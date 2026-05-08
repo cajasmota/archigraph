@@ -63,6 +63,52 @@ func Get(language string) (Extractor, bool) {
 	return e, ok
 }
 
+// TagRelationshipsLanguage stamps Properties["language"] = lang on every
+// embedded relationship of every record (and recursively on nested records
+// where applicable). Issue #90: the resolver's per-language dynamic-pattern
+// dispatch consults this property to pick the right pattern catalog. Without
+// it, pass-2 standalone rels and a chunk of embedded rels fall through to
+// the cross-language catalog only and the dynamic disposition stays at ~0%.
+//
+// Existing Properties[language] values are preserved (per-extractor or
+// per-rel overrides win). Properties maps are allocated lazily.
+func TagRelationshipsLanguage(records []types.EntityRecord, lang string) {
+	if lang == "" {
+		return
+	}
+	for i := range records {
+		rels := records[i].Relationships
+		for j := range rels {
+			r := &rels[j]
+			if r.Properties == nil {
+				r.Properties = map[string]string{"language": lang}
+				continue
+			}
+			if _, ok := r.Properties["language"]; !ok {
+				r.Properties["language"] = lang
+			}
+		}
+	}
+}
+
+// TagStandaloneRelationshipsLanguage is TagRelationshipsLanguage for a slice
+// of standalone (pass-2) relationships rather than entity-embedded ones.
+func TagStandaloneRelationshipsLanguage(rels []types.RelationshipRecord, lang string) {
+	if lang == "" {
+		return
+	}
+	for j := range rels {
+		r := &rels[j]
+		if r.Properties == nil {
+			r.Properties = map[string]string{"language": lang}
+			continue
+		}
+		if _, ok := r.Properties["language"]; !ok {
+			r.Properties["language"] = lang
+		}
+	}
+}
+
 // List returns a snapshot of all registered language names (unsorted).
 func List() []string {
 	mu.RLock()

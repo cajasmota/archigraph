@@ -63,6 +63,9 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		attribute.Int("entity_count", len(entities)),
 		attribute.Int("error_pattern_count", len(errorPatterns)),
 	)
+	// Issue #90 — tag every embedded relationship with language="java" so
+	// the resolver routes to the JVM dynamic-pattern catalog.
+	extractor.TagRelationshipsLanguage(entities, "java")
 	return entities, nil
 }
 

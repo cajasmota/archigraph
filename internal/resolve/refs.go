@@ -195,6 +195,15 @@ var AllDispositions = []Disposition{
 // back to crossLangDynamicPatterns + safeAnchoredDynamicPatterns only.
 var (
 	pythonDynamicPatterns = []*regexp.Regexp{
+		// Bare-identifier forms: per-language extractors emit only the
+		// leaf callee identifier (e.g. ToID="getattr") for `getattr(...)`
+		// call sites. Without bare-name anchors none of the parens-
+		// requiring patterns below ever match real stubs (issue #90).
+		regexp.MustCompile(`^getattr$`),
+		regexp.MustCompile(`^setattr$`),
+		regexp.MustCompile(`^eval$`),
+		regexp.MustCompile(`^exec$`),
+		regexp.MustCompile(`^__import__$`),
 		regexp.MustCompile(`^getattr\(`),                  // getattr(obj, name)(...)
 		regexp.MustCompile(`^__getattr__$`),               // __getattr__ magic name
 		regexp.MustCompile(`^.*\.__getattr__\(`),          // obj.__getattr__("name")
@@ -248,6 +257,17 @@ var (
 	}
 
 	rubyDynamicPatterns = []*regexp.Regexp{
+		// Bare-identifier forms: per-language extractors (Ruby, etc.)
+		// emit only the leaf callee identifier so the parens-requiring
+		// patterns below never match a real stub. Reflective Ruby method
+		// names are unique enough to be safe as bare-name anchors
+		// (issue #90).
+		regexp.MustCompile(`^send$`),
+		regexp.MustCompile(`^public_send$`),
+		regexp.MustCompile(`^__send__$`),
+		regexp.MustCompile(`^define_method$`),
+		regexp.MustCompile(`^instance_eval$`),
+		regexp.MustCompile(`^class_eval$`),
 		regexp.MustCompile(`^.*\.send\(`),        // obj.send(:name) — Ruby ONLY
 		regexp.MustCompile(`^send\(`),            // bare send(:name)
 		regexp.MustCompile(`^.*\.public_send\(`), // obj.public_send(:name)
@@ -262,6 +282,12 @@ var (
 	}
 
 	jvmDynamicPatterns = []*regexp.Regexp{
+		// Bare-identifier forms: extractors emit just the leaf method
+		// name. `forName` (Class.forName) is reflection-unique enough to
+		// be safe as a bare anchor; `newInstance` and `invoke` are NOT
+		// (collide with domain methods) so we leave those parens-anchored
+		// only (issue #90).
+		regexp.MustCompile(`^forName$`),
 		// JVM reflection invoke is `Method.invoke(...)` or
 		// `Constructor.invoke(...)`. Anchored to those receivers so a
 		// user-defined `cli.invoke(...)` / `cmd.invoke(...)` does NOT match.
@@ -530,7 +556,7 @@ func (idx Index) ClassifyEndpoints(endpoints []EndpointPair, allow ExternalAllow
 	var stats Stats
 	for _, ep := range endpoints {
 		if ep.FromID != "" {
-			d := idx.classifyDisposition(ep.FromID, ep.FromOriginal, allow)
+			d := idx.classifyDispositionLang(ep.FromID, ep.FromOriginal, ep.Language, allow)
 			stub := ep.FromOriginal
 			if stub == "" {
 				stub = ep.FromID
@@ -538,7 +564,7 @@ func (idx Index) ClassifyEndpoints(endpoints []EndpointPair, allow ExternalAllow
 			stats.recordDisposition(d, stub)
 		}
 		if ep.ToID != "" {
-			d := idx.classifyDisposition(ep.ToID, ep.ToOriginal, allow)
+			d := idx.classifyDispositionLang(ep.ToID, ep.ToOriginal, ep.Language, allow)
 			stub := ep.ToOriginal
 			if stub == "" {
 				stub = ep.ToID
@@ -559,6 +585,11 @@ type EndpointPair struct {
 	FromOriginal string
 	ToID         string
 	ToOriginal   string
+	// Language is the source language of the relationship (typically read
+	// from RelationshipRecord.Properties["language"]). Threaded through to
+	// classifyDispositionLang so the per-language dynamic-pattern catalog
+	// runs at final-classification time. Issue #90.
+	Language string
 }
 
 // MergeDispositions sums the per-disposition counts and samples from src
