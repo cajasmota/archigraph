@@ -38,7 +38,11 @@ urlpatterns = [
 
 // TestDetect_DRFRouterRoutes verifies that every router.register(prefix, viewset, ...)
 // call in a Django/DRF urls.py emits exactly one ROUTES_TO relationship from
-// the prefix Route to the ViewSet target. Refs #43.
+// the prefix Route to the ViewSet target. After issue #64 the AST pass
+// composes the parent `path("api/", include(router.urls))` prefix with each
+// register call, so the edges originate from `Route:/api/<name>` (and
+// `Route:/api/v2/<name>` for the second router) rather than the bare-name
+// orphans the YAML rules emit on their own. Refs #43, Refs #64.
 func TestDetect_DRFRouterRoutes(t *testing.T) {
 	rules, err := LoadAllRules()
 	if err != nil {
@@ -57,11 +61,11 @@ func TestDetect_DRFRouterRoutes(t *testing.T) {
 
 	type rel struct{ from, to string }
 	expected := map[rel]bool{
-		{"Route:users", "View:UserViewSet"}:          false,
-		{"Route:orders", "View:OrderViewSet"}:        false,
-		{"Route:products", "View:ProductViewSet"}:    false,
-		{"Route:categories", "View:CategoryViewSet"}: false,
-		{"Route:reviews", "View:ReviewViewSet"}:      false,
+		{"Route:/api/users", "View:UserViewSet"}:           false,
+		{"Route:/api/orders", "View:OrderViewSet"}:         false,
+		{"Route:/api/products", "View:ProductViewSet"}:     false,
+		{"Route:/api/categories", "View:CategoryViewSet"}:  false,
+		{"Route:/api/v2/reviews", "View:ReviewViewSet"}:    false,
 	}
 
 	var routesToCount int
@@ -88,16 +92,37 @@ func TestDetect_DRFRouterRoutes(t *testing.T) {
 		}
 	}
 
-	// Sanity: yaml_driven property is set on at least one matching edge.
+	// The composed edges produced by the AST pass carry pattern_type=ast_driven.
 	var found bool
 	for _, r := range result.Relationships {
-		if r.Kind == "ROUTES_TO" && r.FromID == "Route:users" && r.Properties["pattern_type"] == "yaml_driven" {
+		if r.Kind == "ROUTES_TO" && r.FromID == "Route:/api/users" && r.Properties["pattern_type"] == "ast_driven" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("expected DRF router ROUTES_TO edge with pattern_type=yaml_driven")
+		t.Error("expected composed DRF router ROUTES_TO edge with pattern_type=ast_driven")
+	}
+
+	// And the bare-name orphans must be gone after AST composition.
+	orphanFrom := map[string]bool{
+		"Route:users": true, "Route:orders": true, "Route:products": true,
+		"Route:categories": true, "Route:reviews": true,
+	}
+	orphanRoute := map[string]bool{
+		"users": true, "orders": true, "products": true, "categories": true,
+		"reviews": true, "api/": true, "api/v2/": true,
+	}
+	for _, r := range result.Relationships {
+		if r.Kind == "ROUTES_TO" && orphanFrom[r.FromID] {
+			t.Errorf("orphan bare-name ROUTES_TO survived AST composition: %s -> %s",
+				r.FromID, r.ToID)
+		}
+	}
+	for _, e := range result.Entities {
+		if e.Kind == "Route" && orphanRoute[e.Name] {
+			t.Errorf("orphan Route entity survived AST composition: %q", e.Name)
+		}
 	}
 }
 

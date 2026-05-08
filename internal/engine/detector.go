@@ -210,6 +210,16 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 		ctx, file.Language, file.Path, file.Content, entities, relationships,
 	)
 
+	// Django REST Framework AST pass: compose the parent `path("api/",
+	// include(<router>.urls))` prefix with each `<router>.register("name",
+	// ViewSet)` call into a single composed Route. The YAML rules above
+	// can't see the router-variable binding, so they emit orphan
+	// Route:api/ + Route:users pairs; this pass replaces them with
+	// Route:/api/users. No-op for non-Python files. Refs #64.
+	entities, relationships = applyDjangoRouteComposition(
+		ctx, file.Language, file.Path, file.Content, entities, relationships,
+	)
+
 	span.SetAttributes(
 		attribute.Int("entity_count", len(entities)),
 		attribute.Int("relationship_count", len(relationships)),
