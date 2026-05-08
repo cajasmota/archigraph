@@ -51,7 +51,7 @@ public void oldMethod() {}
 		t.Fatalf("expected 1 entity, got %d", len(got))
 	}
 	e := got[0]
-	// MX-1094: deprecation entities are SCOPE.Pattern (subtype = lang tag)
+	// deprecation entities are SCOPE.Pattern (subtype = lang tag)
 	// because the 14-type allowlist has no DeprecationAnnotation entry.
 	if e.kind != "SCOPE.Pattern" {
 		t.Errorf("kind=%q want SCOPE.Pattern", e.kind)
@@ -114,7 +114,7 @@ function oldMethod() {}
 		t.Fatalf("expected 1 entity, got %d", len(got))
 	}
 	e := got[0]
-	// MX-1094: deprecation entities are SCOPE.Pattern (subtype = lang tag)
+	// deprecation entities are SCOPE.Pattern (subtype = lang tag)
 	// because the 14-type allowlist has no DeprecationAnnotation entry.
 	if e.kind != "SCOPE.Pattern" {
 		t.Errorf("kind=%q want SCOPE.Pattern", e.kind)

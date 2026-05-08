@@ -1,5 +1,5 @@
-# tRPC framework extraction rules (MX-570)
-# Schema: FrameworkExtractionSchema (MX-494)
+# tRPC framework extraction rules
+# Schema: FrameworkExtractionSchema
 # NPM: @trpc/server
 #
 # Top-level detection metadata is consumed by the modular_loader.
@@ -33,7 +33,7 @@ frameworks:
   notes: Detect via @trpc/server import; initTRPC.create() call confirms tRPC
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

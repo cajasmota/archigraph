@@ -1,6 +1,6 @@
 // scss.go — regex-based SCSS variable, mixin, and function extractor.
 //
-// Extracted entities (SCOPE.Component per MX-1054 spec):
+// Extracted entities (SCOPE.Component per spec):
 //   - SCSS variables   ($name: value)     → Kind="SCOPE.Component", Subtype="variable", Metadata{"kind":"variable","value":"..."}
 //   - SCSS mixins      (@mixin name(...)) → Kind="SCOPE.Component", Subtype="mixin",    Metadata{"kind":"mixin","params":[...]}
 //   - SCSS functions   (@function name)   → Kind="SCOPE.Component", Subtype="function", Metadata{"kind":"function","params":[...]}

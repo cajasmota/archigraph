@@ -53,6 +53,14 @@ type Index struct {
 	// ambigLocation[file_path][name] = true when (file, name) collides.
 	ambigLocation map[string]map[string]bool
 
+	// byLocationKind[file_path][name][kind] = entity_id. Kind-aware
+	// (file, name) lookup. PORT-2-FIX-2 emissions can produce two entities
+	// at the same (file, name) with different kinds (e.g. SCOPE.Component
+	// class + SCOPE.Operation method); kind-aware lookup picks the correct
+	// one when the relationship's kind hint maps to a single family.
+	// A blank string sentinel marks (file, name, kind) collisions.
+	byLocationKind LocationKindIndex
+
 	// byMember[file_path][scope_name][member_name] = entity_id. Used by
 	// structural-ref Format B resolution. A blank string sentinel marks
 	// (scope, member) collisions inside the same file. Entities are
@@ -64,13 +72,31 @@ type Index struct {
 // that are unique within their file. Returned by BuildLocationIndex.
 type LocationIndex map[string]map[string]string
 
-// Stats reports how many relationships the resolver rewrote and how many it
-// left as stubs because of ambiguity / missing matches. Surfaced via the log
-// line in cmd/archigraph/index.go for instrumentation.
+// LocationKindIndex maps file_path -> name -> kind -> entity_id. Used by the
+// kind-aware structural-ref / location resolver path to disambiguate
+// same-file (file, name) collisions when the relationship supplies a kind
+// hint. A blank string value is the ambiguous-within-kind sentinel.
+type LocationKindIndex map[string]map[string]map[string]string
+
+// Stats reports how many relationship endpoints the resolver rewrote and how
+// many it left as stubs because of ambiguity / missing matches. Surfaced via
+// the log line in cmd/archigraph/index.go for instrumentation.
+//
+// Rewritten/Ambiguous/Unmatched are aggregate counters covering every endpoint
+// the resolver inspected (FromID + ToID combined). PORT-2-FIX-4 added the
+// per-endpoint counters so callers can tell which side of an edge is failing
+// to resolve.
 type Stats struct {
 	Rewritten int
 	Ambiguous int
 	Unmatched int
+
+	FromRewritten int
+	FromAmbiguous int
+	FromUnmatched int
+	ToRewritten   int
+	ToAmbiguous   int
+	ToUnmatched   int
 }
 
 // BuildIndex constructs a (kind, name) -> entity_id lookup from a slice of
@@ -85,14 +111,15 @@ type Stats struct {
 //     so a stub like "View:User" matches an entity of kind "SCOPE.View".
 func BuildIndex(entities []types.EntityRecord) Index {
 	idx := Index{
-		byKind:        make(map[string]map[string]string),
-		ambigKind:     make(map[string]map[string]bool),
-		byName:        make(map[string]string),
-		ambigName:     make(map[string]bool),
-		nameKinds:     make(map[string]map[string]string),
-		byLocation:    make(LocationIndex),
-		ambigLocation: make(map[string]map[string]bool),
-		byMember:      make(map[string]map[string]map[string]string),
+		byKind:         make(map[string]map[string]string),
+		ambigKind:      make(map[string]map[string]bool),
+		byName:         make(map[string]string),
+		ambigName:      make(map[string]bool),
+		nameKinds:      make(map[string]map[string]string),
+		byLocation:     make(LocationIndex),
+		ambigLocation:  make(map[string]map[string]bool),
+		byLocationKind: make(LocationKindIndex),
+		byMember:       make(map[string]map[string]map[string]string),
 	}
 	for k := range entities {
 		e := &entities[k]
@@ -155,6 +182,30 @@ func BuildIndex(entities []types.EntityRecord) Index {
 		// byKind: ambiguous (file, name) tuples are tracked separately so
 		// the structural-ref resolver leaves the stub alone.
 		if e.SourceFile != "" {
+			// Kind-aware (file, name, kind) bucket — collision-safe under
+			// PORT-2-FIX-2 emissions. Indexed under both raw and SCOPE-
+			// trimmed kinds to mirror byKind.
+			fileKindBucket := idx.byLocationKind[e.SourceFile]
+			if fileKindBucket == nil {
+				fileKindBucket = make(map[string]map[string]string)
+				idx.byLocationKind[e.SourceFile] = fileKindBucket
+			}
+			nameKindBucketLoc := fileKindBucket[e.Name]
+			if nameKindBucketLoc == nil {
+				nameKindBucketLoc = make(map[string]string)
+				fileKindBucket[e.Name] = nameKindBucketLoc
+			}
+			for _, kind := range kinds {
+				if kind == "" {
+					continue
+				}
+				if existing, ok := nameKindBucketLoc[kind]; ok && existing != e.ID {
+					nameKindBucketLoc[kind] = "" // ambiguous within (file, name, kind)
+				} else if !ok || existing == e.ID {
+					nameKindBucketLoc[kind] = e.ID
+				}
+			}
+
 			if idx.ambigLocation[e.SourceFile] == nil || !idx.ambigLocation[e.SourceFile][e.Name] {
 				bucket := idx.byLocation[e.SourceFile]
 				if bucket == nil {
@@ -402,6 +453,7 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 	if len(parts) != 6 {
 		return "", statusUnmatched, true
 	}
+	scopeKind := parts[1] // e.g. "component", "operation"
 	filePath := parts[4]
 	tail := parts[5]
 	if filePath == "" || tail == "" {
@@ -431,7 +483,12 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 		return "", statusUnmatched, true
 	}
 
-	// Format A: tail is the entity name.
+	// Format A: tail is the entity name. Try the kind-aware location
+	// index first using the structural-ref's scope-kind segment; this
+	// resolves PORT-2-FIX-2 same-file collisions.
+	if id, ok := idx.lookupLocationKind(filePath, tail, structuralKindFamilies(scopeKind)); ok {
+		return id, statusRewritten, true
+	}
 	if idx.ambigLocation[filePath] != nil && idx.ambigLocation[filePath][tail] {
 		return "", statusAmbiguous, true
 	}
@@ -441,6 +498,51 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 		}
 	}
 	return "", statusUnmatched, true
+}
+
+// structuralKindFamilies maps a scope-kind segment from a structural ref
+// (e.g. "component", "operation") to the entity-kind families it might be
+// indexed under. Returns nil for unknown segments.
+func structuralKindFamilies(scopeKind string) []string {
+	switch strings.ToLower(scopeKind) {
+	case "component":
+		return []string{"Component", "Class", "View", "Model", "SCOPE.Component", "SCOPE.View", "SCOPE.Model"}
+	case "operation":
+		return []string{"Operation", "Function", "Method", "SCOPE.Operation"}
+	}
+	return nil
+}
+
+// lookupLocationKind picks an entity by (file, name) constrained to the
+// supplied kind families. Returns (id, true) only when exactly one family
+// resolves to a non-blank entity ID for this (file, name).
+func (idx Index) lookupLocationKind(filePath, name string, families []string) (string, bool) {
+	if len(families) == 0 {
+		return "", false
+	}
+	fileBucket := idx.byLocationKind[filePath]
+	if fileBucket == nil {
+		return "", false
+	}
+	nameBucket := fileBucket[name]
+	if len(nameBucket) == 0 {
+		return "", false
+	}
+	var match string
+	for _, k := range families {
+		id := nameBucket[k]
+		if id == "" {
+			continue
+		}
+		if match != "" && match != id {
+			return "", false
+		}
+		match = id
+	}
+	if match == "" {
+		return "", false
+	}
+	return match, true
 }
 
 // splitStub splits a stub string on the first ':' into (kind, name). If no

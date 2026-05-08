@@ -1,4 +1,4 @@
-// React Native component hierarchy and navigation route extraction (MX-1063).
+// React Native component hierarchy and navigation route extraction.
 //
 // This extractor targets two React Native / React Navigation patterns:
 //
@@ -14,7 +14,7 @@
 //     relationship.
 //
 // Detection heuristic: regex-based, two-pass (same approach as errorpattern.go
-// and MX-1047). No tree-sitter parsing required for this secondary pass — the
+// and). No tree-sitter parsing required for this secondary pass — the
 // patterns are structurally unambiguous in React Navigation source.
 //
 // File gate: language must be "typescript" or "javascript".

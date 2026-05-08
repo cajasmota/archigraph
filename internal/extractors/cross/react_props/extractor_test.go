@@ -380,7 +380,7 @@ export class Legacy extends React.Component<{}> {
 }
 `
 	res := runExtract(t, "src/Legacy.tsx", "typescript", src)
-	// Class components are out of scope for MX-1062 (the story is explicitly
+	// Class components are out of scope (the story is explicitly
 	// functional / props interface scoped). We must NOT emit anything.
 	for _, r := range res {
 		if r.name == "Legacy" {

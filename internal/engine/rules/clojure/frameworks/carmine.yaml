@@ -1,4 +1,4 @@
-# Clojure Carmine Redis extraction rules (MX-575).
+# Clojure Carmine Redis extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # custom_extractors entries are consumed by CustomExtractorRegistry.

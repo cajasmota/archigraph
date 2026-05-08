@@ -17,7 +17,7 @@ orms_database:
     for connection configuration and Bolt.Sips.query/2 for Cypher execution.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-574)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

@@ -24,7 +24,7 @@ import (
 //	extractor.Register("go", references.Wrap(&golang.GoExtractor{}, refExt))
 //
 // The above line would be the responsibility of the pipeline owner
-// (MX-1044) — this package does not register anything itself.
+// — this package does not register anything itself.
 func Wrap(base extractor.Extractor, refs *ReferenceExtractor) extractor.Extractor {
 	if refs == nil {
 		refs = NewReferenceExtractor()

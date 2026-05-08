@@ -72,7 +72,7 @@ func firstByTypeAndName(recs []types.EntityRecord, refType, targetName string) *
 // ---- AC criterion (Go) --------------------------------------------------
 
 func TestGo_AC_UserTypeAndPropertyAccess(t *testing.T) {
-	// Acceptance criterion from MX-1048: for
+	// Acceptance criterion: for
 	//   func processUser(u User) { _ = u.Name }
 	// we must emit a SCOPE.Reference(type=User) and
 	// SCOPE.Reference(property_access=u.Name), and both carry a

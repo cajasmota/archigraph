@@ -25,8 +25,8 @@ type EntityRecord struct {
 	ProjectID   string `json:"project_id"`
 	ProjectSlug string `json:"project_slug"`
 	// RepoID is the GitHub repository full name (e.g. "cajasmota/archigraph").
-	// Sourced from the ExtractTriggerMessage.RepoURL in the Extract Lambda (MX-1095).
-	// Required by the Typesense entity_embeddings schema for tenant isolation (MX-1076).
+	// Sourced from the ExtractTriggerMessage.RepoURL in the Extract Lambda.
+	// Required by the Typesense entity_embeddings schema for tenant isolation.
 	RepoID           string           `json:"repo_id,omitempty"`
 	Name             string           `json:"name"`
 	QualifiedName    string           `json:"qualified_name"`

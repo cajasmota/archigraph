@@ -1,4 +1,4 @@
-# JavaScript/TypeScript Redis client extraction rules (MX-575).
+# JavaScript/TypeScript Redis client extraction rules.
 #
 # Top-level `orms:` key is consumed by the modular_loader (detection).
 # custom_extractors entries are consumed by CustomExtractorRegistry.

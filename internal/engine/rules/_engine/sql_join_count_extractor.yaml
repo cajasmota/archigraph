@@ -1,9 +1,9 @@
-# SQL JOIN count extractor (MX-735)
+# SQL JOIN count extractor
 # Cross-language extractor that counts JOIN keyword occurrences per SQL string
 # literal and stores join_count / has_complex_joins on the emitted entity.
 #
 # Language gate: ALL languages with embedded SQL strings (identical gate to
-# sql_query_extractor MX-584).
+# sql_query_extractor).
 
 name: sql_join_count
 description: >-

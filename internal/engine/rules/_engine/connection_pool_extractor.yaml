@@ -1,4 +1,4 @@
-# Connection pool config extractor (MX-707)
+# Connection pool config extractor
 # Cross-language extractor for DB connection pool configuration.
 # Registered as a custom extractor that fires on Java/Kotlin (HikariCP, Druid),
 # INI/conf files (pgbouncer), and Python (SQLAlchemy, Django) source files.

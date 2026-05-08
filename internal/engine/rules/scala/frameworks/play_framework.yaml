@@ -1,5 +1,5 @@
-# Play Framework extraction rules (MX-523)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Play Framework extraction rules
+# Schema: FrameworkExtractionSchema
 # SBT: "com.typesafe.play" %% "play"
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
@@ -48,7 +48,7 @@ frameworks:
     '
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

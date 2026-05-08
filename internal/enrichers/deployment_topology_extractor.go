@@ -1,7 +1,7 @@
 package enrichers
 
 // DeploymentTopologyExtractor detects reverse proxy and container config signals.
-// Port of Python deployment_topology_extractor.py (MX-587).
+// Port of Python deployment_topology_extractor.py.
 
 import (
 	"path/filepath"

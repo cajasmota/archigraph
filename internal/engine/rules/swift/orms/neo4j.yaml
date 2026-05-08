@@ -16,7 +16,7 @@ orms_database:
     and ClientProtocol for session management.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-574)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

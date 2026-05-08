@@ -1,7 +1,7 @@
 skip_patterns:
 - pattern: '*_test.go'
   reason: 'Test files handled separately by scope classifier. AST-only extraction,
-    no LLM enrichment per MX-396 spec.
+    no LLM enrichment spec.
 
     '
   scope_tag: test

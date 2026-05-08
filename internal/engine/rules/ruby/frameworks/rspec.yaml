@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# RSpec framework extraction schema (MX-562)
+# RSpec framework extraction schema
 # ---------------------------------------------------------------------------
 # This YAML registers the custom extractor for RSpec test files.
 # Framework key: rspec  (matches framework detection in the Ruby detector)
@@ -10,7 +10,7 @@
 # blocks, examples, let helpers, hooks, shared examples, and subject blocks.
 
 # ---------------------------------------------------------------------------
-# Custom extractors (MX-562)
+# Custom extractors
 # ---------------------------------------------------------------------------
 
 custom_extractors:

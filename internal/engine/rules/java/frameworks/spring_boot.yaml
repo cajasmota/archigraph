@@ -31,7 +31,7 @@ frameworks:
     '
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-497)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions: []
@@ -53,4 +53,4 @@ custom_extractors:
     description: "Extract server.servlet.context-path (properties) and server.servlet.context-path / spring.application.name (YAML) as SCOPE.Pattern/config_prefix entities. Cross-framework extractor gated on well-known config file basenames."
   - module: "archigraph.engine.rules.languages._engine.config_consumer_extractor"
     function: "extract"
-    description: "Extract @Value(\"${key}\") annotations as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges from consuming classes/methods to config key entities. Enables blast-radius analysis for Spring config changes (MX-600)."
+    description: "Extract @Value(\"${key}\") annotations as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges from consuming classes/methods to config key entities. Enables blast-radius analysis for Spring config changes."

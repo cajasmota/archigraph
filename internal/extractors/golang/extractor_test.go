@@ -305,7 +305,7 @@ func NewConfig(host string, port int) *Config {
 	for _, r := range results {
 		kinds[r.Kind] = true
 	}
-	// MX-1093 (revert MX-1045): Config struct must emit SCOPE.Component; NewConfig emits SCOPE.Operation.
+	// Config struct must emit SCOPE.Component; NewConfig emits SCOPE.Operation.
 	if !kinds["SCOPE.Component"] || !kinds["SCOPE.Operation"] {
 		t.Errorf("expected both SCOPE.Component and SCOPE.Operation, got kinds: %v", kinds)
 	}
@@ -542,7 +542,7 @@ func TestExtractGoldenFixture(t *testing.T) {
 	}
 }
 
-// ---- import path extraction tests (MX-1046) ---------------------------------
+// ---- import path extraction tests ---------------------------------
 //
 // These tests lock the contract that import entity Name is the full module
 // path exactly as it appears in the import statement — never truncated to the
@@ -624,7 +624,7 @@ import "os/exec"
 }
 
 func TestImportExtraction_FullModulePath(t *testing.T) {
-	// The headline case from MX-1046: the full github.com/... path must be
+	// The headline case: the full github.com/... path must be
 	// preserved. The bug was splitting on "/" and keeping only "v1".
 	src := `package main
 
@@ -827,7 +827,7 @@ func main() {}
 	}
 }
 
-// ---- MX-1043 relationship tests --------------------------------------------
+// relationship tests --------------------------------------------
 //
 // These tests lock the contract that the Go language extractor emits
 // RelationshipRecord values for CALLS, IMPORTS, DEPENDS_ON, and IMPLEMENTS
@@ -965,7 +965,7 @@ func fact(n int) int {
 }
 
 func TestCallsRelationship_UnknownExternalCall(t *testing.T) {
-	// MX-1043 rule #6: unknown/external callees are emitted with the bare
+	// rule #6: unknown/external callees are emitted with the bare
 	// function name rather than being dropped.
 	src := `package main
 
@@ -1250,7 +1250,7 @@ type Empty struct{}
 // ---- full mix — golden fixture assertion -----------------------------------
 
 func TestRelationships_SampleHandlerFixture(t *testing.T) {
-	// End-to-end check against the MX-1043 golden fixture. Verifies every
+	// End-to-end check against the golden fixture. Verifies every
 	// relationship kind fires at least once on a realistic file.
 	fixturePath := "../../../fixtures/sources/go/sample_handler.go"
 	content, err := os.ReadFile(fixturePath)

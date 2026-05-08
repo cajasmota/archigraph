@@ -1,4 +1,4 @@
-# Snapshot test detector (MX-715)
+# Snapshot test detector
 # Detects snapshot / approval test assertions across 9 languages:
 #   JavaScript/TypeScript: Jest, Vitest
 #   Python: pytest-snapshot, snapshottest, syrupy

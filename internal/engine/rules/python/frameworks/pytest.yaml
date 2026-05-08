@@ -1,8 +1,8 @@
-# Pytest framework extraction rules (MX-560).
+# Pytest framework extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # Top-level extraction keys (file_conventions, source_patterns,
-# relationship_rules) are consumed by FrameworkExtractionSchema (MX-494).
+# relationship_rules) are consumed by FrameworkExtractionSchema.
 #
 frameworks:
   name: pytest
@@ -33,7 +33,7 @@ frameworks:
     in pyproject.toml is also definitive.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 # file_conventions: glob -> entity_type mapping from file naming conventions.

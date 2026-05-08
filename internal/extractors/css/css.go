@@ -6,7 +6,7 @@
 //   - at_rule (@mixin/@function) → Kind="SCOPE.Stylesheet", Subtype="mixin"
 //   - CSS custom properties (--var) → Kind="SCOPE.Stylesheet", Subtype="variable"
 //
-// Extracted entities (SCSS/Less via regex — MX-1054):
+// Extracted entities (SCSS/Less via regex —):
 //   - SCSS $variable: value    → Kind="SCOPE.Component", Subtype="variable"
 //   - SCSS @mixin name(params) → Kind="SCOPE.Component", Subtype="mixin"
 //   - SCSS @function name      → Kind="SCOPE.Component", Subtype="function"
@@ -49,8 +49,8 @@ var mixinKeywords = map[string]bool{
 // Extract dispatches to CSS (tree-sitter), SCSS, or Less extraction based on
 // the file extension embedded in file.Path.
 //
-// For .scss and .sass files: regex-based SCSS extraction (MX-1054).
-// For .less files: regex-based Less extraction (MX-1054).
+// For.scss and.sass files: regex-based SCSS extraction.
+// For.less files: regex-based Less extraction.
 // For all other .css files: tree-sitter CSS extraction (unchanged).
 func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	if len(file.Content) == 0 {

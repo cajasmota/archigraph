@@ -576,7 +576,7 @@ func countByKind(entities []types.EntityRecord, kind string) int {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1055: C# RE2-rewritten relationship rule tests
+// C# RE2-rewritten relationship rule tests
 // ---------------------------------------------------------------------------
 
 // aspNetMVCInjectedIntoYAML is the relationship rule for Controller DI (RE2 rewrite).

@@ -1,7 +1,7 @@
 package enrichers
 
 // LayerClassifierEnricher identifies architectural layers for entities.
-// Port of Python layer_classifier_enricher.py (MX-684).
+// Port of Python layer_classifier_enricher.py.
 // Heuristic path-based classification only — LLM path not ported.
 
 import (

@@ -267,7 +267,7 @@ func findAllNodes(root *sitter.Node, kinds ...string) []*sitter.Node {
 }
 
 // buildComponent creates a Component entity for class/module definitions.
-// Rails-specific framework labelling (MX-1106) is applied via tagRails:
+// Rails-specific framework labelling is applied via tagRails:
 // controllers, models, migrations and routes get framework="rails" plus
 // a kind discriminator in Properties.
 func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string) (types.EntityRecord, bool) {

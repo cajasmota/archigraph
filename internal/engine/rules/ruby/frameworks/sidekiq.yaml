@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Sidekiq framework extraction schema (MX-564)
+# Sidekiq framework extraction schema
 # ---------------------------------------------------------------------------
 # This YAML registers the custom extractor for Sidekiq worker files.
 # Framework key: sidekiq  (matches framework detection in the Ruby detector)
@@ -11,7 +11,7 @@
 # configure_server/client blocks, and middleware chain operations.
 
 # ---------------------------------------------------------------------------
-# Custom extractors (MX-564)
+# Custom extractors
 # ---------------------------------------------------------------------------
 
 custom_extractors:

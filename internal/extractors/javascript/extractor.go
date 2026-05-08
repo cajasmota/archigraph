@@ -99,7 +99,7 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		x.collectImports(root)
 	}()
 
-	// Secondary pass: error-handling patterns (MX-1047).
+	// Secondary pass: error-handling patterns.
 	// Runs after the primary extraction so a detection failure here
 	// cannot abort the primary entity output — extractErrorHandlingPatterns
 	// recovers panics internally and returns partial results.

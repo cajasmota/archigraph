@@ -1,4 +1,4 @@
-# Elixir Redix extraction rules (MX-575).
+# Elixir Redix extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # custom_extractors entries are consumed by CustomExtractorRegistry.

@@ -14,7 +14,7 @@
 // time. It is one of the 14 canonical the graph SCOPE types.)
 //
 // Recipe dependencies (the tokens after the colon on a recipe line) are
-// recorded in the recipe entity's Properties["dependencies"] — per MX-1058
+// recorded in the recipe entity's Properties["dependencies"] —
 // they are relationship metadata, not standalone entities.
 //
 // Registers itself via init() and is imported by registry_gen.go.
@@ -39,7 +39,7 @@ type Extractor struct{}
 // Language returns the canonical language name.
 func (e *Extractor) Language() string { return "just" }
 
-// Patterns mirror the functional requirements in MX-1058.
+// Patterns mirror the functional requirements in.
 //
 // Recipe header: starts at column 0 (recipes must be flush-left; recipe
 // bodies are indented). Optional attributes on a preceding line (e.g.
@@ -231,7 +231,7 @@ func findRecipeEnd(src string, headerEnd, startLine int) int {
 
 // normalizeDeps converts the raw dep tail into a compact comma-separated list.
 // Just allows parenthesised deps with arguments, e.g. `test: build (lint "x")`.
-// For MX-1058 we only need the dep *names*, so we strip argument groups.
+// For we only need the dep *names*, so we strip argument groups.
 func normalizeDeps(raw string) string {
 	// Drop parenthesised groups — they contain args, not dep names.
 	var b strings.Builder

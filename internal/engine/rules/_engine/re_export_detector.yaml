@@ -1,4 +1,4 @@
-# Re-export / barrel-file detector (MX-718)
+# Re-export / barrel-file detector
 # Identifies barrel files and re-export patterns across JS/TS, Python, Rust,
 # Kotlin, Ruby, PHP, and Elixir.
 #

@@ -171,7 +171,7 @@ object MySingleton {
 }
 
 // TestKotlinExtractor_NoImportGhostComponents is the regression guard for
-// MX-1081 AC #2. The Go kotlin extractor previously emitted a SCOPE.Component
+// AC #2. The Go kotlin extractor previously emitted a SCOPE.Component
 // entity named after the top-level segment of every import path (e.g. "org",
 // "com", "java") plus an IMPORTS relationship. The Python indexer emits
 // neither, so those entities were Go-only ghosts polluting parity output.
@@ -206,12 +206,12 @@ class Foo {}
 	ghostNames := map[string]bool{"org": true, "com": true, "java": true}
 	for _, e := range got {
 		if ghostNames[e.Name] {
-			t.Errorf("ghost entity %q (kind=%s) emitted from package/import parsing — MX-1081 regression",
+			t.Errorf("ghost entity %q (kind=%s) emitted from package/import parsing",
 				e.Name, e.Kind)
 		}
 		for _, rel := range e.Relationships {
 			if rel.Kind == "IMPORTS" {
-				t.Errorf("unexpected IMPORTS relationship %s → %s — kotlin extractor must not emit imports (MX-1081)",
+				t.Errorf("unexpected IMPORTS relationship %s → %s — kotlin extractor must not emit imports",
 					rel.FromID, rel.ToID)
 			}
 		}
@@ -219,7 +219,7 @@ class Foo {}
 }
 
 // TestKotlinExtractor_NoOrgGhostFromPackageDeclaration specifically locks the
-// MX-1081 AC #2 scenario: a Kotlin file with `package com.example.demo` must
+// AC #2 scenario: a Kotlin file with `package com.example.demo` must
 // not produce entities named "com", "com.example", or "com.example.demo".
 func TestKotlinExtractor_NoOrgGhostFromPackageDeclaration(t *testing.T) {
 	src := `
@@ -249,14 +249,14 @@ class Bar {
 	}
 	for _, e := range got {
 		if forbidden[e.Name] {
-			t.Errorf("package-declaration path segment %q emitted as entity (kind=%s) — MX-1081 regression",
+			t.Errorf("package-declaration path segment %q emitted as entity (kind=%s)",
 				e.Name, e.Kind)
 		}
 	}
 }
 
 // TestKotlinExtractor_SpringRestControllerEmitsService is the regression guard
-// for MX-1081 AC #3. A class annotated with @RestController must produce a
+// AC #3. A class annotated with @RestController must produce a
 // SCOPE.Service entity whose name equals the class name (NOT the previous
 // hardcoded "spring_service" ghost).
 func TestKotlinExtractor_SpringRestControllerEmitsService(t *testing.T) {
@@ -289,7 +289,7 @@ class UserController {
 	for _, e := range got {
 		if e.Kind == "SCOPE.Service" {
 			if e.Name == "spring_service" {
-				t.Error("kotlin extractor emitted legacy 'spring_service' ghost — MX-1081 regression")
+				t.Error("kotlin extractor emitted legacy 'spring_service' ghost")
 			}
 			if svc == nil {
 				svc = &struct {

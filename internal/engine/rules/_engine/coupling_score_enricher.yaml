@@ -1,4 +1,4 @@
-# Coupling score enricher (MX-691)
+# Coupling score enricher
 # Project-level coupling metrics enricher. Computes afferent coupling (Ca),
 # efferent coupling (Ce), and instability (I = Ce / (Ca + Ce)) per
 # SCOPE.Component entity based on DEPENDS_ON and CALLS edge counts.

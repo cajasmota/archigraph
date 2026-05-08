@@ -18,7 +18,7 @@ orms_and_database:
   notes: Runtime-only client (no CLI); always co-occurs with prisma dev dep
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-554)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

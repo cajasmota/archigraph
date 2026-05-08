@@ -15,7 +15,7 @@
 // language=python) are NOT treated as custom extractors — only keys strictly
 // longer than the prefix qualify.
 //
-// This file wires MX-1044: invoke registered custom extractors in the
+// This file wires : invoke registered custom extractors in the
 // extraction pipeline after base language extraction.
 package extractors
 
@@ -92,7 +92,7 @@ func CustomExtractorsFor(language string) []Extractor {
 // RunCustomExtractors dispatches every custom extractor matching file.Language
 // and returns the merged entity list from all successful invocations.
 //
-// Semantics (matches MX-1044 acceptance criteria):
+// Semantics:
 //   - Each extractor is invoked in its own panic-recovery wrapper; a panic in
 //     one extractor logs+continues and does not abort the pipeline.
 //   - Errors from individual extractors are collected into the returned
@@ -152,7 +152,7 @@ func RunCustomExtractors(ctx context.Context, file FileInput) (entities []types.
 }
 
 // MergeWithCustom merges baseEntities with customEntities applying the
-// MX-1044 dedup rule: when a custom extractor emits an entity with the same
+// dedup rule: when a custom extractor emits an entity with the same
 // Name as a base extractor entity, the custom extractor's version wins.
 //
 // The merge preserves the original ordering of base entities, replacing any

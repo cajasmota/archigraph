@@ -1,7 +1,7 @@
 package enrichers
 
 // PaginationEnricher flags endpoint/operation entities with pagination metadata.
-// Port of Python pagination_enricher.py (MX-611).
+// Port of Python pagination_enricher.py.
 
 import (
 	"regexp"

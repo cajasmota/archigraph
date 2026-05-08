@@ -19,7 +19,7 @@ orms_database:
     Spring Data Neo4j supports Kotlin data classes with @Node.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-574)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

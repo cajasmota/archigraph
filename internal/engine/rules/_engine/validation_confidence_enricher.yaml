@@ -1,4 +1,4 @@
-# Validation Confidence Enricher (MX-742)
+# Validation Confidence Enricher
 # Upgrades endpoint validation_confidence from "inferred" to "proven" when
 # dual evidence exists: a DEPENDS_ON(kind=import) edge to a schema file AND
 # the schema class name appears as a token in the endpoint's function body

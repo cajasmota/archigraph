@@ -1,4 +1,4 @@
-# C# StackExchange.Redis extraction rules (MX-575).
+# C# StackExchange.Redis extraction rules.
 #
 # Top-level `orms:` key is consumed by the modular_loader (detection).
 # custom_extractors entries are consumed by CustomExtractorRegistry.

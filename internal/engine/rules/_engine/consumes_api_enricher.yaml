@@ -1,4 +1,4 @@
-# CONSUMES_API relationship enricher (MX-686)
+# CONSUMES_API relationship enricher
 # Post-extraction pass that links HTTP client call sites to the target service's
 # endpoint entities within the same org. Runs after http_client_extractor and
 # route_extractor have completed for the org job.

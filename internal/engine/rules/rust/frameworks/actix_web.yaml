@@ -1,5 +1,5 @@
-# Actix-web framework extraction rules (MX-516)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Actix-web framework extraction rules
+# Schema: FrameworkExtractionSchema
 # Crate: actix-web
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
@@ -20,7 +20,7 @@ frameworks:
     - "use actix_web::"
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

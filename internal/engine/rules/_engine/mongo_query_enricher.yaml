@@ -1,6 +1,6 @@
-# Mongo-query enricher (MX-150)
+# Mongo-query enricher
 # LLM-powered enricher that triggers on SCOPE.Operation/aggregation entities
-# (from MX-577 mongodb_extractor) and emits SCOPE.Pattern(type=mongo-query)
+# and emits SCOPE.Pattern(type=mongo-query)
 # with stage analysis, index hints, and performance notes.
 #
 # File gate is internal to the detector (applies_to checks language and

@@ -1,4 +1,4 @@
-# Framework Version Enricher (MX-728)
+# Framework Version Enricher
 # Extracts framework version from build/manifest files and detects hexagonal
 # architecture from directory structure.
 #

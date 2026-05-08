@@ -1,4 +1,4 @@
-# Transaction Boundary & Ecto Changeset Enricher (MX-729)
+# Transaction Boundary & Ecto Changeset Enricher
 # Cross-language enricher for transaction scope detection and Ecto changeset
 # validation rule extraction.
 #

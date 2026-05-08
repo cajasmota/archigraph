@@ -10,7 +10,7 @@
 // Kind="SCOPE.Service" entity whose Name is the class name, matching the
 // Python indexer's output.
 //
-// MX-1081: Import headers are intentionally NOT emitted as entities or
+// Import headers are intentionally NOT emitted as entities or
 // IMPORTS relationships. The Python kotlin extractor does not emit them,
 // and the Go extractor previously produced ghost "org" / "com" / "java"
 // SCOPE.Component entities by splitting import paths on '.', which broke
@@ -56,7 +56,7 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 // PORT-2-FIX-2-ALL (#41): class/object declarations attach a CONTAINS edge
 // per function declared inside the body, and every function body is scanned
 // for call_expression / call_suffix nodes that yield CALLS edges with stub
-// to_id. Imports are still NOT emitted (MX-1081 — see package doc).
+// to_id. Imports are still NOT emitted.
 func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord) {
 	if node == nil {
 		return
@@ -78,7 +78,7 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 		}
 		classIdx := len(*out)
 		*out = append(*out, rec)
-		// MX-1081: emit Spring stereotype service entity alongside the class.
+		// emit Spring stereotype service entity alongside the class.
 		if svc, ok := buildSpringService(node, file, rec.Name); ok {
 			*out = append(*out, svc)
 		}
@@ -143,7 +143,7 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 		}
 		return
 
-		// MX-1081: import_header intentionally NOT handled — see package doc.
+		// import_header intentionally NOT handled — see package doc.
 	}
 
 	for i := range node.ChildCount() {

@@ -623,7 +623,7 @@ func TestKindMapping(t *testing.T) {
 }
 
 // ----------------------------------------------------------------
-// Fixture file test (>=100 entities per MX-1072 AC #1 proxy)
+// Fixture file test (>=100 entities per AC #1 proxy)
 // ----------------------------------------------------------------
 
 func TestFixtureEntityCount(t *testing.T) {

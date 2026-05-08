@@ -1,4 +1,4 @@
-# Naming convention detector (MX-722)
+# Naming convention detector
 # Analyzes identifier names within a single file to determine the dominant
 # naming convention: camelCase, snake_case, PascalCase, SCREAMING_SNAKE,
 # kebab-case, mixed, or unknown.

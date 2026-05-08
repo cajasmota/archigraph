@@ -1,7 +1,7 @@
 package enrichers
 
 // ConsumesAPIEnricher links HTTP client calls to known endpoint entities.
-// Port of Python consumes_api_enricher.py (MX-686).
+// Port of Python consumes_api_enricher.py.
 
 import (
 	"net/url"

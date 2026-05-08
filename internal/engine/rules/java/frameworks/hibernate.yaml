@@ -31,7 +31,7 @@ frameworks:
     wraps Hibernate under the hood.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-552)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

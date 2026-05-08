@@ -1,4 +1,4 @@
-# Class hierarchy extractor with is_abstract flag (MX-602, MX-714)
+# Class hierarchy extractor with is_abstract flag
 # Detects class inheritance (EXTENDS), interface implementation (IMPLEMENTS),
 # and emits is_abstract=True/False on every class entity.
 #

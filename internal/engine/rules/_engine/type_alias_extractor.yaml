@@ -1,4 +1,4 @@
-# Type alias / type definition extractor (MX-719)
+# Type alias / type definition extractor
 # Identifies type alias declarations, type definitions, and interface declarations
 # across TypeScript, JavaScript (+ Flow), Kotlin, Scala, Rust, Go, Swift, and Dart.
 #

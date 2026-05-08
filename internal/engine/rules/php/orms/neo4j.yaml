@@ -16,7 +16,7 @@ orms_database:
     Client::create() or ClientBuilder::create() for connection.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-574)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

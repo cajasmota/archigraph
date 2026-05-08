@@ -1,4 +1,4 @@
-# Lib boundary enricher (MX-690)
+# Lib boundary enricher
 # Post-extraction enricher. Classifies every DEPENDS_ON edge target as
 # first_party or third_party based on org-configured namespace prefixes.
 # Does NOT create new edges — only annotates existing ones.

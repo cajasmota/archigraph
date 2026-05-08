@@ -18,7 +18,7 @@
 // Rule 1 additionally accepts path-only detection so that Eloquent
 // entities whose superclass is a project-specific base class (e.g.
 // `extends BaseModel`) still get labelled when they live in
-// app/Models/, matching the MX-1106 acceptance criteria.
+// app/Models/, matching the acceptance criteria.
 package php
 
 import (

@@ -1,5 +1,5 @@
-# ASP.NET Core Minimal API framework extraction rules (MX-519)
-# Schema: FrameworkExtractionSchema (MX-494)
+# ASP.NET Core Minimal API framework extraction rules
+# Schema: FrameworkExtractionSchema
 # NuGet: Microsoft.AspNetCore.App (built-in to SDK)
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
@@ -42,7 +42,7 @@ frameworks:
       Startup.cs pattern is pre-6.0 style. appsettings.json alone is insufficient.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:
@@ -170,4 +170,4 @@ custom_extractors:
     description: >
       Extract Configuration["Key"] and Configuration.GetValue<T>("Key") reads
       as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read)
-      edges from consuming entities (MX-600).
+      edges from consuming entities.

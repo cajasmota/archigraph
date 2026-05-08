@@ -24,7 +24,7 @@ framework_templates:
     entity_type: Component
     name_signal: Function/class name exported from file
     boundary: Named export = one Component entity per function/class.
-  notes: 'JSX/TSX React components are covered in MX-401 (javascript_typescript.yaml).
+  notes: 'JSX/TSX React components are covered in (javascript_typescript.yaml).
     This entry is included for cross-reference only — do not double-index. HTML-specific
     detection in this file focuses on non-JSX template engines.
 

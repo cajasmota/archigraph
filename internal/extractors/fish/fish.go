@@ -29,7 +29,7 @@ type Extractor struct{}
 // Language returns the canonical language name.
 func (e *Extractor) Language() string { return "fish" }
 
-// Patterns mirror the functional requirements in MX-1058.
+// Patterns mirror the functional requirements in.
 var (
 	// function <name>               — start of a function block (terminated by end).
 	// The name must be a valid fish identifier (letters, digits, _ -).

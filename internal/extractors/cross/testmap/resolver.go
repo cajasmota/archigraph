@@ -5,7 +5,7 @@
 // intentionally lightweight — it does not consult a symbol table; that is a
 // post-processing concern of the Transform stage.
 //
-// Confidence ladder (from MX-1051):
+// Confidence ladder:
 //
 //	high   — direct call to an identifier that looks like a production
 //	         function. The identifier must not itself be a test/mock/assert

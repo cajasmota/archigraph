@@ -1,4 +1,4 @@
-// cpp__sample.cpp — fixture for MX-1070 C/C++ tree-sitter extractor tests.
+// cpp__sample.cpp — fixture C/C++ tree-sitter extractor tests.
 #include <iostream>
 #include <vector>
 #include "mylib.h"

@@ -1,4 +1,4 @@
-# Property-based test detector (MX-716)
+# Property-based test detector
 # Detects property-based testing patterns across 13+ language families:
 #   Python: Hypothesis (@given)
 #   JavaScript/TypeScript: fast-check, jsverify, testcheck

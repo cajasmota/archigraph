@@ -1,4 +1,4 @@
-# Port aggregation extractor (MX-688)
+# Port aggregation extractor
 # Cross-format extractor for infrastructure and framework config files.
 # Registered as a custom extractor that fires on Dockerfile, docker-compose,
 # Spring application.properties/yml, Express .env, and Go source files.

@@ -12,7 +12,7 @@
 //	type_spec (interface) → Kind="SCOPE.Component",   Subtype="interface"
 //	type_spec (alias)     → Kind="SCOPE.Schema",      Subtype="type_alias"
 //
-// Relationships (MX-1043):
+// Relationships:
 //
 //	import_spec            → RelationshipRecord{Kind="IMPORTS"}       (File → Module)
 //	call_expression        → RelationshipRecord{Kind="CALLS"}         (Function → Function)
@@ -21,8 +21,8 @@
 //	interface satisfaction → RelationshipRecord{Kind="IMPLEMENTS"}    (Component → Component)
 //
 // All relationship target names use bare entity names (mirroring EntityRecord.Name)
-// per MX-1043 rule #5. Unknown/external call targets are emitted with bare function
-// name per MX-1043 rule #6. Malformed nodes are logged and skipped (rule: never
+// rule #5. Unknown/external call targets are emitted with bare function
+// name rule #6. Malformed nodes are logged and skipped (rule: never
 // abort the whole file because relationship extraction panics).
 package golang
 
@@ -94,14 +94,14 @@ func (g *GoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]
 	)
 
 	// ----------------------------------------------------------------
-	// 1. Functions and methods (MX-1043: CALLS + DEPENDS_ON on methods)
+	// 1. Functions and methods
 	// ----------------------------------------------------------------
 	funcEntities, fCount := extractFunctions(root, file.Content, file.Path)
 	records = append(records, funcEntities...)
 	funcs = fCount
 
 	// ----------------------------------------------------------------
-	// 2. Structs and interfaces (MX-1043: DEPENDS_ON on field types)
+	// 2. Structs and interfaces
 	//    Returns typeIndex describing known schemas in the file so the
 	//    post-pass can compute IMPLEMENTS edges.
 	// ----------------------------------------------------------------
@@ -112,20 +112,20 @@ func (g *GoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]
 	// ----------------------------------------------------------------
 	// 3. Import relationships — emitted as standalone SCOPE.Component
 	//    EntityRecord entries (one per import path). Not fanned out to
-	//    every function/type entity (MX-1025).
+	// every function/type entity.
 	// ----------------------------------------------------------------
 	importRecords := extractImportEntities(root, file.Content, file.Path)
 	records = append(records, importRecords...)
 
 	// ----------------------------------------------------------------
-	// 4. Interface satisfaction — intra-file IMPLEMENTS (MX-1043).
+	// 4. Interface satisfaction — intra-file IMPLEMENTS.
 	//    Applied after both function and type extraction so method sets
 	//    per receiver type are available. Post-processes records in place.
 	// ----------------------------------------------------------------
 	records = attachImplementsRelationships(records, typeIdx)
 
 	// ----------------------------------------------------------------
-	// 5. Error-handling patterns — secondary pass (MX-1047).
+	// 5. Error-handling patterns — secondary pass.
 	//    Emits one SCOPE.Pattern entity per `if err != nil { ... }`
 	//    occurrence. Runs after the base extraction so a detection
 	//    failure here cannot abort the primary entity output.
@@ -134,8 +134,8 @@ func (g *GoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]
 	records = append(records, errorPatterns...)
 
 	// ----------------------------------------------------------------
-	// 6. OTel span attribute relationship_count (MX-1043 NFR)
-	//    and error_pattern_count (MX-1047 NFR).
+	// 6. OTel span attribute relationship_count
+	// and error_pattern_count.
 	// ----------------------------------------------------------------
 	relCount := 0
 	for _, r := range records {
@@ -318,7 +318,7 @@ func receiverTypeName(recv *sitter.Node, src []byte) string {
 // extractFunctions extracts function_declaration and method_declaration nodes.
 // Returns entity records and the count of function-type entities.
 //
-// MX-1043: each function/method entity carries a slice of CALLS
+// each function/method entity carries a slice of CALLS
 // RelationshipRecord values extracted from call_expression nodes inside its
 // body. Methods additionally carry a DEPENDS_ON edge to the receiver type
 // so the graph can traverse from method back to its owning schema.
@@ -401,12 +401,12 @@ func extractFunctions(root *sitter.Node, src []byte, filePath string) ([]types.E
 			qualifiedName = receiverType + "." + name
 		}
 
-		// MX-1043: CALLS relationships — one per call_expression in the body.
+		// CALLS relationships — one per call_expression in the body.
 		// Unknown/external targets are emitted with the bare function name
-		// per MX-1043 behaviour rule #6. Deduplicated by (source, target).
+		// behaviour rule #6. Deduplicated by (source, target).
 		relationships := extractCallRelationships(bodyOrNode, src, name)
 
-		// MX-1043: DEPENDS_ON edge from each method to its receiver type.
+		// DEPENDS_ON edge from each method to its receiver type.
 		// Enables graph traversal from method → owning schema without
 		// needing qualified-name joins downstream.
 		if receiverType != "" {
@@ -451,7 +451,7 @@ func extractFunctions(root *sitter.Node, src []byte, filePath string) ([]types.E
 // from within the same function collapse to a single edge — this matches
 // Python parser semantics.
 //
-// MX-1043 rule #6: unknown/external callees are emitted with the bare name
+// rule #6: unknown/external callees are emitted with the bare name
 // rather than being dropped.
 func extractCallRelationships(body *sitter.Node, src []byte, callerName string) []types.RelationshipRecord {
 	if body == nil || callerName == "" {
@@ -524,7 +524,7 @@ func callExpressionTarget(call *sitter.Node, src []byte) string {
 }
 
 // typeIndex captures the set of schema entities and their method sets
-// needed for intra-file IMPLEMENTS resolution (MX-1043).
+// needed for intra-file IMPLEMENTS resolution.
 type typeIndex struct {
 	// structs is the set of struct entity names declared in the file.
 	structs map[string]bool
@@ -634,12 +634,12 @@ func extractTypes(root *sitter.Node, src []byte, filePath string) ([]types.Entit
 					signature = fmt.Sprintf("type %s struct", name)
 				}
 				structCount++
-				// MX-1093: revert MX-1045 — struct declarations are class-like AST
+				// revert — struct declarations are class-like AST
 				// constructs that can carry methods (behavior) → SCOPE.Component.
 				// Canonical rule: behavior → Component, shape → Schema.
 				kind = "SCOPE.Component"
 				idx.structs[name] = true
-				// MX-1043: emit DEPENDS_ON edges for each field whose type
+				// emit DEPENDS_ON edges for each field whose type
 				// references another type declared in the same file. Keeps
 				// the graph conservative: no edges to primitives, no edges
 				// to unresolved identifiers (which could be package-external).
@@ -647,10 +647,10 @@ func extractTypes(root *sitter.Node, src []byte, filePath string) ([]types.Entit
 			case "interface":
 				methodNodes := findAll(typeBody, "method_elem", "method_spec")
 				signature = fmt.Sprintf("type %s interface // %d method(s)", name, len(methodNodes))
-				// MX-1093: revert MX-1045 — interface declarations define behavioral
+				// revert — interface declarations define behavioral
 				// contracts (method sets) → SCOPE.Component. Canonical rule: behavior → Component.
 				kind = "SCOPE.Component"
-				// MX-1043: record the interface method set so the post-pass
+				// record the interface method set so the post-pass
 				// can compute IMPLEMENTS edges for structs whose method set
 				// is a superset.
 				ifaceMethods := make(map[string]bool, len(methodNodes))
@@ -669,7 +669,7 @@ func extractTypes(root *sitter.Node, src []byte, filePath string) ([]types.Entit
 				signature = fmt.Sprintf("type %s %s", name, baseType)
 				kind = "SCOPE.Schema"
 			default:
-				// Ambiguous type_spec nodes default to SCOPE.Schema per MX-1045
+				// Ambiguous type_spec nodes default to SCOPE.Schema
 				// behaviour rule: "If an AST node type is ambiguous, default to
 				// SCOPE.Schema and log the node type for review."
 				kind = "SCOPE.Schema"
@@ -811,7 +811,7 @@ func interfaceMethodName(node *sitter.Node, src []byte) string {
 // of an interface's method set. Both struct and interface must be declared
 // in the same file. The edge is attached to the struct entity (source).
 //
-// This is the intra-file heuristic MX-1043 calls for — a full inter-package
+// This is the intra-file heuristic calls for — a full inter-package
 // type-resolution pass is out of scope and would require a real Go type
 // checker, not tree-sitter.
 //
@@ -911,7 +911,7 @@ func appendRelationshipTo(records []types.EntityRecord, target string, rel types
 //
 // Name is always the full module path exactly as it appears in the import
 // statement (quotes stripped) — never truncated to the last path segment. This
-// is the contract K-2SO parity enforces against the Python indexer (MX-1046).
+// is the contract K-2SO parity enforces against the Python indexer.
 //
 // The four import styles recognised by the Go grammar are all emitted:
 //

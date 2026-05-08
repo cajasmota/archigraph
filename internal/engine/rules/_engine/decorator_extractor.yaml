@@ -1,4 +1,4 @@
-# Decorator / annotation extractor (MX-725)
+# Decorator / annotation extractor
 # Generic cross-language extractor for ALL decorators and annotations, not
 # just framework-specific ones.  Fires on Python, Java, Kotlin,
 # TypeScript, JavaScript, C#, Rust, PHP, and Swift source files.

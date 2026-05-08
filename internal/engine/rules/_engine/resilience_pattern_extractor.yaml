@@ -1,4 +1,4 @@
-# Resilience pattern extractor (MX-692)
+# Resilience pattern extractor
 # Cross-language extractor for resilience framework annotations and policies.
 # Registered as a custom extractor that fires on Java/Kotlin (Resilience4j,
 # Hystrix), C# (Polly), and Go (sony/gobreaker, afex/hystrix-go) source files.

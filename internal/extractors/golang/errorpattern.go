@@ -1,11 +1,11 @@
-// Error-handling pattern extraction for Go source files (MX-1047).
+// Error-handling pattern extraction for Go source files.
 //
 // This file implements a secondary extraction pass that emits one
 // SCOPE.Pattern EntityRecord per `if err != nil { ... }` occurrence.
 // It runs AFTER the base entity extraction in GoExtractor.Extract and
 // never interferes with the primary walker — a failure here returns
 // partial results and logs at warn level rather than aborting the
-// whole file (see behaviour rule #3 in MX-1047).
+// whole file (see behaviour rule #3 in).
 //
 // Entity shape (matches Python indexer parser.py exactly):
 //
@@ -48,7 +48,7 @@ import (
 // The function is deliberately tolerant of malformed / unexpected AST
 // shapes: a panic inside the walker is recovered and converted into a
 // warn-level log so the primary extraction pipeline is never aborted
-// by a secondary-pass bug (MX-1047 behaviour rule #3).
+// by a secondary-pass bug.
 func extractErrorHandlingPatterns(root *sitter.Node, src []byte, filePath string) []types.EntityRecord {
 	if root == nil {
 		return nil

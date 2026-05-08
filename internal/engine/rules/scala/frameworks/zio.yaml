@@ -1,5 +1,5 @@
-# ZIO framework extraction rules (MX-523)
-# Schema: FrameworkExtractionSchema (MX-494)
+# ZIO framework extraction rules
+# Schema: FrameworkExtractionSchema
 # SBT: "dev.zio" %% "zio" + "dev.zio" %% "zio-http"
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
@@ -46,7 +46,7 @@ frameworks:
     '
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

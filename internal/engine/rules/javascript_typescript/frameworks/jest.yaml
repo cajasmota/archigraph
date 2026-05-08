@@ -32,7 +32,7 @@ frameworks:
     Vitest (jest-compatible API) via the vitest framework gate.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema -- MX-559)
+# Extraction schema (FrameworkExtractionSchema --)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

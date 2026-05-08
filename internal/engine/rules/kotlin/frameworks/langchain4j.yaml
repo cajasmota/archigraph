@@ -29,7 +29,7 @@ frameworks:
     module adds Kotlin coroutine support and extension functions.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema -- MX-531)
+# Extraction schema (FrameworkExtractionSchema --)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

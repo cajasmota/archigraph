@@ -105,7 +105,7 @@ func TestGetUser(t *testing.T) {
 		t.Fatalf("expected >=1 entity")
 	}
 	rec := findByTested(t, recs, "TestGetUser", "GetUser")
-	// MX-1094: testmap entities are SCOPE.Pattern (subtype "test_coverage")
+	// testmap entities are SCOPE.Pattern (subtype "test_coverage")
 	// because the 14-type allowlist has no "TestCoverage" entry.
 	if rec.Kind != "SCOPE.Pattern" {
 		t.Errorf("Kind=%q, want SCOPE.Pattern", rec.Kind)

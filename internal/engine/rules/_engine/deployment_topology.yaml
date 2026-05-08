@@ -1,4 +1,4 @@
-# Deployment topology extractor (MX-587)
+# Deployment topology extractor
 # Cross-format extractor for infrastructure config files.
 # Registered as a custom extractor on all framework YAMLs that may
 # co-exist with infrastructure configs in the same repository.

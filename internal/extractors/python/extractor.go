@@ -87,7 +87,7 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	// Walk top-level children.
 	walkNode(root, file, "", &entities, &functionCount, &classCount)
 
-	// Secondary pass: error-handling patterns (MX-1047).
+	// Secondary pass: error-handling patterns.
 	// Runs after the base walker so a failure here cannot abort the
 	// primary entity output — extractErrorHandlingPatterns recovers
 	// panics internally and returns partial results.

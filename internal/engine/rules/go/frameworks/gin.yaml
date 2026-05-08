@@ -1,5 +1,5 @@
-# Gin HTTP framework extraction rules (MX-496)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Gin HTTP framework extraction rules
+# Schema: FrameworkExtractionSchema
 # Module: github.com/gin-gonic/gin
 
 file_conventions: []
@@ -58,4 +58,4 @@ custom_extractors:
     description: "Extract Gin routes (r.GET/POST/PUT/DELETE/PATCH), route groups (r.Group) with full path resolution, middleware chains (r.Use), request binding (c.ShouldBindJSON/BindJSON), engine creation (gin.Default/gin.New), custom validators (RegisterValidation), NoRoute/NoMethod error handlers, and static file serving (r.Static/r.StaticFS). Emits OWNS, DEPENDS_ON, CALLS relationships."
   - module: "archigraph.engine.rules.languages._engine.config_consumer_extractor"
     function: "extract"
-    description: "Extract viper.Get/GetString/GetBool/GetInt etc. reads as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges from consuming entities (MX-600)."
+    description: "Extract viper.Get/GetString/GetBool/GetInt etc. reads as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges from consuming entities."

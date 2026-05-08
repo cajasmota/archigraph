@@ -1,5 +1,5 @@
 // Package dbmap implements the cross-language database-access extractor
-// (MX-1050).
+// .
 //
 // Scans source files for database operations and emits SCOPE.DataAccess
 // entities together with ACCESSES_TABLE relationship edges that link each
@@ -187,7 +187,7 @@ var (
 
 // Extract scans a source file for database access and emits SCOPE.DataAccess
 // entities + ACCESSES_TABLE edges. Files with no recognised ORM/driver
-// import return an empty slice (per Behaviour Rule #1 of MX-1050).
+// import return an empty slice (per Behaviour Rule #1 of).
 func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("extractor._cross_dbmap")
 	_, span := tracer.Start(ctx, "indexer.data_access_extract")

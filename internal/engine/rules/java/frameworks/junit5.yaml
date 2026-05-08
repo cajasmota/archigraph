@@ -29,7 +29,7 @@ frameworks:
     package (jupiter vs junit4).
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-561)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

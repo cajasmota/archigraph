@@ -1,5 +1,5 @@
-# Fiber HTTP framework extraction rules (MX-496)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Fiber HTTP framework extraction rules
+# Schema: FrameworkExtractionSchema
 # Module: github.com/gofiber/fiber/v2 or github.com/gofiber/fiber/v3
 
 file_conventions: []
@@ -73,4 +73,4 @@ custom_extractors:
     function: extract
     description: >-
       Extract viper.Get/GetString/GetBool/GetInt etc. reads as SCOPE.Pattern/config_key
-      entities and emit DEPENDS_ON(kind=config_read) edges from consuming entities (MX-600).
+      entities and emit DEPENDS_ON(kind=config_read) edges from consuming entities.

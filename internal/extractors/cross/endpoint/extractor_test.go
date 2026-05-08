@@ -28,7 +28,7 @@ func runExtract(t *testing.T, path, lang, source string) []types.EntityRecord {
 }
 
 // endpointRecords filters runExtract output down to entities produced by the
-// endpoint extractor itself. MX-1094 changed the entity Kind from
+// endpoint extractor itself. changed the entity Kind from
 // "SCOPE.Endpoint" (not in the graph's allowlist) to "SCOPE.Operation", so the
 // filter now keys on the provenance marker that only this extractor sets.
 func endpointRecords(recs []types.EntityRecord) []types.EntityRecord {

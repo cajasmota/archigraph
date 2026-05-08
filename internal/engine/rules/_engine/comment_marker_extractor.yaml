@@ -1,4 +1,4 @@
-# Comment marker extractor (MX-717)
+# Comment marker extractor
 # Detects TODO, FIXME, HACK, and XXX inline comments across all supported
 # languages and emits SCOPE.Pattern(kind=code_marker) entities.
 #

@@ -313,7 +313,7 @@ func run() error { return nil }
 
 // TestErrorPattern_SampleFixture verifies the real sample.go fixture
 // emits the parity-expected number of error_handling:go_error_return
-// entities. MX-1047 AC#1 target is 19.
+// entities. AC#1 target is 19.
 //
 // The fixture is loaded from testdata/sample.go.fixture so it does not
 // get compiled as part of the package. Skips gracefully if the fixture

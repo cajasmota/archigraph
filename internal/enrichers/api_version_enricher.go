@@ -1,7 +1,7 @@
 package enrichers
 
 // EnrichAPIVersion detects API version prefix in endpoint path property.
-// Port of Python api_version_enricher.py (MX-610).
+// Port of Python api_version_enricher.py.
 //
 // Pattern priority (first match wins):
 //  1. /api/vN/

@@ -1,7 +1,7 @@
 package enrichers
 
 // ArchitectureClassifierEnricher classifies project architecture deterministically.
-// Port of Python architecture_classifier_enricher.py (MX-689).
+// Port of Python architecture_classifier_enricher.py.
 // LLM path not ported — deterministic fast-path only.
 
 import "github.com/cajasmota/archigraph/internal/types"

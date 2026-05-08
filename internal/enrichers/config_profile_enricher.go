@@ -1,7 +1,7 @@
 package enrichers
 
 // ConfigProfileEnricher detects multi-environment config files and computes diff metadata.
-// Port of Python config_profile_enricher.py (MX-697).
+// Port of Python config_profile_enricher.py.
 
 import (
 	"path/filepath"

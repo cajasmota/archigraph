@@ -531,7 +531,7 @@ func TestHTMLExtractor_WithPreParsedTree(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1103: Jinja2 directive extraction
+// Jinja2 directive extraction
 // ---------------------------------------------------------------------------
 
 func TestHTMLExtractor_Jinja2_Block(t *testing.T) {
@@ -685,7 +685,7 @@ func TestHTMLExtractor_Jinja2_DirectiveLineNumbers(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1103: Form field child extraction
+// Form field child extraction
 // ---------------------------------------------------------------------------
 
 func TestHTMLExtractor_FormField_Input(t *testing.T) {
@@ -796,7 +796,7 @@ func TestHTMLExtractor_FormField_NonFormInputNotExtracted(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1103: Flask Jinja2 register fixture — >=10 entities end-to-end
+// Flask Jinja2 register fixture — >=10 entities end-to-end
 // ---------------------------------------------------------------------------
 
 func TestHTMLExtractor_FlaskJinja2Register_MinEntityCount(t *testing.T) {

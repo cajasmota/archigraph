@@ -31,7 +31,7 @@ frameworks:
     Integrates with Quarkus and Spring Boot via dedicated extensions.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema -- MX-531)
+# Extraction schema (FrameworkExtractionSchema --)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

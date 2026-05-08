@@ -1,7 +1,7 @@
 package enrichers
 
 // ConfigPrefixExtractor detects static path prefixes from framework config files.
-// Port of Python config_prefix_extractor.py (MX-585).
+// Port of Python config_prefix_extractor.py.
 
 import (
 	"path/filepath"

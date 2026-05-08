@@ -800,7 +800,7 @@ func extractKubernetes(root *sitter.Node, file extractor.FileInput) []types.Enti
 }
 
 // extractKubernetesDoc extracts entities from a single K8s YAML document.
-// Entity mapping (MX-1104 deep traversal):
+// Entity mapping:
 //
 //	metadata.name + kind:              → SCOPE.Service (Deployment/Service/StatefulSet/DaemonSet) or SCOPE.Component
 //	spec.selector.matchLabels keys:    → SCOPE.Component, subtype="selector"  (Deployment/StatefulSet/DaemonSet)

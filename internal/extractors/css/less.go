@@ -1,6 +1,6 @@
 // less.go — regex-based Less variable and mixin extractor.
 //
-// Extracted entities (SCOPE.Component per MX-1054 spec):
+// Extracted entities (SCOPE.Component per spec):
 //   - Less variables   (@name: value)      → Kind="SCOPE.Component", Subtype="variable", Metadata{"kind":"variable","value":"..."}
 //   - Less mixins      (.name() { or .name(@param) { → Kind="SCOPE.Component", Subtype="mixin", Metadata{"kind":"mixin","params":[...]}
 //

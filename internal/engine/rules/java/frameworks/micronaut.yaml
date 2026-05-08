@@ -1,5 +1,5 @@
-# Micronaut framework extraction rules (MX-504)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Micronaut framework extraction rules
+# Schema: FrameworkExtractionSchema
 # Artifact: io.micronaut:micronaut-inject
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
@@ -36,7 +36,7 @@ frameworks:
     Gradle plugin distinguishes from Spring. AOT compile-time DI — no runtime reflection.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

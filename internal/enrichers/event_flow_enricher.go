@@ -1,7 +1,7 @@
 package enrichers
 
 // EventFlowEnricher links producer services to consumer services via shared topics.
-// Port of Python event_flow_enricher.py (MX-694).
+// Port of Python event_flow_enricher.py.
 // Only exact topic matching implemented — LLM wildcard path not ported.
 
 import "fmt"

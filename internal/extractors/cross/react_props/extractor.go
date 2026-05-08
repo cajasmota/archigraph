@@ -1,5 +1,5 @@
 // Package react_props implements the cross-language UI component props,
-// children, and hook-usage extractor (MX-1062).
+// children, and hook-usage extractor.
 //
 // Scans React / React Native source files (.tsx / .jsx) for functional
 // components and emits the three relationships required to answer semantic
@@ -43,7 +43,7 @@
 // not contain a `react` import. On those paths it returns (nil, nil) after
 // zero allocations beyond the import scan.
 //
-// Behaviour rules (MX-1062):
+// Behaviour rules:
 //
 //  1. React/RN: extract props from `interface XxxProps`, `type XxxProps`, or
 //     inline destructuring parameter `({a, b, c}: XxxProps)`. Extract child
@@ -59,7 +59,8 @@
 //  4. USES_HOOK relationships link to hook entities identified by their
 //     `useXxx` call name. We do NOT resolve the hook definition here — we
 //     emit a ref keyed on the hook name, and the graph merges it with the
-//     react_hook entity extracted upstream by MX-1061 when present.
+//
+// react_hook entity extracted upstream by when present.
 //  5. Error handling: AST regex fall-through is panic-safe. On detection
 //     failure the file is skipped with an empty result; we never abort the
 //     overall extraction job.
@@ -101,13 +102,13 @@ const (
 	// RelHasProps, RelRenders, RelUsesHook are the three relationship kinds
 	// this extractor emits. These string values are mapped to the proto
 	// RELATIONSHIP_TYPE_HAS_PROPS / _RENDERS / _USES_HOOK enum entries on the
-	// graph ingestion side (VR-196, VR-197, merged 2026-04-10).
+	// graph ingestion side.
 	RelHasProps = "HAS_PROPS"
 	RelRenders  = "RENDERS"
 	RelUsesHook = "USES_HOOK"
 
 	// propsMaxLen is the max byte length of the comma-separated `props`
-	// entity property (MX-1062 behaviour rule 2).
+	// entity property.
 	propsMaxLen = 500
 )
 
@@ -166,7 +167,7 @@ var signaturePropsTypeRE = regexp.MustCompile(
 var jsxOpenTagRE = regexp.MustCompile(`<([A-Z][A-Za-z0-9_]*)(?:\.[A-Z][A-Za-z0-9_]*)?`)
 
 // hookCallRE matches `useXxx(` call sites where the following char after
-// `use` is uppercase — matches MX-1061's hook detection heuristic.
+// `use` is uppercase — matches 's hook detection heuristic.
 var hookCallRE = regexp.MustCompile(`\b(use[A-Z][A-Za-z0-9_]*)\s*\(`)
 
 // identRE verifies a bare identifier — used on prop-name candidates after
@@ -764,7 +765,7 @@ func buildPropsInterfaceEntity(file extractor.FileInput, typeName string, fields
 	}
 }
 
-// truncateProps enforces the 500-char cap required by MX-1062 rule 2.
+// truncateProps enforces the 500-char cap required by rule 2.
 func truncateProps(s string) string {
 	if len(s) <= propsMaxLen {
 		return s

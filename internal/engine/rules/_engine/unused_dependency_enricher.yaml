@@ -1,4 +1,4 @@
-# Unused dependency enricher (MX-683)
+# Unused dependency enricher
 # Project-level cross-reference enricher. Compares SCOPE.Component entities
 # emitted by import_statement_extractor against those emitted by
 # manifest_extractor. Flags manifest entries with no matching import as

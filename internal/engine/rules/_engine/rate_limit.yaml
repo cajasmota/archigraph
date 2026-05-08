@@ -1,4 +1,4 @@
-# Rate limit extractor (MX-681)
+# Rate limit extractor
 # Cross-language extractor for rate-limiting middleware and decorators.
 # Fires on Node.js (express-rate-limit), Python/Django, Java/Spring,
 # C#/ASP.NET, Go (golang.org/x/time/rate), and Python/Flask-Limiter.

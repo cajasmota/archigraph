@@ -81,7 +81,7 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 }
 
 // buildComponent creates a Component entity for class/interface declarations.
-// Eloquent / Laravel framework labelling (MX-1106) is applied via tagEloquent:
+// Eloquent / Laravel framework labelling is applied via tagEloquent:
 // models, migrations and controllers get framework="laravel" plus a kind
 // discriminator in Properties.
 func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string) (types.EntityRecord, bool) {

@@ -691,7 +691,7 @@ public class Product extends PanacheEntity {
 	r := ExtractQuarkus(PatternContext{Source: source, Language: "java", Framework: "quarkus", FilePath: "Product.java"})
 	found := false
 	for _, e := range r.Entities {
-		// MX-1096 (Option A): Panache ORM entities are class-like → SCOPE.Component.
+		// (Option A): Panache ORM entities are class-like → SCOPE.Component.
 		if e.Kind == "SCOPE.Component" && e.Provenance == "INFERRED_FROM_QUARKUS_PANACHE_ENTITY" {
 			found = true
 		}
@@ -730,7 +730,7 @@ public class Document extends PanacheMongoEntity {
 	r := ExtractQuarkus(PatternContext{Source: source, Language: "java", Framework: "quarkus", FilePath: "Document.java"})
 	found := false
 	for _, e := range r.Entities {
-		// MX-1096 (Option A): Panache Mongo entities are class-like → SCOPE.Component.
+		// (Option A): Panache Mongo entities are class-like → SCOPE.Component.
 		if e.Kind == "SCOPE.Component" && e.Provenance == "INFERRED_FROM_QUARKUS_PANACHE_MONGO_ENTITY" {
 			found = true
 		}
@@ -760,7 +760,7 @@ public class Event extends PanacheMongoEntityBase {
 }
 
 // TestQuarkus_NoInvalidKind verifies the Quarkus extractor never emits a
-// Kind value outside the 14-type SCOPE allowlist (MX-1092).
+// Kind value outside the 14-type SCOPE allowlist.
 func TestQuarkus_NoInvalidKind(t *testing.T) {
 	validTypes := map[string]struct{}{
 		"SCOPE.Service":       {},

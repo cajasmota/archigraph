@@ -35,7 +35,7 @@ func (r *RelationshipRecord) Validate() error {
 
 // Relationship is an alias used by batch/SQS message types for source→target edges.
 // SourceID/TargetID map to FromID/ToID in RelationshipRecord.
-// Used by downstream handlers (MX-955, MX-956) and matches the task brief field names.
+// Used by downstream handlers and matches the task brief field names.
 type Relationship struct {
 	SourceID   string            `json:"source_id"`
 	TargetID   string            `json:"target_id"`

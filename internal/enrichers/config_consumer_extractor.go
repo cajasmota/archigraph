@@ -1,7 +1,7 @@
 package enrichers
 
 // ConfigConsumerExtractor detects config key consumption patterns in source code.
-// Port of Python config_consumer_extractor.py (MX-600).
+// Port of Python config_consumer_extractor.py.
 
 import (
 	"fmt"

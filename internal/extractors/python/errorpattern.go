@@ -1,10 +1,10 @@
-// Error-handling pattern extraction for Python source files (MX-1047).
+// Error-handling pattern extraction for Python source files.
 //
 // This file implements a secondary extraction pass that emits one
 // SCOPE.Pattern EntityRecord per `try: ... except: ...` occurrence.
 // It runs AFTER the base entity extraction in Extractor.Extract and
 // never aborts the primary walker — a failure here is logged at warn
-// level and partial results are returned (MX-1047 rule #3).
+// level and partial results are returned.
 //
 // Entity shape (matches Python indexer parser.py exactly):
 //

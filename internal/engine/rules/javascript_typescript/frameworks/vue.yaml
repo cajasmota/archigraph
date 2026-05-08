@@ -23,7 +23,7 @@ frameworks:
   notes: .vue extension is definitive signal
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema -- MX-502)
+# Extraction schema (FrameworkExtractionSchema --)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

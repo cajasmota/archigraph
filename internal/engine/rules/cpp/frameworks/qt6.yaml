@@ -47,7 +47,7 @@ frameworks:
       '
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema -- MX-525)
+# Extraction schema (FrameworkExtractionSchema --)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

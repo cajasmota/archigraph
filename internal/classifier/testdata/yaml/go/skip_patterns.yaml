@@ -1,4 +1,4 @@
-# Hermetic test fixture for classifier tests (MX-1120).
+# Hermetic test fixture for classifier tests.
 # Mirrors the relevant subset of the Python indexer's
 # languages/_data/go/skip_patterns.yaml that exercises the
 # glob-skip code path. Keep minimal — extend only when a

@@ -465,7 +465,7 @@ var extensionLanguageMap = map[string]string{
 	".twig":       "html",
 	".haml":       "html",
 	".slim":       "html",
-	// YAML — routes to yaml extractor (MX-1100)
+	// YAML — routes to yaml extractor
 	".yaml": "yaml",
 	".yml":  "yaml",
 	// TOML — no toml extractor; route to text so it is not silently dropped

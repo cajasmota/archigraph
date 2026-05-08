@@ -1,7 +1,7 @@
 package enrichers
 
 // LibBoundaryEnricher classifies DEPENDS_ON edge targets as first_party or third_party.
-// Port of Python lib_boundary_enricher.py (MX-690).
+// Port of Python lib_boundary_enricher.py.
 
 import "strings"
 

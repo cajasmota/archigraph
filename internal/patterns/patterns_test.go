@@ -1381,7 +1381,7 @@ s := grpc.NewServer(grpc.UnaryInterceptor(...))`
 	}
 }
 
-// MX-1081: Kotlin files must NOT produce the generic "spring_service" ghost
+// Kotlin files must NOT produce the generic "spring_service" ghost
 // entity from the pattern detector. The kotlin extractor owns Spring
 // stereotype → SCOPE.Service conversion locally and emits a proper named
 // service entity. Detect() must return nothing for kotlin regardless of
@@ -1403,7 +1403,7 @@ class UserController {
 	}
 }
 
-// MX-1081: Guard that the exclusion is language-scoped — java, scala, and
+// Guard that the exclusion is language-scoped — java, scala, and
 // groovy must still receive the generic spring_service detection so their
 // parity reports remain unchanged by this fix.
 func TestServiceDetector_Detect_JVMPeersStillDetected(t *testing.T) {

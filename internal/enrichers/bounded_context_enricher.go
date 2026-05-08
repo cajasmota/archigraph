@@ -1,7 +1,7 @@
 package enrichers
 
 // BoundedContextEnricher infers DDD bounded contexts from module structure.
-// Port of Python bounded_context_enricher.py (MX-685).
+// Port of Python bounded_context_enricher.py.
 // LLM path not ported — deterministic namespace grouping only.
 
 import (

@@ -1,4 +1,4 @@
-# Error handling pattern detector (MX-720)
+# Error handling pattern detector
 # Identifies error handling idioms across Java, JS/TS, Python, Go, Rust, and Elixir.
 #
 # Supported styles:

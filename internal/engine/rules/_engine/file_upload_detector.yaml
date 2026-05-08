@@ -1,4 +1,4 @@
-# File upload endpoint detector (MX-721)
+# File upload endpoint detector
 # Cross-language detector for file upload handling patterns.
 # Fires on JS/TS (multer, formidable, busboy, NestJS @UploadedFile),
 # Python (FastAPI UploadFile, Flask request.files, Django request.FILES /

@@ -1,4 +1,4 @@
-# React/Next.js Tier-2 enrichment PatternDetector (MX-149)
+# React/Next.js Tier-2 enrichment PatternDetector
 #
 # Secondary enrichment pass for React/Next.js source files.
 # Emits SCOPE.Pattern(kind=react_component_enrichment) with hooks_used,

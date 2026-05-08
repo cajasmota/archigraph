@@ -36,7 +36,7 @@ func (e *Extractor) Language() string { return "java" }
 // Extract walks the tree-sitter CST and returns entity records for the Java file.
 //
 // OTel span "extractor.java" carries attributes: file, entity_count,
-// error_pattern_count (MX-1047).
+// error_pattern_count.
 func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("extractor.java")
 	_, span := tracer.Start(ctx, "extractor.java")
@@ -55,7 +55,7 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	root := file.Tree.RootNode()
 	walk(root, file, &entities)
 
-	// Secondary pass: error-handling patterns (MX-1047).
+	// Secondary pass: error-handling patterns.
 	errorPatterns := extractErrorHandlingPatterns(root, file.Path)
 	entities = append(entities, errorPatterns...)
 

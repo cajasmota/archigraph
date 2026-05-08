@@ -127,8 +127,8 @@ func ExtractQuarkus(ctx PatternContext) PatternResult {
 	}
 
 	// Panache ORM entities — class-like AST constructs (extend PanacheEntity/PanacheEntityBase).
-	// MX-1096 (Option A): all class-like constructs → SCOPE.Component (strict component rule).
-	// Reverts MX-1092 Schema assignment; aligns with Python convention.
+	// (Option A): all class-like constructs → SCOPE.Component (strict component rule).
+	// Reverts Schema assignment; aligns with Python convention.
 	for _, m := range qkPanacheEntityRE.FindAllStringSubmatchIndex(source, -1) {
 		clsName := source[m[2]:m[3]]
 		panacheType := source[m[4]:m[5]]
@@ -144,8 +144,8 @@ func ExtractQuarkus(ctx PatternContext) PatternResult {
 	}
 
 	// Panache Mongo entities — class-like AST constructs stored in MongoDB collections.
-	// MX-1096 (Option A): all class-like constructs → SCOPE.Component (strict component rule).
-	// Reverts MX-1092 Schema assignment; aligns with Python convention.
+	// (Option A): all class-like constructs → SCOPE.Component (strict component rule).
+	// Reverts Schema assignment; aligns with Python convention.
 	for _, m := range qkPanacheMongoEntityRE.FindAllStringSubmatchIndex(source, -1) {
 		clsName := source[m[2]:m[3]]
 		panacheType := source[m[4]:m[5]]

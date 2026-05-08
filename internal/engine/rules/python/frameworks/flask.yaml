@@ -1,8 +1,8 @@
-# Flask framework extraction rules (MX-500).
+# Flask framework extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # Top-level extraction keys (file_conventions, source_patterns,
-# relationship_rules) are consumed by FrameworkExtractionSchema (MX-494).
+# relationship_rules) are consumed by FrameworkExtractionSchema.
 #
 frameworks:
   name: Flask
@@ -31,7 +31,7 @@ frameworks:
     — app.py with Flask(__name__) is sufficient.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 # file_conventions: glob -> entity_type mapping from file naming conventions.
@@ -134,6 +134,6 @@ custom_extractors:
   - module: archigraph.engine.rules.languages.python.flask_request_response_extractor
     function: extract
     description: >-
-      Flask request/response extractor (MX-607): marshmallow schema.load() references
+      Flask request/response extractor: marshmallow schema.load() references
       → ACCEPTS_INPUT, return type annotations → RETURNS.
       Out of scope: Flask-RESTX/Flask-Smorest.

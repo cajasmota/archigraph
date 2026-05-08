@@ -1,4 +1,4 @@
-# CSRF vulnerability heuristic detector (MX-737)
+# CSRF vulnerability heuristic detector
 # Detects CSRF protection presence or absence for state-changing endpoints
 # across 12 language/framework combinations:
 #   Java: Spring Security (.csrf().disable() detection)

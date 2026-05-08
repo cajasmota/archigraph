@@ -15,7 +15,7 @@ frameworks:
     mutations, subscriptions, enums, inputs, and interfaces from .graphql files.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-526)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

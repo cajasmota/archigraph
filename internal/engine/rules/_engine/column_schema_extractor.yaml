@@ -1,4 +1,4 @@
-# Column schema extractor (MX-693)
+# Column schema extractor
 # Cross-ORM extractor that enriches SCOPE.Schema entities with column-level
 # metadata (name, type, nullable, unique, primary_key, default).
 #

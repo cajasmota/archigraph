@@ -1,5 +1,5 @@
-# ASP.NET Core MVC framework extraction rules (MX-519)
-# Schema: FrameworkExtractionSchema (MX-494)
+# ASP.NET Core MVC framework extraction rules
+# Schema: FrameworkExtractionSchema
 # NuGet: Microsoft.AspNetCore.Mvc
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
@@ -37,7 +37,7 @@ frameworks:
       from MVC view controllers.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

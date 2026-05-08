@@ -1,8 +1,8 @@
-# SQLAlchemy framework extraction rules (MX-553).
+# SQLAlchemy framework extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # Top-level extraction keys (file_conventions, source_patterns,
-# relationship_rules) are consumed by FrameworkExtractionSchema (MX-494).
+# relationship_rules) are consumed by FrameworkExtractionSchema.
 #
 frameworks:
   name: SQLAlchemy
@@ -31,7 +31,7 @@ frameworks:
     create_engine() confirms active usage. alembic.ini indicates managed migrations.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

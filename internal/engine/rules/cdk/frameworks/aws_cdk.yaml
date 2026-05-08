@@ -23,7 +23,7 @@ frameworks:
     Go, Java, and C#. The App and Stack classes are the root abstractions.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-526)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

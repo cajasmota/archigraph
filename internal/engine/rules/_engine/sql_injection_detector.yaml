@@ -1,4 +1,4 @@
-# SQL injection heuristic detector (MX-723)
+# SQL injection heuristic detector
 # Language-agnostic detector that flags SQL strings built with f-string
 # interpolation, .format(), %-formatting, or string concatenation.
 # Parameterized cursor.execute(sql, params) calls are suppressed.

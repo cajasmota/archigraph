@@ -1,4 +1,4 @@
-# Redis Cache Key Extractor (MX-695)
+# Redis Cache Key Extractor
 # Cross-language PatternDetector that extracts Redis cache key patterns from
 # Python (redis-py), Node.js (ioredis), Java (Jedis), and Go (go-redis) source.
 # Registered as a PatternDetector in upstream extraction tooling

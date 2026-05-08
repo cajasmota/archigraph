@@ -1,4 +1,4 @@
-# Sample Terraform file for archigraph HCL extractor fixture (MX-1072).
+# Sample Terraform file for archigraph HCL extractor fixture.
 # Covers: resource, data, module, variable, output, provider, locals, depends_on.
 
 terraform {

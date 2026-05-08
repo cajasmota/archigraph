@@ -1,5 +1,5 @@
-# Eclipse MicroProfile framework extraction rules (MX-532)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Eclipse MicroProfile framework extraction rules
+# Schema: FrameworkExtractionSchema
 #
 # MicroProfile is a set of specifications implemented by multiple frameworks
 # (Quarkus, Open Liberty, Payara, Helidon, WildFly).  This YAML registers
@@ -51,7 +51,7 @@ frameworks:
     org.eclipse.microprofile imports or the BOM in pom.xml/build.gradle.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-532)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions: []
@@ -64,4 +64,4 @@ custom_extractors:
     description: "Extract MicroProfile fault tolerance (@Retry, @CircuitBreaker, @Fallback), health checks (@Liveness, @Readiness), REST clients (@RegisterRestClient, @RestClient @Inject), config (@ConfigProperty), metrics (@Counted, @Timed, @Gauge), reactive messaging (@Incoming, @Outgoing), and JWT auth (@RolesAllowed). Emits DEPENDS_ON relationships for fallback methods, REST client injection, and reactive messaging channel linking."
   - module: "archigraph.engine.rules.languages._engine.config_consumer_extractor"
     function: "extract"
-    description: "Extract @ConfigProperty(name='key') annotations as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges. Enables blast-radius analysis for MicroProfile config changes (MX-600)."
+    description: "Extract @ConfigProperty(name='key') annotations as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges. Enables blast-radius analysis for MicroProfile config changes."

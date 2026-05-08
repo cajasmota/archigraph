@@ -1,4 +1,4 @@
-# Dead module detector (MX-732)
+# Dead module detector
 # Post-extraction enricher. Flags first-party SCOPE.Component entities with
 # zero inbound DEPENDS_ON edges as is_unused=True and emits
 # SCOPE.Pattern(kind=dead_module) for each unused module.

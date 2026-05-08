@@ -1,4 +1,4 @@
-# Cache eviction strategy detector (MX-726)
+# Cache eviction strategy detector
 # Cross-language detector for cache eviction policies and TTL/LRU/LFU/maxSize configurations.
 # Registered as a pattern detector that fires on Java/Kotlin (Spring @Cacheable/@CacheEvict,
 # Caffeine, Guava CacheBuilder, EhCache), Redis CONFIG/EXPIRE, JavaScript/TypeScript

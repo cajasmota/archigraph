@@ -1,7 +1,7 @@
 package enrichers
 
 // MigrationSequenceEnricher parses migration filenames to add sequence metadata.
-// Port of Python migration_sequence_enricher.py (MX-701).
+// Port of Python migration_sequence_enricher.py.
 
 import (
 	"path/filepath"

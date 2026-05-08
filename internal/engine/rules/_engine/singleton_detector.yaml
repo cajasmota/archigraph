@@ -1,4 +1,4 @@
-# Singleton and shared state detector (MX-699)
+# Singleton and shared state detector
 # Identifies singleton patterns across Java, Python, Go, C#, and Ruby.
 #
 # Supported pattern variants:

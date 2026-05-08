@@ -3,9 +3,9 @@
 // Scans source files that look like test files and, for every test function
 // found, emits one or more SCOPE.Pattern entities (subtype "test_coverage")
 // together with TESTS relationship edges pointing at the production functions
-// they exercise. See MX-1094 for the rationale on the Pattern kind.
+// they exercise. See for the rationale on the Pattern kind.
 //
-// Detection strategy (see MX-1051):
+// Detection strategy:
 //
 //  1. Decide whether the file is a test file:
 //     a. test framework import present (pytest, junit, jest, rspec, …), OR
@@ -29,7 +29,7 @@
 // Entity kind:       "SCOPE.Pattern" with subtype "test_coverage"
 // Relationship kind: "TESTS"  (test function → production function)
 //
-// MX-1094: Coverage records emit as SCOPE.Pattern (with subtype "test_coverage"
+// Coverage records emit as SCOPE.Pattern (with subtype "test_coverage"
 // and the test framework on properties.test_framework) because the 14-type
 // SCOPE allowlist does not include a standalone "TestCoverage" or "Test" type.
 // SCOPE.Pattern is the canonical bucket for inferred structural patterns and
@@ -249,7 +249,7 @@ func buildEntity(
 		"test_function":   testQName,
 		"ref":             entityID,
 		"provenance":      confidenceProvenance(tc.confidence),
-		// MX-1094: pattern_kind preserves the original semantic ("test_coverage")
+		// pattern_kind preserves the original semantic ("test_coverage")
 		// after we collapsed the entity Kind into the SCOPE.Pattern bucket so the graph
 		// allowlist validation passes.
 		"pattern_kind": "test_coverage",
@@ -260,7 +260,7 @@ func buildEntity(
 
 	rec := types.EntityRecord{
 		Name: testQName + " -> " + tc.qname,
-		// MX-1094: SCOPE.TestCoverage is not in the 14-type allowlist.
+		// SCOPE.TestCoverage is not in the 14-type allowlist.
 		// Coverage records map to SCOPE.Pattern (canonical bucket for inferred
 		// structural patterns); the framework-specific test type is preserved on
 		// Subtype, and the originating test framework remains on Properties.

@@ -45,7 +45,7 @@ func (s *serviceDetector) AppliesTo(src string) bool {
 }
 
 func (s *serviceDetector) Detect(filePath, language, src string) []types.EntityRecord {
-	// MX-1081: The kotlin extractor owns Spring stereotype → SCOPE.Service
+	// The kotlin extractor owns Spring stereotype → SCOPE.Service
 	// conversion locally (see internal/extractors/kotlin/kotlin.go). Emitting
 	// the generic "spring_service" ghost here alongside the proper named
 	// service entity causes duplicate SCOPE.Service nodes and fails Python

@@ -17,7 +17,7 @@ import (
 // fixture under testdata/yaml. The fixture contains the minimal set of
 // skip_patterns.yaml files needed to exercise the classifier's full code path
 // without depending on any external path (e.g. a local clone of the Python
-// indexer under /tmp). Tests run identically on CI and dev machines (MX-1120).
+// indexer under /tmp). Tests run identically on CI and dev machines.
 func newTestClassifier(t *testing.T) *classifier.Classifier {
 	t.Helper()
 
@@ -289,7 +289,7 @@ func TestClassify_EmptyFilename_HandledGracefully(t *testing.T) {
 
 // hermeticYAMLDir returns the path to the in-repo YAML fixture shipped under
 // testdata/yaml. It is the hermetic replacement for the Python reference clone
-// at /tmp/archigraph-ref (MX-1120) and contains the minimal skip_patterns.yaml
+// at /tmp/archigraph-ref and contains the minimal skip_patterns.yaml
 // files needed to exercise glob-skip behaviour.
 func hermeticYAMLDir(t *testing.T) string {
 	t.Helper()
@@ -402,7 +402,7 @@ func TestExtensionCoverage(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1100 — YAML / TOML / Dockerfile / HTML extension-map fixes
+// YAML / TOML / Dockerfile / HTML extension-map fixes
 // ---------------------------------------------------------------------------
 
 // TestMX1100_YAML verifies that .yaml and .yml route to the "yaml" language
@@ -614,7 +614,7 @@ func TestMX1100_DockerfileWithExtension_NotDockerfile(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// ClassifyWithSize — additional branch coverage (MX-1100)
+// ClassifyWithSize — additional branch coverage
 // ---------------------------------------------------------------------------
 
 func TestClassifyWithSize_EmptyFilename(t *testing.T) {
@@ -673,7 +673,7 @@ func TestIsBinaryContent_LargeContent(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1102 — Classifier contract tests: extractor registry ↔ classifier routing
+// Classifier contract tests: extractor registry ↔ classifier routing
 // ---------------------------------------------------------------------------
 
 // classifierRepresentativeInputs is the single source of truth mapping each
@@ -690,7 +690,7 @@ func TestIsBinaryContent_LargeContent(t *testing.T) {
 // below. Add an entry here ONLY when both a classifier rule AND a registered
 // extractor exist for the language.
 var classifierRepresentativeInputs = map[string]string{
-	// Core compiled / scripted languages — all fully wired (MX-1100).
+	// Core compiled / scripted languages — all fully wired.
 	"python":     "src/app.py",
 	"go":         "internal/server.go",
 	"javascript": "src/index.js",
@@ -721,7 +721,7 @@ var classifierRepresentativeInputs = map[string]string{
 	"fish":       "config.fish",
 	"just":       "Justfile",
 	// C / C++ — fully wired via the cpp extractor which registers both tokens
-	// under "c" and "cpp" (MX-1070 added the extractor; MX-1122 wired it into
+	// under "c" and "cpp" (added the extractor; wired it into
 	// registry_gen.go so the init() fires at import time).
 	"c":   "src/main.c",
 	"cpp": "src/main.cpp",
@@ -813,7 +813,7 @@ func TestClassifier_EveryRegisteredExtractorHasRoutedExtension(t *testing.T) {
 
 // TestClassifier_EveryRoutedExtensionHasRegisteredExtractor verifies that
 // every language token produced by the classifier for a known input has a
-// registered extractor. This is the forward-direction of the MX-1100 bug
+// registered extractor. This is the forward-direction of the bug
 // class: classifier produces token X → extractors.Get(X) must succeed.
 //
 // The table classifierRepresentativeInputs defines the verified set. Any new
@@ -877,7 +877,7 @@ func TestClassifier_EveryRoutedExtensionHasRegisteredExtractor(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1058 — Fish shell and Justfile routing
+// Fish shell and Justfile routing
 // ---------------------------------------------------------------------------
 
 // TestMX1058_Fish verifies that .fish files route to the new "fish" language
@@ -974,14 +974,14 @@ func TestMX1058_ShellStillRoutes(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1122 — C / C++ routing + extractor registration
+// C / C++ routing + extractor registration
 // ---------------------------------------------------------------------------
 
 // TestMX1122_CppRoutesToCppExtractor verifies that every C/C++ source and
 // header extension handled by the classifier routes to a registered extractor
 // (the cpp extractor, which registers itself under both "c" and "cpp").
 //
-// Before MX-1122 the cpp extractor package existed on disk but was missing
+// Before the cpp extractor package existed on disk but was missing
 // from internal/extractors/registry_gen.go, so its init() never fired and
 // these files fell through to the no-op path. This test locks that fix in:
 // if somebody drops the cpp import again, the extractors.Get check below
@@ -1020,11 +1020,11 @@ func TestMX1122_CppRoutesToCppExtractor(t *testing.T) {
 
 			// Contract: the classifier token must resolve to a registered
 			// extractor — i.e. the cpp package's init() actually fired.
-			// This is the MX-1122 regression guard.
+			// This is the regression guard.
 			ex, ok := extractors.Get(r.Language)
 			if !ok {
 				t.Fatalf("file=%q: classifier produced Language=%q but no extractor is registered "+
-					"— cpp extractor likely missing from registry_gen.go (MX-1122 regression)",
+					"— cpp extractor likely missing from registry_gen.go",
 					tc.file, r.Language)
 			}
 			if ex.Language() != tc.wantLang {

@@ -132,7 +132,7 @@ func TestErrorPatternPy_NestedTry(t *testing.T) {
 
 // TestErrorPatternPy_TryFinallyOnly verifies a try block with finally
 // but no except is still captured — `try/finally` is still an error
-// handling pattern (MX-1047 rule: any try_statement node matches).
+// handling pattern.
 func TestErrorPatternPy_TryFinallyOnly(t *testing.T) {
 	src := `def a():
     try:
@@ -225,7 +225,7 @@ func TestErrorPatternPy_PreservesBaseExtraction(t *testing.T) {
 
 // TestErrorPatternPy_ComplexityFixture verifies the real complexity.py
 // fixture emits one error_handling:try_catch entity per `try:` node in
-// the file. MX-1047 AC#2 target is 13 per the K-2SO parity comparison,
+// the file. AC#2 target is 13 per the K-2SO parity comparison,
 // but the committed fixture in this worktree contains a later revision
 // with 11 try blocks; the test enforces parity with the grep-level
 // ground-truth count of the fixture shipped in testdata/ and logs the
@@ -252,7 +252,7 @@ func TestErrorPatternPy_ComplexityFixture(t *testing.T) {
 		}
 		seen[p.Name] = true
 	}
-	t.Logf("complexity fixture: emitted %d error_handling patterns (MX-1047 AC#2 target: 13)", len(patterns))
+	t.Logf("complexity fixture: emitted %d error_handling patterns (target: 13)", len(patterns))
 }
 
 // TestErrorPatternPy_UniqueNames verifies multi-pattern output has no

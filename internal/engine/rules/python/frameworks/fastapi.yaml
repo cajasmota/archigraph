@@ -1,8 +1,8 @@
-# FastAPI framework extraction rules (MX-500).
+# FastAPI framework extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # Top-level extraction keys (file_conventions, source_patterns,
-# relationship_rules) are consumed by FrameworkExtractionSchema (MX-494).
+# relationship_rules) are consumed by FrameworkExtractionSchema.
 #
 frameworks:
   name: FastAPI
@@ -28,7 +28,7 @@ frameworks:
     is high-confidence for FastAPI vs Starlette.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-494)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 # file_conventions: glob -> entity_type mapping from file naming conventions.
@@ -132,7 +132,7 @@ custom_extractors:
   - module: archigraph.engine.rules.languages.python.fastapi_request_response_extractor
     function: extract
     description: >-
-      FastAPI request/response extractor (MX-596): emits ACCEPTS_INPUT edges
+      FastAPI request/response extractor: emits ACCEPTS_INPUT edges
       from endpoint entities to Pydantic body parameter types, and RETURNS edges
       from endpoint entities to response_model= decorator types and -> return
       type annotations. Skips primitives and FastAPI framework response types.
@@ -147,4 +147,4 @@ custom_extractors:
     description: >-
       Extract os.getenv('KEY'), os.environ['KEY'], and os.environ.get('KEY')
       reads as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read)
-      edges from consuming entities (MX-600).
+      edges from consuming entities.

@@ -29,7 +29,7 @@ frameworks:
   notes: Presence of .tsx/.jsx files + react dep is high-confidence signal
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema -- MX-491)
+# Extraction schema (FrameworkExtractionSchema --)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

@@ -1,4 +1,4 @@
-# Shared test helper detector (MX-741)
+# Shared test helper detector
 # Post-extraction enricher. Identifies test entities that are shared test
 # utilities by two mechanisms:
 #   1. High-usage: >= 3 inbound DEPENDS_ON(kind=import) edges from other test files.

@@ -1,5 +1,5 @@
-# Echo HTTP framework extraction rules (MX-496)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Echo HTTP framework extraction rules
+# Schema: FrameworkExtractionSchema
 # Module: github.com/labstack/echo/v4
 
 file_conventions: []
@@ -58,4 +58,4 @@ custom_extractors:
     description: "Extract Echo routes (e.GET/POST/PUT/DELETE/PATCH/etc.), route groups (e.Group) with full path resolution, middleware chains (e.Use), request binding (c.Bind/BindJSON/BindQuery), engine creation (echo.New), WebSocket endpoints (echo.IsWebSocket / upgrader.Upgrade), custom validators (e.Validator assignment and echo.Validator interface implementations), and static file serving (e.Static/e.File). Emits OWNS and CALLS relationships."
   - module: "archigraph.engine.rules.languages._engine.config_consumer_extractor"
     function: "extract"
-    description: "Extract viper.Get/GetString/GetBool/GetInt etc. reads as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges from consuming entities (MX-600)."
+    description: "Extract viper.Get/GetString/GetBool/GetInt etc. reads as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges from consuming entities."

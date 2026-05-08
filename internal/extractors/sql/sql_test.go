@@ -189,7 +189,7 @@ CREATE TABLE orders (id int);
 }
 
 // ---------------------------------------------------------------------------
-// MX-1059 Acceptance criteria: dbt model extraction
+// Acceptance criteria: dbt model extraction
 // ---------------------------------------------------------------------------
 
 const dbtModelFixture = `{{

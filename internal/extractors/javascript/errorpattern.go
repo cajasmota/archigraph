@@ -1,12 +1,12 @@
 // Error-handling pattern extraction for JavaScript and TypeScript source
-// files (MX-1047).
+// files.
 //
 // This file implements a secondary extraction pass that emits one
 // SCOPE.Pattern EntityRecord per `try { ... } catch (...) { ... }`
 // occurrence. It runs AFTER the base entity extraction in
 // JSExtractor.Extract and never aborts the primary walker — a failure
 // here is logged at warn level and partial results are returned
-// (MX-1047 rule #3). The pass handles both "javascript" and
+//. The pass handles both "javascript" and
 // "typescript" languages: the language field is carried from
 // FileInput and written back into each emitted record so downstream
 // consumers can tell them apart.

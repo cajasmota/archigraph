@@ -1,4 +1,4 @@
-# Pattern Taxonomy Enricher (MX-687)
+# Pattern Taxonomy Enricher
 # Cross-language enricher that normalises entity names and file paths to a
 # standard design-pattern taxonomy.
 # Registered as a PatternDetector in upstream extraction tooling

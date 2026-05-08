@@ -17,7 +17,7 @@
 //
 // Rules 1–3 additionally accept path-only detection so that Rails
 // entities without an explicit superclass (e.g. concerns that mix in
-// ActiveSupport::Concern) still get labelled, matching the MX-1106
+// ActiveSupport::Concern) still get labelled, matching the
 // acceptance criteria.
 package ruby
 

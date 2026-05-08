@@ -1,5 +1,5 @@
-# GORM ORM extraction rules (MX-548)
-# Schema: FrameworkExtractionSchema (MX-494)
+# GORM ORM extraction rules
+# Schema: FrameworkExtractionSchema
 # Module: gorm.io/gorm
 
 file_conventions: []

@@ -4,7 +4,7 @@
 // SCOPE.Pattern entities (subtype = language tag, properties.pattern_kind =
 // "deprecation_annotation") with deprecated=true in their properties.
 //
-// MX-1094: SCOPE.DeprecationAnnotation is not in the 14-type SCOPE
+// SCOPE.DeprecationAnnotation is not in the 14-type SCOPE
 // allowlist; deprecation markers are mapped to SCOPE.Pattern (the canonical
 // bucket for inferred coding patterns) and the original semantic is preserved
 // on properties.pattern_kind for downstream filtering. Java microprofile and
@@ -127,14 +127,14 @@ func extractJava(source, filePath string) []types.EntityRecord {
 		line := lineOf(source, loc[0])
 		out = append(out, types.EntityRecord{
 			Name:       "@Deprecated",
-			Kind:       "SCOPE.Pattern", // MX-1094: was SCOPE.DeprecationAnnotation
+			Kind:       "SCOPE.Pattern", // was SCOPE.DeprecationAnnotation
 			Subtype:    "java",
 			SourceFile: filePath,
 			StartLine:  line,
 			EndLine:    line,
 			Language:   "java",
 			Properties: map[string]string{
-				// MX-1094: pattern_kind preserves the original DeprecationAnnotation
+				// pattern_kind preserves the original DeprecationAnnotation
 				// semantic after we collapsed Kind into the SCOPE.Pattern bucket.
 				"pattern_kind":        "deprecation_annotation",
 				"deprecated":          "true",
@@ -160,14 +160,14 @@ func extractJSTS(source, filePath, langTag string) []types.EntityRecord {
 		}
 		out = append(out, types.EntityRecord{
 			Name:       "@deprecated",
-			Kind:       "SCOPE.Pattern", // MX-1094: was SCOPE.DeprecationAnnotation
+			Kind:       "SCOPE.Pattern", // was SCOPE.DeprecationAnnotation
 			Subtype:    langTag,
 			SourceFile: filePath,
 			StartLine:  line,
 			EndLine:    line,
 			Language:   langTag,
 			Properties: map[string]string{
-				// MX-1094: pattern_kind preserves the original DeprecationAnnotation
+				// pattern_kind preserves the original DeprecationAnnotation
 				// semantic after we collapsed Kind into the SCOPE.Pattern bucket.
 				"pattern_kind":        "deprecation_annotation",
 				"deprecated":          "true",
@@ -198,14 +198,14 @@ func extractRust(source, filePath string) []types.EntityRecord {
 		annotation := source[m[0]:m[1]]
 		out = append(out, types.EntityRecord{
 			Name:       "#[deprecated]",
-			Kind:       "SCOPE.Pattern", // MX-1094: was SCOPE.DeprecationAnnotation
+			Kind:       "SCOPE.Pattern", // was SCOPE.DeprecationAnnotation
 			Subtype:    "rust",
 			SourceFile: filePath,
 			StartLine:  line,
 			EndLine:    line,
 			Language:   "rust",
 			Properties: map[string]string{
-				// MX-1094: pattern_kind preserves the original DeprecationAnnotation
+				// pattern_kind preserves the original DeprecationAnnotation
 				// semantic after we collapsed Kind into the SCOPE.Pattern bucket.
 				"pattern_kind":        "deprecation_annotation",
 				"deprecated":          "true",
@@ -231,14 +231,14 @@ func extractCSharp(source, filePath string) []types.EntityRecord {
 		}
 		out = append(out, types.EntityRecord{
 			Name:       "[Obsolete]",
-			Kind:       "SCOPE.Pattern", // MX-1094: was SCOPE.DeprecationAnnotation
+			Kind:       "SCOPE.Pattern", // was SCOPE.DeprecationAnnotation
 			Subtype:    "csharp",
 			SourceFile: filePath,
 			StartLine:  line,
 			EndLine:    line,
 			Language:   "csharp",
 			Properties: map[string]string{
-				// MX-1094: pattern_kind preserves the original DeprecationAnnotation
+				// pattern_kind preserves the original DeprecationAnnotation
 				// semantic after we collapsed Kind into the SCOPE.Pattern bucket.
 				"pattern_kind":        "deprecation_annotation",
 				"deprecated":          "true",
@@ -283,14 +283,14 @@ func extractPython(source, filePath string) []types.EntityRecord {
 		line := lineOf(source, me.pos)
 		out = append(out, types.EntityRecord{
 			Name:       "warnings.warn",
-			Kind:       "SCOPE.Pattern", // MX-1094: was SCOPE.DeprecationAnnotation
+			Kind:       "SCOPE.Pattern", // was SCOPE.DeprecationAnnotation
 			Subtype:    "python",
 			SourceFile: filePath,
 			StartLine:  line,
 			EndLine:    line,
 			Language:   "python",
 			Properties: map[string]string{
-				// MX-1094: pattern_kind preserves the original DeprecationAnnotation
+				// pattern_kind preserves the original DeprecationAnnotation
 				// semantic after we collapsed Kind into the SCOPE.Pattern bucket.
 				"pattern_kind":        "deprecation_annotation",
 				"deprecated":          "true",
@@ -316,14 +316,14 @@ func extractElixir(source, filePath string) []types.EntityRecord {
 		}
 		out = append(out, types.EntityRecord{
 			Name:       "@deprecated",
-			Kind:       "SCOPE.Pattern", // MX-1094: was SCOPE.DeprecationAnnotation
+			Kind:       "SCOPE.Pattern", // was SCOPE.DeprecationAnnotation
 			Subtype:    "elixir",
 			SourceFile: filePath,
 			StartLine:  line,
 			EndLine:    line,
 			Language:   "elixir",
 			Properties: map[string]string{
-				// MX-1094: pattern_kind preserves the original DeprecationAnnotation
+				// pattern_kind preserves the original DeprecationAnnotation
 				// semantic after we collapsed Kind into the SCOPE.Pattern bucket.
 				"pattern_kind":        "deprecation_annotation",
 				"deprecated":          "true",

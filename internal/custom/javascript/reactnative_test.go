@@ -1,7 +1,7 @@
 package javascript_test
 
 // Tests for the React Native component hierarchy and navigation route extractor
-// (MX-1063). All tests run against the real extractor registered as
+//. All tests run against the real extractor registered as
 // "custom_js_react_native". No mocks.
 
 import (

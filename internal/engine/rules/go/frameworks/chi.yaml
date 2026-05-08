@@ -1,5 +1,5 @@
-# Chi HTTP router extraction rules (MX-496)
-# Schema: FrameworkExtractionSchema (MX-494)
+# Chi HTTP router extraction rules
+# Schema: FrameworkExtractionSchema
 # Module: github.com/go-chi/chi/v5
 
 file_conventions: []

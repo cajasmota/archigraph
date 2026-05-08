@@ -1,4 +1,4 @@
-# Swift RediStack (Vapor redis-kit) extraction rules (MX-575).
+# Swift RediStack (Vapor redis-kit) extraction rules.
 #
 # Top-level `frameworks:` key is consumed by the modular_loader (detection).
 # custom_extractors entries are consumed by CustomExtractorRegistry.

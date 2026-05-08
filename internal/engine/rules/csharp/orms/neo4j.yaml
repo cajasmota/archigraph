@@ -17,7 +17,7 @@ orms_database:
     and IAsyncSession / IDriver interfaces.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (MX-574)
+# Extraction schema
 # ---------------------------------------------------------------------------
 
 file_conventions: []

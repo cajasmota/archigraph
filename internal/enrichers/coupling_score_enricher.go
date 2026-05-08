@@ -1,7 +1,7 @@
 package enrichers
 
 // CouplingScoreEnricher computes Ca, Ce, and instability per SCOPE.Component entity.
-// Port of Python coupling_score_enricher.py (MX-691).
+// Port of Python coupling_score_enricher.py.
 
 import (
 	"fmt"

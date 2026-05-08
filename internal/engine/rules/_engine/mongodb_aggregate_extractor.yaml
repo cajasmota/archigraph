@@ -1,4 +1,4 @@
-# MongoDB Aggregate Pipeline Extractor (MX-740)
+# MongoDB Aggregate Pipeline Extractor
 # Detects .aggregate([...]) calls across 12 MongoDB driver languages and emits
 # SCOPE.Operation(kind=aggregate_pipeline) with ordered stage operator names.
 #

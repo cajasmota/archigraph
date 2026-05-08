@@ -146,7 +146,7 @@ type Neo4jDriver interface {
 
 // neo4jPraxisStore is the production PraxisStore.
 //
-// VR-200: routed per org_id — when router is non-nil it is used to resolve
+// routed per org_id — when router is non-nil it is used to resolve
 // the per-tenant driver from params["org_id"], otherwise the legacy
 // single-driver field is used.
 type neo4jPraxisStore struct {
@@ -157,19 +157,19 @@ type neo4jPraxisStore struct {
 // NewNeo4jPraxisStore creates a production PraxisStore backed by Neo4j.
 //
 // Deprecated: prefer NewNeo4jPraxisStoreRouted for production wiring so
-// the VR-200 routing layer scopes Neo4j sessions per org_id.
+// the routing layer scopes Neo4j sessions per org_id.
 func NewNeo4jPraxisStore(driver Neo4jDriver) PraxisStore {
 	return &neo4jPraxisStore{driver: driver}
 }
 
 // NewNeo4jPraxisStoreRouted constructs a PraxisStore that resolves the
-// per-tenant Neo4j driver via the VR-200 router.
+// per-tenant Neo4j driver via the router.
 func NewNeo4jPraxisStoreRouted(router veradriver.DriverRouter) PraxisStore {
 	return &neo4jPraxisStore{router: router}
 }
 
 // openSession returns a Neo4j session for the org_id encoded in params.
-// VR-200: routed per org_id — when router is set, every session is routed
+// routed per org_id — when router is set, every session is routed
 // via the registry; otherwise the legacy shared driver is used.
 func (s *neo4jPraxisStore) openSession(
 	ctx context.Context,
@@ -185,7 +185,7 @@ func (s *neo4jPraxisStore) openSession(
 
 // openSessionForOrg returns a Neo4j session for the given orgID directly.
 // Used by methods that receive orgID as an explicit argument rather than via
-// a params map (e.g., StoreErrorDedup). VR-200: routed per org_id.
+// a params map (e.g., StoreErrorDedup). : routed per org_id.
 func (s *neo4jPraxisStore) openSessionForOrg(
 	ctx context.Context,
 	orgID string,
@@ -233,7 +233,7 @@ func (s *neo4jPraxisStore) StoreErrorDedup(
 	threshold float64,
 	newNodeParams map[string]any,
 ) (bool, map[string]any, error) {
-	// VR-200: routed per org_id — orgID is the explicit argument here.
+	// routed per org_id — orgID is the explicit argument here.
 	session, err := s.openSessionForOrg(ctx, orgID, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	if err != nil {
 		return false, nil, err
@@ -414,7 +414,7 @@ type PraxisServer struct {
 // driver is used to build a neo4jPraxisStore. For tests, use NewPraxisServerWithStore.
 //
 // Deprecated: prefer NewPraxisServerRouted for production wiring so the
-// VR-200 routing layer scopes Neo4j sessions per org_id.
+// routing layer scopes Neo4j sessions per org_id.
 func NewPraxisServer(driver Neo4jDriver, embedder embedding.Client) *PraxisServer {
 	return &PraxisServer{
 		store:    NewNeo4jPraxisStore(driver),
@@ -422,7 +422,7 @@ func NewPraxisServer(driver Neo4jDriver, embedder embedding.Client) *PraxisServe
 	}
 }
 
-// NewPraxisServerRouted constructs a PraxisServer wired through the VR-200
+// NewPraxisServerRouted constructs a PraxisServer wired through the
 // driver router. Production wiring must use this constructor.
 func NewPraxisServerRouted(router veradriver.DriverRouter, embedder embedding.Client) *PraxisServer {
 	return &PraxisServer{

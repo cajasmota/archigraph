@@ -1,4 +1,4 @@
-# Onboarding entry enricher (MX-730)
+# Onboarding entry enricher
 # Cross-language enricher that identifies entry point entities in a project
 # and ranks them by reading order to answer "where should a new developer start?"
 #

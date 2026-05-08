@@ -1,4 +1,4 @@
-# Test fixture / factory detector (MX-708)
+# Test fixture / factory detector
 # Cross-language detector for test fixture and factory setup patterns.
 # Registered as a custom extractor that fires on Python (pytest.fixture),
 # Ruby (factory_bot / FactoryGirl), JavaScript/TypeScript (Jest setupFiles,

@@ -472,7 +472,7 @@ func TestExtract_Kubernetes_Component(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// Deployment metadata.name → SCOPE.Service (per MX-1059 entity kind mapping)
+	// Deployment metadata.name → SCOPE.Service
 	svcs := findEntitiesByKind(entities, "SCOPE.Service")
 	if len(svcs) == 0 {
 		t.Fatal("expected at least one SCOPE.Service entity for Deployment metadata.name")
@@ -503,7 +503,7 @@ func TestExtract_Kubernetes_Containers(t *testing.T) {
 	if !hasEntityWithName(containers, "sidecar") {
 		t.Error("expected container 'sidecar'")
 	}
-	// Containers → SCOPE.Component per MX-1059 entity kind mapping.
+	// Containers → SCOPE.Component entity kind mapping.
 	for _, c := range containers {
 		if c.Kind != "SCOPE.Component" {
 			t.Errorf("container %q kind = %q, want SCOPE.Component", c.Name, c.Kind)
@@ -685,7 +685,7 @@ func TestFixture_Kubernetes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("extract: %v", err)
 	}
-	// AC2 (MX-1059): Deployment metadata.name → SCOPE.Service with QualifiedName="Deployment"
+	// AC2: Deployment metadata.name → SCOPE.Service with QualifiedName="Deployment"
 	svcs := findEntitiesByKind(entities, "SCOPE.Service")
 	found := false
 	for _, s := range svcs {
@@ -839,7 +839,7 @@ func TestExtract_AllKindsAreAllowlisted(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1059 Acceptance criteria: Ansible
+// Acceptance criteria: Ansible
 // ---------------------------------------------------------------------------
 
 var ansiblePlaybookFixture = []byte(`---
@@ -977,7 +977,7 @@ func TestMX1059_Ansible_RealWorldFixture_AtLeast5Entities(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1059 Acceptance criteria: Kubernetes Deployment
+// Acceptance criteria: Kubernetes Deployment
 // ---------------------------------------------------------------------------
 
 var k8sDeploymentRichFixture = []byte(`apiVersion: apps/v1
@@ -1075,7 +1075,7 @@ func TestMX1059_K8sDeployment_RealWorldFixture_AtLeast5Entities(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1059 Acceptance criteria: Kubernetes Service
+// Acceptance criteria: Kubernetes Service
 // ---------------------------------------------------------------------------
 
 var k8sServiceFixture = []byte(`apiVersion: v1
@@ -1165,7 +1165,7 @@ func TestMX1059_K8sService_RealWorldFixture_AtLeast3Entities(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1059 Acceptance criteria: allowlist coverage for new entity types
+// Acceptance criteria: allowlist coverage for new entity types
 // ---------------------------------------------------------------------------
 
 func TestMX1059_AllNewEntitiesAreAllowlisted(t *testing.T) {
@@ -1191,7 +1191,7 @@ func TestMX1059_AllNewEntitiesAreAllowlisted(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1059 Acceptance criteria: YAML parse failure returns quality_score=0.3
+// Acceptance criteria: YAML parse failure returns quality_score=0.3
 // ---------------------------------------------------------------------------
 
 func TestMX1059_YAMLParseFailure_NonemptyInput_DoesNotPanic(t *testing.T) {
@@ -1217,7 +1217,7 @@ func TestMX1059_YAMLParseFailure_NonemptyInput_DoesNotPanic(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1104: K8s deep traversal — env vars, resource limits, selectors, volumeMounts
+// K8s deep traversal — env vars, resource limits, selectors, volumeMounts
 // ---------------------------------------------------------------------------
 
 var k8sDeepDeploymentFixture = []byte(`apiVersion: apps/v1
@@ -1270,7 +1270,7 @@ func TestMX1104_DeepDeployment_AtLeast10Entities(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(entities) < 10 {
-		t.Errorf("MX-1104 AC: expected ≥10 entities for rich Deployment, got %d", len(entities))
+		t.Errorf("expected ≥10 entities for rich Deployment, got %d", len(entities))
 		for _, e := range entities {
 			t.Logf("  [%s/%s] %s", e.Kind, e.Subtype, e.Name)
 		}
@@ -1284,14 +1284,14 @@ func TestMX1104_DeepDeployment_EnvVars_AreSchema(t *testing.T) {
 	}
 	envVars := findEntitiesBySubtype(entities, "env_var")
 	if len(envVars) < 2 {
-		t.Errorf("MX-1104: expected ≥2 env_var entities, got %d", len(envVars))
+		t.Errorf("expected ≥2 env_var entities, got %d", len(envVars))
 	}
 	if !hasEntityWithName(envVars, "DATABASE_URL") {
-		t.Error("MX-1104: expected env_var 'DATABASE_URL'")
+		t.Error("expected env_var 'DATABASE_URL'")
 	}
 	for _, e := range envVars {
 		if e.Kind != "SCOPE.Schema" {
-			t.Errorf("MX-1104: env_var %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
+			t.Errorf("env_var %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
 		}
 	}
 }
@@ -1303,11 +1303,11 @@ func TestMX1104_DeepDeployment_ResourceLimits_AreSchema(t *testing.T) {
 	}
 	limits := findEntitiesBySubtype(entities, "resource_limit")
 	if len(limits) < 2 {
-		t.Errorf("MX-1104: expected ≥2 resource_limit entities, got %d", len(limits))
+		t.Errorf("expected ≥2 resource_limit entities, got %d", len(limits))
 	}
 	for _, e := range limits {
 		if e.Kind != "SCOPE.Schema" {
-			t.Errorf("MX-1104: resource_limit %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
+			t.Errorf("resource_limit %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
 		}
 	}
 }
@@ -1319,11 +1319,11 @@ func TestMX1104_DeepDeployment_Selectors_AreComponent(t *testing.T) {
 	}
 	selectors := findEntitiesBySubtype(entities, "selector")
 	if len(selectors) < 1 {
-		t.Errorf("MX-1104: expected ≥1 selector entities, got %d", len(selectors))
+		t.Errorf("expected ≥1 selector entities, got %d", len(selectors))
 	}
 	for _, e := range selectors {
 		if e.Kind != "SCOPE.Component" {
-			t.Errorf("MX-1104: selector %q kind=%q, want SCOPE.Component", e.Name, e.Kind)
+			t.Errorf("selector %q kind=%q, want SCOPE.Component", e.Name, e.Kind)
 		}
 	}
 }
@@ -1335,11 +1335,11 @@ func TestMX1104_DeepDeployment_VolumeMounts_AreSchema(t *testing.T) {
 	}
 	vms := findEntitiesBySubtype(entities, "volume_mount")
 	if len(vms) < 2 {
-		t.Errorf("MX-1104: expected ≥2 volume_mount entities, got %d", len(vms))
+		t.Errorf("expected ≥2 volume_mount entities, got %d", len(vms))
 	}
 	for _, e := range vms {
 		if e.Kind != "SCOPE.Schema" {
-			t.Errorf("MX-1104: volume_mount %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
+			t.Errorf("volume_mount %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
 		}
 	}
 }
@@ -1351,20 +1351,20 @@ func TestMX1104_DeepDeployment_InitContainers_AreComponent(t *testing.T) {
 	}
 	inits := findEntitiesBySubtype(entities, "init_container")
 	if len(inits) < 1 {
-		t.Errorf("MX-1104: expected ≥1 init_container entities, got %d", len(inits))
+		t.Errorf("expected ≥1 init_container entities, got %d", len(inits))
 	}
 	if !hasEntityWithName(inits, "db-migrator") {
-		t.Error("MX-1104: expected init_container 'db-migrator'")
+		t.Error("expected init_container 'db-migrator'")
 	}
 	for _, e := range inits {
 		if e.Kind != "SCOPE.Component" {
-			t.Errorf("MX-1104: init_container %q kind=%q, want SCOPE.Component", e.Name, e.Kind)
+			t.Errorf("init_container %q kind=%q, want SCOPE.Component", e.Name, e.Kind)
 		}
 	}
 }
 
 // ---------------------------------------------------------------------------
-// MX-1104: ConfigMap extraction
+// ConfigMap extraction
 // ---------------------------------------------------------------------------
 
 var k8sConfigMapFixture = []byte(`apiVersion: v1
@@ -1387,17 +1387,17 @@ func TestMX1104_ConfigMap_DataKeys_AreSchema(t *testing.T) {
 	}
 	configKeys := findEntitiesBySubtype(entities, "config_key")
 	if len(configKeys) < 5 {
-		t.Errorf("MX-1104: expected ≥5 config_key entities, got %d", len(configKeys))
+		t.Errorf("expected ≥5 config_key entities, got %d", len(configKeys))
 		for _, e := range entities {
 			t.Logf("  [%s/%s] %s", e.Kind, e.Subtype, e.Name)
 		}
 	}
 	if !hasEntityWithName(configKeys, "DATABASE_HOST") {
-		t.Error("MX-1104: expected config_key 'DATABASE_HOST'")
+		t.Error("expected config_key 'DATABASE_HOST'")
 	}
 	for _, e := range configKeys {
 		if e.Kind != "SCOPE.Schema" {
-			t.Errorf("MX-1104: config_key %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
+			t.Errorf("config_key %q kind=%q, want SCOPE.Schema", e.Name, e.Kind)
 		}
 	}
 }
@@ -1408,12 +1408,12 @@ func TestMX1104_ConfigMap_AtLeast5Entities(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(entities) < 5 {
-		t.Errorf("MX-1104: expected ≥5 entities for ConfigMap, got %d", len(entities))
+		t.Errorf("expected ≥5 entities for ConfigMap, got %d", len(entities))
 	}
 }
 
 // ---------------------------------------------------------------------------
-// MX-1104: Ingress extraction
+// Ingress extraction
 // ---------------------------------------------------------------------------
 
 var k8sIngressFixture = []byte(`apiVersion: networking.k8s.io/v1
@@ -1459,14 +1459,14 @@ func TestMX1104_Ingress_Hosts_AreExternalAPI(t *testing.T) {
 	}
 	hosts := findEntitiesBySubtype(entities, "ingress_host")
 	if len(hosts) < 2 {
-		t.Errorf("MX-1104: expected ≥2 ingress_host entities, got %d", len(hosts))
+		t.Errorf("expected ≥2 ingress_host entities, got %d", len(hosts))
 	}
 	if !hasEntityWithName(hosts, "api.example.com") {
-		t.Error("MX-1104: expected ingress_host 'api.example.com'")
+		t.Error("expected ingress_host 'api.example.com'")
 	}
 	for _, e := range hosts {
 		if e.Kind != "SCOPE.ExternalAPI" {
-			t.Errorf("MX-1104: ingress_host %q kind=%q, want SCOPE.ExternalAPI", e.Name, e.Kind)
+			t.Errorf("ingress_host %q kind=%q, want SCOPE.ExternalAPI", e.Name, e.Kind)
 		}
 	}
 }
@@ -1478,11 +1478,11 @@ func TestMX1104_Ingress_Paths_AreOperation(t *testing.T) {
 	}
 	paths := findEntitiesBySubtype(entities, "ingress_path")
 	if len(paths) < 3 {
-		t.Errorf("MX-1104: expected ≥3 ingress_path entities, got %d", len(paths))
+		t.Errorf("expected ≥3 ingress_path entities, got %d", len(paths))
 	}
 	for _, e := range paths {
 		if e.Kind != "SCOPE.Operation" {
-			t.Errorf("MX-1104: ingress_path %q kind=%q, want SCOPE.Operation", e.Name, e.Kind)
+			t.Errorf("ingress_path %q kind=%q, want SCOPE.Operation", e.Name, e.Kind)
 		}
 	}
 }
@@ -1493,12 +1493,12 @@ func TestMX1104_Ingress_AtLeast5Entities(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(entities) < 5 {
-		t.Errorf("MX-1104: expected ≥5 entities for Ingress, got %d", len(entities))
+		t.Errorf("expected ≥5 entities for Ingress, got %d", len(entities))
 	}
 }
 
 // ---------------------------------------------------------------------------
-// MX-1104: Real-world fixtures
+// Real-world fixtures
 // ---------------------------------------------------------------------------
 
 func TestMX1104_RealWorld_Deployment_AtLeast10Entities(t *testing.T) {
@@ -1512,7 +1512,7 @@ func TestMX1104_RealWorld_Deployment_AtLeast10Entities(t *testing.T) {
 		t.Fatalf("extract: %v", err)
 	}
 	if len(entities) < 10 {
-		t.Errorf("MX-1104 AC: expected ≥10 entities for kubernetes/deployment.yaml, got %d", len(entities))
+		t.Errorf("expected ≥10 entities for kubernetes/deployment.yaml, got %d", len(entities))
 		for _, e := range entities {
 			t.Logf("  [%s/%s] %s", e.Kind, e.Subtype, e.Name)
 		}
@@ -1532,7 +1532,7 @@ func TestMX1104_RealWorld_MultiDoc_EachDoc_AtLeast5Entities(t *testing.T) {
 	// Multi-document file: total entity count should be substantial.
 	// full_stack_manifests.yaml has 6 documents; we expect ≥5 entities total per document.
 	if len(entities) < 5 {
-		t.Errorf("MX-1104 AC: expected ≥5 total entities for multi-doc K8s manifest, got %d", len(entities))
+		t.Errorf("expected ≥5 total entities for multi-doc K8s manifest, got %d", len(entities))
 		for _, e := range entities {
 			t.Logf("  [%s/%s] %s", e.Kind, e.Subtype, e.Name)
 		}
@@ -1550,7 +1550,7 @@ func TestMX1104_MultiDocFixture_EachDocAtLeast5Entities(t *testing.T) {
 		t.Fatalf("extract: %v", err)
 	}
 	if len(entities) < 5 {
-		t.Errorf("MX-1104: expected ≥5 entities per document from multi-doc fixture, got %d total", len(entities))
+		t.Errorf("expected ≥5 entities per document from multi-doc fixture, got %d total", len(entities))
 		for _, e := range entities {
 			t.Logf("  [%s/%s] %s", e.Kind, e.Subtype, e.Name)
 		}
@@ -1558,7 +1558,7 @@ func TestMX1104_MultiDocFixture_EachDocAtLeast5Entities(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// MX-1104: AllowlistCompliant for new entity types
+// AllowlistCompliant for new entity types
 // ---------------------------------------------------------------------------
 
 func TestMX1104_AllNewEntitiesAreAllowlisted(t *testing.T) {
@@ -1577,7 +1577,7 @@ func TestMX1104_AllNewEntitiesAreAllowlisted(t *testing.T) {
 		}
 		for _, e := range entities {
 			if !allowedKinds[e.Kind] {
-				t.Errorf("MX-1104: entity %q has non-allowlisted kind %q (file: %s)", e.Name, e.Kind, f.path)
+				t.Errorf("entity %q has non-allowlisted kind %q (file: %s)", e.Name, e.Kind, f.path)
 			}
 		}
 	}

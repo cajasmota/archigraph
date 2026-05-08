@@ -12,7 +12,7 @@
 // pipeline or a wrapping extractor) is expected to call
 // ReferenceExtractor.Extract after the language extractor has already run.
 //
-// Two-phase architecture (MX-1048):
+// Two-phase architecture:
 //
 //	Phase 1 — declaration collection: traverse the AST once and populate
 //	an in-memory map name -> (kind, line) for every declaration in the
@@ -91,7 +91,7 @@ func set(values ...string) map[string]struct{} {
 // languageTable is the full 22-language dispatch table for the reference
 // extractor. Languages not in the table are still accepted — Extract()
 // simply emits zero reference entities for them rather than returning an
-// error. This matches behaviour rule 8 in the MX-1048 spec.
+// error. This matches behaviour rule 8 in the spec.
 //
 // Node type names are taken from the upstream tree-sitter grammars used
 // by smacker/go-tree-sitter. When a grammar exposes multiple synonyms for

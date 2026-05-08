@@ -3,7 +3,7 @@
 // Scans source files for REST / gRPC / GraphQL endpoint declarations and emits
 // SCOPE.Operation entities (with subtype "gin" / "express" / "grpc" / ...)
 // together with SERVES relationship edges that link each endpoint to its
-// handler function. See MX-1094 for the rationale on the Operation kind.
+// handler function. See for the rationale on the Operation kind.
 //
 // Supported styles:
 //
@@ -16,7 +16,7 @@
 // Entity kind:         "SCOPE.Operation" with subtype "endpoint"
 // Relationship kind:   "SERVES"  (endpoint → handler function)
 //
-// MX-1094: Endpoints emit as SCOPE.Operation (with subtype carrying the
+// Endpoints emit as SCOPE.Operation (with subtype carrying the
 // router style — gin / express / grpc / graphql / etc.) because the graph's
 // 14-type SCOPE allowlist does not include a standalone "Endpoint" type.
 // SCOPE.Operation is the canonical bucket for any callable behaviour and
@@ -79,7 +79,7 @@ var pathParamBraceRE = regexp.MustCompile(`\{([A-Za-z_]\w*)\}`)
 //
 // Malformed input is returned unchanged with an empty params list — callers
 // are expected to log a warning and continue (see Behaviour rule #1 in
-// MX-1049).
+// ).
 func normalisePath(raw string) (canonical string, params []string, ok bool) {
 	if raw == "" {
 		return "", nil, false
@@ -201,7 +201,7 @@ func buildEntity(
 
 	rec := types.EntityRecord{
 		Name: m.method + " " + canonicalPath,
-		// MX-1094: the 14-type SCOPE allowlist has no "Endpoint" entry —
+		// the 14-type SCOPE allowlist has no "Endpoint" entry —
 		// route handlers belong in SCOPE.Operation (the canonical bucket for
 		// callable behaviour). The router style (gin/express/grpc/graphql/...)
 		// is preserved on Subtype, mirroring jakarta_ee.go's `endpoint` subtype.
@@ -238,7 +238,7 @@ func buildEntity(
 // framework import (and not a .proto / .graphql SDL) are skipped and return
 // an empty slice.
 //
-// Behaviour notes (see MX-1049):
+// Behaviour notes:
 //   - If a handler function name cannot be statically recovered, the endpoint
 //     entity is still emitted, but no SERVES edge is added.
 //   - Ambiguous files (multiple framework imports) resolve to the first entry

@@ -103,7 +103,7 @@ func TestKotlin_CallsBareName(t *testing.T) {
 	}
 }
 
-// TestKotlin_NoImports (#41 + MX-1081): kotlin extractor intentionally does
+// TestKotlin_NoImports (#41): kotlin extractor intentionally does
 // NOT emit IMPORTS edges (Python parity). Guard against future regressions
 // that re-introduce ghost "org" / "com" / "java" entities.
 func TestKotlin_NoImports(t *testing.T) {

@@ -1,4 +1,4 @@
-# Test quality enricher (MX-727)
+# Test quality enricher
 # Cross-language detector that enriches test entities with real-DB detection
 # and mock-to-real ratio metrics.
 #

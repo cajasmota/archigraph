@@ -25,7 +25,7 @@ frameworks:
   notes: angular.json is definitive; @NgModule decorator confirms Angular
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-501)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions: []

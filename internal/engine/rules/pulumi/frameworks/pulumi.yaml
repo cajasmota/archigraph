@@ -17,7 +17,7 @@ frameworks:
     Pulumi.yaml at project root and language-specific SDK imports.
 
 # ---------------------------------------------------------------------------
-# Extraction schema (FrameworkExtractionSchema — MX-526)
+# Extraction schema (FrameworkExtractionSchema —)
 # ---------------------------------------------------------------------------
 
 file_conventions:

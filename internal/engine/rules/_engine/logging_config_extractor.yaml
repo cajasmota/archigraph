@@ -1,4 +1,4 @@
-# Logging config extractor (MX-709)
+# Logging config extractor
 # Cross-language extractor for logging configuration patterns.
 # Registered as a custom extractor that fires on Go (slog, standard log),
 # Python (logging.getLogger, logging.basicConfig), Node.js (winston, pino),
