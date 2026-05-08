@@ -121,7 +121,7 @@ relationship_rules:
 # These run after YAML-driven extraction and contribute additional entities +
 # relationships to the pipeline result.
 custom_extractors:
-  - module: memx_indexer.languages.python.flask_extractor
+  - module: archigraph.engine.rules.languages.python.flask_extractor
     function: extract
     description: >-
       Flask-specific extractor: route decorators (@app.route, @app.get/post etc.),
@@ -131,7 +131,7 @@ custom_extractors:
       Flask-RESTful Resource + api.add_resource(), Flask-SocketIO @socketio.on,
       app.config patterns, and @app.cli.command CLI commands.
       Emits OWNS (blueprint→route, app→blueprint), DEPENDS_ON (endpoint→resource).
-  - module: memx_indexer.languages.python.flask_request_response_extractor
+  - module: archigraph.engine.rules.languages.python.flask_request_response_extractor
     function: extract
     description: >-
       Flask request/response extractor (MX-607): marshmallow schema.load() references

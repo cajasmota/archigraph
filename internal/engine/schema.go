@@ -4,8 +4,8 @@
 // compiles regex patterns at init time, and applies them to source files
 // to extract framework-specific entities and relationships.
 //
-// This is the Go port of the Python YAML-driven extraction engine
-// (memx_indexer.languages._engine.yaml_driven_detector + modular_loader).
+// The engine evaluates declarative YAML rules at runtime; no dynamic
+// code loading is performed.
 package engine
 
 // FrameworkRule is the top-level schema for a single framework YAML file.
@@ -62,7 +62,7 @@ type RelationshipRule struct {
 // CustomExtractor references a Go function for framework-specific extraction
 // that goes beyond what regex patterns can handle.
 type CustomExtractor struct {
-	// Module is the Python module path (kept for YAML compatibility, unused in Go).
+	// Module is a legacy module path retained for YAML compatibility, unused in Go.
 	Module string `yaml:"module"`
 	// Function is the function name within the module.
 	Function string `yaml:"function"`

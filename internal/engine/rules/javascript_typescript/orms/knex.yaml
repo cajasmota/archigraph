@@ -19,5 +19,5 @@ orms_and_database:
   - .select(
   notes: Query builder (not full ORM); often used with Objection.js on top
   custom_extractors:
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract

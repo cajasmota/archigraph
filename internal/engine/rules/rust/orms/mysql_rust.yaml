@@ -23,7 +23,7 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.mysql.mysql_extractor"
+  - module: "archigraph.engine.rules.languages.mysql.mysql_extractor"
     function: "extract"
     description: >
       Cross-language MySQL extractor: driver connections

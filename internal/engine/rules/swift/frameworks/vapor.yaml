@@ -142,6 +142,6 @@ relationship_rules:
     target_group: 1
 
 custom_extractors:
-  - module: "memx_indexer.languages.swift.vapor_extractor"
+  - module: "archigraph.engine.rules.languages.swift.vapor_extractor"
     function: "extract"
     description: "Extract Vapor routes (grouped path composition), Fluent @Model/@Field, Leaf template renders, and Middleware protocol conformances"

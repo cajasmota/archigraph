@@ -41,9 +41,9 @@ frameworks:
 
     '
 custom_extractors:
-  - module: memx_indexer.languages.elixir.ecto_extractor
+  - module: archigraph.engine.rules.languages.elixir.ecto_extractor
     function: extract
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract
     description: >
       Extracts Ecto schema "table_name" declarations, has_one/has_many/belongs_to/many_to_many

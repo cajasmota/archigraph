@@ -32,7 +32,7 @@ orm_db:
     '
 
 custom_extractors:
-  - module: "memx_indexer.languages.sqlite.sqlite_extractor"
+  - module: "archigraph.engine.rules.languages.sqlite.sqlite_extractor"
     function: "extract"
     description: >
       Cross-language SQLite extractor: sqlite3_open/sqlite3_open_v2 calls

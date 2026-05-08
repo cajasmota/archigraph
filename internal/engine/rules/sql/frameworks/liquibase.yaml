@@ -30,5 +30,5 @@ frameworks_and_dialects:
 
     '
   custom_extractors:
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract

@@ -166,17 +166,17 @@ terraform {
 
 func TestExtractResource(t *testing.T) {
 	src := `
-resource "aws_lambda_function" "memx_extract" {
-  function_name = "memx_extract"
+resource "aws_lambda_function" "archigraph_demo" {
+  function_name = "archigraph_demo"
 }
 `
 	records, err := extractHCL(src, "main.tf")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	r := findBySubtypeAndName(records, "resource", "memx_extract")
+	r := findBySubtypeAndName(records, "resource", "archigraph_demo")
 	if r == nil {
-		t.Fatalf("expected resource 'memx_extract' not found in %v", records)
+		t.Fatalf("expected resource 'archigraph_demo' not found in %v", records)
 	}
 	if r.Kind != "SCOPE.Component" {
 		t.Errorf("expected Kind=SCOPE.Component, got %s", r.Kind)
@@ -184,7 +184,7 @@ resource "aws_lambda_function" "memx_extract" {
 	if r.Language != "hcl" {
 		t.Errorf("expected Language=hcl, got %s", r.Language)
 	}
-	if r.QualifiedName != "resource.aws_lambda_function.memx_extract" {
+	if r.QualifiedName != "resource.aws_lambda_function.archigraph_demo" {
 		t.Errorf("unexpected QualifiedName: %s", r.QualifiedName)
 	}
 }
@@ -244,7 +244,7 @@ resource "aws_lambda_function" "fn" {
 
 func TestExtractDataSource(t *testing.T) {
 	src := `
-data "aws_iam_policy_document" "memx_role" {
+data "aws_iam_policy_document" "archigraph_role" {
   statement {
     actions = ["sts:AssumeRole"]
   }
@@ -254,14 +254,14 @@ data "aws_iam_policy_document" "memx_role" {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	r := findBySubtypeAndName(records, "data_source", "memx_role")
+	r := findBySubtypeAndName(records, "data_source", "archigraph_role")
 	if r == nil {
-		t.Fatalf("expected data_source 'memx_role' not found in %v", records)
+		t.Fatalf("expected data_source 'archigraph_role' not found in %v", records)
 	}
 	if r.Kind != "SCOPE.Component" {
 		t.Errorf("expected Kind=SCOPE.Component, got %s", r.Kind)
 	}
-	if r.QualifiedName != "data.aws_iam_policy_document.memx_role" {
+	if r.QualifiedName != "data.aws_iam_policy_document.archigraph_role" {
 		t.Errorf("unexpected QualifiedName: %s", r.QualifiedName)
 	}
 }
@@ -327,7 +327,7 @@ variable "memory" { type = number }
 func TestExtractOutput(t *testing.T) {
 	src := `
 output "lambda_arn" {
-  value = aws_lambda_function.memx_extract.arn
+  value = aws_lambda_function.archigraph_demo.arn
 }
 `
 	records, err := extractHCL(src, "main.tf")
@@ -489,7 +489,7 @@ func TestDependsOnMultiple(t *testing.T) {
 resource "aws_lambda_function" "fn" {
   depends_on = [
     aws_iam_role.lambda_role,
-    aws_ecr_repository.memx_extract,
+    aws_ecr_repository.archigraph_demo,
   ]
 }
 `

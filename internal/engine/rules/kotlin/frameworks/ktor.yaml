@@ -93,9 +93,9 @@ relationship_rules:
     target_group: 2
 
 custom_extractors:
-  - module: "memx_indexer.languages.kotlin.ktor_extractor"
+  - module: "archigraph.engine.rules.languages.kotlin.ktor_extractor"
     function: "extract"
     description: "Extract Ktor routing DSL HTTP method routes (get/post/put/delete/patch), route() scope blocks, install(Plugin) plugin installs, authenticate() blocks, ContentNegotiation serialization formats, call.respond() invocations, and Application module extension functions. Emits OWNS and DEPENDS_ON relationships."
-  - module: "memx_indexer.languages._engine.config_prefix_extractor"
+  - module: "archigraph.engine.rules.languages._engine.config_prefix_extractor"
     function: "extract"
     description: "Extract ktor.deployment.rootPath from application.conf / application.yml as SCOPE.Pattern/config_prefix entities. Cross-framework extractor gated on well-known config file basenames."

@@ -113,7 +113,7 @@ relationship_rules:
 
 # custom_extractors: Python callables for patterns YAML rules cannot capture.
 custom_extractors:
-  - module: memx_indexer.languages.python.celery_extractor
+  - module: archigraph.engine.rules.languages.python.celery_extractor
     function: extract
     description: >-
       Celery-specific extractor: @shared_task/@app.task (SCOPE.Service/task) with

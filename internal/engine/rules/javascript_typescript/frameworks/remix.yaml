@@ -23,7 +23,7 @@ frameworks:
   - useActionData
   - Form
   custom_extractors:
-  - module: memx_indexer.languages.javascript_typescript.remix_extractor
+  - module: archigraph.engine.rules.languages.javascript_typescript.remix_extractor
     function: extract
     description: "Remix file-based routes, loader/action, nested layouts, and boundary detection"
   notes: remix.config.js or @remix-run/react dep is definitive

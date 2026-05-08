@@ -31,6 +31,6 @@ frameworks:
 
     '
 custom_extractors:
-  - module: "memx_indexer.languages.swift.swiftui_extractor"
+  - module: "archigraph.engine.rules.languages.swift.swiftui_extractor"
     function: "extract"
     description: "Extract SwiftUI View structs, body hierarchy nesting, NavigationStack paths, and @State/@Binding property wrapper relationships"

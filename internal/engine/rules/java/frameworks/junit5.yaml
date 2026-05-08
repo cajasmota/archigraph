@@ -37,7 +37,7 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.java.junit5_extractor"
+  - module: "archigraph.engine.rules.languages.java.junit5_extractor"
     function: "extract"
     description: >
       Extract JUnit 5 (Jupiter) patterns: @Test/@ParameterizedTest/@RepeatedTest

@@ -106,7 +106,7 @@ source_patterns:
     scope: file
 
 custom_extractors:
-  - module: memx_indexer.languages.rust.actix_web_extractor
+  - module: archigraph.engine.rules.languages.rust.actix_web_extractor
     function: extract
     description: >
       Extracts Actix-web macro-annotated route handlers (#[get], #[post], etc.) as

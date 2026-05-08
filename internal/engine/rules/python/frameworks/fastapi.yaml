@@ -119,7 +119,7 @@ relationship_rules:
 # These run after YAML-driven extraction and contribute additional entities +
 # relationships to the pipeline result.
 custom_extractors:
-  - module: memx_indexer.languages.python.fastapi_extractor
+  - module: archigraph.engine.rules.languages.python.fastapi_extractor
     function: extract
     description: >-
       FastAPI-specific extractor: HTTP route decorators (@app.get/post/put/delete/patch),
@@ -129,20 +129,20 @@ custom_extractors:
       @app.middleware decorators (SCOPE.Pattern), BackgroundTasks.add_task() call
       sites (SCOPE.Operation/function + CALLS edges), and @app.on_event("startup"/
       "shutdown") lifecycle hooks (SCOPE.Operation/function).
-  - module: memx_indexer.languages.python.fastapi_request_response_extractor
+  - module: archigraph.engine.rules.languages.python.fastapi_request_response_extractor
     function: extract
     description: >-
       FastAPI request/response extractor (MX-596): emits ACCEPTS_INPUT edges
       from endpoint entities to Pydantic body parameter types, and RETURNS edges
       from endpoint entities to response_model= decorator types and -> return
       type annotations. Skips primitives and FastAPI framework response types.
-  - module: memx_indexer.languages._engine.config_prefix_extractor
+  - module: archigraph.engine.rules.languages._engine.config_prefix_extractor
     function: extract
     description: >-
       Extract root_path / root_path_in_servers from FastAPI main.py as
       SCOPE.Pattern/config_prefix entities. Cross-framework extractor gated
       on well-known config file basenames.
-  - module: memx_indexer.languages._engine.config_consumer_extractor
+  - module: archigraph.engine.rules.languages._engine.config_consumer_extractor
     function: extract
     description: >-
       Extract os.getenv('KEY'), os.environ['KEY'], and os.environ.get('KEY')

@@ -3,7 +3,7 @@
 # metadata (name, type, nullable, unique, primary_key, default).
 #
 # Registered as a PatternDetector in:
-#   memx_indexer/pattern_detectors/__init__.py  (DETECTORS list)
+#   upstream extraction tooling  (DETECTORS list)
 #
 # Supported ORMs:
 #   hibernate   : @Column(...) on Java fields
@@ -22,5 +22,5 @@ description: >-
   Detects column-level ORM annotations/declarations and emits SCOPE.Schema
   entities with properties["columns"] containing name, type, nullable, unique,
   primary_key, and default per column. Covers 7 ORM frameworks.
-module: memx_indexer.pattern_detectors.column_schema_extractor
+module: archigraph.engine.rules.pattern_detectors.column_schema_extractor
 class: ColumnSchemaExtractor

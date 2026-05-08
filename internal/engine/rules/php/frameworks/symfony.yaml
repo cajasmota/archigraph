@@ -190,7 +190,7 @@ relationship_rules:
     target_group: 1
 
 custom_extractors:
-- module: memx_indexer.languages.php.symfony_extractor
+- module: archigraph.engine.rules.languages.php.symfony_extractor
   function: extract
   description: >
     Extracts Symfony routes (#[Route] attributes and @Route annotations with full

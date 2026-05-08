@@ -26,7 +26,7 @@ frameworks:
 
       '
 custom_extractors:
-  - module: memx_indexer.languages.csharp.blazor_extractor
+  - module: archigraph.engine.rules.languages.csharp.blazor_extractor
     function: extract
     description: >
       Extracts Blazor @page route directives as SCOPE.Operation/endpoint,

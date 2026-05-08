@@ -26,7 +26,7 @@ orms:
 
 # custom_extractors: Python callables for patterns YAML rules cannot capture.
 custom_extractors:
-  - module: memx_indexer.languages.python.mongodb_extractor
+  - module: archigraph.engine.rules.languages.python.mongodb_extractor
     function: extract
     description: >-
       MongoDB cross-language extractor: driver connections (SCOPE.Service),

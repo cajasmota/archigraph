@@ -140,7 +140,7 @@ relationship_rules:
     target_group: 1
 
 custom_extractors:
-  - module: memx_indexer.languages.csharp.aspnet_core_extractor
+  - module: archigraph.engine.rules.languages.csharp.aspnet_core_extractor
     function: extract
     description: >
       Extracts ASP.NET Core controller-based attribute routes ([HttpGet]/[HttpPost]/etc.)
@@ -152,20 +152,20 @@ custom_extractors:
       mappings as SCOPE.Service, health check endpoints as SCOPE.Operation/endpoint,
       background services (IHostedService/BackgroundService) as SCOPE.Service, and
       Entity Framework DbContext/DbSet entities as SCOPE.Schema.
-  - module: memx_indexer.languages.csharp.aspnet_request_response_extractor
+  - module: archigraph.engine.rules.languages.csharp.aspnet_request_response_extractor
     function: extract
     description: >
       Extract ACCEPTS_INPUT and RETURNS relationships from ASP.NET Core controller
       action methods. Detects [FromBody] parameter annotations and method return
       types (including ActionResult<T> and Task<ActionResult<T>> async unwrapping).
       Emits DTO and response entities as SCOPE.Schema(kind=dto/response).
-  - module: memx_indexer.languages._engine.config_prefix_extractor
+  - module: archigraph.engine.rules.languages._engine.config_prefix_extractor
     function: extract
     description: >
       Extract PathBase / applicationUrl from launchSettings.json and Program.cs
       as SCOPE.Pattern/config_prefix entities. Cross-framework extractor gated
       on well-known config file basenames.
-  - module: memx_indexer.languages._engine.config_consumer_extractor
+  - module: archigraph.engine.rules.languages._engine.config_consumer_extractor
     function: extract
     description: >
       Extract Configuration["Key"] and Configuration.GetValue<T>("Key") reads

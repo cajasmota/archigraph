@@ -59,9 +59,9 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.java.microprofile_extractor"
+  - module: "archigraph.engine.rules.languages.java.microprofile_extractor"
     function: "extract"
     description: "Extract MicroProfile fault tolerance (@Retry, @CircuitBreaker, @Fallback), health checks (@Liveness, @Readiness), REST clients (@RegisterRestClient, @RestClient @Inject), config (@ConfigProperty), metrics (@Counted, @Timed, @Gauge), reactive messaging (@Incoming, @Outgoing), and JWT auth (@RolesAllowed). Emits DEPENDS_ON relationships for fallback methods, REST client injection, and reactive messaging channel linking."
-  - module: "memx_indexer.languages._engine.config_consumer_extractor"
+  - module: "archigraph.engine.rules.languages._engine.config_consumer_extractor"
     function: "extract"
     description: "Extract @ConfigProperty(name='key') annotations as SCOPE.Pattern/config_key entities and emit DEPENDS_ON(kind=config_read) edges. Enables blast-radius analysis for MicroProfile config changes (MX-600)."

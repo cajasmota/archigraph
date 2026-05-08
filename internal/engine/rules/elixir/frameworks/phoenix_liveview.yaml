@@ -35,7 +35,7 @@ frameworks:
 
     '
 custom_extractors:
-  - module: memx_indexer.languages.elixir.phoenix_extractor
+  - module: archigraph.engine.rules.languages.elixir.phoenix_extractor
     function: extract
     description: >
       Extracts Phoenix LiveView/LiveComponent module declarations with

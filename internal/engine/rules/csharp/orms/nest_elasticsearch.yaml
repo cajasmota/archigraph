@@ -16,7 +16,7 @@ orms_database:
     NEST is the high-level .NET Elasticsearch client. Elasticsearch.Net is the
     low-level client. Both are detected by the extractor.
   custom_extractors:
-  - module: "memx_indexer.languages.elasticsearch.elasticsearch_extractor"
+  - module: "archigraph.engine.rules.languages.elasticsearch.elasticsearch_extractor"
     function: "extract"
     description: >
       Extract ElasticClient / ElasticsearchClient connections, search queries,

@@ -17,7 +17,7 @@ orms_database:
     Spring Data Elasticsearch provides @Document for index mapping and
     ElasticsearchRepository for CRUD + search operations.
   custom_extractors:
-  - module: "memx_indexer.languages.elasticsearch.elasticsearch_extractor"
+  - module: "archigraph.engine.rules.languages.elasticsearch.elasticsearch_extractor"
     function: "extract"
     description: >
       Extract index mappings (@Document), ElasticsearchRepository interfaces,

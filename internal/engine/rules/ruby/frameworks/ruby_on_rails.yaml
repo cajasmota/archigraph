@@ -49,11 +49,11 @@ frameworks:
 # ---------------------------------------------------------------------------
 
 custom_extractors:
-  - module: "memx_indexer.languages.ruby.rails_extractor"
+  - module: "archigraph.engine.rules.languages.ruby.rails_extractor"
     function: "extract"
     description: "Extract Rails routes (resources, member/collection), concerns, ActiveRecord callbacks and associations, controller filters — CALLS, OWNS, DEPENDS_ON relationships"
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract
-  - module: memx_indexer.languages._engine.config_prefix_extractor
+  - module: archigraph.engine.rules.languages._engine.config_prefix_extractor
     function: extract
     description: "Extract scope prefix from config/routes.rb as SCOPE.Pattern/config_prefix entities. Cross-framework extractor gated on well-known config file basenames."

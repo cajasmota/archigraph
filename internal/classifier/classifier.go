@@ -1,7 +1,6 @@
 // Package classifier determines the language and skip status of a source file.
-// It replicates Python memx_indexer file_classifier.py behaviour so that Go
-// and Python indexers make identical decisions — required for golden-fixture
-// parity (MX-959).
+// It mirrors the upstream file-classifier behaviour so the Go implementation
+// makes identical decisions — required for golden-fixture parity.
 //
 // Usage:
 //
@@ -356,8 +355,8 @@ func isBinaryExtension(norm string) bool {
 // Language detection
 // ---------------------------------------------------------------------------
 
-// extensionLanguageMap is the single source of truth, mirroring Python's
-// memx_indexer/extensions.py EXTENSION_LANGUAGE_MAP exactly.
+// extensionLanguageMap is the single source of truth, mirroring the upstream
+// extension-to-language map exactly.
 var extensionLanguageMap = map[string]string{
 	// Python
 	".py":  "python",

@@ -14,7 +14,7 @@ orms_database:
   notes: |
     Official JavaScript/TypeScript Elasticsearch client from Elastic.
   custom_extractors:
-  - module: "memx_indexer.languages.elasticsearch.elasticsearch_extractor"
+  - module: "archigraph.engine.rules.languages.elasticsearch.elasticsearch_extractor"
     function: "extract"
     description: >
       Extract Client connections, client.search() calls, aggregations, ILM policies,

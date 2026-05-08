@@ -201,7 +201,7 @@ func TestClassify_GitDir_Skipped(t *testing.T) {
 
 func TestClassify_Pycache_Skipped(t *testing.T) {
 	c := newTestClassifier(t)
-	r := c.Classify(context.Background(), "memx_indexer/__pycache__/foo.cpython-311.pyc")
+	r := c.Classify(context.Background(), "some_project/__pycache__/foo.cpython-311.pyc")
 	if !r.Skip {
 		t.Fatal("__pycache__ file should be skipped")
 	}

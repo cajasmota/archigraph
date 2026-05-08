@@ -25,7 +25,7 @@ frameworks:
       '
 
 custom_extractors:
-  - module: memx_indexer.languages.rust.rocket_extractor
+  - module: archigraph.engine.rules.languages.rust.rocket_extractor
     function: extract
     description: >
       Extracts Rocket macro-annotated route handlers (#[get], #[post], etc.) as

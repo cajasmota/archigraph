@@ -20,7 +20,7 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.dynamodb.dynamodb_extractor"
+  - module: "archigraph.engine.rules.languages.dynamodb.dynamodb_extractor"
     function: "extract"
     description: >
       Cross-language DynamoDB extractor: AmazonDynamoDBClient/DynamoDBContext

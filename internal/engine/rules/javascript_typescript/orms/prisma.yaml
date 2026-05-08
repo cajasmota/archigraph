@@ -23,5 +23,5 @@ orms_and_database:
   notes: schema.prisma is definitive. victorhqc tree-sitter-prisma grammar for AST
     parsing.
   custom_extractors:
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract

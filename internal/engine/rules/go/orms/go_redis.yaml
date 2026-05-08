@@ -21,7 +21,7 @@ database_libraries:
 
 # custom_extractors: Python callables for patterns YAML rules cannot capture.
 custom_extractors:
-  - module: memx_indexer.languages.python.redis_extractor
+  - module: archigraph.engine.rules.languages.python.redis_extractor
     function: extract
     description: >-
       Redis cross-language extractor: client connections (SCOPE.Service), cache

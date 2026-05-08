@@ -41,7 +41,7 @@ orms:
 
     '
   custom_extractors:
-  - module: memx_indexer.languages.php.eloquent_extractor
+  - module: archigraph.engine.rules.languages.php.eloquent_extractor
     function: extract
     description: >
       Extracts Eloquent ORM-specific entities: Model class declarations, relationship

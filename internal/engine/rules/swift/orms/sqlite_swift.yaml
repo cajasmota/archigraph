@@ -21,7 +21,7 @@ orms:
     iOS/macOS apps that want SQL control without an ORM.
 
 custom_extractors:
-  - module: "memx_indexer.languages.sqlite.sqlite_extractor"
+  - module: "archigraph.engine.rules.languages.sqlite.sqlite_extractor"
     function: "extract"
     description: >
       Cross-language SQLite extractor: SQLite.swift Connection()

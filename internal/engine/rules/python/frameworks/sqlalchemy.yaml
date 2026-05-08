@@ -98,7 +98,7 @@ relationship_rules:
 
 # custom_extractors: Python callables for patterns YAML rules cannot capture.
 custom_extractors:
-  - module: memx_indexer.languages.python.sqlalchemy_extractor
+  - module: archigraph.engine.rules.languages.python.sqlalchemy_extractor
     function: extract
     description: >-
       SQLAlchemy-specific extractor: declarative model classes (SCOPE.Schema,

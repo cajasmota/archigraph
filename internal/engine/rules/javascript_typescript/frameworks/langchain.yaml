@@ -51,7 +51,7 @@ relationship_rules: []
 
 # custom_extractors: Python callables for patterns YAML rules cannot capture.
 custom_extractors:
-  - module: memx_indexer.languages.javascript_typescript.langchain_ts_extractor
+  - module: archigraph.engine.rules.languages.javascript_typescript.langchain_ts_extractor
     function: extract
     description: >-
       LangChain TS/JS extractor: LCEL .pipe() chains, RunnableSequence.from(),

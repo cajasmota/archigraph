@@ -3,7 +3,7 @@ package java
 import "regexp"
 
 // Field extraction from Java source using regex.
-// Ported from: memx_indexer/languages/java/parser.py (field_declaration)
+// Derived from upstream extraction tooling (field_declaration logic).
 
 // FieldInfo holds extracted field metadata.
 type FieldInfo struct {

@@ -36,6 +36,6 @@ frameworks:
 
     '
 custom_extractors:
-  - module: "memx_indexer.languages.kotlin.compose_extractor"
+  - module: "archigraph.engine.rules.languages.kotlin.compose_extractor"
     function: "extract"
     description: "Extract @Composable function tree, NavHost navigation graph routes, and ViewModel dependencies"

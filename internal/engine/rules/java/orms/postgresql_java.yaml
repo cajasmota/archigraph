@@ -27,7 +27,7 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.postgresql.postgresql_extractor"
+  - module: "archigraph.engine.rules.languages.postgresql.postgresql_extractor"
     function: "extract"
     description: >
       Cross-language PostgreSQL extractor: JDBC/HikariCP/PGSimpleDataSource

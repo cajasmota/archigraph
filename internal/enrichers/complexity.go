@@ -1,5 +1,5 @@
-// Package enrichers implements post-extraction entity enrichers ported from
-// the Python memx_indexer languages/_engine enrichers.
+// Package enrichers implements post-extraction entity enrichers derived from
+// upstream extraction tooling.
 //
 // Enrichers operate on []types.EntityRecord, enriching Metadata and Properties
 // fields. They are pure computation — no external API calls.

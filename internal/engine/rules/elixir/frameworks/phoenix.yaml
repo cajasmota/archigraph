@@ -47,7 +47,7 @@ frameworks:
 
     '
 custom_extractors:
-  - module: memx_indexer.languages.elixir.phoenix_extractor
+  - module: archigraph.engine.rules.languages.elixir.phoenix_extractor
     function: extract
     description: >
       Extracts Phoenix router HTTP routes (get/post/put/patch/delete/options),

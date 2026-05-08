@@ -34,9 +34,9 @@ frameworks:
       '
 
 custom_extractors:
-  - module: memx_indexer.languages.csharp.ef_core_extractor
+  - module: archigraph.engine.rules.languages.csharp.ef_core_extractor
     function: extract
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract
     description: >
       Extracts EF Core DbContext subclasses as SCOPE.Service (INFERRED_FROM_EF_CONTEXT),

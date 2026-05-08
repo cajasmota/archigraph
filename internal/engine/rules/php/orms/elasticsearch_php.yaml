@@ -14,7 +14,7 @@ orms_database:
     Official PHP Elasticsearch client. v7 uses Elasticsearch\ClientBuilder,
     v8 uses Elastic\Elasticsearch\ClientBuilder.
   custom_extractors:
-  - module: "memx_indexer.languages.elasticsearch.elasticsearch_extractor"
+  - module: "archigraph.engine.rules.languages.elasticsearch.elasticsearch_extractor"
     function: "extract"
     description: >
       Extract ClientBuilder connections, search() calls, aggregations,

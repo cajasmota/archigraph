@@ -53,7 +53,7 @@ frameworks:
 
     '
   custom_extractors:
-  - module: memx_indexer.languages.php.laravel_extractor
+  - module: archigraph.engine.rules.languages.php.laravel_extractor
     function: extract
     description: >
       Extracts Laravel routes (HTTP verb routes and Route::resource expansions),
@@ -62,7 +62,7 @@ frameworks:
       Emits SCOPE.Operation/endpoint, SCOPE.Pattern, SCOPE.UIComponent/component.
       Relationships: CALLS (routes_to), DEPENDS_ON (binding->concrete, template->component),
       OWNS (provider->binding).
-  - module: memx_indexer.languages._engine.config_prefix_extractor
+  - module: archigraph.engine.rules.languages._engine.config_prefix_extractor
     function: extract
     description: >
       Extract APP_URL prefix from RouteServiceProvider.php as

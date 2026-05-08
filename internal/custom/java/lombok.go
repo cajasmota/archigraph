@@ -3,7 +3,7 @@ package java
 // Lombok annotation inference: detect class-level Lombok annotations and
 // generate synthetic getter/setter/constructor/builder entities.
 //
-// Ported from: memx_indexer/languages/java/parser.py (_infer_lombok_entities)
+// Derived from upstream extraction tooling (Lombok-entity inference logic).
 
 // LombokInfer detects Lombok annotations on a class and returns synthetic
 // method entities that Lombok would generate at compile time.

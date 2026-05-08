@@ -41,7 +41,7 @@ frameworks:
 
     '
 custom_extractors:
-  - module: memx_indexer.languages.scala.akka_extractor
+  - module: archigraph.engine.rules.languages.scala.akka_extractor
     function: extract
     description: >
       Extracts Akka/Pekko actor definitions (classic Actor, typed AbstractBehavior,

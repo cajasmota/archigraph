@@ -56,7 +56,7 @@ relationship_rules:
 # These run after YAML-driven extraction and contribute additional entities +
 # relationships to the pipeline result.
 custom_extractors:
-  - module: memx_indexer.languages.go.fiber_extractor
+  - module: archigraph.engine.rules.languages.go.fiber_extractor
     function: extract
     description: >-
       Fiber-specific extractor: HTTP route registrations (app.Get/Post/Put/Delete/Patch,
@@ -69,7 +69,7 @@ custom_extractors:
       instantiation → SCOPE.Service (INFERRED_FROM_FIBER_ENGINE); app.Static() mounts
       → SCOPE.Pattern metadata (INFERRED_FROM_FIBER_STATIC); WebSocket upgrades via
       websocket.New() → SCOPE.Operation/endpoint (INFERRED_FROM_FIBER_WEBSOCKET).
-  - module: memx_indexer.languages._engine.config_consumer_extractor
+  - module: archigraph.engine.rules.languages._engine.config_consumer_extractor
     function: extract
     description: >-
       Extract viper.Get/GetString/GetBool/GetInt etc. reads as SCOPE.Pattern/config_key

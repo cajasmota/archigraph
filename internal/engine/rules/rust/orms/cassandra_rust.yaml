@@ -19,7 +19,7 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.cassandra.cassandra_extractor"
+  - module: "archigraph.engine.rules.languages.cassandra.cassandra_extractor"
     function: "extract"
     description: >
       Cross-language Cassandra extractor: SessionBuilder::new()

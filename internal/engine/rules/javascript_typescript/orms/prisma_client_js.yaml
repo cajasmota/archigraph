@@ -26,8 +26,8 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.javascript_typescript.prisma_extractor"
+  - module: "archigraph.engine.rules.languages.javascript_typescript.prisma_extractor"
     function: "extract"
     description: "Extract Prisma schema models, enums, relations, client queries, raw queries, middleware, and PrismaClient instantiation"
-  - module: memx_indexer.languages.migration.migration_extractor
+  - module: archigraph.engine.rules.languages.migration.migration_extractor
     function: extract

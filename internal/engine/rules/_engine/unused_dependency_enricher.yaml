@@ -13,7 +13,7 @@ description: >-
   SCOPE.Component entities from manifest_extractor with unused=True when no
   matching SCOPE.Component from import_statement_extractor exists for the
   same project.
-module: memx_indexer.languages._engine.unused_dependency_enricher
+module: archigraph.engine.rules.languages._engine.unused_dependency_enricher
 function: enrich_unused_dependencies
 config:
   skip_dev_deps:

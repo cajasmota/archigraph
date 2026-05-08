@@ -17,7 +17,7 @@ orms_database:
     Two major Go Elasticsearch clients: official go-elasticsearch and olivere/elastic.
     Both are handled by the extractor.
   custom_extractors:
-  - module: "memx_indexer.languages.elasticsearch.elasticsearch_extractor"
+  - module: "archigraph.engine.rules.languages.elasticsearch.elasticsearch_extractor"
     function: "extract"
     description: >
       Extract client connections (NewDefaultClient/NewClient), Search() calls,

@@ -39,7 +39,7 @@ source_patterns: []
 relationship_rules: []
 
 custom_extractors:
-  - module: "memx_indexer.languages.java.hibernate_extractor"
+  - module: "archigraph.engine.rules.languages.java.hibernate_extractor"
     function: "extract"
     description: >
       Extract Hibernate/JPA deep patterns: @Entity classes (SCOPE.Schema),

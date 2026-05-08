@@ -12,7 +12,7 @@ frameworks:
   notes: |
     elastic_client is the primary Dart Elasticsearch client (pub.dev).
   custom_extractors:
-  - module: "memx_indexer.languages.elasticsearch.elasticsearch_extractor"
+  - module: "archigraph.engine.rules.languages.elasticsearch.elasticsearch_extractor"
     function: "extract"
     description: >
       Extract ElasticClient connections, search queries, aggregations,

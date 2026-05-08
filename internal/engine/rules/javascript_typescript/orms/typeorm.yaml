@@ -25,7 +25,7 @@ orms_and_database:
   - createConnection
   notes: data-source.ts is modern convention (TypeORM 0.3+); ormconfig.* is legacy
 custom_extractors:
-  - module: memx_indexer.languages.javascript_typescript.typeorm_extractor
+  - module: archigraph.engine.rules.languages.javascript_typescript.typeorm_extractor
     callable: extract
     frameworks:
       - typeorm
