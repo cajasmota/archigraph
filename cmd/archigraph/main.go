@@ -49,6 +49,7 @@ func runIndex(argv []string) error {
 	fs := flag.NewFlagSet("index", flag.ContinueOnError)
 	out := fs.String("out", "", "output path for graph.json (default: <repo>/.archigraph/graph.json)")
 	repoTag := fs.String("repo-tag", "", "repository tag stored on entities (default: dirname of repo path)")
+	skip := fs.String("skip-pass", "", "comma-separated list of passes to skip (extract,framework,cross-lang,graph-algo,build-document)")
 	if err := fs.Parse(argv); err != nil {
 		return err
 	}
@@ -57,5 +58,9 @@ func runIndex(argv []string) error {
 		return fmt.Errorf("missing <repo> argument")
 	}
 	repoPath := fs.Arg(0)
-	return Index(repoPath, *out, *repoTag)
+	var skipPasses []string
+	if *skip != "" {
+		skipPasses = []string{*skip}
+	}
+	return Index(repoPath, *out, *repoTag, skipPasses)
 }
