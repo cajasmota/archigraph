@@ -5,8 +5,8 @@
 *.dll
 *.so
 *.dylib
-archigraph
-archigraph-*
+/archigraph
+/archigraph-*
 
 # Test
 *.test
