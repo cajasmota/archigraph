@@ -150,6 +150,10 @@ func (g *GoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]
 		attribute.Int("error_pattern_count", len(errorPatterns)),
 	)
 
+	// Issue #90 — stamp Properties["language"]="go" so the resolver's
+	// per-language dynamic-pattern dispatch picks the Go catalog.
+	extractor.TagRelationshipsLanguage(records, "go")
+
 	return records, nil
 }
 

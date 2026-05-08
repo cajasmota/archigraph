@@ -38,6 +38,9 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 
 	var entities []types.EntityRecord
 	walk(file.Tree.RootNode(), file, &entities)
+	// Issue #90 — tag every embedded relationship with the source language
+	// so the resolver picks the Ruby dynamic-pattern catalog.
+	extractor.TagRelationshipsLanguage(entities, "ruby")
 	return entities, nil
 }
 
