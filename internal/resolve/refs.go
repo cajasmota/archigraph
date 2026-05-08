@@ -94,20 +94,81 @@ var AllDispositions = []Disposition{
 	DispositionUnclassified,
 }
 
-// dynamicPatterns is the v1.0 catalog of stub shapes that are
-// intrinsically unresolvable by static analysis. Matches here are tagged
-// DispositionDynamic instead of being classified as resolver/extractor bugs.
-// Kept deliberately small — easier to extend than to retract.
+// dynamicPatterns is the catalog of stub shapes that are intrinsically
+// unresolvable by static analysis. Matches here are tagged DispositionDynamic
+// instead of being classified as resolver/extractor bugs. Patterns are kept
+// tight — false positives steal accuracy from `resolved` / `external-*`.
+//
+// v1.0 was a small seed list (Python getattr, JS Reflect, env-driven names,
+// template-built strings). Refs #44 expands it per-language to cover the
+// reflective / string-built / runtime-dispatched call forms commonly emitted
+// as stubs by the per-language extractors.
 var dynamicPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`^getattr\(`),        // Python reflection
-	regexp.MustCompile(`^__getattr__$`),     // Python magic
-	regexp.MustCompile(`^importlib\.`),      // dynamic import
-	regexp.MustCompile(`^Reflect\.`),        // JS reflection
-	regexp.MustCompile(`^.*\.bind\(`),       // JS dynamic this
-	regexp.MustCompile(`^process\.env\.`),   // env-driven (JS)
-	regexp.MustCompile(`^os\.environ\[`),    // env-driven (Python)
-	regexp.MustCompile(`^System\.getenv\(`), // env-driven (JVM)
-	regexp.MustCompile(`.*\$\{.*\}.*`),      // template-built strings
+	// ---- Python ---------------------------------------------------------
+	regexp.MustCompile(`^getattr\(`),                // getattr(obj, name)(...)
+	regexp.MustCompile(`^__getattr__$`),             // __getattr__ magic name
+	regexp.MustCompile(`^.*\.__getattr__\(`),        // obj.__getattr__("name")
+	regexp.MustCompile(`^.*\.__getattribute__\(`),   // obj.__getattribute__(...)
+	regexp.MustCompile(`^setattr\(`),                // setattr-driven dispatch
+	regexp.MustCompile(`^globals\(\)\[`),            // globals()[name](...)
+	regexp.MustCompile(`^locals\(\)\[`),             // locals()[name](...)
+	regexp.MustCompile(`^vars\(\)\[`),               // vars()[name](...)
+	regexp.MustCompile(`^eval\(`),                   // eval(...)
+	regexp.MustCompile(`^exec\(`),                   // exec(...)
+	regexp.MustCompile(`^__import__\(`),             // __import__("modname")
+	regexp.MustCompile(`^importlib\.`),              // importlib.import_module / etc
+	regexp.MustCompile(`^functools\.partial\(`),     // functools.partial(...)
+	regexp.MustCompile(`^functools\.partialmethod\(`),
+	regexp.MustCompile(`^functools\.reduce\(`),
+	regexp.MustCompile(`^operator\.methodcaller\(`), // operator.methodcaller("name")
+	regexp.MustCompile(`^operator\.attrgetter\(`),   // operator.attrgetter(...)
+	regexp.MustCompile(`^operator\.itemgetter\(`),   // operator.itemgetter(...)
+	regexp.MustCompile(`^os\.environ\[`),            // env-driven (Python)
+	regexp.MustCompile(`^os\.getenv\(`),             // env-driven (Python)
+	// dispatch via dict/list subscript: handlers[key](...), funcs["x"](...).
+	// Anchored "<ident>[...](...)" so we don't bite plain attribute access.
+	regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_.]*\[[^\]]+\]\(`),
+
+	// ---- Go -------------------------------------------------------------
+	regexp.MustCompile(`^reflect\.`),                  // reflect.* (Call, ValueOf, MethodByName, ...)
+	regexp.MustCompile(`\.MethodByName\(`),            // v.MethodByName("X").Call(...)
+	regexp.MustCompile(`\.FieldByName\(`),             // v.FieldByName("X")
+	regexp.MustCompile(`^plugin\.Open\(`),             // Go plugin loader
+	regexp.MustCompile(`\.Lookup\(`),                  // plugin.Lookup / sym lookup
+
+	// ---- TypeScript / JavaScript ----------------------------------------
+	regexp.MustCompile(`^Reflect\.`),                  // Reflect.apply / Reflect.construct / Reflect.get
+	regexp.MustCompile(`^Function\(`),                 // new Function(src)
+	regexp.MustCompile(`^new Function\(`),             // new Function(src)
+	regexp.MustCompile(`^import\(`),                   // dynamic import("...")
+	regexp.MustCompile(`^require\(`),                  // dynamic require(expr)
+	regexp.MustCompile(`^.*\.bind\(`),                 // dynamic this binding
+	regexp.MustCompile(`^.*\.apply\(`),                // .apply(thisArg, args)
+	regexp.MustCompile(`^.*\.call\(`),                 // .call(thisArg, ...)
+	regexp.MustCompile(`^process\.env\.`),             // env-driven (JS)
+
+	// ---- Ruby -----------------------------------------------------------
+	regexp.MustCompile(`^.*\.send\(`),                 // obj.send(:name)
+	regexp.MustCompile(`^send\(`),                     // bare send(:name)
+	regexp.MustCompile(`^.*\.public_send\(`),          // obj.public_send(:name)
+	regexp.MustCompile(`^public_send\(`),
+	regexp.MustCompile(`^.*\.__send__\(`),             // obj.__send__(:name)
+	regexp.MustCompile(`^method_missing$`),            // ruby method_missing hook
+	regexp.MustCompile(`^.*\.method_missing\(`),
+	regexp.MustCompile(`^define_method\(`),            // metaprogramming
+	regexp.MustCompile(`^.*\.define_method\(`),
+	regexp.MustCompile(`^.*\.instance_eval\(`),
+	regexp.MustCompile(`^.*\.class_eval\(`),
+
+	// ---- Java / Kotlin / JVM --------------------------------------------
+	regexp.MustCompile(`\.invoke\(`),                  // Method.invoke(...)
+	regexp.MustCompile(`^Class\.forName\(`),           // Class.forName("...")
+	regexp.MustCompile(`\.newInstance\(`),             // Class.forName(x).newInstance()
+	regexp.MustCompile(`^ServiceLoader\.load\(`),      // ServiceLoader.load(...)
+	regexp.MustCompile(`^System\.getenv\(`),           // env-driven (JVM)
+
+	// ---- Cross-language: string interpolation / templated names --------
+	regexp.MustCompile(`.*\$\{.*\}.*`), // template-built strings ${x}
 }
 
 // isDynamicPattern reports whether the stub matches any pattern in
