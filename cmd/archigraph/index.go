@@ -140,6 +140,25 @@ func Index(repoPath, outPath, repoTag string, skipPasses []string) error {
 			return err
 		}
 		fmt.Fprintf(os.Stderr, "archigraph: wrote %s\n", outPath)
+
+		// Sidecar: corpus-level metrics for `archigraph doctor` and the future
+		// MCP `graph_stats` tool. Only written when Pass 4 actually ran.
+		if doc.AlgorithmStats != nil {
+			side := &graph.GraphStatsSidecar{
+				Version:            1,
+				ComputedAt:         time.Now().UTC(),
+				TotalEntities:      doc.Stats.Entities,
+				TotalRelationships: doc.Stats.Relationships,
+				Communities:        doc.AlgorithmStats.NumCommunities,
+				Modularity:         doc.AlgorithmStats.LouvainModularity,
+				GodNodes:           doc.AlgorithmStats.NumGodNodes,
+				ArticulationPoints: doc.AlgorithmStats.NumArticulationPts,
+				RuntimeMS:          doc.AlgorithmStats.RuntimeMS,
+			}
+			if err := graph.WriteSidecar(outPath, side); err != nil {
+				fmt.Fprintf(os.Stderr, "archigraph: sidecar write failed: %v\n", err)
+			}
+		}
 	}
 	return nil
 }
@@ -177,10 +196,16 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 	}
 	i.stats.pass3Rels = countEmbeddedRels(pass3Records)
 
-	// Pass 4 — graph algorithms — placeholder for PORT-4.
-
 	// Pass 5 — build document (deduped).
 	doc := i.buildDocument(pass1Records, pass2Records, pass2Rels, pass3Records)
+
+	// Pass 4 — graph algorithms. Conceptually this runs "between" pass 3 and
+	// pass 5, but it operates on the merged/deduped entity set so we run it
+	// against the assembled Document and attach the per-entity attributes
+	// in-place. The pass is intentionally skippable for cheap CI smoke runs.
+	if !i.skipPasses[PassGraphAlgo] {
+		i.runPass4Algorithms(doc)
+	}
 
 	dur := time.Since(start)
 	fmt.Fprintf(os.Stderr,
@@ -193,6 +218,45 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 		i.stats.pass1Rels, i.stats.pass2Rels, i.stats.pass3Rels,
 		dur.Round(time.Millisecond))
 	return doc, nil
+}
+
+// runPass4Algorithms executes the gonum-backed graph-algorithm sweep against
+// the deduped entity set inside doc. Per-entity attributes (community_id,
+// centrality, pagerank, is_*-flags) are attached in place; corpus aggregates
+// are appended to the Document and copied into the graph-stats.json sidecar
+// at write time.
+func (i *Indexer) runPass4Algorithms(doc *graph.Document) {
+	res := graph.RunAlgorithms(doc.Entities, doc.Relationships)
+
+	for k := range doc.Entities {
+		e := &doc.Entities[k]
+		if cid, ok := res.CommunityID[e.ID]; ok {
+			cidCopy := cid
+			e.CommunityID = &cidCopy
+		}
+		if c, ok := res.Centrality[e.ID]; ok {
+			cCopy := c
+			e.Centrality = &cCopy
+		}
+		if p, ok := res.PageRank[e.ID]; ok {
+			pCopy := p
+			e.PageRank = &pCopy
+		}
+		if res.GodNodes[e.ID] {
+			e.IsGodNode = true
+		}
+		if res.SurpriseEndpoints[e.ID] {
+			e.IsSurpriseEndpoint = true
+		}
+		if res.ArticulationPoints[e.ID] {
+			e.IsArticulationPt = true
+		}
+	}
+
+	doc.Communities = res.Communities
+	doc.SurpriseEdges = res.SurpriseEdges
+	stats := res.Stats
+	doc.AlgorithmStats = &stats
 }
 
 // runPass1Extract runs the per-file AST extractors in parallel. The classified
@@ -586,6 +650,12 @@ func countEmbeddedRels(records []types.EntityRecord) int {
 	return n
 }
 
+// passAliases maps user-facing flag values onto the canonical PassXxx constant.
+// "algorithms" is accepted as a more readable synonym of "graph-algo".
+var passAliases = map[string]string{
+	"algorithms": PassGraphAlgo,
+}
+
 // parseSkipPasses validates a comma-separated --skip-pass list and returns
 // it as a set. Unknown entries are surfaced as an error so typos don't
 // silently degrade the pipeline.
@@ -600,6 +670,9 @@ func parseSkipPasses(skip []string) (map[string]bool, error) {
 			p := strings.TrimSpace(part)
 			if p == "" {
 				continue
+			}
+			if alias, ok := passAliases[p]; ok {
+				p = alias
 			}
 			if !valid[p] {
 				return nil, fmt.Errorf("unknown pass %q (valid: %s)", p, strings.Join(allPassNames, ","))

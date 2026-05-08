@@ -19,13 +19,16 @@ const SchemaVersion = 1
 
 // Document is the top-level structure written to <repo>/.archigraph/graph.json.
 type Document struct {
-	Version        int            `json:"version"`
-	GeneratedAt    time.Time      `json:"generated_at"`
-	Repo           string         `json:"repo"`
-	IndexerVersion string         `json:"indexer_version"`
-	Stats          Stats          `json:"stats"`
-	Entities       []Entity       `json:"entities"`
-	Relationships  []Relationship `json:"relationships"`
+	Version        int               `json:"version"`
+	GeneratedAt    time.Time         `json:"generated_at"`
+	Repo           string            `json:"repo"`
+	IndexerVersion string            `json:"indexer_version"`
+	Stats          Stats             `json:"stats"`
+	Entities       []Entity          `json:"entities"`
+	Relationships  []Relationship    `json:"relationships"`
+	Communities    []CommunityResult `json:"communities,omitempty"`
+	SurpriseEdges  []SurpriseEdge    `json:"surprise_edges,omitempty"`
+	AlgorithmStats *AlgorithmStats   `json:"algorithm_stats,omitempty"`
 }
 
 // Stats summarises a Document.
@@ -50,6 +53,16 @@ type Entity struct {
 	Tags          []string               `json:"tags,omitempty"`
 	Metadata      map[string]interface{} `json:"metadata,omitempty"`
 	Properties    map[string]string      `json:"properties,omitempty"`
+
+	// Pass 4 (graph algorithm) attributes. Pointers + omitempty so that
+	// documents written with --skip-pass=graph-algo stay byte-identical to
+	// the pre-PORT-4 schema.
+	CommunityID        *int     `json:"community_id,omitempty"`
+	Centrality         *float64 `json:"centrality,omitempty"`
+	PageRank           *float64 `json:"pagerank,omitempty"`
+	IsGodNode          bool     `json:"is_god_node,omitempty"`
+	IsSurpriseEndpoint bool     `json:"is_surprise_endpoint,omitempty"`
+	IsArticulationPt   bool     `json:"is_articulation_point,omitempty"`
 }
 
 // Relationship is a directed edge between entities.
@@ -84,6 +97,49 @@ func RelationshipID(fromID, toID, kind string) string {
 	h.Write([]byte{0})
 	h.Write([]byte(kind))
 	return hex.EncodeToString(h.Sum(nil))[:16]
+}
+
+// GraphStatsSidecar is the corpus-level summary written to
+// <repo>/.archigraph/graph-stats.json. Consumed by `archigraph doctor` and the
+// future MCP `graph_stats` tool.
+type GraphStatsSidecar struct {
+	Version            int       `json:"version"`
+	ComputedAt         time.Time `json:"computed_at"`
+	TotalEntities      int       `json:"total_entities"`
+	TotalRelationships int       `json:"total_relationships"`
+	Communities        int       `json:"communities"`
+	Modularity         float64   `json:"modularity"`
+	GodNodes           int       `json:"god_nodes"`
+	ArticulationPoints int       `json:"articulation_points"`
+	RuntimeMS          int64     `json:"runtime_ms"`
+}
+
+// WriteSidecar emits the graph-stats.json sidecar next to the main document.
+// outPath is the same path passed to WriteAtomic; the sidecar is written to
+// the sibling file `graph-stats.json`.
+func WriteSidecar(outPath string, side *GraphStatsSidecar) error {
+	dir := filepath.Dir(outPath)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("graph: mkdir %s: %w", dir, err)
+	}
+	target := filepath.Join(dir, "graph-stats.json")
+	tmp := target + ".tmp"
+	f, err := os.Create(tmp)
+	if err != nil {
+		return fmt.Errorf("graph: create sidecar tmp: %w", err)
+	}
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(side); err != nil {
+		f.Close()
+		os.Remove(tmp)
+		return fmt.Errorf("graph: encode sidecar: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(tmp)
+		return err
+	}
+	return os.Rename(tmp, target)
 }
 
 // WriteAtomic marshals doc to JSON and writes it to outPath atomically by
