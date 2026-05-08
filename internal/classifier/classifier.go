@@ -489,9 +489,10 @@ var extensionLanguageMap = map[string]string{
 	".rmd": "r",
 	".Rmd": "r",
 	// Markdown / Documentation
-	".md":  "markdown",
-	".mdx": "markdown",
-	".rst": "markdown",
+	".md":       "markdown",
+	".mdx":      "markdown",
+	".markdown": "markdown",
+	".rst":      "markdown",
 }
 
 // basenameLanguageMap maps exact file basenames (case-sensitive) to language
