@@ -27,6 +27,12 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	case "mcp":
+		if err := runMCP(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "archigraph mcp: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	fmt.Fprintf(os.Stderr, "archigraph: unknown command: %s\n\n", os.Args[1])
@@ -39,9 +45,10 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage:")
 	fmt.Fprintln(os.Stderr, "  archigraph index <repo>      Walk a repository and write graph.json.")
+	fmt.Fprintln(os.Stderr, "  archigraph mcp serve         Start the MCP server on stdio.")
 	fmt.Fprintln(os.Stderr, "  archigraph version           Print the build version.")
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "Run 'archigraph index --help' for index-specific options.")
+	fmt.Fprintln(os.Stderr, "Run 'archigraph <subcommand> --help' for subcommand options.")
 }
 
 // runIndex parses flags for the `index` subcommand and runs the indexer.
