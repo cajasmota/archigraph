@@ -285,19 +285,19 @@ func extractPython(source, filePath string, res *result) {
 				res.addRel(clsID, ifID, "IMPLEMENTS", map[string]string{"language": "python"})
 				res.implementsFound++
 			} else {
+				// Issue #74: do NOT synthesise a placeholder entity for the
+				// parent base. We can't tell from a `class Foo(Bar):` line
+				// whether `Bar` is declared in the corpus or external
+				// (e.g. `serializers.ModelSerializer`). Emitting a
+				// Subtype="class" entity here conflates external references
+				// with real declarations.
+				//
+				// The EXTENDS relationship is still emitted so the resolver
+				// (Pass 4) can match it against the real declaration when it
+				// exists, and Pass 4.5 (`internal/external/synth.go`) can
+				// rewrite still-unresolved endpoints to "ext:<name>"
+				// placeholders with Kind="SCOPE.External".
 				parentID := classRef(filePath, clean, "python")
-				res.addEntity(types.EntityRecord{
-					Name:       clean,
-					Kind:       "SCOPE.Component",
-					Subtype:    "class",
-					SourceFile: filePath,
-					Language:   "python",
-					Properties: map[string]string{
-						"role": "class", "ref": parentID,
-						"provenance": "INFERRED_FROM_CLASS_HIERARCHY",
-					},
-					QualityScore: 0.9,
-				})
 				res.addRel(clsID, parentID, "EXTENDS", map[string]string{"language": "python"})
 				res.extendsFound++
 			}
