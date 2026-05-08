@@ -204,19 +204,20 @@ func Index(repoPath, outPath, repoTag string, skipPasses []string, pretty bool, 
 // downstream harnesses (scripts/verify2/run.sh) can aggregate without
 // needing to understand the inner Disposition enum.
 type JSONStats struct {
-	Repo                  string         `json:"repo"`
-	Files                 int            `json:"files"`
-	Entities              int            `json:"entities"`
-	Relationships         int            `json:"relationships"`
-	Pass1Rels             int            `json:"pass1_rels"`
-	Pass2Rels             int            `json:"pass2_rels"`
-	Pass3Rels             int            `json:"pass3_rels"`
-	DispositionCounts     map[string]int `json:"disposition_counts"`
-	BugRate               float64        `json:"bug_rate"`
-	ResolutionRate        float64        `json:"resolution_rate"`
-	ExternalSynthesized   int            `json:"external_synthesized"`
-	ExternalUniqueCount   int            `json:"external_unique_count"`
-	ExternalRelsResolved  int            `json:"external_rels_resolved"`
+	Repo                  string              `json:"repo"`
+	Files                 int                 `json:"files"`
+	Entities              int                 `json:"entities"`
+	Relationships         int                 `json:"relationships"`
+	Pass1Rels             int                 `json:"pass1_rels"`
+	Pass2Rels             int                 `json:"pass2_rels"`
+	Pass3Rels             int                 `json:"pass3_rels"`
+	DispositionCounts     map[string]int      `json:"disposition_counts"`
+	DispositionSamples    map[string][]string `json:"disposition_samples,omitempty"`
+	BugRate               float64             `json:"bug_rate"`
+	ResolutionRate        float64             `json:"resolution_rate"`
+	ExternalSynthesized   int                 `json:"external_synthesized"`
+	ExternalUniqueCount   int                 `json:"external_unique_count"`
+	ExternalRelsResolved  int                 `json:"external_rels_resolved"`
 }
 
 // emitJSONStats writes a JSONStats record (one line, no trailing whitespace)
@@ -236,6 +237,12 @@ func emitJSONStats(w *os.File, idx *Indexer, doc *graph.Document) error {
 	if total > 0 {
 		resRate = float64(resolved) / float64(total)
 	}
+	samples := make(map[string][]string, len(resolve.AllDispositions))
+	for _, d := range resolve.AllDispositions {
+		if s := idx.finalDispositions.DispositionSamples[d]; len(s) > 0 {
+			samples[d.String()] = s
+		}
+	}
 	js := JSONStats{
 		Repo:                 idx.repoTag,
 		Files:                idx.stats.files,
@@ -245,6 +252,7 @@ func emitJSONStats(w *os.File, idx *Indexer, doc *graph.Document) error {
 		Pass2Rels:            idx.stats.pass2Rels,
 		Pass3Rels:            idx.stats.pass3Rels,
 		DispositionCounts:    counts,
+		DispositionSamples:   samples,
 		BugRate:              idx.finalDispositions.BugRate,
 		ResolutionRate:       resRate,
 		ExternalSynthesized:  idx.stats.extSynth.Synthesized,
@@ -314,11 +322,24 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 		eps := make([]resolve.EndpointPair, 0, len(doc.Relationships))
 		for k := range doc.Relationships {
 			r := &doc.Relationships[k]
+			// Issue #90 — pass through the relationship's language tag so
+			// the final-classification pass routes to the right per-
+			// language dynamic-pattern catalog instead of falling through
+			// to cross-language only.
+			lang := ""
+			if r.Properties != nil {
+				if v, ok := r.Properties["language"]; ok {
+					lang = v
+				} else if v, ok := r.Properties["lang"]; ok {
+					lang = v
+				}
+			}
 			eps = append(eps, resolve.EndpointPair{
 				FromID:       r.FromID,
 				FromOriginal: r.FromID,
 				ToID:         r.ToID,
 				ToOriginal:   r.ToID,
+				Language:     lang,
 			})
 		}
 		final := i.resolveIdx.ClassifyEndpoints(eps, allow)

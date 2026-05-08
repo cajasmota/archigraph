@@ -107,6 +107,11 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		attribute.Int("error_pattern_count", len(errorPatterns)),
 		attribute.Int("import_count", len(importEnts)),
 	)
+	// Issue #90 — stamp Properties["language"]="python" on every embedded
+	// relationship so the resolver's per-language dynamic-pattern dispatch
+	// picks the python catalog instead of falling back to the cross-language
+	// one. Existing tags are preserved.
+	extractor.TagRelationshipsLanguage(entities, "python")
 	return entities, nil
 }
 

@@ -143,6 +143,8 @@ func (e *CppExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		attribute.Int("file_line_count", lineCount),
 		attribute.Int("entity_count", len(records)),
 	)
+	// Issue #90 — language tag for resolver dynamic-pattern dispatch.
+	extractor.TagRelationshipsLanguage(records, lang)
 	return records, nil
 }
 

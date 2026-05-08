@@ -119,6 +119,11 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		attribute.Int("error_pattern_count", len(errorPatterns)),
 	)
 
+	// Issue #90 — stamp Properties["language"] (e.g. "javascript" or
+	// "typescript") on every embedded relationship so the resolver routes
+	// to the right per-language dynamic-pattern catalog.
+	extreg.TagRelationshipsLanguage(x.entities, file.Language)
+
 	return x.entities, nil
 }
 
