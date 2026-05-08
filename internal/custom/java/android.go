@@ -79,12 +79,12 @@ func ExtractAndroid(ctx PatternContext) PatternResult {
 	// Manifest parsing
 	if isManifest {
 		for _, pair := range []struct {
-			re       *regexp.Regexp
+			re         *regexp.Regexp
 			entityKind string
-			prov     string
-			kind     string
-			refFn    func(string) string
-			known    map[string]string
+			prov       string
+			kind       string
+			refFn      func(string) string
+			known      map[string]string
 		}{
 			{adManifestActivityRE, "SCOPE.UIComponent", "INFERRED_FROM_ANDROID_MANIFEST", "activity",
 				func(n string) string { return "scope:uicomponent:android_activity:" + fp + ":" + n }, knownActivities},
