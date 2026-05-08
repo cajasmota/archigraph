@@ -252,7 +252,7 @@ public class Worker {
 		if r.Kind == "SCOPE.Component" && r.Name == "Worker" {
 			hasClass = true
 		}
-		if r.Kind == "SCOPE.Operation" && r.Name == "run" {
+		if r.Kind == "SCOPE.Operation" && r.Name == "Worker.run" {
 			hasMethod = true
 		}
 		if r.Kind == "SCOPE.Pattern" {

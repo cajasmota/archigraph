@@ -53,7 +53,7 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 
 	var entities []types.EntityRecord
 	root := file.Tree.RootNode()
-	walk(root, file, &entities)
+	walk(root, file, "", &entities)
 
 	// Secondary pass: error-handling patterns.
 	errorPatterns := extractErrorHandlingPatterns(root, file.Path)
@@ -73,23 +73,35 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 // or constructor body is scanned for method_invocation / object_creation
 // nodes that yield CALLS edges with stub `to_id` (resolver rewrites
 // cross-file refs in pass 5).
-func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord) {
+//
+// Issue #65: methods/constructors declared inside a class, interface, or
+// enum body are emitted with Name="<EnclosingType>.<member>" so that
+// EntityRecord.ComputeID(SourceFile+Kind+Name) produces distinct IDs for
+// same-named members on sibling types. Module-level constructs and
+// methods inside anonymous classes (which lack a stable enclosing-type
+// name) stay bare. Nested types carry only their immediate parent — the
+// nested class/interface/enum itself stays bare, but its members are
+// qualified by it (multi-dot fully-qualified IDs are out of scope here).
+func walk(node *sitter.Node, file extractor.FileInput, parentType string, out *[]types.EntityRecord) {
 	if node == nil {
 		return
 	}
 
 	switch node.Type() {
-	case "class_declaration", "interface_declaration":
+	case "class_declaration", "interface_declaration", "enum_declaration":
 		subtype := "class"
-		if node.Type() == "interface_declaration" {
+		switch node.Type() {
+		case "interface_declaration":
 			subtype = "interface"
+		case "enum_declaration":
+			subtype = "enum"
 		}
 		rec, ok := buildComponent(node, file, subtype)
 		if !ok {
 			// Still recurse so nested types/imports below this node are
 			// captured even when the class itself is malformed.
 			for i := range node.ChildCount() {
-				walk(node.Child(int(i)), file, out)
+				walk(node.Child(int(i)), file, parentType, out)
 			}
 			return
 		}
@@ -99,7 +111,10 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 		if body != nil {
 			before := len(*out)
 			for i := range body.ChildCount() {
-				walk(body.Child(int(i)), file, out)
+				// Members of this type are qualified by rec.Name (the
+				// immediate enclosing type), regardless of any outer
+				// type we may currently be nested under.
+				walk(body.Child(int(i)), file, rec.Name, out)
 			}
 			after := len(*out)
 			for k := before; k < after; k++ {
@@ -109,6 +124,8 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 				}
 				(*out)[classIdx].Relationships = append((*out)[classIdx].Relationships,
 					types.RelationshipRecord{
+						// ToID matches the dotted Name emitted by
+						// buildOperation when parentType is non-empty.
 						ToID: child.Name,
 						Kind: "CONTAINS",
 					})
@@ -117,17 +134,27 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 		return
 
 	case "method_declaration":
-		if rec, ok := buildOperation(node, file, "method"); ok {
+		if rec, ok := buildOperation(node, file, "method", parentType); ok {
+			// Self-recursion is detected by the bare callee identifier;
+			// extractCallRelationships compares against the caller name.
+			selfName := rec.Name
+			if nameNode := node.ChildByFieldName("name"); nameNode != nil {
+				selfName = nodeText(nameNode, file.Content)
+			}
 			rec.Relationships = append(rec.Relationships,
-				extractCallRelationships(node.ChildByFieldName("body"), file.Content, rec.Name)...)
+				extractCallRelationships(node.ChildByFieldName("body"), file.Content, selfName)...)
 			*out = append(*out, rec)
 		}
 		return
 
 	case "constructor_declaration":
-		if rec, ok := buildOperation(node, file, "constructor"); ok {
+		if rec, ok := buildOperation(node, file, "constructor", parentType); ok {
+			selfName := rec.Name
+			if nameNode := node.ChildByFieldName("name"); nameNode != nil {
+				selfName = nodeText(nameNode, file.Content)
+			}
 			rec.Relationships = append(rec.Relationships,
-				extractCallRelationships(node.ChildByFieldName("body"), file.Content, rec.Name)...)
+				extractCallRelationships(node.ChildByFieldName("body"), file.Content, selfName)...)
 			*out = append(*out, rec)
 		}
 		return
@@ -143,8 +170,12 @@ func walk(node *sitter.Node, file extractor.FileInput, out *[]types.EntityRecord
 		}
 	}
 
+	// Default recursion. parentType does NOT propagate through unrelated
+	// nodes (e.g. method bodies, anonymous-class bodies) — methods nested
+	// inside a method body or anonymous class are emitted bare because
+	// they have no stable enclosing-type identifier.
 	for i := range node.ChildCount() {
-		walk(node.Child(int(i)), file, out)
+		walk(node.Child(int(i)), file, "", out)
 	}
 }
 
@@ -251,14 +282,25 @@ func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string)
 }
 
 // buildOperation creates an Operation entity for method/constructor declarations.
-func buildOperation(node *sitter.Node, file extractor.FileInput, subtype string) (types.EntityRecord, bool) {
+//
+// Issue #65: when parentType is non-empty (member of a class/interface/enum),
+// Name is emitted as "<parentType>.<member>" so two sibling types declaring
+// same-named methods produce distinct ComputeID(SourceFile+Kind+Name) values.
+// The dotted form is the encoding consumed by resolve.Index.byMember, which
+// splits on the first '.'.
+func buildOperation(node *sitter.Node, file extractor.FileInput, subtype, parentType string) (types.EntityRecord, bool) {
 	name := childFieldText(node, "name", file.Content)
 	if name == "" {
 		return types.EntityRecord{}, false
 	}
 
+	emittedName := name
+	if parentType != "" {
+		emittedName = parentType + "." + name
+	}
+
 	return types.EntityRecord{
-		Name:               name,
+		Name:               emittedName,
 		Kind:               "SCOPE.Operation",
 		Subtype:            subtype,
 		SourceFile:         file.Path,
@@ -347,6 +389,14 @@ func buildImport(node *sitter.Node, file extractor.FileInput) (types.EntityRecor
 			},
 		},
 	}, true
+}
+
+// nodeText returns the source text covered by node.
+func nodeText(node *sitter.Node, src []byte) string {
+	if node == nil {
+		return ""
+	}
+	return string(src[node.StartByte():node.EndByte()])
 }
 
 // childFieldText extracts the text of a named child field (e.g. "name").

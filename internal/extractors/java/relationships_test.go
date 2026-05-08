@@ -70,7 +70,7 @@ class Foo {
 	if contains != 3 {
 		t.Errorf("expected 3 CONTAINS edges from Foo, got %d (rels=%+v)", contains, foo.Relationships)
 	}
-	for _, m := range []string{"a", "b", "c"} {
+	for _, m := range []string{"Foo.a", "Foo.b", "Foo.c"} {
 		if !javaHasRel(ents, "Foo", "SCOPE.Component", "CONTAINS", m) {
 			t.Errorf("expected CONTAINS Foo→%s", m)
 		}
@@ -86,13 +86,13 @@ class A {
 }
 `
 	ents := runJava(t, src)
-	if !javaHasRel(ents, "caller", "SCOPE.Operation", "CALLS", "helper") {
+	if !javaHasRel(ents, "A.caller", "SCOPE.Operation", "CALLS", "helper") {
 		t.Errorf("expected CALLS caller→helper")
 	}
-	if !javaHasRel(ents, "caller", "SCOPE.Operation", "CALLS", "println") {
+	if !javaHasRel(ents, "A.caller", "SCOPE.Operation", "CALLS", "println") {
 		t.Errorf("expected CALLS caller→println (selector trailing)")
 	}
-	caller := javaFind(ents, "caller", "SCOPE.Operation")
+	caller := javaFind(ents, "A.caller", "SCOPE.Operation")
 	n := 0
 	for _, r := range caller.Relationships {
 		if r.Kind == "CALLS" && r.ToID == "helper" {

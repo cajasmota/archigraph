@@ -2,6 +2,8 @@ package java_test
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -183,7 +185,7 @@ public class Svc {
 
 	var found bool
 	for _, e := range got {
-		if e.Name == "getName" && e.Kind == "SCOPE.Operation" && e.Subtype == "method" {
+		if e.Name == "Svc.getName" && e.Kind == "SCOPE.Operation" && e.Subtype == "method" {
 			found = true
 		}
 	}
@@ -213,7 +215,7 @@ public class Bar {
 
 	var found bool
 	for _, e := range got {
-		if e.Name == "Bar" && e.Kind == "SCOPE.Operation" && e.Subtype == "constructor" {
+		if e.Name == "Bar.Bar" && e.Kind == "SCOPE.Operation" && e.Subtype == "constructor" {
 			found = true
 		}
 	}
@@ -400,10 +402,136 @@ public class Outer {
 	if !names["Inner"] {
 		t.Error("expected Inner nested class")
 	}
-	if !names["innerMethod"] {
-		t.Error("expected innerMethod")
+	if !names["Inner.innerMethod"] {
+		t.Error("expected Inner.innerMethod")
 	}
-	if !names["outerMethod"] {
-		t.Error("expected outerMethod")
+	if !names["Outer.outerMethod"] {
+		t.Error("expected Outer.outerMethod")
+	}
+}
+
+// TestJavaExtractor_DuplicateMethodNamesAcrossClasses is the regression
+// test for issue #65. Two classes in the same file each declare a
+// `validate` and a `save` method. The extractor must emit four DISTINCT
+// method entities with class-qualified Names so
+// ComputeID(SourceFile+Kind+Name) produces four distinct IDs rather
+// than collapsing the same-named methods into two.
+func TestJavaExtractor_DuplicateMethodNamesAcrossClasses(t *testing.T) {
+	src := `
+public class UserSerializer {
+    public Object validate(Object value) { return value; }
+    public Object save(Object value) { return value; }
+}
+
+public class OrderSerializer {
+    public Object validate(Object value) { return value; }
+    public Object save(Object value) { return value; }
+}
+`
+	tree := parseForTest(t, src)
+	ext, _ := extractor.Get("java")
+
+	entities, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "Serializers.java",
+		Content:  []byte(src),
+		Language: "java",
+		Tree:     tree,
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+
+	wantMethods := map[string]bool{
+		"UserSerializer.validate":  false,
+		"UserSerializer.save":      false,
+		"OrderSerializer.validate": false,
+		"OrderSerializer.save":     false,
+	}
+	methodCount := 0
+	var allNames []string
+	for _, e := range entities {
+		allNames = append(allNames, e.Name)
+		if e.Kind == "SCOPE.Operation" && e.Subtype == "method" {
+			methodCount++
+			if _, ok := wantMethods[e.Name]; ok {
+				wantMethods[e.Name] = true
+			}
+		}
+	}
+	if methodCount != 4 {
+		t.Errorf("expected 4 distinct method entities, got %d (names=%v)",
+			methodCount, allNames)
+	}
+	for name, seen := range wantMethods {
+		if !seen {
+			t.Errorf("expected method entity %q not found in %v", name, allNames)
+		}
+	}
+
+	// IDs must be distinct under ComputeID(SourceFile+Kind+Name).
+	ids := map[string]string{}
+	for _, e := range entities {
+		if e.Kind != "SCOPE.Operation" || e.Subtype != "method" {
+			continue
+		}
+		id := e.ComputeID()
+		if existing, ok := ids[id]; ok {
+			t.Errorf("method ID collision: %q and %q both compute to %s",
+				existing, e.Name, id)
+		}
+		ids[id] = e.Name
+	}
+
+	// Each class must own a CONTAINS edge per method (4 total: 2 per class).
+	for _, cls := range []string{"UserSerializer", "OrderSerializer"} {
+		count := 0
+		for _, e := range entities {
+			if e.Kind == "SCOPE.Component" && e.Name == cls {
+				for _, r := range e.Relationships {
+					if r.Kind == "CONTAINS" {
+						count++
+					}
+				}
+			}
+		}
+		if count != 2 {
+			t.Errorf("class %s: expected 2 CONTAINS edges, got %d", cls, count)
+		}
+	}
+}
+
+// TestJavaExtractor_DuplicateMethodsFromFixture mirrors the inline test
+// against the committed testdata fixture so the on-disk artifact stays
+// in sync with the regression contract.
+func TestJavaExtractor_DuplicateMethodsFromFixture(t *testing.T) {
+	path := filepath.Join("testdata", "duplicate_methods.java.fixture")
+	src, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	tree := parseForTest(t, string(src))
+	ext, _ := extractor.Get("java")
+
+	entities, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     path,
+		Content:  src,
+		Language: "java",
+		Tree:     tree,
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+
+	methodCount := 0
+	var allNames []string
+	for _, e := range entities {
+		allNames = append(allNames, e.Name)
+		if e.Kind == "SCOPE.Operation" && e.Subtype == "method" {
+			methodCount++
+		}
+	}
+	if methodCount != 4 {
+		t.Errorf("fixture: expected 4 method entities, got %d (names=%v)",
+			methodCount, allNames)
 	}
 }

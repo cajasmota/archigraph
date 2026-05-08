@@ -1,0 +1,24 @@
+// Fixture for issue #65: same-named methods on different classes must
+// be emitted as distinct entities (no Java-extractor dedup). Mirrors
+// the Python fixture for #45.
+package com.example;
+
+public class UserSerializer {
+    public Object validate(Object value) {
+        return value;
+    }
+
+    public Object save(Object value) {
+        return value;
+    }
+}
+
+public class OrderSerializer {
+    public Object validate(Object value) {
+        return value;
+    }
+
+    public Object save(Object value) {
+        return value;
+    }
+}
