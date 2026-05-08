@@ -6,6 +6,16 @@
 // of relationships but every cross-file ToID was left as a stub string, so
 // graph traversal dead-ended at the first cross-file reference. The resolver
 // closes that gap.
+//
+// PORT-2-FIX-3 (issue #31) extends the resolver to handle two additional
+// reference shapes emitted by Pass 3 cross-language extractors:
+//
+//   - Format A: scope:<kind>:<subtype>:<lang>:<file_path>:<name>
+//   - Format B: scope:<kind>:<subtype>:<lang>:<file_path>:<scope_name>#<member_name>
+//
+// and adds a kind-hint code path (driven by the relationship's Kind field)
+// that biases ambiguous bare-name lookups toward the kind families typically
+// referenced by EXTENDS / IMPLEMENTS / CALLS edges.
 package resolve
 
 import (
@@ -30,7 +40,29 @@ type Index struct {
 	byName map[string]string
 	// ambigName[name] = true when a name appears in two or more entities.
 	ambigName map[string]bool
+
+	// nameKinds[name][kind] = entity_id for every entity sharing this
+	// name. A blank string sentinel means two entities share that
+	// (name, kind) tuple — i.e. the kind itself is ambiguous for this
+	// name and the kind hint cannot disambiguate via this family.
+	nameKinds map[string]map[string]string
+
+	// byLocation[file_path][name] = entity_id, retained only when unique
+	// within the file. Used by structural-ref Format A resolution.
+	byLocation LocationIndex
+	// ambigLocation[file_path][name] = true when (file, name) collides.
+	ambigLocation map[string]map[string]bool
+
+	// byMember[file_path][scope_name][member_name] = entity_id. Used by
+	// structural-ref Format B resolution. A blank string sentinel marks
+	// (scope, member) collisions inside the same file. Entities are
+	// indexed by splitting their dotted Name on the first '.'.
+	byMember map[string]map[string]map[string]string
 }
+
+// LocationIndex maps file_path -> name -> entity_id, retaining only entries
+// that are unique within their file. Returned by BuildLocationIndex.
+type LocationIndex map[string]map[string]string
 
 // Stats reports how many relationships the resolver rewrote and how many it
 // left as stubs because of ambiguity / missing matches. Surfaced via the log
@@ -53,10 +85,14 @@ type Stats struct {
 //     so a stub like "View:User" matches an entity of kind "SCOPE.View".
 func BuildIndex(entities []types.EntityRecord) Index {
 	idx := Index{
-		byKind:    make(map[string]map[string]string),
-		ambigKind: make(map[string]map[string]bool),
-		byName:    make(map[string]string),
-		ambigName: make(map[string]bool),
+		byKind:        make(map[string]map[string]string),
+		ambigKind:     make(map[string]map[string]bool),
+		byName:        make(map[string]string),
+		ambigName:     make(map[string]bool),
+		nameKinds:     make(map[string]map[string]string),
+		byLocation:    make(LocationIndex),
+		ambigLocation: make(map[string]map[string]bool),
+		byMember:      make(map[string]map[string]map[string]string),
 	}
 	for k := range entities {
 		e := &entities[k]
@@ -92,6 +128,74 @@ func BuildIndex(entities []types.EntityRecord) Index {
 			bucket[e.Name] = e.ID
 		}
 
+		// Track every (name, kind) -> id so the kind-hint fallback can
+		// disambiguate when byName flips to ambiguous. The plain entity
+		// kind is enough here; SCOPE.* kinds are tracked under both forms
+		// to mirror the byKind dual-indexing above.
+		nameKindBucket := idx.nameKinds[e.Name]
+		if nameKindBucket == nil {
+			nameKindBucket = make(map[string]string)
+			idx.nameKinds[e.Name] = nameKindBucket
+		}
+		for _, kind := range kinds {
+			if kind == "" {
+				continue
+			}
+			// First writer wins per kind; if a second entity shares the
+			// (name, kind) we mark the kind ambiguous for that name by
+			// blanking the entry so the hint falls through.
+			if existing, ok := nameKindBucket[kind]; ok && existing != e.ID {
+				nameKindBucket[kind] = ""
+			} else {
+				nameKindBucket[kind] = e.ID
+			}
+		}
+
+		// Location index — (file_path, name) -> entity_id. Same logic as
+		// byKind: ambiguous (file, name) tuples are tracked separately so
+		// the structural-ref resolver leaves the stub alone.
+		if e.SourceFile != "" {
+			if idx.ambigLocation[e.SourceFile] == nil || !idx.ambigLocation[e.SourceFile][e.Name] {
+				bucket := idx.byLocation[e.SourceFile]
+				if bucket == nil {
+					bucket = make(map[string]string)
+					idx.byLocation[e.SourceFile] = bucket
+				}
+				if existing, ok := bucket[e.Name]; ok && existing != e.ID {
+					delete(bucket, e.Name)
+					if idx.ambigLocation[e.SourceFile] == nil {
+						idx.ambigLocation[e.SourceFile] = make(map[string]bool)
+					}
+					idx.ambigLocation[e.SourceFile][e.Name] = true
+				} else {
+					bucket[e.Name] = e.ID
+				}
+			}
+
+			// Member index — Format B references address a member of an
+			// enclosing scope (class/module/etc.) by qualified name. Pass 3
+			// records typically encode this as "<scope>.<member>" in the
+			// Name field, so we split on the first '.'.
+			if dot := strings.IndexByte(e.Name, '.'); dot > 0 {
+				scope, member := e.Name[:dot], e.Name[dot+1:]
+				fileBucket := idx.byMember[e.SourceFile]
+				if fileBucket == nil {
+					fileBucket = make(map[string]map[string]string)
+					idx.byMember[e.SourceFile] = fileBucket
+				}
+				scopeBucket := fileBucket[scope]
+				if scopeBucket == nil {
+					scopeBucket = make(map[string]string)
+					fileBucket[scope] = scopeBucket
+				}
+				if existing, ok := scopeBucket[member]; ok && existing != e.ID {
+					scopeBucket[member] = "" // blank sentinel → ambiguous
+				} else {
+					scopeBucket[member] = e.ID
+				}
+			}
+		}
+
 		// Kind-agnostic name index. Two different entities sharing a name
 		// (even across kinds) flips the name to ambiguous.
 		if idx.ambigName[e.Name] {
@@ -105,6 +209,38 @@ func BuildIndex(entities []types.EntityRecord) Index {
 		idx.byName[e.Name] = e.ID
 	}
 	return idx
+}
+
+// BuildLocationIndex returns a (file_path, name) -> entity_id map built from
+// the supplied entity slice. Entries that are not unique within their file
+// are dropped. Exposed for callers that only need the location lookup.
+func BuildLocationIndex(entities []types.EntityRecord) LocationIndex {
+	loc := make(LocationIndex)
+	ambig := make(map[string]map[string]bool)
+	for k := range entities {
+		e := &entities[k]
+		if e.ID == "" || e.Name == "" || e.SourceFile == "" {
+			continue
+		}
+		if ambig[e.SourceFile] != nil && ambig[e.SourceFile][e.Name] {
+			continue
+		}
+		bucket := loc[e.SourceFile]
+		if bucket == nil {
+			bucket = make(map[string]string)
+			loc[e.SourceFile] = bucket
+		}
+		if existing, ok := bucket[e.Name]; ok && existing != e.ID {
+			delete(bucket, e.Name)
+			if ambig[e.SourceFile] == nil {
+				ambig[e.SourceFile] = make(map[string]bool)
+			}
+			ambig[e.SourceFile][e.Name] = true
+			continue
+		}
+		bucket[e.Name] = e.ID
+	}
+	return loc
 }
 
 // Lookup resolves a stub string to an entity ID. The stub is split on the
@@ -145,6 +281,18 @@ func (idx Index) Lookup(stub string) (string, bool) {
 // LookupStatus reports whether a stub is unambiguous, ambiguous, or unmatched.
 // Used by References to populate Stats counters without doing two passes.
 func (idx Index) LookupStatus(stub string) (id string, status int) {
+	return idx.LookupStatusHint(stub, "")
+}
+
+// LookupStatusHint is LookupStatus with an optional relationship-kind hint.
+// The hint is the RelationshipRecord.Kind value (e.g. "EXTENDS", "CALLS"),
+// not the entity kind. When the bare-name path would otherwise be ambiguous
+// the hint biases the lookup toward the entity-kind family typically
+// targeted by that relationship. The hint is ignored when the structural-ref
+// path or an explicit Kind: prefix already resolves.
+//
+// When passed "" the function behaves exactly like LookupStatus.
+func (idx Index) LookupStatusHint(stub, relKind string) (id string, status int) {
 	const (
 		statusRewritten = 1
 		statusAmbiguous = 2
@@ -153,6 +301,14 @@ func (idx Index) LookupStatus(stub string) (id string, status int) {
 	if stub == "" {
 		return "", statusUnmatched
 	}
+
+	// Structural-ref forms (Format A / B). Recognised by the "scope:"
+	// prefix and resolved through the location/member indexes — bypasses
+	// the kind / name path entirely.
+	if id, st, handled := idx.lookupStructural(stub); handled {
+		return id, st
+	}
+
 	kind, name := splitStub(stub)
 	if kind != "" {
 		if bucket, ok := idx.byKind[kind]; ok {
@@ -172,9 +328,119 @@ func (idx Index) LookupStatus(stub string) (id string, status int) {
 		return id, statusRewritten
 	}
 	if idx.ambigName[lookupName] {
+		// Ambiguous bare-name. Try the kind hint: pick a family that
+		// the relKind biases toward, and if exactly one entity with this
+		// name lives in that family, resolve to it.
+		if id, ok := idx.lookupByKindHint(lookupName, relKind); ok {
+			return id, statusRewritten
+		}
 		return "", statusAmbiguous
 	}
 	return "", statusUnmatched
+}
+
+// hintKinds returns the entity-kind families preferred for a given
+// relationship kind. EXTENDS / IMPLEMENTS prefer Component-shaped kinds;
+// CALLS prefers Operation-shaped kinds. Everything else returns nil.
+func hintKinds(relKind string) []string {
+	switch strings.ToUpper(relKind) {
+	case "EXTENDS", "IMPLEMENTS":
+		return []string{"Component", "Class", "View", "Model", "SCOPE.Component", "SCOPE.View", "SCOPE.Model"}
+	case "CALLS":
+		return []string{"Operation", "Function", "Method", "SCOPE.Operation"}
+	}
+	return nil
+}
+
+// lookupByKindHint disambiguates a name using the relKind hint. Returns
+// (id, true) only when exactly one entity in the hinted family has this
+// name; otherwise ("", false).
+func (idx Index) lookupByKindHint(name, relKind string) (string, bool) {
+	families := hintKinds(relKind)
+	if len(families) == 0 {
+		return "", false
+	}
+	bucket := idx.nameKinds[name]
+	if len(bucket) == 0 {
+		return "", false
+	}
+	var match string
+	for _, k := range families {
+		id := bucket[k]
+		if id == "" {
+			continue
+		}
+		if match != "" && match != id {
+			// Two distinct entities in the hinted family share this
+			// name — hint cannot disambiguate.
+			return "", false
+		}
+		match = id
+	}
+	if match == "" {
+		return "", false
+	}
+	return match, true
+}
+
+// lookupStructural resolves Format A / B references. Returns handled=false
+// when the stub doesn't start with "scope:" so the caller falls through to
+// the normal Kind:Name / bare-name path.
+//
+// Format A: scope:<kind>:<subtype>:<lang>:<file_path>:<name>
+// Format B: scope:<kind>:<subtype>:<lang>:<file_path>:<scope_name>#<member_name>
+func (idx Index) lookupStructural(stub string) (id string, status int, handled bool) {
+	const (
+		statusRewritten = 1
+		statusAmbiguous = 2
+		statusUnmatched = 3
+	)
+	if !strings.HasPrefix(stub, "scope:") {
+		return "", 0, false
+	}
+	parts := strings.SplitN(stub, ":", 6)
+	if len(parts) != 6 {
+		return "", statusUnmatched, true
+	}
+	filePath := parts[4]
+	tail := parts[5]
+	if filePath == "" || tail == "" {
+		return "", statusUnmatched, true
+	}
+
+	// Format B: tail contains "#" → (scope_name, member_name).
+	if hash := strings.IndexByte(tail, '#'); hash >= 0 {
+		scopeName, memberName := tail[:hash], tail[hash+1:]
+		if scopeName == "" || memberName == "" {
+			return "", statusUnmatched, true
+		}
+		fileBucket := idx.byMember[filePath]
+		if fileBucket == nil {
+			return "", statusUnmatched, true
+		}
+		scopeBucket := fileBucket[scopeName]
+		if scopeBucket == nil {
+			return "", statusUnmatched, true
+		}
+		if id, ok := scopeBucket[memberName]; ok {
+			if id == "" {
+				return "", statusAmbiguous, true
+			}
+			return id, statusRewritten, true
+		}
+		return "", statusUnmatched, true
+	}
+
+	// Format A: tail is the entity name.
+	if idx.ambigLocation[filePath] != nil && idx.ambigLocation[filePath][tail] {
+		return "", statusAmbiguous, true
+	}
+	if bucket, ok := idx.byLocation[filePath]; ok {
+		if id, ok := bucket[tail]; ok {
+			return id, statusRewritten, true
+		}
+	}
+	return "", statusUnmatched, true
 }
 
 // splitStub splits a stub string on the first ':' into (kind, name). If no
@@ -201,7 +467,7 @@ func References(rels []types.RelationshipRecord, idx Index) Stats {
 		r := &rels[k]
 		// FromID
 		if r.FromID != "" && !isHexID(r.FromID) {
-			id, st := idx.LookupStatus(r.FromID)
+			id, st := idx.LookupStatusHint(r.FromID, r.Kind)
 			switch st {
 			case statusRewritten:
 				r.FromID = id
@@ -214,7 +480,7 @@ func References(rels []types.RelationshipRecord, idx Index) Stats {
 		}
 		// ToID
 		if r.ToID != "" && !isHexID(r.ToID) {
-			id, st := idx.LookupStatus(r.ToID)
+			id, st := idx.LookupStatusHint(r.ToID, r.Kind)
 			switch st {
 			case statusRewritten:
 				r.ToID = id
@@ -251,7 +517,7 @@ func ReferencesEmbedded(records []types.EntityRecord, idx Index) Stats {
 			if r.ToID == "" || isHexID(r.ToID) {
 				continue
 			}
-			id, st := idx.LookupStatus(r.ToID)
+			id, st := idx.LookupStatusHint(r.ToID, r.Kind)
 			switch st {
 			case statusRewritten:
 				r.ToID = id

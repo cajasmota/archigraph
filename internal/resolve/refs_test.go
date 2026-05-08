@@ -10,6 +10,10 @@ func ent(id, kind, name string) types.EntityRecord {
 	return types.EntityRecord{ID: id, Kind: kind, Name: name, SourceFile: "x.go"}
 }
 
+func entAt(id, kind, name, file string) types.EntityRecord {
+	return types.EntityRecord{ID: id, Kind: kind, Name: name, SourceFile: file}
+}
+
 func TestReferences_Unambiguous(t *testing.T) {
 	entities := []types.EntityRecord{ent("aaaaaaaaaaaaaaaa", "Function", "Hello")}
 	rels := []types.RelationshipRecord{{FromID: "0000000000000000", ToID: "Function:Hello", Kind: "CALLS"}}
@@ -130,5 +134,139 @@ func TestReferencesEmbedded(t *testing.T) {
 	}
 	if stats.Rewritten != 1 {
 		t.Fatalf("expected 1 rewrite, got %d", stats.Rewritten)
+	}
+}
+
+// PORT-2-FIX-3 (issue #31) — structural reference resolution + kind hint.
+
+func TestReferences_StructuralFormatA(t *testing.T) {
+	// scope:component:class:python:core/views/orders.py:OrderViewSet
+	// resolves to the entity at that file+name.
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "SCOPE.Component", "OrderViewSet", "core/views/orders.py"),
+		entAt("dddddddddddddddd", "SCOPE.Component", "Other", "core/views/other.py"),
+	}
+	rels := []types.RelationshipRecord{{
+		FromID: "0000000000000000",
+		ToID:   "scope:component:class:python:core/views/orders.py:OrderViewSet",
+		Kind:   "USES",
+	}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != "aaaaaaaaaaaaaaaa" {
+		t.Fatalf("format A: ToID=%s", rels[0].ToID)
+	}
+	if stats.Rewritten != 1 {
+		t.Fatalf("expected 1 rewrite, got %+v", stats)
+	}
+}
+
+func TestReferences_StructuralFormatB(t *testing.T) {
+	// scope:operation:method:python:core/views/orders.py:OrderViewSet#create
+	// resolves to the method entity recorded as "OrderViewSet.create".
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "SCOPE.Component", "OrderViewSet", "core/views/orders.py"),
+		entAt("bbbbbbbbbbbbbbbb", "SCOPE.Operation", "OrderViewSet.create", "core/views/orders.py"),
+	}
+	rels := []types.RelationshipRecord{{
+		FromID: "0000000000000000",
+		ToID:   "scope:operation:method:python:core/views/orders.py:OrderViewSet#create",
+		Kind:   "CALLS",
+	}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != "bbbbbbbbbbbbbbbb" {
+		t.Fatalf("format B: ToID=%s", rels[0].ToID)
+	}
+	if stats.Rewritten != 1 {
+		t.Fatalf("expected 1 rewrite, got %+v", stats)
+	}
+}
+
+func TestReferences_StructuralLocationAmbiguous(t *testing.T) {
+	// Same (file, name) recorded twice → ambiguous, stub preserved.
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "SCOPE.Component", "OrderViewSet", "core/views/orders.py"),
+		entAt("bbbbbbbbbbbbbbbb", "SCOPE.View", "OrderViewSet", "core/views/orders.py"),
+	}
+	stub := "scope:component:class:python:core/views/orders.py:OrderViewSet"
+	rels := []types.RelationshipRecord{{FromID: "0000000000000000", ToID: stub, Kind: "USES"}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != stub {
+		t.Fatalf("location-ambig: ToID was rewritten to %s", rels[0].ToID)
+	}
+	if stats.Ambiguous != 1 {
+		t.Fatalf("expected 1 ambiguous, got %+v", stats)
+	}
+}
+
+func TestReferences_KindHintCallsPrefersOperation(t *testing.T) {
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "Operation", "Foo", "a.py"),
+		entAt("bbbbbbbbbbbbbbbb", "Component", "Foo", "b.py"),
+	}
+	rels := []types.RelationshipRecord{{FromID: "0000000000000000", ToID: "Foo", Kind: "CALLS"}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != "aaaaaaaaaaaaaaaa" {
+		t.Fatalf("kind-hint CALLS: ToID=%s", rels[0].ToID)
+	}
+	if stats.Rewritten != 1 {
+		t.Fatalf("expected 1 rewrite, got %+v", stats)
+	}
+}
+
+func TestReferences_KindHintExtendsPrefersComponent(t *testing.T) {
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "Function", "Foo", "a.py"),
+		entAt("bbbbbbbbbbbbbbbb", "Component", "Foo", "b.py"),
+	}
+	rels := []types.RelationshipRecord{{FromID: "0000000000000000", ToID: "Foo", Kind: "EXTENDS"}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != "bbbbbbbbbbbbbbbb" {
+		t.Fatalf("kind-hint EXTENDS: ToID=%s", rels[0].ToID)
+	}
+	if stats.Rewritten != 1 {
+		t.Fatalf("expected 1 rewrite, got %+v", stats)
+	}
+}
+
+func TestReferences_KindHintMissingStillAmbiguous(t *testing.T) {
+	// Same setup as the disambiguation test, but the relationship's Kind
+	// doesn't bias toward any family → still ambiguous, stub preserved.
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "Operation", "Foo", "a.py"),
+		entAt("bbbbbbbbbbbbbbbb", "Component", "Foo", "b.py"),
+	}
+	rels := []types.RelationshipRecord{{FromID: "0000000000000000", ToID: "Foo", Kind: "USES"}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != "Foo" {
+		t.Fatalf("hint-missing: ToID was rewritten to %s", rels[0].ToID)
+	}
+	if stats.Ambiguous != 1 {
+		t.Fatalf("expected 1 ambiguous, got %+v", stats)
+	}
+}
+
+func TestBuildLocationIndex(t *testing.T) {
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "Component", "Foo", "a.py"),
+		entAt("bbbbbbbbbbbbbbbb", "Component", "Bar", "a.py"),
+		// Duplicate (file, name) → dropped.
+		entAt("cccccccccccccccc", "Component", "Foo", "a.py"),
+		entAt("dddddddddddddddd", "Component", "Foo", "b.py"),
+	}
+	loc := BuildLocationIndex(entities)
+	if loc["a.py"]["Bar"] != "bbbbbbbbbbbbbbbb" {
+		t.Fatalf("a.py/Bar: %s", loc["a.py"]["Bar"])
+	}
+	if _, dup := loc["a.py"]["Foo"]; dup {
+		t.Fatalf("a.py/Foo should be dropped as ambiguous; got %s", loc["a.py"]["Foo"])
+	}
+	if loc["b.py"]["Foo"] != "dddddddddddddddd" {
+		t.Fatalf("b.py/Foo: %s", loc["b.py"]["Foo"])
 	}
 }
