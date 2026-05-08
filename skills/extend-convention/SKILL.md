@@ -52,12 +52,12 @@ Run, against the user's repo:
 archigraph index <repo>          # if not already indexed
 ```
 
-Then via MCP, with the repo's CWD active so `whoami` resolves correctly:
+Then via MCP, with the repo's CWD active so `archigraph_whoami` resolves correctly:
 
-- `graph_stats(repo_filter=["<repo>"])` — top entity kinds and edge kinds tell you what the indexer found.
-- `search(question="entry points")` — confirms what runs the app.
-- `search(question="public API surface")` — confirms what's exposed.
-- `list_clusters(repo_filter=["<repo>"])` — confirms the natural module boundary.
+- `archigraph_graph_stats(repo_filter=["<repo>"])` — top entity kinds and edge kinds tell you what the indexer found.
+- `archigraph_search(question="entry points")` — confirms what runs the app.
+- `archigraph_search(question="public API surface")` — confirms what's exposed.
+- `archigraph_list_clusters(repo_filter=["<repo>"])` — confirms the natural module boundary.
 
 Read at most ~10 source files to confirm structural assumptions. Do not read the whole repo — the question is structural, not behavioral.
 
@@ -69,13 +69,13 @@ You must ask, even if the codebase suggests answers:
 2. **Public surface.** Which of these does the framework consider "public":
    - HTTP routes / RPC services / CLI entries / package exports / event handlers / scheduled tasks / native modules / IaC outputs?
    - Anything else specific to the stack?
-3. **Module shape.** What is the directory layout the framework expects or its community has standardized on? Are there places where `list_clusters` will reliably mis-cluster?
+3. **Module shape.** What is the directory layout the framework expects or its community has standardized on? Are there places where `archigraph_list_clusters` will reliably mis-cluster?
 4. **Entry points.** What file does the framework start at? What declares config? What declares dependencies?
 5. **Dynamic edges.** What runtime couplings does the stack create that static analysis misses? List 2-5 patterns. (Examples to prompt the user with: middleware ordering, signal dispatch, plugin discovery, dependency injection containers, ARN references, label selectors.)
 6. **Deployment signals.** How does this stack typically deploy? Containers, serverless, static hosting, on-prem? What configuration files are involved?
 7. **Manifest files.** Which files declare dependencies? Which lockfile is canonical?
 8. **Cross-cutting pitfalls.** What is the top "gotcha" for a new engineer joining a project on this stack? Aim for 2-4 items.
-9. **Cross-repo signals.** How does a service on this stack typically connect to other services? Which signals does archigraph's `list_link_candidates` need to trust by default?
+9. **Cross-repo signals.** How does a service on this stack typically connect to other services? Which signals does archigraph's `archigraph_list_link_candidates` need to trust by default?
 
 ### Step 4 — Draft the convention
 

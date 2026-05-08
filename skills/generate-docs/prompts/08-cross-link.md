@@ -17,15 +17,15 @@ Broken links are auto-fixed where the target is unambiguous; otherwise log them 
 ## Step 2 — Cross-repo link candidates
 
 ```
-list_link_candidates(limit=200)
+archigraph_list_link_candidates(limit=200)
 ```
 
 For each candidate:
 
 ```
-describe(label_or_id="<from>")
-describe(label_or_id="<to>")
-trace(source="<from>", target="<to>")
+archigraph_describe(label_or_id="<from>")
+archigraph_describe(label_or_id="<to>")
+archigraph_trace(source="<from>", target="<to>")
 ```
 
 Decide:
@@ -37,7 +37,7 @@ Decide:
 Resolve each:
 
 ```
-resolve_link_candidate(
+archigraph_resolve_link_candidate(
   candidate_id="<id>",
   decision="accept" | "reject",
   reason="<short explanation>",
@@ -52,13 +52,13 @@ Record every decision in `~/.archigraph/groups/<group>/docs/cross-links.md` so a
 Anything that blocked a doc page in earlier passes shows up in:
 
 ```
-list_enrichment_candidates(limit=100)
+archigraph_list_enrichment_candidates(limit=100)
 ```
 
 For each:
 
-- If you can answer it from the docs you just wrote, call `submit_enrichment(candidate_id=..., value=..., confidence=...)`.
-- If you cannot, call `reject_enrichment(candidate_id=..., reason=...)`.
+- If you can answer it from the docs you just wrote, call `archigraph_submit_enrichment(candidate_id=..., value=..., confidence=...)`.
+- If you cannot, call `archigraph_reject_enrichment(candidate_id=..., reason=...)`.
 - If a human must decide, leave it alone and list it in the cross-link report under "Human-required enrichment".
 
 ## Step 4 — Report

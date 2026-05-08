@@ -6,7 +6,7 @@
 
 ## Context
 
-ADR-004 establishes that a single MCP process per machine serves every registered group. That decision shifts a question onto every tool call: **which group is this call about?** With ten groups registered, a tool like `search("how does authentication work?")` is ambiguous unless the caller specifies a scope.
+ADR-004 establishes that a single MCP process per machine serves every registered group. That decision shifts a question onto every tool call: **which group is this call about?** With ten groups registered, a tool like `archigraph_search("how does authentication work?")` is ambiguous unless the caller specifies a scope.
 
 Two failure modes to avoid:
 
@@ -25,15 +25,15 @@ archigraph implements a three-step resolution cascade for every tool call that n
 
 3. **Singleton fallback third.** If steps 1 and 2 fail and the registry holds exactly one group, use that group. Otherwise, return a structured error explaining the ambiguity and listing registered groups, so the agent can re-issue with an explicit `group` argument.
 
-A new `whoami()` MCP tool exposes the inferred group + repo + resolution-source for the current caller session. Agents can call `whoami` for self-orientation when they are uncertain, and the tool's response is itself a teaching signal about how routing works.
+A new `archigraph_whoami()` MCP tool exposes the inferred group + repo + resolution-source for the current caller session. Agents can call `archigraph_whoami` for self-orientation when they are uncertain, and the tool's response is itself a teaching signal about how routing works.
 
 ## Consequences
 
 ### Positive
-- The common case ("agent is working inside a registered repo") requires no extra arguments; the agent calls `search` or any other tool naturally and routing happens silently.
+- The common case ("agent is working inside a registered repo") requires no extra arguments; the agent calls `archigraph_search` or any other tool naturally and routing happens silently.
 - Cross-group queries are explicit and unambiguous via the `group` argument.
 - The error path is informative rather than guessing; agents fail loudly and recover correctly.
-- `whoami` is a small tool that pays back many agent-side debugging conversations.
+- `archigraph_whoami` is a small tool that pays back many agent-side debugging conversations.
 
 ### Negative
 - Reliable CWD propagation depends on the host integration. Agents whose hosts do not pass CWD metadata fall through to step 3 and may hit the ambiguity error more often. Mitigation: the error message tells them exactly what to do.
