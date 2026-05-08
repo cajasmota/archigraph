@@ -268,3 +268,42 @@ func TestCrossFileBareNameResolution(t *testing.T) {
 	_ = want // shape-only assertion: the resolver does not synthesise IDs,
 	// it only rewrites bare-name to_id values found in the merged set.
 }
+
+// TestPass4Algorithms_AttributesPresent runs the orchestrator on the Go
+// crossfile fixture with and without --skip-pass=algorithms; with Pass 4 on
+// every entity should have community_id/centrality/pagerank populated and the
+// document should expose communities/algorithm_stats. With Pass 4 off, those
+// fields stay nil/empty.
+func TestPass4Algorithms_AttributesPresent(t *testing.T) {
+	full := runIndexerOn(t, "testdata/crossfile_go", "crossfile_go", nil)
+	skipped := runIndexerOn(t, "testdata/crossfile_go", "crossfile_go", []string{"algorithms"})
+
+	if full.AlgorithmStats == nil {
+		t.Fatal("full run: AlgorithmStats nil")
+	}
+	if len(full.Communities) == 0 {
+		t.Fatal("full run: Communities empty")
+	}
+	withAttrs := 0
+	for _, e := range full.Entities {
+		if e.CommunityID != nil && e.PageRank != nil && e.Centrality != nil {
+			withAttrs++
+		}
+	}
+	if withAttrs == 0 {
+		t.Fatal("full run: no entity has community_id+pagerank+centrality")
+	}
+
+	if skipped.AlgorithmStats != nil {
+		t.Errorf("skipped run: AlgorithmStats should be nil, got %+v", skipped.AlgorithmStats)
+	}
+	if len(skipped.Communities) != 0 {
+		t.Errorf("skipped run: Communities should be empty, got %d", len(skipped.Communities))
+	}
+	for _, e := range skipped.Entities {
+		if e.CommunityID != nil || e.PageRank != nil || e.Centrality != nil {
+			t.Errorf("skipped run: entity %s has algo attrs set", e.ID)
+			break
+		}
+	}
+}
