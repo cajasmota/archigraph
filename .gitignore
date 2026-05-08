@@ -1,0 +1,32 @@
+# Build artifacts
+/dist/
+/build/
+*.exe
+*.dll
+*.so
+*.dylib
+archigraph
+archigraph-*
+
+# Test
+*.test
+*.out
+coverage.out
+coverage.html
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Local-only planning files
+BACKLOG.md
+SCRATCH.md
+
+# Go module cache
+/vendor/
