@@ -92,6 +92,24 @@ func TestDynamicPatterns_Catalog(t *testing.T) {
 		{"interpolated_template_js", "javascript", "`prefix-${name}-suffix`", true},
 		{"interpolated_template_unknown", "", "`prefix-${name}-suffix`", true},
 
+		// ---- Bare-identifier forms (issue #90) ---------------------
+		// Per-language extractors emit only the leaf callee identifier
+		// for call sites (ToID="getattr" for `getattr(...)`). The
+		// catalog must recognize these bare-name shapes so dynamic
+		// disposition is non-zero on real corpora.
+		{"py_bare_getattr", "python", `getattr`, true},
+		{"py_bare_setattr", "python", `setattr`, true},
+		{"py_bare_eval", "python", `eval`, true},
+		{"py_bare_exec", "python", `exec`, true},
+		{"py_bare_dunder_import", "python", `__import__`, true},
+		{"rb_bare_send_id", "ruby", `send`, true},
+		{"rb_bare_public_send_id", "ruby", `public_send`, true},
+		{"rb_bare_dunder_send_id", "ruby", `__send__`, true},
+		{"rb_bare_define_method_id", "ruby", `define_method`, true},
+		{"rb_bare_instance_eval_id", "ruby", `instance_eval`, true},
+		{"rb_bare_class_eval_id", "ruby", `class_eval`, true},
+		{"jvm_bare_forName", "java", `forName`, true},
+
 		// ---- Negative cases (must NOT be dynamic) ------------------
 		{"plain_kindname", "", `Function:Hello`, false},
 		{"plain_bare_name", "", `Foo`, false},
