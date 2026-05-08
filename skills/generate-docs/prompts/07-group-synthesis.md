@@ -20,8 +20,8 @@ Tie the per-repo outputs into one group-level page. This page is what an executi
 ### Step 1 — Cross-group queries
 
 ```
-search(question="how do these services communicate", repo_filter=null, depth=3, token_budget=1500)
-search(question="cross-repo dependencies", repo_filter=null, depth=3, token_budget=1200)
+archigraph_search(question="how do these services communicate", repo_filter=null, depth=3, token_budget=1500)
+archigraph_search(question="cross-repo dependencies", repo_filter=null, depth=3, token_budget=1200)
 ```
 
 `repo_filter=null` triggers the cross-group summary-first behavior described in `SKILL.md`.
@@ -29,7 +29,7 @@ search(question="cross-repo dependencies", repo_filter=null, depth=3, token_budg
 ### Step 2 — Confirm cross-repo edges
 
 ```
-list_link_candidates(limit=100)
+archigraph_list_link_candidates(limit=100)
 ```
 
 Anything with `status=accepted` is a confirmed cross-repo edge — describe these in the synthesis. Pending candidates are not facts; mention them only as "potential coupling under review."
@@ -52,7 +52,7 @@ Every code identifier in every heading must be backticked. The synthesis page is
 ### Step 5 — Save
 
 ```
-save_finding(
+archigraph_save_finding(
   question="What is the synthesized architecture of the <group> group?",
   answer="<file: ~/.archigraph/groups/<group>/docs/group-synthesis.md>",
   type="synthesis",

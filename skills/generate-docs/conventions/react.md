@@ -35,7 +35,7 @@ src/
   routes/           # or app/ for Next.js
 ```
 
-A `list_clusters` cluster usually maps to one feature folder. When two features share a hook in `shared/hooks/`, that hook shows up as central in both communities — describe it in `shared`'s module page, not in either feature.
+A `archigraph_list_clusters` cluster usually maps to one feature folder. When two features share a hook in `shared/hooks/`, that hook shows up as central in both communities — describe it in `shared`'s module page, not in either feature.
 
 ## Entry points (Pass 3)
 
@@ -82,4 +82,4 @@ A React repo connects out via:
 - WebSocket / SSE — note both ends.
 - Shared component package — if the repo consumes a sibling component library, that's a static import edge.
 
-For HTTP edges, the path is the most reliable join key. When `list_link_candidates` proposes `<this repo>.api/foo` → `<backend repo>.routes.foo`, accept if the path matches; the user's intent in question 10 of Pass 0 should already have predicted these.
+For HTTP edges, the path is the most reliable join key. When `archigraph_list_link_candidates` proposes `<this repo>.api/foo` → `<backend repo>.routes.foo`, accept if the path matches; the user's intent in question 10 of Pass 0 should already have predicted these.

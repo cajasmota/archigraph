@@ -121,7 +121,7 @@ func TestEmptyRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "whoami", nil)
+	res := callTool(t, srv, "archigraph_whoami", nil)
 	txt := resultText(res)
 	if !strings.Contains(txt, "\"error\"") {
 		t.Errorf("expected error in whoami output for empty registry, got: %s", txt)
@@ -185,7 +185,7 @@ func TestGetNodeViaIndex(t *testing.T) {
 	writeGraph(t, repo, fixtureDoc("r1"))
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
-	res := callTool(t, srv, "describe", map[string]any{"label_or_id": "DashboardScreen"})
+	res := callTool(t, srv, "archigraph_describe", map[string]any{"label_or_id": "DashboardScreen"})
 	txt := resultText(res)
 	if !strings.Contains(txt, "DashboardScreen") {
 		t.Fatalf("expected DashboardScreen in result, got: %s", txt)
@@ -223,7 +223,7 @@ func TestShortestPathCrossRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "trace", map[string]any{"source": "rA::a1", "target": "rB::a4"})
+	res := callTool(t, srv, "archigraph_trace", map[string]any{"source": "rA::a1", "target": "rB::a4"})
 	txt := resultText(res)
 	if !strings.Contains(txt, "\"crosses_repos\": true") {
 		t.Fatalf("expected crosses_repos=true, got: %s", txt)
@@ -300,11 +300,11 @@ func TestLinkCandidateRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	listRes := callTool(t, srv, "list_link_candidates", map[string]any{})
+	listRes := callTool(t, srv, "archigraph_list_link_candidates", map[string]any{})
 	if !strings.Contains(resultText(listRes), "c1") {
 		t.Fatalf("expected c1 in list, got: %s", resultText(listRes))
 	}
-	resolveRes := callTool(t, srv, "resolve_link_candidate", map[string]any{
+	resolveRes := callTool(t, srv, "archigraph_resolve_link_candidate", map[string]any{
 		"candidate_id": "c1", "decision": "accept",
 	})
 	if strings.Contains(resultText(resolveRes), "error") {
@@ -333,11 +333,11 @@ func TestEnrichmentCandidateRoundTrip(t *testing.T) {
 	_ = os.WriteFile(candPath, d, 0o644)
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
-	listRes := callTool(t, srv, "list_enrichment_candidates", nil)
+	listRes := callTool(t, srv, "archigraph_list_enrichment_candidates", nil)
 	if !strings.Contains(resultText(listRes), "e1") {
 		t.Fatalf("expected e1 in list: %s", resultText(listRes))
 	}
-	subRes := callTool(t, srv, "submit_enrichment", map[string]any{
+	subRes := callTool(t, srv, "archigraph_submit_enrichment", map[string]any{
 		"candidate_id": "e1", "value": "controls dashboard", "confidence": 0.9, "reason": "test",
 	})
 	if strings.Contains(resultText(subRes), "error") {
@@ -359,11 +359,11 @@ func TestTelemetryIncrements(t *testing.T) {
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
 	for i := 0; i < 3; i++ {
-		callTool(t, srv, "whoami", nil)
+		callTool(t, srv, "archigraph_whoami", nil)
 	}
 	snap := srv.Tel.Snapshot()
 	tools := snap["tools"].(map[string]any)
-	w := tools["whoami"].(map[string]any)
+	w := tools["archigraph_whoami"].(map[string]any)
 	if int(w["calls"].(int)) < 3 {
 		t.Fatalf("expected calls >= 3, got %v", w["calls"])
 	}
@@ -388,13 +388,13 @@ func TestPerRepoUnavailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "graph_stats", nil)
+	res := callTool(t, srv, "archigraph_graph_stats", nil)
 	txt := resultText(res)
 	if !strings.Contains(txt, "unavailable") {
 		t.Errorf("expected 'unavailable' in graph_stats, got: %s", txt)
 	}
 	// good repo still queryable
-	res2 := callTool(t, srv, "describe", map[string]any{"label_or_id": "DashboardScreen"})
+	res2 := callTool(t, srv, "archigraph_describe", map[string]any{"label_or_id": "DashboardScreen"})
 	if !strings.Contains(resultText(res2), "DashboardScreen") {
 		t.Errorf("expected good repo to serve describe, got: %s", resultText(res2))
 	}
@@ -408,7 +408,7 @@ func TestQueryGraphRendersCompact(t *testing.T) {
 	writeGraph(t, repo, fixtureDoc("r1"))
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
-	res := callTool(t, srv, "search", map[string]any{
+	res := callTool(t, srv, "archigraph_search", map[string]any{
 		"question":     "rareUniqueWidget",
 		"depth":        1,
 		"token_budget": 800,
@@ -439,9 +439,9 @@ func TestToolNameSurface(t *testing.T) {
 		registered[st.Tool.Name] = true
 	}
 	wantPresent := []string{
-		"search", "describe", "related", "trace",
-		"list_clusters", "save_finding", "get_source",
-		"whoami", "recent_activity", "graph_stats", "get_telemetry",
+		"archigraph_search", "archigraph_describe", "archigraph_related", "archigraph_trace",
+		"archigraph_list_clusters", "archigraph_save_finding", "archigraph_get_source",
+		"archigraph_whoami", "archigraph_recent_activity", "archigraph_graph_stats", "archigraph_get_telemetry",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -451,6 +451,10 @@ func TestToolNameSurface(t *testing.T) {
 	wantAbsent := []string{
 		"query_graph", "get_node", "get_neighbors", "shortest_path",
 		"list_communities", "save_result", "get_node_source",
+		// Refs #62: generic names collide with other MCP servers; must be prefixed.
+		"search", "describe", "related", "trace",
+		"list_clusters", "save_finding", "get_source",
+		"whoami", "recent_activity", "graph_stats", "get_telemetry",
 	}
 	for _, n := range wantAbsent {
 		if registered[n] {

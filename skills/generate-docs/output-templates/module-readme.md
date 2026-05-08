@@ -8,7 +8,7 @@
 | ------ | ---- | ---- | ---- |
 | `<entity>` | Component\|Module\|Function\|Class | `<file:line>` | <one line> |
 
-> Pulled from `search` + `related`. Sort by centrality. Entity names always backticked.
+> Pulled from `archigraph_search` + `archigraph_related`. Sort by centrality. Entity names always backticked.
 
 ## Responsibilities
 
@@ -39,4 +39,4 @@
 
 ## Known gaps
 
-> If `list_enrichment_candidates` returned anything blocking accurate documentation of this module, list it here. Each item: candidate id, what is unknown, what would unblock it.
+> If `archigraph_list_enrichment_candidates` returned anything blocking accurate documentation of this module, list it here. Each item: candidate id, what is unknown, what would unblock it.

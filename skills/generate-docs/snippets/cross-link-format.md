@@ -44,15 +44,15 @@ The order flow ultimately calls `BillingService` in the billing repo.
 
 This is the **lowest-fidelity option** — the reader cannot click through. Use it only when options 1 or 2 are unavailable.
 
-## When `list_link_candidates` returns a target
+## When `archigraph_list_link_candidates` returns a target
 
-A pending candidate from `list_link_candidates` is **not** a confirmed link. While it is `pending`, do not write it as a fact. Write it as:
+A pending candidate from `archigraph_list_link_candidates` is **not** a confirmed link. While it is `pending`, do not write it as a fact. Write it as:
 
 ```markdown
 > Pending cross-repo link: `<this entity>` may invoke `<other entity>` in `<other repo>`. Pass 8 will confirm.
 ```
 
-Once Pass 8 calls `resolve_link_candidate(...)` with `decision="accept"`, the candidate is a fact and can be cited normally.
+Once Pass 8 calls `archigraph_resolve_link_candidate(...)` with `decision="accept"`, the candidate is a fact and can be cited normally.
 
 ## When the target is in another archigraph group
 
