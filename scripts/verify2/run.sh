@@ -308,6 +308,24 @@ REPOS=(
   "prometheus-client-golang|https://github.com/prometheus/client_golang.git|main|go|prometheus"                  # Prometheus Go client metrics (#322) SHA 0ac87e14c303
   "sentry-javascript|https://github.com/getsentry/sentry-javascript.git|develop|typescript|packages"             # Sentry SDK init + capture (#322) SHA 298807727c81
   "dd-trace-js|https://github.com/DataDog/dd-trace-js.git|master|javascript|packages"                            # Datadog APM tracer instrumentations (#322) SHA 807fceb14d1a
+  # --- Validation + Lint configs (chunk T, umbrella #324) ---
+  # Validation libraries (Zod, Joi, Yup, Pydantic, class-validator) and lint
+  # configurations (ESLint, Prettier, Ruff, RuboCop, golangci-lint, Clippy)
+  # per Refs #87. Each entry pinned to the SHA recorded in the umbrella body.
+  # Sparse paths from the umbrella are documented in comments; the harness
+  # entry uses a full clone because the parser supports a single sparse path
+  # only and these fixtures list multiple paths each.
+  "zod|https://github.com/colinhacks/zod.git|main|typescript"                                                  # Zod schema definitions, refinements (#324) SHA b6071fc0ad2b paths src/ tests/
+  "joi|https://github.com/hapijs/joi.git|master|javascript"                                                    # Joi schema + extensions (#324) SHA 048fe05b8235 paths lib/ test/
+  "yup|https://github.com/jquense/yup.git|master|typescript"                                                   # Yup object/array validation (#324) SHA ff31eee8a2b1 paths src/ test/
+  "pydantic|https://github.com/pydantic/pydantic.git|main|python"                                              # pydantic v2 BaseModel + validators (#324) SHA 7a369fb502a4 paths pydantic/ tests/
+  "class-validator|https://github.com/typestack/class-validator.git|develop|typescript"                        # class-validator decorators (#324) SHA 2e1a5c27dbd6 paths src/ test/
+  "eslint|https://github.com/eslint/eslint.git|main|javascript"                                                # ESLint flat + legacy config (#324) SHA a4297918d264 paths lib/ conf/ eslint.config.js
+  "prettier|https://github.com/prettier/prettier.git|main|javascript"                                          # Prettier config + plugin discovery (#324) SHA f3db616d8389 paths .prettierrc* src/config/
+  "ruff|https://github.com/astral-sh/ruff.git|main|python"                                                     # ruff config + rule selectors (#324) SHA 8091ad11d15f paths ruff.toml pyproject.toml crates/
+  "rubocop|https://github.com/rubocop/rubocop.git|master|ruby"                                                 # RuboCop cop config + inheritance (#324) SHA 11262e1cdb45 paths .rubocop.yml config/
+  "golangci-lint|https://github.com/golangci/golangci-lint.git|main|go"                                        # golangci-lint linters + presets (#324) SHA ef3710ea5470 paths .golangci.yml pkg/config/
+  "rust-clippy|https://github.com/rust-lang/rust-clippy.git|master|rust"                                       # Clippy lint config + categories (#324) SHA f763854b8bd3 paths clippy.toml clippy_lints/
 )
 
 # Locate or build the archigraph binary. We build into the corpora dir
