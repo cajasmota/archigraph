@@ -424,6 +424,22 @@ REPOS=(
   "esp-idf|https://github.com/espressif/esp-idf.git|master|c|examples/get-started"                                                                             # ESP-IDF C — static linkage, IRAM_ATTR macros, FreeRTOS task entry points (#291) SHA 726f71499970
   "micropython|https://github.com/micropython/micropython.git|master|python|examples"                                                                          # MicroPython firmware-side scripts — top-level imports, no-stdlib subset (#291) SHA a595bbba6727
   "cortex-m-quickstart|https://github.com/rust-embedded/cortex-m-quickstart.git|master|rust|src"                                                                # Embedded no_std Rust — #![no_main], #[entry] attributes, panic handlers (#291) SHA 7a6a7c2c8b94
+
+  # --- Workflow/orchestration (chunk EE, umbrella #293) ---
+  # Workflow- and orchestration-engine repos so the harness exercises
+  # workflow/activity definitions, DAG schedulers, decorators, and BPMN
+  # process XML alongside Java service-task implementations. Each entry is
+  # pinned to the SHA recorded in the umbrella body and verified via
+  # git ls-remote --symref. Sparse paths from the umbrella are documented
+  # in trailing comments; entries use a full clone where the umbrella lists
+  # multiple sparse paths because the parser supports a single sparse path
+  # only.
+  "temporalio-samples-go|https://github.com/temporalio/samples-go.git|main|go"                                 # Temporal Go workflow.ExecuteActivity, signal/query handlers (#293) SHA c5c710404fbf paths helloworld/ child_workflow/ mutex/
+  "cadence-client|https://github.com/uber-go/cadence-client.git|master|go|internal"                            # Cadence Go client workflow registration, activity options (#293) SHA df799e0e8164
+  "airflow|https://github.com/apache/airflow.git|main|python|airflow/example_dags"                             # Airflow @dag/@task decorators, PythonOperator, schedules (#293) SHA c51127ef4357
+  "prefect|https://github.com/PrefectHQ/prefect.git|main|python"                                               # Prefect @flow/@task decorators, deployment specs (#293) SHA fe44ad330730 paths src/prefect/flows.py examples/
+  "camunda-bpm-examples|https://github.com/camunda/camunda-bpm-examples.git|master|java_bpmn|servicetask"      # Camunda .bpmn XML processes + Java JavaDelegate (#293) SHA 8b86bcf8c329
+  "dagster|https://github.com/dagster-io/dagster.git|master|python|examples/quickstart_etl"                    # Dagster @asset/@op/@job decorators, IO managers (#293) SHA 50915f9cab16
 )
 
 # Locate or build the archigraph binary. We build into the corpora dir
