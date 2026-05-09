@@ -1266,3 +1266,93 @@ func TestReferencesEmbedded_GoSamePackageMethodDispatch_NoFalseBind(t *testing.T
 		t.Fatalf("issue #148: foreign-package OtherType.handle wrongly bound to Mux.handle call")
 	}
 }
+
+// Issue #432 — testmap unknown-prod-file marker (`scope:operation:?#<qname>`).
+// The cross-language test→production extractor emits this shape when it
+// cannot infer the production file for a call inside a test body. With no
+// graph entity to bind to, the stub MUST be classified DispositionDynamic
+// instead of bug-extractor (it is, by design, a heuristic ref that drives
+// downstream coverage analysis — not a missing entity).
+func TestDisposition_TestmapUnknownProdFile_IsDynamic(t *testing.T) {
+	rels := []types.RelationshipRecord{{
+		FromID:     "0000000000000000",
+		ToID:       "scope:operation:?#requests.adapters.HTTPAdapter",
+		Kind:       "TESTS",
+		Properties: map[string]string{"language": "python"},
+	}}
+	idx := BuildIndex(nil)
+	stats := ReferencesWithAllowlist(rels, idx, nil)
+	if got := stats.DispositionCounts[DispositionDynamic]; got != 1 {
+		t.Fatalf("expected 1 dynamic for scope:operation:?#…, got %+v",
+			stats.DispositionCounts)
+	}
+	if got := stats.DispositionCounts[DispositionBugExtractor]; got != 0 {
+		t.Fatalf("expected 0 bug-extractor for scope:operation:?#…, got %+v",
+			stats.DispositionCounts)
+	}
+}
+
+// Issue #432 — when the testmap "?" form's qname matches a unique
+// QualifiedName in the graph, the structural-ref resolver should bind it
+// to that entity instead of leaving it as Dynamic. This recovers a
+// resolution credit for the small fraction of test-body references that
+// happen to use the entity's full QualifiedName verbatim.
+func TestReferences_TestmapUnknownProdFile_QnameRewrite(t *testing.T) {
+	entities := []types.EntityRecord{{
+		ID:            "aaaaaaaaaaaaaaaa",
+		Kind:          "Operation",
+		Name:          "extract_cookies_to_jar",
+		QualifiedName: "extract_cookies_to_jar",
+		SourceFile:    "src/requests/cookies.py",
+	}}
+	rels := []types.RelationshipRecord{{
+		FromID:     "0000000000000000",
+		ToID:       "scope:operation:?#extract_cookies_to_jar",
+		Kind:       "TESTS",
+		Properties: map[string]string{"language": "python"},
+	}}
+	idx := BuildIndex(entities)
+	stats := References(rels, idx)
+	if rels[0].ToID != "aaaaaaaaaaaaaaaa" {
+		t.Fatalf("expected qname rewrite, ToID=%s", rels[0].ToID)
+	}
+	if stats.ToRewritten != 1 {
+		t.Fatalf("expected ToRewritten=1, got %+v", stats)
+	}
+}
+
+// Issue #432 — Python `from .compat import urlparse` reaches the resolver
+// as a bare ToID `.compat.urlparse` (the leading dot is preserved by the
+// extractor so the resolver sees the relative form). These are intra-package
+// references the static resolver can't bind without project-layout
+// awareness; classify them DispositionDynamic to keep the metric honest
+// instead of inflating bug-resolver. Mirrors the rationale for
+// scope:component:import:local: stubs that the cross-language imports
+// extractor emits for the same shape.
+func TestDisposition_PythonRelativeImport_IsDynamic(t *testing.T) {
+	// Two SCOPE.Component placeholders sharing the relative-import name —
+	// the shape produced by the Python extractor when multiple files write
+	// `from .compat import urlparse`. Bare-name lookup is ambiguous and
+	// the leaf exists in the graph → without the new pattern the edge
+	// lands in DispositionBugResolver.
+	entities := []types.EntityRecord{
+		entAt("aaaaaaaaaaaaaaaa", "SCOPE.Component", ".compat.urlparse", "src/requests/auth.py"),
+		entAt("bbbbbbbbbbbbbbbb", "SCOPE.Component", ".compat.urlparse", "src/requests/adapters.py"),
+	}
+	rels := []types.RelationshipRecord{{
+		FromID:     "0000000000000000",
+		ToID:       ".compat.urlparse",
+		Kind:       "IMPORTS",
+		Properties: map[string]string{"language": "python"},
+	}}
+	idx := BuildIndex(entities)
+	stats := ReferencesWithAllowlist(rels, idx, nil)
+	if got := stats.DispositionCounts[DispositionDynamic]; got != 1 {
+		t.Fatalf("expected 1 dynamic for .compat.urlparse, got %+v",
+			stats.DispositionCounts)
+	}
+	if got := stats.DispositionCounts[DispositionBugResolver]; got != 0 {
+		t.Fatalf("expected 0 bug-resolver for .compat.urlparse, got %+v",
+			stats.DispositionCounts)
+	}
+}
