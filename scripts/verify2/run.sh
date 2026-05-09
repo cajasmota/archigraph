@@ -408,6 +408,22 @@ REPOS=(
   "MQTT.js|https://github.com/mqttjs/MQTT.js.git|main|typescript|src"                                          # MQTT publish/subscribe, topic filters, QoS (#323) SHA a4e9a92c8710 paths src/ test/
   "pion-webrtc|https://github.com/pion/webrtc.git|main|go"                                                     # WebRTC peer connection, data channels in Go (#323) SHA 9654161f9b69 paths /. examples/
   "mdn-dom-examples|https://github.com/mdn/dom-examples.git|main|javascript|web-sockets"                       # Native WebSocket usage examples (#323) SHA f8aa45c93985 paths server-sent-events/ web-sockets/
+  # --- Game/embedded (chunk CC, umbrella #291) ---
+  # Game-engine and embedded-systems sample fixtures, per Refs #87 corpus
+  # policy. Each entry pinned to the SHA recorded in umbrella #291 and
+  # verified via git ls-remote --symref against canonical upstream branches.
+  # Sparse-paths keep working trees small for the larger monorepos
+  # (EntityComponentSystemSamples, esp-idf); the remaining repos are small
+  # enough to clone in full. EpicGames/UnrealEngine is private; substituted
+  # 20tab/UnrealEnginePython (public C++ Unreal bindings) for `.h`/`.cpp`
+  # coverage per the umbrella body.
+  "EntityComponentSystemSamples|https://github.com/Unity-Technologies/EntityComponentSystemSamples.git|master|csharp|EntityComponentSystemSamples/ECSSamples"  # C# Unity ECS samples — [Serializable] MonoBehaviours, partial system structs, attribute-driven jobs (#291) SHA 6786a741ee1f
+  "UnrealEnginePython|https://github.com/20tab/UnrealEnginePython.git|master|cpp|Source/UnrealEnginePython/Public"                                            # C++17 Unreal-style headers — UCLASS/UPROPERTY macros, .h/.cpp split, namespaced bindings (#291) SHA 4b5da5bf4ca5
+  "bevy|https://github.com/bevyengine/bevy.git|main|rust|crates/bevy_ecs/src"                                                                                  # Rust ECS with heavy trait-bound generics, derive macros, workspace crates (#291) SHA 7dda2bc7fcd2
+  "arduino-examples|https://github.com/arduino/arduino-examples.git|main|cpp|examples"                                                                         # Arduino sketches — .ino (C++ flavour) global setup()/loop(), embedded idioms (#291) SHA 4c5fa7a66b42
+  "esp-idf|https://github.com/espressif/esp-idf.git|master|c|examples/get-started"                                                                             # ESP-IDF C — static linkage, IRAM_ATTR macros, FreeRTOS task entry points (#291) SHA 726f71499970
+  "micropython|https://github.com/micropython/micropython.git|master|python|examples"                                                                          # MicroPython firmware-side scripts — top-level imports, no-stdlib subset (#291) SHA a595bbba6727
+  "cortex-m-quickstart|https://github.com/rust-embedded/cortex-m-quickstart.git|master|rust|src"                                                                # Embedded no_std Rust — #![no_main], #[entry] attributes, panic handlers (#291) SHA 7a6a7c2c8b94
 )
 
 # Locate or build the archigraph binary. We build into the corpora dir
