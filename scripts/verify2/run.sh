@@ -326,6 +326,20 @@ REPOS=(
   "rubocop|https://github.com/rubocop/rubocop.git|master|ruby"                                                 # RuboCop cop config + inheritance (#324) SHA 11262e1cdb45 paths .rubocop.yml config/
   "golangci-lint|https://github.com/golangci/golangci-lint.git|main|go"                                        # golangci-lint linters + presets (#324) SHA ef3710ea5470 paths .golangci.yml pkg/config/
   "rust-clippy|https://github.com/rust-lang/rust-clippy.git|master|rust"                                       # Clippy lint config + categories (#324) SHA f763854b8bd3 paths clippy.toml clippy_lints/
+  # --- Serverless (chunk Z, umbrella #319) ---
+  # Function-only repos covering all major serverless platforms and Lambda
+  # runtimes. Exercises handler detection, function-config parsing
+  # (SAM/serverless/wrangler/netlify/vercel), and per-runtime entry points.
+  # Each entry pinned to the SHA recorded in umbrella #319.
+  "aws-lambda-developer-guide|https://github.com/awsdocs/aws-lambda-developer-guide.git|main|javascript|sample-apps"  # Lambda Node handler shape, SAM template.yaml (#319) SHA 8a681ab924e4
+  "aws-lambda-python-runtime-interface-client|https://github.com/aws/aws-lambda-python-runtime-interface-client.git|main|python|awslambdaric"  # Python Lambda runtime interface, handler bootstrap (#319) SHA f11e7c5c5cc7
+  "aws-lambda-java-libs|https://github.com/aws/aws-lambda-java-libs.git|main|java|aws-lambda-java-core"               # Java Lambda handler interfaces, event POJOs (#319) SHA c4dcbab4ffed
+  "aws-lambda-go|https://github.com/aws/aws-lambda-go.git|main|go|lambda"                                              # Go Lambda handler signatures, event types (#319) SHA 815d21f41769
+  "aws-lambda-rust-runtime|https://github.com/awslabs/aws-lambda-rust-runtime.git|main|rust|lambda-runtime"            # Rust Lambda runtime crate, handler macros (#319) SHA 01237499db5f
+  "vercel-examples|https://github.com/vercel/examples.git|main|typescript|edge-functions"                              # Vercel Edge/Serverless function shape, vercel.json (#319) SHA 72aaac1ba427
+  "netlify-functions|https://github.com/netlify/functions.git|main|typescript|src"                                     # Netlify Functions handler types, netlify.toml (#319) SHA c3f47247079e
+  "cloudflare-workers-sdk|https://github.com/cloudflare/workers-sdk.git|main|typescript|packages/wrangler"             # Cloudflare Workers fetch handler, wrangler.toml (#319) SHA dba84c225f41
+  "functions-framework-nodejs|https://github.com/GoogleCloudPlatform/functions-framework-nodejs.git|main|typescript|src"  # GCF Functions Framework HTTP/CloudEvent handlers (#319) SHA 243202d5e133
 )
 
 # Locate or build the archigraph binary. We build into the corpora dir
