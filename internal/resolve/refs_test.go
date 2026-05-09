@@ -656,14 +656,15 @@ func TestDisposition_ReflectionBuiltinsBeatExternal(t *testing.T) {
 	}
 }
 
-// TestStdlibBareNames_ExcludesReflectionBuiltins guards the synthesiser's
-// stop-list against regressions: reflection builtins must NOT appear in
-// stdlibBareNames, otherwise the synthesiser would re-acquire a foothold
-// for stamping them as "ext:<pkg>" before the resolver sees them. The
-// resolver's classifier still does the right thing thanks to the dynamic-
-// before-external ordering, but keeping these names out of the stop-list
-// preserves the original stub for downstream reporting (Refs #95).
-func TestStdlibBareNames_ExcludesReflectionBuiltins(t *testing.T) {
+// TestReflectionBuiltins_RecognisedAsDynamic asserts the resolver-side
+// invariant for issue #95: every reflection builtin we care about is
+// recognised as a dynamic pattern by isDynamicPatternLang for its
+// language. The companion synthesiser-side guard
+// (TestSynthesize_ReflectionBuiltinsLeftAlone in internal/external)
+// covers the stdlibBareNames stop-list directly; this test does not
+// inspect that map (it lives in another package and is unexported) —
+// it only checks the per-language dynamic catalog (Refs #95).
+func TestReflectionBuiltins_RecognisedAsDynamic(t *testing.T) {
 	t.Parallel()
 	// We import nothing from the external package here — that's a
 	// separate test in internal/external. This test verifies the
