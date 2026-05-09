@@ -214,6 +214,20 @@ var AllDispositions = []Disposition{
 // back to crossLangDynamicPatterns only.
 var (
 	pythonDynamicPatterns = []*regexp.Regexp{
+		// Issue #432 — Python relative-import targets. The Python extractor
+		// preserves the leading dot for `from .compat import urlparse` and
+		// `from ..views import View` (extractor.go:653-655); the resolver
+		// then sees a bare ToID like `.compat.urlparse` or `..views.View`.
+		// One SCOPE.Component placeholder is emitted per importing file
+		// for the same module path, so bare-name lookup is ambiguous in
+		// any project where two or more files share the relative-import
+		// path — driving the edge to bug-resolver despite the placeholder
+		// being bookkeeping rather than the imported symbol's source.
+		// A leading-dot bare path is unambiguously a relative-import
+		// reference; route to Dynamic, mirroring the precedent for
+		// `scope:component:import:local:` (isHeuristicScopeStub) which
+		// the cross-language imports extractor emits for the same shape.
+		regexp.MustCompile(`^\.+[\w.]*$`),
 		// Bare-identifier forms: per-language extractors emit only the
 		// leaf callee identifier (e.g. ToID="getattr") for `getattr(...)`
 		// call sites. Without bare-name anchors none of the parens-
@@ -266,24 +280,24 @@ var (
 		// `before_request` etc. would collide trivially in Go / JS / Ruby.
 		//
 		// Mirrors the Rails ActionController DSL approach from #107.
-		regexp.MustCompile(`^route$`),                    // @app.route(...) / @bp.route(...)
-		regexp.MustCompile(`^add_url_rule$`),             // app.add_url_rule(...)
-		regexp.MustCompile(`^register_blueprint$`),       // app.register_blueprint(bp)
-		regexp.MustCompile(`^before_request$`),           // @app.before_request
-		regexp.MustCompile(`^before_first_request$`),     // @app.before_first_request (legacy)
-		regexp.MustCompile(`^after_request$`),            // @app.after_request
-		regexp.MustCompile(`^teardown_request$`),         // @app.teardown_request
-		regexp.MustCompile(`^teardown_appcontext$`),      // @app.teardown_appcontext
-		regexp.MustCompile(`^errorhandler$`),             // @app.errorhandler(404)
-		regexp.MustCompile(`^register_error_handler$`),   // app.register_error_handler(...)
-		regexp.MustCompile(`^shell_context_processor$`),  // @app.shell_context_processor
-		regexp.MustCompile(`^context_processor$`),        // @app.context_processor
-		regexp.MustCompile(`^template_filter$`),          // @app.template_filter(...)
-		regexp.MustCompile(`^template_test$`),            // @app.template_test(...)
-		regexp.MustCompile(`^template_global$`),          // @app.template_global(...)
-		regexp.MustCompile(`^url_value_preprocessor$`),   // @app.url_value_preprocessor
-		regexp.MustCompile(`^url_defaults$`),             // @app.url_defaults
-		regexp.MustCompile(`^before_app_request$`),       // blueprint scoped variants
+		regexp.MustCompile(`^route$`),                   // @app.route(...) / @bp.route(...)
+		regexp.MustCompile(`^add_url_rule$`),            // app.add_url_rule(...)
+		regexp.MustCompile(`^register_blueprint$`),      // app.register_blueprint(bp)
+		regexp.MustCompile(`^before_request$`),          // @app.before_request
+		regexp.MustCompile(`^before_first_request$`),    // @app.before_first_request (legacy)
+		regexp.MustCompile(`^after_request$`),           // @app.after_request
+		regexp.MustCompile(`^teardown_request$`),        // @app.teardown_request
+		regexp.MustCompile(`^teardown_appcontext$`),     // @app.teardown_appcontext
+		regexp.MustCompile(`^errorhandler$`),            // @app.errorhandler(404)
+		regexp.MustCompile(`^register_error_handler$`),  // app.register_error_handler(...)
+		regexp.MustCompile(`^shell_context_processor$`), // @app.shell_context_processor
+		regexp.MustCompile(`^context_processor$`),       // @app.context_processor
+		regexp.MustCompile(`^template_filter$`),         // @app.template_filter(...)
+		regexp.MustCompile(`^template_test$`),           // @app.template_test(...)
+		regexp.MustCompile(`^template_global$`),         // @app.template_global(...)
+		regexp.MustCompile(`^url_value_preprocessor$`),  // @app.url_value_preprocessor
+		regexp.MustCompile(`^url_defaults$`),            // @app.url_defaults
+		regexp.MustCompile(`^before_app_request$`),      // blueprint scoped variants
 		regexp.MustCompile(`^before_app_first_request$`),
 		regexp.MustCompile(`^after_app_request$`),
 		regexp.MustCompile(`^teardown_app_request$`),
@@ -294,8 +308,8 @@ var (
 		regexp.MustCompile(`^app_template_global$`),
 		regexp.MustCompile(`^app_url_value_preprocessor$`),
 		regexp.MustCompile(`^app_url_defaults$`),
-		regexp.MustCompile(`^record$`),       // @bp.record (blueprint setup-state hook)
-		regexp.MustCompile(`^record_once$`),  // @bp.record_once
+		regexp.MustCompile(`^record$`),      // @bp.record (blueprint setup-state hook)
+		regexp.MustCompile(`^record_once$`), // @bp.record_once
 		// Flask CLI / click AppGroup decorator: `@bp.cli.command(...)` and
 		// `@app.cli.command(...)`. Extractor leaf is "command".
 		regexp.MustCompile(`^command$`),
@@ -1322,6 +1336,86 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 	if !strings.HasPrefix(stub, stubPrefixScope) {
 		return "", statusSkip, false
 	}
+	// Issue #432 — testmap "?" form: scope:operation:?#<qname>. The
+	// cross-language test→production extractor emits this 3-segment shape
+	// when the production file cannot be inferred (high/medium confidence
+	// calls inside a test body). The standard 6-segment structural-ref
+	// path can't match it. Try a QualifiedName lookup first; failing that
+	// hand off to isHeuristicScopeStub (Dynamic) via the parts-length
+	// guard below. The minority of these stubs whose qname is a unique
+	// graph entity (test bodies that reference symbols by full path —
+	// e.g. `requests.get` when only one entity has that qname) earn a
+	// resolution credit instead of being silently dropped to Dynamic.
+	if strings.HasPrefix(stub, "scope:operation:?#") {
+		qname := stub[len("scope:operation:?#"):]
+		if qname != "" {
+			if qid, ok := idx.byQualifiedName[qname]; ok {
+				if qid == "" {
+					// QualifiedName collision — fall through to Dynamic.
+					return "", statusUnmatched, true
+				}
+				return qid, statusRewritten, true
+			}
+		}
+		return "", statusUnmatched, true
+	}
+	// Issue #432 — testmap short-form: scope:operation:<file>#<name>.
+	// testFunctionRef + productionFunctionRef in
+	// internal/extractors/cross/testmap/extractor.go emit this 3-segment
+	// shape when the production file IS known (the extractor doesn't fill
+	// the language / subtype slots — they only matter for the 6-segment
+	// Format B). Probe the file+member index directly and fall back to a
+	// file-scoped name lookup; this resolves the FromID side of every
+	// TESTS edge (test functions live at known paths) and recovers the
+	// minority of high-confidence ToIDs whose prod file IS inferred.
+	if strings.HasPrefix(stub, "scope:operation:") && strings.IndexByte(stub, stubMemberDelim) > 0 {
+		rest := stub[len("scope:operation:"):]
+		if hash := strings.IndexByte(rest, stubMemberDelim); hash > 0 {
+			filePath := normalizePath(rest[:hash])
+			member := rest[hash+1:]
+			if filePath != "" && filePath != "?" && member != "" &&
+				!strings.Contains(filePath, ":") {
+				// First try (file, name) — test functions defined at the
+				// top level of a file (`def test_foo():`) appear in the
+				// byLocation index keyed by their bare name.
+				if id, ok := idx.lookupLocationKind(filePath, member, operationKindFamily); ok {
+					return id, statusRewritten, true
+				}
+				if bucket, ok := idx.byLocation[filePath]; ok {
+					if id, ok := bucket[member]; ok && id != "" {
+						return id, statusRewritten, true
+					}
+				}
+				// Walk byMember[file] looking for any scope that contains
+				// this member name. testmap emits the bare method name
+				// (`test_list`) while the Python / JVM / Ruby extractors
+				// store class methods as `<class>.<member>` so the
+				// member-bucket key matches without us needing to know
+				// the enclosing class.
+				if fileBucket, ok := idx.byMember[filePath]; ok {
+					var match string
+					ambig := false
+					for _, scopeBucket := range fileBucket {
+						id, ok := scopeBucket[member]
+						if !ok || id == "" {
+							continue
+						}
+						if match != "" && match != id {
+							ambig = true
+							break
+						}
+						match = id
+					}
+					if ambig {
+						return "", statusAmbiguous, true
+					}
+					if match != "" {
+						return match, statusRewritten, true
+					}
+				}
+			}
+		}
+	}
 	parts := strings.SplitN(stub, stubDelim, stubScopeSegments)
 	if len(parts) != stubScopeSegments {
 		return "", statusUnmatched, true
@@ -1508,6 +1602,17 @@ func isHeuristicScopeStub(s string) bool {
 	// internal "the file is a component" markers; targets aren't real
 	// individual entities.
 	case strings.HasPrefix(s, "scope:component:file:"):
+		return true
+	// testmap unknown-prod-file marker (issue #432). The cross-language
+	// test→production extractor uses the literal "?" placeholder when it
+	// cannot infer the production file for a call inside a test body
+	// (resolver.go:213 — only convention-fallback ("low") confidence calls
+	// receive a prod-file guess). Without this branch every TESTS edge
+	// targeting a high/medium-confidence call lands in bug-extractor —
+	// the dominant residual on python/requests (96.13% of bug-extractor).
+	// See lookupStructural for the qname-rewrite branch that resolves the
+	// minority of these stubs whose qname matches a unique entity.
+	case strings.HasPrefix(s, "scope:operation:?#"):
 		return true
 	}
 	return false
