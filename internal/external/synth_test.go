@@ -453,7 +453,7 @@ func TestStdlibBareNames_NoCollisionNames(t *testing.T) {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			if _, ok := stdlibFunction(name); ok {
+			if _, ok := stdlibFunction(name, ""); ok {
 				t.Fatalf("stdlibFunction(%q) classified as stdlib bare-name; "+
 					"this name commonly collides with user-defined methods "+
 					"and must not synthesise a placeholder", name)
@@ -488,7 +488,7 @@ func TestStdlibBareNames_RustAssertMacros(t *testing.T) {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			subtype, ok := stdlibFunction(name)
+			subtype, ok := stdlibFunction(name, "")
 			if !ok {
 				t.Fatalf("stdlibFunction(%q) = (_, false); want classified as stdlib bare-name", name)
 			}
@@ -692,5 +692,178 @@ func TestSynthesize_PhpAppNamespaceLeftAlone(t *testing.T) {
 		if doc.Relationships[k].ToID != s {
 			t.Fatalf("case %q: ToID was rewritten to %q, expected unchanged", s, doc.Relationships[k].ToID)
 		}
+	}
+}
+
+// TestGoBareNames_ClassifiedWhenLangIsGo locks in issue #103: bare
+// PascalCase Go stdlib/framework method names that arrive at the
+// resolver after the extractor strips the receiver (e.g. `w.Write(buf)`
+// → `Write`, `r.ServeHTTP(...)` → `ServeHTTP`) must classify as
+// stdlib bare-names — but only when the source entity's language is
+// "go". The same name in another language must fall through to the
+// language-agnostic path so user-defined methods aren't shadowed.
+func TestGoBareNames_ClassifiedWhenLangIsGo(t *testing.T) {
+	names := []string{
+		"ServeHTTP",
+		"ListenAndServe",
+		"HandleFunc",
+		"WriteHeader",
+		"EncodeToString",
+		"DecodeString",
+		"ConstantTimeCompare",
+		"Atoi",
+		"Itoa",
+		"Quote",
+		"MethodFunc",
+		"AbortWithStatus",
+	}
+	for _, name := range names {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			// Direct stdlibFunction probe with lang="go" must classify.
+			subtype, ok := stdlibFunction(name, "go")
+			if !ok {
+				t.Fatalf("stdlibFunction(%q, \"go\") = (_, false); want classified as stdlib bare-name", name)
+			}
+			if subtype != "function" {
+				t.Fatalf("stdlibFunction(%q, \"go\") subtype=%q, want %q", name, subtype, "function")
+			}
+			// End-to-end: Synthesize on a document whose FromID entity
+			// is tagged language="go" rewrites the edge to ext:<name>.
+			doc := &graph.Document{
+				Entities: []graph.Entity{{
+					ID:       "go-src",
+					Name:     "caller",
+					Kind:     "function",
+					Language: "go",
+				}},
+				Relationships: []graph.Relationship{
+					{ID: "rel-1", FromID: "go-src", ToID: name, Kind: "CALLS"},
+				},
+			}
+			stats := Synthesize(doc)
+			if stats.Synthesized != 1 {
+				t.Fatalf("Synthesize(%q): synthesized=%d, want 1", name, stats.Synthesized)
+			}
+			want := "ext:" + name
+			if doc.Relationships[0].ToID != want {
+				t.Fatalf("ToID=%q, want %q", doc.Relationships[0].ToID, want)
+			}
+		})
+	}
+}
+
+// TestGoBareNames_NotClassifiedForOtherLanguages confirms the
+// language gate: the same Go-only Pascal-case names must NOT be
+// rewritten when the source entity's language is anything other than
+// "go". Without the gate, a user-defined `WriteHeader` method on a
+// Python or JS class would be shadowed by a synthesised placeholder.
+func TestGoBareNames_NotClassifiedForOtherLanguages(t *testing.T) {
+	names := []string{"ServeHTTP", "EncodeToString", "AbortWithStatus", "Atoi"}
+	otherLangs := []string{"python", "javascript", "rust", "java", ""}
+	for _, name := range names {
+		for _, lang := range otherLangs {
+			name, lang := name, lang
+			t.Run(name+"/"+lang, func(t *testing.T) {
+				t.Parallel()
+				if _, ok := stdlibFunction(name, lang); ok {
+					t.Fatalf("stdlibFunction(%q, %q) classified; want fall-through "+
+						"(name is gated to lang=\"go\" only)", name, lang)
+				}
+				doc := &graph.Document{
+					Entities: []graph.Entity{{
+						ID:       "src",
+						Name:     "caller",
+						Kind:     "function",
+						Language: lang,
+					}},
+					Relationships: []graph.Relationship{
+						{ID: "rel-1", FromID: "src", ToID: name, Kind: "CALLS"},
+					},
+				}
+				stats := Synthesize(doc)
+				if stats.Synthesized != 0 {
+					t.Fatalf("Synthesize(%q, lang=%q): synthesized=%d, want 0",
+						name, lang, stats.Synthesized)
+				}
+				if doc.Relationships[0].ToID != name {
+					t.Fatalf("ToID=%q, want %q (must not be rewritten for non-Go)",
+						doc.Relationships[0].ToID, name)
+				}
+			})
+		}
+	}
+}
+
+// TestGoBareNames_UserMethodCollisionExclusions confirms that names
+// rejected as too-likely-to-collide-with-user-methods stay
+// fall-through even with lang="go". Per issue #103 hard rules:
+// Get/Post/Put/Delete/Use must NOT be in the allowlist; per the
+// internal review Write/Header/Handle were also excluded as too
+// collision-prone (io.Writer.Write user-implementations, Header()
+// accessors, generic Handle handlers).
+func TestGoBareNames_UserMethodCollisionExclusions(t *testing.T) {
+	excluded := []string{
+		// Hard-rule exclusions from issue #103.
+		"Get", "Post", "Put", "Delete", "Use",
+		// Internal-review exclusions (collision-prone PascalCase).
+		"Write", "Header", "Handle",
+	}
+	for _, name := range excluded {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			if _, ok := stdlibFunction(name, "go"); ok {
+				t.Fatalf("stdlibFunction(%q, \"go\") classified; want fall-through "+
+					"(name is too-likely to be a user-defined method)", name)
+			}
+			doc := &graph.Document{
+				Entities: []graph.Entity{{
+					ID:       "go-src",
+					Name:     "caller",
+					Kind:     "function",
+					Language: "go",
+				}},
+				Relationships: []graph.Relationship{
+					{ID: "rel-1", FromID: "go-src", ToID: name, Kind: "CALLS"},
+				},
+			}
+			stats := Synthesize(doc)
+			if stats.Synthesized != 0 {
+				t.Fatalf("Synthesize(%q): synthesized=%d, want 0 (excluded)", name, stats.Synthesized)
+			}
+			if doc.Relationships[0].ToID != name {
+				t.Fatalf("ToID=%q, want %q (excluded name must not be rewritten)",
+					doc.Relationships[0].ToID, name)
+			}
+		})
+	}
+}
+
+// TestGoBareNames_UnknownGoMethodFallsThrough confirms that a
+// PascalCase Go-source method name that ISN'T in the goBareNames
+// allowlist still falls through normally, so genuine missing-
+// resolution bugs continue to surface in bug-extractor.
+func TestGoBareNames_UnknownGoMethodFallsThrough(t *testing.T) {
+	name := "MyHandler" // Not stdlib; user-defined method.
+	doc := &graph.Document{
+		Entities: []graph.Entity{{
+			ID:       "go-src",
+			Name:     "caller",
+			Kind:     "function",
+			Language: "go",
+		}},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "go-src", ToID: name, Kind: "CALLS"},
+		},
+	}
+	stats := Synthesize(doc)
+	if stats.Synthesized != 0 {
+		t.Fatalf("Synthesize(%q): synthesized=%d, want 0 (unknown user method)", name, stats.Synthesized)
+	}
+	if doc.Relationships[0].ToID != name {
+		t.Fatalf("ToID=%q, want %q (unknown name must not be rewritten)",
+			doc.Relationships[0].ToID, name)
 	}
 }

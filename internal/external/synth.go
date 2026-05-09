@@ -64,8 +64,17 @@ func Synthesize(doc *graph.Document) Stats {
 	// external that already exists in the document. Re-runs of this
 	// pass on the same document must be idempotent.
 	known := make(map[string]bool, len(doc.Entities))
+	// entityLang maps every entity ID to its declared language so the
+	// classifier can apply per-language bare-name allowlists (issue #103
+	// — Go stdlib/framework Pascal-case method names that arrive at the
+	// resolver after the extractor strips the receiver). Lookups against
+	// non-existent IDs return "" (the zero value), which falls back to
+	// the language-agnostic stop-list — matching pre-#103 behaviour for
+	// every relationship whose FromID isn't a known entity.
+	entityLang := make(map[string]string, len(doc.Entities))
 	for k := range doc.Entities {
 		known[doc.Entities[k].ID] = true
+		entityLang[doc.Entities[k].ID] = doc.Entities[k].Language
 	}
 
 	// First pass — collect every unique external name we want to
@@ -90,7 +99,7 @@ func Synthesize(doc *graph.Document) Stats {
 		if rel.ToID == "" || isHexID(rel.ToID) || strings.HasPrefix(rel.ToID, ExtIDPrefix) {
 			continue
 		}
-		canonical, subtype, ok := classifyExternal(rel.ToID, rel.Kind)
+		canonical, subtype, ok := classifyExternal(rel.ToID, rel.Kind, entityLang[rel.FromID])
 		if !ok {
 			continue
 		}
@@ -168,7 +177,7 @@ func Synthesize(doc *graph.Document) Stats {
 // Returns ("", "", false) when the stub doesn't look external — those
 // are left untouched and continue to count as "unmatched" in the
 // resolver stats.
-func classifyExternal(stub, relKind string) (canonical, subtype string, ok bool) {
+func classifyExternal(stub, relKind, lang string) (canonical, subtype string, ok bool) {
 	if stub == "" {
 		return "", "", false
 	}
@@ -351,7 +360,7 @@ func classifyExternal(stub, relKind string) (canonical, subtype string, ok bool)
 	}
 
 	// Stdlib function stop-list — bare names like "Println", "print".
-	if subtype, ok := stdlibFunction(name); ok {
+	if subtype, ok := stdlibFunction(name, lang); ok {
 		return name, subtype, true
 	}
 
@@ -443,9 +452,19 @@ func isNpmSegment(s string) bool {
 // the small per-language stop-list. Kept deliberately small — v1.0
 // catches the highest-volume bare-name calls without ballooning into
 // a full stdlib catalogue.
-func stdlibFunction(name string) (string, bool) {
+func stdlibFunction(name, lang string) (string, bool) {
 	if _, ok := stdlibBareNames[name]; ok {
 		return "function", true
+	}
+	// Per-language allowlists — gated so a Go-only Pascal-case name like
+	// "ServeHTTP" or "EncodeToString" doesn't shadow user-defined methods
+	// in other ecosystems. Fall through to ("", false) when lang is empty
+	// (relationships whose FromID isn't a known entity); the result
+	// matches the pre-gating behaviour for those edges.
+	if lang == "go" {
+		if _, ok := goBareNames[name]; ok {
+			return "function", true
+		}
 	}
 	return "", false
 }
@@ -603,6 +622,59 @@ var stdlibBareNames = map[string]struct{}{
 	// Per-language Rust prelude allowlist filed as follow-up.
 	"assert_eq": {},
 	"assert_ne": {},
+}
+
+// goBareNames is the Go-language-gated bare-Pascal stop-list (issue
+// #103). After the Go extractor strips the receiver from a method call
+// (`w.Write(buf)` → `Write`, `r.Header().Set(...)` → `Header`), the
+// resolver sees a bare PascalCase name that can't be matched to a local
+// entity and lands in bug-extractor. These names are stdlib method
+// identifiers from net/http, encoding/base64, encoding/hex, crypto/
+// subtle, fmt, and strconv — high-volume in Go web codebases (gin/chi/
+// echo) and extremely unlikely to be user-defined receiver methods on
+// a Go type (PascalCase + multi-word + tied to specific stdlib APIs).
+//
+// Conservative selection rule: include only names that are unambiguous
+// stdlib method identifiers OR have a strong stdlib idiom signature.
+// Single-word framework verbs (Get, Post, Put, Delete, Use) are
+// deliberately EXCLUDED — they collide trivially with user methods on
+// any domain type (Repository.Get, Service.Use, etc.). When doubt
+// exists about user-method collision, omit; a missed external is
+// strictly better than a synthesised placeholder shadowing a real
+// missing-resolution bug (lesson from #94).
+var goBareNames = map[string]struct{}{
+	// net/http server-side method receivers (ResponseWriter, Request,
+	// Handler, Server). Multi-word PascalCase, deeply tied to net/http
+	// — no plausible collision with user types.
+	"ServeHTTP":      {},
+	"ListenAndServe": {},
+	"HandleFunc":     {},
+	"WriteHeader":    {},
+	// "Write" / "Header" / "Handle" deliberately omitted: they are
+	// frequent user-method names (io.Writer.Write user-implementations,
+	// custom Header() accessors, generic Handle handlers) and gating by
+	// language alone is not enough to keep them safe.
+
+	// encoding/base64, encoding/hex — package-level helpers commonly
+	// invoked through a package-qualified call that the receiver-strip
+	// reduces to a bare name.
+	"EncodeToString": {},
+	"DecodeString":   {},
+
+	// crypto/subtle — single high-volume name, no plausible collision.
+	"ConstantTimeCompare": {},
+
+	// strconv — Pascal-case stdlib helpers. "Quote" is a common chi/gin
+	// router-helper-adjacent call; Atoi/Itoa are stdlib-only idioms.
+	"Atoi":  {},
+	"Itoa":  {},
+	"Quote": {},
+
+	// Web-framework method names that are unlikely-as-user-methods
+	// (multi-word PascalCase tied to gin/chi/echo handler types). Per
+	// issue #103 hard rules: Get/Post/Put/Delete/Use are EXCLUDED.
+	"MethodFunc":      {},
+	"AbortWithStatus": {},
 }
 
 // isKnownExternalPackage reports whether s matches our small allowlist
