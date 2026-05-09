@@ -299,6 +299,48 @@ var (
 		// Flask CLI / click AppGroup decorator: `@bp.cli.command(...)` and
 		// `@app.cli.command(...)`. Extractor leaf is "command".
 		regexp.MustCompile(`^command$`),
+
+		// click decorator + helper DSL (issue #423). click is the
+		// dominant Python CLI framework and its decorators (`@click.command()`,
+		// `@click.group()`, `@click.option('--foo')`, `@click.argument('name')`,
+		// `@click.pass_context`) plus helper functions (`click.echo`,
+		// `click.prompt`, `click.confirm`, `click.style`, ...) arrive at
+		// the resolver as bare leaf identifiers after the Python extractor
+		// strips the `click.` receiver. Without anchors here every
+		// decorator/helper call site inflates bug-extractor (python/click
+		// 32.60% pre-fix). Names follow the Rails (#107) and Flask (#420)
+		// precedent: collision with user methods is accepted because the
+		// per-language gate (Python only) keeps them safely scoped, and
+		// Dynamic is the appropriate "we know it's framework dispatch we
+		// can't statically resolve" bucket. click constants (`STRING`,
+		// `INT`, `FLOAT`, `BOOL`, `UUID`) and class types (`Path`,
+		// `Choice`, `IntRange`, `FloatRange`, `Tuple`, `File`,
+		// `make_pass_decorator`) are deliberately EXCLUDED here — they
+		// arrive as `ext:click.<name>` stubs and the external allowlist
+		// (click is allowlisted) classifies them ExternalKnown without
+		// help from the dynamic catalog.
+		// NOTE: ^command$ already declared above by the Flask block (#420).
+		regexp.MustCompile(`^group$`),
+		regexp.MustCompile(`^option$`),
+		regexp.MustCompile(`^argument$`),
+		regexp.MustCompile(`^pass_context$`),
+		regexp.MustCompile(`^pass_obj$`),
+		regexp.MustCompile(`^pass_meta_key$`),
+		regexp.MustCompile(`^echo$`),
+		regexp.MustCompile(`^secho$`),
+		regexp.MustCompile(`^prompt$`),
+		regexp.MustCompile(`^confirm$`),
+		regexp.MustCompile(`^progressbar$`),
+		regexp.MustCompile(`^getchar$`),
+		regexp.MustCompile(`^pause$`),
+		regexp.MustCompile(`^clear$`),
+		regexp.MustCompile(`^style$`),
+		regexp.MustCompile(`^unstyle$`),
+		regexp.MustCompile(`^format_filename$`),
+		regexp.MustCompile(`^get_terminal_size$`),
+		regexp.MustCompile(`^launch$`),
+		regexp.MustCompile(`^edit$`),
+		regexp.MustCompile(`^get_app_dir$`),
 	}
 
 	goDynamicPatterns = []*regexp.Regexp{
