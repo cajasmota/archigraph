@@ -197,7 +197,7 @@ func buildUseImports(node *sitter.Node, file extractor.FileInput) []types.Entity
 	// by a `namespace_name` prefix. Tree-sitter PHP exposes the prefix
 	// directly as a sibling child of the declaration node.
 	var prefix string
-	for i := 0; i < int(node.ChildCount()); i++ {
+	for i := range int(node.ChildCount()) {
 		ch := node.Child(i)
 		switch ch.Type() {
 		case "namespace_name":
@@ -211,7 +211,7 @@ func buildUseImports(node *sitter.Node, file extractor.FileInput) []types.Entity
 	// `namespace_use_clause` children. (PHP allows comma-separated
 	// clauses like `use Foo, Bar;` though it's rare.)
 	var out []types.EntityRecord
-	for i := 0; i < int(node.ChildCount()); i++ {
+	for i := range int(node.ChildCount()) {
 		ch := node.Child(i)
 		if ch.Type() != "namespace_use_clause" {
 			continue
@@ -232,7 +232,7 @@ func buildUseGroup(group *sitter.Node, file extractor.FileInput, prefix string) 
 		return nil
 	}
 	var out []types.EntityRecord
-	for i := 0; i < int(group.ChildCount()); i++ {
+	for i := range int(group.ChildCount()) {
 		ch := group.Child(i)
 		// Tree-sitter PHP uses `namespace_use_group_clause` for grouped
 		// imports and `namespace_use_clause` for non-grouped — accept
@@ -254,7 +254,7 @@ func buildUseGroup(group *sitter.Node, file extractor.FileInput, prefix string) 
 // stripping any trailing `as Alias` segment. Returns "" when the clause
 // has no qualified_name child (defensive — malformed input).
 func useClauseFQN(clause *sitter.Node, src []byte) string {
-	for i := 0; i < int(clause.ChildCount()); i++ {
+	for i := range int(clause.ChildCount()) {
 		ch := clause.Child(i)
 		// `qualified_name` / `name` cover plain `use` clauses;
 		// `namespace_name` covers `namespace_use_group_clause` children
