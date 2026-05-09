@@ -843,7 +843,12 @@ func TestRubyRailsDSL_GatedToRuby(t *testing.T) {
 	t.Parallel()
 	stubs := []string{
 		"where", "order", "params", "request", "response", "limit",
-		"group", "render", "validates",
+		"render", "validates",
+		// NOTE: `group` was removed from this gate list (issue #423) —
+		// click's `@click.group()` decorator legitimately makes `group`
+		// a Python DSL bare-name too, so it is intentionally NOT
+		// ruby-only any more. Per-language scoping still holds for the
+		// remaining names.
 		// Migration DSL gating (issue #124) — collision-prone for
 		// other languages (`string`, `integer`, `boolean`, `text`,
 		// `references`, `execute`, `add_column`...).

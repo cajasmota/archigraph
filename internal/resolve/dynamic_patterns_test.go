@@ -133,6 +133,41 @@ func TestDynamicPatterns_Catalog(t *testing.T) {
 		{"jvm_bare_getDeclaredConstructors", "java", `getDeclaredConstructors`, true},
 		// Per-language gate: bare `invoke` from a JS file MUST NOT
 		// classify as JVM dynamic — those names are JVM-only.
+		// ---- click decorator + helper DSL (issue #423) -------------
+		// Python click extractor strips the `click.` receiver so the
+		// resolver sees bare leaf identifiers. Per-language gate keeps
+		// these names from polluting other ecosystems.
+		{"py_click_command", "python", `command`, true},
+		{"py_click_group", "python", `group`, true},
+		{"py_click_option", "python", `option`, true},
+		{"py_click_argument", "python", `argument`, true},
+		{"py_click_pass_context", "python", `pass_context`, true},
+		{"py_click_pass_obj", "python", `pass_obj`, true},
+		{"py_click_pass_meta_key", "python", `pass_meta_key`, true},
+		{"py_click_echo", "python", `echo`, true},
+		{"py_click_secho", "python", `secho`, true},
+		{"py_click_prompt", "python", `prompt`, true},
+		{"py_click_confirm", "python", `confirm`, true},
+		{"py_click_progressbar", "python", `progressbar`, true},
+		{"py_click_getchar", "python", `getchar`, true},
+		{"py_click_pause", "python", `pause`, true},
+		{"py_click_clear", "python", `clear`, true},
+		{"py_click_style", "python", `style`, true},
+		{"py_click_unstyle", "python", `unstyle`, true},
+		{"py_click_format_filename", "python", `format_filename`, true},
+		{"py_click_get_terminal_size", "python", `get_terminal_size`, true},
+		{"py_click_launch", "python", `launch`, true},
+		{"py_click_edit", "python", `edit`, true},
+		{"py_click_get_app_dir", "python", `get_app_dir`, true},
+		// Per-language gate: click DSL names from non-Python files MUST
+		// NOT classify as Python dynamic — these names are Python/click
+		// scoped here and would collide trivially with user methods in
+		// other ecosystems (`group`, `option`, `echo`, `command`).
+		{"click_command_js_negative", "javascript", `command`, false},
+		{"click_option_ruby_negative", "ruby", `option`, false},
+		{"click_echo_go_negative", "go", `echo`, false},
+		{"click_group_java_negative", "java", `group`, false},
+
 		{"jvm_bare_invoke_js_negative", "javascript", `invoke`, false},
 		{"jvm_bare_getMethod_python_negative", "python", `getMethod`, false},
 		{"jvm_bare_newInstance_go_negative", "go", `newInstance`, false},
