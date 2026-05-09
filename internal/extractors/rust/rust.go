@@ -422,8 +422,8 @@ func stripRustVisibility(s string) string {
 	}
 	// Restricted vis: `pub(...) <decl>`.
 	if rest[0] == '(' {
-		if close := strings.IndexByte(rest, ')'); close >= 0 {
-			return strings.TrimSpace(rest[close+1:])
+		if closeIdx := strings.IndexByte(rest, ')'); closeIdx >= 0 {
+			return strings.TrimSpace(rest[closeIdx+1:])
 		}
 	}
 	return s

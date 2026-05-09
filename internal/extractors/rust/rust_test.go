@@ -397,6 +397,39 @@ use super::parent::Other;
 	}
 }
 
+// Issue #101: a bare root-only `use tokio;` (no `::` segment) must still
+// be emitted as an IMPORTS edge with ToID == "tokio" so synth maps it to
+// "ext:tokio" and the resolver classifies it as ExternalKnown — not
+// dropped, not bug-extractor.
+func TestRustExtractor_ImportRootOnly(t *testing.T) {
+	src := `use tokio;
+`
+	tree := parseForTest(t, src)
+	ext, _ := extractor.Get("rust")
+
+	got, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "root_only.rs",
+		Content:  []byte(src),
+		Language: "rust",
+		Tree:     tree,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var foundToID string
+	for _, e := range got {
+		for _, r := range e.Relationships {
+			if r.Kind == "IMPORTS" {
+				foundToID = r.ToID
+			}
+		}
+	}
+	if foundToID != "tokio" {
+		t.Fatalf("root-only `use tokio;` should emit IMPORTS ToID=%q, got %q", "tokio", foundToID)
+	}
+}
+
 func TestRustExtractor_LineNumbers(t *testing.T) {
 	src := `struct Alpha {
     id: u32,
