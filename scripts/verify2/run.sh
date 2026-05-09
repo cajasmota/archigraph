@@ -77,9 +77,9 @@ REPOS=(
   "mini-redis|https://github.com/tokio-rs/mini-redis.git|master|rust"                              # Tokio sample app
   "actix-examples|https://github.com/actix/examples.git|main|rust"                                 # Actix sample apps
   # --- Swift ---
-  "vapor|https://github.com/vapor/vapor.git|main|swift|Sources/Vapor"                              # ~10 MB full; sparse to be safe
+  "vapor-api-template|https://github.com/vapor/api-template.git|master|swift"                      # Vapor sample app (Controllers/Routes/Migrations)
   # --- C# ---
-  "aspnetcore-mvc|https://github.com/dotnet/aspnetcore.git|main|csharp|src/Mvc/Mvc.Core"           # >500 MB full; sparse
+  "aspnetcore-realworld|https://github.com/gothinkster/aspnetcore-realworld-example-app.git|master|csharp" # ASP.NET Core MVC sample app
 )
 
 # Locate or build the archigraph binary. We build into the corpora dir

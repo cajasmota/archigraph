@@ -83,13 +83,21 @@ internals. Library-source entries are kept only when they are small
 enough to also stand in as canonical user code (e.g. `requests`,
 `click`, `sidekiq`, `gin`, `chi`, `exposed`).
 
+The Swift and C# slots previously pointed at framework internals
+(`vapor/vapor` `Sources/Vapor`, `dotnet/aspnetcore` `src/Mvc/Mvc.Core`).
+Both were replaced with sample apps to align with the policy:
+`vapor-api-template` (`vapor/api-template`, the canonical Vapor starter
+with Controllers/Routes/Migrations) and `aspnetcore-realworld`
+(`gothinkster/aspnetcore-realworld-example-app`, an ASP.NET Core MVC +
+EF Core RealWorld implementation).
+
 | characteristic | repos in corpus |
 | --- | --- |
-| ORM-heavy | `django-realworld`, `rails-realworld` |
-| HTTP routing | `gin`, `chi`, `express-realworld`, `actix-examples`, `vapor`, `laravel-quickstart`, `symfony-demo` |
+| ORM-heavy | `django-realworld`, `rails-realworld`, `aspnetcore-realworld` |
+| HTTP routing | `gin`, `chi`, `express-realworld`, `actix-examples`, `vapor-api-template`, `laravel-quickstart`, `symfony-demo` |
 | microservice / RPC / messaging | `etcd`, `kafka-streams-examples` |
 | CLI tool | `click` |
-| config-heavy / framework | `spring-petclinic`, `pandas` (core), `nestjs-starter`, `nextjs-commerce`, `aspnetcore-mvc` |
+| config-heavy / framework | `spring-petclinic`, `pandas` (core), `nestjs-starter`, `nextjs-commerce` |
 | async runtime / concurrency | `mini-redis`, `ktor-samples` |
 
 Add new repos to grow the matrix — coverage gaps surface immediately as
