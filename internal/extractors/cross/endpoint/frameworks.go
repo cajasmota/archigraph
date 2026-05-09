@@ -228,6 +228,11 @@ func expressHandlerFromArgs(source string, start int) string {
 // depth and skips over string and template-literal contents. Returns -1
 // when no balanced close is found within a reasonable lookahead window.
 func matchCloseParen(source string, start int) int {
+	// 4096-byte lookahead cap: bounds worst-case scan cost on pathological
+	// or unterminated input (e.g. a missing `)` would otherwise walk the whole
+	// file). The cap is conservative — real express route registrations fit
+	// in well under 1 KB of arguments — and any call site that exceeds it
+	// degrades safely to "no handler" rather than producing a wrong SERVES edge.
 	const maxLook = 4096
 	depth := 1 // we are already inside the call's argument list
 	i := start
@@ -249,6 +254,12 @@ func matchCloseParen(source string, start int) int {
 			i = skipString(source, i, c, limit)
 			continue
 		case '/':
+			// NOTE: JS regex literals (`/foo/`) are not distinguished from the
+			// division operator here — disambiguating requires full lexer state
+			// (preceding token kind). When a regex literal appears in handler
+			// position we degrade safely: paren tracking may end early and
+			// expressHandlerFromArgs returns "" (no SERVES edge), which is the
+			// correct outcome for an unresolvable handler shape.
 			if i+1 < limit && source[i+1] == '/' {
 				// line comment
 				for i < limit && source[i] != '\n' {
@@ -290,6 +301,11 @@ func skipString(source string, i int, q byte, limit int) int {
 		// caller resume normal scanning by returning here. Approximate:
 		// treat ${...} as part of the string by scanning past the matching
 		// `}` so we don't miscount braces in arg parsing.
+		// Template-literal `${...}` interpolations are treated as opaque text
+		// inside the surrounding template string: we scan past the matching `}`
+		// without re-entering full code parsing. This is sufficient for
+		// handler-shape detection — interpolated route paths/handlers are not
+		// statically resolvable anyway, so the precision loss is irrelevant.
 		if q == '`' && c == '$' && i+1 < limit && source[i+1] == '{' {
 			depth := 1
 			i += 2
