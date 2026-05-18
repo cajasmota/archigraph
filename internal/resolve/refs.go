@@ -3036,9 +3036,170 @@ var pythonExternalInheritedMethods = map[string]struct{}{
 	"group_discard":   {},
 	"group_send":      {},
 	// Django management BaseCommand lifecycle.
-	"execute":       {},
-	"create_parser": {},
-	"print_help":    {},
+	"execute":           {},
+	"create_parser":     {},
+	"print_help":        {},
+	// Wave-8 — django.test / unittest.TestCase assert + lifecycle
+	// methods. Surface as `<MyTest>.assertEqual` etc. when extractor
+	// preserves the enclosing-class qualifier on `self.assertX(...)`
+	// calls. The method is provided by unittest.TestCase /
+	// django.test.TestCase / rest_framework.test.APITestCase (already
+	// in pythonExternalBaseTypes since wave-7) so route to ExternalKnown.
+	"assertEqual":             {},
+	"assertNotEqual":          {},
+	"assertTrue":              {},
+	"assertFalse":             {},
+	"assertIn":                {},
+	"assertNotIn":             {},
+	"assertIs":                {},
+	"assertIsNot":             {},
+	"assertIsNone":            {},
+	"assertIsNotNone":         {},
+	"assertIsInstance":        {},
+	"assertNotIsInstance":     {},
+	"assertRaises":            {},
+	"assertRaisesRegex":       {},
+	"assertRaisesRegexp":      {},
+	"assertWarns":             {},
+	"assertWarnsRegex":        {},
+	"assertLogs":              {},
+	"assertNoLogs":            {},
+	"assertGreater":           {},
+	"assertGreaterEqual":      {},
+	"assertLess":              {},
+	"assertLessEqual":         {},
+	"assertAlmostEqual":       {},
+	"assertNotAlmostEqual":    {},
+	"assertDictEqual":         {},
+	"assertListEqual":         {},
+	"assertSetEqual":          {},
+	"assertTupleEqual":        {},
+	"assertCountEqual":        {},
+	"assertSequenceEqual":     {},
+	"assertMultiLineEqual":    {},
+	"assertRegex":             {},
+	"assertNotRegex":          {},
+	"assertRegexpMatches":     {},
+	"assertNotRegexpMatches":  {},
+	"assertDictContainsSubset": {},
+	"assertItemsEqual":        {},
+	"assertNumQueries":        {},
+	"assertTemplateUsed":      {},
+	"assertTemplateNotUsed":   {},
+	"assertRedirects":         {},
+	"assertContains":          {},
+	"assertNotContains":       {},
+	"assertFormError":         {},
+	"assertFormsetError":      {},
+	"assertFieldOutput":       {},
+	"assertHTMLEqual":         {},
+	"assertHTMLNotEqual":      {},
+	"assertJSONEqual":         {},
+	"assertJSONNotEqual":      {},
+	"assertXMLEqual":          {},
+	"assertXMLNotEqual":       {},
+	"assertQuerysetEqual":     {},
+	"assertQuerySetEqual":     {},
+	"assertInHTML":            {},
+	"fail":                    {},
+	"setUp":                   {},
+	"tearDown":                {},
+	"setUpClass":              {},
+	"tearDownClass":           {},
+	"setUpTestData":           {},
+	"addCleanup":              {},
+	"doCleanups":              {},
+	"skipTest":                {},
+	"subTest":                 {},
+	"shortDescription":        {},
+	"countTestCases":          {},
+	"defaultTestResult":       {},
+	"id":                      {},
+	"_pre_setup":              {},
+	"_post_teardown":          {},
+	// Wave-8 — DRF GenericViewSet / generic view inherited methods
+	// beyond wave-7's pagination/serializer subset. Provided by
+	// rest_framework.viewsets.GenericViewSet, mixins.{List,Create,
+	// Retrieve,Update,Destroy}ModelMixin, and views.APIView.dispatch.
+	"filter_queryset":           {},
+	"get_success_headers":       {},
+	"list":                      {},
+	"retrieve":                  {},
+	"create":                    {},
+	"update":                    {},
+	"partial_update":            {},
+	"destroy":                   {},
+	"dispatch":                  {},
+	"http_method_not_allowed":   {},
+	"options":                   {},
+	"perform_authentication":    {},
+	"raise_uncaught_exception":  {},
+	"reverse_action":            {},
+	"get_extra_actions":         {},
+	// Wave-8 — django.db.models.Manager / QuerySet inherited methods.
+	// Show up as `<X>Manager.<method>` (e.g. `UserManager.get`,
+	// `UserManager.model`, `UserManager.normalize_email`) when the
+	// user manager subclass body doesn't re-define them.
+	"normalize_email":      {},
+	"make_random_password": {},
+	"get_by_natural_key":   {},
+	"contribute_to_class":  {},
+	// Wave-8 pass-2 — pymongo Collection.find + Django Manager.get
+	// receiver-stripped variants. These show up across client-fixture-a
+	// as `_collection.find`, `_get_collection.find`, `UserManager.get`,
+	// `UserManager.model` where the receiver is a Mongo collection or
+	// Django manager instance.
+	"find":  {}, // pymongo Collection.find / Django Manager queryset.find
+	"model": {}, // Django Manager.model (back-ref to the bound model class)
+	"select": {},
+	// Wave-8 pass-3 — Django middleware `get_response` callable
+	// injected by Django on every middleware class via __init__
+	// (`def __init__(self, get_response): self.get_response = ...`).
+	// Calls like `self.get_response(request)` surface as
+	// `<MyMiddleware>.get_response` against the user middleware class.
+	"get_response": {},
+	// Wave-8 — pymongo Collection / Database inherited methods. Show
+	// up as `_collection.find_one`, `_get_collection.find`,
+	// `self._collection.aggregate`, etc. when a Mongo-typed attr is
+	// the receiver and the extractor keeps the receiver name.
+	"find_one":                  {},
+	"find_one_and_update":       {},
+	"find_one_and_replace":      {},
+	"find_one_and_delete":       {},
+	"insert_one":                {},
+	"insert_many":               {},
+	"update_one":                {},
+	"update_many":               {},
+	"replace_one":               {},
+	"delete_one":                {},
+	"delete_many":               {},
+	"aggregate":                 {},
+	"count_documents":           {},
+	"estimated_document_count":  {},
+	"distinct":                  {},
+	"bulk_write":                {},
+	"watch":                     {},
+	"with_options":              {},
+	"rename":                    {},
+	"list_collection_names":     {},
+	"list_database_names":       {},
+	"create_index":              {},
+	"create_indexes":            {},
+	"drop_index":                {},
+	"drop_indexes":              {},
+	"list_indexes":              {},
+	"index_information":         {},
+	// Wave-8 — Celery task chain operations. Used as chained dotted
+	// methods on signatures/groups/chords like `chord(...).apply_async()`,
+	// `mytask.s(...).set(...)`. Bare names already in pythonBareNames;
+	// these handle the `<receiver>.method` chained form.
+	"apply":         {},
+	"apply_async":   {},
+	"delay":         {},
+	"retry":         {},
+	"on_error":      {},
+	"link":          {},
+	"link_error":    {},
 }
 
 var pythonExternalBaseTypes = map[string]struct{}{
@@ -3165,6 +3326,237 @@ var pythonExternalBaseTypes = map[string]struct{}{
 	"RetrieveModelMixin": {},
 	"UpdateModelMixin":   {},
 	"DestroyModelMixin":  {},
+	// Wave-8 — django.db.models F-expressions / Func / aggregations.
+	// These appear as `Model:F`, `Model:Lower`, `Model:Count` etc. when
+	// imported from django.db.models and used inside annotate()/filter().
+	"F":               {},
+	"Q":               {},
+	"Value":           {},
+	"Case":            {},
+	"When":            {},
+	"Exists":          {},
+	"OuterRef":        {},
+	"Subquery":        {},
+	"Prefetch":        {},
+	"ExpressionWrapper": {},
+	"Func":            {},
+	"Count":           {},
+	"Sum":             {},
+	"Avg":             {},
+	"Min":             {},
+	"Max":             {},
+	"StdDev":          {},
+	"Variance":        {},
+	"Coalesce":        {},
+	"Concat":          {},
+	"Lower":           {},
+	"Upper":           {},
+	"Length":          {},
+	"Substr":          {},
+	"Trim":            {},
+	"LTrim":           {},
+	"RTrim":           {},
+	"Cast":            {},
+	"Greatest":        {},
+	"Least":           {},
+	"Now":             {},
+	"TruncDate":       {},
+	"TruncDay":        {},
+	"TruncMonth":      {},
+	"TruncYear":       {},
+	"TruncWeek":       {},
+	"TruncHour":       {},
+	"TruncMinute":     {},
+	"TruncSecond":     {},
+	"ExtractYear":     {},
+	"ExtractMonth":    {},
+	"ExtractDay":      {},
+	"ExtractWeekDay":  {},
+	"ExtractHour":     {},
+	"SearchQuery":     {},
+	"SearchVector":    {},
+	"SearchRank":      {},
+	"ArrayField":      {},
+	"JSONField":       {},
+	"HStoreField":     {},
+	"DateField":       {},
+	"DateTimeField":   {},
+	"CharField":       {},
+	"TextField":       {},
+	"IntegerField":    {},
+	"BooleanField":    {},
+	"DecimalField":    {},
+	"FloatField":      {},
+	"ForeignKey":      {},
+	"OneToOneField":   {},
+	"ManyToManyField": {},
+	"GenericForeignKey": {},
+	"ModelField":      {},
+	"FileExtensionValidator": {},
+	"EmailValidator":  {},
+	"MinValueValidator": {},
+	"MaxValueValidator": {},
+	"RegexValidator":  {},
+	"URLValidator":    {},
+	"ContentType":     {},
+	// Django HTTP / responses / exceptions.
+	"HttpRequest":          {},
+	"HttpResponse":         {},
+	"HttpResponseBadRequest": {},
+	"HttpResponseNotFound": {},
+	"HttpResponseRedirect": {},
+	"HttpResponseForbidden": {},
+	"JsonResponse":         {},
+	"FileResponse":         {},
+	"StreamingHttpResponse": {},
+	"DisallowedHost":       {},
+	"CommandError":         {},
+	"ImageDownloadError":   {},
+	"ImportError":          {},
+	// Django channels routing helpers.
+	"AuthMiddlewareStack": {},
+	"URLRouter":           {},
+	"ProtocolTypeRouter":  {},
+	"AllowedHostsOriginValidator": {},
+	// Django mail.
+	"EmailMultiAlternatives": {},
+	"EmailMessage":           {},
+	// DRF permissions / auth / pagination extras.
+	"AllowAny":            {},
+	"IsAuthenticated":     {},
+	"IsAdminUser":         {},
+	"IsAuthenticatedOrReadOnly": {},
+	"DjangoModelPermissions": {},
+	"DjangoFilterBackend": {},
+	"TokenAuthentication": {},
+	"SessionAuthentication": {},
+	"BasicAuthentication": {},
+	"AnonymousUser":       {},
+	"APIClient":           {},
+	"InvalidToken":        {},
+	// pymongo primitives.
+	"MongoClient":   {},
+	"Collection":    {},
+	"InsertOne":     {},
+	"UpdateOne":     {},
+	"DeleteOne":     {},
+	"UpdateMany":    {},
+	"DeleteMany":    {},
+	"ReplaceOne":    {},
+	"PyMongoError":  {},
+	"InvalidId":     {},
+	"Decimal128":    {},
+	"ASCENDING":     {},
+	"DESCENDING":    {},
+	// Celery primitives.
+	"Celery":   {},
+	"Task":     {},
+	"Signature": {},
+	"chord":    {},
+	"chain":    {},
+	"group":    {},
+	// typing module (Python type-annotation aliases that show up as
+	// EXTENDS targets when used in `class Foo(List[X]):` style).
+	"Any":        {},
+	"List":       {},
+	"Dict":       {},
+	"Tuple":      {},
+	"Set":        {},
+	"FrozenSet":  {},
+	"Optional":   {},
+	"Union":      {},
+	"Callable":   {},
+	"Iterable":   {},
+	"Iterator":   {},
+	"Generator":  {},
+	"Mapping":    {},
+	"MutableMapping": {},
+	"Type":       {},
+	"TypeVar":    {},
+	"Generic":    {},
+	"Protocol":   {},
+	"Literal":    {},
+	"Final":      {},
+	"ClassVar":   {},
+	// Common Python stdlib classes that surface as Model:<X> when
+	// imported and used as parents or in type annotations.
+	"Decimal":      {},
+	"BytesIO":      {},
+	"StringIO":     {},
+	"ContextVar":   {},
+	"NamedTemporaryFile": {},
+	"ThreadPoolExecutor": {},
+	"ProcessPoolExecutor": {},
+	"SequenceMatcher": {},
+	"DataFrame":    {},
+	"DictReader":   {},
+	"DictWriter":   {},
+	"MagicMock":    {},
+	"Mock":         {},
+	"PropertyMock": {},
+	"AsyncMock":    {},
+	// boto3 / botocore exception types.
+	"ClientError":    {},
+	"BotoCoreError":  {},
+	// PIL / Pillow imaging.
+	"Image":         {},
+	"ImageEnhance":  {},
+	"ImageDraw":     {},
+	"ImageFont":     {},
+	// python-docx / openpyxl primitives.
+	"Document":      {},
+	"Font":          {},
+	"Alignment":     {},
+	"PatternFill":   {},
+	"RGBColor":      {},
+	"OxmlElement":   {},
+	"Workbook":      {},
+	"Inches":        {},
+	"Pt":            {},
+	"Cm":            {},
+	"Emu":           {},
+	"Matrix":        {},
+	// jwt / cryptography helpers.
+	"InvalidTokenError": {},
+	"CryptoExtension":   {},
+	// BeautifulSoup / lxml.
+	"BeautifulSoup": {},
+	// channels Message.
+	"Message": {},
+	// Wave-8 pass-3 — additional Django / DRF / Celery / stdlib types
+	// surfaced as `Model:<X>` cross-language EXTENDS targets in the
+	// pass-2 client-fixture-a residual.
+	"NoCredentialsError":   {}, // botocore.exceptions
+	"ObjectDoesNotExist":   {}, // django.core.exceptions
+	"ObjectId":             {}, // bson.ObjectId
+	"OperationalError":     {}, // django.db.OperationalError / psycopg2
+	"OrderedDict":          {}, // collections.OrderedDict
+	"Path":                 {}, // pathlib.Path
+	"PeriodicTask":         {}, // django_celery_beat.models.PeriodicTask
+	"QueryDict":            {}, // django.http.QueryDict
+	"Queue":                {}, // queue.Queue / multiprocessing.Queue
+	"RefreshToken":         {}, // rest_framework_simplejwt.tokens.RefreshToken
+	"Request":              {}, // rest_framework.request.Request
+	"Response":             {}, // rest_framework.response.Response
+	"ReturnDocument":       {}, // pymongo.ReturnDocument
+	"SAFE_METHODS":         {}, // rest_framework.permissions.SAFE_METHODS
+	"Signal":               {}, // django.dispatch.Signal
+	"SoftTimeLimitExceeded": {}, // celery.exceptions
+	"Token":                {}, // rest_framework.authtoken.models.Token
+	"TokenError":           {}, // rest_framework_simplejwt.exceptions
+	"TypedMultipleChoiceField": {}, // django.forms.fields
+	"UUID":                 {}, // uuid.UUID
+	"WSGIRequest":          {}, // django.core.handlers.wsgi.WSGIRequest
+	"model_to_dict":        {}, // django.forms.models.model_to_dict
+	// python-docx WD_* enum constants.
+	"WD_ALIGN_PARAGRAPH":   {},
+	"WD_ALIGN_VERTICAL":    {},
+	"WD_BREAK":             {},
+	"WD_ROW_HEIGHT_RULE":   {},
+	"WD_STYLE_TYPE":        {},
+	"WD_PARAGRAPH_ALIGNMENT": {},
+	"WD_TABLE_ALIGNMENT":   {},
+	"WD_LINE_SPACING":      {},
 }
 
 // isTSBuiltinType reports whether s is a TypeScript / JavaScript
