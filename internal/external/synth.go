@@ -6022,8 +6022,8 @@ var jsBareNames = map[string]struct{}{
 	"off":                {},
 
 	// Wave-4 (RN/Expo, #508) — bare-name hooks + receiver-stripped APIs
-	// observed as the dominant bug-extractor residual on the core-mobile
-	// (Upvate Expo+RN) fixture after pass-1 (knownExternalPackages
+	// observed as the dominant bug-extractor residual on the client-fixture-c
+	// (RN+Expo) fixture after pass-1 (knownExternalPackages
 	// allowlist). All names are distinctive ecosystem APIs gated by
 	// lang=="javascript"||lang=="typescript" in stdlibFunction. Each
 	// follows the React convention (`use*` is reserved by rules-of-hooks
@@ -6121,7 +6121,7 @@ var jsBareNames = map[string]struct{}{
 	// `useFormState` already in jsBareNames (React 19 form-state hook); not duplicated.
 	"useWatch":               {},
 	"useFieldArray":          {},
-	// Other distinctive RN-ecosystem hooks observed in core-mobile.
+	// Other distinctive RN-ecosystem hooks observed in client-fixture-c.
 	"useHeaderHeight":        {}, // @react-navigation/elements
 	"useBottomTabBarHeight":  {}, // @react-navigation/bottom-tabs
 	"useSafeAreaInsets":      {}, // react-native-safe-area-context
@@ -6166,7 +6166,7 @@ var jsBareNames = map[string]struct{}{
 
 	// Wave-4 (RN/Expo, #508) — pass-3 additions. Each is a distinctive
 	// receiver-stripped API from React Navigation / RN core / Zustand /
-	// Expo Router observed in the core-mobile pass-2 residual.
+	// Expo Router observed in the client-fixture-c pass-2 residual.
 	// React Navigation `navigation.setOptions({...})` — distinctive name
 	// for screen header config; no realistic user-method collision in TS.
 	"setOptions":            {},
@@ -9473,7 +9473,7 @@ var knownExternalPackages = map[string]struct{}{
 	"less":             {},
 	"stylelint":        {},
 	// Wave-4 (RN/Expo, #508) — React Native + Expo SDK runtime allowlist.
-	// The core-mobile (Upvate Expo+RN) fixture has 538 files and 16.10% bug-rate
+	// The client-fixture-c (RN+Expo) fixture has 538 files and 16.10% bug-rate
 	// dominated by IMPORTS to react-native-* / @react-navigation / expo-*
 	// packages. Every name is a real npm package shipped by Meta/Expo or a
 	// well-known RN community lib; collision risk with hand-rolled local
@@ -9617,7 +9617,7 @@ var knownExternalPackages = map[string]struct{}{
 	"eas-cli":                               {},
 	"@eas":                                  {},
 	// Additional Expo / RN ecosystem packages observed in real Expo+RN apps
-	// (core-mobile fixture, #508 pass-2). Each is a real npm package; the
+	// (client-fixture-c fixture, #508 pass-2). Each is a real npm package; the
 	// `lucide-react-native` icon set and `@gluestack-ui` component library
 	// are the dominant residuals after pass-1.
 	"@gluestack-ui":              {}, // @gluestack-ui/themed, @gluestack-ui/config, ...

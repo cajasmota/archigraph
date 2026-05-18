@@ -64,7 +64,7 @@ import (
 // ending in `/*` are treated as glob-style prefixes; `targets` lists
 // every directory the prefix may resolve to (tsconfig's paths array
 // can declare multiple — e.g. `@/*: ["./*", "./src/*"]` on the
-// core-mobile project). Exact aliases (`tailwind.config`) ignore the
+// client-fixture-c project). Exact aliases (`tailwind.config`) ignore the
 // trailing-slash semantics and require an equality match.
 type aliasEntry struct {
 	// prefix is the alias key as it appears in source code, with the
