@@ -1854,3 +1854,223 @@ func (s *OrderStore) Get(id string) string { return "" }
 		t.Errorf("struct %s: not found in extracted entities", name)
 	}
 }
+
+// TestMainAndInitEmitStructuralFromID verifies Refs #44 #472: top-level `main`
+// and `init` functions emit CALLS edges with a Format A structural-ref
+// FromID instead of the bare name. Two files declaring `func main` would
+// otherwise both emit FromID="main", colliding in the resolver's byName
+// index and forcing every such edge into bug-resolver.
+func TestMainAndInitEmitStructuralFromID(t *testing.T) {
+	cases := []struct {
+		path    string
+		src     string
+		fnName  string
+		wantSub string // substring expected in the structural-ref FromID
+	}{
+		{
+			path: "examples/helloworld/greeter_server/main.go",
+			src: `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("a")
+}
+`,
+			fnName:  "main",
+			wantSub: "scope:operation:method:go:examples/helloworld/greeter_server/main.go:main",
+		},
+		{
+			path: "examples/route_guide/server/main.go",
+			src: `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("b")
+}
+
+func init() {
+	fmt.Println("c")
+}
+`,
+			fnName:  "main",
+			wantSub: "scope:operation:method:go:examples/route_guide/server/main.go:main",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.path, func(t *testing.T) {
+			results, err := extractFromPath(tc.src, tc.path)
+			if err != nil {
+				t.Fatalf("extract: %v", err)
+			}
+			found := false
+			for _, r := range results {
+				e := r.(types.EntityRecord)
+				if e.Kind != "SCOPE.Operation" || e.Name != tc.fnName {
+					continue
+				}
+				found = true
+				if len(e.Relationships) == 0 {
+					t.Fatalf("entity %q: expected at least one CALLS edge, got 0", tc.fnName)
+				}
+				for _, rel := range e.Relationships {
+					if rel.Kind != "CALLS" {
+						continue
+					}
+					if rel.FromID != tc.wantSub {
+						t.Errorf("CALLS FromID = %q, want %q", rel.FromID, tc.wantSub)
+					}
+				}
+			}
+			if !found {
+				t.Fatalf("did not find entity %q in extracted records", tc.fnName)
+			}
+		})
+	}
+}
+
+// TestMainFromIDsDistinctAcrossFiles verifies that the structural-ref form
+// produced for `func main` in two different files differs, so a resolver
+// indexing CALLS edges keyed by (FromID) sees two distinct sources rather
+// than one ambiguous bucket.
+func TestMainFromIDsDistinctAcrossFiles(t *testing.T) {
+	src := `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("x")
+}
+`
+	a, err := extractFromPath(src, "cmd/server-a/main.go")
+	if err != nil {
+		t.Fatalf("extract a: %v", err)
+	}
+	b, err := extractFromPath(src, "cmd/server-b/main.go")
+	if err != nil {
+		t.Fatalf("extract b: %v", err)
+	}
+	pick := func(rs []interface{}) string {
+		for _, r := range rs {
+			e := r.(types.EntityRecord)
+			if e.Kind != "SCOPE.Operation" || e.Name != "main" {
+				continue
+			}
+			for _, rel := range e.Relationships {
+				if rel.Kind == "CALLS" {
+					return rel.FromID
+				}
+			}
+		}
+		return ""
+	}
+	fa, fb := pick(a), pick(b)
+	if fa == "" || fb == "" {
+		t.Fatalf("missing FromID: a=%q b=%q", fa, fb)
+	}
+	if fa == fb {
+		t.Errorf("FromIDs collided across files: %q", fa)
+	}
+}
+
+// TestInitTopLevelStructuralFromID verifies that a top-level init() function
+// receives the same structural-ref FromID treatment as main().
+func TestInitTopLevelStructuralFromID(t *testing.T) {
+	src := `package widgets
+
+import "fmt"
+
+func init() {
+	fmt.Println("setup")
+}
+`
+	results, err := extractFromPath(src, "internal/widgets/setup.go")
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	wantFrom := "scope:operation:method:go:internal/widgets/setup.go:init"
+	for _, r := range results {
+		e := r.(types.EntityRecord)
+		if e.Kind != "SCOPE.Operation" || e.Name != "init" {
+			continue
+		}
+		for _, rel := range e.Relationships {
+			if rel.Kind == "CALLS" && rel.FromID != wantFrom {
+				t.Errorf("init CALLS FromID = %q, want %q", rel.FromID, wantFrom)
+			}
+		}
+		return
+	}
+	t.Fatalf("init entity not found")
+}
+
+// TestTopLevelFunctionsAllGetStructuralFromID verifies that the widened
+// fix (Refs #44 #472) emits Format A structural-ref FromIDs for every
+// top-level function, not just `main`/`init`. Common names like `Run`,
+// `Setup`, `Handle`, `New` collide just as often across packages in
+// multi-binary repos.
+func TestTopLevelFunctionsAllGetStructuralFromID(t *testing.T) {
+	src := `package svc
+
+import "fmt"
+
+func Run() {
+	fmt.Println("ok")
+}
+`
+	results, err := extractFromPath(src, "svc/run.go")
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	wantFrom := "scope:operation:method:go:svc/run.go:Run"
+	for _, r := range results {
+		e := r.(types.EntityRecord)
+		if e.Kind != "SCOPE.Operation" || e.Name != "Run" {
+			continue
+		}
+		for _, rel := range e.Relationships {
+			if rel.Kind == "CALLS" && rel.FromID != wantFrom {
+				t.Errorf("Run CALLS FromID = %q, want %q", rel.FromID, wantFrom)
+			}
+		}
+		return
+	}
+	t.Fatalf("Run entity not found")
+}
+
+// TestMethodFromIDStillBare verifies that methods (entities with a
+// receiver) keep their dotted `<Receiver>.<method>` Name as the FromID.
+// The receiver-qualified Name already disambiguates across files via the
+// byMember index (issue #66), so methods don't need the structural-ref
+// FromID treatment that top-level functions do.
+func TestMethodFromIDStillBare(t *testing.T) {
+	src := `package svc
+
+import "fmt"
+
+type S struct{}
+
+func (s *S) Save() {
+	fmt.Println("ok")
+}
+`
+	results, err := extractFromPath(src, "svc/store.go")
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	for _, r := range results {
+		e := r.(types.EntityRecord)
+		if e.Kind != "SCOPE.Operation" || e.Name != "S.Save" {
+			continue
+		}
+		for _, rel := range e.Relationships {
+			if rel.Kind == "CALLS" && rel.FromID != "S.Save" {
+				t.Errorf("S.Save CALLS FromID = %q, want %q", rel.FromID, "S.Save")
+			}
+		}
+		return
+	}
+	t.Fatalf("S.Save entity not found")
+}
