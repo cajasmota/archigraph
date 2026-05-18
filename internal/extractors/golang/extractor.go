@@ -909,8 +909,30 @@ func extractFunctions(root *sitter.Node, src []byte, filePath string) ([]types.E
 		relationships := extractCallRelationships(bodyOrNode, src, nameText, recvVarName, receiverType, paramTypes)
 		// Rewrite FromID on each CALLS edge to the qualified Name so the
 		// edge source matches the entity ID downstream.
+		//
+		// Refs #44 #472 — top-level `main` and `init` are unqualified across
+		// every Go package: any multi-binary repo (e.g. grpc-go-examples
+		// with 70 `examples/*/main.go` files) collapses their bare-name
+		// byName entries to "ambiguous", forcing every CALLS edge sourced
+		// from `main`/`init` into the bug-resolver bucket. The Format A
+		// structural-ref form `scope:operation:function:go:<file>:<name>`
+		// pins the edge to the file's entity via byLocation[<file>][<name>]
+		// regardless of how many sibling files repeat the same bare name.
+		// Methods already encode their receiver into Name (issue #66) and
+		// resolve via byMember, so this only fires for top-level functions.
+		fromID := name
+		if receiverType == "" {
+			// All top-level functions get a Format A structural-ref FromID.
+			// Even `Run`, `Setup`, `Handle`, `New`, etc. collide across
+			// packages in any non-trivial multi-binary repo; widening from
+			// the narrow `main`/`init` allowlist to every top-level function
+			// removes the entire FromID-side ambiguity class for Go without
+			// changing the entity Name (so byName lookups for the ToID side
+			// behave exactly as before).
+			fromID = extractor.BuildOperationStructuralRef("go", filePath, nameText)
+		}
 		for i := range relationships {
-			relationships[i].FromID = name
+			relationships[i].FromID = fromID
 		}
 
 		// DEPENDS_ON edge from each method to its receiver type.
@@ -918,7 +940,7 @@ func extractFunctions(root *sitter.Node, src []byte, filePath string) ([]types.E
 		// needing qualified-name joins downstream.
 		if receiverType != "" {
 			relationships = append(relationships, types.RelationshipRecord{
-				FromID: name,
+				FromID: fromID,
 				ToID:   receiverType,
 				Kind:   "DEPENDS_ON",
 			})
