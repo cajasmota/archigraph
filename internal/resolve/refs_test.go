@@ -1715,3 +1715,130 @@ func TestDisposition_DataAccessSQLResolvedWhenEntityPresent(t *testing.T) {
 		t.Fatalf("expected ToID rewritten to %q, got %q", hexID, rels[0].ToID)
 	}
 }
+
+// TestLookupByKindHint_ExtendsPrefersRealComponent — issue #525. When a
+// bare name collides between a real Component-shaped entity and a
+// SCOPE.Component placeholder emitted as a side-effect of import
+// resolution, EXTENDS / IMPLEMENTS edges must bind to the real entity.
+// CALLS edges retain the historic behaviour (no preference shift on
+// non-extending relationships).
+func TestLookupByKindHint_ExtendsPrefersRealComponent(t *testing.T) {
+	t.Run("component-only/EXTENDS", func(t *testing.T) {
+		// Only a real Component entity exists → still resolves cleanly.
+		entities := []types.EntityRecord{
+			ent("aaaaaaaaaaaaaaaa", "Component", "TimestampedModel"),
+			ent("bbbbbbbbbbbbbbbb", "Component", "decoy"),
+		}
+		idx := BuildIndex(entities)
+		id, st := idx.LookupStatusHint("TimestampedModel", "EXTENDS")
+		if id != "aaaaaaaaaaaaaaaa" || st != statusRewritten {
+			t.Fatalf("Component-only EXTENDS: got id=%q st=%d, want aaaa.. statusRewritten", id, st)
+		}
+	})
+
+	t.Run("scope-component-only/EXTENDS", func(t *testing.T) {
+		// Only a SCOPE.Component placeholder exists → fallback tier
+		// still binds to it (no real entity available).
+		entities := []types.EntityRecord{
+			ent("cccccccccccccccc", "SCOPE.Component", "TimestampedModel"),
+			ent("dddddddddddddddd", "Component", "decoy"),
+		}
+		idx := BuildIndex(entities)
+		id, st := idx.LookupStatusHint("TimestampedModel", "EXTENDS")
+		if id != "cccccccccccccccc" || st != statusRewritten {
+			t.Fatalf("SCOPE.Component-only EXTENDS: got id=%q st=%d, want cccc.. statusRewritten", id, st)
+		}
+	})
+
+	t.Run("both-kinds-same-file/EXTENDS-prefers-real", func(t *testing.T) {
+		// Classic #525 shape: `class Article(TimestampedModel):` where
+		// the file imports `TimestampedModel` (SCOPE.Component
+		// placeholder) and the real `Component` entity is also indexed.
+		// EXTENDS must pick the real Component.
+		entities := []types.EntityRecord{
+			entAt("aaaaaaaaaaaaaaaa", "Component", "TimestampedModel", "models.py"),
+			entAt("cccccccccccccccc", "SCOPE.Component", "TimestampedModel", "models.py"),
+			// A second Component using the same name to force ambigName.
+			entAt("eeeeeeeeeeeeeeee", "Component", "OtherClass", "other.py"),
+			entAt("ffffffffffffffff", "SCOPE.Component", "OtherClass", "other.py"),
+		}
+		// Force ambigName for TimestampedModel by adding a same-name
+		// entity of an unrelated kind so byName collapses.
+		entities = append(entities,
+			entAt("9999999999999999", "Function", "TimestampedModel", "elsewhere.py"))
+		idx := BuildIndex(entities)
+		id, st := idx.LookupStatusHint("TimestampedModel", "EXTENDS")
+		if id != "aaaaaaaaaaaaaaaa" || st != statusRewritten {
+			t.Fatalf("both-kinds EXTENDS: got id=%q st=%d, want aaaa.. (real Component) statusRewritten", id, st)
+		}
+	})
+
+	t.Run("both-kinds-same-file/IMPLEMENTS-prefers-real", func(t *testing.T) {
+		entities := []types.EntityRecord{
+			entAt("aaaaaaaaaaaaaaaa", "Component", "Service", "svc.go"),
+			entAt("cccccccccccccccc", "SCOPE.Component", "Service", "svc.go"),
+			entAt("9999999999999999", "Function", "Service", "elsewhere.go"),
+		}
+		idx := BuildIndex(entities)
+		id, st := idx.LookupStatusHint("Service", "IMPLEMENTS")
+		if id != "aaaaaaaaaaaaaaaa" || st != statusRewritten {
+			t.Fatalf("both-kinds IMPLEMENTS: got id=%q st=%d, want aaaa.. statusRewritten", id, st)
+		}
+	})
+
+	t.Run("both-kinds/CALLS-also-prefers-real-operation", func(t *testing.T) {
+		// Symmetric for the Operation family: a real Function/Method
+		// beats SCOPE.Operation. CALLS still preserves preference for
+		// real entity when a placeholder exists (same tier rule).
+		entities := []types.EntityRecord{
+			entAt("aaaaaaaaaaaaaaaa", "Function", "doWork", "a.py"),
+			entAt("cccccccccccccccc", "SCOPE.Operation", "doWork", "a.py"),
+			entAt("9999999999999999", "Component", "doWork", "b.py"),
+		}
+		idx := BuildIndex(entities)
+		id, st := idx.LookupStatusHint("doWork", "CALLS")
+		if id != "aaaaaaaaaaaaaaaa" || st != statusRewritten {
+			t.Fatalf("CALLS both-kinds: got id=%q st=%d, want aaaa.. (real Function) statusRewritten", id, st)
+		}
+	})
+
+	t.Run("structural-ref/EXTENDS-prefers-real-at-same-file", func(t *testing.T) {
+		// Real django shape: `class Article(TimestampedModel):` emits an
+		// EXTENDS edge with ToID =
+		// scope:component:class:python:<file>:TimestampedModel
+		// when the file has both a real Component (imported, indexed
+		// against this file) and a SCOPE.Component placeholder of the
+		// same name. Structural-ref resolution must prefer the real
+		// Component via the location-kind tier-1 pass.
+		const file = "conduit/apps/articles/models.py"
+		entities := []types.EntityRecord{
+			entAt("aaaaaaaaaaaaaaaa", "Component", "TimestampedModel", file),
+			entAt("cccccccccccccccc", "SCOPE.Component", "TimestampedModel", file),
+		}
+		idx := BuildIndex(entities)
+		stub := "scope:component:class:python:" + file + ":TimestampedModel"
+		id, st, handled := idx.lookupStructural(stub)
+		if !handled {
+			t.Fatalf("structural-ref must be handled; got handled=false")
+		}
+		if id != "aaaaaaaaaaaaaaaa" || st != statusRewritten {
+			t.Fatalf("structural-ref EXTENDS: got id=%q st=%d, want aaaa.. statusRewritten", id, st)
+		}
+	})
+
+	t.Run("two-real-components/EXTENDS-still-ambiguous", func(t *testing.T) {
+		// Two distinct REAL Component entities sharing the name: the
+		// tier-1 pass sees two different IDs in the real family and
+		// must return ambiguous; the fix only resolves the
+		// real-vs-placeholder collision, not real-vs-real.
+		entities := []types.EntityRecord{
+			entAt("aaaaaaaaaaaaaaaa", "Component", "Conflict", "a.py"),
+			entAt("bbbbbbbbbbbbbbbb", "Component", "Conflict", "b.py"),
+		}
+		idx := BuildIndex(entities)
+		id, st := idx.LookupStatusHint("Conflict", "EXTENDS")
+		if st == statusRewritten {
+			t.Fatalf("two real Components EXTENDS: must remain ambiguous, got id=%q st=%d", id, st)
+		}
+	})
+}

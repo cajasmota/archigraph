@@ -1262,6 +1262,16 @@ type Index struct {
 	// name and the kind hint cannot disambiguate via this family.
 	nameKinds map[string]map[string]string
 
+	// nameKindsReal[name][kind] = entity_id, indexed under the entity's
+	// ORIGINAL kind only (no SCOPE.* dual-indexing). Used by
+	// lookupByKindHint's tier-1 pass to prefer real entities over
+	// SCOPE.* placeholders when EXTENDS / IMPLEMENTS / CALLS edges
+	// resolve a bare name that lives under both tiers (#525). Blank
+	// string sentinel marks (name, kind) collisions; identical
+	// semantics to nameKinds but without the cross-tier ambiguity that
+	// dual-indexing introduces.
+	nameKindsReal map[string]map[string]string
+
 	// byLocation[file_path][name] = entity_id, retained only when unique
 	// within the file. Used by structural-ref Format A resolution.
 	byLocation LocationIndex
@@ -1275,6 +1285,17 @@ type Index struct {
 	// one when the relationship's kind hint maps to a single family.
 	// A blank string sentinel marks (file, name, kind) collisions.
 	byLocationKind LocationKindIndex
+
+	// byLocationKindReal mirrors byLocationKind but indexes ONLY under
+	// the entity's original kind (no SCOPE.* dual-indexing). Used by
+	// lookupLocationKind's tier-1 pass so structural-ref EXTENDS /
+	// IMPLEMENTS edges that target a same-file collision between a
+	// real Component and a SCOPE.Component placeholder bind to the
+	// real entity (#525). Without this, the dual-indexing in
+	// byLocationKind blanks the "Component" key when a SCOPE.Component
+	// of the same (file, name) is registered, forcing the resolver
+	// into ambig-bare-hint-fail.
+	byLocationKindReal LocationKindIndex
 
 	// byQualifiedName[qualified_name] = entity_id. Direct lookup for
 	// stubs whose ToID is an entity QualifiedName verbatim (e.g. markdown
@@ -1528,9 +1549,11 @@ func BuildIndex(entities []types.EntityRecord) Index {
 		byName:          make(map[string]string),
 		ambigName:       make(map[string]bool),
 		nameKinds:       make(map[string]map[string]string),
+		nameKindsReal:   make(map[string]map[string]string),
 		byLocation:      make(LocationIndex),
 		ambigLocation:   make(map[string]map[string]bool),
-		byLocationKind:  make(LocationKindIndex),
+		byLocationKind:     make(LocationKindIndex),
+		byLocationKindReal: make(LocationKindIndex),
 		byMember:        make(map[string]map[string]map[string]string),
 		byPackageMember:    make(map[string]map[string]map[string]string),
 		byPackageOperation: make(map[string]map[string]string),
@@ -1614,6 +1637,25 @@ func BuildIndex(entities []types.EntityRecord) Index {
 			}
 		}
 
+		// nameKindsReal — single-pass under the entity's original kind
+		// only. Used by lookupByKindHint's tier-1 real-entity pass
+		// (#525) so that SCOPE.Component dual-indexing under
+		// "Component" doesn't poison the hint when a same-named real
+		// Component coexists. Blank sentinel marks collisions within
+		// the same original kind.
+		if e.Kind != "" {
+			realBucket := idx.nameKindsReal[e.Name]
+			if realBucket == nil {
+				realBucket = make(map[string]string)
+				idx.nameKindsReal[e.Name] = realBucket
+			}
+			if existing, ok := realBucket[e.Kind]; ok && existing != e.ID {
+				realBucket[e.Kind] = ""
+			} else {
+				realBucket[e.Kind] = e.ID
+			}
+		}
+
 		// Location index — (file_path, name) -> entity_id. Same logic as
 		// byKind: ambiguous (file, name) tuples are tracked separately so
 		// the structural-ref resolver leaves the stub alone.
@@ -1639,6 +1681,30 @@ func BuildIndex(entities []types.EntityRecord) Index {
 					nameKindBucketLoc[kind] = "" // ambiguous within (file, name, kind)
 				} else {
 					nameKindBucketLoc[kind] = e.ID
+				}
+			}
+
+			// byLocationKindReal — single-pass under the entity's
+			// original kind only. Powers the real-tier preference in
+			// lookupLocationKind so structural-ref EXTENDS targets
+			// like scope:component:class:py:models.py:TimestampedModel
+			// resolve to a real Component even when a SCOPE.Component
+			// placeholder shares the same (file, name) (#525).
+			if e.Kind != "" {
+				realFileBucket := idx.byLocationKindReal[sourceFile]
+				if realFileBucket == nil {
+					realFileBucket = make(map[string]map[string]string)
+					idx.byLocationKindReal[sourceFile] = realFileBucket
+				}
+				realNameBucket := realFileBucket[e.Name]
+				if realNameBucket == nil {
+					realNameBucket = make(map[string]string)
+					realFileBucket[e.Name] = realNameBucket
+				}
+				if existing, ok := realNameBucket[e.Kind]; ok && existing != e.ID {
+					realNameBucket[e.Kind] = ""
+				} else {
+					realNameBucket[e.Kind] = e.ID
 				}
 			}
 
@@ -1983,26 +2049,59 @@ func hintKinds(relKind string) []string {
 }
 
 // lookupByKindHint disambiguates a name using the relKind hint. Returns
-// (id, true) only when exactly one entity in the hinted family has this
-// name; otherwise ("", false).
+// (id, true) only when the hinted family yields exactly one entity for
+// this name; otherwise ("", false).
+//
+// Tiered preference (issue #525): family members are partitioned into
+// "real" entity kinds (Component, Class, View, Model, Operation,
+// Function, Method) and SCOPE.* heuristic placeholders that the
+// extractor emits when a structural target could not be pinned down.
+// When the same bare name appears under both tiers — the classic
+// `class Article(TimestampedModel):` shape where TimestampedModel is
+// both an imported `Component` AND a same-file `SCOPE.Component`
+// placeholder — the real entity is preferred over the placeholder. A
+// real-tier hit short-circuits before the placeholder tier is even
+// consulted, so EXTENDS / IMPLEMENTS / CALLS edges that would
+// otherwise tag `ambig-bare-hint-fail` bind to the actual component.
 func (idx Index) lookupByKindHint(name, relKind string) (string, bool) {
 	families := hintKinds(relKind)
 	if len(families) == 0 {
 		return "", false
 	}
+	// Tier 1: real entity kinds only, consulted via nameKindsReal so
+	// SCOPE.* dual-indexing in nameKinds doesn't blank a real entity's
+	// kind bucket (#525). When a real Component / Class / View / Model
+	// (or Operation / Function / Method) uniquely matches, return it
+	// without consulting the SCOPE.* placeholder tier at all.
+	if realBucket := idx.nameKindsReal[name]; len(realBucket) > 0 {
+		if id, ok := uniqueMatchInFamily(realBucket, families, false); ok {
+			return id, true
+		}
+	}
 	bucket := idx.nameKinds[name]
 	if len(bucket) == 0 {
 		return "", false
 	}
+	// Tier 2: full family including SCOPE.* placeholders.
+	return uniqueMatchInFamily(bucket, families, true)
+}
+
+// uniqueMatchInFamily walks the supplied family slice and returns the
+// single entity ID present in bucket whose kind is a family member.
+// When includePlaceholders is false, kinds prefixed with scopeKindPrefix
+// are skipped — used by the tier-1 pass of lookupByKindHint to prefer
+// real Component over SCOPE.Component (#525).
+func uniqueMatchInFamily(bucket map[string]string, families []string, includePlaceholders bool) (string, bool) {
 	var match string
 	for _, k := range families {
+		if !includePlaceholders && strings.HasPrefix(k, scopeKindPrefix) {
+			continue
+		}
 		id := bucket[k]
 		if id == "" {
 			continue
 		}
 		if match != "" && match != id {
-			// Two distinct entities in the hinted family share this
-			// name — hint cannot disambiguate.
 			return "", false
 		}
 		match = id
@@ -2195,9 +2294,24 @@ func structuralKindFamilies(scopeKind string) []string {
 // lookupLocationKind picks an entity by (file, name) constrained to the
 // supplied kind families. Returns (id, true) only when exactly one family
 // resolves to a non-blank entity ID for this (file, name).
+//
+// Tiered preference (#525): consults byLocationKindReal first, scanning
+// only the non-SCOPE.* members of the family. When that yields a unique
+// real entity, return it without consulting the dual-indexed bucket —
+// this is what makes `class Article(TimestampedModel):` bind to the
+// imported real Component even when a SCOPE.Component placeholder for
+// the same name lives in the same file. The fallback tier preserves
+// the historic behaviour for SCOPE.*-only and mixed-kind shapes.
 func (idx Index) lookupLocationKind(filePath, name string, families []string) (string, bool) {
 	if len(families) == 0 {
 		return "", false
+	}
+	if realFileBucket := idx.byLocationKindReal[filePath]; realFileBucket != nil {
+		if realNameBucket := realFileBucket[name]; len(realNameBucket) > 0 {
+			if id, ok := uniqueMatchInFamily(realNameBucket, families, false); ok {
+				return id, true
+			}
+		}
 	}
 	fileBucket := idx.byLocationKind[filePath]
 	if fileBucket == nil {
@@ -2207,21 +2321,7 @@ func (idx Index) lookupLocationKind(filePath, name string, families []string) (s
 	if len(nameBucket) == 0 {
 		return "", false
 	}
-	var match string
-	for _, k := range families {
-		id := nameBucket[k]
-		if id == "" {
-			continue
-		}
-		if match != "" && match != id {
-			return "", false
-		}
-		match = id
-	}
-	if match == "" {
-		return "", false
-	}
-	return match, true
+	return uniqueMatchInFamily(nameBucket, families, true)
 }
 
 // looksLikeSourceFilePath reports whether s has the shape of a source
