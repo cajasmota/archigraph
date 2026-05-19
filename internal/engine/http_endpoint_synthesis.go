@@ -244,6 +244,11 @@ func applyHTTPEndpointSynthesis(
 	case "go":
 		// Producer side: Gin / Echo / Chi route registrations. #722.
 		synthesizeGoRouters(string(content), emit)
+		// Consumer side (#721 wave 2a): net/http, resty, fasthttp.
+		synthesizeGoClientWithRuntime(string(content), emitClientRuntime)
+	case "kotlin":
+		// Consumer side (#721 wave 2a): Ktor, OkHttp-Kotlin, Retrofit-K.
+		synthesizeKotlinClientWithRuntime(string(content), emitClientRuntime)
 	}
 
 	// #722 — response/request shape extraction. Mutates Properties on
