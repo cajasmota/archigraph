@@ -2,6 +2,8 @@
 
 Emit one markdown file per approved pattern under `docs/patterns/<category>/<pattern-id>.md`. Re-runs of `/generate-docs` overwrite these files from the current pattern store, so refinements and new applies propagate automatically.
 
+> **Pass 3a hook active.** Before writing the section that names an exemplar entity, run the generation-time repair hook from `prompts/03a-generation-time-repair.md`. This prevents pattern exemplars from referencing dangling targets and implements the "patterns → repair" cross-link from #732.
+
 This pass uses the `internal/agentpatterns/docs.go` renderer (`RenderMarkdown`, `WriteMarkdown`) — call it via the daemon's pattern surface rather than reimplementing the markdown construction.
 
 ## Output structure

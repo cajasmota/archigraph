@@ -2,6 +2,8 @@
 
 Some topics span every module: authentication, authorization, logging, error handling, observability, feature flags, rate limiting. They deserve their own pages so readers don't have to reconstruct them from per-module docs.
 
+> **Pass 3a hook active.** Before writing any paragraph that describes an entity, run the generation-time repair hook from `prompts/03a-generation-time-repair.md`. Auto-repair residuals where unambiguous; otherwise emit the documented "Runtime-resolved edge" callout from that prompt. Do not silently drop unresolved outbound edges.
+
 Default topics (override per group via `plan.passes.6_cross_cutting.topics`):
 
 - `auth.md` — authentication and authorization
