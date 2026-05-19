@@ -60,7 +60,28 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	// originating repo via the resolver's byName index. Generalises the
 	// JS/TS fix from #570/#575.
 	entities = append(entities, extractor.FileEntity(file))
-	walk(file.Tree.RootNode(), file, &entities)
+	root := file.Tree.RootNode()
+	walk(root, file, &entities)
+
+	// Track A (analog of #641/#650/#670 for Kotlin) — REFERENCES-edge
+	// emission. Runs after every primary-pass entity is in place so the
+	// file-scope symbol table covers functions, classes, objects, and
+	// property bindings. Failures here recover internally to partial
+	// results — never aborts primary output.
+	func() {
+		defer func() { _ = recover() }()
+		emitReferences(root, file, &entities)
+	}()
+
+	// Track B (analog of #642/#650/#670 for Kotlin) — IMPORTS ToID rewrite.
+	// Rewrites IMPORTS edges whose dotted path's longest matching prefix
+	// is a known external JVM/Kotlin package to an
+	// `ext:<prefix>[:<name>]` ToID so the resolver's external-disposition
+	// gate classifies them ExternalKnown directly. In-tree imports are
+	// untouched — the existing ResolveDottedImportTarget path binds them
+	// via source_module / imported_name properties.
+	resolveImportToIDs(entities)
+
 	// Issue #90 — language tag for resolver dynamic-pattern dispatch.
 	extractor.TagRelationshipsLanguage(entities, "kotlin")
 	return entities, nil
@@ -413,11 +434,24 @@ func buildImport(node *sitter.Node, file extractor.FileInput) (types.EntityRecor
 	if i := strings.Index(raw, " as "); i >= 0 {
 		raw = strings.TrimSpace(raw[:i])
 	}
-	// Strip wildcard suffix.
+	// Strip wildcard suffix; track presence for IMPORTS-rewrite (PR #670 analog).
+	wildcard := strings.HasSuffix(raw, ".*")
 	raw = strings.TrimSuffix(raw, ".*")
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return types.EntityRecord{}, false
+	}
+	props := map[string]string{
+		"source_module": raw,
+	}
+	if wildcard {
+		props["wildcard"] = "1"
+	} else if dot := strings.LastIndexByte(raw, '.'); dot >= 0 {
+		// Imported leaf name (used by the IMPORTS-rewrite pass to build
+		// the `ext:<root>:<leaf>` ToID for known-external packages).
+		props["imported_name"] = raw[dot+1:]
+	} else {
+		props["imported_name"] = raw
 	}
 	return types.EntityRecord{
 		Name:       raw,
@@ -427,9 +461,10 @@ func buildImport(node *sitter.Node, file extractor.FileInput) (types.EntityRecor
 		Language:   "kotlin",
 		Relationships: []types.RelationshipRecord{
 			{
-				FromID: file.Path,
-				ToID:   raw,
-				Kind:   "IMPORTS",
+				FromID:     file.Path,
+				ToID:       raw,
+				Kind:       "IMPORTS",
+				Properties: props,
 			},
 		},
 	}, true

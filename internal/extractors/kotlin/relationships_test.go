@@ -268,10 +268,16 @@ class A
 			}
 		}
 	}
+	// After Track B (analog of #642/#650/#670 for Kotlin) the IMPORTS
+	// ToID for known-external Kotlin/JVM packages is rewritten to the
+	// `ext:<root>[:<leaf>]` form so the resolver's external-disposition
+	// gate classifies them ExternalKnown directly. The entity Name
+	// (left-hand key) still carries the original fully-qualified
+	// dotted path — the rewrite is on the relationship ToID only.
 	want := map[string]string{
-		"io.ktor.server.routing.get": "io.ktor.server.routing.get",
-		"io.ktor.server.routing":     "io.ktor.server.routing",
-		"kotlin.io.println":          "kotlin.io.println",
+		"io.ktor.server.routing.get": "ext:io.ktor:get",
+		"io.ktor.server.routing":     "ext:io.ktor",
+		"kotlin.io.println":          "ext:kotlin:println",
 	}
 	if len(imps) != len(want) {
 		t.Fatalf("expected %d IMPORTS edges, got %d: %+v", len(want), len(imps), imps)

@@ -219,13 +219,15 @@ class Foo {}
 				continue
 			}
 			// Every IMPORTS edge must carry a fully-qualified
-			// dotted path — never a short leading segment.
+			// dotted path OR the `ext:<root>[:<leaf>]` form produced
+			// by resolveImportToIDs (mirror of #642/#650/#670 for
+			// Kotlin) — never a short leading segment.
 			if ghostNames[rel.ToID] {
 				t.Errorf("IMPORTS ToID=%q is a ghost segment; want full dotted path",
 					rel.ToID)
 			}
-			if !strings.Contains(rel.ToID, ".") {
-				t.Errorf("IMPORTS ToID=%q has no '.' — expected fully-qualified import path",
+			if !strings.Contains(rel.ToID, ".") && !strings.HasPrefix(rel.ToID, "ext:") {
+				t.Errorf("IMPORTS ToID=%q has no '.' and no ext: prefix — expected fully-qualified import path or ext-tagged form",
 					rel.ToID)
 			}
 		}
