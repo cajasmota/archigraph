@@ -488,6 +488,49 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 		pass3Records = append(pass3Records, javaEntities...)
 	}
 
+	// Pass 2.7 — corpus-wide response-shape extraction (#753).
+	//
+	// The per-file response-shape pass inside applyHTTPEndpointSynthesis
+	// only works when the handler lives in the same file as the route
+	// registration. Real applications dispatch URLs from a different
+	// module (Django urls.py → views.py, DRF router → ViewSets,
+	// Express routes → imported controllers). This pass runs after
+	// every producer-side synthesizer has populated handler references
+	// on http_endpoint entities and resolves them cross-file using the
+	// classified file set still live in memory at this point.
+	//
+	// MUST run before releaseClassifiedASTs (which nils content) and
+	// before buildDocument (where ResolveHTTPEndpointHandlers clears
+	// the source_handler property post-resolution).
+	if !i.skipPasses[PassFramework] && len(classified) > 0 {
+		// Build a file-content lookup from the classified slice.
+		contentByPath := make(map[string][]byte, len(classified))
+		for k := range classified {
+			cf := &classified[k]
+			if cf.content != nil {
+				contentByPath[cf.relPath] = cf.content
+			}
+		}
+		reader := func(p string) []byte { return contentByPath[p] }
+
+		// Gather the union of records we have so far. Mutating
+		// pass3Records' Properties also mutates the shared map under
+		// the http_endpoint entities buildDocument will receive.
+		shapeStats := engine.ApplyResponseShapesCorpus(
+			concatRecords(pass1Records, pass2Records, pass3Records),
+			pass2Rels,
+			reader,
+		)
+		if shapeStats.Endpoints > 0 {
+			fmt.Fprintf(os.Stderr,
+				"response-shape-corpus: endpoints=%d handler_resolved=%d shape_extracted=%d no_handler_found=%d\n",
+				shapeStats.Endpoints,
+				shapeStats.HandlerResolved,
+				shapeStats.ShapeExtracted,
+				shapeStats.NoHandlerFound)
+		}
+	}
+
 	// Issue #633 — release per-file AST trees + source bytes now that the
 	// last consumer (Pass 3 cross-language extractors) has finished. The
 	// classified slice is otherwise retained until Run() returns, which on
@@ -1875,6 +1918,31 @@ func releaseClassifiedASTs(classified []classifiedFile) {
 		}
 		cf.content = nil
 	}
+}
+
+// concatRecords returns the in-order concatenation of several record
+// slices. Used by the corpus-wide response-shape pass (#753) which
+// needs to see the full producer-side entity set (handlers + synthetic
+// http_endpoints) without modifying the per-pass slices that
+// buildDocument later merges in canonical order.
+//
+// The returned slice shares the underlying EntityRecord values with the
+// inputs — embedded Properties maps are reference-shared, so the
+// post-pass can mutate them and the changes are visible via the
+// original slices.
+func concatRecords(slices ...[]types.EntityRecord) []types.EntityRecord {
+	total := 0
+	for _, s := range slices {
+		total += len(s)
+	}
+	if total == 0 {
+		return nil
+	}
+	out := make([]types.EntityRecord, 0, total)
+	for _, s := range slices {
+		out = append(out, s...)
+	}
+	return out
 }
 
 // countEmbeddedRels totals the relationships embedded inside EntityRecords.

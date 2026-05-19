@@ -259,7 +259,15 @@ func extractDictKeys(body string) []string {
 		keys = append(keys, m[1])
 	}
 	if len(keys) == 0 {
-		for _, m := range bareKeyRe.FindAllStringSubmatch(flat, -1) {
+		// Trim leading whitespace so the first bare key (whose
+		// preceding context after outer-brace stripping is " name:"
+		// rather than "{ name:") still matches bareKeyRe's
+		// `(?:^|[{,]\s*)` anchor. Without this trim,
+		// `{ users: [], page: 1 }` produced only ["page"] because
+		// " users" is preceded by a space, not by `{`, `,`, or string
+		// start. Caught while fixing #753.
+		flatTrim := strings.TrimLeft(flat, " \t\r\n")
+		for _, m := range bareKeyRe.FindAllStringSubmatch(flatTrim, -1) {
 			keys = append(keys, m[1])
 		}
 	}

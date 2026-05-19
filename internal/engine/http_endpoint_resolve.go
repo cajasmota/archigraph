@@ -36,6 +36,22 @@ import (
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
+// resolverKindEquivalents maps a synthesizer-emitted handler Kind to
+// the list of fallback Kinds the resolver should try when the exact
+// match misses. The synthesizers were written against an older
+// extractor convention (Controller / View) but the per-language
+// extractors land function-shaped handlers as SCOPE.Operation and
+// class-shaped handlers as SCOPE.Class. Without this fallback the
+// resolver drops every Flask / FastAPI / Express endpoint whose
+// handler is a plain function. #753.
+var resolverKindEquivalents = map[string][]string{
+	"Controller":      {"SCOPE.Operation", "SCOPE.Function", "View"},
+	"View":            {"SCOPE.Operation", "SCOPE.Class", "Controller"},
+	"SCOPE.Operation": {"Controller", "View"},
+	"SCOPE.Class":     {"View", "Controller"},
+	"SCOPE.Function":  {"SCOPE.Operation", "Controller"},
+}
+
 // ResolveHTTPEndpointStats reports counters for a single resolve pass.
 // Exposed so cmd/archigraph can log a stats line analogous to the
 // import-aware resolver line.
@@ -59,6 +75,17 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 	// (kind, name, sourceFile) → index into `merged`.
 	type key struct{ kind, name, sourceFile string }
 	idx := make(map[key]int, len(merged))
+	// (kind, name) → first index — used as cross-file fallback for
+	// handlers declared in a different module than the route synthetic
+	// (Django composed routes, Express imported controllers, etc.).
+	// See #753: the original same-file-only resolver dropped every
+	// Django-composed and imported-controller endpoint because the
+	// view/controller body lives in a different file than the URL
+	// dispatcher. Falling back to a global (kind, name) match keeps
+	// those endpoints alive so the corpus-wide response-shape pass
+	// can locate and scan the actual handler body.
+	type knKey struct{ kind, name string }
+	globalIdx := make(map[knKey]int, len(merged))
 	for i := range merged {
 		r := &merged[i]
 		if r.Kind == httpEndpointKind {
@@ -67,6 +94,10 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 		k := key{r.Kind, r.Name, r.SourceFile}
 		if _, ok := idx[k]; !ok {
 			idx[k] = i
+		}
+		gk := knKey{r.Kind, r.Name}
+		if _, ok := globalIdx[gk]; !ok {
+			globalIdx[gk] = i
 		}
 	}
 
@@ -102,19 +133,51 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 		}
 
 		// Prefer same-file match (handlers and route synthetics are
-		// always emitted from the same file by Phase 1 construction).
+		// often emitted from the same file by Phase 1 construction).
 		handlerIdx, found := idx[key{hk, hn, r.SourceFile}]
 		if !found {
-			// Spring's composed Route handler reference uses
-			// Kind="Route" + Name=<path>, which collides with the
-			// synthetic itself — the synthetic IS the canonicalised path.
-			// In that case Phase 1 only had the path to refer to, not the
-			// underlying controller method, so we treat it as a true
-			// unresolved (no real handler entity exists with that kind+name
-			// distinct from the synthetic).
-			drop[i] = true
-			stats.HandlerDropped++
-			continue
+			// Cross-file fallback (#753). Django composed routes record
+			// a `View:<ViewSet>` handler reference whose entity lives in
+			// views.py while the synthetic lives in urls.py. Express
+			// imported controllers have the same shape — handler in
+			// controllers/users.js, route registration in routes.js.
+			// Try the global (kind, name) index before giving up.
+			//
+			// Skip the cross-file fallback when the reference is
+			// Kind="Route" + Name=<path> — that's Spring's
+			// "synthesizer didn't have the method name" placeholder
+			// and would always collide with the synthetic itself.
+			if hk == "Route" {
+				stats.HandlerDropped++
+				drop[i] = true
+				continue
+			}
+			handlerIdx, found = globalIdx[knKey{hk, hn}]
+			if !found {
+				// Cross-kind fallback. Synthesizers historically emit
+				// `Controller:<name>` but the Python YAML rules + the
+				// generic SCOPE extractor produce `SCOPE.Operation`
+				// for function-shaped handlers (Flask def, FastAPI
+				// def, Express function expressions). Likewise the
+				// Java AST pass emits `SCOPE.Operation:Class.method`
+				// while older synthesizers still emit `Controller:method`.
+				// Try the known equivalence classes before dropping —
+				// without this fallback every Flask synthetic with a
+				// Controller-shaped ref gets dropped because the
+				// matching entity has kind SCOPE.Operation. #753.
+				for _, altKind := range resolverKindEquivalents[hk] {
+					if hi, ok := globalIdx[knKey{altKind, hn}]; ok {
+						handlerIdx = hi
+						found = true
+						break
+					}
+				}
+			}
+			if !found {
+				stats.HandlerDropped++
+				drop[i] = true
+				continue
+			}
 		}
 
 		// Resolved. Append an embedded IMPLEMENTS edge on the handler.
