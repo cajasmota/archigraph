@@ -2,6 +2,8 @@
 
 Write `<repo>/docs/overview.md` for every repo in the group. The overview is the entry point a new engineer reads first; it is also the page Pass 7 quotes when synthesizing the group-level page.
 
+> **Pass 3a hook active.** Before writing any paragraph that describes an entity, run the generation-time repair hook from `prompts/03a-generation-time-repair.md`. Auto-repair residuals where unambiguous; otherwise emit the documented "Runtime-resolved edge" callout from that prompt. Do not silently drop unresolved outbound edges.
+
 ## Inputs
 
 - `~/.archigraph/groups/<group>/domain.md`

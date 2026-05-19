@@ -31,8 +31,11 @@ The skill is a strict pipeline. Each pass has a dedicated prompt file under `pro
 |------|--------|---------|
 | 0 | `prompts/00-domain-qa.md` | First-run domain interview: what is this group, who owns it, what are the deployment boundaries. |
 | 1 | `prompts/01-inventory.md` | Discover repos and entities via `archigraph_search` / `archigraph_graph_stats` / `archigraph_list_clusters`. |
+| 1a | `prompts/01a-residual-repair-sweep.md` | Pre-Q&A repair sweep (ADR-0015): list residuals via `archigraph_repairs(action=list)`, auto-resolve unambiguous ones, surface the rest as questions for Pass 1b. |
+| 1b | `prompts/01b-repair-aware-qa.md` | Repair-aware Q&A: walk the user through residuals Pass 1a could not auto-resolve; each answer becomes an `archigraph_repairs(action=submit)` call. |
 | 2 | `prompts/02-plan.md` | Produce a per-module documentation plan with token estimates. |
 | 3 | `prompts/03-overview.md` | Repo-level `overview.md` for every repo. |
+| 3a | `prompts/03a-generation-time-repair.md` | Hook (not a standalone pass): every writer in Passes 3-6 + 12 inspects outbound residuals of the entity it is about to describe, repairs in-place when possible, documents as runtime-resolved otherwise. |
 | 4 | `prompts/04-cluster.md` | Per-module deep-dive (parallel writer subagents, one per cluster). |
 | 5 | `prompts/05-reference.md` | Reference docs: API, config, deployment, scripts, dependencies. |
 | 6 | `prompts/06-cross-cutting.md` | Cross-cutting concerns: auth, logging, error handling, observability. |
@@ -44,6 +47,8 @@ The skill is a strict pipeline. Each pass has a dedicated prompt file under `pro
 | 12 | `prompts/12-pattern-prose.md` | Emit `docs/patterns/<category>/<id>.md` per approved pattern (ADR-0018 Phase 6). |
 
 During Pass 4 (per-module writers), each subagent additionally emits `PatternCandidate` entities via `archigraph_patterns(action=record, as_candidate=true)` whenever it observes ≥ `per_subagent_threshold` (default 2) instances of a structural recurrence in its slice. The candidates aggregate in Pass 10, cross-link in Pass 11, and produce dedicated markdown in Pass 12. The full design is in [ADR-0018](../../docs/adrs/0018-agent-learned-patterns.md).
+
+Passes 1a and 1b integrate the ADR-0015 residual-repair flow into doc generation, closing the gap between the static-analysis recall ceiling and full cross-repo coverage. Pass 3a is a hook (not a numbered pass): every writer in Passes 3–6 and 12 runs it before describing an entity, so any residual that escaped the sweep gets one more chance to repair or, failing that, gets surfaced in prose as a documented runtime-resolved edge per ADR-0007. The standalone `/archigraph-repair` skill (`skills/archigraph-repair/SKILL.md`) exposes the same flow outside doc generation for ad-hoc cleanup.
 
 ## archigraph MCP tool surface
 
@@ -60,6 +65,7 @@ The skill is built around the archigraph MCP server. The agent should call these
 - `archigraph_save_finding` - persist a question/answer pair into the group memory directory.
 - `archigraph_list_link_candidates` / `archigraph_resolve_link_candidate` - cross-repo link review (Pass 8).
 - `archigraph_list_enrichment_candidates` / `archigraph_submit_enrichment` / `archigraph_reject_enrichment` - close enrichment loops.
+- `archigraph_repairs` - residual-edge repair queue (`action=list|submit`). Used by Passes 1a, 1b, and the Pass 3a hook to annotate runtime-resolved edges per ADR-0015.
 - `archigraph_graph_stats` - corpus-level metrics (used in Pass 1 inventory).
 - `archigraph_get_telemetry` - server uptime and per-tool counters (debugging only).
 
@@ -115,5 +121,8 @@ Before any pass commits its output, the writer subagent runs the checks in `snip
 ## Related
 
 - `skills/extend-convention/SKILL.md` - companion skill for adding a new stack convention.
+- `skills/archigraph-repair/SKILL.md` - standalone repair flow for ad-hoc residual cleanup outside doc generation.
+- ADR-0015 (`docs/adrs/0015-residual-repair-agent-enrichment.md`) - residual repair foundation; powers Passes 1a, 1b, and 3a.
+- `docs/specs/repair-trust-model.md` - allowlist + verification rules enforced by `archigraph_repairs(action=submit)`.
 - ADR-0007 (`docs/adrs/0007-doc-as-bridge-for-cross-repo-and-dynamic-connections.md`) - why backticked code identifiers in headings matter.
 - ADR-0008 - caller-CWD-aware routing, which is why `repo_filter` defaults work without the agent passing `cwd` explicitly.

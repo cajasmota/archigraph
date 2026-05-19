@@ -2,6 +2,8 @@
 
 For every entry under `plan.passes.4_cluster.modules`, produce a self-contained module page (or set of pages). This pass runs writer subagents **in parallel** — one subagent per module — bounded by a configured concurrency limit.
 
+> **Pass 3a hook active.** Before writing any paragraph that describes an entity, run the generation-time repair hook from `prompts/03a-generation-time-repair.md`. Auto-repair residuals where unambiguous; otherwise emit the documented "Runtime-resolved edge" callout from that prompt. Do not silently drop unresolved outbound edges.
+
 ## Inputs (per writer subagent)
 
 - The single module entry from `plan.json` you are responsible for.
