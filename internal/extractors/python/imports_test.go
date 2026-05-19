@@ -14,12 +14,14 @@ import (
 
 // findImportEdge returns the IMPORTS edge whose source_module matches
 // the supplied dotted module path, or nil when no such edge exists.
+//
+// Issue #693: IMPORTS edges are now attached to the file entity
+// (SCOPE.Component/file) rather than standalone SCOPE.Component/module
+// placeholder entities. The helper searches all entities so tests are
+// independent of the carrier entity kind/subtype.
 func findImportEdge(ents []types.EntityRecord, sourceModule string) *types.RelationshipRecord {
 	for i := range ents {
 		e := &ents[i]
-		if e.Kind != "SCOPE.Component" || e.Subtype != "module" {
-			continue
-		}
 		for j := range e.Relationships {
 			r := &e.Relationships[j]
 			if r.Kind != "IMPORTS" {
@@ -86,6 +88,9 @@ func TestImportsLeavesUnknownAlone(t *testing.T) {
 
 // Relative imports are never rewritten — `from .foo import bar` carries
 // a source_module starting with "." which is never an external package.
+//
+// Issue #693: IMPORTS edges now live on the file entity; the test checks
+// all entities' IMPORTS edges (no longer filtering by SCOPE.Component/module).
 func TestImportsSkipsRelative(t *testing.T) {
 	ex := &Extractor{}
 	ents, err := ex.Extract(context.Background(), extractor.FileInput{
@@ -97,9 +102,6 @@ func TestImportsSkipsRelative(t *testing.T) {
 		t.Fatalf("Extract: %v", err)
 	}
 	for _, e := range ents {
-		if e.Kind != "SCOPE.Component" || e.Subtype != "module" {
-			continue
-		}
 		for _, r := range e.Relationships {
 			if r.Kind != "IMPORTS" {
 				continue

@@ -158,12 +158,41 @@ func emitReferences(root *sitter.Node, file extractor.FileInput, entities *[]typ
 		if e.SourceFile != file.Path {
 			continue
 		}
-		if e.Subtype == "file" {
-			// Issue #577 file-level carrier entity — never reference
-			// it via REFERENCES; its Name is the file path.
-			continue
-		}
 		switch {
+		case e.Kind == "SCOPE.Component" && e.Subtype == "file":
+			// Issue #577 file-level carrier entity — its Name (the file path)
+			// must NOT be added to bareSymbols as a reference target. But its
+			// IMPORTS edges ARE indexed (issue #693): IMPORTS edges now live on
+			// the file entity rather than standalone module placeholder entities,
+			// so we read local_name here instead of from subtype="module" entities.
+			for _, r := range e.Relationships {
+				if r.Kind != "IMPORTS" {
+					continue
+				}
+				local := r.Properties["local_name"]
+				if local == "" {
+					continue
+				}
+				// Use the imported_name as the symbol name so the structural-ref
+				// resolves back to the right ext: entity (e.g. "Optional" not
+				// the full module path "typing.Optional").
+				importedName := r.Properties["imported_name"]
+				if importedName == "" {
+					importedName = r.Properties["source_module"]
+				}
+				if importedName == "" {
+					importedName = local
+				}
+				if _, exists := bareSymbols[local]; !exists {
+					bareSymbols[local] = pySymbol{
+						kind:    "SCOPE.Component",
+						subtype: "module",
+						name:    importedName,
+					}
+					entIdxByName[local] = i
+				}
+			}
+			continue // file entity itself is not a reference target
 		case e.Kind == "SCOPE.Operation":
 			// Methods: Name = "Class.method"; index by leaf AND dotted.
 			leaf := e.Name
@@ -187,24 +216,6 @@ func emitReferences(root *sitter.Node, file extractor.FileInput, entities *[]typ
 			if _, exists := bareSymbols[e.Name]; !exists {
 				bareSymbols[e.Name] = pySymbol{kind: e.Kind, subtype: e.Subtype, name: e.Name}
 				entIdxByName[e.Name] = i
-			}
-		case e.Kind == "SCOPE.Component" && e.Subtype == "module":
-			// IMPORTS placeholder. Index by local_name (the identifier
-			// actually visible in the file's namespace) so a same-file
-			// use of an imported leaf resolves. The local_name lives in
-			// the IMPORTS relationship's Properties.
-			for _, r := range e.Relationships {
-				if r.Kind != "IMPORTS" {
-					continue
-				}
-				local := r.Properties["local_name"]
-				if local == "" {
-					continue
-				}
-				if _, exists := bareSymbols[local]; !exists {
-					bareSymbols[local] = pySymbol{kind: e.Kind, subtype: e.Subtype, name: e.Name}
-					entIdxByName[local] = i
-				}
 			}
 		}
 	}

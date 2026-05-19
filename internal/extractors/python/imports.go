@@ -172,13 +172,15 @@ var pythonKnownExternalRoots = map[string]struct{}{
 // `ext:<root>[:<imported_name>]` form. Idempotent — ToIDs already
 // carrying the `ext:` prefix are left alone.
 //
+// Issue #693: the filter previously limited to SCOPE.Component/module
+// entities. After #693, IMPORTS edges live on the file entity
+// (SCOPE.Component/file). The filter is removed so the rewrite fires for
+// any entity carrying an IMPORTS edge (file entity, or any other carrier).
+//
 // Mutates the entities slice's relationships in place.
 func resolveImportToIDs(entities []types.EntityRecord) {
 	for i := range entities {
 		e := &entities[i]
-		if e.Kind != "SCOPE.Component" || e.Subtype != "module" {
-			continue
-		}
 		for j := range e.Relationships {
 			r := &e.Relationships[j]
 			if r.Kind != "IMPORTS" {

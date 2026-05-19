@@ -144,6 +144,10 @@ func TestExtract_CallsAttributeTrailing(t *testing.T) {
 }
 
 // TestExtract_ImportsSimple covers `import x` and `import x.y`.
+//
+// Issue #693: standalone SCOPE.Component/module entities are no longer
+// emitted. The test now verifies that IMPORTS edges with the expected
+// source_module values exist on any entity (they land on the file entity).
 func TestExtract_ImportsSimple(t *testing.T) {
 	src := `import os
 import os.path
@@ -152,26 +156,39 @@ import os.path
 	ext, _ := extractor.Get("python")
 	ents, _ := ext.Extract(context.Background(), makeFile(src, tree))
 
-	want := map[string]bool{"os": false, "os.path": false}
+	// No module placeholder entities.
 	for _, e := range ents {
-		if e.Subtype == "module" {
-			if _, ok := want[e.Name]; ok {
-				want[e.Name] = true
+		if e.Kind == "SCOPE.Component" && e.Subtype == "module" {
+			t.Errorf("SCOPE.Component/module placeholder entity emitted (#693): %q", e.Name)
+		}
+	}
+
+	// IMPORTS edges must exist (on the file entity or any carrier).
+	wantModules := map[string]bool{"os": false, "os.path": false}
+	for i := range ents {
+		for j := range ents[i].Relationships {
+			r := &ents[i].Relationships[j]
+			if r.Kind != "IMPORTS" || r.Properties == nil {
+				continue
 			}
-			if len(e.Relationships) != 1 || e.Relationships[0].Kind != "IMPORTS" {
-				t.Errorf("import entity %q missing IMPORTS edge: %+v", e.Name, e.Relationships)
+			mod := r.Properties["source_module"]
+			if _, ok := wantModules[mod]; ok {
+				wantModules[mod] = true
 			}
 		}
 	}
-	for k, ok := range want {
-		if !ok {
-			t.Errorf("expected import entity for %q", k)
+	for mod, found := range wantModules {
+		if !found {
+			t.Errorf("expected IMPORTS edge for source_module=%q", mod)
 		}
 	}
 }
 
-// TestExtract_ImportsFromSymbol covers `from x.y import a, b`. Each imported
-// symbol is emitted as its own module entity with name "x.y.a" / "x.y.b".
+// TestExtract_ImportsFromSymbol covers `from x.y import a, b`.
+//
+// Issue #693: standalone SCOPE.Component/module entities are no longer
+// emitted. The test now verifies that IMPORTS edges with the expected
+// imported_name values exist (carried by the file entity).
 func TestExtract_ImportsFromSymbol(t *testing.T) {
 	src := `from collections import OrderedDict, defaultdict
 `
@@ -179,20 +196,30 @@ func TestExtract_ImportsFromSymbol(t *testing.T) {
 	ext, _ := extractor.Get("python")
 	ents, _ := ext.Extract(context.Background(), makeFile(src, tree))
 
-	want := []string{"collections.OrderedDict", "collections.defaultdict"}
-	for _, w := range want {
-		found := false
-		for _, e := range ents {
-			if e.Subtype == "module" && e.Name == w {
-				found = true
-				if len(e.Relationships) != 1 || e.Relationships[0].Kind != "IMPORTS" {
-					t.Errorf("entity %q missing IMPORTS edge: %+v", w, e.Relationships)
-				}
-				break
+	// No module placeholder entities.
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Component" && e.Subtype == "module" {
+			t.Errorf("SCOPE.Component/module placeholder entity emitted (#693): %q", e.Name)
+		}
+	}
+
+	// IMPORTS edges for both symbols must exist.
+	want := map[string]bool{"OrderedDict": false, "defaultdict": false}
+	for i := range ents {
+		for j := range ents[i].Relationships {
+			r := &ents[i].Relationships[j]
+			if r.Kind != "IMPORTS" || r.Properties == nil {
+				continue
+			}
+			name := r.Properties["imported_name"]
+			if _, ok := want[name]; ok {
+				want[name] = true
 			}
 		}
+	}
+	for name, found := range want {
 		if !found {
-			t.Errorf("expected import entity for %q", w)
+			t.Errorf("expected IMPORTS edge for imported_name=%q", name)
 		}
 	}
 }
