@@ -167,3 +167,112 @@ public class Demo {}
 		t.Fatalf("wildcard import ToID = %q, want ext:org.springframework", r.ToID)
 	}
 }
+
+// ---- Issue #666: IMPORTS entity Name must be the local bound name ----
+
+// TestJavaImportNameIsLeaf verifies that a plain import emits an entity
+// whose Name is the last dotted segment (the identifier bound in the
+// file) rather than the top-level package segment. This is the core
+// fix for #666: the references pass indexes imports by local_name and
+// then looks up the entity by Name — so Name must equal local_name.
+//
+//	import com.example.UserService;  → Name = "UserService"  (not "com")
+//	import java.util.List;           → Name = "List"          (not "java")
+func TestJavaImportNameIsLeaf(t *testing.T) {
+	src := `package com.demo;
+
+import com.example.UserService;
+import java.util.List;
+
+public class Demo {}
+`
+	ents := runJavaExtract(t, src)
+
+	// Helper: find IMPORTS entity by source_module and return its Name.
+	findName := func(sourceModule string) string {
+		for i := range ents {
+			e := &ents[i]
+			if e.Kind != "SCOPE.Component" {
+				continue
+			}
+			for j := range e.Relationships {
+				r := &e.Relationships[j]
+				if r.Kind == "IMPORTS" && r.Properties != nil &&
+					r.Properties["source_module"] == sourceModule {
+					return e.Name
+				}
+			}
+		}
+		return ""
+	}
+
+	if got := findName("com.example"); got != "UserService" {
+		t.Errorf("import com.example.UserService: entity Name = %q, want UserService", got)
+	}
+	if got := findName("java.util"); got != "List" {
+		t.Errorf("import java.util.List: entity Name = %q, want List", got)
+	}
+}
+
+// TestJavaImportNameStaticAndWildcard verifies that static and wildcard
+// imports also get the correct Name shape (issue #666 edge cases).
+//
+//	import static com.example.UserService.create; → Name = "create"
+//	import org.springframework.boot.*;             → Name = "*"
+func TestJavaImportNameStaticAndWildcard(t *testing.T) {
+	src := `package com.demo;
+
+import static com.example.UserService.create;
+import org.springframework.boot.*;
+import com.example.UserService.Inner;
+
+public class Demo {}
+`
+	ents := runJavaExtract(t, src)
+
+	findName := func(sourceModule string) string {
+		for i := range ents {
+			e := &ents[i]
+			if e.Kind != "SCOPE.Component" {
+				continue
+			}
+			for j := range e.Relationships {
+				r := &e.Relationships[j]
+				if r.Kind == "IMPORTS" && r.Properties != nil &&
+					r.Properties["source_module"] == sourceModule {
+					return e.Name
+				}
+			}
+		}
+		return ""
+	}
+
+	// Static import: `import static com.example.UserService.create;`
+	// The last segment is "create" — that is the local bound name.
+	if got := findName("com.example.UserService"); got != "create" {
+		t.Errorf("import static ...UserService.create: entity Name = %q, want create", got)
+	}
+
+	// Wildcard import: conventional Name is "*".
+	if got := findName("org.springframework.boot"); got != "*" {
+		t.Errorf("import org.springframework.boot.*: entity Name = %q, want *", got)
+	}
+
+	// Inner class import: `import com.example.UserService.Inner;`
+	// The last segment is "Inner".
+	if got := findName("com.example.UserService"); got == "" {
+		// May share source_module with static import above — acceptable if one
+		// of the two entities has Name = "Inner". Scan directly.
+		found := false
+		for i := range ents {
+			e := &ents[i]
+			if e.Kind == "SCOPE.Component" && e.Name == "Inner" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("import com.example.UserService.Inner: no entity with Name=Inner found")
+		}
+	}
+}

@@ -861,14 +861,13 @@ func buildImport(node *sitter.Node, file extractor.FileInput) (types.EntityRecor
 		return types.EntityRecord{}, false
 	}
 
-	// Top-level package is the first segment.
-	top := raw
-	if idx := strings.Index(raw, "."); idx >= 0 {
-		top = raw[:idx]
-	}
-
 	props := map[string]string{}
 	toID := raw
+	// localName is the identifier actually bound in this file — used as
+	// the entity Name so the symbol-table-by-name lookup in the
+	// references pass can index imports under their local_name (issue #666).
+	// For wildcard imports the bound name is conventionally "*".
+	localName := "*"
 	switch {
 	case strings.HasSuffix(raw, ".*"):
 		// Wildcard: source_module is the path with the trailing ".*"
@@ -878,6 +877,7 @@ func buildImport(node *sitter.Node, file extractor.FileInput) (types.EntityRecor
 		props["source_module"] = mod
 		props["wildcard"] = "1"
 		toID = mod
+		// localName stays "*" for wildcards.
 	default:
 		// Non-wildcard. local_name = leaf (last dotted segment),
 		// source_module = path with the leaf stripped (or full path
@@ -892,13 +892,14 @@ func buildImport(node *sitter.Node, file extractor.FileInput) (types.EntityRecor
 		props["local_name"] = leaf
 		props["source_module"] = mod
 		props["imported_name"] = leaf
+		localName = leaf
 		_ = isStatic // recorded indirectly: static imports bind the
 		// trailing member name as local_name, matching the Java
 		// spec — `import static X.Y.Z;` introduces Z at top level.
 	}
 
 	return types.EntityRecord{
-		Name:       top,
+		Name:       localName,
 		Kind:       "SCOPE.Component",
 		SourceFile: file.Path,
 		Language:   "java",
