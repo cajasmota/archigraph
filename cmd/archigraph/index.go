@@ -473,6 +473,17 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 			fmt.Fprintf(os.Stderr, "archigraph: drf_router_expanded=%d entities\n", len(drfEntities))
 		}
 		pass3Records = append(pass3Records, drfEntities...)
+
+		// Pass 2.6c — Django CBV generic-method resolution (#786). Emits
+		// per-verb http_endpoint synthetics + SCOPE.Operation synthetics for
+		// inherited method handlers on CBVs (TemplateView, ListView, etc.)
+		// so the Phase-2 resolver can emit IMPLEMENTS edges and resolve the
+		// 179 remaining framework-synth orphans post-#783.
+		cbvEntities := runDjangoCBVRoutes(classified)
+		if len(cbvEntities) > 0 {
+			fmt.Fprintf(os.Stderr, "archigraph: django_cbv_routes=%d entities\n", len(cbvEntities))
+		}
+		pass3Records = append(pass3Records, cbvEntities...)
 	}
 
 	// Pass 2.6 — Java JAX-RS / Spring MVC annotation route composition.
@@ -1549,6 +1560,29 @@ func runDjangoDRFRoutes(classified []classifiedFile) []types.EntityRecord {
 		return contentByPath[relPath]
 	}
 	return engine.ApplyDjangoDRFRoutes(pyPaths, reader)
+}
+
+// runDjangoCBVRoutes runs the Django CBV generic-method resolution pass
+// over the classified files. Emits per-verb http_endpoint synthetics and
+// SCOPE.Operation synthetics for inherited HTTP handler methods on
+// class-based views (#786).
+func runDjangoCBVRoutes(classified []classifiedFile) []types.EntityRecord {
+	if len(classified) == 0 {
+		return nil
+	}
+	contentByPath := make(map[string][]byte, len(classified))
+	var pyPaths []string
+	for _, cf := range classified {
+		if cf.language != "python" {
+			continue
+		}
+		contentByPath[cf.relPath] = cf.content
+		pyPaths = append(pyPaths, cf.relPath)
+	}
+	reader := func(relPath string) []byte {
+		return contentByPath[relPath]
+	}
+	return engine.ApplyDjangoCBVRoutes(pyPaths, reader)
 }
 
 // stampEntityIDs computes the deterministic graph entity ID for every

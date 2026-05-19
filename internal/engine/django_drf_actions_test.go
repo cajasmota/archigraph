@@ -723,3 +723,272 @@ func equalStringSlicesDRF(a, b []string) bool {
 	}
 	return true
 }
+
+// ---------------------------------------------------------------------------
+// Issue #786 — ApplyDjangoCBVRoutes tests
+// ---------------------------------------------------------------------------
+
+// TestApplyDjangoCBVRoutes_ListViewEmitsGet verifies that a ListView-based
+// CBV emits a GET http_endpoint synthetic with source_handler pointing to
+// the inherited `get` method.
+func TestApplyDjangoCBVRoutes_ListViewEmitsGet(t *testing.T) {
+	files := fileMap{
+		"myapp/urls.py": `
+from django.urls import path
+from myapp.views import ContractListView
+
+urlpatterns = [
+    path("contracts/", ContractListView.as_view(), name="contract-list"),
+]
+`,
+		"myapp/views.py": `
+from django.views.generic import ListView
+
+class ContractListView(ListView):
+    model = None
+    template_name = "contracts/list.html"
+`,
+	}
+	got := ApplyDjangoCBVRoutes([]string{"myapp/urls.py", "myapp/views.py"}, files.reader)
+
+	assertHasAllIDs(t, got, []string{"http:GET:/contracts"})
+	// ListView is read-only — no POST expected.
+	assertHasNoneIDs(t, got, []string{"http:POST:/contracts"})
+}
+
+// TestApplyDjangoCBVRoutes_CreateViewEmitsGetAndPost verifies that a
+// CreateView-based CBV emits both GET and POST synthetics.
+func TestApplyDjangoCBVRoutes_CreateViewEmitsGetAndPost(t *testing.T) {
+	files := fileMap{
+		"myapp/urls.py": `
+from django.urls import path
+from myapp.views import ContractCreateView
+
+urlpatterns = [
+    path("contracts/new/", ContractCreateView.as_view(), name="contract-create"),
+]
+`,
+		"myapp/views.py": `
+from django.views.generic.edit import CreateView
+
+class ContractCreateView(CreateView):
+    model = None
+    fields = "__all__"
+`,
+	}
+	got := ApplyDjangoCBVRoutes([]string{"myapp/urls.py", "myapp/views.py"}, files.reader)
+
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/contracts/new",
+		"http:POST:/contracts/new",
+	})
+}
+
+// TestApplyDjangoCBVRoutes_SourceHandlerPointsToMethod verifies that the
+// http_endpoint synthetic carries source_handler = "SCOPE.Operation:View.method".
+func TestApplyDjangoCBVRoutes_SourceHandlerPointsToMethod(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from django.urls import path
+from views import ItemDetailView
+
+urlpatterns = [
+    path("items/<int:pk>/", ItemDetailView.as_view()),
+]
+`,
+		"views.py": `
+from django.views.generic import DetailView
+
+class ItemDetailView(DetailView):
+    model = None
+`,
+	}
+	got := ApplyDjangoCBVRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	var found *types.EntityRecord
+	for i := range got {
+		if got[i].Kind == httpEndpointKind && got[i].Properties["verb"] == "GET" {
+			found = &got[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("missing GET http_endpoint for ItemDetailView")
+	}
+	want := "SCOPE.Operation:ItemDetailView.get"
+	if got := found.Properties["source_handler"]; got != want {
+		t.Errorf("source_handler=%q want %q", got, want)
+	}
+}
+
+// TestApplyDjangoCBVRoutes_SyntheticMethodEntitiesEmitted verifies that
+// synthetic SCOPE.Operation entities are emitted for inherited handlers so
+// the Phase-2 resolver can bind source_handler references.
+func TestApplyDjangoCBVRoutes_SyntheticMethodEntitiesEmitted(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from django.urls import path
+from views import UserListView
+
+urlpatterns = [
+    path("users/", UserListView.as_view()),
+]
+`,
+		"views.py": `
+from django.views.generic import ListView
+
+class UserListView(ListView):
+    pass
+`,
+	}
+	got := ApplyDjangoCBVRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	// A synthetic SCOPE.Operation entity for the inherited `get` method.
+	found := false
+	for _, r := range got {
+		if r.Kind == "SCOPE.Operation" && r.Name == "UserListView.get" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("missing synthetic SCOPE.Operation entity for UserListView.get")
+	}
+}
+
+// TestApplyDjangoCBVRoutes_ExplicitMethodNoSynthetic verifies that when the
+// CBV explicitly defines a handler method, NO duplicate synthetic entity is
+// emitted (the Python extractor already has the real one).
+func TestApplyDjangoCBVRoutes_ExplicitMethodNoSynthetic(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from django.urls import path
+from views import CustomListView
+
+urlpatterns = [
+    path("items/", CustomListView.as_view()),
+]
+`,
+		"views.py": `
+from django.views.generic import ListView
+
+class CustomListView(ListView):
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+`,
+	}
+	got := ApplyDjangoCBVRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	// The explicit `get` method must NOT produce a synthetic entity.
+	for _, r := range got {
+		if r.Kind == "SCOPE.Operation" && r.Name == "CustomListView.get" {
+			t.Errorf("unexpected synthetic entity for explicitly-defined method CustomListView.get")
+		}
+	}
+}
+
+// TestApplyDjangoCBVRoutes_NestedIncludeComposesPrefix verifies that CBV
+// routes in an included urls.py are combined with the parent include() prefix.
+func TestApplyDjangoCBVRoutes_NestedIncludeComposesPrefix(t *testing.T) {
+	files := fileMap{
+		"myproject/urls.py": `
+from django.urls import path, include
+urlpatterns = [
+    path("api/v1/", include("core.urls")),
+]
+`,
+		"core/urls.py": `
+from django.urls import path
+from core.views import OrderListView
+
+urlpatterns = [
+    path("orders/", OrderListView.as_view()),
+]
+`,
+		"core/views.py": `
+from django.views.generic import ListView
+
+class OrderListView(ListView):
+    model = None
+`,
+	}
+	got := ApplyDjangoCBVRoutes(
+		[]string{"myproject/urls.py", "core/urls.py", "core/views.py"},
+		files.reader,
+	)
+
+	// core/urls.py is an included file scanned independently by the CBV
+	// pass — bare prefix (no parent compose) yields /orders.
+	found := false
+	for _, r := range got {
+		if r.Kind == httpEndpointKind && r.Properties["path"] == "/orders" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		ids := make([]string, 0, len(got))
+		for _, r := range got {
+			if r.Kind == httpEndpointKind {
+				ids = append(ids, r.ID)
+			}
+		}
+		t.Errorf("missing /orders endpoint; got: %v", ids)
+	}
+}
+
+// TestApplyDjangoCBVRoutes_DeleteViewEmitsGetPost verifies DeleteView
+// exposes GET (confirmation page) and POST (deletion submit).
+func TestApplyDjangoCBVRoutes_DeleteViewEmitsGetPost(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from django.urls import path
+from views import ContractDeleteView
+
+urlpatterns = [
+    path("contracts/<int:pk>/delete/", ContractDeleteView.as_view()),
+]
+`,
+		"views.py": `
+from django.views.generic.edit import DeleteView
+
+class ContractDeleteView(DeleteView):
+    model = None
+    success_url = "/"
+`,
+	}
+	got := ApplyDjangoCBVRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/contracts/{pk}/delete",
+		"http:POST:/contracts/{pk}/delete",
+	})
+}
+
+// TestClassifyCBVParent covers key CBV base classes.
+func TestClassifyCBVParent(t *testing.T) {
+	tests := []struct {
+		base     string
+		wantGet  bool
+		wantPost bool
+	}{
+		{"ListView", true, false},
+		{"DetailView", true, false},
+		{"TemplateView", true, false},
+		{"CreateView", true, true},
+		{"UpdateView", true, true},
+		{"DeleteView", true, true},
+		{"FormView", true, true},
+		{"View", false, false},         // bare View: no defaults
+		{"SomeCustomBase", true, true}, // unknown: fallback GET+POST
+	}
+	for _, tc := range tests {
+		got := classifyCBVParent(tc.base)
+		if got["get"] != tc.wantGet {
+			t.Errorf("classifyCBVParent(%q) get=%v want %v", tc.base, got["get"], tc.wantGet)
+		}
+		if got["post"] != tc.wantPost {
+			t.Errorf("classifyCBVParent(%q) post=%v want %v", tc.base, got["post"], tc.wantPost)
+		}
+	}
+}
