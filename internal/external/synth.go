@@ -16230,6 +16230,33 @@ var knownExternalPackages = map[string]struct{}{
 	"org.testcontainers": {},
 	"io.micrometer":      {}, // metrics/observability used by Spring Boot
 	"ch.qos.logback":     {}, // default Spring Boot logger
+	// Quarkus + ecosystem (Issue #PLT-316 — fixture-d baseline bug-rate reduction)
+	// Quarkus is a cloud-native Java framework with CDI-driven DI and modern JVM
+	// runtime tuning. io.quarkus.* covers Quarkus core and extensions.
+	// io.smallrye.* is the MicroProfile impl used by Quarkus (Config, Reactive,
+	// JWT, OpenAPI, etc.). io.vertx.* is the Vert.x reactive transport layer.
+	// jakarta.* are the modern Java EE APIs (EE 9+ namespacing); jakarta.inject,
+	// jakarta.enterprise, jakarta.ws.rs, jakarta.persistence, jakarta.validation,
+	// jakarta.transaction, jakarta.annotation, jakarta.servlet appear in Quarkus
+	// and modern Spring Boot imports. at.favre.lib.crypto and other 3rd-party
+	// roots are pulled in by Quarkus extensions. org.eclipse.microprofile.* is
+	// the MicroProfile spec implementation (Config, JWT, OpenAPI, REST Client, etc.).
+	// io.hypersistence.* is Hibernate utilities for JSON/JSONB type mapping.
+	"io.quarkus":                {},
+	"io.smallrye":               {},
+	"io.vertx":                  {},
+	"jakarta.inject":            {},
+	"jakarta.enterprise":        {},
+	"jakarta.ws.rs":             {},
+	"jakarta.persistence":       {},
+	"jakarta.validation":        {},
+	"jakarta.transaction":       {},
+	"jakarta.annotation":        {},
+	"jakarta.servlet":           {},
+	"jakarta.json":              {}, // jakarta.json.bind for JSON-B serialization
+	"at.favre.lib.crypto":       {},
+	"org.eclipse.microprofile":  {}, // MicroProfile spec (Config, JWT, OpenAPI, REST Client, etc.)
+	"io.hypersistence":          {}, // Hibernate utilities for JSON/JSONB type mapping
 	// Issue kafka-fix-w3 — Apache Kafka / Confluent / Avro / Jetty / Jersey
 	// ecosystem roots. Multi-segment keys keep longestKnownDottedPrefix
 	// precise so an unrelated `org.apache` user-namespace cannot collide.
@@ -16267,7 +16294,6 @@ var knownExternalPackages = map[string]struct{}{
 	"org.json":               {}, // org.json reference library
 	"org.slf4j":              {}, // SLF4J Logger/LoggerFactory dotted form
 	"javax.servlet":          {}, // jakarta predecessor (Jetty servlet API)
-	"jakarta.servlet":        {}, // Jakarta Servlet API (Jetty 12+ EE10)
 	// Scala ecosystem (play-scala-starter, Akka, scalatest, sbt, etc.).
 	// Both the language-namespace `scala` root and JVM-style dotted
 	// `org.*` / `com.*` roots are present so every `import` shape in a
