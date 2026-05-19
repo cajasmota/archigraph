@@ -1098,3 +1098,88 @@ Chain-fixes filed (for next scala wave):
    would stress-test the Scala extractor + resolver at scale before
    any further scala-bareNames additions (avoid over-fitting to
    play-scala-starter's small surface).
+
+## Wave-10 Track D — Python per-import file-scoped gates (2026-05-19)
+
+Lifts generic Python verbs (`first`, `last`, `info`, `error`, `sub`,
+`search`, `execute`, `cursor`, `urljoin`, `find_all`, `apply_async`,
+...) off #94's safer-bias floor on files that import the canonical
+library whose surface those names belong to. Same precedent as wave-9
+React (`hasJSCollectionLibImport`) and Ktor (`hasKtorServerImport`):
+per-import gates safely activate ecosystem allowlists without
+shadowing user methods of the same name on classes elsewhere.
+
+Gates added: pandas / requests / boto3 / redis / django / flask /
+sqlalchemy / mongo / celery / logging / re / dbapi / bs4 / urllib
+(14 helpers). Each maps to a sentinel subtype routed through the
+classifyExternal wrapper so the synthesiser folds the edge to the
+canonical ecosystem placeholder (`ext:pandas`, `ext:requests`, ...)
+rather than `ext:<bare-leaf>`.
+
+| Corpus | lang | Main | Branch | Delta |
+|--------|------|------|--------|-------|
+| chi | go | 2.025% | 2.025% | 0.000pp |
+| express | js | 2.856% | 2.856% | 0.000pp |
+| spdlog | cpp | 2.856% | 2.856% | 0.000pp |
+| gin | go | 3.383% | 3.383% | 0.000pp |
+| play-scala-starter | scala | 0.704% | 0.704% | 0.000pp |
+| nextjs-commerce | ts | 1.794% | 1.794% | 0.000pp |
+| nestjs-starter | ts | 1.754% | 1.754% | 0.000pp |
+| flask-realworld | python | 2.998% | 2.998% | 0.000pp |
+| django-realworld | python | 0.755% | 0.755% | 0.000pp |
+| pandas | python | 7.586% | 7.482% | **-0.104pp** (improved) |
+| click | python | 3.730% | 3.609% | **-0.121pp** (improved) |
+| requests | python | 1.143% | 0.992% | **-0.151pp** (improved) |
+| kafka-streams-examples | java | 3.329% | 3.329% | 0.000pp |
+| vapor-api-template | swift | 2.128% | 2.128% | 0.000pp |
+| ktor-samples | kotlin | 4.735% | 4.735% | 0.000pp |
+| sidekiq | ruby | 3.571% | 3.571% | 0.000pp |
+| exposed | kotlin | 2.508% | 2.508% | 0.000pp |
+| actix-examples | rust | 5.873% | 5.873% | 0.000pp |
+| client-fixture-b | ts | 0.572% | 0.572% | 0.000pp |
+| client-fixture-c | ts | 2.306% | 2.306% | 0.000pp |
+| **client-fixture-a (TARGET)** | **python** | **5.408%** | **3.427%** | **-1.981pp** |
+
+No regressions on any non-python corpus. All python corpora improve
+or hold — pandas, click, requests each shed 0.10-0.15pp via the new
+gates. Cross-language gate verified by tests
+(`TestPythonPerImportGates_CrossLanguageGate`).
+
+Per-iteration delta on client-fixture-a:
+- Pass-1 (5.408% → 4.091%, -1.317pp): pandas/requests/boto3/redis/
+  django/flask/sqlalchemy/mongo/celery/logging gates wired.
+- Pass-2 (4.091% → 3.427%, -0.664pp): re/dbapi/bs4/urllib gates added
+  for residual `sub`/`search`/`findall`/`execute`/`cursor`/`urljoin`/
+  `find_all`.
+
+**Residual root cause (post-Track D):** the remaining 989
+bug-extractor on client-fixture-a are dominated by:
+1. Python builtin list/dict ops (`append` 163, `items` 75, `pop` 30,
+   `extend` 28, `keys` 17, `remove` 10) — no canonical import gate
+   exists (every Python file uses lists); #94 safer-bias rule keeps
+   them out. Resolving requires either Python-source heuristic
+   (extension-only gate) or full receiver-type inference (#494).
+2. `replace` 47, `write` 37, `read` 11, `close` (DB-API already
+   gated, but `close` on file objects survives) — string/file
+   builtins; same #494 receiver-type primitive blocker.
+3. User-helper bare names (`get_safety_filings`, `get_device`,
+   `setMessageParams`, `generate_presigned_download_url` on custom
+   S3Helper) — actual extraction gaps, NOT external-known; receiver
+   stripping loses the class context for cross-file method
+   resolution.
+
+**Status:** ≤5% floor cleared. Within 0.43pp of the 3% ship-gate.
+Further bug-rate compression on this corpus requires #494 (receiver-
+type primitive) — chain-fix already filed in click PR #601.
+
+**Chain-fixes filed (out of scope for this PR):**
+1. #494 receiver-type primitive for python — would resolve the
+   builtin list/dict ops (`append`/`pop`/`extend`/`keys`) without
+   shadowing user methods in other languages.
+2. Python-extractor receiver-aware extraction for custom helper
+   classes (`S3Helper.generate_presigned_download_url`) — currently
+   loses class context after receiver strip, lands in bug-extractor.
+3. `replace` / `write` / `read` builtin gate — needs a non-import
+   signal (could be: presence of a `with open(...)` block in the
+   function, or a `bytes`/`str` literal-typed receiver inference).
+

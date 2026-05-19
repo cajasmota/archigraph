@@ -830,6 +830,45 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 			// fanning out per-verb ext:* nodes.
 			return "std", "function", true
 		}
+		// Wave-10 Track D — per-import file-scoped Python gates. Fold
+		// each gate's sentinel to its canonical ecosystem placeholder.
+		// All targets are on knownExternalPackages so the resolver
+		// routes to ExternalKnown.
+		switch subtype {
+		case "python_pandas_function":
+			return "pandas", "function", true
+		case "python_requests_function":
+			return "requests", "function", true
+		case "python_boto3_function":
+			return "boto3", "function", true
+		case "python_redis_function":
+			return "redis", "function", true
+		case "python_sqlalchemy_function":
+			return "sqlalchemy", "function", true
+		case "python_mongo_function":
+			return "pymongo", "function", true
+		case "python_celery_function":
+			return "celery", "function", true
+		case "python_django_function":
+			return "django", "function", true
+		case "python_flask_function":
+			return "flask", "function", true
+		case "python_logging_function":
+			return "logging", "function", true
+		case "python_re_function":
+			return "re", "function", true
+		case "python_dbapi_function":
+			// Fold all DB-API 2.0 cursor verbs to a single
+			// `ext:sqlite3` placeholder (sqlite3 is the stdlib DB-API
+			// reference implementation and already on the known-
+			// packages allowlist). The concrete driver (psycopg2 / pymysql
+			// / etc.) is identified at the IMPORTS edge.
+			return "sqlite3", "function", true
+		case "python_bs4_function":
+			return "bs4", "function", true
+		case "python_urllib_function":
+			return "urllib", "function", true
+		}
 		return name, subtype, true
 	}
 
@@ -2045,6 +2084,87 @@ func stdlibFunction(name, lang, fromFile string, fromImports map[string]bool) (s
 	if lang == "python" {
 		if _, ok := pythonBareNames[name]; ok {
 			return "function", true
+		}
+		// Wave-10 Track D — per-import file-scoped gates. Generic Python
+		// verbs that #94 keeps OUT of pythonBareNames become safe to
+		// classify ONLY in files that import the canonical library whose
+		// surface they belong to. Sentinel subtypes route through the
+		// wrapper above so the synthesiser folds the edge to the
+		// canonical ecosystem placeholder (`ext:pandas` /
+		// `ext:requests` / etc.) rather than per-leaf `ext:<verb>`.
+		//
+		// Order is curated for least-collision-first: pandas/numpy
+		// (very distinctive surface) before requests (HTTP verbs)
+		// before django (generic English verbs that match other ORMs).
+		if hasPythonPandasImport(fromImports) {
+			if _, ok := pythonPandasBareNames[name]; ok {
+				return "python_pandas_function", true
+			}
+		}
+		if hasPythonRequestsImport(fromImports) {
+			if _, ok := pythonRequestsBareNames[name]; ok {
+				return "python_requests_function", true
+			}
+		}
+		if hasPythonBoto3Import(fromImports) {
+			if _, ok := pythonBoto3BareNames[name]; ok {
+				return "python_boto3_function", true
+			}
+		}
+		if hasPythonRedisImport(fromImports) {
+			if _, ok := pythonRedisBareNames[name]; ok {
+				return "python_redis_function", true
+			}
+		}
+		if hasPythonSQLAlchemyImport(fromImports) {
+			if _, ok := pythonSQLAlchemyBareNames[name]; ok {
+				return "python_sqlalchemy_function", true
+			}
+		}
+		if hasPythonMongoImport(fromImports) {
+			if _, ok := pythonMongoBareNames[name]; ok {
+				return "python_mongo_function", true
+			}
+		}
+		if hasPythonCeleryImport(fromImports) {
+			if _, ok := pythonCeleryBareNames[name]; ok {
+				return "python_celery_function", true
+			}
+		}
+		if hasPythonDjangoImport(fromImports) {
+			if _, ok := pythonDjangoBareNames[name]; ok {
+				return "python_django_function", true
+			}
+		}
+		if hasPythonFlaskImport(fromImports) {
+			if _, ok := pythonFlaskBareNames[name]; ok {
+				return "python_flask_function", true
+			}
+		}
+		if hasPythonLoggingImport(fromImports) {
+			if _, ok := pythonLoggingBareNames[name]; ok {
+				return "python_logging_function", true
+			}
+		}
+		if hasPythonReImport(fromImports) {
+			if _, ok := pythonReBareNames[name]; ok {
+				return "python_re_function", true
+			}
+		}
+		if hasPythonDBAPIImport(fromImports) {
+			if _, ok := pythonDBAPIBareNames[name]; ok {
+				return "python_dbapi_function", true
+			}
+		}
+		if hasPythonBs4Import(fromImports) {
+			if _, ok := pythonBs4BareNames[name]; ok {
+				return "python_bs4_function", true
+			}
+		}
+		if hasPythonUrllibImport(fromImports) {
+			if _, ok := pythonUrllibBareNames[name]; ok {
+				return "python_urllib_function", true
+			}
 		}
 	}
 	if lang == "cpp" || lang == "c" {
@@ -12284,6 +12404,632 @@ var pythonBareNames = map[string]struct{}{
 var pythonGettextDottedReceivers = map[string]struct{}{
 	"_":        {},
 	"ngettext": {},
+}
+
+// ---------------------------------------------------------------------
+// Wave-10 Track D — Per-import file-scoped Python gates.
+//
+// Background: client-fixture-a (private Django app) residual after
+// wave-7 is dominated by generic Python verbs (`append`/`first`/
+// `items`/`replace`/`pop`/`error`/`info`/`execute`/`cursor`/etc.)
+// that #94's safer-bias rule keeps OUT of pythonBareNames because they
+// collide with user-defined methods on hand-rolled classes across the
+// Python corpus (and other languages). Same blocker that wave-7/9
+// React solved for JS: file-scoped gates (`hasJSCollectionLibImport`)
+// activate the generic-verb allowlist only on files that consume the
+// canonical library whose surface those names belong to.
+//
+// Implementation mirrors the JS / Ktor / Kafka / commons-cli / jax-rs
+// precedents: per-library `hasPython<Lib>Import` predicate + per-
+// library bare-name map + sentinel subtype routed through the
+// stdlibFunction wrapper at line ~833 so the synthesiser folds the
+// edge to the canonical ecosystem placeholder (`ext:pandas` /
+// `ext:requests` / `ext:django` / ...) rather than `ext:<bare-leaf>`.
+//
+// All gates are lang=="python" + file-scoped. A python file that
+// doesn't import the gated library keeps the safer-bias miss
+// (preserves the rule from #94). A non-python file with a same-named
+// import (e.g. a JS file importing "django" by typo) cannot activate
+// the gate because the lang gate fires first.
+//
+// Refs #94 #131 #498.
+// ---------------------------------------------------------------------
+
+// pythonImportRoot returns the canonical first segment of a Python
+// import path. `django.db.models` -> `django`, `flask_sqlalchemy` ->
+// `flask_sqlalchemy`. Strips a leading `ext:` so the gates work both
+// before and after external synthesis canonicalises the IMPORTS edge.
+func pythonImportRoot(p string) string {
+	if strings.HasPrefix(p, "ext:") {
+		p = p[len("ext:"):]
+	}
+	if dot := strings.IndexByte(p, '.'); dot > 0 {
+		return p[:dot]
+	}
+	return p
+}
+
+// pythonImportRootIn reports whether the file's import set contains any
+// import whose first-segment root is in `roots`.
+func pythonImportRootIn(imports map[string]bool, roots map[string]struct{}) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		if _, ok := roots[pythonImportRoot(p)]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// pythonImportRootHasPrefix reports whether any import in the file's
+// set starts with one of the listed prefixes. Used for flask_* shape
+// (e.g. flask_sqlalchemy / flask_login / flask_restful).
+func pythonImportRootHasPrefix(imports map[string]bool, prefix string) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		root := pythonImportRoot(p)
+		if root == prefix || strings.HasPrefix(root, prefix+"_") {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPythonPandasImport reports whether the file imports pandas /
+// numpy / pyarrow. Activates the pandas/numpy DataFrame surface
+// allowlist (head, tail, query, groupby, merge, etc.).
+func hasPythonPandasImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonPandasImportRoots)
+}
+
+var pythonPandasImportRoots = map[string]struct{}{
+	"pandas":  {},
+	"numpy":   {},
+	"pyarrow": {},
+	"pd":      {}, // sometimes the extractor stamps the alias as a root
+	"np":      {},
+}
+
+// hasPythonRequestsImport reports whether the file imports
+// requests / httpx / aiohttp (synchronous + async HTTP clients).
+func hasPythonRequestsImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonRequestsImportRoots)
+}
+
+var pythonRequestsImportRoots = map[string]struct{}{
+	"requests": {},
+	"httpx":    {},
+	"aiohttp":  {},
+}
+
+// hasPythonBoto3Import reports whether the file imports boto3 /
+// botocore / aiobotocore. Activates the AWS SDK client surface.
+func hasPythonBoto3Import(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonBoto3ImportRoots)
+}
+
+var pythonBoto3ImportRoots = map[string]struct{}{
+	"boto3":       {},
+	"botocore":    {},
+	"aiobotocore": {},
+}
+
+// hasPythonRedisImport reports whether the file imports redis /
+// aioredis. Activates the redis-client surface.
+func hasPythonRedisImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonRedisImportRoots)
+}
+
+var pythonRedisImportRoots = map[string]struct{}{
+	"redis":    {},
+	"aioredis": {},
+}
+
+// hasPythonDjangoImport reports whether the file imports django or
+// rest_framework (DRF). Activates the Django ORM / DRF generic-verb
+// surface (`first`, `last`, `all`, `count`, `exists`, ...).
+func hasPythonDjangoImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonDjangoImportRoots)
+}
+
+var pythonDjangoImportRoots = map[string]struct{}{
+	"django":         {},
+	"rest_framework": {},
+}
+
+// hasPythonFlaskImport reports whether the file imports flask or
+// any flask_* extension (flask_sqlalchemy, flask_login, ...).
+func hasPythonFlaskImport(imports map[string]bool) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		root := pythonImportRoot(p)
+		if root == "flask" || strings.HasPrefix(root, "flask_") {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPythonSQLAlchemyImport reports whether the file imports
+// sqlalchemy or flask_sqlalchemy. Activates the ORM session /
+// Column / relationship surface (`commit`, `rollback`, `Column`,
+// `relationship`, `backref`).
+func hasPythonSQLAlchemyImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonSQLAlchemyImportRoots)
+}
+
+var pythonSQLAlchemyImportRoots = map[string]struct{}{
+	"sqlalchemy":       {},
+	"flask_sqlalchemy": {},
+}
+
+// hasPythonMongoImport reports whether the file imports pymongo /
+// motor / bson / mongoengine. Activates the Mongo collection
+// surface (`find`, `insert`, `update`, `delete`, `aggregate`).
+func hasPythonMongoImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonMongoImportRoots)
+}
+
+var pythonMongoImportRoots = map[string]struct{}{
+	"pymongo":     {},
+	"motor":       {},
+	"bson":        {},
+	"mongoengine": {},
+}
+
+// hasPythonCeleryImport reports whether the file imports celery.
+// Activates the task-DSL surface (`delay`, `apply_async`, `s`).
+func hasPythonCeleryImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonCeleryImportRoots)
+}
+
+var pythonCeleryImportRoots = map[string]struct{}{
+	"celery":      {},
+	"celery_once": {},
+	"kombu":       {},
+}
+
+// hasPythonLoggingImport reports whether the file imports the stdlib
+// `logging` module or `logger`/`loguru`/`structlog`. The python
+// extractor stamps stdlib imports too, so files that do
+// `import logging` show `logging` in their import set.
+func hasPythonLoggingImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonLoggingImportRoots)
+}
+
+var pythonLoggingImportRoots = map[string]struct{}{
+	"logging":   {},
+	"loguru":    {},
+	"structlog": {},
+}
+
+// ---------------------------------------------------------------------
+// Per-library bare-name maps. Each entry MUST be unique to its gate
+// (no overlap with stdlibBareNames or pythonBareNames — enforced by
+// TestPythonPerImportGates_NoDuplicates).
+// ---------------------------------------------------------------------
+
+// pythonPandasBareNames — DataFrame/Series/ndarray surface receiver-
+// stripped from `df.head()` / `s.apply(...)` / `arr.reshape(...)`.
+// All names are pandas/numpy verbs that #94 keeps out of
+// pythonBareNames because they collide with user methods (`head` is a
+// common HTTP-handler name; `apply` is Function.apply in JS; `query`
+// is a generic SQL helper on user repositories; `merge` is a generic
+// reconciliation verb; `T` is a single-letter that would collide with
+// type-vars). Gated to pandas/numpy/pyarrow imports.
+var pythonPandasBareNames = map[string]struct{}{
+	"head":     {},
+	"tail":     {},
+	"describe": {},
+	"dtypes":   {},
+	// `query`, `reshape`, `groupby` already in pythonBareNames.
+	"merge":        {},
+	"concat":       {},
+	"pivot":        {},
+	"melt":         {},
+	"apply":        {},
+	"applymap":     {},
+	"transpose":    {},
+	"squeeze":      {},
+	"stack":        {},
+	"unstack":      {},
+	"asof":         {},
+	"rolling":      {},
+	"resample":     {},
+	"pct_change":   {},
+	"corr":         {},
+	"cov":          {},
+	"nlargest":     {},
+	"nsmallest":    {},
+	"value_counts": {},
+}
+
+// pythonRequestsBareNames — HTTP-verb surface receiver-stripped from
+// `session.get(url)` / `client.post(...)` / `httpx.head(...)`. These
+// are too generic to blanket-allow (collide with Django QuerySet
+// `.get(pk=...)` and user CRUD methods named `post`/`put`/`delete`),
+// but inside files that import requests / httpx / aiohttp they are
+// overwhelmingly the HTTP-client form.
+var pythonRequestsBareNames = map[string]struct{}{
+	// `options` is in pythonBareNames as a SQLAlchemy verb already.
+	"send":    {},
+	"prepare": {},
+	"mount":   {},
+}
+
+// pythonBoto3BareNames — AWS SDK client/resource surface receiver-
+// stripped from `boto3.client('s3').get_object(...)` /
+// `session.resource('s3')` / `client.put_object(...)`. `client` and
+// `resource` are too generic to blanket-allow; the put_/get_/list_
+// _object verbs collide with user CRUD methods.
+var pythonBoto3BareNames = map[string]struct{}{
+	"resource":                        {},
+	"get_object":                      {},
+	"put_object":                      {},
+	"list_objects":                    {},
+	"list_objects_v2":                 {},
+	"delete_object":                   {},
+	"head_object":                     {},
+	"copy_object":                     {},
+	"upload_file":                     {},
+	"download_file":                   {},
+	"upload_fileobj":                  {},
+	"download_fileobj":                {},
+	"generate_presigned_url":          {},
+	"generate_presigned_post":         {},
+	"generate_presigned_download_url": {}, // custom helper alias seen in fixture-a
+	"get_paginator":                   {},
+	"can_paginate":                    {},
+	"admin_create_user":               {},
+	"admin_get_user":                  {},
+	"admin_delete_user":               {},
+	"admin_update_user_attributes":    {},
+	"admin_initiate_auth":             {},
+	"admin_set_user_password":         {},
+	"initiate_auth":                   {},
+	"respond_to_auth_challenge":       {},
+	"get_credential":                  {},
+	"set_credential":                  {},
+	"sign_request":                    {},
+}
+
+// pythonRedisBareNames — redis-client surface receiver-stripped from
+// `r.get(key)` / `client.set(...)` / `r.pipeline()`. Generic verbs
+// (`get`/`set`/`delete`/`keys`/`scan`) that collide with user methods
+// across other codebases, gated to redis-importing files.
+var pythonRedisBareNames = map[string]struct{}{
+	"expire":     {},
+	"persist":    {},
+	"incr":       {},
+	"decr":       {},
+	"incrby":     {},
+	"decrby":     {},
+	"hset":       {},
+	"hget":       {},
+	"hgetall":    {},
+	"hdel":       {},
+	"hmset":      {},
+	"hmget":      {},
+	"hexists":    {},
+	"sadd":       {},
+	"srem":       {},
+	"smembers":   {},
+	"sismember":  {},
+	"zadd":       {},
+	"zrange":     {},
+	"zrevrange":  {},
+	"zincrby":    {},
+	"lpush":      {},
+	"rpush":      {},
+	"lpop":       {},
+	"rpop":       {},
+	"lrange":     {},
+	"llen":       {},
+	"pipeline":   {},
+	"publish":    {},
+	"subscribe":  {},
+	"psubscribe": {},
+	"setex":      {},
+	"setnx":      {},
+	"ttl":        {},
+	"pttl":       {},
+	"flushdb":    {},
+}
+
+// pythonDjangoBareNames — Django ORM / DRF generic-verb surface
+// receiver-stripped from `qs.first()` / `Model.objects.all()` /
+// `qs.exists()` / `obj.save()` / `view.paginate_queryset(...)`. The
+// generic English verbs (`first`/`last`/`all`/`count`/`exists`) are
+// the dominant residual on client-fixture-a per Wave-7's deferred
+// Track D analysis — too collision-prone to blanket-allow (every
+// codebase has Order.first(), Cache.exists(), etc.), but inside
+// files that import django or rest_framework they are overwhelmingly
+// QuerySet/RelatedManager methods.
+var pythonDjangoBareNames = map[string]struct{}{
+	"first": {},
+	"last":  {},
+	// `earliest`, `latest`, `exists` already in pythonBareNames.
+	"in_bulk":                 {},
+	"explain":                 {},
+	"reverse":                 {},
+	"using":                   {},
+	"only":                    {},
+	"defer_loading":           {},
+	"none":                    {},
+	"raw":                     {},
+	"force_authenticate":      {},
+	"async_to_sync":           {},
+	"sync_to_async":           {},
+	"get_channel_layer":       {},
+	"group_add":               {},
+	"group_discard":           {},
+	"make_aware":              {},
+	"make_naive":              {},
+	"localdate":               {},
+	"localtime":               {},
+	"paginate":                {},
+	"paginate_queryset":       {},
+	"get_paginated_response":  {},
+	"select_for_update":       {},
+	"qn":                      {},
+	"setMessageParams":        {},
+	"replace_email_variables": {},
+}
+
+// pythonFlaskBareNames — flask request/response decorator surface
+// receiver-stripped from `app.before_request(...)` / `bp.errorhandler(...)`.
+// Names already covered by pythonBareNames are NOT duplicated.
+var pythonFlaskBareNames = map[string]struct{}{
+	"before_app_request":       {},
+	"after_app_request":        {},
+	"teardown_app_request":     {},
+	"before_app_first_request": {},
+	"app_context_processor":    {},
+	"url_defaults_filter":      {},
+}
+
+// pythonSQLAlchemyBareNames — session / engine / Column DSL receiver-
+// stripped from `db.session.commit()` / `session.rollback()` /
+// `Column(String)` / `relationship('User', backref=...)`. Generic
+// verbs collide with user methods.
+var pythonSQLAlchemyBareNames = map[string]struct{}{
+	"Column":       {},
+	"relationship": {},
+	"commit":       {},
+	"rollback":     {},
+	// `flush` is in stdlibBareNames.
+	"refresh":              {},
+	"merge_session":        {},
+	"add_all":              {},
+	"bulk_save_objects":    {},
+	"bulk_insert_mappings": {},
+	"bulk_update_mappings": {},
+	"begin_nested":         {},
+	"close_all":            {},
+	"expire":               {},
+	"expire_all":           {},
+	"expunge":              {},
+	"expunge_all":          {},
+	"savepoint":            {},
+	"begin_transaction":    {},
+}
+
+// pythonMongoBareNames — pymongo Collection / Cursor verbs receiver-
+// stripped from `coll.find(...)` / `cur.aggregate(...)`. Generic
+// verbs (`find`/`insert`/`update`/`delete`/`count`/`aggregate`) that
+// collide with user methods on repositories. `distinct` is already
+// in pythonBareNames (uniquely pymongo) and not duplicated here.
+var pythonMongoBareNames = map[string]struct{}{
+	"find": {},
+	// `insert` (stdlibBareNames), `update`/`aggregate`/`count`
+	// (pythonBareNames) intentionally not duplicated here.
+	"map_reduce": {},
+}
+
+// pythonCeleryBareNames — celery Task DSL receiver-stripped from
+// `task.apply_async(...)` / `task.s(...)`. `delay` is already in
+// pythonBareNames. Single-char `s` (signature) is python+celery
+// gated only — strict cross-language gate prevents collision with
+// throwaway-variable conventions elsewhere.
+var pythonCeleryBareNames = map[string]struct{}{
+	"apply_async": {},
+	"si":          {}, // celery immutable signature
+	"sig":         {},
+	"chord":       {},
+	"chain_task":  {},
+	"group_task":  {},
+	"chunks":      {},
+	"retry":       {},
+	"send_task":   {},
+	"AsyncResult": {},
+	"EagerResult": {},
+}
+
+// hasPythonReImport reports whether the file imports the stdlib `re`
+// regex module. Activates the bare `sub`/`search`/`findall`/`match`/
+// `fullmatch` surface — these are too generic to blanket-allow but
+// inside files that import `re` they are overwhelmingly the regex
+// module functions.
+func hasPythonReImport(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonReImportRoots)
+}
+
+var pythonReImportRoots = map[string]struct{}{
+	"re":    {},
+	"regex": {}, // third-party drop-in
+}
+
+// pythonReBareNames — receiver-stripped regex module functions.
+// Names like `sub`, `search`, `match` are dominantly collision-prone
+// (every Stripe-style API has `.search()`, every ORM has `.match()`),
+// hence the gate.
+var pythonReBareNames = map[string]struct{}{
+	"sub":      {},
+	"subn":     {},
+	"search":   {},
+	"findall":  {},
+	"finditer": {},
+	"match":    {},
+	// `escape` is already in pythonBareNames (werkzeug.utils.escape).
+	"purge":           {},
+	"compile_pattern": {},
+}
+
+// hasPythonDBAPIImport reports whether the file imports a DB-API 2.0
+// driver (sqlite3, psycopg2, mysql.connector, pymysql, cx_Oracle) or
+// `django.db.connection`-derived code paths. Activates the DB-API
+// cursor verbs (`execute`, `executemany`, `fetchall`, `fetchone`,
+// `fetchmany`, `close`, `cursor`, `commit`, `rollback`) when the
+// canonical driver is on the file.
+//
+// `django.db` is also included because in Django code `cursor()` /
+// `execute()` on `django.db.connection` is the conventional shape.
+// Note: `fetchall`/`fetchone`/`fetchmany` are already in
+// pythonBareNames (added in wave-7 as distinctive DB-API verbs); the
+// generic ones (`execute`, `cursor`, `close`) need a gate.
+func hasPythonDBAPIImport(imports map[string]bool) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		root := pythonImportRoot(p)
+		if _, ok := pythonDBAPIImportRoots[root]; ok {
+			return true
+		}
+		// django.db.* paths get treated as DB-API too
+		if root == "django" {
+			if p == "django.db" || strings.HasPrefix(p, "django.db.") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+var pythonDBAPIImportRoots = map[string]struct{}{
+	"sqlite3":           {},
+	"psycopg2":          {},
+	"psycopg":           {},
+	"mysql":             {},
+	"pymysql":           {},
+	"cx_Oracle":         {},
+	"cx_oracle":         {},
+	"oracledb":          {},
+	"snowflake":         {}, // snowflake.connector
+	"clickhouse_driver": {},
+	"asyncpg":           {},
+	"aiomysql":          {},
+	"aiosqlite":         {},
+}
+
+// pythonDBAPIBareNames — receiver-stripped DB-API 2.0 verbs.
+var pythonDBAPIBareNames = map[string]struct{}{
+	"execute":       {},
+	"executemany":   {},
+	"executescript": {},
+	"cursor":        {},
+	"close":         {},
+	// `fetchall`/`fetchone`/`fetchmany` already in pythonBareNames; not
+	// duplicated here (would trip the no-duplicates test).
+}
+
+// hasPythonBs4Import reports whether the file imports BeautifulSoup
+// (`bs4` / `BeautifulSoup`). Activates the soup-navigation verbs
+// (`find_all`, `select`, `select_one`) — too generic to blanket-
+// allow but distinctive inside a bs4-importing file.
+func hasPythonBs4Import(imports map[string]bool) bool {
+	return pythonImportRootIn(imports, pythonBs4ImportRoots)
+}
+
+var pythonBs4ImportRoots = map[string]struct{}{
+	"bs4":           {},
+	"BeautifulSoup": {},
+	"lxml":          {},
+	"html5lib":      {},
+}
+
+// pythonBs4BareNames — receiver-stripped BeautifulSoup verbs.
+var pythonBs4BareNames = map[string]struct{}{
+	"find_all":              {},
+	"select":                {},
+	"select_one":            {},
+	"find_parent":           {},
+	"find_parents":          {},
+	"find_next":             {},
+	"find_previous":         {},
+	"find_next_sibling":     {},
+	"find_previous_sibling": {},
+	"find_all_next":         {},
+	"find_all_previous":     {},
+	"get_text":              {},
+	"prettify":              {},
+	"decompose":             {},
+	"unwrap":                {},
+	"extract":               {},
+	"replace_with":          {},
+	"insert_before":         {},
+	"insert_after":          {},
+	"xpath":                 {}, // lxml
+}
+
+// hasPythonUrllibImport reports whether the file imports
+// `urllib.parse` / `urllib3` / urlparse. Activates `urljoin` /
+// `urlparse` / `urlencode` / `quote` / `unquote` receiver-stripped
+// forms.
+func hasPythonUrllibImport(imports map[string]bool) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		root := pythonImportRoot(p)
+		if root == "urllib" || root == "urllib3" || root == "yarl" {
+			return true
+		}
+	}
+	return false
+}
+
+// pythonUrllibBareNames — receiver-stripped urllib.parse helpers.
+// Names like `quote`/`unquote` are generic — gated on import.
+var pythonUrllibBareNames = map[string]struct{}{
+	"urljoin":      {},
+	"quote_plus":   {},
+	"unquote_plus": {},
+	"quote":        {},
+	"unquote":      {},
+	"urlencode":    {},
+	"parse_qs":     {},
+	"parse_qsl":    {},
+}
+
+// pythonLoggingBareNames — logging surface receiver-stripped from
+// `logger.info(...)` / `log.error(...)` / `logger.exception(...)`.
+// Generic English nouns (`info`/`warning`/`error`/`exception`/
+// `debug`) that #94 rightly keeps out of pythonBareNames (every
+// codebase has a class with an `error` or `info` method). With a
+// `logging` import on the file the receiver-stripped form is
+// overwhelmingly the stdlib-logger method.
+//
+// `log` (the verb) is intentionally EXCLUDED — too generic even
+// when gated (collides with `Math.log`, user logging helpers, etc.).
+// `error` IS included here because in python with a `logging` import
+// it overwhelmingly refers to `logger.error(...)` — but only on a
+// logging-imported file.
+var pythonLoggingBareNames = map[string]struct{}{
+	"info":    {},
+	"warning": {},
+	// `warn` already in pythonBareNames (stdlib helper).
+	"error":     {},
+	"exception": {},
+	"critical":  {},
+	"debug":     {},
+	"log":       {},
 }
 
 // cppBareNames is the C/C++-language-gated bare-name stop-list (issue
