@@ -279,22 +279,44 @@ import express, { Request, Response } from "express";
 import { readFileSync } from "fs";
 `
 
+// TestES6Import (updated for #742) — ES6 import statements emit IMPORTS edges
+// on the file entity. Import-placeholder SCOPE.Component/import entities are
+// no longer emitted.
 func TestES6Import(t *testing.T) {
 	src := []byte(tsImportSrc)
 	tree := parseTS(t, src)
 	entities := extract(t, src, "typescript", tree)
 
-	assertKind(t, entities, "express", "SCOPE.Component")
-	assertKind(t, entities, "fs", "SCOPE.Component")
-
-	for _, name := range []string{"express", "fs"} {
-		e := findByName(entities, name)
-		if e == nil {
-			t.Errorf("import entity %q not found", name)
-			continue
+	// No import-placeholder entities with subtype="import".
+	for _, e := range entities {
+		if e.Kind == "SCOPE.Component" && e.Subtype == "import" {
+			t.Errorf("SCOPE.Component/import placeholder entity still emitted (#742): %q", e.Name)
 		}
-		if e.Subtype != "import" {
-			t.Errorf("%q Subtype=%q, want 'import'", name, e.Subtype)
+	}
+
+	// IMPORTS edges for "express" and "fs" must exist on the file entity.
+	wantSpecs := map[string]bool{"express": false, "fs": false}
+	for i := range entities {
+		for j := range entities[i].Relationships {
+			r := &entities[i].Relationships[j]
+			if r.Kind != "IMPORTS" {
+				continue
+			}
+			ip := ""
+			if r.Properties != nil {
+				ip = r.Properties["import_path"]
+			}
+			if ip == "" {
+				ip = r.ToID
+			}
+			if _, ok := wantSpecs[ip]; ok {
+				wantSpecs[ip] = true
+			}
+		}
+	}
+	for spec, found := range wantSpecs {
+		if !found {
+			t.Errorf("IMPORTS edge for %q not found on any entity", spec)
 		}
 	}
 }
@@ -611,7 +633,30 @@ function authMiddleware(req: Request, res: Response, next: NextFunction): void {
 	assertKind(t, entities, "User", "SCOPE.Schema")
 	assertKind(t, entities, "CreateUserBody", "SCOPE.Schema")
 	assertKind(t, entities, "authMiddleware", "SCOPE.Operation")
-	assertKind(t, entities, "express", "SCOPE.Component")
+	// Issue #742: import placeholder entity for "express" no longer exists.
+	// The IMPORTS edge is now on the file entity. Verify the edge exists.
+	importsExpressFound := false
+	for i := range entities {
+		for j := range entities[i].Relationships {
+			r := &entities[i].Relationships[j]
+			if r.Kind != "IMPORTS" {
+				continue
+			}
+			ip := ""
+			if r.Properties != nil {
+				ip = r.Properties["import_path"]
+			}
+			if ip == "" {
+				ip = r.ToID
+			}
+			if ip == "express" {
+				importsExpressFound = true
+			}
+		}
+	}
+	if !importsExpressFound {
+		t.Error("IMPORTS edge for 'express' not found on any entity after #742 fix")
+	}
 }
 
 // --------------------------------------------------------------------------

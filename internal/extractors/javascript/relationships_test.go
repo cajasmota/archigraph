@@ -158,8 +158,9 @@ function caller() {
 	}
 }
 
-// TestExtract_ImportsES6 (#41) — file with M import statements emits M
-// IMPORTS relationships on module entities.
+// TestExtract_ImportsES6 (#41, updated for #742) — file with M import
+// statements emits M IMPORTS relationships on the file entity. Import-
+// placeholder SCOPE.Component/import entities are no longer emitted (#742).
 func TestExtract_ImportsES6(t *testing.T) {
 	src := `import { Foo } from "./foo";
 import bar from "bar";
@@ -168,21 +169,38 @@ const lodash = require("lodash");
 	tree := parseJSRel(t, []byte(src))
 	ents := runJS(t, src, "javascript", tree)
 
-	want := map[string]bool{"./foo": false, "bar": false, "lodash": false}
+	// No import-placeholder SCOPE.Component/import entities.
 	for _, e := range ents {
-		if e.Subtype != "import" {
-			continue
-		}
-		if _, ok := want[e.Name]; ok {
-			want[e.Name] = true
-		}
-		if len(e.Relationships) != 1 || e.Relationships[0].Kind != "IMPORTS" {
-			t.Errorf("import entity %q missing IMPORTS edge: %+v", e.Name, e.Relationships)
+		if e.Kind == "SCOPE.Component" && e.Subtype == "import" {
+			t.Errorf("SCOPE.Component/import placeholder entity still emitted (#742): %q", e.Name)
 		}
 	}
-	for k, ok := range want {
-		if !ok {
-			t.Errorf("expected import entity for %q", k)
+
+	// IMPORTS edges must exist on the file entity (any entity post-#742).
+	wantModules := map[string]bool{"./foo": false, "bar": false, "lodash": false}
+	for i := range ents {
+		for j := range ents[i].Relationships {
+			r := &ents[i].Relationships[j]
+			if r.Kind != "IMPORTS" {
+				continue
+			}
+			// Match by import_path property (preferred) or raw ToID.
+			if r.Properties != nil {
+				if ip := r.Properties["import_path"]; ip != "" {
+					if _, ok := wantModules[ip]; ok {
+						wantModules[ip] = true
+					}
+				}
+			}
+			// Fallback: ToID for side-effect / require shapes with no properties.
+			if _, ok := wantModules[r.ToID]; ok {
+				wantModules[r.ToID] = true
+			}
+		}
+	}
+	for mod, found := range wantModules {
+		if !found {
+			t.Errorf("expected IMPORTS edge for module %q on any entity", mod)
 		}
 	}
 }
@@ -217,14 +235,30 @@ function helper() {}
 	if !hasRelEdge(ents, "foo", "CALLS", "helper") {
 		t.Errorf("expected CALLS foo→helper")
 	}
-	importFound := false
-	for _, e := range ents {
-		if e.Subtype == "import" && e.Name == "./x" && len(e.Relationships) == 1 {
-			importFound = true
+	// Issue #742 — import placeholder entities are no longer emitted.
+	// Verify the IMPORTS edge for "./x" exists on the file entity instead.
+	importEdgeFound := false
+	for i := range ents {
+		for j := range ents[i].Relationships {
+			r := &ents[i].Relationships[j]
+			if r.Kind == "IMPORTS" {
+				if r.Properties != nil && r.Properties["import_path"] == "./x" {
+					importEdgeFound = true
+				}
+				if r.ToID == "./x" {
+					importEdgeFound = true
+				}
+			}
 		}
 	}
-	if !importFound {
-		t.Errorf("expected ./x import entity with IMPORTS relationship")
+	if !importEdgeFound {
+		t.Errorf("expected IMPORTS edge for ./x on the file entity (post-#742)")
+	}
+	// Verify no SCOPE.Component/import placeholder entity for "./x" exists.
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Component" && e.Subtype == "import" {
+			t.Errorf("SCOPE.Component/import placeholder entity still emitted (#742): %q", e.Name)
+		}
 	}
 }
 
@@ -287,16 +321,21 @@ import * as fs from "fs";
 }
 
 // findImportProps returns the Properties of the IMPORTS edge whose
-// import-entity Name == module AND whose local_name == localName.
-// Returns nil when no such edge exists.
+// import_path property == module AND whose local_name == localName.
+// Issue #742: IMPORTS edges now live on the file entity (SCOPE.Component/file)
+// rather than standalone SCOPE.Component/import placeholder entities. This
+// helper searches ALL entities so tests are independent of the carrier kind.
 func findImportProps(ents []types.EntityRecord, module, localName string) map[string]string {
 	for i := range ents {
 		e := &ents[i]
-		if e.Subtype != "import" || e.Name != module {
-			continue
-		}
 		for _, r := range e.Relationships {
 			if r.Kind != "IMPORTS" || r.Properties == nil {
+				continue
+			}
+			// Match on import_path (preferred — exact spec string) or source_module.
+			importPath := r.Properties["import_path"]
+			sourceMod := r.Properties["source_module"]
+			if importPath != module && sourceMod != module {
 				continue
 			}
 			if r.Properties["local_name"] == localName {
@@ -483,22 +522,27 @@ const lodash = require("lodash");
 		t.Fatalf("expected file-level SCOPE.Component subtype=file entity for %s; ents=%+v", path, ents)
 	}
 
-	// 2. Every IMPORTS edge across every import-entity must carry
-	//    FromID == path (the file entity's Name). The resolver
-	//    rewrites this to the stamped hex ID at index-time.
+	// No SCOPE.Component/import placeholder entities (issue #742).
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Component" && e.Subtype == "import" {
+			t.Errorf("SCOPE.Component/import placeholder entity still emitted (#742): %q", e.Name)
+		}
+	}
+
+	// 2. Every IMPORTS edge across ALL entities must carry FromID == path.
+	// Issue #742: IMPORTS edges now live on the file entity, not on standalone
+	// import-placeholder entities. The resolver rewrites this to the stamped
+	// hex ID at index-time.
 	var importEdges int
 	for _, e := range ents {
-		if e.Subtype != "import" {
-			continue
-		}
 		for _, r := range e.Relationships {
 			if r.Kind != "IMPORTS" {
 				continue
 			}
 			importEdges++
 			if r.FromID != path {
-				t.Errorf("IMPORTS edge on %q has FromID=%q; want file path %q",
-					e.Name, r.FromID, path)
+				t.Errorf("IMPORTS edge on entity %q (subtype=%q) has FromID=%q; want file path %q",
+					e.Name, e.Subtype, r.FromID, path)
 			}
 		}
 	}
