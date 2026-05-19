@@ -217,6 +217,32 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("cwd"),
 	), s.wrap("archigraph_reject_enrichment", s.handleRejectEnrichment))
 
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_list_residuals",
+		mcpapi.WithDescription("List pending repair_edge residual candidates (ADR-0015 phase-1)."),
+		mcpapi.WithArray("repo_filter", mcpapi.WithStringItems()),
+		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(20)),
+		mcpapi.WithNumber("offset", mcpapi.DefaultNumber(0)),
+		mcpapi.WithString("group"),
+		mcpapi.WithString("cwd"),
+	), s.wrap("archigraph_list_residuals", s.handleListResiduals))
+
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_submit_repair",
+		mcpapi.WithDescription("Submit an agent-proposed repair for a residual edge (ADR-0015 phase-1)."),
+		mcpapi.WithString("edge_id", mcpapi.Required(), mcpapi.Description("er:<hex16> identifier from list_residuals.")),
+		mcpapi.WithString("resolution", mcpapi.Required(), mcpapi.Description("bind_to_entity|reclassify_as_external|reclassify_as_dynamic|reclassify_as_resolved|abandon")),
+		mcpapi.WithString("target_entity_id", mcpapi.Description("Required when resolution=bind_to_entity.")),
+		mcpapi.WithString("module", mcpapi.Description("Required when resolution=reclassify_as_external.")),
+		mcpapi.WithString("new_target", mcpapi.Description("Required when resolution=reclassify_as_resolved.")),
+		mcpapi.WithString("dynamic_reason"),
+		mcpapi.WithString("abandon_reason"),
+		mcpapi.WithNumber("confidence", mcpapi.DefaultNumber(0.0), mcpapi.Description("Agent confidence in [0,1].")),
+		mcpapi.WithString("reasoning"),
+		mcpapi.WithString("source", mcpapi.DefaultString("mcp_submit_repair")),
+		mcpapi.WithString("repo", mcpapi.Description("Optional repo name override; defaults to the repo that owns edge_id.")),
+		mcpapi.WithString("group"),
+		mcpapi.WithString("cwd"),
+	), s.wrap("archigraph_submit_repair", s.handleSubmitRepair))
+
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_graph_stats",
 		mcpapi.WithDescription("Corpus-level metrics for the resolved group."),
 		mcpapi.WithString("group"),

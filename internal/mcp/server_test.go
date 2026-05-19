@@ -633,3 +633,153 @@ func TestGraphStatsRepoFilter(t *testing.T) {
 		t.Fatalf("expected 2 repos with [\"*\"], got %d", len(starOut.Repos))
 	}
 }
+
+// ADR-0015 phase-1 (#549 + #550): list_residuals + submit_repair round-trip.
+func TestRepairToolsRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	repo := filepath.Join(dir, "rA")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeGraph(t, repo, fixtureDoc("rA"))
+
+	// Seed enrichment-candidates.json with a repair_edge entry whose
+	// shape matches what internal/enrichment/repair_edge.go emits.
+	cands := []map[string]any{
+		{
+			"id":         "ec:abc1230000000001",
+			"kind":       "repair_edge",
+			"subject_id": "a1",
+			"context": map[string]any{
+				"edge_id":            "er:deadbeef00000001",
+				"relation":           "CALLS",
+				"original_stub":      "save",
+				"disposition":        "DispositionBugResolver",
+				"disposition_reason": "duplicate_short_name",
+				"from_entity": map[string]any{
+					"id":   "a1",
+					"kind": "SCOPE.Component",
+					"name": "DashboardScreen",
+					"file": "src/DashboardScreen.tsx",
+					"line": 10,
+				},
+			},
+		},
+		// A non-repair candidate that should be ignored by list_residuals.
+		{
+			"id":         "ec:other000000ffff",
+			"kind":       "describe_entity",
+			"subject_id": "a2",
+		},
+	}
+	candPath := filepath.Join(repo, ".archigraph", "enrichment-candidates.json")
+	if err := os.MkdirAll(filepath.Dir(candPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cd, _ := json.MarshalIndent(cands, "", "  ")
+	if err := os.WriteFile(candPath, cd, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"rA": repo}})
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 1. list_residuals returns the repair_edge entry and skips the
+	//    describe_entity entry.
+	listRes := callTool(t, srv, "archigraph_list_residuals", map[string]any{})
+	text := resultText(listRes)
+	if !strings.Contains(text, "er:deadbeef00000001") {
+		t.Fatalf("expected edge_id in list: %s", text)
+	}
+	if strings.Contains(text, "describe_entity") {
+		t.Fatalf("describe_entity candidate should be filtered out: %s", text)
+	}
+	var listOut struct {
+		Residuals []map[string]any `json:"residuals"`
+		Total     int              `json:"total"`
+	}
+	if err := json.Unmarshal([]byte(text), &listOut); err != nil {
+		t.Fatalf("unmarshal list: %v: %s", err, text)
+	}
+	if listOut.Total != 1 || len(listOut.Residuals) != 1 {
+		t.Fatalf("expected exactly 1 residual, got %d/%d: %s", listOut.Total, len(listOut.Residuals), text)
+	}
+	if got, _ := listOut.Residuals[0]["relation"].(string); got != "CALLS" {
+		t.Fatalf("expected relation=CALLS, got %q", got)
+	}
+
+	// 2. submit_repair with an unknown resolution must fail validation.
+	badRes := callTool(t, srv, "archigraph_submit_repair", map[string]any{
+		"edge_id":    "er:deadbeef00000001",
+		"resolution": "make_it_work",
+	})
+	if !badRes.IsError {
+		t.Fatalf("expected error for unknown resolution, got: %s", resultText(badRes))
+	}
+
+	// 3. submit_repair with a valid resolution appends to repair.json.
+	okRes := callTool(t, srv, "archigraph_submit_repair", map[string]any{
+		"edge_id":          "er:deadbeef00000001",
+		"resolution":       "bind_to_entity",
+		"target_entity_id": "a3",
+		"confidence":       0.85,
+		"reasoning":        "agent inferred save() is on ProposalsService",
+	})
+	if okRes.IsError {
+		t.Fatalf("submit_repair unexpected error: %s", resultText(okRes))
+	}
+	rpath := filepath.Join(repo, ".archigraph", "repair.json")
+	data, err := os.ReadFile(rpath)
+	if err != nil {
+		t.Fatalf("repair.json missing: %v", err)
+	}
+	if !strings.Contains(string(data), "er:deadbeef00000001") {
+		t.Fatalf("repair.json missing edge_id: %s", data)
+	}
+	if !strings.Contains(string(data), "bind_to_entity") {
+		t.Fatalf("repair.json missing resolution: %s", data)
+	}
+
+	// 4. Second submit appends — repair_count should be 2 and the file
+	//    must still parse as a repairFileOnDisk with 2 entries.
+	okRes2 := callTool(t, srv, "archigraph_submit_repair", map[string]any{
+		"edge_id":        "er:deadbeef00000001",
+		"resolution":     "abandon",
+		"abandon_reason": "test-only dynamic dispatch",
+		"confidence":     0.4,
+	})
+	if okRes2.IsError {
+		t.Fatalf("second submit_repair error: %s", resultText(okRes2))
+	}
+	var out2 struct {
+		RepairCount int `json:"repair_count"`
+	}
+	if err := json.Unmarshal([]byte(resultText(okRes2)), &out2); err != nil {
+		t.Fatalf("unmarshal submit response: %v: %s", err, resultText(okRes2))
+	}
+	if out2.RepairCount != 2 {
+		t.Fatalf("expected repair_count=2, got %d", out2.RepairCount)
+	}
+
+	// 5. Confidence out-of-range is rejected.
+	badConf := callTool(t, srv, "archigraph_submit_repair", map[string]any{
+		"edge_id":    "er:deadbeef00000001",
+		"resolution": "abandon",
+		"confidence": 1.5,
+	})
+	if !badConf.IsError {
+		t.Fatalf("expected error for confidence>1, got: %s", resultText(badConf))
+	}
+
+	// 6. Unknown edge_id is rejected when not in any repo.
+	unknownEdge := callTool(t, srv, "archigraph_submit_repair", map[string]any{
+		"edge_id":    "er:notfoundnotfound",
+		"resolution": "abandon",
+	})
+	if !unknownEdge.IsError {
+		t.Fatalf("expected error for unknown edge_id, got: %s", resultText(unknownEdge))
+	}
+}

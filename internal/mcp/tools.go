@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/enrichment"
 	"github.com/cajasmota/archigraph/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -1118,4 +1119,155 @@ func (s *Server) handleGraphStats(ctx context.Context, req mcpapi.CallToolReques
 
 func (s *Server) handleGetTelemetry(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	return jsonResult(s.Tel.Snapshot()), nil
+}
+
+// ---------------------------------------------------------------------------
+// list_residuals / submit_repair — ADR-0015 phase-1 (#549 + #550)
+// ---------------------------------------------------------------------------
+
+// handleListResiduals returns paginated repair_edge enrichment candidates
+// across the resolved group's repos. Filters: repo_filter, since (ignored
+// for v1 — candidate file has no per-row timestamp), limit, offset.
+func (s *Server) handleListResiduals(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	_, lg, errRes := s.resolveAndGroup(req)
+	if errRes != nil {
+		return errRes, nil
+	}
+	limit := argInt(req, "limit", 20)
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := argInt(req, "offset", 0)
+	if offset < 0 {
+		offset = 0
+	}
+	repos := reposToConsider(lg, argStringSlice(req, "repo_filter"))
+
+	// Collect first, then page. The candidate file is bounded per repo
+	// (max 8 candidates per ambiguous name) so flattening is cheap.
+	all := make([]map[string]any, 0, 64)
+	for _, r := range repos {
+		for _, c := range readRepairEdgeCandidates(r.Path) {
+			all = append(all, summarizeRepairEdge(r.Repo, c))
+		}
+	}
+	total := len(all)
+	if offset >= total {
+		return jsonResult(map[string]any{
+			"residuals": []map[string]any{},
+			"total":     total,
+			"offset":    offset,
+			"limit":     limit,
+		}), nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return jsonResult(map[string]any{
+		"residuals": all[offset:end],
+		"total":     total,
+		"offset":    offset,
+		"limit":     limit,
+	}), nil
+}
+
+// handleSubmitRepair accepts an agent-proposed repair, validates the
+// resolution kind against the ADR-0015 allowlist, and appends it to
+// <repo>/.archigraph/repair.json (creating the file if absent). The write
+// is atomic via tempfile + rename.
+func (s *Server) handleSubmitRepair(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	edgeID, err := req.RequireString("edge_id")
+	if err != nil {
+		return mcpapi.NewToolResultError(err.Error()), nil
+	}
+	resolution, err := req.RequireString("resolution")
+	if err != nil {
+		return mcpapi.NewToolResultError(err.Error()), nil
+	}
+	if !allowedRepairResolutions[resolution] {
+		return mcpapi.NewToolResultError(fmt.Sprintf(
+			"unknown resolution %q (allowed: bind_to_entity, reclassify_as_external, reclassify_as_dynamic, reclassify_as_resolved, abandon)",
+			resolution)), nil
+	}
+	confidence := argFloat(req, "confidence", 0.0)
+	if confidence < 0 || confidence > 1 {
+		return mcpapi.NewToolResultError("confidence must be in [0,1]"), nil
+	}
+	reasoning := argString(req, "reasoning", "")
+	targetEntity := argString(req, "target_entity_id", "")
+	module := argString(req, "module", "")
+	newTarget := argString(req, "new_target", "")
+	dynamicReason := argString(req, "dynamic_reason", "")
+	abandonReason := argString(req, "abandon_reason", "")
+	source := argString(req, "source", "mcp_submit_repair")
+	repoOverride := argString(req, "repo", "")
+
+	_, lg, errRes := s.resolveAndGroup(req)
+	if errRes != nil {
+		return errRes, nil
+	}
+
+	// Pick the target repo. If the caller passed an explicit `repo`, use
+	// it. Otherwise scan candidates to find the repo that owns this
+	// edge_id. The latter is what an agent will normally do: one
+	// list_residuals → one submit_repair per residual.
+	repos := reposToConsider(lg, nil)
+	var target *LoadedRepo
+	if repoOverride != "" {
+		for _, r := range repos {
+			if r.Repo == repoOverride {
+				target = r
+				break
+			}
+		}
+		if target == nil {
+			return mcpapi.NewToolResultError(fmt.Sprintf("repo %q not loaded in group", repoOverride)), nil
+		}
+	} else {
+		for _, r := range repos {
+			for _, c := range readRepairEdgeCandidates(r.Path) {
+				if v, ok := c.Context["edge_id"].(string); ok && v == edgeID {
+					target = r
+					break
+				}
+			}
+			if target != nil {
+				break
+			}
+		}
+		if target == nil {
+			return mcpapi.NewToolResultError(fmt.Sprintf("edge_id %q not found in any loaded repo (pass repo= to disambiguate)", edgeID)), nil
+		}
+	}
+
+	rf, err := readRepairFile(target.Path)
+	if err != nil {
+		return mcpapi.NewToolResultError(err.Error()), nil
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	repair := enrichment.Repair{
+		EdgeID:         edgeID,
+		Resolution:     resolution,
+		TargetEntityID: targetEntity,
+		Module:         module,
+		NewTarget:      newTarget,
+		DynamicReason:  dynamicReason,
+		AbandonReason:  abandonReason,
+		Confidence:     confidence,
+		Reasoning:      reasoning,
+		Source:         source,
+		ResolvedAt:     now,
+	}
+	rf.Repairs = append(rf.Repairs, repair)
+	if err := writeRepairFile(target.Path, rf); err != nil {
+		return mcpapi.NewToolResultError(err.Error()), nil
+	}
+	return jsonResult(map[string]any{
+		"edge_id":      edgeID,
+		"repo":         target.Repo,
+		"resolution":   resolution,
+		"repair_count": len(rf.Repairs),
+		"resolved_at":  now,
+	}), nil
 }
