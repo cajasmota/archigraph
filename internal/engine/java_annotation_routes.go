@@ -17,21 +17,31 @@
 //	    public User get(...) {}
 //	}
 //
-// Today archigraph emits SCOPE.Operation entities for each handler method
-// but the existing JAX-RS regex in http_endpoint_synthesis.go is too strict
-// (requires a tight annotation/class layout) and emits source_handler
-// references pointing at a Kind that doesn't exist in the entity table
-// (`Controller:method`), so all synthetics get dropped by
-// ResolveHTTPEndpointHandlers.
+// The old synthesizeJAXRS pass in http_endpoint_synthesis.go had two bugs
+// (issues #682 and #683):
 //
-// This pass runs AFTER Pass 3 with the full classified file set. It:
+// Bug #682 — kind/name mismatch: synthesizeJAXRS emitted source_handler
+// pointing at kind "Controller" with bare method name (e.g.
+// "Controller:listProducts"). The Java AST extractor produces entities with
+// kind "SCOPE.Operation" and name "ClassName.methodName". The resolver
+// found nothing and dropped all 60 JAX-RS synthetics on fixture-d (Quarkus),
+// producing 0 http_endpoint entities and blocking all d↔e cross-repo links.
 //
-//  1. Scans every .java file for the class-level @Path or @RequestMapping.
-//  2. For every method-level HTTP verb annotation, composes the full route.
-//  3. Emits one `http_endpoint` synthetic entity per (verb, path) pair,
-//     with `source_handler` set to `SCOPE.Operation:<Class>.<method>` so
-//     ResolveHTTPEndpointHandlers can resolve it against the real
-//     SCOPE.Operation entity emitted by the Java extractor.
+// Bug #683 — regex budget exhausted: jaxrsMethodVerbRe used a {0,3} line
+// budget between @VERB and @Path. When multiple annotations intervene
+// (e.g. @POST @PermitAll @Path("/login") @Operation), the budget was
+// consumed before @Path was reached, producing an incomplete path
+// (e.g. "/auth" instead of "/auth/login").
+//
+// This pass fixes BOTH bugs by using a line-buffer approach instead of a
+// single multi-line regex:
+//
+//  1. Scans every .java file line-by-line.
+//  2. Accumulates consecutive annotation lines into a per-method buffer.
+//  3. When a method declaration is encountered, searches the entire buffer
+//     for verb and @Path annotations — no line budget constraint.
+//  4. Emits source_handler = "SCOPE.Operation:ClassName.methodName" so
+//     ResolveHTTPEndpointHandlers wires the correct IMPLEMENTS edge.
 //
 // JAX-RS verb annotations recognised:
 //
@@ -42,7 +52,7 @@
 //	@GetMapping @PostMapping @PutMapping @DeleteMapping @PatchMapping
 //	@RequestMapping(method = RequestMethod.X)
 //
-// Refs #657.
+// Refs #682, #683.
 package engine
 
 import (
@@ -103,6 +113,18 @@ var javaMethodDeclRe = regexp.MustCompile(`^\s*(?:public|protected|private|stati
 // http_endpoint EntityRecords. Caller appends these to the existing
 // entity slice; ResolveHTTPEndpointHandlers wires them to the matching
 // SCOPE.Operation handlers.
+//
+// This is the replacement for the synthesizeJAXRS function in
+// http_endpoint_synthesis.go, which had two bugs (see #682, #683):
+//  1. Emitted source_handler with wrong kind ("Controller" instead of
+//     "SCOPE.Operation") and wrong name format ("methodName" instead of
+//     "ClassName.methodName") — causing the resolver to drop all synthetics.
+//  2. Used a {0,3} line-budget regex that failed when more than 3 annotations
+//     appeared between @VERB and @Path — producing truncated paths.
+//
+// Both are fixed here: kind is "SCOPE.Operation", name is "ClassName.methodName",
+// and the annotation buffer collects ALL annotation lines before a method
+// declaration with no line budget.
 func ApplyJavaAnnotationRoutes(
 	javaFiles []string,
 	fileReader JavaAnnotationFileReader,
@@ -163,11 +185,11 @@ func containsAnyHTTPAnnotation(src string) bool {
 // handler-reference composition), the class-level path prefix, and
 // class-level content-type metadata that method-level routes inherit.
 type classFrame struct {
-	name           string
-	prefix         string
-	framework      string // "jaxrs" or "spring" (best-effort)
-	classConsumes  string
-	classProduces  string
+	name          string
+	prefix        string
+	framework     string // "jaxrs" or "spring" (best-effort)
+	classConsumes string
+	classProduces string
 }
 
 // extractJavaEndpoints walks a Java source file and returns the synthetic
@@ -181,9 +203,12 @@ type classFrame struct {
 //     annotation block, parse its verb + optional method-level path, and
 //     compose the full route against the current class frame.
 //
-// This deliberately uses a lightweight line-oriented parser rather than
-// the tree-sitter AST because the Java extractor strips annotation
-// arguments before producing entities (so we can't reuse extractor output).
+// Fix for #683: this deliberately uses a lightweight line-oriented parser
+// rather than a multi-line regex with a fixed line-count budget. The
+// annotation buffer collects ALL annotation lines, regardless of how many
+// intervene between @VERB and @Path. The verb and @Path searches operate
+// on the full buffer, so @POST @PermitAll @Path("/login") @Operation
+// correctly produces "/login" as the method path.
 func extractJavaEndpoints(src, relPath string) []types.EntityRecord {
 	lines := strings.Split(src, "\n")
 
@@ -282,6 +307,16 @@ func buildClassFrame(className string, annos []string) classFrame {
 
 // buildMethodEndpoints walks the annotation block above a method
 // declaration and produces one or more http_endpoint records.
+//
+// Fix for #682: source_handler is set to "SCOPE.Operation:ClassName.methodName"
+// (not "Controller:methodName" as in the old synthesizeJAXRS). This matches
+// the entity kind/name emitted by the Java AST extractor, allowing the
+// resolver to find and wire the IMPLEMENTS edge.
+//
+// Fix for #683: because this function receives the entire annotation buffer
+// (not a regex-windowed slice), it correctly handles annotation stacks of
+// any depth. @Path will be found regardless of how many @PermitAll,
+// @Consumes, @Operation, @RateLimited, etc. annotations precede it.
 func buildMethodEndpoints(cf classFrame, methodName string, annos []string, relPath string) []types.EntityRecord {
 	joined := strings.Join(annos, "\n")
 
@@ -373,10 +408,12 @@ func buildMethodEndpoints(cf classFrame, methodName string, annos []string, relP
 	for _, verb := range uniqueVerbs {
 		id := httproutes.SyntheticID(verb, canonical)
 		props := map[string]string{
-			"verb":           verb,
-			"path":           canonical,
-			"framework":      framework,
-			"pattern_type":   "java_annotation_routes",
+			"verb":         verb,
+			"path":         canonical,
+			"framework":    framework,
+			"pattern_type": "java_annotation_routes",
+			// Fix for #682: use "SCOPE.Operation:ClassName.methodName" to
+			// match the kind/name the Java AST extractor emits.
 			"source_handler": "SCOPE.Operation:" + cf.name + "." + methodName,
 		}
 		if methodConsumes != "" {

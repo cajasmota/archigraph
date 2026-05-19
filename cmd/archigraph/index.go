@@ -467,10 +467,11 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 	// Pass 2.6 — Java JAX-RS / Spring MVC annotation route composition.
 	// Runs after Pass 3 (while the classified slice is still live with file
 	// content) and emits fully-resolved http_endpoint synthetic entities for
-	// every annotated handler method. The class-level + method-level path
-	// composition cannot be done by the per-file passes in Pass 2.5 because
-	// the Java extractor strips annotation arguments before producing
-	// SCOPE.Component / SCOPE.Operation entities. Refs #657.
+	// every annotated handler method. Fixes #682 (source_handler kind/name
+	// mismatch: now emits "SCOPE.Operation:ClassName.methodName") and #683
+	// (annotation budget: line-buffer approach handles any number of
+	// intervening annotations between @VERB and @Path). Must run before the
+	// classified slice is released below. Refs #682, #683.
 	if !i.skipPasses[PassFramework] {
 		javaEntities := runJavaAnnotationRoutes(classified)
 		pass3Records = append(pass3Records, javaEntities...)
@@ -1464,32 +1465,6 @@ func (i *Indexer) stampEntityIDs(records []types.EntityRecord) {
 	}
 }
 
-// runJavaAnnotationRoutes runs the Java JAX-RS / Spring MVC annotation
-// route composition pass over the set of classified files. Builds a
-// content-lookup map from repo-relative path to raw bytes (Java files
-// only), then delegates to engine.ApplyJavaAnnotationRoutes. Refs #657.
-func runJavaAnnotationRoutes(classified []classifiedFile) []types.EntityRecord {
-	if len(classified) == 0 {
-		return nil
-	}
-	contentByPath := make(map[string][]byte, len(classified))
-	var javaPaths []string
-	for _, cf := range classified {
-		if cf.language != "java" {
-			continue
-		}
-		contentByPath[cf.relPath] = cf.content
-		javaPaths = append(javaPaths, cf.relPath)
-	}
-	if len(javaPaths) == 0 {
-		return nil
-	}
-	reader := func(relPath string) []byte {
-		return contentByPath[relPath]
-	}
-	return engine.ApplyJavaAnnotationRoutes(javaPaths, reader)
-}
-
 // buildPatternContainsRels emits one CONTAINS edge per SCOPE.Pattern entity,
 // targeting it from the per-source-file SCOPE.Component (subtype="file")
 // entity emitted by extractor.FileEntity. Both endpoint IDs are computed
@@ -1797,6 +1772,35 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 		Entities:      entities,
 		Relationships: relationships,
 	}
+}
+
+// runJavaAnnotationRoutes runs the Java JAX-RS / Spring MVC annotation
+// route composition pass over the set of classified files. Builds a
+// content-lookup map from repo-relative path to raw bytes (Java files
+// only), then delegates to engine.ApplyJavaAnnotationRoutes.
+//
+// Fixes #682 (wrong source_handler kind/name) and #683 (annotation budget
+// exhaustion in old jaxrsMethodVerbRe regex). Refs #682, #683.
+func runJavaAnnotationRoutes(classified []classifiedFile) []types.EntityRecord {
+	if len(classified) == 0 {
+		return nil
+	}
+	contentByPath := make(map[string][]byte, len(classified))
+	var javaPaths []string
+	for _, cf := range classified {
+		if cf.language != "java" {
+			continue
+		}
+		contentByPath[cf.relPath] = cf.content
+		javaPaths = append(javaPaths, cf.relPath)
+	}
+	if len(javaPaths) == 0 {
+		return nil
+	}
+	reader := func(relPath string) []byte {
+		return contentByPath[relPath]
+	}
+	return engine.ApplyJavaAnnotationRoutes(javaPaths, reader)
 }
 
 // releaseClassifiedASTs explicitly drops the tree-sitter parse trees + source

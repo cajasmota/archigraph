@@ -253,3 +253,196 @@ public class PingController {
 		t.Fatalf("ids = %v, want [http:GET:/ping]", ids)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Regression tests for #682 — kind/name mismatch
+// ---------------------------------------------------------------------------
+
+// TestApplyJavaAnnotationRoutes_Issue682_SourceHandlerKindAndName verifies
+// that the emitted source_handler property uses "SCOPE.Operation" as the
+// kind and "ClassName.methodName" as the name format. This is the exact
+// format the Java AST extractor emits, so the resolver can wire the
+// IMPLEMENTS edge. The old synthesizeJAXRS emitted "Controller:methodName"
+// which resolved to nothing and dropped all 60 fixture-d synthetics.
+func TestApplyJavaAnnotationRoutes_Issue682_SourceHandlerKindAndName(t *testing.T) {
+	src := `package com.example.quarkus;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Response;
+
+@Path("/products")
+public class ProductsController {
+    @GET
+    public Response listProducts() { return null; }
+
+    @GET
+    @Path("/{id}")
+    public Response getProduct() { return null; }
+
+    @POST
+    public Response createProduct() { return null; }
+}
+`
+	got := collect(t, map[string]string{"ProductsController.java": src})
+	if len(got) == 0 {
+		t.Fatal("expected endpoints, got none")
+	}
+	for _, r := range got {
+		handler := r.Props["source_handler"]
+		// Must start with "SCOPE.Operation:" (not "Controller:")
+		if !strings.HasPrefix(handler, "SCOPE.Operation:") {
+			t.Errorf("[#682] source_handler kind wrong: got %q, want prefix SCOPE.Operation:", handler)
+		}
+		// Must use "ClassName.methodName" format (not bare "methodName")
+		// e.g. "SCOPE.Operation:ProductsController.listProducts"
+		suffix := strings.TrimPrefix(handler, "SCOPE.Operation:")
+		if !strings.HasPrefix(suffix, "ProductsController.") {
+			t.Errorf("[#682] source_handler name format wrong: got %q, want ProductsController.<methodName>", handler)
+		}
+		parts := strings.SplitN(suffix, ".", 2)
+		if len(parts) != 2 || parts[1] == "" {
+			t.Errorf("[#682] source_handler name must be ClassName.methodName, got %q", handler)
+		}
+	}
+
+	// Verify exact expected handlers.
+	handlerSet := map[string]bool{}
+	for _, r := range got {
+		handlerSet[r.Props["source_handler"]] = true
+	}
+	wantHandlers := []string{
+		"SCOPE.Operation:ProductsController.listProducts",
+		"SCOPE.Operation:ProductsController.getProduct",
+		"SCOPE.Operation:ProductsController.createProduct",
+	}
+	for _, wh := range wantHandlers {
+		if !handlerSet[wh] {
+			t.Errorf("[#682] missing expected source_handler %q; got set: %v", wh, handlerSet)
+		}
+	}
+}
+
+// TestApplyJavaAnnotationRoutes_Issue682_OldFormatNotEmitted explicitly
+// verifies that the OLD broken format "Controller:methodName" is never
+// emitted. This test would have caught the regression.
+func TestApplyJavaAnnotationRoutes_Issue682_OldFormatNotEmitted(t *testing.T) {
+	src := `package com.example;
+import jakarta.ws.rs.*;
+
+@Path("/inventory")
+public class InventoryController {
+    @GET
+    @Path("/{id}")
+    public Object getItem() { return null; }
+
+    @DELETE
+    @Path("/{id}")
+    public Object deleteItem() { return null; }
+}
+`
+	got := collect(t, map[string]string{"InventoryController.java": src})
+	for _, r := range got {
+		handler := r.Props["source_handler"]
+		if strings.HasPrefix(handler, "Controller:") {
+			t.Errorf("[#682] old broken source_handler format emitted: %q (endpoint %s)", handler, r.ID)
+		}
+		// Verify it's the correct format
+		if !strings.HasPrefix(handler, "SCOPE.Operation:InventoryController.") {
+			t.Errorf("[#682] expected SCOPE.Operation:InventoryController.<method>, got %q (endpoint %s)", handler, r.ID)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Regression tests for #683 — annotation budget exhaustion
+// ---------------------------------------------------------------------------
+
+// TestApplyJavaAnnotationRoutes_Issue683_PermitAllBetweenVerbAndPath is
+// the concrete reproducer from issue #683. When @PermitAll appears between
+// @POST and @Path("/login"), the old {0,3} regex budget was consumed before
+// reaching @Path, producing "/auth" instead of "/auth/login".
+func TestApplyJavaAnnotationRoutes_Issue683_PermitAllBetweenVerbAndPath(t *testing.T) {
+	src := `package com.example.quarkus.auth;
+import jakarta.ws.rs.*;
+import jakarta.annotation.security.PermitAll;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+
+@Path("/auth")
+public class AuthController {
+
+    @POST
+    @PermitAll
+    @Path("/login")
+    @Operation(summary = "Login an existing user")
+    public LoginResponse login(@Valid LoginRequest request) { return null; }
+
+    @POST
+    @PermitAll
+    @Path("/register")
+    @Operation(summary = "Register a new user")
+    public RegisterResponse register(@Valid RegisterRequest request) { return null; }
+}
+`
+	got := collect(t, map[string]string{"AuthController.java": src})
+	ids := endpointIDs(got)
+	want := []string{
+		"http:POST:/auth/login",
+		"http:POST:/auth/register",
+	}
+	sort.Strings(want)
+	if strings.Join(ids, "|") != strings.Join(want, "|") {
+		t.Fatalf("[#683] ids = %v\nwant %v\n(old bug: @PermitAll between @POST and @Path exhausted {0,3} budget)", ids, want)
+	}
+	// Also verify the source_handler is correctly formed
+	for _, r := range got {
+		handler := r.Props["source_handler"]
+		if !strings.HasPrefix(handler, "SCOPE.Operation:AuthController.") {
+			t.Errorf("[#683] source_handler wrong: got %q for endpoint %s", handler, r.ID)
+		}
+	}
+}
+
+// TestApplyJavaAnnotationRoutes_Issue683_QuarkusDeepAnnotationStack verifies
+// that a realistic Quarkus annotation stack with 5+ annotations between
+// @GET and @Path is handled correctly. Covers @RateLimited, @Produces,
+// @ApiResponse, @Tag all appearing before @Path.
+func TestApplyJavaAnnotationRoutes_Issue683_QuarkusDeepAnnotationStack(t *testing.T) {
+	src := `package com.example.quarkus.catalog;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.*;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import io.smallrye.common.annotation.Blocking;
+
+@Path("/catalog")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class CatalogResource {
+
+    @GET
+    @Path("/items")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponse(responseCode = "200", description = "List of catalog items")
+    @APIResponse(responseCode = "401", description = "Unauthorized")
+    @Blocking
+    public CatalogList listItems() { return null; }
+
+    @GET
+    @APIResponse(responseCode = "200", description = "Single item")
+    @APIResponse(responseCode = "404", description = "Not found")
+    @Blocking
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/items/{sku}")
+    public CatalogItem getItem() { return null; }
+}
+`
+	got := collect(t, map[string]string{"CatalogResource.java": src})
+	ids := endpointIDs(got)
+	want := []string{
+		"http:GET:/catalog/items",
+		"http:GET:/catalog/items/{sku}",
+	}
+	sort.Strings(want)
+	if strings.Join(ids, "|") != strings.Join(want, "|") {
+		t.Fatalf("[#683] deep annotation stack: ids = %v\nwant %v", ids, want)
+	}
+}
