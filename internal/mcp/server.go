@@ -257,6 +257,33 @@ func (s *Server) registerTools() {
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_get_telemetry",
 		mcpapi.WithDescription("Server uptime, per-tool counters, reload counts."),
 	), s.wrap("archigraph_get_telemetry", s.handleGetTelemetry))
+
+	// -----------------------------------------------------------------------
+	// archigraph_patterns — ADR-0018, PR β
+	// action=query|record (refine|apply|reject|promote reserved for PR γ)
+	// -----------------------------------------------------------------------
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_patterns",
+		mcpapi.WithDescription("Agent-learned pattern store (ADR-0018). action=query: find patterns by task description; action=record: store a new pattern with exemplars."),
+		mcpapi.WithString("action", mcpapi.Required(), mcpapi.Description("query|record (refine|apply|reject|promote in γ)")),
+		// query args
+		mcpapi.WithString("text", mcpapi.Description("(query) Natural-language task description.")),
+		mcpapi.WithString("category", mcpapi.Description("(query|record) code|process|team|tooling|architecture")),
+		mcpapi.WithBoolean("include_candidates", mcpapi.DefaultBool(false), mcpapi.Description("(query) Include is_candidate=true patterns.")),
+		mcpapi.WithBoolean("include_private", mcpapi.DefaultBool(false), mcpapi.Description("(query) Include private anti-patterns (archigraph-patterns-sync only).")),
+		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(10), mcpapi.Description("(query) Max patterns returned.")),
+		// record args
+		mcpapi.WithObject("trigger", mcpapi.Description("(record) {natural_language, keywords[], target_entity_kinds[]}")),
+		mcpapi.WithArray("steps", mcpapi.WithStringItems(), mcpapi.Description("(record) Ordered recipe steps.")),
+		mcpapi.WithArray("anti_patterns", mcpapi.Description("(record) [{do_not, reason, private}]")),
+		mcpapi.WithArray("exemplars", mcpapi.WithStringItems(), mcpapi.Description("(record) Required: ≥1 entity id as canonical examples.")),
+		mcpapi.WithBoolean("as_candidate", mcpapi.DefaultBool(false), mcpapi.Description("(record) Emit is_candidate=true (subagent discovery path).")),
+		mcpapi.WithString("proposer_subagent", mcpapi.Description("(record) Subagent identifier for convergence audit.")),
+		mcpapi.WithString("documentation_url", mcpapi.Description("(record) Slot for Phase-6 doc-gen URL; leave empty on initial record.")),
+		// shared optional
+		mcpapi.WithObject("scope", mcpapi.Description("Explicit scope override: {repos, module_paths, languages, stacks, entity_kinds}.")),
+		mcpapi.WithString("group"),
+		mcpapi.WithString("cwd"),
+	), s.wrap("archigraph_patterns", s.handlePatterns))
 }
 
 // wrap is the shared handler middleware: telemetry + lazy reload + panic guard.

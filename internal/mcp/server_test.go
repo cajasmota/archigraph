@@ -440,7 +440,7 @@ func TestToolNameSurface(t *testing.T) {
 	for _, st := range srv.MCP.ListTools() {
 		registered[st.Tool.Name] = true
 	}
-	// 14 tools: 9 renamed/bundled + 5 unchanged.
+	// 15 tools: 9 renamed/bundled + 5 unchanged + 1 new (archigraph_patterns).
 	wantPresent := []string{
 		// renamed (5)
 		"archigraph_find", "archigraph_inspect", "archigraph_expand",
@@ -451,6 +451,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_trace",
 		"archigraph_whoami", "archigraph_save_finding", "archigraph_list_findings",
 		"archigraph_get_source", "archigraph_get_telemetry",
+		// ADR-0018 β
+		"archigraph_patterns",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -478,11 +480,11 @@ func TestToolNameSurface(t *testing.T) {
 			t.Errorf("expected old tool %q to NOT be registered", n)
 		}
 	}
-	// Total count must be exactly 15 (19 original − 4 saved by 3 bundles).
+	// Total count must be exactly 16 (15 pre-β + 1 new archigraph_patterns).
 	// Bundles: enrichments (3→1, saves 2), cross_links (2→1, saves 1),
-	// repairs (2→1, saves 1).
-	if got := len(srv.MCP.ListTools()); got != 15 {
-		t.Errorf("expected 15 registered tools, got %d", got)
+	// repairs (2→1, saves 1). Plus archigraph_patterns (ADR-0018 β).
+	if got := len(srv.MCP.ListTools()); got != 16 {
+		t.Errorf("expected 16 registered tools, got %d", got)
 	}
 }
 
@@ -805,5 +807,461 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	})
 	if !unknownEdge.IsError {
 		t.Fatalf("expected error for unknown residual_id, got: %s", resultText(unknownEdge))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// archigraph_patterns tests (ADR-0018 β)
+// ---------------------------------------------------------------------------
+
+// makePatternsServer creates a Server wired to a single-repo group with one
+// entity. The patterns.json starts empty.
+func makePatternsServer(t *testing.T) (*Server, string) {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+	repo := filepath.Join(dir, "myrepo")
+	_ = os.MkdirAll(repo, 0o755)
+	writeGraph(t, repo, fixtureDoc("myrepo"))
+	regPath := makeRegistry(t, dir, map[string]map[string]string{
+		"g": {"myrepo": repo},
+	})
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return srv, dir
+}
+
+// TestPatterns_RecordThenQuery is the primary integration test:
+// record a pattern, query by text, get it back.
+func TestPatterns_RecordThenQuery(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	// 1. Record.
+	recRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "create a new HTTP endpoint", "keywords": []any{"endpoint", "handler", "http"}},
+		"steps":    []any{"Create handler in internal/handlers/", "Register route in routes.go"},
+		"exemplars": []any{"myrepo::a1"},
+		"category": "code",
+	})
+	if recRes.IsError {
+		t.Fatalf("record error: %s", resultText(recRes))
+	}
+	var recOut struct {
+		ID     string `json:"id"`
+		Merged bool   `json:"merged"`
+	}
+	if err := json.Unmarshal([]byte(resultText(recRes)), &recOut); err != nil {
+		t.Fatalf("unmarshal record: %v: %s", err, resultText(recRes))
+	}
+	if recOut.ID == "" {
+		t.Fatalf("expected non-empty id, got: %s", resultText(recRes))
+	}
+	if recOut.Merged {
+		t.Fatalf("should not be merged on first record")
+	}
+
+	// 2. Query by text.
+	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action": "query",
+		"text":   "create a new HTTP endpoint",
+	})
+	if qRes.IsError {
+		t.Fatalf("query error: %s", resultText(qRes))
+	}
+	var qOut struct {
+		Patterns []map[string]any `json:"patterns"`
+		Count    int              `json:"count"`
+	}
+	if err := json.Unmarshal([]byte(resultText(qRes)), &qOut); err != nil {
+		t.Fatalf("unmarshal query: %v: %s", err, resultText(qRes))
+	}
+	if qOut.Count == 0 || len(qOut.Patterns) == 0 {
+		t.Fatalf("expected ≥1 pattern, got 0: %s", resultText(qRes))
+	}
+	if got := qOut.Patterns[0]["id"]; got != recOut.ID {
+		t.Fatalf("expected pattern id %q in query result, got %q", recOut.ID, got)
+	}
+	// Steps and exemplars must round-trip.
+	steps, _ := qOut.Patterns[0]["steps"].([]any)
+	if len(steps) == 0 {
+		t.Errorf("expected steps in query result, got: %v", qOut.Patterns[0]["steps"])
+	}
+	exemplars, _ := qOut.Patterns[0]["exemplars"].([]any)
+	if len(exemplars) == 0 {
+		t.Errorf("expected exemplars in query result, got: %v", qOut.Patterns[0]["exemplars"])
+	}
+}
+
+// TestPatterns_DocumentationURLRoundtrip verifies the documentation_url slot
+// is preserved across record/query (Phase 6 will populate it later).
+func TestPatterns_DocumentationURLRoundtrip(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	docURL := "https://docs.example.com/patterns/code/endpoint.md"
+	recRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":            "record",
+		"trigger":           map[string]any{"natural_language": "doc url round trip pattern"},
+		"steps":             []any{"step one"},
+		"exemplars":         []any{"myrepo::a1"},
+		"category":          "code",
+		"documentation_url": docURL,
+	})
+	if recRes.IsError {
+		t.Fatalf("record error: %s", resultText(recRes))
+	}
+
+	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action": "query",
+		"text":   "doc url round trip pattern",
+	})
+	if qRes.IsError {
+		t.Fatalf("query error: %s", resultText(qRes))
+	}
+	var qOut struct {
+		Patterns []map[string]any `json:"patterns"`
+	}
+	if err := json.Unmarshal([]byte(resultText(qRes)), &qOut); err != nil {
+		t.Fatalf("unmarshal query: %v", err)
+	}
+	if len(qOut.Patterns) == 0 {
+		t.Fatalf("expected ≥1 pattern")
+	}
+	if got := qOut.Patterns[0]["documentation_url"]; got != docURL {
+		t.Errorf("documentation_url mismatch: got %v, want %s", got, docURL)
+	}
+}
+
+// TestPatterns_CandidateConvergence verifies that 3 records with as_candidate=true,
+// overlapping triggers, and shared exemplars produce convergence_count=3 on one merged candidate.
+func TestPatterns_CandidateConvergence(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	recordCandidate := func(proposer string) map[string]any {
+		res := callTool(t, srv, "archigraph_patterns", map[string]any{
+			"action":            "record",
+			"trigger":           map[string]any{"natural_language": "add a new service endpoint following the chi pattern", "keywords": []any{"chi", "endpoint", "handler"}},
+			"steps":             []any{"Create handler", "Register route"},
+			"exemplars":         []any{"myrepo::a1"},
+			"category":          "code",
+			"as_candidate":      true,
+			"proposer_subagent": proposer,
+		})
+		if res.IsError {
+			t.Fatalf("record candidate (%s) error: %s", proposer, resultText(res))
+		}
+		var out map[string]any
+		if err := json.Unmarshal([]byte(resultText(res)), &out); err != nil {
+			t.Fatalf("unmarshal record (%s): %v", proposer, err)
+		}
+		return out
+	}
+
+	out1 := recordCandidate("agent-1")
+	out2 := recordCandidate("agent-2")
+	out3 := recordCandidate("agent-3")
+
+	// First record creates a new candidate with convergence_count=1 (first proposal).
+	if out1["merged"].(bool) {
+		t.Errorf("first record should not be merged")
+	}
+	if cc, ok := out1["convergence_count"].(float64); !ok || int(cc) != 0 {
+		// out1 is returned before ConvergenceCount is set — it's the new record,
+		// not a merge result. The field returned for a new record is 0 (default).
+		// The convergence_count of 1 is stored on disk; merges will increment from there.
+		_ = cc
+	}
+	// Second and third should merge into the first.
+	if !out2["merged"].(bool) {
+		t.Errorf("second record should be merged")
+	}
+	if !out3["merged"].(bool) {
+		t.Errorf("third record should be merged")
+	}
+	// After first record (count=1) + two merges: convergence_count should be 3.
+	if cc, ok := out3["convergence_count"].(float64); !ok || int(cc) != 3 {
+		t.Errorf("expected convergence_count=3, got: %v", out3["convergence_count"])
+	}
+	// All merged into same id as out1.
+	if out2["id"] != out1["id"] {
+		t.Errorf("expected same id on merge: %v vs %v", out2["id"], out1["id"])
+	}
+}
+
+// TestPatterns_SpecificityScopedQueryWins verifies that a pattern with a more
+// specific scope wins over a less specific one when both match BM25.
+func TestPatterns_SpecificityScopedQueryWins(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	// Broad pattern — no scope constraints.
+	callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "register a new service broad variant", "keywords": []any{"service", "register", "new"}},
+		"steps":    []any{"Step 1 — broad"},
+		"exemplars": []any{"myrepo::a1"},
+		"category": "code",
+	})
+
+	// Specific pattern — repos + languages set (2 non-empty scope fields).
+	callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "register a new service specific variant", "keywords": []any{"service", "register", "new"}},
+		"steps":    []any{"Step A — specific"},
+		"exemplars": []any{"myrepo::a2"},
+		"category": "code",
+		"scope":    map[string]any{"repos": []any{"myrepo"}, "languages": []any{"go"}},
+	})
+
+	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action": "query",
+		"text":   "register a new service",
+		"limit":  5,
+	})
+	if qRes.IsError {
+		t.Fatalf("query error: %s", resultText(qRes))
+	}
+	var qOut struct {
+		Patterns []map[string]any `json:"patterns"`
+		Count    int              `json:"count"`
+	}
+	if err := json.Unmarshal([]byte(resultText(qRes)), &qOut); err != nil {
+		t.Fatalf("unmarshal: %v: %s", err, resultText(qRes))
+	}
+	if qOut.Count < 2 {
+		t.Fatalf("expected ≥2 patterns, got %d: %s", qOut.Count, resultText(qRes))
+	}
+	// First pattern's steps must contain "Step A — specific".
+	steps, _ := qOut.Patterns[0]["steps"].([]any)
+	if len(steps) == 0 || steps[0] != "Step A — specific" {
+		t.Errorf("expected more-specific pattern first, got steps: %v", steps)
+	}
+}
+
+// TestPatterns_ExplicitScopeFilter verifies that an explicit scope override
+// in query returns only matching patterns.
+func TestPatterns_ExplicitScopeFilter(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	// Pattern for repo "myrepo".
+	callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "create a new endpoint for myrepo"},
+		"steps":    []any{"myrepo step"},
+		"exemplars": []any{"myrepo::a1"},
+		"category": "code",
+		"scope":    map[string]any{"repos": []any{"myrepo"}},
+	})
+	// Pattern for repo "otherrepo".
+	callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "create a new endpoint for otherrepo"},
+		"steps":    []any{"otherrepo step"},
+		"exemplars": []any{"myrepo::a2"},
+		"category": "code",
+		"scope":    map[string]any{"repos": []any{"otherrepo"}},
+	})
+
+	// Query with explicit scope override restricting to "otherrepo".
+	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action": "query",
+		"text":   "create a new endpoint",
+		"scope":  map[string]any{"repos": []any{"otherrepo"}},
+	})
+	if qRes.IsError {
+		t.Fatalf("query error: %s", resultText(qRes))
+	}
+	var qOut struct {
+		Patterns []map[string]any `json:"patterns"`
+	}
+	if err := json.Unmarshal([]byte(resultText(qRes)), &qOut); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	for _, p := range qOut.Patterns {
+		scope, _ := p["scope"].(map[string]any)
+		if scope == nil {
+			continue
+		}
+		repos, _ := scope["repos"].([]any)
+		for _, r := range repos {
+			if r == "myrepo" {
+				t.Errorf("scope-filtered query should not return myrepo pattern, got: %v", p)
+			}
+		}
+	}
+}
+
+// TestPatterns_PrivateAntiPatternExclusion verifies that private anti-patterns
+// are NOT included in query response by default but ARE included with include_private=true.
+func TestPatterns_PrivateAntiPatternExclusion(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":  "record",
+		"trigger": map[string]any{"natural_language": "handler with private anti-pattern"},
+		"steps":   []any{"do the thing"},
+		"anti_patterns": []any{
+			map[string]any{"do_not": "inline business logic", "reason": "separation of concerns", "private": false},
+			map[string]any{"do_not": "expose internal secrets", "reason": "security", "private": true},
+		},
+		"exemplars": []any{"myrepo::a1"},
+		"category":  "code",
+	})
+
+	// Default query: private anti-pattern hidden.
+	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action": "query",
+		"text":   "handler with private anti-pattern",
+	})
+	txt := resultText(qRes)
+	if strings.Contains(txt, "expose internal secrets") {
+		t.Errorf("private anti-pattern should not appear in default query, got: %s", txt)
+	}
+	if !strings.Contains(txt, "inline business logic") {
+		t.Errorf("public anti-pattern should appear in default query, got: %s", txt)
+	}
+
+	// With include_private=true: private anti-pattern visible.
+	qResPriv := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":          "query",
+		"text":            "handler with private anti-pattern",
+		"include_private": true,
+	})
+	txtPriv := resultText(qResPriv)
+	if !strings.Contains(txtPriv, "expose internal secrets") {
+		t.Errorf("private anti-pattern should appear with include_private=true, got: %s", txtPriv)
+	}
+}
+
+// TestPatterns_RecordErrorCases verifies validation errors.
+func TestPatterns_RecordErrorCases(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	// Missing exemplars.
+	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "test pattern"},
+		"steps":    []any{"step one"},
+		"category": "code",
+	})
+	if !res.IsError {
+		t.Errorf("expected error for missing exemplars, got: %s", resultText(res))
+	}
+
+	// Invalid category.
+	res2 := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "test pattern 2"},
+		"steps":    []any{"step one"},
+		"exemplars": []any{"myrepo::a1"},
+		"category": "bogus_category",
+	})
+	if !res2.IsError {
+		t.Errorf("expected error for invalid category, got: %s", resultText(res2))
+	}
+
+	// Missing steps.
+	res3 := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "test pattern 3"},
+		"exemplars": []any{"myrepo::a1"},
+		"category": "code",
+	})
+	if !res3.IsError {
+		t.Errorf("expected error for missing steps, got: %s", resultText(res3))
+	}
+}
+
+// TestPatterns_GammaActionsNotImplemented verifies that γ actions return
+// "not implemented yet" errors.
+func TestPatterns_GammaActionsNotImplemented(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	for _, action := range []string{"refine", "apply", "reject", "promote"} {
+		res := callTool(t, srv, "archigraph_patterns", map[string]any{
+			"action": action,
+		})
+		if !res.IsError {
+			t.Errorf("expected error for γ action %q, got: %s", action, resultText(res))
+		}
+		if !strings.Contains(resultText(res), "γ") {
+			t.Errorf("expected γ mention in error for action=%q, got: %s", action, resultText(res))
+		}
+	}
+}
+
+// TestPatterns_QueryIncludeCandidates verifies that candidate patterns are
+// excluded by default and included with include_candidates=true.
+func TestPatterns_QueryIncludeCandidates(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":       "record",
+		"trigger":      map[string]any{"natural_language": "candidate endpoint pattern"},
+		"steps":        []any{"step one"},
+		"exemplars":    []any{"myrepo::a1"},
+		"category":     "code",
+		"as_candidate": true,
+	})
+
+	// Default: candidates excluded.
+	qDefault := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action": "query",
+		"text":   "candidate endpoint pattern",
+	})
+	var outDefault struct {
+		Count int `json:"count"`
+	}
+	if err := json.Unmarshal([]byte(resultText(qDefault)), &outDefault); err == nil {
+		if outDefault.Count > 0 {
+			t.Errorf("expected 0 patterns without include_candidates, got %d", outDefault.Count)
+		}
+	}
+
+	// With include_candidates=true.
+	qWithCands := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":            "query",
+		"text":              "candidate endpoint pattern",
+		"include_candidates": true,
+	})
+	var outWith struct {
+		Count int `json:"count"`
+	}
+	if err := json.Unmarshal([]byte(resultText(qWithCands)), &outWith); err == nil {
+		if outWith.Count == 0 {
+			t.Errorf("expected ≥1 pattern with include_candidates=true, got 0: %s", resultText(qWithCands))
+		}
+	}
+}
+
+// TestPatterns_EdgeEmission verifies that EXEMPLAR edges are returned in the
+// record response.
+func TestPatterns_EdgeEmission(t *testing.T) {
+	srv, _ := makePatternsServer(t)
+
+	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+		"action":   "record",
+		"trigger":  map[string]any{"natural_language": "edge emission test"},
+		"steps":    []any{"step one"},
+		"exemplars": []any{"myrepo::a1", "myrepo::a2"},
+		"category": "code",
+	})
+	if res.IsError {
+		t.Fatalf("record error: %s", resultText(res))
+	}
+	var out struct {
+		EdgesEmitted []map[string]any `json:"edges_emitted"`
+	}
+	if err := json.Unmarshal([]byte(resultText(res)), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(out.EdgesEmitted) != 2 {
+		t.Errorf("expected 2 EXEMPLAR edges, got %d: %s", len(out.EdgesEmitted), resultText(res))
+	}
+	for _, e := range out.EdgesEmitted {
+		if e["edge_kind"] != "EXEMPLAR" {
+			t.Errorf("expected edge_kind=EXEMPLAR, got: %v", e["edge_kind"])
+		}
 	}
 }

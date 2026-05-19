@@ -94,6 +94,10 @@ type Pattern struct {
 
 	// DocumentationURL is populated by Phase 6 doc-gen integration.
 	DocumentationURL string `json:"documentation_url,omitempty"`
+
+	// Exemplars holds the entity IDs of canonical examples of this pattern
+	// in use. Required on record (≥1). Written as EXEMPLAR edges to the graph.
+	Exemplars []string `json:"exemplars,omitempty"`
 }
 
 // PatternID computes the deterministic ID for a pattern given its group and
