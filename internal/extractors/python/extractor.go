@@ -100,10 +100,20 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	errorPatterns := extractErrorHandlingPatterns(root, file.Path)
 	entities = append(entities, errorPatterns...)
 
-	// Imports — emitted as standalone module entities each carrying a
-	// single IMPORTS relationship (file → module). Mirrors the Go
-	// extractor's import_spec handling.
+	// Imports — Issue #693: instead of emitting standalone SCOPE.Component/module
+	// placeholder entities (one per import), attach IMPORTS relationships directly
+	// to the file entity (entities[0]). Placeholder entities had zero inbound
+	// edges and dominated orphan rates on every Python corpus (87/93.4% on
+	// django-realworld, 74/79.0% on flask-realworld, 2590/92.9% on pandas).
+	//
+	// extractImports still builds the IMPORTS relationships with all Properties
+	// (local_name, source_module, imported_name, wildcard). attachImportRelationships
+	// lifts those relationships onto the file entity and discards the wrapper
+	// module entities. The resolver's BuildImportTable reads IMPORTS edges from
+	// any entity — it does not require the carrier to be SCOPE.Component/module.
 	importEnts := extractImports(root, file)
+	importCount := len(importEnts)
+	importEnts = attachImportRelationships(importEnts, &entities[0])
 	entities = append(entities, importEnts...)
 
 	// Track A (analog of #641 for Python) — REFERENCES-edge emission.
@@ -130,7 +140,7 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		attribute.Int("function_count", functionCount),
 		attribute.Int("class_count", classCount),
 		attribute.Int("error_pattern_count", len(errorPatterns)),
-		attribute.Int("import_count", len(importEnts)),
+		attribute.Int("import_count", importCount),
 	)
 	// Issue #90 — stamp Properties["language"]="python" on every embedded
 	// relationship so the resolver's per-language dynamic-pattern dispatch
