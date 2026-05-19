@@ -131,7 +131,15 @@ func daemonGroupsForRepo(repoPath string) []string {
 // the algorithm pass runs separately via daemonSchedulerAlgo on a
 // longer debounce.
 func daemonSchedulerIndex(_ context.Context, repoPath string) error {
-	return Index(repoPath, "", "", []string{"graph-algo"}, false, false)
+	// Phase D: daemon-driven indexes always dual-write graph.fb so MCP
+	// queries can mmap them. WithExportFB is opt-in for the standalone
+	// `archigraph index` CLI but mandatory inside the daemon.
+	err := Index(repoPath, "", "", []string{"graph-algo"}, false, false, WithExportFB(true))
+	// Drop the cached mmap so the next MCP query reopens against the
+	// freshly written graph.fb. Done on both success and failure paths
+	// — a stale handle is worse than a cold miss.
+	invalidateAfterIndex(repoPath)
+	return err
 }
 
 // daemonSchedulerLinks re-runs the cross-repo link passes for a group.
@@ -145,7 +153,11 @@ func daemonSchedulerLinks(_ context.Context, group string) error {
 // against a repo. The scheduler arranges cancel+reschedule on new
 // writes, so this is allowed to be slow.
 func daemonSchedulerAlgo(_ context.Context, repoPath string) error {
-	return Index(repoPath, "", "", nil, false, false)
+	// Phase D: see daemonSchedulerIndex — always emit graph.fb alongside
+	// graph.json so the daemon's MCP cache has a mmap source-of-truth.
+	err := Index(repoPath, "", "", nil, false, false, WithExportFB(true))
+	invalidateAfterIndex(repoPath)
+	return err
 }
 
 // daemonIndexFunc is the IndexFunc handed to daemon.Run. It bridges the

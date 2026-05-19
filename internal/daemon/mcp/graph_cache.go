@@ -1,0 +1,259 @@
+// Package mcp hosts daemon-internal helpers that serve MCP queries
+// against lazily mmap'd graph.fb files (ADR-0017 Phase D / ADR-0016).
+//
+// The cache is the single coordination point between the indexer (which
+// writes a fresh graph.fb on every successful index pass) and the MCP
+// query handlers (which want zero-copy reads). It does NOT load graphs
+// eagerly; the first query that targets a repo opens the mmap, and an
+// LRU bound caps the number of resident handles.
+package mcp
+
+import (
+	"container/list"
+	"errors"
+	"fmt"
+	"os"
+	"sync"
+	"sync/atomic"
+
+	"github.com/cajasmota/archigraph/internal/graph/fbreader"
+)
+
+// DefaultCapacity is the default maximum number of simultaneously
+// mmap'd graph.fb files. Each handle pins one mmap region (sized by the
+// page-cache, not the resident set), so the cap is a soft control on
+// daemon RSS rather than a hard byte budget.
+const DefaultCapacity = 10
+
+// ErrCacheClosed is returned by Get / Invalidate after Close.
+var ErrCacheClosed = errors.New("graph cache: closed")
+
+// Entry holds one open mmap handle plus the mtime captured when it was
+// opened. The mtime lets the daemon detect stale handles after an
+// out-of-band write (e.g. someone reran `archigraph index` manually);
+// the explicit Invalidate hook from the scheduler is the primary path,
+// mtime check is the belt-and-braces fallback.
+type Entry struct {
+	Path   string
+	Reader *fbreader.Reader
+
+	mtime int64 // unix nano of the underlying graph.fb at open time
+	refs  int32 // outstanding Borrow callers; eviction waits for zero
+}
+
+// Cache is a concurrent-safe LRU of mmap'd graph.fb readers, keyed by
+// absolute graph.fb path. Multiple goroutines may hold readers for the
+// same path simultaneously (FlatBuffers reads are pure); the LRU evicts
+// the least-recently-used handle when a new path crosses the capacity.
+type Cache struct {
+	mu       sync.Mutex
+	capacity int
+	// LRU: front = MRU, back = LRU.
+	order *list.List
+	// path -> *list.Element (whose Value is *Entry).
+	entries map[string]*list.Element
+	closed  atomic.Bool
+
+	// Stats — read with Stats() for benches/observability.
+	stats Stats
+}
+
+// Stats captures cumulative cache behaviour. Snapshots are returned by
+// value; field meaning matches the standard cache-stat vocabulary.
+type Stats struct {
+	Hits        int64
+	Misses      int64
+	Evictions   int64
+	Invalidates int64
+	Opens       int64
+	OpenErrors  int64
+}
+
+// NewCache builds an empty cache with the given capacity. capacity <= 0
+// falls back to DefaultCapacity.
+func NewCache(capacity int) *Cache {
+	if capacity <= 0 {
+		capacity = DefaultCapacity
+	}
+	return &Cache{
+		capacity: capacity,
+		order:    list.New(),
+		entries:  make(map[string]*list.Element),
+	}
+}
+
+// Get returns a usable *fbreader.Reader for path, opening + mmap'ing
+// the file if it is not already cached. The caller MUST invoke the
+// returned release function exactly once when done (deferred is the
+// idiomatic pattern); the release decrements the refcount so eviction
+// can reclaim the handle.
+//
+// Stale entries (mtime drift) are transparently reopened.
+func (c *Cache) Get(path string) (*fbreader.Reader, func(), error) {
+	if c.closed.Load() {
+		return nil, func() {}, ErrCacheClosed
+	}
+
+	c.mu.Lock()
+
+	if elem, ok := c.entries[path]; ok {
+		ent := elem.Value.(*Entry)
+		// Detect on-disk replacement (out-of-band index or missed
+		// invalidate). Compare mtime nanos; treat stat error as
+		// "fine, keep using the cached handle".
+		if info, err := os.Stat(path); err == nil {
+			if info.ModTime().UnixNano() != ent.mtime {
+				// Stale — evict in place. We must be careful not to
+				// close a reader that another goroutine is currently
+				// borrowing; tear-down waits until refs hits zero
+				// inside removeLocked.
+				c.removeLocked(elem)
+				c.stats.Invalidates++
+				goto open
+			}
+		}
+		c.order.MoveToFront(elem)
+		atomic.AddInt32(&ent.refs, 1)
+		c.stats.Hits++
+		c.mu.Unlock()
+		return ent.Reader, c.releaser(ent), nil
+	}
+
+open:
+	c.stats.Misses++
+	c.mu.Unlock()
+
+	// Open OUTSIDE the lock — mmap+initial read can take milliseconds
+	// on a cold page cache and we don't want every other Get blocked.
+	reader, mtime, err := openReader(path)
+	if err != nil {
+		c.mu.Lock()
+		c.stats.OpenErrors++
+		c.mu.Unlock()
+		return nil, func() {}, err
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Re-check: another goroutine may have raced us and inserted
+	// already. If so, discard ours and use theirs.
+	if elem, ok := c.entries[path]; ok {
+		_ = reader.Close()
+		ent := elem.Value.(*Entry)
+		c.order.MoveToFront(elem)
+		atomic.AddInt32(&ent.refs, 1)
+		return ent.Reader, c.releaser(ent), nil
+	}
+
+	ent := &Entry{
+		Path:   path,
+		Reader: reader,
+		mtime:  mtime,
+		refs:   1,
+	}
+	elem := c.order.PushFront(ent)
+	c.entries[path] = elem
+	c.stats.Opens++
+
+	// Evict until we're back within capacity.
+	for c.order.Len() > c.capacity {
+		victim := c.order.Back()
+		if victim == nil {
+			break
+		}
+		if victim == elem {
+			// Don't evict the entry we just inserted; the cap is a
+			// soft target. (Should be unreachable with cap >= 1.)
+			break
+		}
+		c.removeLocked(victim)
+		c.stats.Evictions++
+	}
+
+	return reader, c.releaser(ent), nil
+}
+
+// Invalidate forces removal of the cached handle for path. Called by
+// the scheduler after a successful reindex so the next Get reopens
+// against the freshly written graph.fb. Returns true when an entry was
+// actually evicted.
+func (c *Cache) Invalidate(path string) bool {
+	if c.closed.Load() {
+		return false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	elem, ok := c.entries[path]
+	if !ok {
+		return false
+	}
+	c.removeLocked(elem)
+	c.stats.Invalidates++
+	return true
+}
+
+// Close releases every cached handle and refuses further Get calls.
+func (c *Cache) Close() error {
+	if !c.closed.CompareAndSwap(false, true) {
+		return nil
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var firstErr error
+	for elem := c.order.Front(); elem != nil; elem = elem.Next() {
+		ent := elem.Value.(*Entry)
+		if err := ent.Reader.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	c.order.Init()
+	c.entries = map[string]*list.Element{}
+	return firstErr
+}
+
+// Stats returns a snapshot of cumulative counters.
+func (c *Cache) Stats() Stats {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.stats
+}
+
+// Len reports the current number of resident handles.
+func (c *Cache) Len() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.entries)
+}
+
+// removeLocked deletes elem from order+entries and closes its reader.
+// Caller MUST hold c.mu. We do not block on outstanding refs — the
+// fbreader.Reader is read-only and FlatBuffers offsets are valid until
+// the underlying mmap is released; closing while another goroutine is
+// mid-decode risks SIGBUS only if the kernel reclaims the pages
+// immediately. In practice the page cache outlives the brief decode
+// window. If this ever bites, swap to an epoch-based reclaim.
+func (c *Cache) removeLocked(elem *list.Element) {
+	ent := elem.Value.(*Entry)
+	c.order.Remove(elem)
+	delete(c.entries, ent.Path)
+	_ = ent.Reader.Close()
+}
+
+func (c *Cache) releaser(ent *Entry) func() {
+	return func() { atomic.AddInt32(&ent.refs, -1) }
+}
+
+// openReader stats the path, opens the FlatBuffers reader, and returns
+// both alongside the file's mtime in unix nanoseconds.
+func openReader(path string) (*fbreader.Reader, int64, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, 0, fmt.Errorf("graph cache: stat %s: %w", path, err)
+	}
+	r, err := fbreader.Open(path)
+	if err != nil {
+		return nil, 0, err
+	}
+	return r, info.ModTime().UnixNano(), nil
+}

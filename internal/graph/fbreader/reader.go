@@ -99,6 +99,20 @@ func (r *Reader) EntityAt(i int) *fb.Entity {
 	return nil
 }
 
+// RelationshipAt returns the i-th relationship. Convenience for the
+// daemon's MCP handlers; iteration loops that already filter by id
+// should prefer the dedicated IterateRelationshipsFrom/To helpers.
+func (r *Reader) RelationshipAt(i int) *fb.Relationship {
+	if i < 0 || i >= r.nRels {
+		return nil
+	}
+	out := &fb.Relationship{}
+	if r.root.Relationships(out, i) {
+		return out
+	}
+	return nil
+}
+
 // IterateRelationshipsFromID walks the relationship vector and returns
 // the (decoded-on-demand) entries whose from_id matches the given id.
 //
@@ -119,6 +133,64 @@ func (r *Reader) IterateRelationshipsFromID(id string) []*fb.Relationship {
 		}
 	}
 	return out
+}
+
+// IterateRelationshipsToID is the mirror of IterateRelationshipsFromID
+// for inbound edges (find_references). Same O(R) scan with no
+// unmarshal — decodes only the to_id field per row.
+func (r *Reader) IterateRelationshipsToID(id string) []*fb.Relationship {
+	out := make([]*fb.Relationship, 0, 8)
+	idBytes := []byte(id)
+	for i := 0; i < r.nRels; i++ {
+		rel := &fb.Relationship{}
+		if !r.root.Relationships(rel, i) {
+			continue
+		}
+		if bytesEqual(rel.ToId(), idBytes) {
+			out = append(out, rel)
+		}
+	}
+	return out
+}
+
+// FilterEntitiesByKind returns every entity whose Kind() matches the
+// requested kind. O(N) scan over the entity vector; only the kind field
+// is decoded per row before the comparison.
+func (r *Reader) FilterEntitiesByKind(kind string) []*fb.Entity {
+	out := make([]*fb.Entity, 0, 8)
+	kindBytes := []byte(kind)
+	for i := 0; i < r.nEnts; i++ {
+		ent := &fb.Entity{}
+		if !r.root.Entities(ent, i) {
+			continue
+		}
+		if bytesEqual(ent.Kind(), kindBytes) {
+			out = append(out, ent)
+		}
+	}
+	return out
+}
+
+// GraphMeta is the top-of-graph header returned by LoadGraphMeta.
+// Strings are copied out of the mmap'd bytes so callers can safely use
+// them after the Reader is closed (e.g. for log lines).
+type GraphMeta struct {
+	Version    int
+	ComputedAt string
+	RepoTag    string
+}
+
+// LoadGraphMeta returns the (cheap) header fields of the graph: schema
+// version, computed-at timestamp, repo tag. No vectors are touched.
+func (r *Reader) LoadGraphMeta() GraphMeta {
+	if r == nil || r.root == nil {
+		return GraphMeta{}
+	}
+	return GraphMeta{
+		Version:    int(r.root.Version()),
+		ComputedAt: string(r.root.ComputedAt()),
+		RepoTag:    string(r.root.RepoTag()),
+	}
 }
 
 func bytesEqual(a, b []byte) bool {
