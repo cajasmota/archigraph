@@ -106,7 +106,7 @@ func init() {
 		// component default-exported entities (BrandLogo, LoadingEllipsis,
 		// etc.) never make it into the graph — landing every importing
 		// IMPORTS edge in bug-extractor.
-		"tsx": tsx.GetLanguage(),
+		"tsx":  tsx.GetLanguage(),
 		"yaml": yaml.GetLanguage(),
 	}
 }

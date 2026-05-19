@@ -15,13 +15,13 @@
 //  2. For each synthetic http_endpoint with a source_handler property:
 //     a. Parses the property into (handlerKind, handlerName).
 //     b. Resolves to a real entity in the same SourceFile (handlers and
-//        their owning routes always live in the same file by construction
-//        of Phase 1).
+//     their owning routes always live in the same file by construction
+//     of Phase 1).
 //     c. If resolved: appends an IMPLEMENTS edge (handler → synthetic)
-//        to the handler's embedded Relationships, then clears the
-//        source_handler property (its job is done).
+//     to the handler's embedded Relationships, then clears the
+//     source_handler property (its job is done).
 //     d. If NOT resolved: marks the synthetic for removal so it never
-//        reaches the resolver as an orphan.
+//     reaches the resolver as an orphan.
 //
 // Returning a NEW slice of EntityRecords (with unresolved synthetics
 // dropped) keeps the data flow obvious and avoids in-place slice
@@ -40,10 +40,10 @@ import (
 // Exposed so cmd/archigraph can log a stats line analogous to the
 // import-aware resolver line.
 type ResolveHTTPEndpointStats struct {
-	Synthetics       int // total http_endpoint records seen
-	HandlerResolved  int // source_handler resolved → IMPLEMENTS edge emitted
-	HandlerDropped   int // synthetics dropped because source_handler unresolved
-	NoHandlerProp    int // synthetics with no source_handler property (kept as-is)
+	Synthetics      int // total http_endpoint records seen
+	HandlerResolved int // source_handler resolved → IMPLEMENTS edge emitted
+	HandlerDropped  int // synthetics dropped because source_handler unresolved
+	NoHandlerProp   int // synthetics with no source_handler property (kept as-is)
 }
 
 // ResolveHTTPEndpointHandlers runs the Phase-2 post-pass over `merged`.

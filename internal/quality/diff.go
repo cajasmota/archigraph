@@ -37,10 +37,10 @@ type Report struct {
 	FixtureName string
 
 	// Entity scoring.
-	EntityResults     []EntityResult
-	EntityExpected    int // total must_exist
-	EntityFound       int // must_exist AND found
-	EntityExtractedN  int // |doc.Entities| — extra context, not in recall
+	EntityResults    []EntityResult
+	EntityExpected   int // total must_exist
+	EntityFound      int // must_exist AND found
+	EntityExtractedN int // |doc.Entities| — extra context, not in recall
 
 	// Relationship scoring.
 	RelResults    []RelationshipResult

@@ -10,23 +10,23 @@ import (
 // --json`. It is intentionally flat so CI dashboards / regression diff
 // scripts can aggregate without depending on the in-process Report type.
 type JSONReport struct {
-	Fixture                  string  `json:"fixture"`
-	EntityExpected           int     `json:"entity_expected"`
-	EntityFound              int     `json:"entity_found"`
-	EntityRecall             float64 `json:"entity_recall"`
-	EntityExtractedTotal     int     `json:"entity_extracted_total"`
-	RelationshipExpected     int     `json:"relationship_expected"`
-	RelationshipFound        int     `json:"relationship_found"`
-	RelationshipRecall       float64 `json:"relationship_recall"`
-	RelationshipExtractedTotal int   `json:"relationship_extracted_total"`
-	ForbiddenHits            int     `json:"forbidden_hits"`
-	NiceEntityFound          int     `json:"nice_entity_found"`
-	NiceEntityTotal          int     `json:"nice_entity_total"`
-	NiceRelFound             int     `json:"nice_relationship_found"`
-	NiceRelTotal             int     `json:"nice_relationship_total"`
+	Fixture                    string  `json:"fixture"`
+	EntityExpected             int     `json:"entity_expected"`
+	EntityFound                int     `json:"entity_found"`
+	EntityRecall               float64 `json:"entity_recall"`
+	EntityExtractedTotal       int     `json:"entity_extracted_total"`
+	RelationshipExpected       int     `json:"relationship_expected"`
+	RelationshipFound          int     `json:"relationship_found"`
+	RelationshipRecall         float64 `json:"relationship_recall"`
+	RelationshipExtractedTotal int     `json:"relationship_extracted_total"`
+	ForbiddenHits              int     `json:"forbidden_hits"`
+	NiceEntityFound            int     `json:"nice_entity_found"`
+	NiceEntityTotal            int     `json:"nice_entity_total"`
+	NiceRelFound               int     `json:"nice_relationship_found"`
+	NiceRelTotal               int     `json:"nice_relationship_total"`
 
 	// Per-item details so a human can see WHICH expectations missed.
-	MissingEntities      []missingEntity      `json:"missing_entities,omitempty"`
+	MissingEntities      []missingEntity       `json:"missing_entities,omitempty"`
 	MissingRelationships []missingRelationship `json:"missing_relationships,omitempty"`
 	Forbidden            []missingRelationship `json:"forbidden,omitempty"`
 }

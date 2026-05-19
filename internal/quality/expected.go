@@ -33,12 +33,12 @@ import (
 // over-specify. Recall is therefore "did the must_exist things show up",
 // not "is the extracted set exactly this".
 type Fixture struct {
-	Name                    string                  `json:"fixture_name"`
-	Language                string                  `json:"language"`
-	Description             string                  `json:"description,omitempty"`
-	ExpectedEntities        []ExpectedEntity        `json:"expected_entities"`
-	ExpectedRelationships   []ExpectedRelationship  `json:"expected_relationships"`
-	ForbiddenRelationships  []ExpectedRelationship  `json:"forbidden_relationships,omitempty"`
+	Name                   string                 `json:"fixture_name"`
+	Language               string                 `json:"language"`
+	Description            string                 `json:"description,omitempty"`
+	ExpectedEntities       []ExpectedEntity       `json:"expected_entities"`
+	ExpectedRelationships  []ExpectedRelationship `json:"expected_relationships"`
+	ForbiddenRelationships []ExpectedRelationship `json:"forbidden_relationships,omitempty"`
 }
 
 // ExpectedEntity is a hand-curated assertion about what the indexer SHOULD
@@ -87,17 +87,17 @@ type ExpectedEntity struct {
 // django.db.models.Model.objects.filter), the harness also accepts an
 // edge whose ToID matches ToBareName directly (no entity lookup required).
 type ExpectedRelationship struct {
-	FromName     string `json:"from_name"`
-	FromKind     string `json:"from_kind,omitempty"`
-	FromFile     string `json:"from_file,omitempty"`
-	Kind         string `json:"kind"`
-	ToName       string `json:"to_name,omitempty"`
-	ToKind       string `json:"to_kind,omitempty"`
-	ToFile       string `json:"to_file,omitempty"`
-	ToBareName   string `json:"to_bare_name,omitempty"`
-	MustExist    bool   `json:"must_exist"`
-	NiceToHave   bool   `json:"nice_to_have,omitempty"`
-	Note         string `json:"note,omitempty"`
+	FromName   string `json:"from_name"`
+	FromKind   string `json:"from_kind,omitempty"`
+	FromFile   string `json:"from_file,omitempty"`
+	Kind       string `json:"kind"`
+	ToName     string `json:"to_name,omitempty"`
+	ToKind     string `json:"to_kind,omitempty"`
+	ToFile     string `json:"to_file,omitempty"`
+	ToBareName string `json:"to_bare_name,omitempty"`
+	MustExist  bool   `json:"must_exist"`
+	NiceToHave bool   `json:"nice_to_have,omitempty"`
+	Note       string `json:"note,omitempty"`
 }
 
 // LoadFixture reads expected.json from the given fixture directory.

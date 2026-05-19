@@ -280,7 +280,6 @@ func runImportPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pa
 	return res, nil
 }
 
-
 // normalizedRelation maps a graph relationship Kind to one of the
 // canonical relation values used in links.json. Accepts upper- or
 // lowercase forms (extractors emit either).

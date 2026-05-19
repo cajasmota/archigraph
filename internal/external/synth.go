@@ -3127,16 +3127,16 @@ func hasExpoCameraImport(imports map[string]bool) bool {
 }
 
 var jsExpoCameraBareNames = map[string]struct{}{
-	"requestCameraPermissionsAsync":   {},
-	"getCameraPermissionsAsync":       {},
-	"requestMicrophonePermissionsAsync": {},
+	"requestCameraPermissionsAsync":       {},
+	"getCameraPermissionsAsync":           {},
+	"requestMicrophonePermissionsAsync":   {},
 	"requestMediaLibraryPermissionsAsync": {},
-	"launchCameraAsync":              {},
-	"launchImageLibraryAsync":        {},
-	"openCamera":                     {}, // react-native-image-crop-picker
-	"openPicker":                     {},
-	"openCropper":                    {},
-	"clean":                          {}, // ImagePicker.clean()
+	"launchCameraAsync":                   {},
+	"launchImageLibraryAsync":             {},
+	"openCamera":                          {}, // react-native-image-crop-picker
+	"openPicker":                          {},
+	"openCropper":                         {},
+	"clean":                               {}, // ImagePicker.clean()
 }
 
 // hasExpoFileImport reports whether the file imports expo-file-system /
@@ -3209,28 +3209,28 @@ func hasExpoNetworkImport(imports map[string]bool) bool {
 }
 
 var jsExpoPlatformBareNames = map[string]struct{}{
-	"getNetworkStateAsync":              {}, // expo-network
-	"getIpAddressAsync":                 {},
-	"getMacAddressAsync":                {},
-	"startActivityAsync":                {}, // expo-intent-launcher
-	"supportedAuthenticationTypesAsync": {}, // expo-local-authentication
-	"authenticateAsync":                 {},
-	"hasHardwareAsync":                  {},
-	"isEnrolledAsync":                   {},
-	"scheduleNotificationAsync":         {}, // expo-notifications
-	"cancelScheduledNotificationAsync":  {},
+	"getNetworkStateAsync":                 {}, // expo-network
+	"getIpAddressAsync":                    {},
+	"getMacAddressAsync":                   {},
+	"startActivityAsync":                   {}, // expo-intent-launcher
+	"supportedAuthenticationTypesAsync":    {}, // expo-local-authentication
+	"authenticateAsync":                    {},
+	"hasHardwareAsync":                     {},
+	"isEnrolledAsync":                      {},
+	"scheduleNotificationAsync":            {}, // expo-notifications
+	"cancelScheduledNotificationAsync":     {},
 	"cancelAllScheduledNotificationsAsync": {},
-	"setNotificationHandler":            {},
-	"getExpoPushTokenAsync":             {},
-	"getDevicePushTokenAsync":           {},
-	"setStringAsync":                    {}, // expo-clipboard
-	"getStringAsync":                    {},
-	"hasStringAsync":                    {},
-	"lockAsync":                         {}, // expo-screen-orientation
-	"unlockAsync":                       {},
-	"impactAsync":                       {}, // expo-haptics
-	"notificationAsync":                 {},
-	"selectionAsync":                    {},
+	"setNotificationHandler":               {},
+	"getExpoPushTokenAsync":                {},
+	"getDevicePushTokenAsync":              {},
+	"setStringAsync":                       {}, // expo-clipboard
+	"getStringAsync":                       {},
+	"hasStringAsync":                       {},
+	"lockAsync":                            {}, // expo-screen-orientation
+	"unlockAsync":                          {},
+	"impactAsync":                          {}, // expo-haptics
+	"notificationAsync":                    {},
+	"selectionAsync":                       {},
 }
 
 // hasRNAudioRecorderImport reports whether the file imports
@@ -3299,19 +3299,19 @@ func hasRNGestureHandlerImport(imports map[string]bool) bool {
 }
 
 var jsRNGestureHandlerBareNames = map[string]struct{}{
-	"requireExternalGestureToFail": {},
-	"requireExternalGestureToBegin": {},
+	"requireExternalGestureToFail":    {},
+	"requireExternalGestureToBegin":   {},
 	"simultaneousWithExternalGesture": {},
-	"numberOfTaps":                 {},
-	"maxDuration":                  {},
-	"minDuration":                  {},
-	"manualActivation":             {},
-	"shouldCancelWhenOutside":      {},
-	"hitSlop":                      {},
-	"activeOffsetX":                {},
-	"activeOffsetY":                {},
-	"failOffsetX":                  {},
-	"failOffsetY":                  {},
+	"numberOfTaps":                    {},
+	"maxDuration":                     {},
+	"minDuration":                     {},
+	"manualActivation":                {},
+	"shouldCancelWhenOutside":         {},
+	"hitSlop":                         {},
+	"activeOffsetX":                   {},
+	"activeOffsetY":                   {},
+	"failOffsetX":                     {},
+	"failOffsetY":                     {},
 }
 
 // hasReactNavigationImport reports whether the file imports any
@@ -3337,17 +3337,17 @@ func hasReactNavigationImport(imports map[string]bool) bool {
 }
 
 var jsReactNavigationBareNames = map[string]struct{}{
-	"goBack":        {}, // navigation.goBack
-	"jumpTo":        {}, // navigation.jumpTo
-	"toggleDrawer":  {}, // drawer navigation
-	"openDrawer":    {},
-	"closeDrawer":   {},
-	"setParams":     {},
-	"isFocused":     {},
-	"canGoBack":     {},
-	"addListener":   {}, // navigation.addListener (also EventEmitter)
+	"goBack":         {}, // navigation.goBack
+	"jumpTo":         {}, // navigation.jumpTo
+	"toggleDrawer":   {}, // drawer navigation
+	"openDrawer":     {},
+	"closeDrawer":    {},
+	"setParams":      {},
+	"isFocused":      {},
+	"canGoBack":      {},
+	"addListener":    {}, // navigation.addListener (also EventEmitter)
 	"removeListener": {},
-	"dispatch":      {}, // navigation.dispatch (Redux dispatch already
+	"dispatch":       {}, // navigation.dispatch (Redux dispatch already
 	// handled by useDispatch hook; navigation.dispatch is the bare
 	// receiver-stripped name).
 }

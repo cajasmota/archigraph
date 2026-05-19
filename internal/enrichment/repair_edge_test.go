@@ -134,8 +134,8 @@ func TestCollectRepairEdgeCandidates_SchemaShape(t *testing.T) {
 		"from users.models import User",
 		"",
 		"class UserListView:",
-		"    def get(self, request):",         // line 5 — call site
-		"        return JsonResponse({})",     // line 6
+		"    def get(self, request):",     // line 5 — call site
+		"        return JsonResponse({})", // line 6
 	}, "\n")
 	if err := os.MkdirAll(filepath.Join(tmp, filepath.Dir(srcPath)), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
