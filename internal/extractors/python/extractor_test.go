@@ -1109,6 +1109,240 @@ class Config:
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Issue #757 — inner-class CONTAINS + Meta/Config property propagation
+// ---------------------------------------------------------------------------
+
+// TestExtract_DjangoModel_MetaContainsEdge verifies that a Django model with
+// an inner class Meta emits:
+//  1. A SCOPE.Component/class entity for Order.Meta.
+//  2. A CONTAINS edge from Order → Order.Meta on the parent class entity.
+//
+// This was the gap: Meta was emitted as a dangling entity with no inbound edge.
+func TestExtract_DjangoModel_MetaContainsEdge(t *testing.T) {
+	src := `class Order(models.Model):
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "orders"
+        ordering = ["-created_at"]
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+
+	// 1. Order.Meta entity must exist as SCOPE.Component/class.
+	var metaEntity *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "Order.Meta" {
+			metaEntity = &entities[i]
+		}
+	}
+	if metaEntity == nil {
+		t.Fatalf("Order.Meta entity not found; got %v", entityNames(entities))
+	}
+	if metaEntity.Kind != "SCOPE.Component" || metaEntity.Subtype != "class" {
+		t.Errorf("Order.Meta: expected Kind=SCOPE.Component/Subtype=class, got %s/%s", metaEntity.Kind, metaEntity.Subtype)
+	}
+
+	// 2. Order class must have a CONTAINS edge pointing at Order.Meta.
+	var orderEntity *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "Order" && entities[i].Kind == "SCOPE.Component" {
+			orderEntity = &entities[i]
+		}
+	}
+	if orderEntity == nil {
+		t.Fatalf("Order class entity not found; got %v", entityNames(entities))
+	}
+	wantToID := "scope:component:class:python:test.py:Order.Meta"
+	found := false
+	for _, rel := range orderEntity.Relationships {
+		if rel.Kind == "CONTAINS" && rel.ToID == wantToID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Order: expected CONTAINS edge with ToID=%q; got rels=%+v", wantToID, orderEntity.Relationships)
+	}
+}
+
+// TestExtract_DjangoModel_MetaAbstract verifies that `abstract = True` inside
+// a class Meta propagates `is_abstract=true` onto the parent class entity.
+func TestExtract_DjangoModel_MetaAbstract(t *testing.T) {
+	src := `class TimestampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+
+	var cls *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "TimestampedModel" && entities[i].Kind == "SCOPE.Component" {
+			cls = &entities[i]
+		}
+	}
+	if cls == nil {
+		t.Fatalf("TimestampedModel entity not found; got %v", entityNames(entities))
+	}
+	if cls.Properties == nil || cls.Properties["is_abstract"] != "true" {
+		t.Errorf("TimestampedModel: expected Properties[is_abstract]=true, got %v", cls.Properties)
+	}
+}
+
+// TestExtract_DjangoModel_MetaDbTable verifies that `db_table = "orders"`
+// inside a class Meta propagates `db_table="orders"` onto the parent entity.
+func TestExtract_DjangoModel_MetaDbTable(t *testing.T) {
+	src := `class Order(models.Model):
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = "shop_orders"
+        app_label = "shop"
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+
+	var cls *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "Order" && entities[i].Kind == "SCOPE.Component" {
+			cls = &entities[i]
+		}
+	}
+	if cls == nil {
+		t.Fatalf("Order entity not found; got %v", entityNames(entities))
+	}
+	if cls.Properties == nil {
+		t.Fatalf("Order: Properties is nil, expected db_table and app_label")
+	}
+	if cls.Properties["db_table"] != "shop_orders" {
+		t.Errorf("Order: expected Properties[db_table]=shop_orders, got %q", cls.Properties["db_table"])
+	}
+	if cls.Properties["app_label"] != "shop" {
+		t.Errorf("Order: expected Properties[app_label]=shop, got %q", cls.Properties["app_label"])
+	}
+}
+
+// TestExtract_GenericInnerClass_ContainsEdge verifies that a generic Python
+// class with a generic inner class (not Django, no Meta name) still emits a
+// CONTAINS edge from the outer class to the inner class. The CONTAINS emission
+// is generic; the property propagation is framework-specific via the Meta name.
+func TestExtract_GenericInnerClass_ContainsEdge(t *testing.T) {
+	src := `class Outer:
+    class Inner:
+        def method(self):
+            pass
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+
+	var outerEntity *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "Outer" && entities[i].Kind == "SCOPE.Component" {
+			outerEntity = &entities[i]
+		}
+	}
+	if outerEntity == nil {
+		t.Fatalf("Outer entity not found; got %v", entityNames(entities))
+	}
+	wantToID := "scope:component:class:python:test.py:Outer.Inner"
+	found := false
+	for _, rel := range outerEntity.Relationships {
+		if rel.Kind == "CONTAINS" && rel.ToID == wantToID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Outer: expected CONTAINS edge with ToID=%q for generic inner class; got rels=%+v", wantToID, outerEntity.Relationships)
+	}
+	// The generic Inner class must NOT have any framework properties propagated.
+	var innerEntity *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "Outer.Inner" {
+			innerEntity = &entities[i]
+		}
+	}
+	if innerEntity == nil {
+		t.Fatalf("Outer.Inner entity not found; got %v", entityNames(entities))
+	}
+	// No is_abstract / db_table — those are Django-specific.
+	if outerEntity.Properties != nil {
+		if _, hasAbstract := outerEntity.Properties["is_abstract"]; hasAbstract {
+			t.Errorf("Outer: unexpected is_abstract property for non-Meta inner class")
+		}
+	}
+}
+
+// TestExtract_PydanticModel_ConfigContainsEdge verifies that a Pydantic model
+// with a class Config emits a CONTAINS edge and propagates orm_mode onto parent.
+func TestExtract_PydanticModel_ConfigContainsEdge(t *testing.T) {
+	src := `class UserSchema(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+
+	var cls *types.EntityRecord
+	for i := range entities {
+		if entities[i].Name == "UserSchema" && entities[i].Kind == "SCOPE.Component" {
+			cls = &entities[i]
+		}
+	}
+	if cls == nil {
+		t.Fatalf("UserSchema entity not found; got %v", entityNames(entities))
+	}
+	// CONTAINS edge to Config.
+	wantToID := "scope:component:class:python:test.py:UserSchema.Config"
+	found := false
+	for _, rel := range cls.Relationships {
+		if rel.Kind == "CONTAINS" && rel.ToID == wantToID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("UserSchema: expected CONTAINS edge with ToID=%q; got rels=%+v", wantToID, cls.Relationships)
+	}
+	// orm_mode propagation.
+	if cls.Properties == nil || cls.Properties["orm_mode"] != "true" {
+		t.Errorf("UserSchema: expected Properties[orm_mode]=true, got %v", cls.Properties)
+	}
+}
+
 // entityNames returns entity names for test diagnostics.
 func entityNames(entities []types.EntityRecord) []string {
 	names := make([]string, len(entities))

@@ -6,7 +6,7 @@
     { "name": "User", "kind": "SCOPE.Component", "source_file": "users/models.py", "must_exist": true, "note": "Django Model class." },
     { "name": "User", "kind": "Model", "source_file": "users/models.py", "must_exist": true, "note": "Framework-level Model entity emitted by the Django YAML rules." },
     { "name": "ActiveUserManager", "kind": "SCOPE.Component", "source_file": "users/models.py", "must_exist": true, "note": "Custom manager subclass." },
-    { "name": "Meta", "kind": "SCOPE.Component", "source_file": "users/models.py", "must_exist": true, "note": "Inner Meta class on User." },
+    { "name": "User.Meta", "kind": "SCOPE.Component", "source_file": "users/models.py", "must_exist": true, "note": "Inner Meta class on User — qualified name per issue #757." },
 
     { "name": "UserListView", "kind": "SCOPE.Component", "source_file": "users/views.py", "must_exist": true },
     { "name": "UserDetailView", "kind": "SCOPE.Component", "source_file": "users/views.py", "must_exist": true },
@@ -67,6 +67,9 @@
     { "from_name": "User", "from_kind": "SCOPE.Component", "from_file": "users/models.py",
       "kind": "CONTAINS", "to_name": "User.full_label", "to_kind": "SCOPE.Operation", "to_file": "users/models.py",
       "must_exist": true },
+    { "from_name": "User", "from_kind": "SCOPE.Component", "from_file": "users/models.py",
+      "kind": "CONTAINS", "to_name": "User.Meta", "to_kind": "SCOPE.Component", "to_file": "users/models.py",
+      "must_exist": true, "note": "Parent class → inner Meta class CONTAINS edge (issue #757)." },
     { "from_name": "ActiveUserManager", "from_kind": "SCOPE.Component", "from_file": "users/models.py",
       "kind": "CONTAINS", "to_name": "ActiveUserManager.by_email", "to_kind": "SCOPE.Operation", "to_file": "users/models.py",
       "must_exist": true },

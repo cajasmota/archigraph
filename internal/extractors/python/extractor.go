@@ -171,15 +171,22 @@ func walkNode(
 	case "class_definition":
 		rec := buildClass(node, file)
 		if rec.Name != "" {
+			// Issue #757 — qualify nested class entity names with the enclosing
+			// class path so they match the dotted form used by methods and fields
+			// (e.g. "Order.Meta" not bare "Meta"). This mirrors the approach
+			// buildFunction uses for methods (parentClass + "." + name). Top-level
+			// classes (parentClass=="") keep their bare name unchanged.
+			if parentClass != "" {
+				rec.Name = parentClass + "." + rec.Name
+				rec.Signature = "class " + rec.Name
+			}
 			classIdx := len(*out)
 			*out = append(*out, rec)
 			*classCount++
 			// Walk the class body so methods are captured with parentClass set.
 			// For nested classes the parent path accumulates: "Outer" → "Outer.Inner".
+			// childParent is now just rec.Name (already qualified above).
 			childParent := rec.Name
-			if parentClass != "" {
-				childParent = parentClass + "." + rec.Name
-			}
 			body := node.ChildByFieldName("body")
 			if body != nil {
 				before := len(*out)
@@ -226,6 +233,15 @@ func walkNode(
 						// class→method does via lookupLocationKind +
 						// byLocation fallback.
 						toID = extractor.BuildSchemaFieldStructuralRef("python", file.Path, child.Name)
+					case child.Kind == "SCOPE.Component" && child.Subtype == "class":
+						// Issue #757 — nested class CONTAINS edge. Covers
+						// Django Meta/Config inner classes and generic Python
+						// nesting. The structural-ref format mirrors the
+						// class→method form but targets SCOPE.Component/class.
+						// The resolver's byLocation fallback binds the stub
+						// via lookupLocationKind using the child's SourceFile
+						// and Name (which is already dotted: "<Parent>.<Inner>").
+						toID = "scope:component:class:python:" + file.Path + ":" + child.Name
 					default:
 						continue
 					}
@@ -234,6 +250,18 @@ func walkNode(
 							ToID: toID,
 							Kind: "CONTAINS",
 						})
+				}
+				// Issue #757 — propagate inner-class framework properties onto
+				// the parent class entity. For Meta/Config inner classes that
+				// carry framework-specific configuration keys (Django db_table,
+				// ordering, abstract; Pydantic Config; DRF Serializer.Meta),
+				// parse the Meta body and set corresponding properties on the
+				// parent entity in-place before pipeline emission (Option A).
+				for k := before; k < after; k++ {
+					child := &(*out)[k]
+					if child.Kind == "SCOPE.Component" && child.Subtype == "class" {
+						applyFrameworkInnerClassProperties(&(*out)[classIdx], child, body, file.Content, childParent)
+					}
 				}
 			}
 		}
@@ -279,13 +307,15 @@ func walkNode(
 		case "class_definition":
 			rec := buildClass(inner, file)
 			if rec.Name != "" {
+				// Issue #757 — qualify nested class name (same as bare class branch).
+				if parentClass != "" {
+					rec.Name = parentClass + "." + rec.Name
+					rec.Signature = "class " + rec.Name
+				}
 				classIdx := len(*out)
 				*out = append(*out, rec)
 				*classCount++
 				childParent := rec.Name
-				if parentClass != "" {
-					childParent = parentClass + "." + rec.Name
-				}
 				body := inner.ChildByFieldName("body")
 				if body != nil {
 					before := len(*out)
@@ -309,6 +339,10 @@ func walkNode(
 							// emission). See the bare class branch for the
 							// detailed rationale.
 							toID = extractor.BuildSchemaFieldStructuralRef("python", file.Path, child.Name)
+						case child.Kind == "SCOPE.Component" && child.Subtype == "class":
+							// Issue #757 — nested class CONTAINS (same logic as
+							// the bare class_definition branch above).
+							toID = "scope:component:class:python:" + file.Path + ":" + child.Name
 						default:
 							continue
 						}
@@ -317,6 +351,13 @@ func walkNode(
 								ToID: toID,
 								Kind: "CONTAINS",
 							})
+					}
+					// Issue #757 — propagate inner-class framework properties.
+					for k := before; k < after; k++ {
+						child := &(*out)[k]
+						if child.Kind == "SCOPE.Component" && child.Subtype == "class" {
+							applyFrameworkInnerClassProperties(&(*out)[classIdx], child, body, file.Content, childParent)
+						}
 					}
 				}
 			}
@@ -901,6 +942,203 @@ func skipClassAttrName(name string) bool {
 		return true
 	}
 	return false
+}
+
+// applyFrameworkInnerClassProperties examines innerClass to determine whether
+// it is a known framework configuration class (Django / DRF Meta, Pydantic
+// Config) and, if so, parses its body for well-known key–value assignments and
+// propagates them as Properties on the parent class entity in-place.
+//
+// Recognised inner-class names (bare suffix after the last "."):
+//
+//	Meta   — Django models.Model, Django Form, DRF Serializer/ViewSet
+//	Config — Pydantic BaseModel / BaseSettings
+//
+// Propagated properties (Django Meta):
+//
+//	abstract        = True         → parent.Properties["is_abstract"] = "true"
+//	db_table        = "orders"     → parent.Properties["db_table"]    = "orders"
+//	ordering        = ["-created"] → parent.Properties["ordering"]    = ["-created"]
+//	unique_together = [...]        → parent.Properties["unique_together"] = …
+//	app_label       = "shop"       → parent.Properties["app_label"]   = "shop"
+//
+// Propagated properties (Pydantic Config):
+//
+//	orm_mode = True  → parent.Properties["orm_mode"] = "true"
+//	env_prefix = "X" → parent.Properties["env_prefix"] = "X"
+//	alias_generator = …  → parent.Properties["alias_generator"] = "true"
+//
+// The childParent parameter is the dotted class path of the enclosing class
+// (e.g. "Order") so we can detect the Meta suffix via strings.HasSuffix rather
+// than relying on the inner class's full dotted Name ("Order.Meta").
+//
+// Issue #757 — extractor-side mutation (Option A): properties are set on the
+// parent entity slice element before pipeline emission. No new edge kinds.
+func applyFrameworkInnerClassProperties(
+	parent *types.EntityRecord,
+	innerClass *types.EntityRecord,
+	classBody *sitter.Node,
+	src []byte,
+	childParent string,
+) {
+	if parent == nil || innerClass == nil || classBody == nil {
+		return
+	}
+
+	// Compute the bare name of the inner class (after the last ".").
+	innerName := innerClass.Name
+	if dot := strings.LastIndexByte(innerName, '.'); dot >= 0 {
+		innerName = innerName[dot+1:]
+	}
+
+	isMeta := innerName == "Meta"
+	isConfig := innerName == "Config"
+	if !isMeta && !isConfig {
+		return
+	}
+
+	// Find the class_definition node inside classBody that matches innerClass
+	// by start line so we can walk its body for key-value assignments.
+	var innerBody *sitter.Node
+	for i := range int(classBody.ChildCount()) {
+		ch := classBody.Child(i)
+		if ch == nil {
+			continue
+		}
+		// The inner class may be a bare class_definition or wrapped in a
+		// decorated_definition. In practice Meta/Config are never decorated,
+		// but handle both for robustness.
+		var candidate *sitter.Node
+		switch ch.Type() {
+		case "class_definition":
+			candidate = ch
+		case "decorated_definition":
+			if inner := ch.ChildByFieldName("definition"); inner != nil && inner.Type() == "class_definition" {
+				candidate = inner
+			}
+		}
+		if candidate == nil {
+			continue
+		}
+		nameNode := candidate.ChildByFieldName("name")
+		if nameNode == nil {
+			continue
+		}
+		if nodeText(nameNode, src) == innerName {
+			innerBody = candidate.ChildByFieldName("body")
+			break
+		}
+	}
+	if innerBody == nil {
+		return
+	}
+
+	// Collect key = value assignments from the inner class body.
+	// We only care about simple identifier = expr pairs at the immediate body
+	// scope; nested or complex assignments are skipped.
+	props := parseSimpleAssignments(innerBody, src)
+	if len(props) == 0 {
+		return
+	}
+
+	if parent.Properties == nil {
+		parent.Properties = make(map[string]string, len(props))
+	}
+
+	if isMeta {
+		// Django/DRF Meta keys.
+		if v, ok := props["abstract"]; ok {
+			if strings.EqualFold(v, "True") || v == "1" {
+				parent.Properties["is_abstract"] = "true"
+			}
+		}
+		if v, ok := props["db_table"]; ok {
+			parent.Properties["db_table"] = stripQuotes(v)
+		}
+		if v, ok := props["ordering"]; ok {
+			parent.Properties["ordering"] = v
+		}
+		if v, ok := props["unique_together"]; ok {
+			parent.Properties["unique_together"] = v
+		}
+		if v, ok := props["app_label"]; ok {
+			parent.Properties["app_label"] = stripQuotes(v)
+		}
+		// DRF Serializer.Meta fields / model.
+		if v, ok := props["fields"]; ok {
+			parent.Properties["meta_fields"] = v
+		}
+		if v, ok := props["model"]; ok {
+			parent.Properties["meta_model"] = v
+		}
+	}
+
+	if isConfig {
+		// Pydantic Config keys.
+		if v, ok := props["orm_mode"]; ok {
+			if strings.EqualFold(v, "True") || v == "1" {
+				parent.Properties["orm_mode"] = "true"
+			}
+		}
+		if v, ok := props["env_prefix"]; ok {
+			parent.Properties["env_prefix"] = stripQuotes(v)
+		}
+		if _, ok := props["alias_generator"]; ok {
+			parent.Properties["alias_generator"] = "true"
+		}
+	}
+}
+
+// parseSimpleAssignments walks the immediate children of body and returns a
+// map[identifier]rawValue for every simple `identifier = expr` assignment. The
+// value is the raw source text of the right-hand side, trimmed of whitespace.
+// Only the top-level body scope is examined; nested blocks are skipped.
+func parseSimpleAssignments(body *sitter.Node, src []byte) map[string]string {
+	if body == nil {
+		return nil
+	}
+	out := make(map[string]string)
+	for i := range int(body.ChildCount()) {
+		stmt := body.Child(i)
+		if stmt == nil {
+			continue
+		}
+		// expression_statement → assignment
+		if stmt.Type() != "expression_statement" {
+			continue
+		}
+		for j := range int(stmt.NamedChildCount()) {
+			expr := stmt.NamedChild(j)
+			if expr == nil || expr.Type() != "assignment" {
+				continue
+			}
+			lhs := expr.ChildByFieldName("left")
+			rhs := expr.ChildByFieldName("right")
+			if lhs == nil || rhs == nil {
+				continue
+			}
+			if lhs.Type() != "identifier" {
+				continue
+			}
+			key := nodeText(lhs, src)
+			val := strings.TrimSpace(nodeText(rhs, src))
+			if key != "" && val != "" {
+				out[key] = val
+			}
+		}
+	}
+	return out
+}
+
+// stripQuotes removes surrounding single or double quotes from a Python string
+// literal value. Returns the input unchanged when the value is not quoted.
+func stripQuotes(v string) string {
+	if len(v) >= 2 {
+		if (v[0] == '"' && v[len(v)-1] == '"') || (v[0] == '\'' && v[len(v)-1] == '\'') {
+			return v[1 : len(v)-1]
+		}
+	}
+	return v
 }
 
 // findAll returns every descendant of root whose Type() matches kind.
