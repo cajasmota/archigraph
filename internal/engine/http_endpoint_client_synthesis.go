@@ -1,5 +1,6 @@
 // Client-side (consumer) synthetic http_endpoint emission for typed-HTTP
-// cross-repo matching (issue #533, Phase 1 + template-literal Phase 2).
+// cross-repo matching (issue #533, Phase 1 + template-literal Phase 2 +
+// wrapper-recognition Phase 3 (#651)).
 //
 // Producer-side (#534 Phase 1/2) emits one synthetic `http:<METHOD>:<path>`
 // entity per backend route. This file is the symmetric consumer pass: for
@@ -136,12 +137,12 @@ var jsFuncDeclRe = regexp.MustCompile(
 // template literal containing at least one ${...} substitution.
 //
 // Capture groups:
-//   1. the raw template body (content between the outermost backticks,
-//      excluding the backticks themselves). We do a single-line scan and
-//      stop at the first newline-free closing backtick after the opening
-//      one. Multiline template literals whose path spans multiple lines are
-//      uncommon in URL context and are left for a later phase.
-//   2. optional options object (`,{...}`) to extract the HTTP method.
+//  1. the raw template body (content between the outermost backticks,
+//     excluding the backticks themselves). We do a single-line scan and
+//     stop at the first newline-free closing backtick after the opening
+//     one. Multiline template literals whose path spans multiple lines are
+//     uncommon in URL context and are left for a later phase.
+//  2. optional options object (`,{...}`) to extract the HTTP method.
 //
 // The [^`\n\r]*\$\{[^`\n\r]* pattern requires at least one ${…} sequence so
 // we only match actual template strings, not plain backtick strings (those
@@ -265,9 +266,14 @@ func looksLikeURLPathOrParam(s string) bool {
 func synthesizeFetchAxios(content string, emit emitFn) {
 	if !strings.Contains(content, "fetch(") &&
 		!strings.Contains(content, "axios.") &&
+		!strings.Contains(content, "axios(") &&
 		!strings.Contains(content, "Client.") &&
 		!strings.Contains(content, "httpClient.") &&
-		!strings.Contains(content, "apiClient.") {
+		!strings.Contains(content, "apiClient.") &&
+		!strings.Contains(content, "endpoint:") &&
+		!strings.Contains(content, "endpoint :") &&
+		!strings.Contains(content, "axios.create") &&
+		!strings.Contains(content, "$") {
 		return
 	}
 
@@ -382,6 +388,473 @@ func synthesizeFetchAxios(content string, emit emitFn) {
 		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, path)
 		emit(verb, canonical, "http_client", "Function", caller)
 	}
+
+	// -----------------------------------------------------------------
+	// Phase 3 (#651): custom HTTP wrapper functions
+	// -----------------------------------------------------------------
+	//
+	// Real frontends route HTTP calls through a project-specific wrapper
+	// (e.g. `callApi({ endpoint: "/users/5", method: "POST" }, ...)`).
+	// We do NOT hardcode the wrapper name — instead we detect by SHAPE:
+	// any function call whose first argument is an object literal with an
+	// `endpoint:` / `url:` / `path:` / `route:` key whose value is a
+	// string literal or template literal.
+	synthesizeWrapperCalls(content, funcs, syms, emit)
+
+	// -----------------------------------------------------------------
+	// Phase 3 (#651): named axios-instance method calls
+	// -----------------------------------------------------------------
+	//
+	// 1. Build a per-file symbol table of `const X = axios.create({...})`
+	//    declarations (with optional baseURL).
+	// 2. Match `X.<verb>(url, ...)` for any X in the table.
+	// 3. Also match `$<ident>.<verb>(url, ...)` (dollar-prefixed axios
+	//    instances imported from elsewhere — common Angular/Vue/RN
+	//    convention).
+	//
+	// When the instance has a known baseURL, prepend it to the path so
+	// frontend↔backend cross-repo matching survives prefix differences.
+	instances := buildAxiosInstanceTable(content)
+	synthesizeAxiosInstanceCalls(content, funcs, syms, instances, emit)
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 (#651) — custom HTTP wrapper recognition
+// ---------------------------------------------------------------------------
+
+// wrapperCallStartRe locates the START of a `<ident>(<obj-literal>...`
+// invocation. Capture group 1 is the wrapper function identifier; the
+// regex consumes up to the opening `{` of the object literal. From there
+// we walk the source manually to balance braces and parens — this lets us
+// handle nested template-literal substitutions like
+// `{ url: ` + "`" + `${BASE}/${id}` + "`" + ` }` whose value contains
+// `${...}` (which itself contains `{}`).
+//
+// The leading `(?:^|[^\w$.])` boundary keeps us from matching the trailing
+// half of a member-expression call like `foo.bar({...})` (we never want
+// to pick up dotted receivers — those are method calls handled by other
+// matchers).
+var wrapperCallStartRe = regexp.MustCompile(
+	`(?:^|[^\w$.])([A-Za-z_$][\w$]*)\s*\(\s*\{`,
+)
+
+// wrapperEndpointKeyRe extracts a URL-bearing key/value pair from a
+// flat object-literal body. The key must be one of the canonical wrapper
+// shapes: endpoint / url / path / route. The value must be a string
+// literal or template literal (in single, double, or backtick quotes).
+// Capture groups: 1 = key name; 2/3/4 = value (one of single/double/backtick).
+var wrapperEndpointKeyRe = regexp.MustCompile(
+	"(?:^|[,\\s{])(endpoint|url|path|route)\\s*:\\s*(?:'([^'\\n\\r]+)'|\"([^\"\\n\\r]+)\"|`([^`\\n\\r]+)`)",
+)
+
+// wrapperMethodKeyRe extracts a `method:` property value from the object
+// literal. Accepts string literals OR dotted constants like
+// `HTTP_METHODS.GET` (in which case the trailing identifier is the verb).
+// Capture groups: 1 = quoted string verb; 2 = dotted-constant trailing
+// identifier (e.g. GET from HTTP_METHODS.GET).
+var wrapperMethodKeyRe = regexp.MustCompile(
+	`(?:^|[,\s{])method\s*:\s*(?:['"` + "`" + `]([A-Za-z]+)['"` + "`" + `]|[A-Za-z_$][\w$]*\.([A-Za-z]+))`,
+)
+
+// wrapperPositionalMethodRe extracts a method passed as a 2nd positional
+// argument to the wrapper, after the object literal. Accepts a quoted
+// string or a dotted constant. Used by the callApi-style 3-arg form:
+//
+//	callApi({endpoint: "..."}, HTTP_METHODS.POST, body)
+//	callApi({endpoint: "..."}, "POST", body)
+//
+// Capture groups: 1 = quoted verb; 2 = dotted-constant trailing identifier.
+var wrapperPositionalMethodRe = regexp.MustCompile(
+	`^\s*,\s*(?:['"` + "`" + `]([A-Za-z]+)['"` + "`" + `]|[A-Za-z_$][\w$]*\.([A-Za-z]+))`,
+)
+
+// wrapperBlocklist contains identifier names that LOOK like wrapper
+// invocations (they're called with an object-literal first arg) but are
+// known not to be HTTP wrappers. We keep this list small and surgical;
+// the obj-literal shape + URL-key requirement already filters >99% of
+// non-HTTP callsites.
+var wrapperBlocklist = map[string]bool{
+	"if":         true,
+	"for":        true,
+	"while":      true,
+	"switch":     true,
+	"return":     true,
+	"throw":      true,
+	"new":        true,
+	"typeof":     true,
+	"instanceof": true,
+	"await":      true,
+	"async":      true,
+	"function":   true,
+	// Common non-HTTP fns that take an object first arg:
+	"Object":   true,
+	"assign":   true,
+	"setState": true,
+	"useState": true,
+	"useMemo":  true,
+}
+
+// synthesizeWrapperCalls scans for custom HTTP wrapper invocations and
+// emits one synthetic per call. Detection is shape-based (object-literal
+// first arg with an `endpoint:`/`url:`/`path:`/`route:` URL key) so it
+// works regardless of the project-specific wrapper name (`callApi`,
+// `api`, `request`, `http`, `client`, etc.).
+func synthesizeWrapperCalls(content string, funcs []jsFuncSpan, syms map[string]string, emit emitFn) {
+	for _, m := range wrapperCallStartRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 4 {
+			continue
+		}
+		wrapper := content[m[2]:m[3]]
+		if wrapperBlocklist[wrapper] {
+			continue
+		}
+		// m[1] is the position of the opening `{` of the object literal
+		// (last byte consumed by the regex). Walk forward to find the
+		// matching `}`, then continue to the next `)` to close the call.
+		braceOpen := m[1] - 1
+		if braceOpen < 0 || braceOpen >= len(content) || content[braceOpen] != '{' {
+			continue
+		}
+		braceClose := findMatchingBrace(content, braceOpen)
+		if braceClose < 0 {
+			continue
+		}
+		objBody := content[braceOpen+1 : braceClose]
+
+		// Find the closing `)` of the wrapper call. Bounded scan: up to
+		// 256 bytes past the obj literal.
+		rest := ""
+		parenClose := findMatchingParenAfter(content, braceClose+1, 1024)
+		if parenClose > braceClose+1 {
+			rest = content[braceClose+1 : parenClose]
+		}
+
+		// Must have a URL-bearing key.
+		urlMatch := wrapperEndpointKeyRe.FindStringSubmatch(objBody)
+		if len(urlMatch) == 0 {
+			continue
+		}
+
+		// Pull whichever quoting style was used.
+		rawURL := ""
+		isTemplate := false
+		switch {
+		case urlMatch[2] != "":
+			rawURL = urlMatch[2]
+		case urlMatch[3] != "":
+			rawURL = urlMatch[3]
+		case urlMatch[4] != "":
+			rawURL = urlMatch[4]
+			isTemplate = true
+		}
+		if rawURL == "" {
+			continue
+		}
+
+		// Resolve URL to a canonical path.
+		var path string
+		var ok bool
+		if isTemplate && strings.Contains(rawURL, "${") {
+			path, ok = canonicalizeTemplateLiteral(rawURL, syms)
+		} else {
+			candidate := stripURLHost(rawURL)
+			if looksLikeURLPath(candidate) {
+				path = candidate
+				ok = true
+			}
+		}
+		if !ok {
+			continue
+		}
+
+		// Determine the verb. Precedence:
+		//   1. `method:` key inside the object literal
+		//   2. 2nd positional argument after the object literal
+		//   3. default GET
+		verb := "GET"
+		if mm := wrapperMethodKeyRe.FindStringSubmatch(objBody); len(mm) > 0 {
+			if mm[1] != "" {
+				verb = strings.ToUpper(mm[1])
+			} else if mm[2] != "" {
+				verb = strings.ToUpper(mm[2])
+			}
+		} else if rest != "" {
+			if mm := wrapperPositionalMethodRe.FindStringSubmatch(rest); len(mm) > 0 {
+				if mm[1] != "" {
+					verb = strings.ToUpper(mm[1])
+				} else if mm[2] != "" {
+					verb = strings.ToUpper(mm[2])
+				}
+			}
+		}
+
+		caller := enclosingJSFuncAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, path)
+		emit(verb, canonical, "http_wrapper", "Function", caller)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 (#651) — named axios-instance method calls (incl. $-prefix)
+// ---------------------------------------------------------------------------
+
+// axiosCreateRe matches `const X = axios.create({...})` or `let`/`var`.
+// Captures: 1 = instance name; 2 = options-object body (may be empty).
+// We restrict the options body to a flat literal (no nested braces) since
+// real-world axios.create configs are flat property bags. baseURL embedded
+// inside a deeper struct will not be folded — those callsites still emit
+// (with no baseURL prefix).
+var axiosCreateRe = regexp.MustCompile(
+	`(?m)(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*axios\s*\.\s*create\s*\(\s*\{([^{}]*)\}\s*\)`,
+)
+
+// axiosCreateBaseURLRe extracts `baseURL: "<value>"` from an axios.create
+// options object. The value must be a static string literal — template
+// literals with substitutions are NOT supported here (the baseURL becomes
+// empty in that case).
+var axiosCreateBaseURLRe = regexp.MustCompile(
+	`(?:^|[,\s{])baseURL\s*:\s*['"` + "`" + `]([^'"` + "`" + `\n\r$]+)['"` + "`" + `]`,
+)
+
+// axiosInstance records the per-file metadata we keep for each
+// axios.create() result. Used to (a) recognise `instance.<verb>(...)`
+// calls regardless of identifier name, and (b) prepend baseURL when
+// emitting endpoints so cross-repo matching survives a frontend that
+// uses bare paths while the backend exposes a prefixed mount.
+type axiosInstance struct {
+	name    string
+	baseURL string
+}
+
+// buildAxiosInstanceTable scans the file for axios.create() declarations
+// and returns a map from instance-name → metadata.
+func buildAxiosInstanceTable(content string) map[string]axiosInstance {
+	out := make(map[string]axiosInstance)
+	if !strings.Contains(content, "axios.create") {
+		return out
+	}
+	for _, m := range axiosCreateRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		name := content[m[2]:m[3]]
+		opts := content[m[4]:m[5]]
+		base := ""
+		if bm := axiosCreateBaseURLRe.FindStringSubmatch(opts); len(bm) >= 2 {
+			base = stripURLHost(bm[1])
+		}
+		out[name] = axiosInstance{name: name, baseURL: base}
+	}
+	return out
+}
+
+// axiosInstanceCallRe matches `<ident>.<verb>(<arg>, ...)` for any
+// identifier (we filter by instance table in the loop). The path argument
+// may be a string literal OR a template literal. The leading `[^\w$.]`
+// boundary keeps us from cross-firing on member-of-member expressions
+// like `foo.bar.get(...)` (still allowed: leading boundary is matched on
+// the first dot's left side).
+//
+// Capture groups:
+//
+//	1 = receiver identifier (may be `$`-prefixed)
+//	2 = HTTP verb
+//	3 = URL string literal (single/double quotes) OR empty if backtick
+//	4 = URL template-literal body (backtick) OR empty if string
+var axiosInstanceCallRe = regexp.MustCompile(
+	"(?:^|[^\\w$.])(\\$?[A-Za-z_$][\\w$]*)\\s*\\.\\s*(get|post|put|patch|delete|head|options)\\s*(?:<[^<>()]*>)?\\s*\\(\\s*(?:['\"]([^'\"\\n\\r$]+)['\"]|`([^`\\n\\r]+)`)",
+)
+
+// dollarPrefixedHTTPRe is a narrowed view of axiosInstanceCallRe used to
+// fall back on $-prefixed receivers when no in-file axios.create()
+// declaration exists. This matches the gfleet/Angular/Vue pattern where
+// `$http` is exported from a separate module.
+//
+// We require the dollar prefix specifically to avoid lighting up on
+// ordinary local variables — the $-prefix is an idiomatic marker for
+// "imported axios-like client" across Angular ($http), Vue 2 ($axios),
+// and some React/RN projects.
+var dollarPrefixedHTTPRe = regexp.MustCompile(
+	"(?:^|[^\\w$.])(\\$[A-Za-z][\\w$]*)\\s*\\.\\s*(get|post|put|patch|delete|head|options)\\s*(?:<[^<>()]*>)?\\s*\\(\\s*(?:['\"]([^'\"\\n\\r$]+)['\"]|`([^`\\n\\r]+)`)",
+)
+
+// synthesizeAxiosInstanceCalls emits one synthetic per detected
+// instance.<verb>(url) callsite. Behaviour:
+//
+//   - If the receiver is in the file-local axios.create() table, emit
+//     and prepend the instance's baseURL (if any).
+//   - Else if the receiver starts with `$`, treat it as an imported
+//     axios-like instance and emit with no baseURL prefix.
+//   - Else skip (handled by axiosClientRe / axiosLiteralRe already, or
+//     intentionally ignored).
+//
+// Dedup against already-emitted axiosClientRe matches is enforced upstream
+// by the per-ID dedup map in http_endpoint_synthesis.go.
+func synthesizeAxiosInstanceCalls(
+	content string,
+	funcs []jsFuncSpan,
+	syms map[string]string,
+	instances map[string]axiosInstance,
+	emit emitFn,
+) {
+	emitMatch := func(receiver, verb, path string, isTemplate bool, pos int) {
+		var resolved string
+		var ok bool
+		if isTemplate {
+			resolved, ok = canonicalizeTemplateLiteral(path, syms)
+		} else {
+			candidate := stripURLHost(path)
+			if looksLikeURLPath(candidate) {
+				resolved = candidate
+				ok = true
+			}
+		}
+		if !ok {
+			return
+		}
+
+		// baseURL composition.
+		if inst, found := instances[receiver]; found && inst.baseURL != "" {
+			resolved = composeBaseURL(inst.baseURL, resolved)
+		}
+
+		caller := enclosingJSFuncAt(funcs, pos)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, resolved)
+		emit(strings.ToUpper(verb), canonical, "axios_instance", "Function", caller)
+	}
+
+	// Pass 1: any receiver present in the in-file axios.create() table.
+	if len(instances) > 0 {
+		for _, m := range axiosInstanceCallRe.FindAllStringSubmatchIndex(content, -1) {
+			if len(m) < 10 {
+				continue
+			}
+			receiver := content[m[2]:m[3]]
+			if _, ok := instances[receiver]; !ok {
+				continue
+			}
+			verb := content[m[4]:m[5]]
+			var pathArg string
+			var isTemplate bool
+			if m[6] >= 0 {
+				pathArg = content[m[6]:m[7]]
+			} else if m[8] >= 0 {
+				pathArg = content[m[8]:m[9]]
+				isTemplate = true
+			}
+			if pathArg == "" {
+				continue
+			}
+			emitMatch(receiver, verb, pathArg, isTemplate, m[0])
+		}
+	}
+
+	// Pass 2: $-prefixed receivers (imported instances).
+	for _, m := range dollarPrefixedHTTPRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 10 {
+			continue
+		}
+		receiver := content[m[2]:m[3]]
+		// If we already covered this receiver via the instance table,
+		// pass-1 emitted; skip here to avoid duplicates.
+		if _, ok := instances[receiver]; ok {
+			continue
+		}
+		verb := content[m[4]:m[5]]
+		var pathArg string
+		var isTemplate bool
+		if m[6] >= 0 {
+			pathArg = content[m[6]:m[7]]
+		} else if m[8] >= 0 {
+			pathArg = content[m[8]:m[9]]
+			isTemplate = true
+		}
+		if pathArg == "" {
+			continue
+		}
+		emitMatch(receiver, verb, pathArg, isTemplate, m[0])
+	}
+}
+
+// composeBaseURL joins a baseURL prefix and a request path the way axios
+// does: a trailing `/` on the base and a leading `/` on the path collapse
+// to a single separator. Returns an absolute path beginning with `/`.
+func composeBaseURL(base, path string) string {
+	base = strings.TrimRight(base, "/")
+	if !strings.HasPrefix(base, "/") && base != "" {
+		base = "/" + base
+	}
+	if path == "" {
+		if base == "" {
+			return "/"
+		}
+		return base
+	}
+	if !strings.HasPrefix(path, "/") && !strings.HasPrefix(path, "{") {
+		path = "/" + path
+	}
+	if strings.HasPrefix(path, "{") {
+		// path starts with `{param}/...` — slot a `/` between base and {.
+		return base + "/" + path
+	}
+	return base + path
+}
+
+// findMatchingBrace returns the index of the `}` matching the `{` at
+// openIdx, accounting for nested braces inside `${...}` template-literal
+// substitutions and inside nested object literals. Scans at most 4096
+// bytes forward; returns -1 if no match found within the budget.
+//
+// We do NOT attempt to skip string-literal contents — wrapper-call obj
+// literals in practice rarely contain `{` or `}` inside strings; the
+// template-literal `${` case is the one that matters and that DOES
+// balance correctly under naive counting.
+func findMatchingBrace(content string, openIdx int) int {
+	depth := 0
+	limit := openIdx + 4096
+	if limit > len(content) {
+		limit = len(content)
+	}
+	for i := openIdx; i < limit; i++ {
+		switch content[i] {
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// findMatchingParenAfter returns the index of the next `)` at the outer
+// paren level after `start`, scanning up to `limit` bytes. Used to find
+// the close of the wrapper call after the object-literal arg. Returns -1
+// if the close isn't found within budget.
+//
+// We assume the wrapper-call parens are already open at depth 1 when this
+// is called (the regex consumed the opening `(`). We start at the byte
+// after the obj-literal's `}` and decrement on each `)`.
+func findMatchingParenAfter(content string, start, budget int) int {
+	depth := 1
+	end := start + budget
+	if end > len(content) {
+		end = len(content)
+	}
+	for i := start; i < end; i++ {
+		switch content[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
 }
 
 // indexJSEnclosingFunctions returns a slice of (offset, name) records in
