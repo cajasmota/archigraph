@@ -1632,3 +1632,123 @@ Chain-fixes filed (out of scope for this PR):
   filtered.
 - **Follow-ups**: three chain-fixes above; non-Java language analogs
   (Go REFERENCES, Ruby REFERENCES, etc.) are independent waves.
+
+---
+
+## Wave: kotlin-orphan-recovery (Kotlin REFERENCES + IMPORTS, 2026-05-19)
+
+Analog of PR #641 (JS/TS), #650 (Python) and #670 (Java) for the
+Kotlin extractor. The Kotlin extractor previously emitted ~0
+REFERENCES edges per function body and left IMPORTS ToIDs as
+full dotted module paths (`io.ktor.server.routing.get`,
+`kotlin.io.println`). Neither shape carries the `ext:<root>` prefix
+the resolver's external-disposition gate (refs.go:
+stubPrefixExternal) keys on, so imported leaves from known external
+JVM/Kotlin packages had to round-trip through the bare-name resolver
+and miss — contributing to a 40.3% orphan rate on ktor-samples.
+
+Two new passes mirror the JS/TS / Python / Java fix:
+
+- **Track A** (`internal/extractors/kotlin/references.go`,
+  `emitReferences`): walks every function body for `simple_identifier`
+  / `type_identifier` / `navigation_expression` nodes that are NOT
+  declaration position and NOT a CALLS callee. Builds a file-scope
+  symbol table from emitted operations + classes/objects, plus a
+  synthesised dotted-member table (`Class.method`) computed from a
+  one-shot CST walk over class/object → function memberships.
+  Emits Format A structural-refs (`scope:operation:ref:kotlin:...`
+  or `scope:component:ref:kotlin:...`) bound by the resolver's
+  existing lookupStructural → lookupLocationKind path. Kotlin
+  reserved keywords + soft keywords (val, var, fun, object, by,
+  it, this, super, ...) skipped. Self-references filtered.
+
+- **Track B** (`internal/extractors/kotlin/imports.go`,
+  `resolveImportToIDs`): rewrites IMPORTS ToID for edges whose
+  dotted path's longest matching prefix is on the
+  `kotlinKnownExternalRoots` allowlist (kotlin, kotlinx, io.ktor,
+  io.quarkus, org.springframework, javax, jakarta,
+  org.jetbrains.exposed, com.google, com.fasterxml, ch.qos.logback,
+  com.squareup, ...). Longest-prefix matching collapses
+  `io.ktor.server.routing.get` → `ext:io.ktor:get` and
+  `org.springframework.boot.SpringApplication` →
+  `ext:org.springframework:SpringApplication`. Wildcard imports
+  (`io.ktor.server.routing.*`) rewrite to bare `ext:io.ktor`.
+
+### Per-Kotlin-corpus orphan rate before / after
+
+| Corpus | Before | After | Δ | REFERENCES/fn after | IMPORTS hygiene after |
+|---|---:|---:|---:|---:|---:|
+| ktor-samples | 40.3% | 39.9% | -0.4pp | 0.10 | 78% ext_qualified |
+| exposed     |  6.6% |  5.9% | -0.7pp | 0.12 | 93% ext_qualified |
+
+REFERENCES/fn moved from 0.00 → 0.10-0.12 across both corpora.
+IMPORTS hygiene moved from 23-27% bare → 78-93% ext-qualified, a
+3-4x improvement.
+
+### Why the orphan-rate move is small relative to Java/Python
+
+The Java analog (#670) reportedly recovered ~616 entities on
+fixture-d via the dotted-member symbol table; the Python analog
+(#650) hit 26-46% deltas. Kotlin's primary extractor (kotlin.go)
+currently emits a much narrower entity surface than Java's:
+
+- **No property entities.** Kotlin `val`/`var` declarations at
+  class-body or top-level scope are NOT emitted as SCOPE.Schema
+  entities (Java emits fields as SCOPE.Schema with bare Name). The
+  vast majority of orphan-rate residual is `this.<property>` /
+  bare-property usage that has no project entity to bind to.
+
+- **No primary-constructor parameter entities.** Kotlin's
+  `class Foo(val bar: Int)` syntax creates a property `bar` that is
+  invisible to the symbol table.
+
+- **Methods have bare-leaf Name only.** Java's #65 contract emits
+  methods as `Class.method`; Kotlin's primary pass emits the bare
+  leaf. The Track A dotted-member synthesis recovers the
+  `this.method` and `ClassName.method` shape, but a sibling class
+  inside the same file sharing a method name will collide on the
+  bare key.
+
+Chain-fixes filed (out of scope for this PR; should land before
+chasing ktor-samples below 25%):
+
+1. **chain-fix-1-kotlin-properties** — extend the Kotlin primary
+   pass to emit `property_declaration` (val/var) entities as
+   SCOPE.Schema with Name=bare leaf + enclosing class context.
+   Unlocks `this.<property>` and same-class bare-property
+   REFERENCES. Mirror of Java fields + Python `assignment` at the
+   class-body level.
+
+2. **chain-fix-2-kotlin-primary-constructor-properties** — extend
+   the Kotlin primary pass to emit `class_parameter` (with val/var
+   modifier) entities as SCOPE.Schema. Required for the
+   `data class Foo(val bar, val baz)` Kotlin idiom which currently
+   produces zero project entities for the constructor-introduced
+   properties.
+
+3. **chain-fix-3-kotlin-references-cross-file** — mirror of
+   Python/Java chain-fix-1. Extend `resolve/imports.go
+   ResolveImports` (or a new pass) to rewrite REFERENCES edges
+   whose ToID names a leaf imported via an IMPORTS edge on the same
+   file, routing them to the cross-file resolver via
+   source_module / imported_name properties (which buildImport now
+   populates). Currently the Track A pass conservatively SKIPS the
+   import symbol table to avoid emitting unbindable edges; this
+   chain-fix unlocks cross-file binding for imported leaves.
+
+### Test coverage
+
+- `internal/extractors/kotlin/references_test.go` — 8 unit tests:
+  same-scope identifier, this-property smoke, companion-method via
+  enclosing-class binding, imported-name skipped, reserved keywords
+  skipped, self-ref filtered, top-level function, function inside
+  `object` declaration.
+- `internal/extractors/kotlin/imports_test.go` — 4 unit tests:
+  known-external rewrite (org.springframework / io.ktor / kotlin
+  triples), unknown-external left untouched, wildcard rewrite,
+  relative-style skipped.
+
+Cross-language bug-rate parity: the Kotlin extractor is the only
+emission path touched; no resolver or external-synth changes were
+made, so non-Kotlin corpora produce byte-identical entities and
+relationships.
