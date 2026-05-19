@@ -220,6 +220,18 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 		ctx, file.Language, file.Path, file.Content, entities, relationships,
 	)
 
+	// Django models-import suffix rewrite (PR #580 wave-10 Chain-fix A):
+	// The YAML rule `from \S+\.models import (\w+)` emits Model:<name>
+	// for every captured identifier. In Django/DRF projects, a sibling
+	// `models` module routinely re-exports Serializer / ViewSet / View
+	// classes. The naive Model: prefix surfaces as kind-mismatch
+	// bug-resolver edges (60 instances on client-fixture-a). Rewrite the
+	// ToID prefix in-place on suffix heuristics so the IMPORTS edge
+	// matches the actual entity kind. Python-only.
+	if file.Language == "python" {
+		relationships = rewritePythonModelImports(relationships)
+	}
+
 	span.SetAttributes(
 		attribute.Int("entity_count", len(entities)),
 		attribute.Int("relationship_count", len(relationships)),

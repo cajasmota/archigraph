@@ -116,6 +116,13 @@ source_patterns:
 # relationship_rules: regex patterns that produce edges between entities.
 relationship_rules:
   # Model used in view: from app.models import MyModel
+  # NOTE: emits target_type: Model for every captured name. A Go-side
+  # post-pass (rewritePythonModelImports in detector.go) reclassifies
+  # `Model:<X>Serializer` → `Component:<X>Serializer` and
+  # `Model:<X>(View|ViewSet|...)` → `View:<X>...` so DRF / CBV re-exports
+  # through a sibling `models` module don't surface as kind-mismatch
+  # bug-resolver edges. Refs PR #580 residual analysis (60 kind-mismatch
+  # edges on client-fixture-a).
   - pattern: "from\\s+\\S+\\.models\\s+import\\s+(\\w+)"
     source_type: View
     target_type: Model
