@@ -220,12 +220,19 @@ func applyHTTPEndpointSynthesis(
 		// WebClient / OkHttp / Apache HttpClient / Retrofit.
 		synthesizeJavaClientWithRuntime(string(content), emitClientRuntime)
 	case "python":
-		// Producer side: Django composed Routes (from django_routes.go) —
-		// method is unknown statically, so emit with verb=ANY.
-		synthesizeDjangoFromComposed(entities, path, emit)
-		// Producer side: Flask + FastAPI.
+		// Producer side: Flask + FastAPI run FIRST so their synthetics —
+		// which carry a real handler function name as source_handler —
+		// claim each ID before the Django composed-route pass walks the
+		// generic YAML Route entities. Previously synthesizeDjangoFromComposed
+		// ran first and dedup-stole every Flask/@blueprint.route(...) URL,
+		// emitting a synthetic with `source_handler=Route:<path>`
+		// (Spring-style placeholder), which the resolver dropped and
+		// the response-shape extractor could not parse. #753.
 		synthesizeFlask(string(content), emit)
 		synthesizeFastAPI(string(content), emit)
+		// Producer side: Django composed Routes (from django_routes.go).
+		// Method is unknown statically, so emit with verb=ANY.
+		synthesizeDjangoFromComposed(entities, path, emit)
 		// Consumer side (#721 wave 1, extends #533): requests / httpx /
 		// aiohttp / urllib / session-style HTTP client calls. Now emits
 		// FETCHES edges at extraction time.
@@ -237,7 +244,15 @@ func applyHTTPEndpointSynthesis(
 		// HTTP client calls. JS/TS already covered; FETCHES edge wiring
 		// for JS/TS is a separate follow-up to this wave.
 		synthesizeFetchAxios(string(content), emitClient)
+	case "go":
+		// Producer side: Gin / Echo / Chi route registrations. #722.
+		synthesizeGoRouters(string(content), emit)
 	}
+
+	// #722 — response/request shape extraction. Mutates Properties on
+	// the synthetic entities emitted above; never adds or removes
+	// entities, so it cannot regress the bug-rate of upstream passes.
+	applyResponseShapes(lang, content, entities)
 
 	return entities, relationships
 }
