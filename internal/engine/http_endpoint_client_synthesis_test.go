@@ -379,3 +379,241 @@ export async function loadOrders() {
 	}
 	t.Fatalf("no synthetic emitted for /orders")
 }
+
+// ---------------------------------------------------------------------------
+// Phase 3 (#651) — custom HTTP wrapper recognition
+// ---------------------------------------------------------------------------
+
+// TestSynth_Wrapper_EndpointKeyStaticString covers the canonical
+// callApi-style shape:
+//
+//	callApi({ endpoint: "/users/5" }, "GET")
+//
+// We do NOT hardcode `callApi` — match by object-literal shape with an
+// `endpoint:` URL key.
+func TestSynth_Wrapper_EndpointKeyStaticString(t *testing.T) {
+	src := `export async function listClients(token) {
+  const r = await callApi({ token, endpoint: "/clients/" }, "GET");
+  return r.data;
+}
+`
+	got, _ := runDetect(t, "javascript", "wrapper-endpoint.js", src)
+	want := []string{"http:GET:/clients"}
+	requireContains(t, got, want, "wrapper endpoint:")
+}
+
+// TestSynth_Wrapper_URLKeyTemplateLiteral covers the same shape with the
+// `url:` variant and a template-literal value.
+func TestSynth_Wrapper_URLKeyTemplateLiteral(t *testing.T) {
+	src := "const CLIENTS_ENDPOINT = \"/clients\";\n" +
+		"export async function getClient(id) {\n" +
+		"  return api({ url: `${CLIENTS_ENDPOINT}/${id}`, token }, \"GET\");\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "wrapper-url-tmpl.ts", src)
+	want := []string{"http:GET:/clients/{param}"}
+	requireContains(t, got, want, "wrapper url: template literal")
+}
+
+// TestSynth_Wrapper_MethodKeyExplicit verifies an in-object-literal
+// `method:` key takes precedence over default GET.
+func TestSynth_Wrapper_MethodKeyExplicit(t *testing.T) {
+	src := `export async function createClient(body) {
+  return request({ endpoint: "/clients", method: "POST" }, body);
+}
+`
+	got, _ := runDetect(t, "javascript", "wrapper-method-key.js", src)
+	want := []string{"http:POST:/clients"}
+	requireContains(t, got, want, "wrapper method: key")
+}
+
+// TestSynth_Wrapper_PositionalMethodConstant covers the HTTP_METHODS.X
+// pattern as a 2nd positional argument — the dominant fixture-b shape.
+func TestSynth_Wrapper_PositionalMethodConstant(t *testing.T) {
+	src := `export async function updateClient(id, body) {
+  return callApi({ endpoint: "/clients/5/" }, HTTP_METHODS.PUT, body);
+}
+`
+	got, _ := runDetect(t, "javascript", "wrapper-pos-method.js", src)
+	want := []string{"http:PUT:/clients/5"}
+	requireContains(t, got, want, "wrapper positional dotted method")
+}
+
+// TestSynth_Wrapper_DefaultGET verifies that omitting the method key
+// defaults to GET.
+func TestSynth_Wrapper_DefaultGET(t *testing.T) {
+	src := `export async function ping() {
+  return http({ endpoint: "/health" });
+}
+`
+	got, _ := runDetect(t, "javascript", "wrapper-default-get.js", src)
+	want := []string{"http:GET:/health"}
+	requireContains(t, got, want, "wrapper default GET")
+}
+
+// TestSynth_Wrapper_NonHTTPCallRejected verifies that random object-arg
+// invocations without a URL key produce no synthetic — guards against
+// false positives.
+func TestSynth_Wrapper_NonHTTPCallRejected(t *testing.T) {
+	src := `function buildConfig(opts) { return opts; }
+const cfg = buildConfig({ timeout: 5000, retries: 3 });
+const dispatch = createDispatch({ store, middleware: [] });
+const state = useState({ count: 0 });
+`
+	got, _ := runDetect(t, "javascript", "wrapper-no-url.js", src)
+	if len(got) > 0 {
+		t.Errorf("expected zero synthetics for non-HTTP object-arg calls, got: %v", got)
+	}
+}
+
+// TestSynth_Wrapper_BlocklistKeywords verifies that control-flow keywords
+// and known non-HTTP helpers (setState, useState, etc.) are skipped even
+// when they happen to receive an obj literal with an `endpoint:` key.
+func TestSynth_Wrapper_BlocklistKeywords(t *testing.T) {
+	src := `// pathological: someone names a state field 'endpoint'
+useState({ endpoint: "/not-http" });
+setState({ endpoint: "/also-not-http" });
+`
+	got, _ := runDetect(t, "javascript", "wrapper-blocklist.js", src)
+	for _, id := range got {
+		if strings.Contains(id, "not-http") {
+			t.Errorf("blocklisted call emitted synthetic: %q", id)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 (#651) — $-prefixed / named axios instances
+// ---------------------------------------------------------------------------
+
+// TestSynth_DollarHTTP_StaticString covers the gfleet/Angular pattern:
+//
+//	$http.get('/path/')
+func TestSynth_DollarHTTP_StaticString(t *testing.T) {
+	src := `import { $http } from "./httpClient";
+
+export async function getSchedule() {
+  return $http.get('/schedule/');
+}
+
+export async function createReschedule(body) {
+  return $http.post('/reschedule-requests/', body);
+}
+`
+	got, _ := runDetect(t, "typescript", "dollar-http.ts", src)
+	want := []string{
+		"http:GET:/schedule",
+		"http:POST:/reschedule-requests",
+	}
+	requireContains(t, got, want, "$http static")
+}
+
+// TestSynth_DollarHTTP_TypescriptGeneric covers the TS-generic call
+// form `$http.get<Response>('/path')` that is idiomatic for typed
+// axios instances in TypeScript codebases.
+func TestSynth_DollarHTTP_TypescriptGeneric(t *testing.T) {
+	src := `import { $http } from "./httpClient";
+
+export async function listGroups(): Promise<Group[]> {
+  const r = await $http.get<Group[]>('/groups/list/');
+  return r.data;
+}
+`
+	got, _ := runDetect(t, "typescript", "dollar-http-generic.ts", src)
+	want := []string{"http:GET:/groups/list"}
+	requireContains(t, got, want, "$http with TS generic")
+}
+
+// TestSynth_DollarHTTP_TemplateLiteral covers $http with template literal
+// and file-local const folding.
+func TestSynth_DollarHTTP_TemplateLiteral(t *testing.T) {
+	src := "import { $http } from \"./httpClient\";\n" +
+		"const BASE_PATH = \"/inspections/\";\n" +
+		"export async function getInspection(id) {\n" +
+		"  return $http.get(`${BASE_PATH}${id}/`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "dollar-http-tmpl.ts", src)
+	want := []string{"http:GET:/inspections/{param}"}
+	requireContains(t, got, want, "$http template literal")
+}
+
+// TestSynth_AxiosInstance_NamedAndPlain covers `const apiClient =
+// axios.create({...})` followed by `apiClient.post('/users', body)`.
+//
+// This case was already matched by axiosClientRe (apiClient suffix). The
+// instance-table emitter ALSO emits an entity tagged "axios_instance" —
+// the upstream dedup map collapses duplicate IDs.
+func TestSynth_AxiosInstance_NamedAndPlain(t *testing.T) {
+	src := `import axios from "axios";
+const apiClient = axios.create({ timeout: 5000 });
+
+export async function createUser(body) {
+  return apiClient.post('/users', body);
+}
+`
+	got, _ := runDetect(t, "typescript", "axios-instance-named.ts", src)
+	want := []string{"http:POST:/users"}
+	requireContains(t, got, want, "axios.create named instance")
+}
+
+// TestSynth_AxiosInstance_BaseURLComposition verifies that an
+// `axios.create({baseURL:'/api/v1'})` instance prepends its baseURL to
+// the request path on emission.
+func TestSynth_AxiosInstance_BaseURLComposition(t *testing.T) {
+	src := `import axios from "axios";
+const client = axios.create({ baseURL: '/api/v1', timeout: 5000 });
+
+export async function listUsers() {
+  return client.get('/users');
+}
+
+export async function getUser(id) {
+  return client.get('/users/' + id);
+}
+`
+	got, _ := runDetect(t, "typescript", "axios-base-url.ts", src)
+	// First call: literal path. Second: path with concat, dropped (not a
+	// pure literal/template). At minimum the first must emit composed.
+	want := []string{"http:GET:/api/v1/users"}
+	requireContains(t, got, want, "axios.create baseURL composition")
+}
+
+// TestSynth_AxiosInstance_BaseURLTemplateComposition verifies baseURL
+// composition stacks with template-literal path resolution.
+func TestSynth_AxiosInstance_BaseURLTemplateComposition(t *testing.T) {
+	src := "import axios from \"axios\";\n" +
+		"const client = axios.create({ baseURL: '/api/v1' });\n" +
+		"export async function getUser(id) {\n" +
+		"  return client.get(`/users/${id}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "axios-base-url-tmpl.ts", src)
+	want := []string{"http:GET:/api/v1/users/{param}"}
+	requireContains(t, got, want, "axios.create baseURL + template")
+}
+
+// TestSynth_AxiosInstance_UnknownReceiverRejected verifies that the new
+// axios-instance emitter (framework="axios_instance") does NOT fire on
+// `someObj.someMethod({...})` when there is no axios.create() and no `$`
+// prefix.
+//
+// Note: the server-side express synthesizer in http_endpoint_synthesis.go
+// (a different file) DOES currently emit on `formData.delete("foo")` —
+// that's the precision bug fixed by PR #660. We scope this test to the
+// new code only.
+func TestSynth_AxiosInstance_UnknownReceiverRejected(t *testing.T) {
+	src := `const formData = new FormData();
+formData.delete("foo");
+formData.get("bar");
+const someObj = { get(x) { return x; } };
+someObj.get("baz");
+`
+	_, res := runDetect(t, "javascript", "axios-unknown.js", src)
+	for _, e := range res.Entities {
+		if e.Kind != httpEndpointKind {
+			continue
+		}
+		fw := e.Properties["framework"]
+		if fw == "axios_instance" || fw == "http_wrapper" {
+			t.Errorf("new-code emitter fired on unknown receiver: ID=%q framework=%q", e.ID, fw)
+		}
+	}
+}
