@@ -349,3 +349,30 @@ func TestResponseShape_NoFalsePositive_GoFile(t *testing.T) {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Regression: bounds checking for files without trailing newline (#773)
+// ---------------------------------------------------------------------------
+
+// TestResponseShape_Python_NoTrailingNewline verifies that a Python file
+// without a trailing newline does not cause a panic in findHandlerBody when
+// the framework pass is enabled. This is a regression test for #773:
+// "slice bounds out of range [:1505] with length 1504".
+func TestResponseShape_Python_NoTrailingNewline(t *testing.T) {
+	// Construct a source that ends without a newline, and has a handler
+	// body that extends to near the end of the file. This exercises the
+	// bodyEnd bounds check in findHandlerBody (lines 111-115).
+	src := `from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route("/api/items")
+def list_items():
+    return jsonify({"items": [], "count": 0})`
+	// Deliberately omit the trailing newline to trigger the bug.
+
+	_, res := runDetect(t, "python", "app.py", src)
+	props := shapeOf(t, res, "http:GET:/api/items")
+	assertProp(t, props, "response_keys", "count,items")
+	assertProp(t, props, "status_codes", "200")
+	assertProp(t, props, "response_keys_known", "true")
+}

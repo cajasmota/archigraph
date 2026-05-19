@@ -108,6 +108,10 @@ func findHandlerBody(src, name string) string {
 		i += lineEnd + 1
 		bodyEnd = i
 	}
+	// Clamp bodyEnd to source length in case the last line lacked a newline.
+	if bodyEnd > len(src) {
+		bodyEnd = len(src)
+	}
 	return src[bodyStart:bodyEnd]
 }
 
