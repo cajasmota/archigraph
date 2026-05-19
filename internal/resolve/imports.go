@@ -1547,3 +1547,181 @@ func ResolveImports(records []types.EntityRecord, tbl ImportTable) ImportResolve
 	}
 	return stats
 }
+
+// PruneImportPlaceholderStats summarises the prune pass for the
+// indexer's stderr log.
+type PruneImportPlaceholderStats struct {
+	// Considered is the number of kind=SCOPE.Component, subtype="import"
+	// entities the prune pass saw.
+	Considered int
+	// Pruned is the number actually removed from the returned slice.
+	Pruned int
+	// RelsHoisted is the number of embedded relationship records that
+	// were transplanted from a pruned placeholder onto the file-level
+	// SCOPE.Component entity for the same SourceFile.
+	RelsHoisted int
+	// RelsOrphaned is the number of embedded relationship records that
+	// were attached to a pruned placeholder but had no matching
+	// file-level SCOPE.Component entity to receive them. These are
+	// returned alongside the entity slice as standalone records via
+	// the second return value of PruneImportPlaceholders so the
+	// downstream assembly loop still emits them on the document.
+	RelsOrphaned int
+	// PlaceholderKept is the number of kind=SCOPE.Component
+	// subtype="import" entities the pass intentionally KEPT in the
+	// graph because nothing else points at them yet AND the rels they
+	// carried could not be safely hoisted (empty FromID on at least
+	// one rel, which would lose provenance). Surfaced so a future
+	// regression that silently inflates this number is visible.
+	PlaceholderKept int
+}
+
+// PruneImportPlaceholders removes import-placeholder entities (kind =
+// SCOPE.Component, subtype = "import") from the merged EntityRecord
+// slice. These entities were emitted by the JS/TS extractor (issue
+// #421/#570/#578) and the cross-language imports extractor
+// (internal/extractors/cross/imports) as a structural carrier for
+// IMPORTS / DEPENDS_ON relationships. After the import-resolver and
+// references-resolver passes have rewritten ToID / FromID values, the
+// placeholders themselves have no incoming edges — they are pure
+// structural overhead and account for the largest single bucket of
+// orphan entities on the verify2 corpus (2,583 of 9,390 fixture-b
+// orphans, root-cause analysis 2026-05-19).
+//
+// The function preserves the placeholders' embedded relationships by
+// hoisting them onto the file-level SCOPE.Component entity that
+// reflects the same SourceFile (subtype = "file", Name = source
+// path). When no such carrier exists for a placeholder's SourceFile,
+// the embedded rels with non-empty FromID are returned as standalone
+// RelationshipRecords through the second return value so the
+// indexer's assembly loop can still emit them on the document.
+//
+// Cross-repo linker (#566/#570/#578) note: the linker matches on
+// file-level SCOPE.Component (subtype="file") entities and qualified
+// `ext:<module>:<name>` ToIDs. Neither of those entity classes is
+// pruned by this function — only the placeholder shape with
+// subtype="import" is removed. The linker continues to find both its
+// match-target classes after pruning.
+//
+// Returns the filtered slice, any rels that couldn't be hoisted, and
+// a stats record. The input slice's element ordering among survivors
+// is preserved.
+func PruneImportPlaceholders(records []types.EntityRecord) ([]types.EntityRecord, []types.RelationshipRecord, PruneImportPlaceholderStats) {
+	var stats PruneImportPlaceholderStats
+	if len(records) == 0 {
+		return records, nil, stats
+	}
+
+	// Pre-pass: collect placeholder indices and build the file-level
+	// carrier path -> original-index map. We do not yet know the
+	// post-prune index of each carrier — we compute that below by
+	// counting prunable predecessors in a single pass.
+	carrierByPath := make(map[string]int, len(records))
+	for i := range records {
+		r := &records[i]
+		if r.Kind == "SCOPE.Component" && r.Subtype == "file" && r.SourceFile != "" {
+			key := normalizePath(r.SourceFile)
+			if _, seen := carrierByPath[key]; !seen {
+				carrierByPath[key] = i
+			}
+		}
+	}
+
+	// First pass: decide for each record whether it survives. We need
+	// this decided before we can compute post-prune carrier indices.
+	prunable := make([]bool, len(records))
+	hoistTo := make([]int, len(records)) // original-index of carrier or -1
+	for i := range records {
+		hoistTo[i] = -1
+	}
+	for i := range records {
+		r := &records[i]
+		if !(r.Kind == "SCOPE.Component" && r.Subtype == "import") {
+			continue
+		}
+		stats.Considered++
+		key := normalizePath(r.SourceFile)
+		if key == "" {
+			// No SourceFile; can't hoist. Try to migrate rels
+			// directly to the orphan-rel slice if every rel has a
+			// non-empty FromID.
+			if canMigrate(r.Relationships) {
+				prunable[i] = true
+			}
+			continue
+		}
+		if origIdx, ok := carrierByPath[key]; ok {
+			prunable[i] = true
+			hoistTo[i] = origIdx
+			continue
+		}
+		if canMigrate(r.Relationships) {
+			prunable[i] = true
+		}
+	}
+
+	// Second pass: compute the post-prune index for each original
+	// index. Original indices that aren't pruned land at
+	// (originalIdx - prunedBefore). Original indices that are pruned
+	// have no post-prune mapping (we'll never need them on the LHS).
+	postIdx := make([]int, len(records))
+	{
+		pruned := 0
+		for i := range records {
+			if prunable[i] {
+				pruned++
+				postIdx[i] = -1
+				continue
+			}
+			postIdx[i] = i - pruned
+		}
+	}
+
+	// Third pass: materialise the survivor slice and hoist rels onto
+	// the file-level carrier entities at their post-prune indices.
+	out := make([]types.EntityRecord, 0, len(records)-stats.Considered)
+	var orphanRels []types.RelationshipRecord
+	for i := range records {
+		r := &records[i]
+		if !prunable[i] {
+			out = append(out, *r)
+			continue
+		}
+		stats.Pruned++
+		if hoistTo[i] >= 0 {
+			carrierPostIdx := postIdx[hoistTo[i]]
+			if carrierPostIdx >= 0 && carrierPostIdx < len(out) {
+				out[carrierPostIdx].Relationships = append(out[carrierPostIdx].Relationships, r.Relationships...)
+				stats.RelsHoisted += len(r.Relationships)
+				continue
+			}
+		}
+		// No carrier — every rel here has a non-empty FromID (we
+		// gated on canMigrate above), so each can stand alone.
+		orphanRels = append(orphanRels, r.Relationships...)
+		stats.RelsOrphaned += len(r.Relationships)
+	}
+
+	// Account for placeholders we INTENTIONALLY kept (rels couldn't
+	// be safely migrated). Considered minus Pruned is exactly that.
+	stats.PlaceholderKept = stats.Considered - stats.Pruned
+
+	return out, orphanRels, stats
+}
+
+// canMigrate reports whether every rel in the slice has a non-empty
+// FromID. PruneImportPlaceholders uses this gate to decide whether a
+// placeholder whose SourceFile has no file-level carrier can still be
+// dropped: when every rel can stand alone (FromID already rewritten
+// to a file-path or hex ID), migrating them to the standalone-rel
+// list preserves graph semantics. When any rel has empty FromID the
+// assembly loop would substitute the parent placeholder's hex ID, so
+// dropping the placeholder would lose provenance.
+func canMigrate(rels []types.RelationshipRecord) bool {
+	for i := range rels {
+		if rels[i].FromID == "" {
+			return false
+		}
+	}
+	return true
+}

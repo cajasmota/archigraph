@@ -1465,6 +1465,32 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 		totalStats.FromRewritten, totalStats.FromAmbiguous, totalStats.FromUnmatched,
 		totalStats.ToRewritten, totalStats.ToAmbiguous, totalStats.ToUnmatched)
 
+	// Prune import-placeholder entities (kind=SCOPE.Component
+	// subtype="import") emitted by the JS/TS extractor and the
+	// cross-language imports extractor. They are pure structural
+	// carriers for IMPORTS / DEPENDS_ON edges; after the resolver
+	// passes above have rewritten the edge ToID / FromID, the
+	// placeholders are orphan-by-construction (root-cause analysis
+	// 2026-05-19: 2,583 of fixture-b's 9,390 orphans). The pruner
+	// hoists each placeholder's embedded rels onto the file-level
+	// SCOPE.Component (subtype="file") entity for the same SourceFile,
+	// or returns them as standalone rels when no carrier exists.
+	// Cross-repo linker (#566/#570/#578) match targets (file-level
+	// entities and qualified ext:<module>:<name>) are untouched.
+	prunedMerged, pruneOrphanRels, pruneStats := resolve.PruneImportPlaceholders(merged)
+	merged = prunedMerged
+	if pruneStats.Considered > 0 {
+		fmt.Fprintf(os.Stderr,
+			"import-placeholder-prune: considered=%d pruned=%d rels_hoisted=%d rels_orphaned=%d kept=%d\n",
+			pruneStats.Considered, pruneStats.Pruned, pruneStats.RelsHoisted,
+			pruneStats.RelsOrphaned, pruneStats.PlaceholderKept)
+	}
+	if len(pruneOrphanRels) > 0 {
+		// Migrate to the standalone pass2Rels stream so the
+		// assembly loop below still surfaces them on the document.
+		pass2Rels = append(pass2Rels, pruneOrphanRels...)
+	}
+
 	entities := make([]graph.Entity, 0, len(merged))
 	relationships := make([]graph.Relationship, 0)
 
