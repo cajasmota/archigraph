@@ -41,15 +41,15 @@ func readLinkCandidates(group string) []LinkCandidate {
 		return arr
 	}
 	var obj struct {
-		Candidates []LinkCandidate `json:"candidates"`
+		Links []LinkCandidate `json:"links"`
 	}
 	if err := json.Unmarshal(data, &obj); err != nil {
 		return nil
 	}
-	return obj.Candidates
+	return obj.Links
 }
 
-// writeLinkCandidates persists the candidate list back to disk (array form).
+// writeLinkCandidates persists the candidate list back to disk with proper Document format.
 func writeLinkCandidates(group string, cs []LinkCandidate) error {
 	path := defaultLinkCandidatesFile(group)
 	if path == "" {
@@ -58,7 +58,15 @@ func writeLinkCandidates(group string, cs []LinkCandidate) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(cs, "", "  ")
+	// Wrap in Document structure to match the format used by the links package
+	doc := struct {
+		Version int             `json:"version"`
+		Links   []LinkCandidate `json:"links"`
+	}{
+		Version: 1,
+		Links:   cs,
+	}
+	data, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		return err
 	}
