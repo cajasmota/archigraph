@@ -300,6 +300,22 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	entities, relationships = applyGraphQLSubscriptionSynthesis(
 		file.Language, file.Path, file.Content, entities, relationships,
 	)
+	// #728: Scheduled-job entry-point detection. Emits SCOPE.ScheduledJob
+	// entities + TRIGGERS edges for every major scheduler framework across
+	// Python, Node, Java/Kotlin, Go; plus Kubernetes CronJob YAML and
+	// GitHub Actions schedule triggers (path-driven, not language-gated).
+	// Append-only — cannot regress surrounding passes.
+	entities, relationships = applyScheduledJobEdges(
+		file.Language, file.Path, file.Content, entities, relationships,
+	)
+	// #728: Webhook endpoint detection. Tags HTTP endpoints that verify
+	// inbound callbacks from external providers (Stripe, GitHub, Twilio,
+	// Slack, Mailgun, Svix, generic) with is_webhook=true +
+	// webhook_provider and emits SUBSCRIBES_TO edges to SCOPE.External
+	// entities. Append-only — cannot regress surrounding passes.
+	entities, relationships = applyWebhookEdges(
+		file.Language, file.Path, file.Content, entities, relationships,
+	)
 	// Django models-import suffix rewrite (PR #580 wave-10 Chain-fix A):
 	// The YAML rule `from \S+\.models import (\w+)` emits Model:<name>
 	// for every captured identifier. In Django/DRF projects, a sibling

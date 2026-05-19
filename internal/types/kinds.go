@@ -200,6 +200,11 @@ const (
 	RelationshipKindStreamsTo         RelationshipKind = "STREAMS_TO"
 	RelationshipKindGraphQLSubscribes RelationshipKind = "GRAPHQL_SUBSCRIBES"
 	RelationshipKindGraphQLPublishes  RelationshipKind = "GRAPHQL_PUBLISHES"
+
+	// #728: Scheduled-job and webhook edges.
+	//   TRIGGERS : SCOPE.ScheduledJob → handler function/method
+	//              (scheduler fires the handler on the declared schedule)
+	RelationshipKindTriggers RelationshipKind = "TRIGGERS"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -252,6 +257,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindStreamsTo,
 		RelationshipKindGraphQLSubscribes,
 		RelationshipKindGraphQLPublishes,
+		// #728 scheduled jobs + webhooks:
+		RelationshipKindTriggers,
 	}
 }
 
