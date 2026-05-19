@@ -35,3 +35,30 @@ func BuildOperationStructuralRef(lang, filePath, name string) string {
 func BuildSchemaColumnStructuralRef(filePath, table, column string) string {
 	return "scope:schema:column:sql:" + filepath.ToSlash(filePath) + ":" + table + "#" + column
 }
+
+// BuildSchemaFieldStructuralRef returns a Format A structural-ref for
+// class→field CONTAINS edges. Shape:
+//
+//	scope:schema:field:<lang>:<file>:<Class>.<attr>
+//
+// The trailing name segment exactly matches the SCOPE.Schema/field entity's
+// Name ("<dottedClass>.<attr>") and the SourceFile is the class's file, so
+// the resolver's byLocation fallback in internal/resolve/refs.go binds the
+// stub to the field entity ID without needing a kind-family widening for
+// scope="schema" (structuralKindFamilies returns nil for "schema").
+//
+// Counterpart of BuildOperationStructuralRef for class→method CONTAINS:
+// both emit a stub keyed on the parent class's file path so two classes in
+// different files declaring an attribute of the same bare name produce
+// distinct stubs that resolve to distinct entities.
+//
+// Used by the Python extractor to close the SCOPE.Schema/field orphan gap:
+// extractClassFields previously emitted field entities with no inbound or
+// outbound edges (see #526 deferred-emission comment in
+// internal/extractors/python/extractor.go), leaving them as the single
+// largest residual orphan class (~56% on django-realworld). The stub form
+// avoids the ComputeID circularity that motivated the original deferral
+// (the resolver fills the hex ID in after buildDocument runs).
+func BuildSchemaFieldStructuralRef(lang, filePath, name string) string {
+	return "scope:schema:field:" + lang + ":" + filepath.ToSlash(filePath) + ":" + name
+}

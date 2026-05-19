@@ -164,26 +164,42 @@ func walkNode(
 				// "<dottedClass>.<attr>" so the resolver's byMember index
 				// binds `self.<attr>` references back to them.
 				extractClassFields(body, file, childParent, out)
-				// Emit CONTAINS edges from the class to every operation entity
-				// the walker just appended (methods inside this class).
-				// Field entities (#526) are intentionally not given a
-				// CONTAINS edge — they exist solely to populate the
-				// resolver's byMember index for `self.<attr>` lookups,
-				// and an entity-ID-keyed CONTAINS would require the
-				// field's ComputeID up front (it's filled in later by
-				// buildDocument).
+				// Emit CONTAINS edges from the class to every Operation
+				// (method) AND every Schema/field entity the walker just
+				// appended.
+				//
+				// History: field entities (#526) were originally emitted
+				// WITHOUT a CONTAINS edge because the field's hex ComputeID
+				// isn't known until buildDocument runs. The Format A
+				// structural-ref pattern already used for class→method
+				// edges sidesteps that constraint — the resolver binds the
+				// stub to the field entity via byLocation (same-file, name
+				// matches the field's Name="<Class>.<attr>"). Closing this
+				// gap eliminates the largest residual orphan class on
+				// Python corpora (SCOPE.Schema/field with zero edges).
 				after := len(*out)
 				for k := before; k < after; k++ {
 					child := &(*out)[k]
-					if child.Kind != "SCOPE.Operation" {
+					var toID string
+					switch {
+					case child.Kind == "SCOPE.Operation":
+						// Issue #144 — Format A structural-ref keyed on the
+						// source file so the resolver disambiguates by
+						// location when two classes in different files
+						// declare methods with the same Name. FromID empty →
+						// buildDocument substitutes the parent (class)
+						// entity ID at emit time.
+						toID = extractor.BuildOperationStructuralRef("python", file.Path, child.Name)
+					case child.Kind == "SCOPE.Schema" && child.Subtype == "field":
+						// Class-attribute assignment emitted by
+						// extractClassFields (#526). The stub resolves via
+						// byLocation[file][<Class>.<attr>] in the same way
+						// class→method does via lookupLocationKind +
+						// byLocation fallback.
+						toID = extractor.BuildSchemaFieldStructuralRef("python", file.Path, child.Name)
+					default:
 						continue
 					}
-					// Issue #144 — emit a structural-ref (Format A) keyed on
-					// the source file so the resolver disambiguates by
-					// location when two classes in different files declare
-					// methods with the same Name. FromID empty → buildDocument
-					// substitutes the parent (class) entity ID at emit time.
-					toID := extractor.BuildOperationStructuralRef("python", file.Path, child.Name)
 					(*out)[classIdx].Relationships = append((*out)[classIdx].Relationships,
 						types.RelationshipRecord{
 							ToID: toID,
@@ -252,13 +268,21 @@ func walkNode(
 					after := len(*out)
 					for k := before; k < after; k++ {
 						child := &(*out)[k]
-						if child.Kind != "SCOPE.Operation" {
+						var toID string
+						switch {
+						case child.Kind == "SCOPE.Operation":
+							// Issue #144 — structural-ref (Format A) keyed on
+							// file path; same rationale as the bare class
+							// branch above.
+							toID = extractor.BuildOperationStructuralRef("python", file.Path, child.Name)
+						case child.Kind == "SCOPE.Schema" && child.Subtype == "field":
+							// Class→field CONTAINS (closes #526 deferred
+							// emission). See the bare class branch for the
+							// detailed rationale.
+							toID = extractor.BuildSchemaFieldStructuralRef("python", file.Path, child.Name)
+						default:
 							continue
 						}
-						// Issue #144 — structural-ref (Format A) keyed on
-						// file path; same rationale as the bare class
-						// branch above.
-						toID := extractor.BuildOperationStructuralRef("python", file.Path, child.Name)
 						(*out)[classIdx].Relationships = append((*out)[classIdx].Relationships,
 							types.RelationshipRecord{
 								ToID: toID,

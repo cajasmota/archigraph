@@ -88,3 +88,44 @@ func TestBuildSchemaColumnStructuralRef(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildSchemaFieldStructuralRef(t *testing.T) {
+	tests := []struct {
+		name     string
+		lang     string
+		filePath string
+		ident    string
+		want     string
+	}{
+		{
+			name:     "python class.attr",
+			lang:     "python",
+			filePath: "conduit/apps/articles/models.py",
+			ident:    "Article.title",
+			want:     "scope:schema:field:python:conduit/apps/articles/models.py:Article.title",
+		},
+		{
+			name:     "windows path is normalized",
+			lang:     "python",
+			filePath: filepath.FromSlash("app/models.py"),
+			ident:    "User.email",
+			want:     "scope:schema:field:python:app/models.py:User.email",
+		},
+		{
+			name:     "nested class dotted name",
+			lang:     "python",
+			filePath: "x.py",
+			ident:    "Outer.Inner.flag",
+			want:     "scope:schema:field:python:x.py:Outer.Inner.flag",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := BuildSchemaFieldStructuralRef(tc.lang, tc.filePath, tc.ident)
+			if got != tc.want {
+				t.Fatalf("BuildSchemaFieldStructuralRef(%q, %q, %q) = %q, want %q",
+					tc.lang, tc.filePath, tc.ident, got, tc.want)
+			}
+		})
+	}
+}

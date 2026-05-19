@@ -1012,6 +1012,103 @@ func TestExtract_ClassAttrFields_AnnotatedAndTuple(t *testing.T) {
 	}
 }
 
+// TestExtract_ClassAttrFields_EmitsContainsEdge verifies the class entity
+// gets a CONTAINS edge for every emitted SCOPE.Schema/field, mirroring the
+// class→method CONTAINS emission. Regression guard for the Django field
+// orphan recovery — without this edge, ~56% of django-realworld orphans
+// (class-scope attribute declarations) had zero relationships and inflated
+// the orphan rate. The stub form is Format A:
+// scope:schema:field:python:<file>:<Class>.<attr>, resolved via byLocation.
+func TestExtract_ClassAttrFields_EmitsContainsEdge(t *testing.T) {
+	src := `class Article(models.Model):
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+	var classRec *types.EntityRecord
+	for i := range entities {
+		if entities[i].Kind == "SCOPE.Component" && entities[i].Subtype == "class" && entities[i].Name == "Article" {
+			classRec = &entities[i]
+			break
+		}
+	}
+	if classRec == nil {
+		t.Fatalf("Article class entity not found; got %v", entityNames(entities))
+	}
+	wantStubs := map[string]bool{
+		"scope:schema:field:python:test.py:Article.title":    false,
+		"scope:schema:field:python:test.py:Article.body":     false,
+		"scope:operation:method:python:test.py:Article.save": false,
+	}
+	for _, rel := range classRec.Relationships {
+		if rel.Kind != "CONTAINS" {
+			continue
+		}
+		if _, want := wantStubs[rel.ToID]; want {
+			wantStubs[rel.ToID] = true
+		}
+	}
+	for stub, seen := range wantStubs {
+		if !seen {
+			t.Errorf("expected CONTAINS edge with ToID=%q on Article; got rels=%+v", stub, classRec.Relationships)
+		}
+	}
+}
+
+// TestExtract_ClassAttrFields_ContainsEdge_DecoratedClass verifies the
+// CONTAINS-for-field emission also fires on decorated classes (the second
+// emission site in walkNode's decorated_definition branch).
+func TestExtract_ClassAttrFields_ContainsEdge_DecoratedClass(t *testing.T) {
+	src := `@dataclass
+class Config:
+    name: str = "default"
+    count: int = 0
+`
+	tree := parse(t, []byte(src))
+	ext, _ := extractor.Get("python")
+	entities, err := ext.Extract(context.Background(), makeFile(src, tree))
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	entities = stripFileEntity(entities)
+	var classRec *types.EntityRecord
+	for i := range entities {
+		if entities[i].Kind == "SCOPE.Component" && entities[i].Subtype == "class" && entities[i].Name == "Config" {
+			classRec = &entities[i]
+			break
+		}
+	}
+	if classRec == nil {
+		t.Fatalf("Config class entity not found on decorated definition; got %v", entityNames(entities))
+	}
+	wantStubs := map[string]bool{
+		"scope:schema:field:python:test.py:Config.name":  false,
+		"scope:schema:field:python:test.py:Config.count": false,
+	}
+	for _, rel := range classRec.Relationships {
+		if rel.Kind != "CONTAINS" {
+			continue
+		}
+		if _, want := wantStubs[rel.ToID]; want {
+			wantStubs[rel.ToID] = true
+		}
+	}
+	for stub, seen := range wantStubs {
+		if !seen {
+			t.Errorf("expected CONTAINS edge with ToID=%q on decorated Config; got rels=%+v", stub, classRec.Relationships)
+		}
+	}
+}
+
 // entityNames returns entity names for test diagnostics.
 func entityNames(entities []types.EntityRecord) []string {
 	names := make([]string, len(entities))
