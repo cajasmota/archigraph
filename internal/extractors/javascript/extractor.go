@@ -165,6 +165,13 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		}()
 		x.walk(root, "", nil)
 		x.collectImports(root)
+		// Second pass: REFERENCES-edge emission. Runs AFTER walk +
+		// collectImports so the file-scope symbol table covers every
+		// declared name (functions, methods, consts, destructured
+		// bindings, imports). Wrapped in the same recover frame so a
+		// pathological AST shape can't take down the primary extraction
+		// — emitReferences returns partial results internally.
+		x.emitReferences(root)
 	}()
 
 	// Secondary pass: error-handling patterns.
