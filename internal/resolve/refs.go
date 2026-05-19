@@ -1641,6 +1641,30 @@ func BuildIndex(entities []types.EntityRecord) Index {
 				idx.byQualifiedName[e.QualifiedName] = e.ID
 			}
 		}
+		// Flask-realworld wave — index Properties["ref"] under the same
+		// byQualifiedName bucket, scoped to refs that look like
+		// `scope:endpoint:<file>#<method>:<path>`. The cross-language
+		// endpoint extractor stamps the entity's structural identifier
+		// into the `ref` property but doesn't populate QualifiedName, so
+		// SERVES / HANDLES edges that carry the structural stub as
+		// FromID fall through every other index path and land in
+		// bug-extractor. By indexing the endpoint ref under the qname
+		// bucket, the resolver picks these edges up without requiring
+		// an extractor change. SCOPED to the `scope:endpoint:` prefix
+		// so import / file structural refs (which legitimately repeat
+		// across consumer files and would be blanked under the existing
+		// QualifiedName collision policy) are not pulled into the
+		// qname-resolution path. First-writer-wins, NO blanking on
+		// duplicates — endpoint refs are unique per (file, method,
+		// path) tuple by construction so collisions only occur when
+		// the same endpoint entity is re-emitted, and choosing either
+		// instance is safe.
+		if refProp := e.Properties["ref"]; refProp != "" && refProp != e.QualifiedName &&
+			strings.HasPrefix(refProp, "scope:endpoint:") {
+			if _, ok := idx.byQualifiedName[refProp]; !ok {
+				idx.byQualifiedName[refProp] = e.ID
+			}
+		}
 
 		// Index under both the plain kind and the trimmed kind ("SCOPE.View"
 		// → "View"), so stubs can match either form.
@@ -2337,7 +2361,82 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 			}
 		}
 	}
+	// Flask-realworld wave — Python cross-file mixin/base class
+	// fallback. The hierarchy extractor synthesises EXTENDS targets as
+	// `scope:component:class:python:<consumer_file>:<ParentName>` using
+	// the CONSUMER's file path (where the `class Foo(ParentName):`
+	// declaration lives), even when `ParentName` is imported from a
+	// sibling module. Same-file lookup above fails; pkgDir fallback
+	// only fires for "operation" scope. For `component` scope with
+	// lang=="python" probe the global byName index: if exactly one
+	// real (non-SCOPE.*) Component-family entity exists for this name
+	// across the whole graph, bind to it. Resolves the
+	// `class Article(SurrogatePK):` shape where SurrogatePK is defined
+	// in `conduit/database.py` but used in `conduit/articles/models.py`.
+	// Conservative — only fires when the global lookup is unambiguous
+	// (single real entity), so cross-file collisions are left
+	// unresolved rather than guessed.
+	if strings.EqualFold(scopeKind, "component") {
+		// Restrict to python (other languages have their own
+		// package/file-keyed lookup paths and shouldn't be widened).
+		if lang := strings.ToLower(parts[stubScopeLangIndex]); lang == "python" {
+			if id, ok := idx.lookupUniqueRealComponentByName(tail); ok {
+				return id, statusRewritten, true
+			}
+		}
+	}
 	return "", statusUnmatched, true
+}
+
+// lookupUniqueRealComponentByName returns (id, true) when exactly one
+// Component-family entity is registered globally under the supplied
+// bare name. Tries the real-entity tier first (Component / Class /
+// View / Model; SCOPE.* placeholders excluded). When that misses
+// (Python emits user classes only as SCOPE.Component since #525), it
+// falls back to scanning every (file, kind) bucket for SCOPE.Component
+// entries with this name: if a single file owns the only non-placeholder
+// SCOPE.Component (i.e. one consumer file has the class definition
+// while the others may have placeholder imports under different fully-
+// qualified names), bind to it. Used by lookupStructural's Python
+// cross-file fallback for `scope:component:class:python:<file>:<Name>`
+// stubs emitted by the hierarchy extractor with the consumer's file
+// path when the parent class lives in a sibling module. Returns
+// ("", false) when zero or >=2 candidates match — the resolver leaves
+// the stub alone rather than guessing.
+func (idx Index) lookupUniqueRealComponentByName(name string) (string, bool) {
+	if name == "" {
+		return "", false
+	}
+	if realBucket := idx.nameKindsReal[name]; len(realBucket) > 0 {
+		if id, ok := uniqueMatchInFamily(realBucket, componentKindFamily, false); ok {
+			return id, true
+		}
+	}
+	// Python class fallback: scan byLocationKindReal for any file that
+	// owns a SCOPE.Component entity with this exact name. SCOPE.Component
+	// is the Python extractor's class-entity kind (#525). When exactly
+	// one file owns a SCOPE.Component for this name, bind to it; ambiguous
+	// otherwise.
+	scopeKind := scopeKindPrefix + "Component"
+	var match string
+	for _, fileBucket := range idx.byLocationKind {
+		nameBucket := fileBucket[name]
+		if nameBucket == nil {
+			continue
+		}
+		id := nameBucket[scopeKind]
+		if id == "" {
+			continue
+		}
+		if match != "" && match != id {
+			return "", false
+		}
+		match = id
+	}
+	if match != "" {
+		return match, true
+	}
+	return "", false
 }
 
 // structuralKindFamilies maps a scope-kind segment from a structural ref
@@ -3265,10 +3364,142 @@ func (idx Index) classifyDispositionLang(resolvedID, originalStub, lang string, 
 	if lang == "python" && isPythonBuiltinTypeMethod(name) {
 		return DispositionExternalKnown
 	}
+	// Flask-realworld wave — Python local-module dotted re-export
+	// references (`conduit.database.Column`, `conduit.database.Model`,
+	// `myapp.utils.helper`). The Python framework-extractor emits
+	// SCOPE.Component placeholders at every consumer file for each
+	// `from <pkg>.<module> import <Symbol>` so the same dotted name
+	// has N placeholders (one per consumer) and nameExists returns
+	// true → bug-resolver. The reference itself is real but resolves
+	// at runtime to whatever the source module re-exports (commonly
+	// an external like `db.Column` aliased as `Column`). Route to
+	// Dynamic — the edge stays visible in graph.json but doesn't
+	// inflate bug-rate. Gated to lang=="python" so other languages
+	// with dotted identifiers are not shadowed; the strict shape
+	// (all-lower head segments + identifier leaf with at least 2
+	// dots) keeps the safer-bias rule (#94) intact.
+	if lang == "python" && isPythonLocalDottedReexport(name) {
+		return DispositionDynamic
+	}
+	// Flask-realworld wave — Python SQLAlchemy `relationship("ClassName")`
+	// string references emitted by the framework-extractor as
+	// `Model:<Name>` (e.g. `Model:User`, `Model:UserProfile`,
+	// `Model:Blueprint`). These are runtime-resolved string class
+	// references — SQLAlchemy looks up the class by name when the
+	// mapper configures relationships. The `Model` kind bucket only
+	// holds entities whose extractor-emitted kind is literally `Model`
+	// (a small minority in flask-realworld — Tags + CRUDMixin only);
+	// the actual target class is emitted as SCOPE.Component. Bare-name
+	// fallback hits ambig because the same class name may also exist
+	// as a Relationship entity from a sibling SQLAlchemy backref.
+	// Route to Dynamic — the string-keyed lookup is intrinsically
+	// runtime-resolved and not an extractor bug. Gated to lang=="python"
+	// with a `Model:` prefix and a simple python identifier tail.
+	if (lang == "python" || lang == "") && isPythonSQLAlchemyModelStub(originalStub) {
+		return DispositionDynamic
+	}
 	if idx.nameExists(name) {
 		return DispositionBugResolver
 	}
 	return DispositionBugExtractor
+}
+
+// isPythonLocalDottedReexport reports whether s is a dotted reference
+// of the form `<lower_seg>.<lower_seg>...<Identifier>` with at least
+// two dots — i.e. a local-package qualified symbol import like
+// `conduit.database.Column`. The head segments must be lower_snake
+// (canonical Python module path) and the leaf must be a valid Python
+// identifier (lower_snake OR PascalCase/CamelCase; SCREAMING_SNAKE is
+// already routed by isPythonDottedModuleConstant so this catches the
+// non-constant cases). At least two head segments are required to
+// avoid binding `foo.bar` shapes that may be plain attribute access on
+// a local variable; `pkg.mod.Symbol` is the canonical "import from
+// local package" shape. Flask-realworld wave (post-pandas residual
+// 6.58% → ≤3%). Gated upstream to lang=="python".
+func isPythonLocalDottedReexport(s string) bool {
+	// Need at least two dots → at least three segments.
+	first := strings.IndexByte(s, '.')
+	if first <= 0 {
+		return false
+	}
+	last := strings.LastIndexByte(s, '.')
+	if last == first {
+		return false
+	}
+	if last >= len(s)-1 {
+		return false
+	}
+	head := s[:last]
+	leaf := s[last+1:]
+	// Leaf must be a simple Python identifier (any case).
+	if !isSimplePythonIdentifier(leaf) {
+		return false
+	}
+	// Each head segment must be a lower_snake module-path segment.
+	for _, seg := range strings.Split(head, ".") {
+		if seg == "" {
+			return false
+		}
+		for i, c := range seg {
+			switch {
+			case c >= 'a' && c <= 'z':
+				// ok
+			case c >= '0' && c <= '9':
+				if i == 0 {
+					return false
+				}
+			case c == '_':
+				// ok
+			default:
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// isPythonSQLAlchemyModelStub reports whether stub is of the form
+// `Model:<Name>` where <Name> is a simple Python identifier (any
+// case). Used to route SQLAlchemy `relationship("Class")` string
+// references — emitted as `Model:<Name>` by the python framework-
+// extractor — to Dynamic. Flask-realworld wave addition. The leading
+// `Model:` prefix and the strict identifier shape keep the
+// safer-bias rule intact (no plausible non-python use of this exact
+// shape).
+func isPythonSQLAlchemyModelStub(stub string) bool {
+	const prefix = "Model:"
+	if !strings.HasPrefix(stub, prefix) {
+		return false
+	}
+	name := stub[len(prefix):]
+	return isSimplePythonIdentifier(name)
+}
+
+// isSimplePythonIdentifier reports whether s is a valid Python
+// identifier of any case (snake_case, PascalCase, CamelCase,
+// SCREAMING_SNAKE). Must start with a letter or underscore and
+// contain only letters, digits, and underscores. Empty rejected.
+func isSimplePythonIdentifier(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z':
+			// ok
+		case c >= 'A' && c <= 'Z':
+			// ok
+		case c == '_':
+			// ok
+		case c >= '0' && c <= '9':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // isPythonModuleConstantName reports whether s is a SCREAMING_SNAKE_CASE
@@ -4292,6 +4523,150 @@ var pythonExternalBaseTypes = map[string]struct{}{
 	"DirNamesMixin":          {},
 	"DatetimeLikeBlock":      {},
 	"BaseExprVisitor":        {},
+
+	// Flask-realworld wave (post-pandas residual at 6.58%, target ≤3%).
+	// Python builtin exception types — used as parents in `class Foo(Exception):`
+	// across virtually every Python codebase that defines custom errors
+	// (flask-realworld's `InvalidUsage(Exception)`, django/drf custom error
+	// classes, library-internal hierarchy roots). All builtin — no plausible
+	// user-defined class collision (the names are reserved in Python idiom).
+	"Exception":         {},
+	"BaseException":     {},
+	"ValueError":        {},
+	"TypeError":         {},
+	"KeyError":          {},
+	"AttributeError":    {},
+	"RuntimeError":      {},
+	"NotImplementedError": {},
+	"StopIteration":     {},
+	"StopAsyncIteration": {},
+	"GeneratorExit":     {},
+	"KeyboardInterrupt": {},
+	"SystemExit":        {},
+	"OSError":           {},
+	"IOError":           {},
+	"FileNotFoundError": {},
+	"FileExistsError":   {},
+	"PermissionError":   {},
+	"IsADirectoryError": {},
+	"NotADirectoryError": {},
+	"TimeoutError":      {},
+	"ConnectionError":   {},
+	"ConnectionRefusedError": {},
+	"ConnectionResetError":   {},
+	"ConnectionAbortedError": {},
+	"BrokenPipeError":   {},
+	"InterruptedError":  {},
+	"ChildProcessError": {},
+	"ProcessLookupError": {},
+	"BlockingIOError":   {},
+	"LookupError":       {},
+	"IndexError":        {},
+	"ArithmeticError":   {},
+	"ZeroDivisionError": {},
+	"OverflowError":     {},
+	"FloatingPointError": {},
+	"AssertionError":    {},
+	"NameError":         {},
+	"UnboundLocalError": {},
+	"ModuleNotFoundError": {},
+	"SyntaxError":       {},
+	"IndentationError":  {},
+	"TabError":          {},
+	"SystemError":       {},
+	"MemoryError":       {},
+	"ReferenceError":    {},
+	"RecursionError":    {},
+	"BufferError":       {},
+	"EOFError":          {},
+	"UnicodeError":      {},
+	"UnicodeDecodeError": {},
+	"UnicodeEncodeError": {},
+	"UnicodeTranslateError": {},
+	"Warning":           {},
+	"UserWarning":       {},
+	"DeprecationWarning": {},
+	"PendingDeprecationWarning": {},
+	"SyntaxWarning":     {},
+	"RuntimeWarning":    {},
+	"FutureWarning":     {},
+	"ImportWarning":     {},
+	"UnicodeWarning":    {},
+	"BytesWarning":      {},
+	"ResourceWarning":   {},
+
+	// Flask-realworld wave — Flask-Login / Flask-JWT-Extended /
+	// Flask-RESTful / Flask-CORS / Flask-SocketIO / Flask-Marshmallow
+	// base classes routinely used as `class Foo(LoginManager):` /
+	// `class Bar(UserMixin):` / `class Baz(AnonymousUserMixin):`.
+	"UserMixin":           {}, // flask_login.UserMixin
+	"AnonymousUserMixin":  {}, // flask_login.AnonymousUserMixin
+	"MixinMeta":           {}, // flask_login meta
+	"SocketIO":            {}, // flask_socketio.SocketIO
+	"Namespace":           {}, // flask_socketio.Namespace / argparse.Namespace
+	"CORS":                {}, // flask_cors.CORS
+	"SQLAlchemyAutoSchema": {}, // flask_marshmallow.sqla.SQLAlchemyAutoSchema
+	"SQLAlchemySchema":    {}, // flask_marshmallow.sqla.SQLAlchemySchema
+	// Marshmallow validators / decorators used as parents (rare but
+	// observed in custom Validator subclasses).
+	"Validator":           {}, // marshmallow.validate.Validator
+	"Range":               {}, // marshmallow.validate.Range
+	"OneOf":               {}, // marshmallow.validate.OneOf
+	"Email":               {}, // marshmallow.validate.Email
+	"Regexp":              {}, // marshmallow.validate.Regexp / wtforms
+	"NoneOf":              {}, // marshmallow.validate.NoneOf
+	"ContainsOnly":        {}, // marshmallow.validate.ContainsOnly
+	"Equal":               {}, // marshmallow.validate.Equal
+	"ContainsNoneOf":      {}, // marshmallow.validate.ContainsNoneOf
+	"URL":                 {}, // marshmallow.validate.URL
+	// Flask-WTF / WTForms base classes.
+	"FlaskForm":           {},
+	"Form":                {}, // wtforms.Form (collides with django Form? Django Form already implicit via Model)
+	"FieldList":           {},
+	"FormField":           {},
+	"StringField":         {},
+	"PasswordField":       {},
+	"SubmitField":         {},
+	"HiddenField":         {},
+	"SelectField":         {},
+	"SelectMultipleField": {},
+	"RadioField":          {},
+	"DateTimeLocalField":  {},
+	"TimeField":           {},
+	// Flask-Migrate.
+	"AlembicCommand":      {},
+	// Flask-Caching / Flask-Session base classes.
+	"SessionInterface":    {},
+
+	// Flask-realworld wave — SQLAlchemy ORM + Core base classes
+	// commonly used as parents.
+	"BaseQuery":           {}, // flask_sqlalchemy.BaseQuery
+	"Pagination":          {}, // flask_sqlalchemy.Pagination
+	"AbstractConcreteBase": {}, // sqlalchemy.ext.declarative.AbstractConcreteBase
+	"ConcreteBase":        {},
+	"DeferredReflection":  {},
+	"DeclarativeMeta":     {},
+	"MetaData":            {},
+	"ForeignKeyConstraint": {},
+	"PrimaryKeyConstraint": {},
+	"UniqueConstraint":    {},
+	"CheckConstraint":     {},
+	"BigInteger":          {},
+	"SmallInteger":        {},
+	"Numeric":             {},
+	"Float":               {},
+	"Boolean":             {},
+	"DateTime":            {},
+	"Date":                {},
+	"Time":                {},
+	"Interval":            {},
+	"LargeBinary":         {},
+	"JSON":                {},
+	// SQLAlchemy session / engine. (Session is in pythonBareNames as the
+	// botocore Session bare-name; pythonExternalBaseTypes is a separate
+	// map for structural-ref EXTENDS targets.)
+	"Engine":              {},
+	"Connection":          {},
 }
 
 // javaExternalBaseTypes is the Java-language-gated allowlist of

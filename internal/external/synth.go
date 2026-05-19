@@ -5361,258 +5361,6 @@ var kotlinBareNames = map[string]struct{}{
 	"JsonArray":               {},
 	"JsonPrimitive":           {},
 	"isAssignableFrom":        {},
-
-	// Issue: kotlin-exposed-dsl wave — JetBrains Exposed SQL DSL/ORM
-	// (`org.jetbrains.exposed.v1.core.*`, `.v1.jdbc.*`, `.dao.*`)
-	// receiver-stripped types and helpers dominating the residual
-	// bug-extractor sample on the `exposed` corpus. The Kotlin
-	// extractor strips the receiver from a call
-	// (`column.appendValueAlias(builder)` → bare `appendValueAlias`,
-	// `LongColumnType()` → bare `LongColumnType`), so the resolver sees
-	// only the leaf and the call lands in bug-extractor.
-	//
-	// All additions are Kotlin-language-gated. Categories:
-	//
-	//   1. Exposed Column type constructors — Exposed-specific Pascal
-	//      names; effectively zero collision risk in non-Exposed Kotlin
-	//      code, and Kotlin-gated keeps them away from JS/Java/Go.
-	//   2. Exposed DSL leaves — `op`, `joinPart`, `JoinCondition`,
-	//      `wrap`-family (`wrap` already gated to rust, excluded),
-	//      `defaultValue`, `transformFromValue`, `transformToValue`,
-	//      `columnTransformer`, `NullableColumnWithTransform`,
-	//      `ColumnWithTransform`.
-	//   3. JVM collection types + Triple/Pair (java.util.*, kotlin
-	//      built-ins) — Pascal names dominated by Java stdlib in
-	//      Kotlin code.
-	//   4. java.time / kotlinx-datetime conversion helpers —
-	//      `atZone`, `atOffset`, `atTime`, `systemDefault`,
-	//      `currentSystemDefault`, `toKotlinInstant`,
-	//      `toKotlinLocalTime`, `toKotlinUuid`, `toJavaUuid`,
-	//      `toJavaLocalTime`, `toEpochMilliseconds`,
-	//      `fromEpochMilliseconds`, `fromEpochSeconds`,
-	//      `toEpochMilli`, `floorDiv` (Math).
-	//   5. kotlin.collections / kotlin.sequences residue —
-	//      `addAll`, `removeAll`, `mapValues`, `filterValues`,
-	//      `filterNot`, `filterIsInstance`, `subtract`, `asList`,
-	//      `withIndex`, `buildList`, `ifEmpty`, `joinTo`, `none`,
-	//      `flatMapTo`. (`flatMap` remains excluded per swift gate.)
-	//   6. kotlin.text helpers — `replaceBefore`, `replaceRange`,
-	//      `replaceFirst`, `uppercase`, `lowercase`, `ifBlank`,
-	//      `isNullOrBlank`, `contentEquals`, `contentHashCode`,
-	//      `contentToString`, `toBooleanStrict`, `toShort`, `toByte`
-	//      (already added), `toBigInteger`, `toBigDecimal`, `toChar`,
-	//      `toUByte`, `toUShort`, `toULong` (toULongOrNull already
-	//      added), `toUInt`, `toIntArray`, `toFloatArray`,
-	//      `toTypedArray`, `toHashSet`, `arrayOfNulls`, `orEmpty`,
-	//      `isNaN` (Float/Double — gated; `isNaN` already in jsBareNames
-	//      but adding the Kotlin gate via stdlibFunction is safe).
-	//   7. JVM concurrency leaves — `compareAndSet`, `getOrSet`
-	//      (ThreadLocal.getOrSet), `pop`, `peek` (Stack/Deque), `Stack`.
-	//   8. kotlin.uuid (Kotlin 2.x stdlib) — `generateV4`, `generateV7`,
-	//      `fromByteArray`, `getUuid`.
-	//   9. java.nio.charset / java.nio.ByteBuffer leaves — `allocate`,
-	//      `putLong`, `codePointCount`.
-	//  10. kotlin.reflect — `isSubclassOf`, `callBy`, `isEntityIdentifier`
-	//      (Exposed reflection helper).
-	//  11. Gradle DSL — `signAllPublications`, `useInMemoryPgpKeys`,
-	//      `configure`. These are kotlin-gated Gradle Kotlin-DSL
-	//      build-script leaves.
-	//  12. Misc Exposed internals — `resolveColumnType`,
-	//      `resolveVectorColumnType`, `appendValueAlias`,
-	//      `booleanOperator`, `precessOrderByClause` (sic, upstream),
-	//      `isColumnTypeIncorrect`, `isJsonBColumnForCasting`,
-	//      `mappedIndices`, `existingIndices`, `filterInternalIndices`,
-	//      `filterForeignKeys`, `isInternalConstraint`, `topLevelWrap`,
-	//      `additionalConstraint`, `secondFraction`, `Format`,
-	//      `likePatternSpecialChars`, `removeAt`, `setScale`, `scale`,
-	//      `precision`, `traverse`, `fromDb`, `toDb`, `fromByteArray`.
-	//
-	// Excluded (#106 safer-bias — collide with user methods on any
-	// domain type even Kotlin-gated):
-	//   - `value` (already gated elsewhere but kept rejected for the
-	//     Exposed wave — collides with every property accessor).
-	//   - `body`, `on`, `last`, `unzip`, `warn`, `info`, `source`,
-	//     `keys`, `valueOf`, `distinct`, `count`, `update`, `insert`,
-	//     `select`, `selectAll` (already added), `join`, `eq` (already
-	//     added), `transaction` (already added), `deleteWhere` (already
-	//     added), `orderBy` (already added), `limit` (already added) —
-	//     present in other lang maps OR previously added Kotlin gate.
-	//   - `add`, `get`, `set`, `remove`, `isEmpty`, `size` (rejected
-	//     per the original #106 rule).
-
-	// Exposed Column type constructors.
-	"LongColumnType":             {},
-	"IntegerColumnType":          {},
-	"ShortColumnType":            {},
-	"ByteColumnType":             {},
-	"UByteColumnType":            {},
-	"UShortColumnType":           {},
-	"UIntegerColumnType":         {},
-	"ULongColumnType":            {},
-	"FloatColumnType":            {},
-	"DoubleColumnType":           {},
-	"DecimalColumnType":          {},
-	"BooleanColumnType":          {},
-	"CharacterColumnType":        {},
-	"VarCharColumnType":          {},
-	"TextColumnType":             {},
-	"MediumTextColumnType":       {},
-	"LargeTextColumnType":        {},
-	"BinaryColumnType":           {},
-	"BasicBinaryColumnType":      {},
-	"BlobColumnType":             {},
-	"UuidColumnType":             {},
-	"EnumerationColumnType":      {},
-	"EnumerationNameColumnType":  {},
-	"CustomEnumerationColumnType": {},
-	"AutoIncColumnType":          {},
-	"ArrayColumnType":            {},
-	"EntityIDColumnType":         {},
-	"FloatVectorColumnType":      {},
-	"IntVectorColumnType":        {},
-	"ColumnWithTransform":        {},
-	"NullableColumnWithTransform": {},
-	"JoinCondition":              {},
-
-	// Exposed DSL helpers / internals.
-	"op":                       {},
-	"joinPart":                 {},
-	"topLevelWrap":             {},
-	"defaultValue":             {},
-	"transformFromValue":       {},
-	"transformToValue":         {},
-	"columnTransformer":        {},
-	"appendValueAlias":         {},
-	"booleanOperator":          {},
-	"resolveColumnType":        {},
-	"resolveVectorColumnType":  {},
-	"isColumnTypeIncorrect":    {},
-	"isJsonBColumnForCasting":  {},
-	"isInternalConstraint":     {},
-	"isEntityIdentifier":       {},
-	"mappedIndices":            {},
-	"existingIndices":          {},
-	"filterInternalIndices":    {},
-	"filterForeignKeys":        {},
-	"additionalConstraint":     {},
-	"secondFraction":           {},
-	"likePatternSpecialChars":  {},
-	"precessOrderByClause":     {}, // (sic) Exposed dialect hook
-	"Format":                   {},
-
-	// JVM collection types (java.util / kotlin built-ins).
-	"LinkedHashMap": {},
-	"LinkedHashSet": {},
-	"HashMap":       {},
-	"HashSet":       {},
-	"ArrayList":     {},
-	"Stack":         {},
-	"Triple":        {},
-	"Pair":          {},
-
-	// java.time / kotlinx-datetime conversions.
-	"atZone":                {},
-	"atOffset":              {},
-	"atTime":                {},
-	"systemDefault":         {},
-	"currentSystemDefault":  {},
-	"toKotlinInstant":       {},
-	"toKotlinLocalTime":     {},
-	"toKotlinUuid":          {},
-	"toJavaUuid":            {},
-	"toJavaLocalTime":       {},
-	"toEpochMilliseconds":   {},
-	"fromEpochMilliseconds": {},
-	"fromEpochSeconds":      {},
-	"floorDiv":              {},
-
-	// kotlin.collections / kotlin.sequences residue.
-	"addAll":            {},
-	"removeAll":         {},
-	"mapValues":         {},
-	"filterValues":      {},
-	"filterNot":         {},
-	"filterIsInstance":  {},
-	"subtract":          {},
-	"asList":            {},
-	"withIndex":         {},
-	"buildList":         {},
-	"ifEmpty":           {},
-	"joinTo":            {},
-	"none":              {},
-	"flatMapTo":         {},
-	"toTypedArray":      {},
-	"toHashSet":         {},
-	"arrayOfNulls":      {},
-	"orEmpty":           {},
-	"findLast":          {},
-
-	// kotlin.text helpers.
-	"replaceBefore":   {},
-	"replaceRange":    {},
-	"replaceFirst":    {},
-	"uppercase":       {},
-	"lowercase":       {},
-	"ifBlank":         {},
-	"isNullOrBlank":   {},
-	"contentEquals":   {},
-	"contentHashCode": {},
-	"contentToString": {},
-	"toBooleanStrict": {},
-	"toShort":         {},
-	"toBigInteger":    {},
-	"toBigDecimal":    {},
-	"toChar":          {},
-	"toUByte":         {},
-	"toUShort":        {},
-	"toULong":         {},
-	"toUInt":          {},
-	"toIntArray":      {},
-	"toFloatArray":    {},
-	"isNaN":           {},
-
-	// JVM concurrency leaves.
-	"compareAndSet": {},
-	"getOrSet":      {},
-	"pop":           {},
-	"peek":          {},
-
-	// kotlin.uuid (Kotlin 2.x stdlib).
-	"generateV4":    {},
-	"generateV7":    {},
-	"fromByteArray": {},
-	"getUuid":       {},
-
-	// java.nio.
-	"allocate":       {},
-	"putLong":        {},
-	"codePointCount": {},
-
-	// kotlin.reflect.
-	"isSubclassOf": {},
-	"callBy":       {},
-
-	// Gradle Kotlin DSL.
-	// `configure` excluded — gated to rust per rustBareNames (Actix-web App.configure).
-	"signAllPublications": {},
-	"useInMemoryPgpKeys":  {},
-
-	// Misc.
-	"removeAt":     {},
-	"setScale":     {},
-	"scale":        {},
-	"precision":    {},
-	"traverse":     {},
-	"fromDb":       {},
-	"toDb":         {},
-	"BigInteger":   {},
-	"Timestamp":    {},
-	"List":         {},
-	"Array":        {},
-	"String":       {},
-	"LocalDate":    {},
-	"LocalDateTime": {},
-	"isSupported":  {},
 }
 
 // kotlinTestBareNames is the Kotlin test-file-gated bare-name stop-list
@@ -9985,6 +9733,220 @@ var pythonBareNames = map[string]struct{}{
 	// stdlib os.getenv (already exists via os.environ but `getenv` is
 	// the bare-name receiver-strip from `os.getenv("FOO")`).
 	"getenv": {},
+
+	// Flask-realworld wave — flask + sqlalchemy + werkzeug + click
+	// distinctive bare-name receiver-strips not yet covered. Conservative
+	// addition rule preserved: all names below are dominantly framework
+	// idioms in Python and unlikely to collide with user-defined methods
+	// of the same simple name in JS / Go / etc. Excluded generic verbs:
+	// `first`, `commit`, `add`, `remove`, `append`, `pop`, `items`,
+	// `update`, `extend`, `replace`, `post`, `limit`, `offset`, `walk`,
+	// `bind`, `exit` (too collision-prone per #94 safer-bias rule).
+
+	// Flask-Login decorator + helpers. `current_user` is the proxy
+	// receiver-stripped from `current_user.is_authenticated`; the rest
+	// are decorator + helper functions.
+	"current_user":     {},
+	"login_user":       {},
+	"logout_user":      {},
+	"login_required":   {},
+	"fresh_login_required": {},
+	"user_loaded_from_request": {},
+	"login_fresh":      {},
+	"confirm_login":    {},
+	"login_url":        {},
+	// Flask-JWT-Extended decorators + helpers (`create_access_token`
+	// already in wave-4; add the verification + identity helpers).
+	"jwt_required":              {},
+	"jwt_optional":              {},
+	"create_refresh_token":      {},
+	"get_jwt_identity":          {},
+	"get_jwt_claims":            {},
+	"get_jti":                   {},
+	"verify_jwt_in_request":     {},
+	"verify_jwt_in_request_optional": {},
+	"jwt_refresh_token_required": {},
+	"set_access_cookies":        {},
+	"set_refresh_cookies":       {},
+	"unset_jwt_cookies":         {},
+	// Flask-RESTful helpers — `marshal`/`marshal_with` decorator,
+	// `reqparse` parser DSL.
+	"marshal":          {},
+	"marshal_with":     {},
+	"marshal_with_field": {},
+	"reqparse":         {},
+	"RequestParser":    {},
+	// Flask-CORS / Flask-SocketIO decorators.
+	"cross_origin":     {},
+	"join_room":        {},
+	"leave_room":       {},
+	"close_room":       {},
+	"rooms":            {},
+	"disconnect":       {},
+	"on_namespace":     {},
+	// Flask-WTF / WTForms — `validate_on_submit` + CSRF helpers +
+	// distinctive validator constructors (Length / NumberRange /
+	// Required already too generic; `DataRequired` is distinctive).
+	"validate_on_submit": {},
+	"hidden_tag":       {},
+	"populate_obj":     {},
+	"DataRequired":     {},
+	"InputRequired":    {},
+	"EqualTo":          {},
+	"AnyOf":            {},
+	"generate_csrf":    {},
+	"validate_csrf":    {},
+	// Marshmallow Schema decorators + dump/load helpers. `dump`/`load`
+	// excluded as too generic; the `_many`/`_dict` suffix + decorator
+	// hooks are distinctive.
+	"validates_schema": {},
+	"pre_load":         {},
+	"post_load":        {},
+	"pre_dump":         {},
+	"post_dump":        {},
+	"dump_one":         {},
+	"dump_many":        {},
+	"load_one":         {},
+	"load_many":        {},
+	// SQLAlchemy query / session DSL beyond wave-4 set. `desc`/`asc`
+	// are short but distinctive when python-gated (SQLAlchemy ORDER BY
+	// modifiers).
+	"desc":             {}, // sqlalchemy.desc / Column.desc
+	"asc":              {}, // sqlalchemy.asc / Column.asc
+	"nullsfirst":       {},
+	"nullslast":        {},
+	"subqueryload":     {},
+	"joinedload":       {},
+	"selectinload":     {},
+	"lazyload":         {},
+	"noload":           {},
+	"raiseload":        {},
+	"defer":            {},
+	"undefer":          {},
+	"with_entities":    {},
+	"with_polymorphic": {},
+	"options":          {},
+	"having":           {},
+	"group_by":         {},
+	"order_by_clause":  {},
+	"backref":          {},
+	"validates":        {},
+	"column_property":  {},
+	"hybrid_property":  {},
+	"hybrid_method":    {},
+	"declared_attr":    {},
+	"declarative_base": {},
+	"sessionmaker":     {},
+	"scoped_session":   {},
+	"event":            {},
+	// SQLAlchemy column types receiver-stripped from `db.Column(db.Text)`
+	// → `Text` etc. Distinctive PascalCase types.
+	"BigInteger":       {},
+	"SmallInteger":     {},
+	"LargeBinary":      {},
+	"Interval":         {},
+	"Numeric":          {},
+	// Werkzeug helpers receiver-stripped from `werkzeug.utils.X` /
+	// `werkzeug.security.X` / `werkzeug.exceptions.X`.
+	"secure_filename":  {},
+	"escape":           {},
+	"unescape":         {},
+	"safe_str_cmp":     {},
+	"safe_join":        {},
+	"http_date":        {},
+	"BadRequest":       {},
+	"Unauthorized":     {},
+	"Forbidden":        {},
+	// `NotFound` already in stdlibBareNames
+	// `Conflict`/`UnprocessableEntity` collide with csharp aspnet DSL
+	"Gone":             {},
+	"UnsupportedMediaType": {},
+	"TooManyRequests":  {},
+	"InternalServerError": {},
+	// Flask request/response inline helpers. `g` is the flask global
+	// proxy receiver-stripped from `g.user`; `session` collides with
+	// SQLA `db.session` (intentionally NOT added — too generic).
+	"shell_context_processor": {},
+	"to_json":                 {}, // Flask InvalidUsage idiom in this corpus
+	"iter_blueprints":         {},
+	"app_errorhandler":        {},
+	"before_request":          {},
+	"after_request":           {},
+	"teardown_request":        {},
+	"teardown_appcontext":     {},
+	"context_processor":       {},
+	"url_value_preprocessor":  {},
+	"url_defaults":            {},
+	"before_first_request":    {},
+	// Click CLI test runner + DSL (`invoke` already in wave-7; add the
+	// `echo` helper + group decorators). `echo` collides with PHP/Go
+	// idioms but is python-gated here.
+	"echo":             {},
+	"secho":            {},
+	"prompt":           {},
+	"confirm":          {},
+	"clear":            {},
+	"getchar":          {},
+	"pause":            {},
+	"edit":             {},
+	// `launch` excluded — collides with kotlin coroutine launch
+	"open_file":        {},
+	"format_filename":  {},
+	"argument":         {},
+	"option":           {},
+	"password_option":  {},
+	"confirmation_option": {},
+	"version_option":   {},
+	"help_option":      {},
+	"pass_context":     {},
+	"pass_obj":         {},
+	"make_pass_decorator": {},
+	"BadParameter":     {},
+	"UsageError":       {},
+	"MissingParameter": {},
+	"NoSuchOption":     {},
+	"FileError":        {},
+	// Python `cls` receiver. Bare-name receiver-strip from
+	// `cls.method(...)` inside classmethods. Strictly python idiom —
+	// the literal identifier `cls` is the conventional first parameter
+	// of `@classmethod`-decorated methods, treated as keyword-like by
+	// every Python style guide. Gating python-only avoids shadowing
+	// user variables in other languages. Wave-realised on
+	// flask-realworld (6 hits) but high-frequency across django + drf
+	// corpora.
+	"cls":              {},
+	// SQLAlchemy `relationship()` parameter name receiver-strips.
+	// `lazy` excluded — collides with kotlin stdlib lazy
+	"uselist":          {},
+	"viewonly":         {},
+	"cascade":          {},
+	"single_parent":    {},
+	"passive_deletes":  {},
+	"passive_updates":  {},
+	// pytest assertion + capture (already have `raises`, `fixture`,
+	// `mark`, `parametrize`, `monkeypatch`, `xfail`). Add `approx`
+	// (numerical comparison helper) + `deprecated_call`.
+	"approx":           {},
+	"deprecated_call":  {},
+	"warns":            {},
+	"importorskip":     {},
+	"skipif":           {},
+	"skipunless":       {},
+	"usefixtures":      {},
+	"freeze_time":      {},
+	// Marshmallow `Method` / `Function` / `Constant` field constructors.
+	"Method":           {},
+	"Function":         {},
+	"Constant":         {},
+	"Nested":           {},
+	"Pluck":            {},
+	"auto_field":       {},
+	// Flask-Marshmallow / marshmallow-sqlalchemy exports.
+	"SQLAlchemyAutoSchema": {},
+	// Flask-APISpec marshaller decorators.
+	"marshal_with_apispec": {},
+	"use_kwargs":           {},
+	"doc":                  {},
 }
 
 // cppBareNames is the C/C++-language-gated bare-name stop-list (issue
@@ -11670,15 +11632,6 @@ var knownExternalPackages = map[string]struct{}{
 	"kotlin":                {},
 	"kotlinx":               {},
 	"io.ktor":               {}, // io.ktor.* server / client / websockets (Issue #106)
-	// Kotlin Exposed SQL DSL/ORM (JetBrains). Both v0 (legacy) and v1
-	// import roots are present in the wild: legacy `org.jetbrains.exposed.sql.*`,
-	// `org.jetbrains.exposed.dao.*`, and the v1 layout
-	// `org.jetbrains.exposed.v1.core.*`, `.v1.jdbc.*`, `.v1.json.*`,
-	// `.v1.datetime.*`, etc. A single `org.jetbrains.exposed` prefix
-	// covers every subpackage via longestKnownDottedPrefix.
-	"org.jetbrains.exposed":           {},
-	"org.jetbrains.kotlinx":           {}, // org.jetbrains.kotlinx.* (kotlinx coroutines/serialization JB-published artifacts)
-	"org.jetbrains.kotlin":            {}, // org.jetbrains.kotlin.* (kotlin compiler/std)
 	"org.springframework":   {},
 	"com.fasterxml.jackson": {},
 	"com.google.guava":      {},
