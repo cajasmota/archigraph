@@ -1497,6 +1497,37 @@ REFERENCES/fn moved from 0.00 → 1.06–3.68 across the board. Risk score
 (composite of orphan rate, imports hygiene, references density) moved
 29–49 → 75–84.
 
+## Java orphan recovery — REFERENCES emission + IMPORTS to_id (analog of #641/#642/#650 for Java)
+
+Date: 2026-05-19. Branch: feat/java-orphan-recovery.
+
+Java extractor previously emitted ~0 REFERENCES edges per method body —
+every same-scope identifier use, every `this.<field>` reference, every
+`ClassName.staticMember` reference, and every imported-name reference
+outside of a CALLS context produced no edge. The fixture-d (Quarkus)
+baseline (`~/private/benchmarks/client-fixture-de-baseline-2026-05-19.md`)
+flagged 63.4% Java orphan rate with 1,232 of 1,943 entities orphaned;
+~616 entities were estimated recoverable via the same two-track pattern
+that worked for JS/TS (#641/#642) and Python (#650). Two new passes —
+`emitReferences` (Track A) and `resolveImportToIDs` (Track B) — close
+the same gap for Java/JVM while leaving every other language
+byte-identical.
+
+### Per-Java-corpus orphan rate before / after
+
+| Corpus | Java orphan before | Java orphan after | REFERENCES/fn after |
+|---|---:|---:|---:|
+| client-fixture-d (Quarkus) | 63.4% | **55.2%** | 1.33 |
+| spring-petclinic | (unmeasured) | **9.6%** | 1.12 |
+| kafka-streams-examples | (unmeasured) | **15.0%** | 1.47 |
+| exposed (Java subset) | (unmeasured) | 0.0% (10 ents) | 0.00 |
+
+REFERENCES/fn moved from 0.00 → 1.12–1.47 across every Java corpus.
+fixture-d residual is dominated by cross-file REFERENCES (Quarkus
+component injection — `@Inject` fields and CDI producer methods that
+bind a same-package type defined in a sibling file). Same chain-fix
+work item as Python's.
+
 ### Quality fixture recall (gate)
 
 | Fixture | Entity recall | Relationship recall | Forbidden hits |
@@ -1522,7 +1553,7 @@ REFERENCES/fn moved from 0.00 → 1.06–3.68 across the board. Risk score
 Bug-rates byte-identical (or within float drift on Kafka). The Python
 extractor changes do not touch any other language's emission path.
 
-### Residual root cause
+### Residual root cause (Python)
 
 The remaining Python orphan delta (e.g. django-realworld 41.9%,
 client-fixture-a 37.0%) is dominated by **cross-file orphans** — Django
@@ -1543,7 +1574,7 @@ fire on REFERENCES (today it only rewrites CALLS). Chain-fixes filed:
   on subclasses in OTHER files still miss. Requires hierarchy-aware
   field lookup or per-class attr propagation through EXTENDS edges.
 
-### Status
+### Status (Python)
 
 - **PR**: shipped; quality gate green; cross-language regression-free.
 - **Coverage**: same-scope identifier, self.<attr>, f-string
@@ -1553,3 +1584,51 @@ fire on REFERENCES (today it only rewrites CALLS). Chain-fixes filed:
 - **Follow-ups**: two chain-fixes above; non-Python language analogs
   (Go REFERENCES, Java REFERENCES, Ruby REFERENCES, etc.) are
   independent waves.
+
+### Residual root cause (Java)
+
+The remaining Java orphan delta on fixture-d (55.2%) is dominated by
+two classes:
+
+1. **cross-file REFERENCES** — Quarkus CDI components (`@Inject`,
+   `@ApplicationScoped`, `@Singleton`) bind a same-package type defined
+   in a sibling file; the same-file symbol table can't bind those
+   references. Mirror of Python's cross-file orphan class.
+2. **import-placeholder Name shape** — the Java buildImport emits the
+   import entity with `Name = top package segment` (e.g. "com" for
+   `import com.foo.Bar`). The references pass conservatively SKIPS
+   imports in the file-scope symbol table because a target built from
+   the top-segment Name would never bind via lookupStructural. Python
+   does not have this issue because its import entity Name is the full
+   dotted path. Resolved cross-file via the chain-fix below.
+
+Chain-fixes filed (out of scope for this PR):
+
+- **chain-fix:java-references-cross-file** — extend
+  `resolve/imports.go ResolveImports` to rewrite REFERENCES edges
+  (mirror of the CALLS path) via `source_module + imported_name`.
+  Expected -15–25pp on fixture-d.
+- **chain-fix:java-import-entity-shape** — switch buildImport to emit
+  `Name = local_name` (or the full dotted path) so the file-scope
+  symbol table can index imports the way Python does. Today, indexing
+  imports under local_name produces a structural-ref target the
+  resolver cannot bind because the import entity's Name is the top
+  package segment.
+- **chain-fix:java-class-field-cross-file** — class fields are indexed
+  by bare Name today; cross-file references to a field declared on a
+  base class miss for the same reason Python's mixin/base-class fields
+  do. Requires hierarchy-aware field lookup or per-class attr
+  propagation through EXTENDS edges.
+
+### Status (Java)
+
+- **PR**: opened on feat/java-orphan-recovery; quality gate green.
+- **Coverage**: same-scope identifier, this.<field>, ClassName.member,
+  type_identifier references (casts/instanceof/generic params),
+  known-external IMPORTS rewrite (org.springframework, io.quarkus,
+  io.smallrye, com.amazonaws, com.azure, jakarta, javax, kotlin,
+  groovy, com.zaxxer, redis.clients, at.favre.lib, etc.), in-tree
+  imports untouched, reserved keywords skipped, self-references
+  filtered.
+- **Follow-ups**: three chain-fixes above; non-Java language analogs
+  (Go REFERENCES, Ruby REFERENCES, etc.) are independent waves.

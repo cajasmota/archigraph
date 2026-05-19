@@ -16242,6 +16242,9 @@ var knownExternalPackages = map[string]struct{}{
 	// roots are pulled in by Quarkus extensions. org.eclipse.microprofile.* is
 	// the MicroProfile spec implementation (Config, JWT, OpenAPI, REST Client, etc.).
 	// io.hypersistence.* is Hibernate utilities for JSON/JSONB type mapping.
+	// Additional JVM ecosystem roots from java-orphan-recovery: Swagger, Hibernate,
+	// Eclipse umbrella, Gradle, bare org.apache, com.google, com.fasterxml, cloud SDKs,
+	// HikariCP, Jedis, BCrypt, Groovy.
 	"io.quarkus":                {},
 	"io.smallrye":               {},
 	"io.vertx":                  {},
@@ -16257,6 +16260,22 @@ var knownExternalPackages = map[string]struct{}{
 	"at.favre.lib.crypto":       {},
 	"org.eclipse.microprofile":  {}, // MicroProfile spec (Config, JWT, OpenAPI, REST Client, etc.)
 	"io.hypersistence":          {}, // Hibernate utilities for JSON/JSONB type mapping
+	"io.swagger":                {}, // Swagger / OpenAPI annotations
+	"org.hibernate":             {}, // Hibernate ORM / Validator / Reactive
+	"org.eclipse":               {}, // Eclipse foundation umbrella (Jetty, JKube, etc.)
+	"org.gradle":                {}, // Gradle build / plugin APIs
+	"org.apache":                {}, // bare org.apache umbrella for unlisted subpackages
+	"com.google":                {}, // broader com.google.* (Guice, Closure, etc.)
+	"com.fasterxml":             {}, // broader com.fasterxml.* (woodstox, etc.)
+	"com.amazonaws":             {}, // AWS SDK for Java v1
+	"com.azure":                 {}, // Azure SDK for Java
+	"com.microsoft":             {}, // MSAL / SQL Server JDBC / etc.
+	"com.oracle":                {}, // Oracle JDBC / GraalVM SDK
+	"com.sun":                   {}, // legacy com.sun.* (Xerces, JAX-WS RI, etc.)
+	"com.zaxxer":                {}, // HikariCP connection pool
+	"redis.clients":             {}, // Jedis Redis client (`redis.clients.jedis.*`)
+	"at.favre.lib":              {}, // BCrypt password hashing
+	"groovy":                    {}, // Groovy language / Gradle build DSL
 	// Issue kafka-fix-w3 — Apache Kafka / Confluent / Avro / Jetty / Jersey
 	// ecosystem roots. Multi-segment keys keep longestKnownDottedPrefix
 	// precise so an unrelated `org.apache` user-namespace cannot collide.
