@@ -65,11 +65,27 @@ func upsertImportSet(set map[string]bool, rel *graph.Relationship) map[string]bo
 		set[rel.ToID] = true
 	}
 	if rel.Properties != nil {
-		if mod := rel.Properties["source_module"]; mod != "" {
+		mod := rel.Properties["source_module"]
+		imp := rel.Properties["imported_name"]
+		if mod != "" {
 			set[mod] = true
 		}
-		if imp := rel.Properties["imported_name"]; imp != "" {
+		if imp != "" {
 			set[imp] = true
+		}
+		// Issue #787c — Java bare-name constructor folding. The import-leaf
+		// resolver (classifyExternal line 802) finds the leaf of each import
+		// path and, when it matches the stub, calls longestKnownDottedPrefix
+		// on that import path. After #681 the IMPORTS edge ToID is rewritten to
+		// `ext:<prefix>:<leaf>` (colons, not dots) and source_module carries only
+		// the package (`org.apache.poi.xssf.usermodel`), not the FQN.
+		// longestKnownDottedPrefix requires dots and returns "" for bare names,
+		// so `new XSSFWorkbook()` stubs never match.  Adding the synthetic FQN
+		// `source_module + "." + imported_name` gives the resolver a dotted path
+		// it CAN walk, enabling `org.apache` (or any other external prefix) to
+		// be found.  Non-wildcard imports only (wildcard imported_name is "").
+		if mod != "" && imp != "" && !strings.ContainsAny(imp, ".*") {
+			set[mod+"."+imp] = true
 		}
 	}
 	return set
@@ -868,6 +884,14 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 			return "bs4", "function", true
 		case "python_urllib_function":
 			return "urllib", "function", true
+		// Issue #787c — Apache POI and PDFBox bare-name sentinels.
+		// Fold to the canonical package placeholder so the resolver
+		// routes the edge to ExternalKnown rather than synthesising an
+		// ext:<ClassName> node.  Both packages are on knownExternalPackages.
+		case "poi_type":
+			return "org.apache.poi", "package", true
+		case "pdfbox_type":
+			return "org.apache.pdfbox", "package", true
 		}
 		return name, subtype, true
 	}
@@ -1976,6 +2000,32 @@ func stdlibFunction(name, lang, fromFile string, fromImports map[string]bool) (s
 				return "function", true
 			}
 		}
+		// Issue #787c — Apache POI constructor calls and static helpers
+		// (`new XSSFWorkbook()`, `new CellRangeAddress(...)`, `WorkbookFactory.create(...)`,
+		// etc.) arrive as bare-name CALLS stubs. The primary fix is the
+		// synthetic-FQN addition in upsertImportSet which routes them through
+		// the import-leaf folder above.  This gate is the Option-B fallback:
+		// when the file imports any org.apache.poi.* package AND the stub is a
+		// known POI surface name, fold to the sentinel "poi_type" which
+		// classifyExternal maps to ext:org.apache.poi.  Catches POI types
+		// not enumerated in the synthetic-FQN path (e.g. wildcard imports
+		// where source_module lacks the class leaf, or POI subpackages not
+		// yet in javaKnownExternalRoots).
+		if hasPoiImport(fromImports) {
+			if _, ok := poiBareNames[name]; ok {
+				return "poi_type", true
+			}
+		}
+		// Issue #787c — Apache PDFBox constructor calls and static helpers
+		// (`new PDDocument()`, `new PDPage()`, `PDType1Font.HELVETICA`, …).
+		// Same pattern as POI: gate on org.apache.pdfbox.* import presence,
+		// return sentinel "pdfbox_type" which classifyExternal maps to
+		// ext:org.apache.pdfbox.
+		if hasPdfBoxImport(fromImports) {
+			if _, ok := pdfBoxBareNames[name]; ok {
+				return "pdfbox_type", true
+			}
+		}
 	}
 	if lang == "kotlin" {
 		if _, ok := kotlinBareNames[name]; ok {
@@ -2921,6 +2971,218 @@ func hasCommonsCliImport(imports map[string]bool) bool {
 		}
 	}
 	return false
+}
+
+// hasPoiImport reports whether the source file imports any org.apache.poi.*
+// package (Apache POI spreadsheet/document library). Gates the POI
+// bare-name allowlist for constructor calls and static helpers that arrive
+// as bare-name CALLS stubs after receiver stripping.
+func hasPoiImport(imports map[string]bool) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		// Strip ext: prefix that resolveImportToIDs may have applied.
+		// After #787c, ToID for POI imports becomes "ext:org.apache.poi:XSSFWorkbook".
+		p = strings.TrimPrefix(p, "ext:")
+		if p == "org.apache.poi" || strings.HasPrefix(p, "org.apache.poi.") {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPdfBoxImport reports whether the source file imports any
+// org.apache.pdfbox.* package (Apache PDFBox PDF library). Gates the
+// PDFBox bare-name allowlist.
+func hasPdfBoxImport(imports map[string]bool) bool {
+	if len(imports) == 0 {
+		return false
+	}
+	for p := range imports {
+		p = strings.TrimPrefix(p, "ext:")
+		if p == "org.apache.pdfbox" || strings.HasPrefix(p, "org.apache.pdfbox.") {
+			return true
+		}
+	}
+	return false
+}
+
+// poiBareNames is the allowlist of Apache POI class names and static
+// helpers that appear as bare-name CALLS stubs after the Java extractor
+// strips receivers from constructor calls (`new XSSFWorkbook()` → stub
+// `XSSFWorkbook`) and static factory calls (`WorkbookFactory.create(...)` →
+// stub `WorkbookFactory`).
+//
+// These are PascalCase class names from the following POI packages:
+//   - org.apache.poi.xssf.usermodel (XSSFWorkbook, XSSFSheet, ...)
+//   - org.apache.poi.xssf.streaming (SXSSFWorkbook, SXSSFSheet, ...)
+//   - org.apache.poi.hssf.usermodel (HSSFWorkbook, HSSFSheet, ...)
+//   - org.apache.poi.ss.usermodel   (Cell, Row, Sheet, Workbook interfaces)
+//   - org.apache.poi.ss.util        (CellRangeAddress, CellReference, ...)
+//   - org.apache.poi.xwpf.usermodel (XWPFDocument, XWPFParagraph, ...)
+//   - org.apache.poi.xslf.usermodel (XMLSlideShow, XSLFSlide, ...)
+//
+// Gated by hasPoiImport so only files that genuinely import POI activate
+// this allowlist — preventing user-defined classes named `Workbook` from
+// being misclassified in non-POI projects.
+//
+// Issue #787c.
+var poiBareNames = map[string]struct{}{
+	// ---- XSSF (xlsx — OOXML spreadsheet) ----
+	"XSSFWorkbook":          {},
+	"XSSFSheet":             {},
+	"XSSFRow":               {},
+	"XSSFCell":              {},
+	"XSSFFont":              {},
+	"XSSFCellStyle":         {},
+	"XSSFColor":             {},
+	"XSSFRichTextString":    {},
+	"XSSFDrawing":           {},
+	"XSSFClientAnchor":      {},
+	"XSSFChart":             {},
+	"XSSFCreationHelper":    {},
+	"XSSFFormulaEvaluator":  {},
+	"XSSFPivotTable":        {},
+	"XSSFTable":             {},
+	"XSSFDataValidation":    {},
+	"XSSFConditionalFormatting": {},
+	"XSSFHyperlink":         {},
+	"XSSFComment":           {},
+	"XSSFName":              {},
+	"XSSFPrintSetup":        {},
+	"XSSFSheetConditionalFormatting": {},
+	// ---- SXSSF (streaming xlsx — large file write) ----
+	"SXSSFWorkbook":         {},
+	"SXSSFSheet":            {},
+	"SXSSFRow":              {},
+	"SXSSFCell":             {},
+	// ---- HSSF (xls — legacy BIFF8 spreadsheet) ----
+	"HSSFWorkbook":          {},
+	"HSSFSheet":             {},
+	"HSSFRow":               {},
+	"HSSFCell":              {},
+	"HSSFFont":              {},
+	"HSSFCellStyle":         {},
+	"HSSFColor":             {},
+	"HSSFRichTextString":    {},
+	"HSSFDataFormat":        {},
+	"HSSFPrintSetup":        {},
+	"HSSFPatternFormatting": {},
+	// ---- SS common interfaces (org.apache.poi.ss.usermodel) ----
+	"Workbook":              {},
+	"Sheet":                 {},
+	"Row":                   {},
+	"CellStyle":             {},
+	"CreationHelper":        {},
+	"DataFormat":            {},
+	"FormulaEvaluator":      {},
+	"Drawing":               {},
+	"Hyperlink":             {},
+	"Comment":               {},
+	"Name":                  {},
+	"PictureData":           {},
+	"PrintSetup":            {},
+	"RichTextString":        {},
+	// NOTE: `Cell`, `Font`, `Sheet`, `Row` are excluded because they collide
+	// with extremely common non-POI user class names and project-local names;
+	// the primary fix (synthetic-FQN in upsertImportSet) handles those.
+	// ---- SS util (org.apache.poi.ss.util) ----
+	"CellRangeAddress":      {},
+	"CellReference":         {},
+	"CellRangeAddressList":  {},
+	"RegionUtil":            {},
+	"CellUtil":              {},
+	"AreaReference":         {},
+	// ---- WorkbookFactory / utility classes ----
+	"WorkbookFactory":       {},
+	"DataFormatter":         {},
+	"WorkbookEvaluatorProvider": {},
+	// ---- XWPF (Word docx) ----
+	"XWPFDocument":          {},
+	"XWPFParagraph":         {},
+	"XWPFRun":               {},
+	"XWPFTable":             {},
+	"XWPFTableRow":          {},
+	"XWPFTableCell":         {},
+	"XWPFHeader":            {},
+	"XWPFFooter":            {},
+	"XWPFHyperlink":         {},
+	"XWPFStyle":             {},
+	"XWPFStyles":            {},
+	"XWPFComment":           {},
+	"XWPFComments":          {},
+	"XWPFList":              {},
+	"XWPFNumbering":         {},
+	// ---- XSLF (PowerPoint pptx) ----
+	"XMLSlideShow":          {},
+	"XSLFSlide":             {},
+	"XSLFSlideLayout":       {},
+	"XSLFSlideMaster":       {},
+	"XSLFTextShape":         {},
+	"XSLFTextParagraph":     {},
+	"XSLFTextRun":           {},
+	"XSLFShape":             {},
+	"XSLFGroupShape":        {},
+	"XSLFPictureShape":      {},
+	"XSLFTable":             {},
+	"XSLFTableRow":          {},
+	"XSLFTableCell":         {},
+}
+
+// pdfBoxBareNames is the allowlist of Apache PDFBox class names that
+// appear as bare-name CALLS stubs — primarily constructor calls and
+// static factory/constant references.
+//
+// Gated by hasPdfBoxImport. Issue #787c.
+var pdfBoxBareNames = map[string]struct{}{
+	// ---- org.apache.pdfbox.pdmodel ----
+	"PDDocument":          {},
+	"PDPage":              {},
+	"PDPageContentStream": {},
+	"PDPageTree":          {},
+	"PDResources":         {},
+	"PDDocumentInformation": {},
+	"PDDocumentCatalog":   {},
+	"PDDocumentOutline":   {},
+	"PDOutlineItem":       {},
+	"PDPageDestination":   {},
+	"PDNamedDestination":  {},
+	// ---- org.apache.pdfbox.pdmodel.common ----
+	"PDRectangle":         {},
+	"PDStream":            {},
+	"PDMetadata":          {},
+	// ---- org.apache.pdfbox.pdmodel.font ----
+	"PDFont":              {},
+	"PDType1Font":         {},
+	"PDTrueTypeFont":      {},
+	"PDType0Font":         {},
+	"PDCIDFontType2":      {},
+	"Standard14Fonts":     {},
+	// ---- org.apache.pdfbox.pdmodel.graphics.image ----
+	"PDImageXObject":      {},
+	"JPEGFactory":         {},
+	"LosslessFactory":     {},
+	"CCITTFactory":        {},
+	// ---- org.apache.pdfbox.pdmodel.graphics.color ----
+	"PDColorSpace":        {},
+	"PDDeviceRGB":         {},
+	"PDDeviceGray":        {},
+	"PDDeviceCMYK":        {},
+	// ---- org.apache.pdfbox.pdmodel.interactive.* ----
+	"PDAnnotation":        {},
+	"PDAnnotationLink":    {},
+	"PDActionURI":         {},
+	"PDActionGoTo":        {},
+	"PDAnnotationWidget":  {},
+	// ---- org.apache.pdfbox.rendering ----
+	"PDFRenderer":         {},
+	"RenderingHints":      {},
+	// ---- org.apache.pdfbox.text ----
+	"PDFTextStripper":     {},
+	"TextPosition":        {},
+	// ---- org.apache.pdfbox.util ----
+	"Matrix":              {},
 }
 
 // hasJSCollectionLibImport reports whether the source JS/TS file imports
@@ -16330,6 +16592,38 @@ var knownExternalPackages = map[string]struct{}{
 	"org.apache.logging":     {}, // log4j 2.x (org.apache.logging.log4j.*)
 	"org.apache.hadoop":      {}, // commonly imported alongside Kafka in data pipelines
 	"org.apache.commons.cli": {}, // commons-cli (explicit; org.apache.commons already covers it)
+	// Issue #787c — Apache POI (Excel/Word/PowerPoint/OOXML) and Apache PDFBox.
+	// Both are imported in real enterprise Java / Quarkus services alongside
+	// Quarkus, Spring, and Jakarta EE.  Multi-segment keys keep
+	// longestKnownDottedPrefix precise so an unrelated `org.apache.pooling`
+	// namespace cannot collide.
+	//
+	// POI sub-packages (ss=spreadsheet, xssf=OOXML, hssf=legacy, sxssf=streaming,
+	// xwpf=Word, xslf=PowerPoint, ooxml=generic OOXML schemas, extractor=text
+	// extraction).  org.apache.poi covers them all as an umbrella.
+	"org.apache.poi":         {}, // Apache POI: XSSF/HSSF/SXSSF/XWPF/XSLF spreadsheet+doc APIs
+	"org.apache.poi.ss":      {}, // POI Spreadsheet (ss) common API — Cell, Row, Sheet, Workbook interfaces
+	"org.apache.poi.xssf":    {}, // POI XSSF — OOXML-format (xlsx/xlsm) classes
+	"org.apache.poi.hssf":    {}, // POI HSSF — legacy BIFF8 format (xls) classes
+	"org.apache.poi.xwpf":    {}, // POI XWPF — Word 2007+ (docx) classes
+	"org.apache.poi.xslf":    {}, // POI XSLF — PowerPoint 2007+ (pptx) classes
+	"org.apache.poi.ooxml":   {}, // POI generic OOXML schemas
+	// PDFBox — Apache's pure-Java PDF library (org.apache.pdfbox.pdmodel.*,
+	// org.apache.pdfbox.rendering.*, org.apache.pdfbox.text.*, etc.).
+	// Covered by the bare org.apache umbrella, but the explicit entry keeps
+	// longestKnownDottedPrefix from unnecessarily walking to `org.apache` when
+	// org.apache.pdfbox is the real library.
+	"org.apache.pdfbox":      {}, // Apache PDFBox: PDDocument, PDPage, PDPageContentStream, PDFont, …
+	// Apache Commons — commons-io, commons-lang3, commons-collections, and
+	// commons-compress are commonly co-imported with POI in enterprise Java.
+	// org.apache.commons is already on the allowlist but listing the
+	// high-traffic sub-families here gives longestKnownDottedPrefix a
+	// more precise canonical name for each.
+	"org.apache.commons.io":          {}, // Apache Commons IO — FileUtils, IOUtils, FilenameUtils, …
+	"org.apache.commons.lang3":        {}, // Apache Commons Lang3 — StringUtils, ArrayUtils, ObjectUtils, …
+	"org.apache.commons.collections4": {}, // Apache Commons Collections4 — Bag, MultiMap, …
+	"org.apache.commons.compress":     {}, // Apache Commons Compress — zip/tar/7z helpers often used with POI
+	"org.apache.commons.text":         {}, // Apache Commons Text — StringSubstitutor, WordUtils, …
 	"io.confluent":           {}, // Confluent schema-registry / kafka-streams examples / KSQL clients
 	"kafka":                  {}, // Scala Kafka classes (`import kafka.server.KafkaConfig`)
 	"com.google.common":      {}, // Guava (`com.google.common.collect.*`) — supersedes legacy `com.google.guava`

@@ -304,3 +304,47 @@ public class Demo {}
 		}
 	}
 }
+
+// TestJavaImportsRewritePOI verifies that org.apache.poi.* and
+// org.apache.pdfbox.* imports are rewritten by resolveImportToIDs to use
+// the ext: prefix, routing the IMPORTS edge to ExternalKnown in the
+// resolver (issue #787c).
+func TestJavaImportsRewritePOI(t *testing.T) {
+	src := `package com.demo.inventory.reports;
+
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.commons.io.FileUtils;
+
+public class Report {}
+`
+	ents := runJavaExtract(t, src)
+
+	cases := []struct {
+		sourceMod string
+		wantPfx   string
+	}{
+		{"org.apache.poi.xssf.usermodel", "ext:org.apache.poi"},
+		{"org.apache.poi.xssf.streaming", "ext:org.apache.poi"},
+		{"org.apache.poi.ss.util", "ext:org.apache.poi"},
+		{"org.apache.poi.ss.usermodel", "ext:org.apache.poi"},
+		{"org.apache.pdfbox.pdmodel", "ext:org.apache.pdfbox"},
+		{"org.apache.commons.io", "ext:org.apache.commons.io"},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.sourceMod, func(t *testing.T) {
+			r := findJavaImportEdge(ents, c.sourceMod)
+			if r == nil {
+				t.Fatalf("missing IMPORTS edge for source_module=%q", c.sourceMod)
+			}
+			if len(r.ToID) < len(c.wantPfx) || r.ToID[:len(c.wantPfx)] != c.wantPfx {
+				t.Fatalf("source_module=%q: ToID=%q, want prefix %q", c.sourceMod, r.ToID, c.wantPfx)
+			}
+		})
+	}
+}

@@ -102,6 +102,24 @@ var javaKnownExternalRoots = map[string]struct{}{
 	"org.apache.log4j":      {},
 	"org.apache.logging":    {},
 	"org.apache.hadoop":     {},
+	// Issue #787c — Apache POI and PDFBox (see synth.go knownExternalPackages
+	// for rationale). Adding specific sub-families here gives resolveImportToIDs
+	// a canonical ext:<prefix> that is more precise than the bare `org.apache`
+	// umbrella, matching `ext:org.apache.poi:XSSFWorkbook` rather than
+	// `ext:org.apache:XSSFWorkbook`.
+	"org.apache.poi":                  {}, // Apache POI umbrella (xssf/hssf/sxssf/xwpf/xslf)
+	"org.apache.poi.ss":               {}, // POI Spreadsheet common API
+	"org.apache.poi.xssf":             {}, // POI XSSF (xlsx)
+	"org.apache.poi.hssf":             {}, // POI HSSF (xls)
+	"org.apache.poi.xwpf":             {}, // POI XWPF (docx)
+	"org.apache.poi.xslf":             {}, // POI XSLF (pptx)
+	"org.apache.poi.ooxml":            {}, // POI OOXML generic
+	"org.apache.pdfbox":               {}, // Apache PDFBox
+	"org.apache.commons.io":           {}, // Commons IO
+	"org.apache.commons.lang3":        {}, // Commons Lang3
+	"org.apache.commons.collections4": {}, // Commons Collections4
+	"org.apache.commons.compress":     {}, // Commons Compress
+	"org.apache.commons.text":         {}, // Commons Text
 	"org.eclipse":           {},
 	"org.eclipse.jetty":     {},
 	"org.jetbrains":         {},

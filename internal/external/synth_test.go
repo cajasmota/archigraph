@@ -4380,3 +4380,302 @@ func TestHasPythonImportHelpers(t *testing.T) {
 		})
 	}
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Issue #787c — Apache POI + PDFBox bare-name allowlist + FQN fix tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TestPoiBareNames_ClassifiedWithPoiImport verifies the Option-B gate:
+// when a Java source file imports any org.apache.poi.* package, POI class
+// constructor stubs (XSSFWorkbook, SXSSFWorkbook, CellRangeAddress, etc.)
+// are classified as external-known and folded to ext:org.apache.poi.
+func TestPoiBareNames_ClassifiedWithPoiImport(t *testing.T) {
+	importPaths := []string{
+		"org.apache.poi.xssf.usermodel",           // explicit class import
+		"org.apache.poi.xssf.streaming",           // streaming SXSSF
+		"org.apache.poi.ss.util",                  // CellRangeAddress package
+		"org.apache.poi.ss.usermodel",             // wildcard spread
+		"org.apache.poi",                          // root umbrella
+		"org.apache.poi.hssf.usermodel",           // legacy HSSF
+		"org.apache.poi.xwpf.usermodel",           // Word
+		"org.apache.poi.xslf.usermodel",           // PowerPoint
+	}
+	names := []string{
+		"XSSFWorkbook", "XSSFSheet", "XSSFRow", "XSSFCell",
+		"SXSSFWorkbook", "SXSSFSheet", "SXSSFRow", "SXSSFCell",
+		"HSSFWorkbook", "HSSFSheet", "HSSFRow", "HSSFCell",
+		"CellRangeAddress", "CellReference", "WorkbookFactory",
+		"XWPFDocument", "XWPFParagraph",
+		"XMLSlideShow", "XSLFSlide",
+		"DataFormatter",
+	}
+	for _, imp := range importPaths[:3] { // spot-check three import shapes
+		imp := imp
+		for _, name := range names[:5] { // spot-check five class names
+			name := name
+			t.Run(imp+"/"+name, func(t *testing.T) {
+				t.Parallel()
+				imports := map[string]bool{imp: true}
+				subtype, ok := stdlibFunction(name, "java", "Foo.java", imports)
+				if !ok {
+					t.Fatalf("stdlibFunction(%q, java, %q-imp) = (_, false); want poi_type sentinel",
+						name, imp)
+				}
+				if subtype != "poi_type" {
+					t.Fatalf("stdlibFunction(%q, java, %q-imp) subtype=%q, want poi_type",
+						name, imp, subtype)
+				}
+				// End-to-end via Synthesize: edge must be rewritten to ext:org.apache.poi.
+				doc := &graph.Document{
+					Entities: []graph.Entity{{
+						ID: "file-ent", Name: "Foo.java", Kind: "SCOPE.Component",
+						Language: "java", SourceFile: "Foo.java",
+					}, {
+						ID: "caller", Name: "upload", Kind: "SCOPE.Operation",
+						Language: "java", SourceFile: "Foo.java",
+					}},
+					Relationships: []graph.Relationship{
+						{ID: "imp-1", FromID: "file-ent", ToID: imp, Kind: "IMPORTS",
+							Properties: map[string]string{
+								"source_module": imp, "imported_name": name,
+							}},
+						{ID: "rel-1", FromID: "caller", ToID: name, Kind: "CALLS"},
+					},
+				}
+				Synthesize(doc)
+				// Accept any ext:org.apache.poi* canonical — the exact
+				// prefix depends on which sub-family entry in
+				// knownExternalPackages/javaKnownExternalRoots is the
+				// longest match for this specific import path. The
+				// important invariant is that it is NOT the per-class
+				// ext:<ClassName> placeholder.
+				got := doc.Relationships[1].ToID
+				const wantPrefix = "ext:org.apache.poi"
+				if len(got) < len(wantPrefix) || got[:len(wantPrefix)] != wantPrefix {
+					t.Fatalf("import=%q name=%q: ToID=%q, want prefix %q",
+						imp, name, got, wantPrefix)
+				}
+			})
+		}
+	}
+}
+
+// TestPoiBareNames_NoImport_KeepsSaferBias verifies that POI class names
+// are NOT classified when the source file does not import org.apache.poi.*
+// (preventing user-defined classes named Workbook or Sheet from being
+// misclassified in non-POI projects).
+func TestPoiBareNames_NoImport_KeepsSaferBias(t *testing.T) {
+	names := []string{"XSSFWorkbook", "SXSSFWorkbook", "CellRangeAddress", "WorkbookFactory"}
+	for _, name := range names {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			// No POI imports — only an unrelated user import.
+			imports := map[string]bool{"com.acme.inventory.ProductService": true}
+			// stdlibFunction only fires the poi gate; it must NOT match.
+			subtype, ok := stdlibFunction(name, "java", "Foo.java", imports)
+			if ok && subtype == "poi_type" {
+				t.Fatalf("stdlibFunction(%q, java, non-poi-imports) classified as poi_type; want safer-bias miss", name)
+			}
+		})
+	}
+}
+
+// TestPoiBareNames_NonJavaLanguage_NotClassified ensures the Java language
+// gate prevents POI class names from being classified when the stub arrives
+// from a non-Java source (Go, Python, etc.).
+func TestPoiBareNames_NonJavaLanguage_NotClassified(t *testing.T) {
+	poiImports := map[string]bool{"org.apache.poi.xssf.usermodel": true}
+	for _, lang := range []string{"go", "python", "typescript", "ruby"} {
+		lang := lang
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+			subtype, ok := stdlibFunction("XSSFWorkbook", lang, "foo.go", poiImports)
+			if ok && subtype == "poi_type" {
+				t.Fatalf("stdlibFunction(XSSFWorkbook, %q, poi-imports) = poi_type; want no classification", lang)
+			}
+		})
+	}
+}
+
+// TestPdfBoxBareNames_ClassifiedWithPdfBoxImport verifies the PDFBox gate:
+// when a Java source file imports any org.apache.pdfbox.* package, PDFBox
+// class stubs are classified and folded to ext:org.apache.pdfbox.
+func TestPdfBoxBareNames_ClassifiedWithPdfBoxImport(t *testing.T) {
+	imp := "org.apache.pdfbox.pdmodel"
+	names := []string{"PDDocument", "PDPage", "PDPageContentStream", "PDType1Font", "PDRectangle"}
+	for _, name := range names {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			imports := map[string]bool{imp: true}
+			subtype, ok := stdlibFunction(name, "java", "Report.java", imports)
+			if !ok {
+				t.Fatalf("stdlibFunction(%q, java, pdfbox-imp) = (_, false); want pdfbox_type sentinel", name)
+			}
+			if subtype != "pdfbox_type" {
+				t.Fatalf("stdlibFunction(%q, java, pdfbox-imp) subtype=%q, want pdfbox_type", name, subtype)
+			}
+			doc := &graph.Document{
+				Entities: []graph.Entity{{
+					ID: "file-ent", Name: "Report.java", Kind: "SCOPE.Component",
+					Language: "java", SourceFile: "Report.java",
+				}, {
+					ID: "caller", Name: "generate", Kind: "SCOPE.Operation",
+					Language: "java", SourceFile: "Report.java",
+				}},
+				Relationships: []graph.Relationship{
+					{ID: "imp-1", FromID: "file-ent", ToID: imp, Kind: "IMPORTS",
+						Properties: map[string]string{"source_module": imp, "imported_name": name}},
+					{ID: "rel-1", FromID: "caller", ToID: name, Kind: "CALLS"},
+				},
+			}
+			Synthesize(doc)
+			want := "ext:org.apache.pdfbox"
+			if doc.Relationships[1].ToID != want {
+				t.Fatalf("name=%q: ToID=%q, want %q", name, doc.Relationships[1].ToID, want)
+			}
+		})
+	}
+}
+
+// TestUpsertImportSet_SyntheticFQN_EnablesImportLeafFolding verifies the
+// fix for issue #787c: upsertImportSet now adds source_module+"."+imported_name
+// so that classifyExternal's import-leaf folder (line ~802) can call
+// longestKnownDottedPrefix on the full FQN and match an external prefix.
+// This end-to-end test exercises the primary fix path without needing the
+// Option-B import-gate fallback.
+func TestUpsertImportSet_SyntheticFQN_EnablesImportLeafFolding(t *testing.T) {
+	// Simulate: import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+	// call: new XSSFWorkbook() → stub "XSSFWorkbook"
+	doc := &graph.Document{
+		Entities: []graph.Entity{{
+			ID:         "file-ent",
+			Name:       "InventoryController.java",
+			Kind:       "SCOPE.Component",
+			Language:   "java",
+			SourceFile: "InventoryController.java",
+		}, {
+			ID:         "caller",
+			Name:       "uploadProducts",
+			Kind:       "SCOPE.Operation",
+			Language:   "java",
+			SourceFile: "InventoryController.java",
+		}},
+		Relationships: []graph.Relationship{
+			{
+				ID:     "imp-1",
+				FromID: "file-ent",
+				// After resolveImportToIDs, ToID is rewritten to ext:org.apache:XSSFWorkbook.
+				// But source_module and imported_name Properties are still present.
+				ToID: "ext:org.apache:XSSFWorkbook",
+				Kind: "IMPORTS",
+				Properties: map[string]string{
+					"source_module": "org.apache.poi.xssf.usermodel",
+					"imported_name": "XSSFWorkbook",
+				},
+			},
+			{
+				ID:     "rel-1",
+				FromID: "caller",
+				ToID:   "XSSFWorkbook", // bare constructor stub
+				Kind:   "CALLS",
+			},
+		},
+	}
+	Synthesize(doc)
+	// The stub must be rewritten to ext:org.apache (or ext:org.apache.poi if
+	// the allowlist has a more-specific prefix). Either way it must not stay
+	// as "ext:XSSFWorkbook" (the wrong per-class placeholder).
+	rewritten := doc.Relationships[1].ToID
+	if rewritten == "ext:XSSFWorkbook" {
+		t.Fatalf("ToID=%q: still the bare class placeholder; FQN synthetic path did not fire", rewritten)
+	}
+	if rewritten == "XSSFWorkbook" {
+		t.Fatalf("ToID=%q: stub not rewritten at all; no external classification applied", rewritten)
+	}
+	// Must start with ext:org.apache (any sub-prefix is acceptable).
+	if len(rewritten) < len("ext:org.apache") || rewritten[:len("ext:org.apache")] != "ext:org.apache" {
+		t.Fatalf("ToID=%q: want prefix ext:org.apache, got different prefix", rewritten)
+	}
+}
+
+// TestHasPoiImport_Variants verifies hasPoiImport recognises all common
+// import shapes for Apache POI (explicit class, package prefix, ext:-tagged).
+func TestHasPoiImport_Variants(t *testing.T) {
+	cases := []struct {
+		name    string
+		imports map[string]bool
+		want    bool
+	}{
+		{"xssf.usermodel", map[string]bool{"org.apache.poi.xssf.usermodel": true}, true},
+		{"xssf.streaming", map[string]bool{"org.apache.poi.xssf.streaming": true}, true},
+		{"ss.util", map[string]bool{"org.apache.poi.ss.util": true}, true},
+		{"hssf.usermodel", map[string]bool{"org.apache.poi.hssf.usermodel": true}, true},
+		{"root poi", map[string]bool{"org.apache.poi": true}, true},
+		// source_module + imported_name form added by upsertImportSet
+		{"source_module form", map[string]bool{"org.apache.poi.xssf.usermodel": true, "XSSFWorkbook": true}, true},
+		{"kafka only", map[string]bool{"org.apache.kafka.streams.StreamsBuilder": true}, false},
+		{"nil", nil, false},
+		{"empty", map[string]bool{}, false},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			if got := hasPoiImport(c.imports); got != c.want {
+				t.Errorf("hasPoiImport(%v) = %v, want %v", c.imports, got, c.want)
+			}
+		})
+	}
+}
+
+// TestHasPdfBoxImport_Variants verifies hasPdfBoxImport recognises all
+// common import shapes for Apache PDFBox.
+func TestHasPdfBoxImport_Variants(t *testing.T) {
+	cases := []struct {
+		name    string
+		imports map[string]bool
+		want    bool
+	}{
+		{"pdmodel", map[string]bool{"org.apache.pdfbox.pdmodel": true}, true},
+		{"root", map[string]bool{"org.apache.pdfbox": true}, true},
+		{"font sub", map[string]bool{"org.apache.pdfbox.pdmodel.font": true}, true},
+		{"image sub", map[string]bool{"org.apache.pdfbox.pdmodel.graphics.image": true}, true},
+		{"poi only", map[string]bool{"org.apache.poi.xssf.usermodel": true}, false},
+		{"nil", nil, false},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			if got := hasPdfBoxImport(c.imports); got != c.want {
+				t.Errorf("hasPdfBoxImport(%v) = %v, want %v", c.imports, got, c.want)
+			}
+		})
+	}
+}
+
+// TestPoiKnownExternalPackages_EntryExists verifies that org.apache.poi and
+// org.apache.pdfbox are in knownExternalPackages so the resolver routes edges
+// to ExternalKnown (not ExternalUnknown).
+func TestPoiKnownExternalPackages_EntryExists(t *testing.T) {
+	for _, pkg := range []string{
+		"org.apache.poi",
+		"org.apache.poi.ss",
+		"org.apache.poi.xssf",
+		"org.apache.poi.hssf",
+		"org.apache.pdfbox",
+		"org.apache.commons.io",
+		"org.apache.commons.lang3",
+		"org.apache.commons.compress",
+	} {
+		pkg := pkg
+		t.Run(pkg, func(t *testing.T) {
+			t.Parallel()
+			if !isKnownExternalPackage(pkg) {
+				t.Errorf("isKnownExternalPackage(%q) = false; want true (entry missing from knownExternalPackages)", pkg)
+			}
+		})
+	}
+}
