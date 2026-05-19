@@ -6010,6 +6010,32 @@ var scalaBareNames = map[string]struct{}{
 	"GuiceOneAppPerSuite":   {},
 	"GuiceOneServerPerTest": {},
 	"FakeRequest":           {},
+
+	// Scala play+akka wave (post-rust). Residual bug-extractor on
+	// play-scala-starter after the v1 scala stop-list was dominated by
+	// two distinctive idioms the Scala extractor preserves verbatim:
+	//
+	//   1) `Action.async { ... }` — Play `ActionBuilder.async` factory
+	//      preserved as the dotted leaf `Action.async` (not receiver-
+	//      stripped to bare `async`, which would collide with user
+	//      methods on any class). The literal dotted form is
+	//      Play-specific and matches no real user identifier — same
+	//      shape as the dotted-key entries used by the Java JAX-RS
+	//      and Kafka gates.
+	//
+	//   2) `promise.success(_)` / `promise.failure(_)` — scala.concurrent
+	//      Promise completion methods. The extractor strips the
+	//      receiver and emits bare `success` / `failure`. The lang
+	//      gate to scala plus the surrounding `Promise` / `Future`
+	//      idiom keeps these from shadowing user methods named
+	//      `success` in non-Scala codebases. Within Scala, `success` /
+	//      `failure` as standalone receiver-stripped calls are
+	//      overwhelmingly the Promise API; user definitions of methods
+	//      with these names exist but are an order of magnitude rarer
+	//      than the Promise idiom in Play / Akka / cats-effect code.
+	"Action.async": {},
+	"success":      {}, // promise.success(_) → bare `success`
+	"failure":      {}, // promise.failure(_)
 }
 
 // rubyBareNames is the Ruby-language-gated bare-name stop-list (issue
