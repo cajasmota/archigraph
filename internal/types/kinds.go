@@ -41,6 +41,10 @@ const (
 	EntityKindProject  EntityKind = "SCOPE.Project"
 	EntityKindConfig   EntityKind = "SCOPE.Config"
 	EntityKindModel    EntityKind = "SCOPE.Model"
+	// AgentPattern is the kind for agent-learned Pattern entities introduced
+	// in ADR-0018. Stored as "AgentPattern" (no SCOPE. prefix) to distinguish
+	// from the structural SCOPE.Pattern kind used by static-analysis extractors.
+	EntityKindAgentPattern EntityKind = "AgentPattern"
 )
 
 // AllEntityKinds returns every EntityKind that archigraph extractors are
@@ -78,6 +82,7 @@ func AllEntityKinds() []EntityKind {
 		EntityKindProject,
 		EntityKindConfig,
 		EntityKindModel,
+		EntityKindAgentPattern,
 	}
 }
 
@@ -122,6 +127,18 @@ const (
 	// by the OpenAPI pattern extractor to associate operations with their
 	// tag entities.
 	RelationshipKindTaggedAs RelationshipKind = "TAGGED_AS"
+
+	// ADR-0018: Agent-learned pattern edge kinds (append-only additions).
+	// Outgoing from Pattern entities:
+	RelationshipKindExemplar      RelationshipKind = "EXEMPLAR"       // Pattern → Entity: real code example of this pattern in use
+	RelationshipKindTouches       RelationshipKind = "TOUCHES"        // Pattern → Entity: entity the pattern's steps read or modify
+	RelationshipKindAntiExemplar  RelationshipKind = "ANTI_EXEMPLAR"  // Pattern → Entity: real code example of the anti-pattern
+	RelationshipKindSupersedes    RelationshipKind = "SUPERSEDES"     // Pattern → Pattern: this pattern replaces an older one
+	RelationshipKindConflictsWith RelationshipKind = "CONFLICTS_WITH" // Pattern → Pattern: these two patterns cannot both apply
+	RelationshipKindCoAppliesWith RelationshipKind = "CO_APPLIES_WITH" // Pattern → Pattern: typically applied together
+	RelationshipKindPrerequisite  RelationshipKind = "PREREQUISITE"   // Pattern → Pattern: must be satisfied before this one
+	// Incoming to Pattern:
+	RelationshipKindCreatedBy RelationshipKind = "CREATED_BY" // Entity → Pattern: entity produced using the linked pattern
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -148,6 +165,15 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindRenders,
 		RelationshipKindReturns,
 		RelationshipKindTaggedAs,
+		// ADR-0018 pattern edge kinds:
+		RelationshipKindExemplar,
+		RelationshipKindTouches,
+		RelationshipKindAntiExemplar,
+		RelationshipKindSupersedes,
+		RelationshipKindConflictsWith,
+		RelationshipKindCoAppliesWith,
+		RelationshipKindPrerequisite,
+		RelationshipKindCreatedBy,
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/graph/fbreader"
 	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/archigraph/internal/types"
 )
 
 func writeAndOpen(t *testing.T, doc *graph.Document) *fbreader.Reader {
@@ -69,5 +70,115 @@ func TestPhaseDReaderMethods(t *testing.T) {
 	}
 	if meta.ComputedAt == "" {
 		t.Errorf("expected non-empty computed_at")
+	}
+}
+
+// TestAgentPatternKindRoundTrip verifies that the new "AgentPattern" entity kind
+// and the ADR-0018 pattern edge kinds (EXEMPLAR, TOUCHES, ANTI_EXEMPLAR,
+// SUPERSEDES, CONFLICTS_WITH, CO_APPLIES_WITH, PREREQUISITE, CREATED_BY) survive
+// a write → read round-trip through the FlatBuffers format.
+//
+// The FB schema stores kind as a free-form string, so no schema change is
+// required — this test confirms the strings are preserved exactly.
+func TestAgentPatternKindRoundTrip(t *testing.T) {
+	patternID := "adr0018pattern001"
+	entityID := "someentity0000001"
+	pattern2ID := "adr0018pattern002"
+
+	doc := &graph.Document{
+		Repo:        "patterns-test",
+		GeneratedAt: time.Date(2026, 5, 20, 0, 0, 0, 0, time.UTC),
+		Entities: []graph.Entity{
+			{
+				ID:   patternID,
+				Kind: string(types.EntityKindAgentPattern),
+				Name: "chi-handler-pattern",
+				Properties: map[string]string{
+					"category":   "code",
+					"confidence": "0.75",
+				},
+			},
+			{
+				ID:   entityID,
+				Kind: string(types.EntityKindFunction),
+				Name: "RegisterRoutes",
+			},
+			{
+				ID:   pattern2ID,
+				Kind: string(types.EntityKindAgentPattern),
+				Name: "old-handler-pattern",
+			},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "r01", FromID: patternID, ToID: entityID, Kind: string(types.RelationshipKindExemplar)},
+			{ID: "r02", FromID: patternID, ToID: entityID, Kind: string(types.RelationshipKindTouches)},
+			{ID: "r03", FromID: patternID, ToID: entityID, Kind: string(types.RelationshipKindAntiExemplar)},
+			{ID: "r04", FromID: patternID, ToID: pattern2ID, Kind: string(types.RelationshipKindSupersedes)},
+			{ID: "r05", FromID: patternID, ToID: pattern2ID, Kind: string(types.RelationshipKindConflictsWith)},
+			{ID: "r06", FromID: patternID, ToID: pattern2ID, Kind: string(types.RelationshipKindCoAppliesWith)},
+			{ID: "r07", FromID: patternID, ToID: pattern2ID, Kind: string(types.RelationshipKindPrerequisite)},
+			{ID: "r08", FromID: entityID, ToID: patternID, Kind: string(types.RelationshipKindCreatedBy)},
+		},
+	}
+	doc.Stats.Entities = len(doc.Entities)
+	doc.Stats.Relationships = len(doc.Relationships)
+
+	r := writeAndOpen(t, doc)
+
+	// Verify AgentPattern entity kind survives.
+	agentPatternEntity := r.LookupEntityByID(patternID)
+	if agentPatternEntity == nil {
+		t.Fatal("AgentPattern entity not found after round-trip")
+	}
+	if got := string(agentPatternEntity.Kind()); got != string(types.EntityKindAgentPattern) {
+		t.Errorf("kind: got %q want %q", got, types.EntityKindAgentPattern)
+	}
+	if got := string(agentPatternEntity.Name()); got != "chi-handler-pattern" {
+		t.Errorf("name: got %q want chi-handler-pattern", got)
+	}
+
+	// Verify all 8 pattern edge kinds survive via IterateRelationshipsFromID /
+	// IterateRelationshipsToID.
+	fromPattern := r.IterateRelationshipsFromID(patternID)
+	if len(fromPattern) != 7 {
+		t.Errorf("relationships from pattern: got %d want 7", len(fromPattern))
+	}
+
+	// Collect actual kinds from the round-tripped relationships.
+	kindSet := map[string]bool{}
+	for _, rel := range fromPattern {
+		kindSet[string(rel.Kind())] = true
+	}
+
+	wantKinds := []types.RelationshipKind{
+		types.RelationshipKindExemplar,
+		types.RelationshipKindTouches,
+		types.RelationshipKindAntiExemplar,
+		types.RelationshipKindSupersedes,
+		types.RelationshipKindConflictsWith,
+		types.RelationshipKindCoAppliesWith,
+		types.RelationshipKindPrerequisite,
+	}
+	for _, k := range wantKinds {
+		if !kindSet[string(k)] {
+			t.Errorf("edge kind %q not found after round-trip", k)
+		}
+	}
+
+	// Verify CREATED_BY (incoming to pattern, from entity).
+	toPattern := r.IterateRelationshipsToID(patternID)
+	if len(toPattern) != 1 {
+		t.Errorf("relationships to pattern: got %d want 1", len(toPattern))
+	}
+	if len(toPattern) == 1 {
+		if got := string(toPattern[0].Kind()); got != string(types.RelationshipKindCreatedBy) {
+			t.Errorf("CREATED_BY kind: got %q want %q", got, types.RelationshipKindCreatedBy)
+		}
+	}
+
+	// Confirm the count of AgentPattern entities.
+	agentPatterns := r.FilterEntitiesByKind(string(types.EntityKindAgentPattern))
+	if len(agentPatterns) != 2 {
+		t.Errorf("FilterEntitiesByKind(AgentPattern): got %d want 2", len(agentPatterns))
 	}
 }
