@@ -60,9 +60,32 @@ package links
 // import_pass, label_pass, and string_pass intact.
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 )
+
+// pathParamRe matches any path-parameter placeholder regardless of origin:
+//   - {pk}, {id}, {param}, {userId}, {branchId}, etc.  (curly-brace style)
+//   - :id, :pk, :userId, etc.                           (Express/Rails colon style)
+//
+// All of these are replaced with the canonical token {*} for byPath index
+// lookup only — the original canonicalPath is preserved on the hit object.
+var pathParamRe = regexp.MustCompile(`\{[^}]+\}|:[a-zA-Z][a-zA-Z0-9_]*`)
+
+// normalizePathForIndex canonicalizes all path-parameter placeholders to
+// the uniform token {*} so that route shapes from different extractors can
+// be compared without caring about parameter names.
+//
+// Examples:
+//
+//	/users/{pk}             → /users/{*}
+//	/users/:id              → /users/{*}
+//	/users/{userId}/posts/{postId} → /users/{*}/posts/{*}
+//	/api/v1/static          → /api/v1/static  (unchanged)
+func normalizePathForIndex(path string) string {
+	return pathParamRe.ReplaceAllString(path, "{*}")
+}
 
 // MethodHTTP identifies this pass's emissions in links.json.
 const MethodHTTP = "http"
@@ -254,9 +277,12 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 		}
 	}
 
-	// Verb wildcarding: build a parallel index from (path) → []hit so
-	// `ANY`-verb endpoints can be matched against any specific-verb
-	// endpoint with the same path.
+	// Verb wildcarding: build a parallel index from (normalized-path) → []hit
+	// so `ANY`-verb endpoints can be matched against any specific-verb endpoint
+	// with the same path shape. The key is normalized via normalizePathForIndex
+	// so that placeholder names ({pk}, {param}, {id}, :id, etc.) from different
+	// extractors all collapse to the same bucket key {*}. The original
+	// canonicalPath is preserved on every hit object for identifier emission.
 	byPath := map[string][]*httpEndpointHit{}
 	for _, byRepo := range hits {
 		for _, perRepo := range byRepo {
@@ -264,7 +290,8 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 				if h.canonicalPath == "" {
 					continue
 				}
-				byPath[h.canonicalPath] = append(byPath[h.canonicalPath], h)
+				key := normalizePathForIndex(h.canonicalPath)
+				byPath[key] = append(byPath[key], h)
 			}
 		}
 	}
@@ -291,7 +318,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 		// path. The wildcarded counterpart contributes producer /
 		// consumer hits keyed by ITS own repo set.
 		if verb, p, ok := parseHTTPName(name); ok {
-			for _, h := range byPath[p] {
+			for _, h := range byPath[normalizePathForIndex(p)] {
 				if h.name == name {
 					continue
 				}

@@ -265,6 +265,466 @@ func TestHTTPPass_FallbackToSyntheticEntities(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Path-param normalization tests (issue #704)
+// ---------------------------------------------------------------------------
+
+// TestHTTPPass_NormalizePathForIndex verifies the canonical normalization
+// helper maps all placeholder styles to {*} and leaves static segments alone.
+func TestHTTPPass_NormalizePathForIndex(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		// curly-brace Django / generic style
+		{"/users/{pk}", "/users/{*}"},
+		{"/users/{id}", "/users/{*}"},
+		{"/users/{param}", "/users/{*}"},
+		{"/users/{userId}", "/users/{*}"},
+		// multi-segment curly
+		{"/users/{pk}/posts/{post_id}", "/users/{*}/posts/{*}"},
+		{"/users/{userId}/posts/{postId}", "/users/{*}/posts/{*}"},
+		// Express / Rails colon style
+		{"/users/:id", "/users/{*}"},
+		{"/users/:pk", "/users/{*}"},
+		{"/users/:userId/posts/:postId", "/users/{*}/posts/{*}"},
+		// mixed style (edge case)
+		{"/api/{version}/:id", "/api/{*}/{*}"},
+		// static — untouched
+		{"/api/v1/users", "/api/v1/users"},
+		{"/", "/"},
+		{"", ""},
+		// version numbers should NOT be collapsed — v1, v2 are literal
+		{"/api/v1/users/{pk}", "/api/v1/users/{*}"},
+	}
+	for _, c := range cases {
+		got := normalizePathForIndex(c.in)
+		if got != c.want {
+			t.Errorf("normalizePathForIndex(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+// TestHTTPPass_PkVsParamMatch verifies that Django {pk} on the producer side
+// matches a JS {param} placeholder on the consumer side after normalization.
+// This is the concrete regression case from issue #704.
+func TestHTTPPass_PkVsParamMatch(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "NotificationView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:ANY:/notifications/{pk}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "ANY",
+					"path":         "/notifications/{pk}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "patchNotification", "kind": "Function", "source_file": "src/api.ts"},
+			{
+				"id": "ep2", "name": "http:PATCH:/notifications/{param}", "kind": "http_endpoint",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "PATCH",
+					"path":          "/notifications/{param}",
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:patchNotification",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-pk-param", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-pk-param-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected cross-repo link for {pk} vs {param} after normalization; got %+v", doc.Links)
+	}
+}
+
+// TestHTTPPass_MultiSegmentPkMatch verifies multi-segment paths with different
+// placeholder names on each segment are correctly matched via normalization.
+func TestHTTPPass_MultiSegmentPkMatch(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "PostView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:ANY:/users/{pk}/posts/{post_id}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "ANY",
+					"path":         "/users/{pk}/posts/{post_id}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "loadPost", "kind": "Function", "source_file": "src/api.ts"},
+			{
+				"id": "ep2", "name": "http:GET:/users/{userId}/posts/{postId}", "kind": "http_endpoint",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "GET",
+					"path":          "/users/{userId}/posts/{postId}",
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:loadPost",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-multiseg-pk", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-multiseg-pk-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected cross-repo link for multi-segment {pk}/{post_id} vs {userId}/{postId}; got %+v", doc.Links)
+	}
+}
+
+// TestHTTPPass_StaticPathsUnaffected verifies that static paths (no params)
+// still work correctly and are not accidentally collapsed or broken.
+func TestHTTPPass_StaticPathsUnaffected(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "StatusView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:GET:/api/v1/status", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "GET",
+					"path":         "/api/v1/status",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "checkStatus", "kind": "Function", "source_file": "src/api.ts"},
+			{
+				"id": "ep2", "name": "http:GET:/api/v1/status", "kind": "http_endpoint",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "GET",
+					"path":          "/api/v1/status",
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:checkStatus",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-static-path", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-static-path-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected cross-repo link for static path /api/v1/status; got %+v", doc.Links)
+	}
+}
+
+// TestHTTPPass_MixedStaticAndParam verifies mixed paths like /api/v1/users/{pk}
+// match /api/v1/users/{userId} correctly.
+func TestHTTPPass_MixedStaticAndParam(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "UserView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:ANY:/api/v1/users/{pk}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "ANY",
+					"path":         "/api/v1/users/{pk}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "getUser", "kind": "Function", "source_file": "src/api.ts"},
+			{
+				"id": "ep2", "name": "http:GET:/api/v1/users/{userId}", "kind": "http_endpoint",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "GET",
+					"path":          "/api/v1/users/{userId}",
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:getUser",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-mixed-path", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-mixed-path-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected cross-repo link for /api/v1/users/{pk} vs /api/v1/users/{userId}; got %+v", doc.Links)
+	}
+}
+
+// TestHTTPPass_ExpressColonStyleMatch verifies that Express/Rails colon-style
+// placeholders (:id, :userId) are treated equivalently to curly-brace style.
+func TestHTTPPass_ExpressColonStyleMatch(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "UserView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:ANY:/users/{pk}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "ANY",
+					"path":         "/users/{pk}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "express-frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "getUser", "kind": "Function", "source_file": "routes/user.js"},
+			{
+				"id": "ep2", "name": "http:GET:/users/:id", "kind": "http_endpoint",
+				"source_file": "routes/user.js",
+				"properties": map[string]any{
+					"verb":          "GET",
+					"path":          "/users/:id",
+					"framework":     "express",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:getUser",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-express-colon", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-express-colon-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected cross-repo link for Django {pk} vs Express :id style; got %+v", doc.Links)
+	}
+}
+
+// TestHTTPPass_NoFalsePositiveOnDifferentShapes verifies that two paths with
+// different static structures do NOT match even after normalization.
+// e.g., /users/{pk} must NOT match /posts/{pk}.
+func TestHTTPPass_NoFalsePositiveOnDifferentShapes(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "UserView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:ANY:/users/{pk}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "ANY",
+					"path":         "/users/{pk}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "getPost", "kind": "Function", "source_file": "src/api.ts"},
+			{
+				"id": "ep2", "name": "http:GET:/posts/{param}", "kind": "http_endpoint",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "GET",
+					"path":          "/posts/{param}",
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:getPost",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-no-fp-diff-shape", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-no-fp-diff-shape-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			t.Errorf("expected NO cross-repo link for /users/{pk} vs /posts/{param}; got %+v", l)
+		}
+	}
+}
+
+// TestHTTPPass_VerbStillCheckedAfterNormalization verifies that verb
+// incompatibility (GET vs POST) still blocks a match after path normalization
+// — normalization must not bypass the verb-compatibility check.
+func TestHTTPPass_VerbStillCheckedAfterNormalization(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{"id": "h1", "name": "UserView", "kind": "Controller", "source_file": "app/views.py"},
+			{
+				"id": "ep1", "name": "http:GET:/users/{pk}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "GET",
+					"path":         "/users/{pk}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "createUser", "kind": "Function", "source_file": "src/api.ts"},
+			{
+				"id": "ep2", "name": "http:POST:/users/{param}", "kind": "http_endpoint",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "POST",
+					"path":          "/users/{param}",
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:createUser",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-verb-blocked", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-verb-blocked-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			t.Errorf("expected NO cross-repo link when verbs are incompatible (GET vs POST); got %+v", l)
+		}
+	}
+}
+
 // TestHTTPPass_VerbsCompatible verifies the verb compatibility helper.
 func TestHTTPPass_VerbsCompatible(t *testing.T) {
 	cases := []struct {
