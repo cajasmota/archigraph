@@ -1047,3 +1047,383 @@ func parseActionArgs(args, methodName string, defaultDetail bool) drfAction {
 	}
 	return act
 }
+
+// ---------------------------------------------------------------------------
+// Django CBV (class-based view) generic-method resolution — Issue #786
+// ---------------------------------------------------------------------------
+//
+// Problem: `path("contracts/", ContractListView.as_view())` in a Django
+// urls.py causes the YAML rule engine to emit a Route→View ROUTES_TO edge
+// targeting `View:<ClassName>`. The existing ApplyDjangoNestedURLConf pass
+// emits a single ANY-verb http_endpoint synthetic for each such route but
+// sets NO `source_handler`. The Phase-2 resolver takes the NoHandlerProp
+// keep-path and the synthetic entity ends up with zero inbound edges —
+// orphaned.
+//
+// Fix: for every `path("...", SomeView.as_view())` call, classify the CBV
+// parent class to determine which HTTP method handlers it exposes (get, post,
+// put, patch, delete), emit per-verb http_endpoint synthetics with
+// `source_handler = "SCOPE.Operation:ClassName.method"`, and emit synthetic
+// SCOPE.Operation entities for inherited handlers (mirroring the
+// drf_viewset_implicit_method pattern from #783).
+
+// cbvAsViewRe matches `path("pattern", ClassName.as_view())` or the
+// `re_path` variant. Captures:
+//   group 1 — route pattern string
+//   group 2 — view class name (bare identifier only; dotted paths are
+//              normalised to the last component by cbvClassName)
+var cbvAsViewRe = regexp.MustCompile(
+	`(?:re_)?path\s*\(\s*r?["']([^"']*)["']\s*,\s*([\w.]+)\s*\.\s*as_view\s*\(\s*\)`)
+
+// cbvExplicitMethodRe detects explicit HTTP handler definitions (`def get`,
+// `def post`, etc.) in a CBV class body. Used to avoid emitting a synthetic
+// when the Python extractor already sees the real method.
+var cbvExplicitMethodRe = regexp.MustCompile(
+	`\bdef\s+(get|post|put|patch|delete|head|options)\s*\(\s*self`)
+
+// cbvClass describes a Django CBV resolved from disk.
+type cbvClass struct {
+	// httpMethods is the set of HTTP handler method names this CBV
+	// exposes (keys: "get", "post", "put", "patch", "delete").
+	httpMethods map[string]bool
+	// explicitMethods is the subset of httpMethods defined directly in
+	// the class body (the Python extractor will emit a real entity for
+	// those; no synthetic needed).
+	explicitMethods map[string]bool
+}
+
+// cbvClassName extracts the simple class name from a dotted reference like
+// `views.ContractListView` → `ContractListView`.
+func cbvClassName(ref string) string {
+	if idx := strings.LastIndex(ref, "."); idx >= 0 {
+		return ref[idx+1:]
+	}
+	return ref
+}
+
+// classifyCBVParent returns the HTTP methods a CBV exposes based on the
+// text of its base class list.
+//
+// Django generic CBV hierarchy (simplified):
+//
+//	View                            — no default; only what the class defines
+//	TemplateView, RedirectView,
+//	  TemplateResponseMixin         — GET (head is implicit)
+//	ListView, DetailView,
+//	  BaseListView, BaseDetailView  — GET
+//	CreateView, UpdateView,
+//	  BaseCreateView, BaseUpdateView,
+//	  ProcessFormView, FormView     — GET + POST
+//	DeleteView, BaseDeleteView      — GET + POST (confirm form GET, delete POST)
+//
+// Custom views (unknown base) default to GET+POST — the most common pair
+// and a safe over-approximation that avoids under-extraction.
+func classifyCBVParent(base string) map[string]bool {
+	out := map[string]bool{}
+	hasKnown := false
+
+	// Read-only views (GET only).
+	readOnlyBases := []string{
+		"TemplateView", "RedirectView", "TemplateResponseMixin",
+		"ListView", "BaseListView",
+		"DetailView", "BaseDetailView",
+		"ArchiveMixin", "YearArchiveView", "MonthArchiveView",
+		"WeekArchiveView", "DayArchiveView", "TodayArchiveView",
+		"DateDetailView",
+	}
+	for _, b := range readOnlyBases {
+		if containsIdent(base, b) {
+			hasKnown = true
+			out["get"] = true
+		}
+	}
+
+	// Read-write views (GET + POST).
+	readWriteBases := []string{
+		"CreateView", "BaseCreateView",
+		"UpdateView", "BaseUpdateView",
+		"DeleteView", "BaseDeleteView",
+		"FormView", "ProcessFormView",
+		"LoginView", "LogoutView",
+		"PasswordChangeView", "PasswordResetView",
+	}
+	for _, b := range readWriteBases {
+		if containsIdent(base, b) {
+			hasKnown = true
+			out["get"] = true
+			out["post"] = true
+		}
+	}
+
+	// Generic `View` base — no default handlers (only explicit methods matter).
+	if containsIdent(base, "View") && !hasKnown {
+		// Covered by the explicit-method scan; return empty so only
+		// real explicit methods get entities. Returning hasKnown=true
+		// prevents the unknown-fallback below from firing.
+		hasKnown = true
+	}
+
+	if !hasKnown {
+		// Unknown base — safe fallback: GET + POST covers the vast
+		// majority of real-world CBVs.
+		out["get"] = true
+		out["post"] = true
+	}
+	return out
+}
+
+// parseCBVClass scans `src` for `class <viewName>(bases):` and extracts its
+// HTTP method support set + explicit method set.
+func parseCBVClass(src, viewName string) cbvClass {
+	var out cbvClass
+
+	classBodyStart := -1
+	classBase := ""
+	for _, m := range drfClassDefRe.FindAllStringSubmatchIndex(src, -1) {
+		name := src[m[2]:m[3]]
+		if name != viewName {
+			continue
+		}
+		classBase = src[m[4]:m[5]]
+		classBodyStart = m[1]
+		break
+	}
+	if classBodyStart == -1 {
+		return out
+	}
+
+	classBody := extractClassBody(src, classBodyStart)
+	out.httpMethods = classifyCBVParent(classBase)
+
+	// Also pick up HTTP methods that are explicitly defined in the class
+	// body — these are included in httpMethods but marked explicit so we
+	// skip synthetic emission (the Python extractor already emitted them).
+	out.explicitMethods = make(map[string]bool)
+	for _, m := range cbvExplicitMethodRe.FindAllStringSubmatch(classBody, -1) {
+		if len(m) >= 2 {
+			method := m[1]
+			out.httpMethods[method] = true // explicit → also in httpMethods
+			out.explicitMethods[method] = true
+		}
+	}
+	return out
+}
+
+// buildCBVFileIndex scans all Python files for `class FooView(...):`
+// declarations (CBVs) and returns a map of class name → repo-relative file.
+// Used as a fallback when an import statement cannot pinpoint the module.
+func buildCBVFileIndex(
+	parentFiles []string,
+	fileReader NestedURLConfFileReader,
+) map[string]string {
+	out := map[string]string{}
+	for _, relPath := range parentFiles {
+		if !strings.HasSuffix(relPath, ".py") {
+			continue
+		}
+		content := fileReader(relPath)
+		if len(content) == 0 {
+			continue
+		}
+		s := string(content)
+		// Cheap pre-filter: only files containing view-related keywords.
+		if !strings.Contains(s, "View") && !strings.Contains(s, "as_view") {
+			continue
+		}
+		for _, m := range drfClassDefRe.FindAllStringSubmatch(s, -1) {
+			name := m[1]
+			base := m[2]
+			// Require the class to look like a CBV: name ends in "View"
+			// or base contains a known Django generic.
+			isCBV := strings.HasSuffix(name, "View") ||
+				containsIdent(base, "View") ||
+				containsIdent(base, "TemplateView") ||
+				containsIdent(base, "ListView") ||
+				containsIdent(base, "DetailView") ||
+				containsIdent(base, "CreateView") ||
+				containsIdent(base, "UpdateView") ||
+				containsIdent(base, "DeleteView") ||
+				containsIdent(base, "FormView")
+			if !isCBV {
+				continue
+			}
+			if _, exists := out[name]; !exists {
+				out[name] = relPath
+			}
+		}
+	}
+	return out
+}
+
+// ApplyDjangoCBVRoutes resolves Django class-based view (CBV) routes of the
+// form `path("pattern", SomeView.as_view())` into per-verb http_endpoint
+// synthetics and (for inherited handlers) synthetic SCOPE.Operation entities.
+//
+// Mirrors the drf_viewset_implicit_method approach from #783 but for the
+// Django generic CBV hierarchy (TemplateView, ListView, DetailView,
+// CreateView, etc.).
+//
+// parentFiles: repo-relative Python file paths.
+// fileReader:  resolves a repo-relative path to file bytes.
+func ApplyDjangoCBVRoutes(
+	parentFiles []string,
+	fileReader NestedURLConfFileReader,
+) []types.EntityRecord {
+	if fileReader == nil {
+		return nil
+	}
+
+	// Build a global index of CBV class name → file path for import-free
+	// fallback resolution.
+	cbvFiles := buildCBVFileIndex(parentFiles, fileReader)
+
+	var out []types.EntityRecord
+	seenEndpoints := map[string]bool{}
+	seenMethods := map[string]bool{}
+
+	for _, relPath := range parentFiles {
+		if !isDjangoURLFile(relPath) {
+			continue
+		}
+		content := fileReader(relPath)
+		if len(content) == 0 {
+			continue
+		}
+		src := string(content)
+
+		// Flatten parenthesised newlines so multi-line path() calls match.
+		flat := flattenParenthesised(src)
+
+		// Resolve import map so bare class names can be traced to their
+		// defining module.
+		importMap := parseImports(src)
+
+		// Collect parent include() prefixes for this file (same logic as
+		// the DRF pass — widen match surface with bare prefix too).
+		parentPrefixes := findParentIncludePrefixes(relPath, parentFiles, fileReader)
+		hasBare := false
+		for _, p := range parentPrefixes {
+			if p == "" {
+				hasBare = true
+				break
+			}
+		}
+		if !hasBare {
+			parentPrefixes = append(parentPrefixes, "")
+		}
+
+		for _, m := range cbvAsViewRe.FindAllStringSubmatch(flat, -1) {
+			rawPattern := m[1]
+			viewRef := m[2]
+			viewName := cbvClassName(viewRef)
+
+			// Resolve the CBV class to its source file.
+			viewFile := resolveViewSetFile(viewName, importMap, cbvFiles, relPath)
+			var vc cbvClass
+			if viewFile != "" {
+				if fc := fileReader(viewFile); len(fc) > 0 {
+					vc = parseCBVClass(string(fc), viewName)
+				}
+			}
+			if vc.httpMethods == nil {
+				// Class not found — try a local scan of the urls file itself
+				// (some projects define simple CBVs inline).
+				vc = parseCBVClass(src, viewName)
+			}
+			if vc.httpMethods == nil {
+				// Final fallback: assume GET + POST.
+				vc.httpMethods = map[string]bool{"get": true, "post": true}
+			}
+			if vc.explicitMethods == nil {
+				vc.explicitMethods = map[string]bool{}
+			}
+
+			// Emit synthetic SCOPE.Operation entities for inherited methods
+			// (not explicitly defined in the class body).
+			handlerFile := viewFile
+			if handlerFile == "" {
+				handlerFile = relPath
+			}
+			emitCBVMethodEntities(&out, seenMethods, viewName, vc, handlerFile)
+
+			// Emit per-verb http_endpoint synthetics for all parent prefixes.
+			for _, pp := range parentPrefixes {
+				composed := joinDjangoRoutePaths(pp, rawPattern)
+				canonical := canonicalDjango(composed)
+				if canonical == "" || canonical == "/" {
+					continue
+				}
+
+				for verb := range vc.httpMethods {
+					upperVerb := strings.ToUpper(verb)
+					id := httproutes.SyntheticID(upperVerb, canonical)
+					if seenEndpoints[id] {
+						continue
+					}
+					seenEndpoints[id] = true
+
+					qualifiedMethod := viewName + "." + verb
+					out = append(out, types.EntityRecord{
+						ID:                 id,
+						Name:               id,
+						Kind:               httpEndpointKind,
+						SourceFile:         relPath,
+						Language:           "python",
+						EnrichmentRequired: false,
+						EnrichmentStatus:   types.StatusPending,
+						QualityScore:       0.8,
+						Properties: map[string]string{
+							"verb":           upperVerb,
+							"path":           canonical,
+							"framework":      "django",
+							"pattern_type":   "django_cbv_route",
+							"cbv_class":      viewName,
+							"source_handler": "SCOPE.Operation:" + qualifiedMethod,
+						},
+					})
+				}
+			}
+		}
+	}
+	return out
+}
+
+// emitCBVMethodEntities emits synthetic SCOPE.Operation entities for each
+// HTTP handler method that the CBV exposes via inheritance but does NOT
+// explicitly define. Mirrors emitViewSetMethodEntities from #783.
+func emitCBVMethodEntities(
+	out *[]types.EntityRecord,
+	seenMethods map[string]bool,
+	viewName string,
+	vc cbvClass,
+	sourceFile string,
+) {
+	for method := range vc.httpMethods {
+		if vc.explicitMethods[method] {
+			// Python extractor already emitted a real entity — skip.
+			continue
+		}
+		key := sourceFile + "\x00" + viewName + "." + method
+		if seenMethods[key] {
+			continue
+		}
+		seenMethods[key] = true
+		qualifiedName := viewName + "." + method
+		*out = append(*out, types.EntityRecord{
+			Name:               qualifiedName,
+			Kind:               "SCOPE.Operation",
+			Subtype:            "method",
+			Language:           "python",
+			SourceFile:         sourceFile,
+			Signature:          "def " + method + "(self, request, *args, **kwargs)",
+			EnrichmentRequired: false,
+			QualityScore:       0.7,
+			Properties: map[string]string{
+				"pattern_type":      "django_cbv_implicit_method",
+				"cbv_class":         viewName,
+				"inherited_from":    "django.views",
+				"cbv_method_origin": method,
+			},
+		})
+	}
+}
