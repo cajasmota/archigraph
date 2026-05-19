@@ -104,8 +104,9 @@ export async function pingHealth() {
 }
 
 // TestSynth_Fetch_TemplateLiteralSimple verifies that a fetch call with a
-// simple template-literal URL emits a canonical synthetic with {param}
-// substitution. This was deferred in Phase 1; Phase 2 (this PR) enables it.
+// simple template-literal URL emits a canonical synthetic with the variable
+// name preserved as the placeholder (#706). This was deferred in Phase 1;
+// Phase 2 enabled it; #706 adds semantic variable-name fidelity.
 func TestSynth_Fetch_TemplateLiteralSimple(t *testing.T) {
 	src := "export async function fetchUser(id) {\n" +
 		"  return fetch(`/users/${id}`);\n" +
@@ -117,23 +118,26 @@ func TestSynth_Fetch_TemplateLiteralSimple(t *testing.T) {
 			t.Errorf("template literal leaked into synthetic: %q", id)
 		}
 	}
-	want := []string{"http:GET:/users/{param}"}
+	// #706: preserve the variable name — emit {id} not {param}.
+	want := []string{"http:GET:/users/{id}"}
 	requireContains(t, got, want, "template-literal fetch")
 }
 
 // TestSynth_TemplateLiteral_MultiSegment verifies multiple ${...} substitutions
-// in the same URL template.
+// in the same URL template produce distinct named placeholders (#706).
 func TestSynth_TemplateLiteral_MultiSegment(t *testing.T) {
 	src := "export async function fetchChecklist(userId, listId) {\n" +
 		"  return fetch(`/api/users/${userId}/checklists/${listId}`);\n" +
 		"}\n"
 	got, _ := runDetect(t, "typescript", "tmpl2.ts", src)
-	want := []string{"http:GET:/api/users/{param}/checklists/{param}"}
+	// #706: each param gets its own name, not the generic {param}.
+	want := []string{"http:GET:/api/users/{userId}/checklists/{listId}"}
 	requireContains(t, got, want, "template-literal multi-segment")
 }
 
 // TestSynth_TemplateLiteral_ConstantFolding verifies that a known const
-// string is resolved before {param} substitution.
+// string is resolved before variable-name placeholder substitution.
+// Constant folding takes priority over identifier extraction (#706).
 func TestSynth_TemplateLiteral_ConstantFolding(t *testing.T) {
 	src := `const API_BASE = "/api/v1";
 
@@ -148,12 +152,14 @@ export async function getUser(id) {
 	got, _ := runDetect(t, "typescript", "const-fold.ts", src)
 	want := []string{
 		"http:GET:/api/v1/users",
-		"http:GET:/api/v1/users/{param}",
+		// API_BASE folded to "/api/v1"; ${id} → {id} (#706).
+		"http:GET:/api/v1/users/{id}",
 	}
 	requireContains(t, got, want, "constant-folding fetch")
 }
 
-// TestSynth_TemplateLiteral_AxiosPost verifies axios.post with a template URL.
+// TestSynth_TemplateLiteral_AxiosPost verifies axios.post with a template URL
+// preserves the variable name as the placeholder (#706).
 func TestSynth_TemplateLiteral_AxiosPost(t *testing.T) {
 	src := `import axios from "axios";
 
@@ -166,15 +172,17 @@ export async function deleteUser(userId) {
 }
 `
 	got, _ := runDetect(t, "typescript", "axios-tmpl.ts", src)
+	// #706: ${userId} → {userId}, not {param}.
 	want := []string{
-		"http:POST:/api/v1/users/{param}",
-		"http:DELETE:/api/v1/users/{param}",
+		"http:POST:/api/v1/users/{userId}",
+		"http:DELETE:/api/v1/users/{userId}",
 	}
 	requireContains(t, got, want, "axios template literal")
 }
 
 // TestSynth_TemplateLiteral_AxiosConstantFolding verifies axios with a
-// const base URL folded into the canonical path.
+// const base URL folded into the canonical path; non-constant params use
+// variable name as placeholder (#706).
 func TestSynth_TemplateLiteral_AxiosConstantFolding(t *testing.T) {
 	src := `import axios from "axios";
 const BASE = "/api/v1";
@@ -184,20 +192,23 @@ export async function listOrders(userId) {
 }
 `
 	got, _ := runDetect(t, "typescript", "axios-const-fold.ts", src)
-	want := []string{"http:GET:/api/v1/users/{param}/orders"}
+	// BASE folded to "/api/v1"; ${userId} → {userId} (#706).
+	want := []string{"http:GET:/api/v1/users/{userId}/orders"}
 	requireContains(t, got, want, "axios constant-folding")
 }
 
 // TestSynth_TemplateLiteral_UnknownBase verifies that when the first
-// segment is an unknown variable, we emit {param}/... as a fallback.
+// segment is an unknown constant (not in the symbol table), we emit the
+// identifier name as the placeholder (#706). Both ${UNKNOWN_BASE} and
+// ${userId} produce named placeholders since they are valid identifiers.
 func TestSynth_TemplateLiteral_UnknownBase(t *testing.T) {
 	src := `export async function fetchUser(userId) {
   return fetch(` + "`" + `${UNKNOWN_BASE}/users/${userId}` + "`" + `);
 }
 `
 	got, _ := runDetect(t, "typescript", "unknown-base.ts", src)
-	// {param}/users/{param} — first segment is unknown
-	want := []string{"http:GET:/{param}/users/{param}"}
+	// #706: UNKNOWN_BASE is a valid identifier → {UNKNOWN_BASE}; userId → {userId}.
+	want := []string{"http:GET:/{UNKNOWN_BASE}/users/{userId}"}
 	requireContains(t, got, want, "unknown base constant")
 }
 
@@ -403,14 +414,16 @@ func TestSynth_Wrapper_EndpointKeyStaticString(t *testing.T) {
 }
 
 // TestSynth_Wrapper_URLKeyTemplateLiteral covers the same shape with the
-// `url:` variant and a template-literal value.
+// `url:` variant and a template-literal value. The constant is folded and
+// ${id} produces {id} as placeholder (#706).
 func TestSynth_Wrapper_URLKeyTemplateLiteral(t *testing.T) {
 	src := "const CLIENTS_ENDPOINT = \"/clients\";\n" +
 		"export async function getClient(id) {\n" +
 		"  return api({ url: `${CLIENTS_ENDPOINT}/${id}`, token }, \"GET\");\n" +
 		"}\n"
 	got, _ := runDetect(t, "typescript", "wrapper-url-tmpl.ts", src)
-	want := []string{"http:GET:/clients/{param}"}
+	// CLIENTS_ENDPOINT folded; ${id} → {id} (#706).
+	want := []string{"http:GET:/clients/{id}"}
 	requireContains(t, got, want, "wrapper url: template literal")
 }
 
@@ -524,7 +537,7 @@ export async function listGroups(): Promise<Group[]> {
 }
 
 // TestSynth_DollarHTTP_TemplateLiteral covers $http with template literal
-// and file-local const folding.
+// and file-local const folding. BASE_PATH is folded; ${id} emits {id} (#706).
 func TestSynth_DollarHTTP_TemplateLiteral(t *testing.T) {
 	src := "import { $http } from \"./httpClient\";\n" +
 		"const BASE_PATH = \"/inspections/\";\n" +
@@ -532,7 +545,8 @@ func TestSynth_DollarHTTP_TemplateLiteral(t *testing.T) {
 		"  return $http.get(`${BASE_PATH}${id}/`);\n" +
 		"}\n"
 	got, _ := runDetect(t, "typescript", "dollar-http-tmpl.ts", src)
-	want := []string{"http:GET:/inspections/{param}"}
+	// BASE_PATH folded to "/inspections/"; ${id} → {id} (#706).
+	want := []string{"http:GET:/inspections/{id}"}
 	requireContains(t, got, want, "$http template literal")
 }
 
@@ -578,7 +592,8 @@ export async function getUser(id) {
 }
 
 // TestSynth_AxiosInstance_BaseURLTemplateComposition verifies baseURL
-// composition stacks with template-literal path resolution.
+// composition stacks with template-literal path resolution. ${id} produces
+// {id} as placeholder (#706).
 func TestSynth_AxiosInstance_BaseURLTemplateComposition(t *testing.T) {
 	src := "import axios from \"axios\";\n" +
 		"const client = axios.create({ baseURL: '/api/v1' });\n" +
@@ -586,7 +601,8 @@ func TestSynth_AxiosInstance_BaseURLTemplateComposition(t *testing.T) {
 		"  return client.get(`/users/${id}`);\n" +
 		"}\n"
 	got, _ := runDetect(t, "typescript", "axios-base-url-tmpl.ts", src)
-	want := []string{"http:GET:/api/v1/users/{param}"}
+	// #706: ${id} → {id}, not {param}.
+	want := []string{"http:GET:/api/v1/users/{id}"}
 	requireContains(t, got, want, "axios.create baseURL + template")
 }
 
@@ -616,4 +632,115 @@ someObj.get("baz");
 			t.Errorf("new-code emitter fired on unknown receiver: ID=%q framework=%q", e.ID, fw)
 		}
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Issue #706 — semantic placeholder names for template-literal interpolations
+// ---------------------------------------------------------------------------
+
+// TestSynth706_SingleIdentifier is the canonical #706 case: a plain variable
+// name inside ${...} becomes the placeholder name instead of the generic {param}.
+func TestSynth706_SingleIdentifier(t *testing.T) {
+	src := "export async function getUser(userId) {\n" +
+		"  return fetch(`/users/${userId}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-single-ident.ts", src)
+	want := []string{"http:GET:/users/{userId}"}
+	requireContains(t, got, want, "#706 single identifier")
+}
+
+// TestSynth706_MultipleNamedParams verifies that multiple distinct variable
+// names produce distinct named placeholders in the same path.
+func TestSynth706_MultipleNamedParams(t *testing.T) {
+	src := "export async function getComment(postId, commentId) {\n" +
+		"  return fetch(`/posts/${postId}/comments/${commentId}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-multi-param.ts", src)
+	want := []string{"http:GET:/posts/{postId}/comments/{commentId}"}
+	requireContains(t, got, want, "#706 multiple named params")
+}
+
+// TestSynth706_PropertyAccess verifies property-access expressions use the
+// last segment as the placeholder name: ${user.id} → {id}.
+func TestSynth706_PropertyAccess(t *testing.T) {
+	src := "export async function patchUser(user) {\n" +
+		"  return fetch(`/users/${user.id}`, { method: 'PATCH' });\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-prop-access.ts", src)
+	// ${user.id} → last segment "id" → {id}.
+	want := []string{"http:PATCH:/users/{id}"}
+	requireContains(t, got, want, "#706 property access last segment")
+}
+
+// TestSynth706_DeepPropertyAccess verifies that deeper chains like
+// ${params.branchId} still use the last segment.
+func TestSynth706_DeepPropertyAccess(t *testing.T) {
+	src := "export async function getBranch(params) {\n" +
+		"  return axios.get(`/repos/${params.branchId}/details`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-deep-prop.ts", src)
+	// ${params.branchId} → {branchId}
+	want := []string{"http:GET:/repos/{branchId}/details"}
+	requireContains(t, got, want, "#706 deep property access")
+}
+
+// TestSynth706_ComplexExprFallback verifies that function calls fall back to
+// {param} since there is no reliable identifier to extract.
+func TestSynth706_ComplexExprFallback(t *testing.T) {
+	src := "export async function getUser() {\n" +
+		"  return fetch(`/users/${getUserId()}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-complex-expr.ts", src)
+	// Function call → {param} fallback.
+	want := []string{"http:GET:/users/{param}"}
+	requireContains(t, got, want, "#706 complex expression fallback")
+}
+
+// TestSynth706_TypeScriptCast verifies TypeScript `as <Type>` casts are
+// stripped so the underlying identifier name is preserved.
+func TestSynth706_TypeScriptCast(t *testing.T) {
+	src := "export async function getUser(userId: unknown) {\n" +
+		"  return fetch(`/users/${userId as string}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-ts-cast.ts", src)
+	// `userId as string` → strip cast → `userId` → {userId}.
+	want := []string{"http:GET:/users/{userId}"}
+	requireContains(t, got, want, "#706 TypeScript cast stripped")
+}
+
+// TestSynth706_OptionalChain verifies optional-chain expressions like
+// ${user?.id} use the property name after the ?. operator.
+func TestSynth706_OptionalChain(t *testing.T) {
+	src := "export async function deleteUser(user) {\n" +
+		"  return axios.delete(`/users/${user?.id}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-optional-chain.ts", src)
+	// ${user?.id} → strip ?. → user.id → last segment "id" → {id}.
+	want := []string{"http:DELETE:/users/{id}"}
+	requireContains(t, got, want, "#706 optional-chain")
+}
+
+// TestSynth706_NestedTemplatePlaceholders verifies that a template literal
+// with back-to-back placeholders (${prefix}${id}) produces two named params.
+func TestSynth706_NestedTemplatePlaceholders(t *testing.T) {
+	src := "const API = \"/api\";\n" +
+		"export async function getItem(resourceType, itemId) {\n" +
+		"  return fetch(`${API}/${resourceType}/${itemId}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-nested-tmpl.ts", src)
+	// API folded to "/api"; resourceType and itemId get named placeholders.
+	want := []string{"http:GET:/api/{resourceType}/{itemId}"}
+	requireContains(t, got, want, "#706 nested template placeholders")
+}
+
+// TestSynth706_ArraySubscriptFallback verifies that array-subscript
+// expressions like ${arr[0]} fall back to {param} (not extractable).
+func TestSynth706_ArraySubscriptFallback(t *testing.T) {
+	src := "export async function getFirst(ids) {\n" +
+		"  return fetch(`/items/${ids[0]}`);\n" +
+		"}\n"
+	got, _ := runDetect(t, "typescript", "706-subscript.ts", src)
+	// ${ids[0]} → subscript expression → {param} fallback.
+	want := []string{"http:GET:/items/{param}"}
+	requireContains(t, got, want, "#706 array subscript fallback")
 }

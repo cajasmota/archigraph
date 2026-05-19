@@ -18,11 +18,13 @@
 //     aiohttp.ClientSession.<verb>("/path"), session.<verb>("/path")
 //
 // Phase 2 (this file) adds TEMPLATE-LITERAL URL extraction for JS/TS:
-//   - fetch(`/users/${id}/checklists`) → http:GET:/users/{param}/checklists
-//   - axios.post(`/api/v1/users/${userId}`, body) → http:POST:/api/v1/users/{param}
+//   - fetch(`/users/${id}/checklists`) → http:GET:/users/{id}/checklists (#706)
+//   - axios.post(`/api/v1/users/${userId}`, body) → http:POST:/api/v1/users/{userId} (#706)
 //   - Simple constant folding: const API_BASE = "/api/v1"; fetch(`${API_BASE}/users`)
 //     → resolves API_BASE to "/api/v1" → http:GET:/api/v1/users
-//   - Unknown substitutions emit {param} as a placeholder.
+//   - ${user.id} → {id} (last property segment); ${user?.id} → {id} (optional chain)
+//   - ${userId as string} → {userId} (TypeScript cast stripped)
+//   - Complex expressions (function calls, subscripts) → {param} fallback.
 //
 // Still deferred to later chain-fixes:
 //   - URL builders: const u = new URL(...); fetch(u)
@@ -190,28 +192,86 @@ func buildJSConstantSymbolTable(content string) map[string]string {
 	return syms
 }
 
-// templateSubstRe matches ${<identifier>} inside a template literal.
-// We capture the identifier inside. Supports plain identifiers and simple
-// member expressions like `${obj.prop}`, `${obj.prop.sub}` — all map to
-// the leading identifier for constant-folding purposes.
+// templateSubstRe matches ${<expression>} inside a template literal.
+// We capture the full expression inside ${...} for further analysis.
 var templateSubstRe = regexp.MustCompile(`\$\{([^}]+)\}`)
+
+// jsIdentRe matches a valid JS/TS identifier (no dots, brackets, parens, etc.).
+var jsIdentRe = regexp.MustCompile(`^[A-Za-z_$][\w$]*$`)
+
+// tsCastRe strips a TypeScript `as <Type>` suffix from an expression.
+// e.g. `userId as string` → `userId`, `user.id as unknown as string` → `user.id`.
+var tsCastRe = regexp.MustCompile(`\s+as\s+\S+.*$`)
+
+// extractParamName returns the best placeholder name for a template-literal
+// interpolation expression, or "" if the expression is too complex to name
+// (fall back to {param}).
+//
+// Rules (applied in order):
+//  1. Strip TypeScript type casts:  `userId as string` → `userId`
+//  2. Strip optional-chain markers: `user?.id` → `user.id`
+//  3. Plain identifier:             `userId` → `userId`
+//  4. Property access (dotted):     `user.id` / `obj.prop.sub` → last segment (`id`, `sub`)
+//  5. Anything with `(` or `[`:     function call / subscript → return ""
+func extractParamName(expr string) string {
+	expr = strings.TrimSpace(expr)
+
+	// Strip TypeScript type casts (e.g. `userId as string`, `id as unknown as number`).
+	expr = tsCastRe.ReplaceAllString(expr, "")
+	expr = strings.TrimSpace(expr)
+
+	// Strip optional-chain markers (?.) — treat `user?.id` as `user.id`.
+	expr = strings.ReplaceAll(expr, "?.", ".")
+
+	// Reject complex expressions: function calls or array subscripts.
+	if strings.ContainsAny(expr, "([") {
+		return ""
+	}
+
+	// If expression contains a dot, take the last segment.
+	if dot := strings.LastIndexByte(expr, '.'); dot >= 0 {
+		last := expr[dot+1:]
+		if jsIdentRe.MatchString(last) {
+			return last
+		}
+		return ""
+	}
+
+	// Plain identifier.
+	if jsIdentRe.MatchString(expr) {
+		return expr
+	}
+
+	return ""
+}
 
 // canonicalizeTemplateLiteral converts a raw template-literal body (the
 // content between backticks) into a canonical URL path suitable for
 // cross-repo matching. Each `${expr}` substitution is either:
 //   - Resolved to its constant string value from syms (constant folding), or
-//   - Replaced with the `{param}` placeholder.
+//   - Replaced with a `{name}` placeholder where `name` is derived from the
+//     expression identifier (issue #706), or
+//   - Replaced with `{param}` when the expression is too complex to name.
+//
+// Placeholder naming rules (constant folding has highest priority):
+//  1. `${userId}` → `{userId}` (plain identifier)
+//  2. `${user.id}` → `{id}` (last property segment)
+//  3. `${user?.id}` → `{id}` (optional-chain, stripped)
+//  4. `${userId as string}` → `{userId}` (TypeScript cast, stripped)
+//  5. `${getUserId()}` → `{param}` (function call, fallback)
+//  6. `${arr[0]}` → `{param}` (subscript, fallback)
 //
 // The resulting string is stripped of any host prefix (via stripURLHost) and
 // validated by looksLikeURLPathOrParam before being returned. Returns ("", false)
 // when the template does not look like a URL path.
 func canonicalizeTemplateLiteral(tmpl string, syms map[string]string) (string, bool) {
-	// Replace each ${expr} with its constant value or {param}.
+	// Replace each ${expr} with its constant value or a named placeholder.
 	result := templateSubstRe.ReplaceAllStringFunc(tmpl, func(match string) string {
 		// Extract the expression inside ${...}.
 		inner := match[2 : len(match)-1]
 		// Trim whitespace.
 		inner = strings.TrimSpace(inner)
+
 		// For simple identifiers: look up in the constant symbol table.
 		// For member expressions (e.g. `obj.field`), try the full expr
 		// first, then the leading identifier.
@@ -224,6 +284,14 @@ func canonicalizeTemplateLiteral(tmpl string, syms map[string]string) (string, b
 				return val
 			}
 		}
+
+		// Constant folding didn't apply — derive a semantic placeholder from
+		// the expression identifier (#706).
+		if name := extractParamName(inner); name != "" {
+			return "{" + name + "}"
+		}
+
+		// Fallback for complex expressions (function calls, subscripts, etc.).
 		return "{param}"
 	})
 
@@ -231,7 +299,7 @@ func canonicalizeTemplateLiteral(tmpl string, syms map[string]string) (string, b
 	result = stripURLHost(result)
 
 	// Validate that this looks like a URL path (absolute) or a
-	// template-parameter-prefixed path (starts with {param}).
+	// template-parameter-prefixed path (starts with {<name>}).
 	if !looksLikeURLPathOrParam(result) {
 		return "", false
 	}
