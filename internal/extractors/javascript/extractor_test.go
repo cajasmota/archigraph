@@ -920,3 +920,262 @@ func TestDestructureRegressionNonPattern(t *testing.T) {
 
 	assertKind(t, entities, "useAppDispatch", "SCOPE.Component")
 }
+
+// --------------------------------------------------------------------------
+// Issue #771 — class-field arrow methods → SCOPE.Operation
+// --------------------------------------------------------------------------
+
+// Pattern 1: plain arrow `name = () => body`
+func TestClassFieldArrow_PlainArrow(t *testing.T) {
+	src := []byte(`
+class UserService {
+  getAll = () => this.$http.get('/users');
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "getAll", "SCOPE.Operation")
+	e := findByName(entities, "getAll")
+	if e == nil {
+		t.Fatal("getAll not found")
+	}
+	if e.Subtype != "method" {
+		t.Errorf("Subtype=%q, want 'method'", e.Subtype)
+	}
+}
+
+// Pattern 1b: plain arrow in JS (field_definition, not public_field_definition)
+// This is the dominant fixture-e shape — AngularJS-style JS service classes.
+func TestClassFieldArrow_PlainArrowJS(t *testing.T) {
+	src := []byte(`
+class ProductsService {
+  allProducts = ({page}) => this.$http.get('/products');
+  getUploadTemplate = () => downloadFile('/products/upload/template');
+  uploadProducts = ({file}) => uploadFile('/products/upload', file);
+}
+`)
+	tree := parseJS(t, src)
+	entities := extract(t, src, "javascript", tree)
+
+	assertKind(t, entities, "allProducts", "SCOPE.Operation")
+	assertKind(t, entities, "getUploadTemplate", "SCOPE.Operation")
+	assertKind(t, entities, "uploadProducts", "SCOPE.Operation")
+	for _, name := range []string{"allProducts", "getUploadTemplate", "uploadProducts"} {
+		e := findByName(entities, name)
+		if e != nil && e.Subtype != "method" {
+			t.Errorf("%s: Subtype=%q, want 'method'", name, e.Subtype)
+		}
+	}
+}
+
+// Pattern 2: async arrow `name = async () => body`
+func TestClassFieldArrow_AsyncArrow(t *testing.T) {
+	src := []byte(`
+class UserService {
+  fetchUser = async () => this.repo.findOne();
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "fetchUser", "SCOPE.Operation")
+	e := findByName(entities, "fetchUser")
+	if e == nil {
+		t.Fatal("fetchUser not found")
+	}
+	if !strings.Contains(e.Signature, "async") {
+		t.Errorf("Signature=%q, want 'async' in signature for async arrow", e.Signature)
+	}
+}
+
+// Pattern 3: parameterized arrow `name = (a, b) => body`
+func TestClassFieldArrow_Parameterized(t *testing.T) {
+	src := []byte(`
+class CartService {
+  addItem = (id, qty) => this.$http.post('/cart', { id, qty });
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "addItem", "SCOPE.Operation")
+}
+
+// Pattern 4: TS-typed parameters `name = (a: T) => body`
+func TestClassFieldArrow_TSTypedParams(t *testing.T) {
+	src := []byte(`
+class OrderService {
+  byId = (id: string) => this.$http.get('/orders/' + id);
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "byId", "SCOPE.Operation")
+}
+
+// Pattern 5: TS generic `name = <T>(a: T) => body`
+func TestClassFieldArrow_TSGeneric(t *testing.T) {
+	src := []byte(`
+class DataService {
+  get = <T>(url: string): Promise<T> => this.$http.get(url);
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "get", "SCOPE.Operation")
+}
+
+// Pattern 6: block body `name = (a) => { /* multi-line */ }`
+func TestClassFieldArrow_BlockBody(t *testing.T) {
+	src := []byte(`
+class AuthService {
+  login = (user, pass) => {
+    const token = this.auth.signIn(user, pass);
+    return token;
+  };
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "login", "SCOPE.Operation")
+}
+
+// Pattern 7: static arrow `static name = () => body`
+func TestClassFieldArrow_StaticArrow(t *testing.T) {
+	src := []byte(`
+class ConfigService {
+  static defaults = () => ({ timeout: 3000 });
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "defaults", "SCOPE.Operation")
+	e := findByName(entities, "defaults")
+	if e == nil {
+		t.Fatal("defaults not found")
+	}
+	if !strings.Contains(e.Signature, "static") {
+		t.Errorf("Signature=%q, want 'static' in signature for static arrow", e.Signature)
+	}
+}
+
+// Pattern 8: TS property type annotation `name: Type = () => body`
+func TestClassFieldArrow_TSPropertyTypeAnnotation(t *testing.T) {
+	src := []byte(`
+class NotificationService {
+  send: (msg: string) => void = (msg) => this.mailer.send(msg);
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "send", "SCOPE.Operation")
+}
+
+// Pattern 9: TS access modifier `private name = () => body`
+func TestClassFieldArrow_TSAccessModifier(t *testing.T) {
+	src := []byte(`
+class PaymentService {
+  private charge = (amount: number) => this.$http.post('/charge', { amount });
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "charge", "SCOPE.Operation")
+}
+
+// Negative case 1: plain value assignment stays as non-Operation field.
+// `name = 'foo'` should NOT emit SCOPE.Operation (stays as Component via
+// walkChildren → no emit at all for bare public_field_definition without arrow).
+func TestClassFieldArrow_Negative_PlainStringField(t *testing.T) {
+	src := []byte(`
+class Config {
+  baseUrl = '/api';
+  timeout = 5000;
+  debug = false;
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	// These plain fields must NOT become Operation entities.
+	for _, name := range []string{"baseUrl", "timeout", "debug"} {
+		e := findByName(entities, name)
+		if e != nil && e.Kind == "SCOPE.Operation" {
+			t.Errorf("field %q: got SCOPE.Operation, want no Operation entity for plain value", name)
+		}
+	}
+}
+
+// Negative case 2: method_definition (non-arrow class methods) continue to
+// work via the existing handleMethodDefinition path — regression guard.
+func TestClassFieldArrow_Negative_RegularMethodUnaffected(t *testing.T) {
+	src := []byte(`
+class Counter {
+  increment() { this.count++; }
+  decrement() { this.count--; }
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	assertKind(t, entities, "increment", "SCOPE.Operation")
+	assertKind(t, entities, "decrement", "SCOPE.Operation")
+}
+
+// Full service class: all patterns together — the dominant fixture-e shape.
+func TestClassFieldArrow_ServiceClass_MultipleArrowMethods(t *testing.T) {
+	src := []byte(`
+class ProductService {
+  getAll = () => this.$http.get('/products');
+  byId = (id) => this.$http.get('/products/' + id);
+  create = async (data) => this.$http.post('/products', data);
+  update = async (id, data) => this.$http.put('/products/' + id, data);
+  remove = (id) => this.$http.delete('/products/' + id);
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	for _, name := range []string{"getAll", "byId", "create", "update", "remove"} {
+		assertKind(t, entities, name, "SCOPE.Operation")
+		e := findByName(entities, name)
+		if e != nil && e.Subtype != "method" {
+			t.Errorf("%s: Subtype=%q, want 'method'", name, e.Subtype)
+		}
+	}
+}
+
+// CONTAINS edges: class entity must carry CONTAINS for arrow-method children.
+func TestClassFieldArrow_ClassContainsArrowMethods(t *testing.T) {
+	src := []byte(`
+class ItemService {
+  list = () => this.$http.get('/items');
+  detail = (id) => this.$http.get('/items/' + id);
+}
+`)
+	tree := parseTS(t, src)
+	entities := extract(t, src, "typescript", tree)
+
+	cls := findByName(entities, "ItemService")
+	if cls == nil {
+		t.Fatal("ItemService class entity not found")
+	}
+
+	// Both arrow methods must appear in CONTAINS relationships on the class.
+	containsNames := map[string]bool{}
+	for _, rel := range cls.Relationships {
+		if rel.Kind == "CONTAINS" {
+			containsNames[rel.ToID] = true
+		}
+	}
+	if len(containsNames) == 0 {
+		t.Errorf("ItemService has no CONTAINS relationships; list and detail should be contained")
+	}
+}

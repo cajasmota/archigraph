@@ -178,8 +178,14 @@ func (x *extractor) collectClassFields(body *sitter.Node, out map[string]string)
 			continue
 		}
 		switch ch.Type() {
-		case "public_field_definition":
+		case "public_field_definition", "field_definition":
+			// Issue #771 — JS grammar uses "field_definition";
+			// TS grammar uses "public_field_definition". The name
+			// field also differs: TS uses "name", JS uses "property".
 			name := x.childFieldText(ch, "name")
+			if name == "" {
+				name = x.childFieldText(ch, "property")
+			}
 			typ := x.typeAnnotationLeaf(ch.ChildByFieldName("type"))
 			if name != "" && typ != "" {
 				out[name] = typ

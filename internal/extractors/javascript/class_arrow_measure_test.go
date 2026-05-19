@@ -1,0 +1,114 @@
+package javascript_test
+
+// TestClassArrow_Measurement — corpus measurement for issue #771.
+// Counts SCOPE.Operation entities emitted from class-field arrow methods
+// across private fixtures. Only runs when ARCHIGRAPH_771_MEASURE=1.
+//
+//	ARCHIGRAPH_771_MEASURE=1 go test ./internal/extractors/javascript/... -run TestClassArrow_Measurement -v
+
+import (
+	"context"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	sitter "github.com/smacker/go-tree-sitter"
+	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
+	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
+
+	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/extractors/javascript"
+)
+
+func TestClassArrow_Measurement(t *testing.T) {
+	if os.Getenv("ARCHIGRAPH_771_MEASURE") != "1" {
+		t.Skip("set ARCHIGRAPH_771_MEASURE=1 to run #771 corpus measurement")
+	}
+	home, _ := os.UserHomeDir()
+	cases := []struct {
+		fixture string
+		root    string
+		minWant int
+	}{
+		// fixture-e: AngularJS-style service classes with class-field arrows;
+		// expect at least 5 new SCOPE.Operation entities (actual: 51 found).
+		{"client-fixture-e", filepath.Join(home, "private/archigraph-fixtures/client-fixture-e"), 5},
+		// fixture-b and fixture-c: React/functional code — no class-field
+		// arrows in practice; minWant=0 so measurement reports without failing.
+		{"client-fixture-b", filepath.Join(home, "private/archigraph-fixtures/client-fixture-b"), 0},
+		{"client-fixture-c", filepath.Join(home, "private/archigraph-fixtures/client-fixture-c"), 0},
+	}
+
+	ext := javascript.New()
+	jstsExts := map[string]bool{
+		".js": true, ".jsx": true, ".ts": true, ".tsx": true,
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.fixture, func(t *testing.T) {
+			if _, err := os.Stat(c.root); err != nil {
+				t.Skipf("fixture %s not present: %v", c.root, err)
+			}
+			var arrowMethods int
+			var samples []string
+			_ = filepath.WalkDir(c.root, func(p string, d fs.DirEntry, err error) error {
+				if err != nil || d.IsDir() {
+					return nil
+				}
+				e := strings.ToLower(filepath.Ext(p))
+				if !jstsExts[e] {
+					return nil
+				}
+				lang := "javascript"
+				if e == ".ts" || e == ".tsx" {
+					lang = "typescript"
+				}
+				body, err := os.ReadFile(p)
+				if err != nil {
+					return nil
+				}
+				parser := sitter.NewParser()
+				if lang == "typescript" {
+					parser.SetLanguage(tstypescript.GetLanguage())
+				} else {
+					parser.SetLanguage(tsjavascript.GetLanguage())
+				}
+				tree, parseErr := parser.ParseCtx(context.Background(), nil, body)
+				if parseErr != nil || tree == nil {
+					return nil
+				}
+				entities, extractErr := ext.Extract(context.Background(), extreg.FileInput{
+					Path:     p,
+					Content:  body,
+					Language: lang,
+					Tree:     tree,
+				})
+				if extractErr != nil {
+					return nil
+				}
+				for _, ent := range entities {
+					if ent.Kind == "SCOPE.Operation" && ent.Subtype == "method" &&
+						strings.Contains(ent.Signature, "= (...) =>") {
+						arrowMethods++
+						if len(samples) < 10 {
+							relPath, _ := filepath.Rel(c.root, p)
+							samples = append(samples, "  "+ent.Name+" ("+relPath+")")
+						}
+					}
+				}
+				return nil
+			})
+			t.Logf("[771-measure] fixture=%s arrowMethods=%d", c.fixture, arrowMethods)
+			for _, s := range samples {
+				t.Log(s)
+			}
+			if arrowMethods < c.minWant {
+				t.Errorf("fixture=%s: got %d arrow-method Operations, want >= %d",
+					c.fixture, arrowMethods, c.minWant)
+			}
+		})
+	}
+}

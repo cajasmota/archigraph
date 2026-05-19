@@ -12,6 +12,7 @@
 //   - function_expression (via const) → Kind="SCOPE.Operation"
 //   - class_declaration          → Kind="SCOPE.Component"
 //   - method_definition          → Kind="SCOPE.Operation"
+//   - public_field_definition (arrow RHS) → Kind="SCOPE.Operation" (issue #771)
 //   - interface_declaration (TS) → Kind="SCOPE.Schema"
 //   - type_alias_declaration (TS)→ Kind="SCOPE.Schema"
 //   - import_statement + require → IMPORTS edge on file entity (issue #742)
@@ -377,6 +378,17 @@ func (x *extractor) walk(n *sitter.Node, parentClass string, cb *classBindings) 
 		x.handleMethodDefinition(n, parentClass, cb)
 		return
 
+	case "public_field_definition", "field_definition":
+		// Issue #771 — class-body `name = () => ...` arrow methods.
+		// tree-sitter JavaScript grammar: "field_definition"
+		// tree-sitter TypeScript grammar:  "public_field_definition"
+		// Both have the same structure: name + optional type + value.
+		// Only emits when the RHS is an arrow_function; plain value
+		// assignments remain unhandled here and fall through to
+		// walkChildren so nested constructs still get visited.
+		x.handlePublicFieldDefinition(n, parentClass, cb)
+		return
+
 	case "interface_declaration":
 		x.handleInterfaceDeclaration(n)
 		return
@@ -498,6 +510,91 @@ func (x *extractor) handleMethodDefinition(n *sitter.Node, _ string, cb *classBi
 	frame := x.functionParamFrame(params, cb)
 	rels := x.extractCallRelationships(body, name, frame)
 	x.emitWithRels(name, "SCOPE.Operation", n, "method", fmt.Sprintf("method %s", name), rels)
+}
+
+// handlePublicFieldDefinition handles class-body field assignments whose RHS
+// is an arrow function. These are the "class-field arrow method" pattern
+// common in AngularJS-style services and Angular components:
+//
+//	byId = (id) => this.$http.get('/users/' + id);
+//	static getAll = async () => [...];
+//	private save: (x: T) => void = async (x) => { ... };
+//
+// Issue #771 — tree-sitter emits these as `public_field_definition` (TS
+// grammar) or `field_definition` (JS grammar) nodes. The name field differs:
+//   - TypeScript `public_field_definition`: ChildByFieldName("name")
+//   - JavaScript `field_definition`:        ChildByFieldName("property")
+//
+// The `value` field holds the RHS expression. If the value is NOT an
+// arrow_function, this handler does nothing (plain value fields stay as
+// non-Operation entities and the extractor recurses into their subtrees for
+// nested constructs).
+//
+// The emitted entity subtype is "method" — consistent with how
+// handleMethodDefinition classifies class methods.
+func (x *extractor) handlePublicFieldDefinition(n *sitter.Node, parentClass string, cb *classBindings) {
+	// TypeScript grammar: "name" field; JavaScript grammar: "property" field.
+	nameNode := n.ChildByFieldName("name")
+	if nameNode == nil {
+		nameNode = n.ChildByFieldName("property")
+	}
+	name := x.nodeText(nameNode)
+	if name == "" {
+		return
+	}
+
+	valueNode := n.ChildByFieldName("value")
+	if valueNode == nil || valueNode.Type() != "arrow_function" {
+		// Not an arrow method — recurse into children so nested
+		// declarations (e.g. arrow inside object literal RHS) still get
+		// visited, but do NOT emit an Operation entity for this field.
+		x.walkChildren(n, parentClass, cb)
+		return
+	}
+
+	// Arrow method: emit as SCOPE.Operation subtype=method.
+	body := valueNode.ChildByFieldName("body")
+	params := valueNode.ChildByFieldName("parameters")
+	frame := x.functionParamFrame(params, cb)
+	rels := x.extractCallRelationships(body, name, frame)
+
+	// Build a signature that reflects static/async modifiers for readability.
+	isStatic := false
+	isAsync := false
+	for i := 0; i < int(n.ChildCount()); i++ {
+		ch := n.Child(i)
+		if ch == nil {
+			continue
+		}
+		if ch.Type() == "static" {
+			isStatic = true
+		}
+	}
+	// async is a child of the arrow_function itself.
+	for i := 0; i < int(valueNode.ChildCount()); i++ {
+		ch := valueNode.Child(i)
+		if ch == nil {
+			continue
+		}
+		if ch.Type() == "async" {
+			isAsync = true
+		}
+	}
+	sigParts := ""
+	if isStatic {
+		sigParts = "static "
+	}
+	if isAsync {
+		sigParts += "async "
+	}
+	sig := fmt.Sprintf("%s%s = (...) =>", sigParts, name)
+
+	x.emitWithRels(name, "SCOPE.Operation", valueNode, "method", sig, rels)
+
+	// Recurse into the body for nested declarations.
+	if body != nil {
+		x.walkChildren(body, parentClass, cb)
+	}
 }
 
 // handleInterfaceDeclaration handles TypeScript interface declarations.
