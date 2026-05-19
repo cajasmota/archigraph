@@ -265,6 +265,14 @@ func walk(
 			*out = append(*out, synthesizeLombokEntities(rec.Name, classDeclSrc, classBodySrc, file.Path)...)
 			// Field-level @Getter / @Setter / @With synthesis (supplements class-level).
 			*out = append(*out, synthesizeFieldLevelLombok(rec.Name, classBodySrc, file.Path)...)
+			// Issue #804 — Quarkus Panache static-method synthesizer.
+			// Synthesize SCOPE.Operation entities for every method that Panache
+			// provides at runtime for classes extending PanacheEntity / PanacheEntityBase,
+			// implementing PanacheRepository<T>, or their Mongo/Reactive variants.
+			// rawImports is derived from the full file content so import-package
+			// detection determines which Panache flavour (SQL/Reactive/MongoDB) to use.
+			rawImports := collectRawImports(file.Content)
+			*out = append(*out, synthesizePanacheEntities(rec.Name, classDeclSrc, classBodySrc, file.Path, rawImports)...)
 		}
 		return
 
