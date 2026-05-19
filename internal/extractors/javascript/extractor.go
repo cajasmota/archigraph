@@ -14,7 +14,7 @@
 //   - method_definition          → Kind="SCOPE.Operation"
 //   - interface_declaration (TS) → Kind="SCOPE.Schema"
 //   - type_alias_declaration (TS)→ Kind="SCOPE.Schema"
-//   - import_statement + require → Kind="SCOPE.Component"
+//   - import_statement + require → IMPORTS edge on file entity (issue #742)
 package javascript
 
 import (
@@ -164,13 +164,26 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 			}
 		}()
 		x.walk(root, "", nil)
+		// Issue #742 — snapshot length before collectImports so we can
+		// identify which entities were added by it (the import-placeholder
+		// SCOPE.Component/import entities). After collectImports we call
+		// attachImportRelationshipsJS to lift those IMPORTS relationships
+		// onto the file entity (entities[0]) and drop the now-redundant
+		// wrapper entities. Mirrors Java #681/#694 and Python #693/#715.
+		preImportLen := len(x.entities)
 		x.collectImports(root)
+		if len(x.entities) > preImportLen && len(x.entities) > 0 {
+			importSlice := x.entities[preImportLen:]
+			kept := attachImportRelationshipsJS(importSlice, &x.entities[0])
+			x.entities = append(x.entities[:preImportLen], kept...)
+		}
 		// Second pass: REFERENCES-edge emission. Runs AFTER walk +
 		// collectImports so the file-scope symbol table covers every
 		// declared name (functions, methods, consts, destructured
-		// bindings, imports). Wrapped in the same recover frame so a
-		// pathological AST shape can't take down the primary extraction
-		// — emitReferences returns partial results internally.
+		// bindings). Import-placeholder entities are no longer emitted
+		// (issue #742); IMPORTS edges live on the file entity instead.
+		// emitReferences is wrapped in the same recover frame so a
+		// pathological AST shape can't take down the primary extraction.
 		x.emitReferences(root)
 	}()
 

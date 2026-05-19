@@ -190,8 +190,9 @@ func TestErrorPatternJS_TypeScriptLanguage(t *testing.T) {
 }
 
 // TestErrorPatternJS_PreservesBaseExtraction verifies the secondary
-// pass is additive — function / class / import records must all
-// still be present.
+// pass is additive — function / class / import edges must all
+// still be present. Updated for issue #742: import-placeholder entity
+// "bar" is no longer emitted; the IMPORTS edge lives on the file entity.
 func TestErrorPatternJS_PreservesBaseExtraction(t *testing.T) {
 	src := `import { foo } from "bar";
 
@@ -204,7 +205,9 @@ class Worker {
 }
 `
 	recs := extractAll(t, src, "javascript")
-	var hasClass, hasMethod, hasImport, hasPattern bool
+	var hasClass, hasMethod, hasPattern bool
+	// Issue #742: verify IMPORTS edge for "bar" exists on any entity.
+	hasImport := false
 	for _, r := range recs {
 		if r.Kind == "SCOPE.Component" && r.Name == "Worker" {
 			hasClass = true
@@ -212,11 +215,23 @@ class Worker {
 		if r.Kind == "SCOPE.Operation" && r.Name == "run" {
 			hasMethod = true
 		}
-		if r.Kind == "SCOPE.Component" && r.Name == "bar" {
-			hasImport = true
-		}
 		if r.Kind == "SCOPE.Pattern" {
 			hasPattern = true
+		}
+		// No longer a standalone SCOPE.Component/import entity; check edges.
+		for _, rel := range r.Relationships {
+			if rel.Kind == "IMPORTS" {
+				ip := ""
+				if rel.Properties != nil {
+					ip = rel.Properties["import_path"]
+				}
+				if ip == "" {
+					ip = rel.ToID
+				}
+				if ip == "bar" {
+					hasImport = true
+				}
+			}
 		}
 	}
 	if !hasClass {
