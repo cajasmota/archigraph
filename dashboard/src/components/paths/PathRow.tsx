@@ -20,7 +20,7 @@ export function PathRow({ path, group, isSelected = false, onSelect }: PathRowPr
 
   const handleClick = () => {
     onSelect?.(path.path_hash)
-    navigate(`/api/${group}/${path.path_hash}`)
+    navigate(`/paths/${group}/${path.path_hash}`)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

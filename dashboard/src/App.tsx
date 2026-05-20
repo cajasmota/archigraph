@@ -42,9 +42,9 @@ const router = createBrowserRouter([
       { path: 'topology/:group', element: <TopologyRoute /> },
 
       // Surface 4 — API Explorer (with nested detail route)
-      { path: 'api', element: <Navigate to="/api/fixture-a" replace /> },
+      { path: 'paths', element: <Navigate to="/paths/fixture-a" replace /> },
       {
-        path: 'api/:group',
+        path: 'paths/:group',
         element: <PathsRoute />,
         children: [
           {
