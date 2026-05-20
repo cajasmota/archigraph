@@ -208,6 +208,12 @@ export interface HandlerDetail {
   source_file: string
   start_line: number
   language: string
+  /** True when docgen has run and produced a summary for this handler */
+  has_docs?: boolean
+  /** AI-generated summary from /generate-docs */
+  docs_summary?: string
+  /** Path to the generated docs file */
+  docs_path?: string
 }
 
 export interface ResponseShape {
