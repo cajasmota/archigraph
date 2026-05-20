@@ -158,13 +158,26 @@ func extractPythonShape(src, handler, framework string) shape {
 		if expr == "" || expr == "None" {
 			continue
 		}
-		parsePyReturn(src, expr, &sh)
+		parsePyReturn(src, body, expr, &sh)
+	}
+	// If we still have only dynamicResponse (e.g. `return serializer.data`
+	// resolved via self.get_serializer()), try the class-level serializer_class
+	// as a last resort.
+	if sh.dynamicResponse && !sh.knownResponse {
+		if keys := drfResolveAndWalk(src, "", body); len(keys) > 0 {
+			sh.responseKeys = append(sh.responseKeys, keys...)
+			sh.knownResponse = true
+			sh.dynamicResponse = false
+			sh.responseKeysSource = "drf_serializer"
+		}
 	}
 	return sh
 }
 
 // parsePyReturn inspects a single `return <expr>` and updates `sh` in place.
-func parsePyReturn(src, expr string, sh *shape) {
+// `handlerBody` is the text of the enclosing function body, used for DRF
+// local-variable resolution.
+func parsePyReturn(src, handlerBody, expr string, sh *shape) {
 	// Strip a trailing comment.
 	if i := strings.Index(expr, " #"); i >= 0 {
 		expr = strings.TrimSpace(expr[:i])
@@ -190,7 +203,7 @@ func parsePyReturn(src, expr string, sh *shape) {
 			if parenIdx >= 0 {
 				args := extractArgList(expr, idx+parenIdx)
 				if len(args) > 0 {
-					applyPyReturnArg(src, args[0], status, sh)
+					applyPyReturnArg(src, handlerBody, args[0], status, sh)
 					recordStatus(sh, status, looksLikeError(args[0]))
 					return
 				}
@@ -210,7 +223,7 @@ func parsePyReturn(src, expr string, sh *shape) {
 					status = n
 				}
 			}
-			applyPyReturnArg(src, dict, status, sh)
+			applyPyReturnArg(src, handlerBody, dict, status, sh)
 			recordStatus(sh, status, false)
 			return
 		}
@@ -230,9 +243,27 @@ func parsePyReturn(src, expr string, sh *shape) {
 			return
 		}
 	}
-	// `return serializer.data` — known DRF idiom; we cannot resolve the
-	// serializer from the local return alone, but mark known-dynamic.
+	// `return serializer.data` / `return Response(serializer.data)` —
+	// DRF idiom: try to resolve the serializer class and walk its fields.
 	if strings.Contains(expr, ".data") || strings.Contains(expr, ".to_dict()") {
+		// Extract the variable name before ".data" (e.g. "serializer" from "serializer.data").
+		if dotIdx := strings.Index(expr, ".data"); dotIdx > 0 {
+			varName := strings.TrimSpace(expr[:dotIdx])
+			// Strip any wrapper: Response(serializer.data) → varName stays "serializer"
+			if parenIdx := strings.LastIndexAny(varName, "("); parenIdx >= 0 {
+				varName = strings.TrimSpace(varName[parenIdx+1:])
+			}
+			if varName != "" && varName != "self" {
+				if keys := drfResolveAndWalk(src, varName, handlerBody); len(keys) > 0 {
+					for _, k := range keys {
+						sh.responseKeys = append(sh.responseKeys, k)
+					}
+					sh.knownResponse = true
+					sh.responseKeysSource = "drf_serializer"
+					return
+				}
+			}
+		}
 		sh.dynamicResponse = true
 		return
 	}
@@ -241,8 +272,9 @@ func parsePyReturn(src, expr string, sh *shape) {
 }
 
 // applyPyReturnArg merges a single argument (typically the body literal
-// passed to Response(...)) into `sh`.
-func applyPyReturnArg(src, arg string, status int, sh *shape) {
+// passed to Response(...)) into `sh`. `handlerBody` is passed for DRF
+// serializer resolution when the arg is `serializer.data`.
+func applyPyReturnArg(src, handlerBody, arg string, status int, sh *shape) {
 	keys := extractDictKeys(arg)
 	if len(keys) > 0 {
 		sh.knownResponse = true
@@ -251,6 +283,22 @@ func applyPyReturnArg(src, arg string, status int, sh *shape) {
 		} else {
 			sh.responseKeys = append(sh.responseKeys, keys...)
 		}
+		return
+	}
+	// `Response(serializer.data)` — DRF pattern: the arg is `serializer.data`.
+	if strings.Contains(arg, ".data") {
+		if dotIdx := strings.Index(arg, ".data"); dotIdx > 0 {
+			varName := strings.TrimSpace(arg[:dotIdx])
+			if varName != "" && varName != "self" {
+				if drfKeys := drfResolveAndWalk(src, varName, handlerBody); len(drfKeys) > 0 {
+					sh.responseKeys = append(sh.responseKeys, drfKeys...)
+					sh.knownResponse = true
+					sh.responseKeysSource = "drf_serializer"
+					return
+				}
+			}
+		}
+		sh.dynamicResponse = true
 		return
 	}
 	// `return SomeModel(...)` inside a wrapper, e.g. Response(SomeModel(...)).
@@ -376,6 +424,187 @@ func walkPyClassFields(src, name string) map[string]string {
 		out[fname] = ftype
 	}
 	return out
+}
+
+// ---------------------------------------------------------------------------
+// DRF Serializer walking
+// ---------------------------------------------------------------------------
+
+// drfSerializerFieldRe matches class-attribute serializer field assignments:
+//
+//	field_name = serializers.CharField(...)
+//	field_name = serializers.IntegerField(read_only=True)
+//	nested_field = NestedSerializer()
+//	nested_field = NestedSerializer(many=True)
+var drfSerializerFieldRe = regexp.MustCompile(`(?m)^[ \t]+([a-zA-Z_]\w*)\s*=\s*(?:serializers\.\w+|[A-Z][A-Za-z0-9_]*Serializer|[A-Z][A-Za-z0-9_]*)\s*\(`)
+
+// drfMetaFieldsListRe captures `fields = ['id', 'name']` or `fields = ("id", "name")` in a Meta class.
+var drfMetaFieldsListRe = regexp.MustCompile(`(?m)fields\s*=\s*[\[\(](.*?)[\]\)]`)
+
+// drfLocalVarTypeRe matches `varname = SomeSerializer(...)` to track local variable types.
+var drfLocalVarTypeRe = regexp.MustCompile(`(?m)[ \t]+([a-zA-Z_]\w*)\s*=\s*([A-Z][A-Za-z0-9_]*)\s*\(`)
+
+// drfSerializerClassRe matches `varname = self.get_serializer(...)` or `varname = self.serializer_class(...)`.
+var drfGetSerializerRe = regexp.MustCompile(`(?m)[ \t]+([a-zA-Z_]\w*)\s*=\s*self\.(?:get_serializer|serializer_class)\s*\(`)
+
+// drfClassSerializerClassRe finds `serializer_class = SomeSerializer` as a class-level attribute.
+var drfClassSerializerClassRe = regexp.MustCompile(`(?m)[ \t]+serializer_class\s*=\s*([A-Z][A-Za-z0-9_]*)`)
+
+// drfResolveAndWalk resolves a DRF serializer variable/class to its field names.
+// `varName` is the local variable name (e.g. "serializer"), `handlerBody` is the
+// method body text. Falls back to class-level `serializer_class` in the full source.
+// Returns nil when resolution fails.
+func drfResolveAndWalk(src, varName, handlerBody string) []string {
+	// 1. Look for local var assignment: `varName = SomeSerializer(...)`
+	varRe := regexp.MustCompile(`(?m)[ \t]+` + regexp.QuoteMeta(varName) + `\s*=\s*([A-Z][A-Za-z0-9_]*)\s*\(`)
+	if m := varRe.FindStringSubmatch(src); len(m) >= 2 {
+		if keys := walkDRFSerializer(src, m[1]); len(keys) > 0 {
+			return keys
+		}
+	}
+	// 2. Look for `self.get_serializer(...)` or `self.serializer_class(...)`
+	//    in the handler body — resolve via class-level serializer_class.
+	if m := drfGetSerializerRe.FindStringSubmatch(handlerBody + src); len(m) >= 2 {
+		// Ignore the variable name matched — just resolve via class attribute.
+		if m2 := drfClassSerializerClassRe.FindStringSubmatch(src); len(m2) >= 2 {
+			if keys := walkDRFSerializer(src, m2[1]); len(keys) > 0 {
+				return keys
+			}
+		}
+	}
+	// 3. Class-level serializer_class attribute.
+	if m := drfClassSerializerClassRe.FindStringSubmatch(src); len(m) >= 2 {
+		if keys := walkDRFSerializer(src, m[1]); len(keys) > 0 {
+			return keys
+		}
+	}
+	return nil
+}
+
+// walkDRFSerializer walks a DRF Serializer class by name and returns its field names.
+// Handles:
+// - Plain Serializer: field attrs like `name = serializers.CharField(...)`
+// - ModelSerializer with `Meta.fields = [...]`: reads the list
+// - Nested serializers: `nested = NestedSerializer()` → adds "nested" as a key
+func walkDRFSerializer(src, name string) []string {
+	// Find the class body.
+	re := regexp.MustCompile(`(?m)^([ \t]*)class\s+` + regexp.QuoteMeta(name) + `\b[^\n]*:`)
+	loc := re.FindStringSubmatchIndex(src)
+	if loc == nil {
+		return nil
+	}
+	classIndent := loc[3] - loc[2]
+	headEnd := strings.Index(src[loc[0]:], "\n")
+	if headEnd < 0 {
+		return nil
+	}
+	bodyStart := loc[0] + headEnd + 1
+	i := bodyStart
+	bodyEnd := bodyStart
+	for i < len(src) {
+		lineEnd := strings.Index(src[i:], "\n")
+		if lineEnd < 0 {
+			lineEnd = len(src) - i
+		}
+		line := src[i : i+lineEnd]
+		stripped := strings.TrimLeft(line, " \t")
+		if stripped == "" || strings.HasPrefix(stripped, "#") {
+			i += lineEnd + 1
+			bodyEnd = i
+			continue
+		}
+		indent := len(line) - len(stripped)
+		if indent <= classIndent {
+			break
+		}
+		i += lineEnd + 1
+		bodyEnd = i
+	}
+	if bodyEnd > len(src) {
+		bodyEnd = len(src)
+	}
+	body := src[bodyStart:bodyEnd]
+
+	// Check if this is a ModelSerializer with Meta.fields.
+	if metaKeys := drfReadMetaFields(body); len(metaKeys) > 0 {
+		return metaKeys
+	}
+
+	// Walk explicit field assignments.
+	var keys []string
+	for _, m := range drfSerializerFieldRe.FindAllStringSubmatch(body, -1) {
+		fname := m[1]
+		if strings.HasPrefix(fname, "_") {
+			continue
+		}
+		// Skip class Meta itself.
+		if fname == "Meta" {
+			continue
+		}
+		keys = append(keys, fname)
+	}
+	return keys
+}
+
+// drfReadMetaFields looks for a `class Meta:` block inside a Serializer body
+// and extracts the `fields` list.
+func drfReadMetaFields(body string) []string {
+	// Locate `class Meta:` in the body.
+	metaRe := regexp.MustCompile(`(?m)^([ \t]*)class\s+Meta\s*:`)
+	loc := metaRe.FindStringSubmatchIndex(body)
+	if loc == nil {
+		return nil
+	}
+	metaIndent := loc[3] - loc[2]
+	headEnd := strings.Index(body[loc[0]:], "\n")
+	if headEnd < 0 {
+		return nil
+	}
+	metaBodyStart := loc[0] + headEnd + 1
+	j := metaBodyStart
+	metaBodyEnd := metaBodyStart
+	for j < len(body) {
+		lineEnd := strings.Index(body[j:], "\n")
+		if lineEnd < 0 {
+			lineEnd = len(body) - j
+		}
+		line := body[j : j+lineEnd]
+		stripped := strings.TrimLeft(line, " \t")
+		if stripped == "" || strings.HasPrefix(stripped, "#") {
+			j += lineEnd + 1
+			metaBodyEnd = j
+			continue
+		}
+		indent := len(line) - len(stripped)
+		if indent <= metaIndent {
+			break
+		}
+		j += lineEnd + 1
+		metaBodyEnd = j
+	}
+	if metaBodyEnd > len(body) {
+		metaBodyEnd = len(body)
+	}
+	metaBody := body[metaBodyStart:metaBodyEnd]
+
+	// Look for `fields = ['id', 'name', ...]` or `fields = ("id", "name")`.
+	// Handle multi-line by collapsing newlines.
+	collapsed := strings.ReplaceAll(metaBody, "\n", " ")
+	m := drfMetaFieldsListRe.FindStringSubmatch(collapsed)
+	if len(m) < 2 {
+		return nil
+	}
+	// Check for `fields = '__all__'`.
+	inner := strings.TrimSpace(m[1])
+	if strings.Contains(inner, "__all__") {
+		return nil // can't statically enumerate __all__
+	}
+	// Extract quoted field names.
+	var keys []string
+	for _, km := range regexp.MustCompile(`["']([a-zA-Z_]\w*)["']`).FindAllStringSubmatch(inner, -1) {
+		keys = append(keys, km[1])
+	}
+	return keys
 }
 
 // recordStatus appends an observed status code; defaults to 200 when none

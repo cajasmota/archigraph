@@ -78,6 +78,7 @@ func extractJavaShape(src, handler, framework string) shape {
 				sh.responseKeys = append(sh.responseKeys, k)
 			}
 			sh.knownResponse = true
+			sh.responseKeysSource = "java_dto"
 		}
 	}
 
@@ -105,6 +106,7 @@ func extractJavaShape(src, handler, framework string) shape {
 						sh.responseKeys = append(sh.responseKeys, k)
 					}
 					sh.knownResponse = true
+					sh.responseKeysSource = "java_dto"
 				}
 			}
 		}
@@ -250,21 +252,44 @@ func splitJavaParams(params string) []string {
 // walkJavaClassFields locates `class X` or `record X(...)` in the source
 // and returns a map of field name -> type. Records have a different
 // shape — their components are declared in the parentheses.
+//
+// Enhanced to handle:
+// - Java records: `public record X(String id, String name)`
+// - Lombok @Value / @Data classes: all declared fields (any access modifier)
+// - @JsonProperty("alias") annotations: use the alias string as the key name
 var javaFieldRe = regexp.MustCompile(`(?m)^\s*(?:@\w+(?:\([^)]*\))?\s+)*(?:public|private|protected|static|final|\s)+\s*([A-Za-z_][\w<>,.\[\]]*?)\s+([a-zA-Z_]\w*)\s*[;=]`)
+
+// javaJsonPropertyRe captures the string value from @JsonProperty("fieldName").
+var javaJsonPropertyRe = regexp.MustCompile(`@JsonProperty\s*\(\s*["']?([A-Za-z_][\w-]*)["']?\s*\)`)
+
+// javaAnyFieldRe matches field declarations with any access modifier (or none),
+// used for Lombok classes where private fields are the serialized shape.
+// The modifier group is optional so package-private and Lombok @Value fields
+// without explicit modifiers are also matched.
+var javaAnyFieldRe = regexp.MustCompile(`(?m)^\s*((?:@\w+(?:\([^)]*\))?\s+)*)(?:(?:public|private|protected|static|final|transient|volatile)\s+)*([A-Za-z_][\w<>,.\[\]]*?)\s+([a-zA-Z_]\w*)\s*[;=]`)
 
 func walkJavaClassFields(src, name string) map[string]string {
 	// Record form first: `record X(Type a, Type b)`.
-	rec := regexp.MustCompile(`(?m)^(?:public\s+|private\s+|protected\s+)?record\s+` + regexp.QuoteMeta(name) + `\s*\(([^)]*)\)`)
-	if m := rec.FindStringSubmatch(src); len(m) >= 2 {
-		out := map[string]string{}
-		for _, p := range splitJavaParams(m[1]) {
-			parts := strings.Fields(strings.TrimSpace(p))
-			if len(parts) >= 2 {
-				out[parts[len(parts)-1]] = parts[len(parts)-2]
+	// Handle multi-line records by finding the opening paren and matching bracket.
+	recHeaderRe := regexp.MustCompile(`(?m)^(?:public\s+|private\s+|protected\s+)?record\s+` + regexp.QuoteMeta(name) + `\s*\(`)
+	if loc := recHeaderRe.FindStringIndex(src); loc != nil {
+		parenStart := loc[1] - 1
+		parenEnd := findMatchingBracket(src, parenStart)
+		if parenEnd > parenStart {
+			params := src[parenStart+1 : parenEnd]
+			out := map[string]string{}
+			for _, p := range splitJavaParams(params) {
+				// Strip leading annotations from each record component.
+				p = strings.TrimSpace(p)
+				p = regexp.MustCompile(`^(?:@\w+(?:\([^)]*\))?\s+)*`).ReplaceAllString(p, "")
+				parts := strings.Fields(strings.TrimSpace(p))
+				if len(parts) >= 2 {
+					out[parts[len(parts)-1]] = parts[len(parts)-2]
+				}
 			}
-		}
-		if len(out) > 0 {
-			return out
+			if len(out) > 0 {
+				return out
+			}
 		}
 	}
 	// Class / interface form.
@@ -273,6 +298,15 @@ func walkJavaClassFields(src, name string) map[string]string {
 	if loc == nil {
 		return nil
 	}
+	// Detect Lombok @Value or @Data annotation in the 200-char window before the class keyword.
+	preClass := ""
+	if loc[0] > 200 {
+		preClass = src[loc[0]-200 : loc[0]]
+	} else {
+		preClass = src[:loc[0]]
+	}
+	isLombok := strings.Contains(preClass, "@Value") || strings.Contains(preClass, "@Data")
+
 	braceIdx := loc[1] - 1
 	end := findMatchingBracket(src, braceIdx)
 	if end < 0 {
@@ -280,16 +314,56 @@ func walkJavaClassFields(src, name string) map[string]string {
 	}
 	body := src[braceIdx+1 : end]
 	out := map[string]string{}
-	for _, m := range javaFieldRe.FindAllStringSubmatch(body, -1) {
-		fname := m[2]
-		ftype := m[1]
-		// Skip obvious non-field declarations: method bodies start with `(`.
-		// Also skip if the "type" looks like a method-return that wasn't
-		// followed by `;` or `=` — defensive.
+
+	if isLombok {
+		// For Lombok classes, walk all declared fields regardless of access modifier.
+		// Use javaAnyFieldRe which accepts any access combination.
+		for _, m := range javaAnyFieldRe.FindAllStringSubmatch(body, -1) {
+			annotations := m[1]
+			ftype := m[2]
+			fname := m[3]
+			if strings.Contains(ftype, "(") {
+				continue
+			}
+			// Check for @JsonProperty alias.
+			if jp := javaJsonPropertyRe.FindStringSubmatch(annotations); len(jp) >= 2 {
+				fname = jp[1]
+			}
+			out[fname] = strings.TrimSpace(ftype)
+		}
+		return out
+	}
+
+	// Plain class: walk public/package-visible fields and @JsonProperty-annotated fields.
+	for _, m := range javaAnyFieldRe.FindAllStringSubmatch(body, -1) {
+		annotations := m[1]
+		ftype := m[2]
+		fname := m[3]
 		if strings.Contains(ftype, "(") {
 			continue
 		}
-		out[fname] = strings.TrimSpace(ftype)
+		// @JsonProperty-annotated field → include regardless of access modifier.
+		if jp := javaJsonPropertyRe.FindStringSubmatch(annotations); len(jp) >= 2 {
+			out[jp[1]] = strings.TrimSpace(ftype)
+			continue
+		}
+		// Public fields are always included.
+		fieldLine := m[0]
+		if strings.Contains(fieldLine, "public") {
+			out[fname] = strings.TrimSpace(ftype)
+		}
+	}
+	// If nothing was found with the new logic, fall back to the original field regex
+	// (for plain public-field DTOs without @JsonProperty).
+	if len(out) == 0 {
+		for _, m := range javaFieldRe.FindAllStringSubmatch(body, -1) {
+			fname := m[2]
+			ftype := m[1]
+			if strings.Contains(ftype, "(") {
+				continue
+			}
+			out[fname] = strings.TrimSpace(ftype)
+		}
 	}
 	return out
 }

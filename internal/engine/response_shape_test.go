@@ -403,3 +403,367 @@ func TestFindHandlerBody_MultiLineNoTrailingNewline(t *testing.T) {
 		t.Error("findHandlerBody returned empty body for multi-line function; want non-empty")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// DRF Serializer walking (Python)
+// ---------------------------------------------------------------------------
+
+// TestResponseShape_DRF_SerializerData_LocalVar exercises the most common DRF
+// pattern: a local variable assigned from a Serializer class whose fields are
+// declared as class attributes, then returned as `serializer.data`.
+func TestResponseShape_DRF_SerializerData_LocalVar(t *testing.T) {
+	src := `from rest_framework import serializers
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
+class UserSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=100)
+    email = serializers.EmailField()
+
+@app.route("/api/users/<int:id>", methods=["GET"])
+def get_user(id):
+    serializer = UserSerializer(instance)
+    return Response(serializer.data)
+`
+	_, res := runDetect(t, "python", "views.py", src)
+	props := shapeOf(t, res, "http:GET:/api/users/{id}")
+	for _, want := range []string{"id", "name", "email"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("DRF local var: expected response_keys to contain %q; got %q", want, props["response_keys"])
+		}
+	}
+	assertProp(t, props, "response_keys_known", "true")
+	assertProp(t, props, "response_keys_source", "drf_serializer")
+}
+
+// TestResponseShape_DRF_SerializerClass_ViewSet exercises a DRF ViewSet that
+// declares `serializer_class = UserSerializer` as a class attribute. The
+// extractor resolves the class-level attribute and walks the serializer.
+func TestResponseShape_DRF_SerializerClass_ViewSet(t *testing.T) {
+	src := `from rest_framework import serializers, viewsets
+from rest_framework.response import Response
+
+class UserSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField()
+    email = serializers.EmailField()
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+
+    @app.route("/api/users/<int:pk>", methods=["GET"])
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data)
+`
+	_, res := runDetect(t, "python", "views.py", src)
+	props := shapeOf(t, res, "http:GET:/api/users/{pk}")
+	for _, want := range []string{"id", "name", "email"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("DRF ViewSet serializer_class: expected response_keys to contain %q; got %q", want, props["response_keys"])
+		}
+	}
+	assertProp(t, props, "response_keys_source", "drf_serializer")
+}
+
+// TestResponseShape_DRF_ModelSerializer_MetaFields exercises a ModelSerializer
+// that declares `Meta.fields = ['id', 'name', 'email']`.
+func TestResponseShape_DRF_ModelSerializer_MetaFields(t *testing.T) {
+	src := `from rest_framework import serializers
+from rest_framework.response import Response
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'email']
+
+@app.route("/api/users/<int:id>", methods=["GET"])
+def get_user(id):
+    serializer = UserSerializer(User.objects.get(pk=id))
+    return Response(serializer.data)
+`
+	_, res := runDetect(t, "python", "views.py", src)
+	props := shapeOf(t, res, "http:GET:/api/users/{id}")
+	for _, want := range []string{"id", "name", "email"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("DRF ModelSerializer Meta.fields: expected response_keys to contain %q; got %q", want, props["response_keys"])
+		}
+	}
+	assertProp(t, props, "response_keys_source", "drf_serializer")
+}
+
+// TestResponseShape_DRF_NestedSerializer exercises a Serializer that contains
+// a nested serializer field. The nested field name itself becomes a response_key.
+func TestResponseShape_DRF_NestedSerializer(t *testing.T) {
+	src := `from rest_framework import serializers
+from rest_framework.response import Response
+
+class AddressSerializer(serializers.Serializer):
+    street = serializers.CharField()
+    city = serializers.CharField()
+
+class UserSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    address = AddressSerializer()
+
+@app.route("/api/users/<int:id>", methods=["GET"])
+def get_user(id):
+    serializer = UserSerializer(instance)
+    return Response(serializer.data)
+`
+	_, res := runDetect(t, "python", "views.py", src)
+	props := shapeOf(t, res, "http:GET:/api/users/{id}")
+	for _, want := range []string{"id", "name", "address"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("DRF nested serializer: expected response_keys to contain %q; got %q", want, props["response_keys"])
+		}
+	}
+}
+
+// TestResponseShape_DRF_ModelSerializer_MetaFields_Tuple exercises
+// Meta.fields declared with a tuple instead of a list.
+func TestResponseShape_DRF_ModelSerializer_MetaFields_Tuple(t *testing.T) {
+	src := `from rest_framework import serializers
+from rest_framework.response import Response
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('sku', 'price', 'stock')
+
+@app.route("/api/products/<int:pk>", methods=["GET"])
+def get_product(pk):
+    serializer = ProductSerializer(Product.objects.get(pk=pk))
+    return Response(serializer.data)
+`
+	_, res := runDetect(t, "python", "views.py", src)
+	props := shapeOf(t, res, "http:GET:/api/products/{pk}")
+	for _, want := range []string{"sku", "price", "stock"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("DRF Meta.fields tuple: expected response_keys to contain %q; got %q", want, props["response_keys"])
+		}
+	}
+}
+
+// TestResponseShape_DRF_ResponseData_Bare exercises `return serializer.data`
+// (without a Response(...) wrapper) — a common shorthand in DRF APIViews.
+func TestResponseShape_DRF_ResponseData_Bare(t *testing.T) {
+	src := `from rest_framework import serializers
+from rest_framework.views import APIView
+
+class CommentSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    body = serializers.CharField()
+    author = serializers.CharField()
+
+@app.route("/api/comments/<int:id>", methods=["GET"])
+def get_comment(id):
+    serializer = CommentSerializer(Comment.objects.get(pk=id))
+    return serializer.data
+`
+	_, res := runDetect(t, "python", "views.py", src)
+	props := shapeOf(t, res, "http:GET:/api/comments/{id}")
+	for _, want := range []string{"id", "body", "author"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("DRF bare .data: expected response_keys to contain %q; got %q", want, props["response_keys"])
+		}
+	}
+	assertProp(t, props, "response_keys_source", "drf_serializer")
+}
+
+// ---------------------------------------------------------------------------
+// Java DTO class walking (Spring / JAX-RS)
+// ---------------------------------------------------------------------------
+
+// TestResponseShape_Java_Record exercises a Java 17+ record DTO.
+// Records declare their components in the constructor parameter list;
+// each component becomes a response_key.
+func TestResponseShape_Java_Record(t *testing.T) {
+	src := `package com.example;
+import org.springframework.web.bind.annotation.*;
+
+public record UserDTO(Long id, String name, String email) {}
+
+@RestController
+public class UserController {
+    @GetMapping("/users/{id}")
+    public UserDTO getUser(@PathVariable Long id) {
+        return new UserDTO(id, "alice", "a@b");
+    }
+}
+`
+	_, res := runDetect(t, "java", "UserController.java", src)
+	props := shapeOf(t, res, "http:ANY:/users/{id}")
+	for _, want := range []string{"id", "name", "email"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("Java record: expected response_keys to contain %q; got %q (all: %v)", want, props["response_keys"], props)
+		}
+	}
+	assertProp(t, props, "response_keys_source", "java_dto")
+}
+
+// TestResponseShape_Java_LombokValue exercises a Lombok @Value class.
+// All declared fields (private final) are included as response_keys.
+func TestResponseShape_Java_LombokValue(t *testing.T) {
+	src := `package com.example;
+import lombok.Value;
+import org.springframework.web.bind.annotation.*;
+
+@Value
+public class OrderDTO {
+    Long id;
+    String status;
+    Double total;
+}
+
+@RestController
+public class OrderController {
+    @GetMapping("/orders/{id}")
+    public OrderDTO getOrder(@PathVariable Long id) {
+        return new OrderDTO(id, "PENDING", 99.99);
+    }
+}
+`
+	_, res := runDetect(t, "java", "OrderController.java", src)
+	props := shapeOf(t, res, "http:ANY:/orders/{id}")
+	for _, want := range []string{"id", "status", "total"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("Lombok @Value: expected response_keys to contain %q; got %q (all: %v)", want, props["response_keys"], props)
+		}
+	}
+	assertProp(t, props, "response_keys_source", "java_dto")
+}
+
+// TestResponseShape_Java_LombokData exercises a Lombok @Data class.
+func TestResponseShape_Java_LombokData(t *testing.T) {
+	src := `package com.example;
+import lombok.Data;
+import org.springframework.web.bind.annotation.*;
+
+@Data
+public class ProductDTO {
+    private Long id;
+    private String sku;
+    private Double price;
+}
+
+@RestController
+public class ProductController {
+    @GetMapping("/products/{id}")
+    public ProductDTO getProduct(@PathVariable Long id) {
+        return new ProductDTO();
+    }
+}
+`
+	_, res := runDetect(t, "java", "ProductController.java", src)
+	props := shapeOf(t, res, "http:ANY:/products/{id}")
+	for _, want := range []string{"id", "sku", "price"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("Lombok @Data: expected response_keys to contain %q; got %q (all: %v)", want, props["response_keys"], props)
+		}
+	}
+	assertProp(t, props, "response_keys_source", "java_dto")
+}
+
+// TestResponseShape_Java_JsonProperty exercises a plain Java class where
+// fields are annotated with @JsonProperty. The annotation string value
+// is used as the response_key (supporting alias names).
+func TestResponseShape_Java_JsonProperty(t *testing.T) {
+	src := `package com.example;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.web.bind.annotation.*;
+
+public class CustomerDTO {
+    @JsonProperty("customer_id")
+    private Long id;
+
+    @JsonProperty("full_name")
+    private String name;
+
+    @JsonProperty("email_address")
+    private String email;
+}
+
+@RestController
+public class CustomerController {
+    @GetMapping("/customers/{id}")
+    public CustomerDTO getCustomer(@PathVariable Long id) {
+        return new CustomerDTO();
+    }
+}
+`
+	_, res := runDetect(t, "java", "CustomerController.java", src)
+	props := shapeOf(t, res, "http:ANY:/customers/{id}")
+	for _, want := range []string{"customer_id", "full_name", "email_address"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("@JsonProperty: expected response_keys to contain %q; got %q (all: %v)", want, props["response_keys"], props)
+		}
+	}
+	assertProp(t, props, "response_keys_source", "java_dto")
+}
+
+// TestResponseShape_Java_ResponseEntity_DTO exercises a Spring controller that
+// returns ResponseEntity<SomeDTO> with a Lombok @Value DTO.
+func TestResponseShape_Java_ResponseEntity_DTO(t *testing.T) {
+	src := `package com.example;
+import lombok.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@Value
+public class InvoiceDTO {
+    Long invoiceId;
+    String description;
+    Double amount;
+}
+
+@RestController
+public class InvoiceController {
+    @GetMapping("/invoices/{id}")
+    public ResponseEntity<InvoiceDTO> getInvoice(@PathVariable Long id) {
+        return ResponseEntity.ok(new InvoiceDTO(id, "Service fee", 120.0));
+    }
+}
+`
+	_, res := runDetect(t, "java", "InvoiceController.java", src)
+	props := shapeOf(t, res, "http:ANY:/invoices/{id}")
+	for _, want := range []string{"invoiceId", "description", "amount"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("ResponseEntity<DTO> Lombok: expected response_keys to contain %q; got %q (all: %v)", want, props["response_keys"], props)
+		}
+	}
+	assertProp(t, props, "response_keys_source", "java_dto")
+}
+
+// TestResponseShape_Java_Record_WithAnnotations exercises a Java record whose
+// components have annotations (common with validation or Jackson annotations).
+func TestResponseShape_Java_Record_WithAnnotations(t *testing.T) {
+	src := `package com.example;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.web.bind.annotation.*;
+
+public record PaymentDTO(
+    @JsonProperty("payment_id") Long id,
+    String currency,
+    Double amount
+) {}
+
+@RestController
+public class PaymentController {
+    @GetMapping("/payments/{id}")
+    public PaymentDTO getPayment(@PathVariable Long id) {
+        return new PaymentDTO(id, "USD", 50.0);
+    }
+}
+`
+	_, res := runDetect(t, "java", "PaymentController.java", src)
+	props := shapeOf(t, res, "http:ANY:/payments/{id}")
+	// The record has "id", "currency", "amount" as component names.
+	for _, want := range []string{"currency", "amount"} {
+		if !strings.Contains(props["response_keys"], want) {
+			t.Errorf("record with annotations: expected response_keys to contain %q; got %q (all: %v)", want, props["response_keys"], props)
+		}
+	}
+}

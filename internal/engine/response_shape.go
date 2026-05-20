@@ -40,14 +40,15 @@ import (
 // shape from scanning a single handler. Empty fields are not written to
 // the entity properties.
 type shape struct {
-	responseKeys    []string
-	responseSchema  map[string]string
-	errorKeys       []string
-	statusCodes     []int
-	requestKeys     []string
-	requestSchema   map[string]string
-	knownResponse   bool // true when at least one return was statically parsed
-	dynamicResponse bool // true when we saw a non-literal return value
+	responseKeys       []string
+	responseSchema     map[string]string
+	errorKeys          []string
+	statusCodes        []int
+	requestKeys        []string
+	requestSchema      map[string]string
+	knownResponse      bool   // true when at least one return was statically parsed
+	dynamicResponse    bool   // true when we saw a non-literal return value
+	responseKeysSource string // "drf_serializer" or "java_dto" when applicable
 }
 
 // applyResponseShapes scans the freshly-emitted http_endpoint entities and
@@ -143,6 +144,9 @@ func writeShapeProps(props map[string]string, sh shape) {
 		if s := marshalSchema(sh.requestSchema); s != "" {
 			props["request_schema"] = s
 		}
+	}
+	if sh.responseKeysSource != "" {
+		props["response_keys_source"] = sh.responseKeysSource
 	}
 }
 
