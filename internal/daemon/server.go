@@ -83,6 +83,14 @@ func Run(ctx context.Context, cfg Config) error {
 		logger = log.New(os.Stderr, "archigraph-daemon: ", log.LstdFlags|log.Lmicroseconds)
 	}
 
+	// Layer 1 self-defense: refuse to start if a canonical (non-/tmp) daemon
+	// is already running and this binary lives under /tmp. This prevents the
+	// hot-loop runaway observed on 2026-05-20 where agent-spawned daemons were
+	// adopted by launchd after the agent exited and spun at ~1000% CPU.
+	if err := SelfDefenseCheck(logger); err != nil {
+		return err
+	}
+
 	if err := EnsureLayout(cfg.Layout); err != nil {
 		return fmt.Errorf("ensure layout: %w", err)
 	}
@@ -115,6 +123,11 @@ func Run(ctx context.Context, cfg Config) error {
 	svc := newService(cfg.Index, cfg.Rebuild, cfg.QualityAudit, cfg.Layout.SocketPath, stopReq, logger)
 	svc.mcpListTools = cfg.MCPListTools
 	svc.mcpCallTool = cfg.MCPCallTool
+
+	// Layer 2 self-defense: start CPU watchdog for ephemeral /tmp daemons.
+	// The watchdog passes the service's real inFlight counter so it can
+	// distinguish hot-loops (no work) from legitimate sustained indexing.
+	StartCPUWatchdog(&svc.inFlight, logger)
 
 	// Phase B — bring up the scheduler + watcher when the caller
 	// supplied the four hooks. They are optional so tests can exercise

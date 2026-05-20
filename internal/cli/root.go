@@ -109,7 +109,7 @@ Setup (advanced):
 
 Operate:
   update [--refresh-rules-lite]   Update archigraph
-  doctor                          Run health checks
+  doctor [--kill-stale]           Run health checks; --kill-stale terminates orphaned /tmp daemons
   status [group]                  Show daemon health + per-repo state
   list                            List registered groups (alias: ls)
 
