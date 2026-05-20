@@ -863,11 +863,11 @@ var (
 		// them — both cases are statically unresolvable and Dynamic is the
 		// correct bucket. The JVM-language gate keeps these from
 		// polluting non-JVM graphs (#94 safer-bias rule).
-		regexp.MustCompile(`^notFound$`),    // ResponseEntity.notFound()
-		regexp.MustCompile(`^noContent$`),   // ResponseEntity.noContent()
-		regexp.MustCompile(`^badRequest$`),  // ResponseEntity.badRequest()
-		regexp.MustCompile(`^accepted$`),    // ResponseEntity.accepted()
-		regexp.MustCompile(`^created$`),     // ResponseEntity.created(uri)
+		regexp.MustCompile(`^notFound$`),            // ResponseEntity.notFound()
+		regexp.MustCompile(`^noContent$`),           // ResponseEntity.noContent()
+		regexp.MustCompile(`^badRequest$`),          // ResponseEntity.badRequest()
+		regexp.MustCompile(`^accepted$`),            // ResponseEntity.accepted()
+		regexp.MustCompile(`^created$`),             // ResponseEntity.created(uri)
 		regexp.MustCompile(`^unprocessableEntity$`), // ResponseEntity.unprocessableEntity()
 		regexp.MustCompile(`^internalServerError$`), // ResponseEntity.internalServerError()
 		// Builder terminal methods that appear as bare leaf stubs when
@@ -881,6 +881,105 @@ var (
 		// and the name is generic enough to be in-tree we accept the
 		// safer-bias trade-off — Dynamic for both cases.
 		regexp.MustCompile(`^ok$`), // ResponseEntity.ok(body)
+		// Issue #44 — Scala stdlib companion-object and collection method
+		// stubs. The Scala extractor emits qualified CALLS edges of the form
+		// "Future.successful", "List.map", "Map.get", etc. when the receiver
+		// is a stdlib type and full type inference is unavailable.
+		//
+		// These are statically unresolvable because:
+		//  1. Future / Try / Option / List / Map / Seq / Set / Vector are
+		//     external types (scala.concurrent / scala.util / scala.collection).
+		//  2. The extractor already emits the PascalCase-qualified form, so
+		//     the resolver correctly identifies the receiver but can't bind
+		//     to an entity (none is emitted for stdlib).
+		//
+		// Pattern: "^<ScalaStdlibType>\.<method>$" — qualified leaf form.
+		// JVM-language gate keeps these from polluting Python / Go / JS / Ruby.
+		//
+		// scala.concurrent.Future companion methods.
+		regexp.MustCompile(`^Future\.successful$`), // Future.successful(v)
+		regexp.MustCompile(`^Future\.failed$`),     // Future.failed(ex)
+		regexp.MustCompile(`^Future\.apply$`),      // Future { ... }
+		regexp.MustCompile(`^Future\.sequence$`),   // Future.sequence(list)
+		regexp.MustCompile(`^Future\.traverse$`),   // Future.traverse(coll)(f)
+		regexp.MustCompile(`^Future\.unit$`),       // Future.unit
+		// scala.util.Try / Success / Failure companion methods.
+		regexp.MustCompile(`^Try\.apply$`),     // Try { ... }
+		regexp.MustCompile(`^Success\.apply$`), // Success(v)
+		regexp.MustCompile(`^Failure\.apply$`), // Failure(ex)
+		// scala.collection.immutable.List companion + instance methods.
+		regexp.MustCompile(`^List\.apply$`),        // List(a, b, c)
+		regexp.MustCompile(`^List\.empty$`),        // List.empty
+		regexp.MustCompile(`^List\.from$`),         // List.from(iter)
+		regexp.MustCompile(`^List\.map$`),          // list.map(f) — qualified via receiver
+		regexp.MustCompile(`^List\.flatMap$`),      // list.flatMap(f)
+		regexp.MustCompile(`^List\.filter$`),       // list.filter(p)
+		regexp.MustCompile(`^List\.filterNot$`),    // list.filterNot(p)
+		regexp.MustCompile(`^List\.find$`),         // list.find(p)
+		regexp.MustCompile(`^List\.foldLeft$`),     // list.foldLeft(z)(f)
+		regexp.MustCompile(`^List\.foldRight$`),    // list.foldRight(z)(f)
+		regexp.MustCompile(`^List\.foreach$`),      // list.foreach(f)
+		regexp.MustCompile(`^List\.collect$`),      // list.collect(pf)
+		regexp.MustCompile(`^List\.exists$`),       // list.exists(p)
+		regexp.MustCompile(`^List\.forall$`),       // list.forall(p)
+		regexp.MustCompile(`^List\.head$`),         // list.head
+		regexp.MustCompile(`^List\.tail$`),         // list.tail
+		regexp.MustCompile(`^List\.size$`),         // list.size
+		regexp.MustCompile(`^List\.length$`),       // list.length
+		regexp.MustCompile(`^List\.isEmpty$`),      // list.isEmpty
+		regexp.MustCompile(`^List\.nonEmpty$`),     // list.nonEmpty
+		regexp.MustCompile(`^List\.toList$`),       // list.toList
+		regexp.MustCompile(`^List\.toSet$`),        // list.toSet
+		regexp.MustCompile(`^List\.toSeq$`),        // list.toSeq
+		regexp.MustCompile(`^List\.toVector$`),     // list.toVector
+		regexp.MustCompile(`^List\.sorted$`),       // list.sorted
+		regexp.MustCompile(`^List\.sortBy$`),       // list.sortBy(f)
+		regexp.MustCompile(`^List\.groupBy$`),      // list.groupBy(f)
+		regexp.MustCompile(`^List\.take$`),         // list.take(n)
+		regexp.MustCompile(`^List\.drop$`),         // list.drop(n)
+		regexp.MustCompile(`^List\.zip$`),          // list.zip(other)
+		regexp.MustCompile(`^List\.zipWithIndex$`), // list.zipWithIndex
+		regexp.MustCompile(`^List\.distinct$`),     // list.distinct
+		regexp.MustCompile(`^List\.flatten$`),      // list.flatten
+		regexp.MustCompile(`^List\.mkString$`),     // list.mkString(sep)
+		// scala.collection.immutable.Map companion + instance methods.
+		regexp.MustCompile(`^Map\.apply$`),      // Map(k -> v)
+		regexp.MustCompile(`^Map\.empty$`),      // Map.empty
+		regexp.MustCompile(`^Map\.from$`),       // Map.from(iter)
+		regexp.MustCompile(`^Map\.get$`),        // map.get(k)
+		regexp.MustCompile(`^Map\.contains$`),   // map.contains(k)
+		regexp.MustCompile(`^Map\.keys$`),       // map.keys
+		regexp.MustCompile(`^Map\.values$`),     // map.values
+		regexp.MustCompile(`^Map\.updated$`),    // map.updated(k, v)
+		regexp.MustCompile(`^Map\.removed$`),    // map.removed(k)
+		regexp.MustCompile(`^Map\.map$`),        // map.map(f)
+		regexp.MustCompile(`^Map\.filter$`),     // map.filter(p)
+		regexp.MustCompile(`^Map\.filterKeys$`), // map.filterKeys(p)
+		regexp.MustCompile(`^Map\.mapValues$`),  // map.mapValues(f)
+		regexp.MustCompile(`^Map\.toList$`),     // map.toList
+		regexp.MustCompile(`^Map\.toSeq$`),      // map.toSeq
+		regexp.MustCompile(`^Map\.size$`),       // map.size
+		regexp.MustCompile(`^Map\.isEmpty$`),    // map.isEmpty
+		// scala.collection.immutable.Seq / Vector / Set mirrors.
+		regexp.MustCompile(`^Seq\.apply$`), // Seq(...)
+		regexp.MustCompile(`^Seq\.empty$`), // Seq.empty
+		regexp.MustCompile(`^Seq\.map$`),
+		regexp.MustCompile(`^Seq\.flatMap$`),
+		regexp.MustCompile(`^Seq\.filter$`),
+		regexp.MustCompile(`^Seq\.filterNot$`),
+		regexp.MustCompile(`^Seq\.find$`),
+		regexp.MustCompile(`^Seq\.foreach$`),
+		regexp.MustCompile(`^Vector\.apply$`), // Vector(...)
+		regexp.MustCompile(`^Vector\.empty$`), // Vector.empty
+		regexp.MustCompile(`^Vector\.from$`),  // Vector.from(iter)
+		regexp.MustCompile(`^Set\.apply$`),    // Set(...)
+		regexp.MustCompile(`^Set\.empty$`),    // Set.empty
+		regexp.MustCompile(`^Set\.from$`),     // Set.from(iter)
+		// scala.Option instance and companion methods.
+		regexp.MustCompile(`^Option\.apply$`), // Option(v)
+		regexp.MustCompile(`^Option\.empty$`), // Option.empty / None
+		regexp.MustCompile(`^Some\.apply$`),   // Some(v)
+		regexp.MustCompile(`^None\.get$`),     // None.get (rare but emitted)
 	}
 
 	// HCL / Terraform dynamic-pattern catalog (issue #44). Terraform
@@ -4597,26 +4696,26 @@ var pythonExternalBaseTypes = map[string]struct{}{
 	// `class Foo(ListView):` / `class Bar(View):` etc.
 	// Refs #44 — Python EXTENDS stubs for these landed in BugExtractor
 	// because `View` (and siblings) were missing from this table.
-	"View":                 {},
-	"TemplateView":         {},
-	"RedirectView":         {},
-	"ListView":             {},
-	"DetailView":           {},
-	"FormView":             {},
-	"CreateView":           {},
-	"UpdateView":           {},
-	"DeleteView":           {},
-	"ArchiveIndexView":     {},
-	"YearArchiveView":      {},
-	"MonthArchiveView":     {},
-	"WeekArchiveView":      {},
-	"DayArchiveView":       {},
-	"TodayArchiveView":     {},
-	"DateDetailView":       {},
-	"ContextMixin":         {},
+	"View":                  {},
+	"TemplateView":          {},
+	"RedirectView":          {},
+	"ListView":              {},
+	"DetailView":            {},
+	"FormView":              {},
+	"CreateView":            {},
+	"UpdateView":            {},
+	"DeleteView":            {},
+	"ArchiveIndexView":      {},
+	"YearArchiveView":       {},
+	"MonthArchiveView":      {},
+	"WeekArchiveView":       {},
+	"DayArchiveView":        {},
+	"TodayArchiveView":      {},
+	"DateDetailView":        {},
+	"ContextMixin":          {},
 	"TemplateResponseMixin": {},
-	"SingleObjectMixin":    {},
-	"MultipleObjectMixin":  {},
+	"SingleObjectMixin":     {},
+	"MultipleObjectMixin":   {},
 	// Django REST Framework view + viewset + renderer + permission base
 	// classes (when used as a parent — `class Foo(APIView)`).
 	"APIView":                      {},

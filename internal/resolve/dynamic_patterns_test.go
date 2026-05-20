@@ -296,6 +296,57 @@ func TestDynamicPatterns_Catalog(t *testing.T) {
 		{"spring_ruby_notFound_neg", "ruby", `notFound`, false},
 		{"spring_ts_noContent_neg", "typescript", `noContent`, false},
 		{"spring_rust_build_neg", "rust", `build`, false},
+
+		// ---- Scala stdlib companion-object + collection methods (issue #44) ---
+		// scala.concurrent.Future companion methods arrive as qualified stubs
+		// "Future.successful", "Future.failed", etc. The Scala extractor emits
+		// the PascalCase-qualified form when the receiver is a stdlib type;
+		// the resolver cannot bind these (stdlib not indexed).
+		// JVM-language gate keeps them from polluting Python / Go / JS / Ruby.
+		{"scala_future_successful", "scala", `Future.successful`, true},
+		{"scala_future_failed", "scala", `Future.failed`, true},
+		{"scala_future_apply", "scala", `Future.apply`, true},
+		{"scala_future_sequence", "scala", `Future.sequence`, true},
+		// scala.util.Try / Success / Failure companion methods.
+		{"scala_try_apply", "scala", `Try.apply`, true},
+		{"scala_success_apply", "scala", `Success.apply`, true},
+		{"scala_failure_apply", "scala", `Failure.apply`, true},
+		// Scala collection qualified method stubs.
+		{"scala_list_map", "scala", `List.map`, true},
+		{"scala_list_flatmap", "scala", `List.flatMap`, true},
+		{"scala_list_filter", "scala", `List.filter`, true},
+		{"scala_list_filternot", "scala", `List.filterNot`, true},
+		{"scala_list_find", "scala", `List.find`, true},
+		{"scala_list_foldleft", "scala", `List.foldLeft`, true},
+		{"scala_list_foreach", "scala", `List.foreach`, true},
+		{"scala_list_empty", "scala", `List.empty`, true},
+		{"scala_list_apply", "scala", `List.apply`, true},
+		{"scala_map_get", "scala", `Map.get`, true},
+		{"scala_map_contains", "scala", `Map.contains`, true},
+		{"scala_map_empty", "scala", `Map.empty`, true},
+		{"scala_map_map", "scala", `Map.map`, true},
+		{"scala_map_filter", "scala", `Map.filter`, true},
+		{"scala_seq_apply", "scala", `Seq.apply`, true},
+		{"scala_seq_map", "scala", `Seq.map`, true},
+		{"scala_vector_apply", "scala", `Vector.apply`, true},
+		{"scala_vector_empty", "scala", `Vector.empty`, true},
+		{"scala_set_apply", "scala", `Set.apply`, true},
+		{"scala_option_apply", "scala", `Option.apply`, true},
+		{"scala_some_apply", "scala", `Some.apply`, true},
+		// These same qualified forms in Kotlin / Java also fire (JVM gate).
+		{"scala_future_successful_kotlin", "kotlin", `Future.successful`, true},
+		{"scala_future_successful_java", "java", `Future.successful`, true},
+		{"scala_list_map_kotlin", "kotlin", `List.map`, true},
+		// Cross-language gate: Scala stdlib qualified names MUST NOT fire for non-JVM.
+		{"scala_future_successful_python_neg", "python", `Future.successful`, false},
+		{"scala_future_successful_go_neg", "go", `Future.successful`, false},
+		{"scala_future_successful_js_neg", "javascript", `Future.successful`, false},
+		{"scala_future_successful_ruby_neg", "ruby", `Future.successful`, false},
+		{"scala_future_successful_ts_neg", "typescript", `Future.successful`, false},
+		{"scala_list_map_python_neg", "python", `List.map`, false},
+		{"scala_list_map_go_neg", "go", `List.map`, false},
+		{"scala_map_get_python_neg", "python", `Map.get`, false},
+		{"scala_map_get_go_neg", "go", `Map.get`, false},
 	}
 
 	for _, tc := range cases {

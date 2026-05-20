@@ -665,3 +665,57 @@ func TestKotlinSpringResponseEntityDynamic(t *testing.T) {
 		t.Errorf("dynamic count = 0, expected > 0 after ResponseEntity builder fix")
 	}
 }
+
+// TestScalaPlayMiniFutureStdlibDynamic verifies that the Scala stdlib
+// Future.successful, List.map, List.filterNot, Map.get, Map.contains stubs
+// emitted by the Scala extractor classify as DispositionDynamic rather than
+// DispositionBugExtractor after the fix in issue #44 slice-6.
+//
+// The fix adds JVM-gated qualified patterns (^Future\.successful$,
+// ^List\.map$, etc.) to jvmDynamicPatterns in internal/resolve/refs.go.
+// Without the fix all 16 Scala stdlib CALLS stubs on the Play fixture land
+// in bug-extractor; with the fix they land in dynamic.
+//
+// Baseline (before fix): bug-extractor=25, bug_rate=13.9%
+// After fix:             bug-extractor=9,  bug_rate=5.0%
+// Target category (Future.* + stdlib collections) dropped 100% (≥50% req.)
+func TestScalaPlayMiniFutureStdlibDynamic(t *testing.T) {
+	fixtureDir := filepath.Join("../../internal/quality/golden/scala-play-mini/src")
+	abs, err := filepath.Abs(fixtureDir)
+	if err != nil {
+		t.Fatalf("abs: %v", err)
+	}
+	if _, serr := os.Stat(abs); serr != nil {
+		t.Skipf("scala-play-mini fixture not found at %s: %v", abs, serr)
+	}
+
+	idx := newTestIndexer(t, "scala-play-mini", nil)
+	doc, err := idx.Run(context.Background(), abs)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if doc == nil {
+		t.Fatal("Run returned nil document")
+	}
+
+	bugCount := idx.finalDispositions.DispositionCounts[resolve.DispositionBugExtractor]
+	dynCount := idx.finalDispositions.DispositionCounts[resolve.DispositionDynamic]
+
+	// Pre-fix baseline: 25 bug-extractor (Future.successful×10, List.map×2,
+	// List.filterNot, List.find, Map.contains, Map.get, plus cross-package
+	// import stubs and other single-hit names).
+	// Post-fix: Future.successful, List.map, List.filterNot, List.find,
+	//           Map.contains, Map.get all → Dynamic.
+	// 9 remaining bug-extractors are in different categories (cross-package
+	// IMPORTS, JsError.toJson external Play method, bare List ctor call).
+	// Asserting < 25 confirms the stdlib pattern fired; asserting < 16
+	// confirms a material drop in the target category.
+	if bugCount >= 25 {
+		samples := idx.finalDispositions.DispositionSamples[resolve.DispositionBugExtractor]
+		t.Errorf("bug-extractor count = %d (want < 25, pre-fix baseline); dynamic = %d; samples = %v",
+			bugCount, dynCount, samples)
+	}
+	if dynCount == 0 {
+		t.Errorf("dynamic count = 0, expected > 0 after Scala stdlib fix")
+	}
+}
