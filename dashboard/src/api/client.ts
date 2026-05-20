@@ -49,7 +49,7 @@ async function loadMock<T>(name: string): Promise<T> {
     paths: () => import('./mocks/paths.json'),
     'path-detail': () => import('./mocks/path-detail.json'),
     flows: () => import('./mocks/flows.json'),
-    graph: () => import('./mocks/graph.json'),
+    graph: () => import('./mocks/graph-mock.json'),
     topology: () => import('./mocks/topology.json'),
     'docs-tree': () => import('./mocks/docs-tree.json'),
     'docs/acme-web/overview': () => import('./mocks/docs/acme-web-overview.json'),
