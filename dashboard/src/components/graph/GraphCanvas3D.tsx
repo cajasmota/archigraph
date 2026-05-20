@@ -97,14 +97,19 @@ const GraphCanvas3DInner = ({
         onNodeHover(n)
         if (el) el.style.cursor = n ? 'pointer' : 'default'
       })
-      .onZoom(({ k }: { k: number }) => {
-        setZoomLevel(k)
-        onZoomChange?.(k)
-      })
       .d3AlphaDecay(0.02)
       .d3VelocityDecay(0.3)
       .cooldownTime(3000)
       .warmupTicks(50)
+
+    // Wire zoom callback separately — some 3d-force-graph versions don't
+    // return `this` from onNodeHover, breaking the fluent chain.
+    if (typeof graph.onZoom === 'function') {
+      graph.onZoom(({ k }: { k: number }) => {
+        setZoomLevel(k)
+        onZoomChange?.(k)
+      })
+    }
 
     graphRef.current = graph
     setGraphRef(graph)

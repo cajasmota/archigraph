@@ -11,6 +11,7 @@ package dashboard
 //   - full      : all nodes up to 20 000 hard cap
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -62,18 +63,27 @@ func (s *Server) handleGraph(w http.ResponseWriter, r *http.Request) {
 }
 
 // serveGraphCentroids returns one centroid per community (zoom-out tier).
+//
+// Each centroid is emitted as a GraphNode-shaped object (id, label, kind,
+// repo, is_centroid=true, centroid_size) so the force-graph renderer can
+// draw it without additional client-side normalization.
+//
+// Inter-community edges are derived by counting how many relationships cross
+// community boundaries; edges with weight ≥ 1 are emitted so the layout
+// engine has structure to work with (without edges the force simulation
+// produces a uniform blob with no visible separation).
 func (s *Server) serveGraphCentroids(w http.ResponseWriter, group string, repos []*DashRepo) {
-	type Centroid struct {
-		CommunityID  int      `json:"community_id"`
-		Size         int      `json:"size"`
-		AutoName     string   `json:"auto_name,omitempty"`
-		AgentName    string   `json:"agent_name,omitempty"`
-		Repo         string   `json:"repo"`
-		TopEntityIDs []string `json:"top_entity_ids"`
+	nodes := []map[string]any{}
+	communities := []map[string]any{}
+
+	// centroidID builds a stable, unique node ID for a community centroid.
+	centroidID := func(repoSlug string, communityID int) string {
+		return fmt.Sprintf("%s::community::%d", repoSlug, communityID)
 	}
 
-	centroids := []Centroid{}
-	communities := []map[string]any{}
+	// Build entity→communityID lookup for edge derivation.
+	type entityKey struct{ repo, id string }
+	entityCommunity := map[entityKey]int{}
 
 	for _, r := range repos {
 		if r.Doc == nil {
@@ -84,39 +94,103 @@ func (s *Server) serveGraphCentroids(w http.ResponseWriter, group string, repos 
 			if len(top) > 3 {
 				top = top[:3]
 			}
-			// Prefix top entity IDs.
 			prefixed := make([]string, len(top))
 			for i, id := range top {
 				prefixed[i] = dashPrefixedID(r.Slug, id)
 			}
-			centroids = append(centroids, Centroid{
-				CommunityID:  c.ID,
-				Size:         c.Size,
-				AutoName:     c.AutoName,
-				AgentName:    c.AgentName,
-				Repo:         r.Slug,
-				TopEntityIDs: prefixed,
-			})
+
+			name := c.AutoName
+			if c.AgentName != "" {
+				name = c.AgentName
+			}
+			if name == "" {
+				name = fmt.Sprintf("Community %d", c.ID)
+			}
+
+			nid := centroidID(r.Slug, c.ID)
+			node := map[string]any{
+				"id":            nid,
+				"label":         name,
+				"kind":          "Community",
+				"repo":          r.Slug,
+				"is_centroid":   true,
+				"centroid_size": c.Size,
+				"community_id":  c.ID,
+				"top_entity_ids": prefixed,
+			}
+			nodes = append(nodes, node)
+
 			cm := map[string]any{
 				"id":           c.ID,
 				"size":         c.Size,
 				"auto_name":    c.AutoName,
 				"repo":         r.Slug,
 				"top_entities": prefixed,
+				"centroid_node_id": nid,
 			}
 			if c.AgentName != "" {
 				cm["agent_name"] = c.AgentName
 			}
 			communities = append(communities, cm)
+
+			// Populate entity→community lookup for all members.
+			for i := range r.Doc.Entities {
+				e := &r.Doc.Entities[i]
+				if e.CommunityID != nil && *e.CommunityID == c.ID {
+					entityCommunity[entityKey{r.Slug, e.ID}] = c.ID
+				}
+			}
 		}
 	}
 
+	// Derive inter-community edges: count cross-boundary relationships.
+	type edgeKey struct {
+		fromRepo string
+		fromCID  int
+		toRepo   string
+		toCID    int
+	}
+	edgeWeights := map[edgeKey]int{}
+	for _, r := range repos {
+		if r.Doc == nil {
+			continue
+		}
+		for _, rel := range r.Doc.Relationships {
+			fromCID, okFrom := entityCommunity[entityKey{r.Slug, rel.FromID}]
+			toCID, okTo := entityCommunity[entityKey{r.Slug, rel.ToID}]
+			if !okFrom || !okTo {
+				continue
+			}
+			if fromCID == toCID {
+				continue // intra-community — skip
+			}
+			// Normalise direction so A→B and B→A collapse to one key.
+			k := edgeKey{r.Slug, fromCID, r.Slug, toCID}
+			if fromCID > toCID {
+				k = edgeKey{r.Slug, toCID, r.Slug, fromCID}
+			}
+			edgeWeights[k]++
+		}
+	}
+
+	edges := []map[string]any{}
+	for k, weight := range edgeWeights {
+		fromID := centroidID(k.fromRepo, k.fromCID)
+		toID := centroidID(k.toRepo, k.toCID)
+		edges = append(edges, map[string]any{
+			"from_id": fromID,
+			"to_id":   toID,
+			"kind":    "COMMUNITY_LINK",
+			"weight":  weight,
+		})
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"nodes":       centroids,
-		"edges":       []any{},
+		"nodes":       nodes,
+		"edges":       edges,
 		"communities": communities,
-		"lod_level":   "centroids",
-		"total_nodes": len(centroids),
+		"lod_level":   "zoom-out",
+		"total_nodes": len(nodes),
 	})
 }
 
@@ -216,6 +290,7 @@ func (s *Server) serveGraphMid(w http.ResponseWriter, group string, repos []*Das
 		"total_nodes": len(nodes),
 	})
 }
+
 
 // serveGraphFull returns all nodes up to the hard cap.
 func (s *Server) serveGraphFull(w http.ResponseWriter, group string, repos []*DashRepo, filterKind string) {

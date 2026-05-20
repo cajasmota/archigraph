@@ -2,8 +2,25 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchGraph } from '@/api/client'
 import { useGraphLoD } from './useGraphLoD'
-import type { GraphFilters, GraphNode, GraphEdge, Community, LodLevel } from '@/types/api'
+import type { GraphFilters, GraphNode, GraphEdge, Community, LodLevel, ServerLod } from '@/types/api'
 import type { ZoomLevel, Viewport } from './useGraphLoD'
+
+// ── LOD tier selection ────────────────────────────────────────────────────────
+// Map the camera zoom level to a server-side LOD tier.  The server caps the
+// "full" tier at 20 000 nodes; for large groups we must start at "centroids"
+// and step up as the user zooms in.
+const LOD_ZOOM_OUT_THRESHOLD = 0.5
+const LOD_MID_THRESHOLD = 2.0
+
+function zoomToServerLod(zoom: ZoomLevel): ServerLod {
+  if (zoom < LOD_ZOOM_OUT_THRESHOLD) return 'centroids'
+  if (zoom < LOD_MID_THRESHOLD) return 'mid'
+  return 'full'
+}
+
+// Synthetic edge kinds emitted by the server only for layout purposes.
+// These should not appear as user-facing filter chips.
+const SYNTHETIC_KINDS = new Set<string>(['COMMUNITY_LINK'])
 
 export interface GraphDataResult {
   /** Filtered node array for the graph renderer */
@@ -24,8 +41,15 @@ export interface GraphDataResult {
 }
 
 /**
- * Fetches the graph for a group, then derives visible nodes/edges
- * via useGraphLoD. Both 3D and 2D canvas components consume this.
+ * Fetches the graph for a group, then optionally applies client-side LoD
+ * culling via useGraphLoD.
+ *
+ * When we send a server-side LOD param the server has already filtered the
+ * node set to the appropriate tier; client-side re-filtering would remove
+ * nodes that don't match the client's heuristic (e.g. centroid nodes have
+ * is_centroid=true but the mid-zoom heuristic looks for god-node IDs in
+ * community top_entities, which wouldn't match centroid IDs).  In server-LOD
+ * mode we therefore show all returned nodes and skip the useGraphLoD filter.
  *
  * @param group - group ID
  * @param filters - edge-kind and repo filters
@@ -40,14 +64,19 @@ export function useGraphData(
   viewport: Viewport | null,
   selectedNodeId: string | null,
 ): GraphDataResult {
+  // Derive the server-side LOD from the current zoom level.  This is passed
+  // as a query param so the server returns only the nodes appropriate for the
+  // current view (avoids fetching 20k+ nodes when zoomed out to centroid tier).
+  const serverLod = zoomToServerLod(zoomLevel)
+
   const {
     data,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['graph', group, filters.repo],
-    queryFn: () => fetchGraph(group, { repo: filters.repo }),
+    queryKey: ['graph', group, filters.repo, serverLod],
+    queryFn: () => fetchGraph(group, { repo: filters.repo, lod: serverLod }),
     staleTime: 5 * 60 * 1000,
     enabled: !!group,
   })
@@ -60,8 +89,12 @@ export function useGraphData(
     return data.edges.filter((e) => kinds.has(e.kind))
   }, [data, filters.edge_kinds])
 
-  // Derive LoD visibility
-  const { visibleNodeIds, visibleEdgeIds, lodLevel } = useGraphLoD(
+  // The server already performed LOD selection — trust it and show all
+  // returned nodes rather than re-filtering client-side.  useGraphLoD is
+  // still called to derive the LodLevel enum value (used for the LoD
+  // indicator UI) and to apply selected-node 1-hop expansion, but we bypass
+  // its visibility filter and show all server-returned nodes directly.
+  const { lodLevel } = useGraphLoD(
     data?.nodes ?? [],
     filteredEdges,
     data?.communities ?? [],
@@ -70,20 +103,28 @@ export function useGraphData(
     selectedNodeId,
   )
 
-  // Materialize filtered arrays for the renderers
-  const nodes = useMemo(() => {
-    if (!data) return []
-    return data.nodes.filter((n) => visibleNodeIds.has(n.id))
-  }, [data, visibleNodeIds])
+  // For the "blocked" sentinel the server returns 0 nodes; surface that as-is.
+  const serverLodLevel: LodLevel = data?.lod ?? lodLevel
 
-  const edges = useMemo(() => {
+  // Show all nodes the server returned (already LOD-filtered).
+  // Apply only the edge-kind filter on top.
+  const nodes = useMemo<GraphNode[]>(() => {
     if (!data) return []
-    return filteredEdges.filter((e) => visibleEdgeIds.has(e.id))
-  }, [filteredEdges, visibleEdgeIds])
+    return data.nodes
+  }, [data])
 
+  const edges = useMemo<GraphEdge[]>(() => {
+    if (!data) return []
+    return filteredEdges
+  }, [data, filteredEdges])
+
+  // Exclude synthetic centroid-tier edges (COMMUNITY_LINK) from the filter
+  // chip bar — they are internal layout hints and not meaningful to the user.
   const allEdgeKinds = useMemo(() => {
     if (!data) return []
-    return [...new Set(data.edges.map((e) => e.kind))]
+    return [...new Set(data.edges.map((e) => e.kind))].filter(
+      (k) => !SYNTHETIC_KINDS.has(k),
+    )
   }, [data])
 
   return {
@@ -91,7 +132,7 @@ export function useGraphData(
     edges,
     communities: data?.communities ?? [],
     allEdgeKinds,
-    lodLevel,
+    lodLevel: serverLodLevel,
     totalNodeCount: data?.total_node_count ?? 0,
     isLoading,
     error: error as Error | null,

@@ -31,6 +31,8 @@ export type RelationshipKind =
   | 'STREAMS_FROM' | 'STREAMS_TO'
   | 'GRAPHQL_SUBSCRIBES' | 'GRAPHQL_PUBLISHES'
   | 'STEP_IN_PROCESS' | 'ENTRY_POINT_OF'
+  /** Synthetic edge between community centroids (zoom-out tier only). */
+  | 'COMMUNITY_LINK'
 
 export type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS' | 'ANY' | 'WS'
 
@@ -413,6 +415,13 @@ export interface RepairResidual {
 
 export type LodLevel = 'zoom-out' | 'mid' | 'zoom-in' | 'blocked'
 
+/**
+ * Server-side LOD tier names — what the backend accepts as the `?lod=` query
+ * param and returns as `lod_level` in the response.  Distinct from the
+ * client-facing LodLevel which uses zoom-metaphor names.
+ */
+export type ServerLod = 'centroids' | 'mid' | 'full'
+
 /** A community centroid node — rendered at zoom-out tier only */
 export interface CommunityCentroid {
   community_id: number
@@ -456,7 +465,8 @@ export interface GraphResponse {
 }
 
 export interface GraphFilters {
-  lod?: LodLevel
+  /** Server-side LOD tier (centroids | mid | full). */
+  lod?: ServerLod
   edge_kinds?: RelationshipKind[]
   repo?: string
 }
