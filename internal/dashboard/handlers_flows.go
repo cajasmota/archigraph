@@ -23,6 +23,110 @@ const (
 	stepInProcessEdge = "STEP_IN_PROCESS"
 )
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Entry-kind classification
+// ─────────────────────────────────────────────────────────────────────────────
+
+// EntryKindGroup is a summary row in the top-level entry_kind_groups list.
+type EntryKindGroup struct {
+	Kind  string `json:"kind"`
+	Count int    `json:"count"`
+}
+
+// inferEntryKind derives the entry_kind label for a Process entity by looking
+// up its entry entity (via the entry_id property) within the group's repos.
+//
+// Classification precedence (first match wins):
+//  1. Entry entity kind contains Handler|Route|Controller|View → "http_handler"
+//  2. Entry entity kind contains Component                     → "component_render"
+//  3. Entry entity kind contains ScheduledJob|Task             → "scheduled_task"
+//  4. Entry entity kind contains Test|Spec                     → "test"
+//  5. Entry entity kind contains CLI|Command|Main              → "cli_command"
+//  6. Any incoming SUBSCRIBES_TO or READS_FROM edge on entry   → "message_consumer"
+//  7. Fallback                                                  → "function"
+func inferEntryKind(grp *DashGroup, entryID string) string {
+	if entryID == "" {
+		return "function"
+	}
+	// Resolve entry entity — may be bare or prefixed.
+	_, entEnt := findEntity(grp, entryID)
+	if entEnt == nil {
+		return "function"
+	}
+
+	k := entEnt.Kind
+	// Strip leading SCOPE. prefix for matching.
+	if after, ok := strings.CutPrefix(k, "SCOPE."); ok {
+		k = after
+	}
+
+	for _, sub := range []string{"Handler", "Route", "Controller", "View", "HTTPEndpoint"} {
+		if strings.Contains(k, sub) {
+			return "http_handler"
+		}
+	}
+	if strings.Contains(k, "Component") {
+		return "component_render"
+	}
+	for _, sub := range []string{"ScheduledJob", "Task", "Cron", "Scheduled"} {
+		if strings.Contains(k, sub) {
+			return "scheduled_task"
+		}
+	}
+	for _, sub := range []string{"Test", "Spec"} {
+		if strings.Contains(k, sub) {
+			return "test"
+		}
+	}
+	for _, sub := range []string{"CLI", "Command", "Main", "Entrypoint"} {
+		if strings.Contains(k, sub) {
+			return "cli_command"
+		}
+	}
+
+	// Check for incoming message-consumption edges across all repos.
+	for _, r := range sortedRepos(grp) {
+		for _, rel := range r.Doc.Relationships {
+			if rel.ToID != entryID && dashPrefixedID(r.Slug, rel.ToID) != entryID {
+				continue
+			}
+			if rel.Kind == "SUBSCRIBES_TO" || rel.Kind == "READS_FROM" {
+				return "message_consumer"
+			}
+		}
+	}
+
+	return "function"
+}
+
+// entryModuleFromPath extracts a short module label from a file path.
+// e.g. "apps/api/handlers/inspections.py" → "inspections"
+func entryModuleFromPath(p string) string {
+	if p == "" {
+		return ""
+	}
+	base := filepath.Base(p)
+	// Strip extension.
+	if idx := strings.LastIndex(base, "."); idx > 0 {
+		base = base[:idx]
+	}
+	return base
+}
+
+// priorityHint returns a string priority that surfaces user-facing flows first.
+// http_handler → "high", message_consumer / scheduled_task → "medium",
+// component_render / cli_command / test → "low", function → "low".
+func priorityHint(entryKind string) string {
+	switch entryKind {
+	case "http_handler":
+		return "high"
+	case "message_consumer", "scheduled_task":
+		return "medium"
+	default:
+		return "low"
+	}
+}
+
 // handleFlowsList — GET /api/flows/{group}
 func (s *Server) handleFlowsList(w http.ResponseWriter, r *http.Request) {
 	group := r.PathValue("group")
@@ -47,24 +151,29 @@ func (s *Server) handleFlowsList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type ProcessItem struct {
-		ProcessID   string                 `json:"process_id"`
-		Repo        string                 `json:"repo"`
-		Label       string                 `json:"label"`
-		EntryID     string                 `json:"entry_id"`
-		EntryName   string                 `json:"entry_name"`
-		TerminalID  string                 `json:"terminal_id"`
-		StepCount   int                    `json:"step_count"`
-		CrossStack  bool                   `json:"cross_stack"`
-		ChainLabels []string               `json:"chain_labels"`
-		SourceFile  string                 `json:"source_file,omitempty"`
+		ProcessID        string                 `json:"process_id"`
+		Repo             string                 `json:"repo"`
+		Label            string                 `json:"label"`
+		EntryID          string                 `json:"entry_id"`
+		EntryName        string                 `json:"entry_name"`
+		TerminalID       string                 `json:"terminal_id"`
+		StepCount        int                    `json:"step_count"`
+		CrossStack       bool                   `json:"cross_stack"`
+		ChainLabels      []string               `json:"chain_labels"`
+		SourceFile       string                 `json:"source_file,omitempty"`
+		// Entry-kind grouping metadata (#1148).
+		EntryKind        string                 `json:"entry_kind"`
+		EntryModule      string                 `json:"entry_module,omitempty"`
+		PriorityHint     string                 `json:"priority_hint"`
+		DominantStepKind interface{}            `json:"dominant_step_kind"` // null until #1147 lands
 		// Enrichment fields (from YAML frontmatter, if a doc file exists).
-		DocsSummary string                 `json:"docs_summary,omitempty"`
-		Group       string                 `json:"group,omitempty"`
-		GroupLabel  string                 `json:"group_label,omitempty"`
-		Rank        float64                `json:"rank,omitempty"`
-		Gaps        []string               `json:"gaps,omitempty"`
-		Disqualified bool                  `json:"disqualified,omitempty"`
-		Enrichment  *EnrichmentFrontmatter `json:"enrichment,omitempty"`
+		DocsSummary      string                 `json:"docs_summary,omitempty"`
+		Group            string                 `json:"group,omitempty"`
+		GroupLabel       string                 `json:"group_label,omitempty"`
+		Rank             float64                `json:"rank,omitempty"`
+		Gaps             []string               `json:"gaps,omitempty"`
+		Disqualified     bool                   `json:"disqualified,omitempty"`
+		Enrichment       *EnrichmentFrontmatter `json:"enrichment,omitempty"`
 	}
 
 	// Load docgen state for documentation enrichment.
@@ -86,17 +195,23 @@ func (s *Server) handleFlowsList(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			sc, _ := strconv.Atoi(e.Properties["step_count"])
+			entID := e.Properties["entry_id"]
+			ek := inferEntryKind(grp, entID)
 			item := ProcessItem{
-				ProcessID:   pid,
-				Repo:        r.Slug,
-				Label:       e.Name,
-				EntryID:     e.Properties["entry_id"],
-				EntryName:   e.Properties["entry_name"],
-				TerminalID:  e.Properties["terminal_id"],
-				StepCount:   sc,
-				CrossStack:  cs,
-				ChainLabels: splitChainLabels(e.Properties["chain_labels"]),
-				SourceFile:  e.SourceFile,
+				ProcessID:        pid,
+				Repo:             r.Slug,
+				Label:            e.Name,
+				EntryID:          entID,
+				EntryName:        e.Properties["entry_name"],
+				TerminalID:       e.Properties["terminal_id"],
+				StepCount:        sc,
+				CrossStack:       cs,
+				ChainLabels:      splitChainLabels(e.Properties["chain_labels"]),
+				SourceFile:       e.SourceFile,
+				EntryKind:        ek,
+				EntryModule:      entryModuleFromPath(e.SourceFile),
+				PriorityHint:     priorityHint(ek),
+				DominantStepKind: nil, // stubbed until #1147 lands
 			}
 			// Enrich from doc frontmatter when available.
 			if fm, summary := extractFlowDocs(group, e.ID, docgenState); fm != nil {
@@ -127,9 +242,26 @@ func (s *Server) handleFlowsList(w http.ResponseWriter, r *http.Request) {
 		items = items[:limit]
 	}
 
+	// Build entry_kind_groups summary (sorted by count descending).
+	kindCounts := map[string]int{}
+	for _, it := range items {
+		kindCounts[it.EntryKind]++
+	}
+	entryKindGroups := make([]EntryKindGroup, 0, len(kindCounts))
+	for k, v := range kindCounts {
+		entryKindGroups = append(entryKindGroups, EntryKindGroup{Kind: k, Count: v})
+	}
+	sort.Slice(entryKindGroups, func(i, j int) bool {
+		if entryKindGroups[i].Count != entryKindGroups[j].Count {
+			return entryKindGroups[i].Count > entryKindGroups[j].Count
+		}
+		return entryKindGroups[i].Kind < entryKindGroups[j].Kind
+	})
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"processes": items,
-		"count":     len(items),
+		"processes":         items,
+		"count":             len(items),
+		"entry_kind_groups": entryKindGroups,
 	})
 }
 
