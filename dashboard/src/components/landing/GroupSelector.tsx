@@ -7,7 +7,7 @@
  */
 
 import { useNavigate } from 'react-router-dom'
-import { Database, GitBranch, Clock, TerminalSquare } from 'lucide-react'
+import { Database, GitBranch, Clock, TerminalSquare, Activity } from 'lucide-react'
 import { useRegistry } from '@/hooks/shared/useRegistry'
 import type { GroupMeta } from '@/types/api'
 
@@ -41,10 +41,38 @@ function bugRateDotColor(rate?: number): string {
   return '#f87171'
 }
 
+/** Format with thousands separator, abbreviating at 1 M+ */
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+  if (n >= 1_000) return n.toLocaleString()
   return String(n)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tooltip wrapper (title-based; CSS tooltip for richer UX)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface TooltipProps {
+  tip: string
+  children: React.ReactNode
+}
+
+function Tooltip({ tip, children }: TooltipProps) {
+  return (
+    <span className="relative group/tip inline-flex items-center">
+      {children}
+      <span
+        role="tooltip"
+        className={[
+          'pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20',
+          'whitespace-nowrap rounded bg-slate-700 px-2 py-1 text-xs text-slate-200 shadow-lg',
+          'opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150',
+        ].join(' ')}
+      >
+        {tip}
+      </span>
+    </span>
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,7 +125,7 @@ function Sparkline({ history, bugRate, width = 60, height = 24 }: SparklineProps
 function GroupCardSkeleton() {
   return (
     <div
-      className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-4"
+      className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 h-[152px] space-y-4"
       role="status"
       aria-label="Loading group…"
     >
@@ -119,6 +147,31 @@ function GroupCardSkeleton() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Stat pill — icon + label + value (with tooltip on icon)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface StatPillProps {
+  icon: React.ReactNode
+  tooltip: string
+  label: string
+  value: string
+  valueClass?: string
+  dimmed?: boolean
+}
+
+function StatPill({ icon, tooltip, label, value, valueClass = 'text-slate-300', dimmed = false }: StatPillProps) {
+  return (
+    <span className={`flex items-center gap-1 min-w-0 ${dimmed ? 'opacity-40' : ''}`}>
+      <Tooltip tip={tooltip}>
+        <span className="text-slate-500 shrink-0">{icon}</span>
+      </Tooltip>
+      <span className="text-slate-500 text-xs shrink-0">{label}:</span>
+      <span className={`text-xs font-medium truncate ${valueClass}`}>{value}</span>
+    </span>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Group card
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -130,14 +183,18 @@ interface GroupCardProps {
 function GroupCard({ group, onClick }: GroupCardProps) {
   const rateColor = bugRateColor(group.bug_rate)
   const rateLabel =
-    group.bug_rate !== undefined ? `${group.bug_rate.toFixed(1)}%` : '—'
+    group.bug_rate !== undefined ? `${group.bug_rate.toFixed(1)}%` : 'not measured'
+  const hasRealData = group.entity_count > 0
+  const hasIndexedAt = Boolean(group.indexed_at)
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        'w-full text-left rounded-xl border bg-slate-900/60 p-5 space-y-3',
+        'w-full text-left rounded-xl border bg-slate-900/60 p-5',
+        // Fixed height ensures all cards are the same regardless of bug-rate / sparkline presence
+        'h-[152px] flex flex-col justify-between',
         'transition-all duration-150 cursor-pointer',
         'border-slate-800 hover:border-sky-500/40 hover:-translate-y-px hover:bg-slate-900',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
@@ -156,31 +213,43 @@ function GroupCard({ group, onClick }: GroupCardProps) {
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
-        {/* Repo count */}
-        <span className="flex items-center gap-1">
-          <Database className="w-3.5 h-3.5" aria-hidden />
-          <span>{group.repos.length} repo{group.repos.length !== 1 ? 's' : ''}</span>
-        </span>
+      {/* Stats grid — 2×2 to keep consistent height */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        {/* Repos */}
+        <StatPill
+          icon={<Database className="w-3.5 h-3.5" aria-hidden />}
+          tooltip="Number of repositories in this group"
+          label="Repos"
+          value={String(group.repos.length)}
+        />
 
-        {/* Entity count */}
-        <span className="flex items-center gap-1">
-          <TerminalSquare className="w-3.5 h-3.5" aria-hidden />
-          <span>{formatCount(group.entity_count)} entities</span>
-        </span>
+        {/* Entities */}
+        <StatPill
+          icon={<TerminalSquare className="w-3.5 h-3.5" aria-hidden />}
+          tooltip="Total entities across all repos"
+          label="Entities"
+          value={formatCount(group.entity_count)}
+          dimmed={!hasRealData}
+        />
 
         {/* Bug rate */}
-        <span className={`flex items-center gap-1 font-mono ${rateColor}`}>
-          <span>{rateLabel}</span>
-          <span className="text-slate-500 font-normal">bug-rate</span>
-        </span>
+        <StatPill
+          icon={<Activity className="w-3.5 h-3.5" aria-hidden />}
+          tooltip="Percentage of unresolved/ambiguous edges (lower is better)"
+          label="Bug-rate"
+          value={rateLabel}
+          valueClass={`text-xs font-medium font-mono ${rateColor}`}
+          dimmed={group.bug_rate === undefined}
+        />
 
         {/* Last indexed */}
-        <span className="flex items-center gap-1 ml-auto text-slate-500">
-          <Clock className="w-3.5 h-3.5" aria-hidden />
-          <span>{relativeTime(group.indexed_at)}</span>
-        </span>
+        <StatPill
+          icon={<Clock className="w-3.5 h-3.5" aria-hidden />}
+          tooltip="Time since most recent indexing"
+          label="Indexed"
+          value={relativeTime(group.indexed_at)}
+          dimmed={!hasIndexedAt}
+        />
       </div>
     </button>
   )
