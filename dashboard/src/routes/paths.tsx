@@ -156,7 +156,7 @@ export function PathsRoute() {
                     key={path.path_hash}
                     path={path}
                     group={group}
-                    onSelect={() => navigate(`/api/${group}/${path.path_hash}`)}
+                    onSelect={() => navigate(`/paths/${group}/${path.path_hash}`)}
                   />
                 ))}
               </div>

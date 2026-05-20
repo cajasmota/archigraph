@@ -47,7 +47,7 @@ export function AppLayout() {
           <NavItem to={`/graph/${group}`} icon={<Network className="w-4 h-4" />} label="Graph" />
           <NavItem to={`/flows/${group}`} icon={<Workflow className="w-4 h-4" />} label="Flows" />
           <NavItem to={`/topology/${group}`} icon={<Radio className="w-4 h-4" />} label="Topology" />
-          <NavItem to={`/api/${group}`} icon={<Globe className="w-4 h-4" />} label="API" />
+          <NavItem to={`/paths/${group}`} icon={<Globe className="w-4 h-4" />} label="Paths" />
           <NavItem to={`/docs/${group}`} icon={<BookOpen className="w-4 h-4" />} label="Docs" />
         </nav>
 

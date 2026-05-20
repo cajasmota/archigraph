@@ -17,7 +17,7 @@ const LAYOUT_BUTTONS: { mode: LayoutMode; icon: React.FC<{ className?: string }>
   { mode: 'force', icon: Box, label: '3D force' },
   { mode: '2d', icon: Grid2x2, label: '2D force' },
   { mode: 'tree', icon: GitBranch, label: 'Tree' },
-  { mode: 'sphere', icon: Globe, label: 'Sphere' },
+  { mode: 'sphere', icon: Globe, label: 'Globe' },
 ]
 
 /**
