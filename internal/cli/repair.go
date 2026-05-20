@@ -242,10 +242,10 @@ func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, 
 
 	reply := finalResult.reply
 
-	// Final summary line.
 	var elapsedStr string
+	elapsed := time.Duration(reply.ElapsedSec * float64(time.Second))
 	if reply.ElapsedSec > 0 {
-		elapsedStr = fmtDuration(time.Duration(reply.ElapsedSec * float64(time.Second)))
+		elapsedStr = fmtDuration(elapsed)
 	}
 
 	if jsonProgress {
@@ -271,21 +271,25 @@ func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, 
 			Warning:  reply.Warning,
 		})
 	} else {
-		// Pretty summary.
-		summaryParts := []string{}
-		if elapsedStr != "" {
-			summaryParts = append(summaryParts, elapsedStr)
-		}
-		if reply.TotalEntities > 0 {
-			summaryParts = append(summaryParts,
-				fmt.Sprintf("%d entities", reply.TotalEntities),
-				fmt.Sprintf("%d relationships", reply.TotalRels))
-		}
-		if len(summaryParts) > 0 {
-			fmt.Fprintf(w, "Total: %s\n", strings.Join(summaryParts, ", "))
-		}
-		for _, r := range reply.Repos {
-			fmt.Fprintf(w, "rebuilt %s\n", r)
+		// Rich summary — read graph artefacts client-side and render the full table.
+		if len(reply.Repos) > 0 {
+			sum := ComputeRebuildSummary(group, reply.Repos, elapsed)
+			PrintRebuildSummary(w, sum)
+		} else {
+			// No repos reported (e.g. single-slug rebuild with no stats). Fall
+			// back to the legacy one-liner so the output is never empty.
+			summaryParts := []string{}
+			if elapsedStr != "" {
+				summaryParts = append(summaryParts, elapsedStr)
+			}
+			if reply.TotalEntities > 0 {
+				summaryParts = append(summaryParts,
+					fmt.Sprintf("%d entities", reply.TotalEntities),
+					fmt.Sprintf("%d relationships", reply.TotalRels))
+			}
+			if len(summaryParts) > 0 {
+				fmt.Fprintf(w, "Group '%s' rebuilt (%s)\n", group, strings.Join(summaryParts, ", "))
+			}
 		}
 		if reply.Warning != "" {
 			fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s\n", reply.Warning)
@@ -295,59 +299,117 @@ func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, 
 }
 
 // printProgressLine emits one human-readable progress line for a repo.
+//
+// Format follows the spec from issue #989:
+//
+//	core-mobile: scanning 1134 files…
+//	core-mobile: extracted 4521 entities (482 functions, 312 classes, …)
+//	core-mobile: 12,318 relationships emitted
+//	core-mobile: P4 algorithms running (PageRank, Communities)…
+//	core-mobile: DONE 5.2s
+//
+// In-progress phases (walking, extracting, finalizing) use a carriage-return
+// suffix when the writer is a TTY so the line updates in place. Terminal
+// phases (completed, failed) always use a newline so the final state is
+// preserved in the scroll-back buffer.
 func printProgressLine(w io.Writer, r proto.RepoProgressState) {
-	prefix := ""
-	if r.Total > 0 {
-		prefix = fmt.Sprintf("  [%d/%d] %s: ", r.Index, r.Total, r.Slug)
-	} else {
-		prefix = fmt.Sprintf("  %s: ", r.Slug)
+	slug := r.Slug
+	if slug == "" {
+		slug = r.Path
 	}
+	tty := isTTY(w)
 
 	switch r.Phase {
 	case proto.PhaseQueued:
-		fmt.Fprintf(w, "%squeued\n", prefix)
+		// Queued is transient and low-value; skip on TTY (overwritten next tick),
+		// print a single line on non-TTY so logs are complete.
+		if !tty {
+			fmt.Fprintf(w, "%s: queued\n", slug)
+		}
+
 	case proto.PhaseStarted:
-		fmt.Fprintf(w, "%sstarted\n", prefix)
+		if tty {
+			fmt.Fprintf(w, "%s: starting…\r", slug)
+		} else {
+			fmt.Fprintf(w, "%s: starting\n", slug)
+		}
+
 	case proto.PhaseWalking:
 		if r.FilesWalked > 0 {
-			fmt.Fprintf(w, "%swalking files... %d candidates\n", prefix, r.FilesWalked)
+			if tty {
+				fmt.Fprintf(w, "%s: scanning %s files…\r", slug, fmtInt(r.FilesWalked))
+			} else {
+				fmt.Fprintf(w, "%s: scanning %s files…\n", slug, fmtInt(r.FilesWalked))
+			}
 		} else {
-			fmt.Fprintf(w, "%swalking files...\n", prefix)
+			if tty {
+				fmt.Fprintf(w, "%s: scanning files…\r", slug)
+			} else {
+				fmt.Fprintf(w, "%s: scanning files…\n", slug)
+			}
 		}
+
 	case proto.PhaseExtracting:
-		if r.FilesExtracted > 0 && r.FilesWalked > 0 {
-			fmt.Fprintf(w, "%sextracting (%d/%d files, %s)\n",
-				prefix, r.FilesExtracted, r.FilesWalked,
-				fmtDuration(time.Duration(r.ElapsedSec*float64(time.Second))))
+		if r.FilesWalked > 0 {
+			pct := 0
+			if r.FilesWalked > 0 {
+				pct = 100 * r.FilesExtracted / r.FilesWalked
+			}
+			if tty {
+				fmt.Fprintf(w, "%s: extracting… %d%% (%s/%s files)\r",
+					slug, pct, fmtInt(r.FilesExtracted), fmtInt(r.FilesWalked))
+			} else {
+				fmt.Fprintf(w, "%s: extracting… %d%% (%s/%s files)\n",
+					slug, pct, fmtInt(r.FilesExtracted), fmtInt(r.FilesWalked))
+			}
 		} else {
-			fmt.Fprintf(w, "%sextracting...\n", prefix)
+			if tty {
+				fmt.Fprintf(w, "%s: extracting…\r", slug)
+			} else {
+				fmt.Fprintf(w, "%s: extracting…\n", slug)
+			}
 		}
+
 	case proto.PhaseFinalizing:
-		fmt.Fprintf(w, "%sfinalizing...\n", prefix)
+		// Finalizing covers Pass 4 graph algorithms (PageRank, communities).
+		if tty {
+			fmt.Fprintf(w, "%s: P4 algorithms running (PageRank, Communities)…\r", slug)
+		} else {
+			fmt.Fprintf(w, "%s: P4 algorithms running (PageRank, Communities)…\n", slug)
+		}
+
 	case proto.PhaseCompleted:
-		parts := []string{}
+		// Clear the in-progress line (if TTY) and print the final DONE line.
+		dur := time.Duration(r.ElapsedSec * float64(time.Second))
+		durStr := ""
 		if r.ElapsedSec > 0 {
-			parts = append(parts, fmtDuration(time.Duration(r.ElapsedSec*float64(time.Second))))
+			durStr = fmtDuration(dur)
 		}
-		if r.Entities > 0 {
-			parts = append(parts, fmt.Sprintf("%d entities", r.Entities))
+		if tty {
+			// Pad to overwrite any previous carriage-return line.
+			fmt.Fprintf(w, "\r%-80s\r", "")
 		}
-		if r.Rels > 0 {
-			parts = append(parts, fmt.Sprintf("%d rels", r.Rels))
-		}
-		if len(parts) > 0 {
-			fmt.Fprintf(w, "%scompleted (%s)\n", prefix, strings.Join(parts, ", "))
+		if r.Entities > 0 || r.Rels > 0 {
+			fmt.Fprintf(w, "%s: DONE %s  (%s entities, %s relationships)\n",
+				slug, durStr, fmtInt(int(r.Entities)), fmtInt(int(r.Rels)))
+		} else if durStr != "" {
+			fmt.Fprintf(w, "%s: DONE %s\n", slug, durStr)
 		} else {
-			fmt.Fprintf(w, "%scompleted\n", prefix)
+			fmt.Fprintf(w, "%s: DONE\n", slug)
 		}
+
 	case proto.PhaseFailed:
-		if r.ErrMsg != "" {
-			fmt.Fprintf(w, "%sfailed: %s\n", prefix, r.ErrMsg)
-		} else {
-			fmt.Fprintf(w, "%sfailed\n", prefix)
+		if tty {
+			fmt.Fprintf(w, "\r%-80s\r", "")
 		}
+		if r.ErrMsg != "" {
+			fmt.Fprintf(w, "%s: FAILED — %s\n", slug, r.ErrMsg)
+		} else {
+			fmt.Fprintf(w, "%s: FAILED\n", slug)
+		}
+
 	default:
-		fmt.Fprintf(w, "%s%s\n", prefix, r.Phase)
+		fmt.Fprintf(w, "%s: %s\n", slug, r.Phase)
 	}
 }
 

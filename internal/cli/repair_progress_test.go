@@ -44,6 +44,7 @@ func TestFmtDuration(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestPrintProgressLine_Queued(t *testing.T) {
+	// Queued phase is suppressed on TTY; on a bytes.Buffer (non-TTY) it prints.
 	var buf bytes.Buffer
 	printProgressLine(&buf, proto.RepoProgressState{
 		Slug:  "core",
@@ -52,7 +53,8 @@ func TestPrintProgressLine_Queued(t *testing.T) {
 		Phase: proto.PhaseQueued,
 	})
 	got := buf.String()
-	if !strings.Contains(got, "[1/3]") || !strings.Contains(got, "queued") {
+	// Non-TTY output must contain the slug and "queued".
+	if !strings.Contains(got, "core") || !strings.Contains(got, "queued") {
 		t.Errorf("unexpected queued line: %q", got)
 	}
 }
@@ -66,7 +68,8 @@ func TestPrintProgressLine_Started(t *testing.T) {
 		Phase: proto.PhaseStarted,
 	})
 	got := buf.String()
-	if !strings.Contains(got, "[2/3]") || !strings.Contains(got, "started") {
+	// New format: "frontend: starting\n" on non-TTY.
+	if !strings.Contains(got, "frontend") || !strings.Contains(got, "start") {
 		t.Errorf("unexpected started line: %q", got)
 	}
 }
@@ -83,17 +86,18 @@ func TestPrintProgressLine_Completed_WithStats(t *testing.T) {
 		Rels:       4012,
 	})
 	got := buf.String()
-	if !strings.Contains(got, "[3/3]") {
-		t.Errorf("missing position: %q", got)
+	// New format: "mobile: DONE 32s  (1,819 entities, 4,012 relationships)\n"
+	if !strings.Contains(got, "mobile") {
+		t.Errorf("missing slug in completed line: %q", got)
 	}
-	if !strings.Contains(got, "completed") {
-		t.Errorf("missing 'completed': %q", got)
+	if !strings.Contains(got, "DONE") {
+		t.Errorf("missing 'DONE' in completed line: %q", got)
 	}
-	if !strings.Contains(got, "1819 entities") {
-		t.Errorf("missing entity count: %q", got)
+	if !strings.Contains(got, "1,819") {
+		t.Errorf("missing entity count (1,819) in completed line: %q", got)
 	}
-	if !strings.Contains(got, "4012 rels") {
-		t.Errorf("missing rel count: %q", got)
+	if !strings.Contains(got, "4,012") {
+		t.Errorf("missing rel count (4,012) in completed line: %q", got)
 	}
 }
 
@@ -107,8 +111,9 @@ func TestPrintProgressLine_Failed(t *testing.T) {
 		ErrMsg: "permission denied",
 	})
 	got := buf.String()
-	if !strings.Contains(got, "failed") {
-		t.Errorf("missing 'failed': %q", got)
+	// New format: "broken: FAILED — permission denied\n"
+	if !strings.Contains(got, "FAILED") {
+		t.Errorf("missing 'FAILED': %q", got)
 	}
 	if !strings.Contains(got, "permission denied") {
 		t.Errorf("missing error message: %q", got)
@@ -116,16 +121,13 @@ func TestPrintProgressLine_Failed(t *testing.T) {
 }
 
 func TestPrintProgressLine_NoTotal(t *testing.T) {
-	// When Total=0 (e.g. single-repo index), prefix omits [n/n].
+	// Slug must always appear regardless of Total.
 	var buf bytes.Buffer
 	printProgressLine(&buf, proto.RepoProgressState{
 		Slug:  "myrepo",
 		Phase: proto.PhaseStarted,
 	})
 	got := buf.String()
-	if strings.Contains(got, "[0/0]") {
-		t.Errorf("should not contain [0/0]: %q", got)
-	}
 	if !strings.Contains(got, "myrepo") {
 		t.Errorf("missing repo name: %q", got)
 	}
