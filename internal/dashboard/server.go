@@ -171,6 +171,7 @@ func (s *Server) routes() http.Handler {
 
 	// Broker topology
 	mux.HandleFunc("GET /api/topology/{group}", s.handleTopology)
+	mux.HandleFunc("GET /api/topology/{group}/orphan-publishers", s.handleOrphanPublishers)
 
 	// Docs portal
 	mux.HandleFunc("GET /api/docs/{group}", s.handleDocTree)
