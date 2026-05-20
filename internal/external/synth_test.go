@@ -5465,3 +5465,151 @@ func TestSynthesizeDBEntities_Idempotent(t *testing.T) {
 		t.Fatalf("second run: Synthesized=%d RelationshipsResolved=%d, want 0,0 (idempotent)", second.Synthesized, second.RelationshipsResolved)
 	}
 }
+
+// TestSynthesize_NoPlaceholderForPythonStdlib verifies issue #1085: calls to
+// Python stdlib builtins (int, str, list) do NOT emit External entities, while
+// calls to real third-party packages (numpy, requests) DO emit External entities,
+// and in-graph calls resolve to real entities unchanged.
+//
+// Fixture:
+//   - 10 edges to stdlib names: int (×3), str (×3), list (×2), range, len
+//   - 5 edges to real external packages: numpy.array (×3), requests.get (×2)
+//   - 5 edges to a user-defined function (hex ID — already resolved)
+func TestSynthesize_NoPlaceholderForPythonStdlib(t *testing.T) {
+	const callerID = "aaaa000000000001"
+	const userFuncID = "bbbb000000000001"
+
+	// Build 5 edges that already point at a real (hex-ID) in-graph entity.
+	inGraphRels := []graph.Relationship{
+		{ID: "rg1", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg2", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg3", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg4", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg5", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+	}
+
+	// 10 edges to stdlib bare names — should NOT create entities.
+	stdlibRels := []graph.Relationship{
+		{ID: "s1", FromID: callerID, ToID: "int", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s2", FromID: callerID, ToID: "int", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s3", FromID: callerID, ToID: "int", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s4", FromID: callerID, ToID: "str", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s5", FromID: callerID, ToID: "str", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s6", FromID: callerID, ToID: "str", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s7", FromID: callerID, ToID: "list", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s8", FromID: callerID, ToID: "list", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s9", FromID: callerID, ToID: "range", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "s10", FromID: callerID, ToID: "len", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+	}
+
+	// 5 edges to real external packages — SHOULD create entities.
+	extRels := []graph.Relationship{
+		{ID: "e1", FromID: callerID, ToID: "numpy.array", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "e2", FromID: callerID, ToID: "numpy.array", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "e3", FromID: callerID, ToID: "numpy.array", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "e4", FromID: callerID, ToID: "requests.get", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+		{ID: "e5", FromID: callerID, ToID: "requests.get", Kind: "CALLS",
+			Properties: map[string]string{"language": "python"}},
+	}
+
+	allRels := make([]graph.Relationship, 0, len(inGraphRels)+len(stdlibRels)+len(extRels))
+	allRels = append(allRels, inGraphRels...)
+	allRels = append(allRels, stdlibRels...)
+	allRels = append(allRels, extRels...)
+
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{
+				ID:       callerID,
+				Name:     "process",
+				Kind:     "Function",
+				Language: "python",
+				SourceFile: "app/core.py",
+			},
+			{
+				ID:       userFuncID,
+				Name:     "process",
+				Kind:     "Function",
+				Language: "python",
+				SourceFile: "app/util.py",
+			},
+		},
+		Relationships: allRels,
+	}
+
+	stats := Synthesize(doc)
+
+	// 1. Exactly 2 External entities: ext:numpy and ext:requests.
+	//    (NOT ext:int, ext:str, ext:list, ext:range, ext:len)
+	var extEntities []graph.Entity
+	for _, e := range doc.Entities {
+		if e.Kind == KindExternal {
+			extEntities = append(extEntities, e)
+		}
+	}
+	if len(extEntities) != 2 {
+		names := make([]string, len(extEntities))
+		for i, e := range extEntities {
+			names[i] = e.ID
+		}
+		t.Errorf("want 2 External entities (numpy, requests), got %d: %v", len(extEntities), names)
+	}
+	for _, e := range extEntities {
+		if e.ID != "ext:numpy" && e.ID != "ext:requests" {
+			t.Errorf("unexpected External entity: %s", e.ID)
+		}
+	}
+
+	// 2. DynamicTargetsResolved counts the 10 stdlib edges.
+	if stats.DynamicTargetsResolved != 10 {
+		t.Errorf("DynamicTargetsResolved=%d, want 10", stats.DynamicTargetsResolved)
+	}
+
+	// 3. Stdlib edges: ToID cleared to "", dynamic_target stamped.
+	for _, r := range doc.Relationships {
+		// Only check the stdlib edges by ID prefix "s".
+		if len(r.ID) < 1 || r.ID[0] != 's' {
+			continue
+		}
+		if r.ToID != "" {
+			t.Errorf("stdlib edge %s: ToID=%q, want empty", r.ID, r.ToID)
+		}
+		if dt := r.Properties["dynamic_target"]; dt == "" {
+			t.Errorf("stdlib edge %s: dynamic_target property missing", r.ID)
+		}
+	}
+
+	// 4. In-graph edges: ToID still points at the hex entity ID.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "rg" {
+			continue
+		}
+		if r.ToID != userFuncID {
+			t.Errorf("in-graph edge %s: ToID=%q, want %s", r.ID, r.ToID, userFuncID)
+		}
+	}
+
+	// 5. External edges: ToID rewritten to ext:numpy or ext:requests.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 1 || r.ID[0] != 'e' {
+			continue
+		}
+		if r.ToID != "ext:numpy" && r.ToID != "ext:requests" {
+			t.Errorf("external edge %s: ToID=%q, want ext:numpy or ext:requests", r.ID, r.ToID)
+		}
+	}
+}

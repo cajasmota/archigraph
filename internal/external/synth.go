@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/archigraph/internal/resolve"
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
@@ -47,6 +48,11 @@ type Stats struct {
 	// pass touched (including any that were already present from a
 	// previous run).
 	UniqueExternals int
+	// DynamicTargetsResolved is the number of relationship endpoints
+	// that matched the per-language dynamic-pattern catalog and were
+	// stamped with "dynamic_target" instead of emitting a placeholder
+	// External entity. Issue #1085.
+	DynamicTargetsResolved int
 }
 
 // upsertImportSet adds an IMPORTS edge to a per-file import set,
@@ -195,6 +201,7 @@ func Synthesize(doc *graph.Document) Stats {
 	uniques := make(map[string]externalInfo) // ext-id -> info
 	resolved := 0
 
+	dynamicTargets := 0
 	for k := range doc.Relationships {
 		rel := &doc.Relationships[k]
 		if rel.ToID == "" || isHexID(rel.ToID) || strings.HasPrefix(rel.ToID, ExtIDPrefix) {
@@ -209,6 +216,33 @@ func Synthesize(doc *graph.Document) Stats {
 		if lang == "" && rel.Properties != nil {
 			lang = rel.Properties["language"]
 		}
+
+		// Issue #1085 — stdlib-builtin guard. If the unresolved stub is an
+		// unambiguous stdlib builtin for the given language (int, str,
+		// list, len, range, … for Python), stamp the bare name as a
+		// "dynamic_target" property on the edge and clear ToID so no
+		// placeholder External entity is emitted.
+		//
+		// This is intentionally narrower than the full dynamic-pattern
+		// catalog: framework DSL names (Flask route/before_request,
+		// SQLAlchemy commit/rollback, …) still flow through to
+		// classifyExternal so the per-import gate can fold them to the
+		// right ext:<package> placeholder. Only the core language builtins
+		// that can NEVER resolve to a user entity are intercepted here.
+		//
+		// Real third-party packages (numpy, requests, …) are not in the
+		// stdlib-builtin set and flow through to the existing
+		// classifyExternal path unchanged.
+		if resolve.IsStdlibBuiltinTarget(rel.ToID, lang) {
+			if rel.Properties == nil {
+				rel.Properties = make(map[string]string)
+			}
+			rel.Properties["dynamic_target"] = rel.ToID
+			rel.ToID = ""
+			dynamicTargets++
+			continue
+		}
+
 		canonical, subtype, ok := classifyExternal(rel.ToID, rel.Kind, lang, entityFile[rel.FromID], fileImports[entityFile[rel.FromID]], rel.Properties)
 		if !ok {
 			continue
@@ -263,9 +297,10 @@ func Synthesize(doc *graph.Document) Stats {
 	doc.Stats.Relationships = len(doc.Relationships)
 
 	return Stats{
-		Synthesized:           synthesised,
-		RelationshipsResolved: resolved,
-		UniqueExternals:       len(uniques),
+		Synthesized:            synthesised,
+		RelationshipsResolved:  resolved,
+		UniqueExternals:        len(uniques),
+		DynamicTargetsResolved: dynamicTargets,
 	}
 }
 

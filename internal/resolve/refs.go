@@ -348,6 +348,15 @@ func isDynamicPatternLang(stub, lang string) bool {
 	return false
 }
 
+// IsDynamicPatternLang is the exported variant of isDynamicPatternLang.
+// It is used by the external synthesiser (internal/external) to guard
+// against emitting placeholder entities for stubs that are already
+// classified as dynamic (stdlib builtins, reflection primitives, etc.)
+// without creating an import cycle. See issue #1085.
+func IsDynamicPatternLang(stub, lang string) bool {
+	return isDynamicPatternLang(stub, lang)
+}
+
 // ExternalAllowlist is the function signature used by the resolver to
 // decide whether an "ext:<pkg>" endpoint is a known package or not. The
 // caller injects the actual allowlist (typically a wrapper around
