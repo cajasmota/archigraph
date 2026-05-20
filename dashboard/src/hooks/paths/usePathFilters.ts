@@ -4,7 +4,7 @@ import type { PathFilters } from '@/types/api'
 
 /**
  * Reads / writes Surface 4 filter state from the URL search params.
- * Changes to any filter reset the page to 1.
+ * Pagination has been removed — all paths are returned in a single request.
  */
 export function usePathFilters(): {
   filters: PathFilters
@@ -26,8 +26,6 @@ export function usePathFilters(): {
       : params.get('is_webhook') === 'false'
         ? false
         : undefined,
-    page: Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1),
-    page_size: 50,
   }
 
   const setFilter = useCallback(
@@ -38,10 +36,6 @@ export function usePathFilters(): {
           next.delete(key)
         } else {
           next.set(key, String(value))
-        }
-        // Reset page on filter change (not on page change itself)
-        if (key !== 'page') {
-          next.set('page', '1')
         }
         return next
       })
