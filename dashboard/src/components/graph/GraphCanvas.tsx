@@ -7,7 +7,7 @@ import type { GraphNode, GraphEdge } from '@/types/api'
 import { useGraphCameraStore } from '@/store/graphCameraStore'
 
 // ---------------------------------------------------------------------------
-// Semantic layout helpers (#1072)
+// Semantic layout helpers (#1072 / #1106 repo-first layout)
 // ---------------------------------------------------------------------------
 
 /**
@@ -35,96 +35,46 @@ function hashMod1000(s: string): number {
 }
 
 /**
- * Build the composite cluster id for a node:
- *   community_id * 1000  +  moduleHash % 1000
+ * #1106 — Repo-first composite cluster id:
  *
- * When community_id is absent, fall back to just the module hash.
- * This lets Cosmograph's cluster force pull nodes from the same
- * community + module directory toward a shared centroid.
+ *   repoIdx * 10_000_000  +  community_id * 1000  +  moduleHash % 1000
+ *
+ * This makes REPO the dominant clustering signal so the force simulation
+ * pulls same-repo nodes toward their repo's canvas region first, then
+ * sub-clusters them by community and module within that region.
+ *
+ * The multiplier 10_000_000 ensures no aliasing between repos even when
+ * community_id values run into the thousands.
  */
-function clusterIdFor(n: GraphNode): number {
+function clusterIdFor(n: GraphNode, repoIdx: number): number {
   const mod = hashMod1000(moduleKey(n.source_file))
-  if (n.community_id != null) {
-    return n.community_id * 1000 + mod
-  }
-  return mod
+  const cid = n.community_id ?? 0
+  return repoIdx * 10_000_000 + cid * 1000 + mod
 }
 
 /**
- * Arrange community centroids in a deterministic ring around the origin.
+ * #1106 — Build a repo → canvas-center map.
  *
- * The top communities (by total node count) are placed first.
- * Hub communities (those containing the highest-pagerank nodes) are
- * placed closest to the origin so the force simulation converges with
- * high-degree hub nodes near the viewport center.
+ * Repos are sorted deterministically (alphabetically) so positions are
+ * stable across re-renders. N repos are placed evenly on a large circle
+ * whose radius scales with sqrt(nodeCount) so the islands don't overlap.
  *
- * Returns a map from composite cluster_id → [x, y] for Cosmograph's
- * `clusterPositionsMap` prop.
+ * Returns { repoName → {x, y} } for use in initial position seeding.
  */
-function buildClusterPositionsMap(
+function buildRepoCenters(
   nodes: GraphNode[],
-): Record<string, [number, number]> {
-  if (nodes.length === 0) return {}
-
-  // 1. Aggregate: for each community find total node count + max pagerank
-  const commInfo = new Map<number, { count: number; maxPR: number }>()
-  for (const n of nodes) {
-    const cid = n.community_id ?? -1
-    const pr  = n.pagerank ?? 0
-    const prev = commInfo.get(cid)
-    if (prev) {
-      prev.count++
-      if (pr > prev.maxPR) prev.maxPR = pr
-    } else {
-      commInfo.set(cid, { count: 1, maxPR: pr })
-    }
-  }
-
-  // 2. Sort communities: largest (most nodes) first, then by max pagerank desc
-  const sortedComms = [...commInfo.entries()].sort(([, a], [, b]) => {
-    if (b.count !== a.count) return b.count - a.count
-    return b.maxPR - a.maxPR
-  })
-
-  const total = sortedComms.length
-  if (total === 0) return {}
-
-  // 3. Radial layout — innermost ring radius scales with community count
-  //    so clusters don't overlap. Cosmograph's force sim refines from here.
-  const ringRadius = Math.max(300, total * 40)
-
-  const posMap: Record<string, [number, number]> = {}
-  sortedComms.forEach(([cid], idx) => {
-    const angle = (idx / total) * 2 * Math.PI
-    const x = Math.cos(angle) * ringRadius
-    const y = Math.sin(angle) * ringRadius
-
-    // Gather distinct module hashes within this community
-    const modHashes = new Set<number>()
-    for (const n of nodes) {
-      if ((n.community_id ?? -1) === cid) {
-        modHashes.add(hashMod1000(moduleKey(n.source_file)))
-      }
-    }
-    // Register each composite cluster_id
-    for (const mh of modHashes) {
-      const compositeKey = String(cid === -1 ? mh : cid * 1000 + mh)
-      // Slightly offset sub-clusters within their community ring position
-      const subAngle = angle + (mh / 1000) * 0.4 - 0.2
-      const subR = ringRadius * 0.95
-      posMap[compositeKey] = [
-        Math.cos(subAngle) * subR,
-        Math.sin(subAngle) * subR,
-      ]
-    }
-    // Also register the community-level key (for nodes with no module)
-    const communityKey = String(cid === -1 ? 0 : cid * 1000)
-    if (!(communityKey in posMap)) {
-      posMap[communityKey] = [x, y]
-    }
-  })
-
-  return posMap
+): Map<string, { x: number; y: number }> {
+  const repos = Array.from(new Set(nodes.map((n) => n.repo ?? ''))).sort()
+  const N = repos.length
+  if (N === 0) return new Map()
+  // Scale radius with graph size so regions don't overlap at 20k+ nodes
+  const R = Math.max(1500, Math.sqrt(nodes.length) * 30)
+  return new Map(
+    repos.map((repo, i) => {
+      const angle = (i / N) * 2 * Math.PI
+      return [repo, { x: R * Math.cos(angle), y: R * Math.sin(angle) }]
+    }),
+  )
 }
 
 export interface GraphCanvasProps {
@@ -258,10 +208,9 @@ const GraphCanvasInner = ({
   // Cosmograph requires a sequential numeric index column on both points and links.
   // We derive these from the incoming arrays rather than mutating the originals.
   //
-  // #1072: add __cluster_id (community × module composite) and __cluster_strength
-  // so the force simulation groups nodes by community + module locality.
-  // Hub nodes (high pagerank) get a stronger attraction to pull them toward
-  // the center of their community island.
+  // #1072 / #1106: add __cluster_id (repo-first composite) and __cluster_strength
+  // so the force simulation groups nodes by repo first, then community + module.
+  // Repo is the dominant signal: repoIdx * 10_000_000 ensures clear separation.
   //
   // #1089: also compute __size via log scale so degree-750 god nodes are
   // visibly huge relative to degree-1 leaves.
@@ -270,6 +219,15 @@ const GraphCanvasInner = ({
   const computeSize = (d: number): number =>
     2 + Math.log10(d + 1) * 12
 
+  // #1106: repo → index map (alphabetically sorted, deterministic)
+  const repoToIdx = useMemo(() => {
+    const repos = Array.from(new Set(nodes.map((n) => n.repo ?? ''))).sort()
+    return new Map(repos.map((r, i) => [r, i]))
+  }, [nodes])
+
+  // #1106: repo → canvas-center positions placed on a large circle
+  const repoCenters = useMemo(() => buildRepoCenters(nodes), [nodes])
+
   const cosmographPoints = useMemo(() => {
     // Compute per-node max pagerank for normalising cluster strength
     let maxPR = 0
@@ -277,21 +235,28 @@ const GraphCanvasInner = ({
     if (maxPR === 0) maxPR = 1
 
     return nodes.map((n, i) => {
-      const cid = clusterIdFor(n)
-      // Hub nodes (top ~10% by pagerank) get stronger pull → stay near community center
+      const repoIdx = repoToIdx.get(n.repo ?? '') ?? 0
+      const cid = clusterIdFor(n, repoIdx)
+      // Hub nodes (top ~10% by pagerank) get stronger pull → stay near cluster center
       const normalizedPR = (n.pagerank ?? 0) / maxPR
-      // Lower max cluster strength so islands separate visually instead of
-      // collapsing into a single amorphous blob. Range [0.08, 0.20] keeps
-      // community affinity but lets inter-community repulsion push islands apart.
-      const strength = 0.08 + normalizedPR * 0.12
+      // #1106: keep cluster strength low (0.10-0.18) — the pre-positioned initial
+      // positions + strong repulsion do the heavy lifting. Too-high strength collapses
+      // each island into a single point rather than letting nodes spread naturally.
+      const strength = 0.10 + normalizedPR * 0.08
       // #1089: pre-computed log-degree size for pointSizeByFn
       const __size = computeSize(n.degree ?? 0)
-      return { ...n, __idx: i, __cluster_id: cid, __cluster_strength: strength, __size }
+      // #1106: seed each node near its repo's canvas center so the sim starts in
+      // the right region and converges without fighting a random-soup start state.
+      // Small jitter (±50px) prevents all nodes from stacking at the exact center.
+      const center = repoCenters.get(n.repo ?? '')
+      const __x = center ? center.x + (Math.random() * 100 - 50) : 0
+      const __y = center ? center.y + (Math.random() * 100 - 50) : 0
+      return { ...n, __idx: i, __cluster_id: cid, __cluster_strength: strength, __size, __x, __y }
     })
-  }, [nodes])
-
-  // #1072: community + module centroid positions for the cluster force.
-  const clusterPositionsMap = useMemo(() => buildClusterPositionsMap(nodes), [nodes])
+  // repoCenters and repoToIdx are derived from nodes — listing all three would
+  // fire on every nodes change anyway; suppress exhaustive-deps for the derived maps.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, repoToIdx, repoCenters])
 
   const cosmographLinks = useMemo(() => {
     const idToIdx = new Map(nodes.map((n, i) => [String(n.id), i]))
@@ -540,7 +505,8 @@ const GraphCanvasInner = ({
         // DuckDB-WASM (nested objects/arrays crash columnar type inference).
         // __idx is included so Cosmograph can resolve its numeric index lookups.
         // #1072: __cluster_id and __cluster_strength added for semantic layout.
-        pointIncludeColumns={['__idx', 'id', 'label', 'kind', 'repo', 'community_id', 'pagerank', 'is_centroid', 'centroid_size', 'source_file', 'start_line', 'degree', '__cluster_id', '__cluster_strength', '__size']}
+        // #1106: __x and __y added for repo-first initial position seeding.
+        pointIncludeColumns={['__idx', 'id', 'label', 'kind', 'repo', 'community_id', 'pagerank', 'is_centroid', 'centroid_size', 'source_file', 'start_line', 'degree', '__cluster_id', '__cluster_strength', '__size', '__x', '__y']}
 
         links={visibleLinks as unknown as Record<string, unknown>[]}
         linkSourceBy="source"
@@ -550,15 +516,24 @@ const GraphCanvasInner = ({
         // __crossRepo carries the cross-repo flag for color/width differentiation (#1065)
         linkIncludeColumns={['kind', '__crossRepo']}
 
-        // ── Semantic layout — community + module clustering (#1072) ────────
-        // pointClusterBy groups nodes toward shared community×module centroids.
-        // pointClusterStrengthBy makes hub (high-pagerank) nodes pull harder to
-        // their centroid so they naturally gravitate closer to their island core.
-        // clusterPositionsMap arranges community islands in a ring so the initial
-        // force-sim state already has distinct visual regions (no random soup).
+        // ── Repo-first semantic layout (#1072 / #1106) ───────────────────────
+        // #1106: two-layer approach for guaranteed island separation:
+        //
+        // 1. pointXBy/pointYBy: SEED each node's initial position near its repo's
+        //    canvas center (pre-computed in cosmographPoints as __x/__y).
+        //    Nodes start already-separated — the sim doesn't have to fight
+        //    through random-soup to discover repo boundaries.
+        //    NOTE: when pointXBy/pointYBy are set, clusterPositionsMap has no
+        //    effect per Cosmograph docs — so we omit it here.
+        //
+        // 2. pointClusterBy (repo-first cluster id) + pointClusterStrengthBy:
+        //    cluster force keeps nodes near their repo region during the sim.
+        //    The composite id encodes repo as the dominant key so the cluster
+        //    force always pulls toward the correct repo region.
+        pointXBy="__x"
+        pointYBy="__y"
         pointClusterBy="__cluster_id"
         pointClusterStrengthBy="__cluster_strength"
-        clusterPositionsMap={clusterPositionsMap}
 
         // ── Node appearance ────────────────────────────────────────────────
         pointColorBy="id"
@@ -613,18 +588,20 @@ const GraphCanvasInner = ({
         // ── Simulation ─────────────────────────────────────────────────────
         enableSimulation={true}
         preservePointPositionsOnDataUpdate={true}
-        // Higher friction → nodes settle more smoothly (less jitter after layout)
-        simulationFriction={0.7}
-        // #1089: raise repulsion so god nodes (deg=750) physically push their
-        // neighborhood outward, making the size differential more visually apparent.
-        // 0.8 is still safe — cluster positions prevent full blowout.
-        simulationRepulsion={0.8}
-        // Gentle center-mass pull keeps the graph from drifting off-canvas
-        // as cluster positions are arranged around the origin.
-        simulationCenter={0.1}
-        // Lower decay so the simulation settles within the 8s hard-stop window.
-        // Faster alpha decay → quicker convergence on large graphs.
-        simulationDecay={2000}
+        // #1106: Stay at default friction (0.85) for fast settle.
+        simulationFriction={0.85}
+        // #1106: Raise repulsion significantly (was 0.8) so nodes from different
+        // repos physically repel each other, pushing the 3 repo islands apart.
+        // 1.5 is strong but anchored because each node starts near its repo center.
+        simulationRepulsion={1.5}
+        // #1106: Mild per-node gravity toward origin prevents drift off-canvas.
+        // With nodes pre-positioned at R=1500–3000px, 0.1 is gentle enough not
+        // to collapse the islands back toward the center.
+        simulationGravity={0.1}
+        // Tiny center-mass force as a safety net against extreme drift
+        simulationCenter={0.05}
+        // #1106: Faster decay (was 2000) → simulation settles within the 8s hard-stop.
+        simulationDecay={1500}
 
         // ── Selection / interaction ────────────────────────────────────────
         selectPointOnClick="single"
