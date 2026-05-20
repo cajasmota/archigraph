@@ -133,13 +133,127 @@ var pythonStdlibBuiltinNames = map[string]struct{}{
 	"StringIO": {},
 }
 
+// goStdlibBuiltinNames is the Go-specific set of bare-name builtin targets.
+// These are the identifiers declared in the Go universe block — they cannot
+// be imported from any package and should never produce a placeholder External
+// entity. Type names that collide with common user-defined symbols (string,
+// int, int64, byte, bool, float64, error) are intentionally excluded because
+// they are often valid type-entity names inside a graph.
+var goStdlibBuiltinNames = map[string]struct{}{
+	// Built-in functions (spec: https://go.dev/ref/spec#Built-in_functions)
+	"make":    {},
+	"new":     {},
+	"len":     {},
+	"cap":     {},
+	"append":  {},
+	"copy":    {},
+	"delete":  {},
+	"print":   {},
+	"println": {},
+	"panic":   {},
+	"recover": {},
+	"close":   {},
+	"complex": {},
+	"real":    {},
+	"imag":    {},
+}
+
+// javascriptStdlibBuiltinNames covers both JavaScript and TypeScript. These are
+// the global/built-in objects that are always present in any JS/TS runtime and
+// can never be resolved to a user-defined entity or a real npm package.
+// Collision-prone names that are common method names in user code are excluded.
+var javascriptStdlibBuiltinNames = map[string]struct{}{
+	// Core language built-in globals (ECMAScript standard)
+	"console":        {},
+	"JSON":           {},
+	"Math":           {},
+	"Object":         {},
+	"Array":          {},
+	"String":         {},
+	"Number":         {},
+	"Boolean":        {},
+	"Date":           {},
+	"RegExp":         {},
+	"Map":            {},
+	"Set":            {},
+	"WeakMap":        {},
+	"WeakSet":        {},
+	"Promise":        {},
+	"Symbol":         {},
+	"BigInt":         {},
+	"Error":          {},
+	"TypeError":      {},
+	"RangeError":     {},
+	"ReferenceError": {},
+	// Browser globals
+	"window":                {},
+	"document":              {},
+	"localStorage":          {},
+	"sessionStorage":        {},
+	"fetch":                 {},
+	"URL":                   {},
+	"URLSearchParams":       {},
+	"Headers":               {},
+	"Request":               {},
+	"Response":              {},
+	"FormData":              {},
+	"Blob":                  {},
+	"File":                  {},
+	"FileReader":            {},
+	"setTimeout":            {},
+	"setInterval":           {},
+	"clearTimeout":          {},
+	"clearInterval":         {},
+	"requestAnimationFrame": {},
+	"cancelAnimationFrame":  {},
+	// Node.js globals
+	"process":    {},
+	"Buffer":     {},
+	"globalThis": {},
+	"require":    {},
+	"module":     {},
+	"__dirname":  {},
+	"__filename": {},
+}
+
+// rubyStdlibBuiltinNames covers Ruby built-in kernel methods and core stdlib
+// classes that cannot be user-defined under Ruby conventions. Collision-prone
+// names (String, Integer, Float, Array, Hash — which are valid class entities
+// in a user codebase) are excluded deliberately.
+var rubyStdlibBuiltinNames = map[string]struct{}{
+	// Kernel / top-level output methods
+	"puts":  {},
+	"print": {},
+	"p":     {},
+	"pp":    {},
+	"raise": {},
+	// Class macro methods (Module-level DSL)
+	"attr_accessor": {},
+	"attr_reader":   {},
+	"attr_writer":   {},
+	// Forwardable module DSL
+	"def_delegators": {},
+	"delegate":       {},
+	// Core stdlib classes that appear unambiguously as bare-name calls and
+	// cannot collide with real user-defined class names under Ruby conventions.
+	"Symbol": {},
+	"Range":  {},
+	"Regexp": {},
+	"Time":   {},
+	"Date":   {},
+}
+
 // stdlibBuiltinsByLang maps a normalised language tag to its per-language
 // stdlib-builtin name set. Only languages with a non-trivial builtin surface
 // that produces significant External entity noise are listed here. Other
 // languages' stdlib symbols are filtered upstream by different mechanisms
 // (e.g. goBareNames / goPackageFold in classifyExternal for Go).
 var stdlibBuiltinsByLang = map[string]map[string]struct{}{
-	"python": pythonStdlibBuiltinNames,
+	"python":     pythonStdlibBuiltinNames,
+	"go":         goStdlibBuiltinNames,
+	"javascript": javascriptStdlibBuiltinNames,
+	"typescript": javascriptStdlibBuiltinNames, // same set; TS is a JS superset
+	"ruby":       rubyStdlibBuiltinNames,
 }
 
 // IsStdlibBuiltinTarget reports whether stub is an unambiguous stdlib builtin
