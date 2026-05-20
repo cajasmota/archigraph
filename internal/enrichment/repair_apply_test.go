@@ -155,6 +155,41 @@ func TestApplyRepairs_R6_ResolvedByTag(t *testing.T) {
 	}
 }
 
+// #547 — applied edges carry resolved_by_agent set to the repair Source field.
+func TestApplyRepairs_ResolvedByAgent_Propagated(t *testing.T) {
+	doc := mkRepairDoc()
+	eid := edgeIDFor(t, doc, 0)
+	ApplyRepairs(doc, []Repair{{
+		EdgeID:         eid,
+		Resolution:     RepairBindToEntity,
+		TargetEntityID: "bbbbbbbbbbbbbbbb",
+		Reasoning:      "imported from b.py",
+		Source:         "generate-docs/pass-1a",
+	}}, ApplyRepairsOptions{})
+	if doc.Relationships[0].Properties["resolved_by"] != "agent-repair" {
+		t.Fatalf("resolved_by = %q", doc.Relationships[0].Properties["resolved_by"])
+	}
+	if doc.Relationships[0].Properties["resolved_by_agent"] != "generate-docs/pass-1a" {
+		t.Fatalf("resolved_by_agent = %q", doc.Relationships[0].Properties["resolved_by_agent"])
+	}
+}
+
+// #547 — resolved_by_agent is omitted when Source is empty (no spurious empty string property).
+func TestApplyRepairs_ResolvedByAgent_OmittedWhenEmpty(t *testing.T) {
+	doc := mkRepairDoc()
+	eid := edgeIDFor(t, doc, 0)
+	ApplyRepairs(doc, []Repair{{
+		EdgeID:         eid,
+		Resolution:     RepairBindToEntity,
+		TargetEntityID: "bbbbbbbbbbbbbbbb",
+		Reasoning:      "imported from b.py",
+		Source:         "", // explicitly empty
+	}}, ApplyRepairsOptions{})
+	if _, found := doc.Relationships[0].Properties["resolved_by_agent"]; found {
+		t.Fatalf("resolved_by_agent should be absent for empty Source")
+	}
+}
+
 // R7 — reasoning text is persisted on the edge as repair_reasoning.
 // (Trust-model R7 is also about empty reasoning being rejected.)
 func TestApplyRepairs_R7_ReasoningPersistedAndRejectedIfEmpty(t *testing.T) {

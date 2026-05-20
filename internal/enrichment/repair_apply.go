@@ -376,8 +376,18 @@ func applyOneRepair(r graph.Relationship, rep *Repair) (graph.Relationship, bool
 	if r.Properties == nil {
 		r.Properties = make(map[string]string, 4)
 	}
-	// R6 (audit) — every applied edge carries resolved_by + reasoning.
+	// Source-attribution (ADR-0015 #4/8, issue #547) — every applied edge
+	// carries three auditable properties:
+	//   resolved_by       = "agent-repair" (distinguished from "static")
+	//   resolved_by_agent = <repair.Source> e.g. "generate-docs/pass-1a"
+	//   repair_reasoning  = verbatim one-sentence reasoning from repair.json
+	// Downstream consumers can filter on resolved_by to find all
+	// agent-touched edges and read resolved_by_agent to trace the originating
+	// skill or pass.
 	r.Properties["resolved_by"] = "agent-repair"
+	if rep.Source != "" {
+		r.Properties["resolved_by_agent"] = rep.Source
+	}
 	r.Properties["repair_reasoning"] = rep.Reasoning
 
 	switch rep.Resolution {

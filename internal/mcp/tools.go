@@ -479,20 +479,66 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 	if rprefix, local := splitPrefixed(key); rprefix != "" {
 		if r, ok := lg.Repos[rprefix]; ok && r.Doc != nil {
 			if e, ok := r.LabelIndex.ByID[local]; ok {
-				out := serializeEntity(r.Repo, e, len(repos) == 1)
+				scopeIsOne := len(repos) == 1
+				out := serializeEntity(r.Repo, e, scopeIsOne)
 				out["findings"] = findingsToJSON(findingsForEntity(allFindings, e.ID, prefixedID(r.Repo, e.ID)), 0)
+				if agentEdges := agentResolvedEdgesForEntity(r.Doc, r.Repo, e.ID, scopeIsOne); len(agentEdges) > 0 {
+					out["agent_resolved_edges"] = agentEdges
+				}
 				return jsonResult(out), nil
 			}
 		}
 	}
 	for _, r := range repos {
 		if e := r.LabelIndex.Lookup(key); e != nil {
-			out := serializeEntity(r.Repo, e, len(repos) == 1)
+			scopeIsOne := len(repos) == 1
+			out := serializeEntity(r.Repo, e, scopeIsOne)
 			out["findings"] = findingsToJSON(findingsForEntity(allFindings, e.ID, prefixedID(r.Repo, e.ID)), 0)
+			if agentEdges := agentResolvedEdgesForEntity(r.Doc, r.Repo, e.ID, scopeIsOne); len(agentEdges) > 0 {
+				out["agent_resolved_edges"] = agentEdges
+			}
 			return jsonResult(out), nil
 		}
 	}
 	return mcpapi.NewToolResultError(fmt.Sprintf("not found: %s", key)), nil
+}
+
+// agentResolvedEdgesForEntity returns the outgoing relationships from entity e
+// that were resolved by the repair layer (resolved_by == "agent-repair").
+// Each entry carries the edge kind, target ID, source attribution, and
+// the verbatim repair_reasoning so downstream consumers can audit the decision
+// without re-reading repair.json. (ADR-0015 #547)
+func agentResolvedEdgesForEntity(doc *graph.Document, repo string, entityID string, scopeIsOne bool) []map[string]any {
+	if doc == nil {
+		return nil
+	}
+	var out []map[string]any
+	for i := range doc.Relationships {
+		r := &doc.Relationships[i]
+		if r.FromID != entityID {
+			continue
+		}
+		if r.Properties["resolved_by"] != "agent-repair" {
+			continue
+		}
+		toID := r.ToID
+		if !scopeIsOne {
+			toID = prefixedID(repo, toID)
+		}
+		entry := map[string]any{
+			"kind":        r.Kind,
+			"target":      toID,
+			"resolved_by": "agent-repair",
+		}
+		if v := r.Properties["resolved_by_agent"]; v != "" {
+			entry["resolved_by_agent"] = v
+		}
+		if v := r.Properties["repair_reasoning"]; v != "" {
+			entry["repair_reasoning"] = v
+		}
+		out = append(out, entry)
+	}
+	return out
 }
 
 // serializeEntity renders an entity as a map. When scopeIsOne, IDs are local;
