@@ -156,12 +156,6 @@ export interface PathListResponse {
   paths: PathRow[]
   tree: PathTreeNode[]
   total: number
-  /** @deprecated pagination removed — always false */
-  has_more?: boolean
-  /** @deprecated pagination removed */
-  page?: number
-  /** @deprecated pagination removed */
-  page_size?: number
 }
 
 export interface PathFilters {

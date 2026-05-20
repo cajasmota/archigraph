@@ -9,7 +9,7 @@ export function usePathTree(group: string): {
   tree: PathTreeNode[]
   isLoading: boolean
 } {
-  const { data, isLoading } = usePathList(group, { page_size: 50 })
+  const { data, isLoading } = usePathList(group)
   return {
     tree: data?.tree ?? [],
     isLoading,
