@@ -55,19 +55,6 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 	filterFramework := q.Get("framework")
 	filterWebhook := q.Get("webhook")
 	filterRepo := q.Get("filter_repo")
-	page := 0
-	if v := q.Get("page"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 {
-			page = n
-		}
-	}
-	size := pageSize
-	if v := q.Get("size"); v != "" {
-		// Allow explicit override up to 10000 for API consumers.
-		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 10000 {
-			size = n
-		}
-	}
 
 	grp, err := s.graphs.GetGroup(group)
 	if err != nil {
@@ -193,28 +180,18 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 	// Build prefix tree from the full filtered set.
 	tree := buildPrefixTree(rows)
 
-	total := len(rows)
-	// Paginate.
-	start := page * size
-	if start >= total {
-		start = total
-	}
-	end := start + size
-	if end > total {
-		end = total
-	}
-	paged := rows[start:end]
-	if paged == nil {
-		paged = []PathRow{}
+	// Cap at 10000 to prevent unbounded responses
+	maxRows := 10000
+	if len(rows) > maxRows {
+		rows = rows[:maxRows]
 	}
 
+	total := len(rows)
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"paths":    paged,
-		"tree":     tree,
-		"total":    total,
-		"has_more": end < total,
-		"page":     page,
-		"size":     size,
+		"paths": rows,
+		"tree":  tree,
+		"total": total,
 	})
 }
 
