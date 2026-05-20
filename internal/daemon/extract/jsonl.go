@@ -71,6 +71,7 @@ type BatchStats struct {
 	Skipped    int            `json:"skipped"`
 	Failed     int            `json:"failed"`
 	Pass1Rels  int            `json:"pass1_rels"`
+	Pass2Rels  int            `json:"pass2_rels"`
 	Pass25Rels int            `json:"pass2_5_rels"`
 	Pass3Rels  int            `json:"pass3_rels"`
 	ByLang     map[string]int `json:"by_lang,omitempty"`

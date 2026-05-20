@@ -227,6 +227,22 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 			}
 		}
 
+		// Pass 2 — custom/framework extractors (Celery, Django, Flask, …).
+		// RunCustomExtractors fans out to every registered python_* (or
+		// language-equivalent) extractor for the file's language. Results
+		// are emitted as independent entities — they do NOT replace the
+		// base Pass 1 output; downstream dedup handles any overlap.
+		if runExtract {
+			customEnts, _ := extractors.RunCustomExtractors(ctx, file)
+			rels := 0
+			for k := range customEnts {
+				rels += len(customEnts[k].Relationships)
+				e := customEnts[k]
+				emit(Envelope{Type: KindEntity, Entity: &e})
+			}
+			stats.Pass2Rels += rels
+		}
+
 		// Pass 2.5 — YAML framework rules.
 		if runFramework {
 			if res, derr := detector.Detect(ctx, file); derr == nil && res != nil {

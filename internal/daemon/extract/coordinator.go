@@ -87,6 +87,7 @@ type Result struct {
 	Skipped        int
 	Failed         int
 	Pass1Rels      int
+	Pass2Rels      int
 	Pass25Rels     int
 	Pass3Rels      int
 	ByLang         map[string]int
@@ -228,6 +229,7 @@ func Coordinate(ctx context.Context, repoRoot string, files []string, cfg Coordi
 				res.Skipped += stats.Skipped
 				res.Failed += stats.Failed
 				res.Pass1Rels += stats.Pass1Rels
+				res.Pass2Rels += stats.Pass2Rels
 				res.Pass25Rels += stats.Pass25Rels
 				res.Pass3Rels += stats.Pass3Rels
 				for k, v := range stats.ByLang {

@@ -614,6 +614,97 @@ func TestCelery_NoMatch(t *testing.T) {
 	}
 }
 
+// TestCelery_SharedTask_BindFalse exercises the bind=False variant seen
+// in real task files that use @shared_task without self as the first arg.
+func TestCelery_SharedTask_BindFalse(t *testing.T) {
+	src := `from celery import shared_task
+
+@shared_task(bind=False, ignore_result=True)
+def process_order(order_id: int, collection_name: str):
+    pass
+
+@shared_task(bind=False, ignore_result=True)
+def send_email(recipient: str):
+    pass
+`
+	ents := extract(t, "python_celery", src)
+	var names []string
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Service" && e.Subtype == "task" {
+			names = append(names, e.Name)
+		}
+	}
+	if len(names) != 2 {
+		t.Fatalf("expected 2 task entities, got %d (%v)", len(names), names)
+	}
+	found := map[string]bool{}
+	for _, n := range names {
+		found[n] = true
+	}
+	if !found["process_order"] {
+		t.Error("expected entity for process_order")
+	}
+	if !found["send_email"] {
+		t.Error("expected entity for send_email")
+	}
+}
+
+// TestCelery_SharedTask_MultipleInFile ensures all @shared_task decorators
+// in a single file are extracted, mirroring files that define 3+ tasks.
+func TestCelery_SharedTask_MultipleInFile(t *testing.T) {
+	src := `from celery import shared_task
+
+@shared_task(bind=True, ignore_result=True)
+def process_order(self, context):
+    pass
+
+@shared_task(bind=True, ignore_result=True)
+def cancel_order(self, context):
+    pass
+
+@shared_task(bind=True, ignore_result=True)
+def archive_order(self, context):
+    pass
+`
+	ents := extract(t, "python_celery", src)
+	taskCount := 0
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Service" && e.Subtype == "task" {
+			taskCount++
+		}
+	}
+	if taskCount != 3 {
+		t.Fatalf("expected 3 task entities, got %d", taskCount)
+	}
+}
+
+// TestCelery_SharedTask_PatternType verifies that @shared_task entities
+// carry pattern_type="shared_task" and framework="celery" properties.
+func TestCelery_SharedTask_PatternType(t *testing.T) {
+	src := `@shared_task
+def simple_task():
+    pass
+`
+	ents := extract(t, "python_celery", src)
+	foundIdx := -1
+	for i, e := range ents {
+		if e.Name == "simple_task" {
+			foundIdx = i
+			break
+		}
+	}
+	if foundIdx == -1 {
+		t.Fatal("expected entity for simple_task")
+	}
+	e := ents[foundIdx]
+	if e.Props["pattern_type"] != "shared_task" {
+		t.Errorf("expected pattern_type=shared_task, got %q", e.Props["pattern_type"])
+	}
+	if e.Props["framework"] != "celery" {
+		t.Errorf("expected framework=celery, got %q", e.Props["framework"])
+	}
+}
+
 // ============================================================================
 // Pytest tests
 // ============================================================================
