@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, memo } from 'react'
+import { useRef, useEffect, useCallback, memo, useMemo } from 'react'
 import { Cosmograph } from '@cosmograph/react'
 import type { CosmographRef } from '@cosmograph/react'
 import { edgeKindColor } from './EdgeBadge'
@@ -54,6 +54,24 @@ const GraphCanvasInner = ({
   // Mirror of nodes so click handler can resolve index → GraphNode synchronously
   const nodesRef = useRef<GraphNode[]>(nodes)
   nodesRef.current = nodes
+
+  // Cosmograph requires a sequential numeric index column on both points and links.
+  // We derive these from the incoming arrays rather than mutating the originals.
+  const cosmographPoints = useMemo(() =>
+    nodes.map((n, i) => ({ ...n, __idx: i })),
+  [nodes])
+
+  const cosmographLinks = useMemo(() => {
+    const idToIdx = new Map(nodes.map((n, i) => [String(n.id), i]))
+    return edges
+      .map((e, i) => ({
+        ...e,
+        __idx: i,
+        __srcIdx: idToIdx.get(String(e.source)),
+        __tgtIdx: idToIdx.get(String(e.target)),
+      }))
+      .filter((e) => e.__srcIdx !== undefined && e.__tgtIdx !== undefined)
+  }, [nodes, edges])
 
   // Expose a cosmograph-compatible ref to the camera store so
   // resetView / zoomToNode keep working with the new renderer.
@@ -144,15 +162,19 @@ const GraphCanvasInner = ({
         onMount={handleMount}
 
         // ── Data ──────────────────────────────────────────────────────────────
-        points={nodes as unknown as Record<string, unknown>[]}
+        points={cosmographPoints as unknown as Record<string, unknown>[]}
         pointIdBy="id"
+        pointIndexBy="__idx"
         // Explicit allowlist guards against any future non-primitive field reaching
         // DuckDB-WASM (nested objects/arrays crash columnar type inference).
-        pointIncludeColumns={['id', 'label', 'kind', 'repo', 'community_id', 'pagerank', 'is_centroid', 'centroid_size', 'source_file', 'start_line']}
+        // __idx is included so Cosmograph can resolve its numeric index lookups.
+        pointIncludeColumns={['__idx', 'id', 'label', 'kind', 'repo', 'community_id', 'pagerank', 'is_centroid', 'centroid_size', 'source_file', 'start_line']}
 
-        links={edges as unknown as Record<string, unknown>[]}
+        links={cosmographLinks as unknown as Record<string, unknown>[]}
         linkSourceBy="source"
+        linkSourceIndexBy="__srcIdx"
         linkTargetBy="target"
+        linkTargetIndexBy="__tgtIdx"
         linkIncludeColumns={['kind']}
 
         // ── Node appearance ────────────────────────────────────────────────
