@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import {
   GitBranch, Network, Workflow, Radio, Globe, BookOpen,
   Moon, Sun, Settings,
@@ -97,10 +98,27 @@ function NavItem({ to, icon, label }: NavItemProps) {
 }
 
 function ThemeToggle() {
-  // Simple dark/light toggle — persists to localStorage + toggles .dark on <html>
-  const isDark =
-    typeof document !== 'undefined' &&
-    document.documentElement.classList.contains('dark')
+  // Use state to subscribe to theme changes + DOM class mutations.
+  // Persists to localStorage + toggles .dark on <html>.
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === 'undefined') return false
+    return document.documentElement.classList.contains('dark')
+  })
+
+  useEffect(() => {
+    // Listen for changes to the .dark class on the document element
+    const observer = new MutationObserver(() => {
+      const newIsDark = document.documentElement.classList.contains('dark')
+      setIsDark(newIsDark)
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
   const toggle = () => {
     const html = document.documentElement
@@ -111,6 +129,8 @@ function ThemeToggle() {
       html.classList.add('dark')
       localStorage.setItem('theme', 'dark')
     }
+    // Update local state to trigger re-render
+    setIsDark(html.classList.contains('dark'))
   }
 
   return (

@@ -1,4 +1,9 @@
 {
+  "repos": [
+    { "slug": "acme-web", "display_name": "ACME Web" },
+    { "slug": "acme-api", "display_name": "ACME API" },
+    { "slug": "acme-workers", "display_name": "ACME Workers" }
+  ],
   "tree": [
     {
       "type": "group",

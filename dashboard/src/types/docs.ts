@@ -24,6 +24,12 @@ export type DocTreeNode = DocTreeFile | DocTreeGroup
 export interface DocTreeResponse {
   tree: DocTreeNode[]
   recentFiles: DocTreeFile[]
+  repos: RepoMetadata[]
+}
+
+export interface RepoMetadata {
+  slug: string
+  display_name: string
 }
 
 // ────────────────────────────────────────────────────────────────────────────
