@@ -59,6 +59,14 @@ type Config struct {
 	// patterns directory (the dir that contains patterns.json). When nil,
 	// the decay scheduler is not started. Populated by cmd/archigraph.
 	PatternGroupDirs func() map[string]string
+
+	// Phase D — MCP RPC surface (ADR-0017 #832).
+	// Both fields are optional; when nil, MCPToolList returns an empty
+	// catalog and MCPToolCall returns a "not configured" error block.
+	// Injected from cmd/archigraph (which imports internal/mcp) to avoid
+	// the import cycle that would arise from importing internal/mcp here.
+	MCPListTools MCPListToolsFunc
+	MCPCallTool  MCPCallToolFunc
 }
 
 // Run starts the daemon. It blocks until either:
@@ -104,7 +112,9 @@ func Run(ctx context.Context, cfg Config) error {
 	}()
 
 	stopReq := make(chan struct{})
-	svc := newService(cfg.Index, cfg.Rebuild, cfg.QualityAudit, cfg.Layout.SocketPath, stopReq)
+	svc := newService(cfg.Index, cfg.Rebuild, cfg.QualityAudit, cfg.Layout.SocketPath, stopReq, logger)
+	svc.mcpListTools = cfg.MCPListTools
+	svc.mcpCallTool = cfg.MCPCallTool
 
 	// Phase B — bring up the scheduler + watcher when the caller
 	// supplied the four hooks. They are optional so tests can exercise

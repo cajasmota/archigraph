@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -106,12 +107,26 @@ type Service struct {
 	// #802 progress tracking — keyed by ProgressToken.
 	progressMu sync.RWMutex
 	progress   map[string]*rebuildSession
+
+	// Phase D — MCP RPC surface (ADR-0017 #832).
+	// Both fields are injected from cmd/archigraph to avoid the import
+	// cycle that would arise from importing internal/mcp here.
+	// nil means "not configured" — MCPToolList returns empty; MCPToolCall
+	// returns a structured "daemon not ready" error.
+	mcpListTools MCPListToolsFunc
+	mcpCallTool  MCPCallToolFunc
+
+	// logger is the daemon's structured logger, forwarded to the MCP
+	// dispatcher for per-call debug logging (tool=name elapsed=X repo=Y).
+	logger *log.Logger
 }
 
 // newService wires the injected entrypoints onto a fresh Service. The
 // stopReq channel is closed by Stop to signal the server loop; the
 // service itself never re-closes it (a stopped atomic guards the close).
-func newService(idx IndexFunc, rb RebuildFunc, qa QualityAuditFunc, socketPath string, stopReq chan<- struct{}) *Service {
+// logger may be nil; it is forwarded to the MCP dispatcher for debug-level
+// per-call logging (tool=name elapsed=X repo=Y).
+func newService(idx IndexFunc, rb RebuildFunc, qa QualityAuditFunc, socketPath string, stopReq chan<- struct{}, logger *log.Logger) *Service {
 	return &Service{
 		startedAt:    time.Now(),
 		socketPath:   socketPath,
@@ -120,6 +135,7 @@ func newService(idx IndexFunc, rb RebuildFunc, qa QualityAuditFunc, socketPath s
 		qualityAudit: qa,
 		stopReq:      stopReq,
 		progress:     make(map[string]*rebuildSession),
+		logger:       logger,
 	}
 }
 

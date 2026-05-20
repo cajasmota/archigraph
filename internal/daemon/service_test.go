@@ -18,6 +18,7 @@ func TestStatusRSSReportsActualMemory(t *testing.T) {
 		func(proto.QualityAuditRequest) (proto.QualityAuditReply, error) { return proto.QualityAuditReply{}, nil },
 		"/tmp/test.sock",
 		make(chan struct{}),
+		nil, // logger
 	)
 
 	// Attach a scheduler with a non-zero budget.

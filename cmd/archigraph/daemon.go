@@ -98,6 +98,12 @@ func runDaemon(argv []string) error {
 		// PatternGroupDirs returns the patterns storage directory for each
 		// registered group so the decay scheduler can find patterns.json.
 		PatternGroupDirs: daemonPatternGroupDirs,
+
+		// Phase D — MCP RPC surface (ADR-0017 #832).
+		// Inject the tool catalog and dispatcher so the bridge can call
+		// Daemon.MCPToolList / Daemon.MCPToolCall over the socket.
+		MCPListTools: daemonMCPListTools,
+		MCPCallTool:  daemonMCPCallTool,
 	}
 
 	ctx := context.Background()
