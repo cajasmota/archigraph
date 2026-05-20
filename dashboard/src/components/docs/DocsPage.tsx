@@ -8,6 +8,7 @@ import { PathTreeSkeleton, CardSkeleton } from '@/components/shared/LoadingState
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { BookOpen, FileX } from 'lucide-react'
+import { DocsEmptyState } from './DocsEmptyState'
 
 interface DocsPageProps {
   group: string
@@ -29,8 +30,12 @@ interface DocsPageProps {
  * - Keyboard: / focuses search, Esc closes dropdown
  */
 export function DocsPage({ group, docPath }: DocsPageProps) {
-  const { data: treeData, isLoading: treeLoading, error: treeError } = useDocTree(group)
+  const { data: treeData, isLoading: treeLoading, error: treeError, refetch: refetchTree } = useDocTree(group)
   const { data: content, isLoading: contentLoading, error: contentError } = useDocContent(group, docPath)
+
+  // Show docs-not-generated empty state when the tree loaded successfully but
+  // contains no entries (group exists but /generate-docs has never been run).
+  const isDocsEmpty = !treeLoading && !treeError && treeData && treeData.tree.length === 0
 
   return (
     <div className="flex flex-col h-full bg-slate-950">
@@ -85,7 +90,14 @@ export function DocsPage({ group, docPath }: DocsPageProps) {
             />
           }
         >
-          {!docPath && (
+          {isDocsEmpty && (
+            <DocsEmptyState
+              group={group}
+              onRetry={() => refetchTree()}
+            />
+          )}
+
+          {!isDocsEmpty && !docPath && (
             <div className="flex flex-col items-center justify-center h-full">
               <EmptyState
                 icon={BookOpen}
@@ -95,14 +107,14 @@ export function DocsPage({ group, docPath }: DocsPageProps) {
             </div>
           )}
 
-          {docPath && contentLoading && (
+          {!isDocsEmpty && docPath && contentLoading && (
             <div className="p-8 space-y-4 max-w-3xl">
               <CardSkeleton />
               <CardSkeleton />
             </div>
           )}
 
-          {docPath && contentError && (
+          {!isDocsEmpty && docPath && contentError && (
             <div className="flex flex-col items-center justify-center h-full">
               <EmptyState
                 icon={FileX}
@@ -112,7 +124,7 @@ export function DocsPage({ group, docPath }: DocsPageProps) {
             </div>
           )}
 
-          {docPath && content && (
+          {!isDocsEmpty && docPath && content && (
             <DocsContent group={group} content={content} />
           )}
         </ErrorBoundary>
