@@ -1691,3 +1691,148 @@ func TestDeduplicateHTTPSynthesisANY_ModelViewSetAndAction(t *testing.T) {
 		t.Errorf("expected 0 remaining entities, got %d", len(got))
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Issue #1124 — same endpoint with AND without /api/v1/ prefix
+// ---------------------------------------------------------------------------
+
+// TestApplyDjangoDRFRoutes_LocalAttrIncludeNoBareDupe is the regression test
+// for #1124. When a urls.py contains both `router.register(...)` calls and a
+// `path("api/v1/", include(router.urls))` call in the SAME file (i.e., the
+// router mount is entirely local, not reached via an outer parent include()),
+// the pass must emit routes ONLY at the composed /api/v1/<prefix> path and
+// NOT at the bare /<prefix> path.
+//
+// This is the primary pattern that produced 105 duplicates in a real project:
+// the router is declared and registered in the same urls.py that also mounts
+// it under a prefix. Previously, findParentIncludePrefixes returned [] for
+// this file (no OTHER urls.py includes it via string form), so the fallback
+// [""] caused routes to be emitted at bare prefix. Meanwhile the Route
+// entities from the AST pass (applyDjangoRouteComposition) correctly used
+// the local path() prefix, resulting in both /api/v1/X and /X in the graph.
+func TestApplyDjangoDRFRoutes_LocalAttrIncludeNoBareDupe(t *testing.T) {
+	files := fileMap{
+		"upvate_core/urls.py": `
+from django.urls import path, include
+from rest_framework import routers
+from upvate_core.views import (
+    AlternateAddressViewSet,
+    BuildingViewSet,
+    ContractViewSet,
+)
+
+router = routers.DefaultRouter()
+router.register(r"alternate-addresses", AlternateAddressViewSet, basename="alternate-address")
+router.register(r"buildings", BuildingViewSet, basename="building")
+router.register(r"contracts", ContractViewSet, basename="contract")
+
+urlpatterns = [
+    path("api/v1/", include(router.urls)),
+]
+`,
+		"upvate_core/views.py": `
+from rest_framework.viewsets import ModelViewSet
+
+class AlternateAddressViewSet(ModelViewSet):
+    pass
+
+class BuildingViewSet(ModelViewSet):
+    pass
+
+class ContractViewSet(ModelViewSet):
+    pass
+`,
+	}
+
+	pyPaths := []string{"upvate_core/urls.py", "upvate_core/views.py"}
+	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
+
+	// Must emit at the /api/v1/ prefix (correct composed path).
+	prefixedIDs := []string{
+		"http:GET:/api/v1/alternate-addresses",
+		"http:POST:/api/v1/alternate-addresses",
+		"http:GET:/api/v1/alternate-addresses/{pk}",
+		"http:PUT:/api/v1/alternate-addresses/{pk}",
+		"http:PATCH:/api/v1/alternate-addresses/{pk}",
+		"http:DELETE:/api/v1/alternate-addresses/{pk}",
+		"http:GET:/api/v1/buildings",
+		"http:GET:/api/v1/contracts",
+	}
+	assertHasAllIDs(t, got, prefixedIDs)
+
+	// Must NOT emit at bare prefix (the duplicates from #1124).
+	bareIDs := []string{
+		"http:GET:/alternate-addresses",
+		"http:POST:/alternate-addresses",
+		"http:GET:/alternate-addresses/{pk}",
+		"http:GET:/buildings",
+		"http:GET:/contracts",
+	}
+	assertHasNoneIDs(t, got, bareIDs)
+
+	// Each prefixed route must appear exactly once.
+	for _, wantID := range prefixedIDs {
+		count := 0
+		for _, r := range got {
+			if r.ID == wantID {
+				count++
+			}
+		}
+		if count != 1 {
+			t.Errorf("entity %q: emitted %d times, want exactly 1", wantID, count)
+		}
+	}
+}
+
+// TestApplyDjangoDRFRoutes_TwoLocalRoutersDistinctPrefixes verifies that when
+// a single urls.py declares two routers mounted at different local prefixes
+// (e.g. router at "api/v1/" and api_router at "api/v2/"), each ViewSet's
+// routes land under the correct prefix and bare-path duplicates are absent.
+func TestApplyDjangoDRFRoutes_TwoLocalRoutersDistinctPrefixes(t *testing.T) {
+	files := fileMap{
+		"myapp/urls.py": `
+from django.urls import path, include
+from rest_framework import routers
+from myapp.views import UserViewSet, ReviewViewSet
+
+router = routers.DefaultRouter()
+router.register(r"users", UserViewSet)
+
+api_router = routers.SimpleRouter()
+api_router.register(r"reviews", ReviewViewSet)
+
+urlpatterns = [
+    path("api/v1/", include(router.urls)),
+    path("api/v2/", include(api_router.urls)),
+]
+`,
+		"myapp/views.py": `
+from rest_framework.viewsets import ModelViewSet
+
+class UserViewSet(ModelViewSet):
+    pass
+
+class ReviewViewSet(ModelViewSet):
+    pass
+`,
+	}
+
+	pyPaths := []string{"myapp/urls.py", "myapp/views.py"}
+	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
+
+	// Each router is mounted at its own prefix.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/api/v1/users",
+		"http:POST:/api/v1/users",
+		"http:GET:/api/v1/users/{pk}",
+		"http:GET:/api/v2/reviews",
+		"http:POST:/api/v2/reviews",
+		"http:GET:/api/v2/reviews/{pk}",
+	})
+
+	// No bare-path duplicates for either router.
+	assertHasNoneIDs(t, got, []string{
+		"http:GET:/users",
+		"http:GET:/reviews",
+	})
+}

@@ -36,14 +36,32 @@ import (
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
-// drfRouterRegisterDetailedRe captures the (prefix, ViewSet identifier)
-// pair of every `router.register(r"prefix", ViewSetClass, ...)` call in a
+// drfRouterRegisterDetailedRe captures the (routerVar, prefix, ViewSet identifier)
+// triple of every `router.register(r"prefix", ViewSetClass, ...)` call in a
 // DRF urlconf / routers file. The second positional argument MUST be a
 // bare identifier (the ViewSet class) for this pass to fire — if the
 // argument is itself a function call or attribute access we skip
 // (matches DRF idiom faithfully and avoids false positives).
+//
+// Group 1: router variable name (e.g. "router", "api_router")
+// Group 2: register prefix (e.g. "users")
+// Group 3: ViewSet class name (e.g. "UserViewSet")
 var drfRouterRegisterDetailedRe = regexp.MustCompile(
-	`(?:[\w]*[Rr]outer|api_router|v\d+_router|router_v\d+)\.register\s*\(\s*r?["']([^"']*)["']\s*,\s*(?:[\w.]+\.)?([A-Za-z_]\w*)`,
+	`([\w]*[Rr]outer|api_router|v\d+_router|router_v\d+)\.register\s*\(\s*r?["']([^"']*)["']\s*,\s*(?:[\w.]+\.)?([A-Za-z_]\w*)`,
+)
+
+// drfRouterAttrIncludeRe matches `path("prefix", include(routerVar.urls))` calls
+// in a Django urls.py. These represent LOCAL router mounts within the same file.
+//
+// Group 1: URL path prefix (e.g. "api/v1/")
+// Group 2: router variable name (e.g. "router", "api_router")
+//
+// This is distinct from the string-form include() (handled by djangoIncludeStringRe)
+// and is used to build a local routerVar→prefix map so ApplyDjangoDRFRoutes can
+// compose the full route path even when the file has no parent string-include.
+// Fixes #1124 (105 duplicate paths — same endpoint with AND without /api/v1/ prefix).
+var drfRouterAttrIncludeRe = regexp.MustCompile(
+	`(?:re_)?path\s*\(\s*r?["']([^"']*)["']\s*,\s*include\s*\(\s*([\w]+)\.urls\s*\)`,
 )
 
 // drfImportFromRe captures `from <module> import <names>` lines so we can
@@ -298,7 +316,7 @@ func ApplyDjangoDRFRoutes(
 			parentPrefixes = []string{""}
 		}
 
-		// Find every router.register() call. Each yields (prefix, ViewSet).
+		// Find every router.register() call. Each yields (routerVar, prefix, ViewSet).
 		// Flatten parenthesised newlines so multi-line register() calls
 		// (common DRF style: prefix on line 1, ViewSet on line 2) match the
 		// single-line regex.
@@ -312,13 +330,21 @@ func ApplyDjangoDRFRoutes(
 		// (from `NestedSimpleRouter(parent, "prefix", lookup="x")`).
 		nestedPrefixes := buildNestedRouterPrefixes(flatSrc)
 
+		// Map of router variable name -> local path() prefix from
+		// `path("api/v1/", include(routerVar.urls))` calls in THIS file.
+		// When parentPrefixes is [""] (no parent include found), these local
+		// prefixes provide the correct mount point so we don't fall back to
+		// emitting bare-prefix routes. Fix #1124.
+		localRouterPrefixes := buildLocalRouterPrefixes(flatSrc)
+
 		// Resolve imports in this file so a bare ViewSet identifier maps to
 		// its defining module + thus its file.
 		importMap := parseImports(src)
 
 		for _, m := range registers {
-			prefix := m[1]
-			viewSetName := m[2]
+			routerVar := m[1]
+			prefix := m[2]
+			viewSetName := m[3]
 
 			// Locate the ViewSet class. First try the file the import
 			// statement points to; fall back to the global index.
@@ -339,7 +365,11 @@ func ApplyDjangoDRFRoutes(
 
 			// Compose the prefix with any parent include() prefix and any
 			// nested-router parent prefix the router was attached to.
-			composedPrefixes := expandRegisterPrefixes(prefix, parentPrefixes, nestedPrefixes, src)
+			// Also inject the local path() prefix for this router variable
+			// (e.g. `path("api/v1/", include(router.urls))` contributes "api/v1/"
+			// as the local prefix for "router"). Fix #1124.
+			effectivePrefixes := applyLocalRouterPrefix(parentPrefixes, routerVar, localRouterPrefixes)
+			composedPrefixes := expandRegisterPrefixes(prefix, effectivePrefixes, nestedPrefixes, src)
 
 			// Issue #699c — emit synthetic SCOPE.Operation entities for each
 			// CRUD method that the ViewSet exposes via inheritance but does NOT
@@ -359,12 +389,12 @@ func ApplyDjangoDRFRoutes(
 			emitViewSetMethodEntities(&out, seenMethods, viewSetName, vc, handlerFile)
 
 			// expandRegisterPrefixes produces composedPrefixes in the same
-			// order as parentPrefixes, so we can zip them to recover the
+			// order as effectivePrefixes, so we can zip them to recover the
 			// parent prefix that applies to each composed prefix. This lets
 			// the emit closure attach url_prefix correctly.
 			for i, fullPrefix := range composedPrefixes {
-				if i < len(parentPrefixes) {
-					currentURLPrefix = parentPrefixes[i]
+				if i < len(effectivePrefixes) {
+					currentURLPrefix = effectivePrefixes[i]
 				} else {
 					currentURLPrefix = ""
 				}
@@ -629,6 +659,65 @@ func buildNestedRouterPrefixes(src string) map[string]string {
 // substitutes with the actual register() prefix of the parent router.
 func parentVarLookupChild(parentVar, lookup, child string) string {
 	return "$$PARENT:" + parentVar + "$$/{" + lookup + "}/" + strings.TrimPrefix(child, "/")
+}
+
+// buildLocalRouterPrefixes scans a flattened Python source for
+// `path("prefix", include(routerVar.urls))` patterns and returns a map of
+// routerVar → prefix. These represent LOCAL router mounts within the same
+// file (as opposed to parent-file includes that findParentIncludePrefixes handles).
+//
+// For example, given:
+//
+//	path('api/v1/', include(router.urls))
+//	path('api/v2/', include(api_router.urls))
+//
+// returns {"router": "api/v1/", "api_router": "api/v2/"}.
+//
+// Used by applyLocalRouterPrefix to fix #1124.
+func buildLocalRouterPrefixes(flatSrc string) map[string]string {
+	out := map[string]string{}
+	for _, m := range drfRouterAttrIncludeRe.FindAllStringSubmatch(flatSrc, -1) {
+		prefix := m[1]
+		routerVar := m[2]
+		if routerVar != "" {
+			out[routerVar] = prefix
+		}
+	}
+	return out
+}
+
+// applyLocalRouterPrefix returns the effective parent-prefix list for a
+// router variable. When parentPrefixes is the bare-prefix fallback [""],
+// and the local-router-prefix map contains a prefix for this routerVar
+// (e.g. from `path("api/v1/", include(router.urls))`), the local prefix
+// is used instead of "" to avoid emitting bare-path duplicates.
+//
+// If the file already has a non-empty parent prefix from an outer include()
+// chain, the local prefix is composed INSIDE the outer prefix. This handles
+// the uncommon case where a child routers.py is reached via two levels of
+// include nesting.
+//
+// Fix #1124: prevents routes registered on a locally-mounted router from
+// being emitted at the bare (no-prefix) path when their real mount is under
+// a prefix like "api/v1/".
+func applyLocalRouterPrefix(parentPrefixes []string, routerVar string, localPrefixes map[string]string) []string {
+	localPrefix, hasLocal := localPrefixes[routerVar]
+	if !hasLocal {
+		return parentPrefixes
+	}
+	// If parentPrefixes is exactly [""] (bare-prefix fallback because no outer
+	// include was found), substitute the local prefix so we don't emit at "/".
+	if len(parentPrefixes) == 1 && parentPrefixes[0] == "" {
+		return []string{localPrefix}
+	}
+	// If parentPrefixes already contains real prefixes from an outer include(),
+	// compose each with the local prefix. This handles multi-level nesting where
+	// a routers.py is both locally mounted and externally included.
+	out := make([]string, 0, len(parentPrefixes))
+	for _, pp := range parentPrefixes {
+		out = append(out, joinDjangoRoutePaths(pp, localPrefix))
+	}
+	return out
 }
 
 // expandRegisterPrefixes returns the set of composed prefixes that the
