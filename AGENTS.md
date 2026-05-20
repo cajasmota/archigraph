@@ -36,9 +36,23 @@ and PR wiring it into `internal/mcp/server.go`), not from this file.
 - Bug-rate parity across PRs is checked via golden fixtures + cross-language invariant tests
 - Determinism test in `cmd/archigraph/determinism_test.go` must pass byte-identical output
 
+## Language support
+
+As of 2026-05-21, ~50 languages are fully supported with custom extractors:
+
+**Primary (30+):** Go, Python, TypeScript/JavaScript, Java, C#, C++, Rust, Ruby, PHP, Swift, Kotlin, Scala, Groovy, Lua, Dart, Elixir, Clojure, Erlang, Crystal, Nim, F#, Haskell, OCaml, Elm, Lisp family (Common Lisp, Scheme, Racket), Standard ML, ReasonML, ReScript, Pony, Idris
+
+**Frontend + Templates:** Vue SFC, Svelte SFC, Astro, Razor
+
+**Infrastructure & Hardware:** Terraform/HCL, Solidity, Verilog/SystemVerilog, VHDL
+
+**Cross-cutting:** CSS, HTML, SQL, GraphQL, Protocol Buffers, Shell, Dockerfile, YAML, Markdown, Just, Fish
+
+Each language ships with a resolver slice for cross-file class-hierarchy, import-path alias, and framework-specific edge emission (e.g., HTTP endpoints, ORM queries, dynamic dispatch). See `internal/extractors/<lang>/` for per-language implementations and `internal/engine/rules/*.yaml` for framework rule packs.
+
 ## Runtime edge extractors
 
-As of 2026-05-20, the following runtime-distributed systems are fully wired:
+The following runtime-distributed systems are fully wired:
 
 **Async task queues:**
 - Celery, Sidekiq, Bull, dramatiq, RQ, Hangfire, Quartz
@@ -59,29 +73,44 @@ As of 2026-05-20, the following runtime-distributed systems are fully wired:
 **Real-time protocols:**
 - gRPC, WebSockets, Server-Sent Events, GraphQL subscriptions
 
-See `internal/engine/rules/*.yaml` for per-framework rule packs.
+## Architecture milestones
 
-## Resolver slices
+**Graph visualization (Cosmograph):** 1M+ node capacity via WebGL, replaces react-force-graph. Includes degree-based node sizing, semantic layout (community clustering, hub gravity, module locality), hover-to-focus (dim non-neighbors, highlight hovered neighborhood), zoom controls, and cross-repo edge highlighting (#1023, #1044, #1056, #1064, #1070–#1079, #1081, #1095).
 
-**Go:** +83% bug-rate reduction on fixture corpus via per-import gate + sentinel folding
+**Custom extractor wiring (#1086):** RunCustomExtractors now called from daemon's extraction pipeline. Enables Celery/Django/Flask/FastAPI/runtime-edge extractors. Previously wired into `archigraph index` only.
 
-**Python:** Cross-file class-hierarchy resolution with EXTENDS edge emission + global registry
+**Per-language resolver slices:** Dedicated cross-file resolution for each language—class-hierarchy, import-path aliases, framework-specific edges. Go (+83% bug-rate reduction), Python (EXTENDS edge emission), TypeScript/JavaScript (external JSX/hook rewriting). Per-language files in `internal/extractors/<lang>/` + `internal/engine/dynamic_patterns_<lang>.go` (#1028).
 
-**TypeScript/JavaScript:** External JSX/hook CALLS rewritten to ext: + route ref stubs to Dynamic
+**Stdlib elimination (#1088):** Stops emitting placeholder External entities for Python builtins, reducing graph noise.
 
-See #945, #961, #962 for implementation details.
+**CLI lifecycle ops (#1090):** `archigraph remove <group> <slug>`, `archigraph delete <group>`, improved `archigraph monorepo remove` with --json. Dashboard command opens browser (#948); `archigraph rebuild` rich summary (#995); `archigraph doctor` health report (#1042); `archigraph status` rich output (#1007).
 
 ## Cross-platform status
 
 **Phase 1 (macOS, Linux):** Complete
 - macOS: native install + daemon lifecycle ✓
-- Linux: systemd integration + XDG socket paths ✓
+- Linux: systemd integration + XDG socket paths (#939) ✓
 
-**Phase 2 (Windows):** Planning in progress (see #856 for decision items)
+**Phase 2 (Windows):** In progress
+- Blockers: #856 (decision items) + sub-issues. Socket transport, path canonicalization, and daemon registration remain open.
 
 ## MCP server
 
-17 tools available (stable per #669). Clients auto-discover via `archigraph mcp serve`.
+14 tools available (stable per #669), grouped into 6 categories:
+
+**Query (5):** `archigraph_find` (BM25-ranked BFS query), `archigraph_inspect` (lookup by id/qname/label), `archigraph_expand` (neighborhood traversal), `archigraph_trace` (confidence-weighted shortest path), `archigraph_traces` (process-flow queries).
+
+**Analysis (2):** `archigraph_clusters` (Louvain communities), `archigraph_stats` (corpus-level metrics).
+
+**Memory (3):** `archigraph_save_finding` (persist Q&A pairs), `archigraph_list_findings` (retrieve findings), `archigraph_get_source` (source-file snippet lookup).
+
+**Lifecycle (3):** `archigraph_enrichments` (enrichment candidates: list/submit/reject), `archigraph_cross_links` (cross-repo link candidates: list/accept/reject), `archigraph_repairs` (residual-edge repair queue per ADR-0015: list/submit).
+
+**Patterns (1):** `archigraph_patterns` (ADR-0018 agent-learned pattern store: query/record).
+
+**Introspection (2):** `archigraph_whoami` (inferred group + repo + doc-state nudge), `archigraph_get_telemetry` (uptime, per-tool counters, reload counts).
+
+Clients auto-discover via `archigraph mcp serve`.
 
 ## Skills
 

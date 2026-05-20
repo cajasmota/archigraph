@@ -86,17 +86,26 @@ via:
 archigraph start                # start the daemon
 archigraph stop                 # stop the daemon
 archigraph restart              # restart the daemon
+archigraph dashboard            # open dashboard in browser (auto-starts daemon)
 archigraph dashboard serve      # run dashboard server standalone
+```
+
+After upgrading archigraph, materialize indexed data:
+
+```sh
+archigraph rebuild <group> [slug]    # force AST rebuild, no cache; outputs summary
 ```
 
 Other useful commands:
 
 ```sh
-archigraph index <repo>              # one-shot indexer (writes graph.json)
-archigraph rebuild <group> [slug]    # force AST rebuild, no cache
+archigraph index <repo>              # one-shot indexer (writes graph.fb, optionally graph.json)
 archigraph reset <group> [slug]      # wipe .archigraph/ and rebuild
+archigraph remove <group> <slug>     # remove a repo from a group
+archigraph delete <group>            # delete entire group + state
 archigraph monorepo add <group> <p>  # opt a path inside a monorepo into indexing
-archigraph doctor                    # smoke-check install + tools
+archigraph doctor                    # smoke-check install + tools (rich health report)
+archigraph status <group>            # show group health + stats (rich output)
 archigraph uninstall <group>         # remove hooks/watchers from a group
 archigraph patterns list             # inspect agent-learned patterns (ADR-0018)
 archigraph patterns export --repo X  # write the CLAUDE.md marker block
@@ -109,6 +118,20 @@ archigraph patterns config           # show / set pattern thresholds
 
 If you're an AI agent contributing to archigraph, see [AGENTS.md](AGENTS.md) for conventions.
 End-user-facing agent docs are delivered via the MCP `instructions` handshake — there is no per-user setup.
+
+## Languages
+
+archigraph supports ~50 languages with custom extractors and resolver slices:
+
+**Core (30+):** Go · Python · TypeScript/JavaScript · Java · C# · C++ · Rust · Ruby · PHP · Swift · Kotlin · Scala · Groovy · Lua · Dart · Elixir · Clojure · Erlang · Crystal · Nim · F# · Haskell · OCaml · Elm · Lisp family · Standard ML · ReasonML · ReScript · Pony · Idris
+
+**Frontend + Templates:** Vue SFC · Svelte SFC · Astro · Razor
+
+**Infrastructure & Hardware:** Terraform/HCL · Solidity · Verilog/SystemVerilog · VHDL
+
+**Cross-cutting:** CSS · HTML · SQL · GraphQL · Protocol Buffers · Shell · Dockerfile · YAML · Markdown · Just · Fish
+
+Each extractor emits language-specific edges (HTTP endpoints, ORM queries, dynamic dispatch, framework hooks). See [AGENTS.md](AGENTS.md) for architecture details.
 
 ## Corpus & coverage
 
