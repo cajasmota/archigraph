@@ -502,6 +502,10 @@ var extensionLanguageMap = map[string]string{
 	// OCaml — .ml is claimed for OCaml (SML is much less common)
 	".ml":  "ocaml",
 	".mli": "ocaml",
+	// Standard ML — .ml is OCaml above; SML uses .sml/.sig/.fun
+	".sml": "sml",
+	".sig": "sml",
+	".fun": "sml",
 	// ReScript
 	".res":  "rescript",
 	".resi": "rescript",
