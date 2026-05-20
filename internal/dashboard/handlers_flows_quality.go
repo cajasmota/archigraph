@@ -3,6 +3,7 @@ package dashboard
 // handlers_flows_quality.go — Flows v2 quality classification endpoints
 //
 //	GET /api/flows/{group}/dead-ends
+//	GET /api/flows/{group}/truncated
 
 import (
 	"net/http"
@@ -175,6 +176,277 @@ func hasUsefulSink(
 		}
 	}
 	return false
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Truncated flow detector
+// ─────────────────────────────────────────────────────────────────────────────
+
+// truncationSeverity maps a truncation reason to an informational severity
+// level surfaced in the API response.
+//
+//	external_dependency  → info  (expected; known SDK / stdlib boundary)
+//	unresolved_reference → warn  (likely an indexing gap or dynamic dispatch)
+//	unindexed_repo       → error (cross-service edge to a repo never indexed)
+var truncationSeverity = map[string]string{
+	"unresolved_callee":    "warn",
+	"cross_repo_unindexed": "error",
+	"dynamic_dispatch":     "info",
+}
+
+// TruncatedFlowItem represents a single truncated process flow in the API
+// response.
+type TruncatedFlowItem struct {
+	ProcessID        string `json:"process_id"`
+	Label            string `json:"label"`
+	EntryName        string `json:"entry_name"`
+	StepCount        int    `json:"step_count"`
+	Repo             string `json:"repo"`
+	Reason           string `json:"reason"`     // "unresolved_callee" | "cross_repo_unindexed" | "dynamic_dispatch"
+	Severity         string `json:"severity"`   // "info" | "warn" | "error"
+	TruncationStep   string `json:"truncation_step"`         // entity ID of the offending step
+	TruncationIndex  int    `json:"truncation_point"`        // 0-based index into the step chain
+	UnresolvedTarget string `json:"unresolved_target"`       // name/ID of the entity that could not be resolved
+	IsTruncated      bool   `json:"is_truncated"`
+	CrossStack       bool   `json:"cross_stack"`
+}
+
+// truncationCheck holds the result of inspecting a single step for truncation.
+type truncationCheck struct {
+	reason           string
+	truncationStep   string
+	truncationIndex  int
+	unresolvedTarget string
+}
+
+// classifyFlowTruncated inspects all Process entities in a group and returns
+// those whose step chain hits an unresolved or external edge mid-stream.
+//
+// Detection rules (in priority order):
+//  1. A step has property dynamic="true"  → dynamic_dispatch
+//  2. A step has an outgoing CALLS edge to a ToID that is NOT present in any
+//     repo in the group                   → unresolved_callee
+//  3. A step has cross_stack="true" AND the terminal entity is absent from all
+//     group repos                         → cross_repo_unindexed
+func classifyFlowTruncated(grp *DashGroup) []TruncatedFlowItem {
+	// Build a set of all known entity IDs across every repo in the group.
+	// We key by bare local ID (entities reference each other by local ID within
+	// the same repo, and by cross-repo prefixed ID across repos).
+	knownLocalIDs := map[flowStepKey]bool{}
+	knownBareIDs := map[string]bool{} // bare ID, repo-agnostic lookup
+	entityProps := map[flowStepKey]map[string]string{}
+
+	for _, r := range sortedRepos(grp) {
+		for i := range r.Doc.Entities {
+			e := &r.Doc.Entities[i]
+			k := flowStepKey{r.Slug, e.ID}
+			knownLocalIDs[k] = true
+			knownBareIDs[e.ID] = true
+			if e.Properties != nil {
+				entityProps[k] = e.Properties
+			}
+		}
+	}
+
+	// Build per-step outgoing CALLS edges: map (repo, fromID) → []toID
+	callEdges := map[flowStepKey][]string{}
+	for _, r := range sortedRepos(grp) {
+		for _, rel := range r.Doc.Relationships {
+			if rel.Kind != "CALLS" {
+				continue
+			}
+			k := flowStepKey{r.Slug, rel.FromID}
+			callEdges[k] = append(callEdges[k], rel.ToID)
+		}
+	}
+
+	var results []TruncatedFlowItem
+
+	for _, r := range sortedRepos(grp) {
+		for i := range r.Doc.Entities {
+			e := &r.Doc.Entities[i]
+			if e.Kind != processEntityKind {
+				continue
+			}
+
+			sc, _ := strconv.Atoi(e.Properties["step_count"])
+			cs := e.Properties["cross_stack"] == "true"
+			pid := dashPrefixedID(r.Slug, e.ID)
+
+			// Collect ordered step keys.
+			stepKeys := collectStepKeysOrdered(grp, e.ID, pid)
+			if len(stepKeys) == 0 {
+				continue
+			}
+
+			check := findTruncationPoint(stepKeys, entityProps, callEdges, knownLocalIDs, knownBareIDs)
+			if check == nil {
+				// Fully resolved — not truncated.
+				continue
+			}
+
+			severity := truncationSeverity[check.reason]
+			if severity == "" {
+				severity = "warn"
+			}
+
+			results = append(results, TruncatedFlowItem{
+				ProcessID:        pid,
+				Label:            e.Name,
+				EntryName:        e.Properties["entry_name"],
+				StepCount:        sc,
+				Repo:             r.Slug,
+				Reason:           check.reason,
+				Severity:         severity,
+				TruncationStep:   check.truncationStep,
+				TruncationIndex:  check.truncationIndex,
+				UnresolvedTarget: check.unresolvedTarget,
+				IsTruncated:      true,
+				CrossStack:       cs,
+			})
+		}
+	}
+
+	return results
+}
+
+// orderedStep pairs a step key with its declared step_index.
+type orderedStep struct {
+	key   flowStepKey
+	index int
+}
+
+// collectStepKeysOrdered gathers flowStepKey pairs for all steps in a process
+// by following STEP_IN_PROCESS edges, preserving step_index order where
+// available. Falls back to insertion order for steps without an index.
+func collectStepKeysOrdered(
+	grp *DashGroup,
+	processLocalID, processPrefixedID string,
+) []flowStepKey {
+	var indexed []orderedStep
+
+	for _, r := range sortedRepos(grp) {
+		for _, rel := range r.Doc.Relationships {
+			if rel.Kind != stepInProcessEdge {
+				continue
+			}
+			if rel.FromID != processLocalID &&
+				dashPrefixedID(r.Slug, rel.FromID) != processPrefixedID {
+				continue
+			}
+			idx := -1
+			if rel.Properties != nil {
+				if raw, ok := rel.Properties["step_index"]; ok {
+					idx, _ = strconv.Atoi(raw)
+				}
+			}
+			indexed = append(indexed, orderedStep{
+				key:   flowStepKey{r.Slug, rel.ToID},
+				index: idx,
+			})
+		}
+	}
+
+	// Stable insertion sort by step_index; steps without an index stay at end.
+	for i := 1; i < len(indexed); i++ {
+		j := i
+		for j > 0 && indexed[j].index >= 0 && indexed[j-1].index > indexed[j].index {
+			indexed[j-1], indexed[j] = indexed[j], indexed[j-1]
+			j--
+		}
+	}
+
+	keys := make([]flowStepKey, len(indexed))
+	for i, s := range indexed {
+		keys[i] = s.key
+	}
+	return keys
+}
+
+// findTruncationPoint walks the step list and returns the first step that
+// represents a truncation point, or nil if the flow is fully resolved.
+func findTruncationPoint(
+	steps []flowStepKey,
+	entityProps map[flowStepKey]map[string]string,
+	callEdges map[flowStepKey][]string,
+	knownLocalIDs map[flowStepKey]bool,
+	knownBareIDs map[string]bool,
+) *truncationCheck {
+	for idx, step := range steps {
+		props := entityProps[step]
+
+		// Rule 1: dynamic dispatch flag on the step entity.
+		if props != nil && props["dynamic"] == "true" {
+			target := props["dynamic_target"]
+			if target == "" {
+				target = step.id
+			}
+			return &truncationCheck{
+				reason:           "dynamic_dispatch",
+				truncationStep:   step.id,
+				truncationIndex:  idx,
+				unresolvedTarget: target,
+			}
+		}
+
+		// Rule 2: CALLS edge to an entity not present in any repo.
+		for _, toID := range callEdges[step] {
+			// Check if the toID is known as a bare local ID in any repo.
+			if !knownBareIDs[toID] && !strings.HasPrefix(toID, "external:") {
+				return &truncationCheck{
+					reason:           "unresolved_callee",
+					truncationStep:   step.id,
+					truncationIndex:  idx,
+					unresolvedTarget: toID,
+				}
+			}
+		}
+
+		// Rule 3: cross_stack step whose terminal is absent from all repos.
+		if props != nil && props["cross_stack"] == "true" {
+			terminalID := props["terminal_id"]
+			if terminalID != "" && !knownBareIDs[terminalID] {
+				return &truncationCheck{
+					reason:           "cross_repo_unindexed",
+					truncationStep:   step.id,
+					truncationIndex:  idx,
+					unresolvedTarget: terminalID,
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// handleFlowTruncated — GET /api/flows/{group}/truncated
+//
+// Returns all Process flows in the group that hit an external or unresolved
+// edge mid-stream: the flow is cut off before reaching its natural sink.
+// Each item identifies the step at which the chain breaks (truncation_step,
+// truncation_point) and the entity name/ID that could not be resolved
+// (unresolved_target), with a severity tag to guide triage priority.
+func (s *Server) handleFlowTruncated(w http.ResponseWriter, r *http.Request) {
+	group := r.PathValue("group")
+	if group == "" {
+		writeErr(w, http.StatusBadRequest, "group required")
+		return
+	}
+
+	grp, err := s.graphs.GetGroup(group)
+	if err != nil {
+		writeErr(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	truncated := classifyFlowTruncated(grp)
+	if truncated == nil {
+		truncated = []TruncatedFlowItem{}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"truncated_flows": truncated,
+		"total":           len(truncated),
+	})
 }
 
 // handleFlowDeadEnds — GET /api/flows/{group}/dead-ends

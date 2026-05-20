@@ -475,3 +475,330 @@ func TestHandleFlowDeadEnds_SingleStepReason(t *testing.T) {
 		t.Errorf("reason: want single_step, got %q", body.DeadEnds[0].Reason)
 	}
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Unit tests: classifyFlowTruncated
+// ─────────────────────────────────────────────────────────────────────────────
+
+// callsRel builds a CALLS relationship from a step entity to a target ID.
+func callsRel(fromID, toID string) graph.Relationship {
+	return graph.Relationship{
+		ID:     "calls-" + fromID + "-" + toID,
+		FromID: fromID,
+		ToID:   toID,
+		Kind:   "CALLS",
+	}
+}
+
+// dynamicStepEntity builds a step entity with dynamic="true".
+func dynamicStepEntity(id, name string, dynamicTarget string) graph.Entity {
+	return graph.Entity{
+		ID:         id,
+		Name:       name,
+		Kind:       "Function",
+		SourceFile: "src/" + id + ".go",
+		StartLine:  1,
+		Properties: map[string]string{
+			"dynamic":        "true",
+			"dynamic_target": dynamicTarget,
+		},
+	}
+}
+
+// crossStackStepEntity builds a step entity with cross_stack="true" and an
+// unresolved terminal_id.
+func crossStackStepEntity(id, name, terminalID string) graph.Entity {
+	return graph.Entity{
+		ID:         id,
+		Name:       name,
+		Kind:       "Function",
+		SourceFile: "src/" + id + ".go",
+		StartLine:  1,
+		Properties: map[string]string{
+			"cross_stack": "true",
+			"terminal_id": terminalID,
+		},
+	}
+}
+
+// TestTruncated_UnresolvedCallee — a flow whose intermediate step has a CALLS
+// edge to an entity ID not present in any repo must appear with reason
+// "unresolved_callee" and severity "warn".
+func TestTruncated_UnresolvedCallee(t *testing.T) {
+	proc := processEntity("proc-trunc", "fetchData", 3, false)
+	step1 := stepEntity("tr1", "parse", "Function")
+	step2 := stepEntity("tr2", "callExternal", "Function")
+	step3 := stepEntity("tr3", "respond", "Function")
+
+	entities := []graph.Entity{proc, step1, step2, step3}
+	rels := []graph.Relationship{
+		stepRel("proc-trunc", "tr1", 0),
+		stepRel("proc-trunc", "tr2", 1),
+		stepRel("proc-trunc", "tr3", 2),
+		// tr2 calls an entity that is not in the graph.
+		callsRel("tr2", "unknown-lib::parseJSON"),
+	}
+
+	grp := makeFlowGroup(entities, rels)
+	items := classifyFlowTruncated(grp)
+
+	var found *TruncatedFlowItem
+	for i := range items {
+		if items[i].ProcessID == "backend::proc-trunc" {
+			found = &items[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected proc-trunc to appear as truncated, but it was not found")
+	}
+	if found.Reason != "unresolved_callee" {
+		t.Errorf("reason: want unresolved_callee, got %q", found.Reason)
+	}
+	if found.Severity != "warn" {
+		t.Errorf("severity: want warn, got %q", found.Severity)
+	}
+	if found.TruncationStep != "tr2" {
+		t.Errorf("truncation_step: want tr2, got %q", found.TruncationStep)
+	}
+	if found.TruncationIndex != 1 {
+		t.Errorf("truncation_point: want 1, got %d", found.TruncationIndex)
+	}
+	if found.UnresolvedTarget == "" {
+		t.Error("unresolved_target must not be empty")
+	}
+	if !found.IsTruncated {
+		t.Error("is_truncated must be true")
+	}
+}
+
+// TestTruncated_DynamicDispatch — a flow with a step whose dynamic="true"
+// property set must appear with reason "dynamic_dispatch" and severity "info".
+func TestTruncated_DynamicDispatch(t *testing.T) {
+	proc := processEntity("proc-dyn", "dispatchCmd", 2, false)
+	step1 := stepEntity("dyn1", "prepare", "Function")
+	step2 := dynamicStepEntity("dyn2", "dispatch", "cmd.Handler")
+
+	entities := []graph.Entity{proc, step1, step2}
+	rels := []graph.Relationship{
+		stepRel("proc-dyn", "dyn1", 0),
+		stepRel("proc-dyn", "dyn2", 1),
+	}
+
+	grp := makeFlowGroup(entities, rels)
+	items := classifyFlowTruncated(grp)
+
+	var found *TruncatedFlowItem
+	for i := range items {
+		if items[i].ProcessID == "backend::proc-dyn" {
+			found = &items[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected proc-dyn to appear as truncated (dynamic_dispatch), but not found")
+	}
+	if found.Reason != "dynamic_dispatch" {
+		t.Errorf("reason: want dynamic_dispatch, got %q", found.Reason)
+	}
+	if found.Severity != "info" {
+		t.Errorf("severity: want info, got %q", found.Severity)
+	}
+	if found.TruncationStep != "dyn2" {
+		t.Errorf("truncation_step: want dyn2, got %q", found.TruncationStep)
+	}
+	if found.UnresolvedTarget != "cmd.Handler" {
+		t.Errorf("unresolved_target: want cmd.Handler, got %q", found.UnresolvedTarget)
+	}
+}
+
+// TestTruncated_CrossRepoUnindexed — a flow that has a cross-stack step whose
+// terminal_id is not in any indexed repo must appear with reason
+// "cross_repo_unindexed" and severity "error".
+func TestTruncated_CrossRepoUnindexed(t *testing.T) {
+	proc := processEntity("proc-cs", "callService", 2, true)
+	step1 := stepEntity("cs1", "prepare", "Function")
+	step2 := crossStackStepEntity("cs2", "rpcCall", "remote-svc::handleOrder")
+
+	entities := []graph.Entity{proc, step1, step2}
+	rels := []graph.Relationship{
+		stepRel("proc-cs", "cs1", 0),
+		stepRel("proc-cs", "cs2", 1),
+	}
+
+	grp := makeFlowGroup(entities, rels)
+	items := classifyFlowTruncated(grp)
+
+	var found *TruncatedFlowItem
+	for i := range items {
+		if items[i].ProcessID == "backend::proc-cs" {
+			found = &items[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected proc-cs to appear as truncated (cross_repo_unindexed), but not found")
+	}
+	if found.Reason != "cross_repo_unindexed" {
+		t.Errorf("reason: want cross_repo_unindexed, got %q", found.Reason)
+	}
+	if found.Severity != "error" {
+		t.Errorf("severity: want error, got %q", found.Severity)
+	}
+	if found.UnresolvedTarget != "remote-svc::handleOrder" {
+		t.Errorf("unresolved_target: want remote-svc::handleOrder, got %q", found.UnresolvedTarget)
+	}
+}
+
+// TestTruncated_FullyResolvedFlow — a flow whose every CALLS edge points to a
+// known entity must NOT appear as truncated.
+func TestTruncated_FullyResolvedFlow(t *testing.T) {
+	proc := processEntity("proc-clean-tr", "cleanFlow", 3, false)
+	step1 := stepEntity("rc1", "validate", "Function")
+	step2 := stepEntity("rc2", "process", "Function")
+	step3 := stepEntity("rc3", "save", "Function")
+
+	entities := []graph.Entity{proc, step1, step2, step3}
+	rels := []graph.Relationship{
+		stepRel("proc-clean-tr", "rc1", 0),
+		stepRel("proc-clean-tr", "rc2", 1),
+		stepRel("proc-clean-tr", "rc3", 2),
+		// All CALLS edges point to known entities in the graph.
+		callsRel("rc1", "rc2"),
+		callsRel("rc2", "rc3"),
+	}
+
+	grp := makeFlowGroup(entities, rels)
+	items := classifyFlowTruncated(grp)
+
+	for _, item := range items {
+		if item.ProcessID == "backend::proc-clean-tr" {
+			t.Errorf("fully-resolved flow must NOT appear as truncated, but found: %+v", item)
+		}
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Integration smoke: HTTP endpoint shape for truncated flows
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestHandleFlowTruncated_HTTPSmoke(t *testing.T) {
+	proc := processEntity("proc-smoke-tr", "smokeFlow", 2, false)
+	step1 := stepEntity("sm-tr1", "prepare", "Function")
+	step2 := stepEntity("sm-tr2", "callUnknown", "Function")
+
+	entities := []graph.Entity{proc, step1, step2}
+	rels := []graph.Relationship{
+		stepRel("proc-smoke-tr", "sm-tr1", 0),
+		stepRel("proc-smoke-tr", "sm-tr2", 1),
+		callsRel("sm-tr2", "nowhere::missingFn"),
+	}
+	grp := makeFlowGroup(entities, rels)
+	grp.Name = "testgrp"
+
+	ts := newFlowQualityTestServer(t, grp)
+
+	resp, err := http.Get(ts.URL + "/api/flows/testgrp/truncated")
+	if err != nil {
+		t.Fatalf("GET truncated: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status: want 200, got %d — body: %s", resp.StatusCode, b)
+	}
+
+	b, _ := io.ReadAll(resp.Body)
+	var body struct {
+		TruncatedFlows []TruncatedFlowItem `json:"truncated_flows"`
+		Total          int                 `json:"total"`
+	}
+	if err := json.Unmarshal(b, &body); err != nil {
+		t.Fatalf("decode: %v\nbody: %s", err, b)
+	}
+
+	if body.Total != 1 {
+		t.Errorf("total: want 1, got %d", body.Total)
+	}
+	if len(body.TruncatedFlows) == 0 {
+		t.Fatal("truncated_flows must not be empty")
+	}
+
+	item := body.TruncatedFlows[0]
+	if item.ProcessID != "backend::proc-smoke-tr" {
+		t.Errorf("process_id: want backend::proc-smoke-tr, got %q", item.ProcessID)
+	}
+	if item.Reason != "unresolved_callee" {
+		t.Errorf("reason: want unresolved_callee, got %q", item.Reason)
+	}
+	if item.Severity != "warn" {
+		t.Errorf("severity: want warn, got %q", item.Severity)
+	}
+	if !item.IsTruncated {
+		t.Error("is_truncated must be true")
+	}
+	if item.TruncationStep == "" {
+		t.Error("truncation_step must not be empty")
+	}
+	if item.UnresolvedTarget == "" {
+		t.Error("unresolved_target must not be empty")
+	}
+}
+
+func TestHandleFlowTruncated_UnknownGroup(t *testing.T) {
+	grp := makeFlowGroup(nil, nil)
+	grp.Name = "testgrp"
+	ts := newFlowQualityTestServer(t, grp)
+
+	resp, err := http.Get(ts.URL + "/api/flows/nosuchgroup/truncated")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("status: want 404, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleFlowTruncated_EmptyResult(t *testing.T) {
+	// A group with only a fully-resolved flow returns an empty list (not null).
+	proc := processEntity("proc-ok", "resolvedFlow", 2, false)
+	step1 := stepEntity("ok1", "stepA", "Function")
+	step2 := stepEntity("ok2", "stepB", "Function")
+
+	entities := []graph.Entity{proc, step1, step2}
+	rels := []graph.Relationship{
+		stepRel("proc-ok", "ok1", 0),
+		stepRel("proc-ok", "ok2", 1),
+		callsRel("ok1", "ok2"),
+	}
+	grp := makeFlowGroup(entities, rels)
+	grp.Name = "testgrp"
+
+	ts := newFlowQualityTestServer(t, grp)
+
+	resp, err := http.Get(ts.URL + "/api/flows/testgrp/truncated")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer resp.Body.Close()
+
+	b, _ := io.ReadAll(resp.Body)
+	var body map[string]any
+	if err := json.Unmarshal(b, &body); err != nil {
+		t.Fatalf("decode: %v\nbody: %s", err, b)
+	}
+
+	arr, ok := body["truncated_flows"].([]any)
+	if !ok {
+		t.Fatalf("truncated_flows should be an array, got %T", body["truncated_flows"])
+	}
+	if len(arr) != 0 {
+		t.Errorf("expected empty truncated_flows for fully-resolved flow, got %d items", len(arr))
+	}
+	if total, _ := body["total"].(float64); total != 0 {
+		t.Errorf("total: want 0, got %v", total)
+	}
+}
