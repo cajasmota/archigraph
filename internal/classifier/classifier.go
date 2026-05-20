@@ -444,6 +444,9 @@ var extensionLanguageMap = map[string]string{
 	".fsi":    "fsharp",
 	".fsx":    "fsharp",
 	".fsproj": "fsharp",
+	// ReasonML
+	".re":  "reasonml",
+	".rei": "reasonml",
 	// Lua
 	".lua": "lua",
 	// SQL
