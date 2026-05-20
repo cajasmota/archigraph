@@ -466,7 +466,7 @@ var extensionLanguageMap = map[string]string{
 	".html":       "html",
 	".htm":        "html",
 	".vue":        "html",
-	".svelte":     "html",
+	".svelte":     "svelte",
 	".astro":      "html",
 	".erb":        "html",
 	".ejs":        "html",
