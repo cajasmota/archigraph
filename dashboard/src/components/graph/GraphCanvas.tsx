@@ -127,6 +127,32 @@ function buildClusterPositionsMap(
   return posMap
 }
 
+// ---------------------------------------------------------------------------
+// Zoom-driven Level-of-Detail (#1107)
+// ---------------------------------------------------------------------------
+
+/**
+ * Three zoom bands that control how many nodes are visible.
+ *
+ *   overview  (zoom < 0.5)   — only the top-30-50 hubs (degree ≥ 50 or top-30 by degree)
+ *   mid       (zoom < 2.0)   — degree ≥ 5  (~1500–3000 nodes)
+ *   full      (zoom ≥ 2.0)   — all nodes
+ *
+ * `degreeMin` is a floor; `topN` (when set) enforces an absolute count cap so
+ * small graphs (few high-degree nodes) still show something at overview.
+ */
+const ZOOM_BANDS = [
+  { maxZoom: 0.5,      degreeMin: 50,  topN: 50,  label: 'overview', topLabels: 50 },
+  { maxZoom: 2.0,      degreeMin: 5,   topN: null, label: 'mid',      topLabels: 30 },
+  { maxZoom: Infinity, degreeMin: 0,   topN: null, label: 'full',     topLabels: 20 },
+] as const
+
+type ZoomBand = typeof ZOOM_BANDS[number]
+
+function pickBand(zoom: number): ZoomBand {
+  return ZOOM_BANDS.find((b) => zoom < b.maxZoom) ?? ZOOM_BANDS[ZOOM_BANDS.length - 1]
+}
+
 export interface GraphCanvasProps {
   nodes: GraphNode[]
   edges: GraphEdge[]
@@ -216,6 +242,10 @@ const GraphCanvasInner = ({
   // Track whether the first settle has happened so we only auto-pause once.
   const [hasSettled, setHasSettled] = useState(false)
 
+  // #1107: zoom-driven LoD — track current zoom with a small debounce
+  // so we don't re-compute visibility on every micro-zoom step.
+  const [currentZoom, setCurrentZoom] = useState(0.3)
+
   // Hard-stop timer ref — cleared on unmount and when sim settles naturally.
   const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -245,15 +275,86 @@ const GraphCanvasInner = ({
   const visibleIndicesRef = useRef<number[] | null>(visibleIndices)
   visibleIndicesRef.current = visibleIndices
 
+  // #1107: Zoom-driven LoD — compute which nodes are visible for current zoom band.
+  // When a repo filter is also active, intersect: node must pass BOTH filters.
+  //
+  // Band selection logic:
+  //   overview (zoom<0.5): top 50 by degree (floor: degree≥50, cap: top-50 nodes)
+  //   mid      (zoom<2.0): degree≥5
+  //   full     (zoom≥2.0): all nodes
+  //
+  // The result is a numeric index array fed to cosmographRef.selectPoints.
+  // null means "show everything" (no LoD restriction at full zoom).
+  const currentBand = useMemo(() => pickBand(currentZoom), [currentZoom])
+
+  const lodVisibleIndices = useMemo<number[] | null>(() => {
+    const band = currentBand
+    if (band.label === 'full') {
+      // At full zoom no LoD restriction — repo filter still applied separately
+      return null
+    }
+
+    // Sort nodes by degree descending to enforce topN cap at overview
+    let eligible: number[]
+    if (band.topN !== null) {
+      // overview: take top-N by degree, then filter for degreeMin as a floor
+      const sorted = nodes
+        .map((n, i) => ({ i, deg: n.degree ?? 0 }))
+        .sort((a, b) => b.deg - a.deg)
+      // Pick whichever is more inclusive: topN by count OR degreeMin threshold
+      const topNSet = new Set(sorted.slice(0, band.topN).map((x) => x.i))
+      eligible = nodes
+        .map((n, i) => ({ n, i }))
+        .filter(({ n, i }) => (n.degree ?? 0) >= band.degreeMin || topNSet.has(i))
+        .map(({ i }) => i)
+    } else {
+      // mid: degree threshold only
+      eligible = nodes
+        .map((n, i) => ({ n, i }))
+        .filter(({ n }) => (n.degree ?? 0) >= band.degreeMin)
+        .map(({ i }) => i)
+    }
+
+    // Intersect with repo filter if active
+    if (activeRepos) {
+      const repoSet = activeRepos
+      return eligible.filter((i) => repoSet.has(nodes[i]?.repo ?? ''))
+    }
+    return eligible
+  }, [nodes, currentBand, activeRepos])
+
+  // Apply LoD visibility via Cosmograph's imperative selection API.
+  // Fires when lodVisibleIndices changes — this happens when:
+  //   1. nodes load (data arrives after mount)
+  //   2. zoom band changes (currentZoom crosses a threshold)
+  //   3. repo filter changes (activeRepos changes)
+  // lodVisibleIndices is a new array reference each time any of those change,
+  // so this effect correctly fires for all three cases.
+  useEffect(() => {
+    const cosmo = cosmographRef.current
+    if (!cosmo) return
+
+    if (currentBand.label === 'full' && !activeRepos) {
+      // Full zoom + no repo filter → show everything
+      cosmo.selectPoints(null)
+    } else {
+      cosmo.selectPoints(lodVisibleIndices)
+    }
+  }, [lodVisibleIndices, currentBand, activeRepos])
+
   // Apply the repo filter via Cosmograph's imperative selection API.
   // We do this in a useEffect (not in render) because cosmographRef is populated
   // after mount. The effect runs whenever visibleIndices reference changes.
+  // NOTE: with LoD active the combined filter is applied in the LoD effect above.
+  // This effect is kept as a fallback for the mount case where LoD hasn't fired yet.
   useEffect(() => {
     const cosmo = cosmographRef.current
     if (!cosmo) return
     // null → clear selection (show all); array → select visible subset
+    // When LoD is active (not full band), the LoD effect already applied a combined filter.
+    if (currentBand.label !== 'full') return
     cosmo.selectPoints(visibleIndices)
-  }, [visibleIndices])
+  }, [visibleIndices, currentBand])
 
   // Cosmograph requires a sequential numeric index column on both points and links.
   // We derive these from the incoming arrays rather than mutating the originals.
@@ -318,19 +419,33 @@ const GraphCanvasInner = ({
     [cosmographLinks, crossRepoOnly],
   )
 
+  // Ref to lodVisibleIndices so handleMount can re-apply the LoD filter on mount
+  const lodVisibleIndicesRef = useRef<number[] | null>(null)
+  lodVisibleIndicesRef.current = lodVisibleIndices
+
   // Expose a cosmograph-compatible ref to the camera store so
   // resetView / zoomToNode keep working with the new renderer.
-  // Also re-apply the repo filter selection immediately on mount so that if
-  // activeRepos was set before the canvas mounted, the filter still takes effect.
+  // Also re-apply the LoD/repo filter selection immediately on mount so that if
+  // the effect fired before mount, the filter still takes effect.
+  // #1107: set initial zoom to 0.3 (overview band) so the graph starts with
+  // only the top hubs visible — matching the music-genre reference look.
   const handleMount = useCallback((instance: NonNullable<CosmographRef>) => {
     cosmographRef.current = instance
     // Wrap the Cosmograph instance to match the camera store's ForceGraphInstance duck-type
     setGraphRef(instance as unknown as Parameters<typeof setGraphRef>[0])
-    // Re-apply repo filter in case visibleIndices effect fired before mount
-    const indices = visibleIndicesRef.current
-    if (indices !== null) {
-      instance.selectPoints(indices)
-    }
+
+    // #1107: set initial zoom to overview band (0.3) after a short delay so
+    // Cosmograph has finished initialising its WebGL context.
+    setTimeout(() => {
+      instance.setZoomLevel?.(0.3, 0)
+      setCurrentZoom(0.3)
+    }, 150)
+
+    // Apply LoD filter immediately so overview-band nodes are visible from frame 1.
+    // This handles the case where data arrived before mount (e.g. cached response).
+    // The LoD useEffect will also fire for any data that loads after mount.
+    const lodIndices = lodVisibleIndicesRef.current
+    instance.selectPoints(lodIndices)
   }, [setGraphRef])
 
   // Cleanup on unmount
@@ -339,6 +454,7 @@ const GraphCanvasInner = ({
       setGraphRef(null)
       if (hoverDebounceRef.current) clearTimeout(hoverDebounceRef.current)
       if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current)
+      if (zoomDebounceRef.current) clearTimeout(zoomDebounceRef.current)
     }
   }, [setGraphRef])
 
@@ -496,12 +612,22 @@ const GraphCanvasInner = ({
     onCursorMove?.(e.clientX, e.clientY)
   }, [onCursorMove])
 
-  // Zoom: Cosmograph's onZoom fires with a D3 zoom event; extract the k scale
+  // Debounce timer for zoom LoD updates — prevents thrashing on rapid scroll
+  const zoomDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Zoom: Cosmograph's onZoom fires with a D3 zoom event; extract the k scale.
+  // #1107: also update local currentZoom (debounced 80ms) so LoD band changes
+  // don't fire on every pixel of scroll — only when the user pauses.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleZoom = useCallback((e: any) => {
     const k: number = e?.transform?.k ?? 1
     setZoomLevel(k)
     onZoomChange?.(k)
+    // Debounced LoD update
+    if (zoomDebounceRef.current) clearTimeout(zoomDebounceRef.current)
+    zoomDebounceRef.current = setTimeout(() => {
+      setCurrentZoom(k)
+    }, 80)
   }, [setZoomLevel, onZoomChange])
 
   // Theme-aware canvas background:
@@ -580,11 +706,10 @@ const GraphCanvasInner = ({
         // showTopLabels: highest-degree nodes always show labels regardless of viewport.
         // Truncate long entity names at 30 chars; pill background for readability.
         // showTopLabels: hub nodes always labelled; showDynamicLabels: evenly distributed.
+        // #1107: scale topLabels limit per zoom band (overview=50, mid=30, full=20)
         showLabels={true}
         showTopLabels={true}
-        // #1089: increase to 50 so more hub labels are always visible at a glance.
-        // Top nodes are ranked by degree (highest-degree always labelled first).
-        showTopLabelsLimit={50}
+        showTopLabelsLimit={currentBand.topLabels}
         showDynamicLabels={true}
         showDynamicLabelsLimit={40}
         showHoveredPointLabel={true}
@@ -607,8 +732,10 @@ const GraphCanvasInner = ({
         // #1069: when repo filter is active, opacity=0 makes filtered-out nodes
         // and edges invisible. When no filter is active, hover-focus greyout (#1060)
         // uses 0.15 so non-adjacent nodes dim on hover.
-        pointGreyoutOpacity={repoFilterActive ? 0 : 0.15}
-        linkGreyoutOpacity={repoFilterActive ? 0 : 0.1}
+        // #1107: LoD filter also uses selectPoints — hidden nodes must be opacity=0.
+        // When either filter is active, greyout=0 so hidden nodes are invisible.
+        pointGreyoutOpacity={(repoFilterActive || currentBand.label !== 'full') ? 0 : 0.15}
+        linkGreyoutOpacity={(repoFilterActive || currentBand.label !== 'full') ? 0 : 0.1}
 
         // ── Simulation ─────────────────────────────────────────────────────
         enableSimulation={true}
