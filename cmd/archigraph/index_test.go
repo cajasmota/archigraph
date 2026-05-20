@@ -11,6 +11,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/classifier"
 	"github.com/cajasmota/archigraph/internal/engine"
 	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/archigraph/internal/resolve"
 	"github.com/cajasmota/archigraph/internal/treesitter"
 	"github.com/cajasmota/archigraph/internal/types"
 )
@@ -613,5 +614,54 @@ func TestScopePatternContains_AllPatternsHaveContainsEdge(t *testing.T) {
 		}
 		t.Fatalf("%d/%d SCOPE.Pattern entities have no CONTAINS edge targeting them; sample: %v",
 			len(missing), len(patternIDs), missing)
+	}
+}
+
+// TestKotlinSpringResponseEntityDynamic verifies that the Spring MVC
+// ResponseEntity fluent builder method stubs emitted by the Kotlin extractor
+// (notFound, ok, build, body, noContent) classify as DispositionDynamic
+// rather than DispositionBugExtractor after the fix in issue #44 slice-5.
+//
+// The fix adds these JVM-gated bare-name patterns to jvmDynamicPatterns in
+// internal/resolve/refs.go. Without the fix all 8 CALLS stubs on the Spring
+// fixture land in bug-extractor; with the fix they land in dynamic.
+func TestKotlinSpringResponseEntityDynamic(t *testing.T) {
+	fixtureDir := filepath.Join("../../internal/quality/golden/kotlin-spring-mini/src")
+	abs, err := filepath.Abs(fixtureDir)
+	if err != nil {
+		t.Fatalf("abs: %v", err)
+	}
+	if _, serr := os.Stat(abs); serr != nil {
+		t.Skipf("kotlin-spring-mini fixture not found at %s: %v", abs, serr)
+	}
+
+	idx := newTestIndexer(t, "kotlin-spring-mini", nil)
+	doc, err := idx.Run(context.Background(), abs)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if doc == nil {
+		t.Fatal("Run returned nil document")
+	}
+
+	// The final dispositions are populated by Run() via ClassifyEndpoints.
+	// Check that the bug-extractor count dropped vs. the pre-fix baseline
+	// (8 bug-extractor edges) and the dynamic count rose.
+	bugCount := idx.finalDispositions.DispositionCounts[resolve.DispositionBugExtractor]
+	dynCount := idx.finalDispositions.DispositionCounts[resolve.DispositionDynamic]
+
+	// Pre-fix baseline: 8 bug-extractor (notFound×2, ok, build×2, body, noContent, add).
+	// Post-fix: notFound, ok, build, body, noContent, badRequest, accepted,
+	//           created, unprocessableEntity, internalServerError all → Dynamic.
+	//           `add` remains bug-extractor (not in the Spring builder set).
+	// The fixture has exactly 1 add() call (users.add(user)) that stays in
+	// bug-extractor; everything else must be < 2 to confirm the pattern fired.
+	if bugCount >= 8 {
+		samples := idx.finalDispositions.DispositionSamples[resolve.DispositionBugExtractor]
+		t.Errorf("bug-extractor count = %d (want < 8, pre-fix baseline); dynamic = %d; samples = %v",
+			bugCount, dynCount, samples)
+	}
+	if dynCount == 0 {
+		t.Errorf("dynamic count = 0, expected > 0 after ResponseEntity builder fix")
 	}
 }

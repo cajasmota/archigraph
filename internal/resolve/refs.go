@@ -845,6 +845,42 @@ var (
 		regexp.MustCompile(`\.class\.newInstance\(`),
 		regexp.MustCompile(`^ServiceLoader\.load\(`), // ServiceLoader.load(...)
 		regexp.MustCompile(`^System\.getenv\(`),      // env-driven (JVM)
+		// Issue #44 — Spring MVC / WebFlux ResponseEntity fluent builder
+		// methods. Spring's ResponseEntity uses a static factory + builder
+		// pattern:
+		//
+		//   ResponseEntity.notFound().build()
+		//   ResponseEntity.ok(body)
+		//   ResponseEntity.status(HttpStatus.CREATED).body(x)
+		//   ResponseEntity.noContent().build()
+		//
+		// The Kotlin/Java extractor emits the trailing method leaf as a
+		// bare CALLS stub (e.g. `notFound`, `ok`, `build`, `body`).
+		// Without full type-inference the resolver cannot tell whether
+		// the caller's receiver is a ResponseEntity builder or a same-
+		// named in-tree method. These names are also generic enough
+		// (`ok`, `build`, `body`) that user-defined methods can share
+		// them — both cases are statically unresolvable and Dynamic is the
+		// correct bucket. The JVM-language gate keeps these from
+		// polluting non-JVM graphs (#94 safer-bias rule).
+		regexp.MustCompile(`^notFound$`),    // ResponseEntity.notFound()
+		regexp.MustCompile(`^noContent$`),   // ResponseEntity.noContent()
+		regexp.MustCompile(`^badRequest$`),  // ResponseEntity.badRequest()
+		regexp.MustCompile(`^accepted$`),    // ResponseEntity.accepted()
+		regexp.MustCompile(`^created$`),     // ResponseEntity.created(uri)
+		regexp.MustCompile(`^unprocessableEntity$`), // ResponseEntity.unprocessableEntity()
+		regexp.MustCompile(`^internalServerError$`), // ResponseEntity.internalServerError()
+		// Builder terminal methods that appear as bare leaf stubs when
+		// the receiver is a ResponseEntity.BodyBuilder /
+		// ResponseEntity.HeadersBuilder (or any other fluent builder that
+		// can't be resolved by name alone).
+		regexp.MustCompile(`^build$`), // BodyBuilder.build() / HeadersBuilder.build()
+		regexp.MustCompile(`^body$`),  // BodyBuilder.body(T)
+		// ResponseEntity.ok(T) is already common in user code; but since
+		// the receiver is always the static class itself in Spring usage
+		// and the name is generic enough to be in-tree we accept the
+		// safer-bias trade-off — Dynamic for both cases.
+		regexp.MustCompile(`^ok$`), // ResponseEntity.ok(body)
 	}
 
 	// HCL / Terraform dynamic-pattern catalog (issue #44). Terraform

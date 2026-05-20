@@ -1,0 +1,72 @@
+{
+  "fixture_name": "kotlin-spring-mini",
+  "language": "kotlin",
+  "description": "Tiny Spring Boot Kotlin REST controller exercising @RestController, @RequestMapping, @GetMapping / @PostMapping / @DeleteMapping, data classes with primary-constructor val/var fields, and SCOPE.Service emission from Spring stereotype. Used by the extraction-quality benchmark to detect recall regressions in the kotlin + Spring framework path. Added by issue #44 slice-5 (Kotlin resolver: Spring ResponseEntity builder fix).",
+  "expected_entities": [
+    { "name": "User", "kind": "SCOPE.Component", "source_file": "SampleController.kt", "must_exist": true, "note": "data class User(val id: Int, val name: String, val email: String)" },
+    { "name": "User.id", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true, "note": "Primary-constructor val field — #690 pattern." },
+    { "name": "User.name", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "User.email", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true },
+
+    { "name": "CreateUserRequest", "kind": "SCOPE.Component", "source_file": "SampleController.kt", "must_exist": true, "note": "data class CreateUserRequest(val name: String, val email: String)" },
+    { "name": "CreateUserRequest.name", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "CreateUserRequest.email", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true },
+
+    { "name": "UserController", "kind": "SCOPE.Component", "source_file": "SampleController.kt", "must_exist": true, "note": "@RestController class." },
+    { "name": "UserController", "kind": "SCOPE.Service", "source_file": "SampleController.kt", "must_exist": true, "note": "SCOPE.Service emitted by Spring @RestController stereotype." },
+    { "name": "UserController.users", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true, "note": "private val users property." },
+    { "name": "UserController.nextId", "kind": "SCOPE.Schema", "source_file": "SampleController.kt", "must_exist": true },
+
+    { "name": "health", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "listUsers", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "getUser", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "createUser", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "deleteUser", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true },
+
+    { "name": "GET /health", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true, "note": "@GetMapping(\"/health\") route." },
+    { "name": "GET /{id}", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true },
+    { "name": "DELETE /{id}", "kind": "SCOPE.Operation", "source_file": "SampleController.kt", "must_exist": true }
+  ],
+  "expected_relationships": [
+    { "from_name": "User", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "User.id", "to_kind": "SCOPE.Schema", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "User", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "User.name", "to_kind": "SCOPE.Schema", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "User", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "User.email", "to_kind": "SCOPE.Schema", "to_file": "SampleController.kt",
+      "must_exist": true },
+
+    { "from_name": "CreateUserRequest", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "CreateUserRequest.name", "to_kind": "SCOPE.Schema", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "CreateUserRequest", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "CreateUserRequest.email", "to_kind": "SCOPE.Schema", "to_file": "SampleController.kt",
+      "must_exist": true },
+
+    { "from_name": "UserController", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "health", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "UserController", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "listUsers", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "UserController", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "getUser", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "UserController", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "createUser", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "UserController", "from_kind": "SCOPE.Component", "from_file": "SampleController.kt",
+      "kind": "CONTAINS", "to_name": "deleteUser", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true },
+
+    { "from_name": "GET /{id}", "from_kind": "SCOPE.Operation", "from_file": "SampleController.kt",
+      "kind": "SERVES", "to_name": "getUser", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true },
+    { "from_name": "DELETE /{id}", "from_kind": "SCOPE.Operation", "from_file": "SampleController.kt",
+      "kind": "SERVES", "to_name": "deleteUser", "to_kind": "SCOPE.Operation", "to_file": "SampleController.kt",
+      "must_exist": true }
+  ],
+  "forbidden_relationships": []
+}

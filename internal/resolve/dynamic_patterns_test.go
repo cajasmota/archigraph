@@ -268,6 +268,34 @@ func TestDynamicPatterns_Catalog(t *testing.T) {
 		{"neg_unknown_lang_repo_lookup", "", `repo.Lookup(id)`, false},
 		// And that res.send under unknown language is NOT dynamic.
 		{"neg_unknown_lang_res_send", "", `res.send("hello")`, false},
+
+		// ---- Spring MVC ResponseEntity fluent builder methods (issue #44) ---
+		// ResponseEntity.notFound().build() / .ok(body) / .noContent().build()
+		// are the highest-count unresolved CALLS category in Kotlin/Java Spring
+		// fixtures. The bare leaf names arrive because the Kotlin/Java extractors
+		// strip the receiver; no static resolver can bind them without full type
+		// inference. JVM-language gate keeps these from polluting non-JVM graphs.
+		{"spring_kotlin_notFound", "kotlin", `notFound`, true},
+		{"spring_kotlin_noContent", "kotlin", `noContent`, true},
+		{"spring_kotlin_badRequest", "kotlin", `badRequest`, true},
+		{"spring_kotlin_accepted", "kotlin", `accepted`, true},
+		{"spring_kotlin_created", "kotlin", `created`, true},
+		{"spring_kotlin_ok", "kotlin", `ok`, true},
+		{"spring_kotlin_build", "kotlin", `build`, true},
+		{"spring_kotlin_body", "kotlin", `body`, true},
+		{"spring_kotlin_unprocessableEntity", "kotlin", `unprocessableEntity`, true},
+		{"spring_kotlin_internalServerError", "kotlin", `internalServerError`, true},
+		{"spring_java_notFound", "java", `notFound`, true},
+		{"spring_java_build", "java", `build`, true},
+		{"spring_java_ok", "java", `ok`, true},
+		{"spring_scala_noContent", "scala", `noContent`, true},
+		// Cross-language gate: Spring builder names MUST NOT fire for non-JVM.
+		{"spring_python_build_neg", "python", `build`, false},
+		{"spring_js_ok_neg", "javascript", `ok`, false},
+		{"spring_go_body_neg", "go", `body`, false},
+		{"spring_ruby_notFound_neg", "ruby", `notFound`, false},
+		{"spring_ts_noContent_neg", "typescript", `noContent`, false},
+		{"spring_rust_build_neg", "rust", `build`, false},
 	}
 
 	for _, tc := range cases {
