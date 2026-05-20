@@ -111,6 +111,112 @@ func resultText(r *mcpapi.CallToolResult) string {
 	return ""
 }
 
+// 0. CLI registry format (array of GroupRef + per-group config): server initializes
+// and tools list returns all registered tools.
+func TestCLIRegistryFormat(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create two repos with graphs
+	r1 := filepath.Join(dir, "repo1")
+	r2 := filepath.Join(dir, "repo2")
+	for _, p := range []string{r1, r2} {
+		if err := os.MkdirAll(p, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeGraph(t, r1, fixtureDoc("repo1"))
+	writeGraph(t, r2, fixtureDoc("repo2"))
+
+	// Create per-group config files (CLI format)
+	configDir := filepath.Join(dir, "configs")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Group 1: upvate with 1 repo
+	cfg1 := map[string]any{
+		"name": "upvate",
+		"repos": []map[string]any{
+			{"slug": "repo1", "path": r1},
+		},
+	}
+	cfg1Data, _ := json.MarshalIndent(cfg1, "", "  ")
+	cfg1Path := filepath.Join(configDir, "upvate.fleet.json")
+	if err := os.WriteFile(cfg1Path, cfg1Data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Group 2: client-fixture with 1 repo
+	cfg2 := map[string]any{
+		"name": "client-fixture",
+		"repos": []map[string]any{
+			{"slug": "repo2", "path": r2},
+		},
+	}
+	cfg2Data, _ := json.MarshalIndent(cfg2, "", "  ")
+	cfg2Path := filepath.Join(configDir, "client-fixture.fleet.json")
+	if err := os.WriteFile(cfg2Path, cfg2Data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create CLI-format registry.json with array of GroupRef
+	regData := map[string]any{
+		"version": 1,
+		"groups": []map[string]any{
+			{
+				"name":        "upvate",
+				"config_path": cfg1Path,
+				"installed_at": "2026-05-20T12:00:00Z",
+			},
+			{
+				"name":        "client-fixture",
+				"config_path": cfg2Path,
+				"installed_at": "2026-05-20T12:00:00Z",
+			},
+		},
+	}
+	regPath := filepath.Join(dir, "registry.json")
+	regRaw, _ := json.MarshalIndent(regData, "", "  ")
+	if err := os.WriteFile(regPath, regRaw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Server should load successfully
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatalf("NewServer failed: %v", err)
+	}
+
+	// Verify both groups are loaded
+	groups := srv.State.Groups()
+	if len(groups) != 2 {
+		t.Errorf("expected 2 groups, got %d: %v", len(groups), groups)
+	}
+	if !containsString(groups, "upvate") || !containsString(groups, "client-fixture") {
+		t.Errorf("expected both upvate and client-fixture groups, got: %v", groups)
+	}
+
+	// Verify group upvate has repo1
+	gUpvate := srv.State.Group("upvate")
+	if gUpvate == nil || len(gUpvate.Repos) != 1 {
+		t.Errorf("expected upvate to have 1 repo, got %v", gUpvate)
+	}
+	if _, ok := gUpvate.Repos["repo1"]; !ok {
+		t.Errorf("expected upvate to have repo1")
+	}
+
+	// Verify group client-fixture has repo2
+	gClient := srv.State.Group("client-fixture")
+	if gClient == nil || len(gClient.Repos) != 1 {
+		t.Errorf("expected client-fixture to have 1 repo, got %v", gClient)
+	}
+	if _, ok := gClient.Repos["repo2"]; !ok {
+		t.Errorf("expected client-fixture to have repo2")
+	}
+}
+
+// Note: containsString is already defined in patterns.go, reusing it.
+
 // 1. Empty registry: server starts, whoami returns "no group".
 func TestEmptyRegistry(t *testing.T) {
 	dir := t.TempDir()

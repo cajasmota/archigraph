@@ -65,6 +65,82 @@ type RegistryRepo struct {
 	GraphFile string `json:"graph_file,omitempty"`
 }
 
+// UnmarshalJSON implements custom unmarshaling to accept both array format
+// (written by CLI registry) and map format (legacy MCP format).
+// CLI format: {"version":1,"groups":[{"name":"...","config_path":"..."}]}
+// Legacy MCP format: {"groups":{"name":{...}}
+func (r *Registry) UnmarshalJSON(data []byte) error {
+	// Try unmarshaling as a struct with version + groups array (CLI format)
+	type rawRef struct {
+		Name       string `json:"name"`
+		ConfigPath string `json:"config_path"`
+	}
+	type rawReg struct {
+		Version int       `json:"version"`
+		Groups  []rawRef  `json:"groups"`
+	}
+	var raw rawReg
+	if err := json.Unmarshal(data, &raw); err == nil && len(raw.Groups) > 0 {
+		// CLI format: groups is an array of refs with names and config paths
+		r.Groups = make(map[string]RegistryGroup, len(raw.Groups))
+		for _, ref := range raw.Groups {
+			grp := RegistryGroup{
+				Repos: map[string]RegistryRepo{},
+			}
+			// Load per-group config if available
+			if ref.ConfigPath != "" {
+				if cfg, err := loadGroupConfig(ref.ConfigPath); err == nil {
+					// Convert repos from GroupConfig format to RegistryRepo format
+					for _, repo := range cfg.Repos {
+						grp.Repos[repo.Slug] = RegistryRepo{
+							Path: repo.Path,
+						}
+					}
+				}
+				// Silently skip missing or malformed configs—they may be loaded later
+			}
+			r.Groups[ref.Name] = grp
+		}
+		return nil
+	}
+
+	// Fall back to legacy map format
+	type legacyReg struct {
+		Groups map[string]RegistryGroup `json:"groups"`
+	}
+	var legacy legacyReg
+	if err := json.Unmarshal(data, &legacy); err != nil {
+		return fmt.Errorf("unmarshal registry: invalid format (neither CLI array nor legacy map): %w", err)
+	}
+	r.Groups = legacy.Groups
+	if r.Groups == nil {
+		r.Groups = map[string]RegistryGroup{}
+	}
+	return nil
+}
+
+// groupConfig matches internal/registry.GroupConfig structure for per-group config files.
+type groupConfig struct {
+	Name      string `json:"name"`
+	Repos     []struct {
+		Slug string `json:"slug"`
+		Path string `json:"path"`
+	} `json:"repos"`
+}
+
+// loadGroupConfig loads and unmarshals a per-group config file.
+func loadGroupConfig(configPath string) (*groupConfig, error) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, err
+	}
+	var cfg groupConfig
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+
 // LoadRegistry reads a registry file. If the file does not exist an empty
 // registry is returned (no error).
 func LoadRegistry(path string) (*Registry, error) {
