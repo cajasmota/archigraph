@@ -472,19 +472,11 @@ function applyMockFilters(
     paths = paths.filter((p) => p.is_webhook === filters.is_webhook)
   }
 
-  const total = paths.length
-  const page = filters.page ?? 1
-  const pageSize = filters.page_size ?? 50
-  const start = (page - 1) * pageSize
-  const pageItems = paths.slice(start, start + pageSize)
-
   return {
     ...data,
-    paths: pageItems,
-    total,
-    has_more: start + pageSize < total,
-    page,
-    page_size: pageSize,
+    paths,
+    total: paths.length,
+    has_more: false,
   }
 }
 

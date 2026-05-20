@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useParams, Outlet, useNavigate } from 'react-router-dom'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { ChevronUp, ChevronDown, List, Globe } from 'lucide-react'
 import { PathRow } from '@/components/paths/PathRow'
 import { PathsGroup } from '@/components/paths/PathsGroup'
 import { PathFilterPanel } from '@/components/paths/PathFilterPanel'
 import { PathSearchInput } from '@/components/paths/PathSearchInput'
-import { Pagination } from '@/components/paths/Pagination'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PathListSkeleton } from '@/components/shared/LoadingState'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { usePathList } from '@/hooks/paths/usePathList'
 import { usePathFilters } from '@/hooks/paths/usePathFilters'
 import { groupPaths } from '@/lib/groupPaths'
+import type { PathRow as PathRowType } from '@/types/api'
 
 // ─── localStorage key for flat/grouped preference ────────────────────────────
 const LS_FLAT_KEY = 'paths-view-flat'
@@ -22,6 +23,68 @@ function readFlatPref(): boolean {
   } catch {
     return false
   }
+}
+
+// ─── Estimated row height for react-virtual ──────────────────────────────────
+const FLAT_ROW_HEIGHT = 38
+
+/**
+ * Virtualized flat list — renders only visible PathRows using @tanstack/react-virtual.
+ * Handles 1000+ paths without jank.
+ */
+function VirtualFlatList({
+  paths,
+  group,
+  onSelect,
+}: {
+  paths: PathRowType[]
+  group: string
+  onSelect: (hash: string) => void
+}) {
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  const virtualizer = useVirtualizer({
+    count: paths.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => FLAT_ROW_HEIGHT,
+    overscan: 10,
+  })
+
+  return (
+    <div
+      ref={parentRef}
+      className="flex-1 overflow-y-auto"
+      role="grid"
+      aria-label="API paths"
+    >
+      <div
+        role="rowgroup"
+        style={{ height: virtualizer.getTotalSize(), position: 'relative' }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const path = paths[virtualRow.index]
+          return (
+            <div
+              key={path.path_hash}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <PathRow
+                path={path}
+                group={group}
+                onSelect={() => onSelect(path.path_hash)}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -36,6 +99,9 @@ function readFlatPref(): boolean {
  *   - Filter input auto-expands matching groups
  *   - Expand all / Collapse all / Flat list controls
  *
+ * Flat view:
+ *   - Virtualized with @tanstack/react-virtual — handles 1000+ rows
+ *
  * Keyboard shortcuts:
  *   /  → focus search input
  *   ↑↓ → move selection in path list
@@ -47,7 +113,7 @@ export function PathsRoute() {
   const { data, isLoading, isFetching } = usePathList(group, filters)
   const navigate = useNavigate()
   const searchRef = useRef<HTMLDivElement>(null)
-  const listRef = useRef<HTMLDivElement>(null)
+  const groupedListRef = useRef<HTMLDivElement>(null)
 
   // ── View mode ─────────────────────────────────────────────────────────────
   const [isFlat, setIsFlat] = useState<boolean>(readFlatPref)
@@ -129,7 +195,7 @@ export function PathsRoute() {
   }, [])
 
   useEffect(() => {
-    const list = listRef.current
+    const list = groupedListRef.current
     if (!list) return
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
@@ -229,78 +295,63 @@ export function PathsRoute() {
 
           {/* Path list */}
           <ErrorBoundary>
-          <div
-            ref={listRef}
-            className="flex-1 overflow-y-auto"
-            role="grid"
-            aria-label="API paths"
-            aria-busy={isLoading}
-          >
             {isLoading ? (
               <PathListSkeleton count={12} />
             ) : paths.length === 0 ? (
-              <EmptyState
-                icon={Globe}
-                title="No paths match"
-                message="Try adjusting the search or filters."
-                action={
-                  <button
-                    type="button"
-                    className="text-sm text-sky-400 hover:underline"
-                    onClick={clearFilters}
-                  >
-                    Clear filters
-                  </button>
-                }
-              />
-            ) : isFlat ? (
-              /* ── Flat list (legacy) ─────────────────────────────────────── */
-              <div role="rowgroup">
-                {paths.map((path) => (
-                  <PathRow
-                    key={path.path_hash}
-                    path={path}
-                    group={group}
-                    onSelect={() => navigate(`/paths/${group}/${path.path_hash}`)}
-                  />
-                ))}
+              <div className="flex-1 overflow-y-auto">
+                <EmptyState
+                  icon={Globe}
+                  title="No paths match"
+                  message="Try adjusting the search or filters."
+                  action={
+                    <button
+                      type="button"
+                      className="text-sm text-sky-400 hover:underline"
+                      onClick={clearFilters}
+                    >
+                      Clear filters
+                    </button>
+                  }
+                />
               </div>
+            ) : isFlat ? (
+              /* ── Flat list — virtualized with @tanstack/react-virtual ──── */
+              <VirtualFlatList
+                paths={paths}
+                group={group}
+                onSelect={(hash) => navigate(`/paths/${group}/${hash}`)}
+              />
             ) : (
-              /* ── Grouped list ────────────────────────────────────────────── */
-              <div>
-                {groups.map((g) => (
-                  <PathsGroup
-                    key={g.name}
-                    group={g}
-                    isExpanded={!!expandedGroups[g.name]}
-                    onToggle={() => toggleGroup(g.name)}
-                  >
-                    {g.paths.map((path) => (
-                      <PathRow
-                        key={path.path_hash}
-                        path={path}
-                        group={group}
-                        onSelect={() => navigate(`/paths/${group}/${path.path_hash}`)}
-                      />
-                    ))}
-                  </PathsGroup>
-                ))}
+              /* ── Grouped list ──────────────────────────────────────────── */
+              <div
+                ref={groupedListRef}
+                className="flex-1 overflow-y-auto"
+                role="grid"
+                aria-label="API paths"
+                aria-busy={isLoading}
+              >
+                <div>
+                  {groups.map((g) => (
+                    <PathsGroup
+                      key={g.name}
+                      group={g}
+                      isExpanded={!!expandedGroups[g.name]}
+                      onToggle={() => toggleGroup(g.name)}
+                    >
+                      {g.paths.map((path) => (
+                        <PathRow
+                          key={path.path_hash}
+                          path={path}
+                          group={group}
+                          onSelect={() => navigate(`/paths/${group}/${path.path_hash}`)}
+                        />
+                      ))}
+                    </PathsGroup>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-
           </ErrorBoundary>
-
-          {/* Pagination */}
-          {!isLoading && data && data.total > (data.page_size ?? 50) && (
-            <Pagination
-              page={data.page}
-              pageSize={data.page_size}
-              total={data.total}
-              hasMore={data.has_more}
-              onPageChange={(p) => setFilter('page', p)}
-            />
-          )}
         </div>
 
         {/* Detail panel — rendered by nested route */}

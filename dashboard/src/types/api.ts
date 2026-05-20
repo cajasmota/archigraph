@@ -156,9 +156,12 @@ export interface PathListResponse {
   paths: PathRow[]
   tree: PathTreeNode[]
   total: number
-  has_more: boolean
-  page: number
-  page_size: number
+  /** @deprecated pagination removed — always false */
+  has_more?: boolean
+  /** @deprecated pagination removed */
+  page?: number
+  /** @deprecated pagination removed */
+  page_size?: number
 }
 
 export interface PathFilters {
@@ -168,8 +171,6 @@ export interface PathFilters {
   framework?: string
   status_code?: number
   is_webhook?: boolean
-  page?: number
-  page_size?: number
 }
 
 /** Full detail for one path — GET /api/paths/{group}/{pathHash} */

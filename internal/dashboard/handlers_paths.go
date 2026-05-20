@@ -18,7 +18,8 @@ import (
 
 const (
 	httpEndpointKind = "http_endpoint"
-	pageSize         = 50
+	// pageSize is kept for backward-compat but the default is now 5000 (all paths).
+	pageSize = 5000
 )
 
 // PathRow is one grouped API path returned by the list endpoint.
@@ -62,7 +63,8 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 	}
 	size := pageSize
 	if v := q.Get("size"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 200 {
+		// Allow explicit override up to 10000 for API consumers.
+		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 10000 {
 			size = n
 		}
 	}
