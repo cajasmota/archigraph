@@ -103,7 +103,11 @@
 
     { "from_name": "user_post_save", "from_kind": "SCOPE.Operation", "from_file": "users/signals.py",
       "kind": "CALLS", "to_bare_name": "full_label", "must_exist": false, "nice_to_have": true,
-      "note": "Bare-name CALLS — ideally resolves to User.full_label; currently pruned by import-placeholder-prune (bare-name CALLS to pruned stubs). Track without blocking CI; file a separate extractor chain-fix to restore." }
+      "note": "Bare-name CALLS — ideally resolves to User.full_label; currently pruned by import-placeholder-prune (bare-name CALLS to pruned stubs). Track without blocking CI; file a separate extractor chain-fix to restore." },
+
+    { "from_name": "health_check", "from_kind": "SCOPE.Operation", "from_file": "users/views.py",
+      "kind": "IMPLEMENTS", "to_name": "http:ANY:/users/health", "to_kind": "http_endpoint", "must_exist": false, "nice_to_have": true,
+      "note": "Issue #527 — FBV view function bound to its http_endpoint via source_handler (urlconf_nested_include IMPLEMENTS edge)." }
   ],
   "forbidden_relationships": [
     { "from_name": "UserListView.get", "from_kind": "SCOPE.Operation", "from_file": "users/views.py",

@@ -100,6 +100,68 @@ func TestResolveHandlers_KeepsSyntheticWithNoHandlerProp(t *testing.T) {
 	}
 }
 
+// TestResolveHandlers_FBVCrossFileKindFallback verifies that a Django FBV
+// endpoint (pattern_type=urlconf_nested_include) whose source_handler uses
+// the "Controller:<name>" kind can be resolved cross-file via the
+// resolverKindEquivalents fallback — i.e. the entity lives in views.py as
+// SCOPE.Operation but the handler ref says Controller (issue #527).
+func TestResolveHandlers_FBVCrossFileKindFallback(t *testing.T) {
+	// SCOPE.Operation entity for health_check in views.py
+	handler := types.EntityRecord{
+		Kind:       "SCOPE.Operation",
+		Name:       "health_check",
+		SourceFile: "users/views.py",
+		Language:   "python",
+	}
+	// http_endpoint entity in urls.py (different SourceFile from handler)
+	synth := types.EntityRecord{
+		Kind:       httpEndpointKind,
+		Name:       "http:ANY:/users/health",
+		SourceFile: "myproject/urls.py",
+		Language:   "python",
+		Properties: map[string]string{
+			"source_handler": "Controller:health_check",
+			"framework":      "django",
+			"pattern_type":   "urlconf_nested_include",
+		},
+	}
+	merged := []types.EntityRecord{handler, synth}
+	out, stats := ResolveHTTPEndpointHandlers(merged)
+
+	if stats.Synthetics != 1 {
+		t.Errorf("expected 1 synthetic, got %d", stats.Synthetics)
+	}
+	if stats.HandlerResolved != 1 {
+		t.Errorf("expected handler_resolved=1, got %d (handler_dropped=%d no_handler_prop=%d)",
+			stats.HandlerResolved, stats.HandlerDropped, stats.NoHandlerProp)
+	}
+	if stats.HandlerDropped != 0 {
+		t.Errorf("expected handler_dropped=0, got %d", stats.HandlerDropped)
+	}
+	if len(out) != 2 {
+		t.Fatalf("expected 2 entities (no drop), got %d", len(out))
+	}
+	// Handler (health_check) gets the IMPLEMENTS edge appended.
+	if len(out[0].Relationships) != 1 {
+		t.Fatalf("expected 1 relationship on handler (health_check), got %d: %+v",
+			len(out[0].Relationships), out[0].Relationships)
+	}
+	rel := out[0].Relationships[0]
+	if rel.Kind != implementsEdgeKind {
+		t.Errorf("expected kind=%s, got %s", implementsEdgeKind, rel.Kind)
+	}
+	if rel.FromID != "SCOPE.Operation:health_check" {
+		t.Errorf("edge FromID wrong: got %q, want SCOPE.Operation:health_check", rel.FromID)
+	}
+	if rel.ToID != "http_endpoint:http:ANY:/users/health" {
+		t.Errorf("edge ToID wrong: got %q, want http_endpoint:http:ANY:/users/health", rel.ToID)
+	}
+	// source_handler cleared from synthetic.
+	if _, ok := out[1].Properties["source_handler"]; ok {
+		t.Errorf("source_handler should be cleared on synthetic, got %+v", out[1].Properties)
+	}
+}
+
 // TestResolveCallers_EmitsFetchesEdge (#754) verifies that a consumer
 // synthetic with a resolvable source_caller produces a FETCHES edge on
 // the caller's embedded relationships and clears the property.

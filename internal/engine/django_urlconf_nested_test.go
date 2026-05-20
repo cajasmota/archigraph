@@ -350,6 +350,82 @@ urlpatterns = [
 	}
 }
 
+// TestApplyDjangoNestedURLConf_FBVSourceHandler verifies that direct FBV
+// view references in path() calls produce http_endpoint entities with a
+// source_handler property pointing to the view function (issue #527).
+func TestApplyDjangoNestedURLConf_FBVSourceHandler(t *testing.T) {
+	files := fileMap{
+		"conduit/urls.py": `
+from django.urls import path, include
+
+urlpatterns = [
+    path("api/", include("api.urls")),
+]
+`,
+		"api/urls.py": `
+from django.urls import path
+from api import views
+
+urlpatterns = [
+    path("users/", views.user_list, name="user-list"),
+    path("users/<int:pk>/", views.user_detail, name="user-detail"),
+    path("articles/", views.ArticleView.as_view(), name="article-list"),
+    path("health/", views.health_check, name="health"),
+]
+`,
+	}
+
+	pyPaths := []string{"conduit/urls.py", "api/urls.py"}
+	got := ApplyDjangoNestedURLConf(pyPaths, files.reader)
+
+	byID := map[string]string{} // id → source_handler
+	for _, e := range got {
+		if e.Kind != httpEndpointKind {
+			continue
+		}
+		byID[e.ID] = e.Properties["source_handler"]
+	}
+
+	// FBV: module-qualified → bare name as Controller:<name>
+	if h := byID["http:ANY:/api/users"]; h != "Controller:user_list" {
+		t.Errorf("http:ANY:/api/users source_handler = %q, want %q", h, "Controller:user_list")
+	}
+	if h := byID["http:ANY:/api/users/{pk}"]; h != "Controller:user_detail" {
+		t.Errorf("http:ANY:/api/users/{pk} source_handler = %q, want %q", h, "Controller:user_detail")
+	}
+	// FBV bare name (no module prefix)
+	if h := byID["http:ANY:/api/health"]; h != "Controller:health_check" {
+		t.Errorf("http:ANY:/api/health source_handler = %q, want %q", h, "Controller:health_check")
+	}
+	// CBV as_view() — source_handler must be absent (not set by this pass)
+	if h := byID["http:ANY:/api/articles"]; h != "" {
+		t.Errorf("http:ANY:/api/articles source_handler = %q, want empty (CBV)", h)
+	}
+}
+
+// TestResolveFBVHandler verifies the handler name extraction logic.
+func TestResolveFBVHandler(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"views.user_list", "user_list"},
+		{"user_list", "user_list"},
+		{"views.UserView.as_view()", ""},
+		{"UserView.as_view()", ""},
+		{"", ""},
+		{"app.views.fn", "fn"},
+		{"ALLOWED_HOSTS.append", "append"}, // bare word after last dot — valid identifier
+		{"include(router.urls)", ""},        // include() call — no handler
+	}
+	for _, tt := range tests {
+		got := resolveFBVHandler(tt.input)
+		if got != tt.want {
+			t.Errorf("resolveFBVHandler(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 // TestModulePathToFilePath verifies the module-path to file-path conversion.
 func TestModulePathToFilePath(t *testing.T) {
 	tests := []struct {

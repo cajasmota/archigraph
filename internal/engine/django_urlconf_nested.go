@@ -137,8 +137,8 @@ func ApplyDjangoNestedURLConf(
 
 			childRoutes := extractChildRoutes(string(childContent), fileReader, childRelPath, 0)
 
-			for _, childRoute := range childRoutes {
-				composed := joinDjangoRoutePaths(parentPrefix, childRoute)
+			for _, cr := range childRoutes {
+				composed := joinDjangoRoutePaths(parentPrefix, cr.pattern)
 				canonical := httproutes.Canonicalize(httproutes.FrameworkDjango, composed)
 				if canonical == "" || canonical == "/" {
 					continue
@@ -149,18 +149,29 @@ func ApplyDjangoNestedURLConf(
 				}
 				seen[id] = true
 
+				props := map[string]string{
+					"verb":         "ANY",
+					"path":         canonical,
+					"framework":    "django",
+					"pattern_type": "urlconf_nested_include",
+				}
+				// Issue #527 — wire FBV view functions as source_handler so
+				// the ResolveHTTPEndpointHandlers pass emits an IMPLEMENTS
+				// edge from the view function to this http_endpoint entity.
+				// CBV as_view() handlers are handled separately by the CBV
+				// pass (django_drf_actions.go) and are left without a
+				// source_handler here to avoid conflicts.
+				if cr.handler != "" {
+					props["source_handler"] = "Controller:" + cr.handler
+				}
+
 				out = append(out, types.EntityRecord{
 					ID:         id,
 					Name:       id,
 					Kind:       httpEndpointKind,
 					SourceFile: relPath,
 					Language:   "python",
-					Properties: map[string]string{
-						"verb":         "ANY",
-						"path":         canonical,
-						"framework":    "django",
-						"pattern_type": "urlconf_nested_include",
-					},
+					Properties: props,
 					EnrichmentRequired: false,
 					EnrichmentStatus:   types.StatusPending,
 					QualityScore:       0.8,
@@ -171,18 +182,27 @@ func ApplyDjangoNestedURLConf(
 	return out
 }
 
+// childRoute pairs a URL pattern with its resolved view handler reference.
+// handler is the bare function name extracted from the path() call (e.g.
+// "user_list" from "views.user_list"), or "" when the handler could not be
+// resolved to a simple FBV name (CBV as_view() calls, anonymous lambdas, etc.).
+type childRoute struct {
+	pattern string
+	handler string // bare FBV name, or "" for CBVs / unknown
+}
+
 // extractChildRoutes returns all route patterns declared in a child file
 // (urls.py, routers.py, or any Python file referenced by include()). It
 // handles two patterns:
 //
-//  1. Plain `path("pattern", view)` calls → extract pattern directly.
-//  2. DRF `<router>.register("prefix", ViewSet)` calls → extract prefix.
+//  1. Plain `path("pattern", view)` calls → extract pattern + handler directly.
+//  2. DRF `<router>.register("prefix", ViewSet)` calls → extract prefix only.
 //
 // It also handles one level of recursive string include() nesting (depth
 // limit prevents infinite loops on circular imports).
-func extractChildRoutes(src string, fileReader NestedURLConfFileReader, filePath string, depth int) []string {
+func extractChildRoutes(src string, fileReader NestedURLConfFileReader, filePath string, depth int) []childRoute {
 	const maxDepth = 2
-	var routes []string
+	var routes []childRoute
 
 	// Direct routes (non-include path() calls).
 	for _, m := range djangoChildPathRe.FindAllStringSubmatch(src, -1) {
@@ -194,13 +214,17 @@ func extractChildRoutes(src string, fileReader NestedURLConfFileReader, filePath
 		if strings.HasPrefix(strings.TrimSpace(handler), "include") {
 			continue
 		}
-		routes = append(routes, pattern)
+		routes = append(routes, childRoute{
+			pattern: pattern,
+			handler: resolveFBVHandler(handler),
+		})
 	}
 
 	// DRF router.register() calls — handles routers.py style child files.
 	// e.g. `router.register(r"users", UserViewSet)` → yields "users".
+	// No FBV handler to resolve for CBV ViewSet registrations.
 	for _, m := range djangoRouterRegisterRe.FindAllStringSubmatch(src, -1) {
-		routes = append(routes, m[1])
+		routes = append(routes, childRoute{pattern: m[1]})
 	}
 
 	// Recursive nested string include() calls in the child file.
@@ -222,12 +246,70 @@ func extractChildRoutes(src string, fileReader NestedURLConfFileReader, filePath
 			}
 			subRoutes := extractChildRoutes(string(subContent), fileReader, subRelPath, depth+1)
 			for _, sr := range subRoutes {
-				routes = append(routes, joinDjangoRoutePaths(subPrefix, sr))
+				routes = append(routes, childRoute{
+					pattern: joinDjangoRoutePaths(subPrefix, sr.pattern),
+					handler: sr.handler,
+				})
 			}
 		}
 	}
 
 	return routes
+}
+
+// resolveFBVHandler converts a Django path() view argument to a bare function
+// name suitable for use as a source_handler reference. It handles:
+//
+//   - "views.user_list"         → "user_list"   (module-qualified FBV)
+//   - "user_list"               → "user_list"   (bare FBV import)
+//   - "UserView.as_view()"      → ""            (CBV — no FBV name)
+//   - "views.UserView.as_view()"→ ""            (module-qualified CBV)
+//
+// Returns "" for CBV as_view() calls (they are handled by the existing
+// django_drf_actions.go CBV pass which sets its own source_handler).
+func resolveFBVHandler(handler string) string {
+	// Strip trailing whitespace.
+	handler = strings.TrimSpace(handler)
+	if handler == "" {
+		return ""
+	}
+	// CBV as_view() calls — skip; the CBV pass handles these separately.
+	if strings.Contains(handler, "as_view") {
+		return ""
+	}
+	// Strip module prefix: "views.user_list" → "user_list".
+	// Only strip ONE level (the module alias). Names with two dots
+	// (e.g. "app.views.fn") are uncommon and we take the last segment.
+	if idx := strings.LastIndex(handler, "."); idx >= 0 {
+		handler = handler[idx+1:]
+	}
+	// Must be a valid Python identifier — reject anything that still
+	// contains non-identifier characters.
+	if !isPythonIdentifier(handler) {
+		return ""
+	}
+	return handler
+}
+
+// isPythonIdentifier reports whether s is a valid Python bare identifier
+// (letters, digits, underscores; must not start with a digit).
+func isPythonIdentifier(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r == '_':
+			// always valid
+		case r >= '0' && r <= '9':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // modulePathToFilePath converts a Python module path (e.g. "api.urls" or
