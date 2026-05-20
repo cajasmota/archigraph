@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/archigraph/internal/resolve"
 )
 
 // assertCrossLangGate is the canonical structural assertion for the
@@ -1310,6 +1311,15 @@ func TestRustBareNames_NotClassifiedForOtherLanguages(t *testing.T) {
 				if _, ok := stdlibFunction(name, lang, "", nil); ok {
 					t.Fatalf("stdlibFunction(%q, %q, nil) classified; want fall-through "+
 						"(name is gated to lang=\"rust\" only)", name, lang)
+				}
+				// Skip combinations where the name is also a valid per-language
+				// stdlib builtin for the target language (e.g. "println" is a
+				// Go universe-block builtin since #1085 multi-lang extension).
+				// The cross-language guarantee we are checking is "Rust-only names
+				// don't leak to unrelated languages" — names that are genuinely
+				// builtin in BOTH Rust and the target language are out of scope.
+				if resolve.IsStdlibBuiltinTarget(name, lang) {
+					t.Skipf("%q is also a stdlib builtin for lang=%q — skipping Synthesize leak check", name, lang)
 				}
 				doc := &graph.Document{
 					Entities: []graph.Entity{{
@@ -2804,6 +2814,15 @@ func TestRubyBareNames_NotClassifiedForOtherLanguages(t *testing.T) {
 				if _, ok := stdlibFunction(name, lang, "", nil); ok {
 					t.Fatalf("stdlibFunction(%q, %q, nil) classified; want fall-through "+
 						"(name is gated to lang=\"ruby\" only)", name, lang)
+				}
+				// Skip combinations where the name is also a valid per-language
+				// stdlib builtin for the target language (e.g. "new" is a
+				// Go universe-block builtin since #1085 multi-lang extension).
+				// The cross-language guarantee we are checking is "Ruby-only names
+				// don't leak to unrelated languages" — names that are genuinely
+				// builtin in BOTH Ruby and the target language are out of scope.
+				if resolve.IsStdlibBuiltinTarget(name, lang) {
+					t.Skipf("%q is also a stdlib builtin for lang=%q — skipping Synthesize leak check", name, lang)
 				}
 				doc := &graph.Document{
 					Entities: []graph.Entity{{
@@ -5610,6 +5629,399 @@ func TestSynthesize_NoPlaceholderForPythonStdlib(t *testing.T) {
 		}
 		if r.ToID != "ext:numpy" && r.ToID != "ext:requests" {
 			t.Errorf("external edge %s: ToID=%q, want ext:numpy or ext:requests", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_NoPlaceholderForGoStdlib verifies issue #1085 extended to Go:
+// calls to Go universe-block builtins (make, len, append, panic) do NOT emit
+// External entities, while calls to real stdlib packages (fmt.Println) DO emit
+// External entities.
+//
+// Fixture:
+//   - 8 edges to stdlib builtins: make (×2), len (×2), append (×2), panic (×2)
+//   - 4 edges to real stdlib packages: fmt.Println (×2), os.Exit (×2)
+//   - 4 edges to a user-defined function (already resolved)
+func TestSynthesize_NoPlaceholderForGoStdlib(t *testing.T) {
+	const callerID = "cccc000000000001"
+	const userFuncID = "dddd000000000001"
+
+	inGraphRels := []graph.Relationship{
+		{ID: "rg1", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg2", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg3", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg4", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+	}
+
+	// 8 edges to Go universe-block builtins — should NOT create entities.
+	stdlibRels := []graph.Relationship{
+		{ID: "sg1", FromID: callerID, ToID: "make", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg2", FromID: callerID, ToID: "make", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg3", FromID: callerID, ToID: "len", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg4", FromID: callerID, ToID: "len", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg5", FromID: callerID, ToID: "append", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg6", FromID: callerID, ToID: "append", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg7", FromID: callerID, ToID: "panic", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "sg8", FromID: callerID, ToID: "panic", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+	}
+
+	// 4 edges to real stdlib packages — SHOULD create entities.
+	extRels := []graph.Relationship{
+		{ID: "eg1", FromID: callerID, ToID: "fmt.Println", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "eg2", FromID: callerID, ToID: "fmt.Println", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "eg3", FromID: callerID, ToID: "os.Exit", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+		{ID: "eg4", FromID: callerID, ToID: "os.Exit", Kind: "CALLS",
+			Properties: map[string]string{"language": "go"}},
+	}
+
+	allRels := make([]graph.Relationship, 0, len(inGraphRels)+len(stdlibRels)+len(extRels))
+	allRels = append(allRels, inGraphRels...)
+	allRels = append(allRels, stdlibRels...)
+	allRels = append(allRels, extRels...)
+
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{
+				ID:         callerID,
+				Name:       "Handler",
+				Kind:       "Function",
+				Language:   "go",
+				SourceFile: "cmd/server/main.go",
+			},
+			{
+				ID:         userFuncID,
+				Name:       "Run",
+				Kind:       "Function",
+				Language:   "go",
+				SourceFile: "cmd/server/run.go",
+			},
+		},
+		Relationships: allRels,
+	}
+
+	stats := Synthesize(doc)
+
+	// 1. Exactly 2 External entities: ext:fmt and ext:os.
+	//    (NOT ext:make, ext:len, ext:append, ext:panic)
+	var extEntities []graph.Entity
+	for _, e := range doc.Entities {
+		if e.Kind == KindExternal {
+			extEntities = append(extEntities, e)
+		}
+	}
+	if len(extEntities) != 2 {
+		names := make([]string, len(extEntities))
+		for i, e := range extEntities {
+			names[i] = e.ID
+		}
+		t.Errorf("want 2 External entities (fmt, os), got %d: %v", len(extEntities), names)
+	}
+	for _, e := range extEntities {
+		if e.ID != "ext:fmt" && e.ID != "ext:os" {
+			t.Errorf("unexpected External entity: %s", e.ID)
+		}
+	}
+
+	// 2. DynamicTargetsResolved counts the 8 stdlib edges.
+	if stats.DynamicTargetsResolved != 8 {
+		t.Errorf("DynamicTargetsResolved=%d, want 8", stats.DynamicTargetsResolved)
+	}
+
+	// 3. Stdlib edges: ToID cleared, dynamic_target stamped.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "sg" {
+			continue
+		}
+		if r.ToID != "" {
+			t.Errorf("Go stdlib edge %s: ToID=%q, want empty", r.ID, r.ToID)
+		}
+		if dt := r.Properties["dynamic_target"]; dt == "" {
+			t.Errorf("Go stdlib edge %s: dynamic_target property missing", r.ID)
+		}
+	}
+
+	// 4. In-graph edges: ToID still points at the hex entity ID.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "rg" {
+			continue
+		}
+		if r.ToID != userFuncID {
+			t.Errorf("in-graph edge %s: ToID=%q, want %s", r.ID, r.ToID, userFuncID)
+		}
+	}
+}
+
+// TestSynthesize_NoPlaceholderForJSStdlib verifies issue #1085 extended to
+// JavaScript and TypeScript: calls to browser/Node globals (console, JSON,
+// Math, process, fetch) do NOT emit External entities, while calls to real
+// npm packages (lodash, react) DO emit External entities.
+// TypeScript edges are also verified (same builtin set).
+//
+// Fixture (JS):
+//   - 6 edges to JS globals: console (×2), JSON (×2), Math (×2)
+//   - 4 edges to real npm packages: lodash.get (×2), react.useState (×2)
+// Fixture (TS):
+//   - 4 edges to TS/JS globals: fetch (×2), process (×2)
+func TestSynthesize_NoPlaceholderForJSStdlib(t *testing.T) {
+	const callerID = "eeee000000000001"
+	const userFuncID = "ffff000000000001"
+
+	inGraphRels := []graph.Relationship{
+		{ID: "rg1", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+	}
+
+	// 6 edges to JS globals — should NOT create entities.
+	jsStdlibRels := []graph.Relationship{
+		{ID: "js1", FromID: callerID, ToID: "console", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "js2", FromID: callerID, ToID: "console", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "js3", FromID: callerID, ToID: "JSON", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "js4", FromID: callerID, ToID: "JSON", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "js5", FromID: callerID, ToID: "Math", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "js6", FromID: callerID, ToID: "Math", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+	}
+
+	// 4 edges to real npm packages — SHOULD create entities.
+	extRels := []graph.Relationship{
+		{ID: "ej1", FromID: callerID, ToID: "lodash.get", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "ej2", FromID: callerID, ToID: "lodash.get", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "ej3", FromID: callerID, ToID: "react.useState", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+		{ID: "ej4", FromID: callerID, ToID: "react.useState", Kind: "CALLS",
+			Properties: map[string]string{"language": "javascript"}},
+	}
+
+	// 4 TypeScript edges to globals — should NOT create entities.
+	tsStdlibRels := []graph.Relationship{
+		{ID: "ts1", FromID: callerID, ToID: "fetch", Kind: "CALLS",
+			Properties: map[string]string{"language": "typescript"}},
+		{ID: "ts2", FromID: callerID, ToID: "fetch", Kind: "CALLS",
+			Properties: map[string]string{"language": "typescript"}},
+		{ID: "ts3", FromID: callerID, ToID: "process", Kind: "CALLS",
+			Properties: map[string]string{"language": "typescript"}},
+		{ID: "ts4", FromID: callerID, ToID: "process", Kind: "CALLS",
+			Properties: map[string]string{"language": "typescript"}},
+	}
+
+	allRels := make([]graph.Relationship, 0,
+		len(inGraphRels)+len(jsStdlibRels)+len(extRels)+len(tsStdlibRels))
+	allRels = append(allRels, inGraphRels...)
+	allRels = append(allRels, jsStdlibRels...)
+	allRels = append(allRels, extRels...)
+	allRels = append(allRels, tsStdlibRels...)
+
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{
+				ID:         callerID,
+				Name:       "renderApp",
+				Kind:       "Function",
+				Language:   "javascript",
+				SourceFile: "src/index.js",
+			},
+			{
+				ID:         userFuncID,
+				Name:       "setupStore",
+				Kind:       "Function",
+				Language:   "javascript",
+				SourceFile: "src/store.js",
+			},
+		},
+		Relationships: allRels,
+	}
+
+	stats := Synthesize(doc)
+
+	// 1. Exactly 2 External entities: ext:lodash and ext:react.
+	//    (NOT ext:console, ext:JSON, ext:Math, ext:fetch, ext:process)
+	var extEntities []graph.Entity
+	for _, e := range doc.Entities {
+		if e.Kind == KindExternal {
+			extEntities = append(extEntities, e)
+		}
+	}
+	if len(extEntities) != 2 {
+		names := make([]string, len(extEntities))
+		for i, e := range extEntities {
+			names[i] = e.ID
+		}
+		t.Errorf("want 2 External entities (lodash, react), got %d: %v", len(extEntities), names)
+	}
+	for _, e := range extEntities {
+		if e.ID != "ext:lodash" && e.ID != "ext:react" {
+			t.Errorf("unexpected External entity: %s", e.ID)
+		}
+	}
+
+	// 2. DynamicTargetsResolved counts 10 stdlib edges (6 JS + 4 TS).
+	if stats.DynamicTargetsResolved != 10 {
+		t.Errorf("DynamicTargetsResolved=%d, want 10", stats.DynamicTargetsResolved)
+	}
+
+	// 3. JS stdlib edges: ToID cleared, dynamic_target stamped.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "js" {
+			continue
+		}
+		if r.ToID != "" {
+			t.Errorf("JS stdlib edge %s: ToID=%q, want empty", r.ID, r.ToID)
+		}
+		if dt := r.Properties["dynamic_target"]; dt == "" {
+			t.Errorf("JS stdlib edge %s: dynamic_target property missing", r.ID)
+		}
+	}
+
+	// 4. TS stdlib edges: ToID cleared, dynamic_target stamped.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "ts" {
+			continue
+		}
+		if r.ToID != "" {
+			t.Errorf("TS stdlib edge %s: ToID=%q, want empty", r.ID, r.ToID)
+		}
+		if dt := r.Properties["dynamic_target"]; dt == "" {
+			t.Errorf("TS stdlib edge %s: dynamic_target property missing", r.ID)
+		}
+	}
+}
+
+// TestSynthesize_NoPlaceholderForRubyStdlib verifies issue #1085 extended to
+// Ruby: calls to Ruby kernel methods and core DSL macros (puts, raise,
+// attr_accessor, attr_reader) do NOT emit External entities, while calls to
+// real gems (rails, redis) DO emit External entities.
+//
+// Fixture:
+//   - 6 edges to Ruby kernel/DSL: puts (×2), raise (×2), attr_accessor (×2)
+//   - 4 edges to real gems: rails.render (×2), redis.get (×2)
+//   - 2 edges to a user-defined method (already resolved)
+func TestSynthesize_NoPlaceholderForRubyStdlib(t *testing.T) {
+	const callerID = "9999000000000001"
+	const userFuncID = "8888000000000001"
+
+	inGraphRels := []graph.Relationship{
+		{ID: "rg1", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+		{ID: "rg2", FromID: callerID, ToID: userFuncID, Kind: "CALLS"},
+	}
+
+	// 6 edges to Ruby kernel/DSL builtins — should NOT create entities.
+	stdlibRels := []graph.Relationship{
+		{ID: "rb1", FromID: callerID, ToID: "puts", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "rb2", FromID: callerID, ToID: "puts", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "rb3", FromID: callerID, ToID: "raise", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "rb4", FromID: callerID, ToID: "raise", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "rb5", FromID: callerID, ToID: "attr_accessor", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "rb6", FromID: callerID, ToID: "attr_accessor", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+	}
+
+	// 4 edges to real gems — SHOULD create entities.
+	extRels := []graph.Relationship{
+		{ID: "er1", FromID: callerID, ToID: "rails.render", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "er2", FromID: callerID, ToID: "rails.render", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "er3", FromID: callerID, ToID: "redis.get", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+		{ID: "er4", FromID: callerID, ToID: "redis.get", Kind: "CALLS",
+			Properties: map[string]string{"language": "ruby"}},
+	}
+
+	allRels := make([]graph.Relationship, 0, len(inGraphRels)+len(stdlibRels)+len(extRels))
+	allRels = append(allRels, inGraphRels...)
+	allRels = append(allRels, stdlibRels...)
+	allRels = append(allRels, extRels...)
+
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{
+				ID:         callerID,
+				Name:       "UserController",
+				Kind:       "Class",
+				Language:   "ruby",
+				SourceFile: "app/controllers/user_controller.rb",
+			},
+			{
+				ID:         userFuncID,
+				Name:       "authenticate",
+				Kind:       "Function",
+				Language:   "ruby",
+				SourceFile: "app/services/auth.rb",
+			},
+		},
+		Relationships: allRels,
+	}
+
+	stats := Synthesize(doc)
+
+	// 1. Exactly 2 External entities: ext:rails and ext:redis.
+	//    (NOT ext:puts, ext:raise, ext:attr_accessor)
+	var extEntities []graph.Entity
+	for _, e := range doc.Entities {
+		if e.Kind == KindExternal {
+			extEntities = append(extEntities, e)
+		}
+	}
+	if len(extEntities) != 2 {
+		names := make([]string, len(extEntities))
+		for i, e := range extEntities {
+			names[i] = e.ID
+		}
+		t.Errorf("want 2 External entities (rails, redis), got %d: %v", len(extEntities), names)
+	}
+	for _, e := range extEntities {
+		if e.ID != "ext:rails" && e.ID != "ext:redis" {
+			t.Errorf("unexpected External entity: %s", e.ID)
+		}
+	}
+
+	// 2. DynamicTargetsResolved counts the 6 stdlib edges.
+	if stats.DynamicTargetsResolved != 6 {
+		t.Errorf("DynamicTargetsResolved=%d, want 6", stats.DynamicTargetsResolved)
+	}
+
+	// 3. Stdlib edges: ToID cleared, dynamic_target stamped.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "rb" {
+			continue
+		}
+		if r.ToID != "" {
+			t.Errorf("Ruby stdlib edge %s: ToID=%q, want empty", r.ID, r.ToID)
+		}
+		if dt := r.Properties["dynamic_target"]; dt == "" {
+			t.Errorf("Ruby stdlib edge %s: dynamic_target property missing", r.ID)
+		}
+	}
+
+	// 4. In-graph edges: ToID still points at the hex entity ID.
+	for _, r := range doc.Relationships {
+		if len(r.ID) < 2 || r.ID[:2] != "rg" {
+			continue
+		}
+		if r.ToID != userFuncID {
+			t.Errorf("in-graph edge %s: ToID=%q, want %s", r.ID, r.ToID, userFuncID)
 		}
 	}
 }
