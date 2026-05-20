@@ -1,16 +1,21 @@
 import { useParams } from 'react-router-dom'
-import { BookOpen } from 'lucide-react'
-import { EmptyState } from '@/components/shared/EmptyState'
+import { DocsPage } from '@/components/docs/DocsPage'
 
+/**
+ * Surface 5 — Docs Portal route.
+ *
+ * URL patterns (from App.tsx):
+ *   /docs/:group         → no doc selected, show empty state
+ *   /docs/:group/*       → wildcard captures doc path (e.g. "acme-web/modules/auth/overview")
+ */
 export function DocsRoute() {
-  const { group } = useParams<{ group: string }>()
-  return (
-    <div className="h-full flex flex-col items-center justify-center">
-      <EmptyState
-        icon={BookOpen}
-        title="Docs Portal (Surface 5)"
-        message={`Documentation portal for group "${group}" — coming in M2 phase 5.`}
-      />
-    </div>
-  )
+  const { group = 'fixture-a', '*': docPathWildcard } = useParams<{
+    group: string
+    '*': string
+  }>()
+
+  // Wildcard may be empty string when just at /docs/:group
+  const docPath = docPathWildcard || undefined
+
+  return <DocsPage group={group} docPath={docPath} />
 }
