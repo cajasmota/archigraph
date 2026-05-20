@@ -334,6 +334,16 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	entities, relationships = applyWebhookEdges(
 		file.Language, file.Path, file.Content, entities, relationships,
 	)
+	// gRPC service definitions + client/server cross-repo edges (#725).
+	// Emits SCOPE.GrpcService + SCOPE.GrpcMethod entities and
+	// GRPC_IMPLEMENTS / GRPC_HANDLES edges for Java/Kotlin, Go, Python,
+	// and Node/TypeScript. Cross-repo matching: both sides emit GrpcMethod
+	// entities keyed by `grpc:ServiceName/MethodName`; the import-channel
+	// linker joins them without any new linker code. Append-only — cannot
+	// regress surrounding passes.
+	entities, relationships = applyGRPCEdges(
+		file.Language, file.Path, file.Content, entities, relationships,
+	)
 	// Django models-import suffix rewrite (PR #580 wave-10 Chain-fix A):
 	// The YAML rule `from \S+\.models import (\w+)` emits Model:<name>
 	// for every captured identifier. In Django/DRF projects, a sibling

@@ -51,6 +51,15 @@ const (
 	// is Kafka-only; wave 2 will reuse the kind for RabbitMQ, SQS, NATS,
 	// and Pub/Sub.
 	EntityKindMessageTopic EntityKind = "SCOPE.MessageTopic"
+
+	// #725: gRPC service definitions + client/server cross-repo edges.
+	//   GrpcService represents a gRPC service implementation (server) or stub
+	//   (client). Cross-repo identity is the service name.
+	//   GrpcMethod represents a single RPC method. Cross-repo identity is
+	//   `grpc:<ServiceName>/<MethodName>` — identical on both client and server
+	//   sides so the import-channel linker can join them without new linker code.
+	EntityKindGrpcService EntityKind = "SCOPE.GrpcService"
+	EntityKindGrpcMethod  EntityKind = "SCOPE.GrpcMethod"
 )
 
 // AllEntityKinds returns every EntityKind that archigraph extractors are
@@ -90,6 +99,9 @@ func AllEntityKinds() []EntityKind {
 		EntityKindModel,
 		EntityKindAgentPattern,
 		EntityKindMessageTopic,
+		// #725:
+		EntityKindGrpcService,
+		EntityKindGrpcMethod,
 	}
 }
 
@@ -205,6 +217,14 @@ const (
 	//   TRIGGERS : SCOPE.ScheduledJob → handler function/method
 	//              (scheduler fires the handler on the declared schedule)
 	RelationshipKindTriggers RelationshipKind = "TRIGGERS"
+
+	// #725: gRPC service definitions + client/server cross-repo edges.
+	//   GRPC_IMPLEMENTS : handler method → GrpcMethod (server declares it implements this RPC).
+	//   GRPC_HANDLES    : client call site → GrpcMethod (client invokes this RPC).
+	// Cross-repo linking: both sides emit GrpcMethod with the same ID
+	// `grpc:ServiceName/MethodName` so the existing import-channel linker joins them.
+	RelationshipKindGRPCImplements RelationshipKind = "GRPC_IMPLEMENTS"
+	RelationshipKindGRPCHandles    RelationshipKind = "GRPC_HANDLES"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -259,6 +279,9 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindGraphQLPublishes,
 		// #728 scheduled jobs + webhooks:
 		RelationshipKindTriggers,
+		// #725 gRPC:
+		RelationshipKindGRPCImplements,
+		RelationshipKindGRPCHandles,
 	}
 }
 
