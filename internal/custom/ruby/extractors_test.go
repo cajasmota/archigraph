@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/types"
 
 	_ "github.com/cajasmota/archigraph/internal/custom/ruby"
 )
@@ -109,6 +110,129 @@ func TestRailsNoMatch(t *testing.T) {
 	ents := extract(t, "custom_ruby_rails", fi("plain.rb", "ruby", src))
 	if len(ents) != 0 {
 		t.Errorf("expected no entities, got %d", len(ents))
+	}
+}
+
+// TestRailsBeforeActionCallsEdge verifies that each before_action / after_action
+// / around_action filter entity carries a CALLS relationship (structural-ref)
+// that points at the named filter method in the same controller file.
+// This closes the orphan gap where filter-pattern entities existed but had
+// no outbound edges, making them disconnected from the actual SCOPE.Operation
+// nodes the tree-sitter extractor emits for the same methods.
+func TestRailsBeforeActionCallsEdge(t *testing.T) {
+	src := `
+class UsersController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_user, only: [:show, :update, :destroy]
+  after_action :log_action
+
+  def show; end
+  def set_user; end
+  def authenticate_user!; end
+  def log_action; end
+end
+`
+	filePath := "app/controllers/users_controller.rb"
+	e, ok := extreg.Get("custom_ruby_rails")
+	if !ok {
+		t.Fatal("custom_ruby_rails extractor not registered")
+	}
+	ents, err := e.Extract(context.Background(), extreg.FileInput{
+		Path:     filePath,
+		Language: "ruby",
+		Content:  []byte(src),
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+
+	// findFilterEntity returns the entity for the given filter name, or nil.
+	findFilterEntity := func(name string) *types.EntityRecord {
+		for i := range ents {
+			if ents[i].Name == name && ents[i].Kind == "SCOPE.Pattern" {
+				return &ents[i]
+			}
+		}
+		return nil
+	}
+
+	// hasCallsEdge reports whether ent has a CALLS edge with the given toID.
+	hasCallsEdge := func(ent *types.EntityRecord, toID string) bool {
+		for _, r := range ent.Relationships {
+			if r.Kind == "CALLS" && r.ToID == toID {
+				return true
+			}
+		}
+		return false
+	}
+
+	tests := []struct {
+		filterName   string // SCOPE.Pattern entity name, e.g. "before_action:set_user"
+		targetMethod string // method name the CALLS edge must point at
+	}{
+		{"before_action:authenticate_user!", "authenticate_user!"},
+		{"before_action:set_user", "set_user"},
+		{"after_action:log_action", "log_action"},
+	}
+
+	for _, tc := range tests {
+		ent := findFilterEntity(tc.filterName)
+		if ent == nil {
+			t.Errorf("expected SCOPE.Pattern entity %q not found", tc.filterName)
+			continue
+		}
+		wantRef := "scope:operation:method:ruby:" + filePath + ":" + tc.targetMethod
+		if !hasCallsEdge(ent, wantRef) {
+			t.Errorf("entity %q: missing CALLS edge to %q; got rels=%+v",
+				tc.filterName, wantRef, ent.Relationships)
+		}
+	}
+}
+
+// TestRailsBeforeActionCallsEdge_CountDropsUnresolved verifies the proportion
+// of bare-name CALLS edges emitted for a controller with before_action filters.
+// Before this fix the filter methods produced zero CALLS edges; now each one
+// produces a structural-ref edge that the resolver can bind, reducing the
+// unresolved-edge count for this pattern class.
+func TestRailsBeforeActionCallsEdge_ThreeFilters(t *testing.T) {
+	src := `
+class PostsController < ApplicationController
+  before_action :auth!
+  before_action :set_post, only: [:show]
+  around_action :wrap_transaction
+
+  def show; end
+end
+`
+	filePath := "app/controllers/posts_controller.rb"
+	e, _ := extreg.Get("custom_ruby_rails")
+	ents, _ := e.Extract(context.Background(), extreg.FileInput{
+		Path:     filePath,
+		Language: "ruby",
+		Content:  []byte(src),
+	})
+
+	wantRefs := map[string]string{
+		"before_action:auth!":         "scope:operation:method:ruby:app/controllers/posts_controller.rb:auth!",
+		"before_action:set_post":      "scope:operation:method:ruby:app/controllers/posts_controller.rb:set_post",
+		"around_action:wrap_transaction": "scope:operation:method:ruby:app/controllers/posts_controller.rb:wrap_transaction",
+	}
+
+	for filterName, wantRef := range wantRefs {
+		found := false
+		for _, ent := range ents {
+			if ent.Name == filterName && ent.Kind == "SCOPE.Pattern" {
+				for _, r := range ent.Relationships {
+					if r.Kind == "CALLS" && r.ToID == wantRef {
+						found = true
+					}
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("filter %q: missing CALLS structural-ref %q", filterName, wantRef)
+		}
 	}
 }
 
