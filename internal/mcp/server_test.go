@@ -815,6 +815,63 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Source-attribution tests (ADR-0015 #4/8 — issue #547)
+// ---------------------------------------------------------------------------
+
+// TestInspect_AgentResolvedEdges verifies that archigraph_inspect includes
+// agent_resolved_edges when the graph contains edges whose resolved_by
+// property is "agent-repair". This confirms source-attribution survives
+// from the repair-apply layer into the MCP surface.
+func TestInspect_AgentResolvedEdges(t *testing.T) {
+	dir := t.TempDir()
+	repo := filepath.Join(dir, "rA")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Build a document where one edge carries agent-repair properties.
+	doc := fixtureDoc("rA")
+	// Mark the CALLS edge from a1→a2 as agent-repaired.
+	doc.Relationships[0].Properties = map[string]string{
+		"resolved_by":       "agent-repair",
+		"resolved_by_agent": "generate-docs/pass-1a",
+		"repair_reasoning":  "inferred from import statement",
+	}
+	writeGraph(t, repo, doc)
+
+	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"rA": repo}})
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res := callTool(t, srv, "archigraph_inspect", map[string]any{"label_or_id": "DashboardScreen"})
+	if res.IsError {
+		t.Fatalf("inspect error: %s", resultText(res))
+	}
+	text := resultText(res)
+
+	// The node was agent-repaired — agent_resolved_edges must appear.
+	if !strings.Contains(text, "agent_resolved_edges") {
+		t.Fatalf("agent_resolved_edges missing from inspect output: %s", text)
+	}
+	if !strings.Contains(text, "generate-docs/pass-1a") {
+		t.Fatalf("resolved_by_agent missing: %s", text)
+	}
+	if !strings.Contains(text, "inferred from import statement") {
+		t.Fatalf("repair_reasoning missing: %s", text)
+	}
+
+	// A node with no agent edges (a3) should NOT have the field.
+	res2 := callTool(t, srv, "archigraph_inspect", map[string]any{"label_or_id": "ProposalsService"})
+	if res2.IsError {
+		t.Fatalf("inspect a3 error: %s", resultText(res2))
+	}
+	if strings.Contains(resultText(res2), "agent_resolved_edges") {
+		t.Fatalf("agent_resolved_edges should be absent for non-repaired node: %s", resultText(res2))
+	}
+}
+
+// ---------------------------------------------------------------------------
 // archigraph_patterns tests (ADR-0018 β)
 // ---------------------------------------------------------------------------
 
