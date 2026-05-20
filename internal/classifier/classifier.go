@@ -436,6 +436,11 @@ var extensionLanguageMap = map[string]string{
 	// Nim
 	".nim":    "nim",
 	".nimble": "nim",
+	// F#
+	".fs":     "fsharp",
+	".fsi":    "fsharp",
+	".fsx":    "fsharp",
+	".fsproj": "fsharp",
 	// Lua
 	".lua": "lua",
 	// SQL
