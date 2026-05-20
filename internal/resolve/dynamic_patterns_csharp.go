@@ -101,5 +101,6 @@ var csharpExternalNamespaceRoots = []string{
 
 func init() {
 	dynamicPatternsByLang["csharp"] = csharpDynamicPatterns
-	dynamicPatternsByLang["razor"] = csharpDynamicPatterns
+	// "razor" is registered by dynamic_patterns_razor.go (init order: _csharp < _razor
+	// alphabetically, so razor's init runs after and installs the extended catalog).
 }
