@@ -1,0 +1,26 @@
+{
+  "groups": [
+    {
+      "id": "fixture-a",
+      "display_name": "Fixture A",
+      "repos": [
+        { "slug": "core-api", "display_name": "Core API", "language": "python", "entity_count": 4201, "indexed_at": "2026-05-20T10:00:00Z" },
+        { "slug": "admin-service", "display_name": "Admin Service", "language": "python", "entity_count": 1823, "indexed_at": "2026-05-20T10:01:00Z" },
+        { "slug": "gateway", "display_name": "API Gateway", "language": "go", "entity_count": 892, "indexed_at": "2026-05-20T10:02:00Z" }
+      ],
+      "entity_count": 6916,
+      "indexed_at": "2026-05-20T10:05:00Z"
+    },
+    {
+      "id": "fixture-b",
+      "display_name": "Fixture B",
+      "repos": [
+        { "slug": "web-app", "display_name": "Web App", "language": "typescript", "entity_count": 3102, "indexed_at": "2026-05-20T09:00:00Z" },
+        { "slug": "data-pipeline", "display_name": "Data Pipeline", "language": "python", "entity_count": 1455, "indexed_at": "2026-05-20T09:01:00Z" }
+      ],
+      "entity_count": 4557,
+      "indexed_at": "2026-05-20T09:05:00Z"
+    }
+  ],
+  "version": "1.0.0-m2"
+}
