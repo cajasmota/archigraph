@@ -42,7 +42,7 @@ var (
 		`(?m)^\s*(has_many|belongs_to|has_one|has_and_belongs_to_many)\s+:([a-z_]+)`,
 	)
 	reRailsBeforeAction = regexp.MustCompile(
-		`(?m)^\s*(before_action|after_action|around_action)\s+:([a-z_]+)`,
+		`(?m)^\s*(before_action|after_action|around_action)\s+:([a-z_]+[!?]?)`,
 	)
 	reRailsScope = regexp.MustCompile(
 		`(?m)^\s*scope\s+:([a-z_]+)`,
@@ -167,6 +167,14 @@ func (e *railsExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 	}
 
 	// 7. before_action/after_action filters -> SCOPE.Pattern
+	// Each filter entity also carries a CALLS edge (structural-ref) pointing
+	// at the filter method in the same controller file. The structural-ref
+	// format matches what the tree-sitter Ruby extractor assigns to method
+	// entities (scope:operation:method:ruby:<file>:<name>), so the resolver
+	// can bind the edge within the same file without needing a cross-file
+	// lookup. This closes the gap where filter chain relationships were
+	// extracted but left as orphan SCOPE.Pattern entities with no outbound
+	// edges.
 	for _, m := range reRailsBeforeAction.FindAllStringSubmatchIndex(src, -1) {
 		filterType := src[m[2]:m[3]]
 		filterMethod := src[m[4]:m[5]]
@@ -174,6 +182,12 @@ func (e *railsExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		ent := makeEntity(name, "SCOPE.Pattern", "", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "rails", "provenance", "INFERRED_FROM_RAILS_FILTER",
 			"filter_type", filterType, "filter_method", filterMethod)
+		// Emit CALLS edge to the actual filter method via structural-ref so the
+		// resolver can bind the pattern to the concrete SCOPE.Operation entity.
+		ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+			ToID: extractor.BuildOperationStructuralRef("ruby", file.Path, filterMethod),
+			Kind: "CALLS",
+		})
 		add(ent)
 	}
 
