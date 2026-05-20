@@ -386,6 +386,8 @@ func TestExtensionCoverage(t *testing.T) {
 		{"foo.graphql", "graphql"},
 		{"foo.prisma", "prisma"},
 		{"foo.hs", "haskell"},
+		{"foo.pony", "pony"},
+		{"foo.idr", "idris"},
 		{"foo.pl", "perl"},
 		{"foo.res", "rescript"},
 		{"foo.resi", "rescript"},
@@ -804,6 +806,9 @@ var classifierRepresentativeInputs = map[string]string{
 	"c":        "src/main.c",
 	"cpp":      "src/main.cpp",
 	"solidity": "contracts/TokenMint.sol",
+	// Niche research languages — fully wired extractor + classifier.
+	"pony":  "src/main.pony",
+	"idris": "src/Main.idr",
 }
 
 // knownMismatches documents classifier ↔ extractor gaps that exist on the

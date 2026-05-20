@@ -512,6 +512,10 @@ var extensionLanguageMap = map[string]string{
 	// Haskell
 	".hs":  "haskell",
 	".lhs": "haskell",
+	// Pony — actor-based capability-secure language
+	".pony": "pony",
+	// Idris — dependently-typed functional language
+	".idr": "idris",
 	// Solidity — Ethereum smart contracts
 	".sol": "solidity",
 	// Verilog / SystemVerilog — hardware description languages (EDA / silicon)
