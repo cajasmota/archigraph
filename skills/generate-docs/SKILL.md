@@ -71,6 +71,96 @@ The pass is **on-demand** — not part of a standard first-time doc generation r
 - The user explicitly asks for enriched dashboard data ("enrich the Paths panel", "add rank and summaries to my flows").
 - The `archigraph_enrichments(action=list)` call returns enrichment candidates with status `pending`.
 
+### Model selection — Haiku default, Sonnet for critical tier
+
+**Never use Sonnet (or Opus) for the full enrichment corpus.** At Sonnet rates, a 5,800-entity run costs $70+ and takes 3–8 hours. Use the following tiered model selection keyed on each candidate's `criticality_band` field (set by `ComputeScore` in the indexer, sourced from `internal/enrichment/candidates.go`):
+
+| `criticality_band` | Score | Model | Rationale |
+|--------------------|-------|-------|-----------|
+| `critical` | ≥ 80 | `claude-3-5-sonnet-20241022` | High-traffic endpoints, god nodes, articulation points — deeper analysis justified |
+| `high` | 60–79 | `claude-3-haiku-20240307` | Important but not business-critical; Haiku sufficient |
+| `medium` | 40–59 | `claude-3-haiku-20240307` | Moderate signal; Haiku sufficient |
+| `low` | < 40 | `claude-3-haiku-20240307` | Marginal enrichment value; Haiku only |
+
+**Never mix tiers in the same batch** — different tiers go to different models.
+
+> **Agent host guidance:** See [docs/agent-hosts.md](../../docs/agent-hosts.md) for how to set Haiku as the active model in Claude Code, Cursor, and Windsurf before starting Pass 13.
+
+### Batching — 20–50 entities per LLM call
+
+Do not enrich one entity per call. Batch 20–50 entity stubs per LLM call to amortise per-call overhead.
+
+**Batch size guidance:**
+- Haiku batches: 30–50 entities (default 40)
+- Sonnet batches: 20–30 entities (larger context per entity; default 25)
+- Reduce batch size if the LLM returns truncated or incomplete results
+
+**Entity stub shape** (include in each batch payload):
+
+```json
+{
+  "entity_id": "ep-abc123",
+  "kind": "http_endpoint",
+  "name": "GET /api/orders",
+  "criticality_band": "critical",
+  "score": 82,
+  "context": {
+    "caller_count": 14,
+    "callee_count": 3,
+    "is_god_node": true,
+    "neighbours": ["OrderService::create", "PaymentGateway::charge"]
+  }
+}
+```
+
+Populate `context` from `archigraph_expand(node="<entity_id>", depth=2)`. Include `caller_count`, `callee_count`, `is_god_node`, and up to 5 neighbour names.
+
+**Batch request shape:**
+
+```json
+{
+  "model": "claude-3-haiku-20240307",
+  "batch_id": "pass13-batch-007",
+  "entities": [
+    { "entity_id": "...", "kind": "...", "name": "...", "context": { ... } }
+  ],
+  "instructions": "For each entity, emit only its YAML frontmatter block (--- delimited). Do not emit prose. Fill summary, rank, group, group_label, and gaps at minimum. Emit kind-appropriate per-kind fields only."
+}
+```
+
+**Batch response shape** (what the LLM should return):
+
+```json
+{
+  "batch_id": "pass13-batch-007",
+  "results": [
+    {
+      "entity_id": "ep-abc123",
+      "frontmatter": "---\nentity_id: ep-abc123\nkind: http_endpoint\nsummary: '...'\n..."
+    }
+  ],
+  "skipped": ["ep-xyz999"],
+  "error": null
+}
+```
+
+After receiving results, write each `frontmatter` block to the entity's doc file (prepend; do not replace existing prose) and submit via `archigraph_enrichments(action=submit, ...)`.
+
+### Resume semantics — safe to restart
+
+Pass 13 is **idempotent**. Before assembling batches:
+
+```
+# 1. Fetch already-enriched entity IDs.
+archigraph_enrichments(action=list, status="enriched")
+
+# 2. Exclude those entity_ids from all batches.
+#    This makes Pass 13 safe to restart after any failure without re-enriching
+#    already-completed entities or incurring duplicate LLM costs.
+```
+
+If the daemon restarts mid-run, re-invoke Pass 13 — it will resume from where it left off.
+
 ### What Pass 13 does (per entity kind)
 
 For every entity of kind `http_endpoint`, `process_flow`, or `message_topic`, the enrichment subagent:
@@ -271,25 +361,61 @@ Aim to populate all health-tracked fields when writing Pass 13 output.
 ### Pass 13 procedure
 
 ```
-# 1. List entities to enrich.
-archigraph_find(question="HTTP endpoints routes", depth=1, token_budget=1200)
-archigraph_find(question="process flows call chains", depth=1, token_budget=1200)
-archigraph_find(question="message topics broker queues", depth=1, token_budget=800)
+# ── Step 0: Resume check ─────────────────────────────────────────────────────
+# Fetch already-enriched IDs to skip (idempotent restart).
+already_enriched = archigraph_enrichments(action=list, status="enriched")
+skip_ids = set(c.entity_id for c in already_enriched)
 
-# 2. For each entity, inspect neighbours (auth edges, QUERIES edges, PUBLISHES_TO).
-archigraph_expand(node="<entity_id>", depth=2)
+# ── Step 1: Collect candidates ───────────────────────────────────────────────
+# Pull from the pre-computed enrichment queue (includes criticality_band + score).
+candidates_ep   = archigraph_enrichments(action=list, kind="http_endpoint",  status="pending")
+candidates_flow = archigraph_enrichments(action=list, kind="process_flow",   status="pending")
+candidates_mt   = archigraph_enrichments(action=list, kind="message_topic",  status="pending")
+all_candidates  = candidates_ep + candidates_flow + candidates_mt
 
-# 3. Check enrichment candidates queue for pre-computed signals.
-archigraph_enrichments(action=list, kind="http_endpoint")
-archigraph_enrichments(action=list, kind="process_flow")
-archigraph_enrichments(action=list, kind="message_topic")
+# Filter already-done.
+todo = [c for c in all_candidates if c.entity_id not in skip_ids]
 
-# 4. Write frontmatter. Prepend to the existing doc file; do not replace prose.
-# 5. Submit enrichment record so the daemon tracks it.
-archigraph_enrichments(action=submit, entity_id="<id>", summary="...", kind="<kind>")
+# ── Step 2: Build entity stubs ───────────────────────────────────────────────
+# For each candidate, expand neighbours for context.
+# archigraph_expand(node="<entity_id>", depth=2)
+# Include: caller_count, callee_count, is_god_node, up to 5 neighbour names.
+
+# ── Step 3: Partition by criticality_band ────────────────────────────────────
+critical_todo = [c for c in todo if c.criticality_band == "critical"]   # → Sonnet
+other_todo    = [c for c in todo if c.criticality_band != "critical"]   # → Haiku
+
+# ── Step 4: Print cost estimate before dispatching ───────────────────────────
+# Rough estimate: critical × 800 tok, other × 500 tok.
+# Print: "Enriching N entities (~$X). Proceed? [y/N]"
+# Gate on user confirmation (or --yes flag for automation).
+
+# ── Step 5: Dispatch Haiku batches (other_todo) ──────────────────────────────
+# Batch size: 40 entities per call.
+# Model: claude-3-haiku-20240307
+for batch in chunks(other_todo, size=40):
+    results = call_llm(model="claude-3-haiku-20240307", entities=batch)
+    for r in results:
+        write_frontmatter(r.entity_id, r.frontmatter)   # prepend; do not replace prose
+        archigraph_enrichments(action=submit, entity_id=r.entity_id,
+                               summary=r.summary, kind=r.kind)
+
+# ── Step 6: Dispatch Sonnet batches (critical_todo) ──────────────────────────
+# Batch size: 25 entities per call.
+# Model: claude-3-5-sonnet-20241022
+for batch in chunks(critical_todo, size=25):
+    results = call_llm(model="claude-3-5-sonnet-20241022", entities=batch)
+    for r in results:
+        write_frontmatter(r.entity_id, r.frontmatter)
+        archigraph_enrichments(action=submit, entity_id=r.entity_id,
+                               summary=r.summary, kind=r.kind)
+
+# ── Step 7: Verify ───────────────────────────────────────────────────────────
+# Run snippets/verification-checklist.md for a sample (≥10 entities per tier).
+# Hand back to orchestrator.
 ```
 
-After writing, run `snippets/verification-checklist.md` for each entity. Hand back to the orchestrator when all entities processed.
+After writing, run `snippets/verification-checklist.md` for a sample of at least 10 entities per criticality tier. Hand back to the orchestrator when all entities are processed or when a partial batch failure has been documented.
 
 ## Pass 14 — Frontmatter validation pass
 
@@ -422,3 +548,4 @@ Before any pass commits its output, the writer subagent runs the checks in `snip
 - `internal/dashboard/handlers_flows.go` `extractFlowDocsWithResolver` + `enrichmentHealth` - Flows panel enrichment lookup and health check (PR #1181).
 - `skills/generate-docs/templates/` - per-kind frontmatter template files for Pass 13.
 - `skills/generate-docs/examples/` - fully-populated example enriched doc files per kind.
+- `docs/agent-hosts.md` - how to configure Haiku in Claude Code, Cursor, and Windsurf before running Pass 13 (see #1288).
