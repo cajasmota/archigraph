@@ -58,6 +58,20 @@ type GroupConfig struct {
 		// which MCP endpoints to query. Default false — opt-in only.
 		AutoInjectAgentsMD bool `json:"auto_inject_agents_md,omitempty"`
 	} `json:"features"`
+	// ExtraStdlibFilter is a user-extensible map from language tag to a list
+	// of bare-name symbols that should be suppressed as if they were stdlib
+	// builtins — i.e. no placeholder External entity is emitted for them.
+	// Use this to suppress framework stdlibs that are specific to your group
+	// (e.g. Django's django.contrib.auth.models when you only care about your
+	// own code). Values are loaded via resolve.RegisterExtraStdlibFilter at
+	// daemon startup. Issue #1206.
+	//
+	// Example in fleet JSON:
+	//   "extra_stdlib_filter": {
+	//     "python": ["authenticate", "login_required", "permission_required"],
+	//     "java":   ["doFilter", "doGet", "doPost"]
+	//   }
+	ExtraStdlibFilter map[string][]string `json:"extra_stdlib_filter,omitempty"`
 }
 
 // Manifest is the committed teammate file: <repo>/.archigraph/group.json.
