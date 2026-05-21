@@ -1172,6 +1172,48 @@ Stripe keys, SendGrid keys, Slack tokens, generic high-entropy assignments, and 
 
 ---
 
+---
+
+## Handshake Token Budget
+
+The MCP `initialize` response carries every tool definition. Keeping it small
+reduces the token cost paid on every new agent session.
+
+| Metric | Value |
+|--------|-------|
+| Measured baseline (2026-05-21, 32 tools) | **4,219 tokens** |
+| Ceiling (baseline + 7 %) | **4,500 tokens** |
+| Estimation method | conservative 4 chars/token |
+| Tool description limit | **80 characters** |
+
+### Enforcement
+
+`make mcp-audit` runs `cmd/mcp-audit` which:
+
+1. Instantiates the MCP server against an empty registry.
+2. Measures the JSON-serialised size of every tool definition.
+3. Applies the 4-chars/token estimate + 512-byte envelope overhead.
+4. Fails (exit 1) if the total exceeds `AUDIT_CEILING` (default 4,500).
+5. Fails if any tool description exceeds 80 characters.
+
+The pre-merge CI workflow runs `make mcp-audit` as a required gate.
+
+### Adding a new tool
+
+When you add a tool, run `make mcp-audit` before submitting. If the ceiling is
+exceeded, either shorten existing descriptions or open a budget-increase PR with
+a comment explaining the token cost and why it is justified.
+
+### Override ceiling
+
+```sh
+AUDIT_CEILING=4200 make mcp-audit          # stricter gate
+AUDIT_BASELINE=4219 make mcp-audit         # show delta from measured baseline
+go run ./cmd/mcp-audit -json               # machine-readable JSON report
+```
+
+---
+
 ## See also
 
 - ADR-0001 — Go-native single-binary distribution

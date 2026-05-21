@@ -1,4 +1,4 @@
-.PHONY: build dashboard-build test lint fmt vet clean fbgen fb-bench
+.PHONY: build dashboard-build test lint fmt vet clean fbgen fb-bench mcp-audit
 
 GO ?= go
 NPM ?= npm
@@ -60,6 +60,14 @@ fbgen:
 	fi
 	@sed -i.bak 's/^package archigraph$$/package fbgraph/' internal/graph/fbgraph/*.go && \
 	  rm -f internal/graph/fbgraph/*.bak
+
+# mcp-audit: measure handshake token budget and validate tool descriptions.
+# Exit 1 when handshake exceeds AUDIT_CEILING (default 3500) or any description
+# exceeds 80 chars.  Run with -json for machine-readable output.
+# Override ceiling: AUDIT_CEILING=3200 make mcp-audit
+# Show delta against baseline: AUDIT_BASELINE=3326 make mcp-audit
+mcp-audit:
+	$(GO) run ./cmd/mcp-audit
 
 # Run the ADR-0016 microbenchmarks against the configured fixture.
 # Override the fixture with: ARCHIGRAPH_BENCH_FIXTURE=/path/to/graph.json

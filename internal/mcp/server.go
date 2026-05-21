@@ -103,7 +103,7 @@ func (s *Server) inferCWD(req mcpapi.CallToolRequest) string {
 
 // registerTools registers every tool handler on the MCP server.
 // Source of truth: AddTool calls below — keep internal/mcp/SCHEMA.md in sync.
-// Tool count: 32 (#1281: 9→4 bundles; #1293: desc trim; #1312: +archigraph_quality_cycles; #1314: +archigraph_auth_coverage; #1322: +archigraph_secrets; #1323: +archigraph_test_coverage already on main).
+// Tool count: 32 (#1281: 9→4 bundles; #1293: desc trim; #1312: +archigraph_quality_cycles; #1314: +archigraph_auth_coverage; #1322: +archigraph_secrets; #1323: +archigraph_test_coverage already on main; #1333: desc trimmed to ≤80 chars for budget gate).
 // Dropped (HTTP-only): archigraph_diagnostics, archigraph_quality_orphans,
 //   archigraph_get_next_enrichment_task, archigraph_get_telemetry.
 func (s *Server) registerTools() {
@@ -418,7 +418,7 @@ func (s *Server) registerTools() {
 	// archigraph_quality_cycles — import cycle detection (#1312).
 	// Runs Tarjan SCC on IMPORTS edges; each SCC > 1 = circular dependency.
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_quality_cycles",
-		mcpapi.WithDescription("Detect import cycles via Tarjan SCC on IMPORTS edges. Returns cycle members, weakest-link edge, and suggested extraction target."),
+		mcpapi.WithDescription("Detect import cycles via Tarjan SCC; returns members, weakest edge, fix hint."),
 		mcpapi.WithArray("repo_filter", mcpapi.WithStringItems()),
 		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),
 		mcpapi.WithString("group"),
@@ -429,9 +429,7 @@ func (s *Server) registerTools() {
 	// Walk all http_endpoint_definition entities and flag those without auth
 	// decorators/middleware.  Severity: error (sensitive/IDOR), warn (public), info (covered).
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_auth_coverage",
-		mcpapi.WithDescription("Security audit: list HTTP endpoints and flag those missing auth decorators or middleware. "+
-			"Returns has_auth, severity (error/warn/info), IDOR risk, and sensitive-operation flags per endpoint. "+
-			"error = unprotected sensitive operation or IDOR risk; warn = potentially public endpoint; info = auth present."),
+		mcpapi.WithDescription("Security audit: flag HTTP endpoints missing auth (severity, IDOR risk)."),
 		mcpapi.WithArray("repo_filter", mcpapi.WithStringItems()),
 		mcpapi.WithBoolean("only_missing", mcpapi.DefaultBool(false)),
 		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(200)),
@@ -441,11 +439,7 @@ func (s *Server) registerTools() {
 
 	// #1323: test-coverage graph — link Test entities to the code they exercise.
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_test_coverage",
-		mcpapi.WithDescription("Test-coverage analysis: identifies production entities (Function, Method, Class, "+
-			"http_endpoint) that have no incoming TESTS edge. "+
-			"Ranks untested code by severity: high=HTTP endpoints, medium=exported functions, low=other. "+
-			"Use top_directories=true to see which directories have the worst coverage gaps. "+
-			"severity filter: high|medium|low (empty = all)."),
+		mcpapi.WithDescription("Find production entities with no TESTS edge, ranked by severity."),
 		mcpapi.WithArray("repo_filter", mcpapi.WithStringItems()),
 		mcpapi.WithString("severity", mcpapi.Description("Filter uncovered list: high|medium|low (empty=all)")),
 		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),
@@ -458,7 +452,7 @@ func (s *Server) registerTools() {
 	// Walks source files; flags API keys, passwords, JWT tokens, and other
 	// high-entropy credentials. Test fixtures and opt-out comments are suppressed.
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_secrets",
-		mcpapi.WithDescription("Scan source files for hardcoded secrets (API keys, passwords, JWT tokens, AWS credentials, private keys). Returns masked findings with severity grades and suggested env-var names."),
+		mcpapi.WithDescription("Scan source files for hardcoded secrets; returns masked findings by severity."),
 		mcpapi.WithString("group"),
 		mcpapi.WithString("cwd"),
 		mcpapi.WithString("severity",

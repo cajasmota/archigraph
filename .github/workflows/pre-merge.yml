@@ -35,3 +35,7 @@ jobs:
         run: |
           npm ci
           npm run build
+      - name: mcp-audit (handshake budget + description validation)
+        run: go run ./cmd/mcp-audit
+        env:
+          AUDIT_CEILING: "4500"
