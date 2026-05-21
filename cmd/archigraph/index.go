@@ -32,6 +32,7 @@ import (
 	pyextr "github.com/cajasmota/archigraph/internal/extractors/python"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/archigraph/internal/module"
 	"github.com/cajasmota/archigraph/internal/progress"
 	"github.com/cajasmota/archigraph/internal/resolve"
 	"github.com/cajasmota/archigraph/internal/treesitter"
@@ -142,6 +143,11 @@ type Indexer struct {
 	resolveIdx        *resolve.Index
 	resolveStats      resolve.Stats
 	finalDispositions resolve.Stats
+
+	// moduleMarkers is built from the walked file list before extraction and
+	// used by buildDocument to derive Properties["module"] for every entity.
+	// Issue #1381 — module extraction via path rollup.
+	moduleMarkers module.MarkerSet
 }
 
 // IndexOption configures optional behaviour on the Indexer. Used as a
@@ -523,6 +529,13 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 	trk.Tick(progress.PhaseScan, len(files), 0, "", 0)
 	fmt.Fprintf(os.Stderr, "archigraph: discovered %d candidate files in %s\n", len(files), absRepo)
 
+	// Issue #1381 — build package-boundary marker set from the full walked
+	// file list.  This is a single O(N) pass over the already-allocated
+	// slice; it costs no additional I/O.  The result is stored on the
+	// Indexer and consumed by buildDocument to stamp Properties["module"]
+	// on every entity.
+	i.moduleMarkers = module.BuildMarkerSet(files)
+
 	// Incremental mode (issue #1339): filter files down to those whose
 	// content hash changed since the last successful index. The manifest is
 	// loaded once before filtering; it is written back in saveGraph below
@@ -788,6 +801,22 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 			extStats.Synthesized, extStats.RelationshipsResolved, extStats.UniqueExternals)
 	}
 	i.stats.extSynth = extStats
+
+	// Issue #1381 — stamp module="_external" on synthesised placeholder
+	// entities that have no source_file (ext:* nodes from external.Synthesize,
+	// and any other synthetic entities that buildDocument could not tag because
+	// they were appended after the assembly loop).  EnsureModule skips entities
+	// that already carry a "module" key, so well-sourced entities are unaffected.
+	for k := range doc.Entities {
+		e := &doc.Entities[k]
+		if e.SourceFile == "" {
+			if e.Properties == nil {
+				e.Properties = map[string]string{"module": "_external"}
+			} else if _, ok := e.Properties["module"]; !ok {
+				e.Properties["module"] = "_external"
+			}
+		}
+	}
 
 	// ADR-0015 phase-1 (#545) — repair.json apply path. Runs BEFORE the
 	// final reclassification so the bug-rate measurement that follows
@@ -2196,6 +2225,11 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 		id := graph.EntityID(i.repoTag, r.Kind, r.Name, r.SourceFile)
 		if !seenEntity[id] {
 			seenEntity[id] = true
+			// Issue #1381 — stamp Properties["module"] on every entity at
+			// assembly time using the deterministic path-rollup algorithm.
+			// EnsureModule is a no-op when the key is already set (extractor
+			// overrides are preserved).
+			r.Properties = module.EnsureModule(r.Properties, r.SourceFile, i.moduleMarkers)
 			entities = append(entities, graph.Entity{
 				ID:            id,
 				Name:          r.Name,
