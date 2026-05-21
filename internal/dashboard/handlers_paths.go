@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	httpEndpointKind = "http_endpoint"
+	httpEndpointKind           = "http_endpoint"
+	httpEndpointDefinitionKind = "http_endpoint_definition"
 	// pageSize is kept for backward-compat but the default is now 5000 (all paths).
 	pageSize = 5000
 )
@@ -46,6 +47,29 @@ type PathTreeNode struct {
 	HasPaths bool           `json:"has_paths"`
 }
 
+// BackendEndpointRow is one endpoint definition inside a BackendGroup.
+type BackendEndpointRow struct {
+	PathHash          string   `json:"path_hash"`
+	Path              string   `json:"path"`
+	Verbs             []string `json:"verbs"`
+	Handlers          []string `json:"handlers"`
+	Multiplicity      int      `json:"multiplicity"`
+	Frameworks        []string `json:"frameworks"`
+	IsWebhook         bool     `json:"is_webhook"`
+	Repos             []string `json:"repos"`
+	OwningBackend     string   `json:"owning_backend"`
+	CrossBackendRef   bool     `json:"cross_backend_ref,omitempty"`
+}
+
+// BackendGroup groups endpoint definitions that belong to a single backend service.
+type BackendGroup struct {
+	Name          string               `json:"name"`
+	EndpointCount int                  `json:"endpoint_count"`
+	ServiceType   string               `json:"service_type,omitempty"`
+	Repos         []string             `json:"repos"`
+	Endpoints     []BackendEndpointRow `json:"endpoints"`
+}
+
 // handlePathsList — GET /api/paths/{group}
 func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 	group := r.PathValue("group")
@@ -66,17 +90,19 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Collect all http_endpoint entities across repos.
+	// Collect all http_endpoint / http_endpoint_definition entities across repos.
 	type rawEndpoint struct {
-		ID         string
-		Path       string
-		Verb       string
-		Handler    string
-		Framework  string
-		IsWebhook  bool
-		Repo       string
-		SourceFile string
-		StartLine  int
+		ID            string
+		Path          string
+		Verb          string
+		Handler       string
+		Framework     string
+		IsWebhook     bool
+		Repo          string
+		SourceFile    string
+		StartLine     int
+		OwningBackend string
+		IsDefinition  bool // true when kind == http_endpoint_definition
 	}
 
 	var endpoints []rawEndpoint
@@ -86,8 +112,11 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 		}
 		for i := range r.Doc.Entities {
 			e := &r.Doc.Entities[i]
-			if !strings.EqualFold(dashStripScopePrefix(e.Kind), httpEndpointKind) &&
-				e.Kind != "Endpoint" && e.Kind != "Route" {
+			kind := dashStripScopePrefix(e.Kind)
+			isDefinition := strings.EqualFold(kind, httpEndpointDefinitionKind)
+			isEndpoint := strings.EqualFold(kind, httpEndpointKind) ||
+				e.Kind == "Endpoint" || e.Kind == "Route"
+			if !isDefinition && !isEndpoint {
 				continue
 			}
 			// Skip frontend-only synthetic call-site entries — those belong
@@ -117,24 +146,36 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 			}
 			framework := e.Properties["framework"]
 			isWebhook := e.Properties["is_webhook"] == "true"
+			owningBackend := e.Properties["owning_backend"]
+			if owningBackend == "" {
+				// Fallback heuristic: use the handler name prefix or repo slug
+				// to infer a backend name when the property is absent (#1217
+				// may not have landed yet).
+				owningBackend = inferOwningBackend(e.Name, r.Slug)
+			}
 			endpoints = append(endpoints, rawEndpoint{
-				ID:         dashPrefixedID(r.Slug, e.ID),
-				Path:       path,
-				Verb:       verb,
-				Handler:    e.Name,
-				Framework:  framework,
-				IsWebhook:  isWebhook,
-				Repo:       r.Slug,
-				SourceFile: e.SourceFile,
-				StartLine:  e.StartLine,
+				ID:            dashPrefixedID(r.Slug, e.ID),
+				Path:          path,
+				Verb:          verb,
+				Handler:       e.Name,
+				Framework:     framework,
+				IsWebhook:     isWebhook,
+				Repo:          r.Slug,
+				SourceFile:    e.SourceFile,
+				StartLine:     e.StartLine,
+				OwningBackend: owningBackend,
+				IsDefinition:  isDefinition,
 			})
 		}
 	}
 
-	// Group by path.
+	// Group by path (flat list — kept for backward compat).
 	type pathKey = string
 	grouped := map[pathKey]*PathRow{}
 	pathOrder := []string{}
+
+	// Also track per-path owning backend (first seen wins for the flat list).
+	pathBackend := map[pathKey]string{}
 
 	for _, ep := range endpoints {
 		if _, ok := grouped[ep.Path]; !ok {
@@ -147,6 +188,7 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 				Repos:      []string{},
 			}
 			pathOrder = append(pathOrder, ep.Path)
+			pathBackend[ep.Path] = ep.OwningBackend
 		}
 		pr := grouped[ep.Path]
 		pr.Multiplicity++
@@ -204,10 +246,23 @@ func (s *Server) handlePathsList(w http.ResponseWriter, r *http.Request) {
 
 	total := len(rows)
 
+	// Build owning_backends grouping (new response field — sub-B #1218).
+	// Convert local rawEndpoint slice to the exported type for the grouping helper.
+	groupingEps := make([]rawEndpointForGrouping, len(endpoints))
+	for i, ep := range endpoints {
+		groupingEps[i] = rawEndpointForGrouping{
+			Path:          ep.Path,
+			Repo:          ep.Repo,
+			OwningBackend: ep.OwningBackend,
+		}
+	}
+	owningBackends := buildOwningBackends(rows, groupingEps, pathBackend)
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"paths": rows,
-		"tree":  tree,
-		"total": total,
+		"paths":           rows,
+		"tree":            tree,
+		"total":           total,
+		"owning_backends": owningBackends,
 	})
 }
 
@@ -536,6 +591,164 @@ func buildPrefixTree(rows []PathRow) []PathTreeNode {
 		return out
 	}
 	return toNodes(root)
+}
+
+// buildOwningBackends groups filtered path rows by owning_backend, computes
+// aggregates, infers service_type, and sets cross_backend_ref for endpoints
+// referenced from another backend's repo. Backends are sorted by endpoint
+// count descending.
+//
+// rawEps is the full (unfiltered) endpoint slice used to detect cross-backend
+// references. pathBackend maps path strings to their primary owning backend.
+func buildOwningBackends(rows []PathRow, rawEps []rawEndpointForGrouping, pathBackend map[string]string) []BackendGroup {
+	// backend name → BackendGroup builder state
+	type backendState struct {
+		name      string
+		endpoints map[string]*BackendEndpointRow // keyed by path
+		repoSet   map[string]bool
+	}
+	states := map[string]*backendState{}
+	order := []string{}
+
+	for _, row := range rows {
+		backend := pathBackend[row.Path]
+		if backend == "" {
+			backend = "unknown"
+		}
+		if _, ok := states[backend]; !ok {
+			states[backend] = &backendState{
+				name:      backend,
+				endpoints: map[string]*BackendEndpointRow{},
+				repoSet:   map[string]bool{},
+			}
+			order = append(order, backend)
+		}
+		st := states[backend]
+		if _, ok := st.endpoints[row.Path]; !ok {
+			st.endpoints[row.Path] = &BackendEndpointRow{
+				PathHash:      row.PathHash,
+				Path:          row.Path,
+				Verbs:         row.Verbs,
+				Handlers:      row.Handlers,
+				Multiplicity:  row.Multiplicity,
+				Frameworks:    row.Frameworks,
+				IsWebhook:     row.IsWebhook,
+				Repos:         row.Repos,
+				OwningBackend: backend,
+			}
+		}
+		for _, repo := range row.Repos {
+			st.repoSet[repo] = true
+		}
+	}
+
+	// Build a set of (path, backend) pairs so we can detect cross-backend refs:
+	// an endpoint is cross-backend if another backend's repo also references it.
+	// We use the raw endpoints to find repos that reference each path.
+	pathRepoBackend := map[string]map[string]string{} // path → repo → owning_backend
+	for _, ep := range rawEps {
+		if _, ok := pathRepoBackend[ep.Path]; !ok {
+			pathRepoBackend[ep.Path] = map[string]string{}
+		}
+		pathRepoBackend[ep.Path][ep.Repo] = ep.OwningBackend
+	}
+
+	// Mark cross-backend refs and collect service types.
+	for _, st := range states {
+		for path, epRow := range st.endpoints {
+			repoBackends := pathRepoBackend[path]
+			for _, rb := range repoBackends {
+				if rb != st.name {
+					epRow.CrossBackendRef = true
+					break
+				}
+			}
+		}
+	}
+
+	// Convert to slice, infer service_type, sort by endpoint_count desc.
+	groups := make([]BackendGroup, 0, len(states))
+	for _, name := range order {
+		st := states[name]
+		eps := make([]BackendEndpointRow, 0, len(st.endpoints))
+		for _, ep := range st.endpoints {
+			eps = append(eps, *ep)
+		}
+		// Sort endpoints within each backend by path for determinism.
+		sort.Slice(eps, func(i, j int) bool { return eps[i].Path < eps[j].Path })
+
+		repos := make([]string, 0, len(st.repoSet))
+		for r := range st.repoSet {
+			repos = append(repos, r)
+		}
+		sort.Strings(repos)
+
+		groups = append(groups, BackendGroup{
+			Name:          name,
+			EndpointCount: len(eps),
+			ServiceType:   inferServiceType(name, repos),
+			Repos:         repos,
+			Endpoints:     eps,
+		})
+	}
+	sort.Slice(groups, func(i, j int) bool {
+		if groups[i].EndpointCount != groups[j].EndpointCount {
+			return groups[i].EndpointCount > groups[j].EndpointCount
+		}
+		return groups[i].Name < groups[j].Name
+	})
+	return groups
+}
+
+// rawEndpointForGrouping is an alias so buildOwningBackends can access the
+// rawEndpoint fields without the local type escaping the function scope.
+// We re-declare a minimal struct here to avoid coupling to the local type
+// declared inside handlePathsList.
+type rawEndpointForGrouping struct {
+	Path          string
+	Repo          string
+	OwningBackend string
+}
+
+// inferOwningBackend derives a backend name from an entity name or repo slug
+// when the owning_backend property is absent (pre-#1217 graphs).
+//
+// Heuristic: if the handler name contains a recognisable suffix like "Handler",
+// "Controller", "Router", or "Service" preceded by a capitalised word, strip
+// the suffix and lower-case the root.  Otherwise fall back to the repo slug.
+func inferOwningBackend(handlerName, repoSlug string) string {
+	suffixes := []string{"Handler", "Controller", "Router", "Service", "View"}
+	for _, suf := range suffixes {
+		if idx := strings.Index(handlerName, suf); idx > 0 {
+			root := handlerName[:idx]
+			if root != "" {
+				return strings.ToLower(root)
+			}
+		}
+	}
+	return repoSlug
+}
+
+// inferServiceType returns a best-guess service_type label for a backend based
+// on its name and repo list.  Categories: api, web, cron, worker.
+func inferServiceType(backendName string, repos []string) string {
+	combined := strings.ToLower(backendName)
+	for _, r := range repos {
+		combined += " " + strings.ToLower(r)
+	}
+	switch {
+	case strings.Contains(combined, "cron") || strings.Contains(combined, "scheduler") ||
+		strings.Contains(combined, "beat"):
+		return "cron"
+	case strings.Contains(combined, "worker") || strings.Contains(combined, "celery") ||
+		strings.Contains(combined, "consumer") || strings.Contains(combined, "queue"):
+		return "worker"
+	case strings.Contains(combined, "web") || strings.Contains(combined, "frontend") ||
+		strings.Contains(combined, "ui") || strings.Contains(combined, "spa"):
+		return "web"
+	default:
+		return "api"
+	}
 }
 
 // isHTTPEndpointPath reports whether path looks like a real HTTP endpoint
