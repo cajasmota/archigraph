@@ -8,6 +8,7 @@ import { useCommunityColors } from '@/hooks/graph/useCommunityColors'
 import { useGraphSearch } from '@/hooks/graph/useGraphSearch'
 import { useHoverLabel } from '@/hooks/graph/useHoverLabel'
 import { useColorMode } from '@/hooks/graph/useColorMode'
+import { useGroupByConfig } from '@/hooks/graph/useGroupByConfig'
 import { useSimulationConfig } from '@/hooks/graph/useSimulationConfig'
 import { saveLayout, loadLayout, clearLayout } from '@/hooks/graph/useLayoutCache'
 import type { LayoutCacheEntry } from '@/hooks/graph/useLayoutCache'
@@ -75,6 +76,9 @@ export function GraphRoute() {
 
   // ── Color mode (#1153 — persisted to localStorage) ────────────────────────
   const { colorMode, setColorMode } = useColorMode()
+
+  // ── Group by — clustering dimension (#1392, persisted to localStorage) ─────
+  const { groupBy, setGroupBy } = useGroupByConfig()
 
   // ── Simulation config (#1361 — tunable params persisted to localStorage) ──
   const { config: simConfig, setParam: setSimParam, applyPreset: applySimPreset, shareHash: simShareHash } = useSimulationConfig()
@@ -625,6 +629,50 @@ export function GraphRoute() {
 
           <div className="border-t border-slate-200 dark:border-slate-700" />
 
+          {/* Group by — clustering dimension (#1392) */}
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-600 font-semibold px-2 pb-1">
+              Group by
+            </p>
+            <div className="flex flex-col gap-0.5" role="radiogroup" aria-label="Graph clustering dimension">
+              {(
+                [
+                  { value: 'repo',      label: 'Repo',      title: 'Cluster nodes into one island per repository (default)' },
+                  { value: 'community', label: 'Community', title: 'Cluster nodes into one island per community' },
+                  { value: 'module',    label: 'Module',    title: 'Cluster nodes into one island per source-file module' },
+                  { value: 'none',      label: 'None',      title: 'No clustering — free force layout' },
+                ] as const
+              ).map(({ value, label, title }) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={groupBy === value}
+                  onClick={() => setGroupBy(value)}
+                  title={title}
+                  className={[
+                    'flex items-center gap-2 px-2 py-1 rounded text-left text-xs w-full transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400',
+                    groupBy === value
+                      ? 'bg-sky-900/40 text-sky-300 dark:text-sky-300'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800/60',
+                  ].join(' ')}
+                >
+                  <span
+                    className={[
+                      'w-1.5 h-1.5 rounded-full shrink-0 transition-all',
+                      groupBy === value ? 'bg-sky-400' : 'bg-slate-600',
+                    ].join(' ')}
+                    aria-hidden
+                  />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 dark:border-slate-700" />
+
           {/* MCP activity overlay toggle (#1157, Phase 2) */}
           <div>
             <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-600 font-semibold px-2 pb-1">
@@ -828,6 +876,7 @@ export function GraphRoute() {
               className="w-full h-full"
               activeRepos={effectiveActiveRepos}
               colorMode={colorMode}
+              groupBy={groupBy}
               forceVisibleIds={highlightedNodeIds}
               highlightedEdgeIds={highlightedEdgeIds}
               simulationConfig={simConfig}
