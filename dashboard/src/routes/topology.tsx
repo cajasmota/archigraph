@@ -512,6 +512,7 @@ export function TopologyRoute() {
             {selectedId && !isChannelSelectedInMap && topicDetail.node && (
               <TopicDetailPanel
                 detail={topicDetail}
+                group={group}
                 onClose={() => setSelectedTopic(null)}
                 onNavigateToTopic={(id) => {
                   setSelectedTopic(id)

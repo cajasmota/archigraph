@@ -551,6 +551,43 @@ export interface OrphanSubscribersResponse {
   total: number
 }
 
+// ── Per-topic detail — GET /api/topology/{group}/topics/{topicId} (#1138) ───
+
+export type LifecycleState = 'active' | 'orphan_publisher' | 'orphan_subscriber' | 'orphan'
+
+export interface TopicDetailEntityStub {
+  entity_id: string
+  name: string
+  source_file: string
+  start_line: number
+  repo: string
+}
+
+export interface TopicDetailV2 {
+  id: string
+  label: string
+  broker: string
+  framework?: string
+  scheduled?: boolean
+  schedule?: string
+  message_schema?: string | null
+  lifecycle_state: LifecycleState
+  flow_count: number
+  cross_repo: boolean
+  producers: TopicDetailEntityStub[]
+  consumers: TopicDetailEntityStub[]
+  related_topics: Array<{ id: string; label: string; broker: string }>
+  usage_history: Array<{ date: string; count: number }>
+  docs_summary?: string | null
+  enrichment?: {
+    gaps?: string[]
+    volume_estimate?: string
+    typical_payload_size_bytes?: number
+  } | null
+  /** ISO timestamp of last index rebuild */
+  last_rebuilt?: string | null
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Cross-surface
 // ────────────────────────────────────────────────────────────────────────────

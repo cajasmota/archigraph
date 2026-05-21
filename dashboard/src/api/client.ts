@@ -83,6 +83,7 @@ import type {
   TopologyResponse,
   TopologyFilters,
   TopologyProtocol,
+  TopicDetailV2,
   GraphResponse,
   GraphFilters,
   GraphLabelsResponse,
@@ -531,6 +532,97 @@ export async function fetchOrphanSubscribers(
       return { subscribers: [], total: 0 }
     }
     throw err
+  }
+}
+
+/**
+ * Fetch rich per-topic detail from the v2 endpoint (#1138).
+ * In mock mode, synthesises a response from the topology mock.
+ */
+export async function fetchTopicDetail(
+  group: string,
+  topicId: string,
+): Promise<TopicDetailV2> {
+  if (USE_MOCKS) {
+    const topology = await loadMock<TopologyResponse>('topology')
+    return synthesiseMockTopicDetail(topology, topicId)
+  }
+  return apiFetch<TopicDetailV2>(`/api/topology/${group}/topics/${encodeURIComponent(topicId)}`)
+}
+
+/** Build a TopicDetailV2 from topology mock data so mock mode works end-to-end. */
+function synthesiseMockTopicDetail(
+  topology: TopologyResponse,
+  topicId: string,
+): TopicDetailV2 {
+  const allNodes = [
+    ...(topology.topics ?? []),
+    ...(topology.queues ?? []),
+    ...(topology.nats_subjects ?? []),
+  ]
+  const node = allNodes.find((n) => n.id === topicId)
+
+  // Determine lifecycle state from producer/consumer presence
+  const hasProducers = (node && 'producer_ids' in node && (node as { producer_ids: string[] }).producer_ids.length > 0) ?? false
+  const hasConsumers = (node && 'consumer_ids' in node && (node as { consumer_ids: string[] }).consumer_ids.length > 0) ?? false
+  let lifecycle_state: TopicDetailV2['lifecycle_state'] = 'active'
+  if (!hasProducers && !hasConsumers) lifecycle_state = 'orphan'
+  else if (!hasProducers) lifecycle_state = 'orphan_publisher'
+  else if (!hasConsumers) lifecycle_state = 'orphan_subscriber'
+
+  const resolveStubs = (ids: string[]): TopicDetailV2['producers'] =>
+    ids.flatMap((id) => {
+      const stub = topology.producers?.[id] ?? topology.consumers?.[id]
+      return stub
+        ? [{ entity_id: stub.id, name: stub.label, source_file: stub.source_file, start_line: stub.start_line, repo: stub.repo }]
+        : []
+    })
+
+  const producerIds: string[] = (node && 'producer_ids' in node) ? (node as { producer_ids: string[] }).producer_ids : []
+  const consumerIds: string[] = (node && 'consumer_ids' in node) ? (node as { consumer_ids: string[] }).consumer_ids : []
+
+  // Find repos of producers vs consumers to detect cross-repo
+  const producerRepos = new Set(resolveStubs(producerIds).map((s) => s.repo))
+  const consumerRepos = new Set(resolveStubs(consumerIds).map((s) => s.repo))
+  const cross_repo = [...producerRepos].some((r) => !consumerRepos.has(r)) || [...consumerRepos].some((r) => !producerRepos.has(r))
+
+  const framework = (node && 'framework' in node) ? (node as { framework?: string }).framework : undefined
+  const scheduled = (node && 'scheduled' in node) ? (node as { scheduled?: boolean }).scheduled : undefined
+  const schedule = (node && 'schedule' in node) ? (node as { schedule?: string }).schedule : undefined
+  const broker = (node && 'broker' in node) ? (node as { broker: string }).broker : 'unknown'
+
+  // Provide a mock schema for kafka topics to demonstrate schema section
+  const message_schema = broker === 'kafka'
+    ? '{ "type": "object", "properties": { "id": { "type": "string" }, "timestamp": { "type": "string", "format": "date-time" }, "payload": { "type": "object" } } }'
+    : null
+
+  return {
+    id: topicId,
+    label: node?.label ?? topicId,
+    broker,
+    framework,
+    scheduled,
+    schedule,
+    message_schema,
+    lifecycle_state,
+    flow_count: Math.floor(Math.random() * 5),
+    cross_repo,
+    producers: resolveStubs(producerIds),
+    consumers: resolveStubs(consumerIds),
+    related_topics: allNodes
+      .filter((n) => n.id !== topicId && (node && 'producer_ids' in node ? (node as { producer_ids: string[] }).producer_ids.some((id) => 'consumer_ids' in n && (n as { consumer_ids: string[] }).consumer_ids?.includes(id)) : false))
+      .slice(0, 3)
+      .map((n) => ({ id: n.id, label: n.label, broker: 'broker' in n ? (n as { broker: string }).broker : 'unknown' })),
+    usage_history: [],
+    docs_summary: lifecycle_state === 'active'
+      ? 'This topic carries domain events between microservices. Producers emit structured payloads; consumers react asynchronously.'
+      : null,
+    enrichment: lifecycle_state === 'active' ? {
+      gaps: [],
+      volume_estimate: 'medium',
+      typical_payload_size_bytes: 1024,
+    } : null,
+    last_rebuilt: new Date(Date.now() - 3600_000).toISOString(),
   }
 }
 
