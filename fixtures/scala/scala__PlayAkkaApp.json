@@ -1,0 +1,208 @@
+{
+  "input_file": "fixtures/sources/scala/PlayAkkaApp.scala",
+  "language": "scala",
+  "entities": [
+    {
+      "name": "Report",
+      "qualified_name": "com.example.play.Report",
+      "kind": "SCOPE.Schema",
+      "start_line": 19,
+      "end_line": 19,
+      "language": "scala",
+      "signature": "case class Report",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Schema",
+        "subtype": "case_class",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "ReportProcessor",
+      "qualified_name": "com.example.play.ReportProcessor",
+      "kind": "SCOPE.Component",
+      "start_line": 27,
+      "end_line": 41,
+      "language": "scala",
+      "signature": "object ReportProcessor",
+      "enrichment_required": false,
+      "properties": {
+        "type": "object",
+        "kind": "SCOPE.Component",
+        "subtype": "akka_actor",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "apply",
+      "qualified_name": "ReportProcessor.apply",
+      "kind": "SCOPE.Operation",
+      "start_line": 35,
+      "end_line": 41,
+      "language": "scala",
+      "signature": "def apply(): Behavior[Command]",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "NotificationActor",
+      "qualified_name": "com.example.play.NotificationActor",
+      "kind": "SCOPE.Component",
+      "start_line": 44,
+      "end_line": 55,
+      "language": "scala",
+      "signature": "object NotificationActor",
+      "enrichment_required": false,
+      "properties": {
+        "type": "object",
+        "kind": "SCOPE.Component",
+        "subtype": "akka_actor",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "ReportsTable",
+      "qualified_name": "com.example.play.ReportsTable",
+      "kind": "SCOPE.Schema",
+      "start_line": 59,
+      "end_line": 66,
+      "language": "scala",
+      "signature": "class ReportsTable extends Table[Report]",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Schema",
+        "subtype": "slick_table",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "ReportsController",
+      "qualified_name": "com.example.play.ReportsController",
+      "kind": "SCOPE.Component",
+      "start_line": 70,
+      "end_line": 110,
+      "language": "scala",
+      "signature": "class ReportsController extends AbstractController",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "play_controller",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 4,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "list",
+      "qualified_name": "ReportsController.list",
+      "kind": "SCOPE.Operation",
+      "start_line": 80,
+      "end_line": 82,
+      "language": "scala",
+      "signature": "def list(): Action[AnyContent]",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "get",
+      "qualified_name": "ReportsController.get",
+      "kind": "SCOPE.Operation",
+      "start_line": 84,
+      "end_line": 90,
+      "language": "scala",
+      "signature": "def get(id: Long): Action[AnyContent]",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "create",
+      "qualified_name": "ReportsController.create",
+      "kind": "SCOPE.Operation",
+      "start_line": 92,
+      "end_line": 105,
+      "language": "scala",
+      "signature": "def create(): Action[JsValue]",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "delete",
+      "qualified_name": "ReportsController.delete",
+      "kind": "SCOPE.Operation",
+      "start_line": 107,
+      "end_line": 114,
+      "language": "scala",
+      "signature": "def delete(id: Long): Action[AnyContent]",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

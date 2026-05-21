@@ -1,0 +1,208 @@
+{
+  "input_file": "fixtures/sources/rust/actix_redis.rs",
+  "language": "rust",
+  "entities": [
+    {
+      "name": "health",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 28,
+      "end_line": 30,
+      "language": "rust",
+      "signature": "async fn health() -> impl Responder",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "list_items",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 33,
+      "end_line": 46,
+      "language": "rust",
+      "signature": "async fn list_items(state: web::Data<AppState>) -> impl Responder",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "get_item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 49,
+      "end_line": 63,
+      "language": "rust",
+      "signature": "async fn get_item(path: web::Path<i32>, state: web::Data<AppState>) -> impl Responder",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "create_item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 66,
+      "end_line": 86,
+      "language": "rust",
+      "signature": "async fn create_item(body: web::Json<CreateItem>, state: web::Data<AppState>) -> impl Responder",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "delete_item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 89,
+      "end_line": 103,
+      "language": "rust",
+      "signature": "async fn delete_item(path: web::Path<i32>, state: web::Data<AppState>) -> impl Responder",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "redis_subscriber",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 106,
+      "end_line": 114,
+      "language": "rust",
+      "signature": "async fn redis_subscriber(client: Arc<Client>)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "main",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 117,
+      "end_line": 140,
+      "language": "rust",
+      "signature": "async fn main() -> std::io::Result<()>",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "Item",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 10,
+      "end_line": 14,
+      "language": "rust",
+      "signature": "struct Item",
+      "enrichment_required": false,
+      "properties": {
+        "type": "struct",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "CreateItem",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 16,
+      "end_line": 19,
+      "language": "rust",
+      "signature": "struct CreateItem",
+      "enrichment_required": false,
+      "properties": {
+        "type": "struct",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "AppState",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 21,
+      "end_line": 24,
+      "language": "rust",
+      "signature": "struct AppState",
+      "enrichment_required": false,
+      "properties": {
+        "type": "struct",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

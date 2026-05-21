@@ -1,0 +1,188 @@
+{
+  "input_file": "fixtures/sources/crystal/kemal_redis.cr",
+  "language": "crystal",
+  "entities": [
+    {
+      "name": "Item",
+      "qualified_name": null,
+      "kind": "SCOPE.Schema",
+      "start_line": 8,
+      "end_line": 8,
+      "language": "crystal",
+      "signature": "record Item",
+      "enrichment_required": false,
+      "properties": {
+        "type": "struct",
+        "kind": "SCOPE.Schema",
+        "subtype": "record",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "redis_key",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 15,
+      "end_line": 17,
+      "language": "crystal",
+      "signature": "def redis_key(id : Int32) : String",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "next_id",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 19,
+      "end_line": 21,
+      "language": "crystal",
+      "signature": "def next_id : Int32",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "save_item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 23,
+      "end_line": 25,
+      "language": "crystal",
+      "signature": "def save_item(item : Item)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "load_item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 27,
+      "end_line": 31,
+      "language": "crystal",
+      "signature": "def load_item(id : Int32) : Item?",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "delete_item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 33,
+      "end_line": 35,
+      "language": "crystal",
+      "signature": "def delete_item(id : Int32) : Bool",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "list_items",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 37,
+      "end_line": 40,
+      "language": "crystal",
+      "signature": "def list_items : Array(Item)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "publish_event",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 43,
+      "end_line": 45,
+      "language": "crystal",
+      "signature": "def publish_event(channel : String, payload : String)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "start_subscriber",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 48,
+      "end_line": 57,
+      "language": "crystal",
+      "signature": "def start_subscriber",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

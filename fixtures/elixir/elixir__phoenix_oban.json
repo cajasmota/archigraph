@@ -1,0 +1,188 @@
+{
+  "input_file": "fixtures/sources/elixir/phoenix_oban.ex",
+  "language": "elixir",
+  "entities": [
+    {
+      "name": "SampleApi.NotificationController",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 1,
+      "end_line": 52,
+      "language": "elixir",
+      "signature": "defmodule SampleApi.NotificationController",
+      "enrichment_required": false,
+      "properties": {
+        "type": "module",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 3,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "index",
+      "qualified_name": "SampleApi.NotificationController.index",
+      "kind": "SCOPE.Operation",
+      "start_line": 12,
+      "end_line": 15,
+      "language": "elixir",
+      "signature": "def index(conn, _params)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "show",
+      "qualified_name": "SampleApi.NotificationController.show",
+      "kind": "SCOPE.Operation",
+      "start_line": 17,
+      "end_line": 20,
+      "language": "elixir",
+      "signature": "def show(conn, %{\"id\" => id})",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "create",
+      "qualified_name": "SampleApi.NotificationController.create",
+      "kind": "SCOPE.Operation",
+      "start_line": 22,
+      "end_line": 42,
+      "language": "elixir",
+      "signature": "def create(conn, %{\"notification\" => params})",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "delete",
+      "qualified_name": "SampleApi.NotificationController.delete",
+      "kind": "SCOPE.Operation",
+      "start_line": 44,
+      "end_line": 49,
+      "language": "elixir",
+      "signature": "def delete(conn, %{\"id\" => id})",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "SampleApi.Notification",
+      "qualified_name": null,
+      "kind": "SCOPE.Schema",
+      "start_line": 54,
+      "end_line": 72,
+      "language": "elixir",
+      "signature": "defmodule SampleApi.Notification",
+      "enrichment_required": false,
+      "properties": {
+        "type": "module",
+        "kind": "SCOPE.Schema",
+        "subtype": "ecto_schema",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "SampleApi.Workers.NotificationWorker",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 74,
+      "end_line": 96,
+      "language": "elixir",
+      "signature": "defmodule SampleApi.Workers.NotificationWorker",
+      "enrichment_required": false,
+      "properties": {
+        "type": "module",
+        "kind": "SCOPE.Component",
+        "subtype": "oban_worker",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "perform",
+      "qualified_name": "SampleApi.Workers.NotificationWorker.perform",
+      "kind": "SCOPE.Operation",
+      "start_line": 84,
+      "end_line": 96,
+      "language": "elixir",
+      "signature": "def perform(%Oban.Job{args: %{\"notification_id\" => id}})",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "oban_job",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "SampleApi.Workers.RetryWorker",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 99,
+      "end_line": 112,
+      "language": "elixir",
+      "signature": "defmodule SampleApi.Workers.RetryWorker",
+      "enrichment_required": false,
+      "properties": {
+        "type": "module",
+        "kind": "SCOPE.Component",
+        "subtype": "oban_worker",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

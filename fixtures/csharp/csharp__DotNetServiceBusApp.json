@@ -1,0 +1,208 @@
+{
+  "input_file": "fixtures/sources/csharp/DotNetServiceBusApp.cs",
+  "language": "csharp",
+  "entities": [
+    {
+      "name": "Order",
+      "qualified_name": null,
+      "kind": "SCOPE.Schema",
+      "start_line": 20,
+      "end_line": 27,
+      "language": "csharp",
+      "signature": "class Order",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Schema",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "OrderDbContext",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 29,
+      "end_line": 33,
+      "language": "csharp",
+      "signature": "class OrderDbContext : DbContext",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "db_context",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "OrdersController",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 38,
+      "end_line": 88,
+      "language": "csharp",
+      "signature": "[ApiController] class OrdersController : ControllerBase",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 4,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "List",
+      "qualified_name": "OrdersController.List",
+      "kind": "SCOPE.Operation",
+      "start_line": 50,
+      "end_line": 51,
+      "language": "csharp",
+      "signature": "[HttpGet] async Task<IActionResult> List()",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "Get",
+      "qualified_name": "OrdersController.Get",
+      "kind": "SCOPE.Operation",
+      "start_line": 53,
+      "end_line": 57,
+      "language": "csharp",
+      "signature": "[HttpGet(\"{id}\")] async Task<IActionResult> Get(int id)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "Create",
+      "qualified_name": "OrdersController.Create",
+      "kind": "SCOPE.Operation",
+      "start_line": 59,
+      "end_line": 77,
+      "language": "csharp",
+      "signature": "[HttpPost] async Task<IActionResult> Create([FromBody] Order order)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "Delete",
+      "qualified_name": "OrdersController.Delete",
+      "kind": "SCOPE.Operation",
+      "start_line": 79,
+      "end_line": 87,
+      "language": "csharp",
+      "signature": "[HttpDelete(\"{id}\")] async Task<IActionResult> Delete(int id)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "OrderEventConsumer",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 91,
+      "end_line": 127,
+      "language": "csharp",
+      "signature": "class OrderEventConsumer : BackgroundService",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "background_service",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 3,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "ExecuteAsync",
+      "qualified_name": "OrderEventConsumer.ExecuteAsync",
+      "kind": "SCOPE.Operation",
+      "start_line": 102,
+      "end_line": 110,
+      "language": "csharp",
+      "signature": "async Task ExecuteAsync(CancellationToken stoppingToken)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "HandleMessage",
+      "qualified_name": "OrderEventConsumer.HandleMessage",
+      "kind": "SCOPE.Operation",
+      "start_line": 112,
+      "end_line": 124,
+      "language": "csharp",
+      "signature": "async Task HandleMessage(ProcessMessageEventArgs args)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

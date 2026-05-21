@@ -1,0 +1,148 @@
+{
+  "input_file": "fixtures/sources/go/grpc_nats.go",
+  "language": "go",
+  "entities": [
+    {
+      "name": "main",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 131,
+      "end_line": 162,
+      "language": "go",
+      "signature": "func main()",
+      "enrichment_required": false
+    },
+    {
+      "name": "NewTaskPublisher",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 30,
+      "end_line": 37,
+      "language": "go",
+      "signature": "func NewTaskPublisher(url string) (*TaskPublisher, error)",
+      "enrichment_required": false
+    },
+    {
+      "name": "PublishCreated",
+      "qualified_name": "TaskPublisher.PublishCreated",
+      "kind": "SCOPE.Operation",
+      "start_line": 39,
+      "end_line": 42,
+      "language": "go",
+      "signature": "func (p *TaskPublisher) PublishCreated(t Task) error",
+      "enrichment_required": false
+    },
+    {
+      "name": "PublishCompleted",
+      "qualified_name": "TaskPublisher.PublishCompleted",
+      "kind": "SCOPE.Operation",
+      "start_line": 44,
+      "end_line": 46,
+      "language": "go",
+      "signature": "func (p *TaskPublisher) PublishCompleted(id int64) error",
+      "enrichment_required": false
+    },
+    {
+      "name": "NewTaskSubscriber",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 54,
+      "end_line": 62,
+      "language": "go",
+      "signature": "func NewTaskSubscriber(nc *nats.Conn) (*TaskSubscriber, error)",
+      "enrichment_required": false
+    },
+    {
+      "name": "handleMessage",
+      "qualified_name": "TaskSubscriber.handleMessage",
+      "kind": "SCOPE.Operation",
+      "start_line": 64,
+      "end_line": 66,
+      "language": "go",
+      "signature": "func (ts *TaskSubscriber) handleMessage(msg *nats.Msg)",
+      "enrichment_required": false
+    },
+    {
+      "name": "GetTask",
+      "qualified_name": "TaskServiceServer.GetTask",
+      "kind": "SCOPE.Operation",
+      "start_line": 73,
+      "end_line": 84,
+      "language": "go",
+      "signature": "func (s *TaskServiceServer) GetTask(ctx context.Context, req *GetTaskRequest) (*TaskResponse, error)",
+      "enrichment_required": false
+    },
+    {
+      "name": "ListTasks",
+      "qualified_name": "TaskServiceServer.ListTasks",
+      "kind": "SCOPE.Operation",
+      "start_line": 87,
+      "end_line": 101,
+      "language": "go",
+      "signature": "func (s *TaskServiceServer) ListTasks(ctx context.Context, req *ListTasksRequest) (*ListTasksResponse, error)",
+      "enrichment_required": false
+    },
+    {
+      "name": "CreateTask",
+      "qualified_name": "TaskServiceServer.CreateTask",
+      "kind": "SCOPE.Operation",
+      "start_line": 104,
+      "end_line": 118,
+      "language": "go",
+      "signature": "func (s *TaskServiceServer) CreateTask(ctx context.Context, req *CreateTaskRequest) (*TaskResponse, error)",
+      "enrichment_required": false
+    },
+    {
+      "name": "CompleteTask",
+      "qualified_name": "TaskServiceServer.CompleteTask",
+      "kind": "SCOPE.Operation",
+      "start_line": 121,
+      "end_line": 131,
+      "language": "go",
+      "signature": "func (s *TaskServiceServer) CompleteTask(ctx context.Context, req *CompleteTaskRequest) (*TaskResponse, error)",
+      "enrichment_required": false
+    },
+    {
+      "name": "Task",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 18,
+      "end_line": 22,
+      "language": "go",
+      "signature": "type Task struct",
+      "enrichment_required": false
+    },
+    {
+      "name": "TaskPublisher",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 26,
+      "end_line": 28,
+      "language": "go",
+      "signature": "type TaskPublisher struct",
+      "enrichment_required": false
+    },
+    {
+      "name": "TaskSubscriber",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 49,
+      "end_line": 52,
+      "language": "go",
+      "signature": "type TaskSubscriber struct",
+      "enrichment_required": false
+    },
+    {
+      "name": "TaskServiceServer",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 70,
+      "end_line": 73,
+      "language": "go",
+      "signature": "type TaskServiceServer struct",
+      "enrichment_required": false
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

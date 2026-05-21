@@ -1,0 +1,268 @@
+{
+  "input_file": "fixtures/sources/lisp/restas_app.lisp",
+  "language": "lisp",
+  "entities": [
+    {
+      "name": "db-find-item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 21,
+      "end_line": 23,
+      "language": "lisp",
+      "signature": "(defun db-find-item (id))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "db-all-items",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 25,
+      "end_line": 27,
+      "language": "lisp",
+      "signature": "(defun db-all-items ())",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "db-save-item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 29,
+      "end_line": 32,
+      "language": "lisp",
+      "signature": "(defun db-save-item (item))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "db-delete-item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 34,
+      "end_line": 38,
+      "language": "lisp",
+      "signature": "(defun db-delete-item (id))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "enqueue-event",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 41,
+      "end_line": 44,
+      "language": "lisp",
+      "signature": "(defun enqueue-event (event-type payload))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "process-next-event",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 47,
+      "end_line": 54,
+      "language": "lisp",
+      "signature": "(defun process-next-event ())",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "start-event-loop",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 56,
+      "end_line": 63,
+      "language": "lisp",
+      "signature": "(defun start-event-loop ())",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "health",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 67,
+      "end_line": 69,
+      "language": "lisp",
+      "signature": "(restas:define-route health (\"/health\" :method :get))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "http_route",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "list-items",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 71,
+      "end_line": 79,
+      "language": "lisp",
+      "signature": "(restas:define-route list-items (\"/api/items\" :method :get))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "http_route",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "get-item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 81,
+      "end_line": 95,
+      "language": "lisp",
+      "signature": "(restas:define-route get-item (\"/api/items/:id\" :method :get))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "http_route",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "create-item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 97,
+      "end_line": 114,
+      "language": "lisp",
+      "signature": "(restas:define-route create-item (\"/api/items\" :method :post))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "http_route",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "delete-item",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 116,
+      "end_line": 127,
+      "language": "lisp",
+      "signature": "(restas:define-route delete-item (\"/api/items/:id\" :method :delete))",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": "http_route",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "start",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 148,
+      "end_line": 151,
+      "language": "lisp",
+      "signature": "(defun start ())",
+      "enrichment_required": false,
+      "properties": {
+        "type": "function",
+        "kind": "SCOPE.Operation",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

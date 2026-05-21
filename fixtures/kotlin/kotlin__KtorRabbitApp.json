@@ -1,0 +1,168 @@
+{
+  "input_file": "fixtures/sources/kotlin/KtorRabbitApp.kt",
+  "language": "kotlin",
+  "entities": [
+    {
+      "name": "Product",
+      "qualified_name": null,
+      "kind": "SCOPE.Schema",
+      "start_line": 20,
+      "end_line": 20,
+      "language": "kotlin",
+      "signature": "data class Product",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Schema",
+        "subtype": "data_class",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "Products",
+      "qualified_name": null,
+      "kind": "SCOPE.Schema",
+      "start_line": 22,
+      "end_line": 29,
+      "language": "kotlin",
+      "signature": "object Products : Table",
+      "enrichment_required": false,
+      "properties": {
+        "type": "object",
+        "kind": "SCOPE.Schema",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "RabbitPublisher",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 32,
+      "end_line": 47,
+      "language": "kotlin",
+      "signature": "class RabbitPublisher",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "publish",
+      "qualified_name": "RabbitPublisher.publish",
+      "kind": "SCOPE.Operation",
+      "start_line": 43,
+      "end_line": 45,
+      "language": "kotlin",
+      "signature": "fun publish(event: String)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "RabbitConsumer",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 49,
+      "end_line": 62,
+      "language": "kotlin",
+      "signature": "class RabbitConsumer",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "start",
+      "qualified_name": "RabbitConsumer.start",
+      "kind": "SCOPE.Operation",
+      "start_line": 54,
+      "end_line": 62,
+      "language": "kotlin",
+      "signature": "fun start()",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "productRoutes",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 65,
+      "end_line": 100,
+      "language": "kotlin",
+      "signature": "fun Application.productRoutes(publisher: RabbitPublisher)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "extension_function",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 4,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "main",
+      "qualified_name": null,
+      "kind": "SCOPE.Operation",
+      "start_line": 103,
+      "end_line": 115,
+      "language": "kotlin",
+      "signature": "fun main()",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

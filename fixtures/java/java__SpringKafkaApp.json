@@ -1,0 +1,204 @@
+{
+  "input_file": "fixtures/sources/java/SpringKafkaApp.java",
+  "language": "java",
+  "entities": [
+    {
+      "name": "SpringKafkaApp",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 17,
+      "end_line": 21,
+      "language": "java",
+      "signature": "@SpringBootApplication class SpringKafkaApp",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "OrderController",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 24,
+      "end_line": 50,
+      "language": "java",
+      "signature": "@RestController @RequestMapping class OrderController",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "listOrders",
+      "qualified_name": "OrderController.listOrders",
+      "kind": "SCOPE.Operation",
+      "start_line": 35,
+      "end_line": 37,
+      "language": "java",
+      "signature": "@GetMapping ResponseEntity<List<Order>> listOrders()",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "createOrder",
+      "qualified_name": "OrderController.createOrder",
+      "kind": "SCOPE.Operation",
+      "start_line": 40,
+      "end_line": 44,
+      "language": "java",
+      "signature": "@PostMapping ResponseEntity<Order> createOrder(@RequestBody Order order)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "getOrder",
+      "qualified_name": "OrderController.getOrder",
+      "kind": "SCOPE.Operation",
+      "start_line": 46,
+      "end_line": 50,
+      "language": "java",
+      "signature": "@GetMapping ResponseEntity<Order> getOrder(@PathVariable Long id)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "OrderEventConsumer",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 53,
+      "end_line": 73,
+      "language": "java",
+      "signature": "class OrderEventConsumer",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "handleOrderCreated",
+      "qualified_name": "OrderEventConsumer.handleOrderCreated",
+      "kind": "SCOPE.Operation",
+      "start_line": 59,
+      "end_line": 63,
+      "language": "java",
+      "signature": "@KafkaListener void handleOrderCreated(String payload)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "handleOrderCancelled",
+      "qualified_name": "OrderEventConsumer.handleOrderCancelled",
+      "kind": "SCOPE.Operation",
+      "start_line": 65,
+      "end_line": 73,
+      "language": "java",
+      "signature": "@KafkaListener void handleOrderCancelled(String orderId)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "method",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "Order",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 77,
+      "end_line": 100,
+      "language": "java",
+      "signature": "@Entity class Order",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": null,
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": false,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "OrderController",
+      "qualified_name": null,
+      "kind": "SCOPE.Service",
+      "start_line": 24,
+      "end_line": 50,
+      "language": "java",
+      "signature": null,
+      "enrichment_required": false,
+      "properties": {
+        "subtype": null,
+        "provenance": "@RestController",
+        "source": "",
+        "source_type": "class"
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}

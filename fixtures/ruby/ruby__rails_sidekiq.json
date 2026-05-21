@@ -1,0 +1,208 @@
+{
+  "input_file": "fixtures/sources/ruby/rails_sidekiq.rb",
+  "language": "ruby",
+  "entities": [
+    {
+      "name": "Event",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 12,
+      "end_line": 25,
+      "language": "ruby",
+      "signature": "class Event < ApplicationRecord",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "active_record_model",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "EventsController",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 29,
+      "end_line": 60,
+      "language": "ruby",
+      "signature": "class EventsController < ApplicationController",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "rails_controller",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 4,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "index",
+      "qualified_name": "EventsController#index",
+      "kind": "SCOPE.Operation",
+      "start_line": 30,
+      "end_line": 33,
+      "language": "ruby",
+      "signature": "def index",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "show",
+      "qualified_name": "EventsController#show",
+      "kind": "SCOPE.Operation",
+      "start_line": 35,
+      "end_line": 41,
+      "language": "ruby",
+      "signature": "def show",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "create",
+      "qualified_name": "EventsController#create",
+      "kind": "SCOPE.Operation",
+      "start_line": 43,
+      "end_line": 51,
+      "language": "ruby",
+      "signature": "def create",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 2,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "destroy",
+      "qualified_name": "EventsController#destroy",
+      "kind": "SCOPE.Operation",
+      "start_line": 53,
+      "end_line": 59,
+      "language": "ruby",
+      "signature": "def destroy",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "controller_action",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "EventProcessorWorker",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 66,
+      "end_line": 94,
+      "language": "ruby",
+      "signature": "class EventProcessorWorker",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "sidekiq_worker",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 3,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "perform",
+      "qualified_name": "EventProcessorWorker#perform",
+      "kind": "SCOPE.Operation",
+      "start_line": 70,
+      "end_line": 87,
+      "language": "ruby",
+      "signature": "def perform(event_id)",
+      "enrichment_required": false,
+      "properties": {
+        "type": "method",
+        "kind": "SCOPE.Operation",
+        "subtype": "sidekiq_job",
+        "provenance": null,
+        "has_conditionals": true,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 3,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "NotificationWorker",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 96,
+      "end_line": 108,
+      "language": "ruby",
+      "signature": "class NotificationWorker",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "sidekiq_worker",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "name": "RetryCleanupWorker",
+      "qualified_name": null,
+      "kind": "SCOPE.Component",
+      "start_line": 110,
+      "end_line": 119,
+      "language": "ruby",
+      "signature": "class RetryCleanupWorker",
+      "enrichment_required": false,
+      "properties": {
+        "type": "class",
+        "kind": "SCOPE.Component",
+        "subtype": "sidekiq_worker",
+        "provenance": null,
+        "has_conditionals": false,
+        "has_external_calls": true,
+        "cyclomatic_complexity": 1,
+        "quality_score": 1.0
+      }
+    }
+  ],
+  "relationships": [],
+  "extractor_version": "fixture"
+}
