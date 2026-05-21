@@ -520,6 +520,224 @@ func TestPathsList_SearchFilter(t *testing.T) {
 	}
 }
 
+// TestPathsList_OwningBackends_Present verifies that owning_backends is
+// present in the response and has at least one entry (#1218).
+func TestPathsList_OwningBackends_Present(t *testing.T) {
+	ts, _ := newPhase1Server(t)
+	code, body := getJSON(t, ts.URL, "/api/paths/testgroup")
+	if code != 200 {
+		t.Fatalf("status=%d", code)
+	}
+	// owning_backends must be present and be an array.
+	raw, ok := body["owning_backends"]
+	if !ok {
+		t.Fatalf("owning_backends missing from response")
+	}
+	backends, ok := raw.([]interface{})
+	if !ok {
+		t.Fatalf("owning_backends is not an array: %T", raw)
+	}
+	if len(backends) == 0 {
+		t.Fatalf("expected at least 1 backend entry, got 0")
+	}
+	// Verify required fields are present on each entry.
+	for i, b := range backends {
+		bm, ok := b.(map[string]any)
+		if !ok {
+			t.Fatalf("backend[%d] is not an object", i)
+		}
+		if bm["name"] == nil {
+			t.Errorf("backend[%d] missing name", i)
+		}
+		if bm["endpoint_count"] == nil {
+			t.Errorf("backend[%d] missing endpoint_count", i)
+		}
+		if bm["endpoints"] == nil {
+			t.Errorf("backend[%d] missing endpoints array", i)
+		}
+		if bm["repos"] == nil {
+			t.Errorf("backend[%d] missing repos array", i)
+		}
+	}
+}
+
+// TestPathsList_OwningBackends_MultiBackend verifies that a group with
+// two repos each owning distinct http_endpoint_definition entities produces
+// two entries in owning_backends sorted by endpoint_count descending.
+func TestPathsList_OwningBackends_MultiBackend(t *testing.T) {
+	st := newFakeStore()
+	st.groups["multigrp"] = GroupSummary{
+		Name:       "multigrp",
+		ConfigPath: "/tmp/multigrp.json",
+		Repos:      []string{"core-api", "admin-api"},
+	}
+	cfg := DefaultConfig()
+	srv, err := NewServer(cfg, st)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+
+	// core-api: 3 http_endpoint_definition endpoints owned by "core"
+	coreDoc := &graph.Document{
+		Repo: "core-api",
+		Entities: []graph.Entity{
+			{
+				ID: "ce1", Name: "GET /api/users", Kind: "http_endpoint_definition",
+				SourceFile: "routes.go", Language: "go",
+				Properties: map[string]string{"verb": "GET", "path": "/api/users", "owning_backend": "core"},
+			},
+			{
+				ID: "ce2", Name: "POST /api/users", Kind: "http_endpoint_definition",
+				SourceFile: "routes.go", Language: "go",
+				Properties: map[string]string{"verb": "POST", "path": "/api/users/create", "owning_backend": "core"},
+			},
+			{
+				ID: "ce3", Name: "GET /api/products", Kind: "http_endpoint_definition",
+				SourceFile: "routes.go", Language: "go",
+				Properties: map[string]string{"verb": "GET", "path": "/api/products", "owning_backend": "core"},
+			},
+		},
+	}
+	// admin-api: 1 http_endpoint_definition endpoint owned by "admin"
+	adminDoc := &graph.Document{
+		Repo: "admin-api",
+		Entities: []graph.Entity{
+			{
+				ID: "ae1", Name: "GET /admin/users", Kind: "http_endpoint_definition",
+				SourceFile: "admin_routes.go", Language: "go",
+				Properties: map[string]string{"verb": "GET", "path": "/admin/users", "owning_backend": "admin"},
+			},
+		},
+	}
+
+	grp := &DashGroup{
+		Name: "multigrp",
+		Repos: map[string]*DashRepo{
+			"core-api":  {Slug: "core-api", Path: "/tmp/core-api", Doc: coreDoc},
+			"admin-api": {Slug: "admin-api", Path: "/tmp/admin-api", Doc: adminDoc},
+		},
+		Links: []CrossRepoLink{},
+	}
+	srv.graphs.mu.Lock()
+	srv.graphs.entries["multigrp"] = &cacheEntry{group: grp, loadedAt: time.Now()}
+	srv.graphs.mu.Unlock()
+
+	ts := httptest.NewServer(srv.routes())
+	t.Cleanup(ts.Close)
+
+	code, body := getJSON(t, ts.URL, "/api/paths/multigrp")
+	if code != 200 {
+		t.Fatalf("status=%d body=%v", code, body)
+	}
+
+	backends, ok := body["owning_backends"].([]interface{})
+	if !ok {
+		t.Fatalf("owning_backends missing or not array: %v", body["owning_backends"])
+	}
+	if len(backends) != 2 {
+		t.Fatalf("expected 2 backends (core, admin), got %d: %v", len(backends), backends)
+	}
+
+	// First backend should be "core" (3 endpoints > 1 endpoint).
+	first := backends[0].(map[string]any)
+	if first["name"] != "core" {
+		t.Errorf("expected first backend = core (most endpoints), got %v", first["name"])
+	}
+	firstCount := int(first["endpoint_count"].(float64))
+	if firstCount != 3 {
+		t.Errorf("expected core endpoint_count=3, got %d", firstCount)
+	}
+
+	second := backends[1].(map[string]any)
+	if second["name"] != "admin" {
+		t.Errorf("expected second backend = admin, got %v", second["name"])
+	}
+	secondCount := int(second["endpoint_count"].(float64))
+	if secondCount != 1 {
+		t.Errorf("expected admin endpoint_count=1, got %d", secondCount)
+	}
+
+	// Verify total endpoint count across backends matches top-level total.
+	total := int(body["total"].(float64))
+	if total != firstCount+secondCount {
+		t.Errorf("total=%d does not match sum of backend counts %d+%d", total, firstCount, secondCount)
+	}
+}
+
+// TestPathsList_OwningBackends_SingleBackend verifies that a group with all
+// endpoints from one backend produces exactly one entry in owning_backends.
+func TestPathsList_OwningBackends_SingleBackend(t *testing.T) {
+	st := newFakeStore()
+	st.groups["singlegrp"] = GroupSummary{
+		Name:       "singlegrp",
+		ConfigPath: "/tmp/singlegrp.json",
+		Repos:      []string{"my-api"},
+	}
+	cfg := DefaultConfig()
+	srv, err := NewServer(cfg, st)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+
+	doc := &graph.Document{
+		Repo: "my-api",
+		Entities: []graph.Entity{
+			{
+				ID: "ep1", Name: "GET /health", Kind: "http_endpoint_definition",
+				SourceFile: "routes.go", Language: "go",
+				Properties: map[string]string{"verb": "GET", "path": "/health", "owning_backend": "my-api"},
+			},
+			{
+				ID: "ep2", Name: "GET /api/items", Kind: "http_endpoint_definition",
+				SourceFile: "routes.go", Language: "go",
+				Properties: map[string]string{"verb": "GET", "path": "/api/items", "owning_backend": "my-api"},
+			},
+		},
+	}
+
+	grp := &DashGroup{
+		Name: "singlegrp",
+		Repos: map[string]*DashRepo{
+			"my-api": {Slug: "my-api", Path: "/tmp/my-api", Doc: doc},
+		},
+		Links: []CrossRepoLink{},
+	}
+	srv.graphs.mu.Lock()
+	srv.graphs.entries["singlegrp"] = &cacheEntry{group: grp, loadedAt: time.Now()}
+	srv.graphs.mu.Unlock()
+
+	ts := httptest.NewServer(srv.routes())
+	t.Cleanup(ts.Close)
+
+	code, body := getJSON(t, ts.URL, "/api/paths/singlegrp")
+	if code != 200 {
+		t.Fatalf("status=%d body=%v", code, body)
+	}
+
+	backends, ok := body["owning_backends"].([]interface{})
+	if !ok {
+		t.Fatalf("owning_backends missing or not array: %v", body["owning_backends"])
+	}
+	if len(backends) != 1 {
+		t.Fatalf("expected 1 backend entry for single-backend group, got %d", len(backends))
+	}
+
+	bm := backends[0].(map[string]any)
+	if bm["name"] != "my-api" {
+		t.Errorf("expected backend name my-api, got %v", bm["name"])
+	}
+	cnt := int(bm["endpoint_count"].(float64))
+	if cnt != 2 {
+		t.Errorf("expected endpoint_count=2, got %d", cnt)
+	}
+
+	// Count math: total must equal sum of backend endpoint_counts.
+	total := int(body["total"].(float64))
+	if total != cnt {
+		t.Errorf("total=%d does not match backend endpoint_count=%d", total, cnt)
+	}
+}
+
 // TestIsHTTPEndpointPath verifies the path-shape predicate used by the
 // Paths list API to filter out XML namespace XPath strings (issue #1125).
 func TestIsHTTPEndpointPath(t *testing.T) {
