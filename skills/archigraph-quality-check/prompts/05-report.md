@@ -96,6 +96,10 @@ Concrete tuning ideas for the archigraph coordinator. Each recommendation cites 
 ### Anti-patterns to avoid
 - `<X>` - observed in q04, costs N tokens per occurrence.
 
+## Extraction calibration
+
+(Appended by Phase 6 - `prompts/06-extraction-calibration.md`. Leave this heading as the insertion point; Phase 6 fills the over/under table, calibration verdict, and prune/add recommendations. Omit only if `--no-calibration`.)
+
 ## Regression diff (if --baseline provided)
 
 | Question | Prior with-MCP tokens | Current | Δ | Prior quality | Current | Δ |
