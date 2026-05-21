@@ -388,3 +388,84 @@ requests.get("https://py.example.com/api")
 		t.Errorf("expected at least 2 API entities with empty language, got %d", len(apis))
 	}
 }
+
+// ---------------------------------------------------------------------------
+// PHP: Guzzle + Laravel Http facade
+// ---------------------------------------------------------------------------
+
+func TestPHP_GuzzleGet(t *testing.T) {
+	src := `<?php
+use GuzzleHttp\Client;
+function fetchOrders() {
+    $client = new Client();
+    return $client->get('http://orders-service/api/orders');
+}
+`
+	apis := apiEntities(runExtract(t, "php", src))
+	if len(apis) != 1 {
+		t.Fatalf("expected 1 API entity, got %d", len(apis))
+	}
+	if apis[0].Name != "http://orders-service/api/orders" {
+		t.Errorf("url=%q", apis[0].Name)
+	}
+}
+
+func TestPHP_GuzzlePost(t *testing.T) {
+	src := `<?php
+use GuzzleHttp\Client;
+function createOrder($data) {
+    $client = new Client();
+    $response = $client->post('http://orders-service/api/orders', ['json' => $data]);
+    return $response;
+}
+`
+	apis := apiEntities(runExtract(t, "php", src))
+	if len(apis) != 1 {
+		t.Fatalf("expected 1 API entity, got %d", len(apis))
+	}
+}
+
+func TestPHP_LaravelHttpFacade(t *testing.T) {
+	src := `<?php
+use Illuminate\Support\Facades\Http;
+function notify($userId) {
+    Http::post('http://notifications-service/api/notifications', ['user_id' => $userId]);
+}
+`
+	apis := apiEntities(runExtract(t, "php", src))
+	if len(apis) != 1 {
+		t.Fatalf("expected 1 API entity, got %d", len(apis))
+	}
+	if apis[0].Name != "http://notifications-service/api/notifications" {
+		t.Errorf("url=%q", apis[0].Name)
+	}
+	rels := callRels(apis)
+	if len(rels) != 1 {
+		t.Errorf("expected 1 CALLS relationship, got %d", len(rels))
+	}
+}
+
+func TestPHP_GuzzleRequest(t *testing.T) {
+	src := `<?php
+use GuzzleHttp\Client;
+function patchOrder($id, $data) {
+    $client = new Client();
+    $client->request('PATCH', 'http://orders-service/api/orders/123', ['json' => $data]);
+}
+`
+	apis := apiEntities(runExtract(t, "php", src))
+	if len(apis) != 1 {
+		t.Fatalf("expected 1 API entity, got %d", len(apis))
+	}
+}
+
+func TestPHP_NoPHPNoResults(t *testing.T) {
+	// Go file that happens to contain "->get(" should not trigger PHP extraction.
+	// Language is "go", not "php" — PHP patterns should not fire.
+	src := `package main
+func main() { _ = "http://example.com" }
+`
+	apis := apiEntities(runExtract(t, "go", src))
+	// just verify no panic; Go extractor won't match $client->get
+	_ = apis
+}

@@ -100,6 +100,33 @@ var javaURICreateRE = regexp.MustCompile(
 	`(?m)\bURI\.create\s*\(\s*"([^"]{1,500})"`,
 )
 
+// PHP: Guzzle $client->METHOD('url') — double and single quoted
+var phpGuzzleVerbDoubleRE = regexp.MustCompile(
+	`(?im)\$(?:client|http|guzzle|httpClient)\s*->\s*(get|post|put|patch|delete|head|options)\s*\(\s*"([^"\n\r]{1,500})"`,
+)
+var phpGuzzleVerbSingleRE = regexp.MustCompile(
+	`(?im)\$(?:client|http|guzzle|httpClient)\s*->\s*(get|post|put|patch|delete|head|options)\s*\(\s*'([^'\n\r]{1,500})'`,
+)
+
+// PHP: Guzzle $client->request('METHOD', 'url') — verb/url quote combinations
+var phpGuzzleRequestDoubleRE = regexp.MustCompile(
+	`(?im)\$(?:client|http|guzzle|httpClient)\s*->\s*request\s*\(\s*"([A-Za-z]+)"\s*,\s*"([^"\n\r]{1,500})"`,
+)
+var phpGuzzleRequestSingleRE = regexp.MustCompile(
+	`(?im)\$(?:client|http|guzzle|httpClient)\s*->\s*request\s*\(\s*'([A-Za-z]+)'\s*,\s*'([^'\n\r]{1,500})'`,
+)
+var phpGuzzleRequestMixedRE = regexp.MustCompile(
+	`(?im)\$(?:client|http|guzzle|httpClient)\s*->\s*request\s*\(\s*'([A-Za-z]+)'\s*,\s*"([^"\n\r]{1,500})"`,
+)
+
+// PHP: Laravel Http::METHOD('url') facade
+var phpLaravelHttpDoubleRE = regexp.MustCompile(
+	`(?im)\bHttp\s*::\s*(get|post|put|patch|delete|head|options)\s*\(\s*"([^"\n\r]{1,500})"`,
+)
+var phpLaravelHttpSingleRE = regexp.MustCompile(
+	`(?im)\bHttp\s*::\s*(get|post|put|patch|delete|head|options)\s*\(\s*'([^'\n\r]{1,500})'`,
+)
+
 // ---------------------------------------------------------------------------
 // Language gate
 // ---------------------------------------------------------------------------
@@ -272,6 +299,48 @@ func extractJava(source string) []call {
 	return out
 }
 
+func extractPHP(source string) []call {
+	var out []call
+
+	for _, m := range phpGuzzleVerbDoubleRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+	for _, m := range phpGuzzleVerbSingleRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+	for _, m := range phpGuzzleRequestDoubleRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+	for _, m := range phpGuzzleRequestSingleRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+	for _, m := range phpGuzzleRequestMixedRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+	for _, m := range phpLaravelHttpDoubleRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+	for _, m := range phpLaravelHttpSingleRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 3 {
+			out = append(out, call{url: m[2], method: strings.ToUpper(m[1])})
+		}
+	}
+
+	return out
+}
+
 // ---------------------------------------------------------------------------
 // All-language scan (when language is empty)
 // ---------------------------------------------------------------------------
@@ -282,6 +351,7 @@ func extractAll(source string) []call {
 	out = append(out, extractPython(source)...)
 	out = append(out, extractGo(source)...)
 	out = append(out, extractJava(source)...)
+	out = append(out, extractPHP(source)...)
 	return out
 }
 
@@ -380,6 +450,8 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		calls = extractGo(source)
 	case "java":
 		calls = extractJava(source)
+	case "php":
+		calls = extractPHP(source)
 	default:
 		// Empty language: evaluate all patterns (cross-language fallback).
 		calls = extractAll(source)
