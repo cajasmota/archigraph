@@ -13,7 +13,7 @@
    8. EntityStub — when stub=true, replaces body sections
    ============================================================ */
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { ChevronRight, Code2, ExternalLink, Sparkles, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui";
 import { TypeBadge } from "./type-glyph";
@@ -240,17 +240,17 @@ export function DocsEntity({ entity }: DocsEntityProps) {
             <SectionLabel>Parameters</SectionLabel>
             <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 gap-y-2 text-sm">
               {entity.params.map((p) => (
-                <>
-                  <span key={`name-${p.name}`} className="font-mono text-text font-medium whitespace-nowrap">
+                <React.Fragment key={p.name}>
+                  <span className="font-mono text-text font-medium whitespace-nowrap">
                     {p.name}
                   </span>
-                  <span key={`type-${p.name}`} className="font-mono text-text-3 whitespace-nowrap">
+                  <span className="font-mono text-text-3 whitespace-nowrap">
                     {p.type}
                   </span>
-                  <span key={`desc-${p.name}`} className="text-text-2">
+                  <span className="text-text-2">
                     {p.desc}
                   </span>
-                </>
+                </React.Fragment>
               ))}
             </div>
           </section>
