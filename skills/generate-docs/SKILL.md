@@ -48,8 +48,9 @@ Time estimates assume typical small-to-medium codebases (1k–10k source entitie
 | 11 | `prompts/11-pattern-cross-link.md` | Populate each approved pattern's `documentation_url` (ADR-0018 Phase 5). | 1–2 min |
 | 12 | `prompts/12-pattern-prose.md` | Emit `docs/patterns/<category>/<id>.md` per approved pattern (ADR-0018 Phase 6). | 2–4 min |
 | 13 | `prompts/13-enrichment.md` | LLM enrichment pass: emit unified YAML frontmatter for `http_endpoint`, `process_flow`, and `message_topic` entities (merge, disqualify, rank, group, summarise, detect gaps). Dashboard surfaces consume this data. | 5–15 min |
+| 14 | `prompts/14-frontmatter-validation.md` | Frontmatter validation pass: re-read every enriched doc file, parse its YAML frontmatter, and verify each field against the backend parser's expectations. Catches schema drift between the skill and the dashboard consumers. | 2–5 min |
 
-**Total wall time:** typically **25–60 minutes** for small repos (1k entities), **1–2 hours** for medium repos (10k entities), **2–4 hours** for large repos (100k+ entities). Pass 4 parallelizes across module clusters, so the critical path is dominated by Pass 0 (user interaction), Passes 1–2 (discovery), and Passes 4–5 (content generation).
+**Total wall time:** typically **25–65 minutes** for small repos (1k entities), **1–2 hours** for medium repos (10k entities), **2–4 hours** for large repos (100k+ entities). Pass 4 parallelizes across module clusters, so the critical path is dominated by Pass 0 (user interaction), Passes 1–2 (discovery), and Passes 4–5 (content generation).
 
 If a pass appears to hang:
 1. Check `archigraph status` — the daemon must be running and idle (not indexing another repo).
@@ -83,9 +84,49 @@ For every entity of kind `http_endpoint`, `process_flow`, or `message_topic`, th
 
 The subagent writes the enrichment as YAML frontmatter at the **top** of the entity's existing doc file. If no doc file exists for the entity, a minimal file is created containing only the frontmatter block.
 
+### Doc file discovery convention
+
+The backend parsers locate enriched doc files via `docgen-state.json` (`GeneratedPaths` list). Each parser applies a two-pass lookup:
+
+**For `message_topic` (Topology panel — `applyTopologyEnrichment`):**
+1. Pass 1 (fast): any `GeneratedPaths` entry whose path contains the entity ID as a substring.
+2. Pass 2 (fallback): any path containing `"topic"` or `"topology"` (case-insensitive) whose frontmatter has `kind: message_topic`. Used for hashed entity IDs where the path alone cannot match.
+
+**For `process_flow` (Flows panel — `extractFlowDocsWithResolver`):**
+1. Fast path: any path containing the entity ID or the word `"flow"` (case-insensitive) whose frontmatter has `kind: process_flow` or no `kind` set.
+2. Tertiary pass: scan all paths for frontmatter whose `entity_id` field matches the entity ID (handles hashed IDs).
+
+**For `http_endpoint` (Paths panel):** same entity-ID substring match; frontmatter `kind: http_endpoint` is used to reject wrong-kind docs.
+
+When no match is found, the parser falls back to scanning the first non-heading non-empty line of the file as a plain-text summary.
+
+**Canonical file placement** (when no prior doc exists for the entity):
+
+```
+<repo>/docs/enrichments/<kind>/<entity_id>.md
+```
+
+Example: `api/docs/enrichments/message_topic/order-created.md`
+
+This path will contain `"topic"` and the entity ID, making both lookup passes reliable.
+
+### `docgen_status` states
+
+The dashboard exposes a `docgen_status` field on every entity row:
+
+| Status | Meaning |
+|--------|---------|
+| `enriched` | A doc file with valid YAML frontmatter (`kind` + `summary` present) was found and parsed. |
+| `stale` | A doc file exists but its frontmatter is absent or has no `kind`/`summary` (legacy plain-prose file). For `message_topic`, stale is also set when the doc file's `mtime` is older than the topic's last index timestamp. |
+| `pending` | No doc file found for this entity in `GeneratedPaths`. |
+
+The skill should aim to move all entities from `pending` or `stale` to `enriched` by the end of Pass 13. Re-running Pass 13 on a `stale` entity re-emits the frontmatter block.
+
 ### Unified frontmatter schema
 
 Every enriched entity doc file starts with a YAML frontmatter block delimited by `---`. **All fields are optional** — omit any field the LLM cannot determine with confidence. The dashboard backend falls back to first-line prose summary when frontmatter is absent.
+
+The per-kind templates in `templates/` give copy-paste starting points. Example completed files are in `examples/`.
 
 ```yaml
 ---
@@ -126,6 +167,11 @@ responses:
     description: Invalid query params
 auth: 'Bearer token required (JWT)'
 tables_touched: [orders, order_items]
+# Prose-enrichment fields (consumed by Paths detail panel):
+parameters_explained: 'page and limit control pagination; limit is capped at 200 server-side'
+response_shapes_explained: 'orders array contains Order objects with id, total, status, created_at'
+examples: 'GET /api/orders?page=2&limit=20 — returns second page of 20 orders'
+caveats: 'Soft-deleted orders are excluded unless ?include_deleted=true is passed'
 
 # ── process_flow-specific fields ─────────────────────────────────────────────
 steps:
@@ -135,12 +181,19 @@ steps:
   - Emit order.created event to broker
 preconditions: 'User is authenticated and cart is non-empty'
 expected_outcome: 'Order persisted, confirmation email dispatched, inventory decremented'
+# Prose-enrichment fields (consumed by Flows detail panel):
+examples: 'Happy path: user checks out 3 items, payment succeeds, order.created emitted'
+caveats: 'Stock check is advisory — race conditions possible under high load'
 
 # ── message_topic-specific fields ────────────────────────────────────────────
+purpose: 'Signals that a new order was placed; consumed by fulfillment, analytics, and notifications'
 schema: '{ order_id: string, total: float, items: OrderItem[], user_id: string }'
 typical_payload_size_bytes: 512
 volume_estimate: high          # low | medium | high | very-high
 expected_consumers: [order-fulfillment, analytics, notifications]
+# Prose-enrichment fields (consumed by Topology detail panel):
+examples: 'order.created published after checkout with order_id and items array'
+caveats: 'Schema version 2 — consumers must handle missing discount_code field from v1 payloads'
 ---
 
 ## Description
@@ -149,11 +202,71 @@ Free-form prose continues here (existing content unchanged below this block).
 ```
 
 > **Field selection rules**
-> - Emit only `kind`-relevant per-kind fields. Do not emit `steps` for an `http_endpoint`.
+> - Emit only `kind`-relevant per-kind fields. Do not emit `steps` for an `http_endpoint`; do not emit `method`/`path` for a `message_topic`.
 > - Omit `rank` when you have no signal; do not fabricate a number.
 > - `disqualified: true` suppresses the entity from the default dashboard view; only set it when clearly a false positive.
 > - `merged_into` must reference an `entity_id` that exists in the same group.
 > - `gaps` entries should be actionable (the user can act on them); avoid tautological observations.
+> - `purpose` (message_topic) is distinct from `summary`: `summary` is a one-sentence overview for list views; `purpose` explains the business reason the topic exists, used in the detail panel.
+> - `parameters_explained`, `response_shapes_explained`, `examples`, `caveats` are freeform prose fields consumed by the detail panel. They are not parsed structurally — write them as natural language.
+
+### Per-kind field matrix
+
+The backend parser (`enrichment_frontmatter.go`) reads all of these fields. Fields marked **consumed** are actively surfaced in the dashboard; **parsed** means they are stored but not yet rendered.
+
+| Field | `http_endpoint` | `process_flow` | `message_topic` | Backend field |
+|-------|----------------|----------------|-----------------|--------------|
+| `entity_id` | consumed | consumed | consumed | `EntityID` |
+| `kind` | consumed | consumed | consumed | `Kind` |
+| `disqualified` | consumed | consumed | consumed | `Disqualified` |
+| `merged_into` | consumed | consumed | consumed | `MergedInto` |
+| `rank` | consumed | consumed | consumed | `Rank` |
+| `group` | consumed | consumed | consumed | `Group` |
+| `group_label` | consumed | consumed | consumed | `GroupLabel` |
+| `summary` | consumed | consumed | consumed | `Summary` |
+| `gaps` | consumed | consumed | consumed | `Gaps` |
+| `method` | consumed | — | — | `Method` |
+| `path` | consumed | — | — | `Path` |
+| `parameters` | parsed | — | — | `Parameters` |
+| `responses` | parsed | — | — | `Responses` |
+| `auth` | consumed | — | — | `Auth` |
+| `tables_touched` | consumed | — | — | `TablesTouched` |
+| `parameters_explained` | prose | — | — | *(prose field — not parsed by backend)* |
+| `response_shapes_explained` | prose | — | — | *(prose field — not parsed by backend)* |
+| `steps` | — | consumed | — | `Steps` |
+| `preconditions` | — | consumed | — | `Preconditions` |
+| `expected_outcome` | — | consumed | — | `ExpectedOutcome` |
+| `purpose` | — | — | prose | *(prose field — not parsed by backend)* |
+| `schema` | — | — | consumed | `Schema` |
+| `typical_payload_size_bytes` | — | — | consumed | `TypicalPayloadSizeBytes` |
+| `volume_estimate` | — | — | consumed | `VolumeEstimate` |
+| `expected_consumers` | — | — | consumed | `ExpectedConsumers` |
+| `examples` | prose | prose | prose | *(prose field — not parsed by backend)* |
+| `caveats` | prose | prose | prose | *(prose field — not parsed by backend)* |
+
+> **Prose fields** (`parameters_explained`, `response_shapes_explained`, `purpose`, `examples`, `caveats`) are scalar string values stored in the YAML block for documentation completeness. The backend parser does not currently map them to struct fields — they pass through as unrecognised keys and are ignored. The dashboard detail panels read them from the raw frontmatter when the backend returns the full `enrichment` object. Emit them only when you have concrete information.
+
+### `enrichment_health` per kind
+
+The detail panels expose an `enrichment_health` object that reports which structured fields are filled. The fields checked differ per kind:
+
+**`message_topic` (Topology detail panel — `computeEnrichmentHealth`):**
+- `has_summary` — `summary` present
+- `has_schema` — `schema` present
+- `has_volume_estimate` — `volume_estimate` present
+- `has_typical_payload_size` — `typical_payload_size_bytes` > 0
+- `has_expected_consumers` — `expected_consumers` non-empty
+- `has_gaps` — `gaps` non-empty
+- `filled_field_count` / `total_field_count` (total = 6)
+
+**`process_flow` (Flows detail panel — `enrichmentHealth`):**
+- `summary` — `summary` present
+- `preconditions` — `preconditions` present
+- `expected_outcome` — `expected_outcome` present
+- `steps` — `steps` non-empty
+- `gaps` — `gaps` non-empty
+
+Aim to populate all health-tracked fields when writing Pass 13 output.
 
 ### Pass 13 procedure
 
@@ -177,6 +290,44 @@ archigraph_enrichments(action=submit, entity_id="<id>", summary="...", kind="<ki
 ```
 
 After writing, run `snippets/verification-checklist.md` for each entity. Hand back to the orchestrator when all entities processed.
+
+## Pass 14 — Frontmatter validation pass
+
+Pass 14 validates the YAML frontmatter emitted by Pass 13 against the backend parser's expectations. It catches schema drift (a field renamed in Go, a new required field added to the health check) before the user notices a blank panel in the dashboard.
+
+### When to run Pass 14
+
+Run Pass 14 immediately after Pass 13 completes. It is mandatory when enriching a group for the first time and recommended after any archigraph upgrade that mentions changes to `enrichment_frontmatter.go`.
+
+### What Pass 14 checks
+
+For every doc file in `GeneratedPaths` that contains a frontmatter block:
+
+1. **Structural validity** — the file opens with `---` on line 1 and has a matching closing `---`.
+2. **Required universal fields** — `kind` is one of `http_endpoint`, `process_flow`, `message_topic`.
+3. **Kind isolation** — no cross-kind fields present (e.g. `steps` on an `http_endpoint`).
+4. **Rank bounds** — if `rank` is present, it is a float in `[0, 1]`.
+5. **`merged_into` integrity** — if non-empty, the referenced `entity_id` appears in another doc file in the same group.
+6. **Health-tracked field coverage** — for each entity kind, report which health-tracked fields are missing:
+   - `message_topic`: `summary`, `schema`, `volume_estimate`, `typical_payload_size_bytes`, `expected_consumers`, `gaps`.
+   - `process_flow`: `summary`, `preconditions`, `expected_outcome`, `steps`, `gaps`.
+7. **Discovery-path reachability** — the doc file's path is listed in `docgen-state.json`'s `GeneratedPaths`, ensuring the backend can locate it.
+
+### Pass 14 output
+
+The pass emits a validation report as a finding:
+
+```
+archigraph_save_finding(
+  question="Pass 14 frontmatter validation report",
+  answer="<summary of pass/fail counts, list of files with issues>",
+  type="enrichment_validation",
+)
+```
+
+Any entity with validation failures is **not** marked `enriched`; the pass sets those entities back to `pending` in the finding so a re-run of Pass 13 knows to revisit them.
+
+Pass 14 does **not** modify doc files directly — it only reports. The user must re-run Pass 13 for any entity with failures.
 
 ## archigraph MCP tool surface
 
@@ -228,6 +379,13 @@ docs/
   how-to/
     local-dev.md
   glossary.md
+  enrichments/                 # Pass 13 — created only for entities with no prior doc file
+    http_endpoint/
+      <entity_id>.md           # template: templates/http_endpoint.md
+    process_flow/
+      <entity_id>.md           # template: templates/process_flow.md
+    message_topic/
+      <entity_id>.md           # template: templates/message_topic.md
 ```
 
 Group-level output lands at `~/.archigraph/groups/<group>/docs/`:
@@ -258,3 +416,9 @@ Before any pass commits its output, the writer subagent runs the checks in `snip
 - `docs/specs/repair-trust-model.md` - allowlist + verification rules enforced by `archigraph_repairs(action=submit)`.
 - ADR-0007 (`docs/adrs/0007-doc-as-bridge-for-cross-repo-and-dynamic-connections.md`) - why backticked code identifiers in headings matter.
 - ADR-0008 - caller-CWD-aware routing, which is why `repo_filter` defaults work without the agent passing `cwd` explicitly.
+- `internal/dashboard/enrichment_frontmatter.go` - backend YAML frontmatter parser; source of truth for which fields are consumed vs. ignored.
+- `internal/dashboard/handlers_topology.go` `applyTopologyEnrichment` - Topology panel enrichment lookup (PR #1182).
+- `internal/dashboard/handlers_topology_detail.go` `computeEnrichmentHealth` - health field coverage check for `message_topic`.
+- `internal/dashboard/handlers_flows.go` `extractFlowDocsWithResolver` + `enrichmentHealth` - Flows panel enrichment lookup and health check (PR #1181).
+- `skills/generate-docs/templates/` - per-kind frontmatter template files for Pass 13.
+- `skills/generate-docs/examples/` - fully-populated example enriched doc files per kind.
