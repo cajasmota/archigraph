@@ -46,8 +46,9 @@ type RebuildSummary struct {
 	// EnrichmentCandidates is the number of unique subject entities needing
 	// enrichment (one-per-entity, issue #1134). EnrichmentActions is the total
 	// number of pending action items across those entities.
-	EnrichmentCandidates int // unique subjects (entities) needing enrichment
-	EnrichmentActions    int // total pending actions across all subjects
+	EnrichmentCandidates int           // unique subjects (entities) needing enrichment
+	EnrichmentActions    int           // total pending actions across all subjects
+	EnrichmentByKind     map[string]int // action counts by enrichment kind (describe_entity, describe_role, etc)
 	RepairCandidates     int
 
 	// Orphan proxy — entities with no incoming relationships.
@@ -125,10 +126,11 @@ func loadGraphStats(stateDir string) (entities, rels int) {
 // (e.g. a repo that failed to index) does not prevent summary generation.
 func ComputeRebuildSummary(group string, repoPaths []string, elapsed time.Duration) *RebuildSummary {
 	s := &RebuildSummary{
-		Group:        group,
-		EntityByKind: make(map[string]int),
-		RelByKind:    make(map[string]int),
-		Elapsed:      elapsed,
+		Group:            group,
+		EntityByKind:     make(map[string]int),
+		RelByKind:        make(map[string]int),
+		EnrichmentByKind: make(map[string]int),
+		Elapsed:          elapsed,
 	}
 
 	// hasIncoming tracks entity IDs that appear as ToID in at least one
@@ -175,9 +177,12 @@ func ComputeRebuildSummary(group string, repoPaths []string, elapsed time.Durati
 			s.TotalRelationships += sidecarRels
 		}
 
-		enrichSubjects, enrichActions, repairCount := loadCandidateCounts(stateDir)
+		enrichSubjects, enrichActions, enrichByKind, repairCount := loadCandidateCounts(stateDir)
 		s.EnrichmentCandidates += enrichSubjects
 		s.EnrichmentActions += enrichActions
+		for kind, count := range enrichByKind {
+			s.EnrichmentByKind[kind] += count
+		}
 		s.RepairCandidates += repairCount
 	}
 
@@ -208,16 +213,18 @@ func normaliseEntityKind(kind string) string {
 }
 
 // loadCandidateCounts reads enrichment-candidates.json and returns
-// (enrichSubjects, enrichActions, repairCount).
+// (enrichSubjects, enrichActions, enrichByKind, repairCount).
 //
 // enrichSubjects is the number of distinct SubjectIDs among non-repair
 // candidates — the "X entities need enrichment" display count (#1134).
 // enrichActions is the total number of non-repair candidate rows (total
-// pending actions across all subjects). repairCount is the total number of
-// repair-kind rows.
+// pending actions across all subjects). enrichByKind is a map of enrichment
+// kind to count (e.g., describe_entity: 100, describe_role: 50).
+// repairCount is the total number of repair-kind rows.
 //
-// All three are zero on any read/parse error.
-func loadCandidateCounts(stateDir string) (enrichSubjects, enrichActions, repair int) {
+// All return values are zero on any read/parse error.
+func loadCandidateCounts(stateDir string) (enrichSubjects, enrichActions int, enrichByKind map[string]int, repair int) {
+	enrichByKind = make(map[string]int)
 	path := filepath.Join(stateDir, "enrichment-candidates.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -248,6 +255,7 @@ func loadCandidateCounts(stateDir string) (enrichSubjects, enrichActions, repair
 			repair++
 		} else {
 			enrichActions++
+			enrichByKind[c.Kind]++
 			if c.SubjectID != "" {
 				seenSubjects[c.SubjectID] = struct{}{}
 			}
@@ -319,12 +327,47 @@ func PrintRebuildSummary(w io.Writer, s *RebuildSummary) {
 	fmt.Fprintf(w, "\nCross-repo edges:       %s\n", fmtInt(s.CrossRepoEdges))
 	fmt.Fprintf(w, "Process flows:          %s\n", fmtInt(s.ProcessFlows))
 	fmt.Fprintf(w, "HTTP endpoints:         %s\n", fmtInt(s.HTTPEndpoints))
-	if s.EnrichmentActions > s.EnrichmentCandidates {
-		fmt.Fprintf(w, "Enrichment candidates:  %s entities (%s pending actions)\n",
-			fmtInt(s.EnrichmentCandidates), fmtInt(s.EnrichmentActions))
-	} else {
-		fmt.Fprintf(w, "Enrichment candidates:  %s\n", fmtInt(s.EnrichmentCandidates))
+
+	// --- Enrichment candidates with breakdown ---
+	if s.EnrichmentCandidates > 0 {
+		pct := 0.0
+		if s.TotalEntities > 0 {
+			pct = 100.0 * float64(s.EnrichmentCandidates) / float64(s.TotalEntities)
+		}
+		colorCode := "" // empty by default (no color)
+		if pct >= 80 {
+			colorCode = "\033[31m" // red
+		} else if pct >= 50 {
+			colorCode = "\033[33m" // yellow
+		}
+		resetCode := ""
+		if colorCode != "" {
+			resetCode = "\033[0m"
+		}
+
+		if s.EnrichmentActions > s.EnrichmentCandidates {
+			fmt.Fprintf(w, "Enrichment candidates:  %s%s entities%s (%s pending actions, %.1f%% of total)\n",
+				colorCode, fmtInt(s.EnrichmentCandidates), resetCode,
+				fmtInt(s.EnrichmentActions), pct)
+		} else {
+			fmt.Fprintf(w, "Enrichment candidates:  %s%s entities%s (%.1f%% of total)\n",
+				colorCode, fmtInt(s.EnrichmentCandidates), resetCode, pct)
+		}
+
+		// Per-kind breakdown (top 5)
+		topEnrich, otherEnrich := topNKinds(s.EnrichmentByKind, 5)
+		if len(topEnrich) > 0 {
+			fmt.Fprintf(w, "  Action breakdown:\n")
+			enrichColW := maxKindLen(topEnrich, otherEnrich > 0)
+			for _, row := range topEnrich {
+				fmt.Fprintf(w, "    %-*s  %s\n", enrichColW, row.Kind, fmtInt(row.Count))
+			}
+			if otherEnrich > 0 {
+				fmt.Fprintf(w, "    %-*s  %s\n", enrichColW, "Other", fmtInt(otherEnrich))
+			}
+		}
 	}
+
 	fmt.Fprintf(w, "Repair candidates:      %s\n", fmtInt(s.RepairCandidates))
 	if s.TotalEntities > 0 {
 		fmt.Fprintf(w, "Orphan entities:        %s (%.1f%%)\n",
@@ -365,3 +408,4 @@ func fmtInt(n int) string {
 	}
 	return string(out)
 }
+

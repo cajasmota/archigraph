@@ -126,7 +126,7 @@ func ComputeStatusSummary(group string, repos []registry.Repo) *StatusSummary {
 
 		// Load enrichment + repair candidate counts.
 		// enrichSubjects = unique entities needing enrichment (#1134).
-		enrichSubjects, _, repairCount := loadCandidateCounts(stateDir)
+		enrichSubjects, _, _, repairCount := loadCandidateCounts(stateDir)
 		s.EnrichmentCandidates += enrichSubjects
 		s.RepairCandidates += repairCount
 

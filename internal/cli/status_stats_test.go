@@ -247,8 +247,8 @@ func TestLoadCandidateCountsArray(t *testing.T) {
 	data, _ := json.Marshal(candidates)
 	os.WriteFile(filepath.Join(stateDir, "enrichment-candidates.json"), data, 0o644)
 
-	// loadCandidateCounts now returns (uniqueSubjects, totalActions, repairCount).
-	subjects, actions, repair := loadCandidateCounts(stateDir)
+	// loadCandidateCounts now returns (uniqueSubjects, totalActions, enrichByKind, repairCount).
+	subjects, actions, _, repair := loadCandidateCounts(stateDir)
 	if subjects != 3 {
 		t.Errorf("expected 3 unique enrichment subjects, got %d", subjects)
 	}
@@ -266,7 +266,7 @@ func TestLoadCandidateCountsMissing(t *testing.T) {
 	os.MkdirAll(stateDir, 0o755)
 
 	// No enrichment-candidates.json file.
-	subjects, actions, repair := loadCandidateCounts(stateDir)
+	subjects, actions, _, repair := loadCandidateCounts(stateDir)
 	if subjects != 0 {
 		t.Errorf("expected 0 enrichment subjects when file missing, got %d", subjects)
 	}

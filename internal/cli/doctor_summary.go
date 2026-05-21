@@ -199,7 +199,7 @@ func computeQualityMetrics(health *DoctorGroupHealth) {
 		}
 
 		// Load candidate counts (enrichSubjects = unique entities needing enrichment).
-		enrichSubjects, _, repairCount := loadCandidateCounts(stateDir)
+		enrichSubjects, _, _, repairCount := loadCandidateCounts(stateDir)
 		health.PendingEnrichments += enrichSubjects
 		health.PendingRepairs += repairCount
 	}

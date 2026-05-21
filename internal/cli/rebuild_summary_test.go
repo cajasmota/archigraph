@@ -298,9 +298,12 @@ func TestCountLinksFile_ValidFile(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestLoadCandidateCounts_MissingDir(t *testing.T) {
-	subjects, actions, repair := loadCandidateCounts("/nonexistent/stateDir")
+	subjects, actions, byKind, repair := loadCandidateCounts("/nonexistent/stateDir")
 	if subjects != 0 || actions != 0 || repair != 0 {
 		t.Errorf("expected (0,0,0) for missing dir, got (%d,%d,%d)", subjects, actions, repair)
+	}
+	if len(byKind) != 0 {
+		t.Errorf("expected empty byKind map, got %v", byKind)
 	}
 }
 
@@ -315,7 +318,7 @@ func TestLoadCandidateCounts_BareArray(t *testing.T) {
 	if err := writeTestFile(tmp+"/enrichment-candidates.json", content); err != nil {
 		t.Fatal(err)
 	}
-	subjects, actions, repair := loadCandidateCounts(tmp)
+	subjects, actions, byKind, repair := loadCandidateCounts(tmp)
 	// 2 unique subjects (e1, e3), 2 total actions, 1 repair.
 	if subjects != 2 {
 		t.Errorf("expected subjects=2, got %d", subjects)
@@ -325,6 +328,9 @@ func TestLoadCandidateCounts_BareArray(t *testing.T) {
 	}
 	if repair != 1 {
 		t.Errorf("expected repair=1, got %d", repair)
+	}
+	if byKind["describe_entity"] != 2 {
+		t.Errorf("expected byKind[describe_entity]=2, got %d", byKind["describe_entity"])
 	}
 }
 
@@ -341,7 +347,7 @@ func TestLoadCandidateCounts_MultiAction(t *testing.T) {
 	if err := writeTestFile(tmp+"/enrichment-candidates.json", content); err != nil {
 		t.Fatal(err)
 	}
-	subjects, actions, repair := loadCandidateCounts(tmp)
+	subjects, actions, byKind, repair := loadCandidateCounts(tmp)
 	if subjects != 1 {
 		t.Errorf("expected subjects=1 (1 entity), got %d", subjects)
 	}
@@ -351,6 +357,9 @@ func TestLoadCandidateCounts_MultiAction(t *testing.T) {
 	if repair != 0 {
 		t.Errorf("expected repair=0, got %d", repair)
 	}
+	if byKind["describe_entity"] != 1 || byKind["classify_domain"] != 1 || byKind["describe_role"] != 1 {
+		t.Errorf("expected all 3 kinds with count=1, got %v", byKind)
+	}
 }
 
 func TestLoadCandidateCounts_ObjectEnvelope(t *testing.T) {
@@ -359,7 +368,7 @@ func TestLoadCandidateCounts_ObjectEnvelope(t *testing.T) {
 	if err := writeTestFile(tmp+"/enrichment-candidates.json", content); err != nil {
 		t.Fatal(err)
 	}
-	subjects, actions, repair := loadCandidateCounts(tmp)
+	subjects, actions, byKind, repair := loadCandidateCounts(tmp)
 	if repair != 2 {
 		t.Errorf("expected repair=2, got %d", repair)
 	}
@@ -368,6 +377,9 @@ func TestLoadCandidateCounts_ObjectEnvelope(t *testing.T) {
 	}
 	if actions != 0 {
 		t.Errorf("expected actions=0, got %d", actions)
+	}
+	if len(byKind) != 0 {
+		t.Errorf("expected empty byKind map (repair_edge is not enrichment), got %v", byKind)
 	}
 }
 
@@ -458,6 +470,164 @@ func TestComputeRebuildSummary_SidecarFallback(t *testing.T) {
 	}
 	if sum.TotalRelationships != 67890 {
 		t.Errorf("TotalRelationships = %d, want 67890 (sidecar fallback)", sum.TotalRelationships)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// formatEnrichmentBreakdown
+// ---------------------------------------------------------------------------
+
+func TestFormatEnrichmentBreakdown(t *testing.T) {
+	s := &RebuildSummary{
+		Group:                "mygroup",
+		TotalEntities:        20000,
+		EnrichmentCandidates: 15000,
+		EnrichmentActions:    25000,
+		EnrichmentByKind: map[string]int{
+			"describe_entity":  15000,
+			"describe_role":     5000,
+			"classify_domain":   3000,
+			"name_community":    2000,
+		},
+	}
+
+	var buf bytes.Buffer
+	PrintRebuildSummary(&buf, s)
+	out := buf.String()
+
+	// Check that enrichment section includes both entities and actions
+	if !strings.Contains(out, "15,000 entities") {
+		t.Errorf("expected '15,000 entities' in output:\n%s", out)
+	}
+	if !strings.Contains(out, "25,000 pending actions") {
+		t.Errorf("expected '25,000 pending actions' in output:\n%s", out)
+	}
+
+	// Check that percentage is shown (75% of 20,000)
+	if !strings.Contains(out, "75.0%") {
+		t.Errorf("expected '75.0%%' in output:\n%s", out)
+	}
+
+	// Check that per-kind breakdown is present
+	if !strings.Contains(out, "Action breakdown:") {
+		t.Errorf("expected 'Action breakdown:' in output:\n%s", out)
+	}
+	if !strings.Contains(out, "describe_entity") {
+		t.Errorf("expected 'describe_entity' in output:\n%s", out)
+	}
+	if !strings.Contains(out, "15,000") {
+		t.Errorf("expected '15,000' (describe_entity count) in output:\n%s", out)
+	}
+}
+
+func TestFormatEnrichmentBreakdown_HighPercentage_ColorRed(t *testing.T) {
+	// When enrichment is >80% of entities, should show red color code
+	s := &RebuildSummary{
+		Group:                "mygroup",
+		TotalEntities:        1000,
+		EnrichmentCandidates: 900, // 90% > 80%
+		EnrichmentActions:    1200,
+		EnrichmentByKind: map[string]int{
+			"describe_entity":  900,
+			"classify_domain":  300,
+		},
+	}
+
+	var buf bytes.Buffer
+	PrintRebuildSummary(&buf, s)
+	out := buf.String()
+
+	// Check for red color code (ANSI 31m)
+	if !strings.Contains(out, "\033[31m") {
+		t.Errorf("expected red color code for high enrichment percentage, got:\n%s", out)
+	}
+	if !strings.Contains(out, "\033[0m") {
+		t.Errorf("expected color reset code, got:\n%s", out)
+	}
+	if !strings.Contains(out, "90.0%") {
+		t.Errorf("expected '90.0%%' in output, got:\n%s", out)
+	}
+}
+
+func TestFormatEnrichmentBreakdown_MediumPercentage_ColorYellow(t *testing.T) {
+	// When enrichment is 50-80% of entities, should show yellow
+	s := &RebuildSummary{
+		Group:                "mygroup",
+		TotalEntities:        1000,
+		EnrichmentCandidates: 600, // 60% in [50%, 80%)
+		EnrichmentActions:    800,
+		EnrichmentByKind: map[string]int{
+			"describe_entity":  600,
+			"describe_role":    200,
+		},
+	}
+
+	var buf bytes.Buffer
+	PrintRebuildSummary(&buf, s)
+	out := buf.String()
+
+	// Check for yellow color code (ANSI 33m)
+	if !strings.Contains(out, "\033[33m") {
+		t.Errorf("expected yellow color code for medium enrichment percentage, got:\n%s", out)
+	}
+	if !strings.Contains(out, "\033[0m") {
+		t.Errorf("expected color reset code, got:\n%s", out)
+	}
+	if !strings.Contains(out, "60.0%") {
+		t.Errorf("expected '60.0%%' in output, got:\n%s", out)
+	}
+}
+
+func TestFormatEnrichmentBreakdown_TopFiveKinds(t *testing.T) {
+	// When enrichment has >5 kinds, only show top 5 with "Other" aggregate
+	s := &RebuildSummary{
+		Group:                "mygroup",
+		TotalEntities:        100,
+		EnrichmentCandidates: 50,
+		EnrichmentByKind: map[string]int{
+			"describe_entity":  25,
+			"describe_role":    10,
+			"classify_domain":  8,
+			"name_community":   4,
+			"link_reference":   2,
+			"extra_kind_a":     1,
+		},
+	}
+
+	var buf bytes.Buffer
+	PrintRebuildSummary(&buf, s)
+	out := buf.String()
+
+	// Should show top 5 kinds
+	if !strings.Contains(out, "describe_entity") {
+		t.Errorf("expected 'describe_entity' in output:\n%s", out)
+	}
+	if !strings.Contains(out, "describe_role") {
+		t.Errorf("expected 'describe_role' in output:\n%s", out)
+	}
+
+	// Should show "Other" for the 6th kind
+	if !strings.Contains(out, "Other") {
+		t.Errorf("expected 'Other' row when >5 kinds, got:\n%s", out)
+	}
+}
+
+func TestFormatEnrichmentBreakdown_NoEnrichment(t *testing.T) {
+	// When there are no enrichment candidates, no enrichment section should appear
+	s := &RebuildSummary{
+		Group:                "mygroup",
+		TotalEntities:        1000,
+		EnrichmentCandidates: 0,
+		EnrichmentByKind:     map[string]int{},
+	}
+
+	var buf bytes.Buffer
+	PrintRebuildSummary(&buf, s)
+	out := buf.String()
+
+	// Should not have enrichment candidates line
+	if strings.Contains(out, "Enrichment candidates:") {
+		t.Errorf("should not show enrichment candidates when count=0, got:\n%s", out)
 	}
 }
 
