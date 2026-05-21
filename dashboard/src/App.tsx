@@ -29,6 +29,7 @@ import { AuditLogRoute } from '@/routes/audit-log'
 import { OnboardRoute } from '@/routes/onboard'
 import { MCPSetupRoute } from '@/routes/mcp-setup'
 import { HelpRoute } from '@/routes/help'
+import SkillsPage from '@/routes/skills'
 import { RouterErrorBoundary } from '@/components/RouterErrorBoundary'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Globe } from 'lucide-react'
@@ -148,6 +149,9 @@ const router = createBrowserRouter([
 
       // Surface 16 — Help & About (#1253)
       { path: 'help', element: <HelpRoute /> },
+
+      // Surface 18 — Skills surface (#1354)
+      { path: 'skills', element: <SkillsPage /> },
     ],
   },
 ])

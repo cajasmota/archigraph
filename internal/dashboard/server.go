@@ -411,6 +411,12 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/updates/apply", s.handleUpdatesApply)
 	mux.HandleFunc("POST /api/updates/refresh-rules", s.handleUpdatesRefreshRules)
 
+	// Skills surface (#1354) — list installed, browse marketplace, install/remove
+	mux.HandleFunc("GET /api/skills/installed", s.handleSkillsInstalled)
+	mux.HandleFunc("GET /api/skills/available", s.handleSkillsAvailable)
+	mux.HandleFunc("POST /api/skills/install", s.handleSkillsInstall)
+	mux.HandleFunc("POST /api/skills/uninstall", s.handleSkillsUninstall)
+
 	// Maintenance ops — rebuild / reset / cleanup (#1200)
 	mux.HandleFunc("POST /api/groups/{group}/rebuild", s.handleGroupRebuild)
 	mux.HandleFunc("POST /api/groups/{group}/repos/{repo}/rebuild", s.handleRepoRebuild)
