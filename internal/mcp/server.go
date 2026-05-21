@@ -438,6 +438,21 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("group"),
 		mcpapi.WithString("cwd"),
 	), s.wrap("archigraph_auth_coverage", s.handleAuthCoverage))
+
+	// #1323: test-coverage graph — link Test entities to the code they exercise.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_test_coverage",
+		mcpapi.WithDescription("Test-coverage analysis: identifies production entities (Function, Method, Class, "+
+			"http_endpoint) that have no incoming TESTS edge. "+
+			"Ranks untested code by severity: high=HTTP endpoints, medium=exported functions, low=other. "+
+			"Use top_directories=true to see which directories have the worst coverage gaps. "+
+			"severity filter: high|medium|low (empty = all)."),
+		mcpapi.WithArray("repo_filter", mcpapi.WithStringItems()),
+		mcpapi.WithString("severity", mcpapi.Description("Filter uncovered list: high|medium|low (empty=all)")),
+		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),
+		mcpapi.WithBoolean("top_directories", mcpapi.DefaultBool(false)),
+		mcpapi.WithString("group"),
+		mcpapi.WithString("cwd"),
+	), s.wrap("archigraph_test_coverage", s.handleTestCoverage))
 }
 
 // wrap is the shared handler middleware: telemetry + lazy reload + panic guard
