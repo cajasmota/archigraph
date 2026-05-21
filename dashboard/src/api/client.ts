@@ -1313,4 +1313,3 @@ export function postRefreshRules(
   })()
   return () => { cancelled = true }
 }
-}
