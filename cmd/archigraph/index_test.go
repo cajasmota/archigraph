@@ -825,3 +825,55 @@ func TestRustTokioMiniChannelRecvDynamic(t *testing.T) {
 		t.Errorf("dynamic count = 0, expected > 0 after Rust channel/recv fix")
 	}
 }
+
+// TestModuleCoverage_AllEntitiesTagged verifies that every entity produced by
+// the indexer carries a non-empty Properties["module"] value after issue #1381.
+// It also confirms the distinct module count is much smaller than the entity
+// count (many entities share the same module), which validates that rollup —
+// not identity — is happening.
+func TestModuleCoverage_AllEntitiesTagged(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		repo string
+	}{
+		{"django_app", "testdata/django_app"},
+		{"spring_app", "testdata/spring_app"},
+		{"crossfile_go", "testdata/crossfile_go"},
+		{"crossfile_python", "testdata/crossfile_python"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := runIndexerOn(t, tc.repo, tc.name,
+				[]string{"graph-algo", "process-flow", "enrichment"})
+
+			total := len(doc.Entities)
+			if total == 0 {
+				t.Fatalf("%s: no entities produced", tc.name)
+			}
+
+			modules := map[string]int{}
+			missing := 0
+			for _, e := range doc.Entities {
+				m := e.Properties["module"]
+				if m == "" {
+					missing++
+				} else {
+					modules[m]++
+				}
+			}
+
+			if missing > 0 {
+				t.Errorf("%s: %d/%d entities missing Properties[\"module\"]",
+					tc.name, missing, total)
+			}
+
+			t.Logf("%s: entities=%d distinct_modules=%d", tc.name, total, len(modules))
+
+			// Rollup sanity: distinct modules should be strictly fewer than entities
+			// (unless every entity is in a unique module, which would be a bug).
+			if total > 1 && len(modules) >= total {
+				t.Errorf("%s: distinct_modules=%d >= entities=%d; rollup is not collapsing paths",
+					tc.name, len(modules), total)
+			}
+		})
+	}
+}
