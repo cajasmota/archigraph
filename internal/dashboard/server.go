@@ -302,6 +302,12 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/admin/groups", s.handleCreateGroup)
 	mux.HandleFunc("POST /api/admin/groups/{group}/repos", s.handleAddRepo)
 
+	// Repo Manifest viewer (#1351) — surface AGENTS.md + .archigraph/ state per repo.
+	// NOTE: the /manifest literal segment must be registered before the /graph wildcard
+	// so Go 1.22 ServeMux prefers the more-specific path.
+	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/manifest", s.handleRepoManifest)
+	mux.HandleFunc("POST /api/groups/{group}/repos/{repo}/manifest/refresh", s.handleRepoManifestRefresh)
+
 	// --- Phase 1 aggregator endpoints ---
 
 	// First-paint aggregate
