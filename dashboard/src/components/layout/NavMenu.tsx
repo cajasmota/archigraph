@@ -21,7 +21,7 @@ import {
   Network, Workflow, Radio, Globe, BookOpen, Clock,
   Stethoscope, Sparkles, Server, RefreshCw, ChevronDown,
   BarChart2, Settings, Activity, ClipboardList, Zap, HelpCircle,
-  ShieldAlert,
+  ShieldAlert, Package,
 } from 'lucide-react'
 import {
   prefetchSurface,
@@ -76,6 +76,7 @@ export function operateItems(group: string): NavEntry[] {
     { label: 'Audit Log',     to: '/audit-log',         icon: <ClipboardList  className="w-4 h-4" /> },
     { label: 'MCP Setup',     to: '/mcp-setup',         icon: <Zap         className="w-4 h-4" /> },
     { label: 'Settings',      to: '/settings',          icon: <Settings    className="w-4 h-4" /> },
+    { label: 'Skills',        to: '/skills',            icon: <Package     className="w-4 h-4" /> },
     { label: 'Help & About',  to: '/help',              icon: <HelpCircle  className="w-4 h-4" /> },
   ]
 }

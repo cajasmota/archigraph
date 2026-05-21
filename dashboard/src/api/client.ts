@@ -2111,3 +2111,62 @@ export async function fetchSecurityNPlusOne(
   return apiFetch<GroupNPlusOneReportFE>(`/api/quality/anti-patterns/${encodeURIComponent(group)}${qs}`)
 }
 
+// ── Skills surface (#1354) ───────────────────────────────────────────────────
+
+export interface SkillMeta {
+  name: string
+  description: string
+  type: string
+  when_to_use: string
+  version: string
+}
+
+export interface InstalledSkill extends SkillMeta {
+  slug: string
+  last_invoked_at?: string
+  total_invocations: number
+  update_available: boolean
+}
+
+export interface CatalogSkill extends SkillMeta {
+  slug: string
+  source: string
+  install_url?: string
+  installed: boolean
+}
+
+export interface SkillsInstalledReply {
+  skills: InstalledSkill[]
+  skills_dir: string
+}
+
+export interface SkillsAvailableReply {
+  skills: CatalogSkill[]
+}
+
+/** GET /api/skills/installed */
+export async function fetchSkillsInstalled(): Promise<SkillsInstalledReply> {
+  return apiFetch<SkillsInstalledReply>('/api/skills/installed')
+}
+
+/** GET /api/skills/available */
+export async function fetchSkillsAvailable(): Promise<SkillsAvailableReply> {
+  return apiFetch<SkillsAvailableReply>('/api/skills/available')
+}
+
+/** POST /api/skills/install */
+export async function installSkill(slug: string): Promise<{ ok: boolean; slug: string; dir: string }> {
+  return apiFetch('/api/skills/install', {
+    method: 'POST',
+    body: JSON.stringify({ slug }),
+  })
+}
+
+/** POST /api/skills/uninstall */
+export async function uninstallSkill(slug: string): Promise<{ ok: boolean; slug: string }> {
+  return apiFetch('/api/skills/uninstall', {
+    method: 'POST',
+    body: JSON.stringify({ slug }),
+  })
+}
+
