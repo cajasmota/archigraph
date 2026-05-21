@@ -1,20 +1,29 @@
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { Link, Outlet, useParams } from 'react-router-dom'
 import { useEffect } from 'react'
-import {
-  GitBranch, Network, Workflow, Radio, Globe, BookOpen,
-  Moon, Sun, Clock, Stethoscope, Sparkles, Server, ArrowUpCircle, Settings,
-} from 'lucide-react'
+import { GitBranch, Moon, Sun } from 'lucide-react'
 import { useRegistry } from '@/hooks/shared/useRegistry'
 import { useThemeContext } from '@/context/ThemeContext'
 import { GroupSelector } from '@/components/layout/GroupSelector'
 import { VersionPopover } from '@/components/layout/VersionPopover'
+import {
+  NavMenu,
+  exploreItems,
+  operateItems,
+  useIsGroupActive,
+} from '@/components/layout/NavMenu'
 
 const GROUP_DEFAULT = 'fixture-a'
+
+const EXPLORE_PREFIXES = ['/graph/', '/flows/', '/topology/', '/paths/', '/docs/', '/pending/']
+const OPERATE_PREFIXES = ['/diagnostics', '/quality', '/patterns/', '/system', '/update', '/settings']
 
 export function AppLayout() {
   const { group = GROUP_DEFAULT } = useParams()
   const { data: registry } = useRegistry()
   const groups = registry?.groups ?? []
+
+  const exploreActive = useIsGroupActive(EXPLORE_PREFIXES)
+  const operateActive = useIsGroupActive(OPERATE_PREFIXES)
 
   // Keyboard shortcut: g h → go home
   useEffect(() => {
@@ -44,19 +53,20 @@ export function AppLayout() {
           archigraph
         </Link>
 
-        {/* Surface nav — 11 chips (Graph / Flows / Topology / Pending / Paths / Docs / Diagnostics / Patterns / System / Update / Settings) */}
-        <nav className="flex items-center gap-0.5 ml-2 sm:ml-4 sm:gap-1 flex-shrink-0" aria-label="Surface navigation">
-          <NavItem to={`/graph/${group}`} icon={<Network className="w-4 h-4" />} label="Graph" />
-          <NavItem to={`/flows/${group}`} icon={<Workflow className="w-4 h-4" />} label="Flows" />
-          <NavItem to={`/topology/${group}`} icon={<Radio className="w-4 h-4" />} label="Topology" />
-          <NavItem to={`/pending/${group}`} icon={<Clock className="w-4 h-4" />} label="Pending" />
-          <NavItem to={`/paths/${group}`} icon={<Globe className="w-4 h-4" />} label="Paths" />
-          <NavItem to={`/docs/${group}`} icon={<BookOpen className="w-4 h-4" />} label="Docs" />
-          <NavItem to="/diagnostics" icon={<Stethoscope className="w-4 h-4" />} label="Diagnostics" />
-          <NavItem to={`/patterns/${group}`} icon={<Sparkles className="w-4 h-4" />} label="Patterns" />
-          <NavItem to="/system" icon={<Server className="w-4 h-4" />} label="System" />
-          <NavItem to="/update" icon={<ArrowUpCircle className="w-4 h-4" />} label="Update" />
-          <NavItem to="/settings" icon={<Settings className="w-4 h-4" />} label="Settings" />
+        {/* Surface nav — 2 grouped dropdowns (Explore / Operate) */}
+        <nav className="flex items-center gap-1 ml-2 sm:ml-4 flex-shrink-0" aria-label="Surface navigation">
+          <NavMenu
+            label="Explore"
+            testId="nav-explore"
+            items={exploreItems(group)}
+            isGroupActive={exploreActive}
+          />
+          <NavMenu
+            label="Operate"
+            testId="nav-operate"
+            items={operateItems(group)}
+            isGroupActive={operateActive}
+          />
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -72,33 +82,6 @@ export function AppLayout() {
         <Outlet />
       </main>
     </div>
-  )
-}
-
-interface NavItemProps {
-  to: string
-  icon: React.ReactNode
-  label: string
-}
-
-function NavItem({ to, icon, label }: NavItemProps) {
-  return (
-    <NavLink
-      to={to}
-      aria-label={label}
-      className={({ isActive }) =>
-        [
-          'flex items-center gap-1.5 px-2 py-1.5 rounded text-sm transition-colors',
-          'sm:px-3',
-          isActive
-            ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200'
-            : 'text-slate-500 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-700 dark:hover:text-slate-300',
-        ].join(' ')
-      }
-    >
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-    </NavLink>
   )
 }
 
