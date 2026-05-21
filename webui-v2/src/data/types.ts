@@ -60,3 +60,48 @@ export interface Group {
   indexedAt: number | null;
   health: GroupHealth;
 }
+
+// ── Docs screen ─────────────────────────────────────────────────────────────
+
+export type DocsEntityKind =
+  | "function"
+  | "component"
+  | "hook"
+  | "class"
+  | "method"
+  | "http_endpoint"
+  | "module"
+  | "folder"
+  | "repo";
+
+export interface DocsTreeNode {
+  type: DocsEntityKind;
+  name: string;
+  id?: string;           // leaf only
+  children?: DocsTreeNode[];
+}
+
+export interface DocsParam {
+  name: string;
+  type: string;
+  desc: string;
+}
+
+export interface DocsEntityDetail {
+  name: string;
+  type: DocsEntityKind;
+  repo: string;
+  file: string;
+  line: number;
+  signature: string;
+  description: string;
+  aiGenerated: boolean;
+  params: DocsParam[];
+  returns: { type: string; desc?: string } | null;
+  inbound: number;
+  outbound: number;
+  callers: string[];
+  callees: string[];
+  responseShapes?: { status: number; shape: string }[];
+  stub?: boolean;
+}
