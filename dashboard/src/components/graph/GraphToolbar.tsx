@@ -6,12 +6,14 @@ import { useGraphCameraStore } from '@/store/graphCameraStore'
 // #1059: LayoutMode type + dead props scrubbed (no-tech-debt).
 // #1066: Resume/Pause layout button added (simulation auto-pauses after settle).
 // #1067: Show external/stdlib toggle added (hidden by default).
+// #1362: onSaveSnapshot renamed to onSnapshotView — opens the SnapshotModal.
 
 interface GraphToolbarProps {
   searchQuery: string
   onSearchChange: (q: string) => void
   onResetView: () => void
-  onSaveSnapshot: () => void
+  /** Opens the Snapshot view modal (PNG / SVG export). #1362 */
+  onSnapshotView: () => void
   /** Fit view to all visible nodes */
   onFitView?: () => void
   /** Reset zoom to 1:1 then fit */
@@ -55,7 +57,7 @@ export function GraphToolbar({
   searchQuery,
   onSearchChange,
   onResetView,
-  onSaveSnapshot,
+  onSnapshotView,
   onFitView,
   onResetZoom,
   onToggleSimulation,
@@ -251,13 +253,14 @@ export function GraphToolbar({
         aria-label="Reset camera view"
       />
 
-      {/* Save snapshot */}
+      {/* Snapshot view — PNG / SVG export modal (#1362) */}
       <button
         type="button"
-        onClick={onSaveSnapshot}
-        title="Save snapshot"
+        onClick={onSnapshotView}
+        title="Snapshot view (PNG / SVG)"
         className={btnBase}
-        aria-label="Save graph snapshot as PNG"
+        aria-label="Open snapshot export options"
+        data-testid="toolbar-snapshot-btn"
       >
         <Camera className="w-4 h-4" />
       </button>

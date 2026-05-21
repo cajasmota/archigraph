@@ -24,6 +24,8 @@ import {
 } from '@/components/graph/GraphEmptyState'
 import { MCPActivityOverlay } from '@/components/graph/MCPActivityOverlay'
 import { IndexingProgressModal } from '@/components/indexing/IndexingProgressModal'
+import { SnapshotModal } from '@/components/graph/SnapshotModal'
+import { useSnapshotExport } from '@/hooks/graph/useSnapshotExport'
 import { repoColor } from '@/lib/colors'
 import { RefreshCw } from 'lucide-react'
 import type { GraphNode, RelationshipKind } from '@/types/api'
@@ -62,6 +64,10 @@ export function GraphRoute() {
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [highContrast, setHighContrast] = useState(false)
   const [reindexOpen, setReindexOpen] = useState(false)
+  const [snapshotOpen, setSnapshotOpen] = useState(false)
+  const [snapshotExporting, setSnapshotExporting] = useState(false)
+  const [snapshotError, setSnapshotError] = useState<string | undefined>()
+  const { exportSnapshot } = useSnapshotExport()
   const [crossRepoOnly, setCrossRepoOnly] = useState(false)
   const [hoveredCommunityId, setHoveredCommunityId] = useState<number | null>(null)
 
@@ -220,14 +226,38 @@ export function GraphRoute() {
     setShowSearchResults(false)
   }, [selectNode, zoomToNode])
 
-  const handleSaveSnapshot = useCallback(() => {
-    const canvas = document.querySelector<HTMLCanvasElement>('.graph-canvas canvas')
-    if (!canvas) return
-    const a = document.createElement('a')
-    a.href = canvas.toDataURL('image/png')
-    a.download = `archigraph-${group ?? 'graph'}-${Date.now()}.png`
-    a.click()
-  }, [group])
+  /** Opens the Snapshot view modal. #1362 */
+  const handleSnapshotView = useCallback(() => {
+    setSnapshotError(undefined)
+    setSnapshotOpen(true)
+  }, [])
+
+  /** Called when the user confirms export options in SnapshotModal. #1362 */
+  const handleSnapshotConfirm = useCallback(async (opts: {
+    format: import('@/hooks/graph/useSnapshotExport').SnapshotFormat
+    resolution: import('@/hooks/graph/useSnapshotExport').SnapshotResolution
+    includeLegend: boolean
+  }) => {
+    setSnapshotExporting(true)
+    setSnapshotError(undefined)
+    try {
+      await exportSnapshot({
+        ...opts,
+        groupSlug: group ?? 'graph',
+        colorMode,
+        visibleRepos: allRepoSlugs,
+        nodes,
+        edges,
+        isDark,
+      })
+      setSnapshotOpen(false)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Export failed'
+      setSnapshotError(msg)
+    } finally {
+      setSnapshotExporting(false)
+    }
+  }, [exportSnapshot, group, colorMode, allRepoSlugs, nodes, edges, isDark])
 
   const handleOpenInFlows = useCallback((entityId: string) => {
     navigate(`/${group}/flows?entry=${encodeURIComponent(entityId)}`)
@@ -341,7 +371,7 @@ export function GraphRoute() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onResetView={resetView}
-          onSaveSnapshot={handleSaveSnapshot}
+          onSnapshotView={handleSnapshotView}
           onFitView={fitView}
           onResetZoom={resetZoom}
           onToggleSimulation={toggleSimulation}
@@ -686,6 +716,15 @@ export function GraphRoute() {
               onClose={() => setReindexOpen(false)}
             />
           )}
+
+          {/* Snapshot export modal — PNG / SVG download. #1362 */}
+          <SnapshotModal
+            isOpen={snapshotOpen}
+            onClose={() => setSnapshotOpen(false)}
+            onConfirm={handleSnapshotConfirm}
+            isExporting={snapshotExporting}
+            exportError={snapshotError}
+          />
         </div>
 
         {/* Right: entity inspector */}
