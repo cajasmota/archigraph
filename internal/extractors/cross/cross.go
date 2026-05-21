@@ -18,6 +18,7 @@ import (
 	_ "github.com/cajasmota/archigraph/internal/extractors/cross/httpclient"
 	_ "github.com/cajasmota/archigraph/internal/extractors/cross/imports"
 	_ "github.com/cajasmota/archigraph/internal/extractors/cross/manifest"
+	_ "github.com/cajasmota/archigraph/internal/extractors/cross/ormlink"
 	_ "github.com/cajasmota/archigraph/internal/extractors/cross/react_props"
 	_ "github.com/cajasmota/archigraph/internal/extractors/cross/testmap"
 )
@@ -39,6 +40,7 @@ var names = []string{
 	"hierarchy",
 	"httpclient",
 	"dbmap",
+	"ormlink",
 	"react_props",
 	"endpoint",
 	"manifest",

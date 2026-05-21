@@ -17,6 +17,14 @@
 //   - Function → Table            : READS_FROM   (Issue #389; SELECT in body)
 //   - Function → Table            : WRITES_TO    (Issue #389; INSERT/UPDATE/DELETE in body)
 //
+// Migration metadata (Issue #1275):
+//   When a .sql file lives under a migrations/ directory, every emitted table
+//   entity gets two extra Properties:
+//     - "migration_file"  = basename of the file (e.g. "0003_add_orders.sql")
+//     - "migration_order" = numeric prefix extracted from the filename, zero-padded
+//       to 8 chars for lexicographic stability (e.g. "00000003"). Used by the
+//       ORM-linker and topology endpoint to order schema evolution.
+//
 // dbt model files are SQL files containing Jinja templating. They are classified
 // as "sql" by the file classifier and receive enhanced entity extraction here.
 //
@@ -28,7 +36,9 @@ package sql
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
@@ -81,6 +91,9 @@ var (
 // dbt model detection: if the file contains Jinja template markers ({{ ref(...)}}
 // or {{ source(...) }} or {{ config(...) }}), dbt-specific entities are emitted in
 // addition to any standard SQL entities.
+//
+// Migration metadata: if the file path contains a "migrations" path segment,
+// table entities are annotated with migration_file and migration_order properties.
 func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	if len(file.Content) == 0 {
 		return nil, nil
@@ -90,7 +103,58 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	if isDbtModel(src) {
 		entities = append(entities, extractDbt(src, file.Path)...)
 	}
+	// Issue #1275: stamp migration metadata on table entities when the file
+	// lives under a migrations directory.
+	if isMigrationFile(file.Path) {
+		base := filepath.Base(file.Path)
+		order := migrationOrder(base)
+		for i := range entities {
+			if entities[i].Subtype != "table" {
+				continue
+			}
+			if entities[i].Properties == nil {
+				entities[i].Properties = make(map[string]string)
+			}
+			entities[i].Properties["migration_file"] = base
+			entities[i].Properties["migration_order"] = order
+		}
+	}
 	return entities, nil
+}
+
+// migrationFilePathRE matches any path component named "migrations", "migration",
+// "migrate", or "db/migrate" (Rails convention). The check is case-insensitive.
+var migrationDirRE = regexp.MustCompile(`(?i)(?:^|/)migrations?(?:/|$)|(?:^|/)db/migrate(?:/|$)`)
+
+// isMigrationFile returns true when the file path indicates a SQL migration file.
+func isMigrationFile(path string) bool {
+	return migrationDirRE.MatchString(path)
+}
+
+// migrationOrderRE captures a leading numeric sequence (Django 4-digit, Rails
+// timestamp, Flyway V<n>, or arbitrary integer prefix).
+//
+// Supported prefix forms:
+//
+//	0001_       Django-style (4+ digits)
+//	20240501_   timestamp prefix
+//	V1__        Flyway (V followed by integer)
+//	1_          bare integer
+var migrationOrderRE = regexp.MustCompile(`^(?:[Vv])?(\d+)[_.]`)
+
+// migrationOrder extracts an 8-char zero-padded numeric sort key from a
+// migration filename. Returns "00000000" when no prefix is found (sorts first
+// so schema files without a prefix don't get lost).
+func migrationOrder(basename string) string {
+	m := migrationOrderRE.FindStringSubmatch(basename)
+	if m == nil {
+		return "00000000"
+	}
+	n, err := strconv.ParseInt(m[1], 10, 64)
+	if err != nil {
+		return "00000000"
+	}
+	return fmt.Sprintf("%08d", n)
 }
 
 // isDbtModel returns true when the SQL file contains Jinja template markers
