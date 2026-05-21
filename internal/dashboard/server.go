@@ -511,6 +511,11 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("GET /api/snapshots/{group}/{id}/diff", s.handleSnapshotDiff)
 	mux.HandleFunc("DELETE /api/snapshots/{group}/{id}", s.handleDeleteSnapshot)
 
+	// --- API v2 routes (coexist with v1; v1 routes above are UNCHANGED) ---
+	// Bootstrap — called once by WebUI v2 on mount to discover daemon version
+	// and registered groups.
+	mux.HandleFunc("GET /api/v2/meta", s.handleV2Meta)
+
 	return s.withAuth(withGzip(mux))
 }
 
