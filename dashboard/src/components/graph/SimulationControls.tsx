@@ -28,6 +28,8 @@ export interface SimulationControlsProps {
   setParam:    (key: keyof SimulationConfig, value: number) => void
   applyPreset: (preset: SimulationPreset) => void
   shareHash:   string
+  /** Called when user requests a fresh layout (clears cached positions + re-runs sim). */
+  onRelayout?: () => void
 }
 
 // ---------------------------------------------------------------------------
@@ -39,6 +41,7 @@ export function SimulationControls({
   setParam,
   applyPreset,
   shareHash,
+  onRelayout,
 }: SimulationControlsProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -165,6 +168,26 @@ export function SimulationControls({
                 Dense
               </button>
             </div>
+
+            {/* Re-layout button — clears cached positions and re-runs force sim */}
+            {onRelayout && (
+              <button
+                type="button"
+                onClick={onRelayout}
+                className={[
+                  'flex items-center justify-center gap-1 w-full px-1.5 py-1 rounded text-[10px] font-medium transition-colors',
+                  'bg-slate-200/40 dark:bg-slate-800/40 text-slate-500 dark:text-slate-500',
+                  'hover:text-amber-400 hover:border-amber-600',
+                  'border border-slate-300 dark:border-slate-700',
+                  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400',
+                ].join(' ')}
+                aria-label="Recompute layout from scratch"
+                data-testid="sim-relayout-btn"
+                title="Clears cached positions and runs a fresh force simulation"
+              >
+                Re-layout
+              </button>
+            )}
 
             {/* Share link button */}
             <button
