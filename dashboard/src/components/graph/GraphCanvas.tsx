@@ -14,6 +14,7 @@ import {
 } from '@/hooks/graph/useNodeSizingConfig'
 import type { RenderConfig } from '@/hooks/graph/useRenderConfig'
 import { DEFAULT_RENDER_CONFIG } from '@/hooks/graph/useRenderConfig'
+import type { LayoutCacheEntry } from '@/hooks/graph/useLayoutCache'
 
 // ---------------------------------------------------------------------------
 // cosmos.gl (MIT) engine wrapper — replaces @cosmograph/react (#1373)
@@ -178,6 +179,14 @@ export interface GraphCanvasProps {
   nodeFilterIndices?: number[] | null
   nodeSizingConfig?: NodeSizingConfig
   renderConfig?: RenderConfig
+  /** Group slug — used as cache key namespace for position persistence. */
+  group?: string
+  /** Pre-loaded settled positions from localStorage (null = cold load). */
+  savedLayout?: LayoutCacheEntry | null
+  /** Called once when the simulation settles, with the final Float32 positions. */
+  onLayoutSaved?: (positions: Float32Array) => void
+  /** When true, ignore savedLayout and run a fresh simulation (Re-layout). */
+  relayoutRequested?: boolean
 }
 
 /** Truncate long labels at ~30 chars for layout legibility */
@@ -218,12 +227,20 @@ const GraphCanvasInner = ({
   nodeFilterIndices,
   nodeSizingConfig,
   renderConfig,
+  savedLayout,
+  onLayoutSaved,
+  relayoutRequested,
 }: GraphCanvasProps) => {
   // #1361: merge tunable params with Silk Road defaults
   const simCfg: SimulationConfig = useMemo(
     () => simulationConfig ? { ...SILK_ROAD_DEFAULTS, ...simulationConfig } : SILK_ROAD_DEFAULTS,
     [simulationConfig],
   )
+
+  // Live ref so the mount-only settle-time cap timer reads the current
+  // settleTime slider value without re-running the mount effect.
+  const simCfgRef = useRef(simCfg)
+  simCfgRef.current = simCfg
 
   // #1380: merge tunable render params with defaults so nothing changes if
   // renderConfig is not supplied (maintains backward compat with all callers).
@@ -500,6 +517,15 @@ const GraphCanvasInner = ({
   const hasSettledRef = useRef(false)
   hasSettledRef.current = hasSettled
 
+  // Stable refs for layout-cache props so the mount-only effect + settle
+  // callback can read live values without re-running.
+  const onLayoutSavedRef = useRef(onLayoutSaved)
+  onLayoutSavedRef.current = onLayoutSaved
+  const savedLayoutRef = useRef(savedLayout)
+  savedLayoutRef.current = savedLayout
+  const relayoutRequestedRef = useRef(relayoutRequested)
+  relayoutRequestedRef.current = relayoutRequested
+
   const doSettle = useCallback(() => {
     if (hardStopTimerRef.current) {
       clearTimeout(hardStopTimerRef.current)
@@ -510,6 +536,11 @@ const GraphCanvasInner = ({
     onSimulationRunningChange?.(false)
     labelDirtyRef.current = true
     refreshLabels()
+    // Persist settled positions so the next load can skip the simulation.
+    const positions = graphRef.current?.getPointPositions()
+    if (positions && positions.length > 0 && onLayoutSavedRef.current) {
+      onLayoutSavedRef.current(new Float32Array(positions))
+    }
   }, [onSimulationRunningChange, refreshLabels])
 
   const doSettleRef = useRef(doSettle)
@@ -569,8 +600,12 @@ const GraphCanvasInner = ({
       if (!node) return
       // selectAdjacentPoints=true highlights node + 1-degree neighbors; others
       // are greyed out GPU-side via pointGreyoutOpacity (no buffer re-upload).
-      graphRef.current?.selectPointByIndex(index, true)
-      if (hasSettledRef.current) graphRef.current?.pause()
+      // Gate BOTH select + pause on hasSettledRef: touching the sim mid-settle
+      // interrupts the tick loop and freezes a half-laid-out graph.
+      if (hasSettledRef.current) {
+        graphRef.current?.selectPointByIndex(index, true)
+        graphRef.current?.pause()
+      }
       onNodeHoverRef.current(node)
     }, 50)
   }, [])
@@ -635,9 +670,12 @@ const GraphCanvasInner = ({
       // Cosmograph product layer, so any meaningful value fuses the islands.
       simulationGravity: 0.02,
       simulationFriction: simCfg.friction,
-      // Slower decay so repulsion + cluster forces have time to pull the
-      // communities into separated islands before the simulation cools.
-      simulationDecay: 6000,
+      // Faster decay (was 6000) so a FRESH layout cools quickly. The actual
+      // ceiling on the explode/settle animation is the wall-clock settle-time
+      // cap below (simCfg.settleTime), which force-calls doSettle() regardless
+      // of decay. Decay 1500 lets the sim mostly settle on its own well within
+      // the ~2s cap while still giving islands time to separate.
+      simulationDecay: 1500,
       // Moderate cluster force pulls each repo/community toward its own island
       // center — strong enough to form distinct islands, but NOT so strong it
       // collapses every island into a single overplotted dot (which re-creates
@@ -648,9 +686,10 @@ const GraphCanvasInner = ({
       // APART from each other and (b) spreads nodes WITHIN each island so the
       // core isn't a single saturated point — local density drops and the
       // purple→pink→yellow degree gradient becomes legible across the island.
-      simulationRepulsion: 4.0,
-      // No center pull — center gravity re-fuses islands into a single mass.
-      simulationCenter: 0.0,
+      simulationRepulsion: simCfg.repulsion,
+      // Center pull keeps the settled layout centered in the viewport instead
+      // of drifting to the edges. Driven by the live "Center Force" slider.
+      simulationCenter: simCfg.center,
 
       // rescalePositions: true — let cosmos.gl rescale the seeded ring positions
       // into the canvas space at init. Phase 2 had this false which, combined
@@ -695,6 +734,23 @@ const GraphCanvasInner = ({
 
     graphRef.current = graph
 
+    // If a saved layout exists and no re-layout was requested, pre-seed the
+    // engine with the cached positions and settle immediately — the explode/
+    // settle animation is SKIPPED entirely (the wall-clock cap below only
+    // applies to fresh layouts). Use rAF so cosmos.gl finishes GL init before
+    // we feed position data in.
+    const hasSavedLayout =
+      !relayoutRequestedRef.current && savedLayoutRef.current?.positions != null
+    if (hasSavedLayout) {
+      requestAnimationFrame(() => {
+        const g = graphRef.current
+        const entry = savedLayoutRef.current
+        if (!g || !entry) return
+        g.setPointPositions(entry.positions, true)
+        doSettleRef.current()
+      })
+    }
+
     // Publish a CosmographRef-shaped shim so the camera store / toolbar /
     // keyboard nav / inspector consume the engine without code changes.
     const shim = {
@@ -719,11 +775,20 @@ const GraphCanvasInner = ({
     }
     setGraphRef(shim as unknown as Parameters<typeof setGraphRef>[0])
 
-    // Hard-stop in case onSimulationEnd never fires (#1153). Raised to 16s to
-    // give the slower decay time to settle into separated islands first.
-    hardStopTimerRef.current = setTimeout(() => {
-      if (!hasSettledRef.current) doSettleRef.current()
-    }, 16000)
+    // Wall-clock settle-time CAP for a FRESH layout: force doSettle() after
+    // simCfg.settleTime seconds (default 2.0s, owner-tunable via the "Settle
+    // time (s)" slider) even if onSimulationEnd never fired. This is a hard
+    // ceiling on the initial → explode → settle animation so it is reliably
+    // ≤ the configured time and never drags on. Skipped when a saved layout is
+    // restored (that path settles immediately above). The cap is read live
+    // from simCfgRef so a fresh re-layout uses the current slider value.
+    if (!hasSavedLayout) {
+      const capSeconds = simCfgRef.current.settleTime ?? 2.0
+      const capMs = Math.max(500, Math.min(6000, capSeconds * 1000))
+      hardStopTimerRef.current = setTimeout(() => {
+        if (!hasSettledRef.current) doSettleRef.current()
+      }, capMs)
+    }
 
     return () => {
       if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current)
@@ -796,8 +861,54 @@ const GraphCanvasInner = ({
       simulationLinkSpring: simCfg.linkSpring,
       simulationLinkDistance: simCfg.linkDistance,
       simulationFriction: simCfg.friction,
+      simulationRepulsion: simCfg.repulsion,
+      simulationCenter: simCfg.center,
     })
   }, [isDark, repoFilterActive, nodeFilterIndices, simCfg])
+
+  // Live settle-time cap: when the "Settle time (s)" slider changes WHILE a
+  // fresh layout is still settling, re-arm the wall-clock cap to the new value
+  // (relative to mount). If the new cap has already elapsed, settle now. Skips
+  // entirely once the layout has settled. settleTime changes never touch the
+  // cosmos.gl config (it has no such knob) — they only move this JS timer.
+  const mountTimeRef = useRef<number>(Date.now())
+  useEffect(() => {
+    if (hasSettled) return
+    if (savedLayoutRef.current?.positions != null && !relayoutRequestedRef.current) return
+    const capMs = Math.max(500, Math.min(6000, (simCfg.settleTime ?? 2.0) * 1000))
+    const elapsed = Date.now() - mountTimeRef.current
+    if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current)
+    if (elapsed >= capMs) {
+      if (!hasSettledRef.current) doSettleRef.current()
+      return
+    }
+    hardStopTimerRef.current = setTimeout(() => {
+      if (!hasSettledRef.current) doSettleRef.current()
+    }, capMs - elapsed)
+  }, [simCfg.settleTime, hasSettled])
+
+  // Re-layout: when relayoutRequested flips true, restart the force sim from
+  // the current positions, reset the settle state + mount clock, and re-arm
+  // the wall-clock cap so the fresh explode/settle is bounded by settleTime.
+  const prevRelayoutRef = useRef(false)
+  useEffect(() => {
+    if (relayoutRequested && !prevRelayoutRef.current) {
+      const g = graphRef.current
+      if (g) {
+        mountTimeRef.current = Date.now()
+        setHasSettled(false)
+        hasSettledRef.current = false
+        onSimulationRunningChange?.(true)
+        g.start(1)
+        const capMs = Math.max(500, Math.min(6000, (simCfgRef.current.settleTime ?? 2.0) * 1000))
+        if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current)
+        hardStopTimerRef.current = setTimeout(() => {
+          if (!hasSettledRef.current) doSettleRef.current()
+        }, capMs)
+      }
+    }
+    prevRelayoutRef.current = !!relayoutRequested
+  }, [relayoutRequested, onSimulationRunningChange])
 
   // ---------------------------------------------------------------------------
   // #1380: Live render config — apply immediately via setConfig (no re-init).
