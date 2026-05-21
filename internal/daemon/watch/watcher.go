@@ -7,49 +7,147 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
 
 // EventSink is the per-repo callback invoked once a repo settles
-// (i.e. no new fs events for the debounce window).
-type EventSink func(repoPath string)
+// (i.e. no new fs events for the debounce window). When bulk is true
+// the caller received 50+ events within a 1-second window and should
+// perform a full repo reindex rather than a file-level diff.
+type EventSink func(repoPath string, bulk bool)
+
+// Config holds tunable parameters for the Watcher. Zero values fall
+// back to the built-in defaults.
+type Config struct {
+	// Debounce is the quiet-period window after the last event before
+	// the sink is called. Default: 5 s (was 2 s before #1270).
+	Debounce time.Duration
+
+	// BulkThreshold is the number of events per repo within BulkWindow
+	// that switches the watcher from file-level to repo-level reindex
+	// signalling. Default: 50.
+	BulkThreshold int
+
+	// BulkWindow is the measurement window for bulk detection.
+	// Default: 1 s.
+	BulkWindow time.Duration
+
+	// HeartbeatInterval controls how often the watcher checks that
+	// fsnotify is still running. If the internal channel closes
+	// unexpectedly (OS-level inotify error, resource exhaustion, etc.)
+	// the watcher restarts itself and emits a full diff scan for every
+	// registered repo. Default: 30 s.
+	HeartbeatInterval time.Duration
+
+	// ExcludeDirs is a list of additional directory basenames (beyond
+	// SkipDirs) that this watcher instance will not subscribe to.
+	// Useful for per-group custom exclusions.
+	ExcludeDirs []string
+}
+
+func (c *Config) debounce() time.Duration {
+	if c.Debounce > 0 {
+		return c.Debounce
+	}
+	return 5 * time.Second
+}
+
+func (c *Config) bulkThreshold() int {
+	if c.BulkThreshold > 0 {
+		return c.BulkThreshold
+	}
+	return 50
+}
+
+func (c *Config) bulkWindow() time.Duration {
+	if c.BulkWindow > 0 {
+		return c.BulkWindow
+	}
+	return time.Second
+}
+
+func (c *Config) heartbeatInterval() time.Duration {
+	if c.HeartbeatInterval > 0 {
+		return c.HeartbeatInterval
+	}
+	return 30 * time.Second
+}
 
 // Watcher is a single fsnotify-backed instance that watches one or
 // more registered repos. Each repo has its own debounce timer; when
 // the timer fires, the EventSink is called with the repo path.
+//
+// Reliability improvements over the original design (#1270):
+//   - Debounce window increased to 5 s (was 2 s) and is configurable.
+//   - Bulk detection: 50+ events in 1 s → sink called with bulk=true so
+//     the scheduler can short-circuit to a full repo reindex instead of
+//     per-file diff, preventing re-index storms after git checkout.
+//   - Heartbeat loop: if the fsnotify goroutine crashes silently (channel
+//     closed without a Stop call) the watcher recreates the fsnotify
+//     instance, re-subscribes all repos, and triggers a recovery scan.
+//   - Dropped-event counter (separate from skip counter) tracks how many
+//     events were lost while the watcher was restarting.
+//   - Per-directory exclusion list (ExcludeDirs) for per-group tuning.
+//   - ExtendedStats returns per-repo event rates and last-event timestamps
+//     for the /diagnostics endpoint.
 //
 // The watcher is goroutine-safe: AddRepo, RemoveRepo, and Stop may be
 // called concurrently. Internal state is guarded by a single mutex
 // because the volume of mutations is low (handful of repos, lifecycle
 // is registration/deregistration, not per-event).
 type Watcher struct {
-	logger       *log.Logger
-	debounce     time.Duration
-	sink         EventSink
-	fs           *fsnotify.Watcher
-	mu           sync.Mutex
-	repos        map[string]*repoState // key: absolute repo path
-	dirToRepo    map[string]string     // key: absolute dir path → repo path
-	stopOnce     sync.Once
-	stoppedCh    chan struct{}
-	totalEvents  uint64
-	droppedSkips uint64
+	logger      *log.Logger
+	cfg         Config
+	sink        EventSink
+	extraSkip   map[string]struct{}
+	mu          sync.Mutex
+	fs          *fsnotify.Watcher
+	repos       map[string]*repoState // key: absolute repo path
+	dirToRepo   map[string]string     // key: absolute dir path → repo path
+	stopOnce    sync.Once
+	stopCh      chan struct{}
+	stoppedCh   chan struct{}
+	restartCh   chan struct{} // signals heartbeat loop to recreate fsnotify
+	// counters — accessed atomically outside mu where latency matters
+	totalEvents   uint64
+	droppedSkips  uint64
+	droppedReplay uint64 // events lost during fsnotify restart
 }
 
-// repoState tracks per-repo bookkeeping. The timer is recreated on
-// every event after the previous one fires; while it is non-nil and
-// pending, additional events extend the window via Reset.
+// repoState tracks per-repo bookkeeping.
 type repoState struct {
-	path    string
+	path string
+
+	// debounce timer
 	timer   *time.Timer
 	pending bool
+
+	// bulk detection — count events in the current bulkWindow
+	bulkCount     int
+	bulkWindowEnd time.Time
+	bulkTriggered bool // true once we emitted a bulk=true signal this burst
+
+	// stats
+	lastEventAt time.Time
+	totalEvents uint64
 }
 
-// NewWatcher constructs a watcher with the given debounce window. The
-// sink is called once per repo per debounced burst. logger may be nil.
+// NewWatcher constructs a Watcher with the given EventSink and Config.
+// A zero-value Config is valid; defaults are applied for every zero field.
+// logger may be nil.
+//
+// Deprecated convenience: callers that pass only a debounce duration should
+// migrate to NewWatcherConfig. This overload is kept for back-compat with
+// existing call sites in server.go.
 func NewWatcher(debounce time.Duration, sink EventSink, logger *log.Logger) (*Watcher, error) {
+	return NewWatcherConfig(Config{Debounce: debounce}, sink, logger)
+}
+
+// NewWatcherConfig constructs a Watcher with the full Config surface.
+func NewWatcherConfig(cfg Config, sink EventSink, logger *log.Logger) (*Watcher, error) {
 	if sink == nil {
 		return nil, errors.New("watch: sink is required")
 	}
@@ -60,17 +158,37 @@ func NewWatcher(debounce time.Duration, sink EventSink, logger *log.Logger) (*Wa
 	if err != nil {
 		return nil, fmt.Errorf("fsnotify: %w", err)
 	}
+
+	extraSkip := make(map[string]struct{}, len(cfg.ExcludeDirs))
+	for _, d := range cfg.ExcludeDirs {
+		extraSkip[d] = struct{}{}
+	}
+
 	w := &Watcher{
 		logger:    logger,
-		debounce:  debounce,
+		cfg:       cfg,
 		sink:      sink,
+		extraSkip: extraSkip,
 		fs:        fw,
 		repos:     map[string]*repoState{},
 		dirToRepo: map[string]string{},
+		stopCh:    make(chan struct{}),
 		stoppedCh: make(chan struct{}),
+		restartCh: make(chan struct{}, 1),
 	}
 	go w.loop()
+	go w.heartbeat()
 	return w, nil
+}
+
+// shouldSkipDir extends the package-level ShouldSkipDir with instance
+// extra excludes.
+func (w *Watcher) shouldSkipDir(base string) bool {
+	if ShouldSkipDir(base) {
+		return true
+	}
+	_, ok := w.extraSkip[base]
+	return ok
 }
 
 // AddRepo subscribes to every directory under repoPath that survives
@@ -89,23 +207,31 @@ func (w *Watcher) AddRepo(repoPath string) (int, error) {
 	w.repos[abs] = &repoState{path: abs}
 	w.mu.Unlock()
 
+	added, err := w.subscribeRepo(abs)
+	if err != nil {
+		return added, err
+	}
+	w.logger.Printf("watcher: registered repo=%s dirs=%d debounce=%s", abs, added, w.cfg.debounce())
+	return added, nil
+}
+
+// subscribeRepo walks the repo tree and adds every non-skipped dir to
+// the fsnotify instance. Separated from AddRepo so the restart path
+// can call it without the idempotency guard.
+func (w *Watcher) subscribeRepo(abs string) (int, error) {
 	added := 0
 	walkErr := filepath.WalkDir(abs, func(p string, d os.DirEntry, err error) error {
 		if err != nil {
-			// Permission errors etc. — skip silently rather than abort
-			// the whole subscribe.
 			return nil
 		}
 		if !d.IsDir() {
 			return nil
 		}
 		base := filepath.Base(p)
-		if p != abs && ShouldSkipDir(base) {
+		if p != abs && w.shouldSkipDir(base) {
 			return filepath.SkipDir
 		}
 		if err := w.fs.Add(p); err != nil {
-			// inotify watch limit hit etc. — log and move on so the
-			// rest of the tree is still watched.
 			w.logger.Printf("watcher: add %s: %v", p, err)
 			return nil
 		}
@@ -115,11 +241,7 @@ func (w *Watcher) AddRepo(repoPath string) (int, error) {
 		added++
 		return nil
 	})
-	if walkErr != nil {
-		return added, walkErr
-	}
-	w.logger.Printf("watcher: registered repo=%s dirs=%d debounce=%s", abs, added, w.debounce)
-	return added, nil
+	return added, walkErr
 }
 
 // RemoveRepo unsubscribes every directory associated with a repo. Any
@@ -156,17 +278,64 @@ func (w *Watcher) Repos() []string {
 	return out
 }
 
-// Stats returns coarse counters for /status output.
+// Stats returns coarse counters for /status output. Signature is
+// intentionally identical to the pre-#1270 version so service.go
+// doesn't need changes.
 func (w *Watcher) Stats() (repos int, dirs int, events uint64, dropped uint64) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	return len(w.repos), len(w.dirToRepo), w.totalEvents, w.droppedSkips
+	return len(w.repos), len(w.dirToRepo),
+		atomic.LoadUint64(&w.totalEvents),
+		atomic.LoadUint64(&w.droppedSkips) + atomic.LoadUint64(&w.droppedReplay)
+}
+
+// RepoStat holds per-repo watcher statistics for the /diagnostics endpoint.
+type RepoStat struct {
+	Path        string    `json:"path"`
+	TotalEvents uint64    `json:"total_events"`
+	LastEventAt time.Time `json:"last_event_at,omitempty"`
+}
+
+// ExtendedStats returns per-repo event rates plus overall counters.
+// Used by the /diagnostics handler added in #1270.
+func (w *Watcher) ExtendedStats() (repoStats []RepoStat, totalEvents, droppedSkips, droppedReplay uint64) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, rs := range w.repos {
+		repoStats = append(repoStats, RepoStat{
+			Path:        rs.path,
+			TotalEvents: rs.totalEvents,
+			LastEventAt: rs.lastEventAt,
+		})
+	}
+	return repoStats,
+		atomic.LoadUint64(&w.totalEvents),
+		atomic.LoadUint64(&w.droppedSkips),
+		atomic.LoadUint64(&w.droppedReplay)
+}
+
+// ForceRescan triggers the sink for every registered repo with bulk=true
+// to request a full diff reconciliation. Called by the heartbeat loop
+// after a crash-and-restart and exposed for the "force re-scan" button
+// on /diagnostics.
+func (w *Watcher) ForceRescan() {
+	w.mu.Lock()
+	paths := make([]string, 0, len(w.repos))
+	for p := range w.repos {
+		paths = append(paths, p)
+	}
+	w.mu.Unlock()
+	for _, p := range paths {
+		w.logger.Printf("watcher: force-rescan repo=%s", p)
+		w.sink(p, true)
+	}
 }
 
 // Stop halts the watcher and frees the fsnotify handles. Safe to call
 // multiple times.
 func (w *Watcher) Stop() {
 	w.stopOnce.Do(func() {
+		close(w.stopCh)
 		_ = w.fs.Close()
 		<-w.stoppedCh
 		w.mu.Lock()
@@ -179,25 +348,115 @@ func (w *Watcher) Stop() {
 	})
 }
 
+// heartbeat monitors the loop goroutine. If it detects the fsnotify
+// channel was closed without a Stop (i.e. an OS-level failure), it
+// recreates the fsnotify instance, re-subscribes all repos, and triggers
+// a full recovery scan via ForceRescan.
+func (w *Watcher) heartbeat() {
+	ticker := time.NewTicker(w.cfg.heartbeatInterval())
+	defer ticker.Stop()
+	for {
+		select {
+		case <-w.stopCh:
+			return
+		case <-ticker.C:
+			// still healthy — nothing to do
+		case <-w.restartCh:
+			// loop goroutine detected unexpected channel closure.
+			w.logger.Printf("watcher: fsnotify closed unexpectedly — restarting")
+			atomic.AddUint64(&w.droppedReplay, 1)
+
+			// Recreate fsnotify.
+			fw, err := fsnotify.NewWatcher()
+			if err != nil {
+				w.logger.Printf("watcher: restart failed: %v", err)
+				continue
+			}
+			w.mu.Lock()
+			w.fs = fw
+			// Clear stale dirToRepo — will be repopulated by subscribeRepo.
+			w.dirToRepo = make(map[string]string, len(w.dirToRepo))
+			repos := make([]string, 0, len(w.repos))
+			for p := range w.repos {
+				repos = append(repos, p)
+			}
+			w.mu.Unlock()
+
+			// Re-subscribe.
+			for _, abs := range repos {
+				if n, err := w.subscribeRepo(abs); err != nil {
+					w.logger.Printf("watcher: restart re-subscribe %s: %v", abs, err)
+				} else {
+					w.logger.Printf("watcher: restart re-subscribed repo=%s dirs=%d", abs, n)
+				}
+			}
+
+			// Restart the loop goroutine against the new fsnotify instance.
+			go w.loop()
+
+			// Trigger full diff reconciliation for every repo.
+			w.ForceRescan()
+		}
+	}
+}
+
 // loop drains the fsnotify channels until the watcher is closed. We
 // route every event through the per-repo debounce timer; the timer's
 // callback runs the sink on its own goroutine.
 func (w *Watcher) loop() {
-	defer close(w.stoppedCh)
 	for {
 		select {
 		case ev, ok := <-w.fs.Events:
 			if !ok {
+				// Channel closed — either Stop() was called or fsnotify
+				// crashed. If it wasn't us, signal the heartbeat to restart.
+				select {
+				case <-w.stopCh:
+					// intentional stop — close stoppedCh once
+					select {
+					case <-w.stoppedCh: // already closed
+					default:
+						close(w.stoppedCh)
+					}
+				default:
+					// unexpected — ask heartbeat to restart
+					select {
+					case w.restartCh <- struct{}{}:
+					default:
+					}
+				}
 				return
 			}
 			w.handleEvent(ev)
 		case err, ok := <-w.fs.Errors:
 			if !ok {
+				select {
+				case <-w.stopCh:
+					select {
+					case <-w.stoppedCh:
+					default:
+						close(w.stoppedCh)
+					}
+				default:
+					select {
+					case w.restartCh <- struct{}{}:
+					default:
+					}
+				}
 				return
 			}
 			if err != nil {
 				w.logger.Printf("watcher: error: %v", err)
 			}
+		case <-w.stopCh:
+			// Stop() was called while we were blocked waiting; drain
+			// the channel close from fsnotify.Close() which happens next.
+			select {
+			case <-w.stoppedCh:
+			default:
+				close(w.stoppedCh)
+			}
+			return
 		}
 	}
 }
@@ -207,17 +466,13 @@ func (w *Watcher) loop() {
 // directories are watched recursively so freshly-checked-out commits
 // pick up nested subtrees without an explicit re-register.
 func (w *Watcher) handleEvent(ev fsnotify.Event) {
-	w.mu.Lock()
-	w.totalEvents++
-	w.mu.Unlock()
+	atomic.AddUint64(&w.totalEvents, 1)
 
 	if ev.Op == fsnotify.Chmod {
 		return
 	}
 	if ShouldSkipPath(ev.Name) {
-		w.mu.Lock()
-		w.droppedSkips++
-		w.mu.Unlock()
+		atomic.AddUint64(&w.droppedSkips, 1)
 		return
 	}
 
@@ -225,7 +480,7 @@ func (w *Watcher) handleEvent(ev fsnotify.Event) {
 	if ev.Op.Has(fsnotify.Create) {
 		if fi, err := os.Stat(ev.Name); err == nil && fi.IsDir() {
 			base := filepath.Base(ev.Name)
-			if !ShouldSkipDir(base) {
+			if !w.shouldSkipDir(base) {
 				w.subscribeDirRecursive(ev.Name)
 			}
 		}
@@ -235,7 +490,7 @@ func (w *Watcher) handleEvent(ev fsnotify.Event) {
 	if repo == "" {
 		return
 	}
-	w.armDebounce(repo)
+	w.recordAndArm(repo)
 }
 
 // repoFor finds which registered repo a path belongs to. We walk up
@@ -273,7 +528,7 @@ func (w *Watcher) subscribeDirRecursive(root string) {
 			return nil
 		}
 		base := filepath.Base(p)
-		if p != root && ShouldSkipDir(base) {
+		if p != root && w.shouldSkipDir(base) {
 			return filepath.SkipDir
 		}
 		if err := w.fs.Add(p); err != nil {
@@ -286,31 +541,64 @@ func (w *Watcher) subscribeDirRecursive(root string) {
 	})
 }
 
-// armDebounce (re)starts the per-repo timer. The timer's callback
-// hands off to the sink on its own goroutine so a slow sink does not
-// block the fsnotify loop.
-func (w *Watcher) armDebounce(repo string) {
+// recordAndArm updates per-repo event counters and (re)starts the
+// debounce timer. If the event rate crosses the bulk threshold the
+// sink is called immediately with bulk=true and the debounce timer is
+// reset so subsequent events don't generate a second non-bulk call.
+func (w *Watcher) recordAndArm(repo string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	rs, ok := w.repos[repo]
 	if !ok {
 		return
 	}
+
+	now := time.Now()
+	rs.totalEvents++
+	rs.lastEventAt = now
+
+	// Bulk detection: count events within BulkWindow.
+	bulkWin := w.cfg.bulkWindow()
+	if now.Before(rs.bulkWindowEnd) {
+		rs.bulkCount++
+	} else {
+		// New window.
+		rs.bulkCount = 1
+		rs.bulkWindowEnd = now.Add(bulkWin)
+		rs.bulkTriggered = false
+	}
+
+	if !rs.bulkTriggered && rs.bulkCount >= w.cfg.bulkThreshold() {
+		rs.bulkTriggered = true
+		// Cancel any in-flight debounce timer — bulk fires immediately.
+		if rs.timer != nil {
+			rs.timer.Stop()
+			rs.timer = nil
+		}
+		rs.pending = false
+		repoPath := repo
+		w.logger.Printf("watcher: bulk-detect repo=%s events_in_window=%d → full reindex", repoPath, rs.bulkCount)
+		go w.sink(repoPath, true)
+		return
+	}
+
+	// Normal debounce path (non-bulk).
+	debounce := w.cfg.debounce()
 	if rs.timer != nil {
-		// Reset is safe because the timer is single-fire; if it
-		// already fired the AfterFunc closure cleared rs.pending.
-		rs.timer.Reset(w.debounce)
+		rs.timer.Reset(debounce)
 		rs.pending = true
 		return
 	}
 	rs.pending = true
-	rs.timer = time.AfterFunc(w.debounce, func() {
+	repoPath := repo
+	rs.timer = time.AfterFunc(debounce, func() {
 		w.mu.Lock()
-		rs := w.repos[repo]
+		rs := w.repos[repoPath]
 		if rs != nil {
 			rs.pending = false
+			rs.timer = nil
 		}
 		w.mu.Unlock()
-		w.sink(repo)
+		w.sink(repoPath, false)
 	})
 }

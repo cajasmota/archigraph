@@ -40,11 +40,11 @@ type DiagnosticsReply struct {
 // DaemonDiagnostics covers the daemon / process-level health section.
 type DaemonDiagnostics struct {
 	// Process state
-	Running         bool   `json:"running"`
-	Status          string `json:"status"`           // "running" | "unknown"
-	PID             int    `json:"pid"`
-	UptimeSeconds   int64  `json:"uptime_seconds"`
-	UptimeHuman     string `json:"uptime_human"`
+	Running         bool    `json:"running"`
+	Status          string  `json:"status"`           // "running" | "unknown"
+	PID             int     `json:"pid"`
+	UptimeSeconds   int64   `json:"uptime_seconds"`
+	UptimeHuman     string  `json:"uptime_human"`
 	RSSМБ           float64 `json:"rss_mb"`
 
 	// Binary info (mirrors /api/info)
@@ -53,17 +53,24 @@ type DaemonDiagnostics struct {
 	BuiltAt string `json:"built_at"`
 
 	// Infrastructure checks
-	SocketReachable        bool   `json:"socket_reachable"`
-	WorkspaceWritable      bool   `json:"workspace_writable"`
-	DashboardPort          int    `json:"dashboard_port"`
-	DashboardPortAvailable bool   `json:"dashboard_port_available"`
-	LaunchAgentInstalled   bool   `json:"launch_agent_installed"`   // macOS-only
-	MCPClaudeCode          bool   `json:"mcp_claude_code"`
-	MCPWindsurf            bool   `json:"mcp_windsurf"`
+	SocketReachable        bool `json:"socket_reachable"`
+	WorkspaceWritable      bool `json:"workspace_writable"`
+	DashboardPort          int  `json:"dashboard_port"`
+	DashboardPortAvailable bool `json:"dashboard_port_available"`
+	LaunchAgentInstalled   bool `json:"launch_agent_installed"` // macOS-only
+	MCPClaudeCode          bool `json:"mcp_claude_code"`
+	MCPWindsurf            bool `json:"mcp_windsurf"`
 
 	// Registry
-	RegistryPath   string `json:"registry_path"`
-	GroupCount     int    `json:"group_count"`
+	RegistryPath string `json:"registry_path"`
+	GroupCount   int    `json:"group_count"`
+
+	// Watcher stats (#1270) — non-zero when the watcher is running.
+	WatcherRepos         int    `json:"watcher_repos,omitempty"`
+	WatcherDirs          int    `json:"watcher_dirs,omitempty"`
+	WatcherTotalEvents   uint64 `json:"watcher_total_events,omitempty"`
+	WatcherDropped       uint64 `json:"watcher_dropped,omitempty"`
+	WatcherForceRescanOK bool   `json:"watcher_force_rescan_available"`
 }
 
 // GroupDiagnostics covers one group's health.
@@ -109,6 +116,12 @@ type IssueDiagnostic struct {
 type KillStaleReply struct {
 	Killed []KilledProcess `json:"killed"`
 	DryRun bool            `json:"dry_run"`
+}
+
+// ForceRescanReply is the wire shape for POST /api/diagnostics/force-rescan.
+type ForceRescanReply struct {
+	Triggered bool   `json:"triggered"`
+	Message   string `json:"message"`
 }
 
 // KilledProcess is one stale process that was found (and optionally killed).
@@ -202,6 +215,24 @@ func (s *Server) handleDiagnosticsKillStale(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, KillStaleReply{Killed: killed, DryRun: dryRun})
 }
 
+// handleDiagnosticsForceRescan — POST /api/diagnostics/force-rescan
+//
+// Triggers ForceRescan on the daemon's file watcher, queuing a full diff
+// reconciliation for every registered repo. Returns 503 when the watcher
+// is not available (e.g. daemon is not running in this process).
+// Added in #1270.
+func (s *Server) handleDiagnosticsForceRescan(w http.ResponseWriter, _ *http.Request) {
+	if s.watcher == nil {
+		writeErr(w, http.StatusServiceUnavailable, "watcher not available")
+		return
+	}
+	s.watcher.ForceRescan()
+	writeJSON(w, http.StatusOK, ForceRescanReply{
+		Triggered: true,
+		Message:   "force rescan triggered for all registered repos",
+	})
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -281,6 +312,16 @@ func (s *Server) buildDaemonDiagnostics() DaemonDiagnostics {
 		if _, err := os.Stat(p); err == nil {
 			d.MCPWindsurf = true
 		}
+	}
+
+	// Watcher stats (#1270)
+	if s.watcher != nil {
+		repos, dirs, events, dropped := s.watcher.Stats()
+		d.WatcherRepos = repos
+		d.WatcherDirs = dirs
+		d.WatcherTotalEvents = events
+		d.WatcherDropped = dropped
+		d.WatcherForceRescanOK = true
 	}
 
 	return d

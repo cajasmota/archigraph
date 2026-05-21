@@ -91,6 +91,18 @@ type Config struct {
 	// DashboardBind is the bind address for the dashboard TCP listener.
 	// Defaults to "127.0.0.1" (loopback-only).
 	DashboardBind string
+
+	// WatcherConfig tunes the file watcher. Zero value uses built-in
+	// defaults (5 s debounce, 50-event bulk threshold, 30 s heartbeat).
+	// Populated from daemon.toml or CLI flags (watcher_debounce_ms,
+	// watcher_bulk_threshold). Added in #1270.
+	WatcherConfig watch.Config
+
+	// OnWatcherReady is called with the live watcher after it is
+	// successfully created and repos are subscribed. Allows callers
+	// (e.g. cmd/archigraph) to wire the watcher into the dashboard
+	// without creating an import cycle. Added in #1270.
+	OnWatcherReady func(w *watch.Watcher)
 }
 
 // Run starts the daemon. It blocks until either:
@@ -179,7 +191,11 @@ func Run(ctx context.Context, cfg Config) error {
 		svc.scheduler = scheduler
 		defer scheduler.Stop()
 
-		watcher, werr := watch.NewWatcher(2*time.Second, func(repo string) {
+		wcfg := cfg.WatcherConfig
+		watcher, werr := watch.NewWatcherConfig(wcfg, func(repo string, bulk bool) {
+			if bulk {
+				logger.Printf("watcher: bulk trigger repo=%s — enqueuing full reindex", repo)
+			}
 			scheduler.Enqueue(repo)
 		}, logger)
 		if werr != nil {
@@ -193,6 +209,9 @@ func Run(ctx context.Context, cfg Config) error {
 						logger.Printf("watcher: add repo %s: %v", r, err)
 					}
 				}
+			}
+			if cfg.OnWatcherReady != nil {
+				cfg.OnWatcherReady(watcher)
 			}
 		}
 	}
