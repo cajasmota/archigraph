@@ -112,6 +112,18 @@ var drfActionDetailRe = regexp.MustCompile(
 	`detail\s*=\s*(True|False)`,
 )
 
+// drfGenericRegisterRe captures `<anyVar>.register(r"prefix", ViewSetClass, ...)`
+// for an arbitrary variable name. Used to collect register() calls on nested
+// router variables (e.g. `nested.register(r"companies", CompaniesViewSet)`)
+// whose names don't match the name-pattern in drfRouterRegisterDetailedRe.
+//
+// Group 1: arbitrary variable name
+// Group 2: register prefix
+// Group 3: ViewSet class name
+var drfGenericRegisterRe = regexp.MustCompile(
+	`(\w+)\.register\s*\(\s*r?["']([^"']*)["']\s*,\s*(?:[\w.]+\.)?([A-Za-z_]\w*)`,
+)
+
 // drfLookupFieldRe captures `lookup_field = "<name>"` class-attribute
 // assignments in a ViewSet body. When present, the value replaces "pk"
 // in the detail-route path placeholder (e.g. `{slug}` instead of `{pk}`).
@@ -334,13 +346,24 @@ func ApplyDjangoDRFRoutes(
 		// single-line regex.
 		flatSrc := flattenParenthesised(src)
 		registers := drfRouterRegisterDetailedRe.FindAllStringSubmatch(flatSrc, -1)
-		if len(registers) == 0 {
-			continue
-		}
 
 		// Map of router variable name -> nested-router parent prefix
 		// (from `NestedSimpleRouter(parent, "prefix", lookup="x")`).
 		nestedPrefixes := buildNestedRouterPrefixes(flatSrc)
+
+		// Supplement registers with register() calls on nested router variables
+		// (e.g. `nested.register(r"companies", CompaniesViewSet)`). The nested
+		// router variable names (e.g. "nested", "companies_router") don't match
+		// the name-pattern in drfRouterRegisterDetailedRe, so they must be
+		// captured separately using the generic register regex.
+		// Fixes #1424.
+		if len(nestedPrefixes) > 0 {
+			registers = appendNestedRegisterCalls(registers, flatSrc, nestedPrefixes)
+		}
+
+		if len(registers) == 0 {
+			continue
+		}
 
 		// Map of router variable name -> local path() prefix from
 		// `path("api/v1/", include(routerVar.urls))` calls in THIS file.
@@ -348,6 +371,11 @@ func ApplyDjangoDRFRoutes(
 		// prefixes provide the correct mount point so we don't fall back to
 		// emitting bare-prefix routes. Fix #1124.
 		localRouterPrefixes := buildLocalRouterPrefixes(flatSrc)
+
+		// Build a routerVar → []registerPrefix index for nested-router
+		// sentinel resolution. Needed by expandRegisterPrefixes when routerVar
+		// is a NestedSimpleRouter child (Fixes #1424).
+		routerRegisterMap := buildRouterRegisterMap(flatSrc)
 
 		// Resolve imports in this file so a bare ViewSet identifier maps to
 		// its defining module + thus its file.
@@ -381,7 +409,7 @@ func ApplyDjangoDRFRoutes(
 			// (e.g. `path("api/v1/", include(router.urls))` contributes "api/v1/"
 			// as the local prefix for "router"). Fix #1124.
 			effectivePrefixes := applyLocalRouterPrefix(parentPrefixes, routerVar, localRouterPrefixes)
-			composedPrefixes := expandRegisterPrefixes(prefix, effectivePrefixes, nestedPrefixes, src)
+			composedPrefixes := expandRegisterPrefixes(prefix, effectivePrefixes, nestedPrefixes, routerVar, routerRegisterMap)
 
 			// Issue #699c — emit synthetic SCOPE.Operation entities for each
 			// CRUD method that the ViewSet exposes via inheritance but does NOT
@@ -754,6 +782,95 @@ func buildLocalRouterPrefixes(flatSrc string) map[string]string {
 	return out
 }
 
+// appendNestedRegisterCalls supplements the registers slice with register()
+// calls found on nested router variables. drfRouterRegisterDetailedRe only
+// matches router-named variables (e.g. "router", "api_router"). Nested router
+// variables have arbitrary names (e.g. "nested", "companies_router") and are
+// only known after buildNestedRouterPrefixes has run.
+//
+// For each variable name that appears as a key in nestedPrefixes, we scan
+// flatSrc with drfGenericRegisterRe and add matching register() calls to
+// registers.
+func appendNestedRegisterCalls(
+	registers [][]string,
+	flatSrc string,
+	nestedPrefixes map[string]string,
+) [][]string {
+	for _, m := range drfGenericRegisterRe.FindAllStringSubmatch(flatSrc, -1) {
+		routerVar := m[1]
+		if _, isNested := nestedPrefixes[routerVar]; !isNested {
+			continue
+		}
+		// Avoid duplicates: only add if not already present (drfRouterRegisterDetailedRe
+		// might have matched if the var name happened to match the router pattern).
+		alreadyPresent := false
+		for _, existing := range registers {
+			if len(existing) >= 3 && existing[1] == routerVar && existing[2] == m[2] {
+				alreadyPresent = true
+				break
+			}
+		}
+		if !alreadyPresent {
+			registers = append(registers, m)
+		}
+	}
+	return registers
+}
+
+// buildRouterRegisterMap returns a map of routerVar → list of register()
+// prefixes for that router variable. For example, given:
+//
+//	router.register(r"groups", GroupsViewSet)
+//	router.register(r"users", UsersViewSet)
+//
+// returns {"router": ["groups", "users"]}.
+//
+// Used by expandRegisterPrefixes to resolve $$PARENT:routerVar$$ sentinels
+// when the routerVar is a nested-router child.
+func buildRouterRegisterMap(flatSrc string) map[string][]string {
+	out := map[string][]string{}
+	for _, m := range drfRouterRegisterDetailedRe.FindAllStringSubmatch(flatSrc, -1) {
+		rv := m[1]
+		prefix := m[2]
+		out[rv] = append(out[rv], prefix)
+	}
+	return out
+}
+
+// parseNestedSentinel extracts the parentVar and lookup field from a
+// sentinel string produced by parentVarLookupChild. The sentinel format is:
+//
+//	$$PARENT:<parentVar>$$/{<lookup>}/<childPrefix>
+//
+// Returns (parentVar, lookup, true) on success, or ("", "", false) if the
+// sentinel cannot be parsed.
+func parseNestedSentinel(sentinel string) (parentVar, lookup string, ok bool) {
+	const pfx = "$$PARENT:"
+	const sfx = "$$"
+	if !strings.HasPrefix(sentinel, pfx) {
+		return
+	}
+	rest := sentinel[len(pfx):]
+	endIdx := strings.Index(rest, sfx)
+	if endIdx < 0 {
+		return
+	}
+	parentVar = rest[:endIdx]
+	tail := rest[endIdx+len(sfx):] // e.g. "/{group}/groups"
+	// Extract lookup from first {…} segment.
+	if !strings.HasPrefix(tail, "/{") {
+		return
+	}
+	tail = tail[2:] // strip "/{"
+	closeBrace := strings.Index(tail, "}")
+	if closeBrace < 0 {
+		return
+	}
+	lookup = tail[:closeBrace]
+	ok = true
+	return
+}
+
 // applyLocalRouterPrefix returns the effective parent-prefix list for a
 // router variable. When parentPrefixes is the bare-prefix fallback [""],
 // and the local-router-prefix map contains a prefix for this routerVar
@@ -790,24 +907,48 @@ func applyLocalRouterPrefix(parentPrefixes []string, routerVar string, localPref
 
 // expandRegisterPrefixes returns the set of composed prefixes that the
 // given router.register() prefix should land at, given the parent include()
-// prefixes for this file. (Nested-router resolution is conservative: if a
-// nested-router parent prefix can be resolved within the file, we use it;
-// otherwise we fall back to the bare register prefix.)
+// prefixes for this file.
+//
+// When routerVar is a nested router (entry in nestedPrefixes), the path is
+// composed as:
+//
+//	outerIncludePrefix + parentRouterRegisterPrefix + /{lookup}/ + registerPrefix
+//
+// The nestedPrefixes value is a sentinel produced by buildNestedRouterPrefixes
+// of the form "$$PARENT:parentVar$$/{lookup}/...". We extract parentVar and
+// lookup from the sentinel, look up the parent router's own register() prefixes
+// in routerRegisterMap, and compose the full nested path.
+//
+// When routerVar is a regular router this falls through to the simple
+// composition: parentIncludePrefix + "/" + registerPrefix.
 func expandRegisterPrefixes(
 	registerPrefix string,
 	parentPrefixes []string,
 	nestedPrefixes map[string]string,
-	src string,
+	routerVar string,
+	routerRegisterMap map[string][]string,
 ) []string {
-	// For each parent include() prefix, compose with the bare register
-	// prefix. We do NOT use nestedPrefixes here for the main path — that
-	// resolution requires knowing which router variable owns the call, and
-	// the simple register-call regex doesn't capture the router variable.
-	// Nested routers are exercised by the test suite via direct
-	// drfNestedRouterRe handling in a follow-up pass.
-	_ = nestedPrefixes
-	_ = src
+	// Nested router path: resolve the sentinel and compose the full path.
+	if sentinel, isNested := nestedPrefixes[routerVar]; isNested {
+		if parentVar, lookup, ok := parseNestedSentinel(sentinel); ok {
+			if parentRegPrefixes, found := routerRegisterMap[parentVar]; found && len(parentRegPrefixes) > 0 {
+				var out []string
+				for _, pp := range parentPrefixes {
+					for _, parentRegPrefix := range parentRegPrefixes {
+						// Compose: outerIncludePrefix/parentRegisterPrefix/{lookup}/registerPrefix
+						nestedBase := joinDjangoRoutePaths(parentRegPrefix, "{"+lookup+"}")
+						fullPath := joinDjangoRoutePaths(nestedBase, registerPrefix)
+						out = append(out, joinDjangoRoutePaths(pp, fullPath))
+					}
+				}
+				if len(out) > 0 {
+					return out
+				}
+			}
+		}
+	}
 
+	// Regular router: simple composition.
 	out := make([]string, 0, len(parentPrefixes))
 	for _, pp := range parentPrefixes {
 		out = append(out, joinDjangoRoutePaths(pp, registerPrefix))
