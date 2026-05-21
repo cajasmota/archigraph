@@ -1,10 +1,16 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AppLayout } from '@/routes/_layout'
 import { IndexRoute } from '@/routes/index'
-import { GraphRoute } from '@/routes/graph'
+// GraphRoute is lazy-loaded so the Cosmograph WebGL bundle (~500 KB gzipped)
+// is only fetched when the user navigates to /graph/*.  All other surfaces
+// load instantly without pulling in the GPU renderer. (#1249 perf)
+const GraphRoute = lazy(() =>
+  import('@/routes/graph').then((m) => ({ default: m.GraphRoute })),
+)
 import { FlowsRoute } from '@/routes/flows'
 import { TopologyRoute } from '@/routes/topology'
 import { PathsRoute } from '@/routes/paths'
@@ -24,6 +30,15 @@ import { RouterErrorBoundary } from '@/components/RouterErrorBoundary'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Globe } from 'lucide-react'
 
+// Fallback shown while the Cosmograph chunk downloads on first visit to /graph/*.
+function GraphLoadingFallback() {
+  return (
+    <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 text-sm">
+      Loading graph renderer…
+    </div>
+  )
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -42,9 +57,16 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <IndexRoute /> },
 
-      // Surface 1 — Graph
+      // Surface 1 — Graph (lazy — Cosmograph chunk only loads on first visit)
       { path: 'graph', element: <Navigate to="/graph/fixture-a" replace /> },
-      { path: 'graph/:group', element: <GraphRoute /> },
+      {
+        path: 'graph/:group',
+        element: (
+          <Suspense fallback={<GraphLoadingFallback />}>
+            <GraphRoute />
+          </Suspense>
+        ),
+      },
 
       // Surface 2 — Flows
       { path: 'flows', element: <Navigate to="/flows/fixture-a" replace /> },

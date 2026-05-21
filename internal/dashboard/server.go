@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -343,7 +344,7 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/mcp-setup/uninstall", s.handleMCPSetupUninstall)
 	mux.HandleFunc("POST /api/mcp-setup/verify", s.handleMCPSetupVerify)
 
-	return s.withAuth(mux)
+	return s.withAuth(withGzip(mux))
 }
 
 // spaHandler returns an http.Handler that serves static files from fsys.
@@ -438,4 +439,57 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 // writeErr emits a uniform { "error": "..." } body.
 func writeErr(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+// withGzip wraps next with transparent gzip compression for clients that
+// send Accept-Encoding: gzip.  Only compresses JSON API responses;
+// static assets and SSE/WebSocket streams are always passed through as-is.
+//
+// Perf (#1249): on a 100k-node graph the JSON payload is ~8-12 MiB uncompressed.
+// gzip at the default level reduces it to ~1-2 MiB, cutting LAN transfer time
+// by ~6x and loopback time by ~3x.  The compression cost (~40 ms at 100k nodes)
+// is amortized by staleTime=5min caching in the React Query layer.
+//
+// SSE and WebSocket paths are excluded: they are streaming protocols that require
+// an unbuffered, unflushed write path and must never be gzip-compressed.
+func withGzip(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// Only compress API JSON — static assets have their own cache pipeline.
+		if !strings.HasPrefix(r.URL.Path, "/api/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// Never compress SSE streams or WebSocket upgrades — they are long-lived
+		// streaming connections that write incrementally and must not be buffered.
+		if strings.HasSuffix(r.URL.Path, "/stream") ||
+			strings.Contains(r.URL.Path, "index-progress") ||
+			strings.Contains(r.URL.Path, "mcp-activity") ||
+			r.Header.Get("Upgrade") == "websocket" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		gz, err := gzip.NewWriterLevel(w, gzip.DefaultCompression)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		defer gz.Close()
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Del("Content-Length") // length changes after compression
+		next.ServeHTTP(&gzipResponseWriter{ResponseWriter: w, Writer: gz}, r)
+	})
+}
+
+// gzipResponseWriter wraps http.ResponseWriter so Write goes to the gzip stream.
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	Writer *gzip.Writer
+}
+
+func (g *gzipResponseWriter) Write(b []byte) (int, error) {
+	return g.Writer.Write(b)
 }

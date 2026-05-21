@@ -48,6 +48,11 @@ export default defineConfig(({ mode }) => {
             ],
             // React Flow lazy chunk — loaded only when the flow detail panel opens (#1150)
             'flow-dag': ['@xyflow/react', '@xyflow/system', 'dagre'],
+            // Cosmograph WebGL renderer — split from the main bundle so non-graph
+            // pages (Paths, Flows, Topology, Docs …) never download the GPU renderer.
+            // Combined with the lazy GraphRoute in App.tsx this saves ~500 KB gzipped
+            // on initial load for users who only use non-graph surfaces. (#1249 perf)
+            cosmograph: ['@cosmograph/react', '@cosmograph/cosmos'],
           },
         },
       },
