@@ -684,6 +684,17 @@ export interface RepairResidual {
 // Pending queue — repairs + enrichments (Surface 6, #987)
 // ────────────────────────────────────────────────────────────────────────────
 
+/** Signals that contributed to the candidate's score (from #1131). */
+export type QualificationSignal =
+  | 'http_endpoint'
+  | 'god_node'
+  | 'articulation_point'
+  | 'high_pagerank'
+  | 'ambiguous_name'
+  | 'schema_model'
+  | 'data_access'
+  | 'service_controller'
+
 /** One row returned by GET /api/repairs/{group} or GET /api/enrichments/{group}. */
 export interface PendingCandidateRow {
   candidate_id: string
@@ -702,6 +713,10 @@ export interface PendingCandidateRow {
   score_breakdown?: string
   /** "critical" | "high" | "medium" | "low" */
   criticality_band?: string
+  /** Which scoring signals fired for this candidate (#1131). */
+  qualification_signals?: QualificationSignal[]
+  /** EntityKind of the subject entity (enriched by #1131 backend). */
+  entity_kind?: string
 }
 
 export interface PendingRepairsResponse {
