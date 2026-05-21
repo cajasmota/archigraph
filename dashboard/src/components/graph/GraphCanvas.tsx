@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, memo, useMemo, useState } from 'react'
-import { Cosmograph } from '@cosmograph/react'
+import { Cosmograph, CosmographPointSizeStrategy } from '@cosmograph/react'
 import type { CosmographRef } from '@cosmograph/react'
 import { communityColor } from '@/hooks/graph/useCommunityColors'
 import { repoColor } from '@/lib/colors'
@@ -413,6 +413,15 @@ const GraphCanvasInner = ({
   const nodesRef = useRef<GraphNode[]>(nodes)
   nodesRef.current = nodes
 
+  // #perf: stable refs for selectedNodeId/hoveredNodeId so pointColorByFnRepo
+  // doesn't get recreated (and trigger a full 19k color-buffer re-upload) on
+  // every hover event. The callback reads current values from these refs at
+  // call time, preserving identical color behavior.
+  const selectedNodeIdRef = useRef<string | null>(selectedNodeId)
+  selectedNodeIdRef.current = selectedNodeId
+  const hoveredNodeIdRef = useRef<string | null>(hoveredNodeId)
+  hoveredNodeIdRef.current = hoveredNodeId
+
   // Debounce timer for hover — prevents thrashing on rapid micro-movements
   const hoverDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -760,15 +769,21 @@ const GraphCanvasInner = ({
   // ---------------------------------------------------------------------------
 
   // Repo mode: color by id (so we can match selectedNodeId/hoveredNodeId)
+  // #perf: reads from refs (selectedNodeIdRef/hoveredNodeIdRef) so this callback
+  // is never recreated on hover — prevents full 19k color-buffer re-upload every
+  // mouse move. Identical color behavior preserved; deps=[] is intentional.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const pointColorByFnRepo = useCallback((nodeId: string) => {
-    if (nodeId === selectedNodeId) return '#38bdf8'   // sky-400 — selected
-    if (nodeId === hoveredNodeId)  return '#e2e8f0'   // slate-200 — hovered
+    const selId  = selectedNodeIdRef.current
+    const hovId  = hoveredNodeIdRef.current
+    if (nodeId === selId)  return '#38bdf8'   // sky-400 — selected
+    if (nodeId === hovId)  return '#e2e8f0'   // slate-200 — hovered
     const node = nodesRef.current.find((n) => n.id === nodeId)
     if (!node) return '#64748b'
     if (node.is_centroid) return communityColor(node.community_id ?? 0)
-    if (selectedNodeId) return repoColor(node.repo) + '66' // dimmed when another selected
+    if (selId) return repoColor(node.repo) + '66' // dimmed when another selected
     return repoColor(node.repo)
-  }, [selectedNodeId, hoveredNodeId])
+  }, [])
 
   // Community mode: color by community_id (numeric column)
   const pointColorByFnCommunity = useCallback((communityId: unknown) => {
@@ -916,6 +931,11 @@ const GraphCanvasInner = ({
       <Cosmograph
         ref={cosmographRef}
         style={{ width: '100%', height: '100%' }}
+        // #perf: cap the WebGL canvas pixel ratio at 1.5 to reduce GPU fill-rate
+        // on Retina/HiDPI displays. At DPR 2 the fill cost is 4× a DPR-1 canvas;
+        // DPR 1.5 cuts that to 2.25× while keeping text/node rendering crisp.
+        // Falls back to window.devicePixelRatio when it's already ≤1.5.
+        pixelRatio={Math.min(window.devicePixelRatio, 1.5)}
         onMount={handleMount}
 
         // ── Data ──────────────────────────────────────────────────────────────
@@ -959,13 +979,14 @@ const GraphCanvasInner = ({
             }
         )}
 
-        // #1153: Silk Road size + scale params
-        // #1127: pointSizeBy='__size' preserves Process node cap
+        // #1127: pointSizeBy='__size' carries per-node tier pixels computed by
+        // computeTunedSize (4–14px range). pointSizeStrategy='direct' tells
+        // Cosmograph to use those values as literal pixel sizes — no log-quantile
+        // rescaling onto pointSizeRange. Removing pointSizeScale + pointSizeRange
+        // prevents the old 1.6× multiplier from blowing nodes up to 128px+.
+        // This fixes #1365 (sizing ignores tunable tier pixels).
         pointSizeBy="__size"
-        // #1356: pointSizeScale=1.6 — slightly bigger base than Silk Road original.
-        // Combined with pointSizeRange for wide dynamic range.
-        pointSizeScale={1.6}
-        pointSizeRange={[5, 80]}
+        pointSizeStrategy={CosmographPointSizeStrategy.Direct}
         // #1356: scalePointsOnZoom=false — THE FIX. scalePointsOnZoom=true was
         // causing nodes to shrink to sub-pixel size at default zoom with spaceSize=8192,
         // making the graph appear as 3 invisible clumps in empty space.
