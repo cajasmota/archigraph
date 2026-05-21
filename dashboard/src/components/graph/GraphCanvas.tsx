@@ -15,6 +15,7 @@ import {
 import type { RenderConfig } from '@/hooks/graph/useRenderConfig'
 import { DEFAULT_RENDER_CONFIG } from '@/hooks/graph/useRenderConfig'
 import type { LayoutCacheEntry } from '@/hooks/graph/useLayoutCache'
+import type { GroupByMode } from '@/hooks/graph/useGroupByConfig'
 
 // ---------------------------------------------------------------------------
 // cosmos.gl (MIT) engine wrapper — replaces @cosmograph/react (#1373)
@@ -56,27 +57,71 @@ function hashMod1000(s: string): number {
 }
 
 /**
- * #1106 — Repo-first composite cluster id:
- *   repoIdx * 10_000_000  +  community_id * 1000  +  moduleHash % 1000
+ * #1392 — "Group by" key for a node along the chosen dimension. This single
+ * string identity drives BOTH the cluster id (which island a node belongs to)
+ * and the island center placement, so the two always agree.
+ *   'repo'      → repo slug
+ *   'community' → community_id
+ *   'module'    → last-2-dir module key derived from source_file
+ *   'none'      → '' (no grouping)
  */
-function clusterIdFor(n: GraphNode, repoIdx: number): number {
-  const mod = hashMod1000(moduleKey(n.source_file))
-  const cid = n.community_id ?? 0
-  return repoIdx * 10_000_000 + cid * 1000 + mod
+function groupKeyFor(n: GraphNode, mode: GroupByMode): string {
+  switch (mode) {
+    case 'repo':
+      return n.repo ?? ''
+    case 'community':
+      return `c:${n.community_id ?? -1}`
+    case 'module':
+      return moduleKey(n.source_file) || `repo:${n.repo ?? ''}`
+    case 'none':
+    default:
+      return ''
+  }
 }
 
-/** #1106 — Build a repo → canvas-center map (deterministic ring layout). */
-function buildRepoCenters(
+/**
+ * #1106 / #1392 — composite cluster id. When a group dimension is active the
+ * id is derived from the group key so all members share one island; the legacy
+ * repo-first composite is kept for the 'repo' default to preserve sub-structure.
+ */
+function clusterIdFor(
+  n: GraphNode,
+  repoIdx: number,
+  mode: GroupByMode,
+): number | undefined {
+  if (mode === 'none') return undefined // no cluster force
+  if (mode === 'repo') {
+    // repo-first composite: keep community + module sub-structure inside the
+    // repo island (#1106) so the island has internal texture, not a flat disc.
+    const mod = hashMod1000(moduleKey(n.source_file))
+    const cid = n.community_id ?? 0
+    return repoIdx * 10_000_000 + cid * 1000 + mod
+  }
+  // community / module: one tight cluster per group key.
+  return hashMod1000(groupKeyFor(n, mode)) + hashMod1000(groupKeyFor(n, mode) + '#') * 1000
+}
+
+/**
+ * #1106 / #1392 — Build a group-key → canvas-center map (deterministic ring
+ * layout). Used to SEED node positions near their island center so the cluster
+ * force has a head start and islands separate quickly within the settle cap.
+ */
+function buildGroupCenters(
   nodes: GraphNode[],
+  mode: GroupByMode,
 ): Map<string, { x: number; y: number }> {
-  const repos = Array.from(new Set(nodes.map((n) => n.repo ?? ''))).sort()
-  const N = repos.length
+  if (mode === 'none') return new Map()
+  const keys = Array.from(new Set(nodes.map((n) => groupKeyFor(n, mode)))).sort()
+  const N = keys.length
   if (N === 0) return new Map()
-  const R = Math.max(3000, Math.sqrt(nodes.length) * 50)
+  // Radius scales with node count AND group count so many islands fan out wide
+  // enough to stay distinct, but the ring stays bounded so the camera fit keeps
+  // everything on-screen.
+  const R = Math.max(3000, Math.sqrt(nodes.length) * 50, N * 700)
   return new Map(
-    repos.map((repo, i) => {
+    keys.map((key, i) => {
       const angle = (i / N) * 2 * Math.PI
-      return [repo, { x: R * Math.cos(angle), y: R * Math.sin(angle) }]
+      return [key, { x: R * Math.cos(angle), y: R * Math.sin(angle) }]
     }),
   )
 }
@@ -87,6 +132,28 @@ function buildRepoCenters(
 // ---------------------------------------------------------------------------
 
 type RGBA = [number, number, number, number]
+
+// ---------------------------------------------------------------------------
+// COLOR-CONVENTION FIX (#1392): cosmos.gl 2.6.4 reads the per-point/per-link
+// color attribute as a RAW float vec4 and assigns it straight to the fragment
+// color (vertex shader: `shapeColor = color;`). It does NOT divide by 255.
+// So colors MUST be uploaded in the 0–1 float range. The previous packers
+// produced 0–255 RGB (e.g. sky-500 = [14,165,233]); every channel >1 clamps
+// to 1.0 in the shader → every node renders WHITE in every color mode.
+// This is the root cause of the all-modes white-out reported in #1392.
+//
+// We keep the parse/gradient helpers in the human-friendly 0–255 space and
+// normalise to 0–1 only at the moment we write into the GPU Float32Array.
+// ---------------------------------------------------------------------------
+
+/** Write an RGBA (rgb 0–255, a 0–1) into a packed GPU buffer at quad index i,
+ *  normalising rgb to the 0–1 range cosmos.gl's shaders expect. */
+function writeNormalizedRGBA(out: Float32Array, i: number, rgba: RGBA): void {
+  out[i * 4] = rgba[0] / 255
+  out[i * 4 + 1] = rgba[1] / 255
+  out[i * 4 + 2] = rgba[2] / 255
+  out[i * 4 + 3] = rgba[3]
+}
 
 /** Parse a #rrggbb / #rgb / rgba(...) string into [r,g,b,a] (rgb 0-255, a 0-1). */
 function parseColor(c: string | null | undefined): RGBA {
@@ -179,6 +246,8 @@ export interface GraphCanvasProps {
   nodeFilterIndices?: number[] | null
   nodeSizingConfig?: NodeSizingConfig
   renderConfig?: RenderConfig
+  /** #1392 — clustering dimension: repo (default) / community / module / none. */
+  groupBy?: GroupByMode
   /** Group slug — used as cache key namespace for position persistence. */
   group?: string
   /** Pre-loaded settled positions from localStorage (null = cold load). */
@@ -227,6 +296,7 @@ const GraphCanvasInner = ({
   nodeFilterIndices,
   nodeSizingConfig,
   renderConfig,
+  groupBy = 'repo',
   savedLayout,
   onLayoutSaved,
   relayoutRequested,
@@ -304,7 +374,11 @@ const GraphCanvasInner = ({
     return new Map(repos.map((r, i) => [r, i]))
   }, [nodes])
 
-  const repoCenters = useMemo(() => buildRepoCenters(nodes), [nodes])
+  // #1392 — island centers keyed by the active group dimension.
+  const groupCenters = useMemo(
+    () => buildGroupCenters(nodes, groupBy),
+    [nodes, groupBy],
+  )
 
   // Per-node packed buffers (positions seed, sizes, clusters, strengths).
   const packed = useMemo(() => {
@@ -318,23 +392,28 @@ const GraphCanvasInner = ({
     for (const n of nodes) { if ((n.pagerank ?? 0) > maxPR) maxPR = n.pagerank ?? 0 }
     if (maxPR === 0) maxPR = 1
 
-    const repoEntityCount = new Map<string, number>()
+    // Member count per island group (drives seed spread radius).
+    const grouping = groupBy !== 'none'
+    const groupEntityCount = new Map<string, number>()
     for (const n of nodes) {
-      const repo = n.repo ?? ''
-      repoEntityCount.set(repo, (repoEntityCount.get(repo) ?? 0) + 1)
+      const key = groupKeyFor(n, groupBy)
+      groupEntityCount.set(key, (groupEntityCount.get(key) ?? 0) + 1)
     }
 
     const getPercentile = buildDegreePercentileFn(sortedDegrees)
 
     nodes.forEach((n, i) => {
       const repoIdx = repoToIdx.get(n.repo ?? '') ?? 0
-      clusters[i] = clusterIdFor(n, repoIdx)
-      // Per-node pull toward the cluster center. Kept LOW so islands form but
-      // don't collapse their cores into a single overplotted (additive-white)
-      // point — high-pagerank hubs anchor a little harder so they sit nearer
-      // the island core, while the bulk stays loosely spread for legible color.
+      clusters[i] = clusterIdFor(n, repoIdx, groupBy)
+      // #1392 — Per-node pull toward the island center. When a group dimension
+      // is active we pull HARD so each group contracts into a tight, DISTINCT
+      // island that clearly separates from the others; high-pagerank hubs anchor
+      // a little harder so they sit nearer the island core. With grouping off
+      // (mode 'none') the cluster id is undefined so this strength is unused.
       const normalizedPR = (n.pagerank ?? 0) / maxPR
-      clusterStrength[i] = 0.04 + normalizedPR * 0.06
+      clusterStrength[i] = grouping
+        ? 0.45 + normalizedPR * 0.25 // tight islands
+        : 0.04 + normalizedPR * 0.06
 
       sizes[i] = n.kind === 'Process'
         // Process nodes: same base scale (120) so they're visible at fit zoom
@@ -343,12 +422,14 @@ const GraphCanvasInner = ({
           ? computeTunedSize(n.degree ?? 0, getPercentile, nodeSizingConfig)
           : computeSize(n.degree ?? 0)
 
-      // Seed each node near its repo center but with a WIDE per-repo spread so
-      // the initial state is dispersed (not a tight ball). The cluster force
-      // then tightens repo islands while repulsion keeps the galaxy expanded.
-      // A tight seed collapses to a single overplotted disc under gravity.
-      const center = repoCenters.get(n.repo ?? '')
-      const jitterR = Math.max(600, Math.sqrt(repoEntityCount.get(n.repo ?? '') ?? 1) * 40)
+      // #1392 — Seed each node near its ISLAND center (per the active group
+      // dimension) with a WIDE spread so the initial state is dispersed (not a
+      // tight ball). The cluster force then tightens each island while repulsion
+      // keeps the galaxy expanded. With grouping off, seed in a single broad
+      // disc and let the free force layout take over.
+      const gkey = groupKeyFor(n, groupBy)
+      const center = grouping ? groupCenters.get(gkey) : undefined
+      const jitterR = Math.max(600, Math.sqrt(groupEntityCount.get(gkey) ?? 1) * 40)
       const angle = Math.random() * 2 * Math.PI
       const r = Math.random() * jitterR
       positions[i * 2] = center ? center.x + r * Math.cos(angle) : (Math.random() - 0.5) * 4000
@@ -357,7 +438,7 @@ const GraphCanvasInner = ({
 
     return { positions, sizes, clusters, clusterStrength }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, repoToIdx, repoCenters, sortedDegrees, nodeSizingConfig])
+  }, [nodes, repoToIdx, groupCenters, groupBy, sortedDegrees, nodeSizingConfig])
 
   // Packed node colors — depends on colorMode + selection/hover.
   // Recomputed only when colorMode / nodes / theme change (NOT on hover; hover
@@ -389,10 +470,7 @@ const GraphCanvasInner = ({
         if (n.is_centroid) rgba = parseColor(communityColor(n.community_id))
         else rgba = parseColor(repoColor(n.repo))
       }
-      out[i * 4] = rgba[0]
-      out[i * 4 + 1] = rgba[1]
-      out[i * 4 + 2] = rgba[2]
-      out[i * 4 + 3] = rgba[3]
+      writeNormalizedRGBA(out, i, rgba)
     }
     return out
   }, [nodes, colorMode, sortedDegrees])
@@ -432,21 +510,23 @@ const GraphCanvasInner = ({
   const packLinkColors = useCallback((): Float32Array => {
     const { states } = linkData
     const out = new Float32Array(states.length * 4)
+    // #1392: cross-repo edges are the integration "bridges" — make them visibly
+    // brighter / higher-opacity than the subtle intra-repo links. The same-repo
+    // base opacity comes from the live rc.linkOpacity knob; cross-repo scales UP
+    // from it (clamped) and uses a bright sky hue so the islands read as bridged.
+    const sameAlpha = highContrast ? Math.min(1, rc.linkOpacity * 2) : rc.linkOpacity
+    const crossAlpha = highContrast ? 1.0 : Math.min(1, Math.max(0.55, rc.linkOpacity * 3.5))
     for (let i = 0; i < states.length; i++) {
       let rgba: RGBA
       if (states[i] === 2) {
-        rgba = highContrast ? [251, 146, 60, 1.0] : [251, 146, 60, 0.85] // amber — highlighted
+        rgba = highContrast ? [251, 146, 60, 1.0] : [251, 146, 60, 0.9] // amber — highlighted
       } else if (states[i] === 1) {
-        rgba = highContrast ? [56, 189, 248, 1.0] : [56, 189, 248, 0.7]  // sky — cross-repo
+        rgba = [56, 189, 248, crossAlpha]  // sky — cross-repo bridge (bright)
       } else {
-        // same-repo: use live linkOpacity knob (#1380, was hardcoded 0.15)
-        const alpha = highContrast ? Math.min(1, rc.linkOpacity * 2) : rc.linkOpacity
-        rgba = [100, 116, 139, alpha] // slate
+        // same-repo: subtle slate, driven by live linkOpacity knob (#1380)
+        rgba = [100, 116, 139, sameAlpha]
       }
-      out[i * 4] = rgba[0]
-      out[i * 4 + 1] = rgba[1]
-      out[i * 4 + 2] = rgba[2]
-      out[i * 4 + 3] = rgba[3]
+      writeNormalizedRGBA(out, i, rgba)
     }
     return out
   }, [linkData, highContrast, rc])
@@ -457,8 +537,11 @@ const GraphCanvasInner = ({
     if (!rc.showLinks) return out // all zeros → edges hidden
     const base = highContrast ? 1.5 : 1.0
     for (let i = 0; i < states.length; i++) {
-      // #1380: apply live linkWidthScale knob (was implicit via cosmos linkWidthScale config only)
-      out[i] = (states[i] === 0 ? base * 0.6 : base) * rc.linkWidthScale
+      // #1380: apply live linkWidthScale knob. #1392: cross-repo bridges (1) and
+      // highlighted (2) get a thicker stroke so integration points stand out;
+      // intra-repo (0) stay thin.
+      const mult = states[i] === 0 ? 0.6 : (states[i] === 1 ? 2.2 : 1.6)
+      out[i] = base * mult * rc.linkWidthScale
     }
     return out
   }, [linkData, highContrast, rc])
@@ -534,8 +617,15 @@ const GraphCanvasInner = ({
     graphRef.current?.pause()
     setHasSettled(true)
     onSimulationRunningChange?.(false)
+    // #1392 — Fit the camera to the actual NODE bounding box (cosmos.gl fitView
+    // frames the points, not the square simulation space) so the settled graph
+    // FILLS the 16:9 viewport instead of sitting tiny inside the square space.
+    // A short animation feels intentional; runs once on settle.
+    graphRef.current?.fitView(400)
     labelDirtyRef.current = true
+    // refresh labels after the fit animation positions are applied
     refreshLabels()
+    setTimeout(() => { labelDirtyRef.current = true; refreshLabels() }, 450)
     // Persist settled positions so the next load can skip the simulation.
     const positions = graphRef.current?.getPointPositions()
     if (positions && positions.length > 0 && onLayoutSavedRef.current) {
@@ -676,12 +766,12 @@ const GraphCanvasInner = ({
       // of decay. Decay 1500 lets the sim mostly settle on its own well within
       // the ~2s cap while still giving islands time to separate.
       simulationDecay: 1500,
-      // Moderate cluster force pulls each repo/community toward its own island
-      // center — strong enough to form distinct islands, but NOT so strong it
-      // collapses every island into a single overplotted dot (which re-creates
-      // the white-core washout locally even at low opacity). We rely on the
-      // higher repulsion below to give each island internal breathing room.
-      simulationCluster: 0.28,
+      // #1392 — Global cluster-force multiplier on the per-node clusterStrength.
+      // Raised so that when "Group by" is active each group contracts into a
+      // TIGHT, DISTINCT island (the per-node strength is also raised to ~0.45
+      // when grouping). Repulsion below keeps each island internally spread so
+      // cores don't collapse to one overplotted dot.
+      simulationCluster: 0.5,
       // High repulsion does double duty: it (a) pushes the separate islands
       // APART from each other and (b) spreads nodes WITHIN each island so the
       // core isn't a single saturated point — local density drops and the
@@ -733,6 +823,9 @@ const GraphCanvasInner = ({
     })
 
     graphRef.current = graph
+    if (import.meta.env.DEV) {
+      ;(window as unknown as { __getGraph?: () => unknown }).__getGraph = () => graphRef.current
+    }
 
     // If a saved layout exists and no re-layout was requested, pre-seed the
     // engine with the cached positions and settle immediately — the explode/
@@ -909,6 +1002,36 @@ const GraphCanvasInner = ({
     }
     prevRelayoutRef.current = !!relayoutRequested
   }, [relayoutRequested, onSimulationRunningChange])
+
+  // #1392 — Re-cluster on "Group by" change. The packed clusters/seeds memo has
+  // already recomputed (groupBy is a dep); push the new seed positions + cluster
+  // ids and restart the force sim so the islands reform along the new dimension.
+  // Bounded by the same settle-time cap. Skips the very first run (mount handles
+  // the initial layout).
+  const prevGroupByRef = useRef(groupBy)
+  useEffect(() => {
+    if (prevGroupByRef.current === groupBy) return
+    prevGroupByRef.current = groupBy
+    const g = graphRef.current
+    if (!g) return
+    // Re-seed from the fresh group-center positions so islands actually move
+    // to their new homes (keeping old positions would leave them mixed).
+    g.setPointPositions(packed.positions)
+    g.setPointClusters(packed.clusters)
+    g.setPointClusterStrength(packed.clusterStrength)
+    g.render()
+    g.create()
+    mountTimeRef.current = Date.now()
+    setHasSettled(false)
+    hasSettledRef.current = false
+    onSimulationRunningChange?.(true)
+    g.start(1)
+    const capMs = Math.max(500, Math.min(6000, (simCfgRef.current.settleTime ?? 2.0) * 1000))
+    if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current)
+    hardStopTimerRef.current = setTimeout(() => {
+      if (!hasSettledRef.current) doSettleRef.current()
+    }, capMs)
+  }, [groupBy, packed, onSimulationRunningChange])
 
   // ---------------------------------------------------------------------------
   // #1380: Live render config — apply immediately via setConfig (no re-init).
