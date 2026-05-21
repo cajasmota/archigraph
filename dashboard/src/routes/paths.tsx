@@ -15,6 +15,7 @@ import { usePathFilters } from '@/hooks/paths/usePathFilters'
 import { useOrphanCallers } from '@/hooks/paths/useOrphanCallers'
 import { groupPaths } from '@/lib/groupPaths'
 import type { PathRow as PathRowType, BackendInfo } from '@/types/api'
+import type { PathGroup } from '@/lib/groupPaths'
 
 // ─── localStorage key for flat/grouped preference ────────────────────────────
 const LS_FLAT_KEY = 'paths-view-flat'
@@ -31,14 +32,83 @@ function readFlatPref(): boolean {
   }
 }
 
-// ─── Estimated row height for react-virtual ──────────────────────────────────
+// ─── Estimated row heights for react-virtual ─────────────────────────────────
 const FLAT_ROW_HEIGHT = 38
+const GROUP_HEADER_HEIGHT = 37
+const PATH_ROW_HEIGHT = 38
+const BACKEND_HEADER_HEIGHT = 42
+const BACKEND_EMPTY_HEIGHT = 40
 
 // ─── Tab type ─────────────────────────────────────────────────────────────────
 type TabId = 'endpoints' | 'orphan-callers'
 
+// ─── Virtual item descriptors for grouped list ───────────────────────────────
+
+type VirtualItem =
+  | { kind: 'backend-header'; backend: BackendInfo }
+  | { kind: 'backend-empty'; backend: BackendInfo }
+  | { kind: 'group-header'; group: PathGroup; groupKey: string }
+  | { kind: 'path-row'; path: PathRowType; groupKey: string }
+
 /**
- * Virtualized flat list — renders only visible PathRows using @tanstack/react-virtual.
+ * Build a flat array of VirtualItem descriptors from the current expand state.
+ * This is the "table of contents" the virtualizer indexes into.
+ */
+function buildVirtualItems(
+  groups: PathGroup[],
+  expandedGroups: Record<string, boolean>,
+  backends: BackendInfo[] | undefined,
+  expandedBackends: Record<string, boolean>,
+  isMultiBackend: boolean,
+  groupPathsFn: (paths: PathRowType[]) => PathGroup[],
+): VirtualItem[] {
+  const items: VirtualItem[] = []
+
+  if (isMultiBackend && backends) {
+    for (const backend of backends) {
+      items.push({ kind: 'backend-header', backend })
+      if (!expandedBackends[backend.name]) continue
+
+      const isEmpty = backend.paths.length === 0
+      if (isEmpty) {
+        items.push({ kind: 'backend-empty', backend })
+        continue
+      }
+
+      const backendGroups = groupPathsFn(backend.paths)
+      for (const g of backendGroups) {
+        const gKey = `${backend.name}::${g.name}`
+        items.push({ kind: 'group-header', group: g, groupKey: gKey })
+        if (!expandedGroups[gKey]) continue
+        for (const path of g.paths) {
+          items.push({ kind: 'path-row', path, groupKey: gKey })
+        }
+      }
+    }
+  } else {
+    for (const g of groups) {
+      items.push({ kind: 'group-header', group: g, groupKey: g.name })
+      if (!expandedGroups[g.name]) continue
+      for (const path of g.paths) {
+        items.push({ kind: 'path-row', path, groupKey: g.name })
+      }
+    }
+  }
+
+  return items
+}
+
+function estimateItemSize(item: VirtualItem): number {
+  switch (item.kind) {
+    case 'backend-header': return BACKEND_HEADER_HEIGHT
+    case 'backend-empty':  return BACKEND_EMPTY_HEIGHT
+    case 'group-header':   return GROUP_HEADER_HEIGHT
+    case 'path-row':       return PATH_ROW_HEIGHT
+  }
+}
+
+/**
+ * VirtualFlatList — renders only visible PathRows using @tanstack/react-virtual.
  * Handles 1000+ paths without jank.
  */
 function VirtualFlatList({
@@ -91,6 +161,243 @@ function VirtualFlatList({
             </div>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ─── VirtualGroupedList ───────────────────────────────────────────────────────
+
+interface VirtualGroupedListProps {
+  items: VirtualItem[]
+  group: string
+  isMultiBackend: boolean
+  expandedGroups: Record<string, boolean>
+  expandedBackends: Record<string, boolean>
+  onToggleGroup: (key: string) => void
+  onToggleBackend: (name: string) => void
+  onSelectPath: (hash: string) => void
+  listRef: React.RefObject<HTMLDivElement | null>
+}
+
+/**
+ * VirtualGroupedList — virtualized grouped list for the Paths surface (#1303).
+ *
+ * Architecture:
+ *   All group-headers and path-rows are flattened into a single VirtualItem[].
+ *   useVirtualizer renders only the visible window + overscan, keeping DOM node
+ *   count bounded regardless of endpoint count.
+ *
+ * Sticky headers:
+ *   We track the "current section header" at the top of the visible window and
+ *   render it in a sticky overlay (`position: sticky; top: 0`) above the scroll
+ *   container. This gives true CSS-sticky behaviour without breaking the virtual
+ *   absolute-layout.
+ *
+ * Keyboard navigation:
+ *   The parent's ArrowUp/ArrowDown handler queries [role="row"] in the scroll
+ *   container — only currently-rendered rows are in DOM, which is correct for
+ *   virtualized lists.
+ */
+function VirtualGroupedList({
+  items,
+  group,
+  isMultiBackend,
+  expandedGroups,
+  expandedBackends,
+  onToggleGroup,
+  onToggleBackend,
+  onSelectPath,
+  listRef,
+}: VirtualGroupedListProps) {
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  // Expose scroll container ref to parent for keyboard nav
+  useEffect(() => {
+    if (listRef && 'current' in listRef) {
+      ;(listRef as React.MutableRefObject<HTMLDivElement | null>).current =
+        parentRef.current
+    }
+  }, [listRef])
+
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: (index: number) => estimateItemSize(items[index]),
+    overscan: 8,
+  })
+
+  // ── Sticky header tracking ────────────────────────────────────────────────
+  // Find the last header item whose `start` position is <= scrollTop.
+  // Render it as a sticky overlay at the top of the container.
+  const [scrollTop, setScrollTop] = useState(0)
+  const onScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop((e.target as HTMLDivElement).scrollTop)
+  }, [])
+
+  // The visible virtual rows used for rendering
+  const allVirtualRows = virtualizer.getVirtualItems()
+
+  // We need all item start positions, not just visible ones.
+  // react-virtual exposes virtualizer.range for visible indices.
+  // For sticky header we look at ALL items whose start <= scrollTop and find last header.
+  // Find the sticky header: the last section header whose BOTTOM edge has scrolled
+  // past the top of the viewport (i.e., it is fully above scrollTop).
+  // When a header is still visible in the scroll area, we don't overlay it.
+  const stickyHeader = useMemo(() => {
+    if (scrollTop === 0) return null
+
+    let lastHeader: VirtualItem | null = null
+    let accOffset = 0
+    for (let i = 0; i < items.length; i++) {
+      const size = estimateItemSize(items[i])
+      const bottom = accOffset + size
+      // Header has fully scrolled out of view
+      if (bottom <= scrollTop) {
+        if (items[i].kind === 'backend-header' || items[i].kind === 'group-header') {
+          lastHeader = items[i]
+        }
+      } else {
+        break
+      }
+      accOffset += size
+    }
+    return lastHeader
+  }, [items, scrollTop])
+
+  return (
+    <div className="flex-1 overflow-hidden flex flex-col" style={{ position: 'relative' }}>
+      {/* ── Sticky header overlay ──────────────────────────────────────────── */}
+      {stickyHeader && stickyHeader.kind === 'backend-header' && (
+        <div className="flex-shrink-0 z-20" style={{ position: 'sticky', top: 0 }}>
+          <BackendGroup
+            backend={stickyHeader.backend}
+            isExpanded={!!expandedBackends[stickyHeader.backend.name]}
+            onToggle={() => onToggleBackend(stickyHeader.backend.name)}
+          >
+            {null}
+          </BackendGroup>
+        </div>
+      )}
+      {stickyHeader && stickyHeader.kind === 'group-header' && (
+        <div className="flex-shrink-0 z-10" style={{ position: 'sticky', top: 0 }}>
+          <PathsGroup
+            group={stickyHeader.group}
+            isExpanded={!!expandedGroups[stickyHeader.groupKey]}
+            onToggle={() => onToggleGroup(stickyHeader.groupKey)}
+          >
+            {null}
+          </PathsGroup>
+        </div>
+      )}
+
+      {/* ── Virtual scroll container ───────────────────────────────────────── */}
+      <div
+        ref={parentRef}
+        className="flex-1 overflow-y-auto"
+        role="grid"
+        aria-label={isMultiBackend ? 'API paths grouped by backend' : 'API paths'}
+        onScroll={onScroll}
+      >
+        <div
+          style={{ height: virtualizer.getTotalSize(), position: 'relative' }}
+        >
+          {allVirtualRows.map((virtualRow) => {
+            const item = items[virtualRow.index]
+
+            // ── Backend header ──────────────────────────────────────────────
+            if (item.kind === 'backend-header') {
+              return (
+                <div
+                  key={`bh:${item.backend.name}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <BackendGroup
+                    backend={item.backend}
+                    isExpanded={!!expandedBackends[item.backend.name]}
+                    onToggle={() => onToggleBackend(item.backend.name)}
+                  >
+                    {null}
+                  </BackendGroup>
+                </div>
+              )
+            }
+
+            // ── Empty backend hint ──────────────────────────────────────────
+            if (item.kind === 'backend-empty') {
+              return (
+                <div
+                  key={`be:${item.backend.name}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <div className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 italic">
+                    {item.backend.count} endpoint{item.backend.count !== 1 ? 's' : ''} defined here — index this backend to see details.
+                  </div>
+                </div>
+              )
+            }
+
+            // ── Group header ────────────────────────────────────────────────
+            if (item.kind === 'group-header') {
+              return (
+                <div
+                  key={`gh:${item.groupKey}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <PathsGroup
+                    group={item.group}
+                    isExpanded={!!expandedGroups[item.groupKey]}
+                    onToggle={() => onToggleGroup(item.groupKey)}
+                  >
+                    {null}
+                  </PathsGroup>
+                </div>
+              )
+            }
+
+            // ── Path row ────────────────────────────────────────────────────
+            if (item.kind === 'path-row') {
+              return (
+                <div
+                  key={`pr:${item.path.path_hash}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <PathRow
+                    path={item.path}
+                    group={group}
+                    onSelect={() => onSelectPath(item.path.path_hash)}
+                  />
+                </div>
+              )
+            }
+
+            return null
+          })}
+        </div>
       </div>
     </div>
   )
@@ -178,6 +485,12 @@ function TabBar({ activeTab, onTabChange, endpointCount, orphanCount, orphanLoad
  *   /  → focus search input (Endpoints tab only)
  *   ↑↓ → move selection in path list
  *   Enter → drill into selected path
+ *
+ * Performance (#1303):
+ *   Both flat and grouped views are virtualized via @tanstack/react-virtual.
+ *   The grouped view flattens the group-header + path-row tree into a single
+ *   VirtualItem[] array, rendering only visible rows + overscan buffer (~8 rows).
+ *   A sticky header overlay tracks the current section during scroll.
  */
 export function PathsRoute() {
   const { group = 'fixture-a' } = useParams<{ group: string }>()
@@ -215,11 +528,11 @@ export function PathsRoute() {
   }, [])
 
   // ── Group expand/collapse state ───────────────────────────────────────────
-  // Map: groupName → expanded boolean. Default: all collapsed.
+  // Map: groupKey → expanded boolean. Default: all collapsed.
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
 
-  const toggleGroup = useCallback((name: string) => {
-    setExpandedGroups((prev) => ({ ...prev, [name]: !prev[name] }))
+  const toggleGroup = useCallback((key: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }))
   }, [])
 
   // ── Backend expand/collapse state (#1219) ─────────────────────────────────
@@ -292,8 +605,19 @@ export function PathsRoute() {
         updates[g.name] = true
       }
     }
+    // For multi-backend, also expand matching backend → controller pairs
+    if (isMultiBackend && backends) {
+      for (const b of backends) {
+        const bGroups = groupPaths(b.paths)
+        for (const g of bGroups) {
+          if (g.paths.some((p) => p.path.toLowerCase().includes(filterQ))) {
+            updates[`${b.name}::${g.name}`] = true
+          }
+        }
+      }
+    }
     setExpandedGroups(updates)
-  }, [filterQ, groups, isFlat])
+  }, [filterQ, groups, isFlat, isMultiBackend, backends])
 
   // Reset expand state when groups change substantially
   const prevGroupNamesRef = useRef<string>('')
@@ -310,10 +634,32 @@ export function PathsRoute() {
   const expandAll = useCallback(() => {
     const all: Record<string, boolean> = {}
     for (const g of groups) all[g.name] = true
+    if (isMultiBackend && backends) {
+      for (const b of backends) {
+        const bGroups = groupPaths(b.paths)
+        for (const g of bGroups) {
+          all[`${b.name}::${g.name}`] = true
+        }
+      }
+    }
     setExpandedGroups(all)
-  }, [groups])
+  }, [groups, isMultiBackend, backends])
 
   const collapseAll = useCallback(() => setExpandedGroups({}), [])
+
+  // ── Virtual items for grouped list ────────────────────────────────────────
+  // Recomputed whenever group/expand state changes. O(n) over visible items only.
+  const virtualItems = useMemo(() => {
+    if (isFlat) return []
+    return buildVirtualItems(
+      groups,
+      expandedGroups,
+      backends,
+      expandedBackends,
+      isMultiBackend,
+      groupPaths,
+    )
+  }, [isFlat, groups, expandedGroups, backends, expandedBackends, isMultiBackend])
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -328,6 +674,7 @@ export function PathsRoute() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
+  // Arrow-key navigation across visible [role="row"] elements in the grouped list
   useEffect(() => {
     const list = groupedListRef.current
     if (!list) return
@@ -502,84 +849,19 @@ export function PathsRoute() {
                     group={group}
                     onSelect={(hash) => navigate(`/paths/${group}/${hash}`)}
                   />
-                ) : isMultiBackend && backends ? (
-                  /* ── Two-level grouped list: backend → controller (#1219) ──── */
-                  <div
-                    ref={groupedListRef}
-                    className="flex-1 overflow-y-auto"
-                    role="grid"
-                    aria-label="API paths grouped by backend"
-                    aria-busy={isLoading}
-                  >
-                    <div>
-                      {backends.map((backend) => {
-                        const backendGroups = groupPaths(backend.paths)
-                        const isEmpty = backend.paths.length === 0
-                        return (
-                          <BackendGroup
-                            key={backend.name}
-                            backend={backend}
-                            isExpanded={!!expandedBackends[backend.name]}
-                            onToggle={() => toggleBackend(backend.name)}
-                          >
-                            {isEmpty ? (
-                              /* Empty backend hint */
-                              <div className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 italic">
-                                {backend.count} endpoint{backend.count !== 1 ? 's' : ''} defined here — index this backend to see details.
-                              </div>
-                            ) : (
-                              backendGroups.map((g) => (
-                                <PathsGroup
-                                  key={`${backend.name}::${g.name}`}
-                                  group={g}
-                                  isExpanded={!!expandedGroups[`${backend.name}::${g.name}`]}
-                                  onToggle={() => toggleGroup(`${backend.name}::${g.name}`)}
-                                >
-                                  {g.paths.map((path) => (
-                                    <PathRow
-                                      key={path.path_hash}
-                                      path={path}
-                                      group={group}
-                                      onSelect={() => navigate(`/paths/${group}/${path.path_hash}`)}
-                                    />
-                                  ))}
-                                </PathsGroup>
-                              ))
-                            )}
-                          </BackendGroup>
-                        )
-                      })}
-                    </div>
-                  </div>
                 ) : (
-                  /* ── Single-backend grouped list (controller only) ─────────── */
-                  <div
-                    ref={groupedListRef}
-                    className="flex-1 overflow-y-auto"
-                    role="grid"
-                    aria-label="API paths"
-                    aria-busy={isLoading}
-                  >
-                    <div>
-                      {groups.map((g) => (
-                        <PathsGroup
-                          key={g.name}
-                          group={g}
-                          isExpanded={!!expandedGroups[g.name]}
-                          onToggle={() => toggleGroup(g.name)}
-                        >
-                          {g.paths.map((path) => (
-                            <PathRow
-                              key={path.path_hash}
-                              path={path}
-                              group={group}
-                              onSelect={() => navigate(`/paths/${group}/${path.path_hash}`)}
-                            />
-                          ))}
-                        </PathsGroup>
-                      ))}
-                    </div>
-                  </div>
+                  /* ── Grouped list — virtualized (#1303) ─────────────────── */
+                  <VirtualGroupedList
+                    items={virtualItems}
+                    group={group}
+                    isMultiBackend={isMultiBackend}
+                    expandedGroups={expandedGroups}
+                    expandedBackends={expandedBackends}
+                    onToggleGroup={toggleGroup}
+                    onToggleBackend={toggleBackend}
+                    onSelectPath={(hash) => navigate(`/paths/${group}/${hash}`)}
+                    listRef={groupedListRef}
+                  />
                 )}
               </ErrorBoundary>
             </>
