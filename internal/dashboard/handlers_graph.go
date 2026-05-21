@@ -10,7 +10,7 @@ package dashboard
 // Three-tier graph data model:
 //
 //	Tier 1 (default): Compact render payload — nodes carry id, repo, kind,
-//	  degree, community_id, and label (Process nodes only). Edges carry source, target, kind.
+//	  degree, community_id, and label (all nodes, #1374). Edges carry source, target, kind.
 //	  This is the only shape; there is no ?full= opt-in.
 //
 //	Tier 2: Labels endpoint — GET /api/graph/{group}/labels?top=200 returns
@@ -169,9 +169,10 @@ type graphDenseResponse struct {
 // A soft X-Graph-Warning header is added when node count exceeds
 // softNodeWarnThreshold so the frontend can optionally surface a notice.
 //
-// Tier 1 compact payload: nodes carry only id, repo, kind, degree, community_id.
+// Tier 1 compact payload: nodes carry id, repo, kind, degree, community_id, label.
 // Full entity detail is available via GET /api/graph/{group}/entity/{id} (Tier 3).
-// Labels for the top-N nodes are available via GET /api/graph/{group}/labels (Tier 2).
+// The Tier 2 labels endpoint (GET /api/graph/{group}/labels) remains available for
+// backward compatibility but is no longer the sole source of human-readable names.
 //
 // includeExternal controls whether SCOPE.External placeholder entities are
 // emitted. Default (false) hides stdlib/builtin nodes from the graph view.
@@ -242,23 +243,20 @@ func (s *Server) serveGraphDense(w http.ResponseWriter, group string, repos []*D
 				continue
 			}
 			visible[pid] = true
-			// Tier 1 compact node: id, repo, kind, degree, community_id.
-			// `kind` is included so the frontend can special-case Process sizing (#1121 P3)
-			// and `label` is included for Process entities so they never fall back to
-			// their hash ID in the Tier-2 top-200 labels window (#1121 P4).
+			// Tier 1 compact node: id, repo, kind, degree, community_id, label.
+			// `kind` is included so the frontend can special-case Process sizing (#1121 P3).
+			// `label` is included for ALL entities (#1374) so the frontend never falls back
+			// to repo::<hash-id> for non-Process nodes. Uses e.Name, the same field
+			// returned by the MCP inspect tool.
 			node := graphNodeWire{
 				ID:     pid,
 				Repo:   r.Slug,
 				Kind:   strippedKind,
 				Degree: degreeMap[e.ID],
+				Label:  e.Name,
 			}
 			if e.CommunityID != nil {
 				node.CommunityID = e.CommunityID
-			}
-			// Process entities carry their human label (entry → terminal) in e.Name.
-			// Include it inline so the frontend never falls back to the proc:<hash> ID.
-			if strippedKind == "Process" {
-				node.Label = e.Name
 			}
 			nodes = append(nodes, node)
 		}

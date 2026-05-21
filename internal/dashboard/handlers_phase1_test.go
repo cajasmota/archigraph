@@ -377,7 +377,7 @@ func TestGraphLabels_UnknownGroup_404(t *testing.T) {
 	}
 }
 
-func TestGraph_LitePayload_KindAlwaysLabelForProcess(t *testing.T) {
+func TestGraph_LitePayload_LabelOnAllNodes(t *testing.T) {
 	ts, _ := newPhase1Server(t)
 	code, body := getJSON(t, ts.URL, "/api/graph/testgroup")
 	if code != 200 {
@@ -387,21 +387,19 @@ func TestGraph_LitePayload_KindAlwaysLabelForProcess(t *testing.T) {
 	if len(nodes) == 0 {
 		t.Fatalf("expected nodes")
 	}
-	// #1121: Tier 1 compact nodes now include `kind` for every node and `label`
-	// for Process nodes only. source_file and pagerank remain excluded.
+	// #1374: Tier 1 compact nodes include `kind` and `label` for every node.
+	// Previously only Process nodes carried label, causing other nodes to render
+	// as repo::<hash-id> in the graph view. Now all nodes carry their human name.
+	// source_file and pagerank remain excluded.
 	for _, n := range nodes {
 		nm, _ := n.(map[string]any)
 		// kind is always present (#1121 P3 — frontend needs it for Process sizing)
 		if nm["kind"] == nil {
 			t.Errorf("Tier 1 node missing kind field; id=%v", nm["id"])
 		}
-		// Process nodes carry label inline (#1121 P4 — avoid proc:<hash> fallback)
-		if nm["kind"] == "Process" && nm["label"] == nil {
-			t.Errorf("Tier 1 Process node missing label field; id=%v", nm["id"])
-		}
-		// Non-Process nodes must NOT carry label (kept compact)
-		if nm["kind"] != "Process" && nm["label"] != nil {
-			t.Errorf("Tier 1 non-Process node should not carry label field; kind=%v got label=%v", nm["kind"], nm["label"])
+		// label is now always present (#1374 — all nodes must carry human-readable name)
+		if nm["label"] == nil {
+			t.Errorf("Tier 1 node missing label field; kind=%v id=%v", nm["kind"], nm["id"])
 		}
 		// source_file stays excluded
 		if nm["source_file"] != nil {
