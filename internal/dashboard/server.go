@@ -21,6 +21,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/audit"
 	"github.com/cajasmota/archigraph/internal/jobs"
 	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/archigraph/internal/notifications"
 	"github.com/cajasmota/archigraph/internal/perf"
 	"github.com/cajasmota/archigraph/internal/progress"
 )
@@ -87,6 +88,12 @@ type Server struct {
 	// Guarded by perfMu; initialised on first call to perfComponents().
 	perfRecorder *perf.Recorder
 	perfMu       sync.Mutex
+
+	// webhookDispatcher fires quality-event notifications to configured URLs
+	// after every rebuild (#1341). Optional: nil disables the test-ping
+	// endpoints but does not prevent build or read-only webhook list routes.
+	// Set via SetWebhookDispatcher before Serve.
+	webhookDispatcher webhookDispatcherIface
 }
 
 // watcherForceRescan is the subset of the watch.Watcher surface used by
@@ -96,6 +103,15 @@ type watcherForceRescan interface {
 	ForceRescan()
 	// Stats returns (repos, dirs, totalEvents, dropped).
 	Stats() (int, int, uint64, uint64)
+}
+
+// webhookDispatcherIface is the subset of notifications.Dispatcher used by the
+// dashboard. The narrow interface keeps server.go free of a direct import of
+// the notifications package.
+type webhookDispatcherIface interface {
+	PostOnceForTest(cfg notifications.WebhookConfig, payload notifications.WebhookPayload) (int, error)
+	FailureLog() []notifications.DeliveryFailure
+	DispatchAll(cfgs []notifications.WebhookConfig, payload notifications.WebhookPayload)
 }
 
 // NewServer wires a server against the given config and registry-store
@@ -184,6 +200,14 @@ func (s *Server) SetAuditBroker(b *audit.Broker) {
 // this is always a *watch.Watcher. Call before Serve (#1270).
 func (s *Server) SetWatcher(w watcherForceRescan) {
 	s.watcher = w
+}
+
+// SetWebhookDispatcher wires the notification dispatcher into the dashboard so
+// that POST /api/webhooks/test and POST /api/webhooks/{id}/test can send real
+// pings, and GET /api/webhooks/failures can report delivery errors.
+// Call from the daemon entrypoint before Serve (#1341).
+func (s *Server) SetWebhookDispatcher(d webhookDispatcherIface) {
+	s.webhookDispatcher = d
 }
 
 // Listen binds to a random free port within cfg.PortRange. It is
@@ -350,6 +374,17 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("GET /api/settings", s.handleGetSettings)
 	mux.HandleFunc("PUT /api/settings", s.handlePutSettings)
 	mux.HandleFunc("POST /api/settings/reset", s.handleResetSettings)
+
+	// Webhook notifications (#1341)
+	mux.HandleFunc("GET /api/webhooks", s.handleListWebhooks)
+	mux.HandleFunc("POST /api/webhooks", s.handleCreateWebhook)
+	// NOTE: /api/webhooks/test must be registered before /api/webhooks/{id}
+	// so that the static path wins the Go 1.22 pattern-match precedence.
+	mux.HandleFunc("POST /api/webhooks/test", s.handleTestWebhookAdhoc)
+	mux.HandleFunc("GET /api/webhooks/failures", s.handleWebhookFailures)
+	mux.HandleFunc("PUT /api/webhooks/{id}", s.handleUpdateWebhook)
+	mux.HandleFunc("DELETE /api/webhooks/{id}", s.handleDeleteWebhook)
+	mux.HandleFunc("POST /api/webhooks/{id}/test", s.handleTestWebhookByID)
 
 	// Build / version info
 	mux.HandleFunc("GET /api/info", s.handleInfo)

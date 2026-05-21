@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/cajasmota/archigraph/internal/notifications"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
 
@@ -42,6 +43,16 @@ type AppSettings struct {
 
 	// Logs
 	LogLevel string `json:"log_level"` // "debug" | "info" | "warn" | "error"
+
+	// Webhooks is the list of configured notification destinations.
+	// Each entry fires on the event types it subscribes to after a rebuild.
+	// See internal/notifications for payload shapes (Slack/Discord/generic).
+	Webhooks []notifications.WebhookConfig `json:"webhooks,omitempty"`
+
+	// QualityBudgets defines the maximum acceptable values per quality metric.
+	// When any metric exceeds its budget after a rebuild a budget_exceeded
+	// webhook event is fired (in addition to quality_regression when applicable).
+	QualityBudgets notifications.QualityBudgets `json:"quality_budgets,omitempty"`
 }
 
 // DefaultAppSettings returns the canonical defaults. Any field not supplied

@@ -18,6 +18,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/client"
 	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/archigraph/internal/notifications"
 	"github.com/cajasmota/archigraph/internal/quality"
 )
 
@@ -530,21 +531,124 @@ func emitJSONProgressState(w io.Writer, token string, r proto.RepoProgressState)
 }
 
 // recordHealthHistory appends a HealthEntry to ~/.archigraph/health-history.jsonl
-// after a successful rebuild. Errors are silently ignored so a storage failure
-// never disrupts the CLI output.
+// after a successful rebuild and fires configured webhook notifications.
+// Errors are silently ignored so a storage failure never disrupts the CLI output.
 func recordHealthHistory(group string, sum *RebuildSummary) {
 	layout, err := daemon.DefaultLayout()
 	if err != nil {
 		return
 	}
+	healthScore := quality.ComputeHealthScore(sum.OrphanRate, 0)
 	entry := quality.HealthEntry{
 		Timestamp:     time.Now().UTC(),
 		Group:         group,
 		TotalEntities: sum.TotalEntities,
 		OrphanRate:    sum.OrphanRate,
-		HealthScore:   quality.ComputeHealthScore(sum.OrphanRate, 0),
+		HealthScore:   healthScore,
 	}
 	_ = quality.AppendEntry(layout.Root, entry)
+
+	// Fire webhook notifications asynchronously — never block the CLI.
+	go dispatchRebuildWebhooks(group, sum, healthScore, layout.Root)
+}
+
+// dispatchRebuildWebhooks loads webhook configuration from settings and fires
+// appropriate events based on the rebuild outcome. Called in a goroutine after
+// a successful rebuild so webhook latency never affects the user-facing output.
+func dispatchRebuildWebhooks(group string, sum *RebuildSummary, healthScore float64, root string) {
+	// Load settings — silently bail on any error so this path is truly best-effort.
+	settings, err := loadWebhookSettings()
+	if err != nil || len(settings.Webhooks) == 0 {
+		return
+	}
+
+	snap := notifications.QualitySnapshot{
+		Group:         group,
+		OrphanRate:    sum.OrphanRate,
+		BugRate:       0, // BugRate not yet computed in rebuild path
+		HealthScore:   healthScore,
+		TotalEntities: sum.TotalEntities,
+	}
+
+	dispatcher := notifications.NewDispatcher()
+	now := time.Now().UTC()
+
+	// Always fire rebuild_complete.
+	dispatcher.DispatchAll(settings.Webhooks, notifications.WebhookPayload{
+		Event:     notifications.EventRebuildComplete,
+		Timestamp: now,
+		Quality:   snap,
+	})
+
+	// Check budgets and fire budget_exceeded when any threshold is breached.
+	violations := notifications.CheckBudgets(snap, settings.QualityBudgets)
+	if len(violations) > 0 {
+		details := make(map[string]any, len(violations))
+		for _, v := range violations {
+			details[v.Metric] = map[string]any{
+				"threshold": v.Threshold,
+				"actual":    v.Actual,
+			}
+		}
+		dispatcher.DispatchAll(settings.Webhooks, notifications.WebhookPayload{
+			Event:     notifications.EventBudgetExceeded,
+			Timestamp: now,
+			Quality:   snap,
+			Details:   details,
+		})
+	}
+
+	// Compare against previous entry to detect regression.
+	prev, readErr := quality.ReadHistory(root, group, 2)
+	if readErr == nil && len(prev) >= 2 {
+		prevEntry := prev[len(prev)-2] // second-to-last = prior rebuild
+		prevSnap := notifications.QualitySnapshot{
+			Group:       group,
+			OrphanRate:  prevEntry.OrphanRate,
+			BugRate:     prevEntry.BugRate,
+			HealthScore: prevEntry.HealthScore,
+		}
+		if notifications.RegressionDetected(prevSnap, snap) {
+			dispatcher.DispatchAll(settings.Webhooks, notifications.WebhookPayload{
+				Event:     notifications.EventQualityRegressed,
+				Timestamp: now,
+				Quality:   snap,
+				Details: map[string]any{
+					"previous_health": prevEntry.HealthScore,
+					"previous_orphan": prevEntry.OrphanRate,
+				},
+			})
+		}
+	}
+}
+
+// webhookSettingsShape is a minimal subset of AppSettings used to avoid a
+// circular import between cli and dashboard packages. Settings are read
+// directly from the JSON file.
+type webhookSettingsShape struct {
+	Webhooks       []notifications.WebhookConfig    `json:"webhooks"`
+	QualityBudgets notifications.QualityBudgets     `json:"quality_budgets"`
+}
+
+// loadWebhookSettings reads only the webhook-relevant fields from settings.json.
+func loadWebhookSettings() (webhookSettingsShape, error) {
+	layout, err := daemon.DefaultLayout()
+	if err != nil {
+		return webhookSettingsShape{}, err
+	}
+	p := layout.Root + "/settings.json"
+	b, err := os.ReadFile(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return webhookSettingsShape{}, nil
+		}
+		return webhookSettingsShape{}, err
+	}
+	var s webhookSettingsShape
+	if err := json.Unmarshal(b, &s); err != nil {
+		return webhookSettingsShape{}, err
+	}
+	return s, nil
 }
 
 // emitJSONEvent emits a simple JSON heartbeat/generic event line.
