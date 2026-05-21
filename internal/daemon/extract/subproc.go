@@ -53,6 +53,15 @@ type SubprocessOptions struct {
 	// passes (graph-algo, build-document, enrichment) never run inside
 	// the subprocess regardless of this set — the daemon owns those.
 	SkipPasses map[string]bool
+
+	// DRFNamesPath is the absolute path of a newline-delimited file that
+	// contains every DRF router.register() basename collected by the
+	// coordinator's repo-wide pre-pass. When set, the subprocess loads
+	// the global DRF register-name registry from this file instead of
+	// re-scanning only its own (partial) batch — which would miss register
+	// calls in files assigned to other batches. This is the fix for the
+	// multi-batch ghost path regression described in issue #1292.
+	DRFNamesPath string
 }
 
 // Run is the subprocess-side entrypoint. It is invoked from
@@ -143,21 +152,46 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 	// lightweight line-based pass (no AST). ClearPythonClassRegistry resets any
 	// state from a prior batch to avoid bleeding across unrelated index runs.
 	//
-	// Pre-pass (#1278): build cross-file DRF register-name registry. Scans
-	// every Python file for router.register() basenames so that
-	// applyDjangoRouteComposition can suppress bare Route entities even when
-	// the matching include(router.urls) call lives in a different file.
+	// Pre-pass (#1278 / #1292): load cross-file DRF register-name registry.
+	//
+	// When the coordinator provides a DRFNamesPath file (multi-batch mode), we
+	// load the globally-collected register names from it — those names span ALL
+	// Python files in the repo, not just the files in this batch. This is the
+	// fix for #1292: the original per-batch scan only saw the files in each
+	// individual batch, so register names from other batches were invisible,
+	// allowing ghost bare-prefix Route entities to survive suppression.
+	//
+	// When DRFNamesPath is empty (single-batch mode or tests), we fall back to
+	// scanning the files in this batch (the original #1278 behaviour).
 	if runExtract {
 		pyextr.ClearPythonClassRegistry()
 		engine.ClearDRFRegisterNames()
-		for _, rel := range files {
-			abs := filepath.Join(opts.RepoRoot, rel)
-			if !strings.HasSuffix(strings.ToLower(rel), ".py") {
-				continue
+		if opts.DRFNamesPath != "" {
+			// Multi-batch path (#1292): load the coordinator-written global set.
+			if names, err := readDRFNamesFile(opts.DRFNamesPath); err == nil {
+				engine.LoadDRFRegisterNames(names)
 			}
-			if pyContent, err := os.ReadFile(abs); err == nil {
-				pyextr.ScanPythonClassRegistry(rel, string(pyContent))
-				engine.ScanDRFRegisterNames(pyContent)
+			// Still scan the batch for the Python class registry (unrelated to DRF).
+			for _, rel := range files {
+				abs := filepath.Join(opts.RepoRoot, rel)
+				if !strings.HasSuffix(strings.ToLower(rel), ".py") {
+					continue
+				}
+				if pyContent, err := os.ReadFile(abs); err == nil {
+					pyextr.ScanPythonClassRegistry(rel, string(pyContent))
+				}
+			}
+		} else {
+			// Single-batch / fallback path (#1278): scan only the files in this batch.
+			for _, rel := range files {
+				abs := filepath.Join(opts.RepoRoot, rel)
+				if !strings.HasSuffix(strings.ToLower(rel), ".py") {
+					continue
+				}
+				if pyContent, err := os.ReadFile(abs); err == nil {
+					pyextr.ScanPythonClassRegistry(rel, string(pyContent))
+					engine.ScanDRFRegisterNames(pyContent)
+				}
 			}
 		}
 	}
@@ -308,6 +342,29 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 }
 
 // readBatch reads a newline-delimited file of repo-relative paths.
+// readDRFNamesFile reads the coordinator-written DRF register-name file and
+// returns the list of basenames. The file format is one basename per line;
+// blank lines are skipped. This is part of the #1292 multi-batch fix: the
+// coordinator writes ALL repo-wide DRF register names before spawning any
+// subprocesses, and each subprocess loads from this file rather than scanning
+// only its own partial batch.
+func readDRFNamesFile(path string) ([]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	sc := bufio.NewScanner(f)
+	var out []string
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if line != "" {
+			out = append(out, line)
+		}
+	}
+	return out, sc.Err()
+}
+
 // Blank lines and lines beginning with '#' are skipped so the batch
 // files are inspectable by hand when debugging.
 func readBatch(path string) ([]string, error) {

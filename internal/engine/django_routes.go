@@ -97,12 +97,46 @@ func ClearDRFRegisterNames() {
 	drfGlobalRegisterNames = map[string]bool{}
 }
 
+// LoadDRFRegisterNames populates the global DRF register-name registry from
+// a pre-collected slice of basenames. This is the subprocess entry point for
+// the multi-batch coordinator path: the coordinator scans ALL Python files
+// once, writes the collected names to a temp file, and each subprocess loads
+// them here instead of re-scanning its own (partial) batch.
+//
+// Calling this replaces any names currently in the registry; call
+// ClearDRFRegisterNames first if you want a clean slate.
+func LoadDRFRegisterNames(names []string) {
+	if len(names) == 0 {
+		return
+	}
+	drfGlobalMu.Lock()
+	defer drfGlobalMu.Unlock()
+	for _, n := range names {
+		if n != "" {
+			drfGlobalRegisterNames[n] = true
+		}
+	}
+}
+
 // isDRFGlobalRegisterName reports whether name appears in the cross-file
 // DRF register-name registry populated by the ScanDRFRegisterNames pre-pass.
 func isDRFGlobalRegisterName(name string) bool {
 	drfGlobalMu.RLock()
 	defer drfGlobalMu.RUnlock()
 	return drfGlobalRegisterNames[name]
+}
+
+// CollectDRFRegisterNames returns a snapshot of all currently-registered DRF
+// register basenames. Used by the coordinator to write the global name set to a
+// temp file before spawning subprocesses.
+func CollectDRFRegisterNames() []string {
+	drfGlobalMu.RLock()
+	defer drfGlobalMu.RUnlock()
+	out := make([]string, 0, len(drfGlobalRegisterNames))
+	for n := range drfGlobalRegisterNames {
+		out = append(out, n)
+	}
+	return out
 }
 
 // composedDjangoRoutes holds the output of the Django AST pass.
