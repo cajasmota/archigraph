@@ -103,7 +103,7 @@ func (s *Server) inferCWD(req mcpapi.CallToolRequest) string {
 
 // registerTools registers every tool handler on the MCP server.
 // Source of truth: AddTool calls below — keep internal/mcp/SCHEMA.md in sync.
-// Tool count: 32 (#1281: 9→4 bundles; #1293: desc trim; #1312: +archigraph_quality_cycles; #1314: +archigraph_auth_coverage; #1322: +archigraph_secrets; #1323: +archigraph_test_coverage already on main; #1333: desc trimmed to ≤80 chars for budget gate).
+// Tool count: 33 (#1281: 9→4 bundles; #1293: desc trim; #1312: +archigraph_quality_cycles; #1314: +archigraph_auth_coverage; #1322: +archigraph_secrets; #1323: +archigraph_test_coverage; #1333: desc trimmed to ≤80 chars for budget gate; #1334: +archigraph_license_audit).
 // Dropped (HTTP-only): archigraph_diagnostics, archigraph_quality_orphans,
 //   archigraph_get_next_enrichment_task, archigraph_get_telemetry.
 func (s *Server) registerTools() {
@@ -462,6 +462,26 @@ func (s *Server) registerTools() {
 			mcpapi.Description("Maximum number of findings to return."),
 		),
 	), s.wrap("archigraph_secrets", s.handleSecrets))
+
+	// archigraph_license_audit — dependency license detector (#1334).
+	// Reads ExternalPackage entities, detects SPDX licenses, flags incompatible
+	// combinations (GPL/AGPL in MIT project = error; LGPL/MPL = warn).
+	// Transitive npm deps surfaced when include_transitive=true.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_license_audit",
+		mcpapi.WithDescription("Detect dependency licenses; flag GPL/AGPL incompatibility, weak-copyleft."),
+		mcpapi.WithString("group"),
+		mcpapi.WithString("cwd"),
+		mcpapi.WithBoolean("include_transitive", mcpapi.DefaultBool(false),
+			mcpapi.Description("Include transitive/indirect dependencies. Default: direct only."),
+		),
+		mcpapi.WithString("severity",
+			mcpapi.Description("Filter output: error|warn|info|unknown (empty = all). "+
+				"error=strong-copyleft incompatibility, warn=weak-copyleft."),
+		),
+		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(500),
+			mcpapi.Description("Maximum number of dependency findings to return."),
+		),
+	), s.wrap("archigraph_license_audit", s.handleLicenseAudit))
 }
 
 // wrap is the shared handler middleware: telemetry + lazy reload + panic guard
@@ -530,7 +550,7 @@ func extractIDs(res *mcpapi.CallToolResult) (nodeIDs, edgeIDs []string) {
 			"results", "nodes", "steps", "orphans", "patterns", "orphan_publishers",
 			"orphan_subscribers", "dead_ends", "truncated_flows", "publishers",
 			"subscribers", "exemplars",
-			"callers", "callees", "affected", "dead_code")...)
+			"callers", "callees", "affected", "dead_code", "dependencies")...)
 		edgeIDs = append(edgeIDs, collectSliceIDs(payload, "edges")...)
 	}
 	return dedup(nodeIDs), dedup(edgeIDs)
