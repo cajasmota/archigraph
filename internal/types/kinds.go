@@ -350,6 +350,14 @@ const (
 	// #1343: TypeScript type extraction edges.
 	//   HAS_TYPE     : entity → SCOPE.Schema  (e.g. a variable or field whose declared type is the target schema)
 	RelationshipKindHasType RelationshipKind = "HAS_TYPE"
+
+	// #1344: Post-rebuild rename / move / split detection.
+	// Emitted from a NEW entity to the OLD entity's ID after the indexer
+	// detects that a function, method, or class was renamed between rebuilds.
+	// Properties: confidence (0.0–1.0), old_name, old_id, method
+	// (name_exact+same_file, name_fuzzy+neighborhood, moved, split, …).
+	// The edge is append-only and never modifies existing entities or edges.
+	RelationshipKindRenamedFrom RelationshipKind = "RENAMED_FROM"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -417,6 +425,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindUnresolvedFetch,
 		// #1343:
 		RelationshipKindHasType,
+		// #1344 rename detection:
+		RelationshipKindRenamedFrom,
 	}
 }
 

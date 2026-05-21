@@ -17,6 +17,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
+	"github.com/cajasmota/archigraph/internal/algorithms"
 	"github.com/cajasmota/archigraph/internal/classifier"
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/extract"
@@ -44,14 +45,15 @@ const (
 	PassFramework     = "framework"      // Pass 2.5: YAML-driven framework rules
 	PassCrossLang     = "cross-lang"     // Pass 3: cross-language extractors
 	PassGraphAlgo     = "graph-algo"     // Pass 4: placeholder for PORT-4
-	PassBuildDocument = "build-document" // Pass 5: assemble graph.Document
-	PassEnrichment    = "enrichment"     // Pass 6: emit enrichment candidates
-	PassProcessFlow   = "process-flow"   // Pass 7: process-flow BFS over CALLS (#724)
+	PassBuildDocument  = "build-document"  // Pass 5: assemble graph.Document
+	PassRenameDetect   = "rename-detect"   // Pass 5.5: detect entity renames across rebuilds (#1344)
+	PassEnrichment     = "enrichment"      // Pass 6: emit enrichment candidates
+	PassProcessFlow    = "process-flow"    // Pass 7: process-flow BFS over CALLS (#724)
 )
 
 // allPassNames is used to validate --skip-pass entries.
 var allPassNames = []string{
-	PassExtract, PassFramework, PassCrossLang, PassGraphAlgo, PassBuildDocument, PassEnrichment, PassProcessFlow,
+	PassExtract, PassFramework, PassCrossLang, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow,
 }
 
 // fileTask carries one repo-relative path and its absolute counterpart
@@ -316,6 +318,25 @@ func Index(repoPath, outPath, repoTag string, skipPasses []string, pretty bool, 
 	doc, err := idx.Run(context.Background(), absRepo)
 	if err != nil {
 		return err
+	}
+
+	// Pass 5.5 — rename detection (#1344). Load the previous graph from disk
+	// and compare it with the freshly-built doc to detect entity renames,
+	// moves, and splits. Runs BEFORE the final sort and disk write so the
+	// emitted RENAMED_FROM edges are included in graph.fb / graph.json.
+	// The pass is append-only and safe to skip with --skip-pass=rename-detect.
+	if !skipSet[PassRenameDetect] {
+		stateDir := filepath.Dir(outPath)
+		if prevDoc, err := graph.LoadGraphFromDir(stateDir); err == nil {
+			renameStats := algorithms.DetectRenames(prevDoc, doc)
+			if renameStats.Renames > 0 {
+				fmt.Fprintf(os.Stderr,
+					"rename-detect: %d rename(s) detected (moves=%d splits=%d)\n",
+					renameStats.Renames, renameStats.Moves, renameStats.Splits)
+			}
+		}
+		// If no previous graph exists (first run) or it cannot be loaded,
+		// we simply skip rename detection — this is not an error.
 	}
 
 	if !skipSet[PassBuildDocument] {
