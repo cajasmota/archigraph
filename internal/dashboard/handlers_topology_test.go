@@ -2,6 +2,7 @@ package dashboard
 
 // handlers_topology_test.go — unit tests for the broadened collectTopology
 // function (#946: Redis pub/sub, Redis Streams, serverless, async tasks).
+// Extended in #1139: broker_canonical, owning_service, broker_groups.
 
 import (
 	"testing"
@@ -417,5 +418,243 @@ func TestCollectTopology_KafkaRegression(t *testing.T) {
 	}
 	if topics[0]["broker"] != "kafka" {
 		t.Errorf("broker = %v, want kafka", topics[0]["broker"])
+	}
+}
+
+// ---------------------------------------------------------------------------
+// #1139: broker_canonical helper
+// ---------------------------------------------------------------------------
+
+func TestBrokerCanonical(t *testing.T) {
+	cases := []struct {
+		broker    string
+		framework string
+		want      string
+	}{
+		{"rabbitmq", "", "rabbitmq"},
+		{"amqp", "", "rabbitmq"},
+		{"redis", "", "redis"},
+		{"sqs", "", "sqs"},
+		{"aws-sqs", "", "sqs"},
+		{"pubsub", "", "pubsub"},
+		{"gcp-pubsub", "", "pubsub"},
+		{"nats", "", "nats"},
+		{"kafka", "", "kafka"},
+		{"celery", "", "celery"},
+		{"dramatiq", "", "dramatiq"},
+		{"", "celery", "celery"},
+		{"", "celery_beat", "celery"},
+		{"", "dramatiq", "dramatiq"},
+		{"", "rq", "rq"},
+		{"", "sidekiq", "sidekiq"},
+		{"", "bullmq", "bullmq"},
+		{"", "bull", "bullmq"},
+		{"", "hangfire", "hangfire"},
+		{"", "quartz", "quartz"},
+		{"", "quartz.net", "quartz"},
+		{"", "", "unknown"},
+		{"custom-broker", "", "custom-broker"},
+	}
+	for _, tc := range cases {
+		got := brokerCanonical(tc.broker, tc.framework)
+		if got != tc.want {
+			t.Errorf("brokerCanonical(%q, %q) = %q, want %q", tc.broker, tc.framework, got, tc.want)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// #1139: owningService helper
+// ---------------------------------------------------------------------------
+
+func TestOwningService(t *testing.T) {
+	if got := owningService(map[string]string{"service": "orders-svc"}, "repo-a"); got != "orders-svc" {
+		t.Errorf("expected orders-svc, got %q", got)
+	}
+	if got := owningService(map[string]string{}, "repo-a"); got != "repo-a" {
+		t.Errorf("expected repo-a fallback, got %q", got)
+	}
+	if got := owningService(nil, "repo-b"); got != "repo-b" {
+		t.Errorf("expected repo-b fallback on nil props, got %q", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// #1139: broker_groups — 2 brokers, 5 topics each
+// ---------------------------------------------------------------------------
+
+func TestCollectTopologyResponse_BrokerGroups_TwoBrokers(t *testing.T) {
+	// Build a group with 2 repos, each contributing 5 topics under a different broker.
+	makeTopics := func(repo, broker string, n int) []graph.Entity {
+		ents := make([]graph.Entity, n)
+		for i := 0; i < n; i++ {
+			ents[i] = graph.Entity{
+				ID:         graph.EntityID(repo, "MessageTopic", string(rune('A'+i)), ""),
+				Name:       string(rune('A' + i)),
+				Kind:       "MessageTopic",
+				Properties: map[string]string{"broker": broker},
+			}
+		}
+		return ents
+	}
+	makeRels := func(entities []graph.Entity, producerID, consumerID string) []graph.Relationship {
+		var rels []graph.Relationship
+		for _, e := range entities {
+			rels = append(rels,
+				graph.Relationship{ID: "p-" + e.ID, FromID: producerID, ToID: e.ID, Kind: "PUBLISHES_TO"},
+				graph.Relationship{ID: "c-" + e.ID, FromID: e.ID, ToID: consumerID, Kind: "SUBSCRIBES_TO"},
+			)
+		}
+		return rels
+	}
+
+	rabbitTopics := makeTopics("svc-a", "rabbitmq", 5)
+	sqsTopics := makeTopics("svc-b", "sqs", 5)
+
+	grp := &DashGroup{
+		Name: "g",
+		Repos: map[string]*DashRepo{
+			"svc-a": {Slug: "svc-a", Doc: &graph.Document{
+				Repo:     "svc-a",
+				Entities: rabbitTopics,
+				Relationships: makeRels(rabbitTopics, "svc-a::producer", "svc-a::consumer"),
+			}},
+			"svc-b": {Slug: "svc-b", Doc: &graph.Document{
+				Repo:     "svc-b",
+				Entities: sqsTopics,
+				Relationships: makeRels(sqsTopics, "svc-b::producer", "svc-b::consumer"),
+			}},
+		},
+	}
+
+	resp := collectTopologyResponse(grp, "", nil)
+
+	if len(resp.BrokerGroups) != 2 {
+		t.Fatalf("expected 2 broker_groups, got %d: %v", len(resp.BrokerGroups), resp.BrokerGroups)
+	}
+
+	// Groups are sorted alphabetically: rabbitmq < sqs.
+	bg0 := resp.BrokerGroups[0]
+	bg1 := resp.BrokerGroups[1]
+
+	if bg0.Broker != "rabbitmq" {
+		t.Errorf("broker_groups[0].broker = %q, want rabbitmq", bg0.Broker)
+	}
+	if bg0.Count != 5 {
+		t.Errorf("broker_groups[0].count = %d, want 5", bg0.Count)
+	}
+	if bg1.Broker != "sqs" {
+		t.Errorf("broker_groups[1].broker = %q, want sqs", bg1.Broker)
+	}
+	if bg1.Count != 5 {
+		t.Errorf("broker_groups[1].count = %d, want 5", bg1.Count)
+	}
+
+	// All topics have both producer and consumer → all active.
+	if bg0.HealthSummary.Active != 5 {
+		t.Errorf("rabbitmq health_summary.active = %d, want 5", bg0.HealthSummary.Active)
+	}
+	if bg0.OrphanPublishers != 0 || bg0.OrphanSubscribers != 0 {
+		t.Errorf("unexpected orphans in rabbitmq group")
+	}
+
+	// Per-entry broker_canonical and owning_service fields.
+	for _, entry := range resp.Topics {
+		if _, ok := entry["broker_canonical"]; !ok {
+			t.Errorf("topic entry missing broker_canonical field")
+		}
+		if _, ok := entry["owning_service"]; !ok {
+			t.Errorf("topic entry missing owning_service field")
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// #1139: broker_groups — cross-repo topic via CrossRepoLink
+// ---------------------------------------------------------------------------
+
+func TestCollectTopologyResponse_BrokerGroups_CrossRepo(t *testing.T) {
+	topicID := graph.EntityID("svc-a", "MessageTopic", "OrderPlaced", "")
+	prefixedID := dashPrefixedID("svc-a", topicID)
+
+	grp := &DashGroup{
+		Name: "g",
+		Repos: map[string]*DashRepo{
+			"svc-a": {Slug: "svc-a", Doc: &graph.Document{
+				Repo: "svc-a",
+				Entities: []graph.Entity{
+					{ID: topicID, Name: "OrderPlaced", Kind: "MessageTopic",
+						Properties: map[string]string{"broker": "rabbitmq"}},
+				},
+				Relationships: []graph.Relationship{
+					{ID: "p1", FromID: "svc-a::producer", ToID: topicID, Kind: "PUBLISHES_TO"},
+					{ID: "c1", FromID: topicID, ToID: "svc-b::consumer", Kind: "SUBSCRIBES_TO"},
+				},
+			}},
+		},
+		// Cross-repo link: svc-b consumer subscribes to svc-a topic.
+		Links: []CrossRepoLink{
+			{Source: prefixedID, Target: "svc-b::consumer", Kind: "SUBSCRIBES_TO"},
+		},
+	}
+
+	resp := collectTopologyResponse(grp, "", nil)
+
+	if len(resp.BrokerGroups) != 1 {
+		t.Fatalf("expected 1 broker_group, got %d", len(resp.BrokerGroups))
+	}
+	bg := resp.BrokerGroups[0]
+	if bg.Broker != "rabbitmq" {
+		t.Errorf("broker = %q, want rabbitmq", bg.Broker)
+	}
+	if bg.CrossRepoTopicCount != 1 {
+		t.Errorf("cross_repo_topic_count = %d, want 1", bg.CrossRepoTopicCount)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// #1139: broker_canonical = 'celery' for framework=celery entity
+// ---------------------------------------------------------------------------
+
+func TestCollectTopologyResponse_BrokerGroups_CeleryFramework(t *testing.T) {
+	grp := &DashGroup{
+		Name: "g",
+		Repos: map[string]*DashRepo{
+			"worker": {Slug: "worker", Doc: &graph.Document{
+				Repo: "worker",
+				Entities: []graph.Entity{
+					{
+						ID:   "task:celery:send_invoice",
+						Name: "send_invoice",
+						Kind: "Task",
+						Properties: map[string]string{
+							"framework": "celery",
+						},
+					},
+				},
+			}},
+		},
+	}
+
+	resp := collectTopologyResponse(grp, "", nil)
+
+	// Task entities go into queues bucket.
+	if len(resp.Queues) != 1 {
+		t.Fatalf("expected 1 queue, got %d", len(resp.Queues))
+	}
+	entry := resp.Queues[0]
+	if entry["broker_canonical"] != "celery" {
+		t.Errorf("broker_canonical = %v, want celery", entry["broker_canonical"])
+	}
+	if entry["owning_service"] != "worker" {
+		t.Errorf("owning_service = %v, want worker (repo slug fallback)", entry["owning_service"])
+	}
+
+	if len(resp.BrokerGroups) != 1 {
+		t.Fatalf("expected 1 broker_group for celery, got %d", len(resp.BrokerGroups))
+	}
+	bg := resp.BrokerGroups[0]
+	if bg.Broker != "celery" {
+		t.Errorf("broker_groups[0].broker = %q, want celery", bg.Broker)
 	}
 }

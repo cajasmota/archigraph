@@ -12,6 +12,7 @@ package dashboard
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/mcp"
@@ -41,6 +42,37 @@ type topologyResponse struct {
 	GraphQLSubscriptions []map[string]any `json:"graphql_subscriptions"`
 	Transforms           []map[string]any `json:"transforms"`
 	Functions            []map[string]any `json:"functions"`
+	// BrokerGroups is a top-level summary of all brokers present in the
+	// group, sorted alphabetically by broker name (stable).  Each entry
+	// contains per-service topic counts, orphan counts, cross-repo topic
+	// counts, a health summary, and the last index timestamp.
+	BrokerGroups []brokerGroup `json:"broker_groups"`
+}
+
+// brokerServiceStat holds per-service aggregated counts inside a broker group.
+type brokerServiceStat struct {
+	Name        string `json:"name"`
+	TopicCount  int    `json:"topic_count"`
+}
+
+// brokerHealthSummary breaks down entity health per broker.
+type brokerHealthSummary struct {
+	Active            int `json:"active"`
+	OrphanPublisher   int `json:"orphan_publisher"`
+	OrphanSubscriber  int `json:"orphan_subscriber"`
+	Orphan            int `json:"orphan"`
+}
+
+// brokerGroup is one element of topologyResponse.BrokerGroups.
+type brokerGroup struct {
+	Broker              string              `json:"broker"`
+	Count               int                 `json:"count"`
+	Services            []brokerServiceStat `json:"services"`
+	OrphanPublishers    int                 `json:"orphan_publishers"`
+	OrphanSubscribers   int                 `json:"orphan_subscribers"`
+	CrossRepoTopicCount int                 `json:"cross_repo_topic_count"`
+	HealthSummary       brokerHealthSummary `json:"health_summary"`
+	LastIndexTimestamp  string              `json:"last_index_timestamp,omitempty"`
 }
 
 // classifyTopologyBucket maps an entity (by kind + name + properties) to
@@ -136,6 +168,20 @@ func (s *Server) handleGroupTopics(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, collectTopologyResponse(grp, group, docgenState))
 }
 
+// brokerAccum accumulates per-broker data during collectTopologyResponse so we
+// can produce the BrokerGroups summary in a single pass.
+type brokerAccum struct {
+	count               int
+	services            map[string]int   // service name → topic/queue count
+	orphanPublishers    int
+	orphanSubscribers   int
+	crossRepoTopicCount int
+	healthSummary       brokerHealthSummary
+	lastIndexTS         string
+	// repoSlugs tracks which repos contributed entities to this broker bucket.
+	repoSlugs map[string]struct{}
+}
+
 // collectTopologyResponse builds the full topology wire payload from a loaded
 // group. All slice fields are initialised to non-nil empty slices so that
 // JSON encoding produces [] (not null) when no data exists — fixing the
@@ -152,11 +198,38 @@ func collectTopologyResponse(grp *DashGroup, groupName string, docgenState *mcp.
 		GraphQLSubscriptions: []map[string]any{},
 		Transforms:           []map[string]any{},
 		Functions:            []map[string]any{},
+		BrokerGroups:         []brokerGroup{},
+	}
+
+	// brokerAccums accumulates data keyed by broker_canonical for the top-level
+	// broker_groups summary. Channels and functions are excluded (they have a
+	// different classification axis).
+	brokerAccums := map[string]*brokerAccum{}
+
+	// ensureBroker returns (or creates) the accumulator for a canonical broker.
+	ensureBroker := func(canonical string) *brokerAccum {
+		if a, ok := brokerAccums[canonical]; ok {
+			return a
+		}
+		a := &brokerAccum{
+			services:  map[string]int{},
+			repoSlugs: map[string]struct{}{},
+		}
+		brokerAccums[canonical] = a
+		return a
 	}
 
 	for _, r := range sortedRepos(grp) {
 		if r.Doc == nil {
 			continue
+		}
+
+		// Capture the last-index timestamp for this repo to propagate to the
+		// broker_groups.  GeneratedAt is zero for test fixtures; emit only when
+		// non-zero.
+		var repoTS string
+		if !r.Doc.GeneratedAt.IsZero() {
+			repoTS = r.Doc.GeneratedAt.UTC().Format("2006-01-02T15:04:05Z")
 		}
 
 		// For each entity, classify into a topology bucket and collect edges.
@@ -169,20 +242,50 @@ func collectTopologyResponse(grp *DashGroup, groupName string, docgenState *mcp.
 			switch bucket {
 			case "topic":
 				producers, consumers, transformsTo := brokerEdges(r, e.ID)
+				rawBroker := e.Properties["broker"]
+				framework := e.Properties["framework"]
+				canonical := brokerCanonical(rawBroker, framework)
+				svc := owningService(e.Properties, r.Slug)
 				entry := map[string]any{
-					"id":            dashPrefixedID(r.Slug, e.ID),
-					"repo":          r.Slug,
-					"label":         e.Name,
-					"broker":        e.Properties["broker"],
-					"producers":     producers,
-					"consumers":     consumers,
-					"transforms_to": transformsTo,
+					"id":               dashPrefixedID(r.Slug, e.ID),
+					"repo":             r.Slug,
+					"label":            e.Name,
+					"broker":           rawBroker,
+					"broker_canonical": canonical,
+					"owning_service":   svc,
+					"producers":        producers,
+					"consumers":        consumers,
+					"transforms_to":    transformsTo,
 				}
 				// Enrich topic with frontmatter when available.
 				if groupName != "" {
 					applyTopologyEnrichment(entry, groupName, e.ID, docgenState)
 				}
 				resp.Topics = append(resp.Topics, entry)
+
+				// Accumulate broker_groups data.
+				a := ensureBroker(canonical)
+				a.count++
+				a.services[svc]++
+				a.repoSlugs[r.Slug] = struct{}{}
+				if repoTS > a.lastIndexTS {
+					a.lastIndexTS = repoTS
+				}
+				// Determine orphan / health status.
+				hasProducer := len(producers) > 0
+				hasConsumer := len(consumers) > 0
+				switch {
+				case hasProducer && hasConsumer:
+					a.healthSummary.Active++
+				case hasProducer && !hasConsumer:
+					a.orphanSubscribers++
+					a.healthSummary.OrphanSubscriber++
+				case !hasProducer && hasConsumer:
+					a.orphanPublishers++
+					a.healthSummary.OrphanPublisher++
+				default:
+					a.healthSummary.Orphan++
+				}
 
 			case "queue":
 				producers, consumers, _ := brokerEdges(r, e.ID)
@@ -193,14 +296,18 @@ func collectTopologyResponse(grp *DashGroup, groupName string, docgenState *mcp.
 				}
 				// Async task queues carry framework info instead of a broker name.
 				framework := e.Properties["framework"]
+				canonical := brokerCanonical(broker, framework)
+				svc := owningService(e.Properties, r.Slug)
 				entry := map[string]any{
-					"id":        dashPrefixedID(r.Slug, e.ID),
-					"repo":      r.Slug,
-					"label":     e.Name,
-					"broker":    broker,
-					"framework": framework,
-					"producers": producers,
-					"consumers": consumers,
+					"id":               dashPrefixedID(r.Slug, e.ID),
+					"repo":             r.Slug,
+					"label":            e.Name,
+					"broker":           broker,
+					"broker_canonical": canonical,
+					"framework":        framework,
+					"owning_service":   svc,
+					"producers":        producers,
+					"consumers":        consumers,
 				}
 				// #1116: ScheduledJob entities (emitted by the scheduled-job pass for
 				// Celery beat, APScheduler, node-cron, Spring @Scheduled, etc.) carry a
@@ -213,6 +320,31 @@ func collectTopologyResponse(grp *DashGroup, groupName string, docgenState *mcp.
 						entry["schedule"] = e.Properties["schedule"]
 					}
 				}
+
+				// Accumulate broker_groups data (NATS goes into nats_subjects but
+				// still counts in broker_groups).
+				a := ensureBroker(canonical)
+				a.count++
+				a.services[svc]++
+				a.repoSlugs[r.Slug] = struct{}{}
+				if repoTS > a.lastIndexTS {
+					a.lastIndexTS = repoTS
+				}
+				hasProducer := len(producers) > 0
+				hasConsumer := len(consumers) > 0
+				switch {
+				case hasProducer && hasConsumer:
+					a.healthSummary.Active++
+				case hasProducer && !hasConsumer:
+					a.orphanSubscribers++
+					a.healthSummary.OrphanSubscriber++
+				case !hasProducer && hasConsumer:
+					a.orphanPublishers++
+					a.healthSummary.OrphanPublisher++
+				default:
+					a.healthSummary.Orphan++
+				}
+
 				// NATS subjects (SCOPE.Queue with broker=nats) are surfaced in
 				// the dedicated nats_subjects bucket so the frontend can render
 				// them with the correct icon and filter logic. All other queues
@@ -288,6 +420,102 @@ func collectTopologyResponse(grp *DashGroup, groupName string, docgenState *mcp.
 				})
 			}
 		}
+	}
+
+	// --- Second pass: compute cross_repo_topic_count and build broker_groups ---
+	// A topic/queue is "cross-repo" if producers and consumers live in different
+	// repos. We detect this by re-scanning the CrossRepoLink list in grp.Links.
+	// Any cross-repo link whose channel/kind indicates a messaging edge is counted
+	// toward the broker that owns the entity on either side.
+	//
+	// Simpler approach: count broker_groups entries whose repoSlugs set has >1
+	// element — i.e., the same broker has entries from multiple repos.  We
+	// approximate cross-repo topic count as the number of topics/queues that
+	// appear in more than one repo under the same broker canonical, which maps
+	// cleanly to how the dashboard frontend will use this number.
+	//
+	// Exact cross-repo topic detection (per entry) happens by checking whether
+	// any CrossRepoLink references a topic entity that appears in the entry list.
+	// We build a quick lookup of cross-repo linked entity IDs.
+	crossRepoIDs := map[string]struct{}{}
+	for _, lnk := range grp.Links {
+		// Links with Kind PUBLISHES_TO / SUBSCRIBES_TO spanning repos are
+		// cross-repo messaging links.
+		k := strings.ToUpper(lnk.Kind)
+		if k == "PUBLISHES_TO" || k == "SUBSCRIBES_TO" || k == "STREAMS_TO" || k == "STREAMS_FROM" {
+			crossRepoIDs[lnk.Source] = struct{}{}
+			crossRepoIDs[lnk.Target] = struct{}{}
+		}
+	}
+	// Count cross-repo entries per broker from the already-built entry lists.
+	for _, entry := range resp.Topics {
+		id, _ := entry["id"].(string)
+		canonical, _ := entry["broker_canonical"].(string)
+		if canonical == "" {
+			continue
+		}
+		if _, isCross := crossRepoIDs[id]; isCross {
+			if a, ok := brokerAccums[canonical]; ok {
+				a.crossRepoTopicCount++
+			}
+		}
+	}
+	for _, entry := range resp.Queues {
+		id, _ := entry["id"].(string)
+		canonical, _ := entry["broker_canonical"].(string)
+		if canonical == "" {
+			continue
+		}
+		if _, isCross := crossRepoIDs[id]; isCross {
+			if a, ok := brokerAccums[canonical]; ok {
+				a.crossRepoTopicCount++
+			}
+		}
+	}
+	for _, entry := range resp.NatsSubjects {
+		id, _ := entry["id"].(string)
+		canonical, _ := entry["broker_canonical"].(string)
+		if canonical == "" {
+			continue
+		}
+		if _, isCross := crossRepoIDs[id]; isCross {
+			if a, ok := brokerAccums[canonical]; ok {
+				a.crossRepoTopicCount++
+			}
+		}
+	}
+
+	// Build sorted broker_groups slice (alphabetical by broker name).
+	brokerNames := make([]string, 0, len(brokerAccums))
+	for b := range brokerAccums {
+		brokerNames = append(brokerNames, b)
+	}
+	sort.Strings(brokerNames)
+
+	for _, bname := range brokerNames {
+		a := brokerAccums[bname]
+
+		// Build services slice sorted alphabetically.
+		svcNames := make([]string, 0, len(a.services))
+		for s := range a.services {
+			svcNames = append(svcNames, s)
+		}
+		sort.Strings(svcNames)
+		svcs := make([]brokerServiceStat, 0, len(svcNames))
+		for _, s := range svcNames {
+			svcs = append(svcs, brokerServiceStat{Name: s, TopicCount: a.services[s]})
+		}
+
+		resp.BrokerGroups = append(resp.BrokerGroups, brokerGroup{
+			Broker:              bname,
+			Count:               a.count,
+			Services:            svcs,
+			OrphanPublishers:    a.orphanPublishers,
+			OrphanSubscribers:   a.orphanSubscribers,
+			CrossRepoTopicCount: a.crossRepoTopicCount,
+			HealthSummary:       a.healthSummary,
+			LastIndexTimestamp:  a.lastIndexTS,
+		})
 	}
 
 	return resp
@@ -437,6 +665,62 @@ func inferBrokerFromName(name string) string {
 	default:
 		return ""
 	}
+}
+
+// brokerCanonical normalises a raw broker/framework string into one of the
+// recognised canonical values: rabbitmq, redis, sqs, pubsub, nats, celery,
+// dramatiq, or "unknown".
+func brokerCanonical(broker, framework string) string {
+	// Framework takes precedence for async-task entities (Celery, Dramatiq, …).
+	switch strings.ToLower(framework) {
+	case "celery", "celery_beat":
+		return "celery"
+	case "dramatiq":
+		return "dramatiq"
+	case "rq":
+		return "rq"
+	case "sidekiq":
+		return "sidekiq"
+	case "bullmq", "bull":
+		return "bullmq"
+	case "hangfire":
+		return "hangfire"
+	case "quartz", "quartz.net":
+		return "quartz"
+	}
+	switch strings.ToLower(broker) {
+	case "rabbitmq", "amqp":
+		return "rabbitmq"
+	case "redis":
+		return "redis"
+	case "sqs", "aws-sqs":
+		return "sqs"
+	case "pubsub", "gcp-pubsub", "google-pubsub":
+		return "pubsub"
+	case "nats":
+		return "nats"
+	case "celery":
+		return "celery"
+	case "dramatiq":
+		return "dramatiq"
+	case "kafka":
+		return "kafka"
+	case "":
+		return "unknown"
+	default:
+		return strings.ToLower(broker)
+	}
+}
+
+// owningService derives the logical service name for a topology entry.
+// Resolution order:
+//  1. entity Properties["service"]
+//  2. repo slug (the service boundary in a mono-repo group)
+func owningService(props map[string]string, repoSlug string) string {
+	if svc := props["service"]; svc != "" {
+		return svc
+	}
+	return repoSlug
 }
 
 // inferProviderFromID guesses the cloud provider from the entity ID prefix.
