@@ -74,6 +74,20 @@ type Server struct {
 	// auditor is the combined writer (disk + broker). Mutation handlers call
 	// s.auditor.OK / s.auditor.Err. Initialised by SetAuditLog / SetAuditBroker.
 	auditor *audit.Writer
+
+	// watcher is the daemon's file watcher. Optional: when nil, the
+	// POST /api/diagnostics/force-rescan endpoint returns 503.
+	// Set via SetWatcher before Serve (#1270).
+	watcher watcherForceRescan
+}
+
+// watcherForceRescan is the subset of the watch.Watcher surface used by
+// the dashboard. The interface keeps the dashboard package free of a
+// direct import of internal/daemon/watch.
+type watcherForceRescan interface {
+	ForceRescan()
+	// Stats returns (repos, dirs, totalEvents, dropped).
+	Stats() (int, int, uint64, uint64)
 }
 
 // NewServer wires a server against the given config and registry-store
@@ -154,6 +168,14 @@ func (s *Server) SetAuditLog(l *audit.Log) {
 func (s *Server) SetAuditBroker(b *audit.Broker) {
 	s.auditBroker = b
 	s.auditor = audit.NewWriter(s.auditLog, s.auditBroker)
+}
+
+// SetWatcher wires the daemon's file watcher into the dashboard so that
+// POST /api/diagnostics/force-rescan can trigger a full diff reconciliation.
+// The parameter accepts any value that implements ForceRescan — in production
+// this is always a *watch.Watcher. Call before Serve (#1270).
+func (s *Server) SetWatcher(w watcherForceRescan) {
+	s.watcher = w
 }
 
 // Listen binds to a random free port within cfg.PortRange. It is
@@ -314,9 +336,10 @@ func (s *Server) routes() http.Handler {
 	// Build / version info
 	mux.HandleFunc("GET /api/info", s.handleInfo)
 
-	// Diagnostics (#1187)
+	// Diagnostics (#1187, #1270)
 	mux.HandleFunc("GET /api/diagnostics", s.handleDiagnostics)
 	mux.HandleFunc("POST /api/diagnostics/kill-stale", s.handleDiagnosticsKillStale)
+	mux.HandleFunc("POST /api/diagnostics/force-rescan", s.handleDiagnosticsForceRescan)
 
 	// System / daemon control panel (#1195)
 	mux.HandleFunc("GET /api/system", s.handleSystem)

@@ -44,6 +44,16 @@ func TestShouldSkipPath(t *testing.T) {
 	}
 }
 
+// newTestWatcher builds a watcher with a short debounce and a very high
+// bulk threshold so existing tests don't accidentally trigger bulk mode.
+func newTestWatcher(debounce time.Duration, sink EventSink) (*Watcher, error) {
+	return NewWatcherConfig(Config{
+		Debounce:          debounce,
+		BulkThreshold:     10000, // effectively disable bulk detection
+		HeartbeatInterval: time.Hour,
+	}, sink, nil)
+}
+
 // TestDebounce verifies that a burst of writes within the debounce
 // window collapses to a single sink invocation.
 func TestDebounce(t *testing.T) {
@@ -58,10 +68,10 @@ func TestDebounce(t *testing.T) {
 
 	var calls atomic.Int32
 	doneCh := make(chan string, 4)
-	w, err := NewWatcher(150*time.Millisecond, func(repoPath string) {
+	w, err := newTestWatcher(150*time.Millisecond, func(repoPath string, _ bool) {
 		calls.Add(1)
 		doneCh <- repoPath
-	}, nil)
+	})
 	if err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -108,11 +118,11 @@ func TestDebounceTwoBursts(t *testing.T) {
 		mu    sync.Mutex
 		calls int
 	)
-	w, err := NewWatcher(100*time.Millisecond, func(string) {
+	w, err := newTestWatcher(100*time.Millisecond, func(string, bool) {
 		mu.Lock()
 		calls++
 		mu.Unlock()
-	}, nil)
+	})
 	if err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -158,9 +168,9 @@ func TestSkipDirRespected(t *testing.T) {
 	}
 
 	var calls atomic.Int32
-	w, err := NewWatcher(100*time.Millisecond, func(string) {
+	w, err := newTestWatcher(100*time.Millisecond, func(string, bool) {
 		calls.Add(1)
-	}, nil)
+	})
 	if err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -185,5 +195,222 @@ func TestSkipDirRespected(t *testing.T) {
 	time.Sleep(300 * time.Millisecond)
 	if got := calls.Load(); got != 1 {
 		t.Errorf("expected 1 sink call for src write, got %d", got)
+	}
+}
+
+// TestBulkDetection verifies that a burst exceeding BulkThreshold in one
+// window calls the sink with bulk=true exactly once and suppresses a
+// subsequent non-bulk debounced call for the same burst.
+func TestBulkDetection(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+	repo := t.TempDir()
+	src := filepath.Join(repo, "src")
+	if err := os.MkdirAll(src, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		mu        sync.Mutex
+		bulkCalls int
+		normCalls int
+	)
+	doneCh := make(chan struct{}, 10)
+	w, err := NewWatcherConfig(Config{
+		Debounce:          200 * time.Millisecond,
+		BulkThreshold:     3, // low so tests are fast
+		BulkWindow:        500 * time.Millisecond,
+		HeartbeatInterval: time.Hour,
+	}, func(_ string, bulk bool) {
+		mu.Lock()
+		if bulk {
+			bulkCalls++
+		} else {
+			normCalls++
+		}
+		mu.Unlock()
+		doneCh <- struct{}{}
+	}, nil)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer w.Stop()
+	if _, err := w.AddRepo(repo); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+
+	// Write 5 files rapidly — should trigger bulk at event #3.
+	for i := 0; i < 5; i++ {
+		p := filepath.Join(src, "bulk_test_file.go")
+		if err := os.WriteFile(p, []byte("package main"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	// Wait for the bulk call.
+	select {
+	case <-doneCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("bulk sink never fired")
+	}
+
+	// Wait out the debounce window to confirm no extra normal call.
+	time.Sleep(600 * time.Millisecond)
+
+	mu.Lock()
+	bc, nc := bulkCalls, normCalls
+	mu.Unlock()
+
+	if bc != 1 {
+		t.Errorf("expected 1 bulk call, got %d", bc)
+	}
+	// A debounce timer may or may not fire after a bulk trigger depending on
+	// OS scheduling; we only require no more than 1 extra call total.
+	if nc > 1 {
+		t.Errorf("expected ≤1 normal calls after bulk, got %d", nc)
+	}
+}
+
+// TestExcludeDirs verifies that per-instance ExcludeDirs blocks events
+// from those directories even when they are not in the global SkipDirs.
+func TestExcludeDirs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+	repo := t.TempDir()
+	generated := filepath.Join(repo, "generated")
+	src := filepath.Join(repo, "src")
+	for _, d := range []string{generated, src} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var calls atomic.Int32
+	w, err := NewWatcherConfig(Config{
+		Debounce:          100 * time.Millisecond,
+		BulkThreshold:     10000,
+		HeartbeatInterval: time.Hour,
+		ExcludeDirs:       []string{"generated"},
+	}, func(string, bool) {
+		calls.Add(1)
+	}, nil)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer w.Stop()
+	if _, err := w.AddRepo(repo); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+
+	// Write in the excluded dir — should be ignored.
+	if err := os.WriteFile(filepath.Join(generated, "foo.go"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(300 * time.Millisecond)
+	if got := calls.Load(); got != 0 {
+		t.Errorf("expected 0 calls for excluded dir write, got %d", got)
+	}
+
+	// Write in src — should fire.
+	if err := os.WriteFile(filepath.Join(src, "bar.go"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(300 * time.Millisecond)
+	if got := calls.Load(); got != 1 {
+		t.Errorf("expected 1 call for src write, got %d", got)
+	}
+}
+
+// TestForceRescan verifies that ForceRescan triggers the sink with bulk=true
+// for every registered repo.
+func TestForceRescan(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+	repo1 := t.TempDir()
+	repo2 := t.TempDir()
+
+	var (
+		mu       sync.Mutex
+		bulkSeen []string
+	)
+	w, err := newTestWatcher(5*time.Second, func(path string, bulk bool) {
+		if bulk {
+			mu.Lock()
+			bulkSeen = append(bulkSeen, path)
+			mu.Unlock()
+		}
+	})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer w.Stop()
+	for _, r := range []string{repo1, repo2} {
+		if _, err := w.AddRepo(r); err != nil {
+			t.Fatalf("add %s: %v", r, err)
+		}
+	}
+
+	w.ForceRescan()
+	// ForceRescan is synchronous per-repo (called via goroutines); give it
+	// a moment to complete.
+	time.Sleep(100 * time.Millisecond)
+
+	mu.Lock()
+	got := len(bulkSeen)
+	mu.Unlock()
+	if got != 2 {
+		t.Errorf("ForceRescan: expected 2 bulk calls, got %d", got)
+	}
+}
+
+// TestExtendedStats verifies that ExtendedStats returns per-repo counters
+// after some events.
+func TestExtendedStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+	repo := t.TempDir()
+	src := filepath.Join(repo, "src")
+	if err := os.MkdirAll(src, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	doneCh := make(chan struct{}, 4)
+	w, err := newTestWatcher(150*time.Millisecond, func(_ string, _ bool) {
+		doneCh <- struct{}{}
+	})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer w.Stop()
+	if _, err := w.AddRepo(repo); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(src, "a.go"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-doneCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("sink never fired")
+	}
+
+	repoStats, total, _, _ := w.ExtendedStats()
+	if total == 0 {
+		t.Error("expected totalEvents > 0")
+	}
+	if len(repoStats) != 1 {
+		t.Errorf("expected 1 repo stat, got %d", len(repoStats))
+	}
+	if repoStats[0].TotalEvents == 0 {
+		t.Error("per-repo TotalEvents should be > 0")
+	}
+	if repoStats[0].LastEventAt.IsZero() {
+		t.Error("LastEventAt should be non-zero")
 	}
 }
