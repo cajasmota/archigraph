@@ -516,6 +516,10 @@ func (s *Server) routes() http.Handler {
 	// and registered groups.
 	mux.HandleFunc("GET /api/v2/meta", s.handleV2Meta)
 
+	// Landing screen — rich group list + create-group.
+	mux.HandleFunc("GET /api/v2/groups", s.handleV2Groups)
+	mux.HandleFunc("POST /api/v2/groups", s.handleV2CreateGroup)
+
 	return s.withAuth(withGzip(mux))
 }
 

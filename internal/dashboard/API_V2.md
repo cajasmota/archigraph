@@ -168,6 +168,43 @@ Called once on app mount by WebUI v2. Response:
 
 ---
 
+## 6a. Group surface (Landing screen)
+
+`/api/v2/meta` returns only group **slugs**. The Landing screen needs richer
+per-group data, so two dedicated endpoints back it.
+
+### `GET /api/v2/groups` (paginated)
+
+Rich group list for the Landing cards grid. Each item:
+
+```json
+{
+  "id": "acme",
+  "name": "acme",
+  "repos": ["core", "web"],
+  "entityCount": 1200,
+  "fidelity": 1.0,        // 0..1, or null when never indexed
+  "indexedAt": 1716300000000, // unix-ms, or null when never indexed
+  "health": "healthy"     // "healthy" | "warning" | "unindexed"
+}
+```
+
+`health` + `fidelity` are derived server-side in `deriveGroupHealth`
+(`v2_groups.go`) so the rules live in one place: a group with no entities and
+no last-indexed time is `unindexed` (fidelity null); otherwise it is indexed.
+**Note:** the daemon does not yet persist a real per-group fidelity score, so
+indexed groups currently report `fidelity: 1.0` / `health: "healthy"`. When a
+real score lands it slots straight into `deriveGroupHealth` with no wire change.
+
+### `POST /api/v2/groups`
+
+Creates an **empty** group (fleet.json + registry entry) from a name. Body:
+`{ "name": "<slug>" }`. Returns `201` with the created group in a `v2OK`
+envelope. Repo discovery / indexing (the full wizard) is **out of scope** for
+this endpoint; the created group reports `health: "unindexed"`.
+
+---
+
 ## 7. Adding a new v2 endpoint — checklist
 
 - [ ] Handler file named `v2_<surface>.go`.
