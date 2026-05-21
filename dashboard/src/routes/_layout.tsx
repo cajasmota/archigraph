@@ -1,6 +1,7 @@
-import { Link, Outlet, useParams, useNavigate } from 'react-router-dom'
-import { useCallback, useEffect, useState } from 'react'
+import { Link, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { GitBranch, Moon, Search, Sun } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRegistry } from '@/hooks/shared/useRegistry'
 import { useThemeContext } from '@/context/ThemeContext'
 import { GroupSelector } from '@/components/layout/GroupSelector'
@@ -13,17 +14,33 @@ import {
   operateItems,
   useIsGroupActive,
 } from '@/components/layout/NavMenu'
+import {
+  prefetchIdle,
+  recordVisit,
+  IDLE_DELAY_MS,
+  type PrefetchSurface,
+} from '@/lib/prefetcher'
 
 const GROUP_DEFAULT = 'fixture-a'
 
 const EXPLORE_PREFIXES = ['/graph/', '/flows/', '/topology/', '/paths/', '/docs/', '/pending/']
 const OPERATE_PREFIXES = ['/diagnostics', '/quality', '/patterns/', '/system', '/update', '/mcp-activity', '/mcp-setup', '/settings', '/help']
 
+/** Derive the current surface from the pathname for visit recording. */
+function surfaceFromPathname(pathname: string): PrefetchSurface | null {
+  if (pathname.startsWith('/graph/')) return 'graph'
+  if (pathname.startsWith('/flows/')) return 'flows'
+  if (pathname.startsWith('/topology/')) return 'topology'
+  return null
+}
+
 export function AppLayout() {
   const navigate = useNavigate()
   const { group = GROUP_DEFAULT } = useParams()
   const { data: registry } = useRegistry()
   const groups = registry?.groups ?? []
+  const queryClient = useQueryClient()
+  const location = useLocation()
 
   const exploreActive = useIsGroupActive(EXPLORE_PREFIXES)
   const operateActive = useIsGroupActive(OPERATE_PREFIXES)
@@ -35,6 +52,40 @@ export function AppLayout() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const openShortcuts  = useCallback(() => setShortcutsOpen(true),  [])
   const closeShortcuts = useCallback(() => setShortcutsOpen(false), [])
+
+  // ── Visit recording (#1257) ──────────────────────────────────────────────────
+  // Track the current surface in localStorage so predictive idle-prefetch knows
+  // which surfaces the user visits most.
+  useEffect(() => {
+    const surface = surfaceFromPathname(location.pathname)
+    if (surface) recordVisit(surface)
+  }, [location.pathname])
+
+  // ── Idle prefetch (#1257) ────────────────────────────────────────────────────
+  // After IDLE_DELAY_MS of inactivity (no mouse/keyboard events), prefetch the
+  // surfaces the user is most likely to visit next based on their visit history.
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimer.current !== null) clearTimeout(idleTimer.current)
+    idleTimer.current = setTimeout(() => {
+      const activeSurface = surfaceFromPathname(location.pathname)
+      prefetchIdle(queryClient, group, activeSurface).catch(() => {
+        // non-fatal — surfaces will fetch on demand if daemon is unavailable
+      })
+    }, IDLE_DELAY_MS)
+  }, [queryClient, group, location.pathname])
+
+  useEffect(() => {
+    const IDLE_EVENTS = ['mousemove', 'keydown', 'pointerdown', 'scroll'] as const
+    IDLE_EVENTS.forEach((evt) => document.addEventListener(evt, resetIdleTimer, { passive: true }))
+    // Start the timer immediately so a newly opened tab also warms the cache
+    resetIdleTimer()
+    return () => {
+      IDLE_EVENTS.forEach((evt) => document.removeEventListener(evt, resetIdleTimer))
+      if (idleTimer.current !== null) clearTimeout(idleTimer.current)
+    }
+  }, [resetIdleTimer])
 
   // Keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Linux/Win)
   useEffect(() => {
@@ -128,12 +179,14 @@ export function AppLayout() {
             testId="nav-explore"
             items={exploreItems(group)}
             isGroupActive={exploreActive}
+            group={group}
           />
           <NavMenu
             label="Operate"
             testId="nav-operate"
             items={operateItems(group)}
             isGroupActive={operateActive}
+            group={group}
           />
         </nav>
 

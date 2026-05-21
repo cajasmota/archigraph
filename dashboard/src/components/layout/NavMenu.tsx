@@ -7,15 +7,26 @@
  *
  * Built on @radix-ui/react-dropdown-menu for keyboard nav, a11y,
  * and proper focus management out of the box.
+ *
+ * Hover prefetch (#1257):
+ *   Hovering over Graph / Flows / Topology menu items for HOVER_DELAY_MS fires
+ *   a react-query prefetchQuery so data is cached before the click lands.
  */
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 import {
   Network, Workflow, Radio, Globe, BookOpen, Clock,
   Stethoscope, Sparkles, Server, RefreshCw, ChevronDown,
   BarChart2, Settings, Activity, Zap, HelpCircle,
 } from 'lucide-react'
+import {
+  prefetchSurface,
+  HOVER_DELAY_MS,
+  type PrefetchSurface,
+} from '@/lib/prefetcher'
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
 
@@ -34,6 +45,8 @@ interface NavMenuProps {
   items: NavEntry[]
   /** Whether any item in the group is currently active */
   isGroupActive: boolean
+  /** Current group slug — used for hover-prefetch target URLs (#1257) */
+  group?: string
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
@@ -66,8 +79,18 @@ export function operateItems(group: string): NavEntry[] {
 
 /* ── NavMenu component ──────────────────────────────────────────────────────── */
 
-export function NavMenu({ label, testId, items, isGroupActive }: NavMenuProps) {
+/** Map label → PrefetchSurface for the 3 data-heavy explore surfaces. */
+const PREFETCH_SURFACE_MAP: Record<string, PrefetchSurface> = {
+  Graph: 'graph',
+  Flows: 'flows',
+  Topology: 'topology',
+}
+
+export function NavMenu({ label, testId, items, isGroupActive, group }: NavMenuProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  // Track per-item hover timers so we can cancel on mouse-leave
+  const hoverTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   const triggerCls = [
     'flex items-center gap-1 px-2.5 py-1.5 rounded text-sm font-medium transition-colors',
@@ -76,6 +99,24 @@ export function NavMenu({ label, testId, items, isGroupActive }: NavMenuProps) {
       ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
       : 'text-slate-500 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-700 dark:hover:text-slate-300',
   ].join(' ')
+
+  function handleItemMouseEnter(itemLabel: string) {
+    const surface = PREFETCH_SURFACE_MAP[itemLabel]
+    if (!surface || !group) return
+    hoverTimers.current[itemLabel] = setTimeout(() => {
+      prefetchSurface(queryClient, surface, group).catch(() => {
+        // prefetch failures are non-fatal — surface will fetch on demand
+      })
+    }, HOVER_DELAY_MS)
+  }
+
+  function handleItemMouseLeave(itemLabel: string) {
+    const t = hoverTimers.current[itemLabel]
+    if (t !== undefined) {
+      clearTimeout(t)
+      delete hoverTimers.current[itemLabel]
+    }
+  }
 
   return (
     <DropdownMenu.Root>
@@ -122,6 +163,8 @@ export function NavMenu({ label, testId, items, isGroupActive }: NavMenuProps) {
               key={item.to}
               className="outline-none"
               onSelect={() => navigate(item.to)}
+              onMouseEnter={() => handleItemMouseEnter(item.label)}
+              onMouseLeave={() => handleItemMouseLeave(item.label)}
             >
               <MenuNavLink to={item.to} icon={item.icon} label={item.label} />
             </DropdownMenu.Item>
