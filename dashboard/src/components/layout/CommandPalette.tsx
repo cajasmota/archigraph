@@ -164,8 +164,9 @@ export function CommandPalette({ open, onClose, group = 'fixture-a' }: CommandPa
       description: 'View all keyboard shortcuts (? overlay)',
       kind: 'action',
       icon: <HelpCircle className="w-4 h-4" />,
-      comingSoon: true,
-      fn: () => { /* coming soon */ },
+      fn: () => {
+        document.dispatchEvent(new CustomEvent('archigraph:open-shortcuts'))
+      },
     },
   ], [group])
 

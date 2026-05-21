@@ -6,6 +6,7 @@ import { useThemeContext } from '@/context/ThemeContext'
 import { GroupSelector } from '@/components/layout/GroupSelector'
 import { VersionPopover } from '@/components/layout/VersionPopover'
 import { CommandPalette } from '@/components/layout/CommandPalette'
+import { KeyboardShortcutsOverlay } from '@/components/layout/KeyboardShortcutsOverlay'
 import {
   NavMenu,
   exploreItems,
@@ -30,6 +31,10 @@ export function AppLayout() {
   const openPalette  = useCallback(() => setPaletteOpen(true),  [])
   const closePalette = useCallback(() => setPaletteOpen(false), [])
 
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const openShortcuts  = useCallback(() => setShortcutsOpen(true),  [])
+  const closeShortcuts = useCallback(() => setShortcutsOpen(false), [])
+
   // Keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Linux/Win)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -48,6 +53,12 @@ export function AppLayout() {
     document.addEventListener('archigraph:toggle-theme', toggleTheme)
     return () => document.removeEventListener('archigraph:toggle-theme', toggleTheme)
   }, [toggleTheme])
+
+  // Listen for open-shortcuts event dispatched by the CommandPalette action
+  useEffect(() => {
+    document.addEventListener('archigraph:open-shortcuts', openShortcuts)
+    return () => document.removeEventListener('archigraph:open-shortcuts', openShortcuts)
+  }, [openShortcuts])
 
   // Keyboard shortcut: g h → go home
   useEffect(() => {
@@ -69,6 +80,20 @@ export function AppLayout() {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [paletteOpen])
+
+  // Keyboard shortcut: ? → open shortcuts overlay
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (paletteOpen || shortcutsOpen) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === '?') {
+        e.preventDefault()
+        openShortcuts()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [paletteOpen, shortcutsOpen, openShortcuts])
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200">
@@ -131,6 +156,9 @@ export function AppLayout() {
 
       {/* ── Command Palette ───────────────────────────────────────────────────── */}
       <CommandPalette open={paletteOpen} onClose={closePalette} group={group} />
+
+      {/* ── Keyboard Shortcuts Overlay ────────────────────────────────────────── */}
+      <KeyboardShortcutsOverlay open={shortcutsOpen} onClose={closeShortcuts} />
     </div>
   )
 }
