@@ -1836,3 +1836,157 @@ class ReviewViewSet(ModelViewSet):
 		"http:GET:/reviews",
 	})
 }
+
+// TestApplyDjangoDRFRoutes_NestedSimpleRouter verifies that a
+// drf-nested-routers NestedSimpleRouter registration correctly emits
+// routes at the composed path:
+//
+//	<parent_prefix>/{parent_lookup_pk}/<child_prefix>/...
+//
+// Fixture:
+//
+//	router.register(r"groups", GroupsViewSet)
+//	nested = routers.NestedSimpleRouter(router, r"groups", lookup="group")
+//	nested.register(r"companies", CompaniesViewSet)
+//
+// Expected: GET /groups/{group_pk}/companies  (list)
+//
+//	GET /groups/{group_pk}/companies/{pk}  (detail)
+//
+// Refs #1424.
+func TestApplyDjangoDRFRoutes_NestedSimpleRouter(t *testing.T) {
+	files := fileMap{
+		"api/urls.py": `
+from rest_framework import routers
+from rest_framework_nested import routers as nested_routers
+from api.views import GroupsViewSet, CompaniesViewSet
+
+router = routers.DefaultRouter()
+router.register(r"groups", GroupsViewSet, basename="group")
+
+nested = nested_routers.NestedSimpleRouter(router, r"groups", lookup="group")
+nested.register(r"companies", CompaniesViewSet, basename="company")
+
+urlpatterns = [
+    path("api/v1/", include(router.urls)),
+    path("api/v1/", include(nested.urls)),
+]
+`,
+		"api/views.py": `
+from rest_framework.viewsets import ModelViewSet
+
+class GroupsViewSet(ModelViewSet):
+    pass
+
+class CompaniesViewSet(ModelViewSet):
+    pass
+`,
+	}
+	pyPaths := []string{"api/urls.py", "api/views.py"}
+	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
+
+	// Nested router routes must be present.
+	// The lookup="group" param produces {group} in the path. DRF's drf-nested-routers
+	// library uses {group_pk} at runtime, but the {*} path-normalizer in archigraph
+	// canonicalises all placeholders to {*} at match-time, so {group} resolves
+	// against any client-side placeholder variant.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/api/v1/groups/{group}/companies",
+		"http:POST:/api/v1/groups/{group}/companies",
+		"http:GET:/api/v1/groups/{group}/companies/{pk}",
+		"http:PUT:/api/v1/groups/{group}/companies/{pk}",
+		"http:PATCH:/api/v1/groups/{group}/companies/{pk}",
+		"http:DELETE:/api/v1/groups/{group}/companies/{pk}",
+	})
+
+	// Parent router routes must also be present.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/api/v1/groups",
+		"http:GET:/api/v1/groups/{pk}",
+	})
+}
+
+// TestApplyDjangoDRFRoutes_NestedRouter_ActionOnChildViewSet verifies that
+// @action methods on a nested ViewSet emit at the full composed path:
+//
+//	<parent_prefix>/{group_pk}/<child_prefix>/<action_url_path>
+//
+// Refs #1424.
+func TestApplyDjangoDRFRoutes_NestedRouter_ActionOnChildViewSet(t *testing.T) {
+	files := fileMap{
+		"api/urls.py": `
+from rest_framework import routers
+from rest_framework_nested import routers as nested_routers
+from api.views import GroupsViewSet, CompaniesViewSet
+
+router = routers.DefaultRouter()
+router.register(r"groups", GroupsViewSet, basename="group")
+
+nested = nested_routers.NestedSimpleRouter(router, r"groups", lookup="group")
+nested.register(r"companies", CompaniesViewSet, basename="company")
+
+urlpatterns = [
+    path("api/v1/", include(router.urls)),
+    path("api/v1/", include(nested.urls)),
+]
+`,
+		"api/views.py": `
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+
+class GroupsViewSet(ModelViewSet):
+    pass
+
+class CompaniesViewSet(ModelViewSet):
+    @action(detail=False, methods=["get"], url_path="sync-logs")
+    def sync_logs(self, request, group_pk=None):
+        pass
+`,
+	}
+	pyPaths := []string{"api/urls.py", "api/views.py"}
+	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
+
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/api/v1/groups/{group}/companies/sync-logs",
+	})
+}
+
+// TestApplyDjangoDRFRoutes_NestedRouter_DefaultLookup verifies that when
+// lookup is not specified in NestedSimpleRouter(), the default "pk" is used:
+//
+//	/parent_prefix/{pk}/child_prefix/...
+//
+// Refs #1424.
+func TestApplyDjangoDRFRoutes_NestedRouter_DefaultLookup(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from rest_framework_nested import routers as nested_routers
+from views import ParentViewSet, ChildViewSet
+
+router = routers.DefaultRouter()
+router.register(r"parents", ParentViewSet)
+
+nested = nested_routers.NestedSimpleRouter(router, r"parents")
+nested.register(r"children", ChildViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+
+class ParentViewSet(ModelViewSet):
+    pass
+
+class ChildViewSet(ModelViewSet):
+    pass
+`,
+	}
+	pyPaths := []string{"urls.py", "views.py"}
+	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
+
+	// Default lookup="pk" → {pk} in the nested path.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/parents/{pk}/children",
+		"http:POST:/parents/{pk}/children",
+		"http:GET:/parents/{pk}/children/{pk}",
+	})
+}
