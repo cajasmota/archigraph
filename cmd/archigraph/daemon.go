@@ -21,6 +21,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/dashboard"
 	"github.com/cajasmota/archigraph/internal/quality/audit"
 	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/archigraph/internal/resolve"
 )
 
 // defaultDashboardPort is the default TCP port for the embedded dashboard.
@@ -279,6 +280,11 @@ func daemonRebuildFunc(args proto.RebuildArgs) ([]string, string, error) {
 	cfg, err := registry.LoadGroupConfig(ref.ConfigPath)
 	if err != nil {
 		return nil, "", err
+	}
+	// Issue #1206 — apply group-level extra_stdlib_filter before indexing so
+	// the synthesiser suppresses user-configured framework stdlib names.
+	for lang, names := range cfg.ExtraStdlibFilter {
+		resolve.RegisterExtraStdlibFilter(lang, names)
 	}
 	var rebuilt []string
 	for _, r := range cfg.Repos {
