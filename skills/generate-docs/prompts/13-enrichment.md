@@ -5,6 +5,11 @@ Produce structured YAML frontmatter enrichments for every `http_endpoint`,
 Flows, and Topology surfaces consume this data to surface summaries, group
 badges, rank scores, gap warnings, and disqualification signals.
 
+**Dashboard consumers:**
+- `http_endpoint` → Paths panel (`handlers_paths.go`)
+- `process_flow` → Flows list + detail panel (`handlers_flows.go`, `enrichmentHealth`)
+- `message_topic` → Topology list + detail panel (`handlers_topology.go` `applyTopologyEnrichment`, `handlers_topology_detail.go` `computeEnrichmentHealth`)
+
 > **Pass 3a hook active** for any entity where a doc file is being written
 > from scratch (i.e., no existing doc). Before writing the prose section,
 > run the generation-time repair hook from `prompts/03a-generation-time-repair.md`.
@@ -15,6 +20,8 @@ badges, rank scores, gap warnings, and disqualification signals.
 - Existing doc files under `<repo>/docs/` (Pass 4–6 output) — enrich in-place.
 - `archigraph_enrichments(action=list)` — pre-computed enrichment candidates
   from the daemon; use as signals, not as verbatim output.
+- Per-kind templates at `skills/generate-docs/templates/<kind>.md` — use as
+  starting point when creating new files.
 
 ## Procedure
 
@@ -67,7 +74,9 @@ For each entity in the working list:
 
 5. **Write summary** — one sentence, no jargon, from the user's perspective.
 
-6. **Detect gaps** — use the checklist below.
+6. **Detect gaps** — use the gap checklist below.
+
+7. **Write per-kind fields** — follow the field guidance for each kind below.
 
 #### Gap checklist
 
@@ -86,30 +95,104 @@ For `message_topic`:
 - [ ] Orphan producer (no SUBSCRIBES_TO consumer anywhere in the group)
 - [ ] Orphan consumer (no PUBLISHES_TO producer anywhere in the group)
 - [ ] Incompatible schemas (two consumers expect different field sets)
-- [ ] No expected_consumers listed
+- [ ] No `expected_consumers` listed
+
+#### Per-kind field guidance
+
+**`http_endpoint` — Paths panel**
+
+All fields below are consumed by the Paths panel. Populate as many as you have
+confident data for:
+
+- `method`, `path` — copy from the entity properties or handler signature.
+- `parameters` — list every query/path/header/body parameter with type and
+  required flag. Inferred from function signature or docstring.
+- `responses` — document at least `200` and the most likely error codes.
+  Shape is a compact inline TypeScript-style type string.
+- `auth` — one-sentence description of the auth requirement.
+- `tables_touched` — list DB tables or ORM models that this handler reads or writes.
+- `parameters_explained` — prose expanding on non-obvious parameter semantics.
+- `response_shapes_explained` — prose describing nested object structures,
+  enum values, and optional fields.
+- `examples` — one or two representative call-and-response examples in prose.
+- `caveats` — edge cases, rate limits, soft-delete behaviour, deprecation notes.
+
+**`process_flow` — Flows list + detail panel**
+
+The Flows panel's `enrichmentHealth` checks: `summary`, `preconditions`,
+`expected_outcome`, `steps`, `gaps`. Populate all five to achieve full health.
+
+- `steps` — numbered list of discrete actions in the flow's happy path.
+  Use short imperative phrases (verb + noun). Order must match execution order.
+  Aim for 3–10 steps; collapse trivially-small steps (e.g. a single assignment)
+  into their parent action.
+- `preconditions` — the minimum state required for the flow to begin. One sentence.
+- `expected_outcome` — what the system state looks like after a successful run.
+  Include persistence, events emitted, and side effects.
+- `examples` — prose: happy path narrative + one failure/retry scenario.
+- `caveats` — known failure modes, retry behaviour, race conditions, async gaps.
+
+**`message_topic` — Topology list + detail panel**
+
+The Topology detail panel's `computeEnrichmentHealth` checks six fields:
+`summary`, `schema`, `volume_estimate`, `typical_payload_size_bytes`,
+`expected_consumers`, `gaps`. Populate all six to achieve a `filled_field_count`
+of 6/6.
+
+- `purpose` — distinct from `summary`: explain the business reason this topic
+  exists and how it fits into the architecture. Consumed by the detail panel prose
+  section. Two to four sentences.
+- `schema` — inline compact type string representing the message payload.
+  Use TypeScript-style notation: `{ field: type, ... }`. If the schema has
+  multiple versions, document the latest and note version history in `caveats`.
+  **Important:** when `schema` is present in the frontmatter, the Topology detail
+  panel prefers it over the entity-derived `schema` property from the graph — so
+  this is the authoritative source for the UI.
+- `typical_payload_size_bytes` — integer estimate. Useful for capacity planning.
+  Omit if you have no data rather than guessing wildly.
+- `volume_estimate` — one of `low | medium | high | very-high`. Base on
+  known traffic patterns or the flow rank of the publishing flow.
+- `expected_consumers` — list of service/repo slugs that subscribe. The Topology
+  detail panel merges these hints into the graph-derived related-topics list, so
+  include any consumer whose subscription edge may not be in the graph (e.g.
+  external services consuming via a shared subscription).
+- `examples` — prose: sample publish event with representative field values.
+- `caveats` — schema version compatibility, at-least-once vs. exactly-once
+  delivery, ordering guarantees, dead-letter-queue status.
 
 ### Step 4 — Write frontmatter
 
 For each entity, prepend the YAML frontmatter block to the **top** of the
 existing doc file. Do not alter the prose body below the closing `---`.
 
-If no doc file exists for the entity, create a minimal file:
+Use the template for the entity's `kind` as your starting point:
+
+```
+skills/generate-docs/templates/http_endpoint.md
+skills/generate-docs/templates/process_flow.md
+skills/generate-docs/templates/message_topic.md
+```
+
+See `skills/generate-docs/examples/` for fully-populated reference examples.
+
+If no doc file exists for the entity, create a minimal file at:
 
 ```
 <repo>/docs/enrichments/<kind>/<entity_id>.md
 ```
 
-containing only the frontmatter block followed by a one-paragraph prose
-description.
+This path must contain the entity ID as a substring so the backend's
+fast-path lookup (`applyTopologyEnrichment` pass 1, `extractFlowDocsWithResolver`
+fast path) can resolve it without a full frontmatter scan.
 
-Use the schema documented in `SKILL.md § Unified frontmatter schema`. Emit
-only fields relevant to the entity's `kind`. Omit fields where you have no
-confident data rather than fabricating values.
+Emit only fields relevant to the entity's `kind`. Do not emit `steps` on an
+`http_endpoint` or `method`/`path` on a `message_topic`. Omit any field where
+you have no confident data rather than fabricating values.
 
 ### Step 5 — Submit enrichment record
 
 After writing the frontmatter, record the enrichment in the daemon so the
-group state reflects it:
+group state reflects it and the `docgen_status` transitions to `enriched`:
 
 ```
 archigraph_enrichments(
@@ -127,11 +210,14 @@ verify:
 
 - [ ] Frontmatter opens with `---` on line 1.
 - [ ] Frontmatter closes with `---` before any prose.
-- [ ] `kind` matches the graph entity kind.
+- [ ] `kind` matches the graph entity kind (`http_endpoint`, `process_flow`, or `message_topic`).
 - [ ] `rank` is in 0..1 (or absent).
-- [ ] `merged_into` references an entity_id that exists in this group (or is absent).
+- [ ] `merged_into` references an `entity_id` that exists in this group (or is absent).
 - [ ] `disqualified: true` is justified in a `gaps` entry or comment.
-- [ ] No per-kind fields from the wrong kind (e.g. no `steps` on an `http_endpoint`).
+- [ ] No per-kind fields from the wrong kind (e.g. no `steps` on an `http_endpoint`, no `method` on a `message_topic`).
+- [ ] For `process_flow`: `summary`, `preconditions`, `expected_outcome`, `steps`, and `gaps` are all present (needed for full `enrichment_health`).
+- [ ] For `message_topic`: `summary`, `schema`, `volume_estimate`, `typical_payload_size_bytes`, `expected_consumers`, and `gaps` are all present (needed for `filled_field_count` = 6).
+- [ ] The doc file path is registered in `docgen-state.json` `GeneratedPaths` so the backend can locate it.
 
 ### Step 7 — Hand back
 
@@ -140,10 +226,10 @@ Save a finding summarising enrichment coverage:
 ```
 archigraph_save_finding(
   question="What enrichment data was produced for this group?",
-  answer="Pass 13 enriched <N> http_endpoints, <M> process_flows, <K> message_topics. <X> disqualified. <Y> merged.",
+  answer="Pass 13 enriched <N> http_endpoints, <M> process_flows, <K> message_topics. <X> disqualified. <Y> merged. Health coverage: <Z> message_topics at 6/6, <W> process_flows at 5/5.",
   type="enrichment",
 )
 ```
 
 Hand control back to the orchestrator. The orchestrator marks Pass 13 complete
-in docgen-state.json.
+in docgen-state.json and queues Pass 14 (frontmatter validation).
