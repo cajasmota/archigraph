@@ -1153,3 +1153,164 @@ export async function fetchSystemLogs(opts: {
   if (opts.severity) params.set('severity', opts.severity)
   return apiFetch<SystemLogsReply>(`/api/system/logs?${params}`)
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Update surface — GET /api/updates/check, POST /api/updates/apply,
+//                  POST /api/updates/refresh-rules (#1199)
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface UpdateCheckReply {
+  current_version: string
+  current_commit: string
+  current_built_at: string
+  latest_version: string
+  latest_tag: string
+  latest_body: string
+  latest_html_url: string
+  published_at?: string
+  update_available: boolean
+  fetch_error?: string
+  checked_at: string
+}
+
+/** GET /api/updates/check — compare current build to latest GitHub release. */
+export async function fetchUpdateCheck(): Promise<UpdateCheckReply> {
+  if (USE_MOCKS) {
+    return {
+      current_version: '0.0.0-dev',
+      current_commit: 'dab4c62',
+      current_built_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      latest_version: '1.2.0',
+      latest_tag: 'v1.2.0',
+      latest_body: '## What\'s new\n- Faster graph rendering\n- Fix orphan detection edge case\n- Improved pattern learning',
+      latest_html_url: 'https://github.com/cajasmota/archigraph/releases/tag/v1.2.0',
+      published_at: new Date(Date.now() - 86400 * 1000).toISOString(),
+      update_available: true,
+      checked_at: new Date().toISOString(),
+    }
+  }
+  return apiFetch<UpdateCheckReply>('/api/updates/check')
+}
+
+export interface UpdateSSELine {
+  event: 'connected' | 'output' | 'done' | 'error'
+  data: string
+}
+
+/**
+ * POST /api/updates/apply — stream update progress via SSE.
+ * Returns a cleanup function to close the EventSource.
+ */
+export function postUpdatesApply(
+  onLine: (line: string) => void,
+  onDone: (exitCode: number) => void,
+  onError: (msg: string) => void,
+): () => void {
+  if (USE_MOCKS) {
+    // Simulate a streaming update in mock mode.
+    const timer = setTimeout(() => {
+      onLine('hook reinstalled')
+      onLine('update complete')
+      onDone(0)
+    }, 800)
+    return () => clearTimeout(timer)
+  }
+  // Use fetch + ReadableStream since EventSource doesn't support POST.
+  let cancelled = false
+  void (async () => {
+    try {
+      const res = await fetch('/api/updates/apply', { method: 'POST' })
+      if (!res.ok || !res.body) {
+        onError(`HTTP ${res.status}`)
+        return
+      }
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (!cancelled) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const blocks = buf.split('\n\n')
+        buf = blocks.pop() ?? ''
+        for (const block of blocks) {
+          const lines = block.split('\n')
+          let event = ''
+          let data = ''
+          for (const l of lines) {
+            if (l.startsWith('event: ')) event = l.slice(7).trim()
+            if (l.startsWith('data: ')) data = l.slice(6).trim()
+          }
+          if (event === 'output') {
+            try { onLine(JSON.parse(data).line as string) } catch { onLine(data) }
+          } else if (event === 'done') {
+            try { onDone(JSON.parse(data).exit_code as number) } catch { onDone(0) }
+          } else if (event === 'error') {
+            try { onError(JSON.parse(data).message as string) } catch { onError(data) }
+          }
+        }
+      }
+    } catch (e) {
+      if (!cancelled) onError(String(e))
+    }
+  })()
+  return () => { cancelled = true }
+}
+
+/**
+ * POST /api/updates/refresh-rules — refresh YAML rules without binary update.
+ * Same SSE streaming pattern as apply.
+ */
+export function postRefreshRules(
+  onLine: (line: string) => void,
+  onDone: (exitCode: number) => void,
+  onError: (msg: string) => void,
+): () => void {
+  if (USE_MOCKS) {
+    const timer = setTimeout(() => {
+      onLine('refreshing rules-lite (no-op in current build)')
+      onDone(0)
+    }, 500)
+    return () => clearTimeout(timer)
+  }
+  let cancelled = false
+  void (async () => {
+    try {
+      const res = await fetch('/api/updates/refresh-rules', { method: 'POST' })
+      if (!res.ok || !res.body) {
+        onError(`HTTP ${res.status}`)
+        return
+      }
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (!cancelled) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const blocks = buf.split('\n\n')
+        buf = blocks.pop() ?? ''
+        for (const block of blocks) {
+          const lines = block.split('\n')
+          let event = ''
+          let data = ''
+          for (const l of lines) {
+            if (l.startsWith('event: ')) event = l.slice(7).trim()
+            if (l.startsWith('data: ')) data = l.slice(6).trim()
+          }
+          if (event === 'output') {
+            try { onLine(JSON.parse(data).line as string) } catch { onLine(data) }
+          } else if (event === 'done') {
+            try { onDone(JSON.parse(data).exit_code as number) } catch { onDone(0) }
+          } else if (event === 'error') {
+            try { onError(JSON.parse(data).message as string) } catch { onError(data) }
+          }
+        }
+      }
+    } catch (e) {
+      if (!cancelled) onError(String(e))
+    }
+  })()
+  return () => { cancelled = true }
+}
+}

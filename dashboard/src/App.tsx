@@ -14,6 +14,7 @@ import { PendingRoute } from '@/routes/pending'
 import { DiagnosticsRoute } from '@/routes/diagnostics'
 import { PatternsRoute } from '@/routes/patterns'
 import { SystemRoute } from '@/routes/system'
+import { UpdateRoute } from '@/routes/update'
 import { RouterErrorBoundary } from '@/components/RouterErrorBoundary'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Globe } from 'lucide-react'
@@ -88,6 +89,9 @@ const router = createBrowserRouter([
 
       // Surface 9 — System / daemon control panel (#1195)
       { path: 'system', element: <SystemRoute /> },
+
+      // Surface 10 — Update / Version management (#1199)
+      { path: 'update', element: <UpdateRoute /> },
     ],
   },
 ])

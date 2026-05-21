@@ -231,6 +231,11 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/system/stop", s.handleSystemStop)
 	mux.HandleFunc("GET /api/system/logs", s.handleSystemLogs)
 
+	// Update surface (#1199) — check, apply, refresh-rules
+	mux.HandleFunc("GET /api/updates/check", s.handleUpdatesCheck)
+	mux.HandleFunc("POST /api/updates/apply", s.handleUpdatesApply)
+	mux.HandleFunc("POST /api/updates/refresh-rules", s.handleUpdatesRefreshRules)
+
 	// Supporting endpoints
 	mux.HandleFunc("GET /api/groups/{group}/communities", s.handleGroupCommunities)
 	mux.HandleFunc("GET /api/groups/{group}/god-nodes", s.handleGroupGodNodes)

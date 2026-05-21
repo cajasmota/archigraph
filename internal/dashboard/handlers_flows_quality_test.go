@@ -85,18 +85,6 @@ func outRel(fromID, toID, kind string) graph.Relationship {
 	}
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	s := ""
-	for n > 0 {
-		s = string(rune('0'+n%10)) + s
-		n /= 10
-	}
-	return s
-}
-
 // newFlowQualityTestServer builds an httptest.Server pre-loaded with grp.
 func newFlowQualityTestServer(t *testing.T, grp *DashGroup) *httptest.Server {
 	t.Helper()
