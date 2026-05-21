@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/cajasmota/archigraph/internal/classifier"
+	"github.com/cajasmota/archigraph/internal/engine"
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
@@ -147,6 +148,22 @@ func Coordinate(ctx context.Context, repoRoot string, files []string, cfg Coordi
 		return nil, err
 	}
 
+	// Pre-pass (#1292): build the repo-wide DRF register-name registry by
+	// scanning ALL Python files before any extraction batch spawns. This
+	// ensures every subprocess receives the complete set of router.register()
+	// basenames regardless of which batch those files land in.
+	//
+	// Without this, each subprocess only scanned its own partial batch, so
+	// register() calls in batch N were invisible to batch M — resulting in
+	// ghost bare-prefix Route entities (e.g. /alternate-addresses, /aoc)
+	// surviving suppression and appearing as phantom http_endpoints.
+	drfNamesPath, drfWriteErr := writeDRFNamesFile(batchDir, repoRoot, buckets["python"])
+	if drfWriteErr != nil {
+		// Non-fatal: fall back to per-batch scan (which is correct for single-batch
+		// repos and avoids a hard failure if the pre-pass itself has an I/O error).
+		drfNamesPath = ""
+	}
+
 	skip := strings.Join(cfg.SkipPasses, ",")
 	stderr := cfg.Stderr
 	if stderr == nil {
@@ -189,6 +206,9 @@ func Coordinate(ctx context.Context, repoRoot string, files []string, cfg Coordi
 			}
 			if b.language != "" {
 				args = append(args, "--lang", b.language)
+			}
+			if drfNamesPath != "" {
+				args = append(args, "--drf-names", drfNamesPath)
 			}
 			if skip != "" {
 				args = append(args, "--skip-pass", skip)
@@ -340,6 +360,60 @@ func writeBatches(dir string, buckets map[string][]string, batchSize int) ([]bat
 		}
 	}
 	return batches, nil
+}
+
+// writeDRFNamesFile scans all Python files in pyFiles for router.register()
+// basenames and writes one basename per line to a temp file in dir. Returns
+// the absolute path of the written file, or ("", nil) when no names were
+// found (so subprocesses stay in fallback mode and don't need the flag).
+//
+// This is the coordinator side of the #1292 multi-batch DRF ghost fix. By
+// scanning ALL Python files at once (before any subprocess spawns), we produce
+// a complete, repo-wide set of DRF register basenames. Each subprocess then
+// loads this file via --drf-names instead of scanning only its own partial
+// batch — eliminating the cross-batch visibility gap that caused 124 ghost
+// bare-prefix paths to survive suppression.
+func writeDRFNamesFile(dir, repoRoot string, pyFiles []string) (string, error) {
+	if len(pyFiles) == 0 {
+		return "", nil
+	}
+
+	// Scan all Python files into the engine's global registry temporarily.
+	engine.ClearDRFRegisterNames()
+	for _, rel := range pyFiles {
+		abs := filepath.Join(repoRoot, rel)
+		content, err := os.ReadFile(abs)
+		if err != nil {
+			continue // skip unreadable files; don't fail the whole pre-pass
+		}
+		engine.ScanDRFRegisterNames(content)
+	}
+
+	names := engine.CollectDRFRegisterNames()
+	// Always clear after collecting — we don't want this coordinator-side global
+	// to bleed into any in-process extraction that might follow (tests, etc.).
+	engine.ClearDRFRegisterNames()
+
+	if len(names) == 0 {
+		return "", nil // no register() calls found; subprocesses use fallback
+	}
+
+	f, err := os.CreateTemp(dir, "drf-names-*.txt")
+	if err != nil {
+		return "", fmt.Errorf("create drf-names file: %w", err)
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	for _, n := range names {
+		if _, err := fmt.Fprintln(w, n); err != nil {
+			return "", fmt.Errorf("write drf-names file: %w", err)
+		}
+	}
+	if err := w.Flush(); err != nil {
+		return "", fmt.Errorf("flush drf-names file: %w", err)
+	}
+	return f.Name(), nil
 }
 
 // decodeStream consumes the subprocess's stdout (one JSONL envelope per

@@ -81,6 +81,7 @@ func runExtractSubprocess(argv []string) error {
 		batch      = fs.String("batch", "", "path to newline-delimited batch file")
 		batchID    = fs.String("batch-id", "", "label propagated into stats")
 		skipPasses = fs.String("skip-pass", "", "comma-separated pass names to skip")
+		drfNames   = fs.String("drf-names", "", "path to coordinator-written DRF register-name file (#1292)")
 	)
 	if err := fs.Parse(argv); err != nil {
 		return err
@@ -98,11 +99,12 @@ func runExtractSubprocess(argv []string) error {
 	}
 
 	return extract.Run(context.Background(), extract.SubprocessOptions{
-		RepoRoot:   *repo,
-		Language:   *lang,
-		BatchPath:  *batch,
-		BatchID:    *batchID,
-		Output:     os.Stdout,
-		SkipPasses: skipSet,
+		RepoRoot:     *repo,
+		Language:     *lang,
+		BatchPath:    *batch,
+		BatchID:      *batchID,
+		Output:       os.Stdout,
+		SkipPasses:   skipSet,
+		DRFNamesPath: *drfNames,
 	})
 }

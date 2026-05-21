@@ -231,6 +231,128 @@ urlpatterns = [
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Multi-batch ghost regression (#1292)
+// ---------------------------------------------------------------------------
+//
+// This test reproduces the exact failure mode that caused 124 ghost bare-prefix
+// paths to survive after #1290 merged:
+//
+// The coordinator partitions Python files into batches of ~80. Each batch
+// previously ran ClearDRFRegisterNames + ScanDRFRegisterNames on only its OWN
+// files. When router.register() calls lived in batch-0 files and the consuming
+// file (with include(router.urls)) lived in batch-1, the batch-1 subprocess
+// had an empty global registry and never suppressed the ghost Route entities.
+//
+// The fix (coordinator side): scan ALL Python files once → write names file →
+// each subprocess loads the file via LoadDRFRegisterNames.
+//
+// This test simulates that two-batch scenario at the engine level:
+// batch-0 has router_test.py (register-only), batch-1 has urls_test.py
+// (include-only). We verify that:
+//  1. Loading names via LoadDRFRegisterNames (the new path) suppresses ghosts.
+//  2. Route entities composed by the AST pass (with /api/v1/ prefix) survive.
+
+// TestDRFMultiBatch_GhostsSuppressedViaLoadedNames verifies that bare
+// Route entities from a router.register()-only file are suppressed even when
+// LoadDRFRegisterNames is used to populate the global set (coordinator path).
+//
+// Regression test for #1292.
+func TestDRFMultiBatch_GhostsSuppressedViaLoadedNames(t *testing.T) {
+	// Simulate coordinator pre-pass: scan batch-0 (router_test.py) and collect names.
+	// In production the coordinator writes these to a file; here we directly call
+	// ScanDRFRegisterNames then CollectDRFRegisterNames to get the slice.
+	ClearDRFRegisterNames()
+	ScanDRFRegisterNames([]byte(crossFileRoutersFile)) // batch-0 files only
+	collectedNames := CollectDRFRegisterNames()
+	ClearDRFRegisterNames() // simulate subprocess starting with empty state
+
+	// Simulate batch-1 subprocess: load names from the coordinator file.
+	LoadDRFRegisterNames(collectedNames) // <-- the new path introduced in #1292
+	t.Cleanup(ClearDRFRegisterNames)
+
+	rules, err := LoadAllRules()
+	if err != nil {
+		t.Fatalf("LoadAllRules: %v", err)
+	}
+	det := New(rules)
+	ctx := context.Background()
+
+	// Detect router_test.py (the batch-0 file with only register() calls).
+	// In multi-batch mode, batch-0 subprocess ALSO receives the names file, so
+	// it suppresses its own YAML Route entities via LoadDRFRegisterNames.
+	routersResult, err := det.Detect(ctx, extractor.FileInput{
+		Path:     "router_test/routers.py",
+		Content:  []byte(crossFileRoutersFile),
+		Language: "python",
+	})
+	if err != nil {
+		t.Fatalf("Detect(routers.py): %v", err)
+	}
+
+	// Bare ghost Route entities must be absent.
+	ghostNames := map[string]bool{"users": true, "orders": true}
+	for _, e := range routersResult.Entities {
+		if e.Kind == "Route" && ghostNames[e.Name] {
+			t.Errorf("[#1292] ghost Route %q survived multi-batch suppression; "+
+				"LoadDRFRegisterNames not consulted by applyDjangoRouteComposition", e.Name)
+		}
+	}
+	// Ghost ROUTES_TO edges must also be absent.
+	for _, r := range routersResult.Relationships {
+		if r.Kind == "ROUTES_TO" && len(r.FromID) > 6 {
+			bare := r.FromID[6:] // strip "Route:"
+			if ghostNames[bare] {
+				t.Errorf("[#1292] ghost ROUTES_TO Route:%s survived multi-batch suppression", bare)
+			}
+		}
+	}
+
+	// Ghost http_endpoint entities must also be absent (synthesizeDjangoFromComposed
+	// consumes ast_driven Route entities; there should be none for bare names).
+	for _, e := range routersResult.Entities {
+		if e.Kind == "http_endpoint" {
+			// Paths like /users, /orders, /users/{pk}, /orders/{pk} are ghosts.
+			for ghost := range ghostNames {
+				if e.Name == "/"+ghost || e.Name == "/"+ghost+"/{pk}" {
+					t.Errorf("[#1292] ghost http_endpoint %q must not appear after multi-batch suppression", e.Name)
+				}
+			}
+		}
+	}
+}
+
+// TestDRFMultiBatch_CollectAndLoadRoundTrip verifies that the
+// CollectDRFRegisterNames→clear→LoadDRFRegisterNames round-trip correctly
+// transfers all names. This tests the coordinator↔subprocess boundary.
+func TestDRFMultiBatch_CollectAndLoadRoundTrip(t *testing.T) {
+	content := []byte(`
+from rest_framework.routers import DefaultRouter
+router = DefaultRouter()
+router.register(r'alternate-addresses', AlternateAddressViewSet)
+router.register(r'aoc', AocViewSet)
+router.register(r'auth/login', AuthLoginViewSet)
+`)
+	ClearDRFRegisterNames()
+	ScanDRFRegisterNames(content)
+	collected := CollectDRFRegisterNames()
+	ClearDRFRegisterNames()
+
+	if len(collected) != 3 {
+		t.Fatalf("expected 3 names collected, got %d: %v", len(collected), collected)
+	}
+
+	// Load into fresh state (subprocess side).
+	LoadDRFRegisterNames(collected)
+	t.Cleanup(ClearDRFRegisterNames)
+
+	for _, name := range []string{"alternate-addresses", "aoc", "auth/login"} {
+		if !isDRFGlobalRegisterName(name) {
+			t.Errorf("name %q missing after LoadDRFRegisterNames round-trip", name)
+		}
+	}
+}
+
 // TestDRFCrossFile_ApplyDRFRoutes_AttributeFormInclude verifies that
 // ApplyDjangoDRFRoutes correctly emits prefixed routes when the parent file
 // uses attribute-form include(router.urls) to mount a routers file.
