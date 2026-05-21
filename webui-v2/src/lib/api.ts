@@ -20,6 +20,7 @@ import type {
   SettingsGroup,
   SettingsFeatures,
   DoctorCheck,
+  V2CandidatesResponse,
 } from "@/data/types";
 
 const BASE = import.meta.env.VITE_AG_API_BASE ?? "/api";
@@ -196,6 +197,19 @@ export const api = {
     requestV2<DoctorCheck[]>(`/groups/${encodeURIComponent(groupId)}/doctor`, {
       method: "POST",
     }),
+
+  // --- v2 Pending screen (#1442) ---
+  /** Fetch repair + enrichment candidates for a group. */
+  listCandidates: (groupId: string, tab?: "repairs" | "enrichments") =>
+    requestV2<V2CandidatesResponse>(
+      `/groups/${encodeURIComponent(groupId)}/candidates${tab ? `?tab=${tab}` : ""}`,
+    ),
+  /** Persist a hint for a candidate. Empty string clears the hint. */
+  saveHint: (groupId: string, candidateId: string, hint: string) =>
+    requestV2<{ ok: true }>(
+      `/groups/${encodeURIComponent(groupId)}/candidates/${encodeURIComponent(candidateId)}/hint`,
+      { method: "PUT", body: JSON.stringify({ hint }) },
+    ),
 };
 
 export type Api = typeof api;
