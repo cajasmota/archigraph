@@ -247,6 +247,10 @@ export interface ProcessStep {
   repo: string
   step_index: number
   edge_kind: RelationshipKind
+  /** #1147 step-kind annotation — e.g. 'http_fetch', 'db_query', 'message_publish' */
+  step_kind?: string
+  /** #1147 observed side-effects for this step */
+  side_effects?: string[]
 }
 
 export type FlowEntryKind =
@@ -288,13 +292,25 @@ export interface Process {
   priority_hint?: FlowPriorityHint
   dominant_step_kind?: RelationshipKind | null
   complexity_score?: number
+  /** #1105 unified enrichment — preconditions / expected_outcome / ai_summary */
+  enrichment?: {
+    ai_summary?: string
+    preconditions?: string[]
+    expected_outcome?: string
+    writes_db_table?: string[]
+    publishes_to?: string[]
+    external_calls?: string[]
+    read_sources?: string[]
+    write_sinks?: string[]
+    linked_endpoint_id?: string
+    linked_topic_id?: string
+  }
 }
 
 /** Summary entry in the top-level entry_kind_groups array (#1148) */
 export interface FlowEntryKindGroup {
   kind: FlowEntryKind
   count: number
-}
 
 // ── Dead-ends (#1145) ─────────────────────────────────────────────────────────
 

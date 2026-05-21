@@ -46,6 +46,8 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-dropdown-menu',
               '@radix-ui/react-select',
             ],
+            // React Flow lazy chunk — loaded only when the flow detail panel opens (#1150)
+            'flow-dag': ['@xyflow/react', '@xyflow/system', 'dagre'],
           },
         },
       },
