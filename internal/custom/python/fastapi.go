@@ -17,8 +17,19 @@ func init() {
 }
 
 // FastAPIExtractor extracts FastAPI framework patterns: route decorators,
-// Depends(), Pydantic models, APIRouter, WebSocket, middleware,
-// BackgroundTasks, and lifecycle events.
+// Depends(), APIRouter, WebSocket, middleware, BackgroundTasks, and lifecycle
+// events.
+//
+// Pydantic model classes (BaseModel / BaseSettings / RootModel subclasses) are
+// intentionally NOT emitted as separate entities here. The base Python extractor
+// already emits a canonical SCOPE.Component/class entity for every class
+// definition in the same file, including Pydantic models. Emitting a second
+// SCOPE.Schema entity for the same class from this extractor created within-file
+// duplicates (one node per extractor) for names like "Order", inflating node
+// counts without adding structural information. Framework properties for Pydantic
+// models (orm_mode, env_prefix, alias_generator) are captured by the base Python
+// extractor's applyFrameworkInnerClassProperties logic on the Config inner class.
+// Issue #1501 — within-extractor dedup, fix 1/2.
 type FastAPIExtractor struct{}
 
 func (e *FastAPIExtractor) Language() string { return "python_fastapi" }
@@ -29,12 +40,7 @@ var (
 			`\(\s*(?:r)?["']([^"']*)["'][^)]*\)\s*\n` +
 			`(?:\s*(?:#[^\n]*)?\n)*` +
 			`\s*(?:async\s+)?def\s+(\w+)\s*\(`)
-	faDependsParamRe  = regexp.MustCompile(`=\s*Depends\s*\(\s*(\w+)\s*\)`)
-	faPydanticClassRe = regexp.MustCompile(
-		`(?m)^class\s+([A-Z][A-Za-z0-9_]*)\s*\([^)]*` +
-			`(?:(?:pydantic\.)?(?:BaseModel|BaseSettings|RootModel|GenericModel|` +
-			`ConstrainedStr|ConstrainedInt|ConstrainedFloat|ConstrainedBytes|` +
-			`ConstrainedDate|ConstrainedDecimal))[^)]*\)\s*:`)
+	faDependsParamRe = regexp.MustCompile(`=\s*Depends\s*\(\s*(\w+)\s*\)`)
 	faAPIRouterRe    = regexp.MustCompile(`(?m)(\w+)\s*=\s*APIRouter\s*\(([^)]*)\)`)
 	faRouterPrefixRe = regexp.MustCompile(`prefix\s*=\s*["']([^"']*)["']`)
 	faRouterTagsRe   = regexp.MustCompile(`tags\s*=\s*\[\s*["']([^"']*)["']`)
@@ -88,15 +94,12 @@ func (e *FastAPIExtractor) Extract(ctx context.Context, file extractor.FileInput
 			map[string]string{"framework": "fastapi", "pattern_type": "depends", "dependency_fn": depFn}))
 	}
 
-	// 3. Pydantic models
-	for _, idx := range allMatchesIndex(faPydanticClassRe, source) {
-		className := source[idx[2]:idx[3]]
-		line := lineOf(source, idx[0])
-		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, line,
-			map[string]string{"framework": "fastapi", "pattern_type": "pydantic_model", "class_name": className}))
-	}
+	// Note: Pydantic model classes (BaseModel subclasses) are not emitted here.
+	// The base Python extractor already emits SCOPE.Component/class for every
+	// class definition. Emitting a second SCOPE.Schema entity for the same class
+	// creates within-file duplicates that inflate node counts (issue #1501).
 
-	// 4. APIRouter instantiation
+	// 3. APIRouter instantiation
 	for _, idx := range allMatchesIndex(faAPIRouterRe, source) {
 		varName := source[idx[2]:idx[3]]
 		args := source[idx[4]:idx[5]]

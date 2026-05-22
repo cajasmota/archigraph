@@ -653,6 +653,11 @@ async def get_items(db = Depends(get_db)):
 }
 
 func TestFastAPI_PydanticModel(t *testing.T) {
+	// Issue #1501 — the FastAPI extractor must NOT emit standalone SCOPE.Schema
+	// entities for Pydantic model classes. The base Python extractor already
+	// emits a SCOPE.Component/class entity for every class definition; a second
+	// SCOPE.Schema from this extractor creates within-file duplicates that inflate
+	// node counts (e.g. "Order" appearing 3× instead of 1×).
 	src := `class UserCreate(BaseModel):
     name: str
     email: str
@@ -661,14 +666,11 @@ class AppConfig(BaseSettings):
     debug: bool = False
 `
 	ents := extract(t, "python_fastapi", src)
-	schemaCount := 0
 	for _, e := range ents {
-		if e.Kind == "SCOPE.Schema" {
-			schemaCount++
+		if e.Kind == "SCOPE.Schema" && (e.Name == "UserCreate" || e.Name == "AppConfig") {
+			t.Fatalf("python_fastapi must not emit SCOPE.Schema entity for Pydantic class %q (issue #1501): "+
+				"the base Python extractor already emits SCOPE.Component/class for it", e.Name)
 		}
-	}
-	if schemaCount != 2 {
-		t.Fatalf("expected 2 Pydantic schemas, got %d", schemaCount)
 	}
 }
 
@@ -1426,6 +1428,31 @@ func TestSQLAlchemy_NoMatch(t *testing.T) {
 	ents := extract(t, "python_sqlalchemy", src)
 	if len(ents) != 0 {
 		t.Fatalf("expected 0 entities, got %d", len(ents))
+	}
+}
+
+// TestSQLAlchemy_NoFalsePositiveOnPydantic verifies that Pydantic BaseModel
+// subclasses are NOT emitted as SQLAlchemy model entities. "BaseModel" contains
+// the word "Model" (which was previously in saBaseIndicators as a bare substring
+// match), causing false-positive SCOPE.Schema duplicates for shared domain
+// classes (issue #1501 — within-extractor dedup fix 2/2).
+func TestSQLAlchemy_NoFalsePositiveOnPydantic(t *testing.T) {
+	src := `from pydantic import BaseModel, BaseSettings
+
+class Order(BaseModel):
+    id: str
+    status: str
+    total_cents: int
+
+class AppConfig(BaseSettings):
+    db_url: str
+`
+	ents := extract(t, "python_sqlalchemy", src)
+	for _, e := range ents {
+		if e.Name == "Order" || e.Name == "AppConfig" {
+			t.Fatalf("python_sqlalchemy must not emit entity for Pydantic class %q (issue #1501): "+
+				"'BaseModel' was falsely matched by the 'Model' substring in saBaseIndicators", e.Name)
+		}
 	}
 }
 
