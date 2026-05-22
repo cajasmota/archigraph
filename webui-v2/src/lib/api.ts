@@ -20,6 +20,10 @@ import type {
   SettingsGroup,
   SettingsFeatures,
   DoctorCheck,
+  TopologyResponse,
+  TopologyChannelDetail,
+  OrphanPublisherEntry,
+  OrphanSubscriberEntry,
 } from "@/data/types";
 
 const BASE = import.meta.env.VITE_AG_API_BASE ?? "/api";
@@ -115,6 +119,40 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return requestV2<GraphPayloadWire>(`/graph/${encodeURIComponent(groupId)}${suffix}`);
   },
+
+  // --- Topology screen (#1440, epic #1432) ---
+  // v2 endpoints wrap collectTopologyResponse + buildTopicDetail in the v2 envelope.
+  // All data is static graph extraction — no runtime metrics.
+
+  /**
+   * GET /api/v2/topology/:group
+   * Full topology payload in the v2 envelope (topics/queues/channels/functions/broker_groups).
+   */
+  getTopology: (groupId: string) =>
+    requestV2<TopologyResponse>(`/topology/${encodeURIComponent(groupId)}`),
+
+  /**
+   * GET /api/v2/topology/:group/topic/:topicId
+   * Detailed channel view in the v2 envelope.
+   */
+  getTopologyDetail: (groupId: string, topicId: string) =>
+    requestV2<TopologyChannelDetail>(
+      `/topology/${encodeURIComponent(groupId)}/topic/${encodeURIComponent(topicId)}`,
+    ),
+
+  /**
+   * GET /api/topology/:group/orphan-publishers
+   * Orphan publishers — v1 endpoint (no v2 wrapper needed for these list endpoints).
+   */
+  getOrphanPublishers: (groupId: string) =>
+    request<OrphanPublisherEntry[]>(`/topology/${encodeURIComponent(groupId)}/orphan-publishers`),
+
+  /**
+   * GET /api/topology/:group/orphan-subscribers
+   * Orphan subscribers — v1 endpoint.
+   */
+  getOrphanSubscribers: (groupId: string) =>
+    request<OrphanSubscriberEntry[]>(`/topology/${encodeURIComponent(groupId)}/orphan-subscribers`),
 
   // --- v1 surfaces still used by other (placeholder) screens ---
   getGroup: (groupId: string) => request<Group>(`/groups/${groupId}`),

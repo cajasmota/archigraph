@@ -540,6 +540,12 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("PATCH /api/v2/groups/{group}/repos/{repo}/monorepo", s.handleV2PatchMonorepo)
 	mux.HandleFunc("POST /api/v2/groups/{group}/doctor", s.handleV2Doctor)
 
+	// Topology screen — WebUI v2 (#1440, epic #1432).
+	// Wraps the v1 collectTopologyResponse + buildTopicDetail in the v2 envelope.
+	// The v1 topology routes above are UNCHANGED.
+	mux.HandleFunc("GET /api/v2/topology/{group}", s.handleV2Topology)
+	mux.HandleFunc("GET /api/v2/topology/{group}/topic/{topicId}", s.handleV2TopologyDetail)
+
 	return s.withAuth(withGzip(mux))
 }
 
