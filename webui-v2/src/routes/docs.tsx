@@ -1,21 +1,16 @@
 /* ============================================================
-   docs.tsx — Docs screen: GENERATED markdown documents (#1552).
+   docs.tsx — Docs screen: GENERATED markdown documents (#1552, #1584).
    Route: /g/:groupId/docs  and  /g/:groupId/docs/<repoSlug/rel/path.md>
 
-   The Docs screen renders the markdown produced by the `generate-docs`
-   SKILL (run by the user's coding agent) — NOT the entity graph. The left
-   pane lists generated documents grouped per-repo → category; the right
-   pane renders the selected document's markdown.
-
    States:
-   - No docs generated → DocsNotGenerated (whole screen)
+   - No skill-generated docs → DocsNotGenerated (whole screen) with copy-prompt CTA
    - Docs exist, none selected → DocsPickDocument (right pane)
    - Loading page → skeleton text
    - Loaded → DocsReader
    - 404 page → redirects to base /g/:groupId/docs
    ============================================================ */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { Kbd } from "@/components/ui";
@@ -51,7 +46,7 @@ export default function DocsScreen() {
     [groupId, navigate],
   );
 
-  const { data: tree = [], isLoading: treeLoading } = useDocsTree(groupId);
+  const { data: treeResult, isLoading: treeLoading } = useDocsTree(groupId);
   const {
     data: page,
     isLoading: pageLoading,
@@ -72,7 +67,18 @@ export default function DocsScreen() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const hasDocs = tree.length > 0;
+  // Split tree into skill-generated nodes vs raw repo-doc nodes.
+  const skillNodes = useMemo(
+    () => (treeResult?.nodes ?? []).filter((n) => !n.isRepoDocs),
+    [treeResult],
+  );
+  const repoDocNodes = useMemo(
+    () => (treeResult?.nodes ?? []).filter((n) => n.isRepoDocs),
+    [treeResult],
+  );
+
+  const hasSkillDocs =
+    !treeLoading && (treeResult?.skillGenerated ?? false) && skillNodes.length > 0;
 
   // Keyboard: "/" focuses search input
   const searchRef = useRef<HTMLInputElement>(null);
@@ -113,12 +119,14 @@ export default function DocsScreen() {
             <Kbd className="absolute right-2 text-[10px]">/</Kbd>
           )}
         </div>
-        <span className="text-xs text-text-3 ml-auto shrink-0">Generated docs</span>
+        {hasSkillDocs && (
+          <span className="text-xs text-text-3 ml-auto shrink-0">Generated docs</span>
+        )}
       </div>
 
-      {/* No documents generated yet → whole-screen agent-skill empty state. */}
-      {!treeLoading && !hasDocs ? (
-        <DocsNotGenerated />
+      {/* No skill-generated docs → onboarding CTA with copyable prompt */}
+      {!treeLoading && !hasSkillDocs ? (
+        <DocsNotGenerated groupId={groupId} />
       ) : (
         <div className="flex flex-1 min-h-0">
           {/* Left pane: document index */}
@@ -128,7 +136,8 @@ export default function DocsScreen() {
             </div>
           ) : (
             <DocsTree
-              tree={tree}
+              tree={skillNodes}
+              repoDocs={repoDocNodes}
               selectedPath={selectedPath}
               onSelect={handleSelect}
               query={debouncedSearch}
