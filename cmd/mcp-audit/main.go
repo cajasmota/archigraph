@@ -40,7 +40,15 @@ import (
 // Empirical baseline: 2,963 tokens (28 tools, measured 2026-05-21 with 4-chars/token,
 // after refactor/mcp-real-3k schema compression). Ceiling = 3,000 (hard spec target).
 // Bump this constant when intentionally adding new tools (with justification comment).
-const defaultCeiling = 3000
+//
+// 2026-05-23 (#1384, epic #1380): bumped 3000 → 3100 to seat the new
+// archigraph_module_analysis tool. Module-level GDS (SCC + PageRank + betweenness
+// on the aggregated module graph) is a strategic addition — the bird's-eye-view
+// counterpart to the entity-level surface. Bundled into one action-dispatched
+// tool (cycles|centrality|all) to minimise footprint; measured at 3085 tokens
+// (+85 above the previous ceiling, +122 above baseline). +100-token bump is the
+// smallest round number that fits with a safety margin.
+const defaultCeiling = 3100
 
 // maxDescLen is the per-tool description character limit.
 const maxDescLen = 80

@@ -27,8 +27,11 @@ import (
 func TestMCPHandshakeBudget(t *testing.T) {
 	const (
 		// tokenCeiling matches cmd/mcp-audit defaultCeiling.
-		// Baseline: 2,963 tokens (28 tools, measured 2026-05-21 post refactor/mcp-real-3k). Ceiling = 3,000.
-		tokenCeiling  = 3000
+		// Baseline: 2,963 tokens (28 tools, measured 2026-05-21 post refactor/mcp-real-3k).
+		// 2026-05-23 (#1384, epic #1380): ceiling bumped to 3,100 to seat the new
+		// archigraph_module_analysis tool (module-level SCC/PageRank/betweenness).
+		// Current measurement at 29 tools: 3,085 tokens. See cmd/mcp-audit/main.go.
+		tokenCeiling  = 3100
 		charsPerToken = 4
 		envelopeBytes = 512 // initEnvelopeBytes constant from cmd/mcp-audit
 		maxDescLen    = 80

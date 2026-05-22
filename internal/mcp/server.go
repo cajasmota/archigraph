@@ -415,6 +415,19 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_test_coverage", s.handleTestCoverage))
 
+	// archigraph_module_analysis — module-level GDS (#1384, epic #1380).
+	// action=cycles|centrality|all over the aggregated module graph: SCCs,
+	// PageRank, betweenness. Bird's-eye view alongside entity-level tools.
+	// Optional args read from request map but undeclared in schema to keep
+	// the handshake token budget under its ceiling (#1639 pattern): top_n,
+	// limit, min_size, repo_filter (slice form).
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_module_analysis",
+		mcpapi.WithDescription("Module-level SCC+PageRank+betweenness: cycles|centrality|all."),
+		mcpapi.WithString("action", mcpapi.DefaultString("all")),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+	), s.wrap("archigraph_module_analysis", s.handleModuleAnalysis))
+
 	// archigraph_secrets — hardcoded secret detector (#1322).
 	// Walks source files; flags API keys, passwords, JWT tokens, and other
 	// high-entropy credentials. Test fixtures and opt-out comments are suppressed.
