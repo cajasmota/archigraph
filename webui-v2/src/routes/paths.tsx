@@ -12,9 +12,9 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
-  Search, X, ChevronRight, Lock, ExternalLink, Copy,
+  Search, X, ChevronRight, ChevronLeft, Lock, ExternalLink, Copy,
   Database, Zap, Globe, FlaskConical, TestTube, Server,
-  Layers, Box, List, Maximize2,
+  Layers, Box, List, Maximize2, FolderTree, Boxes, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Tabs, TabsList, TabsTrigger, TabsContent, Skeleton } from "@/components/ui";
@@ -1120,6 +1120,231 @@ function StatItem({ label, value }: { label: string; value: number }) {
 }
 
 /* ============================================================
+   Backends overview — drill-down screen 1
+   ============================================================ */
+
+/** Accent color for a service type, used on overview cards + section borders. */
+function serviceAccent(type: string): string {
+  return type === "gRPC"
+    ? "var(--pastel-9-ink)"
+    : type === "GraphQL"
+      ? "var(--pastel-5-ink)"
+      : "var(--pastel-1-ink)";
+}
+
+function backendStats(b: PathBackend) {
+  const groups = b.groups ?? [];
+  let routes = 0;
+  let endpoints = 0;
+  const verbCounts: Record<string, number> = {};
+  const repoSet = new Set<string>();
+  for (const g of groups) {
+    for (const r of g.routes ?? []) {
+      routes += 1;
+      endpoints += r.handlers_count || (r.verbs?.length ?? 0);
+      for (const v of r.verbs ?? []) verbCounts[v] = (verbCounts[v] ?? 0) + 1;
+      for (const rp of r.repos ?? []) repoSet.add(rp);
+    }
+  }
+  return { controllers: groups.length, routes, endpoints, verbCounts, repos: [...repoSet] };
+}
+
+function BackendCard({
+  backend,
+  onOpen,
+}: {
+  backend: PathBackend;
+  onOpen: () => void;
+}) {
+  const { controllers, routes, endpoints, verbCounts } = backendStats(backend);
+  const accent = serviceAccent(backend.service_type);
+  const svcClass = SERVICE_TYPE_COLORS[backend.service_type] ?? "bg-surface-2 text-text-3";
+  const verbs = Object.entries(verbCounts).sort((a, b) => b[1] - a[1]);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      data-testid={`backend-card-${backend.id}`}
+      className={cn(
+        "group text-left rounded-lg border border-border bg-surface overflow-hidden",
+        "hover:border-border-strong hover:shadow-sm transition-all duration-100",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]",
+      )}
+      style={{ borderTop: `3px solid ${accent}` }}
+    >
+      <div className="p-4">
+        <div className="flex items-start gap-2">
+          <Boxes size={16} className="text-text-3 mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-sm font-semibold text-text truncate">{backend.label}</span>
+              <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded", svcClass)}>
+                {backend.service_type}
+              </span>
+            </div>
+            {backend.id !== backend.label && (
+              <span className="block text-[11px] text-text-4 font-mono truncate mt-0.5">{backend.id}</span>
+            )}
+          </div>
+          <ChevronRight
+            size={16}
+            className="text-text-4 shrink-0 group-hover:translate-x-0.5 transition-transform"
+          />
+        </div>
+
+        {/* Counts */}
+        <div className="mt-3 flex items-center gap-4">
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold text-text tabular-nums leading-none">{routes}</span>
+            <span className="text-[10px] text-text-4 mt-0.5">paths</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold text-text tabular-nums leading-none">{endpoints}</span>
+            <span className="text-[10px] text-text-4 mt-0.5">endpoints</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold text-text tabular-nums leading-none">{controllers}</span>
+            <span className="text-[10px] text-text-4 mt-0.5">controllers</span>
+          </div>
+        </div>
+
+        {/* Verb breakdown */}
+        {verbs.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1">
+            {verbs.map(([v, n]) => (
+              <span key={v} className="inline-flex items-center gap-1">
+                <VerbChip verb={v} />
+                <span className="text-[10px] text-text-4 tabular-nums">{n}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Footer chips */}
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {backend.language && (
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 text-text-3">
+              {backend.language}
+            </span>
+          )}
+          {backend.framework && (
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 text-text-3">
+              {backend.framework}
+            </span>
+          )}
+          {backend.cross_backend_refs && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-text-3 border border-dashed border-border-strong px-1 rounded">
+              <ExternalLink size={9} /> cross-refs
+            </span>
+          )}
+          {backend.any_rate > 0 && (
+            <span className="text-[10px] text-warning">ANY {backend.any_rate}</span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function BackendsOverview({
+  backends,
+  search,
+  onOpenBackend,
+}: {
+  backends: PathBackend[];
+  search: string;
+  onOpenBackend: (id: string) => void;
+}) {
+  const filtered = useMemo(() => {
+    if (!search) return backends;
+    const q = search.toLowerCase();
+    return backends.filter(
+      (b) =>
+        b.label.toLowerCase().includes(q) ||
+        b.id.toLowerCase().includes(q) ||
+        (b.groups ?? []).some((g) =>
+          (g.routes ?? []).some((r) => (r.path ?? "").toLowerCase().includes(q)),
+        ),
+    );
+  }, [backends, search]);
+
+  if (filtered.length === 0) {
+    return (
+      <div className="p-10 text-center flex flex-col items-center gap-3">
+        <Search size={22} className="text-text-4" />
+        <p className="text-sm text-text-2">No backends match "{search}"</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 overflow-y-auto ag-scroll h-full">
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+        {filtered.map((b) => (
+          <BackendCard key={b.id} backend={b} onOpen={() => onOpenBackend(b.id)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Breadcrumb — drill-down navigation
+   ============================================================ */
+
+function Breadcrumb({
+  backend,
+  pathLabel,
+  onAll,
+  onBackend,
+}: {
+  backend: PathBackend | null;
+  pathLabel: string | null;
+  onAll: () => void;
+  onBackend: () => void;
+}) {
+  return (
+    <nav className="flex items-center gap-1 text-xs min-w-0" aria-label="Breadcrumb">
+      <button
+        type="button"
+        onClick={onAll}
+        className={cn(
+          "inline-flex items-center gap-1 px-1.5 h-6 rounded hover:bg-surface-2 transition-colors shrink-0",
+          backend ? "text-text-3" : "text-text font-medium",
+        )}
+      >
+        <FolderTree size={12} /> All backends
+      </button>
+      {backend && (
+        <>
+          <ChevronRight size={11} className="text-text-4 shrink-0" />
+          <button
+            type="button"
+            onClick={onBackend}
+            className={cn(
+              "inline-flex items-center gap-1 px-1.5 h-6 rounded hover:bg-surface-2 transition-colors min-w-0",
+              pathLabel ? "text-text-3" : "text-text font-medium",
+            )}
+          >
+            <Boxes size={12} className="shrink-0" />
+            <span className="font-mono truncate max-w-[180px]">{backend.label}</span>
+          </button>
+        </>
+      )}
+      {backend && pathLabel && (
+        <>
+          <ChevronRight size={11} className="text-text-4 shrink-0" />
+          <span className="inline-flex items-center px-1.5 h-6 text-text font-mono font-medium truncate max-w-[220px]">
+            {pathLabel}
+          </span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+/* ============================================================
    Main screen
    ============================================================ */
 
@@ -1127,9 +1352,10 @@ export default function PathsScreen() {
   const { groupId = "" } = useParams<{ groupId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // URL state
+  // URL state — backend drives the drill-down level.
   const activeTab = (searchParams.get("tab") ?? "endpoints") as "endpoints" | "orphans";
   const selectedHash = searchParams.get("path");
+  const selectedBackendId = searchParams.get("backend");
 
   // Local list state
   const [search, setSearch] = useState("");
@@ -1141,8 +1367,33 @@ export default function PathsScreen() {
   const { data: pathsData, isLoading, isError } = usePaths(groupId);
   const { data: detail, isLoading: isDetailLoading } = usePathDetail(groupId, selectedHash);
 
-  const backends = pathsData?.backends ?? [];
+  const allBackends = pathsData?.backends ?? [];
   const totals = pathsData?.totals;
+  const orphanCount = totals?.orphans;
+
+  // Selected backend (drill-down level 2). When set, the rail scopes to it.
+  const selectedBackend = useMemo(
+    () => allBackends.find((b) => b.id === selectedBackendId) ?? null,
+    [allBackends, selectedBackendId],
+  );
+  // Backends rendered in the rail/tree: just the selected one, or all (legacy).
+  const backends = selectedBackend ? [selectedBackend] : allBackends;
+
+  // Auto-enter the single backend so a one-service platform skips the overview.
+  useEffect(() => {
+    if (
+      activeTab === "endpoints" &&
+      !selectedBackendId &&
+      !selectedHash &&
+      allBackends.length === 1
+    ) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("backend", allBackends[0].id);
+        return next;
+      });
+    }
+  }, [activeTab, selectedBackendId, selectedHash, allBackends, setSearchParams]);
 
   // "/" key focuses search
   useEffect(() => {
@@ -1161,16 +1412,48 @@ export default function PathsScreen() {
   }, []);
 
   const selectRoute = useCallback(
-    (hash: string) => {
+    (hash: string, backendId?: string) => {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.set("path", hash);
         next.set("tab", "endpoints");
+        if (backendId) next.set("backend", backendId);
         return next;
       });
     },
     [setSearchParams],
   );
+
+  const openBackend = useCallback(
+    (id: string) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("backend", id);
+        next.delete("path");
+        return next;
+      });
+      setSearch("");
+    },
+    [setSearchParams],
+  );
+
+  const goAllBackends = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("backend");
+      next.delete("path");
+      return next;
+    });
+    setSearch("");
+  }, [setSearchParams]);
+
+  const goBackendRoot = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("path");
+      return next;
+    });
+  }, [setSearchParams]);
 
   const setTab = useCallback(
     (tab: string) => {
@@ -1209,8 +1492,19 @@ export default function PathsScreen() {
     setOpenMap(next);
   }, [backends]);
 
+  // Routes within the scoped (selected) backend — drives the rail labels so the
+  // count reflects the backend you drilled into, not the whole platform.
+  const scopedRouteCount = useMemo(
+    () =>
+      backends.reduce(
+        (sum, b) => sum + (b.groups ?? []).reduce((gs, g) => gs + (g.routes ?? []).length, 0),
+        0,
+      ),
+    [backends],
+  );
+
   const filteredCount = useMemo(() => {
-    if (!search) return totals?.routes ?? 0;
+    if (!search) return scopedRouteCount;
     return backends.reduce(
       (sum, b) =>
         sum +
@@ -1224,7 +1518,7 @@ export default function PathsScreen() {
         ),
       0,
     );
-  }, [search, backends, totals]);
+  }, [search, backends, scopedRouteCount]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-bg" data-testid="paths-screen">
@@ -1263,11 +1557,82 @@ export default function PathsScreen() {
           </TabsTrigger>
           <TabsTrigger value="orphans">
             Orphan callers
+            {orphanCount !== undefined && orphanCount > 0 ? (
+              <span
+                className="ml-1.5 inline-flex items-center gap-0.5 text-xs tabular-nums text-warning"
+                data-testid="orphan-count-badge"
+              >
+                <AlertTriangle size={11} className="shrink-0" />
+                {orphanCount}
+              </span>
+            ) : orphanCount !== undefined ? (
+              <span className="ml-1.5 text-text-4 text-xs tabular-nums" data-testid="orphan-count-badge">
+                {orphanCount}
+              </span>
+            ) : null}
           </TabsTrigger>
         </TabsList>
 
         {/* Endpoints tab */}
         <TabsContent value="endpoints" className="flex-1 min-h-0 flex flex-col mt-0">
+          {/* Breadcrumb bar */}
+          <div className="flex items-center gap-2 px-3 h-9 border-b border-border bg-surface shrink-0">
+            {selectedBackend && (
+              <button
+                type="button"
+                onClick={selectedHash ? goBackendRoot : goAllBackends}
+                aria-label="Back"
+                title="Back"
+                className="h-6 w-6 flex items-center justify-center rounded text-text-3 hover:bg-surface-2 shrink-0 transition-colors"
+              >
+                <ChevronLeft size={14} />
+              </button>
+            )}
+            <Breadcrumb
+              backend={selectedBackend}
+              pathLabel={selectedHash ? (detail?.path ?? "endpoint") : null}
+              onAll={goAllBackends}
+              onBackend={goBackendRoot}
+            />
+            {/* Overview-level search */}
+            {!selectedBackend && allBackends.length > 1 && (
+              <div className="ml-auto flex items-center gap-1.5 h-7 rounded-md border border-border bg-bg-soft px-2 w-64 focus-within:ring-2 focus-within:ring-[var(--accent-ring)] focus-within:border-accent transition-all">
+                <Search size={12} className="text-text-4 shrink-0" />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && setSearch("")}
+                  placeholder="Filter backends…"
+                  aria-label="Filter backends"
+                  className="flex-1 bg-transparent text-xs text-text placeholder-text-4 outline-none min-w-0"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Overview (no backend selected) */}
+          {!selectedBackend ? (
+            isLoading ? (
+              <ListSkeleton />
+            ) : isError ? (
+              <div className="p-6 text-center">
+                <p className="text-sm text-text-3">Couldn't load paths.</p>
+              </div>
+            ) : allBackends.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-sm text-text-3">No endpoints indexed yet.</p>
+                <p className="mt-1 text-xs text-text-4">Run the indexer, then reload.</p>
+              </div>
+            ) : (
+              <BackendsOverview
+                backends={allBackends}
+                search={search}
+                onOpenBackend={openBackend}
+              />
+            )
+          ) : (
           <div className="flex flex-1 min-h-0">
             {/* List rail — 520px */}
             <aside
@@ -1292,7 +1657,7 @@ export default function PathsScreen() {
                   {search ? (
                     <>
                       <span className="text-[10px] text-text-4 tabular-nums shrink-0">
-                        {filteredCount} of {totals?.routes ?? "…"}
+                        {filteredCount} of {scopedRouteCount}
                       </span>
                       <button
                         type="button"
@@ -1305,7 +1670,7 @@ export default function PathsScreen() {
                     </>
                   ) : (
                     <span className="text-[10px] text-text-4 shrink-0">
-                      {totals?.routes ?? "…"} routes
+                      {scopedRouteCount} routes
                     </span>
                   )}
                 </div>
@@ -1379,7 +1744,7 @@ export default function PathsScreen() {
                     <Search size={20} className="text-text-4" />
                     <p className="text-sm text-text-2">No routes match "{search}"</p>
                     <p className="text-xs text-text-4">
-                      Clear the search to see all {totals?.routes ?? ""} routes.
+                      Clear the search to see all {scopedRouteCount} routes.
                     </p>
                     <button
                       type="button"
@@ -1397,7 +1762,7 @@ export default function PathsScreen() {
                       openMap={openMap}
                       toggle={toggleOpen}
                       selectedHash={selectedHash}
-                      onSelect={(r) => selectRoute(r.path_hash)}
+                      onSelect={(r) => selectRoute(r.path_hash, b.id)}
                       search={search}
                     />
                   ))
@@ -1406,7 +1771,7 @@ export default function PathsScreen() {
                     backends={backends}
                     search={search}
                     selectedHash={selectedHash}
-                    onSelect={(r) => selectRoute(r.path_hash)}
+                    onSelect={(r) => selectRoute(r.path_hash, selectedBackend?.id)}
                   />
                 )}
               </div>
@@ -1436,6 +1801,7 @@ export default function PathsScreen() {
               )}
             </div>
           </div>
+          )}
         </TabsContent>
 
         {/* Orphans tab */}

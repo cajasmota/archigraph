@@ -347,8 +347,8 @@ func TestV2PathsOrphans_Empty(t *testing.T) {
 	}
 
 	var body struct {
-		OK   bool               `json:"ok"`
-		Data v2OrphansResponse  `json:"data"`
+		OK   bool              `json:"ok"`
+		Data v2OrphansResponse `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		t.Fatalf("decode: %v", err)
@@ -383,6 +383,113 @@ func TestV2PathsOrphans_RouteRegistration(t *testing.T) {
 	// handler (not a 200 orphans list).
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("want 200 from orphans handler, got %d (route precedence bug?)", resp.StatusCode)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Grouping + label helpers (#1551)
+// ---------------------------------------------------------------------------
+
+func TestControllerLabelFromFile(t *testing.T) {
+	cases := map[string]string{
+		"src/orders.controller.ts": "OrdersController",
+		"src/saga.controller.ts":   "SagaController",
+		"src/resolvers.ts":         "resolvers",
+		"src/index.ts":             "index",
+		"app/orders/views.py":      "views",
+		"":                         "",
+	}
+	for in, want := range cases {
+		if got := controllerLabelFromFile(in); got != want {
+			t.Errorf("controllerLabelFromFile(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestBackendLabelFromRepo(t *testing.T) {
+	all := []string{
+		"polyglot-platform-services-gateway",
+		"polyglot-platform-services-payments",
+		"polyglot-platform-services-catalog",
+	}
+	if got := backendLabelFromRepo("polyglot-platform-services-gateway", all); got != "gateway" {
+		t.Errorf("backendLabelFromRepo gateway = %q, want gateway", got)
+	}
+	// Single repo: no trimming.
+	if got := backendLabelFromRepo("solo-repo", []string{"solo-repo"}); got != "solo-repo" {
+		t.Errorf("backendLabelFromRepo solo = %q, want solo-repo", got)
+	}
+}
+
+func TestServiceTypeFromVerbs(t *testing.T) {
+	cases := []struct {
+		verbs map[string]bool
+		want  string
+	}{
+		{map[string]bool{"GRAPHQL": true}, "GraphQL"},
+		{map[string]bool{"GRPC": true}, "gRPC"},
+		{map[string]bool{"GET": true, "POST": true}, "REST"},
+		{map[string]bool{"GET": true, "GRAPHQL": true}, "GraphQL"},
+	}
+	for _, c := range cases {
+		if got := serviceTypeFromVerbs(c.verbs, "svc", nil); got != c.want {
+			t.Errorf("serviceTypeFromVerbs(%v) = %q, want %q", c.verbs, got, c.want)
+		}
+	}
+}
+
+// TestV2PathsList_GroupsByFile verifies endpoints in the same source file are
+// grouped into one controller, while different files become separate controllers
+// — the real multi-module grouping behaviour (#1551).
+func TestV2PathsList_GroupsByFile(t *testing.T) {
+	entities := []graph.Entity{
+		{ID: "a", Name: "list", Kind: "http_endpoint", SourceFile: "src/orders.controller.ts",
+			Properties: map[string]string{"path": "/orders", "verb": "GET", "owning_backend": "src"}},
+		{ID: "b", Name: "create", Kind: "http_endpoint", SourceFile: "src/orders.controller.ts",
+			Properties: map[string]string{"path": "/orders/new", "verb": "POST", "owning_backend": "src"}},
+		{ID: "c", Name: "checkout", Kind: "http_endpoint", SourceFile: "src/saga.controller.ts",
+			Properties: map[string]string{"path": "/checkout", "verb": "POST", "owning_backend": "src"}},
+	}
+	grp := makePathsTestGroup(entities, nil)
+	ts := newPathsTestServer(t, grp)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/v2/groups/testgrp/paths")
+	if err != nil {
+		t.Fatalf("GET paths: %v", err)
+	}
+	defer resp.Body.Close()
+	var body struct {
+		Data v2PathsListResponse `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	if len(body.Data.Backends) != 1 {
+		t.Fatalf("backends: want 1 (repo), got %d", len(body.Data.Backends))
+	}
+	if got := len(body.Data.Backends[0].Groups); got != 2 {
+		t.Fatalf("controllers: want 2 (by file), got %d", got)
+	}
+	if body.Data.Totals.Controllers != 2 {
+		t.Errorf("totals.controllers: want 2, got %d", body.Data.Totals.Controllers)
+	}
+	// Parameters must never serialise as null (#1551).
+	hash := hashStr("/orders")
+	dr, err := http.Get(ts.URL + "/api/v2/groups/testgrp/paths/" + hash)
+	if err != nil {
+		t.Fatalf("GET detail: %v", err)
+	}
+	defer dr.Body.Close()
+	var detail struct {
+		Data v2PathDetail `json:"data"`
+	}
+	if err := json.NewDecoder(dr.Body).Decode(&detail); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if detail.Data.Parameters == nil {
+		t.Error("parameters: want [] (non-nil), got nil")
 	}
 }
 

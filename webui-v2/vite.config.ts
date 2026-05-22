@@ -12,11 +12,12 @@ export default defineConfig({
     },
   },
   server: {
-    port: 47280,
+    port: Number(process.env.AG_DEV_PORT) || 47280,
     strictPort: true,
     proxy: {
       // Proxy /api/* to the archigraph daemon during dev so the SPA can talk to a real dataset.
-      "/api": { target: "http://localhost:47274", changeOrigin: false },
+      // AG_API_TARGET lets you point at an isolated daemon (never the live :47274) for verification.
+      "/api": { target: process.env.AG_API_TARGET || "http://localhost:47274", changeOrigin: false },
     },
   },
   preview: { port: 47281, strictPort: true },
