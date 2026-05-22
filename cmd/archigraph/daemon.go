@@ -24,11 +24,20 @@ import (
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/jobs"
 	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/archigraph/internal/progress"
 	"github.com/cajasmota/archigraph/internal/quality"
 	"github.com/cajasmota/archigraph/internal/quality/audit"
 	"github.com/cajasmota/archigraph/internal/registry"
 	"github.com/cajasmota/archigraph/internal/resolve"
 )
+
+// daemonProgressBroker is the process-wide indexer progress bus. The Rebuild
+// path publishes granular per-repo progress.Event records into it (via the
+// indexer's WithPublisher option) and the dashboard's /api/index-progress SSE
+// endpoints subscribe to it, so the WebUI Index step renders live per-repo /
+// per-module rows with file counters instead of a generic bar (#1531). It is
+// created once in runDaemon before the RPC + dashboard servers start.
+var daemonProgressBroker = progress.NewBroker()
 
 // defaultDashboardPort is the default TCP port for the embedded dashboard.
 const defaultDashboardPort = 47274
@@ -381,6 +390,11 @@ func daemonRebuildFunc(args proto.RebuildArgs) ([]string, string, error) {
 			if args.Incremental && !args.Wipe {
 				opts = append(opts, WithIncremental(daemon.StateDirForRepo(w.r.Path)))
 			}
+			// Publish granular per-repo progress into the shared broker so the
+			// WebUI Index step renders live rows + file counters (#1531).
+			opts = append(opts,
+				WithPublisher(daemonProgressBroker),
+				WithProgressSlugs(args.Group, w.r.Slug))
 			indexErr := rebuildIndexFunc(w.r.Path, "", "", nil, false, false, opts...)
 			results[i] = repoResult{
 				path: w.r.Path,
@@ -408,6 +422,11 @@ func daemonRebuildFunc(args proto.RebuildArgs) ([]string, string, error) {
 				if args.Incremental && !args.Wipe {
 					opts = append(opts, WithIncremental(daemon.StateDirForRepo(rw.r.Path)))
 				}
+				// Publish granular per-repo progress into the shared broker so
+				// the WebUI Index step renders live rows + file counters (#1531).
+				opts = append(opts,
+					WithPublisher(daemonProgressBroker),
+					WithProgressSlugs(args.Group, rw.r.Slug))
 				indexErr := rebuildIndexFunc(rw.r.Path, "", "", nil, false, false, opts...)
 				results[idx] = repoResult{
 					path: rw.r.Path,
@@ -686,6 +705,12 @@ func makeDaemonDashboardServe(daemonStartedAt time.Time) func(ctx context.Contex
 		// Tell the dashboard server when the daemon started so /api/info
 		// can compute and report uptime (#991).
 		srv.SetDaemonStartedAt(daemonStartedAt)
+
+		// Wire the shared indexer progress broker (#1531) so the
+		// /api/index-progress SSE endpoints can fan granular per-repo /
+		// per-module progress.Event records to the WebUI Index step. The
+		// Rebuild path publishes into this same broker (see daemonRebuildFunc).
+		srv.SetProgressBroker(daemonProgressBroker)
 
 		// Wire MCP activity broker (epic #1157, Phase 1: Jarvis).
 		// The same broker is injected into the shared MCP server so tool
