@@ -24,7 +24,7 @@
    ============================================================ */
 
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useRouteError, isRouteErrorResponse } from "react-router-dom";
 import {
   Home,
   RefreshCw,
@@ -43,7 +43,7 @@ import { cn } from "@/lib/utils";
 interface ActionSpec {
   label: string;
   href?: string;
-  action?: "retry" | "rebuild" | "logs" | "notes" | "create";
+  action?: "retry" | "rebuild" | "logs" | "notes" | "create" | "reload";
   Icon?: typeof Home;
 }
 
@@ -148,6 +148,16 @@ const ERR_VARIANTS: Record<ErrorVariant, ErrorVariantSpec> = {
       { k: "Dropped at", v: "—" },
       { k: "Retries", v: "0 attempts" },
     ],
+  },
+  appError: {
+    chrome: "minimal",
+    severity: "danger",
+    code: "Unexpected error",
+    title: "Something went wrong.",
+    sub: "An unexpected error occurred while rendering this page. If this keeps happening, reload the app or return to the home screen.",
+    primary: { label: "Reload", action: "reload", Icon: RefreshCw },
+    secondary: { label: "Back to home", href: "/", Icon: Home },
+    details: [],
   },
 };
 
@@ -413,6 +423,12 @@ function resolveDetails(
       { k: "Retries", v: ctx.retries != null ? `${ctx.retries} attempts` : "0 attempts" },
     ];
   }
+  if (variant === "appError") {
+    return [
+      { k: "Error", v: ctx?.errorMessage ?? "—" },
+      { k: "Path",  v: typeof window !== "undefined" ? window.location.pathname : "—" },
+    ];
+  }
   return base;
 }
 
@@ -532,5 +548,101 @@ export function UpgradingPage() {
     <div className="h-full bg-bg">
       <ErrorScreen variant="upgrading" />
     </div>
+  );
+}
+
+/**
+ * Route errorElement — catches any thrown render error in a child route.
+ * Uses useRouteError() so React Router passes the thrown value in.
+ * Renders with minimal chrome (no sidebar — there may be no group context).
+ */
+export function AppErrorPage() {
+  const error = useRouteError();
+
+  // Derive a human-readable message from whatever was thrown
+  let message = "An unexpected error occurred.";
+  let stack: string | undefined;
+
+  if (isRouteErrorResponse(error)) {
+    // e.g. throw new Response("Not found", { status: 404 })
+    message = `${error.status} ${error.statusText}`;
+  } else if (error instanceof Error) {
+    message = error.message;
+    stack = error.stack;
+  } else if (typeof error === "string") {
+    message = error;
+  }
+
+  function handleAction(action: string) {
+    if (action === "reload") {
+      window.location.reload();
+    }
+  }
+
+  return (
+    <MinimalChrome>
+      <div className="flex flex-col items-center justify-center min-h-full py-16 px-4">
+        <div className="flex flex-col items-center text-center max-w-md w-full gap-5">
+          <ErrorConstellation variant="appError" />
+
+          <p
+            className="font-mono text-sm uppercase tracking-wider text-danger"
+            aria-hidden="true"
+          >
+            Unexpected error
+          </p>
+
+          <h1 className="text-2xl font-semibold text-text -mt-2">
+            Something went wrong.
+          </h1>
+
+          <p className="text-md text-text-3 leading-relaxed">
+            {message}
+          </p>
+
+          <div className="flex items-center gap-3 flex-wrap justify-center mt-1">
+            <Button
+              variant="primary"
+              onClick={() => handleAction("reload")}
+              aria-label="Reload page"
+            >
+              <RefreshCw size={14} aria-hidden="true" />
+              Reload
+            </Button>
+            <Button asChild variant="secondary" aria-label="Back to home">
+              <Link to="/">
+                <Home size={14} aria-hidden="true" />
+                Back to home
+              </Link>
+            </Button>
+          </div>
+
+          {stack && (
+            <details className="w-full text-left mt-2">
+              <summary className="inline-flex items-center gap-1.5 text-sm text-text-3 cursor-pointer select-none hover:text-text-2 transition-colors list-none">
+                <Info size={12} aria-hidden="true" />
+                <span>Technical details</span>
+              </summary>
+              <dl className="mt-3 rounded-md border border-border bg-surface p-3 text-sm space-y-1.5">
+                <div className="flex gap-3">
+                  <dt className="shrink-0 w-28 text-text-3">Error</dt>
+                  <dd className="font-mono text-text-2 break-all">{message}</dd>
+                </div>
+                <div className="flex gap-3">
+                  <dt className="shrink-0 w-28 text-text-3">Stack</dt>
+                  <dd className="font-mono text-text-2 break-all whitespace-pre-wrap text-xs">{stack}</dd>
+                </div>
+                <div className="flex gap-3">
+                  <dt className="shrink-0 w-28 text-text-3">Path</dt>
+                  <dd className="font-mono text-text-2 break-all">
+                    {typeof window !== "undefined" ? window.location.pathname : "—"}
+                  </dd>
+                </div>
+              </dl>
+            </details>
+          )}
+        </div>
+      </div>
+    </MinimalChrome>
   );
 }

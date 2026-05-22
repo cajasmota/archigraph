@@ -12,7 +12,8 @@ export type ErrorVariant =
   | "daemonDown"
   | "indexerFailed"
   | "upgrading"
-  | "offline";
+  | "offline"
+  | "appError";
 
 interface DotSpec {
   x: number;
@@ -161,6 +162,38 @@ const ART_CONFIG: Record<ErrorVariant, ArtConfig> = {
       [0, 3],
       [2, 4],
     ],
+  },
+  appError: {
+    edgeColor: "color-mix(in srgb, var(--danger) 25%, transparent)",
+    dashed: true,
+    dots: [
+      { x: 60,  y: 38, r: 3.0, color: "var(--pastel-1)" },
+      { x: 110, y: 28, r: 3.4, color: "var(--danger)" },
+      { x: 160, y: 42, r: 3.0, color: "var(--pastel-2)" },
+      { x: 80,  y: 80, r: 3.0, color: "var(--pastel-3)" },
+      { x: 140, y: 84, r: 3.0, color: "var(--pastel-9)" },
+    ],
+    edges: [
+      [0, 1],
+      [2, 1],
+      [3, 4],
+    ],
+    overlay: (
+      <g transform="translate(102,20)">
+        <circle cx="0" cy="0" r="10" fill="var(--bg)" stroke="var(--danger)" strokeWidth="1.2" />
+        <text
+          x="0"
+          y="4.5"
+          textAnchor="middle"
+          fontSize="10"
+          fontWeight="600"
+          fill="var(--danger)"
+          fontFamily="monospace"
+        >
+          !
+        </text>
+      </g>
+    ),
   },
 };
 
