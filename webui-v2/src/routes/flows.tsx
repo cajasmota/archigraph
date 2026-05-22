@@ -119,8 +119,14 @@ function PathString({ text }: { text: string }) {
 
 // ─── FlowLabel — entry → terminal with dim arrow ─────────────────────────────
 
-function FlowLabel({ label }: { label: string }) {
-  const parts = label.split(" → ");
+function FlowLabel({ label }: { label?: string | null }) {
+  // Dead-end items have a sparser shape and may carry a null/undefined label.
+  // Guard so the Dead-ends tab never crashes on `.split` of undefined.
+  const safe = (label ?? "").trim();
+  if (!safe) {
+    return <span className="text-text-4 italic font-sans">unnamed flow</span>;
+  }
+  const parts = safe.split(" → ");
   return (
     <>
       {parts.map((p, i) => (
@@ -482,7 +488,10 @@ function ListRail({
     if (!showSingleStep) arr = arr.filter((d) => d.reason !== "single_step");
     if (search) {
       const q = search.toLowerCase();
-      arr = arr.filter((d) => d.process_name.toLowerCase().includes(q));
+      arr = arr.filter((d) =>
+        (d.process_name ?? "").toLowerCase().includes(q) ||
+        d.repo.toLowerCase().includes(q),
+      );
     }
     return arr;
   }, [deadEndsQ.data, showSingleStep, search]);
@@ -744,11 +753,11 @@ function ListRail({
 
 // ─── DAG constants ────────────────────────────────────────────────────────────
 
-const NODE_W = 220;
-const NODE_H = 64;
-const NODE_HGAP = 56; // horizontal gap between nodes in a lane
-const NODE_VGAP = 44; // vertical gap between wrapped lanes
-const CANVAS_PAD = 28;
+const NODE_W = 248; // wider so name + kind sit on clean single lines
+const NODE_H = 84;  // taller so kind label + meta row never wrap/clip
+const NODE_HGAP = 96;  // generous horizontal gap so edge labels don't collide
+const NODE_VGAP = 72;  // generous vertical gap between wrapped lanes
+const CANVAS_PAD = 36;
 const MAX_PER_LANE = 5; // wrap to a new lane after this many nodes
 
 // Left-to-right layered layout: entry on the left, terminal on the right,
@@ -782,7 +791,7 @@ function FlowDag({
   flow: Process;
   detailSteps?: ProcessStep[];
   selectedStepIdx: number | null;
-  onPickStep: (i: number) => void;
+  onPickStep: (i: number | null) => void;
 }) {
   const steps = detailSteps ?? flow.steps ?? [];
 
@@ -790,7 +799,7 @@ function FlowDag({
   const viewportRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  const dragRef = useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const { positions, totalHeight, totalWidth, perLane } = useMemo(
@@ -822,20 +831,23 @@ function FlowDag({
     });
   };
 
+  // Zoom around the viewport centre. Reads the *current* zoom/pan state
+  // directly (no nested setState updaters — that was why the buttons no-op'd:
+  // a setPan nested inside a setZoom functional updater is unreliable) and
+  // commits both new values in the same tick.
   const zoomAtCenter = (factor: number) => {
     const vp = viewportRef.current;
-    setZoom((z) => {
-      const nz = clampZoom(z * factor);
-      if (vp) {
-        const cx = vp.clientWidth / 2;
-        const cy = vp.clientHeight / 2;
-        setPan((p) => ({
-          x: cx - ((cx - p.x) / z) * nz,
-          y: cy - ((cy - p.y) / z) * nz,
-        }));
-      }
-      return nz;
-    });
+    const nz = clampZoom(zoom * factor);
+    if (nz === zoom) return;
+    if (vp) {
+      const cx = vp.clientWidth / 2;
+      const cy = vp.clientHeight / 2;
+      setPan({
+        x: cx - ((cx - pan.x) / zoom) * nz,
+        y: cy - ((cy - pan.y) / zoom) * nz,
+      });
+    }
+    setZoom(nz);
   };
 
   // Fit when the flow changes.
@@ -854,30 +866,42 @@ function FlowDag({
     const rect = vp.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    setZoom((z) => {
-      const nz = clampZoom(z * (e.deltaY < 0 ? 1.12 : 1 / 1.12));
-      setPan((p) => ({
-        x: mx - ((mx - p.x) / z) * nz,
-        y: my - ((my - p.y) / z) * nz,
-      }));
-      return nz;
+    // Gentle wheel-zoom: small per-tick increment so scrolling feels smooth.
+    const step = 1.045;
+    const nz = clampZoom(zoom * (e.deltaY < 0 ? step : 1 / step));
+    if (nz === zoom) return;
+    setPan({
+      x: mx - ((mx - pan.x) / zoom) * nz,
+      y: my - ((my - pan.y) / zoom) * nz,
     });
+    setZoom(nz);
   };
 
   // Drag-to-pan.
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+    dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y, moved: false };
     setDragging(true);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
-    setPan({ x: d.px + (e.clientX - d.x), y: d.py + (e.clientY - d.y) });
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+    setPan({ x: d.px + dx, y: d.py + dy });
   };
   const endDrag = (e: React.PointerEvent) => {
-    if (dragRef.current) {
+    const d = dragRef.current;
+    if (d) {
+      // A click on empty canvas (no drag, target is not a step node) deselects
+      // the current step. Node buttons are <button> elements, so a click that
+      // did not land on/inside a button is an empty-canvas click.
+      if (!d.moved && e.type === "pointerup") {
+        const onNode = (e.target as HTMLElement)?.closest?.("button[data-step-node]");
+        if (!onNode) onPickStep(null);
+      }
       dragRef.current = null;
       setDragging(false);
       try {
@@ -1022,14 +1046,25 @@ function FlowDag({
           const isPhantom = flow.terminal_is_phantom && isTerminal;
           const meta = getStepMeta(s.step_kind);
           const name = stepName(s);
-          const verb = isTerminal ? getHttpVerb(name) : null;
+          const verb = getHttpVerb(name);
           const isXrepo = i > 0 && steps[i - 1].repo !== s.repo;
           const pos = positions[i];
+          // Modest, useful locator: short file:line (basename only) — falls
+          // back to the repo when no file is known. No clutter.
+          const baseFile = s.source_file
+            ? s.source_file.split("/").pop() ?? s.source_file
+            : "";
+          const locator = baseFile
+            ? s.start_line && s.start_line > 0
+              ? `${baseFile}:${s.start_line}`
+              : baseFile
+            : "";
 
           return (
             <button
               key={s.entity_id}
               type="button"
+              data-step-node
               onClick={() => onPickStep(i)}
               className={cn(
                 "absolute flex flex-col gap-1 rounded-md border cursor-pointer text-left",
@@ -1100,9 +1135,9 @@ function FlowDag({
                   {name}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center justify-between gap-2 min-w-0">
                 <span
-                  className="inline-flex items-center gap-1 text-[9px] font-medium"
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold whitespace-nowrap flex-none"
                   style={{ color: meta.color }}
                 >
                   <span
@@ -1112,12 +1147,21 @@ function FlowDag({
                   {meta.label}
                 </span>
                 <span
-                  className="font-mono text-[9px]"
+                  className="font-mono text-[9px] truncate min-w-0"
                   style={isXrepo ? { color: "#a78bfa" } : { color: "var(--text-3)" }}
+                  title={s.repo}
                 >
                   {s.repo}
                 </span>
               </div>
+              {locator && (
+                <span
+                  className="font-mono text-[9px] text-text-4 truncate block min-w-0"
+                  title={s.source_file ? `${s.source_file}${s.start_line ? `:${s.start_line}` : ""}` : ""}
+                >
+                  {locator}
+                </span>
+              )}
             </button>
           );
         })}
@@ -1193,16 +1237,23 @@ function StepInspector({
   step,
   flow,
   totalSteps,
+  onClose,
 }: {
   step: ProcessStep;
   flow: Process;
   totalSteps: number;
+  onClose: () => void;
 }) {
   const meta = getStepMeta(step.step_kind);
   const snippet = flow.source_snippets?.[step.entity_id];
 
   return (
-    <div className="border-t border-border bg-surface px-5 py-3.5 flex flex-col gap-2 max-h-[320px] overflow-y-auto flex-none">
+    <div
+      // Floating detail card — same surface/border styling as the flow header
+      // card. Floats over the bottom of the DAG canvas; only present when a
+      // step is selected.
+      className="absolute left-3 right-3 bottom-3 z-20 rounded-md border border-border bg-surface shadow-[var(--shadow-3)] px-4 py-3 flex flex-col gap-2 max-h-[60%] overflow-y-auto"
+    >
       <div className="flex items-center gap-2">
         <span style={{ color: meta.color }}>
           <meta.Icon size={14} />
@@ -1216,9 +1267,17 @@ function StepInspector({
         >
           {meta.label}
         </span>
-        <span className="font-mono text-[10px] text-text-3 flex-none ml-auto">
+        <span className="font-mono text-[10px] text-text-3 flex-none">
           Step {step.step_index + 1} of {totalSteps}
         </span>
+        <button
+          type="button"
+          onClick={onClose}
+          title="Close"
+          className="w-6 h-6 flex items-center justify-center rounded-sm text-text-3 hover:bg-surface-2 hover:text-text flex-none ml-1"
+        >
+          <X size={12} />
+        </button>
       </div>
       <div className="flex flex-wrap gap-2.5 text-[11px] text-text-3">
         <span>{meta.label}</span>
@@ -1618,7 +1677,7 @@ function DeadEndDetail({ de, onClose }: { de: FlowDeadEnd; onClose: () => void }
               </span>
               <Layout size={13} className="text-text-3" />
               <span className="font-mono text-[11px] text-text truncate">
-                {de.process_name.split(" → ")[0]}
+                {(de.process_name ?? "").split(" → ")[0] || de.repo}
               </span>
             </div>
           </div>
@@ -1876,23 +1935,25 @@ function DetailPanel({
           </div>
         )}
 
-        {/* DAG canvas */}
+        {/* DAG canvas + floating step-detail card overlay */}
         {(fullFlow.steps?.length ?? 0) > 0 && (
-          <FlowDag
-            flow={fullFlow}
-            detailSteps={fullFlow.steps}
-            selectedStepIdx={selectedStepIdx}
-            onPickStep={setSelectedStepIdx}
-          />
-        )}
-
-        {/* Step inspector */}
-        {selectedStep && (
-          <StepInspector
-            step={selectedStep}
-            flow={fullFlow}
-            totalSteps={fullFlow.steps?.length ?? fullFlow.step_count}
-          />
+          <div className="relative flex-none">
+            <FlowDag
+              flow={fullFlow}
+              detailSteps={fullFlow.steps}
+              selectedStepIdx={selectedStepIdx}
+              onPickStep={setSelectedStepIdx}
+            />
+            {/* Floating detail card — only when a step is selected. */}
+            {selectedStep && (
+              <StepInspector
+                step={selectedStep}
+                flow={fullFlow}
+                totalSteps={fullFlow.steps?.length ?? fullFlow.step_count}
+                onClose={() => setSelectedStepIdx(null)}
+              />
+            )}
+          </div>
         )}
 
         {/* Sections */}
