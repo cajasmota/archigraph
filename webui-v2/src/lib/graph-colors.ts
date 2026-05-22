@@ -140,23 +140,29 @@ export function linkPalette(isDark: boolean): LinkPalette {
   // are now only a SLIGHTLY-distinct, more muted tone than intra (a soft
   // sky / lavender-ish slate) so the user can TRACE them on inspection rather
   // than be overwhelmed. Still theme-aware (#1564) + dark-visible.
+  // Fix #1599: with real cross-repo edges now present (and rare — 376 of 37k on
+  // upvate), the bridge color is the KEY signal and can be a vivid, fully-
+  // saturated cyan in both themes without becoming spaghetti. The intra tiers are
+  // pushed quieter (lower contrast vs the bg) so the bright bridges clearly own
+  // the foreground. This is the chromatic half of the multi-repo emphasis (the
+  // opacity/width gaps live in graph-canvas).
   if (isDark) {
     return {
-      // muted sky — distinct but not blaring on the near-black bg.
-      crossRepo: [125, 211, 252, 1],
+      // vivid sky/cyan — the bridge signal, pops on the near-black bg.
+      crossRepo: [56, 211, 255, 1],
       // soft periwinkle — only slightly distinct from intra slate.
-      crossModule: [165, 180, 252, 1],
-      // light slate — visible on dark but quiet, so it recedes.
-      intraModule: [148, 163, 184, 1],
+      crossModule: [148, 163, 220, 1],
+      // dim slate — quiet, recedes well into the dark bg.
+      intraModule: [120, 134, 156, 1],
     };
   }
   return {
-    // medium sky — distinct but not saturated against the light bg.
-    crossRepo: [56, 154, 214, 1],
+    // saturated sky/cyan — the bridge signal, pops on the light bg.
+    crossRepo: [14, 144, 210, 1],
     // muted indigo — only slightly distinct from the slate intra edges.
-    crossModule: [99, 102, 180, 1],
-    // dark slate — quiet, recedes into the light bg.
-    intraModule: [71, 85, 105, 1],
+    crossModule: [110, 116, 170, 1],
+    // light slate — quiet, recedes into the light bg.
+    intraModule: [120, 134, 156, 1],
   };
 }
 

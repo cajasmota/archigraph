@@ -481,8 +481,6 @@ function GraphCanvasInner(
     // a distinct bright bridge color in BOTH themes. Re-packed on theme change
     // (isDark is a dep), so the dark/light toggle flows through live.
     const pal = linkPalette(isDark);
-    // Fix #1566: keep emphasis muted + thin (no violet/sky spaghetti) — cross
-    // edges read as a slightly distinct thread, not a dominating rope.
     // Fix #1567-1: make the emphasis tier REPO-AWARE. We compute three opacity
     // tiers — faded / subtle / emphasized — then map each edge STATE onto a tier
     // depending on whether the group is multi-repo:
@@ -491,10 +489,40 @@ function GraphCanvasInner(
     //                  island↔island bridges light up, NOT the in-repo wiring.
     //   • single-repo: no st-2 edges; cross-MODULE (st 1) = emphasized,
     //                  intra-module (st 0) = faded (the #1569 behavior).
+    //
+    // Fix #1599: the #1566/#1567 emphasis was tuned with ZERO real cross-repo
+    // edges present, so the "make cross-repo pop" path was never exercised against
+    // live data. Now upvate serves 376 cross-repo edges out of 37k — but the old
+    // tier gaps were so tight (faded≈0.36 / subtle≈0.51 / emph≈0.63) that those
+    // 376 bridges were lost in the 37k-edge mesh. Because the cross-repo bridges
+    // are RARE (376 of 37k), they can safely be near-opaque + bright WITHOUT
+    // becoming spaghetti — there simply aren't enough of them to dominate. So when
+    // the group is MULTI-REPO we open the gap hard: the emphasized (cross-repo)
+    // tier goes near-full opacity while intra-repo (cross-module + intra-module)
+    // edges fade well back, so the inter-cluster connections visibly stand out.
+    // For a single-repo monorepo the cross-MODULE tier is the rare/structural one,
+    // so it gets the emphasized treatment but with a gentler gap (cross-module is
+    // far more common than cross-repo, so over-brightening it would re-introduce
+    // spaghetti).
     const base = render.linkOpacity;
-    const fadedA = Math.min(0.5, base * 0.6);
-    const subtleA = Math.min(0.7, Math.max(0.5, base * 0.85));
-    const emphA = Math.min(0.8, Math.max(0.6, base * 1.05));
+    let fadedA: number;
+    let subtleA: number;
+    let emphA: number;
+    if (isMultiRepo) {
+      // Wide gap: bridges pop, intra-repo recedes. The rare cross-repo edges
+      // (376 of 37k on upvate) get a high — but not fully opaque — alpha so they
+      // clearly own the foreground while staying tasteful even when a denser
+      // layout packs them through the center (not a solid cyan mat).
+      fadedA = Math.min(0.32, base * 0.5);
+      subtleA = Math.min(0.42, Math.max(0.3, base * 0.62));
+      emphA = 0.85;
+    } else {
+      // Single-repo: cross-module is the (more common) emphasized tier — a
+      // tasteful gap that still keeps it readable, not blaring.
+      fadedA = Math.min(0.5, base * 0.6);
+      subtleA = Math.min(0.7, Math.max(0.5, base * 0.85));
+      emphA = Math.min(0.85, Math.max(0.65, base * 1.15));
+    }
     for (let i = 0; i < states.length; i++) {
       const st = states[i];
       // tier: 0 faded, 1 subtle, 2 emphasized — repo-aware.
@@ -532,12 +560,18 @@ function GraphCanvasInner(
     // repo) gets the thickest hair; the subtle tier sits between; intra is
     // thinnest. So upvate's island bridges read as the distinct tier, not the
     // in-repo wiring.
-    const W_FADED = 0.8;
-    const W_SUBTLE = 1.0;
-    const W_EMPH = 1.3;
-    const FLOOR_FADED = 0.8;
-    const FLOOR_SUBTLE = 1.0;
-    const FLOOR_EMPH = 1.2;
+    // Fix #1599: on a MULTI-REPO group the rare cross-repo bridges (376 of 37k on
+    // upvate) get a distinctly thicker hair so they read as the structural tier,
+    // while intra-repo edges stay thin. There are few enough bridges that a
+    // noticeably thicker line stays tasteful (no rope). On a single-repo monorepo
+    // the cross-module emphasized tier is far more common, so keep the original
+    // gentle width gap to avoid spaghetti.
+    const W_FADED = isMultiRepo ? 0.6 : 0.8;
+    const W_SUBTLE = isMultiRepo ? 0.7 : 1.0;
+    const W_EMPH = isMultiRepo ? 1.8 : 1.3;
+    const FLOOR_FADED = isMultiRepo ? 0.6 : 0.8;
+    const FLOOR_SUBTLE = isMultiRepo ? 0.7 : 1.0;
+    const FLOOR_EMPH = isMultiRepo ? 1.7 : 1.2;
     for (let i = 0; i < states.length; i++) {
       const st = states[i];
       let tier: 0 | 1 | 2;

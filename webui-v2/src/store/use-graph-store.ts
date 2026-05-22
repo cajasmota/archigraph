@@ -302,7 +302,15 @@ export const useGraphStore = create<GraphState>((set) => ({
 
   enabledEdgeKinds: new Set(ALL_EDGE_KINDS),
   activeRepos: null,
-  lod: "mid",
+  // Fix #1599: DEFAULT to HIGH so the FULL graph renders out of the box (no
+  // node/edge thinning). MID/overview previously capped the daemon payload to
+  // ~3000 nodes, which silently dropped most of a large graph (upvate: 3000 of
+  // 19.6k nodes) AND nearly all cross-repo edges (10 of 376) — so the inter-repo
+  // structure the emphasis tier exists to surface was never even served. HIGH
+  // serves the complete corpus (19,613 nodes / 37,418 edges on upvate); cosmos.gl
+  // renders it fine (verified #1562/#1580). MID/LOW stay selectable as lighter
+  // tiers via the LOD control.
+  lod: "high",
 
   colorMode: "repo",
   groupBy: "repo",
@@ -382,7 +390,8 @@ export const useGraphStore = create<GraphState>((set) => ({
     set({
       enabledEdgeKinds: new Set(ALL_EDGE_KINDS),
       activeRepos: null,
-      lod: "mid",
+      // Fix #1599: clearing filters returns to the full-graph default (HIGH).
+      lod: "high",
     }),
   resetView: () =>
     set({
