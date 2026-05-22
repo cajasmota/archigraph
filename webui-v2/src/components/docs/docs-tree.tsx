@@ -8,6 +8,8 @@
    - Header: "Documentation" + total document count.
    - Repo + category folders auto-expanded; collapsible.
    - Search filters by document name; matching branches auto-expand.
+   - Pre-existing repo docs (isRepoDocs=true) appear in a secondary
+     collapsed "Repository docs" section — never labelled as generated.
    ============================================================ */
 
 import { useState, useMemo, useCallback } from "react";
@@ -149,13 +151,16 @@ function TreeNode({ node, depth, selectedPath, onSelect, query, openMap, onToggl
 
 export interface DocsTreeProps {
   tree: DocNode[];
+  /** Pre-existing repo docs that are NOT skill output — shown in a secondary section. */
+  repoDocs: DocNode[];
   selectedPath: string | null;
   onSelect: (path: string) => void;
   query: string;
 }
 
-export function DocsTree({ tree, selectedPath, onSelect, query }: DocsTreeProps) {
+export function DocsTree({ tree, repoDocs, selectedPath, onSelect, query }: DocsTreeProps) {
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const [repoDocsOpen, setRepoDocsOpen] = useState(false);
 
   const handleToggle = useCallback((key: string) => {
     // depth 0 (repo) and 1 (category) default open.
@@ -165,9 +170,13 @@ export function DocsTree({ tree, selectedPath, onSelect, query }: DocsTreeProps)
   }, []);
 
   const totalDocs = useMemo(() => tree.reduce((s, r) => s + countDocs(r), 0), [tree]);
+  const totalRepoDocs = useMemo(() => repoDocs.reduce((s, r) => s + countDocs(r), 0), [repoDocs]);
 
   const lowerQ = query.toLowerCase();
-  const noMatches = !!query && tree.every((r) => !hasMatch(r, lowerQ));
+  const noMatches =
+    !!query &&
+    tree.every((r) => !hasMatch(r, lowerQ)) &&
+    repoDocs.every((r) => !hasMatch(r, lowerQ));
 
   return (
     <div className="flex flex-col h-full w-[320px] shrink-0 border-r border-border overflow-hidden">
@@ -184,18 +193,54 @@ export function DocsTree({ tree, selectedPath, onSelect, query }: DocsTreeProps)
             No documents match &ldquo;{query}&rdquo;
           </p>
         ) : (
-          tree.map((repo, i) => (
-            <TreeNode
-              key={repo.name + "-" + i}
-              node={repo}
-              depth={0}
-              selectedPath={selectedPath}
-              onSelect={onSelect}
-              query={query}
-              openMap={openMap}
-              onToggle={handleToggle}
-            />
-          ))
+          <>
+            {tree.map((repo, i) => (
+              <TreeNode
+                key={repo.name + "-" + i}
+                node={repo}
+                depth={0}
+                selectedPath={selectedPath}
+                onSelect={onSelect}
+                query={query}
+                openMap={openMap}
+                onToggle={handleToggle}
+              />
+            ))}
+
+            {/* Secondary: pre-existing repo docs that are NOT skill output */}
+            {repoDocs.length > 0 && (
+              <div className="mt-3 border-t border-border pt-2">
+                <button
+                  className="flex items-center gap-1.5 w-full px-3 py-1 text-xs text-text-4 hover:text-text-2 transition-colors"
+                  onClick={() => setRepoDocsOpen((v) => !v)}
+                  aria-expanded={repoDocsOpen}
+                >
+                  <ChevronRight
+                    size={11}
+                    className={[
+                      "shrink-0 transition-transform",
+                      repoDocsOpen ? "rotate-90" : "",
+                    ].join(" ")}
+                  />
+                  <span className="font-medium uppercase tracking-wide">Repository docs</span>
+                  <span className="ml-auto font-mono tabular-nums">{totalRepoDocs}</span>
+                </button>
+                {repoDocsOpen &&
+                  repoDocs.map((repo, i) => (
+                    <TreeNode
+                      key={repo.name + "-rd-" + i}
+                      node={repo}
+                      depth={0}
+                      selectedPath={selectedPath}
+                      onSelect={onSelect}
+                      query={query}
+                      openMap={openMap}
+                      onToggle={handleToggle}
+                    />
+                  ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
