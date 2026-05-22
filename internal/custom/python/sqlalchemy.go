@@ -41,7 +41,18 @@ var (
 )
 
 // saBaseIndicators are common base classes for SQLAlchemy declarative models.
-var saBaseIndicators = []string{"Base", "DeclarativeBase", "db.Model", "Model"}
+// "Model" is intentionally absent: it is too broad a substring and matches
+// Pydantic's "BaseModel" as well as Flask-Login's "UserMixin", causing false
+// positives. Use "db.Model" (Flask-SQLAlchemy) or rely on the __tablename__/
+// Mapped[] body scan below instead. Issue #1501 — within-extractor dedup fix 2/2.
+var saBaseIndicators = []string{"Base", "DeclarativeBase", "db.Model"}
+
+// saPydanticBases lists Pydantic base class names that, when present in a
+// class's base list, conclusively identify the class as a Pydantic model and
+// NOT a SQLAlchemy declarative model. This guard prevents false positives when
+// a file imports both sqlalchemy and pydantic (e.g. a shared models.py with
+// Pydantic DTOs next to ORM classes).
+var saPydanticBases = []string{"BaseModel", "BaseSettings", "RootModel", "GenericModel"}
 
 func (e *SQLAlchemyExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("custom.python_sqlalchemy")
@@ -60,6 +71,21 @@ func (e *SQLAlchemyExtractor) Extract(ctx context.Context, file extractor.FileIn
 	for _, idx := range allMatchesIndex(saDeclarativeModelRe, source) {
 		className := source[idx[2]:idx[3]]
 		bases := source[idx[4]:idx[5]]
+
+		// Exclude Pydantic models: if any Pydantic base class appears in the
+		// base list, the class is definitely NOT a SQLAlchemy model, even if the
+		// body contains SQLAlchemy-like patterns (e.g. a shared models.py with
+		// Pydantic DTOs). Issue #1501 — prevents BaseModel false positives.
+		isPydantic := false
+		for _, pb := range saPydanticBases {
+			if strings.Contains(bases, pb) {
+				isPydantic = true
+				break
+			}
+		}
+		if isPydantic {
+			continue
+		}
 
 		// Check if this looks like a SQLAlchemy model
 		isModel := false
