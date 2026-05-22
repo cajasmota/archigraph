@@ -402,23 +402,82 @@ type FlatChannel = TopologyChannel & { lifecycle_state: ChannelLifecycle };
 const DIAGRAM_MAX_CHANNELS = 40; // per broker
 const DIAGRAM_MAX_SIDE = 60; // per side column
 
+// --- Selection model (#1609) ----------------------------------------------
+// A node in the Map is identified by which column it lives in plus its stable
+// key. Selecting a node highlights its full related path:
+//   publisher  → channels it publishes to + those channels' subscribers
+//   subscriber → channels it subscribes to + those channels' publishers
+//   channel    → its publishers + subscribers
+// Everything else is dimmed. Selection lives in MapView so only one node is
+// ever active across the whole map; clicking it again (or empty space) clears.
+type MapSelection =
+  | { col: "pub"; key: string }
+  | { col: "chan"; key: string } // key = channel id
+  | { col: "sub"; key: string }
+  | null;
+
+/** What a selection lights up: sets of pub keys, channel ids, sub keys. */
+type Related = {
+  pubs: Set<string>;
+  chans: Set<string>;
+  subs: Set<string>;
+};
+
 function BrokerDiagram({
   brokerGroup,
   channels,
   selectedId,
   onSelect,
+  selection,
+  onSelectNode,
 }: {
   brokerGroup: TopologyBrokerGroup;
   channels: FlatChannel[];
   selectedId: string | null;
   onSelect: (ch: FlatChannel) => void;
+  selection: MapSelection;
+  onSelectNode: (sel: MapSelection) => void;
 }) {
   const [open, setOpen] = useState(true);
   const m = brokerMeta(brokerGroup.broker);
 
+  // Lifecycle rank: connected/active flows first, dead-ends last (#1609).
+  const lifecycleRank: Record<ChannelLifecycle, number> = {
+    active: 0,
+    orphan_publisher: 1,
+    orphan_subscriber: 2,
+    orphan: 3,
+  };
+
+  // Stable side keys for a channel.
+  const pubKeysOf = (ch: FlatChannel) =>
+    resolveSide(ch.producer_refs, ch.producers).map((p) => p.entityId ?? p.name);
+  const subKeysOf = (ch: FlatChannel) =>
+    resolveSide(ch.consumer_refs, ch.consumers).map((c) => c.entityId ?? c.name);
+
+  // Sort channels: active grouped at top (by shared publisher then subscriber to
+  // minimise line crossings), orphans sink to the bottom (#1609). Stable within
+  // a rank via original index.
+  const sortedChannels = channels
+    .map((ch, idx) => ({ ch, idx }))
+    .sort((a, b) => {
+      const ra = lifecycleRank[a.ch.lifecycle_state];
+      const rb = lifecycleRank[b.ch.lifecycle_state];
+      if (ra !== rb) return ra - rb;
+      // Group rows sharing a publisher (then subscriber) adjacently.
+      const pa = pubKeysOf(a.ch)[0] ?? "";
+      const pb = pubKeysOf(b.ch)[0] ?? "";
+      if (pa !== pb) return pa < pb ? -1 : 1;
+      const sa = subKeysOf(a.ch)[0] ?? "";
+      const sb = subKeysOf(b.ch)[0] ?? "";
+      if (sa !== sb) return sa < sb ? -1 : 1;
+      return a.idx - b.idx;
+    })
+    .map((x) => x.ch);
+
   // Cap channels rendered to keep the SVG bounded.
-  const shownChannels = channels.slice(0, DIAGRAM_MAX_CHANNELS);
-  const channelOverflow = channels.length - shownChannels.length;
+  const shownChannels = sortedChannels.slice(0, DIAGRAM_MAX_CHANNELS);
+  const channelOverflow = sortedChannels.length - shownChannels.length;
 
   // Build distinct publisher / subscriber node sets keyed by entityId|name.
   const pubMap = new Map<string, DisplayRef>();
@@ -440,10 +499,68 @@ function BrokerDiagram({
     }
   });
 
+  // Order side columns by first appearance in the (already-sorted) channel
+  // list so related rows align horizontally and crossings stay minimal (#1609).
   const pubKeys = Array.from(pubMap.keys()).slice(0, DIAGRAM_MAX_SIDE);
   const subKeys = Array.from(subMap.keys()).slice(0, DIAGRAM_MAX_SIDE);
   const pubIdx = new Map(pubKeys.map((k, i) => [k, i]));
   const subIdx = new Map(subKeys.map((k, i) => [k, i]));
+
+  // --- Resolve the active selection into highlighted sets (#1609) ----------
+  const chanById = new Map(shownChannels.map((ch) => [ch.id, ch]));
+  let related: Related | null = null;
+  if (selection) {
+    const pubs = new Set<string>();
+    const chans = new Set<string>();
+    const subs = new Set<string>();
+    if (selection.col === "chan") {
+      const ch = chanById.get(selection.key);
+      if (ch) {
+        chans.add(ch.id);
+        for (const k of pubKeysOf(ch)) pubs.add(k);
+        for (const k of subKeysOf(ch)) subs.add(k);
+      }
+    } else if (selection.col === "pub") {
+      pubs.add(selection.key);
+      for (const ch of shownChannels) {
+        if (pubKeysOf(ch).includes(selection.key)) {
+          chans.add(ch.id);
+          for (const k of subKeysOf(ch)) subs.add(k); // full downstream path
+        }
+      }
+    } else {
+      // subscriber → its channels + those channels' publishers (upstream path)
+      subs.add(selection.key);
+      for (const ch of shownChannels) {
+        if (subKeysOf(ch).includes(selection.key)) {
+          chans.add(ch.id);
+          for (const k of pubKeysOf(ch)) pubs.add(k);
+        }
+      }
+    }
+    related = { pubs, chans, subs };
+  }
+  // Only dim if the selection actually belongs to (lit something in) this broker.
+  const dimming =
+    related !== null &&
+    (related.pubs.size > 0 || related.chans.size > 0 || related.subs.size > 0);
+
+  const litPub = (k: string) => !related || related.pubs.has(k);
+  const litChan = (id: string) => !related || related.chans.has(id);
+  const litSub = (k: string) => !related || related.subs.has(k);
+  // An edge is lit when BOTH endpoints are part of the related path.
+  const litPubEdge = (k: string, id: string) =>
+    !related || (related.pubs.has(k) && related.chans.has(id));
+  const litSubEdge = (id: string, k: string) =>
+    !related || (related.chans.has(id) && related.subs.has(k));
+
+  function toggle(sel: NonNullable<MapSelection>) {
+    if (selection && selection.col === sel.col && selection.key === sel.key) {
+      onSelectNode(null);
+    } else {
+      onSelectNode(sel);
+    }
+  }
 
   // Layout geometry.
   const ROW_H = 30;
@@ -516,25 +633,33 @@ function BrokerDiagram({
             viewBox={`0 0 ${width} ${height}`}
             className="block"
             style={{ minWidth: width }}
+            onClick={(e) => {
+              // Click on empty canvas clears the selection.
+              if (e.target === e.currentTarget) onSelectNode(null);
+            }}
           >
             {/* Edges: publisher → channel */}
             {pubEdges.map((e, i) => {
               const pi = pubIdx.get(e.key);
               if (pi === undefined) return null;
+              const chId = shownChannels[e.ci]?.id;
               const y1 = yOf(pi);
               const y2 = yOf(e.ci);
               const x1 = leftX + COL_W;
               const x2 = chX;
               const mx = (x1 + x2) / 2;
-              const isSel = shownChannels[e.ci]?.id === selectedId;
+              const lit = litPubEdge(e.key, chId);
+              const isSelChan = chId === selectedId;
+              const active = lit && (dimming || isSelChan);
               return (
                 <path
                   key={`pe-${i}`}
                   d={`M ${x1},${y1} C ${mx},${y1} ${mx},${y2} ${x2},${y2}`}
                   fill="none"
-                  stroke={isSel ? m.color : "var(--border-strong)"}
-                  strokeWidth={isSel ? 1.6 : 1}
-                  opacity={isSel ? 0.9 : 0.45}
+                  stroke={active ? m.color : "var(--border-strong)"}
+                  strokeWidth={active ? 1.6 : 1}
+                  opacity={dimming && !lit ? 0.06 : active ? 0.9 : 0.45}
+                  style={{ transition: "opacity 0.18s, stroke 0.18s" }}
                 />
               );
             })}
@@ -542,38 +667,54 @@ function BrokerDiagram({
             {subEdges.map((e, i) => {
               const si = subIdx.get(e.key);
               if (si === undefined) return null;
+              const chId = shownChannels[e.ci]?.id;
               const y1 = yOf(e.ci);
               const y2 = yOf(si);
               const x1 = chX + CH_W;
               const x2 = rightX;
               const mx = (x1 + x2) / 2;
-              const isSel = shownChannels[e.ci]?.id === selectedId;
+              const lit = litSubEdge(chId, e.key);
+              const isSelChan = chId === selectedId;
+              const active = lit && (dimming || isSelChan);
               return (
                 <path
                   key={`se-${i}`}
                   d={`M ${x1},${y1} C ${mx},${y1} ${mx},${y2} ${x2},${y2}`}
                   fill="none"
-                  stroke={isSel ? m.color : "var(--border-strong)"}
-                  strokeWidth={isSel ? 1.6 : 1}
-                  opacity={isSel ? 0.9 : 0.45}
+                  stroke={active ? m.color : "var(--border-strong)"}
+                  strokeWidth={active ? 1.6 : 1}
+                  opacity={dimming && !lit ? 0.06 : active ? 0.9 : 0.45}
+                  style={{ transition: "opacity 0.18s, stroke 0.18s" }}
                 />
               );
             })}
 
-            {/* Publisher nodes */}
+            {/* Publisher nodes (clickable — highlight full downstream path) */}
             {pubKeys.map((k, i) => {
               const ref = pubMap.get(k)!;
               const y = PAD_Y + i * ROW_H;
+              const lit = litPub(k);
+              const sel = selection?.col === "pub" && selection.key === k;
               return (
-                <g key={`p-${k}`}>
+                <g
+                  key={`p-${k}`}
+                  onClick={() => toggle({ col: "pub", key: k })}
+                  style={{
+                    cursor: "pointer",
+                    opacity: dimming && !lit ? 0.18 : 1,
+                    transition: "opacity 0.18s",
+                  }}
+                >
                   <rect
                     x={leftX}
                     y={y}
                     width={COL_W}
                     height={NODE_H}
                     rx={5}
-                    fill="var(--surface)"
-                    stroke="var(--border)"
+                    fill={sel ? m.bgColor : "var(--surface)"}
+                    stroke={sel ? m.color : lit && dimming ? m.color + "99" : "var(--border)"}
+                    strokeWidth={sel ? 1.6 : 1}
+                    style={{ transition: "stroke 0.18s, fill 0.18s" }}
                   />
                   <text
                     x={leftX + COL_W - 8}
@@ -582,6 +723,7 @@ function BrokerDiagram({
                     fontSize={11}
                     fontFamily="ui-monospace, monospace"
                     fill={nodeColor(ref)}
+                    style={{ pointerEvents: "none" }}
                   >
                     {ref.name.length > 22 ? ref.name.slice(0, 21) + "…" : ref.name}
                     <title>
@@ -593,15 +735,23 @@ function BrokerDiagram({
               );
             })}
 
-            {/* Channel nodes (clickable) */}
+            {/* Channel nodes (clickable — highlight publishers + subscribers) */}
             {shownChannels.map((ch, i) => {
               const y = PAD_Y + i * ROW_H;
-              const isSel = ch.id === selectedId;
+              const isSel = ch.id === selectedId || (selection?.col === "chan" && selection.key === ch.id);
+              const lit = litChan(ch.id);
               return (
                 <g
                   key={`c-${ch.id}`}
-                  onClick={() => onSelect(ch)}
-                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    toggle({ col: "chan", key: ch.id });
+                    onSelect(ch); // keep the detail panel wired to channel clicks
+                  }}
+                  style={{
+                    cursor: "pointer",
+                    opacity: dimming && !lit ? 0.18 : 1,
+                    transition: "opacity 0.18s",
+                  }}
                 >
                   <rect
                     x={chX}
@@ -610,8 +760,9 @@ function BrokerDiagram({
                     height={NODE_H}
                     rx={5}
                     fill={isSel ? m.bgColor : "var(--surface-2)"}
-                    stroke={isSel ? m.color : m.color + "66"}
+                    stroke={isSel ? m.color : lit && dimming ? m.color : m.color + "66"}
                     strokeWidth={isSel ? 1.6 : 1}
+                    style={{ transition: "stroke 0.18s, fill 0.18s" }}
                   />
                   <text
                     x={chX + CH_W / 2}
@@ -620,6 +771,7 @@ function BrokerDiagram({
                     fontSize={11}
                     fontFamily="ui-monospace, monospace"
                     fill="var(--text)"
+                    style={{ pointerEvents: "none" }}
                   >
                     {ch.label.length > 20 ? ch.label.slice(0, 19) + "…" : ch.label}
                     <title>{ch.label}</title>
@@ -628,20 +780,32 @@ function BrokerDiagram({
               );
             })}
 
-            {/* Subscriber nodes */}
+            {/* Subscriber nodes (clickable — highlight upstream path) */}
             {subKeys.map((k, i) => {
               const ref = subMap.get(k)!;
               const y = PAD_Y + i * ROW_H;
+              const lit = litSub(k);
+              const sel = selection?.col === "sub" && selection.key === k;
               return (
-                <g key={`s-${k}`}>
+                <g
+                  key={`s-${k}`}
+                  onClick={() => toggle({ col: "sub", key: k })}
+                  style={{
+                    cursor: "pointer",
+                    opacity: dimming && !lit ? 0.18 : 1,
+                    transition: "opacity 0.18s",
+                  }}
+                >
                   <rect
                     x={rightX}
                     y={y}
                     width={COL_W}
                     height={NODE_H}
                     rx={5}
-                    fill="var(--surface)"
-                    stroke="var(--border)"
+                    fill={sel ? m.bgColor : "var(--surface)"}
+                    stroke={sel ? m.color : lit && dimming ? m.color + "99" : "var(--border)"}
+                    strokeWidth={sel ? 1.6 : 1}
+                    style={{ transition: "stroke 0.18s, fill 0.18s" }}
                   />
                   <text
                     x={rightX + 8}
@@ -650,6 +814,7 @@ function BrokerDiagram({
                     fontSize={11}
                     fontFamily="ui-monospace, monospace"
                     fill={nodeColor(ref)}
+                    style={{ pointerEvents: "none" }}
                   >
                     {ref.name.length > 22 ? ref.name.slice(0, 21) + "…" : ref.name}
                     <title>
@@ -687,11 +852,15 @@ function MapView({
   brokerGroups,
   selectedId,
   onSelect,
+  selection,
+  onSelectNode,
 }: {
   channels: FlatChannel[];
   brokerGroups: TopologyBrokerGroup[];
   selectedId: string | null;
   onSelect: (ch: FlatChannel) => void;
+  selection: MapSelection;
+  onSelectNode: (sel: MapSelection) => void;
 }) {
   const totalCrossRepo = brokerGroups.reduce((n, bg) => n + (bg.cross_repo_topic_count ?? 0), 0);
   const totalOrphanPub = brokerGroups.reduce((n, bg) => n + (bg.orphan_publishers ?? 0), 0);
@@ -730,6 +899,8 @@ function MapView({
             channels={bandChannels}
             selectedId={selectedId}
             onSelect={onSelect}
+            selection={selection}
+            onSelectNode={onSelectNode}
           />
         );
       })}
@@ -1439,6 +1610,8 @@ export default function TopologyScreen() {
   const [search, setSearch] = useState("");
   const [activeBrokers, setActiveBrokers] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(channelParam);
+  // Map-view node selection (publisher / channel / subscriber path highlight, #1609).
+  const [mapSelection, setMapSelection] = useState<MapSelection>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useTopology(groupId);
@@ -1460,6 +1633,7 @@ export default function TopologyScreen() {
       }
       if (e.key === "Escape") {
         setSelectedId(null);
+        setMapSelection(null);
         setSearchParams((prev) => {
           const n = new URLSearchParams(prev);
           n.delete("channel");
@@ -1715,6 +1889,8 @@ export default function TopologyScreen() {
                   )}
                   selectedId={selectedId}
                   onSelect={selectChannel}
+                  selection={mapSelection}
+                  onSelectNode={setMapSelection}
                 />
               ) : (
                 <ListView
