@@ -46,11 +46,15 @@ export interface RenderConfig {
 }
 
 export const DEFAULT_SIMULATION: SimulationConfig = {
+  // Fix #1548-2: the layout was over-spread (clusters flung far apart, mostly
+  // empty canvas). A firmer center pull + slightly lower repulsion pulls the
+  // clusters together so the graph uses space sensibly (was center 0.4 /
+  // repulsion 1.2). Kept moderate so clusters stay legible, not collapsed.
   linkSpring: 1.0,
-  linkDistance: 8,
+  linkDistance: 10,
   friction: 0.85,
-  repulsion: 1.2,
-  center: 0.4,
+  repulsion: 1.0,
+  center: 0.55,
   settleTime: 2.0,
 };
 
@@ -71,9 +75,10 @@ export const DEFAULT_RENDER: RenderConfig = {
   // even when zoomed in (was 60).
   maxPointSize: 34,
   linkWidthScale: 1.0,
-  // Fix #1532-2: edges were nearly invisible on the light background at 0.18.
-  // Raise the default same-repo link opacity so relationships read clearly.
-  linkOpacity: 0.42,
+  // Fix #1548-2: edges must read clearly from the FIRST paint (not just after
+  // settle). Raise the default same-repo link opacity further so relationships
+  // are visible immediately on a light background.
+  linkOpacity: 0.6,
   showLinks: true,
 };
 

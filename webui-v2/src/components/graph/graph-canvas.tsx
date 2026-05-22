@@ -24,7 +24,15 @@
    and pushes them to the engine; it never recreates the Graph on data change.
    ============================================================ */
 
-import { useRef, useEffect, useMemo, useCallback, memo } from "react";
+import {
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+  memo,
+} from "react";
 import { Graph } from "@cosmos.gl/graph";
 import type { GraphNode, GraphEdge } from "@/data/types";
 import {
@@ -47,9 +55,10 @@ import type {
 } from "@/store/use-graph-store";
 
 const SPACE_SIZE = 32768;
-// Fix #1532-3: a smaller padding makes the settled graph FILL the canvas
-// instead of floating small in the middle at LOD HIGH (was 0.1).
-const FIT_PADDING = 0.04;
+// Fix #1532-3 / #1548-2: a small padding makes the settled graph FILL the
+// canvas instead of floating small in the middle. A touch more than 0.04 so
+// the outermost clusters/labels aren't clipped at the viewport edge.
+const FIT_PADDING = 0.08;
 
 // ── group / cluster helpers ──────────────────────────────────────────────────
 
@@ -97,7 +106,10 @@ function buildGroupCenters(
   const keys = Array.from(new Set(nodes.map((n) => groupKeyFor(n, mode)))).sort();
   const N = keys.length;
   if (N === 0) return new Map();
-  const R = Math.max(3000, Math.sqrt(nodes.length) * 50, N * 700);
+  // Fix #1548-2: the prior ring radius (N*700, sqrt(n)*50) flung clusters far
+  // apart, leaving the canvas mostly empty. Tighten it so clusters sit in a
+  // compact ring and the stronger center force pulls the whole graph together.
+  const R = Math.max(900, Math.sqrt(nodes.length) * 20, N * 150);
   return new Map(
     keys.map((key, i) => {
       const angle = (i / N) * 2 * Math.PI;
@@ -124,8 +136,12 @@ export interface GraphCanvasProps {
   activeRepos: Set<string> | null;
   /** community focus — dims non-members (null = none). */
   focusedCommunityId: number | null;
-  /** N-hop ego focus — hard-restrict to these ids (null = full graph). */
-  focusNodeIds: Set<string> | null;
+  /**
+   * Fix #1548-3: true when the parent is rendering an ego SUB-graph (nodes/edges
+   * already pre-filtered to the ≤5-hop neighborhood). The canvas re-layouts +
+   * fits this smaller set so it fills the viewport.
+   */
+  isFocusView: boolean;
   /** changes to this nonce force a fresh re-layout (skip cache). */
   relayoutNonce: number;
   onNodeClick: (node: GraphNode | null) => void;
@@ -139,29 +155,46 @@ export interface GraphCanvasProps {
 // revealed as the user zooms in — readable, not cluttered.
 const LABEL_BASE_COUNT = 12; // shown at the default (zoomed-out) level
 const LABEL_MAX_COUNT = 160; // ceiling once fully zoomed in
+// Fix #1548-1: during continuous pan/zoom we drive labels from the camera every
+// frame (rAF). Label compute is heavy, so while interacting we render only the
+// top-N hubs; the full zoom-gated set is restored on interaction-end.
+const LABEL_MOTION_CAP = 24;
 const truncate = (s: string) => (s.length > 30 ? s.slice(0, 28) + "…" : s);
 
-function GraphCanvasInner({
-  group,
-  nodes,
-  edges,
-  selectedNodeId,
-  hoveredNodeId,
-  isDark,
-  colorMode,
-  groupBy,
-  simulation,
-  nodeSizing,
-  render,
-  activeRepos,
-  focusedCommunityId,
-  focusNodeIds,
-  relayoutNonce,
-  onNodeClick,
-  onNodeHover,
-  onSettled,
-  className = "",
-}: GraphCanvasProps) {
+/**
+ * Imperative handle (Fix #1548-3): the parent snapshots the camera (zoom + pan)
+ * on focus-enter and restores it on focus-exit, so the user returns to exactly
+ * the view they left.
+ */
+export interface GraphCanvasHandle {
+  snapshotCamera: () => void;
+  restoreCamera: () => void;
+}
+
+function GraphCanvasInner(
+  {
+    group,
+    nodes,
+    edges,
+    selectedNodeId,
+    hoveredNodeId,
+    isDark,
+    colorMode,
+    groupBy,
+    simulation,
+    nodeSizing,
+    render,
+    activeRepos,
+    focusedCommunityId,
+    isFocusView,
+    relayoutNonce,
+    onNodeClick,
+    onNodeHover,
+    onSettled,
+    className = "",
+  }: GraphCanvasProps,
+  ref: React.Ref<GraphCanvasHandle>,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const hasSettledRef = useRef(false);
@@ -370,7 +403,7 @@ function GraphCanvasInner({
       strong ? `;outline:1px solid ${isDark ? "#38bdf8" : "#0284c7"}` : ""
     }">${escapeLabel(text)}</span>`;
 
-  const refreshLabels = useCallback(() => {
+  const refreshLabels = useCallback((motion = false) => {
     const g = graphRef.current;
     const layer = labelLayerRef.current;
     if (!g || !layer) return;
@@ -388,11 +421,14 @@ function GraphCanvasInner({
       /* engine not ready */
     }
     const factor = Math.max(1, Math.pow(Math.max(zoom, 0.0001) * 3.2, 1.4));
-    const count = Math.min(
+    // Fix #1548-1: while panning/zooming, cap to the top hubs so the per-frame
+    // label compute stays cheap and tracks the nodes smoothly with no lag.
+    const idleCount = Math.min(
       LABEL_MAX_COUNT,
       rankedByDegree.length,
       Math.round(LABEL_BASE_COUNT * factor),
     );
+    const count = motion ? Math.min(idleCount, LABEL_MOTION_CAP) : idleCount;
 
     const shown = new Set<number>(rankedByDegree.slice(0, count));
     // Always include the hovered node, even if it's a low-degree leaf.
@@ -437,6 +473,63 @@ function GraphCanvasInner({
   // scheduleLabels is stable (no deps), so engine handlers can use it directly.
   const scheduleLabelsLive = scheduleLabels;
 
+  // ── Fix #1548-1: per-frame label tracking during pan / zoom ──────────────────
+  // The settled engine stops painting, so onSimulationTick never fires while the
+  // user pans — the old coalesced setTimeout meant labels FROZE during drag and
+  // only snapped on mouse-release. Instead, while the user is interacting we run
+  // our own rAF loop and re-project the (capped) label set from the cosmos.gl
+  // camera every frame, so labels track the nodes smoothly with no lag.
+  const interactingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const motionLoop = useCallback(() => {
+    if (!interactingRef.current) {
+      rafRef.current = null;
+      return;
+    }
+    refreshLabelsRef.current(true); // motion=true → capped count, cheap
+    rafRef.current = requestAnimationFrame(motionLoop);
+  }, []);
+  const startInteraction = useCallback(() => {
+    interactingRef.current = true;
+    if (rafRef.current === null) rafRef.current = requestAnimationFrame(motionLoop);
+  }, [motionLoop]);
+  const endInteraction = useCallback(() => {
+    interactingRef.current = false;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    // Restore the full zoom-gated label set now that motion has stopped.
+    requestAnimationFrame(() => refreshLabelsRef.current(false));
+  }, []);
+  const startInteractionRef = useRef(startInteraction);
+  startInteractionRef.current = startInteraction;
+  const endInteractionRef = useRef(endInteraction);
+  endInteractionRef.current = endInteraction;
+
+  // Fix #1548-2: cosmos.gl `fitView` only takes effect while the render loop is
+  // running; once the graph is paused (settled) it is a silent no-op. This
+  // helper guarantees a camera fit at any time: briefly resume the loop, fit
+  // instantly, re-pin the geometry so the physics can't drift, then pause again.
+  const fitNow = useCallback((indices?: number[]) => {
+    const g = graphRef.current;
+    if (!g) return;
+    const wasSettled = hasSettledRef.current;
+    const frozen = wasSettled ? new Float32Array(g.getPointPositions()) : null;
+    g.unpause();
+    if (indices && indices.length > 0) g.fitViewByPointIndices(indices, 0, FIT_PADDING);
+    else g.fitView(0, FIT_PADDING);
+    if (frozen) {
+      g.setPointPositions(frozen, true);
+      g.pause();
+    }
+  }, []);
+  const fitNowRef = useRef(fitNow);
+  fitNowRef.current = fitNow;
+
+  // Fix #1548-3: when EXITING focus we restore the snapshotted camera, so the
+  // settle handler must NOT auto-fit (which would clobber the restore).
+  const suppressFitRef = useRef(false);
   const doSettle = useCallback(() => {
     if (hasSettledRef.current) return;
     hasSettledRef.current = true;
@@ -445,19 +538,39 @@ function GraphCanvasInner({
       capTimerRef.current = null;
     }
     const g = graphRef.current;
-    g?.pause();
-    g?.fitView(400, FIT_PADDING);
-    scheduleLabels();
-    // Re-fit once layout has fully painted so the graph reliably FILLS the
-    // viewport at LOD HIGH (the first fit can run before final positions land).
-    setTimeout(() => {
-      graphRef.current?.fitView(300, FIT_PADDING);
-      scheduleLabels();
-    }, 450);
-    const positions = g?.getPointPositions();
+    if (!g) return;
+
+    // Persist the settled positions (the layout cache) BEFORE we touch the
+    // camera — saving the geometry, not the view transform.
+    const positions = g.getPointPositions();
     if (positions && positions.length > 0) {
       saveLayout(group, nodeIds, new Float32Array(positions));
     }
+
+    // Fix #1548-2: cosmos.gl `fitView` is a no-op while the render loop is
+    // paused — that was why the settled graph floated off-center and didn't
+    // FILL the viewport. We freeze the geometry (re-pin the settled positions)
+    // and pause the physics FIRST, then use the fitNow helper which briefly
+    // resumes the render loop to apply an INSTANT fit and pauses again — so the
+    // fit lands deterministically on the final geometry with no drift.
+    g.setPointPositions(new Float32Array(positions), true);
+    g.pause();
+
+    if (suppressFitRef.current) {
+      // Exiting focus: skip the fit (restoreCamera owns the view).
+      suppressFitRef.current = false;
+      scheduleLabels();
+      onSettledRef.current();
+      return;
+    }
+
+    fitNowRef.current();
+    scheduleLabels();
+    // One more fit on the next frames in case the canvas size settled late.
+    setTimeout(() => {
+      fitNowRef.current();
+      scheduleLabels();
+    }, 200);
     onSettledRef.current();
   }, [group, nodeIds, scheduleLabels]);
   const doSettleRef = useRef(doSettle);
@@ -478,6 +591,15 @@ function GraphCanvasInner({
       pointGreyoutOpacity: 0.15,
       linkGreyoutOpacity: render.linkOpacity * 0.5,
       linkWidthScale: render.showLinks ? render.linkWidthScale : 0,
+      // Fix #1548-2: cosmos.gl fades links by their ON-SCREEN length
+      // (linkVisibilityDistanceRange, in px) and caps far-link alpha at
+      // linkVisibilityMinTransparency. The defaults ([50,150] / 0.25) made
+      // every link nearly invisible at the fitted (zoomed-out) level — links
+      // only "appeared" after zooming/settling. Widen the visibility floor and
+      // raise the min transparency so links read clearly from the first paint
+      // at any zoom.
+      linkVisibilityDistanceRange: [1, 10000],
+      linkVisibilityMinTransparency: 0.8,
       renderHoveredPointRing: true,
       hoveredPointRingColor: isDark ? "#e2e8f0" : "#1e293b",
       pointSamplingDistance: 120,
@@ -521,9 +643,20 @@ function GraphCanvasInner({
         const n = nodesRef.current[index];
         if (n) onNodeHoverRef.current(n);
       },
-      onZoom: scheduleLabelsLive,
+      // Fix #1548-1: pan AND wheel-zoom both flow through the d3-zoom behavior,
+      // so onZoomStart/onZoomEnd bracket every camera move. Start the per-frame
+      // rAF label loop on start, stop it on end. onZoom still nudges a refresh
+      // for the (rare) single-shot zoom that doesn't emit start/end.
+      onZoomStart: () => startInteractionRef.current(),
+      onZoom: () => {
+        if (!interactingRef.current) scheduleLabelsLive();
+      },
+      onZoomEnd: () => endInteractionRef.current(),
+      onDragStart: () => startInteractionRef.current(),
+      onDragEnd: () => endInteractionRef.current(),
     });
     graphRef.current = g;
+    if (import.meta.env.DEV) (window as unknown as { __ag?: Graph }).__ag = g;
 
     const saved = loadLayout(group, nodeIds);
     if (saved) {
@@ -543,6 +676,8 @@ function GraphCanvasInner({
     return () => {
       if (capTimerRef.current) clearTimeout(capTimerRef.current);
       if (labelTimerRef.current !== null) clearTimeout(labelTimerRef.current);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      interactingRef.current = false;
       g.destroy();
       graphRef.current = null;
     };
@@ -635,6 +770,40 @@ function GraphCanvasInner({
     }, capMs);
   }, [relayoutNonce, packed]);
 
+  // ── re-layout when the node SET changes (Fix #1548-3 ego enter/exit) ─────────
+  // Entering/leaving focus swaps `group` (…::ego) and the node set. The settled
+  // engine would otherwise just re-pin the new (scattered) positions and pause —
+  // so explicitly reset the settle flag and run a fresh layout for the new set.
+  const prevGroupRef = useRef(group);
+  useEffect(() => {
+    if (prevGroupRef.current === group) return;
+    prevGroupRef.current = group;
+    const g = graphRef.current;
+    if (!g) return;
+    hasSettledRef.current = false;
+    didAutoStartRef.current = true;
+    mountTimeRef.current = Date.now();
+    const saved = loadLayout(group, nodeIds);
+    if (saved && saved.positions.length === packed.positions.length) {
+      g.setPointPositions(saved.positions, true);
+      g.render();
+      g.create();
+      doSettleRef.current();
+      return;
+    }
+    g.setPointPositions(packed.positions);
+    g.setPointClusters(packed.clusters);
+    g.setPointClusterStrength(packed.clusterStrength);
+    g.render();
+    g.create();
+    g.start(1);
+    const capMs = Math.max(500, Math.min(6000, (simRef.current.settleTime ?? 2.0) * 1000));
+    if (capTimerRef.current) clearTimeout(capTimerRef.current);
+    capTimerRef.current = setTimeout(() => {
+      if (!hasSettledRef.current) doSettleRef.current();
+    }, capMs);
+  }, [group, packed, nodeIds]);
+
   // ── re-cluster on group-by change ───────────────────────────────────────────
   const prevGroupByRef = useRef(groupBy);
   useEffect(() => {
@@ -657,31 +826,31 @@ function GraphCanvasInner({
     }, capMs);
   }, [groupBy, packed]);
 
-  // ── visibility / focus selection ─────────────────────────────────────────────
+  // ── visibility / repo + community selection ──────────────────────────────────
+  // Fix #1548-3: ego focus is no longer a greyout — the parent passes a pre-built
+  // ego SUB-graph as nodes/edges, so here we only handle repo filter (hard-hide)
+  // and community focus (soft-dim).
   useEffect(() => {
     const g = graphRef.current;
     if (!g) return;
     const repoActive = activeRepos != null;
-    const focusActive = focusNodeIds != null;
     const communityActive = focusedCommunityId != null;
 
-    if (!repoActive && !focusActive && !communityActive) {
+    if (!repoActive && !communityActive) {
       g.selectPointsByIndices(null);
       g.setConfig({ pointGreyoutOpacity: 0.15 });
       return;
     }
-    let effective: number[] = nodes
+    const effective: number[] = nodes
       .map((n, i) => {
         if (repoActive && !activeRepos!.has(n.repo)) return -1;
         if (communityActive && n.communityId !== focusedCommunityId) return -1;
-        if (focusActive && !focusNodeIds!.has(n.id)) return -1;
         return i;
       })
       .filter((i) => i !== -1);
     g.selectPointsByIndices(effective);
-    // hard-hide for repo/focus filters; soft-dim for community focus.
-    g.setConfig({ pointGreyoutOpacity: repoActive || focusActive ? 0 : 0.18 });
-  }, [nodes, activeRepos, focusNodeIds, focusedCommunityId]);
+    g.setConfig({ pointGreyoutOpacity: repoActive ? 0 : 0.18 });
+  }, [nodes, activeRepos, focusedCommunityId]);
 
   // ── refresh labels when the hovered node changes (Fix #1532-5) ───────────────
   useEffect(() => {
@@ -703,20 +872,81 @@ function GraphCanvasInner({
     };
   }, [rankedByDegree, scheduleLabels]);
 
-  // ── re-fit to focus ego-graph ────────────────────────────────────────────────
+  // ── Fix #1548-3: camera snapshot / restore for ego focus enter / exit ─────────
+  // cosmos.gl exposes no public pan setter, so we capture (a) the zoom level and
+  // (b) the space coordinate currently at the viewport center. To restore we
+  // re-center on that point (degenerate fitViewByPointPositions box) then set the
+  // recorded zoom — together that reproduces the prior pan + zoom exactly.
+  const cameraSnapRef = useRef<{ zoom: number; center: [number, number] } | null>(null);
+  useImperativeHandle(
+    ref,
+    () => ({
+      snapshotCamera: () => {
+        const g = graphRef.current;
+        const el = containerRef.current;
+        if (!g || !el) return;
+        try {
+          const center = g.screenToSpacePosition([el.clientWidth / 2, el.clientHeight / 2]);
+          cameraSnapRef.current = { zoom: g.getZoomLevel() || 1, center };
+        } catch {
+          cameraSnapRef.current = null;
+        }
+      },
+      restoreCamera: () => {
+        const snap = cameraSnapRef.current;
+        const g = graphRef.current;
+        if (!snap || !g) return;
+        // Tell the imminent re-layout's settle handler to NOT auto-fit.
+        suppressFitRef.current = true;
+        const [cx, cy] = snap.center;
+        const apply = () => {
+          const gg = graphRef.current;
+          if (!gg) return;
+          const frozen = new Float32Array(gg.getPointPositions());
+          // Camera ops only take while the render loop runs (see fitNow); resume
+          // briefly, re-center + restore zoom, re-pin geometry, then pause.
+          gg.unpause();
+          gg.fitViewByPointPositions([cx, cy, cx, cy], 0);
+          gg.setZoomLevel(snap.zoom, 0);
+          gg.setPointPositions(frozen, true);
+          gg.pause();
+          refreshLabelsRef.current(false);
+        };
+        // Apply after the full-graph positions have been pushed back. A short
+        // delay lets the group-change re-layout effect commit the cached layout
+        // first; we re-assert once more so the restore reliably wins.
+        setTimeout(apply, 80);
+        setTimeout(apply, 260);
+      },
+    }),
+    [],
+  );
+
+  // ── fit the ego sub-graph once it settles (Fix #1548-3) ──────────────────────
+  // When entering focus the node set shrank, so the data effect kicked a fresh
+  // layout; ensure the camera fits the (now small) sub-graph so it FILLS the
+  // viewport and far neighbors are reachable.
+  const prevFocusViewRef = useRef(isFocusView);
   useEffect(() => {
+    const entered = isFocusView && !prevFocusViewRef.current;
+    prevFocusViewRef.current = isFocusView;
+    if (!entered) return;
     const g = graphRef.current;
-    if (!g || !hasSettledRef.current) return;
-    if (focusNodeIds && focusNodeIds.size > 0) {
-      const indices = Array.from(focusNodeIds)
-        .map((id) => idToIdx.get(id))
-        .filter((i): i is number => i !== undefined);
-      if (indices.length > 0) g.fitViewByPointIndices(indices, 400, FIT_PADDING);
-    } else {
-      g.fitView(400, FIT_PADDING);
-    }
-    setTimeout(scheduleLabels, 450);
-  }, [focusNodeIds, idToIdx, scheduleLabels]);
+    if (!g) return;
+    // The re-layout settles via the cap timer; fit a few times as positions land.
+    const fit = () => {
+      fitNowRef.current();
+      refreshLabelsRef.current(false);
+    };
+    const t1 = setTimeout(fit, 350);
+    const t2 = setTimeout(fit, 1100);
+    const t3 = setTimeout(fit, 2200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [isFocusView]);
 
   return (
     <div className={`relative h-full w-full ${className}`} role="img" aria-label="Dependency graph">
@@ -736,7 +966,7 @@ function GraphCanvasInner({
   );
 }
 
-export const GraphCanvas = memo(GraphCanvasInner);
+export const GraphCanvas = memo(forwardRef(GraphCanvasInner));
 
 // Re-export so callers can resolve the slate fallback consistently.
 export { parseColor };

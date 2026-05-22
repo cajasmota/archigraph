@@ -23,6 +23,7 @@ import type { EdgeKind, GraphNode } from "@/data/types";
 const GraphCanvas = lazy(() =>
   import("@/components/graph/graph-canvas").then((m) => ({ default: m.GraphCanvas })),
 );
+import type { GraphCanvasHandle } from "@/components/graph/graph-canvas";
 import { NodeInspector } from "@/components/graph/node-inspector";
 import { FiltersDrawer } from "@/components/graph/filters-drawer";
 import { CommunitiesPopover } from "@/components/graph/communities-popover";
@@ -44,6 +45,7 @@ export default function GraphScreen() {
   const { data, isLoading, isError } = useGraph(groupId, { lod: s.lod });
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<GraphCanvasHandle>(null);
 
   // ── ?node= deep-link: restore on mount, persist on selection change ──────────
   // On first render, if the URL carries ?node=<id>, apply it as the selected
@@ -85,10 +87,10 @@ export default function GraphScreen() {
         e.preventDefault();
         s.setFiltersOpen(!s.filtersOpen);
       } else if (e.key === "Escape") {
-        if (s.selectedNodeId) s.setSelectedNode(null);
-        else if (s.filtersOpen) s.setFiltersOpen(false);
+        if (s.filtersOpen) s.setFiltersOpen(false);
         else if (s.communitiesOpen) s.setCommunitiesOpen(false);
-        else if (s.focusNodeIds) s.setFocusNodes(null);
+        else if (s.focusNodeIds) exitFocus();
+        else if (s.selectedNodeId) s.setSelectedNode(null);
         else if (s.focusedCommunityId != null) s.setFocusedCommunity(null);
       }
     };
@@ -140,7 +142,12 @@ export default function GraphScreen() {
     return m;
   }, [edges]);
 
-  const focusEgo = (id: string, hops = 1) => {
+  // Fix #1548-3: focus builds a NEW ego sub-graph = the node + neighbors up to
+  // ~5 hops (BFS over the edge set). We render ONLY that sub-graph (see the
+  // `egoNodes`/`egoEdges` memo below) and fit the camera to it. Default 5 hops
+  // so far neighbors stay reachable (was 1 hop + hide-the-rest).
+  const EGO_HOPS = 5;
+  const focusEgo = (id: string, hops = EGO_HOPS) => {
     const set = new Set<string>([id]);
     let frontier = [id];
     for (let h = 0; h < hops; h++) {
@@ -155,13 +162,15 @@ export default function GraphScreen() {
       }
       frontier = next;
     }
+    // Snapshot the current camera so EXIT can restore it exactly (#1548-3).
+    canvasRef.current?.snapshotCamera();
     s.setFocusNodes(set);
   };
 
   // Once data arrives, if a node was deep-linked, focus its ego-graph.
   useEffect(() => {
     if (data && s.selectedNodeId && !s.focusNodeIds) {
-      focusEgo(s.selectedNodeId, 1);
+      focusEgo(s.selectedNodeId);
     }
     // Only trigger when data first becomes available.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,9 +181,36 @@ export default function GraphScreen() {
     [nodes, s.selectedNodeId],
   );
 
+  // Fix #1548-3: when an ego focus is active, render ONLY the sub-graph (node +
+  // ≤5-hop neighbors). The canvas re-layouts + fits this smaller set so it
+  // fills the viewport and far neighbors stay reachable. On exit we pass the
+  // full sets back and restore the snapshotted camera.
+  const focusActive = !!(s.focusNodeIds && s.focusNodeIds.size > 0);
+  const egoNodes = useMemo(() => {
+    if (!focusActive) return nodes;
+    return nodes.filter((n) => s.focusNodeIds!.has(n.id));
+  }, [nodes, focusActive, s.focusNodeIds]);
+  const egoEdges = useMemo(() => {
+    if (!focusActive) return edges;
+    return edges.filter((e) => s.focusNodeIds!.has(e.source) && s.focusNodeIds!.has(e.target));
+  }, [edges, focusActive, s.focusNodeIds]);
+  const focusLabel = useMemo(() => {
+    if (!focusActive) return "";
+    const root = nodes.find((n) => n.id === s.selectedNodeId);
+    if (root) return root.label;
+    return nodes.find((n) => s.focusNodeIds!.has(n.id))?.label ?? "node";
+  }, [focusActive, nodes, s.focusNodeIds, s.selectedNodeId]);
+
+  const exitFocus = () => {
+    s.setFocusNodes(null);
+    s.setSelectedNode(null);
+    // Restore the full-graph camera (zoom + pan) snapshotted on focus enter.
+    canvasRef.current?.restoreCamera();
+  };
+
   const onNodeClick = (node: GraphNode | null) => {
     s.setSelectedNode(node?.id ?? null);
-    if (!node) s.setFocusNodes(null);
+    if (!node) exitFocus();
   };
 
   const lodLabel = `${s.lod.toUpperCase()}  ${nodes.length.toLocaleString()}/${(
@@ -282,9 +318,11 @@ export default function GraphScreen() {
               }
             >
               <GraphCanvas
-                group={groupId}
-                nodes={nodes}
-                edges={edges}
+                ref={canvasRef}
+                group={focusActive ? `${groupId}::ego` : groupId}
+                nodes={egoNodes}
+                edges={egoEdges}
+                isFocusView={focusActive}
                 selectedNodeId={s.selectedNodeId}
                 hoveredNodeId={s.hoveredNodeId}
                 isDark={isDark}
@@ -295,13 +333,28 @@ export default function GraphScreen() {
                 render={s.render}
                 activeRepos={s.activeRepos}
                 focusedCommunityId={s.focusedCommunityId}
-                focusNodeIds={s.focusNodeIds}
                 relayoutNonce={s.relayoutNonce}
                 onNodeClick={onNodeClick}
                 onNodeHover={(n) => s.setHoveredNode(n?.id ?? null)}
                 onSettled={() => {}}
               />
             </Suspense>
+
+            {/* Fix #1548-3: clear "focused on X — exit" affordance. */}
+            {focusActive ? (
+              <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-accent/40 bg-surface/90 px-3 py-1 text-sm text-text shadow-sm backdrop-blur-sm">
+                <span className="text-text-3">Focused on</span>
+                <span className="max-w-[18rem] truncate font-medium">{focusLabel}</span>
+                <span className="text-text-4 tabular-nums">· {egoNodes.length} nodes</span>
+                <button
+                  onClick={exitFocus}
+                  aria-label="Exit focus"
+                  className="ml-1 inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-xs text-text-2 hover:bg-surface-2"
+                >
+                  <X size={12} /> Exit
+                </button>
+              </div>
+            ) : null}
 
             <div className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-md border border-border bg-surface/80 px-2 py-1 font-mono text-xs text-text-3 backdrop-blur-sm">
               LOD: {lodLabel}
@@ -316,8 +369,8 @@ export default function GraphScreen() {
                 groupId={groupId}
                 node={selectedNode}
                 onClose={() => {
-                  s.setSelectedNode(null);
-                  s.setFocusNodes(null);
+                  if (s.focusNodeIds) exitFocus();
+                  else s.setSelectedNode(null);
                 }}
                 onFocusNode={(id) => focusEgo(id)}
               />
