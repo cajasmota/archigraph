@@ -6,6 +6,71 @@ import (
 	"testing"
 )
 
+// TestSynth_ProducerConsumerSameFile_BothSurvive covers the #1496 dedup bug.
+// A NestJS gateway can both SERVE a route (@Controller("orders") @Post()) and
+// CALL the same logical path on a downstream service (axios `orders.post(
+// "/orders")`). Both are the canonical id `http:POST:/orders`, so the old
+// side-agnostic dedup collapsed them into a single producer synthetic and the
+// consumer call vanished — leaving the gateway→orders cross-repo link
+// permanently unformed. The dedup is now side-scoped: a producer
+// (http_endpoint_synthesis) and a consumer (http_endpoint_client_synthesis)
+// for the same (verb, path) must both survive.
+func TestSynth_ProducerConsumerSameFile_BothSurvive(t *testing.T) {
+	src := `import { Controller, Get, Post, Param, Body } from "@nestjs/common";
+import { serviceClient } from "@shipfast/js-shared";
+
+const orders = serviceClient(process.env.ORDERS_URL || "http://orders:8000");
+
+@Controller("orders")
+export class OrdersProxyController {
+  @Post()
+  async create(@Body() body: any) {
+    const { data } = await orders.post("/orders", body);
+    return data;
+  }
+
+  @Get(":id")
+  async get(@Param("id") id: string) {
+    const { data } = await orders.get(` + "`/orders/${id}`" + `);
+    return data;
+  }
+}
+`
+	_, res := runDetect(t, "typescript", "orders.controller.ts", src)
+
+	type pp struct{ verb, path, side string }
+	var seen []pp
+	for _, e := range res.Entities {
+		if e.Kind != httpEndpointDefinitionKind && e.Kind != httpEndpointCallKind {
+			continue
+		}
+		seen = append(seen, pp{
+			verb: e.Properties["verb"],
+			path: e.Properties["path"],
+			side: e.Properties["pattern_type"],
+		})
+	}
+
+	want := []pp{
+		{"POST", "/orders", "http_endpoint_synthesis"},        // producer: @Controller("orders") @Post()
+		{"POST", "/orders", "http_endpoint_client_synthesis"}, // consumer: orders.post("/orders")
+		{"GET", "/orders/{id}", "http_endpoint_synthesis"},        // producer: @Get(":id")
+		{"GET", "/orders/{id}", "http_endpoint_client_synthesis"}, // consumer: orders.get(`/orders/${id}`)
+	}
+	for _, w := range want {
+		found := false
+		for _, s := range seen {
+			if s == w {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("missing %s synthetic for %s %s (got: %+v)", w.side, w.verb, w.path, seen)
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Idiom 1 — NestJS HttpService (RxJS)
 // ---------------------------------------------------------------------------
@@ -245,6 +310,41 @@ end
 		"http:GET:/orders",
 	}
 	requireContains(t, got, want, "elixir-finch-interpolated")
+}
+
+// TestSynth_ElixirFinch_SystemGetEnvBaseURL covers the #1496 real-fixture
+// pattern where the @base_url module attribute is resolved from
+// System.get_env/2 with a static default rather than a bare string literal:
+//
+//	@base_url System.get_env("GATEWAY_URL", "http://gateway:3000")
+//	url = "#{@base_url}/orders/#{order_id}"
+//	Finch.build(:get, url)
+//
+// Before the fix the symbol table never resolved @base_url, so the canonical
+// path kept a bogus `/{@base_url}/orders/{order_id}` segment and the
+// realtime-dashboard→gateway cross-repo link could never form.
+func TestSynth_ElixirFinch_SystemGetEnvBaseURL(t *testing.T) {
+	src := `
+defmodule RealtimeDashboard.GatewayClient do
+  @base_url System.get_env("GATEWAY_URL", "http://gateway:3000")
+
+  def get_order(order_id) do
+    url = "#{@base_url}/orders/#{order_id}"
+    Finch.build(:get, url, [])
+    |> Finch.request(RealtimeDashboard.Finch)
+  end
+end
+`
+	got, _ := runDetect(t, "elixir", "gateway_client.ex", src)
+	want := []string{
+		"http:GET:/orders/{order_id}",
+	}
+	requireContains(t, got, want, "elixir-finch-system-getenv-baseurl")
+	for _, id := range got {
+		if id == "http:GET:/{@base_url}/orders/{order_id}" {
+			t.Errorf("regression: @base_url not resolved, emitted bogus path %q", id)
+		}
+	}
 }
 
 // TestSynth_ElixirHTTPoison_Static covers `HTTPoison.get("url")` and

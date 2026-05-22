@@ -260,6 +260,27 @@ var elixirModuleAttrRe = regexp.MustCompile(
 	`(?m)@([a-z_][a-z0-9_]*)\s+"([^"\n\r]+)"`,
 )
 
+// elixirModuleAttrEnvRe matches a module attribute whose value is a
+// `System.get_env/2` call carrying a static default literal, e.g.
+//
+//	@base_url System.get_env("GATEWAY_URL", "http://gateway:3000")
+//
+// This is the idiomatic Elixir config pattern (#1496): the base URL is
+// resolved from an env var at boot with a hard-coded fallback. The fallback
+// literal is the only statically-knowable value, so we register it as the
+// attribute's symbol-table value — exactly mirroring how the JS/TS side
+// treats `process.env.X || "literal"`. Without this the `#{@base_url}`
+// interpolation never resolves and the canonical path keeps a bogus
+// `{@base_url}` segment, so the cross-repo link can never form.
+//
+// Capture groups:
+//
+//	1 = attribute name (without @)
+//	2 = default string literal (2nd arg to System.get_env)
+var elixirModuleAttrEnvRe = regexp.MustCompile(
+	`(?m)@([a-z_][a-z0-9_]*)\s+System\.get_env\(\s*"[^"\n\r]*"\s*,\s*"([^"\n\r]+)"\s*\)`,
+)
+
 // elixirInterpolationRe matches `#{expr}` inside Elixir string interpolations.
 var elixirInterpolationRe = regexp.MustCompile(`#\{([^}]+)\}`)
 
@@ -269,6 +290,17 @@ func buildElixirSymbolTable(content string) map[string]string {
 	syms := make(map[string]string)
 	// Module attributes: @base_url "http://gateway:4000"
 	for _, m := range elixirModuleAttrRe.FindAllStringSubmatch(content, -1) {
+		if len(m) >= 3 {
+			key := "@" + m[1]
+			if _, dup := syms[key]; !dup {
+				syms[key] = m[2]
+			}
+		}
+	}
+	// #1496 — Module attributes resolved from System.get_env/2 with a static
+	// default: @base_url System.get_env("GATEWAY_URL", "http://gateway:3000").
+	// The fallback literal is the statically-knowable value.
+	for _, m := range elixirModuleAttrEnvRe.FindAllStringSubmatch(content, -1) {
 		if len(m) >= 3 {
 			key := "@" + m[1]
 			if _, dup := syms[key]; !dup {

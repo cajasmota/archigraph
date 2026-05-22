@@ -384,6 +384,21 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 				if genericKey, ok := stripAPIPrefix(key); ok {
 					byPath[genericKey] = append(byPath[genericKey], h)
 				}
+
+				// #1496 — GraphQL root aliasing. A GraphQL service exposes one
+				// HTTP endpoint (conventionally `POST /graphql`) that multiplexes
+				// every field resolver. The producer side emits per-field
+				// synthetics with paths like `/graphql/Query/searchProducts`
+				// (verb=GRAPHQL), while a client (Apollo `new ApolloClient({uri:
+				// ".../graphql"})`) only knows the transport root `/graphql`.
+				// Register every GraphQL field-level producer ALSO under the
+				// `/graphql` root so a client pointing at the root matches the
+				// service. We key off the `/graphql/` path prefix (not framework)
+				// so any GraphQL extractor benefits, and only register producer
+				// hits to avoid a consumer-root entry shadowing the producer.
+				if h.side == sideProducer && strings.HasPrefix(key, "/graphql/") {
+					byPath["/graphql"] = append(byPath["/graphql"], h)
+				}
 			}
 		}
 	}

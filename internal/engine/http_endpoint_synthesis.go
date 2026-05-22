@@ -140,10 +140,20 @@ func applyHTTPEndpointSynthesis(
 				return
 			}
 			id := httproutes.SyntheticID(method, canonicalPath)
-			if seen[id] {
+			// #1496 — dedup is SIDE-scoped. A producer-side definition and a
+			// consumer-side call for the same (verb, path) are legitimately
+			// distinct entities and must both survive: a gateway that SERVES
+			// `POST /orders` (NestJS @Controller) while also CALLING a
+			// downstream `POST /orders` (axios proxy) needs both synthetics or
+			// the cross-repo consumer edge can never form. The dedup still
+			// collapses same-side duplicates (e.g. AST-composed Route + YAML
+			// regex both claiming the same producer endpoint) because those
+			// share both the path-ID and the patternType.
+			dedupKey := patternType + "\x00" + id
+			if seen[dedupKey] {
 				return
 			}
-			seen[id] = true
+			seen[dedupKey] = true
 
 			props := map[string]string{
 				"verb":         strings.ToUpper(method),
@@ -209,7 +219,10 @@ func applyHTTPEndpointSynthesis(
 				return
 			}
 			id := httproutes.SyntheticID(method, canonicalPath)
-			alreadySeen := seen[id]
+			// #1496 — mirror the side-scoped dedup key emitClient uses, so the
+			// "did emitClient actually append a new entity?" check below is
+			// correct (it stamps caller_file / url_kind on the appended entity).
+			alreadySeen := seen["http_endpoint_client_synthesis\x00"+id]
 			emitClient(method, canonicalPath, framework, refKind, refName)
 			// Stamp runtime_dynamic on the newly emitted entity if this
 			// is the first time we see this ID and the URL was derived

@@ -3,6 +3,7 @@ package links
 import (
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -407,6 +408,87 @@ func TestHTTPPass_GenericPrefixMatch(t *testing.T) {
 	if !found {
 		t.Errorf("expected cross-repo link for /api/v1 prefix mismatch w/o url_prefix; got %+v", doc.Links)
 	}
+}
+
+// TestHTTPPass_GraphQLRootMatch verifies the #1496 fix: an Apollo client that
+// only knows the GraphQL transport root (`new ApolloClient({uri: ".../graphql"})`
+// → consumer synthetic `http:GRAPHQL:/graphql`) links to a GraphQL service whose
+// producer synthetics are emitted per resolver field
+// (`http:GRAPHQL:/graphql/Query/searchProducts`). All GraphQL operations are
+// multiplexed over the one `/graphql` HTTP endpoint, so the field-level
+// producers are aliased under the `/graphql` root in the byPath index.
+func TestHTTPPass_GraphQLRootMatch(t *testing.T) {
+	root := fixtureRoot(t)
+	writeFixture(t, root, fixtureGraph{
+		Repo: "search-graphql",
+		Entities: []map[string]any{
+			{
+				"id": "ep1", "name": "http:GRAPHQL:/graphql/Query/searchProducts", "kind": "http_endpoint",
+				"source_file": "src/resolvers.ts",
+				"properties": map[string]any{
+					"verb":         "GRAPHQL",
+					"path":         "/graphql/Query/searchProducts",
+					"framework":    "graphql",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+			{
+				"id": "ep2", "name": "http:GRAPHQL:/graphql/Query/order", "kind": "http_endpoint",
+				"source_file": "src/resolvers.ts",
+				"properties": map[string]any{
+					"verb":         "GRAPHQL",
+					"path":         "/graphql/Query/order",
+					"framework":    "graphql",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	writeFixture(t, root, fixtureGraph{
+		Repo: "admin",
+		Entities: []map[string]any{
+			{"id": "fn1", "name": "queries", "kind": "Function", "source_file": "src/queries.ts"},
+			{
+				"id": "ep3", "name": "http:GRAPHQL:/graphql", "kind": "http_endpoint",
+				"source_file": "src/queries.ts",
+				"properties": map[string]any{
+					"verb":          "GRAPHQL",
+					"path":          "/graphql",
+					"framework":     "apollo_client_uri",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:queries",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g-graphql-root", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g-graphql-root-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodHTTP && repoOfLink(l.Source) == "admin" && repoOfLink(l.Target) == "search-graphql" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected admin→search-graphql GraphQL-root cross-repo link; got %+v", doc.Links)
+	}
+}
+
+// repoOfLink extracts the repo prefix of a "repo::entityID" endpoint key.
+func repoOfLink(endpoint string) string {
+	if i := strings.Index(endpoint, "::"); i >= 0 {
+		return endpoint[:i]
+	}
+	return endpoint
 }
 
 // TestHTTPPass_PkVsParamMatch verifies that Django {pk} on the producer side
