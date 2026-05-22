@@ -29,8 +29,16 @@ export interface SimulationConfig {
 }
 
 export interface NodeSizingConfig {
+  /**
+   * Fix #1607: baseSize is now a USER MULTIPLIER (≈1.0 = "leave it auto"), NOT an
+   * absolute pixel/size value. The graph-canvas computes an AUTOMATIC base size in
+   * screen-pixels from the node count (big graph → smaller dots, small graph →
+   * bigger nodes; see autoBasePx) and multiplies it by this knob. So 1.0 gives the
+   * tuned auto size for any graph; 0.5 halves it, 2.0 doubles it — proportional on
+   * every graph instead of an absolute that only suited one node count.
+   */
   baseSize: number;
-  /** log10(degree) multiplier. */
+  /** log10(degree) multiplier — hub emphasis, capped by maxMultiplier. */
   degreeScale: number;
   maxMultiplier: number;
 }
@@ -80,47 +88,67 @@ export const DEFAULT_SIMULATION: SimulationConfig = {
 };
 
 export const DEFAULT_NODE_SIZING: NodeSizingConfig = {
-  // Fix #1532-4: out-of-box defaults must not produce overlapping "blobs".
-  // Lower base + gentler degree scale + a tight max multiplier so a high-degree
-  // hub stays at most ~1.8× the base size (was 3× of a much larger base).
-  //
-  // Fix #1580: this is the REFERENCE base size for a small/mid graph. On a large
-  // (≈19k-node) graph that fixed 90 is far too big — nodes overlap into colored
-  // blobs when zoomed out. The graph-canvas now AUTO-SCALES this down inversely
-  // with sqrt(nodeCount) (see baseSizeForCount), so the user-facing default knob
-  // can stay readable on a small graph while a huge graph renders as fine points.
-  baseSize: 90,
-  degreeScale: 18,
-  maxMultiplier: 1.8,
+  // Fix #1607: baseSize is a MULTIPLIER around the auto (count-derived) base, so
+  // the out-of-box default is 1.0 ("use the computed auto size"). The auto base in
+  // screen-pixels is computed by autoBasePx() from the node count, so 19k and 1.3k
+  // graphs both get a sensible default with no manual tuning. degreeScale/maxMult
+  // give hubs a gentle, hard-capped boost so no node ever blobs.
+  baseSize: 1.0,
+  degreeScale: 0.5,
+  maxMultiplier: 2.2,
 };
 
-// Fix #1580: the base-size slider/clamp floor. Lowered from 40 to 4 so a very
-// dense (≈19k-node) graph can be tuned down to fine points instead of blobs.
-export const NODE_BASE_SIZE_MIN = 4;
-export const NODE_BASE_SIZE_MAX = 320;
+// Fix #1607: baseSize is now a unitless MULTIPLIER, so the slider runs 0.2..4×.
+export const NODE_BASE_SIZE_MIN = 0.2;
+export const NODE_BASE_SIZE_MAX = 4;
 
 /**
- * Fix #1580: node-count-aware DEFAULT base size. A 19k-node graph needs a much
- * smaller base than a 200-node one, so scale the reference default DOWN inversely
- * with sqrt(nodeCount), normalized to a ~1.5k-node reference graph, and floor it
- * at NODE_BASE_SIZE_MIN. This is applied in graph-canvas to the EFFECTIVE base
- * size whenever the user hasn't overridden the knob, so a freshly-loaded huge
- * graph renders as points, not blobs, with no manual tuning.
+ * Fix #1607: AUTOMATIC base node size in SCREEN PIXELS (at neutral zoom = 1),
+ * derived purely from the node count. The whole point of this fix is that the
+ * defaults look right on BOTH a 19,613-node graph and a 1,320-node graph without
+ * touching any knob, so the base must adapt to density.
+ *
+ * Model: nodes share the viewport area, so per-node "breathing room" scales like
+ * 1/sqrt(count). We anchor that to a comfortable on-screen diameter and clamp to a
+ * perceptible-but-non-overlapping pixel band:
+ *
+ *   px = clamp( K / sqrt(count), MIN_PX, MAX_PX )
+ *
+ * Tuned so:
+ *   • count ≈ 1,320  → ~9.5px   (small graph: clearly visible discs)
+ *   • count ≈ 19,613 → ~2.8px   (huge graph: fine perceptible points, no blobs)
+ *   • count ≈ 200    → capped at MAX_PX (tiny graph stays tasteful, not giant)
+ *
+ * This is the BASE at zoom=1; graph-canvas multiplies by the user baseSize knob
+ * and then applies a SUBLINEAR, capped zoom response on top (see zoomSizeFactor).
  */
-export function baseSizeForCount(count: number, reference = DEFAULT_NODE_SIZING.baseSize): number {
-  if (!Number.isFinite(count) || count <= 0) return reference;
-  const REF_NODES = 1500; // graph size the reference baseSize was tuned for
-  const scaled = reference * Math.sqrt(REF_NODES / count);
-  return Math.max(NODE_BASE_SIZE_MIN, Math.min(reference, scaled));
+export const NODE_MIN_PX = 2.0;
+export const NODE_MAX_PX = 14;
+export function autoBasePx(count: number): number {
+  if (!Number.isFinite(count) || count <= 0) return 8;
+  const K = 350; // K/sqrt(count): 1320→9.6px, 19613→2.5px, 200→24.7px(→clamped)
+  const px = K / Math.sqrt(count);
+  return Math.max(NODE_MIN_PX, Math.min(NODE_MAX_PX, px));
 }
 
 export const DEFAULT_RENDER: RenderConfig = {
   pointOpacity: 0.92,
-  pointSizeScale: 0.22,
+  // Fix #1607: the per-node SIZE buffer is now authored directly in screen-pixels
+  // (autoBasePx × knobs), so the global scale is a neutral 1.0 — the px values map
+  // 1:1 on screen at zoom=1. (Was 0.22, which only made sense against the old
+  // ~90-unit absolute base.)
+  pointSizeScale: 1.0,
+  // Fix #1607: this flag now means "GROW nodes on zoom" and is driven by OUR
+  // sublinear, px-capped updater (NOT cosmos's built-in linear law, which is
+  // forced off in graph-canvas). DEFAULT ON: nodes grow gently (z^0.5) as you zoom
+  // in so they read as discs — but the px cap stops them blobbing — and a floor
+  // keeps them perceptible when zoomed out. OFF = constant on-screen pixel size.
   scalePointsOnZoom: true,
-  // Fix #1532-4: cap the on-screen pixel size so no node becomes a giant blob
-  // even when zoomed in (was 60).
-  maxPointSize: 34,
+  // Fix #1607: this is now a REAL on-screen pixel CAP, enforced by the zoom-driven
+  // size updater so the largest (hub) node can never blob past this many px no
+  // matter how far the user zooms in. (Previously cosmos had no maxPointSize at
+  // all, so this knob was inert — a root cause of the "big blobs zoomed in" bug.)
+  maxPointSize: 26,
   // Fix #1558-1: the long cross-module links between islands vanished when
   // zoomed OUT. Raise the default width scale so even the thin same-repo links
   // clear the visible-pixel floor at every zoom level (see packLinkWidths,
@@ -158,7 +186,12 @@ const ALL_EDGE_KINDS: EdgeKind[] = [
 // scope the layout cache by graph-layout-cache.LAYOUT_VERSION (kept in lock-step
 // with this constant); bumping here also discards stale persisted TUNING so the
 // current force defaults (which produce the good spread) actually apply on load.
-const DEFAULTS_VERSION = 4;
+// Fix #1607: bump to 5 — the sizing model changed shape entirely (baseSize is now
+// a unitless multiplier, pointSizeScale is 1.0, scalePointsOnZoom is off, defaults
+// retuned). A stored v4 sizing/render blob (baseSize 90, pointSizeScale 0.22,
+// scalePointsOnZoom true) would be catastrophically wrong under the new model, so
+// discard it and adopt the new code defaults on next load — no manual Reset.
+const DEFAULTS_VERSION = 5;
 const VERSION_KEY = "ag.v2.graph.defaultsVersion";
 
 function readStoredVersion(): number {
@@ -367,8 +400,8 @@ export const useGraphStore = create<GraphState>((set) => ({
   setNodeSizing: (patch) =>
     set((s) => {
       const nodeSizing = { ...s.nodeSizing, ...patch };
-      // Fix #1580: clamp baseSize to the lowered floor so the knob can go to
-      // single digits (fine points on a dense graph) but never below 4 / above max.
+      // Fix #1607: clamp the baseSize MULTIPLIER to 0.2..4× so the knob nudges the
+      // auto (count-derived) base proportionally without ever going to zero/absurd.
       if (patch.baseSize !== undefined) {
         nodeSizing.baseSize = Math.max(
           NODE_BASE_SIZE_MIN,

@@ -46,8 +46,7 @@ import {
 } from "@/lib/graph-colors";
 import { saveLayout, loadLayout, isDegenerateLayout, isLayoutHealthy } from "@/lib/graph-layout-cache";
 import {
-  baseSizeForCount,
-  DEFAULT_NODE_SIZING,
+  autoBasePx,
   type ColorMode,
   type GroupByMode,
   type SimulationConfig,
@@ -283,6 +282,10 @@ function GraphCanvasInner(
   onSettledRef.current = onSettled;
   const simRef = useRef(simulation);
   simRef.current = simulation;
+  // Fix #1607: live render config in a ref so the mount-only zoom handler reads
+  // the current pointSizeScale / maxPointSize when computing the zoom response.
+  const renderRef = useRef(render);
+  renderRef.current = render;
   const hoveredRef = useRef<string | null>(hoveredNodeId);
   hoveredRef.current = hoveredNodeId;
   const relayoutRef = useRef(relayoutNonce);
@@ -350,16 +353,16 @@ function GraphCanvasInner(
     for (const n of nodes) if ((n.pageRank ?? 0) > maxPR) maxPR = n.pageRank ?? 0;
     if (maxPR === 0) maxPR = 1;
 
-    // Fix #1580: AUTO-SCALE the base size DOWN as the graph grows. The knob's
-    // value is tuned for a ~1.5k-node reference graph; on a ≈19k-node graph that
-    // base produces overlapping colored blobs when zoomed out. We scale the
-    // EFFECTIVE base inversely with sqrt(nodeCount) so a huge graph renders as
-    // fine points out of the box. The knob still works: we scale it by the same
-    // count-derived ratio as the default, so turning the slider down further
-    // shrinks points proportionally (and it now reaches single digits).
-    const countScale =
-      baseSizeForCount(count) / DEFAULT_NODE_SIZING.baseSize; // ≤1, →small for big graphs
-    const effectiveBase = Math.max(1, nodeSizing.baseSize * countScale);
+    // Fix #1607: the per-node SIZE buffer is now authored directly in SCREEN
+    // PIXELS at neutral zoom (pointSizeScale is 1.0). The base pixel size is
+    // computed AUTOMATICALLY from the node count (autoBasePx: big graph → small
+    // dots, small graph → bigger discs) so the defaults look right on both 19k and
+    // 1.3k graphs with no tuning. The user baseSize knob is a MULTIPLIER around
+    // that auto base (1.0 = auto). The zoom RESPONSE (sublinear growth on zoom-in +
+    // a px cap) is applied separately by the zoom-driven pointSizeScale updater, so
+    // these are the base px at zoom = 1.
+    const autoBase = autoBasePx(count);
+    const effectiveBase = Math.max(0.5, autoBase * nodeSizing.baseSize);
 
     const grouping = groupBy !== "none";
     const groupCount = new Map<string, number>();
@@ -396,12 +399,13 @@ function GraphCanvasInner(
       // wins and connected groups migrate adjacent. (was 0.22 + normPR*0.15)
       clusterStrength[i] = grouping ? 0.06 + normPR * 0.06 : 0.03 + normPR * 0.04;
 
-      // log-scaled size by degree (graph.md: radius scales with PageRank/degree),
-      // hard-capped at maxMultiplier × base so high-degree hubs never bloom into
-      // overlapping blobs. (Fix #1532-4)
-      const raw =
-        effectiveBase + Math.log10((n.degree ?? 0) + 1) * nodeSizing.degreeScale * countScale;
-      sizes[i] = Math.min(raw, effectiveBase * nodeSizing.maxMultiplier);
+      // Fix #1607: gentle log-scaled degree boost in MULTIPLES of the base px,
+      // hard-capped at maxMultiplier × base so a high-degree hub is at most ~2.2×
+      // a regular node — slightly larger, never a blob. degreeScale is a small
+      // unitless factor on log10(degree+1).
+      const degBoost = 1 + Math.log10((n.degree ?? 0) + 1) * nodeSizing.degreeScale;
+      const mult = Math.min(degBoost, nodeSizing.maxMultiplier);
+      sizes[i] = effectiveBase * mult;
 
       const gkey = groupKeyFor(n, groupBy);
       const center = grouping ? groupCenters.get(gkey) : undefined;
@@ -418,7 +422,14 @@ function GraphCanvasInner(
         : (Math.random() - 0.5) * 1600;
     });
 
-    return { positions, sizes, clusters, clusterStrength };
+    // Fix #1607: the largest base-px size in the buffer (a hub). The zoom-driven
+    // size updater uses this to set pointSizeScale so the LARGEST node is exactly
+    // capped at render.maxPointSize px when zoomed in — preventing any blob.
+    let maxSizePx = 0;
+    for (let i = 0; i < count; i++) if (sizes[i] > maxSizePx) maxSizePx = sizes[i];
+    if (maxSizePx <= 0) maxSizePx = 1;
+
+    return { positions, sizes, clusters, clusterStrength, maxSizePx };
   }, [nodes, repoToIdx, groupCenters, groupBy, nodeSizing]);
 
   // Node colors — re-read pastel scale from tokens.css so theme flows through.
@@ -694,6 +705,9 @@ function GraphCanvasInner(
     // Fix #1564-3: only the hovered node + neighbors are ever labelled, so the
     // per-frame work is tiny — the hover label tracks smoothly during pan/zoom.
     refreshLabelsRef.current();
+    // Fix #1607: keep point sizing in lock-step with the zoom every frame during
+    // a continuous pinch/wheel/drag so the sublinear growth + cap track smoothly.
+    applyZoomSizingRef.current();
     rafRef.current = requestAnimationFrame(motionLoop);
   }, []);
   const startInteraction = useCallback(() => {
@@ -809,10 +823,15 @@ function GraphCanvasInner(
     }
 
     fitNowRef.current();
+    // Fix #1607: the fit sets the fitted zoom level → recompute the zoom-driven
+    // point size so the very first painted (fitted) frame already has perceptible,
+    // non-overlapping nodes with no manual tuning.
+    applyZoomSizingRef.current(true);
     scheduleLabels();
     // One more fit on the next frames in case the canvas size settled late.
     setTimeout(() => {
       fitNowRef.current();
+      applyZoomSizingRef.current(true);
       scheduleLabels();
     }, 200);
     onSettledRef.current();
@@ -826,6 +845,63 @@ function GraphCanvasInner(
   // re-layout) without each one re-deriving the kick logic.
   const packedRef = useRef(packed);
   packedRef.current = packed;
+
+  // ── Fix #1607: SUBLINEAR, capped zoom-driven point sizing ────────────────────
+  // cosmos's built-in scalePointsOnZoom is LINEAR: zoom in → size×zoom (blobs that
+  // overlap), zoom out → tiny dots. That single linear law can't be perceptible
+  // when zoomed out AND non-overlapping when zoomed in. We turn cosmos's law OFF
+  // and drive `pointSizeScale` ourselves from the LIVE zoom level with a SUBLINEAR
+  // response and a hard pixel cap:
+  //
+  //   factor(z) = clamp( z^ZOOM_EXP , MIN_FACTOR , capFactor )
+  //
+  //   • z^0.5 (sqrt) grows nodes GENTLY as you zoom in — they get bigger so they
+  //     read as discs, but far slower than the geometry spreads apart, so they
+  //     never catch up and overlap into blobs.
+  //   • MIN_FACTOR keeps nodes a perceptible fraction of their base size when
+  //     zoomed all the way OUT (visible dots, not invisible lines).
+  //   • capFactor is derived from render.maxPointSize: it's the factor at which
+  //     the LARGEST node (packed.maxSizePx, a hub) hits exactly maxPointSize px, so
+  //     no node ever blobs past the cap no matter how far the user zooms in.
+  //
+  // The on-screen px of a node ≈ baseSizePx × pointSizeScale (scalePointsOnZoom is
+  // off, so cosmos does NOT multiply by zoom again — we own the whole zoom curve).
+  const ZOOM_EXP = 0.5; // sqrt → sublinear growth
+  const MIN_FACTOR = 0.62; // floor: zoomed-out dots stay perceptible
+  const lastZoomScaleRef = useRef(-1);
+  const applyZoomSizing = useCallback((force = false) => {
+    const g = graphRef.current;
+    if (!g) return;
+    let z = 1;
+    try {
+      z = g.getZoomLevel() || 1;
+    } catch {
+      z = 1;
+    }
+    if (!Number.isFinite(z) || z <= 0) z = 1;
+    const r = renderRef.current;
+    const baseScale = r.pointSizeScale; // user "Point size scale" knob (default 1.0)
+    const maxPx = Math.max(2, r.maxPointSize);
+    const maxBasePx = packedRef.current.maxSizePx; // largest hub base px @ zoom 1
+    // capFactor: the scale at which the largest node reaches maxPx on screen.
+    const capFactor = maxPx / (maxBasePx * baseScale);
+    // Fix #1607: the "Grow nodes on zoom" toggle (render.scalePointsOnZoom) chooses
+    // the zoom law. ON (default) = sublinear growth z^0.5 so nodes read as discs
+    // when zoomed in without overlapping; OFF = constant on-screen size (factor 1),
+    // i.e. nodes keep a fixed pixel size at every zoom. Both stay px-capped.
+    const raw = renderRef.current.scalePointsOnZoom ? Math.pow(z, ZOOM_EXP) : 1;
+    const factor = Math.max(MIN_FACTOR, Math.min(capFactor, raw));
+    const next = baseScale * factor;
+    // Skip redundant setConfig churn if the scale hasn't meaningfully moved.
+    if (!force && Math.abs(next - lastZoomScaleRef.current) < 1e-3) return;
+    lastZoomScaleRef.current = next;
+    g.setConfig({ pointSizeScale: next });
+    // While settled the loop is paused; nudge a single repaint so the new size
+    // lands without re-running the simulation.
+    if (hasSettledRef.current) g.render();
+  }, []);
+  const applyZoomSizingRef = useRef(applyZoomSizing);
+  applyZoomSizingRef.current = applyZoomSizing;
 
   // Fix #1581: THE single source of truth for "run a fresh settle". Previously the
   // first-load no-cache path (mount effect) and the Reset/Re-layout path used
@@ -887,7 +963,9 @@ function GraphCanvasInner(
       backgroundColor: isDark ? "#020617" : "#f8fafc",
       spaceSize: SPACE_SIZE,
       pixelRatio: Math.min(window.devicePixelRatio, 1.5),
-      scalePointsOnZoom: render.scalePointsOnZoom,
+      // Fix #1607: ALWAYS off — our applyZoomSizing updater is the sole zoom→size
+      // law (sublinear + px-capped). cosmos's built-in linear law must not stack.
+      scalePointsOnZoom: false,
       pointSizeScale: render.pointSizeScale,
       pointOpacity: render.pointOpacity,
       pointGreyoutOpacity: 0.15,
@@ -979,6 +1057,10 @@ function GraphCanvasInner(
       // for the (rare) single-shot zoom that doesn't emit start/end.
       onZoomStart: () => startInteractionRef.current(),
       onZoom: () => {
+        // Fix #1607: drive the sublinear, capped point size off every zoom event
+        // (covers the single-shot wheel zoom that doesn't bracket start/end). The
+        // rAF motion loop handles continuous zoom/pan; this catches the rest.
+        applyZoomSizingRef.current();
         if (!interactingRef.current) scheduleLabelsLive();
       },
       onZoomEnd: () => endInteractionRef.current(),
@@ -1083,8 +1165,12 @@ function GraphCanvasInner(
     if (!g) return;
     g.setConfig({
       pointOpacity: render.pointOpacity,
-      pointSizeScale: render.pointSizeScale,
-      scalePointsOnZoom: render.scalePointsOnZoom,
+      // Fix #1607: do NOT set pointSizeScale here — the zoom-driven updater owns it
+      // (base scale × sublinear-capped zoom factor). We re-run that updater below so
+      // a knob change (Point size scale / Max point size) re-derives the live scale
+      // at the current zoom. We also force scalePointsOnZoom OFF: our updater is the
+      // single source of the zoom→size law, and cosmos's linear law must not stack.
+      scalePointsOnZoom: false,
       linkWidthScale: render.showLinks ? render.linkWidthScale : 0,
       simulationLinkSpring: simulation.linkSpring,
       simulationLinkDistance: Math.max(simulation.linkDistance, 8),
@@ -1092,6 +1178,9 @@ function GraphCanvasInner(
       simulationRepulsion: simulation.repulsion,
       simulationCenter: simulation.center,
     });
+    // Fix #1607: re-derive pointSizeScale from the live zoom (force, since the knob
+    // may have changed maxPointSize / base scale).
+    applyZoomSizingRef.current(true);
     g.setLinkColors(packLinkColors());
     g.setLinkWidths(packLinkWidths());
     g.render();

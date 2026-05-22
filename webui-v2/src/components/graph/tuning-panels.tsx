@@ -233,19 +233,23 @@ export function TuningPanels() {
         onReset={() => setNodeSizing(DEFAULT_NODE_SIZING)}
       >
         <Slider
-          label="Base size"
+          // Fix #1607: baseSize is now a MULTIPLIER around the auto count-derived
+          // size (1.0 = auto). 0.2..4× nudges all nodes proportionally on any graph.
+          label="Base size (×auto)"
           value={nodeSizing.baseSize}
           min={NODE_BASE_SIZE_MIN}
           max={NODE_BASE_SIZE_MAX}
-          step={2}
+          step={0.1}
           onChange={(v) => setNodeSizing({ baseSize: v })}
         />
         <Slider
+          // Fix #1607: degreeScale is now a small unitless hub-emphasis factor
+          // (log10(degree+1) × this), capped by Max multiplier. 0..3 is plenty.
           label="Degree scale"
           value={nodeSizing.degreeScale}
           min={0}
-          max={120}
-          step={5}
+          max={3}
+          step={0.1}
           onChange={(v) => setNodeSizing({ degreeScale: v })}
         />
         <Slider
@@ -364,7 +368,9 @@ export function TuningPanels() {
           onChange={(v) => setRender({ linkWidthScale: v })}
         />
         <Toggle
-          label="Scale on zoom"
+          // Fix #1607: ON = nodes grow gently (sublinear, px-capped) as you zoom
+          // in; OFF = constant on-screen pixel size at every zoom.
+          label="Grow nodes on zoom"
           checked={render.scalePointsOnZoom}
           onChange={(v) => setRender({ scalePointsOnZoom: v })}
         />
