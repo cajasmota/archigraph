@@ -217,8 +217,21 @@ type cacheEntry struct {
 type GraphCache struct {
 	mu       sync.Mutex
 	entries  map[string]*cacheEntry
+	loading  map[string]*loadGate // in-flight loads, keyed by group (singleflight)
 	ttl      time.Duration
 	Payloads *graphPayloadCache // pre-serialised dense graph JSON, keyed by group+params
+}
+
+// loadGate coordinates a single in-flight loadGroup call so that N concurrent
+// GetGroup callers for the same group do not each kick off a (potentially
+// multi-second) disk-load + Pass-4 algorithm run.  The first caller loads; the
+// rest wait on done and read the shared result.  Critically, loadGroup runs
+// WITHOUT GraphCache.mu held, so a slow group never wedges unrelated groups or
+// the cheap cached-read fast path used by first-paint endpoints (#1478).
+type loadGate struct {
+	done chan struct{}
+	grp  *DashGroup
+	err  error
 }
 
 // NewGraphCache returns a cache with the given TTL.  Use 60 * time.Second
@@ -226,9 +239,30 @@ type GraphCache struct {
 func NewGraphCache(ttl time.Duration) *GraphCache {
 	return &GraphCache{
 		entries:  map[string]*cacheEntry{},
+		loading:  map[string]*loadGate{},
 		ttl:      ttl,
 		Payloads: newGraphPayloadCache(),
 	}
+}
+
+// GetGroupCached returns the already-loaded group and true, or (nil, false)
+// when the group is not warm.  It NEVER loads from disk or runs algorithms,
+// so it is safe to call from first-paint / best-effort enrichment paths that
+// must not block on a cold or slow group (#1478).  A best-effort warm is
+// kicked off in the background so a subsequent request finds it ready.
+func (c *GraphCache) GetGroupCached(groupName string) (*DashGroup, bool) {
+	c.mu.Lock()
+	ent, ok := c.entries[groupName]
+	if ok && time.Since(ent.loadedAt) < c.ttl {
+		grp := ent.group
+		c.mu.Unlock()
+		return grp, true
+	}
+	c.mu.Unlock()
+	// Not warm (or stale): trigger an async warm so the next caller is fast,
+	// but return immediately so we never block first paint.
+	go func() { _, _ = c.GetGroup(groupName) }()
+	return nil, false
 }
 
 // Invalidate drops the cached entry for group (called on re-index events).
@@ -253,25 +287,47 @@ func (c *GraphCache) InvalidateAll() {
 // elapsed or when graph files have changed on disk.
 func (c *GraphCache) GetGroup(groupName string) (*DashGroup, error) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	now := time.Now()
-	ent, ok := c.entries[groupName]
-	if ok && now.Sub(ent.loadedAt) < c.ttl {
-		return ent.group, nil
+	if ent, ok := c.entries[groupName]; ok && now.Sub(ent.loadedAt) < c.ttl {
+		grp := ent.group
+		c.mu.Unlock()
+		return grp, nil
 	}
 
-	// Load (or refresh) from disk.
-	grp, err := c.loadGroup(groupName)
-	if err != nil {
-		return nil, err
+	// Cold / stale. Coordinate a single in-flight load via a loadGate so
+	// concurrent callers for the same group share one disk-load + Pass-4
+	// algorithm run instead of each launching their own. We deliberately
+	// release c.mu before running loadGroup: the load can take seconds on a
+	// large group, and holding the cache mutex across it would serialise
+	// EVERY other group + the cheap cached-read fast path behind it — the
+	// exact wedge that made first-paint endpoints (and thus the dashboard)
+	// return 000 with a large group registered (#1478).
+	if g, ok := c.loading[groupName]; ok {
+		c.mu.Unlock()
+		<-g.done
+		return g.grp, g.err
 	}
-	c.entries[groupName] = &cacheEntry{group: grp, loadedAt: now}
-	return grp, nil
+	gate := &loadGate{done: make(chan struct{})}
+	c.loading[groupName] = gate
+	c.mu.Unlock()
+
+	grp, err := c.loadGroup(groupName)
+
+	c.mu.Lock()
+	if err == nil {
+		c.entries[groupName] = &cacheEntry{group: grp, loadedAt: time.Now()}
+	}
+	delete(c.loading, groupName)
+	c.mu.Unlock()
+
+	gate.grp, gate.err = grp, err
+	close(gate.done)
+	return grp, err
 }
 
 // loadGroup reads the registry for groupName and loads each repo's graph.
-// Must be called with c.mu held.
+// It runs WITHOUT c.mu held (see GetGroup) so a slow load never blocks the
+// rest of the cache.
 func (c *GraphCache) loadGroup(groupName string) (*DashGroup, error) {
 	groups, err := registry.Groups()
 	if err != nil {

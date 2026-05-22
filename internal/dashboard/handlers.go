@@ -19,8 +19,11 @@ func (s *Server) handleListRegistry(w http.ResponseWriter, _ *http.Request) {
 		groups = []GroupSummary{}
 	}
 	// Best-effort: enrich with top frameworks from the in-memory graph cache.
+	// Use the non-blocking cached-only lookup so this first-paint endpoint
+	// never blocks on a cold/slow group load (#1478) — enrichment appears on
+	// a later request once the background warm completes.
 	for i := range groups {
-		if grp, gErr := s.graphs.GetGroup(groups[i].Name); gErr == nil {
+		if grp, ok := s.graphs.GetGroupCached(groups[i].Name); ok {
 			groups[i].Frameworks = groupTopFrameworks(grp, 8)
 		}
 	}

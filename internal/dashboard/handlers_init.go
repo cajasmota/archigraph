@@ -57,8 +57,11 @@ func (s *Server) handleDashboardInit(w http.ResponseWriter, r *http.Request) {
 			"config_path": g.ConfigPath,
 			"repos":       g.Repos,
 		}
-		// Best-effort: try to load cached stats (sub-second when already warm).
-		if grp, err := s.graphs.GetGroup(g.Name); err == nil {
+		// Best-effort: use ONLY already-warm stats. GetGroupCached never loads
+		// from disk or runs Pass-4 algorithms, so this combined first-paint
+		// endpoint returns immediately even with a large group registered
+		// (#1478); a background warm is kicked off for the next request.
+		if grp, ok := s.graphs.GetGroupCached(g.Name); ok {
 			totalE, totalR := 0, 0
 			for _, r := range grp.Repos {
 				if r.Doc != nil {
