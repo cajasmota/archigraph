@@ -188,6 +188,22 @@ export const api = {
     requestV2<DocPage>(
       `/groups/${encodeURIComponent(groupId)}/docs/page?path=${encodeURIComponent(path)}`,
     ),
+  /**
+   * Docs export URL (#1624) — extensible by `format` (zip first) and `kind`
+   * (all | technical | business). Returns a plain URL string suitable for use
+   * as an anchor `href` or programmatic `window.location.assign` target; the
+   * daemon streams the archive directly so the browser handles the download
+   * lifecycle.
+   */
+  docsExportUrl: (
+    groupId: string,
+    opts?: { format?: "zip"; kind?: "all" | "technical" | "business" },
+  ) => {
+    const qs = new URLSearchParams();
+    qs.set("format", opts?.format ?? "zip");
+    qs.set("kind", opts?.kind ?? "all");
+    return `/api/v2/groups/${encodeURIComponent(groupId)}/docs/export?${qs.toString()}`;
+  },
   /** v2 — the full graph payload (nodes/edges/communities/repos) for the Graph
    *  screen. `params` maps to the daemon's repo/kind filters. */
   getGraph: (groupId: string, params?: { repos?: string[]; filterKind?: string; lod?: string }) => {

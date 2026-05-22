@@ -53,7 +53,7 @@ bottom so an engineer can audit it without polluting the PM reading:
 <summary>Where this came from (for engineers)</summary>
 
 Derived from the technical docs and graph evidence:
-- capability backed by the endpoints documented in `<repo>/docs/reference/api.md`
+- capability backed by the endpoints documented in `~/.archigraph/docs/<group>/<repo-slug>/reference/api.md`
 - rule observed in validation logic surfaced by `archigraph_find`
 - last regenerated: <date>
 

@@ -1,6 +1,6 @@
 # Pass 5 — Reference
 
-Reference docs are the dry, exhaustive, alphabetized pages. They live under `<repo>/docs/reference/` and are produced one section at a time, sequentially, by a single writer subagent per repo.
+Reference docs are the dry, exhaustive, alphabetized pages. They live under `~/.archigraph/docs/<group>/<repo-slug>/reference/` and are produced one section at a time, sequentially, by a single writer subagent per repo.
 
 > **Pass 3a hook active.** Before writing any paragraph that describes an entity, run the generation-time repair hook from `prompts/03a-generation-time-repair.md`. Auto-repair residuals where unambiguous; otherwise emit the documented "Runtime-resolved edge" callout from that prompt. Do not silently drop unresolved outbound edges.
 

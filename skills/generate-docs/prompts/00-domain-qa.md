@@ -73,7 +73,7 @@ Write the answers into `domain.md` with this skeleton:
 <paragraph>
 
 ## Known dynamic couplings
-- <description>; encode in `<repo>/docs/...` per ADR-0007.
+- <description>; encode in `~/.archigraph/docs/<group>/<repo-slug>/...` per ADR-0007.
 
 ## Doc preferences
 - Emphasize: ...

@@ -16,8 +16,8 @@ app → backend → office web).
 
 ## Inputs
 
-- `<primary-repo>/docs/business/domain-glossary.md` (Pass 15).
-- `<primary-repo>/docs/business/capabilities/*.md` (Pass 16) — link into them.
+- `~/.archigraph/docs/<group>/business/domain-glossary.md` (Pass 15).
+- `~/.archigraph/docs/<group>/business/capabilities/*.md` (Pass 16) — link into them.
 - Process flows / call chains and cross-repo links from the graph.
 - Any technical-tier journey/flow pages — translate to business voice, do not
   copy. Demote their mermaid sequence diagrams; they stay in the technical tier.
@@ -25,7 +25,7 @@ app → backend → office web).
 ## Output
 
 ```
-<primary-repo>/docs/business/journeys/<journey-slug>.md   # one per journey
+~/.archigraph/docs/<group>/business/journeys/<journey-slug>.md   # one per journey
 ```
 
 Use `output-templates/business-journey.md`. A journey-slug is a goal in
@@ -76,7 +76,7 @@ Run `snippets/verification-checklist.md`. Then:
 ```
 archigraph_save_finding(
   question="What are the business user journeys for the <group> group?",
-  answer="<files: <primary-repo>/docs/business/journeys/*.md>",
+  answer="<files: ~/.archigraph/docs/<group>/business/journeys/*.md>",
   type="business_journeys",
 )
 ```

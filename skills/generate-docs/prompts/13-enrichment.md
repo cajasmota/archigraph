@@ -17,7 +17,7 @@ badges, rank scores, gap warnings, and disqualification signals.
 ## Inputs
 
 - Group inventory already produced in Passes 1–2.
-- Existing doc files under `<repo>/docs/` (Pass 4–6 output) — enrich in-place.
+- Existing doc files under `~/.archigraph/docs/<group>/<repo-slug>/` (Pass 4–6 output) — enrich in-place.
 - `archigraph_enrichments(action=list)` — pre-computed enrichment candidates
   from the daemon; use as signals, not as verbatim output.
 - Per-kind templates at `skills/generate-docs/templates/<kind>.md` — use as
@@ -178,7 +178,7 @@ See `skills/generate-docs/examples/` for fully-populated reference examples.
 If no doc file exists for the entity, create a minimal file at:
 
 ```
-<repo>/docs/enrichments/<kind>/<entity_id>.md
+~/.archigraph/docs/<group>/<repo-slug>/enrichments/<kind>/<entity_id>.md
 ```
 
 This path must contain the entity ID as a substring so the backend's

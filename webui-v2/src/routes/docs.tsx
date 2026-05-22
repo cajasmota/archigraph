@@ -12,10 +12,10 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Search, X, ChevronLeft } from "lucide-react";
+import { Search, X, ChevronLeft, Download } from "lucide-react";
 import { Kbd } from "@/components/ui";
 import { useDocsTree, useDocPage } from "@/hooks/use-docs";
-import { ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { DocsTree } from "@/components/docs/docs-tree";
 import { DocsReader } from "@/components/docs/docs-reader";
 import { DocsNotGenerated, DocsPickDocument } from "@/components/docs/docs-empty";
@@ -196,6 +196,23 @@ export default function DocsScreen() {
         </div>
         {hasSkillDocs && (
           <span className="text-xs text-text-3 ml-auto shrink-0">Generated docs</span>
+        )}
+        {/* Export (#1624): downloads a zip of the group's generated docs.
+            The daemon streams the archive — no JS-side blob handling needed. */}
+        {hasSkillDocs && (
+          <a
+            href={api.docsExportUrl(groupId, {
+              format: "zip",
+              kind: tier === "business" ? "business" : tier === "technical" ? "technical" : "all",
+            })}
+            download
+            className={`flex items-center gap-1 px-2 h-7 rounded-md text-xs text-text-2 hover:text-text hover:bg-surface border border-border shrink-0 ${hasSkillDocs ? "" : "ml-auto"}`}
+            title={`Download ${tier ?? "all"} docs as a zip`}
+            aria-label="Export documentation as zip"
+          >
+            <Download size={12} />
+            Export
+          </a>
         )}
       </div>
 

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
 
@@ -144,6 +145,17 @@ func (s *Server) handleDocPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // groupDocPaths returns a map of repo-slug -> docs root path for a group.
+//
+// Resolution order (#1624 — docs no longer live in repos):
+//  1. The archigraph-managed store at `~/.archigraph/docs/<group>/<slug>/`.
+//     When that directory exists it ALWAYS wins.
+//  2. A one-time best-effort migration: if the store directory is empty but
+//     the repo's legacy `<repo>/docs/` looks like skill-generated output, it
+//     is moved into the store and then served from there.
+//  3. Legacy fallback for hand-authored repo docs (a pre-existing Docusaurus
+//     site, hand-maintained `<repo>/docs/`, or markdown at the repo root).
+//     This keeps the surface compatible with repos that ship docs of their
+//     own, but the generate-docs skill no longer writes to these paths.
 func groupDocPaths(groupName string) (map[string]string, error) {
 	groups, err := registry.Groups()
 	if err != nil {
@@ -159,18 +171,48 @@ func groupDocPaths(groupName string) (map[string]string, error) {
 		}
 		out := map[string]string{}
 		for _, r := range cfg.Repos {
-			// Convention: look for a "docs" dir under the repo path.
+			storeDir := daemon.RepoDocsDir(groupName, r.Slug)
+
+			// (2) Attempt a one-time migration when the store has nothing.
+			if !dirHasContent(storeDir) {
+				if migrated, mErr := daemon.MigrateInRepoDocs(groupName, r.Slug, r.Path); mErr == nil && migrated {
+					// fall through — storeDir is now populated.
+				}
+			}
+
+			// (1) Prefer the store layout.
+			if dirHasContent(storeDir) {
+				out[r.Slug] = storeDir
+				continue
+			}
+
+			// (3) Legacy: look for `<repo>/docs/`, then the repo root.
 			docsDir := filepath.Join(r.Path, "docs")
 			if _, err := os.Stat(docsDir); err == nil {
 				out[r.Slug] = docsDir
 				continue
 			}
-			// Fall back to the repo root itself (some repos put .md files at root).
 			out[r.Slug] = r.Path
 		}
 		return out, nil
 	}
 	return nil, errNotFound(groupName)
+}
+
+// dirHasContent reports whether dir exists, is a directory, and is non-empty.
+func dirHasContent(dir string) bool {
+	if dir == "" {
+		return false
+	}
+	info, err := os.Stat(dir)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	return len(entries) > 0
 }
 
 func errNotFound(group string) error {

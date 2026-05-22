@@ -16,8 +16,8 @@ Synthesised across the whole group.
 
 ## Inputs
 
-- `<primary-repo>/docs/business/domain-glossary.md` (Pass 15).
-- `<primary-repo>/docs/business/capabilities/*.md` (Pass 16) — rules attach to
+- `~/.archigraph/docs/<group>/business/domain-glossary.md` (Pass 15).
+- `~/.archigraph/docs/<group>/business/capabilities/*.md` (Pass 16) — rules attach to
   capabilities.
 - The graph: validation logic, conditional branches, permission checks,
   required fields.
@@ -25,7 +25,7 @@ Synthesised across the whole group.
 ## Output
 
 ```
-<primary-repo>/docs/business/rules/index.md   # grouped by business area
+~/.archigraph/docs/<group>/business/rules/index.md   # grouped by business area
 ```
 
 Use `output-templates/business-rules.md`. One file is usually enough; split into
@@ -73,7 +73,7 @@ Run `snippets/verification-checklist.md`. Then:
 ```
 archigraph_save_finding(
   question="What business rules does the <group> group enforce?",
-  answer="<file: <primary-repo>/docs/business/rules/index.md>",
+  answer="<file: ~/.archigraph/docs/<group>/business/rules/index.md>",
   type="business_rules",
 )
 ```

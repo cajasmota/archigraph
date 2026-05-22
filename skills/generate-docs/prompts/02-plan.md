@@ -94,9 +94,12 @@ Write `~/.archigraph/groups/<group>/plan.json`:
 The `tiers` field records which documentation tiers the user selected (see
 SKILL.md § Documentation tiers). `business` passes (15–19) are only scheduled if
 `"business"` is in `tiers`; technical passes (3–8, 10–14) only if `"technical"`
-is in `tiers`. `primary_repo` is the anchor repo the business tier writes its
-group-synthesised `docs/business/` set into (default: the repo with the most
-entities — usually the backend/service).
+is in `tiers`. `primary_repo` is retained for backwards compatibility but is
+no longer used as a write location: business docs are always written to the
+single group-level directory `~/.archigraph/docs/<group>/business/` (#1624).
+Treat `primary_repo` as a hint for which repo to lead with in cross-cutting
+prose (default: the repo with the most entities — usually the
+backend/service).
 
 ### Step 5 — Show the plan to the user
 

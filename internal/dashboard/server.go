@@ -568,6 +568,9 @@ func (s *Server) routes() http.Handler {
 	// Generated-markdown docs portal — WebUI v2 (#1552)
 	mux.HandleFunc("GET /api/v2/groups/{group}/docs/tree", s.handleV2DocsTree)
 	mux.HandleFunc("GET /api/v2/groups/{group}/docs/page", s.handleV2DocsPage)
+	// Docs export (#1624): streams an archive of a group's generated docs.
+	// Extensible by format (zip first) + kind (all|technical|business).
+	mux.HandleFunc("GET /api/v2/groups/{group}/docs/export", s.handleV2DocsExport)
 	// Graph — the WebUI v2 hero surface payload (nodes/edges/communities/repos).
 	// Carries pagerank + source_file for cosmos.gl node sizing + module group-by.
 	mux.HandleFunc("GET /api/v2/graph/{group}", s.handleV2Graph)

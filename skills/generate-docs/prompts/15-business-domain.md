@@ -16,7 +16,7 @@ content spans every repo's domain.
 ## Inputs
 
 - `~/.archigraph/groups/<group>/domain.md` — owner-supplied domain framing (Pass 0).
-- Every `<repo>/docs/overview.md` and `<repo>/docs/glossary.md` from the
+- Every `~/.archigraph/docs/<group>/<repo-slug>/overview.md` and `~/.archigraph/docs/<group>/<repo-slug>/glossary.md` from the
   technical tier, if it was generated (the technical glossary is symbol-anchored;
   translate it to business voice — do not copy it).
 - The graph (entities / data model) via the MCP tools below.
@@ -26,7 +26,7 @@ content spans every repo's domain.
 Write a single group-synthesised file:
 
 ```
-<primary-repo>/docs/business/domain-glossary.md
+~/.archigraph/docs/<group>/business/domain-glossary.md
 ```
 
 `<primary-repo>` is the group's anchor repo — the one the orchestrator selected
@@ -78,7 +78,7 @@ Run `snippets/verification-checklist.md` (business-voice section applies).
 ```
 archigraph_save_finding(
   question="What is the business domain glossary for the <group> group?",
-  answer="<file: <primary-repo>/docs/business/domain-glossary.md>",
+  answer="<file: ~/.archigraph/docs/<group>/business/domain-glossary.md>",
   type="business_domain",
 )
 ```

@@ -50,9 +50,9 @@ graph LR
 
 ## Where to look next
 
-- New engineer? Start with [`<repo>/docs/overview.md`](../../<repo>/docs/overview.md).
+- New engineer? Start with [`~/.archigraph/docs/<group>/<repo-slug>/overview.md`](../../~/.archigraph/docs/<group>/<repo-slug>/overview.md).
 - On call? Start with [`cross-cutting/observability.md`](../cross-cutting/observability.md).
-- Building an integration? Start with [`<repo>/docs/reference/api.md`](../../<repo>/docs/reference/api.md).
+- Building an integration? Start with [`~/.archigraph/docs/<group>/<repo-slug>/reference/api.md`](../../~/.archigraph/docs/<group>/<repo-slug>/reference/api.md).
 
 ## Pending cross-repo links
 
