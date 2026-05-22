@@ -342,3 +342,50 @@ func TestRabbitMQ_LooksLikeQueueName(t *testing.T) {
 		}
 	}
 }
+
+// #1638 — aio-pika async RabbitMQ producer/consumer detection.
+func TestRabbitMQ_Python_AioPikaPublishConstRoutingKey(t *testing.T) {
+	src := `import aio_pika
+
+LOAD_QUEUE = "etl-load-queue"
+
+async def publish_aggregate(channel, aggregate):
+    await channel.default_exchange.publish(
+        aio_pika.Message(body=b"x"),
+        routing_key=LOAD_QUEUE,
+    )
+`
+	ents, rels := runRabbitMQDetect(t, "python", "stage5.py", src)
+	qID := rabbitmqQueueID("etl-load-queue")
+	if queueByName(ents, qID) == nil {
+		t.Fatalf("expected SCOPE.Queue for etl-load-queue, ents=%v", ents)
+	}
+	pubs := relsByKind(rels, publishesToEdgeKind)
+	if len(pubs) == 0 || !strings.Contains(pubs[0].to, qID) {
+		t.Fatalf("expected aio-pika PUBLISHES_TO to %q, got %v", qID, pubs)
+	}
+	if pubs[0].props["messaging_layer"] != "aio-pika" {
+		t.Fatalf("messaging_layer = %q, want aio-pika", pubs[0].props["messaging_layer"])
+	}
+}
+
+func TestRabbitMQ_Python_AioPikaDeclareAndConsume(t *testing.T) {
+	src := `import aio_pika
+
+LOAD_QUEUE = "etl-load-queue"
+
+async def consume(connection):
+    channel = await connection.channel()
+    queue = await channel.declare_queue(LOAD_QUEUE, durable=True)
+    await queue.consume(on_message)
+`
+	ents, rels := runRabbitMQDetect(t, "python", "stage6.py", src)
+	qID := rabbitmqQueueID("etl-load-queue")
+	if queueByName(ents, qID) == nil {
+		t.Fatalf("expected SCOPE.Queue for etl-load-queue, ents=%v", ents)
+	}
+	subs := relsByKind(rels, subscribesToEdgeKind)
+	if len(subs) == 0 || !strings.Contains(subs[0].to, qID) {
+		t.Fatalf("expected aio-pika SUBSCRIBES_TO to %q, got %v", qID, subs)
+	}
+}

@@ -139,6 +139,7 @@ func applyRabbitMQEdges(
 	switch lang {
 	case "python":
 		synthesizePyRabbitMQ(src, emitQueue, emitEdge)
+		synthesizePyAioPika(src, emitQueue, emitEdge)
 	case "javascript", "typescript":
 		synthesizeNodeRabbitMQ(src, emitQueue, emitEdge)
 	case "java", "kotlin":
@@ -207,6 +208,147 @@ var pikaQueueDeclareKwRe = regexp.MustCompile(`\.queue_declare\s*\(\s*queue\s*=\
 // pikaQueueDeclarePosRe captures channel.queue_declare(name).
 // Group 1 = queue name.
 var pikaQueueDeclarePosRe = regexp.MustCompile(`\.queue_declare\s*\(\s*["']([^"'\n\r]+)["']`)
+
+// ---------------------------------------------------------------------------
+// Python — aio-pika (async RabbitMQ) — #1638
+//
+// aio-pika is the de-facto async RabbitMQ client. Unlike pika it routes
+// through an exchange object, so publishes look like:
+//
+//	await channel.default_exchange.publish(Message(...), routing_key="q")
+//	await exchange.publish(msg, routing_key=QUEUE_CONST)
+//
+// and consumers / declarations look like:
+//
+//	queue = await channel.declare_queue("q", durable=True)
+//	await queue.consume(handler)
+//
+// We resolve the queue name from the publish routing_key and from
+// declare_queue, then attach consume() edges to the most recently declared
+// queue in the same file (single-queue ETL workers are the common case).
+// ---------------------------------------------------------------------------
+
+// aioPikaPublishLitRe captures a routing_key="q" kwarg. aio-pika publishes
+// pass a Message(...) positional arg whose own parens defeat a `.publish(...`
+// anchored match, so we key on the routing_key kwarg directly. Presence of a
+// `.publish(` somewhere in the file is verified by the caller guard.
+// Group 1 = routing key (literal queue name).
+var aioPikaPublishLitRe = regexp.MustCompile(`routing_key\s*=\s*["']([^"'\n\r]+)["']`)
+
+// aioPikaPublishVarRe captures routing_key=QUEUE_CONST (resolved via consts).
+// Group 1 = constant name.
+var aioPikaPublishVarRe = regexp.MustCompile(`routing_key\s*=\s*([A-Za-z_][A-Za-z0-9_]*)`)
+
+// aioPikaDeclareQueueLitRe captures await channel.declare_queue("q", ...).
+// Group 1 = queue name (literal).
+var aioPikaDeclareQueueLitRe = regexp.MustCompile(`\.declare_queue\s*\(\s*["']([^"'\n\r]+)["']`)
+
+// aioPikaDeclareQueueVarRe captures await channel.declare_queue(QUEUE_CONST, ...).
+// Group 1 = constant name.
+var aioPikaDeclareQueueVarRe = regexp.MustCompile(`\.declare_queue\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)`)
+
+// aioPikaConsumeRe captures queue.consume(handler) — async consumer side.
+var aioPikaConsumeRe = regexp.MustCompile(`\.consume\s*\(`)
+
+// pyConstAssignRe captures module-level NAME = "value" string constants used
+// to resolve queue-name references in aio-pika calls.
+var pyConstAssignRe = regexp.MustCompile(`(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*["']([^"'\n\r]+)["']`)
+
+// synthesizePyAioPika emits RabbitMQ producer/consumer edges for aio-pika.
+func synthesizePyAioPika(
+	src string,
+	emitQueue func(queueID, queueName, exchange, routingKey string, props map[string]string),
+	emitEdge func(callerKind, callerName, queueID, edgeKind string, props map[string]string),
+) {
+	isAioPika := strings.Contains(src, "aio_pika") || strings.Contains(src, "aio-pika")
+	// declare_queue + consume without an aio_pika import is still aio-pika
+	// (re-exported names), but plain pika never calls declare_queue/consume —
+	// it uses queue_declare/basic_consume — so this is safe.
+	if !isAioPika && !strings.Contains(src, "declare_queue") {
+		return
+	}
+
+	// Build a module-level string-constant table for routing_key/queue refs.
+	consts := map[string]string{}
+	for _, m := range pyConstAssignRe.FindAllStringSubmatch(src, -1) {
+		if len(m) >= 3 {
+			consts[m[1]] = m[2]
+		}
+	}
+	resolve := func(tok string) string {
+		if v, ok := consts[tok]; ok {
+			return v
+		}
+		return tok
+	}
+
+	enclosing := func(offset int) string { return findEnclosingPyName(src, offset) }
+
+	// Track the last declared queue name so consume() can bind to it when the
+	// consume call does not name a queue (aio-pika consumes on a queue object).
+	lastDeclared := ""
+
+	// declare_queue (literal + const) — emit the queue entity.
+	declareNames := map[int]string{}
+	for _, m := range aioPikaDeclareQueueLitRe.FindAllStringSubmatchIndex(src, -1) {
+		declareNames[m[0]] = src[m[2]:m[3]]
+	}
+	for _, m := range aioPikaDeclareQueueVarRe.FindAllStringSubmatchIndex(src, -1) {
+		if _, seen := declareNames[m[0]]; seen {
+			continue
+		}
+		declareNames[m[0]] = resolve(src[m[2]:m[3]])
+	}
+	for off, name := range declareNames {
+		if !looksLikeQueueName(name) {
+			continue
+		}
+		_ = off
+		lastDeclared = name
+		emitQueue(rabbitmqQueueID(name), name, "", "", map[string]string{
+			"declared":        "true",
+			"messaging_layer": "aio-pika",
+		})
+	}
+
+	// publish via routing_key (literal + const) — producer side. Only for
+	// genuine aio-pika files: pika also uses routing_key= on basic_publish,
+	// which is already handled by synthesizePyRabbitMQ — avoid double-counting.
+	pubOffsets := map[int]string{}
+	if isAioPika && strings.Contains(src, ".publish(") {
+		for _, m := range aioPikaPublishLitRe.FindAllStringSubmatchIndex(src, -1) {
+			pubOffsets[m[0]] = src[m[2]:m[3]]
+		}
+		for _, m := range aioPikaPublishVarRe.FindAllStringSubmatchIndex(src, -1) {
+			if _, seen := pubOffsets[m[0]]; seen {
+				continue
+			}
+			pubOffsets[m[0]] = resolve(src[m[2]:m[3]])
+		}
+	}
+	for off, name := range pubOffsets {
+		if !looksLikeQueueName(name) {
+			continue
+		}
+		qID := rabbitmqQueueID(name)
+		emitQueue(qID, name, "", name, map[string]string{"messaging_layer": "aio-pika"})
+		emitEdge("Function", enclosing(off), qID, publishesToEdgeKind, map[string]string{
+			"messaging_layer": "aio-pika",
+			"routing_key":     name,
+		})
+	}
+
+	// consume — consumer side, bound to the last declared queue in the file.
+	if lastDeclared != "" {
+		for _, m := range aioPikaConsumeRe.FindAllStringSubmatchIndex(src, -1) {
+			// Skip the declare_queue/publish offsets already handled.
+			qID := rabbitmqQueueID(lastDeclared)
+			emitEdge("Function", enclosing(m[0]), qID, subscribesToEdgeKind, map[string]string{
+				"messaging_layer": "aio-pika",
+			})
+		}
+	}
+}
 
 // celeryTaskRe captures @app.task or @celery.task decorated functions.
 // Group 1 = function name.
