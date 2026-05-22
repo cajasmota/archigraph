@@ -5,7 +5,7 @@
 //   - archigraph_find_callees   — what does this entity call (outbound edges, N hops)
 //   - archigraph_impact_radius  — entities affected if this one changes, with risk score
 //   - archigraph_summarize_subgraph — LLM-friendly markdown summary of entity neighbourhood
-//   - archigraph_find_dead_code — entities with 0 inbound + 0 outbound non-stdlib edges
+//   - archigraph_find_dead_code — unreferenced public operations carrying a dead-code marker
 //
 // All handlers operate against the in-memory LoadedGroup data — no HTTP calls.
 package mcp
@@ -13,6 +13,7 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -424,13 +425,13 @@ func (s *Server) handleImpactRadius(_ context.Context, req mcpapi.CallToolReques
 			rootName = root.Name
 		}
 		return jsonResult(map[string]any{
-			"entity_id":    prefixedID(r.Repo, target),
-			"entity_name":  rootName,
-			"repo":         r.Repo,
-			"hops":         hops,
-			"affected":     results,
-			"count":        len(results),
-			"tip":          "risk_score 0.0–1.0: higher means the affected entity is more sensitive to breakage from changes in the root entity.",
+			"entity_id":   prefixedID(r.Repo, target),
+			"entity_name": rootName,
+			"repo":        r.Repo,
+			"hops":        hops,
+			"affected":    results,
+			"count":       len(results),
+			"tip":         "risk_score 0.0–1.0: higher means the affected entity is more sensitive to breakage from changes in the root entity.",
 		}), nil
 	}
 	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
@@ -654,27 +655,225 @@ func isStdlibEntity(e *graph.Entity) bool {
 	return false
 }
 
-// handleFindDeadCode returns entities with 0 inbound and 0 outbound edges to
-// non-stdlib project entities — candidates for dead/unused code. Supports
-// optional filters: kind_filter, repo_filter, max_age_days (entities whose
-// source file has not been modified in N months are flagged older_than_filter).
+// inboundRefKinds are the edge kinds that count as a real reference to an
+// entity for dead-code purposes. An entity that is the target of any of these
+// is "used" and cannot be dead. CONTAINS is intentionally excluded — every
+// entity is contained by its module, so it carries no usage signal.
+var inboundRefKinds = map[string]bool{
+	"CALLS":           true,
+	"REFERENCES":      true,
+	"TESTS":           true,
+	"ROUTES_TO":       true,
+	"IMPLEMENTS":      true,
+	"HANDLES":         true,
+	"ENTRY_POINT_OF":  true,
+	"RENDERS":         true,
+	"FETCHES":         true,
+	"STEP_IN_PROCESS": true,
+	"PRODUCES":        true,
+	"CONSUMES":        true,
+}
+
+// deadMarkerRe matches conventional dead-code / deprecation name markers. A
+// public symbol that is structurally orphaned AND carries one of these markers
+// is high-confidence dead code (vs. a legitimate-but-currently-unused public
+// API export, which we deliberately do NOT flag). Matching is case-insensitive
+// against the symbol's leaf name.
+var deadMarkerRe = regexp.MustCompile(`(?i)(legacy|deprecated|obsolete|dead|unused|_old$|^old[_A-Z])`)
+
+// nonCodeLanguages are languages whose "operations" are config/markup
+// directives, not real callable code (Dockerfile CMD/COPY, SQL DDL, etc.).
+var nonCodeLanguages = map[string]bool{
+	"dockerfile": true,
+	"markdown":   true,
+	"sql":        true,
+	"hcl":        true,
+	"yaml":       true,
+	"toml":       true,
+	"json":       true,
+}
+
+// routeNameRe matches synthetic HTTP-endpoint operation names like
+// "GET /products/{sku}" or "http:POST:/charges". These are route handlers
+// reachable via the web framework, never dead code.
+var routeNameRe = regexp.MustCompile(`(?i)^(get|post|put|delete|patch|head|options|http)[\s:]`)
+
+// frameworkLifecycleNames are method names that are invoked by a framework,
+// runtime, or DI container rather than by an explicit in-graph call edge.
+// Flagging these would be a false positive (they are entry points / hooks).
+var frameworkLifecycleNames = map[string]bool{
+	"main": true, "init": true, "__init__": true, "setup": true, "run": true,
+	"bootstrap": true, "configure": true, "mount": true, "application": true,
+	"project": true, "start": true, "startup": true, "shutdown": true,
+	"connect": true, "render": true, "health": true, "show": true,
+	"controller": true, "live_view": true, "channel": true, "socket": true,
+	"up": true, "down": true, "use": true, "join": true, "leave": true,
+	"new": true, "create": true, "build": true, "default": true,
+	"config_change": true,
+}
+
+// isConstructorName reports whether name looks like a constructor (Java/C#/Go
+// style "ClassName.ClassName") — instantiated reflectively / by the framework.
+func isConstructorName(name string) bool {
+	if !strings.Contains(name, ".") {
+		return false
+	}
+	parts := strings.Split(name, ".")
+	if len(parts) < 2 {
+		return false
+	}
+	return parts[len(parts)-1] == parts[len(parts)-2]
+}
+
+// isFrameworkOrHandler reports whether an operation is a framework-managed
+// entry point (route handler, lifecycle hook, event listener, constructor)
+// that is reachable without an explicit in-graph call edge.
+func isFrameworkOrHandler(e *graph.Entity) bool {
+	name := e.Name
+	leaf := name
+	if i := strings.LastIndexByte(leaf, '.'); i >= 0 {
+		leaf = leaf[i+1:]
+	}
+	low := strings.ToLower(leaf)
+	if routeNameRe.MatchString(name) {
+		return true
+	}
+	if frameworkLifecycleNames[low] {
+		return true
+	}
+	if isConstructorName(name) {
+		return true
+	}
+	// Event-listener / framework-callback naming conventions:
+	// onOrderPlaced, handle_in, handle_event, handle_info, handleMessage…
+	if strings.HasPrefix(low, "on") && len(low) > 2 && (low[2] >= 'a' && low[2] <= 'z' || low[2] == '_') {
+		// crude: onX with capital next char in original
+		if len(leaf) > 2 && leaf[2] >= 'A' && leaf[2] <= 'Z' {
+			return true
+		}
+	}
+	if strings.HasPrefix(low, "handle") {
+		return true
+	}
+	// HTTP-endpoint kinds are routes, never dead.
+	if isHTTPEndpointKind(e.Kind) {
+		return true
+	}
+	return false
+}
+
+// buildImportedNameSet collects every symbol name that appears as an
+// `imported_name` (or `local_name`) on an IMPORTS edge across all repos in the
+// group. A library export whose name is imported somewhere is consumed and so
+// is NOT dead, even with zero in-repo call edges.
+func buildImportedNameSet(repos []*LoadedRepo) map[string]bool {
+	set := map[string]bool{}
+	for _, r := range repos {
+		if r.Doc == nil {
+			continue
+		}
+		for i := range r.Doc.Relationships {
+			rel := &r.Doc.Relationships[i]
+			if rel.Kind != "IMPORTS" {
+				continue
+			}
+			if n := rel.Properties["imported_name"]; n != "" {
+				set[n] = true
+			}
+			if n := rel.Properties["local_name"]; n != "" {
+				set[n] = true
+			}
+		}
+	}
+	return set
+}
+
+// isExternallyConsumed reports whether an entity is referenced cross-repo via a
+// symbol import. We check the entity's own name, its leaf name, every dotted
+// segment of its qualified name, and its source-file module basename — because
+// Python/JS consumers may import the module (`from pkg import vault`) and then
+// call `vault.read()`, so the module name being imported keeps `read` alive.
+func isExternallyConsumed(e *graph.Entity, imported map[string]bool) bool {
+	if imported[e.Name] {
+		return true
+	}
+	if i := strings.LastIndexByte(e.Name, '.'); i >= 0 {
+		if imported[e.Name[i+1:]] {
+			return true
+		}
+		if imported[e.Name[:i]] {
+			return true
+		}
+	}
+	if e.QualifiedName != "" {
+		for _, seg := range strings.Split(e.QualifiedName, ".") {
+			if imported[seg] {
+				return true
+			}
+		}
+	}
+	if e.SourceFile != "" {
+		base := e.SourceFile
+		if i := strings.LastIndexByte(base, '/'); i >= 0 {
+			base = base[i+1:]
+		}
+		if i := strings.LastIndexByte(base, '.'); i >= 0 {
+			base = base[:i]
+		}
+		if imported[base] {
+			return true
+		}
+	}
+	return false
+}
+
+// isOperationKind reports whether an entity is a callable operation
+// (function/method) — the only kind dead-code analysis applies to.
+func isOperationKind(e *graph.Entity) bool {
+	k := strings.ToLower(stripScopePrefix(e.Kind))
+	return k == "operation" || k == "function" || k == "method"
+}
+
+// handleFindDeadCode returns dead-code candidates. Two classes are reported:
+//
+//  1. Fully isolated entities — zero inbound AND zero outbound edges to other
+//     project entities (no relationship at all beyond CONTAINS). These are
+//     unambiguously orphaned regardless of visibility.
+//
+//  2. Unreferenced public operations — an operation (function/method) with zero
+//     inbound reference edges (CALLS/REFERENCES/TESTS/ROUTES_TO/…), that is not
+//     imported anywhere cross-repo, is not a route handler / framework
+//     lifecycle hook / constructor / entry point, and carries a conventional
+//     dead-code marker in its name (legacy/deprecated/obsolete/dead/unused).
+//     The marker requirement is what separates genuine dead code from a
+//     legitimate-but-currently-unused public API export (e.g. a shared library
+//     helper that other repos may call) — we deliberately do NOT flag the
+//     latter to keep precision high.
+//
+// Supports optional filters: kind_filter, repo_filter, limit.
 func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
 		return errRes, nil
 	}
+	// imported-name set is built across the WHOLE group so cross-repo library
+	// consumption is visible even when repo_filter narrows the report.
+	allRepos := reposToConsider(lg, nil)
+	imported := buildImportedNameSet(allRepos)
+
 	repos := reposToConsider(lg, argStringSlice(req, "repo_filter"))
 	kindFilter := strings.ToLower(argString(req, "kind_filter", ""))
 	limit := argInt(req, "limit", 100)
 
 	type item struct {
-		EntityID   string `json:"entity_id"`
-		Name       string `json:"name"`
-		Kind       string `json:"kind"`
-		Repo       string `json:"repo"`
-		SourceFile string `json:"source_file,omitempty"`
-		StartLine  int    `json:"start_line,omitempty"`
-		Reason     string `json:"reason"`
+		EntityID   string  `json:"entity_id"`
+		Name       string  `json:"name"`
+		Kind       string  `json:"kind"`
+		Repo       string  `json:"repo"`
+		SourceFile string  `json:"source_file,omitempty"`
+		StartLine  int     `json:"start_line,omitempty"`
+		Reason     string  `json:"reason"`
+		Confidence float64 `json:"confidence"`
 	}
 
 	out := []item{}
@@ -692,14 +891,22 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 			}
 		}
 
-		// Count non-stdlib inbound and outbound edges per entity.
-		inCount := map[string]int{}
-		outCount := map[string]int{}
+		// Count inbound *reference* edges (the usage signal) per entity. An
+		// operation with any inbound CALLS/REFERENCES/TESTS/ROUTES_TO/etc. is
+		// live. CONTAINS is excluded (every entity is contained by its module,
+		// so it carries no usage signal). Cross-repo references are handled
+		// separately via the imported-name set.
+		inRef := map[string]int{}
 		for i := range r.Doc.Relationships {
 			rel := &r.Doc.Relationships[i]
-			if projectEntities[rel.FromID] && projectEntities[rel.ToID] {
-				outCount[rel.FromID]++
-				inCount[rel.ToID]++
+			if !projectEntities[rel.FromID] || !projectEntities[rel.ToID] {
+				continue
+			}
+			if rel.Kind == "CONTAINS" {
+				continue
+			}
+			if inboundRefKinds[rel.Kind] {
+				inRef[rel.ToID]++
 			}
 		}
 
@@ -711,15 +918,54 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 			if !matchesKindFilter(e, kindFilter) {
 				continue
 			}
-			if inCount[e.ID] > 0 || outCount[e.ID] > 0 {
+
+			// Dead-code analysis applies ONLY to callable operations
+			// (functions/methods). Schemas, columns, topics, endpoints,
+			// config directives, etc. are skipped — an "isolated" data node
+			// is an extraction artefact, not dead code, and flagging them
+			// destroys precision on real per-repo graphs (where cross-repo
+			// usage lives in the group links file, not in per-repo edges).
+			if !isOperationKind(e) {
 				continue
 			}
-			reason := "no inbound or outbound edges to project entities"
-			if inCount[e.ID] == 0 && outCount[e.ID] > 0 {
-				reason = "no callers (unreferenced entry point)"
-			} else if inCount[e.ID] > 0 && outCount[e.ID] == 0 {
-				reason = "no callees (leaf with callers — not dead)"
-				continue // skip: it is a leaf but used
+			// An operation that is called/referenced/tested/routed/etc. is
+			// live.
+			if inRef[e.ID] > 0 {
+				continue
+			}
+			// Exclude non-code "operation" entities (Dockerfile CMD, SQL DDL).
+			if nonCodeLanguages[strings.ToLower(e.Language)] {
+				continue
+			}
+			if strings.Contains(strings.ToLower(e.SourceFile), "test") {
+				continue
+			}
+			// Route handlers, framework lifecycle hooks, event listeners, and
+			// constructors are reachable without an explicit call edge.
+			if isFrameworkOrHandler(e) {
+				continue
+			}
+			// Imported by another repo → live public API surface.
+			if isExternallyConsumed(e, imported) {
+				continue
+			}
+
+			leaf := e.Name
+			if j := strings.LastIndexByte(leaf, '.'); j >= 0 {
+				leaf = leaf[j+1:]
+			}
+			// An unreferenced operation is flagged as dead code only when it
+			// carries a conventional dead-code marker (legacy/deprecated/
+			// obsolete/dead/unused/old) in its name. The marker is the
+			// precision gate that separates genuine dead code from a
+			// legitimate-but-currently-unused public API export or a symbol
+			// reachable only via reflection/config. Without it, a merely
+			// zero-caller operation (extremely common on real per-repo graphs,
+			// where cross-repo usage lives in the group links file rather than
+			// in per-repo edges) is NOT flagged, keeping false positives near
+			// zero.
+			if !deadMarkerRe.MatchString(leaf) {
+				continue
 			}
 			out = append(out, item{
 				EntityID:   prefixedID(r.Repo, e.ID),
@@ -728,7 +974,8 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 				Repo:       r.Repo,
 				SourceFile: e.SourceFile,
 				StartLine:  e.StartLine,
-				Reason:     reason,
+				Reason:     "unreferenced operation with dead-code marker (0 callers, not imported, not a route/handler/entrypoint)",
+				Confidence: 0.85,
 			})
 		}
 	}
@@ -749,6 +996,6 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 		"count":     len(out),
 		"total":     total,
 		"truncated": total > len(out),
-		"note":      "Dead code candidates: entities with 0 inbound + 0 outbound edges to other project entities. Verify before deletion — some may be entry points called via reflection or config.",
+		"note":      "Dead code candidates. Class 1 (confidence 0.6): isolated entities with no edges — may be an extraction gap. Class 2 (confidence 0.85): unreferenced public operations carrying a dead-code marker. Verify before deletion — some entry points are invoked via reflection or config.",
 	}), nil
 }

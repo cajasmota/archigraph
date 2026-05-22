@@ -398,6 +398,89 @@ func TestFindDeadCode_StdlibExcluded(t *testing.T) {
 	}
 }
 
+// buildPublicAPIDeadCodeDoc models the polyglot-platform fixture's dead-code
+// scenario: a shared module exporting several public operations where most are
+// either called in-repo, imported by another repo, or legitimate API, and only
+// the marker-tagged unreferenced ones are genuinely dead.
+//
+//	verifyToken      — exported, imported cross-repo (IMPORTS imported_name)   → LIVE
+//	hasRole          — exported, unreferenced, NO dead marker (legit API)      → LIVE
+//	legacySignToken  — exported, unreferenced, "legacy" marker                 → DEAD
+//	postHandler      — route handler (GET /x), unreferenced                    → LIVE
+//	DeadReindexAll   — exported, unreferenced, "Dead" marker                   → DEAD
+func buildPublicAPIDeadCodeDoc() *graph.Document {
+	return minDoc(
+		[]graph.Entity{
+			{ID: "mod", Name: "src", Kind: "Module", SourceFile: "src/auth.ts"},
+			{ID: "verify", Name: "verifyToken", Kind: "SCOPE.Operation", SourceFile: "src/auth.ts", Language: "typescript"},
+			{ID: "role", Name: "hasRole", Kind: "SCOPE.Operation", SourceFile: "src/auth.ts", Language: "typescript"},
+			{ID: "legacy", Name: "legacySignToken", Kind: "SCOPE.Operation", SourceFile: "src/auth.ts", Language: "typescript"},
+			{ID: "route", Name: "GET /products", Kind: "SCOPE.Operation", SourceFile: "src/index.ts", Language: "typescript"},
+			{ID: "dead2", Name: "DeadReindexAll", Kind: "SCOPE.Operation", SourceFile: "internal/server.go", Language: "go"},
+			// External import marker carrying imported_name=verifyToken.
+			{ID: "ext", Name: "@shared/js", Kind: "SCOPE.External", SourceFile: ""},
+			// A shared helper each operation calls — gives them an outbound
+			// edge so they are not "fully isolated" (Class 1), exercising the
+			// Class-2 unreferenced-public-operation path instead.
+			{ID: "helper", Name: "jwtSign", Kind: "SCOPE.Operation", SourceFile: "src/jwt.ts", Language: "typescript"},
+		},
+		[]graph.Relationship{
+			{FromID: "mod", ToID: "verify", Kind: "CONTAINS"},
+			{FromID: "mod", ToID: "role", Kind: "CONTAINS"},
+			{FromID: "mod", ToID: "legacy", Kind: "CONTAINS"},
+			{FromID: "mod", ToID: "route", Kind: "CONTAINS"},
+			{FromID: "mod", ToID: "dead2", Kind: "CONTAINS"},
+			{FromID: "mod", ToID: "helper", Kind: "CONTAINS"},
+			// Each public op calls the shared helper (outbound edge).
+			{FromID: "verify", ToID: "helper", Kind: "CALLS"},
+			{FromID: "role", ToID: "helper", Kind: "CALLS"},
+			{FromID: "legacy", ToID: "helper", Kind: "CALLS"},
+			{FromID: "route", ToID: "helper", Kind: "CALLS"},
+			{FromID: "dead2", ToID: "helper", Kind: "CALLS"},
+			// verifyToken is imported (consumed) cross-repo.
+			{FromID: "mod", ToID: "ext", Kind: "IMPORTS", Properties: map[string]string{"imported_name": "verifyToken"}},
+		},
+	)
+}
+
+func TestFindDeadCode_PrecisionOnPublicAPI(t *testing.T) {
+	srv := newTestServerWithDoc(t, buildPublicAPIDeadCodeDoc())
+	out := callFlowTool(t, srv.handleFindDeadCode, map[string]any{})
+	dead := out["dead_code"].([]any)
+
+	flagged := map[string]bool{}
+	for _, item := range dead {
+		flagged[item.(map[string]any)["name"].(string)] = true
+	}
+
+	wantDead := []string{"legacySignToken", "DeadReindexAll"}
+	wantLive := []string{"verifyToken", "hasRole", "GET /products"}
+
+	for _, n := range wantDead {
+		if !flagged[n] {
+			t.Errorf("expected %q to be flagged as dead code", n)
+		}
+	}
+	for _, n := range wantLive {
+		if flagged[n] {
+			t.Errorf("false positive: %q should NOT be flagged (live/legit API)", n)
+		}
+	}
+	if len(flagged) != len(wantDead) {
+		t.Errorf("expected exactly %d dead entities, got %d: %v", len(wantDead), len(flagged), flagged)
+	}
+}
+
+func TestFindDeadCode_ImportedNotFlagged(t *testing.T) {
+	srv := newTestServerWithDoc(t, buildPublicAPIDeadCodeDoc())
+	out := callFlowTool(t, srv.handleFindDeadCode, map[string]any{})
+	for _, item := range out["dead_code"].([]any) {
+		if item.(map[string]any)["name"] == "verifyToken" {
+			t.Fatal("verifyToken is imported cross-repo and must not be flagged")
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestImpactRiskScore unit tests
 // ---------------------------------------------------------------------------
