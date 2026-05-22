@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -564,5 +565,264 @@ def emit():
 	}
 	if count != 1 {
 		t.Errorf("expected exactly 1 entity for dedup case; got %d in %v", count, ents)
+	}
+}
+
+// ============================================================================
+// Java / Kotlin — Spring Data Redis (RedisTemplate / StringRedisTemplate)
+// ============================================================================
+//
+// These tests verify the #1482 fix: Spring convertAndSend now emits
+// channel:redis-pubsub:<channel> SCOPE.Queue entities so the P7 cross-repo
+// linker can join a Kotlin publisher (notifications service) with its
+// consumer (tracking-ws service).
+
+// TestRedisPubSub_Kotlin_ConvertAndSend verifies that a Kotlin Spring service
+// calling redisTemplate.convertAndSend("notifications.push", payload) emits a
+// canonical channel:redis-pubsub:notifications.push entity.
+func TestRedisPubSub_Kotlin_ConvertAndSend(t *testing.T) {
+	src := `package com.example.notifications
+
+import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.stereotype.Service
+
+@Service
+class NotificationPublisher(
+    private val redisTemplate: StringRedisTemplate,
+) {
+    fun sendPush(userId: String, payload: String) {
+        redisTemplate.convertAndSend("notifications.push", payload)
+    }
+}
+`
+	ents, rels := runRedisPubSub(t, "kotlin", src)
+
+	wantID := "channel:redis-pubsub:notifications.push"
+	if !hasEntity(ents, wantID) {
+		t.Fatalf("expected entity %q; got %v", wantID, ents)
+	}
+	wantRel := "PUBLISHES_TO|Service:NotificationPublisher|SCOPE.Queue:channel:redis-pubsub:notifications.push"
+	if !hasRel(rels, wantRel) {
+		t.Errorf("expected rel %q; got %v", wantRel, rels)
+	}
+}
+
+// TestRedisPubSub_Java_ConvertAndSend verifies the same pattern in Java.
+func TestRedisPubSub_Java_ConvertAndSend(t *testing.T) {
+	src := `package com.example.notifications;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+@Service
+public class NotificationService {
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public void sendPush(String userId, Object payload) {
+        redisTemplate.convertAndSend("notifications.push", payload);
+    }
+}
+`
+	ents, rels := runRedisPubSub(t, "java", src)
+
+	wantID := "channel:redis-pubsub:notifications.push"
+	if !hasEntity(ents, wantID) {
+		t.Fatalf("expected entity %q; got %v", wantID, ents)
+	}
+	wantRel := "PUBLISHES_TO|Service:NotificationService|SCOPE.Queue:channel:redis-pubsub:notifications.push"
+	if !hasRel(rels, wantRel) {
+		t.Errorf("expected rel %q; got %v", wantRel, rels)
+	}
+}
+
+// TestRedisPubSub_Kotlin_ChannelTopicSubscriber verifies that a Kotlin Spring
+// listener registered via ChannelTopic("notifications.push") emits a
+// SUBSCRIBES_TO edge with the canonical channel ID.
+func TestRedisPubSub_Kotlin_ChannelTopicSubscriber(t *testing.T) {
+	src := `package com.example.tracking
+
+import org.springframework.context.annotation.Bean
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.listener.ChannelTopic
+import org.springframework.data.redis.listener.RedisMessageListenerContainer
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter
+
+class TrackingWsConfig {
+    @Bean
+    fun container(
+        connectionFactory: RedisConnectionFactory,
+        adapter: MessageListenerAdapter,
+    ): RedisMessageListenerContainer {
+        val container = RedisMessageListenerContainer()
+        container.setConnectionFactory(connectionFactory)
+        container.addMessageListener(adapter, ChannelTopic("notifications.push"))
+        return container
+    }
+}
+`
+	ents, rels := runRedisPubSub(t, "kotlin", src)
+
+	wantID := "channel:redis-pubsub:notifications.push"
+	if !hasEntity(ents, wantID) {
+		t.Fatalf("expected entity %q; got %v", wantID, ents)
+	}
+	wantRel := "SUBSCRIBES_TO|Service:TrackingWsConfig|SCOPE.Queue:channel:redis-pubsub:notifications.push"
+	if !hasRel(rels, wantRel) {
+		t.Errorf("expected rel %q; got %v", wantRel, rels)
+	}
+}
+
+// TestRedisPubSub_Spring_CrossRepoTopicLink verifies that a Kotlin publisher
+// (notifications service) and a Kotlin consumer (tracking-ws) emit the exact
+// same canonical entity ID so P7 can link them.
+//
+// This is the core #1482 acceptance criterion:
+//   notifications → redis:notifications.push → tracking-ws
+func TestRedisPubSub_Spring_CrossRepoTopicLink(t *testing.T) {
+	publisherSrc := `package com.example.notifications
+
+import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.stereotype.Service
+
+@Service
+class NotificationPublisher(private val redisTemplate: StringRedisTemplate) {
+    fun sendPush(userId: String, payload: String) {
+        redisTemplate.convertAndSend("notifications.push", payload)
+    }
+}
+`
+
+	consumerSrc := `package com.example.trackingws
+
+import org.springframework.context.annotation.Bean
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.listener.ChannelTopic
+import org.springframework.data.redis.listener.RedisMessageListenerContainer
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter
+
+class TrackingWsRedisConfig {
+    @Bean
+    fun listenerContainer(
+        factory: RedisConnectionFactory,
+        adapter: MessageListenerAdapter,
+    ): RedisMessageListenerContainer {
+        val container = RedisMessageListenerContainer()
+        container.setConnectionFactory(factory)
+        container.addMessageListener(adapter, ChannelTopic("notifications.push"))
+        return container
+    }
+}
+`
+
+	pubEnts, pubRels := runRedisPubSub(t, "kotlin", publisherSrc)
+	subEnts, subRels := runRedisPubSub(t, "kotlin", consumerSrc)
+
+	wantID := "channel:redis-pubsub:notifications.push"
+
+	if !hasEntity(pubEnts, wantID) {
+		t.Errorf("publisher side did not emit %q; got %v", wantID, pubEnts)
+	}
+	if !hasEntity(subEnts, wantID) {
+		t.Errorf("consumer side did not emit %q; got %v", wantID, subEnts)
+	}
+
+	pubRelFound := false
+	for _, r := range pubRels {
+		if strings.Contains(r, "PUBLISHES_TO") && strings.Contains(r, wantID) {
+			pubRelFound = true
+			break
+		}
+	}
+	if !pubRelFound {
+		t.Errorf("publisher PUBLISHES_TO %q not found in %v", wantID, pubRels)
+	}
+
+	subRelFound := false
+	for _, r := range subRels {
+		if strings.Contains(r, "SUBSCRIBES_TO") && strings.Contains(r, wantID) {
+			subRelFound = true
+			break
+		}
+	}
+	if !subRelFound {
+		t.Errorf("consumer SUBSCRIBES_TO %q not found in %v", wantID, subRels)
+	}
+
+	t.Logf("Both sides emit %q — P7 notifications→tracking-ws link will fire", wantID)
+}
+
+// TestRedisPubSub_Spring_StringRedisTemplate verifies that StringRedisTemplate
+// (common in Kotlin Spring projects) is also recognised.
+func TestRedisPubSub_Spring_StringRedisTemplate(t *testing.T) {
+	src := `package com.example;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+class PushSender(private val stringRedisTemplate: StringRedisTemplate) {
+    fun push(msg: String) {
+        stringRedisTemplate.convertAndSend("notifications.push", msg)
+    }
+}
+`
+	ents, _ := runRedisPubSub(t, "kotlin", src)
+	wantID := "channel:redis-pubsub:notifications.push"
+	if !hasEntity(ents, wantID) {
+		t.Fatalf("StringRedisTemplate: expected entity %q; got %v", wantID, ents)
+	}
+}
+
+// TestRedisPubSub_Spring_PatternTopicSubscriber verifies wildcard PatternTopic
+// registration emits a SUBSCRIBES_TO edge and sets is_pattern=true.
+func TestRedisPubSub_Spring_PatternTopicSubscriber(t *testing.T) {
+	src := `package com.example;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+
+class Config(private val factory: RedisConnectionFactory) {
+    fun container(): RedisMessageListenerContainer {
+        val c = RedisMessageListenerContainer()
+        c.setConnectionFactory(factory)
+        c.addMessageListener(listener, PatternTopic("notifications.*"))
+        return c
+    }
+}
+`
+	ents, rels := runRedisPubSub(t, "kotlin", src)
+	wantID := "channel:redis-pubsub:notifications.*"
+	if !hasEntity(ents, wantID) {
+		t.Fatalf("expected PatternTopic entity %q; got %v", wantID, ents)
+	}
+	subFound := false
+	for _, r := range rels {
+		if strings.Contains(r, "SUBSCRIBES_TO") && strings.Contains(r, wantID) {
+			subFound = true
+			break
+		}
+	}
+	if !subFound {
+		t.Errorf("expected SUBSCRIBES_TO for PatternTopic, rels=%v", rels)
+	}
+}
+
+// TestRedisPubSub_Spring_NoFire_NoCacheOnlyFile verifies that a plain Redis
+// cache file (no pub/sub tokens) is not mis-tagged.
+func TestRedisPubSub_Spring_NoFire_NoCacheOnlyFile(t *testing.T) {
+	src := `package com.example;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+@Service
+class CacheService(private val redisTemplate: RedisTemplate<String, String>) {
+    fun get(key: String): String? = redisTemplate.opsForValue().get(key)
+    fun set(key: String, value: String) { redisTemplate.opsForValue().set(key, value) }
+}
+`
+	ents, _ := runRedisPubSub(t, "kotlin", src)
+	for _, id := range ents {
+		if strings.HasPrefix(id, "channel:redis-pubsub:") {
+			t.Errorf("must not emit pub/sub entity for cache-only file, got %q", id)
+		}
 	}
 }

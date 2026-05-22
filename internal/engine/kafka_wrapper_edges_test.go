@@ -441,13 +441,20 @@ public class UrlBuilder {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Java Spring RedisTemplate.convertAndSend
+// 3. Java / Kotlin Spring RedisTemplate.convertAndSend
+//
+// As of #1482 this detection is handled by applyRedisPubSubEdges
+// (redis_pubsub_edges.go) which emits the canonical
+// channel:redis-pubsub:<channel> SCOPE.Queue entity IDs so the P7 cross-repo
+// linker correctly joins the Kotlin publisher with its consumer.  The wrapper
+// pass no longer emits a separate (wrong-ID) entity for this idiom.
 // ---------------------------------------------------------------------------
 
-// TestKafkaWrapper_JavaRedisConvertAndSend verifies that
-// redisTemplate.convertAndSend("channel", payload) emits a redis:channel
-// MessageTopic + PUBLISHES_TO.
-func TestKafkaWrapper_JavaRedisConvertAndSend(t *testing.T) {
+// TestKafkaWrapper_JavaRedisConvertAndSend_RedisPubSubPass verifies that the
+// correct pass (applyRedisPubSubEdges) now handles Spring
+// redisTemplate.convertAndSend and emits the canonical
+// channel:redis-pubsub:<channel> SCOPE.Queue entity so P7 links fire.
+func TestKafkaWrapper_JavaRedisConvertAndSend_RedisPubSubPass(t *testing.T) {
 	src := `package io.demo;
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -459,28 +466,40 @@ public class NotificationService {
     }
 }
 `
-	ents, rels := runWrapperDetect(t, "java", "notifications/NotificationService.java", src)
+	ents, rels := applyRedisPubSubEdges("java", "notifications/NotificationService.java", []byte(src), nil, nil)
 
+	wantID := "channel:redis-pubsub:notifications.channel"
 	var found *types.EntityRecord
 	for i := range ents {
-		if ents[i].Kind == messageTopicKind && ents[i].Properties["topic_name"] == "notifications.channel" {
+		if ents[i].Name == wantID {
 			found = &ents[i]
 			break
 		}
 	}
 	if found == nil {
-		t.Fatalf("expected MessageTopic for notifications.channel, ents=%v", ents)
+		t.Fatalf("expected SCOPE.Queue entity %q, ents=%v", wantID, ents)
+	}
+	if found.Kind != redisPubSubChannelEntityKind {
+		t.Errorf("Kind: want %q, got %q", redisPubSubChannelEntityKind, found.Kind)
 	}
 	if found.Properties["broker"] != "redis" {
 		t.Errorf("broker: want redis, got %q", found.Properties["broker"])
 	}
-	// Entity ID must be redis:<channel> so it matches the redis_pubsub_edges consumer side.
-	if !strings.HasPrefix(found.Name, "redis:") {
-		t.Errorf("Name: want redis: prefix, got %q", found.Name)
-	}
 	pub := edgesOfKind(rels, publishesToEdgeKind)
 	if len(pub) == 0 {
 		t.Fatalf("expected PUBLISHES_TO edge, rels=%v", rels)
+	}
+	// Verify the ToID uses the canonical SCOPE.Queue prefix.
+	if !strings.Contains(pub[0].ToID, "SCOPE.Queue:channel:redis-pubsub:notifications.channel") {
+		t.Errorf("PUBLISHES_TO ToID = %q, want SCOPE.Queue:channel:redis-pubsub:notifications.channel", pub[0].ToID)
+	}
+
+	// Also verify the kafka_wrapper pass no longer emits a competing wrong-ID entity.
+	wrapperEnts, _ := runWrapperDetect(t, "java", "notifications/NotificationService.java", src)
+	for _, e := range wrapperEnts {
+		if strings.HasPrefix(e.Name, "redis:") {
+			t.Errorf("kafka_wrapper_edges must not emit redis:<channel> entity after #1482 fix, got %v", e)
+		}
 	}
 }
 

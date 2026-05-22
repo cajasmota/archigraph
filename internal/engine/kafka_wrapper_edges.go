@@ -140,7 +140,11 @@ func applyKafkaWrapperEdges(
 		synthesizePySNSPublish(src, emitTopic, emitEdge)
 	case "java", "kotlin":
 		synthesizeJavaKafkaStreams(src, emitTopic, emitEdge)
-		synthesizeJavaRedisConvertAndSend(src, emitTopic, emitEdge)
+		// Note: Spring RedisTemplate.convertAndSend pub/sub is handled by
+		// applyRedisPubSubEdges (redis_pubsub_edges.go) which emits the correct
+		// channel:redis-pubsub:<channel> SCOPE.Queue entity IDs so P7 cross-repo
+		// links fire. The old synthesizeJavaRedisConvertAndSend emitted the wrong
+		// redis:<channel> SCOPE.MessageTopic IDs (#1482).
 		synthesizeJavaSNSPublish(src, emitTopic, emitEdge)
 	case "javascript", "typescript":
 		synthesizeNodeSNSPublish(src, emitTopic, emitEdge)
