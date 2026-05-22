@@ -32,6 +32,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,6 +86,11 @@ export function ScanWizard(props: ScanWizardProps) {
   const [scan, setScan] = useState<ScanInspectReply | null>(null);
   const [name, setName] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
+  // Monorepo module selection (#1531). When Detect finds a monorepo, the user
+  // picks WHICH package roots to index; each selected package is registered as
+  // its own repo (its absolute sub-path), so indexing a subset works and the
+  // Index step shows one row per chosen module. Default: all packages checked.
+  const [selectedPkgs, setSelectedPkgs] = useState<Set<string>>(new Set());
 
   // Server-side folder browser (#1529). `browseDir` is the directory currently
   // being listed; null defaults to the daemon's home dir. `null` while the
@@ -112,6 +119,7 @@ export function ScanWizard(props: ScanWizardProps) {
     setScan(null);
     setName("");
     setJobId(null);
+    setSelectedPkgs(new Set());
     setBrowseDir(null);
     inspect.reset();
     createFromScan.reset();
@@ -151,6 +159,9 @@ export function ScanWizard(props: ScanWizardProps) {
       setScan(result);
       if (result.valid) {
         setName((prev) => prev || result.suggestedGroup);
+        // Default to ALL detected packages checked (#1531). Empty for a single
+        // repo — then runIndex registers the whole folder as one repo.
+        setSelectedPkgs(new Set(result.packages ?? []));
         setStep("detect");
       } else {
         toast.error(result.error ?? "That path can't be indexed.");
@@ -163,7 +174,23 @@ export function ScanWizard(props: ScanWizardProps) {
   // --- Step 3: create/register + index ---
   async function runIndex() {
     if (!scan?.valid) return;
-    const repos = [{ path: scan.absPath, slug: scan.suggestedSlug }];
+    // Monorepo with a package list → register ONLY the SELECTED package roots,
+    // each as its own repo (its absolute sub-path). The daemon walks each
+    // sub-path independently, so indexing a subset works and the Index step
+    // streams one progress row per chosen module (#1531). A single repo (no
+    // packages) registers the whole folder as one repo, as before.
+    const isMonorepo = (scan.packages?.length ?? 0) > 0;
+    const repos = isMonorepo
+      ? [...selectedPkgs].sort().map((pkg) => ({
+          path: `${scan.absPath}/${pkg}`,
+          slug: slugify(`${scan.suggestedSlug}-${pkg}`),
+          modules: [pkg],
+        }))
+      : [{ path: scan.absPath, slug: scan.suggestedSlug }];
+    if (repos.length === 0) {
+      toast.error("Select at least one package to index.");
+      return;
+    }
     try {
       if (mode === "create") {
         if (!nameSlug || nameDuplicate) return;
@@ -320,6 +347,11 @@ export function ScanWizard(props: ScanWizardProps) {
                 type="button"
                 variant="secondary"
                 size="sm"
+                // shrink-0 + whitespace-nowrap: the flex parent was squeezing the
+                // button so its label wrapped to two lines, and the wrapped text
+                // overflowed the fixed-height border box — reading as a double
+                // border. Keep it a single-line pill with one clean border (#1531).
+                className="shrink-0 whitespace-nowrap"
                 disabled={!browsePath || inspect.isPending}
                 onClick={() => {
                   setPath(browsePath);
@@ -421,6 +453,83 @@ export function ScanWizard(props: ScanWizardProps) {
                   )}
                 </dl>
 
+                {/* Monorepo module selection (#1531): pick which package roots
+                    to index. Default all-checked; only the SELECTED packages are
+                    registered + indexed. */}
+                {scan.packages.length > 0 && (
+                  <div data-testid="wizard-modules">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-text-2">
+                        Packages to index
+                        <span className="ml-1.5 text-xs text-text-4">
+                          ({selectedPkgs.size}/{scan.packages.length})
+                        </span>
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs"
+                          onClick={() => setSelectedPkgs(new Set(scan.packages))}
+                          data-testid="wizard-modules-all"
+                        >
+                          Select all
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs"
+                          onClick={() => setSelectedPkgs(new Set())}
+                          data-testid="wizard-modules-none"
+                        >
+                          None
+                        </Button>
+                      </div>
+                    </div>
+                    <ul className="mt-1.5 max-h-48 overflow-y-auto rounded-lg border border-border bg-surface divide-y divide-border/60">
+                      {scan.packages.map((pkg) => {
+                        const checked = selectedPkgs.has(pkg);
+                        return (
+                          <li key={pkg}>
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={checked}
+                              className={cn(
+                                "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-2",
+                                checked ? "text-text-2" : "text-text-4",
+                              )}
+                              onClick={() =>
+                                setSelectedPkgs((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(pkg)) next.delete(pkg);
+                                  else next.add(pkg);
+                                  return next;
+                                })
+                              }
+                              data-testid="wizard-module"
+                              data-pkg={pkg}
+                              data-checked={checked}
+                            >
+                              {checked ? (
+                                <CheckSquare size={15} className="shrink-0 text-accent-strong" />
+                              ) : (
+                                <Square size={15} className="shrink-0 text-text-4" />
+                              )}
+                              <span className="min-w-0 flex-1 truncate font-mono">{pkg}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {selectedPkgs.size === 0 && (
+                      <p className="mt-1 text-xs text-danger">Select at least one package to index.</p>
+                    )}
+                  </div>
+                )}
+
                 {mode === "create" && (
                   <label className="block">
                     <span className="text-sm text-text-2">Group name</span>
@@ -445,7 +554,12 @@ export function ScanWizard(props: ScanWizardProps) {
               </Button>
               <Button
                 type="button"
-                disabled={!scan.valid || indexing || (mode === "create" && (!nameSlug || nameDuplicate))}
+                disabled={
+                  !scan.valid ||
+                  indexing ||
+                  (scan.packages.length > 0 && selectedPkgs.size === 0) ||
+                  (mode === "create" && (!nameSlug || nameDuplicate))
+                }
                 onClick={() => void runIndex()}
                 data-testid="wizard-index"
               >
