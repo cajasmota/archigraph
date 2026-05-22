@@ -9,12 +9,37 @@ import (
 	"time"
 )
 
-func TestStateDirForRepo_DefaultColocated(t *testing.T) {
+// #1626: when no isolated ARCHIGRAPH_DAEMON_ROOT is set, the state
+// directory now lives in the EXTERNAL store under ARCHIGRAPH_HOME/store,
+// NOT inside the repo working tree. This is the change that keeps repos
+// clean and breaks the fb-vs-json reindex loop.
+func TestStateDirForRepo_DefaultStore(t *testing.T) {
 	t.Setenv(EnvRoot, "")
+	home := t.TempDir()
+	t.Setenv("ARCHIGRAPH_HOME", home)
+
 	got := StateDirForRepo("/some/repo")
+
+	storePrefix := filepath.Join(home, "store") + string(filepath.Separator)
+	if !strings.HasPrefix(got, storePrefix) {
+		t.Fatalf("default state dir not under store: got %q want prefix %q", got, storePrefix)
+	}
+	// Must NOT be inside the repo.
+	if strings.HasPrefix(got, "/some/repo") {
+		t.Fatalf("state dir leaked into repo tree: %q", got)
+	}
+	// Segment is "<slug>-<16hex>".
+	rel, _ := filepath.Rel(filepath.Join(home, "store"), got)
+	if !regexp.MustCompile(`^[a-zA-Z0-9._-]+-[0-9a-f]{16}$`).MatchString(rel) {
+		t.Fatalf("store segment %q is not <slug>-<hash>", rel)
+	}
+}
+
+func TestLegacyInRepoStateDir(t *testing.T) {
+	got := LegacyInRepoStateDir("/some/repo")
 	want := filepath.Join("/some/repo", ".archigraph")
 	if got != want {
-		t.Fatalf("default state dir: got %q want %q", got, want)
+		t.Fatalf("legacy dir: got %q want %q", got, want)
 	}
 }
 

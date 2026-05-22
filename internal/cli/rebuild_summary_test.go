@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/cajasmota/archigraph/internal/daemon"
 )
 
 // ---------------------------------------------------------------------------
@@ -79,13 +81,13 @@ func TestTopNKinds_FewerThanN(t *testing.T) {
 
 func TestTopNKinds_MoreThanN(t *testing.T) {
 	m := map[string]int{
-		"Function":    4892,
-		"Class":       1231,
-		"Variable":    8402,
+		"Function":     4892,
+		"Class":        1231,
+		"Variable":     8402,
 		"HTTPEndpoint": 744,
-		"Other1":      3000,
-		"Other2":      2000,
-		"Other3":      1000,
+		"Other1":       3000,
+		"Other2":       2000,
+		"Other3":       1000,
 	}
 	rows, other := topNKinds(m, 5)
 	if len(rows) != 5 {
@@ -220,8 +222,8 @@ func TestPrintRebuildSummary_BasicShape(t *testing.T) {
 func TestPrintRebuildSummary_ZeroEntities_NoOrphanLine(t *testing.T) {
 	// When TotalEntities == 0, orphan line should be suppressed.
 	s := &RebuildSummary{
-		Group:   "empty",
-		Elapsed: 1 * time.Second,
+		Group:        "empty",
+		Elapsed:      1 * time.Second,
 		EntityByKind: map[string]int{},
 		RelByKind:    map[string]int{},
 	}
@@ -450,10 +452,11 @@ func TestLoadGraphStats_Malformed(t *testing.T) {
 // from graph-stats.json are used, fixing #1076.
 func TestComputeRebuildSummary_SidecarFallback(t *testing.T) {
 	// Create a fake repo directory with only graph-stats.json (no graph.fb).
-	// Use t.TempDir() as both the repo dir and its .archigraph/ subdir since
-	// StateDirForRepo adds "/.archigraph" to the path.
+	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT so
+	// the store is test-local and seed via daemon.StateDirForRepo.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
 	repoDir := t.TempDir()
-	stateDir := repoDir + "/.archigraph"
+	stateDir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -484,10 +487,10 @@ func TestFormatEnrichmentBreakdown(t *testing.T) {
 		EnrichmentCandidates: 15000,
 		EnrichmentActions:    25000,
 		EnrichmentByKind: map[string]int{
-			"describe_entity":  15000,
-			"describe_role":     5000,
-			"classify_domain":   3000,
-			"name_community":    2000,
+			"describe_entity": 15000,
+			"describe_role":   5000,
+			"classify_domain": 3000,
+			"name_community":  2000,
 		},
 	}
 
@@ -528,8 +531,8 @@ func TestFormatEnrichmentBreakdown_HighPercentage_ColorRed(t *testing.T) {
 		EnrichmentCandidates: 900, // 90% > 80%
 		EnrichmentActions:    1200,
 		EnrichmentByKind: map[string]int{
-			"describe_entity":  900,
-			"classify_domain":  300,
+			"describe_entity": 900,
+			"classify_domain": 300,
 		},
 	}
 
@@ -557,8 +560,8 @@ func TestFormatEnrichmentBreakdown_MediumPercentage_ColorYellow(t *testing.T) {
 		EnrichmentCandidates: 600, // 60% in [50%, 80%)
 		EnrichmentActions:    800,
 		EnrichmentByKind: map[string]int{
-			"describe_entity":  600,
-			"describe_role":    200,
+			"describe_entity": 600,
+			"describe_role":   200,
 		},
 	}
 
@@ -585,12 +588,12 @@ func TestFormatEnrichmentBreakdown_TopFiveKinds(t *testing.T) {
 		TotalEntities:        100,
 		EnrichmentCandidates: 50,
 		EnrichmentByKind: map[string]int{
-			"describe_entity":  25,
-			"describe_role":    10,
-			"classify_domain":  8,
-			"name_community":   4,
-			"link_reference":   2,
-			"extra_kind_a":     1,
+			"describe_entity": 25,
+			"describe_role":   10,
+			"classify_domain": 8,
+			"name_community":  4,
+			"link_reference":  2,
+			"extra_kind_a":    1,
 		},
 	}
 

@@ -15,10 +15,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 )
 
@@ -44,15 +44,15 @@ type AuthEndpointFinding struct {
 
 // GroupAuthCoverageReport is the wire shape for GET /api/security/auth-coverage/{group}.
 type GroupAuthCoverageReport struct {
-	Group           string                `json:"group"`
-	TotalEndpoints  int                   `json:"total_endpoints"`
-	CoveredCount    int                   `json:"covered_count"`
-	UncoveredCount  int                   `json:"uncovered_count"`
-	CoveragePct     float64               `json:"coverage_pct"`
-	ErrorCount      int                   `json:"error_count"`
-	WarnCount       int                   `json:"warn_count"`
-	InfoCount       int                   `json:"info_count"`
-	Findings        []AuthEndpointFinding `json:"findings"`
+	Group          string                `json:"group"`
+	TotalEndpoints int                   `json:"total_endpoints"`
+	CoveredCount   int                   `json:"covered_count"`
+	UncoveredCount int                   `json:"uncovered_count"`
+	CoveragePct    float64               `json:"coverage_pct"`
+	ErrorCount     int                   `json:"error_count"`
+	WarnCount      int                   `json:"warn_count"`
+	InfoCount      int                   `json:"info_count"`
+	Findings       []AuthEndpointFinding `json:"findings"`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,13 +78,13 @@ type SecuritySecretFinding struct {
 
 // GroupSecretsReport is the wire shape for GET /api/security/secrets/{group}.
 type GroupSecretsReport struct {
-	Group          string          `json:"group"`
-	TotalFindings  int             `json:"total_findings"`
-	ErrorCount     int             `json:"error_count"`
-	WarnCount      int             `json:"warn_count"`
-	InfoCount      int             `json:"info_count"`
-	ByCategory     map[string]int  `json:"by_category"`
-	Findings       []SecuritySecretFinding `json:"findings"`
+	Group         string                  `json:"group"`
+	TotalFindings int                     `json:"total_findings"`
+	ErrorCount    int                     `json:"error_count"`
+	WarnCount     int                     `json:"warn_count"`
+	InfoCount     int                     `json:"info_count"`
+	ByCategory    map[string]int          `json:"by_category"`
+	Findings      []SecuritySecretFinding `json:"findings"`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,12 +111,12 @@ type CycleFinding struct {
 
 // GroupCyclesReport is the wire shape for GET /api/security/cycles/{group}.
 type GroupCyclesReport struct {
-	Group         string         `json:"group"`
-	TotalCycles   int            `json:"total_cycles"`
-	ErrorCount    int            `json:"error_count"`
-	WarnCount     int            `json:"warn_count"`
-	InfoCount     int            `json:"info_count"`
-	Findings      []CycleFinding `json:"findings"`
+	Group       string         `json:"group"`
+	TotalCycles int            `json:"total_cycles"`
+	ErrorCount  int            `json:"error_count"`
+	WarnCount   int            `json:"warn_count"`
+	InfoCount   int            `json:"info_count"`
+	Findings    []CycleFinding `json:"findings"`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,7 +235,7 @@ func (s *Server) handleSecurityAuthCoverage(w http.ResponseWriter, r *http.Reque
 	result := GroupAuthCoverageReport{Group: groupName}
 
 	for _, rp := range repoPaths {
-		stateDir := filepath.Join(rp.Path, ".archigraph")
+		stateDir := daemon.StateDirForRepo(rp.Path)
 		doc, loadErr := graph.LoadGraphFromDir(stateDir)
 		if loadErr != nil {
 			continue
@@ -361,7 +361,7 @@ func (s *Server) handleSecuritySecrets(w http.ResponseWriter, r *http.Request) {
 	sevOrder := map[string]int{"error": 0, "warn": 1, "info": 2}
 
 	for _, rp := range repoPaths {
-		stateDir := filepath.Join(rp.Path, ".archigraph")
+		stateDir := daemon.StateDirForRepo(rp.Path)
 		doc, loadErr := graph.LoadGraphFromDir(stateDir)
 		if loadErr != nil {
 			continue
@@ -485,7 +485,7 @@ func (s *Server) handleSecurityCycles(w http.ResponseWriter, r *http.Request) {
 	sevOrder := map[string]int{"error": 0, "warn": 1, "info": 2}
 
 	for _, rp := range repoPaths {
-		stateDir := filepath.Join(rp.Path, ".archigraph")
+		stateDir := daemon.StateDirForRepo(rp.Path)
 		doc, loadErr := graph.LoadGraphFromDir(stateDir)
 		if loadErr != nil {
 			continue

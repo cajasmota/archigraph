@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
 
@@ -21,11 +22,10 @@ func TestDetectGraphChanges_TriggersOnMtimeBump(t *testing.T) {
 	repoA := filepath.Join(home, "repos", "alpha")
 	repoB := filepath.Join(home, "repos", "beta")
 	for _, r := range []string{repoA, repoB} {
-		if err := os.MkdirAll(filepath.Join(r, ".archigraph"), 0o755); err != nil {
+		if err := os.MkdirAll(daemon.StateDirForRepo(r), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		// Seed a minimal graph.json so Stat succeeds.
-		gj := filepath.Join(r, ".archigraph", "graph.json")
+		gj := daemon.GraphPathForRepo(r)
 		if err := os.WriteFile(gj, []byte(`{"version":1,"repo":"x","entities":[],"relationships":[]}`), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -67,7 +67,7 @@ func TestDetectGraphChanges_TriggersOnMtimeBump(t *testing.T) {
 	}
 
 	// Bump beta's graph.json mtime forward by 2s.
-	gjBeta := filepath.Join(repoB, ".archigraph", "graph.json")
+	gjBeta := daemon.GraphPathForRepo(repoB)
 	future := time.Now().Add(2 * time.Second)
 	if err := os.Chtimes(gjBeta, future, future); err != nil {
 		t.Fatal(err)
@@ -93,10 +93,11 @@ func TestRunWatch_TriggersLinksHookOnGraphChange(t *testing.T) {
 	repoA := filepath.Join(home, "repos", "alpha")
 	repoB := filepath.Join(home, "repos", "beta")
 	for _, r := range []string{repoA, repoB} {
-		if err := os.MkdirAll(filepath.Join(r, ".archigraph"), 0o755); err != nil {
+		if err := os.MkdirAll(daemon.StateDirForRepo(r), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(r, ".archigraph", "graph.json"),
+		gj := daemon.GraphPathForRepo(r)
+		if err := os.WriteFile(gj,
 			[]byte(`{"version":1,"repo":"x","entities":[],"relationships":[]}`), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +119,7 @@ func TestRunWatch_TriggersLinksHookOnGraphChange(t *testing.T) {
 
 	// Bump alpha's mtime forward.
 	future := time.Now().Add(3 * time.Second)
-	if err := os.Chtimes(filepath.Join(repoA, ".archigraph", "graph.json"), future, future); err != nil {
+	if err := os.Chtimes(daemon.GraphPathForRepo(repoA), future, future); err != nil {
 		t.Fatal(err)
 	}
 

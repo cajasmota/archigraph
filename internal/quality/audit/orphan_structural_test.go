@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 )
 
@@ -15,8 +16,10 @@ import (
 // 0 orphans on graphs that visibly render isolated nodes.
 func TestAudit_StructuralOnlyCountsAsOrphan(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_ROOT", "") // force <repo>/.archigraph state layout
-	stateDir := filepath.Join(dir, ".archigraph")
+	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT so
+	// the store is test-local and seed via daemon.StateDirForRepo.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	stateDir := daemon.StateDirForRepo(dir)
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

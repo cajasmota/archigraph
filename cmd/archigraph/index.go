@@ -22,7 +22,6 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/extract"
 	"github.com/cajasmota/archigraph/internal/daemon/walk"
-	idiff "github.com/cajasmota/archigraph/internal/indexer/diff"
 	"github.com/cajasmota/archigraph/internal/engine"
 	"github.com/cajasmota/archigraph/internal/enrichment"
 	"github.com/cajasmota/archigraph/internal/external"
@@ -32,6 +31,7 @@ import (
 	pyextr "github.com/cajasmota/archigraph/internal/extractors/python"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	idiff "github.com/cajasmota/archigraph/internal/indexer/diff"
 	"github.com/cajasmota/archigraph/internal/install/detect"
 	"github.com/cajasmota/archigraph/internal/module"
 	"github.com/cajasmota/archigraph/internal/progress"
@@ -47,11 +47,11 @@ const (
 	PassFramework     = "framework"      // Pass 2.5: YAML-driven framework rules
 	PassCrossLang     = "cross-lang"     // Pass 3: cross-language extractors
 	PassGraphAlgo     = "graph-algo"     // Pass 4: placeholder for PORT-4
-	PassBuildDocument  = "build-document"  // Pass 5: assemble graph.Document
-	PassRenameDetect   = "rename-detect"   // Pass 5.5: detect entity renames across rebuilds (#1344)
-	PassEnrichment     = "enrichment"      // Pass 6: emit enrichment candidates
-	PassProcessFlow    = "process-flow"    // Pass 7: process-flow BFS over CALLS (#724)
-	PassModuleAgg      = "module-agg"      // Pass 8: module-level aggregation (#1383)
+	PassBuildDocument = "build-document" // Pass 5: assemble graph.Document
+	PassRenameDetect  = "rename-detect"  // Pass 5.5: detect entity renames across rebuilds (#1344)
+	PassEnrichment    = "enrichment"     // Pass 6: emit enrichment candidates
+	PassProcessFlow   = "process-flow"   // Pass 7: process-flow BFS over CALLS (#724)
+	PassModuleAgg     = "module-agg"     // Pass 8: module-level aggregation (#1383)
 )
 
 // allPassNames is used to validate --skip-pass entries.
@@ -130,9 +130,9 @@ type Indexer struct {
 	// boundary and at every TickEveryNFiles interval during AST extraction.
 	// Defaults to progress.NoOpPublisher so callers that do not wire a sink
 	// pay zero overhead.
-	publisher  progress.Publisher
-	groupSlug  string // forwarded to every Event.GroupSlug
-	repoSlug   string // forwarded to every Event.RepoSlug; defaults to repoTag
+	publisher progress.Publisher
+	groupSlug string // forwarded to every Event.GroupSlug
+	repoSlug  string // forwarded to every Event.RepoSlug; defaults to repoTag
 
 	// Statistics — populated as passes run, surfaced in the final summary.
 	stats indexerStats
@@ -286,6 +286,15 @@ func Index(repoPath, outPath, repoTag string, skipPasses []string, pretty bool, 
 	if repoTag == "" {
 		repoTag = filepath.Base(absRepo)
 	}
+	// #1626: relocate any pre-existing in-repo `.archigraph/` graph
+	// artifacts into the external store before resolving output paths,
+	// so incremental loads + rename detection see the migrated state and
+	// the repo working tree is left clean.
+	if migrated, mErr := daemon.MigrateInRepoState(absRepo); mErr != nil {
+		fmt.Fprintf(os.Stderr, "archigraph: in-repo state migration: %v\n", mErr)
+	} else if migrated {
+		fmt.Fprintf(os.Stderr, "archigraph: migrated in-repo .archigraph → %s\n", daemon.StateDirForRepo(absRepo))
+	}
 	if outPath == "" {
 		outPath = daemon.GraphPathForRepo(absRepo)
 	}
@@ -371,6 +380,15 @@ func Index(repoPath, outPath, repoTag string, skipPasses []string, pretty bool, 
 				return err
 			}
 			fmt.Fprintf(os.Stderr, "archigraph: wrote %s\n", outPath)
+
+			// #1626: stamp graph.fb and graph.json with an IDENTICAL mtime.
+			// These are two encodings of the SAME index pass; letting their
+			// mtimes diverge made the daemon's fb-vs-json drift check fire a
+			// spurious "drift" every load and (combined with in-repo writes)
+			// drove an infinite reindex loop. Same mtime → no drift, ever.
+			now := time.Now()
+			_ = os.Chtimes(fbPath, now, now)
+			_ = os.Chtimes(outPath, now, now)
 		}
 
 		// Sidecar: corpus-level metrics for `archigraph doctor` and the future
@@ -1815,7 +1833,6 @@ func (i *Indexer) classifyAndReadWithProgress(ctx context.Context, absRepo strin
 	sortEntityRecords(allRecords)
 	return classified, allRecords
 }
-
 
 // runPass25FrameworkRules applies the YAML rule engine to every classified
 // file. Returns extra entity records (from source_patterns) plus standalone

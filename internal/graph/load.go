@@ -15,7 +15,6 @@ package graph
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -47,15 +46,16 @@ func LoadGraphFromDir(dir string) (*Document, error) {
 
 	switch {
 	case hasFB && hasJSON:
-		// Both present — prefer the more-recent file and warn on drift.
-		fbMT := fbInfo.ModTime()
-		jsonMT := jsonInfo.ModTime()
-		threshold := time.Second // mtime granularity on some filesystems
-		if fbMT.After(jsonMT.Add(threshold)) || jsonMT.After(fbMT.Add(threshold)) {
-			log.Printf("archigraph: mtime drift in %s: graph.fb=%s graph.json=%s — preferring graph.fb",
-				dir, fbMT.Format(time.RFC3339), jsonMT.Format(time.RFC3339))
-		}
-		// Always prefer graph.fb when both exist (it is the new canonical).
+		// Both present — always prefer graph.fb (the canonical binary).
+		//
+		// #1626: we no longer log "mtime drift" here. graph.fb and
+		// graph.json are two encodings of the SAME index pass and are now
+		// stamped with an identical mtime by the indexer, so any residual
+		// sub-second skew is meaningless. The old drift warning implied a
+		// problem that didn't exist and was the symptom that surfaced the
+		// in-repo reindex loop; treating fb as authoritative is sufficient.
+		_ = fbInfo
+		_ = jsonInfo
 		return loadFBDocument(fbPath)
 
 	case hasFB:

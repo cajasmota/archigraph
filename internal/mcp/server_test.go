@@ -10,15 +10,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// writeGraph writes a graph.Document to <repoDir>/.archigraph/graph.json.
+// writeGraph writes a graph.Document to the repo's external store state
+// dir (#1626: per-repo state no longer lives in <repo>/.archigraph).
 func writeGraph(t *testing.T, repoDir string, doc *graph.Document) string {
 	t.Helper()
-	dir := filepath.Join(repoDir, ".archigraph")
+	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
+		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	}
+	dir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -400,7 +405,7 @@ func TestEnrichmentCandidateRoundTrip(t *testing.T) {
 	_ = os.MkdirAll(repo, 0o755)
 	writeGraph(t, repo, fixtureDoc("r1"))
 	cands := []EnrichmentCandidate{{ID: "e1", NodeID: "a1", Kind: "purpose"}}
-	candPath := filepath.Join(repo, ".archigraph", "enrichment-candidates.json")
+	candPath := filepath.Join(daemon.StateDirForRepo(repo), "enrichment-candidates.json")
 	d, _ := json.MarshalIndent(cands, "", "  ")
 	_ = os.WriteFile(candPath, d, 0o644)
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
@@ -415,7 +420,7 @@ func TestEnrichmentCandidateRoundTrip(t *testing.T) {
 	if strings.Contains(resultText(subRes), "error") {
 		t.Fatalf("submit error: %s", resultText(subRes))
 	}
-	resPath := filepath.Join(repo, ".archigraph", "enrichment-resolutions.json")
+	resPath := filepath.Join(daemon.StateDirForRepo(repo), "enrichment-resolutions.json")
 	data, err := os.ReadFile(resPath)
 	if err != nil || !strings.Contains(string(data), "controls dashboard") {
 		t.Fatalf("resolution missing: err=%v data=%s", err, data)
@@ -450,7 +455,7 @@ func TestPerRepoUnavailable(t *testing.T) {
 	_ = os.MkdirAll(r2, 0o755)
 	writeGraph(t, r1, fixtureDoc("good"))
 	// Write a corrupt file in r2.
-	badDir := filepath.Join(r2, ".archigraph")
+	badDir := daemon.StateDirForRepo(r2)
 	_ = os.MkdirAll(badDir, 0o755)
 	_ = os.WriteFile(filepath.Join(badDir, "graph.json"), []byte("not json"), 0o644)
 	regPath := makeRegistry(t, dir, map[string]map[string]string{
@@ -762,7 +767,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 			"subject_id": "a2",
 		},
 	}
-	candPath := filepath.Join(repo, ".archigraph", "enrichment-candidates.json")
+	candPath := filepath.Join(daemon.StateDirForRepo(repo), "enrichment-candidates.json")
 	if err := os.MkdirAll(filepath.Dir(candPath), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -822,7 +827,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	if okRes.IsError {
 		t.Fatalf("submit unexpected error: %s", resultText(okRes))
 	}
-	rpath := filepath.Join(repo, ".archigraph", "repair.json")
+	rpath := filepath.Join(daemon.StateDirForRepo(repo), "repair.json")
 	data, err := os.ReadFile(rpath)
 	if err != nil {
 		t.Fatalf("repair.json missing: %v", err)
@@ -950,7 +955,7 @@ func TestListResiduals_IncludeStale(t *testing.T) {
 	writeGraph(t, repo, fixtureDoc("rA"))
 
 	// Write a repair_stats.json with two stale entries.
-	archDir := filepath.Join(repo, ".archigraph")
+	archDir := daemon.StateDirForRepo(repo)
 	if err := os.MkdirAll(archDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -2062,7 +2067,10 @@ func TestPatterns_ConcurrentRefineApply(t *testing.T) {
 // (FlatBuffers format). Used to verify fix for issue #1374 item #1.
 func writeGraphFB(t *testing.T, repoDir string, doc *graph.Document) string {
 	t.Helper()
-	dir := filepath.Join(repoDir, ".archigraph")
+	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
+		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	}
+	dir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -2094,8 +2102,8 @@ func TestReloadFBOnlyRepo(t *testing.T) {
 	docBoth := fixtureDoc("repo-both")
 
 	writeGraph(t, repoJSON, docJSON)   // graph.json only
-	writeGraphFB(t, repoFB, docFB)    // graph.fb only
-	writeGraph(t, repoBoth, docBoth)  // graph.json
+	writeGraphFB(t, repoFB, docFB)     // graph.fb only
+	writeGraph(t, repoBoth, docBoth)   // graph.json
 	writeGraphFB(t, repoBoth, docBoth) // + graph.fb
 
 	reg := &Registry{

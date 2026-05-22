@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/enrichment"
 )
 
@@ -14,7 +15,9 @@ import (
 // an enrichment-candidates.json file with the expected envelope.
 func TestEnrichmentCandidates_DjangoFixture(t *testing.T) {
 	// Copy the django_app fixture into a tmp dir so we can inspect the
-	// .archigraph/ output without polluting source-tree fixtures.
+	// state output without polluting source-tree fixtures.
+	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
 	tmp := t.TempDir()
 	src, err := filepath.Abs("testdata/django_app")
 	if err != nil {
@@ -29,8 +32,8 @@ func TestEnrichmentCandidates_DjangoFixture(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	// runPass6 writes inside absRepo/.archigraph; Run() received tmp.
-	candPath := filepath.Join(tmp, ".archigraph", "enrichment-candidates.json")
+	// runPass6 writes into the per-repo store state dir.
+	candPath := filepath.Join(daemon.StateDirForRepo(tmp), "enrichment-candidates.json")
 	data, err := os.ReadFile(candPath)
 	if err != nil {
 		t.Fatalf("read candidates: %v (entities=%d)", err, len(doc.Entities))
@@ -62,6 +65,8 @@ func TestEnrichmentCandidates_DjangoFixture(t *testing.T) {
 // next emit, and that the previously-resolved entity no longer produces
 // a describe_entity candidate.
 func TestEnrichmentResolutions_MergeBack(t *testing.T) {
+	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
 	tmp := t.TempDir()
 	src, err := filepath.Abs("testdata/django_app")
 	if err != nil {
@@ -83,7 +88,7 @@ func TestEnrichmentResolutions_MergeBack(t *testing.T) {
 	subject := doc.Entities[0].ID
 
 	// Seed a resolution file mapping that subject to a "description".
-	archDir := filepath.Join(tmp, ".archigraph")
+	archDir := daemon.StateDirForRepo(tmp)
 	if err := os.MkdirAll(archDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

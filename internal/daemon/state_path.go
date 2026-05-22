@@ -37,6 +37,8 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 // repoStateHash returns a deterministic, path-safe identifier for a
@@ -48,12 +50,71 @@ func repoStateHash(absRepoPath string) string {
 	return hex.EncodeToString(sum[:8]) // 16 hex chars
 }
 
-// StateDirForRepo returns the directory that holds per-repo state
-// (graph.json, repair.json, enrichment-*.json, …) for repoPath.
+// homeDir resolves the archigraph home directory, honouring the
+// ARCHIGRAPH_HOME override (matching registry.HomeDir) and falling
+// back to ~/.archigraph. Kept dependency-light so this hot-path
+// helper does not pull in the registry package.
+func homeDir() string {
+	if override := os.Getenv("ARCHIGRAPH_HOME"); override != "" {
+		return override
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		// Last-ditch fallback so we never write into a repo by accident.
+		return filepath.Join(os.TempDir(), ".archigraph")
+	}
+	return filepath.Join(home, ".archigraph")
+}
+
+// StoreDir returns the root of the daemon's external graph store —
+// the single source of truth for where generated graph artifacts live
+// when no isolated ARCHIGRAPH_DAEMON_ROOT is in effect.
 //
-// When ARCHIGRAPH_DAEMON_ROOT is set, the directory is
-// `$ARCHIGRAPH_DAEMON_ROOT/state/<hash>/`. Otherwise it is the
-// ADR-0007 default of `<repoPath>/.archigraph/`.
+//	$ARCHIGRAPH_HOME (or ~/.archigraph)/store
+//
+// Issue #1626: graph artifacts (graph.fb, graph.json, enrichments,
+// links, metadata) are NEVER written into the repo working tree any
+// more — they live under the store, keyed by repo. Keeping them out of
+// the tree (a) stops them polluting user repos and (b) breaks the
+// fb-vs-json mtime-drift reindex loop, since the watcher can no longer
+// observe its own output.
+func StoreDir() string {
+	return filepath.Join(homeDir(), "store")
+}
+
+var unsafeSlugChars = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
+
+// repoSlug derives a short, human-readable, path-safe label from a repo
+// path so the store layout is browsable (e.g. "my-service-1a2b3c4d…").
+// The trailing hash guarantees uniqueness even when two repos share a
+// basename.
+func repoSlug(absRepoPath string) string {
+	base := filepath.Base(absRepoPath)
+	base = unsafeSlugChars.ReplaceAllString(base, "-")
+	base = strings.Trim(base, "-._")
+	if base == "" {
+		base = "repo"
+	}
+	if len(base) > 48 {
+		base = base[:48]
+	}
+	return base + "-" + repoStateHash(absRepoPath)
+}
+
+// StateDirForRepo returns the directory that holds per-repo state
+// (graph.fb, graph.json, repair.json, enrichment-*.json, links, …) for
+// repoPath.
+//
+// Resolution (issue #1626):
+//   - When ARCHIGRAPH_DAEMON_ROOT is set (isolated daemons, parallel
+//     agents, tests): `$ARCHIGRAPH_DAEMON_ROOT/state/<hash>/`. This
+//     preserves the issue-#745 isolation contract.
+//   - Otherwise: the external store at
+//     `$ARCHIGRAPH_HOME (or ~/.archigraph)/store/<slug>-<hash>/`.
+//
+// Graph artifacts are NO LONGER written into `<repo>/.archigraph/`.
+// Pre-existing in-repo state is relocated transparently by
+// MigrateInRepoState (called from the load path).
 //
 // The directory is NOT created here; callers that write should
 // os.MkdirAll the returned path.
@@ -61,16 +122,26 @@ func StateDirForRepo(repoPath string) string {
 	if repoPath == "" {
 		return ""
 	}
-	root := os.Getenv(EnvRoot)
-	if root == "" {
-		return filepath.Join(repoPath, ".archigraph")
-	}
 	abs, err := filepath.Abs(repoPath)
 	if err != nil {
 		abs = repoPath
 	}
 	abs = filepath.Clean(abs)
-	return filepath.Join(root, "state", repoStateHash(abs))
+
+	if root := os.Getenv(EnvRoot); root != "" {
+		return filepath.Join(root, "state", repoStateHash(abs))
+	}
+	return filepath.Join(StoreDir(), repoSlug(abs))
+}
+
+// LegacyInRepoStateDir returns the historical co-located state directory
+// `<repo>/.archigraph/`. Used only by the migration path to find and
+// relocate pre-#1626 artifacts. New code MUST use StateDirForRepo.
+func LegacyInRepoStateDir(repoPath string) string {
+	if repoPath == "" {
+		return ""
+	}
+	return filepath.Join(repoPath, ".archigraph")
 }
 
 // GraphPathForRepo is a convenience wrapper that returns the

@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/cajasmota/archigraph/internal/daemon"
 )
 
 // ---------------------------------------------------------------------------
@@ -60,7 +62,11 @@ func newActionServer(t *testing.T, repoPath string) *httptest.Server {
 // given candidates under <repoPath>/.archigraph/.
 func seedEnrichmentCandidates(t *testing.T, repoPath string, cs []candidateRaw) {
 	t.Helper()
-	archDir := filepath.Join(repoPath, ".archigraph")
+	// #1626: per-repo state lives in the external store, not in-repo.
+	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
+		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	}
+	archDir := daemon.StateDirForRepo(repoPath)
 	if err := os.MkdirAll(archDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
@@ -188,7 +194,7 @@ func TestCandidateAction_Reject_Enrichment(t *testing.T) {
 	}
 
 	// Verify rejection was written.
-	rejPath := filepath.Join(repoPath, ".archigraph", "enrichment-rejections.json")
+	rejPath := filepath.Join(daemon.StateDirForRepo(repoPath), "enrichment-rejections.json")
 	rejData, err := os.ReadFile(rejPath)
 	if err != nil {
 		t.Fatalf("rejection file not created: %v", err)
@@ -202,10 +208,7 @@ func TestCandidateAction_Reject_Enrichment(t *testing.T) {
 	}
 
 	// Verify candidate was removed.
-	archDir := filepath.Join(repoPath, ".archigraph")
 	remaining := readAllCandidates(repoPath)
-	// The candidates file is under repoPath (StateDirForRepo uses repoPath/.archigraph)
-	_ = archDir
 	for _, c := range remaining {
 		if c.ID == candidateID {
 			t.Fatalf("candidate %s was not removed from candidates file", candidateID)
@@ -245,7 +248,7 @@ func TestCandidateAction_Apply_Enrichment(t *testing.T) {
 	}
 
 	// Verify resolution was written.
-	resPath := filepath.Join(repoPath, ".archigraph", "enrichment-resolutions.json")
+	resPath := filepath.Join(daemon.StateDirForRepo(repoPath), "enrichment-resolutions.json")
 	resData, err := os.ReadFile(resPath)
 	if err != nil {
 		t.Fatalf("resolution file not created: %v", err)
@@ -364,7 +367,7 @@ func TestCandidateAction_Apply_Repair(t *testing.T) {
 	}
 
 	// Verify resolution written.
-	resPath := filepath.Join(repoPath, ".archigraph", "enrichment-resolutions.json")
+	resPath := filepath.Join(daemon.StateDirForRepo(repoPath), "enrichment-resolutions.json")
 	if _, err := os.Stat(resPath); os.IsNotExist(err) {
 		t.Fatal("resolution file not created for repair candidate")
 	}

@@ -17,6 +17,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/cajasmota/archigraph/internal/daemon"
 )
 
 // ---------------------------------------------------------------------------
@@ -58,10 +60,16 @@ func newPendingServer(t *testing.T, group, repoSlug, repoPath string) *httptest.
 	return ts
 }
 
-// seedPendingCandidates writes candidates to <repoPath>/.archigraph/enrichment-candidates.json.
+// seedPendingCandidates writes candidates to the per-repo state dir.
+// #1626: state now lives in the external store (daemon.StateDirForRepo),
+// not <repo>/.archigraph. We pin ARCHIGRAPH_DAEMON_ROOT to an isolated
+// temp dir so the store is test-local and matches what the handler reads.
 func seedPendingCandidates(t *testing.T, repoPath string, cs []candidateRaw) {
 	t.Helper()
-	archDir := filepath.Join(repoPath, ".archigraph")
+	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
+		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	}
+	archDir := daemon.StateDirForRepo(repoPath)
 	if err := os.MkdirAll(archDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
@@ -146,9 +154,9 @@ func TestHandleV2Candidates_enrichmentKind(t *testing.T) {
 	repoPath := t.TempDir()
 	seedPendingCandidates(t, repoPath, []candidateRaw{
 		{
-			ID:        "e1",
-			Kind:      "describe_entity",
-			SubjectID: "pkg.Bar",
+			ID:         "e1",
+			Kind:       "describe_entity",
+			SubjectID:  "pkg.Bar",
 			Confidence: 0.75,
 			Context: map[string]any{
 				"entity_name": "Bar",

@@ -22,10 +22,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 )
 
@@ -85,8 +85,8 @@ func (s *Server) handleNPlusOne(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, rp := range repoPaths {
-		// LoadGraphFromDir expects the .archigraph state directory.
-		stateDir := filepath.Join(rp.Path, ".archigraph")
+		// Resolve the per-repo state dir (external store; #1626).
+		stateDir := daemon.StateDirForRepo(rp.Path)
 		doc, loadErr := graph.LoadGraphFromDir(stateDir)
 		if loadErr != nil {
 			// Repo not yet indexed — skip silently.

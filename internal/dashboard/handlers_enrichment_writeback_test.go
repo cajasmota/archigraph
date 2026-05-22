@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 )
 
@@ -31,6 +32,8 @@ func newWritebackServer(t *testing.T) (*Server, *graph.Entity, string) {
 	t.Helper()
 
 	tmp := t.TempDir()
+	// #1626: per-repo graph artifacts live in the external store.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
 
 	// Build a minimal graph with one entity.
 	entityID := "aabbccddeeff0011"
@@ -38,10 +41,10 @@ func newWritebackServer(t *testing.T) (*Server, *graph.Entity, string) {
 		Version: graph.SchemaVersion,
 		Entities: []graph.Entity{
 			{
-				ID:       entityID,
-				Name:     "OrderCheckout",
-				Kind:     "http_endpoint",
-				Language: "python",
+				ID:         entityID,
+				Name:       "OrderCheckout",
+				Kind:       "http_endpoint",
+				Language:   "python",
 				SourceFile: "api/views.py",
 				Properties: map[string]string{},
 			},
@@ -49,7 +52,10 @@ func newWritebackServer(t *testing.T) (*Server, *graph.Entity, string) {
 	}
 
 	// Write the initial graph.json — the handler will overwrite it.
-	graphPath := filepath.Join(tmp, "graph.json")
+	graphPath := daemon.GraphPathForRepo(tmp)
+	if err := os.MkdirAll(filepath.Dir(graphPath), 0o755); err != nil {
+		t.Fatalf("mkdir store: %v", err)
+	}
 	if err := graph.WriteAtomic(graphPath, doc, false); err != nil {
 		t.Fatalf("write initial graph: %v", err)
 	}
@@ -194,7 +200,7 @@ func TestWriteback_success(t *testing.T) {
 	}
 
 	// ── 3. graph.json updated on disk ─────────────────────────────────────
-	graphPath := filepath.Join(repoDir, "graph.json")
+	graphPath := daemon.GraphPathForRepo(repoDir)
 	raw, err := os.ReadFile(graphPath)
 	if err != nil {
 		t.Fatalf("read graph.json: %v", err)
@@ -274,7 +280,7 @@ func TestWriteback_idempotent(t *testing.T) {
 
 	// We need to re-seed the cache for the second call because Invalidate cleared it.
 	// Reload the doc from disk.
-	graphPath := filepath.Join(repoDir, "graph.json")
+	graphPath := daemon.GraphPathForRepo(repoDir)
 	raw, err := os.ReadFile(graphPath)
 	if err != nil {
 		t.Fatalf("read graph.json: %v", err)
@@ -329,13 +335,13 @@ func TestValidateDescription(t *testing.T) {
 		wantErr bool
 	}{
 		{"Handles the checkout flow for authenticated users.", false},
-		{"short", true},                                                           // too short
-		{"TODO: describe this", true},                                             // placeholder
-		{"FIXME: add description later", true},                                    // placeholder
-		{"N/A not applicable here", true},                                         // placeholder
+		{"short", true},                        // too short
+		{"TODO: describe this", true},          // placeholder
+		{"FIXME: add description later", true}, // placeholder
+		{"N/A not applicable here", true},      // placeholder
 		{"This is a perfectly normal description of a thing.", false},
-		{"describe this endpoint for me", true},                                   // "describe this"
-		{"Placeholder content should be rejected from the pipeline.", true},       // "Placeholder"
+		{"describe this endpoint for me", true},                             // "describe this"
+		{"Placeholder content should be rejected from the pipeline.", true}, // "Placeholder"
 	}
 	for _, tc := range cases {
 		msg := validateDescription(tc.desc)
@@ -364,9 +370,9 @@ func TestSanitizePathSegment(t *testing.T) {
 func TestYamlScalar(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{"simple", "simple"},
-		{"with space", "with space"},                      // no special chars
+		{"with space", "with space"}, // no special chars
 		{"has:colon", "'has:colon'"},
-		{"has#hash", "has#hash"},                          // # not in the quoting set
+		{"has#hash", "has#hash"}, // # not in the quoting set
 		{"it's quoted", "'it''s quoted'"},
 		{"", "''"},
 	}

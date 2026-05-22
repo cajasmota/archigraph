@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/quality/fitness"
 	"github.com/cajasmota/archigraph/internal/registry"
@@ -73,7 +74,7 @@ func runQualityCheck(argv []string) error {
 				return fmt.Errorf("load group config: %w", err)
 			}
 			for _, r := range cfg.Repos {
-				stateDir := filepath.Join(r.Path, ".archigraph")
+				stateDir := daemon.StateDirForRepo(r.Path)
 				doc, err := graph.LoadGraphFromDir(stateDir)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "quality check: skip %s (%v)\n", r.Slug, err)
@@ -91,7 +92,7 @@ func runQualityCheck(argv []string) error {
 		if err != nil {
 			return fmt.Errorf("resolve path: %w", err)
 		}
-		stateDir := filepath.Join(absPath, ".archigraph")
+		stateDir := daemon.StateDirForRepo(absPath)
 		doc, err := graph.LoadGraphFromDir(stateDir)
 		if err != nil {
 			return fmt.Errorf("load graph from %s: %w", stateDir, err)

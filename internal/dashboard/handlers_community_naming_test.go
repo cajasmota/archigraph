@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/cajasmota/archigraph/internal/daemon"
 )
 
 // newCommunityNamingServer creates a minimal Server with one repo whose
@@ -26,8 +28,10 @@ func newCommunityNamingServer(t *testing.T) (*Server, string) {
 	}
 
 	// Create a temporary repo directory with an archigraph state dir.
+	// #1626: per-repo state lives in the external store, not in-repo.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
 	repoDir := t.TempDir()
-	stateDir := filepath.Join(repoDir, ".archigraph")
+	stateDir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatalf("mkdir state: %v", err)
 	}
@@ -35,30 +39,30 @@ func newCommunityNamingServer(t *testing.T) (*Server, string) {
 	// Write a candidates file with mixed kinds.
 	candidates := []map[string]any{
 		{
-			"id":         "cn:community:1",
-			"kind":       "name_community",
-			"task_type":  "community",
-			"subject_id": "community:1",
-			"context":    map[string]any{"auto_name": "AuthCluster", "size": 42, "top_entities": []string{"UserService", "TokenValidator"}},
+			"id":               "cn:community:1",
+			"kind":             "name_community",
+			"task_type":        "community",
+			"subject_id":       "community:1",
+			"context":          map[string]any{"auto_name": "AuthCluster", "size": 42, "top_entities": []string{"UserService", "TokenValidator"}},
 			"confidence_floor": 0.6,
 			"discovered_at":    "2026-05-01T00:00:00Z",
 		},
 		{
-			"id":         "cn:community:2",
-			"kind":       "name_community",
-			"task_type":  "community",
-			"subject_id": "community:2",
-			"context":    map[string]any{"auto_name": "BillingCluster", "size": 17, "top_entities": []string{"InvoiceService"}},
+			"id":               "cn:community:2",
+			"kind":             "name_community",
+			"task_type":        "community",
+			"subject_id":       "community:2",
+			"context":          map[string]any{"auto_name": "BillingCluster", "size": 17, "top_entities": []string{"InvoiceService"}},
 			"confidence_floor": 0.6,
 			"discovered_at":    "2026-05-01T00:00:00Z",
 		},
 		{
-			"id":         "ec:entity:abc",
-			"kind":       "describe_entity",
-			"task_type":  "entity",
-			"subject_id": "entity:abc",
-			"context":    map[string]any{"name": "AuthHandler", "kind": "Service"},
-			"score":      75,
+			"id":            "ec:entity:abc",
+			"kind":          "describe_entity",
+			"task_type":     "entity",
+			"subject_id":    "entity:abc",
+			"context":       map[string]any{"name": "AuthHandler", "kind": "Service"},
+			"score":         75,
 			"discovered_at": "2026-05-01T00:00:00Z",
 		},
 	}

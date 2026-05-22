@@ -21,6 +21,12 @@ import (
 // passes to skip — pass nil to run everything.
 func newTestIndexer(t *testing.T, repoTag string, skipPasses []string) *Indexer {
 	t.Helper()
+	// #1626: per-repo state lives in the external store. Pin DAEMON_ROOT
+	// to an isolated temp so indexer runs (a) don't pollute the source
+	// tree fixtures with state and (b) don't load stale state across runs.
+	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
+		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	}
 	cls, err := classifier.New("", nil)
 	if err != nil {
 		t.Fatalf("classifier: %v", err)

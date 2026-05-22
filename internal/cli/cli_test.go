@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
 
@@ -152,7 +153,9 @@ func TestStatusGraphFileDetection(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	archigraphDir := filepath.Join(repo, ".archigraph")
+	// #1626: per-repo state lives in the external store (resolved by
+	// daemon.StateDirForRepo under the sandbox ARCHIGRAPH_HOME), not in-repo.
+	archigraphDir := daemon.StateDirForRepo(repo)
 
 	// Test 1: No graph files exist
 	out := &bytes.Buffer{}

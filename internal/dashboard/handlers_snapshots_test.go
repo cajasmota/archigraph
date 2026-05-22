@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
@@ -181,7 +182,7 @@ func setupSnapshotEnv(t *testing.T) (*Server, string) {
 
 	// Create the fake repo directory with a graph.json.
 	repoDir := filepath.Join(tmp, "repos", "repo1")
-	archigraphDir := filepath.Join(repoDir, ".archigraph")
+	archigraphDir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
 		t.Fatalf("mkdir repo: %v", err)
 	}
@@ -218,8 +219,8 @@ func setupSnapshotEnv(t *testing.T) (*Server, string) {
 		t.Fatalf("save group config: %v", err)
 	}
 	reg := struct {
-		Version int                  `json:"version"`
-		Groups  []registry.GroupRef  `json:"groups"`
+		Version int                 `json:"version"`
+		Groups  []registry.GroupRef `json:"groups"`
 	}{
 		Version: 1,
 		Groups:  []registry.GroupRef{{Name: "testgroup", ConfigPath: groupCfgPath}},
@@ -423,7 +424,7 @@ func TestSnapshotDiff_DetectsNewEntity(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// 2. Add a third entity to the live graph.
-	archigraphDir := filepath.Join(repoDir, ".archigraph")
+	archigraphDir := daemon.StateDirForRepo(repoDir)
 	doc := graph.Document{
 		Version: 1,
 		Repo:    "repo1",

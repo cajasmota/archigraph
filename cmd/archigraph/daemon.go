@@ -118,6 +118,18 @@ func runDaemon(argv []string) error {
 		return fmt.Errorf("ensure layout: %w", err)
 	}
 
+	// #1626: one-time sweep to relocate any pre-existing in-repo
+	// `.archigraph/` graph artifacts into the external store, so groups
+	// that were indexed before this change don't need a full re-index and
+	// their working trees end up clean. Best-effort + idempotent.
+	for _, repoPath := range daemonReposToWatch() {
+		if migrated, mErr := daemon.MigrateInRepoState(repoPath); mErr != nil {
+			fmt.Fprintf(os.Stderr, "archigraph: migrate %s: %v\n", repoPath, mErr)
+		} else if migrated {
+			fmt.Fprintf(os.Stderr, "archigraph: migrated in-repo .archigraph for %s → store\n", repoPath)
+		}
+	}
+
 	// Log to both stderr (so `archigraph start` foreground mode shows
 	// progress) and the rotating log file. Phase B will replace the
 	// raw file with a size-rotated writer; for Phase A a single append
