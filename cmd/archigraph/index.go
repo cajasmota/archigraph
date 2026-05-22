@@ -2093,6 +2093,292 @@ func (i *Indexer) buildPatternContainsRels(records []types.EntityRecord) []types
 	return out
 }
 
+// foldShadowStats reports the result of foldClassHierarchyShadows for the
+// stderr log line.
+type foldShadowStats struct {
+	// ShadowsFolded is the number of INFERRED_FROM_CLASS_HIERARCHY shadows
+	// dropped because a real typed node existed for the same source+symbol.
+	ShadowsFolded int
+	// EdgesRepointed is the number of edge endpoints (FromID/ToID, embedded
+	// or standalone) rewritten from a folded shadow's ID to its survivor.
+	EdgesRepointed int
+	// ShadowsBackfilled is the number of shadows that survived (no real typed
+	// node) and now carry a real start_line (>0) from the extractor.
+	ShadowsBackfilled int
+	// ShadowsStillLine0 is the residual count of surviving shadows that still
+	// have start_line==0 (regex could not anchor a line — should be ~0).
+	ShadowsStillLine0 int
+}
+
+// frameworkClassKindPriority ranks framework-typed node kinds by how strongly
+// they represent a class/type *declaration* (vs a nested artifact that merely
+// shares the class name, e.g. a Django Meta `Constraint`). These are the only
+// kinds eligible to be a fold *survivor*. When several share a fold source's
+// source_file+name, the highest-priority kind wins. Higher value = stronger
+// class signal. SCOPE.Component is intentionally absent: it is the generic AST
+// node we fold AWAY into a framework-typed survivor (so a class with a View
+// resolves to ONE node), and it is itself the survivor only when no
+// framework-typed node exists (handled separately, never as a candidate here).
+var frameworkClassKindPriority = map[string]int{
+	"Model":          100,
+	"View":           100,
+	"Controller":     100,
+	"Service":        100,
+	"Middleware":     100,
+	"Repository":     100,
+	"TestClass":      90,
+	"Schema":         80,
+	"Plugin":         80,
+	"Implementation": 80,
+	"Interface":      80,
+	"Task":           70,
+}
+
+func isShadowRecord(r *types.EntityRecord) bool {
+	return r.Properties["provenance"] == "INFERRED_FROM_CLASS_HIERARCHY"
+}
+
+// classLikeComponentSubtypes are the SCOPE.Component subtypes that denote a
+// class/type declaration (as opposed to subtype="file"/"import"/"module").
+var classLikeComponentSubtypes = map[string]bool{
+	"class": true, "struct": true, "interface": true,
+	"protocol": true, "trait": true, "behaviour": true,
+}
+
+// isFoldSource reports whether r is a class-representation node that should be
+// folded into a framework-typed node when one exists for the same symbol:
+//   - the INFERRED_FROM_CLASS_HIERARCHY shadow emitted by the hierarchy pass, OR
+//   - the generic SCOPE.Component class node emitted by the per-language AST
+//     extractor (these two share an EntityID and pre-merge at assembly).
+//
+// When NO framework-typed node exists, a fold source is kept as the single
+// node for that class (it already carries a real line from its extractor).
+func isFoldSource(r *types.EntityRecord) bool {
+	if r.Name == "" {
+		return false
+	}
+	if isShadowRecord(r) {
+		return true
+	}
+	return r.Kind == "SCOPE.Component" && classLikeComponentSubtypes[r.Subtype]
+}
+
+// foldClassHierarchyShadows folds line-less / generic class nodes into the real
+// framework-typed node (View/Model/Controller/…) for the same source_file +
+// symbol when one exists, so every class resolves to ONE node with a real line
+// span + qualified_name. Issue #1613.
+//
+// Fold sources (see isFoldSource): the INFERRED_FROM_CLASS_HIERARCHY shadow and
+// the generic SCOPE.Component/class AST node. For each:
+//   - If a framework-typed node (see frameworkClassKindPriority) exists for the
+//     same (SourceFile, Name): DROP the source and remap its stamped ID to the
+//     survivor. The survivor keeps its real start_line/end_line/qualified_name/
+//     language; any property the source carried that the survivor lacks (e.g.
+//     is_abstract) is copied over.
+//   - Otherwise the source SURVIVES as the single node for that class — the
+//     extractor already stamped a real start_line (+ qualified_name for Python).
+//
+// After deciding folds, every edge endpoint (embedded EntityRecord.Relationships
+// across ALL records, plus the standalone pass2Rels stream) that points at a
+// folded source's ID is rewritten to the survivor's ID. Embedded edges OWNED by
+// a folded source (those it emitted) are re-homed onto the survivor record so
+// they are still surfaced at assembly time. Edges are never dropped.
+//
+// Runs after stampEntityIDs + the resolver passes so r.ID is populated and
+// embedded rel endpoints are already in hex-ID form where resolvable.
+func (i *Indexer) foldClassHierarchyShadows(
+	merged []types.EntityRecord,
+	pass2Rels []types.RelationshipRecord,
+) ([]types.EntityRecord, []types.RelationshipRecord, foldShadowStats) {
+	var stats foldShadowStats
+
+	// Index framework-typed survivor candidates by (SourceFile, Name).
+	type cand struct {
+		idx int
+		id  string
+		pri int
+		ln  int
+	}
+	bySymbol := make(map[[2]string][]cand)
+	for k := range merged {
+		r := &merged[k]
+		if r.Name == "" {
+			continue
+		}
+		pri, ok := frameworkClassKindPriority[r.Kind]
+		if !ok {
+			continue
+		}
+		key := [2]string{r.SourceFile, r.Name}
+		bySymbol[key] = append(bySymbol[key], cand{idx: k, id: r.ID, pri: pri, ln: r.StartLine})
+	}
+
+	// Index non-shadow records by stamped ID so a surviving shadow can detect a
+	// sibling AST SCOPE.Component node (same ID) to defer to (#1613): the shadow
+	// and the per-language AST class node share an EntityID, so only one is
+	// emitted at assembly. We want the AST node (real coordinates, no inference
+	// provenance) to win, and we strip the now-misleading shadow provenance from
+	// any shadow that survives with real coordinates.
+	nonShadowByID := make(map[string]bool)
+	for k := range merged {
+		r := &merged[k]
+		if r.ID != "" && !isShadowRecord(r) {
+			nonShadowByID[r.ID] = true
+		}
+	}
+
+	// remap: folded source ID -> survivor ID.
+	remap := make(map[string]string)
+	drop := make(map[int]bool)
+
+	for k := range merged {
+		r := &merged[k]
+		if !isFoldSource(r) {
+			continue
+		}
+		cands := bySymbol[[2]string{r.SourceFile, r.Name}]
+		if len(cands) == 0 {
+			// No framework-typed survivor — this node IS the single class node.
+			if isShadowRecord(r) {
+				// If a sibling AST SCOPE.Component node (same ID) exists, drop
+				// the shadow and let the AST node carry the class (it has real
+				// coordinates and no inference provenance). Otherwise the shadow
+				// is the only node: keep it, but strip the now-misleading
+				// INFERRED_FROM_CLASS_HIERARCHY provenance since it points at
+				// real source (start_line>0). Record residual stats.
+				if nonShadowByID[r.ID] {
+					drop[k] = true
+					stats.ShadowsFolded++
+					// Re-home edges the shadow owns onto the standalone stream
+					// with an explicit FromID (== the shared ID the AST sibling
+					// also uses) so they are not lost when this record is dropped.
+					for ri := range r.Relationships {
+						rel := r.Relationships[ri]
+						if rel.FromID == "" {
+							rel.FromID = r.ID
+						}
+						pass2Rels = append(pass2Rels, rel)
+					}
+					r.Relationships = nil
+					continue
+				}
+				if r.StartLine > 0 {
+					stats.ShadowsBackfilled++
+					delete(r.Properties, "provenance")
+				} else {
+					stats.ShadowsStillLine0++
+				}
+			}
+			continue
+		}
+		// Pick the strongest class-like candidate: highest priority, then
+		// smallest start_line (the declaration), then smallest id for stability.
+		best := cands[0]
+		for _, c := range cands[1:] {
+			if c.pri != best.pri {
+				if c.pri > best.pri {
+					best = c
+				}
+				continue
+			}
+			if c.ln != best.ln {
+				// Prefer a real (>0) smaller line; treat 0 as "no line" (worst).
+				switch {
+				case best.ln == 0 && c.ln > 0:
+					best = c
+				case c.ln > 0 && c.ln < best.ln:
+					best = c
+				}
+				continue
+			}
+			if c.id < best.id {
+				best = c
+			}
+		}
+		if best.id == r.ID {
+			// Degenerate (same ID) — leave as-is.
+			continue
+		}
+		drop[k] = true
+		remap[r.ID] = best.id
+		stats.ShadowsFolded++
+
+		// Copy useful properties the survivor lacks (e.g. is_abstract, role).
+		sv := &merged[best.idx]
+		if sv.Properties == nil {
+			sv.Properties = map[string]string{}
+		}
+		for pk, pv := range r.Properties {
+			if pk == "provenance" || pk == "ref" {
+				continue
+			}
+			if _, exists := sv.Properties[pk]; !exists {
+				sv.Properties[pk] = pv
+			}
+		}
+		// Re-home edges the shadow OWNS (emitted on its own record). Their
+		// FromID may be "" (meaning the owner's ID) — bind it to the survivor.
+		for ri := range r.Relationships {
+			rel := r.Relationships[ri]
+			if rel.FromID == "" || rel.FromID == r.ID {
+				rel.FromID = best.id
+			}
+			sv.Relationships = append(sv.Relationships, rel)
+		}
+		r.Relationships = nil
+	}
+
+	if len(remap) == 0 && len(drop) == 0 {
+		return merged, pass2Rels, stats
+	}
+
+	// Re-point every edge endpoint that targets a folded shadow.
+	rewrite := func(id string) (string, bool) {
+		if nv, ok := remap[id]; ok {
+			return nv, true
+		}
+		return id, false
+	}
+	for k := range merged {
+		if drop[k] {
+			continue
+		}
+		r := &merged[k]
+		for ri := range r.Relationships {
+			rel := &r.Relationships[ri]
+			if nv, ok := rewrite(rel.FromID); ok {
+				rel.FromID = nv
+				stats.EdgesRepointed++
+			}
+			if nv, ok := rewrite(rel.ToID); ok {
+				rel.ToID = nv
+				stats.EdgesRepointed++
+			}
+		}
+	}
+	for ri := range pass2Rels {
+		rel := &pass2Rels[ri]
+		if nv, ok := rewrite(rel.FromID); ok {
+			rel.FromID = nv
+			stats.EdgesRepointed++
+		}
+		if nv, ok := rewrite(rel.ToID); ok {
+			rel.ToID = nv
+			stats.EdgesRepointed++
+		}
+	}
+
+	// Compact: drop the folded shadow records.
+	out := merged[:0]
+	for k := range merged {
+		if drop[k] {
+			continue
+		}
+		out = append(out, merged[k])
+	}
+	return out, pass2Rels, stats
+}
+
 // buildDocument merges entity records from every pass, dedupes by stable
 // graph-entity ID, resolves cross-file CALLS edges, then assembles the
 // final on-disk document.
@@ -2274,6 +2560,27 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 		// Migrate to the standalone pass2Rels stream so the
 		// assembly loop below still surfaces them on the document.
 		pass2Rels = append(pass2Rels, pruneOrphanRels...)
+	}
+
+	// #1613 — fold class-hierarchy Component shadows into their real typed
+	// node. The class-hierarchy pass emits every class as a SCOPE.Component
+	// (provenance=INFERRED_FROM_CLASS_HIERARCHY). When a real typed node
+	// (View/Model/Controller/struct/…) already exists for the same
+	// source_file+symbol, that shadow is a line-less duplicate: drop it and
+	// re-point its edges onto the surviving typed node. Shadows with no real
+	// typed node keep their (now real, from the extractor) line span +
+	// qualified_name and survive as the single node for that class.
+	var foldStats foldShadowStats
+	// ARCHIGRAPH_DISABLE_1613_FOLD is a verification escape hatch (compare
+	// folded vs unfolded graphs on the same binary); unset in production.
+	if os.Getenv("ARCHIGRAPH_DISABLE_1613_FOLD") == "" {
+		merged, pass2Rels, foldStats = i.foldClassHierarchyShadows(merged, pass2Rels)
+	}
+	if foldStats.ShadowsFolded > 0 || foldStats.ShadowsBackfilled > 0 {
+		fmt.Fprintf(os.Stderr,
+			"class-shadow-fold: folded=%d (edges_repointed=%d) survived_with_real_lines=%d still_line0=%d\n",
+			foldStats.ShadowsFolded, foldStats.EdgesRepointed,
+			foldStats.ShadowsBackfilled, foldStats.ShadowsStillLine0)
 	}
 
 	entities := make([]graph.Entity, 0, len(merged))
