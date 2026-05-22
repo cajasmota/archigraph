@@ -203,8 +203,9 @@ export type DocCategory =
 export interface DocNode {
   type: "folder" | "doc";
   name: string;
-  path?: string;          // doc leaf only — key for the page endpoint
-  category?: DocCategory; // top-level section
+  path?: string;           // doc leaf only — key for the page endpoint
+  category?: DocCategory;  // top-level section
+  isRepoDocs?: boolean;    // true = not skill-generated (raw repo markdown)
   children?: DocNode[];
 }
 
@@ -212,6 +213,12 @@ export interface DocPage {
   path: string;
   title: string;
   markdown: string;
+}
+
+/** Wrapper returned by GET /api/v2/groups/:id/docs/tree */
+export interface DocsTreeResponse {
+  skillGenerated: boolean;
+  nodes: DocNode[];
 }
 
 // ----------------------------------------------------------------

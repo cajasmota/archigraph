@@ -15,6 +15,7 @@ import type {
   Community,
   DocNode,
   DocPage,
+  DocsTreeResponse,
   GraphPayloadWire,
   EntityDetailWire,
   SettingsGroup,
@@ -183,7 +184,7 @@ export const api = {
 
   // --- v2 Docs portal — generated markdown documents (#1552) ---
   getDocsTree: (groupId: string) =>
-    requestV2<DocNode[]>(`/groups/${groupId}/docs/tree`),
+    requestV2<DocsTreeResponse>(`/groups/${groupId}/docs/tree`),
   getDocPage: (groupId: string, path: string) =>
     requestV2<DocPage>(
       `/groups/${encodeURIComponent(groupId)}/docs/page?path=${encodeURIComponent(path)}`,
