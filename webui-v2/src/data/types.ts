@@ -634,7 +634,8 @@ export interface Process {
 
 export interface FlowDeadEnd {
   process_id: string;
-  process_name: string;
+  /** May be null/absent — dead-end items have a sparser shape than full flows. */
+  process_name?: string | null;
   repo: string;
   reason: "no_useful_sink" | "single_step" | "unresolved_callee" | "phantom_terminal" | "dead_end";
   step_count: number;
