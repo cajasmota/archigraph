@@ -12,7 +12,7 @@ Synthesised across the whole group.
 
 ## Inputs
 
-- `<primary-repo>/docs/business/domain-glossary.md` (Pass 15) — link into it.
+- `~/.archigraph/docs/<group>/business/domain-glossary.md` (Pass 15) — link into it.
 - Technical-tier `reference/api.md`, module `flows.md`, and `overview.md` for
   every repo (where generated) — these enumerate the behaviour; translate it.
 - The graph via the MCP tools below.
@@ -20,7 +20,7 @@ Synthesised across the whole group.
 ## Output
 
 ```
-<primary-repo>/docs/business/capabilities/<capability-slug>.md   # one per capability
+~/.archigraph/docs/<group>/business/capabilities/<capability-slug>.md   # one per capability
 ```
 
 Use `output-templates/business-capability.md`. `<capability-slug>` is a
@@ -73,7 +73,7 @@ Run `snippets/verification-checklist.md`. Then once, for the capability set:
 ```
 archigraph_save_finding(
   question="What product capabilities does the <group> group provide?",
-  answer="<files: <primary-repo>/docs/business/capabilities/*.md>",
+  answer="<files: ~/.archigraph/docs/<group>/business/capabilities/*.md>",
   type="business_capabilities",
 )
 ```

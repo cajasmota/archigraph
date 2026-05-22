@@ -1,6 +1,6 @@
 # Pass 3 — Repo Overview
 
-Write `<repo>/docs/overview.md` for every repo in the group. The overview is the entry point a new engineer reads first; it is also the page Pass 7 quotes when synthesizing the group-level page.
+Write `~/.archigraph/docs/<group>/<repo-slug>/overview.md` for every repo in the group. The overview is the entry point a new engineer reads first; it is also the page Pass 7 quotes when synthesizing the group-level page.
 
 > **Pass 3a hook active.** Before writing any paragraph that describes an entity, run the generation-time repair hook from `prompts/03a-generation-time-repair.md`. Auto-repair residuals where unambiguous; otherwise emit the documented "Runtime-resolved edge" callout from that prompt. Do not silently drop unresolved outbound edges.
 
@@ -42,7 +42,7 @@ Mention any accepted cross-repo links in a section called "Connections to other 
 
 ### Step 4 — Render
 
-Open `output-templates/overview.md`, fill every section, write the result to `<repo>/docs/overview.md`. Apply `_graph-searchability.md` and the stack convention strictly:
+Open `output-templates/overview.md`, fill every section, write the result to `~/.archigraph/docs/<group>/<repo-slug>/overview.md`. Apply `_graph-searchability.md` and the stack convention strictly:
 
 - Every code identifier in headings goes in backticks: `` ## `OrderViewSet` ``.
 - Every code block has a language tag.
@@ -59,7 +59,7 @@ Call:
 ```
 archigraph_save_finding(
   question="What is the architectural overview of <repo>?",
-  answer="<file: <repo>/docs/overview.md>",
+  answer="<file: ~/.archigraph/docs/<group>/<repo-slug>/overview.md>",
   type="overview",
   repo_filter=["<r>"]
 )

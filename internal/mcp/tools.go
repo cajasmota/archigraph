@@ -297,11 +297,42 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 		return mcpapi.NewToolResultText("# no repos loaded for this group\n"), nil
 	}
 
-	// Score across all repos in scope.
+	// Score across all repos in scope. BM25 runs unconditionally; the
+	// semantic vector index is fused via RRF when (a) the repo has an
+	// embeddings.bin sidecar and (b) the configured query embedding backend
+	// successfully embeds the question (#461 / ADR-0019). Per-repo fusion
+	// keeps ranks comparable; cross-repo merging follows the existing
+	// re-rank pass below.
 	all := []scored{}
+	var qVec []float32
+	var qHave bool
 	for _, r := range repos {
-		hits := r.BM25.Search(question, 50)
-		for _, h := range hits {
+		bm25Hits := r.BM25.Search(question, 50)
+		if r.Semantic != nil && r.Semantic.Len() > 0 {
+			if !qHave {
+				qVec, qHave = embedQuery(ctx, question)
+				if !qHave {
+					// One query embed attempt per request; on failure stay BM25-only.
+					qVec = nil
+				}
+			}
+			if qHave && len(qVec) == r.Semantic.Dims {
+				semIDs := r.Semantic.Search(qVec, 50)
+				semHits := make([]Hit, 0, len(semIDs))
+				for _, s := range semIDs {
+					if e, ok := r.byID[s.ID]; ok {
+						semHits = append(semHits, Hit{Entity: e, Score: s.Score, Source: "semantic"})
+					}
+				}
+				fused := FuseRRF(bm25Hits, semHits)
+				for _, h := range fused {
+					all = append(all, scored{repo: r, hit: h})
+				}
+				continue
+			}
+		}
+		for _, h := range bm25Hits {
+			h.Source = "bm25"
 			all = append(all, scored{repo: r, hit: h})
 		}
 	}
@@ -350,7 +381,20 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 
 	// Smart scoping: no filter, multiple repos -> per-repo top 3.
 	if len(repoFilter) == 0 && len(lg.Repos) > 1 {
-		return mcpapi.NewToolResultText(renderPerRepoSummary(all, lg)), nil
+		summary := renderPerRepoSummary(all, lg)
+		// Record the prefixed ids of the top-3-per-repo hits actually shown so
+		// the MCP-activity glow has nodes to highlight (the markdown body
+		// carries no machine-readable ids). Mirrors renderPerRepoSummary's
+		// own per-repo top-3 selection.
+		perRepoShown := map[string]int{}
+		for _, sc := range all {
+			if perRepoShown[sc.repo.Repo] >= 3 {
+				continue
+			}
+			perRepoShown[sc.repo.Repo]++
+			recordNodeIDs(ctx, prefixedID(sc.repo.Repo, sc.hit.Entity.ID))
+		}
+		return mcpapi.NewToolResultText(summary), nil
 	}
 
 	// Otherwise BFS-expand from each top hit and render compact.
@@ -407,6 +451,11 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 		Nodes:        visibleNodes,
 		Edges:        visibleEdges,
 		OneRepo:      oneRepo,
+	}
+	// Record the prefixed ids of every visible node so the MCP-activity glow
+	// highlights the compact result set (the rendered markdown has no ids).
+	for _, nw := range visibleNodes {
+		recordNodeIDs(ctx, prefixedID(nw.Repo, nw.Entity.ID))
 	}
 	return mcpapi.NewToolResultText(renderCompact(rr, tokenBudget)), nil
 }

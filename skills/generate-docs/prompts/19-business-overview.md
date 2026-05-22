@@ -18,7 +18,7 @@ Synthesised across the whole group.
 ## Output
 
 ```
-<primary-repo>/docs/business/overview.md
+~/.archigraph/docs/<group>/business/overview.md
 ```
 
 Use `output-templates/business-overview.md`. This is the root of the Business
@@ -60,7 +60,7 @@ confirm every link from `overview.md` resolves to a file that exists under
 ```
 archigraph_save_finding(
   question="What is the business overview of the <group> group?",
-  answer="<file: <primary-repo>/docs/business/overview.md>",
+  answer="<file: ~/.archigraph/docs/<group>/business/overview.md>",
   type="business_overview",
 )
 ```

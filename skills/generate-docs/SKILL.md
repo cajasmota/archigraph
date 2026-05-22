@@ -34,16 +34,26 @@ The choice is recorded in `plan.json` `tiers: ["technical", "business"]`.
   (15–19); the business passes can reuse the just-written technical docs as
   input, which produces higher-fidelity business translation.
 
-The tiers write to **disjoint locations** (technical: `<repo>/docs/{overview,
-modules,reference,…}`; business: `<primary-repo>/docs/business/…`), so they
+The tiers write to **disjoint locations** (technical: `~/.archigraph/docs/<group>/<repo-slug>/{overview,
+modules,reference,…}`; business: `~/.archigraph/docs/<group>/business/…`), so they
 never overwrite each other and the webui keeps them in separate views.
 
 The **business tier is NOT per-repo.** It is synthesised across every repo in
-the group and organised by business domain/capability. It is written into one
-anchor repo's `docs/business/` directory (the `primary_repo` chosen in Pass 2 —
-default the repo with the most entities). The webui aggregates every repo's
-`business/` tree into a single Business view, so a single location reads as one
-group-level set.
+the group and organised by business domain/capability. It is written into the
+single group-level directory `~/.archigraph/docs/<group>/business/`, regardless
+of how many repos make up the group. The webui surfaces this set directly under
+the Business tab.
+
+> **Storage location (#1624 — important).** The generate-docs skill NEVER
+> writes into a source repo's working tree. All generated markdown (technical
+> and business) lives under the archigraph-managed store
+> `~/.archigraph/docs/<group>/...`. This keeps the source repos clean (no
+> commit noise) and matches the #1626 principle that archigraph owns its
+> outputs. The daemon dashboard reads from this location; pre-#1624
+> `<repo>/docs/` directories produced by an earlier run are migrated into
+> the store transparently on first read. If you ever see a writer subagent
+> emitting a path that starts with the repo working tree, redirect it to
+> the store path documented here.
 
 ## When to use this skill
 
@@ -96,7 +106,7 @@ Time estimates assume typical small-to-medium codebases (1k–10k source entitie
 ### Business-tier passes (Pass 15 through Pass 19)
 
 These run only when `"business"` is in `plan.tiers`. They are **group-synthesised**
-(not per-repo) and write to `<primary-repo>/docs/business/`. Every business
+(not per-repo) and write to `~/.archigraph/docs/<group>/business/`. Every business
 writer reads `snippets/business-voice.md` first (PM audience, zero internal
 symbols, no code mermaid). Pass 15 runs first (later passes link into the
 glossary); Pass 19 runs last (it indexes the rest).
@@ -252,7 +262,7 @@ When no match is found, the parser falls back to scanning the first non-heading 
 **Canonical file placement** (when no prior doc exists for the entity):
 
 ```
-<repo>/docs/enrichments/<kind>/<entity_id>.md
+~/.archigraph/docs/<group>/<repo-slug>/enrichments/<kind>/<entity_id>.md
 ```
 
 Example: `api/docs/enrichments/message_topic/order-created.md`
@@ -545,10 +555,11 @@ The skill is built around the archigraph MCP server. The agent should call these
 
 ## Output layout
 
-For each repo `<r>` in the group, the skill writes into `<r>/docs/`:
+For each repo `<r>` in the group, the skill writes into
+`~/.archigraph/docs/<group>/<r>/` (NOT the repo working tree — #1624):
 
 ```
-docs/
+~/.archigraph/docs/<group>/<r>/
   overview.md                  # Pass 3
   modules/
     <module-slug>/
@@ -573,22 +584,24 @@ docs/
       <entity_id>.md           # template: templates/message_topic.md
 ```
 
-Group-level output lands at `~/.archigraph/groups/<group>/docs/`:
+Group-level technical output (cross-repo synthesis + cross-links) lands at
+`~/.archigraph/docs/<group>/` (alongside the per-repo directories):
 
 ```
-docs/
+~/.archigraph/docs/<group>/
   group-synthesis.md           # Pass 7
   cross-links.md               # Pass 8 summary
 ```
 
 ### Business tier layout
 
-The business tier (Passes 15–19) is group-synthesised and written into the
-`primary_repo`'s `docs/business/` directory. The webui (#1634) reads the
-`business/` set and surfaces it under its Business chooser tab.
+The business tier (Passes 15–19) is group-synthesised and written to the
+single group-level directory `~/.archigraph/docs/<group>/business/` (no
+`primary_repo` indirection any more — #1624). The webui (#1634) reads this
+set and surfaces it under its Business chooser tab.
 
 ```
-<primary-repo>/docs/business/
+~/.archigraph/docs/<group>/business/
   overview.md                  # Pass 19 — landing page + indexes (template: business-overview.md)
   capabilities/
     <capability-slug>.md       # Pass 16 — one per product capability (template: business-capability.md)

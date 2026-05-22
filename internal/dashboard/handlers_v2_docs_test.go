@@ -1,16 +1,37 @@
 package dashboard
 
 import (
+	"archive/zip"
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
+
+// daemonBusinessDocsDir returns (and creates) the post-#1624 group-level
+// business docs directory for tests.
+func daemonBusinessDocsDir(t *testing.T, group string) string {
+	t.Helper()
+	dir := daemon.BusinessDocsDir(group)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
+func contains(s, substr string) bool   { return strings.Contains(s, substr) }
+func startsWith(s, prefix string) bool { return strings.HasPrefix(s, prefix) }
+func bytesReaderAt(b []byte) *bytes.Reader {
+	return bytes.NewReader(b)
+}
 
 // buildV2DocsTestServer creates a Server with one group "testgrp" backed by a
 // registry config + on-disk generated markdown docs under <repo>/docs/.
@@ -264,5 +285,109 @@ func TestHandleV2DocsTreeGroupNotFound(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+// ── #1624: docs export ─────────────────────────────────────────────────────
+
+func TestHandleV2DocsExport_ZipAll(t *testing.T) {
+	srv := buildV2DocsTestServer(t)
+
+	// Seed business-tier docs in the post-#1624 group-level store location.
+	bizDir := daemonBusinessDocsDir(t, "testgrp")
+	mustWrite(t, filepath.Join(bizDir, "overview.md"), "# Business\n")
+	mustWrite(t, filepath.Join(bizDir, "capabilities", "billing.md"), "# Billing\n")
+
+	r := httptest.NewRequest("GET", "/api/v2/groups/testgrp/docs/export?format=zip&kind=all", nil)
+	w := httptest.NewRecorder()
+	srv.routes().ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if got := w.Header().Get("Content-Type"); got != "application/zip" {
+		t.Fatalf("Content-Type = %q, want application/zip", got)
+	}
+	if cd := w.Header().Get("Content-Disposition"); cd == "" || !contains(cd, "testgrp-docs-") {
+		t.Fatalf("Content-Disposition = %q, expected to contain 'testgrp-docs-'", cd)
+	}
+
+	body := w.Body.Bytes()
+	zr, err := zip.NewReader(bytesReaderAt(body), int64(len(body)))
+	if err != nil {
+		t.Fatalf("zip parse: %v", err)
+	}
+	names := map[string]bool{}
+	for _, f := range zr.File {
+		names[f.Name] = true
+	}
+	// Technical tier: per-repo prefix.
+	if !names["testgrp/repo1/overview.md"] {
+		t.Errorf("missing testgrp/repo1/overview.md; got: %v", names)
+	}
+	if !names["testgrp/repo1/modules/order-service/README.md"] {
+		t.Errorf("missing module readme in zip")
+	}
+	// Business tier: group-level prefix.
+	if !names["testgrp/business/overview.md"] {
+		t.Errorf("missing testgrp/business/overview.md; got: %v", names)
+	}
+	if !names["testgrp/business/capabilities/billing.md"] {
+		t.Errorf("missing capability doc")
+	}
+}
+
+func TestHandleV2DocsExport_UnsupportedFormat(t *testing.T) {
+	srv := buildV2DocsTestServer(t)
+	r := httptest.NewRequest("GET", "/api/v2/groups/testgrp/docs/export?format=tar", nil)
+	w := httptest.NewRecorder()
+	srv.routes().ServeHTTP(w, r)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandleV2DocsExport_BusinessKindOnly(t *testing.T) {
+	srv := buildV2DocsTestServer(t)
+	bizDir := daemonBusinessDocsDir(t, "testgrp")
+	mustWrite(t, filepath.Join(bizDir, "overview.md"), "# Business\n")
+
+	r := httptest.NewRequest("GET", "/api/v2/groups/testgrp/docs/export?kind=business", nil)
+	w := httptest.NewRecorder()
+	srv.routes().ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	body := w.Body.Bytes()
+	zr, err := zip.NewReader(bytesReaderAt(body), int64(len(body)))
+	if err != nil {
+		t.Fatalf("zip parse: %v", err)
+	}
+	for _, f := range zr.File {
+		if !startsWith(f.Name, "testgrp/business/") {
+			t.Errorf("business-only export contained non-business entry: %s", f.Name)
+		}
+	}
+}
+
+// TestHandleV2DocsTree_MigratesLegacyInRepoDocs verifies the post-#1624
+// migration: a pre-existing `<repo>/docs/` set produced by the skill is moved
+// into ~/.archigraph/docs/<group>/<repoSlug>/ on first read.
+func TestHandleV2DocsTree_MigratesLegacyInRepoDocs(t *testing.T) {
+	srv := buildV2DocsTestServer(t)
+	// buildV2DocsTestServer seeds <repo>/docs/ — invoking the tree handler
+	// should migrate it transparently.
+	r := httptest.NewRequest("GET", "/api/v2/groups/testgrp/docs/tree", nil)
+	w := httptest.NewRecorder()
+	srv.routes().ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	store := daemon.RepoDocsDir("testgrp", "repo1")
+	if _, err := os.Stat(filepath.Join(store, "overview.md")); err != nil {
+		t.Fatalf("overview.md not migrated to store: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(store, "modules", "order-service", "README.md")); err != nil {
+		t.Fatalf("module readme not migrated: %v", err)
 	}
 }

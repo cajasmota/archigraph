@@ -17,7 +17,7 @@ For every entry under `plan.passes.4_cluster.modules`, produce a self-contained 
 Per module:
 
 ```
-<repo>/docs/modules/<module-slug>/
+~/.archigraph/docs/<group>/<repo-slug>/modules/<module-slug>/
   README.md      # always (output-templates/module-readme.md)
   flows.md       # if the module has runtime flows worth diagramming
   api.md         # only if the module is the primary owner of a public API; otherwise Pass 5 owns api.md at the repo level
@@ -118,7 +118,7 @@ Run every check in `snippets/verification-checklist.md`. The orchestrator will r
 ```
 archigraph_save_finding(
   question="What does the <module-slug> module do in <repo>?",
-  answer="<file: <repo>/docs/modules/<module-slug>/README.md>",
+  answer="<file: ~/.archigraph/docs/<group>/<repo-slug>/modules/<module-slug>/README.md>",
   type="module",
   nodes=["<top-entity-1>", "<top-entity-2>"],
   repo_filter=["<repo>"],

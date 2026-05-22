@@ -18,7 +18,7 @@ Each topic is one writer subagent. They run in parallel.
 Per repo per topic:
 
 ```
-<repo>/docs/cross-cutting/<topic>.md
+~/.archigraph/docs/<group>/<repo-slug>/cross-cutting/<topic>.md
 ```
 
 Group-level aggregator (Pass 7 will use these to fill the synthesis page):

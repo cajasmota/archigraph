@@ -5,7 +5,7 @@ Tie the per-repo outputs into one group-level page. This page is what an executi
 ## Inputs
 
 - `~/.archigraph/groups/<group>/domain.md`
-- Every `<repo>/docs/overview.md` produced in Pass 3
+- Every `~/.archigraph/docs/<group>/<repo-slug>/overview.md` produced in Pass 3
 - Every `~/.archigraph/groups/<group>/cross-cutting/<topic>.md` produced in Pass 6
 - `output-templates/group-synthesis.md`
 
