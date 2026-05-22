@@ -218,6 +218,7 @@ var phpLaravelEnvVerbRe = regexp.MustCompile(
 
 // ---------------------------------------------------------------------------
 // PHP variable string table: $url = "/path"; $base = "https://...";
+// Also captures runtime-dynamic base URLs: $x = config(...) / env(...)
 // ---------------------------------------------------------------------------
 
 // phpStringVarRe captures PHP variable string assignments:
@@ -227,6 +228,104 @@ var phpLaravelEnvVerbRe = regexp.MustCompile(
 //	$endpoint = '/api/v1/users';
 var phpStringVarRe = regexp.MustCompile(
 	`(?m)(\$[A-Za-z_][\w]*)\s*=\s*(?:"([^"\n\r]{1,256})"|'([^'\n\r]{1,256})')`,
+)
+
+// phpConfigVarRe captures PHP variable assignments whose value is a runtime
+// config/env call:
+//
+//	$ordersUrl  = config('services.orders.url');
+//	$baseUrl    = env('ORDERS_BASE');
+//	$apiBaseUrl = config("services.notifications.url");
+//
+// Group 1 = variable name, group 2+ = config key (unused by caller — just
+// the presence of the assignment is needed to mark the var as runtime-dynamic).
+var phpConfigVarRe = regexp.MustCompile(
+	`(?m)(\$[A-Za-z_][\w]*)\s*=\s*(?:config|env)\s*\(\s*(?:"[^"\n\r]{1,256}"|'[^'\n\r]{1,256}')\s*\)`,
+)
+
+// phpInterpLeadingVarRe matches a PHP double-quoted string whose FIRST
+// interpolation is a variable: "{$ordersUrl}/orders/{$orderId}".
+// It captures:
+//   - group 1: the leading variable name (without `${}` delimiters), e.g. "ordersUrl"
+//   - group 2: the static path suffix following the first interpolation,
+//     e.g. "/orders/" — further `{$x}` segments inside it are converted to
+//     OpenAPI {x} placeholders by resolvePHPInterpSuffix.
+var phpInterpLeadingVarRe = regexp.MustCompile(
+	`^\{\$([A-Za-z_][\w]*)\}([^"'\n\r]*)$`,
+)
+
+// phpInnerInterpRe replaces `{$varName}` and `{$obj->prop}` segments within a
+// path suffix with the OpenAPI placeholder `{varName}` or `{prop}`.
+// Matches:
+//   - {$orderId}        → {orderId}
+//   - {$this->orderId}  → {orderId}  (last identifier after ->)
+var phpInnerInterpRe = regexp.MustCompile(`\{\$([A-Za-z_][\w]*(?:->[A-Za-z_][\w]*)*)\}`)
+
+// phpConcatLeadingVarRe matches PHP concatenation where a variable prefixes
+// a string literal, as captured by the URL variable group in client regexes
+// AFTER the literal groups have been exhausted. It is applied to the raw
+// URL value when it looks like `$varName . "/path"` — this form is
+// pre-folded into the symbol table (literal part already extracted) so this
+// regex handles the separate concat-detection pass.
+//
+// This regex operates on the CONTENT around the call site, not on the already-
+// extracted raw string. See synthesizePHPClient concat-scan loop below.
+//
+// Pattern: $var . "suffix" or $var . 'suffix'
+var phpConcatLeadingVarRe = regexp.MustCompile(
+	`(\$[A-Za-z_][\w]*)\s*\.\s*(?:"([^"\n\r]{0,256})"|'([^'\n\r]{0,256})')`,
+)
+
+// phpLaravelHttpInterpRe matches Laravel Http:: calls whose URL argument is a
+// double-quoted interpolated PHP string starting with a variable:
+//
+//	Http::get("{$ordersUrl}/orders/{$orderId}")
+//	Http::post("{$notifUrl}/notifications", [...])
+//	Http::withToken(config('x'))->get("{$erpUrl}/api/erp/invoices/{$id}")
+//
+// Capture groups: 1 = verb, 2 = raw interpolated string body (between the
+// outer double-quotes, after the leading `{$`).
+var phpLaravelHttpInterpRe = regexp.MustCompile(
+	`\bHttp\s*(?:::\s*(?:withHeaders|withToken|withBasicAuth|timeout|retry|acceptJson|asJson|asForm|asMultipart|baseUrl|withOptions)\s*\((?:[^)(]|\([^)]*\))*\)\s*->\s*)?\s*::\s*(get|post|put|patch|delete|head|options)\s*\(\s*"\{(\$[A-Za-z_][\w]*[^"]{0,256})`,
+)
+
+// phpLaravelHttpChainedInterpRe matches the chained Laravel form with an
+// interpolated URL:
+//
+//	Http::withToken(config('x'))->post("{$erpUrl}/api/erp/invoices")
+var phpLaravelHttpChainedInterpRe = regexp.MustCompile(
+	`\bHttp\s*::\s*(?:withHeaders|withToken|withBasicAuth|timeout|retry|acceptJson|asJson|asForm|asMultipart|baseUrl|withOptions)\s*\((?:[^)(]|\([^)]*\))*\)\s*->\s*(get|post|put|patch|delete|head|options)\s*\(\s*"\{(\$[A-Za-z_][\w]*[^"]{0,256})`,
+)
+
+// phpGuzzleVerbInterpRe matches Guzzle verb methods with an interpolated URL:
+//
+//	$client->get("{$ordersUrl}/orders/{$orderId}")
+//	$http->post("{$notifUrl}/api/notifications")
+var phpGuzzleVerbInterpRe = regexp.MustCompile(
+	`\$(?:client|http|guzzle|httpClient)\s*->\s*(get|post|put|patch|delete|head|options)\s*\(\s*"\{(\$[A-Za-z_][\w]*[^"]{0,256})`,
+)
+
+// phpLaravelHttpConcatRe matches Laravel Http:: calls where the URL is a
+// variable followed by string concatenation:
+//
+//	Http::get($ordersUrl . "/orders/" . $id)
+//	Http::post($notifUrl . '/notifications', $data)
+var phpLaravelHttpConcatRe = regexp.MustCompile(
+	`\bHttp\s*(?:::\s*(?:withHeaders|withToken|withBasicAuth|timeout|retry|acceptJson|asJson|asForm|asMultipart|baseUrl|withOptions)\s*\((?:[^)(]|\([^)]*\))*\)\s*->\s*)?\s*::\s*(get|post|put|patch|delete|head|options)\s*\(\s*(\$[A-Za-z_][\w]*)\s*\.`,
+)
+
+// phpLaravelHttpChainedConcatRe is the chained form with concatenation:
+//
+//	Http::withToken(config('x'))->post($erpUrl . "/api/erp/invoices", $data)
+var phpLaravelHttpChainedConcatRe = regexp.MustCompile(
+	`\bHttp\s*::\s*(?:withHeaders|withToken|withBasicAuth|timeout|retry|acceptJson|asJson|asForm|asMultipart|baseUrl|withOptions)\s*\((?:[^)(]|\([^)]*\))*\)\s*->\s*(get|post|put|patch|delete|head|options)\s*\(\s*(\$[A-Za-z_][\w]*)\s*\.`,
+)
+
+// phpGuzzleVerbConcatRe matches Guzzle verb methods with concatenation:
+//
+//	$client->get($ordersUrl . "/orders/" . $id)
+var phpGuzzleVerbConcatRe = regexp.MustCompile(
+	`\$(?:client|http|guzzle|httpClient)\s*->\s*(get|post|put|patch|delete|head|options)\s*\(\s*(\$[A-Za-z_][\w]*)\s*\.`,
 )
 
 // ---------------------------------------------------------------------------
@@ -501,6 +600,126 @@ func synthesizePHPClientWithRuntime(content string, emit phpClientEmitFn) {
 		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, suffix)
 		emit(verb, canonical, "laravel_http", "Function", caller, true)
 	}
+
+	// ----- PHP string interpolation: Http::get("{$ordersUrl}/orders/{$id}") -----
+	for _, m := range phpLaravelHttpInterpRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		raw := content[m[4]:m[5]] // e.g. "$ordersUrl}/orders/{$orderId}"
+		path := resolvePHPInterpURL(raw, syms)
+		if path == "" {
+			continue
+		}
+		normed, ok := normalizeRawClientPath(path)
+		if !ok {
+			continue
+		}
+		caller := enclosingPHPFnAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, normed)
+		emit(verb, canonical, "laravel_http", "Function", caller, true)
+	}
+
+	// ----- PHP string interpolation (chained): Http::withToken()->get("{$url}/path") -----
+	for _, m := range phpLaravelHttpChainedInterpRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		raw := content[m[4]:m[5]]
+		path := resolvePHPInterpURL(raw, syms)
+		if path == "" {
+			continue
+		}
+		normed, ok := normalizeRawClientPath(path)
+		if !ok {
+			continue
+		}
+		caller := enclosingPHPFnAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, normed)
+		emit(verb, canonical, "laravel_http", "Function", caller, true)
+	}
+
+	// ----- PHP string interpolation: $client->get("{$ordersUrl}/orders/{$id}") -----
+	for _, m := range phpGuzzleVerbInterpRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		raw := content[m[4]:m[5]]
+		path := resolvePHPInterpURL(raw, syms)
+		if path == "" {
+			continue
+		}
+		normed, ok := normalizeRawClientPath(path)
+		if !ok {
+			continue
+		}
+		caller := enclosingPHPFnAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, normed)
+		emit(verb, canonical, "guzzle", "Function", caller, true)
+	}
+
+	// ----- PHP variable concat: Http::get($ordersUrl . "/orders/" . $id) -----
+	for _, m := range phpLaravelHttpConcatRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		varName := content[m[4]:m[5]]
+		path := resolvePHPConcatURL(content, m[1], varName, syms)
+		if path == "" {
+			continue
+		}
+		normed, ok := normalizeRawClientPath(path)
+		if !ok {
+			continue
+		}
+		caller := enclosingPHPFnAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, normed)
+		emit(verb, canonical, "laravel_http", "Function", caller, true)
+	}
+
+	// ----- PHP variable concat (chained): Http::withToken()->post($url . "/path") -----
+	for _, m := range phpLaravelHttpChainedConcatRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		varName := content[m[4]:m[5]]
+		path := resolvePHPConcatURL(content, m[1], varName, syms)
+		if path == "" {
+			continue
+		}
+		normed, ok := normalizeRawClientPath(path)
+		if !ok {
+			continue
+		}
+		caller := enclosingPHPFnAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, normed)
+		emit(verb, canonical, "laravel_http", "Function", caller, true)
+	}
+
+	// ----- PHP variable concat: $client->get($ordersUrl . "/orders/" . $id) -----
+	for _, m := range phpGuzzleVerbConcatRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		varName := content[m[4]:m[5]]
+		path := resolvePHPConcatURL(content, m[1], varName, syms)
+		if path == "" {
+			continue
+		}
+		normed, ok := normalizeRawClientPath(path)
+		if !ok {
+			continue
+		}
+		caller := enclosingPHPFnAt(funcs, m[0])
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, normed)
+		emit(verb, canonical, "guzzle", "Function", caller, true)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -528,9 +747,14 @@ func phpHasAnyHTTPClient(content string) bool {
 }
 
 // buildPHPStringSymbolTable returns a map from $variable → string value
-// for simple PHP variable string assignments.
+// for simple PHP variable string assignments and config/env calls.
+//
+// Config/env calls ($x = config(...) / $x = env(...)) are stored with the
+// sentinel value phpRuntimeDynamicSentinel so that interpolation/concat
+// resolvers know the variable is a runtime-dynamic base URL.
 func buildPHPStringSymbolTable(content string) map[string]string {
 	syms := make(map[string]string)
+	// Literal string assignments: $url = "http://..." or $url = '/path'
 	for _, m := range phpStringVarRe.FindAllStringSubmatchIndex(content, -1) {
 		if len(m) < 8 {
 			continue
@@ -549,7 +773,189 @@ func buildPHPStringSymbolTable(content string) map[string]string {
 			syms[name] = val
 		}
 	}
+	// config(...) / env(...) assignments — runtime-dynamic base URLs (#1473).
+	for _, m := range phpConfigVarRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 4 || m[2] < 0 {
+			continue
+		}
+		name := content[m[2]:m[3]]
+		if _, dup := syms[name]; !dup {
+			syms[name] = phpRuntimeDynamicSentinel
+		}
+	}
 	return syms
+}
+
+// phpRuntimeDynamicSentinel is stored in the symbol table for variables whose
+// value comes from config(...) or env(...). It signals that the variable is a
+// runtime-dynamic base URL prefix, not a literal path component.
+const phpRuntimeDynamicSentinel = "\x00runtime_dynamic\x00"
+
+// resolvePHPInterpURL resolves a PHP double-quoted interpolated string body
+// that starts immediately after the opening `"` and the leading `{$`.
+//
+// Input raw is the content AFTER the regex has consumed `Http::get("{`, so it
+// looks like: `$ordersUrl}/orders/{$orderId}"` (the closing `"` may or may
+// not be present — we stop at the first `"`).
+//
+// Resolution:
+//  1. Recover the full body: prepend `{$`, take up to (not including) `"`.
+//  2. Match phpInterpLeadingVarRe: leading variable + static suffix.
+//  3. If the leading variable is runtime-dynamic (config/env assigned), return
+//     the static suffix with `{$inner}` → `{inner}` expansion.
+//  4. If the leading variable has a literal value in the symbol table, try to
+//     resolve via normalizeRawClientPath (returns a host-stripped path).
+func resolvePHPInterpURL(raw string, syms map[string]string) string {
+	// raw starts after `"{` — prepend `{` to reconstruct the interpolation
+	body := "{" + raw
+	// Trim at first double-quote (end of the string literal).
+	if idx := strings.Index(body, `"`); idx >= 0 {
+		body = body[:idx]
+	}
+	// Also strip trailing `)` or `,` that may appear if the closing quote was
+	// not in the regex capture window.
+	body = strings.TrimRight(body, ");, \t\n\r")
+
+	m := phpInterpLeadingVarRe.FindStringSubmatch(body)
+	if len(m) < 3 {
+		return ""
+	}
+	varName := "$" + m[1]
+	suffix := m[2] // static path fragment, may contain more {$x} segments
+
+	val, known := syms[varName]
+	if !known {
+		// Unknown variable — cannot resolve.
+		return ""
+	}
+
+	if val == phpRuntimeDynamicSentinel {
+		// Variable is runtime-dynamic (config/env). Extract the path suffix.
+		path := phpExpandInnerInterp(suffix)
+		return path
+	}
+
+	// Literal base URL: strip host, then append suffix with inner params expanded.
+	base, ok := normalizeRawClientPath(val)
+	if !ok {
+		// Probably a relative path; use it directly and append suffix.
+		base = val
+	}
+	path := base + phpExpandInnerInterp(suffix)
+	return path
+}
+
+// resolvePHPConcatURL resolves a PHP variable-concatenation URL like:
+//
+//	$ordersUrl . "/orders/" . $orderId
+//
+// contentAfterDot is the content immediately after the first `.` operator.
+// We scan forward to collect all consecutive string-literal and variable
+// segments in the concat chain and assemble the static path.
+//
+// varName is the leading variable (already past the opening `$var .` part
+// captured by phpLaravelHttpConcatRe). We look up its value in syms and then
+// scan forward from afterDotOffset in content for more segments.
+func resolvePHPConcatURL(content string, afterDotOffset int, varName string, syms map[string]string) string {
+	val, known := syms[varName]
+	if !known {
+		return ""
+	}
+
+	// Only runtime-dynamic and literal-path bases are handled.
+	// For literal bases that start with http(s)://, strip the host.
+	var base string
+	isDynamic := val == phpRuntimeDynamicSentinel
+	if isDynamic {
+		base = ""
+	} else {
+		stripped, ok := normalizeRawClientPath(val)
+		if !ok {
+			base = val // may be relative path
+		} else {
+			base = stripped
+		}
+	}
+
+	// Scan forward from afterDotOffset to collect path segments.
+	window := content[afterDotOffset:]
+	if len(window) > 512 {
+		window = window[:512]
+	}
+	path := base + phpCollectConcatSuffix(window)
+	return path
+}
+
+// phpCollectConcatSuffix scans a PHP concat expression tail, collecting
+// string literals and converting `$var` segments to `{var}` OpenAPI
+// path-param placeholders.
+//
+// window starts immediately after the first `.` operator.
+// Example window: ` "/orders/" . $orderId . "/status")`
+// Returns:        `/orders/{orderId}/status`
+func phpCollectConcatSuffix(window string) string {
+	var buf strings.Builder
+	rest := strings.TrimLeft(window, " \t")
+
+	// phpConcatSegRe matches one segment: a string literal or a variable.
+	// We process iteratively.
+	segRe := regexp.MustCompile(
+		`^(?:` +
+			`"([^"\n\r]{0,256})"` + // group 1: double-quoted literal
+			`|` +
+			`'([^'\n\r]{0,256})'` + // group 2: single-quoted literal
+			`|` +
+			`(\$[A-Za-z_][\w]*)` + // group 3: variable
+			`)`,
+	)
+	dotRe := regexp.MustCompile(`^\s*\.\s*`)
+
+	for rest != "" {
+		m := segRe.FindStringSubmatch(rest)
+		if m == nil {
+			break
+		}
+		if m[1] != "" {
+			buf.WriteString(m[1])
+		} else if m[2] != "" {
+			buf.WriteString(m[2])
+		} else if m[3] != "" {
+			// $varName → {varName}
+			vn := m[3][1:] // strip leading $
+			buf.WriteString("{")
+			buf.WriteString(vn)
+			buf.WriteString("}")
+		}
+		rest = rest[len(m[0]):]
+		// Consume optional `.` separator.
+		dm := dotRe.FindString(rest)
+		if dm == "" {
+			break
+		}
+		rest = rest[len(dm):]
+	}
+	return buf.String()
+}
+
+// phpExpandInnerInterp replaces `{$varName}` and `{$this->prop}` segments in a
+// path suffix with the OpenAPI path-parameter form `{varName}` / `{prop}`.
+// For property accesses like `{$this->orderId}` the last segment after `->` is used.
+func phpExpandInnerInterp(suffix string) string {
+	return phpInnerInterpRe.ReplaceAllStringFunc(suffix, func(match string) string {
+		inner := phpInnerInterpRe.FindStringSubmatch(match)
+		if len(inner) < 2 {
+			return "{param}"
+		}
+		expr := inner[1]
+		// Take the last identifier segment after `->` (e.g. "this->orderId" → "orderId").
+		if idx := strings.LastIndex(expr, "->"); idx >= 0 {
+			expr = expr[idx+2:]
+		}
+		if expr == "" {
+			return "{param}"
+		}
+		return "{" + expr + "}"
+	})
 }
 
 // phpPickURLArg extracts the URL string from a match's double-quoted /
