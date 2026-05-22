@@ -259,10 +259,14 @@ export const api = {
     requestV2<V2CandidatesResponse>(
       `/groups/${encodeURIComponent(groupId)}/candidates${tab ? `?tab=${tab}` : ""}`,
     ),
-  /** Persist a hint for a candidate. Empty string clears the hint. */
-  saveHint: (groupId: string, candidateId: string, hint: string) =>
-    requestV2<{ ok: true }>(
-      `/groups/${encodeURIComponent(groupId)}/candidates/${encodeURIComponent(candidateId)}/hint`,
+  /**
+   * Persist a hint for an entity.  Pass the stable `entityId` field from the
+   * candidate (NOT the ephemeral `id`) so hints survive candidate-ID churn
+   * across re-index sweeps (#1518).  Empty string clears the hint.
+   */
+  saveHint: (groupId: string, entityId: string, hint: string) =>
+    requestV2<{ hint: string; entityId: string }>(
+      `/groups/${encodeURIComponent(groupId)}/candidates/${encodeURIComponent(entityId)}/hint`,
       { method: "PUT", body: JSON.stringify({ hint }) },
     ),
   // --- Flows (Process Flow Explorer) ---

@@ -469,6 +469,8 @@ export type Severity = "critical" | "warning" | "info";
 
 export interface RepairCandidate {
   id: string;
+  /** Stable entity identifier (SubjectID). Use this — not id — for hint keying. */
+  entityId: string;
   severity: Severity;
   issueType: RepairIssueType;
   entity: EntityRef;
@@ -477,20 +479,26 @@ export interface RepairCandidate {
   confidence: number;
   /** Unix ms. */
   detectedAt: number;
+  /** Team-authored hint currently stored for this entity (may be absent). */
+  hint?: string;
 }
 
 export interface EnrichmentCandidate {
   id: string;
+  /** Stable entity identifier (SubjectID). Use this — not id — for hint keying. */
+  entityId: string;
   enrichmentType: EnrichmentType;
   entity: EntityRef;
   description: string;
   confidence: number;
   detectedAt: number;
+  /** Team-authored hint currently stored for this entity (may be absent). */
+  hint?: string;
 }
 
 export type Candidate = RepairCandidate | EnrichmentCandidate;
 
-/** Hints stored per-candidate-id in local state and persisted via PUT hint. */
+/** Hints stored per-entity-id in local state and persisted via PUT hint (#1518). */
 export type HintMap = Record<string, string>;
 
 /** Wire shape returned by GET /api/v2/groups/:id/candidates */
