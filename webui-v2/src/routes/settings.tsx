@@ -29,8 +29,13 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
+  Download,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Button,
@@ -822,7 +827,235 @@ function HealthSection({ groupId }: { groupId: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Danger zone
+// 6. Export / Import (#1627)
+//
+// Parallel to the docs export shipped in #1658, this section lets users
+// archive the entire indexed graph + fleet config for a group (or download
+// the graph + docs together) and import an archive back to recreate the
+// group. Designed extensibly: today supports zip + (graph|all); future
+// formats slot into the same UI.
+// ---------------------------------------------------------------------------
+
+function ExportImportSection({ group, groupId }: { group: SettingsGroup; groupId: string }) {
+  const [kind, setKind] = useState<"graph" | "all">("graph");
+  const [importOpen, setImportOpen] = useState(false);
+
+  const exportHref = api.graphExportUrl(groupId, { format: "zip", kind });
+
+  return (
+    <Section
+      id="export-import"
+      title="Export & Import"
+      sub="Back up this group as a zip, or restore one from a previous backup. Designed to enable machine-to-machine transfers."
+    >
+      <div className="space-y-4">
+        {/* Export controls */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-text">Export this group</div>
+            <div className="text-xs text-text-3 mt-0.5">
+              Streams the indexed graph (graph.fb, enrichments, links, embeddings)
+              plus the fleet config as a single zip. <code className="font-mono">all</code>{" "}
+              also bundles the generated docs.
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div
+              role="radiogroup"
+              aria-label="Export contents"
+              className="inline-flex rounded-md border border-border-soft overflow-hidden"
+            >
+              {(["graph", "all"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={kind === k}
+                  onClick={() => setKind(k)}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-mono",
+                    kind === k
+                      ? "bg-accent text-white"
+                      : "bg-surface text-text-2 hover:bg-surface-2",
+                  )}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+            <Button asChild variant="secondary" size="sm">
+              <a
+                href={exportHref}
+                download={`${group.name}-${kind}.zip`}
+                data-testid="btn-graph-export"
+              >
+                <Download size={12} />
+                Download
+              </a>
+            </Button>
+          </div>
+        </div>
+
+        <div className="border-t border-border-soft" />
+
+        {/* Import controls */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-text">Import a group</div>
+            <div className="text-xs text-text-3 mt-0.5">
+              Restore a group from a zip previously produced by Export. Touches
+              registry state; requires explicit confirmation.
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setImportOpen(true)}
+            data-testid="btn-graph-import"
+          >
+            <Upload size={12} />
+            Import…
+          </Button>
+        </div>
+      </div>
+
+      <ImportGroupModal open={importOpen} onClose={() => setImportOpen(false)} />
+    </Section>
+  );
+}
+
+function ImportGroupModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [nameOverride, setNameOverride] = useState("");
+  const [force, setForce] = useState(false);
+  const [pending, setPending] = useState(false);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const reset = () => {
+    setFile(null);
+    setNameOverride("");
+    setForce(false);
+    setPending(false);
+  };
+
+  const handleClose = () => {
+    if (pending) return;
+    reset();
+    onClose();
+  };
+
+  const handleImport = async () => {
+    if (!file) return;
+    setPending(true);
+    try {
+      const reply = await api.graphImport(file, {
+        force,
+        name: nameOverride.trim() || undefined,
+      });
+      toast.success(`Imported "${reply.group}" (${reply.repos.length} repos).`);
+      // Force a meta refresh so the new group shows up in the sidebar / landing.
+      queryClient.invalidateQueries({ queryKey: ["meta"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      reset();
+      onClose();
+      navigate(`/g/${encodeURIComponent(reply.group)}/settings`);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "Import failed.";
+      toast.error(msg);
+      setPending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+      <DialogContent>
+        <DialogTitle>Import a group</DialogTitle>
+        <DialogDescription>
+          Restore a group from a zip archive previously produced by Export. The
+          imported store is written under the daemon&apos;s archigraph home; source
+          repos on disk are untouched.
+        </DialogDescription>
+
+        <div className="mt-4 space-y-3">
+          <label className="block">
+            <span className="block text-sm text-text-2 mb-1">Archive (.zip)</span>
+            <input
+              type="file"
+              accept=".zip,application/zip"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-text-2 file:mr-3 file:rounded-md file:border-0 file:bg-surface-2 file:px-3 file:py-1.5 file:text-sm file:text-text file:hover:bg-surface"
+              data-testid="import-file-input"
+            />
+            {file && (
+              <span className="block mt-1 text-xs text-text-3 font-mono truncate">
+                {file.name} · {(file.size / 1024).toFixed(1)} KB
+              </span>
+            )}
+          </label>
+
+          <label className="block">
+            <span className="block text-sm text-text-2 mb-1">
+              Register as (optional)
+            </span>
+            <Input
+              value={nameOverride}
+              onChange={(e) => setNameOverride(e.target.value)}
+              placeholder="leave blank to keep the archive's group name"
+              className="font-mono text-sm"
+            />
+          </label>
+
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={force}
+              onChange={(e) => setForce(e.target.checked)}
+              className="mt-0.5 accent-[var(--accent)]"
+            />
+            <span>
+              <span className="font-medium text-text">Overwrite existing group</span>
+              <span className="text-text-3">
+                {" "}
+                — required if a group with this name already exists. Replaces its
+                fleet config + cached store.
+              </span>
+            </span>
+          </label>
+
+          <ul className="mt-2 space-y-1.5 text-xs text-text-3">
+            <li className="flex items-start gap-2">
+              <Info size={12} className="text-accent-strong mt-0.5 shrink-0" />
+              The daemon validates the archive layout before writing anything.
+            </li>
+            <li className="flex items-start gap-2">
+              <AlertTriangle size={12} className="text-warning mt-0.5 shrink-0" />
+              Overwrite replaces the existing group&apos;s cached graph + fleet config.
+            </li>
+          </ul>
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={handleClose} disabled={pending}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!file || pending}
+            onClick={handleImport}
+            data-testid="btn-import-confirm"
+          >
+            {pending ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+            Import group
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 7. Danger zone
 // ---------------------------------------------------------------------------
 
 function DangerZone({ group, groupId }: { group: SettingsGroup; groupId: string }) {
@@ -1289,7 +1522,10 @@ export default function SettingsScreen() {
       {/* 5. Health check */}
       <HealthSection groupId={groupId} />
 
-      {/* 6. Danger zone */}
+      {/* 6. Export & Import (#1627) */}
+      <ExportImportSection group={group} groupId={groupId} />
+
+      {/* 7. Danger zone */}
       <DangerZone group={group} groupId={groupId} />
 
       {/* --- Modals --- */}

@@ -204,6 +204,57 @@ export const api = {
     qs.set("kind", opts?.kind ?? "all");
     return `/api/v2/groups/${encodeURIComponent(groupId)}/docs/export?${qs.toString()}`;
   },
+  /**
+   * Graph export URL (#1627) — parallel to docsExportUrl. Streams an archive
+   * of the indexed store (graph.fb, enrichments, links, embeddings, fleet
+   * config) for the entire group. `kind=all` also bundles the generated docs
+   * so a single archive backs up the whole group surface. Returns a plain
+   * URL string for use as an anchor `href` so the browser handles the
+   * download lifecycle.
+   */
+  graphExportUrl: (
+    groupId: string,
+    opts?: { format?: "zip"; kind?: "graph" | "all" },
+  ) => {
+    const qs = new URLSearchParams();
+    qs.set("format", opts?.format ?? "zip");
+    qs.set("kind", opts?.kind ?? "graph");
+    return `/api/v2/groups/${encodeURIComponent(groupId)}/export?${qs.toString()}`;
+  },
+  /**
+   * POST /api/v2/groups/import (#1627) — restore a group from a zip archive
+   * previously produced by graphExportUrl. The browser uploads the zip as a
+   * multipart/form-data body keyed `file`. `force=true` overwrites an
+   * existing group of the same name; `name` registers the archive under a
+   * different group slug.
+   */
+  graphImport: async (
+    file: File,
+    opts?: { force?: boolean; name?: string },
+  ): Promise<{ group: string; repos: string[]; forced: boolean }> => {
+    const qs = new URLSearchParams();
+    if (opts?.force) qs.set("force", "true");
+    if (opts?.name) qs.set("name", opts.name);
+    const fd = new FormData();
+    fd.append("file", file);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    const res = await fetch(`${BASE_V2}/groups/import${suffix}`, {
+      method: "POST",
+      body: fd,
+    });
+    let body: V2Ok<{ group: string; repos: string[]; forced: boolean }> | V2Err;
+    try {
+      body = (await res.json()) as
+        | V2Ok<{ group: string; repos: string[]; forced: boolean }>
+        | V2Err;
+    } catch {
+      throw new ApiError(res.status, `POST /groups/import failed: ${res.status}`);
+    }
+    if (!body.ok) {
+      throw new ApiError(res.status, body.error.message, body.error.code);
+    }
+    return body.data;
+  },
   /** v2 — the full graph payload (nodes/edges/communities/repos) for the Graph
    *  screen. `params` maps to the daemon's repo/kind filters. */
   getGraph: (groupId: string, params?: { repos?: string[]; filterKind?: string; lod?: string }) => {

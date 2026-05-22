@@ -571,6 +571,13 @@ func (s *Server) routes() http.Handler {
 	// Docs export (#1624): streams an archive of a group's generated docs.
 	// Extensible by format (zip first) + kind (all|technical|business).
 	mux.HandleFunc("GET /api/v2/groups/{group}/docs/export", s.handleV2DocsExport)
+	// Graph export + import (#1627): streams an archive of the indexed store
+	// (graph.fb, enrichments, links, embeddings, fleet config); import accepts
+	// such an archive and restores the group. Extensible by format + kind.
+	// NOTE: registered BEFORE the wildcard /api/v2/groups/{group} GET below so
+	// Go 1.22 ServeMux picks the more-specific path first.
+	mux.HandleFunc("POST /api/v2/groups/import", s.handleV2GraphImport)
+	mux.HandleFunc("GET /api/v2/groups/{group}/export", s.handleV2GraphExport)
 	// Graph — the WebUI v2 hero surface payload (nodes/edges/communities/repos).
 	// Carries pagerank + source_file for cosmos.gl node sizing + module group-by.
 	mux.HandleFunc("GET /api/v2/graph/{group}", s.handleV2Graph)
