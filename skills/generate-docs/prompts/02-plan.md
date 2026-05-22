@@ -16,6 +16,17 @@ A Louvain community from `archigraph_clusters` is a graph cluster, not necessari
 - Merge two communities if they share more than 30% of their bridge-doc nodes or if their top-entity names share a clear prefix (e.g., `users.views`, `users.serializers` -> module `users`).
 - Split a community if it contains entities from two unrelated layers (e.g., HTTP handlers + DB migrations); rare, but the convention file for the stack tells you when to expect it.
 
+**Prefer real graph communities over directory fallback.** Call `archigraph_clusters(repo_filter=["<r>"])` first. As of archigraph #1620 communities persist through the daemon load path, so a non-empty cluster list is the norm. Only fall back to directory-derived modules when `archigraph_clusters` genuinely returns `[]` for a repo.
+
+#### Step 1b — Volume control (fragmentation guard)
+
+This step fixes the audit finding where a single-app backend exploded into 122 directory-derived modules with empty `flows/index.md` stub triplets. Apply it whether modules came from communities or directory fallback, but it is **mandatory** on the directory-fallback path:
+
+- **Merge thin modules.** A module with fewer than `min_module_entities` (default **8**) in-module entities is too thin to stand alone. Merge it into its nearest sibling — same parent directory, or the module whose top entities share its prefix. Only keep a sub-`min_module_entities` module standalone if it is a genuinely distinct public surface (e.g. a small but externally-consumed API module); note the exception in the plan entry.
+- **Cap module count relative to size.** As a sanity check, target roughly one module per ~1.5–3k LOC. If the candidate module count exceeds `loc / 1500`, you are over-fragmenting — merge more aggressively. Record the final count and the merge decisions in `plan.json` under `volume_control`.
+- **Never schedule empty stub pages.** A module gets a `flows.md` / `api.md` page in its plan entry ONLY if it has real content for it: `flows.md` only if the module owns ≥1 process flow or dynamic edge; `api.md` only if it is the primary owner of a public API. A module page (`README.md`) is always scheduled, but `flows`/`api` are conditional. Set `"pages": ["readme"]` (or add `"flows"`, `"api"`) per module so Pass 4 never emits an empty `flows/index.md`.
+- **Index pages only when non-empty.** Only schedule a `modules/README.md` / section index if the section will have ≥1 child page. Pass 8 link-hygiene forbids linking to a directory whose index was never generated.
+
 ### Step 2 — Name modules
 
 Each module gets a kebab-case slug used as a directory name under `docs/modules/`. Pull the slug from the dominant package/import path when one exists; otherwise, pick the most central entity's parent.
@@ -34,6 +45,15 @@ Write `~/.archigraph/groups/<group>/plan.json`:
 ```json
 {
   "group": "<group>",
+  "tiers": ["technical", "business"],
+  "primary_repo": "<slug>",
+  "volume_control": {
+    "min_module_entities": 8,
+    "modules_before_merge": 122,
+    "modules_after_merge": 46,
+    "module_source": "communities",
+    "merge_notes": ["merged sync/import/report dir-stubs into data-pipeline"]
+  },
   "passes": {
     "3_overview": { "repos": ["<slug>", "..."] },
     "4_cluster": {
@@ -46,6 +66,7 @@ Write `~/.archigraph/groups/<group>/plan.json`:
           "communities": ["c1", "c4"],
           "token_budget": 6500,
           "source_snippets": 10,
+          "pages": ["readme", "flows"],
           "depends_on": []
         }
       ]
@@ -59,10 +80,23 @@ Write `~/.archigraph/groups/<group>/plan.json`:
       "topics": ["auth", "logging", "errors", "observability"]
     },
     "7_synthesis": { "scope": "group" },
-    "8_cross_link": { "candidates_to_review": 0 }
+    "8_cross_link": { "candidates_to_review": 0 },
+    "business": {
+      "enabled": true,
+      "primary_repo": "<slug>",
+      "capabilities_estimate": 10,
+      "journeys_estimate": 5
+    }
   }
 }
 ```
+
+The `tiers` field records which documentation tiers the user selected (see
+SKILL.md § Documentation tiers). `business` passes (15–19) are only scheduled if
+`"business"` is in `tiers`; technical passes (3–8, 10–14) only if `"technical"`
+is in `tiers`. `primary_repo` is the anchor repo the business tier writes its
+group-synthesised `docs/business/` set into (default: the repo with the most
+entities — usually the backend/service).
 
 ### Step 5 — Show the plan to the user
 

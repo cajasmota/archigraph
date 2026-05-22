@@ -1,6 +1,49 @@
 # generate-docs
 
-Generate module-organized markdown documentation for every repo in a registered archigraph group, then stitch it into a group-level synthesis with cross-repo links.
+Generate documentation for a registered archigraph group in two independent
+**tiers**:
+
+- **Technical tier** — module-organized markdown for every repo, stitched into a
+  group-level synthesis with cross-repo links. For engineers. (Passes 0–14.)
+- **Business tier** — a separate, group-synthesised `business/` doc set written
+  for PMs / non-engineers: product capabilities, a business domain glossary,
+  user journeys as plain-language narratives, and business rules reverse-
+  engineered from the code. (Passes 15–19.) The webui surfaces this under its
+  Business chooser tab (#1634).
+
+The user picks one or both tiers. The two tiers are produced by separate pass
+ranges and can run independently.
+
+## Documentation tiers
+
+Before planning, the orchestrator asks **which tier(s)** to generate:
+
+> Generate **Technical** docs (per-repo engineering reference), **Business** docs
+> (PM-facing product capabilities / journeys / rules synthesised across the
+> group), or **both**?
+
+The choice is recorded in `plan.json` `tiers: ["technical", "business"]`.
+
+- **Technical only** → run Passes 0–8 (+10–14 as applicable). Skip 15–19.
+- **Business only** → run Pass 0 (domain interview) and Pass 1 (inventory) for
+  the graph signals the business passes need, then Passes 15–19. Skip 2–14
+  except where a business pass reads a technical-tier file that does not exist —
+  in that case the business writer falls back to graph queries (each business
+  prompt names its fallback).
+- **Both** → run the technical tier first (Passes 0–14), then the business tier
+  (15–19); the business passes can reuse the just-written technical docs as
+  input, which produces higher-fidelity business translation.
+
+The tiers write to **disjoint locations** (technical: `<repo>/docs/{overview,
+modules,reference,…}`; business: `<primary-repo>/docs/business/…`), so they
+never overwrite each other and the webui keeps them in separate views.
+
+The **business tier is NOT per-repo.** It is synthesised across every repo in
+the group and organised by business domain/capability. It is written into one
+anchor repo's `docs/business/` directory (the `primary_repo` chosen in Pass 2 —
+default the repo with the most entities). The webui aggregates every repo's
+`business/` tree into a single Business view, so a single location reads as one
+group-level set.
 
 ## When to use this skill
 
@@ -49,6 +92,22 @@ Time estimates assume typical small-to-medium codebases (1k–10k source entitie
 | 12 | `prompts/12-pattern-prose.md` | Emit `docs/patterns/<category>/<id>.md` per approved pattern (ADR-0018 Phase 6). | 2–4 min |
 | 13 | `prompts/13-enrichment.md` | LLM enrichment pass: emit unified YAML frontmatter for `http_endpoint`, `process_flow`, and `message_topic` entities (merge, disqualify, rank, group, summarise, detect gaps). Dashboard surfaces consume this data. | 5–15 min |
 | 14 | `prompts/14-frontmatter-validation.md` | Frontmatter validation pass: re-read every enriched doc file, parse its YAML frontmatter, and verify each field against the backend parser's expectations. Catches schema drift between the skill and the dashboard consumers. | 2–5 min |
+
+### Business-tier passes (Pass 15 through Pass 19)
+
+These run only when `"business"` is in `plan.tiers`. They are **group-synthesised**
+(not per-repo) and write to `<primary-repo>/docs/business/`. Every business
+writer reads `snippets/business-voice.md` first (PM audience, zero internal
+symbols, no code mermaid). Pass 15 runs first (later passes link into the
+glossary); Pass 19 runs last (it indexes the rest).
+
+| Pass | Prompt | Purpose | Est. time |
+|------|--------|---------|-----------|
+| 15 | `prompts/15-business-domain.md` | Business domain model + glossary: business nouns (Inspection, Deficiency, Jurisdiction) defined in plain language, code collapsed to one term per concept. | 5–10 min |
+| 16 | `prompts/16-business-capabilities.md` | Product capabilities: what the system does + why, derived from endpoints/flows/topics grouped by business outcome (a few capabilities, not one-per-endpoint). | 8–20 min |
+| 17 | `prompts/17-business-journeys.md` | User journeys as plain-language narratives — a user accomplishing a goal end-to-end across the product. Replaces the audit's symbol-heavy mermaid "journey". | 5–15 min |
+| 18 | `prompts/18-business-rules.md` | Business rules / requirements reverse-engineered from validation/permission/conditional logic, stated as product requirements. | 5–15 min |
+| 19 | `prompts/19-business-overview.md` | Business landing page: pitch + indexes into capabilities, journeys, glossary, rules. Runs last. | 3–5 min |
 
 **Total wall time:** typically **25–65 minutes** for small repos (1k entities), **1–2 hours** for medium repos (10k entities), **2–4 hours** for large repos (100k+ entities). Pass 4 parallelizes across module clusters, so the critical path is dominated by Pass 0 (user interaction), Passes 1–2 (discovery), and Passes 4–5 (content generation).
 
@@ -522,6 +581,31 @@ docs/
   cross-links.md               # Pass 8 summary
 ```
 
+### Business tier layout
+
+The business tier (Passes 15–19) is group-synthesised and written into the
+`primary_repo`'s `docs/business/` directory. The webui (#1634) reads the
+`business/` set and surfaces it under its Business chooser tab.
+
+```
+<primary-repo>/docs/business/
+  overview.md                  # Pass 19 — landing page + indexes (template: business-overview.md)
+  capabilities/
+    <capability-slug>.md       # Pass 16 — one per product capability (template: business-capability.md)
+  domain-glossary.md           # Pass 15 — business vocabulary (template: business-domain-glossary.md)
+  journeys/
+    <journey-slug>.md          # Pass 17 — plain-language user journeys (template: business-journey.md)
+  rules/
+    index.md                   # Pass 18 — business rules / requirements (template: business-rules.md)
+    <area>.md                  # optional — only if one area's rules outgrow index.md
+```
+
+Every business page is reverse-engineered from code, so each carries a collapsed
+`<details>` provenance block at the bottom (the ONLY place a symbol/file path may
+appear in a business page) so an engineer can audit it without polluting the PM
+reading. All other content is plain business language with zero internal symbol
+names per `snippets/business-voice.md`.
+
 > **Note:** A doc-site (formerly Pass 9 VitePress config) is out of scope for this skill. It is planned for a separate milestone-2 effort. Pass 9 is intentionally reserved in the pass table.
 
 ## Conventions
@@ -532,7 +616,12 @@ If the agent encounters a stack with no matching convention, it should stop and 
 
 ## Quality gates (snippets/verification-checklist.md)
 
-Before any pass commits its output, the writer subagent runs the checks in `snippets/verification-checklist.md`. The orchestrator re-runs the same checklist before declaring the pass complete.
+Before any pass commits its output, the writer subagent runs the checks in `snippets/verification-checklist.md`. The orchestrator re-runs the same checklist before declaring the pass complete. The checklist incorporates three contracts that fix the 2026-05-23 docgen audit defects:
+
+- **`snippets/anchor-contract.md`** — emitted `anchors:` frontmatter is *derived from* the headings the writer actually produced, never hand-authored. Fixes the 17 anchor-slug mismatches (`summary` declared vs `## Where it lives` written). Enforced per-file in the checklist and group-wide in Pass 8.
+- **`snippets/link-hygiene.md`** — link targets must be real generated doc files; never link into source-code directories; bare-directory links need a real index target; relative paths use the filesystem dirname (not the registry slug) to avoid the `upvate-core`/`upvate_core` 404 class. Fixes the 37 broken links.
+- **Volume control** (`prompts/02-plan.md` § Step 1b) — merge thin dir-derived modules, cap module count by LOC, and never schedule empty stub pages (`flows/index.md`). With archigraph #1620 communities now persisting, the plan prefers real graph communities over directory fallback. Fixes the 122-module over-fragmentation.
+- **`snippets/business-voice.md`** — the business-tier style contract (PM audience, zero symbols, no code mermaid). Fixes the symbol-heavy "user-journeys.md" that read as technical, not business.
 
 ## Related
 

@@ -64,6 +64,16 @@ Use whichever output template fits, or write freeform if no template applies (cr
 - A "Where this is enforced" section listing file paths.
 - A "Where this is bypassed" section if the convention's `cross_cutting_pitfalls` lists known gotchas (e.g., management commands that skip middleware).
 
+**Anchor contract (`snippets/anchor-contract.md`).** Cross-cutting pages are
+where the 2026-05-23 audit found the 17 anchor mismatches: stubs declared
+`anchors: [summary, primary-implementation, patterns, consumers, gotchas]` but
+the prose used `## Where it lives`, `## How it's used`. If you emit an
+`anchors:` frontmatter list, **write the headings first, then derive `anchors:`
+from those exact headings** — never the reverse. A declared anchor with no
+matching heading in the same file is a hard failure. Apply
+`snippets/link-hygiene.md` to every link you emit (no source-dir links, no bare
+directory links).
+
 ### Step 5 — Aggregate to group level
 
 After all per-repo files for the topic are written, write the group-level aggregator at `~/.archigraph/groups/<group>/cross-cutting/<topic>.md`. The aggregator is short — it points to each repo's page and calls out repo-to-repo divergence.

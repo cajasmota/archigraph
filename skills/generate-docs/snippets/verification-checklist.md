@@ -24,9 +24,18 @@ False positives are possible (acronyms, capitalized prose words) — review each
 ## Structural
 
 - [ ] No empty sections — either fill them or delete them.
+- [ ] No empty stub pages — never emit a `flows/index.md` (or any page) that contains only a heading or a placeholder table with no rows. If a module has no flows, do not write a `flows` page at all (see `prompts/02-plan.md` § Volume control).
 - [ ] No placeholder text remaining (`<one line>`, `<entity>`, `TODO`, `FIXME`).
 - [ ] Tables have a header row + alignment row.
 - [ ] Internal links use relative paths and resolve to existing files.
+
+## Links + anchors (`snippets/link-hygiene.md`, `snippets/anchor-contract.md`)
+
+- [ ] No link points into a source-code directory (`src/`, `core/`, `dockerfile`, …). Source paths are backticked, not linked.
+- [ ] No bare-directory link (`](modules/)`) without a real index-file target that exists.
+- [ ] Relative link PATHS use the filesystem dirname; prose may use the slug. (Catches the `upvate-core` vs `upvate_core` 404.)
+- [ ] No link to an optional page the plan did not schedule.
+- [ ] If the file declares `anchors:` in frontmatter, every declared anchor has a matching heading IN THIS FILE whose slug equals it. The list was derived FROM the headings, not hand-authored.
 
 ## Forbidden terms
 
@@ -47,3 +56,13 @@ False positives are possible (acronyms, capitalized prose words) — review each
 
 - [ ] The file's section headings match the relevant `output-templates/*.md`.
 - [ ] No drive-by additions of sections the template did not include.
+
+## Business tier only (`snippets/business-voice.md`)
+
+Apply these checks to any file under a `business/` directory. A violation is a hard stop — rewrite, do not ship.
+
+- [ ] Zero internal symbol names in the visible body (no class/function/file names, no API paths, no env vars, no table names, no module slugs, no repo dir names). The ONLY place a symbol/path may appear is inside the collapsed `<details>` provenance block.
+- [ ] No `sequenceDiagram` / `classDiagram` / call-graph mermaid. Any mermaid is a business-step `flowchart` with ≤ 8 business-labelled boxes.
+- [ ] No quoted source code blocks.
+- [ ] A non-engineer could read the page top to bottom and understand it without help.
+- [ ] Every link resolves to another `business/` page or the domain glossary (run after the page's siblings exist).

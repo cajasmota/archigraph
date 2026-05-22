@@ -7,12 +7,39 @@ Two responsibilities:
 
 ## Step 1 — Static link check
 
-For each generated markdown file, parse every `[text](path)` and confirm:
+Apply `snippets/link-hygiene.md` and `snippets/anchor-contract.md` — they are the
+source of truth for what a valid link/anchor is. This pass enforces them across
+the whole tree (technical + business). For each generated markdown file, parse
+every `[text](path)` and confirm:
 
-- The path resolves to an existing file (relative paths) or a known anchor (`#section-slug`).
-- The anchor matches the heading slug exactly. The slugification rule: lowercase, spaces → hyphens, drop non-alphanumeric except `-`; your anchor check must match that.
+- The path resolves to an existing file under a `docs/` tree (relative paths) or
+  a known anchor (`#section-slug`).
+- **No link points into a source-code directory** (`src/`, `core/`,
+  `dockerfile`, etc.). Those must be backticked paths, not links — rewrite any
+  that slipped through (link-hygiene rule 2).
+- **No bare-directory link** (`](modules/)`, `](reference/)`) without a real
+  index file target. Either repoint to a concrete page or to a generated
+  `<dir>/README.md` that exists; if neither exists, drop the link and leave the
+  text in backticks (link-hygiene rule 3).
+- **Relative paths use the filesystem dirname, prose uses the slug.** The
+  registry slug (`upvate-core`) and the on-disk dir (`upvate_core`) can differ.
+  A link path with the slug where the directory uses an underscore is the
+  `core-mobile → ../../upvate-core/docs/` 404 from the audit. Resolve the real
+  dirname from `inventory.json` `repo.path` and rewrite (link-hygiene rule 4).
+- The anchor matches the heading slug exactly per `snippets/anchor-contract.md`
+  slugification. Additionally verify each file's declared `anchors:` frontmatter
+  list: every declared anchor MUST have a matching heading in that same file
+  (the 17-mismatch bug). If a file declares anchors with no matching heading,
+  the writer built the list by hand — re-derive `anchors:` from the actual
+  headings (anchor-contract procedure) and fix in place.
+- **Don't keep links to optional pages that were never generated**
+  (`how-to/local-dev.md`, a missing `reference/` index): drop them
+  (link-hygiene rule 6).
 
-Broken links are auto-fixed where the target is unambiguous; otherwise log them and report at the end.
+Broken links are auto-fixed where the target is unambiguous; otherwise log them
+and report at the end. The report's "Broken intra-doc links" section must be
+empty for the run to be considered clean — every broken link is either repaired
+or downgraded to a backticked identifier.
 
 ## Step 2 — Cross-repo link candidates
 
