@@ -1,64 +1,43 @@
 /* ============================================================
-   NavRail — left sidebar = PROJECT (group) SWITCHER (#1568).
-   56px collapsed, 220px expanded on hover.
+   NavRail — left sidebar = SCREEN nav. 56px collapsed, 220px
+   expanded on hover. (prototype `.ag-sidebar`, stack-guide → <NavRail>)
 
-   Its sole job is selecting the current project (workspace-switcher
-   pattern). It lists the indexed projects from /api/v2/groups, marks
-   the current one (from the route :groupId), and switching keeps the
-   SAME screen when the route supports it (else falls back to graph).
+   This is the PRIMARY navigation: it navigates the screens of the
+   CURRENT project (Graph · Topology · Paths · Flows · Docs ·
+   Operations · Pending · Settings). The active screen is the
+   highlighted row. Screens come from the chrome/screens.ts registry.
 
-   The per-screen nav (Graph/Flows/…) now lives in the TopBar tab
-   strip — see chrome/screen-tabs.tsx.
+   Brand mark at top, screen nav in the middle, divider + Pending,
+   then theme toggle / All-groups / Settings at the foot.
+   Active row = filled surface card (no left accent bar).
 
-   Foot: All-groups / Landing affordance, Add-group, theme toggle.
+   The PROJECT (group) switcher lives in the TopBar (top-right) —
+   the rail no longer switches projects (#1572).
    ============================================================ */
 
-import { NavLink, useParams, useLocation, useNavigate } from "react-router-dom";
-import { Sun, Moon, Home, Plus } from "lucide-react";
+import { NavLink, useParams } from "react-router-dom";
+import { Sun, Moon, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Kbd } from "@/components/ui";
 import { useAppStore } from "@/store/use-app-store";
-import { useGroups } from "@/hooks/use-groups";
-import { SCREEN_SEGMENTS } from "./screens";
-import type { GroupHealth } from "@/data/types";
-
-const HEALTH_DOT: Record<GroupHealth, string> = {
-  healthy: "var(--success)",
-  warning: "var(--warning)",
-  degraded: "var(--danger)",
-  unindexed: "var(--text-4)",
-};
+import { SCREENS, PENDING_SCREEN, SETTINGS_SCREEN } from "./screens";
 
 function rowClass(active: boolean) {
   return cn(
-    "group/nav relative flex items-center h-9 rounded-md px-2.5 mx-2 gap-3 w-[calc(100%-1rem)]",
+    "group/nav relative flex items-center h-9 rounded-md px-2.5 mx-2 gap-3",
     "text-text-2 transition-colors duration-[120ms]",
     active ? "bg-surface text-text shadow-[var(--shadow-1)]" : "hover:bg-surface-2",
   );
 }
 
-/** Segment after the group id in the current path (default graph). */
-function currentSegment(pathname: string, groupId: string): string {
-  const prefix = `/g/${groupId}/`;
-  if (!pathname.startsWith(prefix)) return "graph";
-  const seg = pathname.slice(prefix.length).split("/")[0] ?? "";
-  return seg || "graph";
-}
-
 export function NavRail() {
   const { groupId = "demo" } = useParams();
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
   const theme = useAppStore((s) => s.theme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
-  const { data: groups = [], isLoading } = useGroups();
+  const base = `/g/${groupId}`;
 
-  // Keep the same screen across a project switch when the route supports it.
-  const seg = currentSegment(pathname, groupId);
-  const targetScreen = SCREEN_SEGMENTS.has(seg) ? seg : "graph";
-
-  function switchTo(id: string) {
-    navigate(`/g/${id}/${targetScreen}`);
-  }
+  const { Icon: PendingIcon } = PENDING_SCREEN;
+  const { Icon: SettingsIcon } = SETTINGS_SCREEN;
 
   return (
     <aside
@@ -75,71 +54,53 @@ export function NavRail() {
         </span>
       </div>
 
-      {/* Section label */}
-      <div className="px-4 pt-1 pb-1.5 shrink-0">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-4 whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">
-          Projects
-        </span>
-      </div>
+      {/* Screen nav */}
+      <nav aria-label="Screens" className="flex flex-col gap-0.5 py-1">
+        {SCREENS.map(({ to, label, Icon, shortcut }) => (
+          <NavLink key={to} to={`${base}/${to}`} className={({ isActive }) => rowClass(isActive)} title={label}>
+            <Icon size={18} className="shrink-0" />
+            <span className="flex-1 whitespace-nowrap text-md opacity-0 group-hover/rail:opacity-100 transition-opacity">
+              {label}
+            </span>
+            <Kbd className="opacity-0 group-hover/rail:opacity-100 transition-opacity">{shortcut}</Kbd>
+          </NavLink>
+        ))}
 
-      {/* Project list */}
-      <nav aria-label="Projects" className="flex flex-col gap-0.5 py-0.5 flex-1 min-h-0 ag-scroll">
-        {isLoading && (
-          <span className="px-3 mx-2 h-9 flex items-center text-text-4 text-md whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">
-            Loading…
+        <div className="my-1.5 mx-3 border-t border-border" />
+
+        <NavLink to={`${base}/${PENDING_SCREEN.to}`} className={({ isActive }) => rowClass(isActive)} title="Pending suggestions">
+          <PendingIcon size={18} className="shrink-0" />
+          <span className="flex-1 whitespace-nowrap text-md opacity-0 group-hover/rail:opacity-100 transition-opacity">
+            {PENDING_SCREEN.label}
           </span>
-        )}
-        {groups.map((g) => {
-          const active = g.id === groupId;
-          return (
-            <button
-              key={g.id}
-              type="button"
-              onClick={() => switchTo(g.id)}
-              aria-current={active ? "true" : undefined}
-              className={cn(rowClass(active), "text-left")}
-              title={g.name}
-            >
-              <span
-                className="size-2.5 rounded-full shrink-0 ml-[3px] mr-[3px]"
-                style={{ background: HEALTH_DOT[g.health] }}
-                aria-hidden
-              />
-              <span
-                className={cn(
-                  "flex-1 whitespace-nowrap text-md truncate opacity-0 group-hover/rail:opacity-100 transition-opacity",
-                  active && "font-medium",
-                )}
-              >
-                {g.name}
-              </span>
-            </button>
-          );
-        })}
+          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-accent-text text-[10px] tabular-nums">
+            12
+          </span>
+        </NavLink>
       </nav>
 
       {/* Foot */}
-      <div className="mt-auto flex flex-col gap-0.5 py-2 shrink-0 border-t border-border">
-        <NavLink to="/" className={({ isActive }) => rowClass(isActive)} title="All groups / Landing">
-          <Home size={18} className="shrink-0 ml-px" />
+      <div className="mt-auto flex flex-col gap-0.5 py-2">
+        <NavLink to={`${base}/${SETTINGS_SCREEN.to}`} className={({ isActive }) => rowClass(isActive)} title={SETTINGS_SCREEN.label}>
+          <SettingsIcon size={18} className="shrink-0" />
           <span className="flex-1 whitespace-nowrap text-md opacity-0 group-hover/rail:opacity-100 transition-opacity">
-            All groups
-          </span>
-        </NavLink>
-
-        <NavLink to="/?new=1" className={rowClass(false)} title="Add group">
-          <Plus size={18} className="shrink-0 ml-px" />
-          <span className="flex-1 whitespace-nowrap text-md opacity-0 group-hover/rail:opacity-100 transition-opacity">
-            Add group
+            {SETTINGS_SCREEN.label}
           </span>
         </NavLink>
 
         <button className={rowClass(false)} onClick={toggleTheme} title={theme === "dark" ? "Light mode" : "Dark mode"}>
-          {theme === "dark" ? <Sun size={18} className="shrink-0 ml-px" /> : <Moon size={18} className="shrink-0 ml-px" />}
+          {theme === "dark" ? <Sun size={18} className="shrink-0" /> : <Moon size={18} className="shrink-0" />}
           <span className="flex-1 text-left whitespace-nowrap text-md opacity-0 group-hover/rail:opacity-100 transition-opacity">
             {theme === "dark" ? "Light" : "Dark"} mode
           </span>
         </button>
+
+        <NavLink to="/" className={rowClass(false)} title="All groups">
+          <Home size={18} className="shrink-0" />
+          <span className="flex-1 whitespace-nowrap text-md opacity-0 group-hover/rail:opacity-100 transition-opacity">
+            All groups
+          </span>
+        </NavLink>
       </div>
     </aside>
   );
