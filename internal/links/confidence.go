@@ -40,7 +40,40 @@ const (
 	// stringBandLow / stringBandHigh bracket the P3 low band.
 	stringBandLow  = 0.3
 	stringBandHigh = 0.6
+
+	// sameAsBandLow / sameAsBandHigh bracket the P8 cross-language
+	// SAME_AS band. The pass is heavily gated (shared-lib location +
+	// canonical name + structural field overlap), so even the floor
+	// represents a high-signal identity match. The confidence scales
+	// with the Jaccard field overlap between the two models.
+	sameAsBandLow  = 0.7
+	sameAsBandHigh = 0.98
 )
+
+// ScoreSameAs maps a field-overlap ratio in [0, 1] (Jaccard over
+// normalized field-name sets) to the P8 SAME_AS band. A perfect field
+// match lands near the top; the configured minimum overlap maps to the
+// floor of the band.
+func ScoreSameAs(overlap, minOverlap float64) float64 {
+	if overlap >= 1.0 {
+		return sameAsBandHigh
+	}
+	if minOverlap >= 1.0 {
+		minOverlap = 0.0
+	}
+	span := 1.0 - minOverlap
+	if span <= 0 {
+		return sameAsBandLow
+	}
+	scaled := sameAsBandLow + (overlap-minOverlap)/span*(sameAsBandHigh-sameAsBandLow)
+	if scaled < sameAsBandLow {
+		scaled = sameAsBandLow
+	}
+	if scaled > sameAsBandHigh {
+		scaled = sameAsBandHigh
+	}
+	return scaled
+}
 
 // ScoreImport returns the confidence for a P1 (import/calls) link.
 func ScoreImport() float64 { return ImportConfidence }

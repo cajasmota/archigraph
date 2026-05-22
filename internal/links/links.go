@@ -5,11 +5,17 @@
 // candidates.json sidecar for mid-confidence matches and a
 // rejections.json file used to suppress already-rejected candidates.
 //
-// Three pass kinds:
+// Pass kinds:
 //
 //   - P1 (import_pass.go) — structural cross-repo imports/calls edges
 //   - P2 (label_pass.go) — TF-IDF + kind-compat shared-label match
 //   - P3 (string_pass.go) — string-pattern catalog (HTTP routes, ARNs, etc.)
+//   - P4 (http_pass.go) — HTTP route ↔ fetch matcher
+//   - P5 (openapi_pass.go) — OpenAPI spec → HTTP route linker
+//   - P6 (grpc_pass.go) — gRPC client-stub → server-impl linker
+//   - P7 (topic_pass.go) — message-topic publisher ↔ subscriber linker
+//   - P8 (sameas_pass.go) — cross-language SAME_AS linker for shared-lib
+//     domain models
 //
 // All passes are idempotent and method-segregated: re-running a pass only
 // rewrites the entries whose `method` matches that pass; entries from
@@ -39,6 +45,10 @@ const (
 	RelationImports     = "imports"
 	RelationSharedLabel = "shared_label"
 	RelationStringMatch = "string_match"
+	// RelationSameAs marks an undirected cross-language identity edge
+	// between two shared-library domain models that represent the same
+	// concept (emitted by the P8 same-as pass — see sameas_pass.go).
+	RelationSameAs = "same_as"
 )
 
 // Method values identify which pass produced an entry. Method-segregated
@@ -270,6 +280,17 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 		return nil, fmt.Errorf("topic pass: %w", err)
 	}
 	res.Results = append(res.Results, p7)
+
+	// P8 — cross-language SAME_AS linker for shared-library domain models.
+	// Conservatively links same-named domain models (Component/Model/Schema
+	// kinds) that live in shared-lib repos and share enough field names to
+	// be the same concept across languages (e.g. py-shared Order ↔
+	// js-shared Order). See sameas_pass.go.
+	p8, err := runSameAsPass(graphs, paths, rejects)
+	if err != nil {
+		return nil, fmt.Errorf("same-as pass: %w", err)
+	}
+	res.Results = append(res.Results, p8)
 
 	for _, r := range res.Results {
 		res.TotalLinks += r.LinksAdded

@@ -62,9 +62,10 @@ type ServiceLink struct {
 //     service "importing" another), not service→service
 //     runtime calls. Including them collapses unrelated
 //     services into one giant SCC.
-//   - shared_label /        UNDIRECTED co-occurrence signals (two services
-//     string_match          merely reference the same label / string). Treating
-//     them as edges manufactures spurious cycles.
+//   - shared_label /        UNDIRECTED co-occurrence / identity signals (two
+//     string_match /         services merely reference the same label / string,
+//     same_as                or two shared-lib models are the same concept).
+//     Treating them as edges manufactures spurious cycles.
 var directedRelations = map[string]bool{
 	"calls":        true,
 	"publishes_to": true,
