@@ -46,23 +46,29 @@ export interface RenderConfig {
 }
 
 export const DEFAULT_SIMULATION: SimulationConfig = {
-  // Fix #1558-2: the graph showed a HOLLOW RING of islands with an empty middle —
-  // the cluster force pinned each module to a wide ring while the cross-module
-  // links were too weak to pull connected modules together. Raise link-spring so
-  // edges (esp. the 36 cross-module bridges) contract, raise center gravity so
-  // the whole graph collapses inward and FILLS the canvas, and drop repulsion so
-  // unconnected islands stop shoving each other to the rim. Balanced — clusters
-  // still read as clusters, the graph is not a single blob.
-  // (was linkSpring 1.0 / repulsion 1.0 / center 0.55)
-  linkSpring: 2.2,
-  linkDistance: 8,
-  friction: 0.85,
-  repulsion: 0.12,
-  center: 1.6,
-  // A slightly longer settle (still ≤ the 6s hard cap) lets the strong center +
-  // gravity converge from the seed into the canvas-filling mass — the 2s cap
-  // stopped it while the islands were still spread. (Fix #1558-2)
-  settleTime: 4.5,
+  // Fix #1562: the #1558 tuning (linkSpring 2.2 / repulsion 0.12 / center 1.6 /
+  // gravity 0.35 + a mid-settle re-heat) was unstable on a LARGER graph: the
+  // strong attractive forces (link-spring + center + gravity + cluster) vastly
+  // outweighed the near-zero repulsion, so on the full 1316-node graph positions
+  // collapsed and oscillated until they DIVERGED to NaN/Infinity. cosmos.gl then
+  // tried to size a Float32Array from the Infinity-derived bounds and threw
+  // "RangeError: Array buffer allocation failed". (At ~232 nodes the smaller
+  // force sums stayed inside the stable basin so it never repro'd.)
+  //
+  // Re-tuned to a cohesive-but-STABLE balance: restore enough repulsion to
+  // counter the attractive forces (nodes can't all pile onto one point), pull
+  // link-spring and center back to sane values, and lower gravity. The graph
+  // still coheres and fills the canvas (no hollow ring) but the net force stays
+  // bounded so positions can never diverge. (was linkSpring 2.2 / repulsion 0.12
+  // / center 1.6 / gravity 0.35 / settle 4.5)
+  linkSpring: 1.3,
+  linkDistance: 12,
+  friction: 0.88,
+  repulsion: 0.7,
+  center: 0.9,
+  // A 3s settle is enough for this balance to converge while staying ≤ the 6s
+  // hard cap. (Fix #1562)
+  settleTime: 3.0,
 };
 
 export const DEFAULT_NODE_SIZING: NodeSizingConfig = {

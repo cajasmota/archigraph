@@ -60,18 +60,57 @@ const SPACE_SIZE = 32768;
 // the outermost clusters/labels aren't clipped at the viewport edge.
 const FIT_PADDING = 0.08;
 
+// Fix #1562: a hard finite bound for any position we hand back to cosmos.gl.
+// cosmos derives a spaceSize / bounds buffer from the point bbox; if a single
+// coordinate is NaN/Infinity the bbox blows up and `new Float32Array(...)`
+// throws "Array buffer allocation failed". We clamp every coordinate to a
+// generous-but-finite range so the engine can never size a buffer from
+// Infinity, regardless of how the simulation behaved.
+const POS_CLAMP = SPACE_SIZE; // ±32768 — far beyond any sane settled layout
+
+/**
+ * Fix #1562: copy positions into a Float32Array, replacing any non-finite
+ * coordinate (NaN / ±Infinity) with a clamped value and clamping every
+ * coordinate to ±POS_CLAMP. Returns the sanitized array plus whether anything
+ * had to be repaired (so callers can decide to skip a fit on garbage geometry).
+ */
+function sanitizePositions(
+  positions: ArrayLike<number> | null | undefined,
+): { array: Float32Array; repaired: boolean } {
+  const len = positions?.length ?? 0;
+  const out = new Float32Array(len);
+  let repaired = false;
+  for (let i = 0; i < len; i++) {
+    let v = positions![i];
+    if (!Number.isFinite(v)) {
+      v = 0;
+      repaired = true;
+    } else if (v > POS_CLAMP) {
+      v = POS_CLAMP;
+      repaired = true;
+    } else if (v < -POS_CLAMP) {
+      v = -POS_CLAMP;
+      repaired = true;
+    }
+    out[i] = v;
+  }
+  return { array: out, repaired };
+}
+
+/** Fix #1562: true only if EVERY coordinate is a finite number. */
+function allFinite(positions: ArrayLike<number> | null | undefined): boolean {
+  const len = positions?.length ?? 0;
+  if (len === 0) return false;
+  for (let i = 0; i < len; i++) if (!Number.isFinite(positions![i])) return false;
+  return true;
+}
+
 // ── group / cluster helpers ──────────────────────────────────────────────────
 
 function moduleKey(sourceFile: string): string {
   if (!sourceFile) return "";
   const parts = sourceFile.replace(/\\/g, "/").split("/");
   return parts.slice(0, -1).slice(-2).join("/");
-}
-
-function hashMod1000(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  return Math.abs(h) % 1000;
 }
 
 function groupKeyFor(n: GraphNode, mode: GroupByMode): string {
@@ -87,15 +126,30 @@ function groupKeyFor(n: GraphNode, mode: GroupByMode): string {
   }
 }
 
-function clusterIdFor(n: GraphNode, repoIdx: number, mode: GroupByMode): number | undefined {
+/**
+ * Fix #1562: a STABLE STRING key for the cluster a node belongs to (or undefined
+ * for "none"). This is intentionally NOT a numeric id: cosmos.gl treats the
+ * numeric values passed to `setPointClusters` as DENSE indices and allocates a
+ * cluster FBO of size `ceil(sqrt(maxClusterId + 1))²`. The previous code packed
+ * sparse hash ids up to ~repoIdx*10_000_000 (≈1.9e8 on a ~20-repo group), so
+ * cosmos tried to allocate a ~13784×13784×4-float texture (multiple GB) →
+ * "RangeError: Array buffer allocation failed". Returning a key here lets the
+ * caller remap to contiguous 0-based indices, so the cluster texture is sized to
+ * the ACTUAL number of clusters (tens), not the magnitude of a hash. (This,
+ * not a NaN/position divergence, is the true cause of #1562: 232 nodes had a
+ * smaller repoIdx range and stayed under the allocation limit; 1316 nodes across
+ * ~20 repos pushed maxClusterId — and the texture — past what could be alloc'd.)
+ */
+function clusterKeyFor(n: GraphNode, repoIdx: number, mode: GroupByMode): string | undefined {
   if (mode === "none") return undefined;
   if (mode === "repo") {
-    const mod = hashMod1000(moduleKey(n.sourceFile));
+    // Sub-cluster a repo by module + community so a big repo still reads as
+    // several islands — but as a string key, remapped to a dense index later.
+    const mod = moduleKey(n.sourceFile);
     const cid = n.communityId ?? 0;
-    return repoIdx * 10_000_000 + cid * 1000 + mod;
+    return `r:${repoIdx}|c:${cid}|m:${mod}`;
   }
-  const k = groupKeyFor(n, mode);
-  return hashMod1000(k) + hashMod1000(k + "#") * 1000;
+  return groupKeyFor(n, mode);
 }
 
 function buildGroupCenters(
@@ -289,9 +343,25 @@ function GraphCanvasInner(
       groupCount.set(k, (groupCount.get(k) ?? 0) + 1);
     }
 
+    // Fix #1562: remap cluster KEYS to DENSE, contiguous 0-based indices. cosmos.gl
+    // sizes the cluster force texture as ceil(sqrt(maxIndex+1))² — so the indices
+    // must be small and packed, never a sparse hash. This keeps the texture sized
+    // to the real cluster count (tens) instead of a hash magnitude (hundreds of
+    // millions), which is what blew the Float32Array allocation.
+    const clusterKeyToIdx = new Map<string, number>();
+
     nodes.forEach((n, i) => {
       const repoIdx = repoToIdx.get(n.repo ?? "") ?? 0;
-      clusters[i] = clusterIdFor(n, repoIdx, groupBy);
+      const ckey = clusterKeyFor(n, repoIdx, groupBy);
+      let cidx: number | undefined;
+      if (ckey !== undefined) {
+        cidx = clusterKeyToIdx.get(ckey);
+        if (cidx === undefined) {
+          cidx = clusterKeyToIdx.size;
+          clusterKeyToIdx.set(ckey, cidx);
+        }
+      }
+      clusters[i] = cidx;
       const normPR = (n.pageRank ?? 0) / maxPR;
       // Fix #1558-2: lower the per-node cluster pull so it nudges (rather than
       // pins) nodes to their group center; the cross-module link-spring then wins
@@ -540,14 +610,38 @@ function GraphCanvasInner(
   const fitNow = useCallback((indices?: number[]) => {
     const g = graphRef.current;
     if (!g) return;
+    // Fix #1562: this was the crash site. cosmos.gl's fitView builds a bounds
+    // buffer from the point positions; if the simulation diverged to
+    // NaN/Infinity, that buffer is sized from Infinity and
+    // `new Float32Array(...)` throws "Array buffer allocation failed", taking
+    // down the whole canvas. Sanitize positions to finite/clamped values BEFORE
+    // any fit, and wrap the (still GPU-side) fit in a try/catch so a buffer
+    // failure degrades gracefully instead of crashing.
     const wasSettled = hasSettledRef.current;
-    const frozen = wasSettled ? new Float32Array(g.getPointPositions()) : null;
-    g.unpause();
-    if (indices && indices.length > 0) g.fitViewByPointIndices(indices, 0, FIT_PADDING);
-    else g.fitView(0, FIT_PADDING);
-    if (frozen) {
-      g.setPointPositions(frozen, true);
-      g.pause();
+    const raw = g.getPointPositions();
+    const { array: clean, repaired } = sanitizePositions(raw);
+    try {
+      // If geometry was non-finite, re-pin the clamped positions first so the
+      // engine's own bbox is sane before we ask it to fit to them.
+      if (repaired) g.setPointPositions(clean, true);
+      const frozen = wasSettled ? clean : null;
+      g.unpause();
+      if (indices && indices.length > 0) g.fitViewByPointIndices(indices, 0, FIT_PADDING);
+      else g.fitView(0, FIT_PADDING);
+      if (frozen) {
+        g.setPointPositions(frozen, true);
+        g.pause();
+      }
+    } catch (err) {
+      // Recoverable: re-pin clamped geometry and pause so the canvas keeps the
+      // last good frame rather than tearing down. (Fix #1562)
+      console.error("[graph-canvas] fitNow failed; recovering with clamped geometry", err);
+      try {
+        g.setPointPositions(clean, true);
+        g.pause();
+      } catch {
+        /* engine unrecoverable — leave as-is rather than crash */
+      }
     }
   }, []);
   const fitNowRef = useRef(fitNow);
@@ -568,9 +662,16 @@ function GraphCanvasInner(
 
     // Persist the settled positions (the layout cache) BEFORE we touch the
     // camera — saving the geometry, not the view transform.
-    const positions = g.getPointPositions();
-    if (positions && positions.length > 0) {
-      saveLayout(group, nodeIds, new Float32Array(positions));
+    // Fix #1562: sanitize first — never persist (or re-pin) NaN/Infinity, or the
+    // next reload would load a poisoned layout cache and crash again. If the
+    // simulation diverged we clamp every coordinate to a finite range; the
+    // clamped layout still settles cleanly.
+    const { array: positions, repaired } = sanitizePositions(g.getPointPositions());
+    if (repaired) {
+      console.warn("[graph-canvas] non-finite positions at settle; clamped before fit/cache");
+    }
+    if (positions.length > 0) {
+      saveLayout(group, nodeIds, positions);
     }
 
     // Fix #1548-2: cosmos.gl `fitView` is a no-op while the render loop is
@@ -579,7 +680,7 @@ function GraphCanvasInner(
     // and pause the physics FIRST, then use the fitNow helper which briefly
     // resumes the render loop to apply an INSTANT fit and pauses again — so the
     // fit lands deterministically on the final geometry with no drift.
-    g.setPointPositions(new Float32Array(positions), true);
+    g.setPointPositions(positions, true);
     g.pause();
 
     if (suppressFitRef.current) {
@@ -637,21 +738,24 @@ function GraphCanvasInner(
       enableSimulation: true,
       simulationLinkSpring: simulation.linkSpring,
       simulationLinkDistance: Math.max(simulation.linkDistance, 8),
-      // Fix #1558-2: more gravity (was 0.02) reinforces the center pull so
-      // disconnected islands drift inward instead of sitting on the rim, filling
-      // the canvas rather than leaving an empty middle.
-      simulationGravity: 0.35,
+      // Fix #1562: the #1558 gravity (0.35) stacked with the strong link-spring,
+      // center and cluster forces against near-zero repulsion, so on a large
+      // graph the net inward pull overwhelmed everything and positions diverged
+      // to NaN. A modest gravity still pulls disconnected islands inward to fill
+      // the canvas, but with the restored repulsion the net force now stays
+      // bounded. (was 0.35; original pre-#1558 was 0.02)
+      simulationGravity: 0.2,
       simulationFriction: simulation.friction,
-      // Fix #1558-2: a slower cool-down (was 1500) keeps the simulation active
-      // long enough for the strong center + gravity to pull the islands inward
-      // before it freezes — otherwise it ended early at the spread state and the
-      // graph settled as a hollow ring. The ≤settleTime wall-clock cap still
-      // bounds total settle time.
-      simulationDecay: 3000,
-      // Fix #1558-2: the cluster force pinned every node hard to its ring center,
-      // overriding the cross-module link-spring and locking in the hollow ring.
-      // Soften it so groups still coalesce locally but connected modules are free
-      // to be pulled together by their shared edges (was 0.5).
+      // Fix #1562: a moderate cool-down. #1558 pushed this to 3000 to give the
+      // strong forces time to converge from the hollow ring; with the rebalanced
+      // (bounded) forces a 2000 decay converges without keeping a borderline
+      // simulation alive long enough to wander into a divergent state. The
+      // ≤settleTime wall-clock cap still bounds total settle time.
+      simulationDecay: 2000,
+      // Fix #1558-2: soft cluster pull so groups coalesce locally without pinning
+      // nodes hard to a ring center; the link-spring then draws connected modules
+      // together. Kept moderate (with restored repulsion this no longer
+      // destabilizes large graphs). (was 0.5)
       simulationCluster: 0.2,
       simulationRepulsion: simulation.repulsion,
       simulationCenter: simulation.center,
@@ -709,7 +813,10 @@ function GraphCanvasInner(
     if (import.meta.env.DEV) (window as unknown as { __ag?: Graph }).__ag = g;
 
     const saved = loadLayout(group, nodeIds);
-    if (saved) {
+    // Fix #1562: a layout cached BEFORE this fix could contain NaN/Infinity from
+    // a diverged settle; loading it would crash on the first fit. Only trust a
+    // fully-finite cache; otherwise fall through to a fresh (now-stable) layout.
+    if (saved && allFinite(saved.positions)) {
       requestAnimationFrame(() => {
         const gg = graphRef.current;
         if (!gg) return;
@@ -755,7 +862,9 @@ function GraphCanvasInner(
     if (!g) return;
     const prev = g.getPointPositions();
     if (hasSettledRef.current && prev.length === packed.positions.length) {
-      g.setPointPositions(new Float32Array(prev), true);
+      // Fix #1562: re-pin the settled geometry, but sanitize first so a diverged
+      // layout never gets pushed back into the engine.
+      g.setPointPositions(sanitizePositions(prev).array, true);
     } else {
       g.setPointPositions(packed.positions);
     }
@@ -848,7 +957,12 @@ function GraphCanvasInner(
     didAutoStartRef.current = true;
     mountTimeRef.current = Date.now();
     const saved = loadLayout(group, nodeIds);
-    if (saved && saved.positions.length === packed.positions.length) {
+    // Fix #1562: ignore a non-finite cached layout (see mount handler).
+    if (
+      saved &&
+      saved.positions.length === packed.positions.length &&
+      allFinite(saved.positions)
+    ) {
       g.setPointPositions(saved.positions, true);
       g.render();
       g.create();
@@ -966,15 +1080,30 @@ function GraphCanvasInner(
         const apply = () => {
           const gg = graphRef.current;
           if (!gg) return;
-          const frozen = new Float32Array(gg.getPointPositions());
-          // Camera ops only take while the render loop runs (see fitNow); resume
-          // briefly, re-center + restore zoom, re-pin geometry, then pause.
-          gg.unpause();
-          gg.fitViewByPointPositions([cx, cy, cx, cy], 0);
-          gg.setZoomLevel(snap.zoom, 0);
-          gg.setPointPositions(frozen, true);
-          gg.pause();
-          refreshLabelsRef.current(false);
+          // Fix #1562: sanitize geometry + clamp the restore target so a diverged
+          // layout can't size a bounds buffer from Infinity; wrap the camera ops
+          // so a buffer failure degrades gracefully.
+          const { array: frozen } = sanitizePositions(gg.getPointPositions());
+          const sx = Number.isFinite(cx) ? Math.max(-POS_CLAMP, Math.min(POS_CLAMP, cx)) : 0;
+          const sy = Number.isFinite(cy) ? Math.max(-POS_CLAMP, Math.min(POS_CLAMP, cy)) : 0;
+          try {
+            // Camera ops only take while the render loop runs (see fitNow); resume
+            // briefly, re-center + restore zoom, re-pin geometry, then pause.
+            gg.unpause();
+            gg.fitViewByPointPositions([sx, sy, sx, sy], 0);
+            gg.setZoomLevel(snap.zoom, 0);
+            gg.setPointPositions(frozen, true);
+            gg.pause();
+            refreshLabelsRef.current(false);
+          } catch (err) {
+            console.error("[graph-canvas] restoreCamera failed; recovering", err);
+            try {
+              gg.setPointPositions(frozen, true);
+              gg.pause();
+            } catch {
+              /* unrecoverable */
+            }
+          }
         };
         // Apply after the full-graph positions have been pushed back. A short
         // delay lets the group-change re-layout effect commit the cached layout
