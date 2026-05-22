@@ -67,6 +67,10 @@ type v2PathTotals struct {
 	Endpoints   int `json:"endpoints"`
 	Controllers int `json:"controllers"`
 	Backends    int `json:"backends"`
+	// Orphans is the count of frontend FETCH calls that resolve to no backend
+	// handler. Surfaced here so the Orphan-callers tab can show a counter badge
+	// without a second round-trip (#1551).
+	Orphans int `json:"orphans"`
 }
 
 // v2PathsListResponse is the payload for GET /api/v2/groups/:id/paths.
@@ -139,22 +143,22 @@ type v2OutboundQueries struct {
 
 // v2PathDetail is the full detail for GET /api/v2/groups/:id/paths/:hash.
 type v2PathDetail struct {
-	PathHash        string              `json:"path_hash"`
-	Path            string              `json:"path"`
-	Verbs           []string            `json:"verbs"`
-	Repos           []string            `json:"repos"`
-	IsWebhook       bool                `json:"is_webhook"`
-	WebhookProvider string              `json:"webhook_provider,omitempty"`
-	Auth            bool                `json:"auth"`
-	AuthScheme      string              `json:"auth_scheme,omitempty"`
-	Description     v2DescriptionBlock  `json:"description"`
-	Parameters      []v2PathParameter   `json:"parameters"`
-	ResponseShapes  []v2ResponseShape   `json:"response_shapes"`
-	Handlers        []v2HandlerDetail   `json:"handlers"`
-	InboundFetches  []v2PathEntity      `json:"inbound_fetches"`
-	Outbound        v2OutboundQueries   `json:"outbound"`
-	SideEffects     []v2PathEntity      `json:"side_effects"`
-	Tests           []v2PathEntity      `json:"tests"`
+	PathHash        string             `json:"path_hash"`
+	Path            string             `json:"path"`
+	Verbs           []string           `json:"verbs"`
+	Repos           []string           `json:"repos"`
+	IsWebhook       bool               `json:"is_webhook"`
+	WebhookProvider string             `json:"webhook_provider,omitempty"`
+	Auth            bool               `json:"auth"`
+	AuthScheme      string             `json:"auth_scheme,omitempty"`
+	Description     v2DescriptionBlock `json:"description"`
+	Parameters      []v2PathParameter  `json:"parameters"`
+	ResponseShapes  []v2ResponseShape  `json:"response_shapes"`
+	Handlers        []v2HandlerDetail  `json:"handlers"`
+	InboundFetches  []v2PathEntity     `json:"inbound_fetches"`
+	Outbound        v2OutboundQueries  `json:"outbound"`
+	SideEffects     []v2PathEntity     `json:"side_effects"`
+	Tests           []v2PathEntity     `json:"tests"`
 }
 
 // v2OrphanCaller is one orphan caller row.
@@ -172,8 +176,8 @@ type v2OrphanCaller struct {
 
 // v2OrphanTotals is the breakdown by severity.
 type v2OrphanTotals struct {
-	NoHandlerFound int `json:"no_handler_found"`
-	DynamicBaseURL int `json:"dynamic_baseurl"`
+	NoHandlerFound  int `json:"no_handler_found"`
+	DynamicBaseURL  int `json:"dynamic_baseurl"`
 	TemplateLiteral int `json:"template_literal"`
 }
 
@@ -211,21 +215,21 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 	// ---- Phase 1: collect raw endpoints (ported from handlePathsList) ----
 
 	type rawEP struct {
-		ID            string
-		Path          string
-		Verb          string
-		Handler       string
-		Framework     string
-		IsWebhook     bool
-		WebhookProv   string
-		Auth          bool
-		Repo          string
-		SourceFile    string
-		StartLine     int
-		OwningBackend string
-		ControllerID  string
+		ID             string
+		Path           string
+		Verb           string
+		Handler        string
+		Framework      string
+		IsWebhook      bool
+		WebhookProv    string
+		Auth           bool
+		Repo           string
+		SourceFile     string
+		StartLine      int
+		OwningBackend  string
+		ControllerID   string
 		ControllerFile string
-		Language      string
+		Language       string
 	}
 
 	var eps []rawEP
@@ -259,33 +263,41 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			owningBackend := e.Properties["owning_backend"]
-			if owningBackend == "" {
-				owningBackend = inferOwningBackend(e.Name, repo.Slug)
-			}
+			// Backend = the owning repo. The raw owning_backend property is
+			// almost always the bare entity prefix ("src") which collapses every
+			// service into one node, so the repo slug is the only reliable
+			// top-level grouping key on a real multi-repo platform (#1551).
+			owningBackend := repo.Slug
 
-			// Derive controller name from handler name heuristic.
-			controllerID := e.Properties["controller"]
+			// Controller/module = the source file the handler lives in. For
+			// framework controllers ("orders.controller.ts") and GraphQL
+			// resolver files ("resolvers.ts") this maps directly to the unit a
+			// developer thinks in, which the raw `controller` property
+			// (one-per-endpoint garbage) does not. Fall back to a name heuristic.
+			controllerID := controllerKeyFromFile(e.SourceFile)
+			if controllerID == "" {
+				controllerID = e.Properties["controller"]
+			}
 			if controllerID == "" {
 				controllerID = inferControllerName(e.Name)
 			}
 
 			eps = append(eps, rawEP{
-				ID:            dashPrefixedID(repo.Slug, e.ID),
-				Path:          path,
-				Verb:          verb,
-				Handler:       e.Name,
-				Framework:     e.Properties["framework"],
-				IsWebhook:     e.Properties["is_webhook"] == "true",
-				WebhookProv:   e.Properties["webhook_provider"],
-				Auth:          e.Properties["auth"] == "true" || e.Properties["auth_scheme"] != "",
-				Repo:          repo.Slug,
-				SourceFile:    e.SourceFile,
-				StartLine:     e.StartLine,
-				OwningBackend: owningBackend,
-				ControllerID:  controllerID,
+				ID:             dashPrefixedID(repo.Slug, e.ID),
+				Path:           path,
+				Verb:           verb,
+				Handler:        e.Name,
+				Framework:      e.Properties["framework"],
+				IsWebhook:      e.Properties["is_webhook"] == "true",
+				WebhookProv:    e.Properties["webhook_provider"],
+				Auth:           e.Properties["auth"] == "true" || e.Properties["auth_scheme"] != "",
+				Repo:           repo.Slug,
+				SourceFile:     e.SourceFile,
+				StartLine:      e.StartLine,
+				OwningBackend:  owningBackend,
+				ControllerID:   controllerID,
 				ControllerFile: e.SourceFile,
-				Language:      e.Language,
+				Language:       e.Language,
 			})
 		}
 	}
@@ -331,11 +343,11 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 
 		if _, ok := cm.paths[ep.Path]; !ok {
 			cm.paths[ep.Path] = &v2PathRoute{
-				PathHash:  hashStr(ep.Path),
-				Path:      ep.Path,
-				Verbs:     []string{},
+				PathHash:   hashStr(ep.Path),
+				Path:       ep.Path,
+				Verbs:      []string{},
 				Frameworks: []string{},
-				Repos:     []string{},
+				Repos:      []string{},
 				Controller: cID,
 			}
 			cm.order = append(cm.order, ep.Path)
@@ -383,11 +395,12 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 		}
 		sort.Strings(repos)
 
-		// Detect cross-backend refs (endpoint's repos include a repo not
-		// owned by this backend — heuristic: any repo outside this set).
+		// Detect cross-backend refs: a route owned here whose repo set spans
+		// beyond this backend's own repo (the backend id is the repo slug).
 		crossBackendRefs := false
 		anyRate := 0
 		var language, framework string
+		verbSet := map[string]bool{}
 
 		groups := make([]v2ControllerGroup, 0, len(bm.order))
 		for _, cID := range bm.order {
@@ -397,8 +410,14 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 				pr := cm.paths[path]
 				sort.Strings(pr.Verbs)
 				for _, v := range pr.Verbs {
+					verbSet[v] = true
 					if v == "ANY" {
 						anyRate++
+					}
+				}
+				for _, rr := range pr.Repos {
+					if rr != bID {
+						crossBackendRefs = true
 					}
 				}
 				routes = append(routes, *pr)
@@ -415,7 +434,7 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 			}
 			groups = append(groups, v2ControllerGroup{
 				ID:        cID,
-				Label:     cID,
+				Label:     controllerLabelFromFile(cm.file),
 				File:      cm.file,
 				IsWebhook: isWebhookCtrl,
 				Routes:    routes,
@@ -430,11 +449,11 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		serviceType := inferServiceTypeV2(bID, repos)
+		serviceType := serviceTypeFromVerbs(verbSet, bID, repos)
 
 		result = append(result, v2PathBackend{
 			ID:               bID,
-			Label:            bID,
+			Label:            backendLabelFromRepo(bID, backendOrder),
 			ServiceType:      serviceType,
 			Framework:        framework,
 			Language:         language,
@@ -457,6 +476,10 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Orphan count for the tab badge — reuse the same v1 scan the Orphans tab
+	// uses so the number is authoritative, not an estimate (#1551).
+	orphanCount := len(collectOrphanCallers(grp))
+
 	writeV2JSON(w, http.StatusOK, v2OK(v2PathsListResponse{
 		Backends: result,
 		Totals: v2PathTotals{
@@ -464,6 +487,7 @@ func (s *Server) handleV2PathsList(w http.ResponseWriter, r *http.Request) {
 			Endpoints:   totalEndpoints,
 			Controllers: totalControllers,
 			Backends:    len(result),
+			Orphans:     orphanCount,
 		},
 	}))
 }
@@ -884,6 +908,121 @@ func inferControllerName(handlerName string) string {
 	return handlerName
 }
 
+// controllerKeyFromFile derives a stable controller/module grouping key from a
+// handler's source file. The full repo-relative path is used so two files with
+// the same basename in different directories never collide.
+func controllerKeyFromFile(sourceFile string) string {
+	return strings.TrimSpace(sourceFile)
+}
+
+// controllerLabelFromFile produces a human-friendly controller/module label
+// from a source file path. "src/orders.controller.ts" → "OrdersController";
+// "src/resolvers.ts" → "resolvers"; "src/index.ts" → "index". Falls back to the
+// basename when no recognisable convention applies.
+func controllerLabelFromFile(sourceFile string) string {
+	base := sourceFile
+	if i := strings.LastIndex(base, "/"); i >= 0 {
+		base = base[i+1:]
+	}
+	// Strip a single trailing extension.
+	if dot := strings.LastIndex(base, "."); dot > 0 {
+		base = base[:dot]
+	}
+	// "orders.controller" / "saga.controller" → "OrdersController".
+	for _, suf := range []string{".controller", ".resolver", ".router", ".service", ".handler"} {
+		if strings.HasSuffix(base, suf) {
+			stem := strings.TrimSuffix(base, suf)
+			kind := strings.TrimPrefix(suf, ".")
+			return titleFirst(stem) + titleFirst(kind)
+		}
+	}
+	return base
+}
+
+func titleFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// backendLabelFromRepo trims the longest common slash/dash-delimited prefix
+// shared by all repo backends so labels read as "gateway" / "payments" rather
+// than "polyglot-platform-services-gateway". Falls back to the raw slug.
+func backendLabelFromRepo(repo string, allRepos []string) string {
+	if len(allRepos) < 2 {
+		return repo
+	}
+	prefix := commonDashPrefix(allRepos)
+	if prefix != "" && strings.HasPrefix(repo, prefix) {
+		trimmed := strings.TrimPrefix(repo, prefix)
+		if trimmed != "" {
+			return trimmed
+		}
+	}
+	return repo
+}
+
+// commonDashPrefix returns the longest shared prefix of dash-delimited segments,
+// including the trailing dash (e.g. "polyglot-platform-services-").
+func commonDashPrefix(items []string) string {
+	if len(items) == 0 {
+		return ""
+	}
+	segs := strings.Split(items[0], "-")
+	commonN := len(segs)
+	for _, it := range items[1:] {
+		other := strings.Split(it, "-")
+		n := 0
+		for n < commonN && n < len(other) && segs[n] == other[n] {
+			n++
+		}
+		commonN = n
+		if commonN == 0 {
+			return ""
+		}
+	}
+	// Never consume every segment (would leave an empty label).
+	if commonN >= len(segs) {
+		commonN = len(segs) - 1
+	}
+	if commonN <= 0 {
+		return ""
+	}
+	return strings.Join(segs[:commonN], "-") + "-"
+}
+
+// serviceTypeFromVerbs derives the display service_type from the set of verbs a
+// backend actually serves, falling back to a name/repo heuristic for ambiguous
+// REST cases. GRAPHQL → "GraphQL", GRPC → "gRPC", otherwise "REST".
+func serviceTypeFromVerbs(verbSet map[string]bool, backendName string, repos []string) string {
+	graphql, grpc, rest := false, false, false
+	for v := range verbSet {
+		switch strings.ToUpper(v) {
+		case "GRAPHQL":
+			graphql = true
+		case "GRPC":
+			grpc = true
+		default:
+			rest = true
+		}
+	}
+	// Mixed backends are labelled by their dominant non-REST protocol so the
+	// section colour is meaningful; pure-REST stays REST.
+	switch {
+	case grpc && !rest && !graphql:
+		return "gRPC"
+	case graphql && !rest:
+		return "GraphQL"
+	case graphql:
+		return "GraphQL"
+	case grpc:
+		return "gRPC"
+	default:
+		return inferServiceTypeV2(backendName, repos)
+	}
+}
+
 // inferServiceTypeV2 maps a backend name + repo list to one of the display
 // service_type values used by the UI: "REST" | "gRPC" | "GraphQL".
 func inferServiceTypeV2(backendName string, repos []string) string {
@@ -904,7 +1043,7 @@ func inferServiceTypeV2(backendName string, repos []string) string {
 // dynamic segments. Real parameter metadata would come from annotations /
 // OpenAPI schema; this synthesises a fallback for paths without it.
 func extractPathParameters(path string, verbs []string) []v2PathParameter {
-	var params []v2PathParameter
+	params := []v2PathParameter{}
 	re := strings.Split(strings.TrimPrefix(path, "/"), "/")
 	for _, seg := range re {
 		if strings.HasPrefix(seg, "{") && strings.HasSuffix(seg, "}") {

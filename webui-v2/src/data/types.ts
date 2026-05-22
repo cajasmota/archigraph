@@ -701,6 +701,8 @@ export interface PathTotals {
   endpoints: number;
   controllers: number;
   backends: number;
+  /** Orphan-caller count, surfaced for the tab badge (#1551). Optional for back-compat. */
+  orphans?: number;
 }
 
 /** Response from GET /api/v2/groups/:id/paths. */
