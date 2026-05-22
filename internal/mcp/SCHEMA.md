@@ -23,7 +23,11 @@ for clients (Claude Code, Windsurf, etc.) and tracks the implementation in
   collisions when other MCP servers are installed alongside (Refs #62).
   Prior history: 19 tools → #668 bundled 3 action-dispatch tools (saved 4) → 39 tools
   after #1202/#1220/#1252 additions → #1281 merged 9 tools into 4 bundles → 32 tools
-  → dropped 4 dashboard-only tools → 28 tools → #1314 added auth_coverage → 29 tools.
+  → dropped 4 dashboard-only tools → 28 tools → #1314 added auth_coverage → 29 tools
+  → #1384 (epic #1380) added `archigraph_module_analysis` (action-dispatched
+  cycles|centrality|all over the aggregated module graph).
+- **Handshake token ceiling:** 3,100 (bumped from 3,000 in #1384 to seat
+  `archigraph_module_analysis`; current measurement 3,085 tokens).
 - **State:** in-memory `Document`s loaded from per-repo `.archigraph/graph.json`
   files; no database. See ADR-0006.
 - **Routing:** every tool that touches graph data resolves a group via the
@@ -122,6 +126,73 @@ Agents using these names will receive a "tool not found" error — update to the
 | [`archigraph_find_dead_code`](#archigraph_find_dead_code) | Entities with 0 inbound/outbound project edges. |
 | [`archigraph_auth_coverage`](#archigraph_auth_coverage) | Security audit: flag HTTP endpoints missing auth decorators/middleware. |
 | [`archigraph_secrets`](#archigraph_secrets) | Security scan: detect hardcoded API keys, passwords, JWT tokens, and other credentials in source files. |
+| [`archigraph_module_analysis`](#archigraph_module_analysis) | Module-level SCC + PageRank + betweenness over the aggregated module graph (action: cycles\|centrality\|all). |
+
+---
+
+### `archigraph_module_analysis`
+
+Module-level graph data-science (#1384, part of epic #1380). Runs SCC,
+PageRank, and betweenness over the **aggregated module graph** — the
+bird's-eye-view counterpart to the entity-level tools.
+
+The module graph is computed by collapsing every entity-level edge `A → B`
+onto the pair `(module(A), module(B))`, dropping intra-module self-edges,
+and accumulating per-pair weight = count. When the input document already
+contains synthetic `Module` containers and `DEPENDS_ON` edges between them
+(post-#1383 documents), those pre-aggregated edges are used directly
+(honouring their `weight` property).
+
+**Args:**
+
+| Field | Type | Required | Default | Notes |
+|-------|------|----------|---------|-------|
+| `action` | string | no | `all` | `cycles` / `centrality` / `all`. |
+| `repo_filter` | string\[\] | no | all | Restrict to listed repo slugs (read from args even though omitted from schema for handshake-token economy). |
+| `top_n` | int | no | 10 | Top-N for centrality rankings. |
+| `limit` | int | no | 50 | Max SCCs returned. |
+| `min_size` | int | no | 2 | Minimum SCC size to report (cycles action only). |
+| `group` | string | no | inferred | See routing rules above. |
+| `cwd` | string | no | inferred | See routing rules above. |
+
+**Returns (action=all):**
+
+```jsonc
+{
+  "sccs": [                       // module-level cycles, ≥ min_size
+    {
+      "repo": "...",
+      "id": 0,                    // deterministic per repo
+      "size": 3,
+      "members": ["repo::M_A", "repo::M_B", "repo::M_C"],
+      "member_names": ["mod_a", "mod_b", "mod_c"],
+      "edges": [ { "from_module": "repo::M_A", "to_module": "repo::M_B", "weight": 12 } ]
+    }
+  ],
+  "top_pagerank": [               // top-N modules by PageRank, across repos
+    { "repo": "...", "module_id": "repo::M_X", "module_name": "...",
+      "pagerank": 0.0421, "betweenness": 0.0117,
+      "in_degree": 8, "out_degree": 2, "in_cycle": false }
+  ],
+  "top_betweenness": [ /* same shape, sorted by betweenness */ ],
+  "summaries": [                  // per-repo aggregate counts
+    { "repo": "...", "num_modules": N, "num_module_edges": N,
+      "num_sccs": N, "largest_scc_size": N, "modules_in_cycle": N }
+  ]
+}
+```
+
+**Returns (action=cycles):** `{ "cycles": [...], "count": N, "total": N, "truncated": bool, "repos_scanned": N }`.
+
+**Returns (action=centrality):** `{ "repos": [ { "repo": "...", "top_pagerank": [...], "top_betweenness": [...], ... } ], "count": N }`.
+
+Scores are rounded to 4 decimal places (same determinism policy as entity-level
+algorithms, see issue #481). The synthetic `_external` bucket (entities that
+lack a `module` property) is excluded from the module graph — including it
+would pollute SCC and centrality with noise.
+
+The HTTP equivalent is `GET /api/v2/groups/{group}/modules/analysis` on the
+dashboard server (same payload shape, v2 envelope).
 
 ---
 
