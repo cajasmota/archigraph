@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/cajasmota/archigraph/internal/types"
@@ -157,7 +158,7 @@ def update(self, request):
 	foundSub := false
 	for _, r := range subs {
 		if r.FromID == "SCOPE.Operation:handle_inspection_pre_update" &&
-			r.ToID == signalTopicKind+":django_signal:inspection_pre_update" {
+			r.ToID == signalTopicKind+":inspection_pre_update" {
 			foundSub = true
 		}
 	}
@@ -173,6 +174,34 @@ def update(self, request):
 	}
 	if !foundPub {
 		t.Errorf("missing publisher edge from update(); pubs=%v", pubs)
+	}
+
+	// Regression guard for #1649: the topic entity's pre-stamp ID must match
+	// the form used on edge endpoints, AND the suffix after the first ':'
+	// must equal Entity.Name. resolve.splitStub splits on ':' and then looks
+	// up byKind[kind][name] / byName[name] — any mismatch leaves the ToID as
+	// a stub on-disk forever (PUBLISHES_TO/SUBSCRIBES_TO orphaned from their
+	// topic at runtime, even though graph.fb persistence is correct).
+	for _, e := range ents {
+		if e.Kind != signalTopicKind {
+			continue
+		}
+		want := signalTopicKind + ":" + e.Name
+		if e.ID != want {
+			t.Errorf("topic entity ID=%q want=%q (must round-trip splitStub→Name)", e.ID, want)
+		}
+	}
+	for _, r := range append(append([]types.RelationshipRecord(nil), subs...), pubs...) {
+		// ToID must be "<kind>:<bareName>" — never include the historical
+		// "django_signal:" disambiguator in the resolver-visible segment.
+		if !strings.HasPrefix(r.ToID, signalTopicKind+":") {
+			t.Errorf("edge ToID=%q missing %s: prefix", r.ToID, signalTopicKind)
+			continue
+		}
+		suffix := r.ToID[len(signalTopicKind)+1:]
+		if strings.Contains(suffix, ":") {
+			t.Errorf("edge ToID=%q has extra ':' in name segment — resolver will fail to bind to topic Entity.Name (#1649)", r.ToID)
+		}
 	}
 }
 

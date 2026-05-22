@@ -245,16 +245,27 @@ func ApplyDjangoSignalPubSub(
 	emittedTopic := map[string]bool{}
 	seenEdge := map[string]bool{}
 
-	signalTopicID := func(name string) string {
-		return "django_signal:" + name
+	// topicStub returns the resolver-friendly stub form used on both the
+	// entity construction-time ID and on edge endpoints: "<kind>:<name>".
+	// The trailing name MUST match EntityRecord.Name verbatim — splitStub
+	// in resolve.Index.LookupStatusHint splits on the first ':' and then
+	// looks up byKind[kind][name] / byName[name]. Using "django_signal:<n>"
+	// as the name segment (as the original #1617 implementation did) broke
+	// the resolver lookup so every PUBLISHES_TO / SUBSCRIBES_TO ToID kept
+	// its stub form on-disk instead of being rewritten to the topic's hex
+	// EntityID, leaving topology queries blind to signal pub/sub at runtime
+	// (#1649). The "django_signal:" disambiguator is now carried only in
+	// Properties["signal"] (still set below).
+	topicStub := func(name string) string {
+		return signalTopicKind + ":" + name
 	}
 
 	emitTopic := func(name, sourceFile string) string {
-		id := signalTopicID(name)
-		if !emittedTopic[id] {
-			emittedTopic[id] = true
+		stub := topicStub(name)
+		if !emittedTopic[stub] {
+			emittedTopic[stub] = true
 			ents = append(ents, types.EntityRecord{
-				ID:         signalTopicKind + ":" + id,
+				ID:         stub,
 				Name:       name,
 				Kind:       signalTopicKind,
 				SourceFile: sourceFile,
@@ -270,21 +281,21 @@ func ApplyDjangoSignalPubSub(
 				QualityScore:       0.8,
 			})
 		}
-		return id
+		return stub
 	}
 
-	emitEdge := func(fromOp, topicID, kind string) {
+	emitEdge := func(fromOp, topicStub, kind string) {
 		if fromOp == "" {
 			return
 		}
-		key := kind + "|" + fromOp + "|" + topicID
+		key := kind + "|" + fromOp + "|" + topicStub
 		if seenEdge[key] {
 			return
 		}
 		seenEdge[key] = true
 		rels = append(rels, types.RelationshipRecord{
 			FromID: "SCOPE.Operation:" + fromOp,
-			ToID:   signalTopicKind + ":" + topicID,
+			ToID:   topicStub,
 			Kind:   kind,
 			Properties: map[string]string{
 				"framework":    "django_signals",
