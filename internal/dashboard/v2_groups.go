@@ -36,7 +36,7 @@ type v2Group struct {
 	Fidelity *float64 `json:"fidelity"`
 	// IndexedAt is unix-ms, or null when never indexed.
 	IndexedAt *int64 `json:"indexedAt"`
-	// Health is one of "healthy" | "warning" | "unindexed", derived server-side.
+	// Health is one of "healthy" | "warning" | "degraded" | "unindexed", derived server-side.
 	Health string `json:"health"`
 }
 
@@ -47,15 +47,11 @@ const (
 )
 
 // deriveGroupHealth computes the health + fidelity for a group from its
-// aggregated stats. The rules live here (one place) per the design doc:
-//   - never indexed (no entities AND no last-indexed) → unindexed, fidelity null
-//   - fidelity ≥ 0.8 → healthy; otherwise → warning
-//
-// Until the daemon persists a real fidelity score per group, we surface a
-// neutral indexed-but-unknown value (1.0 → healthy) so indexed groups don't
-// render as perpetually "low fidelity". This keeps the wire contract stable;
-// when a real score lands it slots straight into this function.
-func deriveGroupHealth(s GroupSummary) (health string, fidelity *float64, indexedAt *int64) {
+// aggregated stats. Priority:
+//  1. Real bug_rate from health-history.jsonl (via latestGroupBugRate).
+//  2. Never indexed (no entities AND no last-indexed) → unindexed, fidelity null.
+//  3. Indexed but no history → neutral fidelity 1.0 / healthy (stable contract).
+func deriveGroupHealth(s GroupSummary, histRoot string) (health string, fidelity *float64, indexedAt *int64) {
 	indexed := s.LastIndexed != ""
 	if !indexed && s.EntityCount == 0 {
 		return healthUnindexed, nil, nil
@@ -64,18 +60,21 @@ func deriveGroupHealth(s GroupSummary) (health string, fidelity *float64, indexe
 		ms := t.UnixMilli()
 		indexedAt = &ms
 	}
-	f := 1.0
-	fidelity = &f
-	if f >= 0.8 {
-		health = healthHealthy
-	} else {
-		health = healthWarning
+
+	// Try real bug_rate from history.
+	if bugRate, ok := latestGroupBugRate(s.Name, histRoot); ok {
+		f := fidelityFromBugRate(bugRate)
+		f, hlth := deriveHealthFromFidelity(f)
+		return hlth, &f, indexedAt
 	}
-	return health, fidelity, indexedAt
+
+	// Fallback: indexed but no history recorded yet.
+	f := 1.0
+	return healthHealthy, &f, indexedAt
 }
 
-func toV2Group(s GroupSummary) v2Group {
-	health, fidelity, indexedAt := deriveGroupHealth(s)
+func toV2Group(s GroupSummary, histRoot string) v2Group {
+	health, fidelity, indexedAt := deriveGroupHealth(s, histRoot)
 	repos := s.Repos
 	if repos == nil {
 		repos = []string{}
@@ -100,9 +99,10 @@ func (s *Server) handleV2Groups(w http.ResponseWriter, r *http.Request) {
 		writeV2Err(w, http.StatusInternalServerError, "internal_error", err.Error())
 		return
 	}
+	root := s.daemonRoot()
 	out := make([]v2Group, 0, len(groups))
 	for _, g := range groups {
-		out = append(out, toV2Group(g))
+		out = append(out, toV2Group(g, root))
 	}
 	pag := parsePagination(r.URL.Query(), len(out))
 	end := pag.Offset + pag.Limit
@@ -140,5 +140,5 @@ func (s *Server) handleV2CreateGroup(w http.ResponseWriter, r *http.Request) {
 		writeV2Err(w, http.StatusBadRequest, "bad_request", err.Error())
 		return
 	}
-	writeV2JSON(w, http.StatusCreated, v2OK(toV2Group(created)))
+	writeV2JSON(w, http.StatusCreated, v2OK(toV2Group(created, s.daemonRoot())))
 }

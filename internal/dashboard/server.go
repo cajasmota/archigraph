@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/cajasmota/archigraph/internal/audit"
+	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/jobs"
 	"github.com/cajasmota/archigraph/internal/mcp"
 	"github.com/cajasmota/archigraph/internal/notifications"
@@ -38,6 +39,10 @@ type Server struct {
 	srv             *http.Server
 	rng             *rand.Rand
 	daemonStartedAt time.Time // zero when not embedded inside a daemon process
+
+	// historyRoot is the directory containing health-history.jsonl.
+	// Defaults to daemon.DefaultLayout().Root; injectable for tests.
+	historyRoot string
 
 	// progressBroker is the shared pub/sub bus for real-time indexing progress.
 	// It is optional: when nil the /api/index-progress endpoints return 503.
@@ -136,6 +141,20 @@ func NewServer(cfg Config, store RegistryStore) (*Server, error) {
 	// auditor starts as a no-op writer; replaced when SetAuditLog/SetAuditBroker is called.
 	srv.auditor = audit.NewWriter(nil, nil)
 	return srv, nil
+}
+
+// daemonRoot returns the daemon root directory used for reading
+// health-history.jsonl. Uses historyRoot when set (for tests); falls back
+// to daemon.DefaultLayout().Root at runtime.
+func (s *Server) daemonRoot() string {
+	if s.historyRoot != "" {
+		return s.historyRoot
+	}
+	layout, err := daemon.DefaultLayout()
+	if err != nil {
+		return ""
+	}
+	return layout.Root
 }
 
 // SetDaemonStartedAt records when the parent daemon process started so

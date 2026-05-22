@@ -3,10 +3,13 @@ package dashboard
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/cajasmota/archigraph/internal/quality"
 )
 
 // decodeV2Group is the wire shape returned by the v2 group endpoints.
@@ -217,5 +220,75 @@ func TestV2CreateGroup_BadRequest(t *testing.T) {
 	}
 	if body.Error.Code != "bad_request" {
 		t.Errorf("error.code: want bad_request, got %q", body.Error.Code)
+	}
+}
+
+// TestV2Groups_RealFidelityFromHistory verifies that when a health-history entry
+// exists for a group, the fidelity returned is 100-bug_rate/100 not 1.0.
+func TestV2Groups_RealFidelityFromHistory(t *testing.T) {
+	// Write a history entry so latestGroupBugRate can find it.
+	histDir := t.TempDir()
+	if err := quality.AppendEntry(histDir, quality.HealthEntry{
+		Timestamp:   time.Now(),
+		Group:       "indexed",
+		BugRate:     6.0,
+		HealthScore: 94.0,
+	}); err != nil {
+		t.Fatalf("AppendEntry: %v", err)
+	}
+
+	st := newFakeStore()
+	st.groups["indexed"] = GroupSummary{
+		Name:        "indexed",
+		ConfigPath:  "/i.json",
+		Repos:       []string{"a"},
+		EntityCount: 500,
+		LastIndexed: time.Now().UTC().Format(time.RFC3339),
+	}
+	srv, err := NewServer(DefaultConfig(), st)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	// Inject the test history root.
+	srv.historyRoot = histDir
+
+	ts := httptest.NewServer(srv.routes())
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/v2/groups")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var body struct {
+		OK   bool            `json:"ok"`
+		Data []decodeV2Group `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(body.Data) == 0 {
+		t.Fatal("no groups returned")
+	}
+	var g decodeV2Group
+	for _, d := range body.Data {
+		if d.ID == "indexed" {
+			g = d
+		}
+	}
+	if g.ID == "" {
+		t.Fatal("group 'indexed' not found in response")
+	}
+	if g.Fidelity == nil {
+		t.Fatal("fidelity: want non-nil")
+	}
+	// bug_rate=6.0 → fidelity = round((100-6)*10)/1000 = 940/1000 = 0.940
+	wantFid := 0.94
+	if math.Abs(*g.Fidelity-wantFid) > 1e-9 {
+		t.Errorf("fidelity: want %.4f, got %.4f", wantFid, *g.Fidelity)
+	}
+	if g.Health != healthWarning {
+		t.Errorf("health: want %q, got %q", healthWarning, g.Health)
 	}
 }
