@@ -29,6 +29,7 @@ import { CommunitiesPopover } from "@/components/graph/communities-popover";
 
 const COLOR_MODES: { id: ColorMode; label: string }[] = [
   { id: "repo", label: "Repo" },
+  { id: "module", label: "Module" },
   { id: "community", label: "Community" },
   { id: "degree", label: "Degree" },
 ];
@@ -103,6 +104,23 @@ export default function GraphScreen() {
   }, [data, s.enabledEdgeKinds]);
 
   const nodes = data?.nodes ?? [];
+
+  // ── monorepo-aware default coloring/grouping (Fix #1532-1) ───────────────────
+  // A monorepo is a single repo split into many modules. Repo grouping there is
+  // one flat color = useless; default to per-MODULE color + module grouping.
+  // Multi-repo groups keep Repo. Applied ONCE per group, before the user touches
+  // the controls (applyMonorepoDefaults no-ops once groupingTouched is true).
+  useEffect(() => {
+    if (!data || nodes.length === 0) return;
+    const repos = new Set(nodes.map((n) => n.repo));
+    const moduleOf = (sf: string) =>
+      sf ? sf.replace(/\\/g, "/").split("/").slice(0, -1).slice(-2).join("/") : "";
+    const modules = new Set(nodes.map((n) => moduleOf(n.sourceFile)).filter(Boolean));
+    const isMonorepo = repos.size <= 1 && modules.size >= 3;
+    s.applyMonorepoDefaults(isMonorepo);
+    // Run once per group when data first becomes available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, !!data]);
 
   const searchMatches = useMemo(() => {
     if (!s.search.trim()) return [];
@@ -268,6 +286,7 @@ export default function GraphScreen() {
                 nodes={nodes}
                 edges={edges}
                 selectedNodeId={s.selectedNodeId}
+                hoveredNodeId={s.hoveredNodeId}
                 isDark={isDark}
                 colorMode={s.colorMode}
                 groupBy={s.groupBy}

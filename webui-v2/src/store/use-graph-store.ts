@@ -14,7 +14,7 @@
 import { create } from "zustand";
 import type { EdgeKind } from "@/data/types";
 
-export type ColorMode = "repo" | "community" | "degree";
+export type ColorMode = "repo" | "module" | "community" | "degree";
 export type GroupByMode = "repo" | "community" | "module" | "none";
 export type LodLevel = "low" | "mid" | "high";
 
@@ -55,18 +55,25 @@ export const DEFAULT_SIMULATION: SimulationConfig = {
 };
 
 export const DEFAULT_NODE_SIZING: NodeSizingConfig = {
-  baseSize: 120,
-  degreeScale: 30,
-  maxMultiplier: 3.0,
+  // Fix #1532-4: out-of-box defaults must not produce overlapping "blobs".
+  // Lower base + gentler degree scale + a tight max multiplier so a high-degree
+  // hub stays at most ~1.8× the base size (was 3× of a much larger base).
+  baseSize: 90,
+  degreeScale: 18,
+  maxMultiplier: 1.8,
 };
 
 export const DEFAULT_RENDER: RenderConfig = {
   pointOpacity: 0.92,
   pointSizeScale: 0.22,
   scalePointsOnZoom: true,
-  maxPointSize: 60,
+  // Fix #1532-4: cap the on-screen pixel size so no node becomes a giant blob
+  // even when zoomed in (was 60).
+  maxPointSize: 34,
   linkWidthScale: 1.0,
-  linkOpacity: 0.18,
+  // Fix #1532-2: edges were nearly invisible on the light background at 0.18.
+  // Raise the default same-repo link opacity so relationships read clearly.
+  linkOpacity: 0.42,
   showLinks: true,
 };
 
@@ -117,6 +124,12 @@ interface GraphState {
   // View knobs
   colorMode: ColorMode;
   groupBy: GroupByMode;
+  /**
+   * Whether the user has explicitly chosen a color/group mode this session.
+   * Until then, the screen is free to pick monorepo-aware defaults once the
+   * graph data arrives (Fix #1532-1). Set true by setColorMode/setGroupBy.
+   */
+  groupingTouched: boolean;
 
   // Tuning (persisted)
   simulation: SimulationConfig;
@@ -140,6 +153,13 @@ interface GraphState {
   setLod: (lod: LodLevel) => void;
   setColorMode: (m: ColorMode) => void;
   setGroupBy: (m: GroupByMode) => void;
+  /**
+   * Pick monorepo-aware default coloring/grouping ONCE per group, before the
+   * user touches the controls. A monorepo (one repo, many modules) defaults to
+   * per-MODULE color + module grouping (repo coloring would be one flat color);
+   * a multi-repo group keeps Repo. (Fix #1532-1)
+   */
+  applyMonorepoDefaults: (isMonorepo: boolean) => void;
   setSimulation: (patch: Partial<SimulationConfig>) => void;
   setNodeSizing: (patch: Partial<NodeSizingConfig>) => void;
   setRender: (patch: Partial<RenderConfig>) => void;
@@ -163,6 +183,7 @@ export const useGraphStore = create<GraphState>((set) => ({
 
   colorMode: "repo",
   groupBy: "repo",
+  groupingTouched: false,
 
   simulation: persistedJSON("ag.v2.graph.sim", DEFAULT_SIMULATION),
   nodeSizing: persistedJSON("ag.v2.graph.sizing", DEFAULT_NODE_SIZING),
@@ -194,8 +215,15 @@ export const useGraphStore = create<GraphState>((set) => ({
     }),
   clearRepos: () => set({ activeRepos: null }),
   setLod: (lod) => set({ lod }),
-  setColorMode: (colorMode) => set({ colorMode }),
-  setGroupBy: (groupBy) => set({ groupBy }),
+  setColorMode: (colorMode) => set({ colorMode, groupingTouched: true }),
+  setGroupBy: (groupBy) => set({ groupBy, groupingTouched: true }),
+  applyMonorepoDefaults: (isMonorepo) =>
+    set((s) => {
+      if (s.groupingTouched) return {}; // never override an explicit choice
+      return isMonorepo
+        ? { colorMode: "module" as ColorMode, groupBy: "module" as GroupByMode }
+        : { colorMode: "repo" as ColorMode, groupBy: "repo" as GroupByMode };
+    }),
 
   setSimulation: (patch) =>
     set((s) => {

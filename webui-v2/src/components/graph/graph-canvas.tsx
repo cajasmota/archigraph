@@ -47,7 +47,9 @@ import type {
 } from "@/store/use-graph-store";
 
 const SPACE_SIZE = 32768;
-const FIT_PADDING = 0.1;
+// Fix #1532-3: a smaller padding makes the settled graph FILL the canvas
+// instead of floating small in the middle at LOD HIGH (was 0.1).
+const FIT_PADDING = 0.04;
 
 // ── group / cluster helpers ──────────────────────────────────────────────────
 
@@ -111,6 +113,7 @@ export interface GraphCanvasProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   selectedNodeId: string | null;
+  hoveredNodeId: string | null;
   isDark: boolean;
   colorMode: ColorMode;
   groupBy: GroupByMode;
@@ -131,7 +134,11 @@ export interface GraphCanvasProps {
   className?: string;
 }
 
-const LABEL_COUNT = 24;
+// Labels (Fix #1532-5) are zoom/LOD-gated: a small always-on set of the
+// highest-degree hubs (plus the hovered node), with progressively more labels
+// revealed as the user zooms in — readable, not cluttered.
+const LABEL_BASE_COUNT = 12; // shown at the default (zoomed-out) level
+const LABEL_MAX_COUNT = 160; // ceiling once fully zoomed in
 const truncate = (s: string) => (s.length > 30 ? s.slice(0, 28) + "…" : s);
 
 function GraphCanvasInner({
@@ -139,6 +146,7 @@ function GraphCanvasInner({
   nodes,
   edges,
   selectedNodeId,
+  hoveredNodeId,
   isDark,
   colorMode,
   groupBy,
@@ -174,6 +182,8 @@ function GraphCanvasInner({
   onSettledRef.current = onSettled;
   const simRef = useRef(simulation);
   simRef.current = simulation;
+  const hoveredRef = useRef<string | null>(hoveredNodeId);
+  hoveredRef.current = hoveredNodeId;
   const relayoutRef = useRef(relayoutNonce);
 
   const idToIdx = useMemo(() => {
@@ -190,6 +200,13 @@ function GraphCanvasInner({
   }, [nodes]);
 
   const groupCenters = useMemo(() => buildGroupCenters(nodes, groupBy), [nodes, groupBy]);
+
+  // Stable 1-based module color index (alphabetical) for the "module" color
+  // mode — gives a monorepo's packages distinct colors. (Fix #1532-1)
+  const moduleToIdx = useMemo(() => {
+    const mods = Array.from(new Set(nodes.map((n) => moduleKey(n.sourceFile)))).sort();
+    return new Map(mods.map((m, i) => [m, i]));
+  }, [nodes]);
 
   // Degree percentile fn (so the degree gradient spreads across the long tail).
   const sortedDegrees = useMemo(
@@ -237,9 +254,12 @@ function GraphCanvasInner({
       const normPR = (n.pageRank ?? 0) / maxPR;
       clusterStrength[i] = grouping ? 0.45 + normPR * 0.25 : 0.04 + normPR * 0.06;
 
-      // log-scaled size by degree (graph.md: radius scales with PageRank/degree).
-      sizes[i] =
+      // log-scaled size by degree (graph.md: radius scales with PageRank/degree),
+      // hard-capped at maxMultiplier × base so high-degree hubs never bloom into
+      // overlapping blobs. (Fix #1532-4)
+      const raw =
         nodeSizing.baseSize + Math.log10((n.degree ?? 0) + 1) * nodeSizing.degreeScale;
+      sizes[i] = Math.min(raw, nodeSizing.baseSize * nodeSizing.maxMultiplier);
 
       const gkey = groupKeyFor(n, groupBy);
       const center = grouping ? groupCenters.get(gkey) : undefined;
@@ -268,13 +288,15 @@ function GraphCanvasInner({
         rgba = degreeColor(t);
       } else if (colorMode === "community") {
         rgba = pastelAt(fill, (n.communityId ?? 0) + 1);
+      } else if (colorMode === "module") {
+        rgba = pastelAt(fill, (moduleToIdx.get(moduleKey(n.sourceFile)) ?? 0) + 1);
       } else {
         rgba = pastelAt(fill, (repoToIdx.get(n.repo ?? "") ?? 0) + 1);
       }
       writeNormalizedRGBA(out, i, rgba);
     }
     return out;
-  }, [nodes, colorMode, repoToIdx, degreePercentile]);
+  }, [nodes, colorMode, repoToIdx, moduleToIdx, degreePercentile]);
 
   // Links — packed [src,tgt] + cross-repo state.
   const linkData = useMemo(() => {
@@ -322,18 +344,31 @@ function GraphCanvasInner({
     return out;
   }, [linkData, render.showLinks, render.linkWidthScale]);
 
-  // Top-N labels overlay.
-  const topLabelIdx = useMemo(
+  // Nodes ranked by degree (descending) — the highest-degree hubs are labelled
+  // first; the count revealed grows with zoom level. (Fix #1532-5)
+  const rankedByDegree = useMemo(
     () =>
       nodes
         .map((n, i) => ({ i, d: n.degree ?? 0 }))
         .sort((a, b) => b.d - a.d)
-        .slice(0, LABEL_COUNT)
         .map((x) => x.i),
     [nodes],
   );
   const labelLayerRef = useRef<HTMLDivElement>(null);
-  const labelRafRef = useRef<number | null>(null);
+
+  const escapeLabel = (s: string) =>
+    truncate(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+  const labelSpan = (sx: number, sy: number, text: string, strong: boolean) =>
+    `<span style="position:absolute;left:${sx}px;top:${
+      sy - 14
+    }px;transform:translate(-50%,-100%);white-space:nowrap;font-size:${
+      strong ? 12 : 11
+    }px;font-weight:${strong ? 600 : 500};padding:1px 5px;border-radius:4px;background:${
+      isDark ? "rgba(2,6,23,0.72)" : "rgba(248,250,252,0.9)"
+    };color:${isDark ? "#e2e8f0" : "#1e293b"}${
+      strong ? `;outline:1px solid ${isDark ? "#38bdf8" : "#0284c7"}` : ""
+    }">${escapeLabel(text)}</span>`;
 
   const refreshLabels = useCallback(() => {
     const g = graphRef.current;
@@ -343,8 +378,30 @@ function GraphCanvasInner({
     if (!positions || positions.length === 0) return;
     const w = containerRef.current?.clientWidth ?? 0;
     const h = containerRef.current?.clientHeight ?? 0;
+
+    // Zoom-gated count: at the fitted level show only the top hubs; reveal more
+    // (up to a ceiling) the further the user zooms in.
+    let zoom = 1;
+    try {
+      zoom = g.getZoomLevel() || 1;
+    } catch {
+      /* engine not ready */
+    }
+    const factor = Math.max(1, Math.pow(Math.max(zoom, 0.0001) * 3.2, 1.4));
+    const count = Math.min(
+      LABEL_MAX_COUNT,
+      rankedByDegree.length,
+      Math.round(LABEL_BASE_COUNT * factor),
+    );
+
+    const shown = new Set<number>(rankedByDegree.slice(0, count));
+    // Always include the hovered node, even if it's a low-degree leaf.
+    const hovId = hoveredRef.current;
+    const hovIdx = hovId != null ? idToIdx.get(hovId) : undefined;
+    if (hovIdx !== undefined) shown.add(hovIdx);
+
     const frag: string[] = [];
-    for (const idx of topLabelIdx) {
+    for (const idx of shown) {
       const n = nodesRef.current[idx];
       if (!n) continue;
       const px = positions[idx * 2];
@@ -352,26 +409,33 @@ function GraphCanvasInner({
       if (px === undefined || py === undefined) continue;
       const [sx, sy] = g.spaceToScreenPosition([px, py]);
       if (sx < -50 || sy < -50 || sx > w + 50 || sy > h + 50) continue;
-      frag.push(
-        `<span style="position:absolute;left:${sx}px;top:${
-          sy - 14
-        }px;transform:translate(-50%,-100%);white-space:nowrap;font-size:11px;font-weight:500;padding:1px 5px;border-radius:4px;background:${
-          isDark ? "rgba(2,6,23,0.72)" : "rgba(248,250,252,0.85)"
-        };color:${isDark ? "#e2e8f0" : "#1e293b"}">${truncate(n.label)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")}</span>`,
-      );
+      frag.push(labelSpan(sx, sy, n.label, idx === hovIdx));
     }
     layer.innerHTML = frag.join("");
-  }, [topLabelIdx, isDark]);
+  }, [rankedByDegree, idToIdx, isDark]);
 
+  // Always invoke the LATEST refreshLabels via a ref: the mount-only engine
+  // handlers (onZoom / onSimulationTick) and a stable scheduleLabels would
+  // otherwise capture the FIRST-render closure, whose node list was still empty
+  // — so labels never rendered. (Fix #1532-5)
+  const refreshLabelsRef = useRef(refreshLabels);
+  refreshLabelsRef.current = refreshLabels;
+
+  // Schedule a debounced label refresh on a short timeout. We deliberately do
+  // NOT use requestAnimationFrame: once the engine is paused (settled) it stops
+  // painting, so rAF gets starved and never fires — labels would never appear.
+  // A stable single-timer (clear-then-set) guarantees the refresh runs and is
+  // coalesced across the many tick/zoom events. (Fix #1532-5)
+  const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scheduleLabels = useCallback(() => {
-    if (labelRafRef.current !== null) return;
-    labelRafRef.current = requestAnimationFrame(() => {
-      labelRafRef.current = null;
-      refreshLabels();
-    });
-  }, [refreshLabels]);
+    if (labelTimerRef.current !== null) clearTimeout(labelTimerRef.current);
+    labelTimerRef.current = setTimeout(() => {
+      labelTimerRef.current = null;
+      refreshLabelsRef.current();
+    }, 48);
+  }, []);
+  // scheduleLabels is stable (no deps), so engine handlers can use it directly.
+  const scheduleLabelsLive = scheduleLabels;
 
   const doSettle = useCallback(() => {
     if (hasSettledRef.current) return;
@@ -384,7 +448,12 @@ function GraphCanvasInner({
     g?.pause();
     g?.fitView(400, FIT_PADDING);
     scheduleLabels();
-    setTimeout(scheduleLabels, 450);
+    // Re-fit once layout has fully painted so the graph reliably FILLS the
+    // viewport at LOD HIGH (the first fit can run before final positions land).
+    setTimeout(() => {
+      graphRef.current?.fitView(300, FIT_PADDING);
+      scheduleLabels();
+    }, 450);
     const positions = g?.getPointPositions();
     if (positions && positions.length > 0) {
       saveLayout(group, nodeIds, new Float32Array(positions));
@@ -428,7 +497,7 @@ function GraphCanvasInner({
       onSimulationEnd: () => {
         if (!hasSettledRef.current) doSettleRef.current();
       },
-      onSimulationTick: scheduleLabels,
+      onSimulationTick: scheduleLabelsLive,
       onClick: (index?: number) => {
         if (index === undefined) {
           onNodeClickRef.current(null);
@@ -452,7 +521,7 @@ function GraphCanvasInner({
         const n = nodesRef.current[index];
         if (n) onNodeHoverRef.current(n);
       },
-      onZoom: scheduleLabels,
+      onZoom: scheduleLabelsLive,
     });
     graphRef.current = g;
 
@@ -473,7 +542,7 @@ function GraphCanvasInner({
 
     return () => {
       if (capTimerRef.current) clearTimeout(capTimerRef.current);
-      if (labelRafRef.current !== null) cancelAnimationFrame(labelRafRef.current);
+      if (labelTimerRef.current !== null) clearTimeout(labelTimerRef.current);
       g.destroy();
       graphRef.current = null;
     };
@@ -613,6 +682,26 @@ function GraphCanvasInner({
     // hard-hide for repo/focus filters; soft-dim for community focus.
     g.setConfig({ pointGreyoutOpacity: repoActive || focusActive ? 0 : 0.18 });
   }, [nodes, activeRepos, focusNodeIds, focusedCommunityId]);
+
+  // ── refresh labels when the hovered node changes (Fix #1532-5) ───────────────
+  useEffect(() => {
+    scheduleLabels();
+  }, [hoveredNodeId, scheduleLabels]);
+
+  // Once node data is available, kick a few delayed label refreshes so the
+  // labels appear after the engine has positions — the mount-time settle may
+  // have scheduled a refresh while the node list was still empty. (Fix #1532-5)
+  useEffect(() => {
+    if (rankedByDegree.length === 0) return;
+    const t1 = setTimeout(scheduleLabels, 300);
+    const t2 = setTimeout(scheduleLabels, 1200);
+    const t3 = setTimeout(scheduleLabels, 2600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [rankedByDegree, scheduleLabels]);
 
   // ── re-fit to focus ego-graph ────────────────────────────────────────────────
   useEffect(() => {

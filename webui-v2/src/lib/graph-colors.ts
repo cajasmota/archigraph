@@ -110,7 +110,8 @@ export function degreeColor(t: number): RGBA {
 
 /** Cross-repo "bridge" edge color — bright sky so integration points pop. */
 export const CROSS_REPO_EDGE: RGBA = [56, 189, 248, 1];
-/** Same-repo edge color — subtle slate. */
-export const SAME_REPO_EDGE: RGBA = [100, 116, 139, 1];
+/** Same-repo edge color — slate, lifted brighter (#1532-2) so edges read on
+ *  the light background instead of fading into it. */
+export const SAME_REPO_EDGE: RGBA = [71, 85, 105, 1];
 /** Highlighted (focused-neighbor) edge color — amber. */
 export const HIGHLIGHT_EDGE: RGBA = [251, 146, 60, 1];
