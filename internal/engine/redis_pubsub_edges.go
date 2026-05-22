@@ -80,7 +80,7 @@ const redisPubSubChannelEntityKind = "SCOPE.Queue"
 // can emit synthetics for `lang`.
 func redisPubSubSynthesisSupportsLanguage(lang string) bool {
 	switch lang {
-	case "python", "javascript", "typescript", "go", "ruby":
+	case "python", "javascript", "typescript", "go", "ruby", "java", "kotlin":
 		return true
 	default:
 		return false
@@ -125,7 +125,13 @@ func applyRedisPubSubEdges(
 	hasPubSub := hasPubSubWithRedis || hasPSubscribeAlone
 	hasXadd := strings.Contains(srcLower, "xadd")
 	hasXread := strings.Contains(srcLower, "xreadgroup") || strings.Contains(srcLower, "xread")
-	if !hasPubSub && !hasXadd && !hasXread {
+	// Spring RedisTemplate.convertAndSend (Java/Kotlin) is its own pub/sub
+	// signal when the file also references redis.
+	hasConvertAndSend := strings.Contains(src, "convertAndSend") && hasRedis
+	// Spring MessageListenerAdapter / ChannelTopic / PatternTopic consumer side.
+	hasChannelTopic := (strings.Contains(src, "ChannelTopic") || strings.Contains(src, "PatternTopic") ||
+		strings.Contains(src, "MessageListenerAdapter")) && hasRedis
+	if !hasPubSub && !hasXadd && !hasXread && !hasConvertAndSend && !hasChannelTopic {
 		return entities, relationships
 	}
 
@@ -200,6 +206,8 @@ func applyRedisPubSubEdges(
 		synthesizeGoRedisPubSub(src, emitChannel, emitEdge)
 	case "ruby":
 		synthesizeRubyRedisPubSub(src, emitChannel, emitEdge)
+	case "java", "kotlin":
+		synthesizeSpringRedisPubSub(src, emitChannel, emitEdge)
 	}
 
 	return entities, relationships
@@ -719,5 +727,125 @@ func synthesizeRubyRedisPubSub(
 		id := redisStreamID(stream)
 		emitChannel(id, stream, "stream", false, map[string]string{"messaging_layer": "redis-rb"})
 		emitEdge("Function", enclosing(m[0]), id, subscribesToEdgeKind, map[string]string{"messaging_layer": "redis-rb", "channel_type": "stream"})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Java / Kotlin — Spring Data Redis (RedisTemplate / StringRedisTemplate)
+// ---------------------------------------------------------------------------
+//
+// Publisher: `redisTemplate.convertAndSend("channel", payload)` and the
+//   StringRedisTemplate variant.  This is the standard Spring pub/sub
+//   publisher idiom; Kotlin uses the exact same API.
+//
+// Consumer: Spring registers listeners via
+//   `container.addMessageListener(adapter, new ChannelTopic("channel"))` or
+//   `container.addMessageListener(adapter, new PatternTopic("pattern"))`.
+//   A plain `MessageListenerAdapter` constructor reference is also detected
+//   when the channel is supplied in the same statement.
+//
+// Entity ID: `channel:redis-pubsub:<channel>` — identical to the ID emitted
+//   by the Python / Node / Go / Ruby pass so P7 cross-repo links fire
+//   automatically between the Kotlin publisher and any language's subscriber
+//   (and vice-versa).
+
+// springRedisConvertAndSendRe captures
+//   `redisTemplate.convertAndSend("channel", payload)` and the
+//   `stringRedisTemplate.convertAndSend("channel", msg)` variant.
+// Group 1 = channel name (string literal, single or double quoted).
+var springRedisConvertAndSendRe = regexp.MustCompile(
+	`\.convertAndSend\s*\(\s*["']([^"'\n\r]+)["']`,
+)
+
+// springRedisChannelTopicRe captures
+//   `new ChannelTopic("channel")` and `ChannelTopic("channel")` in
+//   Kotlin/Java.  Group 1 = channel name.
+var springRedisChannelTopicRe = regexp.MustCompile(
+	`\bChannelTopic\s*\(\s*["']([^"'\n\r]+)["']`,
+)
+
+// springRedisPatternTopicRe captures
+//   `new PatternTopic("pattern")` — wildcard subscription.
+// Group 1 = pattern.
+var springRedisPatternTopicRe = regexp.MustCompile(
+	`\bPatternTopic\s*\(\s*["']([^"'\n\r]+)["']`,
+)
+
+func synthesizeSpringRedisPubSub(
+	src string,
+	emitChannel func(channelID, channelName, channelType string, isWildcard bool, props map[string]string),
+	emitEdge func(callerKind, callerName, channelID, edgeKind string, props map[string]string),
+) {
+	// Guard: must reference Spring Redis or Redis pub/sub tokens.
+	if !strings.Contains(src, "convertAndSend") &&
+		!strings.Contains(src, "ChannelTopic") &&
+		!strings.Contains(src, "PatternTopic") &&
+		!strings.Contains(src, "MessageListenerAdapter") {
+		return
+	}
+
+	// Extract the enclosing class name for the caller entity.
+	className := ""
+	if m := classNameRe.FindStringSubmatch(src); len(m) >= 2 {
+		className = m[1]
+	}
+
+	// Publisher: redisTemplate.convertAndSend("channel", payload)
+	for _, m := range springRedisConvertAndSendRe.FindAllStringSubmatchIndex(src, -1) {
+		ch := src[m[2]:m[3]]
+		if !looksLikeRedisChannel(ch) {
+			continue
+		}
+		id := redisPubSubChannelID(ch)
+		emitChannel(id, ch, "pubsub", false, map[string]string{"messaging_layer": "spring-data-redis"})
+		caller := className
+		if caller == "" {
+			// Fallback: use enclosing method or a generic sentinel.
+			caller = findFollowingMethod(src, m[0])
+		}
+		if caller == "" {
+			continue
+		}
+		emitEdge("Service", caller, id, publishesToEdgeKind, map[string]string{
+			"messaging_layer": "spring-data-redis",
+			"channel_type":    "pubsub",
+		})
+	}
+
+	// Consumer: container.addMessageListener(adapter, new ChannelTopic("channel"))
+	for _, m := range springRedisChannelTopicRe.FindAllStringSubmatchIndex(src, -1) {
+		ch := src[m[2]:m[3]]
+		if !looksLikeRedisChannel(ch) {
+			continue
+		}
+		id := redisPubSubChannelID(ch)
+		emitChannel(id, ch, "pubsub", false, map[string]string{"messaging_layer": "spring-data-redis"})
+		caller := className
+		if caller == "" {
+			caller = "listener"
+		}
+		emitEdge("Service", caller, id, subscribesToEdgeKind, map[string]string{
+			"messaging_layer": "spring-data-redis",
+			"channel_type":    "pubsub",
+		})
+	}
+
+	// Consumer: container.addMessageListener(adapter, new PatternTopic("pattern"))
+	for _, m := range springRedisPatternTopicRe.FindAllStringSubmatchIndex(src, -1) {
+		pattern := src[m[2]:m[3]]
+		if !looksLikeRedisChannel(pattern) {
+			continue
+		}
+		id := redisPubSubChannelID(pattern)
+		emitChannel(id, pattern, "pubsub", true, map[string]string{"messaging_layer": "spring-data-redis"})
+		caller := className
+		if caller == "" {
+			caller = "listener"
+		}
+		emitEdge("Service", caller, id, subscribesToEdgeKind, map[string]string{
+			"messaging_layer": "spring-data-redis",
+			"channel_type":    "pubsub",
+			"is_pattern":      "true",
+		})
 	}
 }
