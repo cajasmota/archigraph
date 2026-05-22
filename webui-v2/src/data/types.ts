@@ -164,7 +164,7 @@ export interface EntityDetailWire {
 }
 
 /** Derived health state for a group (computed server-side in v2_groups.go). */
-export type GroupHealth = "healthy" | "warning" | "unindexed";
+export type GroupHealth = "healthy" | "warning" | "degraded" | "unindexed";
 
 export interface Group {
   /** Slug — also the route param. */

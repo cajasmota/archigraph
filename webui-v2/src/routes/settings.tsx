@@ -157,6 +157,7 @@ function Section({
 const HEALTH_CONFIG = {
   healthy: { label: "Healthy", color: "var(--success)" },
   warning: { label: "Needs review", color: "var(--warning)" },
+  degraded: { label: "Critical", color: "var(--danger)" },
   unindexed: { label: "Not indexed", color: "var(--text-4)" },
 } as const;
 

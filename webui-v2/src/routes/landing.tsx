@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 const HEALTH: Record<GroupHealth, { label: string; dot: string }> = {
   healthy: { label: "Healthy", dot: "var(--success)" },
   warning: { label: "Low fidelity", dot: "var(--warning)" },
+  degraded: { label: "Needs work", dot: "var(--danger)" },
   unindexed: { label: "Not indexed", dot: "var(--text-4)" },
 };
 
