@@ -1127,6 +1127,38 @@ export interface KindStat {
   orphan_rate: number;
 }
 
+/** One plain-language bucket of unresolved references. */
+export interface UnresolvedReason {
+  /** Machine key: external_library | unresolved_import | extraction_gap. */
+  reason: string;
+  /** Human-readable name shown in the UI. */
+  label: string;
+  /** Plain-language explanation of what this bucket means. */
+  description: string;
+  /** Number of unresolved edges in this bucket. */
+  count: number;
+  /** Share of the TOTAL edges (0–1). */
+  pct: number;
+}
+
+/**
+ * Unresolved-references breakdown — the real driver of Fidelity. Of every
+ * import/reference edge archigraph extracted, how many it linked to a real
+ * target and, for the rest, the reason it could not.
+ */
+export interface UnresolvedReferences {
+  /** Every import/reference edge considered. */
+  total: number;
+  /** Linked to a real target. */
+  resolved: number;
+  /** total − resolved. */
+  unresolved: number;
+  /** resolved/total (0–1); equals Fidelity as a ratio. */
+  resolved_rate: number;
+  /** The unresolved edges, bucketed by reason. */
+  reasons: UnresolvedReason[];
+}
+
 /** Recommendation item from orphan audit */
 export interface RecommendationItem {
   priority: number;
@@ -1145,12 +1177,14 @@ export interface OrphanAuditReply {
   total: OrphanAuditTotals;
   per_repo: RepoOrphanStats[];
   per_kind: KindStat[];
-  /** Composite graph-health score (0–100): orphans + bug-rate + recall. */
+  /** Composite graph-health score (0–100): orphans + unresolved refs + recall. */
   health_score: number;
-  /** Fidelity = 100 − bug_rate, as a 0–1 ratio (null when unknown). */
+  /** Fidelity = resolved-reference share, as a 0–1 ratio (null when unknown). */
   fidelity: number | null;
-  /** Unresolved-import rate (0–100); fidelity = 100 − this. */
+  /** @deprecated internal field; the unresolved-reference rate (0–100). */
   bug_rate_pct: number;
+  /** Unresolved-references breakdown — the real Fidelity story. */
+  references: UnresolvedReferences;
   recommendations: RecommendationItem[];
 }
 

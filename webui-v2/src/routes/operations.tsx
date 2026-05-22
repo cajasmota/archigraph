@@ -331,6 +331,27 @@ function DaemonStatusCard({
   const dot = STATUS_DOT[status.status] ?? "bg-text-4";
   const label = STATUS_LABEL[status.status] ?? status.status;
 
+  // Memory budget state. When RSS exceeds the configured budget the daemon is
+  // running over its intended footprint — surface a clear warning rather than a
+  // bare "987 / 500 MB" number that reads as fine.
+  const overBudget =
+    status.rss_budget_mb != null &&
+    status.rss_budget_mb > 0 &&
+    status.rss_mb > status.rss_budget_mb;
+  const memRatio =
+    status.rss_budget_mb && status.rss_budget_mb > 0
+      ? status.rss_mb / status.rss_budget_mb
+      : 0;
+  // Hard warning (red) once ~1.5× over; amber for anything above budget.
+  const memSeverity = overBudget ? (memRatio >= 1.5 ? "danger" : "warning") : null;
+  const memTooltip = overBudget
+    ? `Over memory budget — using ${status.rss_mb.toFixed(0)} MB against a ${status.rss_budget_mb!.toFixed(
+        0,
+      )} MB budget (${Math.round(memRatio * 100)}%). Consider restarting the daemon or indexing fewer repositories.`
+    : status.rss_budget_mb
+    ? `Within budget — ${status.rss_mb.toFixed(0)} MB of ${status.rss_budget_mb.toFixed(0)} MB.`
+    : undefined;
+
   return (
     <Card className="p-5">
       <div className="flex items-start justify-between gap-4">
@@ -366,15 +387,30 @@ function DaemonStatusCard({
               : `${status.rss_mb.toFixed(0)} MB`,
             mono: true,
             truncate: false,
+            memory: true,
           },
           { label: "Socket", value: status.socket_path ?? "—", mono: true, truncate: true },
           { label: "Dashboard URL", value: status.dashboard_url ?? "—", mono: true, truncate: true },
-        ].map(({ label, value, mono, truncate }) => (
+        ].map(({ label, value, mono, truncate, memory }) => (
           <div key={label}>
-            <dt className="text-xs text-text-3">{label}</dt>
+            <dt className="text-xs text-text-3 flex items-center gap-1.5">
+              {label}
+              {memory && memSeverity && (
+                <Badge tone={memSeverity} className="text-[10px] px-1.5 py-0" title={memTooltip}>
+                  <AlertTriangle size={9} className="mr-0.5" />
+                  Over budget
+                </Badge>
+              )}
+            </dt>
             <dd
-              className={cn("text-sm mt-0.5", mono && "font-mono", truncate && "truncate")}
-              title={value}
+              className={cn(
+                "text-sm mt-0.5",
+                mono && "font-mono",
+                truncate && "truncate",
+                memory && memSeverity === "danger" && "text-danger",
+                memory && memSeverity === "warning" && "text-warning",
+              )}
+              title={memory ? memTooltip ?? value : value}
             >
               {value}
             </dd>
@@ -1008,9 +1044,200 @@ function PatternsTab({ groupId }: { groupId: string }) {
 // ---------------------------------------------------------------------------
 
 const FIDELITY_TIP_OPS =
-  "Fidelity = 100 − bug-rate: the share of import/reference edges that resolve to a real target. This is the owner-defined primary quality number, shown the same way on the Home cards.";
+  "Fidelity — how complete archigraph's map of your code is. Whenever your code points at something (calls a function, imports a module, calls an API), archigraph links it to where that's defined. Fidelity is the percentage of those links it resolved. The rest point at things it couldn't locate yet — external libraries, dynamically-loaded code, or extraction gaps.";
 const HEALTH_TIP_OPS =
-  "Health is a composite score (0–100) that ALSO factors in orphan rate and recall miss — not just extraction correctness. It is computed only from a real audit run, so it can differ from Fidelity: a graph can extract correctly (high fidelity) yet still have many orphaned entities (lower health).";
+  "Health is a composite score (0–100) that ALSO factors in orphan rate and recall miss — not just how many references resolved. It is computed only from a real audit run, so it can differ from Fidelity: a graph can resolve most references (high fidelity) yet still have many orphaned entities (lower health).";
+
+// Honest banner shown above the Quality views: Fidelity measures extraction
+// completeness, which is a DIFFERENT axis from documentation coverage.
+function FidelityBanner() {
+  return (
+    <div className="flex items-start gap-2.5 rounded-lg border border-border-soft bg-surface-2 p-3 text-xs text-text-3">
+      <Info size={14} className="text-accent-strong shrink-0 mt-0.5" />
+      <p>
+        <span className="text-text-2 font-medium">Fidelity measures extraction completeness</span>{" "}
+        — the share of your code's references that archigraph linked to a real target. Running the
+        docs skill improves <span className="text-text-2">documentation</span> coverage, which is a
+        different axis and does not change Fidelity.
+      </p>
+    </div>
+  );
+}
+
+// PRIMARY quality view: the unresolved-references breakdown that actually
+// drives Fidelity. On graphs with zero orphans the orphan audit reads
+// "perfect" while Fidelity is held down entirely by these unresolved edges, so
+// this is the view that explains the number.
+function UnresolvedReferencesPane({ groupId }: { groupId: string }) {
+  const { data, isLoading } = useOrphanAudit(groupId);
+  const runAudit = useRunOrphanAudit(groupId);
+
+  const hasRun = !!data?.has_run;
+  const refs = data?.references;
+  const resolvedPct = refs && refs.total > 0 ? Math.round(refs.resolved_rate * 100) : null;
+  const resolvedColor =
+    resolvedPct == null
+      ? "text-text-3"
+      : resolvedPct >= 90
+      ? "text-success"
+      : resolvedPct >= 75
+      ? "text-warning"
+      : "text-danger";
+
+  const reasonColor = (i: number) =>
+    ["bg-danger", "bg-warning", "bg-accent-strong", "bg-info"][i % 4];
+
+  return (
+    <div className="space-y-5">
+      <FidelityBanner />
+
+      <div className="flex items-center justify-between">
+        {hasRun ? (
+          <p className="text-xs text-text-4">Last measured {relativeTime(data!.audited_at)}</p>
+        ) : (
+          <span />
+        )}
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() =>
+            runAudit.mutate(undefined, {
+              onSuccess: () => toast.success("Audit complete."),
+              onError: () => toast.error("Audit failed."),
+            })
+          }
+          disabled={runAudit.isPending}
+        >
+          {runAudit.isPending ? (
+            <>
+              <Loader2 size={12} className="animate-spin" />
+              Running…
+            </>
+          ) : (
+            <>
+              <Activity size={12} />
+              Run audit
+            </>
+          )}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} h="h-16" className="rounded-lg" />
+          ))}
+        </div>
+      ) : !hasRun || !refs ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center text-text-3">
+          <Activity size={28} className="text-text-4 mb-3" />
+          <p className="text-sm font-medium">Not measured yet</p>
+          <p className="text-xs mt-1">
+            Run audit to see which of your code's references archigraph could resolve.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Headline numbers */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card className="p-4 text-center">
+              <p className={cn("text-xl font-mono font-semibold tabular-nums", resolvedColor)}>
+                {resolvedPct == null ? "—" : `${resolvedPct}%`}
+              </p>
+              <div className="mt-1 flex justify-center">
+                <InfoLabel label="Fidelity" hint={FIDELITY_TIP_OPS} />
+              </div>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-xl font-mono font-semibold tabular-nums text-text">
+                {refs.total.toLocaleString()}
+              </p>
+              <p className="text-xs text-text-3 mt-1">References</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-xl font-mono font-semibold tabular-nums text-success">
+                {refs.resolved.toLocaleString()}
+              </p>
+              <p className="text-xs text-text-3 mt-1">Resolved</p>
+            </Card>
+            <Card className="p-4 text-center">
+              <p className="text-xl font-mono font-semibold tabular-nums text-warning">
+                {refs.unresolved.toLocaleString()}
+              </p>
+              <p className="text-xs text-text-3 mt-1">Unresolved</p>
+            </Card>
+          </div>
+
+          {/* Stacked resolved/unresolved bar */}
+          <div className="space-y-1.5">
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-surface-3">
+              <div
+                className="h-full bg-success"
+                style={{ width: `${refs.resolved_rate * 100}%` }}
+                title={`Resolved — ${refs.resolved.toLocaleString()} (${Math.round(
+                  refs.resolved_rate * 100,
+                )}%)`}
+              />
+              {refs.reasons.map((r, i) => (
+                <div
+                  key={r.reason}
+                  className={cn("h-full", reasonColor(i))}
+                  style={{ width: `${r.pct * 100}%` }}
+                  title={`${r.label} — ${r.count.toLocaleString()} (${Math.round(r.pct * 100)}%)`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-text-3">
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-success" /> Resolved
+              </span>
+              {refs.reasons.map((r, i) => (
+                <span key={r.reason} className="flex items-center gap-1">
+                  <span className={cn("size-2 rounded-full", reasonColor(i))} /> {r.label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Unresolved by reason */}
+          {refs.reasons.length > 0 ? (
+            <Section
+              title="Unresolved references"
+              sub="What stops archigraph from linking the rest of your code's references — the reasons that drive Fidelity below 100%."
+            >
+              <div className="space-y-2.5">
+                {refs.reasons.map((r, i) => (
+                  <div
+                    key={r.reason}
+                    className="rounded-lg border border-border-soft bg-surface-2 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={cn("size-2.5 rounded-full shrink-0", reasonColor(i))} />
+                      <span className="text-sm text-text-2 font-medium flex-1">{r.label}</span>
+                      <span className="text-xs font-mono tabular-nums text-text-3 w-12 text-right">
+                        {(r.pct * 100).toFixed(1)}%
+                      </span>
+                      <span className="text-xs text-text-4 font-mono w-20 text-right">
+                        {r.count.toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-3 mt-1.5 ml-[22px]">{r.description}</p>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center text-text-3">
+              <CheckCircle size={24} className="text-success mb-2" />
+              <p className="text-sm font-medium">All references resolved</p>
+              <p className="text-xs mt-1">Every import/reference edge links to a real target.</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 function OrphanAuditPane({ groupId }: { groupId: string }) {
   const { data, isLoading } = useOrphanAudit(groupId);
@@ -1399,11 +1626,15 @@ function RecallPane({ groupId }: { groupId: string }) {
 
 function QualityTab({ groupId }: { groupId: string }) {
   return (
-    <Tabs defaultValue="orphans">
+    <Tabs defaultValue="references">
       <TabsList className="mb-5">
+        <TabsTrigger value="references">Unresolved references</TabsTrigger>
         <TabsTrigger value="orphans">Orphan audit</TabsTrigger>
         <TabsTrigger value="recall">Recall measurement</TabsTrigger>
       </TabsList>
+      <TabsContent value="references">
+        <UnresolvedReferencesPane groupId={groupId} />
+      </TabsContent>
       <TabsContent value="orphans">
         <OrphanAuditPane groupId={groupId} />
       </TabsContent>

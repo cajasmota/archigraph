@@ -58,8 +58,45 @@ type OrphanAuditReply struct {
 	Fidelity *float64 `json:"fidelity"`
 	// BugRatePct is the unresolved-import rate (0–100); fidelity = 100 − this.
 	BugRatePct float64 `json:"bug_rate_pct"`
+	// References is the unresolved-references breakdown — the real driver of
+	// Fidelity. It explains, in plain-language reason buckets, why a fraction of
+	// the import/reference edges could NOT be linked to a real target.
+	References UnresolvedReferences `json:"references"`
 	// Recommendations is the punch list from the audit engine.
 	Recommendations []RecommendationItem `json:"recommendations"`
+}
+
+// UnresolvedReferences is the Fidelity story: of all the import/reference edges
+// archigraph extracted, how many it resolved to a real target and — for the
+// rest — the reason it could not. This is the PRIMARY quality view because the
+// orphan audit reads "perfect" (0 orphans) on graphs whose Fidelity is held
+// down entirely by unresolved references.
+type UnresolvedReferences struct {
+	// Total is every import/reference edge considered.
+	Total int `json:"total"`
+	// Resolved is the count linked to a real target (hex id or ext-qualified).
+	Resolved int `json:"resolved"`
+	// Unresolved is Total − Resolved.
+	Unresolved int `json:"unresolved"`
+	// ResolvedRate is Resolved/Total (0–1); equals Fidelity as a ratio.
+	ResolvedRate float64 `json:"resolved_rate"`
+	// Reasons breaks the UNRESOLVED edges into plain-language buckets.
+	Reasons []UnresolvedReason `json:"reasons"`
+}
+
+// UnresolvedReason is one plain-language bucket of unresolved references.
+type UnresolvedReason struct {
+	// Reason is the machine key (external_library, unresolved_import, etc.).
+	Reason string `json:"reason"`
+	// Label is the human-readable name shown in the UI.
+	Label string `json:"label"`
+	// Description explains, for a non-technical user, what this bucket means.
+	Description string `json:"description"`
+	// Count is the number of unresolved edges in this bucket.
+	Count int `json:"count"`
+	// Pct is this bucket's share of the TOTAL edges (0–1), so the buckets plus
+	// the resolved share add up to 1.
+	Pct float64 `json:"pct"`
 }
 
 // OrphanTotals rolls up aggregate counts across the whole group.
@@ -246,6 +283,7 @@ func buildOrphanAuditReply(group string, repos []*audit.RepoReport) OrphanAuditR
 	kindOrphans := map[string]int{}
 	totalImports := 0
 	goodImports := 0
+	formatCounts := map[audit.ImportFormat]int{}
 
 	for _, rr := range repos {
 		if rr == nil {
@@ -257,6 +295,9 @@ func buildOrphanAuditReply(group string, repos []*audit.RepoReport) OrphanAuditR
 		totalImports += rr.ImportsTotal
 		goodImports += rr.ImportsToIDFormat[audit.ImportFormatHex] +
 			rr.ImportsToIDFormat[audit.ImportFormatExtQualified]
+		for f, c := range rr.ImportsToIDFormat {
+			formatCounts[f] += c
+		}
 
 		slug := filepath.Base(rr.Path)
 		rate := 0.0
@@ -326,7 +367,69 @@ func buildOrphanAuditReply(group string, repos []*audit.RepoReport) OrphanAuditR
 	fid := fidelityFromBugRate(bugPct)
 	reply.Fidelity = &fid
 
+	reply.References = buildUnresolvedReferences(totalImports, goodImports, formatCounts)
+
 	return reply
+}
+
+// buildUnresolvedReferences turns the raw import-format histogram into the
+// plain-language unresolved-references breakdown that drives Fidelity.
+//
+// Resolved = hex (linked to a real entity id) + ext_qualified (linked to a
+// named symbol in an external module). Everything else is unresolved, bucketed
+// by the reason archigraph could not pin it to a target:
+//
+//	ext_bare    → external_library  (a third-party package, no specific symbol)
+//	path_string → unresolved_import (a relative/absolute path the resolver did
+//	                                 not attach to an extracted file)
+//	other       → extraction_gap    (a bare name with no prefix — dynamic
+//	                                 dispatch, generated code, or a parser gap)
+func buildUnresolvedReferences(total, resolved int, formats map[audit.ImportFormat]int) UnresolvedReferences {
+	ur := UnresolvedReferences{
+		Total:      total,
+		Resolved:   resolved,
+		Unresolved: total - resolved,
+		Reasons:    []UnresolvedReason{},
+	}
+	if total > 0 {
+		ur.ResolvedRate = float64(resolved) / float64(total)
+	}
+
+	type spec struct {
+		format      audit.ImportFormat
+		reason      string
+		label       string
+		description string
+	}
+	specs := []spec{
+		{audit.ImportFormatExtBare, "external_library", "External library",
+			"Points at a third-party package archigraph does not index, so there is no target inside your code to link to."},
+		{audit.ImportFormatPathString, "unresolved_import", "Unresolved import",
+			"References a file by path that archigraph could not match to an extracted file — often a build alias, generated file, or a path outside the indexed repos."},
+		{audit.ImportFormatOther, "extraction_gap", "Dynamic or not-yet-extracted",
+			"A bare reference with no resolvable target — dynamically-loaded code, runtime dispatch, or a gap in extraction for that language."},
+	}
+	for _, sp := range specs {
+		c := formats[sp.format]
+		if c == 0 {
+			continue
+		}
+		p := 0.0
+		if total > 0 {
+			p = float64(c) / float64(total)
+		}
+		ur.Reasons = append(ur.Reasons, UnresolvedReason{
+			Reason:      sp.reason,
+			Label:       sp.label,
+			Description: sp.description,
+			Count:       c,
+			Pct:         p,
+		})
+	}
+	sort.Slice(ur.Reasons, func(i, j int) bool {
+		return ur.Reasons[i].Count > ur.Reasons[j].Count
+	})
+	return ur
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
