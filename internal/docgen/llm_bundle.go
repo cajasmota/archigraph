@@ -128,6 +128,11 @@ type LLMGraphContext struct {
 	// module via DEPENDS_ON_CONFIG edges. Populated only for Module-kind seeds
 	// (#1880). Nil/empty for non-Module seeds.
 	ModuleConfigs []ModuleConfigEntry `json:"module_configs,omitempty"`
+	// ModuleManifest is a structured enumeration of the module's contained
+	// entities, bucketed by kind: classes, functions, constants, imports,
+	// endpoints, and models. Populated only for Module-kind seeds (#1881).
+	// Nil for non-Module seeds.
+	ModuleManifest *ModuleManifest `json:"module_manifest,omitempty"`
 }
 
 // ModuleReadme holds the README content embedded into a Module bundle (#1880).
@@ -245,6 +250,114 @@ const ClassManifestMaxMethods = 100
 // ClassManifestMaxFields is the cap on the number of field entries in a
 // ClassManifest.
 const ClassManifestMaxFields = 100
+
+// ---------------------------------------------------------------------------
+// ModuleManifest schema (#1881)
+// ---------------------------------------------------------------------------
+
+// ModuleManifest is a structured enumeration of a Module entity's contained
+// children, bucketed by kind. It replaces the flat neighbour_briefs dump for
+// Module seeds, reducing bundle size and letting each docgen section consume
+// only the bucket it cares about (#1881).
+type ModuleManifest struct {
+	// Classes is the list of class-like children (Class, Component, Controller,
+	// Service, View, UIComponent). Capped at ModuleManifestBucketCap.
+	Classes []ModuleClassEntry `json:"classes,omitempty"`
+	// ClassesTruncatedCount is the number of class entries omitted due to cap.
+	ClassesTruncatedCount int `json:"classes_truncated_count,omitempty"`
+
+	// Functions is the list of top-level operation children that are NOT
+	// contained inside a class (i.e. module-level functions / hooks).
+	// Capped at ModuleManifestBucketCap.
+	Functions []ModuleFunctionEntry `json:"functions,omitempty"`
+	// FunctionsTruncatedCount is the number of function entries omitted.
+	FunctionsTruncatedCount int `json:"functions_truncated_count,omitempty"`
+
+	// Constants is the list of top-level constant / schema children with
+	// subtype "constant". Capped at ModuleManifestBucketCap.
+	Constants []ModuleConstantEntry `json:"constants,omitempty"`
+	// ConstantsTruncatedCount is the number of constant entries omitted.
+	ConstantsTruncatedCount int `json:"constants_truncated_count,omitempty"`
+
+	// Imports is the list of modules imported by this module (IMPORTS edges).
+	// Capped at ModuleManifestBucketCap.
+	Imports []ModuleImportEntry `json:"imports,omitempty"`
+	// ImportsTruncatedCount is the number of import entries omitted.
+	ImportsTruncatedCount int `json:"imports_truncated_count,omitempty"`
+
+	// Endpoints is the list of HTTP endpoint definition children declared in
+	// this module. Capped at ModuleManifestBucketCap.
+	Endpoints []ModuleEndpointEntry `json:"endpoints,omitempty"`
+	// EndpointsTruncatedCount is the number of endpoint entries omitted.
+	EndpointsTruncatedCount int `json:"endpoints_truncated_count,omitempty"`
+
+	// Models is the list of model-kind children (ORM/SQL/JPA/Pydantic models).
+	// Called out separately from Classes so api/flows sections can distinguish
+	// data-shape entities from behaviour entities. Capped at ModuleManifestBucketCap.
+	Models []ModuleClassEntry `json:"models,omitempty"`
+	// ModelsTruncatedCount is the number of model entries omitted.
+	ModelsTruncatedCount int `json:"models_truncated_count,omitempty"`
+}
+
+// ModuleManifestBucketCap is the maximum number of entries per bucket in a
+// ModuleManifest. Buckets with more entries will record the overflow in
+// <bucket>_truncated_count.
+const ModuleManifestBucketCap = 100
+
+// ModuleClassEntry describes a class-like or model-kind child entity of a module.
+type ModuleClassEntry struct {
+	// Name is the short name of the entity.
+	Name string `json:"name"`
+	// StartLine is the first line of the entity declaration (1-indexed).
+	StartLine int `json:"start_line,omitempty"`
+	// KindSubtype is the extractor subtype string (e.g. "class", "interface",
+	// "enum", "model"). Empty when the extractor did not set a subtype.
+	KindSubtype string `json:"kind_subtype,omitempty"`
+}
+
+// ModuleFunctionEntry describes a top-level function or hook in the module.
+type ModuleFunctionEntry struct {
+	// Name is the short function name.
+	Name string `json:"name"`
+	// Signature is the full function signature as stored by the extractor.
+	Signature string `json:"signature,omitempty"`
+	// StartLine is the first line of the function declaration (1-indexed).
+	StartLine int `json:"start_line,omitempty"`
+	// Visibility is "public", "private", "protected", or "" (unknown).
+	Visibility string `json:"visibility,omitempty"`
+}
+
+// ModuleConstantEntry describes a top-level constant in the module.
+type ModuleConstantEntry struct {
+	// Name is the short constant name.
+	Name string `json:"name"`
+	// StartLine is the line where the constant is declared (1-indexed).
+	StartLine int `json:"start_line,omitempty"`
+	// ValueLiteral is the literal value captured by the extractor, when
+	// available. Empty for computed or unknown values.
+	ValueLiteral string `json:"value_literal,omitempty"`
+}
+
+// ModuleImportEntry describes a module imported by this module.
+type ModuleImportEntry struct {
+	// Name is the imported module name or alias.
+	Name string `json:"name"`
+	// TargetModule is the target entity name when the IMPORTS edge resolves
+	// to a known graph entity. Empty for unresolved / external imports.
+	TargetModule string `json:"target_module,omitempty"`
+}
+
+// ModuleEndpointEntry describes an HTTP endpoint declared in the module.
+type ModuleEndpointEntry struct {
+	// Method is the HTTP verb (e.g. "GET", "POST"). Empty when not known.
+	Method string `json:"method,omitempty"`
+	// Path is the URL path pattern (e.g. "/api/users/{id}").
+	Path string `json:"path,omitempty"`
+	// HandlerName is the name of the handler function or method.
+	HandlerName string `json:"handler_name,omitempty"`
+	// StartLine is the line where the endpoint is declared (1-indexed).
+	StartLine int `json:"start_line,omitempty"`
+}
 
 // NeighbourBrief is a compact description of a single 1-hop neighbour entity.
 type NeighbourBrief struct {
@@ -615,8 +728,10 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 		}
 
 		// Populate ModuleReadme and ModuleConfigs for Module-kind seeds (#1880).
+		// Also populate ModuleManifest (#1881) — both coexist.
 		if isModuleKind(entity.Kind) {
 			gc.ModuleReadme, gc.ModuleConfigs = buildModuleSupplements(entity, seedRepo, neighbours, neighbourKinds)
+			gc.ModuleManifest = buildModuleManifest(entity, neighbours, neighbourKinds)
 		}
 	}
 
@@ -1013,7 +1128,9 @@ func capKeysTopLevel(raw string) string {
 	return fmt.Sprintf("%s,+%d more", strings.Join(parts[:ModuleConfigMaxKeys], ","), more)
 }
 
-// isModuleKind returns true when the entity kind is a Module kind (#1880).
+// isModuleKind returns true when the entity kind is the Module kind that
+// should receive a ModuleManifest (#1881). Handles both bare "Module" and
+// any variant that contains "module" (case-insensitive).
 func isModuleKind(kind string) bool {
 	k := strings.ToLower(strings.TrimPrefix(kind, "SCOPE."))
 	return k == "module" || strings.Contains(k, "module")
@@ -1104,6 +1221,201 @@ func configEntryFromEntity(n *graph.Entity) ModuleConfigEntry {
 		entry.KeysTopLevel = capKeysTopLevel(get("keys_top_level"))
 	}
 	return entry
+}
+
+// ---------------------------------------------------------------------------
+// ModuleManifest helpers (#1881)
+// ---------------------------------------------------------------------------
+
+// isModelKind returns true when the entity kind is a model-like construct:
+// ORM models, Pydantic models, JPA entities, SQL table entities, etc.
+// It is a stricter subset of isClassLikeKind — "model" must appear in the
+// kind or subtype so that generic components are not misclassified.
+func isModelKind(kind, subtype string) bool {
+	k := strings.ToLower(strings.TrimPrefix(kind, "SCOPE."))
+	s := strings.ToLower(subtype)
+	return k == "model" || strings.Contains(k, "model") ||
+		s == "model" || s == "orm_model" || s == "jpa_entity" || s == "pydantic_model"
+}
+
+// isEndpointKind returns true when the entity kind represents an HTTP endpoint
+// definition. Handles bare "http_endpoint_definition" and SCOPE.* prefixed forms.
+func isEndpointKind(kind string) bool {
+	k := strings.ToLower(strings.TrimPrefix(kind, "SCOPE."))
+	return k == "http_endpoint_definition" || k == "endpoint" ||
+		strings.Contains(k, "endpoint") || strings.Contains(k, "route")
+}
+
+// buildModuleManifest constructs a ModuleManifest for the seed Module entity by
+// walking the neighbours slice (already loaded by loadEntityContext) and the
+// neighbourKinds slice (edge kinds, index-aligned with neighbours).
+//
+// It collects:
+//   - Classes bucket:    CONTAINS neighbours with class-like kinds (excluding models)
+//   - Models bucket:     CONTAINS neighbours with model-like kinds
+//   - Functions bucket:  CONTAINS neighbours with Operation kind and top-level subtype
+//   - Constants bucket:  CONTAINS neighbours with Schema kind + subtype "constant"
+//   - Imports bucket:    IMPORTS-edge neighbours
+//   - Endpoints bucket:  CONTAINS neighbours with endpoint kind
+//
+// Each bucket is capped at ModuleManifestBucketCap with a <bucket>_truncated_count
+// overflow field. Returns nil when no data was collected.
+func buildModuleManifest(entity *graph.Entity, neighbours []graph.Entity, neighbourKinds []string) *ModuleManifest {
+	if entity == nil {
+		return nil
+	}
+
+	m := &ModuleManifest{}
+
+	// Counters for truncation tracking (total seen before cap).
+	totalClasses := 0
+	totalModels := 0
+	totalFunctions := 0
+	totalConstants := 0
+	totalImports := 0
+	totalEndpoints := 0
+
+	for i, n := range neighbours {
+		rel := ""
+		if i < len(neighbourKinds) {
+			rel = neighbourKinds[i]
+		}
+
+		switch rel {
+		case "CONTAINS":
+			lkind := strings.ToLower(strings.TrimPrefix(n.Kind, "SCOPE."))
+
+			// --- Endpoints (checked first: endpoint kinds may overlap class-like patterns) ---
+			if isEndpointKind(n.Kind) {
+				totalEndpoints++
+				if totalEndpoints <= ModuleManifestBucketCap {
+					entry := ModuleEndpointEntry{
+						HandlerName: shortName(n.Name),
+						StartLine:   n.StartLine,
+					}
+					if n.Properties != nil {
+						entry.Method = n.Properties["http_method"]
+						entry.Path = n.Properties["path"]
+					}
+					if entry.Path == "" && n.Signature != "" {
+						// Fallback: try to parse "METHOD /path" from signature.
+						parts := strings.Fields(n.Signature)
+						if len(parts) >= 2 {
+							entry.Method = parts[0]
+							entry.Path = parts[1]
+						}
+					}
+					m.Endpoints = append(m.Endpoints, entry)
+				}
+				continue
+			}
+
+			// --- Models (checked before generic class-like to keep buckets separate) ---
+			if isModelKind(n.Kind, n.Subtype) {
+				totalModels++
+				if totalModels <= ModuleManifestBucketCap {
+					m.Models = append(m.Models, ModuleClassEntry{
+						Name:        shortName(n.Name),
+						StartLine:   n.StartLine,
+						KindSubtype: n.Subtype,
+					})
+				}
+				continue
+			}
+
+			// --- Classes (other class-like kinds, after model filter) ---
+			if isClassLikeKind(n.Kind) {
+				totalClasses++
+				if totalClasses <= ModuleManifestBucketCap {
+					m.Classes = append(m.Classes, ModuleClassEntry{
+						Name:        shortName(n.Name),
+						StartLine:   n.StartLine,
+						KindSubtype: n.Subtype,
+					})
+				}
+				continue
+			}
+
+			// --- Functions: Operation or Function kind with top-level subtype ---
+			if strings.Contains(lkind, "operation") || strings.Contains(lkind, "function") {
+				// Collect only module-level functions/hooks, not class methods.
+				// Class methods have subtype "method" or "constructor" and are
+				// handled by the ClassManifest of the enclosing class entity.
+				isTopLevel := n.Subtype == "function" || n.Subtype == "hook" ||
+					n.Subtype == "" || n.Subtype == "lambda" || n.Subtype == "closure"
+				if isTopLevel {
+					totalFunctions++
+					if totalFunctions <= ModuleManifestBucketCap {
+						entry := ModuleFunctionEntry{
+							Name:       shortName(n.Name),
+							Signature:  n.Signature,
+							StartLine:  n.StartLine,
+							Visibility: inferVisibility(n.Signature),
+						}
+						m.Functions = append(m.Functions, entry)
+					}
+				}
+				continue
+			}
+
+			// --- Constants: Schema kind with subtype "constant" ---
+			if strings.Contains(lkind, "schema") && n.Subtype == "constant" {
+				totalConstants++
+				if totalConstants <= ModuleManifestBucketCap {
+					entry := ModuleConstantEntry{
+						Name:      shortName(n.Name),
+						StartLine: n.StartLine,
+					}
+					if n.Properties != nil {
+						entry.ValueLiteral = n.Properties["value_literal"]
+					}
+					m.Constants = append(m.Constants, entry)
+				}
+				continue
+			}
+
+		case "IMPORTS":
+			totalImports++
+			if totalImports <= ModuleManifestBucketCap {
+				entry := ModuleImportEntry{
+					Name: shortName(n.Name),
+				}
+				if n.Name != "" {
+					entry.TargetModule = n.Name
+				}
+				m.Imports = append(m.Imports, entry)
+			}
+		}
+	}
+
+	// Record truncation counts.
+	if totalClasses > ModuleManifestBucketCap {
+		m.ClassesTruncatedCount = totalClasses - ModuleManifestBucketCap
+	}
+	if totalModels > ModuleManifestBucketCap {
+		m.ModelsTruncatedCount = totalModels - ModuleManifestBucketCap
+	}
+	if totalFunctions > ModuleManifestBucketCap {
+		m.FunctionsTruncatedCount = totalFunctions - ModuleManifestBucketCap
+	}
+	if totalConstants > ModuleManifestBucketCap {
+		m.ConstantsTruncatedCount = totalConstants - ModuleManifestBucketCap
+	}
+	if totalImports > ModuleManifestBucketCap {
+		m.ImportsTruncatedCount = totalImports - ModuleManifestBucketCap
+	}
+	if totalEndpoints > ModuleManifestBucketCap {
+		m.EndpointsTruncatedCount = totalEndpoints - ModuleManifestBucketCap
+	}
+
+	// Return nil when no data was collected — keeps JSON clean for module
+	// entities whose extractors have not yet been run.
+	if len(m.Classes) == 0 && len(m.Models) == 0 && len(m.Functions) == 0 &&
+		len(m.Constants) == 0 && len(m.Imports) == 0 && len(m.Endpoints) == 0 {
+		return nil
+	}
+
+	return m
 }
 
 // ---------------------------------------------------------------------------
