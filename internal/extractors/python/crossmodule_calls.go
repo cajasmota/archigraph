@@ -227,10 +227,24 @@ func resolvePythonImportModule(modNode *sitter.Node, file extractor.FileInput) s
 	// current file's leaf module. Two dots = parent package = drop two
 	// leaves (current leaf + parent package boundary), and so on.
 	//
-	// Note: filePathToModule already collapses __init__.py to the parent
-	// directory, so `from . import x` inside a package's __init__ correctly
-	// refers to that package itself.
+	// Issue #2019 — __init__.py special case: filePathToModule already
+	// collapses `pkg/__init__.py` to `pkg` (stripping the `__init__`
+	// leaf). For a regular file `pkg/sub/mod.py` the module path is
+	// `pkg.sub.mod`, so `from .X` (dots=1) should drop the leaf `mod`
+	// and resolve to `pkg.sub.X`. For `pkg/__init__.py` the module path
+	// is already `pkg` (no leaf to drop), so `from .X` should resolve to
+	// `pkg.X` — i.e. drop zero additional levels.
+	//
+	// We detect this case by checking whether the original file path ends
+	// with `__init__.py`. When it does, one dot of the climb is already
+	// accounted for by the filePathToModule collapse, so we reduce `drop`
+	// by one to avoid stripping the package root itself.
 	drop := dots
+	isInitFile := strings.HasSuffix(file.Path, "__init__.py") ||
+		strings.HasSuffix(file.Path, "__init__")
+	if isInitFile && drop > 0 {
+		drop--
+	}
 	if drop > len(parts) {
 		// Escapes the file's known package — leave unresolved rather than
 		// guess. The existing bare-name resolver still has the option of
