@@ -223,3 +223,165 @@ func TestImportsSkipsRelative(t *testing.T) {
 		}
 	}
 }
+
+// Issue #2019 — Python relative-import resolution regression tests.
+//
+// `from .X import Y` was misresolved as external library X (leading dot
+// stripped before package resolution). The root cause: for __init__.py
+// files, filePathToModule already collapses the __init__ leaf, so
+// resolvePythonImportModule was dropping one extra level, leaving the
+// package root empty and causing celery/etc. to be mistaken for the
+// well-known external package of the same name.
+
+// TestRelativeImport_SingleDot verifies that `from .X import Y` inside a
+// regular module resolves source_module to the sibling module path, NOT to
+// the bare name X (which could collide with an external library).
+//
+// client-fixture-X: simple package layout simulating real project structure.
+//
+// `client_fixture_x/services/orders.py` + `from .helpers import format_id`
+// → source_module = "client_fixture_x.services.helpers"
+// → ToID = "client_fixture_x.services.helpers.format_id"  (NOT ext:helpers)
+func TestRelativeImport_SingleDot(t *testing.T) {
+	ex := &Extractor{}
+	ents, err := ex.Extract(context.Background(), extractor.FileInput{
+		Path:    "client_fixture_x/services/orders.py",
+		Content: []byte("from .helpers import format_id\n"),
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	r := findImportEdge(ents, "client_fixture_x.services.helpers")
+	if r == nil {
+		t.Fatalf("missing IMPORTS edge with source_module=client_fixture_x.services.helpers; got edges:")
+	}
+	if strings.HasPrefix(r.ToID, "ext:") {
+		t.Errorf("relative import from regular module got ext: ToID = %q, want internal form", r.ToID)
+	}
+	want := "client_fixture_x.services.helpers.format_id"
+	if r.ToID != want {
+		t.Errorf("ToID = %q, want %q", r.ToID, want)
+	}
+}
+
+// TestRelativeImport_SingleDot_InitPy is the W9R1 ground-truth regression:
+// `from .celery import app` in `client_fixture_x/__init__.py` must resolve
+// to source_module = "client_fixture_x.celery", NOT to "celery" (which
+// would then be rewritten to ext:celery:app by resolveImportToIDs).
+func TestRelativeImport_SingleDot_InitPy(t *testing.T) {
+	ex := &Extractor{}
+	ents, err := ex.Extract(context.Background(), extractor.FileInput{
+		Path:    "client_fixture_x/__init__.py",
+		Content: []byte("from .celery import app\n"),
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	// Must NOT have an ext:celery edge.
+	for _, e := range ents {
+		for _, r := range e.Relationships {
+			if r.Kind != "IMPORTS" {
+				continue
+			}
+			if strings.HasPrefix(r.ToID, "ext:celery") {
+				t.Errorf("__init__.py relative import got ext:celery ToID = %q, want internal resolution", r.ToID)
+			}
+		}
+	}
+	// Must have the correctly resolved edge.
+	r := findImportEdge(ents, "client_fixture_x.celery")
+	if r == nil {
+		t.Fatalf("missing IMPORTS edge with source_module=client_fixture_x.celery")
+	}
+	want := "client_fixture_x.celery.app"
+	if r.ToID != want {
+		t.Errorf("ToID = %q, want %q", r.ToID, want)
+	}
+}
+
+// TestRelativeImport_DoubleDot verifies `from ..X import Y` climbs one level
+// above the current package.
+//
+// `client_fixture_x/foo/bar.py` + `from ..models import BaseModel`
+// → source_module = "client_fixture_x.models"
+// → ToID = "client_fixture_x.models.BaseModel"
+func TestRelativeImport_DoubleDot(t *testing.T) {
+	ex := &Extractor{}
+	ents, err := ex.Extract(context.Background(), extractor.FileInput{
+		Path:    "client_fixture_x/foo/bar.py",
+		Content: []byte("from ..models import BaseModel\n"),
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	r := findImportEdge(ents, "client_fixture_x.models")
+	if r == nil {
+		t.Fatalf("missing IMPORTS edge with source_module=client_fixture_x.models")
+	}
+	want := "client_fixture_x.models.BaseModel"
+	if r.ToID != want {
+		t.Errorf("ToID = %q, want %q", r.ToID, want)
+	}
+}
+
+// TestRelativeImport_FromDotImport covers `from . import Y` (no module name
+// between dot and import keyword). The imported name Y is a sibling module.
+//
+// `client_fixture_x/services/dispatch.py` + `from . import helpers`
+// → source_module = "client_fixture_x.services"
+// → IMPORTS ToID should be internal (not ext:)
+func TestRelativeImport_FromDotImport(t *testing.T) {
+	ex := &Extractor{}
+	ents, err := ex.Extract(context.Background(), extractor.FileInput{
+		Path:    "client_fixture_x/services/dispatch.py",
+		Content: []byte("from . import helpers\n"),
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	// Any IMPORTS edge produced must NOT be ext: prefixed.
+	for _, e := range ents {
+		for _, r := range e.Relationships {
+			if r.Kind != "IMPORTS" {
+				continue
+			}
+			if strings.HasPrefix(r.ToID, "ext:") {
+				t.Errorf("from . import got ext: ToID = %q", r.ToID)
+			}
+		}
+	}
+}
+
+// TestRelativeImport_AliasedImport verifies that `from .X import Y as Z`
+// preserves the alias on the IMPORTS edge (local_name=Z, imported_name=Y).
+//
+// `client_fixture_x/api/views.py` + `from .serializers import OrderSerializer as OS`
+// → local_name = "OS"
+// → imported_name = "OrderSerializer"
+// → source_module = "client_fixture_x.api.serializers"
+func TestRelativeImport_AliasedImport(t *testing.T) {
+	ex := &Extractor{}
+	ents, err := ex.Extract(context.Background(), extractor.FileInput{
+		Path:    "client_fixture_x/api/views.py",
+		Content: []byte("from .serializers import OrderSerializer as OS\n"),
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	r := findImportEdge(ents, "client_fixture_x.api.serializers")
+	if r == nil {
+		t.Fatalf("missing IMPORTS edge with source_module=client_fixture_x.api.serializers")
+	}
+	if r.Properties == nil {
+		t.Fatalf("IMPORTS edge has nil Properties")
+	}
+	if got := r.Properties["local_name"]; got != "OS" {
+		t.Errorf("local_name = %q, want %q", got, "OS")
+	}
+	if got := r.Properties["imported_name"]; got != "OrderSerializer" {
+		t.Errorf("imported_name = %q, want %q", got, "OrderSerializer")
+	}
+	if strings.HasPrefix(r.ToID, "ext:") {
+		t.Errorf("aliased relative import got ext: ToID = %q", r.ToID)
+	}
+}
