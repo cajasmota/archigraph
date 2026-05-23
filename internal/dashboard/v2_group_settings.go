@@ -178,7 +178,7 @@ func loadV2SettingsGroup(groupName, histRoot string) (*v2SettingsGroup, error) {
 		sr := v2SettingsRepo{
 			Slug:  r.Slug,
 			Path:  r.Path,
-			Stack: r.Stack,
+			Stack: r.Stack.Primary(),
 			Files: files,
 		}
 		sr.Entities = entities
@@ -192,7 +192,7 @@ func loadV2SettingsGroup(groupName, histRoot string) (*v2SettingsGroup, error) {
 			for _, mod := range r.Modules {
 				pkgs = append(pkgs, v2MonorepoPkg{
 					Path:    mod,
-					Stack:   r.Stack,
+					Stack:   r.Stack.Primary(),
 					Indexed: true,
 				})
 			}

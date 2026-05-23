@@ -24,7 +24,7 @@ func TestComputeRepoHealth(t *testing.T) {
 	repo := registry.Repo{
 		Slug:  "test-repo",
 		Path:  repoPath,
-		Stack: "go",
+		Stack: registry.StackList{"go"},
 	}
 
 	health := computeRepoHealth(repo)
@@ -49,7 +49,7 @@ func TestComputeRepoHealthMissing(t *testing.T) {
 	repo := registry.Repo{
 		Slug:  "missing-repo",
 		Path:  "/nonexistent/path",
-		Stack: "go",
+		Stack: registry.StackList{"go"},
 	}
 
 	health := computeRepoHealth(repo)
@@ -186,7 +186,7 @@ func BenchmarkComputeRepoHealth(b *testing.B) {
 	repo := registry.Repo{
 		Slug:  "test-repo",
 		Path:  repoPath,
-		Stack: "go",
+		Stack: registry.StackList{"go"},
 	}
 
 	b.ResetTimer()

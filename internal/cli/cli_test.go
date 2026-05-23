@@ -88,7 +88,7 @@ func TestDoctorRunsCleanly(t *testing.T) {
 	makeRepo(t, repo)
 	cfg := &registry.GroupConfig{Name: "demo"}
 	cfg.Features.GitHooks = true
-	cfg.Repos = []registry.Repo{{Slug: "alpha", Path: repo, Stack: "go"}}
+	cfg.Repos = []registry.Repo{{Slug: "alpha", Path: repo, Stack: registry.StackList{"go"}}}
 	cfgPath, err := registry.ConfigPathFor("demo")
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +117,7 @@ func TestStatusFiltering(t *testing.T) {
 		repo := filepath.Join(home, "repos", name)
 		makeRepo(t, repo)
 		cfg := &registry.GroupConfig{Name: name}
-		cfg.Repos = []registry.Repo{{Slug: name, Path: repo, Stack: "go"}}
+		cfg.Repos = []registry.Repo{{Slug: name, Path: repo, Stack: registry.StackList{"go"}}}
 		p, _ := registry.ConfigPathFor(name)
 		if err := registry.SaveGroupConfig(p, cfg); err != nil {
 			t.Fatal(err)
@@ -144,7 +144,7 @@ func TestStatusGraphFileDetection(t *testing.T) {
 
 	// Create a group with one repo but no graph files yet
 	cfg := &registry.GroupConfig{Name: "demo"}
-	cfg.Repos = []registry.Repo{{Slug: "test", Path: repo, Stack: "go"}}
+	cfg.Repos = []registry.Repo{{Slug: "test", Path: repo, Stack: registry.StackList{"go"}}}
 	cfgPath, _ := registry.ConfigPathFor("demo")
 	if err := registry.SaveGroupConfig(cfgPath, cfg); err != nil {
 		t.Fatal(err)

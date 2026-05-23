@@ -54,7 +54,7 @@ func TestComputeRepoHealthStale(t *testing.T) {
 	repo := registry.Repo{
 		Slug:  "stale-repo",
 		Path:  repoPath,
-		Stack: "go",
+		Stack: registry.StackList{"go"},
 	}
 
 	health := computeRepoHealth(repo)

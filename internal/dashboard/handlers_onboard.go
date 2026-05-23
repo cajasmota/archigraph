@@ -234,7 +234,7 @@ func (s *Server) handleOnboardCreateGroup(w http.ResponseWriter, r *http.Request
 		repo := registry.Repo{
 			Slug:    slug,
 			Path:    abs,
-			Stack:   detect.Stack(abs),
+			Stack:   registry.StackList{detect.Stack(abs)},
 			Modules: spec.Modules,
 		}
 		if err := s.registry.AddRepo(req.GroupName, repo); err != nil {

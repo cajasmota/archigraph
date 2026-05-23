@@ -150,7 +150,7 @@ func (s *Server) handleV2GraphExport(w http.ResponseWriter, r *http.Request) {
 		manifest.Repos = append(manifest.Repos, ExportRepoEntry{
 			Slug:     rp.Slug,
 			Path:     rp.Path,
-			Stack:    rp.Stack,
+			Stack:    rp.Stack.Primary(),
 			CloneURL: rp.CloneURL,
 		})
 	}

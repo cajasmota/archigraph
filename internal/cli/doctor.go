@@ -222,7 +222,7 @@ func checkRepo(w io.Writer, r registry.Repo) {
 	if _, err := os.Stat(gitDir); err != nil {
 		fmt.Fprintf(w, "  %s repo %s: missing .git\n", statusWarn, r.Slug)
 	} else {
-		fmt.Fprintf(w, "  %s repo %s (%s)\n", statusOK, r.Slug, r.Stack)
+		fmt.Fprintf(w, "  %s repo %s (%s)\n", statusOK, r.Slug, r.Stack.String())
 	}
 	jsonPath := daemon.GraphPathForRepo(r.Path)
 	fbPath := daemon.GraphFBPathForRepo(r.Path)

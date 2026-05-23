@@ -117,7 +117,7 @@ func runWizard(out io.Writer, opts wizardOptions) error {
 		cfg.Repos = append(cfg.Repos, registry.Repo{
 			Slug:  filepath.Base(abs),
 			Path:  abs,
-			Stack: detect.Stack(abs),
+			Stack: registry.StackList{detect.Stack(abs)},
 		})
 	}
 
@@ -230,7 +230,7 @@ func writeManifests(cfg *registry.GroupConfig) error {
 			Slug     string `json:"slug"`
 			CloneURL string `json:"clone_url,omitempty"`
 			Stack    string `json:"stack,omitempty"`
-		}{Slug: r.Slug, CloneURL: r.CloneURL, Stack: r.Stack})
+		}{Slug: r.Slug, CloneURL: r.CloneURL, Stack: r.Stack.Primary()})
 	}
 	for _, r := range cfg.Repos {
 		dir := filepath.Join(r.Path, ".archigraph")

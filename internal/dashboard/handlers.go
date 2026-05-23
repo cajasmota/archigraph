@@ -113,10 +113,14 @@ func (s *Server) handleAddRepo(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
+	stack := registry.StackList(nil)
+	if req.Stack != "" {
+		stack = registry.StackList{req.Stack}
+	}
 	repo := registry.Repo{
 		Slug:     req.Slug,
 		Path:     req.Path,
-		Stack:    req.Stack,
+		Stack:    stack,
 		CloneURL: req.CloneURL,
 		Modules:  req.Modules,
 	}

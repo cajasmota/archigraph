@@ -89,7 +89,7 @@ func runOnboard(out io.Writer, start, parentDir string, nonInteractive bool) err
 		cfg.Repos = append(cfg.Repos, registry.Repo{
 			Slug:     r.Slug,
 			Path:     path,
-			Stack:    stack,
+			Stack:    registry.StackList{stack},
 			CloneURL: r.CloneURL,
 		})
 	}

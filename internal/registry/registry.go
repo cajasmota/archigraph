@@ -15,9 +15,83 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
+
+// StackList is a JSON-polymorphic list of language tags for a repo.
+//
+// On disk the "stack" field may appear in two shapes produced by different
+// versions of the binary:
+//
+//	{"stack": "go"}             ← single string (old shape)
+//	{"stack": ["go","typescript"]} ← array of strings (new shape)
+//
+// Both forms are accepted on read; the value is always written back as an
+// array so new configs are unambiguous. Callers that need a single canonical
+// label should call Primary().
+type StackList []string
+
+// UnmarshalJSON accepts null/absent, a bare JSON string, or a JSON array of
+// strings. Any other shape is returned as a descriptive error.
+func (s *StackList) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 || string(b) == "null" {
+		*s = nil
+		return nil
+	}
+	// Try array first.
+	if b[0] == '[' {
+		var arr []string
+		if err := json.Unmarshal(b, &arr); err != nil {
+			return fmt.Errorf("stack: cannot parse array of strings: %w", err)
+		}
+		*s = arr
+		return nil
+	}
+	// Try bare string.
+	if b[0] == '"' {
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return fmt.Errorf("stack: cannot parse string: %w", err)
+		}
+		if str == "" {
+			*s = nil
+		} else {
+			*s = StackList{str}
+		}
+		return nil
+	}
+	return fmt.Errorf("stack: expected string or array, got %s", string(b))
+}
+
+// MarshalJSON always writes an array (or omits the field when the list is
+// empty, relying on the omitempty tag on the containing struct field).
+func (s StackList) MarshalJSON() ([]byte, error) {
+	if len(s) == 0 {
+		return []byte("null"), nil
+	}
+	return json.Marshal([]string(s))
+}
+
+// Primary returns the first element, or "" if the list is empty.
+// Use this wherever a single canonical label is needed (display, detect
+// fallback, equality checks).
+func (s StackList) Primary() string {
+	if len(s) == 0 {
+		return ""
+	}
+	return s[0]
+}
+
+// String returns a slash-joined representation suitable for display
+// (e.g. "go/typescript"). Returns "" for an empty list.
+func (s StackList) String() string {
+	return strings.Join(s, "/")
+}
+
+// IsEmpty reports whether the list contains no elements.
+func (s StackList) IsEmpty() bool { return len(s) == 0 }
 
 // GroupRef is a registered group: a name and the absolute path to its
 // per-group config file. The group's state directory is colocated with
@@ -36,11 +110,11 @@ type Registry struct {
 
 // Repo describes a single repository inside a group config.
 type Repo struct {
-	Slug     string   `json:"slug"`
-	Path     string   `json:"path"`
-	Stack    string   `json:"stack,omitempty"`
-	CloneURL string   `json:"clone_url,omitempty"`
-	Modules  []string `json:"modules,omitempty"`
+	Slug     string    `json:"slug"`
+	Path     string    `json:"path"`
+	Stack    StackList `json:"stack,omitempty"`
+	CloneURL string    `json:"clone_url,omitempty"`
+	Modules  []string  `json:"modules,omitempty"`
 }
 
 // GroupConfig is the per-group config persisted alongside the registry.
@@ -296,4 +370,40 @@ func LoadManifest(repoOrManifest string) (*Manifest, error) {
 		return nil, fmt.Errorf("%s: %w", filepath.Base(p), err)
 	}
 	return m, nil
+}
+
+// ConfigParseError records a single fleet-config parse failure.
+type ConfigParseError struct {
+	ConfigPath string
+	GroupName  string
+	Err        error
+}
+
+func (e *ConfigParseError) Error() string {
+	return fmt.Sprintf("fleet config %q (group %q): %v", e.ConfigPath, e.GroupName, e.Err)
+}
+
+// ValidateFleetConfigs attempts to parse every registered fleet config and
+// returns one ConfigParseError per file that fails. A non-nil, non-empty
+// slice means at least one config is unreadable — callers should log each
+// entry and continue operating on the healthy configs rather than hard-failing
+// the whole daemon.
+//
+// Typical call site: daemon startup, before the first indexer run.
+func ValidateFleetConfigs() []*ConfigParseError {
+	groups, err := Load()
+	if err != nil {
+		return []*ConfigParseError{{ConfigPath: "(registry)", Err: err}}
+	}
+	var errs []*ConfigParseError
+	for _, g := range groups.Groups {
+		if _, err := LoadGroupConfig(g.ConfigPath); err != nil {
+			errs = append(errs, &ConfigParseError{
+				ConfigPath: g.ConfigPath,
+				GroupName:  g.Name,
+				Err:        err,
+			})
+		}
+	}
+	return errs
 }

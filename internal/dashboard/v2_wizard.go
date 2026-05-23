@@ -309,7 +309,7 @@ func (s *Server) registerWizardRepos(group string, repos []v2WizardRepo) (int, s
 		repo := registry.Repo{
 			Slug:    slug,
 			Path:    abs,
-			Stack:   detect.Stack(abs),
+			Stack:   registry.StackList{detect.Stack(abs)},
 			Modules: spec.Modules,
 		}
 		if err := s.registry.AddRepo(group, repo); err != nil {

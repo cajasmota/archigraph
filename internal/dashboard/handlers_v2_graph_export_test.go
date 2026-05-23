@@ -60,7 +60,7 @@ func buildGraphExportTestServer(t *testing.T) (*Server, *registry.GroupConfig, s
 	cfgPath := filepath.Join(home, "alpha.fleet.json")
 	cfg := &registry.GroupConfig{
 		Name:  "alpha",
-		Repos: []registry.Repo{{Slug: "alpha-repo", Path: repoPath, Stack: "go"}},
+		Repos: []registry.Repo{{Slug: "alpha-repo", Path: repoPath, Stack: registry.StackList{"go"}}},
 	}
 	cfg.Features.Watchers = true
 	if err := registry.SaveGroupConfig(cfgPath, cfg); err != nil {
