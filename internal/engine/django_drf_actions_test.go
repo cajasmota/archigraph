@@ -88,9 +88,11 @@ class ContractViewSet(ModelViewSet):
 		"http:PUT:/api/v1/contracts/{pk}",
 		"http:PATCH:/api/v1/contracts/{pk}",
 		"http:DELETE:/api/v1/contracts/{pk}",
-		"http:ANY:/api/v1/contracts/{pk}",
 	}
 	assertHasAllIDs(t, got, wantIDs)
+	// Fix #1692 — per-verb detail routes must be emitted; the ANY catch-all
+	// must NOT appear alongside them (it was redundant and polluted the index).
+	assertHasNoneIDs(t, got, []string{"http:ANY:/api/v1/contracts/{pk}"})
 }
 
 // TestApplyDjangoDRFRoutes_ReadOnlyModelViewSet verifies that a
@@ -448,6 +450,121 @@ class LoginViewSet(viewsets.ModelViewSet):
 	})
 }
 
+// ---------------------------------------------------------------------------
+// Issue #1692 — detail routes ({pk}) must emit per-verb, not ANY
+// ---------------------------------------------------------------------------
+
+// TestApplyDjangoDRFRoutes_DetailRoutePerVerbModelViewSet verifies that a
+// standard ModelViewSet emits per-verb detail routes (GET, PUT, PATCH, DELETE)
+// for the /{pk} path and does NOT emit ANY as a catch-all alongside them.
+// This is the core regression test for #1692: the per-verb fix from #1648/#1673
+// that landed on collection routes must also suppress the ANY catch-all on
+// detail routes.
+func TestApplyDjangoDRFRoutes_DetailRoutePerVerbModelViewSet(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import InspectionViewSet
+
+router = routers.DefaultRouter()
+router.register(r"inspections", InspectionViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+
+class InspectionViewSet(ModelViewSet):
+    http_method_names = ["get", "post", "put", "patch", "delete"]
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	// All four detail verbs must be present.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/inspections/{pk}",
+		"http:PUT:/inspections/{pk}",
+		"http:PATCH:/inspections/{pk}",
+		"http:DELETE:/inspections/{pk}",
+	})
+	// Fix #1692 — ANY must NOT be emitted alongside per-verb detail routes.
+	assertHasNoneIDs(t, got, []string{"http:ANY:/inspections/{pk}"})
+}
+
+// TestApplyDjangoDRFRoutes_DetailRoutePerVerbExplicitBareViewSet verifies that
+// a bare viewsets.ViewSet with explicitly defined retrieve/update/partial_update/
+// destroy methods emits per-verb /{pk} routes and NOT ANY. This mirrors the
+// collection-route fix from #1648/#1673 but for the detail-route path.
+func TestApplyDjangoDRFRoutes_DetailRoutePerVerbExplicitBareViewSet(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import ResourceViewSet
+
+router = routers.DefaultRouter()
+router.register(r"resources", ResourceViewSet)
+`,
+		"views.py": `
+from rest_framework import viewsets
+
+class ResourceViewSet(viewsets.ViewSet):
+    def retrieve(self, request, pk=None):
+        return None
+
+    def update(self, request, pk=None):
+        return None
+
+    def partial_update(self, request, pk=None):
+        return None
+
+    def destroy(self, request, pk=None):
+        return None
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	// Per-verb detail routes must be emitted via the explicitMethods merge.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/resources/{pk}",
+		"http:PUT:/resources/{pk}",
+		"http:PATCH:/resources/{pk}",
+		"http:DELETE:/resources/{pk}",
+	})
+	// Fix #1692 — ANY must NOT appear alongside per-verb detail routes.
+	assertHasNoneIDs(t, got, []string{"http:ANY:/resources/{pk}"})
+}
+
+// TestApplyDjangoDRFRoutes_DetailRouteANYFallbackWhenUnknownViewSet verifies
+// that when a ViewSet class cannot be resolved from disk (no import/index hit),
+// the fallback behaviour is to use modelViewSetMethods() which emits per-verb
+// routes — not ANY. The ANY fallback is now only emitted when crudMethods is
+// empty after resolution, which is a very rare edge case (unknown base with no
+// explicit methods).
+func TestApplyDjangoDRFRoutes_DetailRouteANYFallbackWhenUnknownViewSet(t *testing.T) {
+	// viewSetFile is NOT listed in pyPaths, so parseViewSetClass returns zero
+	// value. The conservative fallback at line 422 applies modelViewSetMethods()
+	// which includes retrieve/update/partial_update/destroy — all per-verb.
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import GhostViewSet
+
+router = routers.DefaultRouter()
+router.register(r"ghosts", GhostViewSet)
+`,
+		// "views.py" intentionally absent — ViewSet not resolvable.
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py"}, files.reader)
+
+	// The modelViewSetMethods() fallback should produce per-verb routes.
+	assertHasAllIDs(t, got, []string{
+		"http:GET:/ghosts/{pk}",
+		"http:PUT:/ghosts/{pk}",
+		"http:PATCH:/ghosts/{pk}",
+		"http:DELETE:/ghosts/{pk}",
+	})
+	// ANY must NOT appear when modelViewSetMethods() fallback fills in detail verbs.
+	assertHasNoneIDs(t, got, []string{"http:ANY:/ghosts/{pk}"})
+}
+
 // TestParseHTTPMethodNames covers the small parser used by parseViewSetClass
 // when filtering CRUD methods through the http_method_names class attribute.
 func TestParseHTTPMethodNames(t *testing.T) {
@@ -541,8 +658,9 @@ func TestClassifyViewSetParent(t *testing.T) {
 // TestApplyDjangoDRFRoutes_SourceHandlerSet verifies that each http_endpoint
 // synthetic emitted for a CRUD method carries source_handler =
 // "SCOPE.Operation:<ViewSet>.<method>" so ResolveHTTPEndpointHandlers can
-// emit an IMPLEMENTS edge. The ANY catch-all must NOT carry source_handler
-// (it has no single owning method).
+// emit an IMPLEMENTS edge. Since #1692, no ANY catch-all is emitted alongside
+// per-verb routes; this test also guards that if ANY is emitted (fallback case)
+// it must NOT carry source_handler (it has no single owning method).
 func TestApplyDjangoDRFRoutes_SourceHandlerSet(t *testing.T) {
 	files := fileMap{
 		"urls.py": `
@@ -1598,10 +1716,10 @@ func makeDRFExpanded(verb, path string) types.EntityRecord {
 
 // TestDeduplicateHTTPSynthesisANY_BasicCRUD verifies that ANY synthesis entries
 // for a ModelViewSet-backed path are removed when concrete verbs are present.
-// Fixture: ModelViewSet on /api/v1/contracts — 6 concrete verbs + 1 ANY
-// detail catch-all from ApplyDjangoDRFRoutes. The per-file ANY synthesis
-// entry for /api/v1/contracts (list route) must be dropped; the detail
-// ANY catch-all (from drf_router_expanded) must be preserved.
+// Fixture: ModelViewSet on /api/v1/contracts — 6 concrete verbs from
+// ApplyDjangoDRFRoutes. Both the list-path and detail-path ANY synthesis entries
+// must be dropped. Since #1692 emitCRUDFamily no longer emits a drf_router_expanded
+// ANY catch-all when per-verb routes are present.
 func TestDeduplicateHTTPSynthesisANY_BasicCRUD(t *testing.T) {
 	listPath := "/api/v1/contracts"
 	detailPath := "/api/v1/contracts/{pk}"
@@ -1614,7 +1732,7 @@ func TestDeduplicateHTTPSynthesisANY_BasicCRUD(t *testing.T) {
 		{ID: "other:entity", Name: "other", Kind: "SCOPE.Component"},
 	}
 
-	// Pass 2.6b DRF entries (6 CRUD verbs + 1 ANY detail catch-all).
+	// Pass 2.6b DRF entries (6 CRUD verbs — no ANY catch-all since #1692).
 	drfEntities := []types.EntityRecord{
 		makeDRFExpanded("GET", listPath),
 		makeDRFExpanded("POST", listPath),
@@ -1622,18 +1740,6 @@ func TestDeduplicateHTTPSynthesisANY_BasicCRUD(t *testing.T) {
 		makeDRFExpanded("PUT", detailPath),
 		makeDRFExpanded("PATCH", detailPath),
 		makeDRFExpanded("DELETE", detailPath),
-		// Intentional ANY from emitCRUDFamily — pattern_type=drf_router_expanded.
-		{
-			ID:   "http:ANY:" + detailPath,
-			Name: "http:ANY:" + detailPath,
-			Kind: httpEndpointKind,
-			Properties: map[string]string{
-				"verb":         "ANY",
-				"path":         detailPath,
-				"framework":    "django",
-				"pattern_type": "drf_router_expanded",
-			},
-		},
 	}
 
 	got := DeduplicateHTTPSynthesisANY(synthEntities, drfEntities)
@@ -1677,18 +1783,8 @@ func TestDeduplicateHTTPSynthesisANY_ReadOnly(t *testing.T) {
 	drfEntities := []types.EntityRecord{
 		makeDRFExpanded("GET", listPath),   // list
 		makeDRFExpanded("GET", detailPath), // retrieve
-		// ANY detail catch-all still emitted by emitCRUDFamily.
-		{
-			ID:   "http:ANY:" + detailPath,
-			Name: "http:ANY:" + detailPath,
-			Kind: httpEndpointKind,
-			Properties: map[string]string{
-				"verb":         "ANY",
-				"path":         detailPath,
-				"framework":    "django",
-				"pattern_type": "drf_router_expanded",
-			},
-		},
+		// No ANY detail catch-all since #1692: emitCRUDFamily only emits
+		// per-verb routes when crudMethods is known.
 	}
 
 	got := DeduplicateHTTPSynthesisANY(synthEntities, drfEntities)
@@ -1750,10 +1846,10 @@ func TestDeduplicateHTTPSynthesisANY_EmptyInputs(t *testing.T) {
 }
 
 // TestDeduplicateHTTPSynthesisANY_ModelViewSetAndAction verifies the full
-// fixture from issue #1126: a ModelViewSet with one @action emits 6+1=7
-// drf_router_expanded entries; the synthesis ANY for the same paths must be
-// dropped. The @action-path ANY synthesis entry should also be dropped when
-// covered.
+// fixture from issue #1126: a ModelViewSet with one @action emits 6
+// drf_router_expanded per-verb entries (no ANY since #1692); the synthesis
+// ANY for the same paths must be dropped. The @action-path ANY synthesis
+// entry should also be dropped when covered.
 func TestDeduplicateHTTPSynthesisANY_ModelViewSetAndAction(t *testing.T) {
 	listPath := "/api/v1/users"
 	detailPath := "/api/v1/users/{pk}"
@@ -1772,15 +1868,7 @@ func TestDeduplicateHTTPSynthesisANY_ModelViewSetAndAction(t *testing.T) {
 		makeDRFExpanded("PUT", detailPath),
 		makeDRFExpanded("PATCH", detailPath),
 		makeDRFExpanded("DELETE", detailPath),
-		{
-			ID:   "http:ANY:" + detailPath,
-			Name: "http:ANY:" + detailPath,
-			Kind: httpEndpointKind,
-			Properties: map[string]string{
-				"verb": "ANY", "path": detailPath,
-				"framework": "django", "pattern_type": "drf_router_expanded",
-			},
-		},
+		// No ANY detail catch-all since #1692: per-verb routes suppress it.
 		// @action(detail=False, methods=["post"]) on activate endpoint.
 		makeDRFExpanded("POST", actionPath),
 	}

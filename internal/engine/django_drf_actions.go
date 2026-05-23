@@ -566,10 +566,10 @@ func DeduplicateNestedURLConfDRF(
 // spurious ANY paths.
 //
 // This function removes the ANY synthesis entries for every path already
-// covered by at least one drf_router_expanded per-verb entry. The ANY entry
-// from emitCRUDFamily (the detail-route wildcard) is NOT removed — it is
-// intentional and carries pattern_type="drf_router_expanded", not
-// "http_endpoint_synthesis".
+// covered by at least one drf_router_expanded per-verb entry. Since #1692,
+// emitCRUDFamily no longer emits a drf_router_expanded ANY for detail routes
+// when per-verb routes are present, so this function is effectively removing
+// ALL http_endpoint_synthesis ANY entries that have drf_router_expanded coverage.
 //
 // synthEntities: the merged entity slice from pass2 (from applyHTTPEndpointSynthesis)
 // drfEntities:   output from ApplyDjangoDRFRoutes
@@ -1020,24 +1020,30 @@ func emitOneCRUDFamily(
 	if vc.crudMethods["create"] {
 		emit("POST", canonicalDjango(fullPrefix), sourceFile, viewSetName, "create")
 	}
+	hasDetailVerb := false
 	if vc.crudMethods["retrieve"] {
 		emit("GET", canonicalDjango(detailBase), sourceFile, viewSetName, "retrieve")
+		hasDetailVerb = true
 	}
 	if vc.crudMethods["update"] {
 		emit("PUT", canonicalDjango(detailBase), sourceFile, viewSetName, "update")
+		hasDetailVerb = true
 	}
 	if vc.crudMethods["partial_update"] {
 		emit("PATCH", canonicalDjango(detailBase), sourceFile, viewSetName, "partial_update")
+		hasDetailVerb = true
 	}
 	if vc.crudMethods["destroy"] {
 		emit("DELETE", canonicalDjango(detailBase), sourceFile, viewSetName, "destroy")
+		hasDetailVerb = true
 	}
-	// Also emit an ANY-verb detail variant so verb-agnostic consumer
-	// matching (e.g. PATCH /contracts/{param}) still resolves when the
-	// consumer's verb doesn't match a specific CRUD verb (e.g. a custom
-	// HTTP verb on an @action that overrides update).
-	if vc.crudMethods["retrieve"] || vc.crudMethods["update"] ||
-		vc.crudMethods["partial_update"] || vc.crudMethods["destroy"] {
+	// Emit an ANY-verb detail fallback ONLY when no per-verb detail routes
+	// were emitted above (i.e. the ViewSet class could not be resolved and
+	// crudMethods is empty). When per-verb routes are present, the ANY is
+	// redundant: it pollutes the index with a duplicate path that the
+	// verb-aware matcher must skip, and it defeated the iter3 calibration
+	// top add-rec #2 (detail routes still showing method=ANY). Fix #1692.
+	if !hasDetailVerb {
 		emit("ANY", canonicalDjango(detailBase), sourceFile, viewSetName, "")
 	}
 }
