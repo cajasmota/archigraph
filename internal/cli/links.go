@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/engine"
 	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
 	"github.com/cajasmota/archigraph/internal/links"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
@@ -295,11 +297,23 @@ func runPhantomEdgePass(group string, cfg *registry.GroupConfig, linksPath strin
 			return ra.Kind < rb.Kind
 		})
 
-		// Write atomically.
+		// Write atomically — both graph.fb (canonical binary) and graph.json
+		// must be updated together so that LoadGraphFromDir and any tool that
+		// reads graph.json directly see the same entity set (fixes #1702).
+		stateDir := filepath.Dir(graphPaths[slug])
+		fbPath := filepath.Join(stateDir, "graph.fb")
+		if fbErr := fbwriter.WriteAtomic(fbPath, doc); fbErr != nil {
+			return added, fmt.Errorf("phantom-edge pass: write graph.fb %s: %w", slug, fbErr)
+		}
 		p := graphPaths[slug]
 		if werr := graph.WriteAtomic(p, doc, false); werr != nil {
-			return added, fmt.Errorf("phantom-edge pass: write %s: %w", slug, werr)
+			return added, fmt.Errorf("phantom-edge pass: write graph.json %s: %w", slug, werr)
 		}
+		// Stamp identical mtime so the two encodings of the same data are
+		// never mistaken for a partial write (#1626 pattern).
+		now := time.Now()
+		_ = os.Chtimes(fbPath, now, now)
+		_ = os.Chtimes(p, now, now)
 		fmt.Fprintf(os.Stderr,
 			"archigraph: phantom-edge pass group=%s repo=%s phantom_edges=%d\n",
 			group, slug, added)

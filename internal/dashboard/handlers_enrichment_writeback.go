@@ -41,6 +41,7 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -198,16 +199,36 @@ func (s *Server) handleEnrichmentWriteback(w http.ResponseWriter, r *http.Reques
 	}
 	found.entity.Properties["description"] = req.Description
 
-	// Persist the updated graph.json atomically.
+	// Persist the updated graph to disk — both graph.fb (canonical binary,
+	// preferred by LoadGraphFromDir / MCP) and graph.json (backward-compatible
+	// JSON, read by debug tools and external integrations). Writing only one
+	// format leaves the other stale, causing ghost entity IDs for direct
+	// graph.json readers (fixes #1702).
+	stateDir := daemon.StateDirForRepo(found.repoPath)
+	fbPath := filepath.Join(stateDir, "graph.fb")
 	graphPath := daemon.GraphPathForRepo(found.repoPath)
+
+	if err := fbwriter.WriteAtomic(fbPath, found.doc); err != nil {
+		s.auditor.Err("enrichment_writeback", group, map[string]any{
+			"subject_id": subjectID,
+			"kind":       req.Kind,
+		}, "write graph.fb: "+err.Error())
+		writeErr(w, http.StatusInternalServerError, "persist graph.fb: "+err.Error())
+		return
+	}
 	if err := graph.WriteAtomic(graphPath, found.doc, false); err != nil {
 		s.auditor.Err("enrichment_writeback", group, map[string]any{
 			"subject_id": subjectID,
 			"kind":       req.Kind,
 		}, "write graph.json: "+err.Error())
-		writeErr(w, http.StatusInternalServerError, "persist graph: "+err.Error())
+		writeErr(w, http.StatusInternalServerError, "persist graph.json: "+err.Error())
 		return
 	}
+	// Stamp identical mtime on both files so the on-disk pair is never
+	// mistaken for a partial write (#1626 pattern).
+	writeNow := time.Now()
+	_ = os.Chtimes(fbPath, writeNow, writeNow)
+	_ = os.Chtimes(graphPath, writeNow, writeNow)
 
 	// Invalidate the cache so the next GET re-reads the updated graph.
 	s.graphs.Invalidate(group)
