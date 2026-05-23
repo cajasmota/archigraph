@@ -14,12 +14,14 @@
 
 import { useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { X, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { X, RotateCcw, SlidersHorizontal, Boxes } from "lucide-react";
 import { SearchInput, Pill, Kbd } from "@/components/ui";
 import { useGraph } from "@/hooks/use-graph";
+import { useModuleAnalysis } from "@/hooks/use-module-analysis";
 import { useGraphStore, type ColorMode } from "@/store/use-graph-store";
 import { useAppStore } from "@/store/use-app-store";
 import type { EdgeKind, GraphNode } from "@/data/types";
+import { ModuleOverview } from "@/components/graph/module-overview";
 const GraphCanvas = lazy(() =>
   import("@/components/graph/graph-canvas").then((m) => ({ default: m.GraphCanvas })),
 );
@@ -29,6 +31,20 @@ import { FiltersDrawer } from "@/components/graph/filters-drawer";
 import { CommunitiesPopover } from "@/components/graph/communities-popover";
 import { MCPActivityOverlay } from "@/components/graph/mcp-activity-overlay";
 import { useGraphHighlight } from "@/hooks/use-graph-highlight";
+
+/**
+ * #1386 — derive the entity-level "module key" from a node's source file.
+ *
+ * Mirrors `moduleKey` in graph-canvas.tsx (last 2 path segments minus the
+ * file part). Kept here in addition to (not instead of) the canvas copy so
+ * the route can filter the entity set when a user expands a module from
+ * the overview, without reaching into the canvas internals.
+ */
+function moduleKeyOf(sourceFile: string): string {
+  if (!sourceFile) return "";
+  const parts = sourceFile.replace(/\\/g, "/").split("/");
+  return parts.slice(0, -1).slice(-2).join("/");
+}
 
 const COLOR_MODES: { id: ColorMode; label: string }[] = [
   { id: "repo", label: "Repo" },
@@ -45,6 +61,13 @@ export default function GraphScreen() {
   const s = useGraphStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, isError } = useGraph(groupId, { lod: s.lod });
+
+  // #1386 — module-level GDS for the "Module overview" mode. Lazy: only
+  // fetched while the overview toggle is ON, so the default graph route has
+  // zero extra network cost.
+  const moduleAnalysis = useModuleAnalysis(groupId, {
+    enabled: s.moduleOverviewMode,
+  });
 
   const searchRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<GraphCanvasHandle>(null);
@@ -98,6 +121,8 @@ export default function GraphScreen() {
         else if (s.focusNodeIds) exitFocus();
         else if (s.selectedNodeId) s.setSelectedNode(null);
         else if (s.focusedCommunityId != null) s.setFocusedCommunity(null);
+        // #1386 — last-resort Escape: exit Module overview mode.
+        else if (s.moduleOverviewMode) s.setModuleOverviewMode(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -185,6 +210,43 @@ export default function GraphScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.egoHops, s.focusRootId, adjacency]);
 
+  // #1386 — when the user expands a module from the overview, build a focus
+  // set covering all entities in that (repo, module) pair and pop back into
+  // the entity-level view. We piggy-back on the existing focus machinery so
+  // the rendered ego sub-graph, exit affordance, camera snapshot etc. all
+  // just work — no parallel "module focus" branch.
+  useEffect(() => {
+    if (!s.expandedModule || !data) return;
+    const { repo: targetRepo, moduleName } = s.expandedModule;
+    const ids = new Set<string>();
+    for (const n of nodes) {
+      if (n.repo !== targetRepo) continue;
+      if (moduleKeyOf(n.sourceFile) !== moduleName) continue;
+      ids.add(n.id);
+    }
+    if (ids.size === 0) {
+      // Fallback: the module identity from the daemon (Module entity Name)
+      // doesn't always line up with the entity-graph's path-derived module
+      // key — synthetic top-level modules carry the repo slug as their name,
+      // for example. Fall back to filtering by repo so the user STILL gets a
+      // meaningful expanded sub-graph (the repo's entities) rather than a
+      // silent no-op.
+      for (const n of nodes) {
+        if (n.repo === targetRepo) ids.add(n.id);
+      }
+    }
+    if (ids.size === 0) {
+      s.setExpandedModule(null);
+      return;
+    }
+    canvasRef.current?.snapshotCamera();
+    s.setModuleOverviewMode(false); // exit overview into entity view…
+    s.setExpandedModule(null);
+    s.setFocusRoot(null); // …with a module-scoped focus instead of a single root.
+    s.setFocusNodes(ids);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.expandedModule, data]);
+
   // Once data arrives, if a node was deep-linked, focus its ego-graph.
   useEffect(() => {
     if (data && s.selectedNodeId && !s.focusNodeIds) {
@@ -268,6 +330,23 @@ export default function GraphScreen() {
         ) : null}
 
         <div className="ml-auto flex items-center gap-2">
+          {/* #1386 — Module overview toggle. Off by default; ON collapses the
+              graph to module-level nodes (one node per module) so users can
+              see the SCC/PageRank/betweenness from #1384 at a glance. */}
+          <button
+            onClick={() => s.setModuleOverviewMode(!s.moduleOverviewMode)}
+            aria-pressed={s.moduleOverviewMode}
+            data-testid="module-overview-toggle"
+            className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-sm transition-colors ${
+              s.moduleOverviewMode
+                ? "border-accent bg-accent-soft text-accent-strong"
+                : "border-border bg-surface text-text-2 hover:bg-surface-2"
+            }`}
+            title="Collapse graph to module-level overview"
+          >
+            <Boxes size={13} /> Module overview
+          </button>
+
           <div className="flex overflow-hidden rounded-md border border-border">
             {COLOR_MODES.map((m) => (
               <button
@@ -310,7 +389,40 @@ export default function GraphScreen() {
 
       {/* Canvas + overlays */}
       <div className="relative min-h-0 flex-1">
-        {isLoading ? (
+        {s.moduleOverviewMode ? (
+          /* #1386 — module-level collapsed view. Renders OVER the entity
+             graph route's data plumbing; closing it (toggle off OR Reset)
+             returns to the canonical entity-level canvas below. */
+          moduleAnalysis.isLoading ? (
+            <div className="grid h-full place-items-center bg-bg">
+              <div className="flex flex-col items-center gap-3 text-text-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
+                <span className="text-sm">Computing module analysis…</span>
+              </div>
+            </div>
+          ) : moduleAnalysis.isError ? (
+            <div className="grid h-full place-items-center bg-bg">
+              <div className="text-center">
+                <p className="text-md text-text">Module analysis unavailable.</p>
+                <p className="mt-1 text-sm text-text-3">
+                  The daemon endpoint /api/v2/groups/{groupId}/modules/analysis
+                  returned an error.
+                </p>
+              </div>
+            </div>
+          ) : moduleAnalysis.data ? (
+            <ModuleOverview
+              data={moduleAnalysis.data}
+              activeRepo={
+                s.activeRepos && s.activeRepos.size === 1
+                  ? Array.from(s.activeRepos)[0]
+                  : null
+              }
+              isDark={isDark}
+              onExpandModule={(m) => s.setExpandedModule(m)}
+            />
+          ) : null
+        ) : isLoading ? (
           <div className="grid h-full place-items-center bg-bg">
             <div className="flex flex-col items-center gap-3 text-text-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
