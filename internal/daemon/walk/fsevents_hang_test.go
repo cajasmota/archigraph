@@ -1,3 +1,5 @@
+//go:build darwin || linux
+
 // fsevents_hang_test.go — #1721 regression coverage.
 //
 // We simulate the macOS fsevents kernel stall by pointing ParseIgnoreFile and
@@ -5,6 +7,9 @@
 // open(2) blocks until a writer connects — the writer never connects here, so
 // without the deadline fix both callers would block indefinitely. After the
 // fix they must return within the test's timeout budget.
+//
+// Build-constrained to darwin||linux: syscall.Mkfifo is a POSIX-only syscall
+// and does not exist on Windows.
 package walk
 
 import (

@@ -1,3 +1,5 @@
+//go:build darwin || linux
+
 // openleak_test.go — #1723 regression coverage.
 //
 // #1722 (cf113fd) fixed the *caller* hang by wrapping os.Open in a goroutine
@@ -8,6 +10,11 @@
 //
 // These tests force ParseIgnoreFile to hit the deadline path repeatedly and
 // confirm the goroutine count stays bounded — i.e. no leak per call.
+//
+// Build-constrained to darwin||linux: the FIFO-based leak simulation and the
+// syscall.Mkfifo / syscall.Write helpers are POSIX-only. Windows uses a
+// separate test (openleak_windows_test.go) that exercises the plain os.Open
+// fallback path.
 package walk
 
 import (
