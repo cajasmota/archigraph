@@ -562,7 +562,7 @@ function DetailPane({ detail: rawDetail, initialVerb }: { detail: PathDetail; in
     outbound: rawDetail.outbound ?? {},
   } as PathDetail;
   // Default to the verb selected in the list row (from URL), fall back to "all".
-  const [verbFilter, setVerbFilter] = useState<string>(() => {
+  const [verbFilter] = useState<string>(() => {
     if (initialVerb && (rawDetail.verbs ?? []).includes(initialVerb as HttpVerb)) return initialVerb;
     return "all";
   });
@@ -611,7 +611,8 @@ function DetailPane({ detail: rawDetail, initialVerb }: { detail: PathDetail; in
         {/* Large verb chips + path */}
         <div className="flex flex-wrap items-start gap-2 mb-2">
           <div className="flex flex-wrap gap-1.5 items-center">
-            {detail.verbs.map((v) => <VerbChip key={v} verb={v} lg />)}
+            {verbFilter !== "all" && <VerbChip key={verbFilter} verb={verbFilter} lg />}
+            {verbFilter === "all" && detail.verbs.map((v) => <VerbChip key={v} verb={v} lg />)}
             {detail.is_webhook && (
               <span className="inline-flex items-center gap-1 h-6 px-2 rounded text-xs font-medium bg-[var(--info-soft)] text-[var(--info)]">
                 🪝 {detail.webhook_provider ?? "webhook"}
@@ -662,44 +663,6 @@ function DetailPane({ detail: rawDetail, initialVerb }: { detail: PathDetail; in
           )}
         </div>
       </div>
-
-      {/* Verb filter strip — only when >1 verb */}
-      {detail.verbs.length > 1 && (
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-bg-soft shrink-0 overflow-x-auto">
-          <span className="text-xs text-text-4 mr-1 shrink-0">View</span>
-          <button
-            type="button"
-            onClick={() => setVerbFilter("all")}
-            className={cn(
-              "shrink-0 h-6 px-2 rounded text-xs transition-colors",
-              verbFilter === "all"
-                ? "bg-accent-soft text-accent-strong font-medium"
-                : "text-text-3 hover:bg-surface-2",
-            )}
-          >
-            All · {detail.verbs.length} verbs
-          </button>
-          {detail.verbs.map((v) => {
-            const params = detail.parameters.filter((p) => !p.verbs || p.verbs.includes(v));
-            return (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setVerbFilter(v)}
-                className={cn(
-                  "shrink-0 h-6 px-2 rounded text-xs transition-colors flex items-center gap-1",
-                  verbFilter === v
-                    ? "bg-accent-soft text-accent-strong font-medium"
-                    : "text-text-3 hover:bg-surface-2",
-                )}
-              >
-                <VerbChip verb={v} />
-                {params.length > 0 && <span className="text-text-4">· {params.length} params</span>}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       {/* Scrollable sections */}
       <div className="flex-1 overflow-y-auto ag-scroll">
