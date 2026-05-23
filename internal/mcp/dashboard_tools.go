@@ -870,108 +870,17 @@ func (s *Server) handleSearchEntities(_ context.Context, req mcpapi.CallToolRequ
 
 // handleGetSubgraph returns all nodes and edges within `depth` hops of the
 // given entity_id — a local neighbourhood extract.
-func (s *Server) handleGetSubgraph(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
-	entityID, err := req.RequireString("entity_id")
-	if err != nil {
-		return mcpapi.NewToolResultError(err.Error()), nil
+//
+// Deprecated: use archigraph_subgraph with format="raw".
+func (s *Server) handleGetSubgraph(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	// Trampoline: delegate to unified handler with format="raw".
+	args := req.GetArguments()
+	if args == nil {
+		args = map[string]any{}
+		req.Params.Arguments = args
 	}
-	_, lg, errRes := s.resolveAndGroup(req)
-	if errRes != nil {
-		return errRes, nil
-	}
-	depth := argInt(req, "depth", 2)
-	if depth < 1 {
-		depth = 1
-	}
-	if depth > 5 {
-		depth = 5
-	}
-	repos := reposToConsider(lg, nil)
-	repoHint, local := splitPrefixed(entityID)
-	if repoHint != "" {
-		if r, ok := lg.Repos[repoHint]; ok && r.Doc != nil {
-			repos = []*LoadedRepo{r}
-		}
-	}
-
-	for _, r := range repos {
-		if r.Doc == nil {
-			continue
-		}
-		target := local
-		if target == "" {
-			target = entityID
-		}
-		byID := r.ByID
-		if _, ok := byID[target]; !ok {
-			continue
-		}
-		adj := r.Adjacency
-		visited := bfs(adj, target, depth, nil)
-		byID2 := r.ByID
-		type nodeOut struct {
-			EntityID   string `json:"entity_id"`
-			Name       string `json:"name"`
-			Kind       string `json:"kind"`
-			SourceFile string `json:"source_file,omitempty"`
-			StartLine  int    `json:"start_line,omitempty"`
-			Depth      int    `json:"depth"`
-		}
-		type edgeOut struct {
-			FromID string `json:"from_id"`
-			ToID   string `json:"to_id"`
-			Kind   string `json:"kind"`
-		}
-		var nodes []nodeOut
-		nodeSet := map[string]bool{}
-		for id, d := range visited {
-			if e := byID2[id]; e != nil {
-				nodes = append(nodes, nodeOut{
-					EntityID:   prefixedID(r.Repo, e.ID),
-					Name:       e.Name,
-					Kind:       e.Kind,
-					SourceFile: e.SourceFile,
-					StartLine:  e.StartLine,
-					Depth:      d,
-				})
-			}
-			nodeSet[id] = true
-		}
-		sort.Slice(nodes, func(i, j int) bool {
-			if nodes[i].Depth != nodes[j].Depth {
-				return nodes[i].Depth < nodes[j].Depth
-			}
-			return nodes[i].Name < nodes[j].Name
-		})
-		var edges []edgeOut
-		seen := map[string]bool{}
-		for i := range r.Doc.Relationships {
-			rel := &r.Doc.Relationships[i]
-			if !nodeSet[rel.FromID] || !nodeSet[rel.ToID] {
-				continue
-			}
-			key := rel.FromID + ">" + rel.ToID + ":" + rel.Kind
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-			edges = append(edges, edgeOut{
-				FromID: prefixedID(r.Repo, rel.FromID),
-				ToID:   prefixedID(r.Repo, rel.ToID),
-				Kind:   rel.Kind,
-			})
-		}
-		return jsonResult(map[string]any{
-			"root":       prefixedID(r.Repo, target),
-			"repo":       r.Repo,
-			"depth":      depth,
-			"nodes":      nodes,
-			"edges":      edges,
-			"node_count": len(nodes),
-			"edge_count": len(edges),
-		}), nil
-	}
-	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
+	args["format"] = "raw"
+	return s.handleSubgraph(ctx, req)
 }
 
 // reverseTraversalEdgeKinds is the set of edge kinds where the BFS in

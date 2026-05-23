@@ -421,6 +421,152 @@ func TestSummarizeSubgraph_RootNoCallers(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// TestSubgraph — unified archigraph_subgraph tool (#1754)
+// ---------------------------------------------------------------------------
+
+// TestSubgraph_FormatRaw_DefaultsToRaw verifies that omitting format= returns
+// JSON (raw) output identical to the old get_subgraph path.
+func TestSubgraph_FormatRaw_DefaultsToRaw(t *testing.T) {
+	entities := []graph.Entity{
+		{ID: "root", Name: "Root", Kind: "Function"},
+		{ID: "child", Name: "Child", Kind: "Function"},
+	}
+	rels := []graph.Relationship{
+		{ID: "r1", FromID: "root", ToID: "child", Kind: "CALLS"},
+	}
+	srv := newTestServerWithDoc(t, minDoc(entities, rels))
+
+	// No format= → default is "raw".
+	out := callFlowTool(t, srv.handleSubgraph, map[string]any{
+		"group":     "test",
+		"entity_id": "root",
+		"depth":     float64(1),
+	})
+	if out == nil {
+		t.Fatal("expected JSON output for format=raw, got nil (markdown path?)")
+	}
+	nc, ok := out["node_count"].(float64)
+	if !ok {
+		t.Fatalf("node_count missing or wrong type in raw output: %v", out)
+	}
+	if int(nc) != 2 {
+		t.Errorf("expected node_count=2, got %d", int(nc))
+	}
+}
+
+// TestSubgraph_FormatRaw_MatchesLegacyGetSubgraph verifies byte-identical
+// node_count + edge_count output for the same seed/depth between the unified
+// tool with format="raw" and the legacy handleGetSubgraph trampoline.
+func TestSubgraph_FormatRaw_MatchesLegacyGetSubgraph(t *testing.T) {
+	entities := []graph.Entity{
+		{ID: "root", Name: "Root", Kind: "Function"},
+		{ID: "child", Name: "Child", Kind: "Function"},
+		{ID: "grandchild", Name: "GrandChild", Kind: "Function"},
+	}
+	rels := []graph.Relationship{
+		{ID: "r1", FromID: "root", ToID: "child", Kind: "CALLS"},
+		{ID: "r2", FromID: "child", ToID: "grandchild", Kind: "CALLS"},
+	}
+	srv := newTestServerWithDoc(t, minDoc(entities, rels))
+
+	args := map[string]any{"group": "test", "entity_id": "root", "depth": float64(2)}
+
+	// Legacy path via deprecated handleGetSubgraph trampoline.
+	legacyArgs := map[string]any{"group": "test", "entity_id": "root", "depth": float64(2)}
+	legacy := callDashboardTool(t, srv.handleGetSubgraph, legacyArgs)
+
+	// New unified path with explicit format="raw".
+	args["format"] = "raw"
+	unified := callFlowTool(t, srv.handleSubgraph, args)
+	if unified == nil {
+		t.Fatal("expected JSON output for format=raw")
+	}
+
+	if legacy["node_count"] != unified["node_count"] {
+		t.Errorf("node_count mismatch: legacy=%v unified=%v", legacy["node_count"], unified["node_count"])
+	}
+	if legacy["edge_count"] != unified["edge_count"] {
+		t.Errorf("edge_count mismatch: legacy=%v unified=%v", legacy["edge_count"], unified["edge_count"])
+	}
+}
+
+// TestSubgraph_FormatMarkdown_MatchesLegacySummarize verifies that
+// format="markdown" produces identical content to the legacy trampoline.
+func TestSubgraph_FormatMarkdown_MatchesLegacySummarize(t *testing.T) {
+	doc := buildChainDoc()
+	srv := newTestServerWithDoc(t, doc)
+
+	unifiedText := callFlowToolText(t, srv.handleSubgraph, map[string]any{
+		"entity_id": "ent-b",
+		"depth":     float64(1),
+		"format":    "markdown",
+	})
+	legacyText := callFlowToolText(t, srv.handleSummarizeSubgraph, map[string]any{
+		"entity_id": "ent-b",
+		"depth":     float64(1),
+	})
+
+	if unifiedText != legacyText {
+		t.Errorf("format=markdown output differs from legacy summarize_subgraph:\nunified:\n%s\nlegacy:\n%s", unifiedText, legacyText)
+	}
+}
+
+// TestSubgraph_InvalidFormat verifies a helpful error is returned for unknown format.
+func TestSubgraph_InvalidFormat(t *testing.T) {
+	doc := buildChainDoc()
+	srv := newTestServerWithDoc(t, doc)
+
+	req := mcpapi.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"entity_id": "ent-a",
+		"depth":     float64(1),
+		"format":    "xml",
+	}
+	res, err := srv.handleSubgraph(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !res.IsError {
+		t.Fatal("expected IsError=true for invalid format")
+	}
+}
+
+// TestSubgraph_LegacyGetSubgraph_TrampolineWorks ensures the deprecated
+// handleGetSubgraph still produces valid JSON output via the trampoline.
+func TestSubgraph_LegacyGetSubgraph_TrampolineWorks(t *testing.T) {
+	entities := []graph.Entity{
+		{ID: "a", Name: "A", Kind: "Function"},
+		{ID: "b", Name: "B", Kind: "Function"},
+	}
+	rels := []graph.Relationship{{ID: "r1", FromID: "a", ToID: "b", Kind: "CALLS"}}
+	srv := newTestServerWithDoc(t, minDoc(entities, rels))
+
+	out := callDashboardTool(t, srv.handleGetSubgraph, map[string]any{
+		"group":     "test",
+		"entity_id": "a",
+		"depth":     float64(1),
+	})
+	if int(out["node_count"].(float64)) != 2 {
+		t.Errorf("expected 2 nodes via legacy trampoline, got %v", out["node_count"])
+	}
+}
+
+// TestSubgraph_LegacySummarizeSubgraph_TrampolineWorks ensures the deprecated
+// handleSummarizeSubgraph still produces markdown output via the trampoline.
+func TestSubgraph_LegacySummarizeSubgraph_TrampolineWorks(t *testing.T) {
+	doc := buildChainDoc()
+	srv := newTestServerWithDoc(t, doc)
+
+	text := callFlowToolText(t, srv.handleSummarizeSubgraph, map[string]any{
+		"entity_id": "ent-b",
+		"depth":     float64(1),
+	})
+	if !strings.Contains(text, "FuncB") {
+		t.Errorf("legacy trampoline should still return FuncB in markdown:\n%s", text)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // TestFindDeadCode
 // ---------------------------------------------------------------------------
 

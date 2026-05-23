@@ -332,8 +332,20 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_search_entities", s.handleSearchEntities))
 
+	// archigraph_subgraph — unified subgraph tool (#1754).
+	// Folds archigraph_get_subgraph + archigraph_summarize_subgraph into one
+	// entry point; discriminated by format="raw"|"markdown".
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_subgraph",
+		mcpapi.WithDescription("Nodes+edges within N hops (format=raw) or Markdown summary (format=markdown)."),
+		mcpapi.WithString("entity_id", mcpapi.Required()),
+		mcpapi.WithNumber("depth", mcpapi.DefaultNumber(2)),
+		mcpapi.WithString("format", mcpapi.DefaultString("raw")),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+	), s.wrap("archigraph_subgraph", s.handleSubgraph))
+
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_get_subgraph",
-		mcpapi.WithDescription("All nodes and edges within N hops of an entity."),
+		mcpapi.WithDescription("Deprecated — use archigraph_subgraph(format=raw)."),
 		mcpapi.WithString("entity_id", mcpapi.Required()),
 		mcpapi.WithNumber("depth", mcpapi.DefaultNumber(2)),
 		mcpapi.WithAny("group"),
@@ -397,7 +409,7 @@ func (s *Server) registerTools() {
 	), s.wrap("archigraph_impact_radius", s.handleImpactRadius))
 
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_summarize_subgraph",
-		mcpapi.WithDescription("Markdown summary of callers + callees within N hops."),
+		mcpapi.WithDescription("Deprecated — use archigraph_subgraph(format=markdown)."),
 		mcpapi.WithString("entity_id", mcpapi.Required()),
 		mcpapi.WithNumber("depth", mcpapi.DefaultNumber(2)),
 		mcpapi.WithAny("group"),

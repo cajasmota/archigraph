@@ -37,7 +37,11 @@ func TestMCPHandshakeBudget(t *testing.T) {
 		// 2026-05-23 (#1738): ceiling bumped to 3,300 to seat token_budget params on
 		// expand/traces/endpoints/find_callers/find_callees (5 params, +48 tokens).
 		// Measured: 3,248 tokens.
-		tokenCeiling  = 3300
+		// 2026-05-23 (#1754): ceiling bumped to 3,350 to seat archigraph_subgraph
+		// unified tool (format=raw|markdown discriminator folding get_subgraph +
+		// summarize_subgraph). Net: +1 schema entry with deprecated shims retained.
+		// Measured: 3,319 tokens. Full saving (~229B) lands when shims drop next release.
+		tokenCeiling  = 3350
 		charsPerToken = 4
 		envelopeBytes = 512 // initEnvelopeBytes constant from cmd/mcp-audit
 		maxDescLen    = 80

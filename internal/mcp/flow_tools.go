@@ -1,11 +1,12 @@
 // flow_tools.go — MCP handlers for flow-aware graph traversal tools (issue #1252).
 //
 // Implements:
-//   - archigraph_find_callers   — what calls this entity (inbound edges, N hops)
-//   - archigraph_find_callees   — what does this entity call (outbound edges, N hops)
-//   - archigraph_impact_radius  — entities affected if this one changes, with risk score
-//   - archigraph_summarize_subgraph — LLM-friendly markdown summary of entity neighbourhood
-//   - archigraph_find_dead_code — unreferenced public operations carrying a dead-code marker
+//   - archigraph_find_callers       — what calls this entity (inbound edges, N hops)
+//   - archigraph_find_callees       — what does this entity call (outbound edges, N hops)
+//   - archigraph_impact_radius      — entities affected if this one changes, with risk score
+//   - archigraph_subgraph           — unified subgraph tool (format=raw|markdown) (#1754)
+//   - archigraph_summarize_subgraph — deprecated alias for archigraph_subgraph(format=markdown)
+//   - archigraph_find_dead_code     — unreferenced public operations carrying a dead-code marker
 //
 // All handlers operate against the in-memory LoadedGroup data — no HTTP calls.
 package mcp
@@ -535,17 +536,134 @@ func buildRiskReason(e *graph.Entity, inDegree int) string {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_summarize_subgraph
+// archigraph_subgraph (unified, #1754)
 // ---------------------------------------------------------------------------
 
-// handleSummarizeSubgraph returns an LLM-friendly Markdown summary of an
-// entity's local neighbourhood. The summary can be pasted directly into a
-// doc or used as context for a follow-up agent prompt.
-func (s *Server) handleSummarizeSubgraph(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+// handleSubgraph is the unified handler for archigraph_subgraph.
+// format="raw"      → JSON graph (nodes + edges), identical output to old get_subgraph.
+// format="markdown" → LLM-friendly Markdown summary, identical output to old summarize_subgraph.
+// Both legacy tools delegate here as deprecated trampolines.
+func (s *Server) handleSubgraph(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	entityID, err := req.RequireString("entity_id")
 	if err != nil {
 		return mcpapi.NewToolResultError(err.Error()), nil
 	}
+	format := argString(req, "format", "raw")
+	switch format {
+	case "raw":
+		return s.subgraphRaw(entityID, req)
+	case "markdown":
+		return s.subgraphMarkdown(entityID, req)
+	default:
+		return mcpapi.NewToolResultError("format must be \"raw\" or \"markdown\"; got: " + format), nil
+	}
+}
+
+// subgraphRaw returns all nodes and edges within depth hops of entity_id.
+// Extracted from the former handleGetSubgraph (dashboard_tools.go).
+func (s *Server) subgraphRaw(entityID string, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	_, lg, errRes := s.resolveAndGroup(req)
+	if errRes != nil {
+		return errRes, nil
+	}
+	depth := argInt(req, "depth", 2)
+	if depth < 1 {
+		depth = 1
+	}
+	if depth > 5 {
+		depth = 5
+	}
+	repos := reposToConsider(lg, nil)
+	repoHint, local := splitPrefixed(entityID)
+	if repoHint != "" {
+		if r, ok := lg.Repos[repoHint]; ok && r.Doc != nil {
+			repos = []*LoadedRepo{r}
+		}
+	}
+
+	for _, r := range repos {
+		if r.Doc == nil {
+			continue
+		}
+		target := local
+		if target == "" {
+			target = entityID
+		}
+		byID := r.ByID
+		if _, ok := byID[target]; !ok {
+			continue
+		}
+		adj := r.Adjacency
+		visited := bfs(adj, target, depth, nil)
+		byID2 := r.ByID
+		type nodeOut struct {
+			EntityID   string `json:"entity_id"`
+			Name       string `json:"name"`
+			Kind       string `json:"kind"`
+			SourceFile string `json:"source_file,omitempty"`
+			StartLine  int    `json:"start_line,omitempty"`
+			Depth      int    `json:"depth"`
+		}
+		type edgeOut struct {
+			FromID string `json:"from_id"`
+			ToID   string `json:"to_id"`
+			Kind   string `json:"kind"`
+		}
+		var nodes []nodeOut
+		nodeSet := map[string]bool{}
+		for id, d := range visited {
+			if e := byID2[id]; e != nil {
+				nodes = append(nodes, nodeOut{
+					EntityID:   prefixedID(r.Repo, e.ID),
+					Name:       e.Name,
+					Kind:       e.Kind,
+					SourceFile: e.SourceFile,
+					StartLine:  e.StartLine,
+					Depth:      d,
+				})
+			}
+			nodeSet[id] = true
+		}
+		sort.Slice(nodes, func(i, j int) bool {
+			if nodes[i].Depth != nodes[j].Depth {
+				return nodes[i].Depth < nodes[j].Depth
+			}
+			return nodes[i].Name < nodes[j].Name
+		})
+		var edges []edgeOut
+		seen := map[string]bool{}
+		for i := range r.Doc.Relationships {
+			rel := &r.Doc.Relationships[i]
+			if !nodeSet[rel.FromID] || !nodeSet[rel.ToID] {
+				continue
+			}
+			key := rel.FromID + ">" + rel.ToID + ":" + rel.Kind
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			edges = append(edges, edgeOut{
+				FromID: prefixedID(r.Repo, rel.FromID),
+				ToID:   prefixedID(r.Repo, rel.ToID),
+				Kind:   rel.Kind,
+			})
+		}
+		return jsonResult(map[string]any{
+			"root":       prefixedID(r.Repo, target),
+			"repo":       r.Repo,
+			"depth":      depth,
+			"nodes":      nodes,
+			"edges":      edges,
+			"node_count": len(nodes),
+			"edge_count": len(edges),
+		}), nil
+	}
+	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
+}
+
+// subgraphMarkdown returns an LLM-friendly Markdown summary of entity_id's
+// local neighbourhood. Extracted from the former handleSummarizeSubgraph.
+func (s *Server) subgraphMarkdown(entityID string, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
 		return errRes, nil
@@ -701,6 +819,26 @@ func (s *Server) handleSummarizeSubgraph(_ context.Context, req mcpapi.CallToolR
 		return mcpapi.NewToolResultText(b.String()), nil
 	}
 	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
+}
+
+// ---------------------------------------------------------------------------
+// archigraph_summarize_subgraph (deprecated — trampoline to archigraph_subgraph)
+// ---------------------------------------------------------------------------
+
+// handleSummarizeSubgraph returns an LLM-friendly Markdown summary of an
+// entity's local neighbourhood. The summary can be pasted directly into a
+// doc or used as context for a follow-up agent prompt.
+//
+// Deprecated: use archigraph_subgraph with format="markdown".
+func (s *Server) handleSummarizeSubgraph(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	// Trampoline: delegate to unified handler with format="markdown".
+	args := req.GetArguments()
+	if args == nil {
+		args = map[string]any{}
+		req.Params.Arguments = args
+	}
+	args["format"] = "markdown"
+	return s.handleSubgraph(ctx, req)
 }
 
 // ---------------------------------------------------------------------------
