@@ -265,6 +265,35 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	// The pass never removes or modifies existing entities.
 	configModuleEmitted := emitConfigModuleEntity(root, file, &entities)
 
+	// Issue #1967 — capture DRF @action(...) decorator kwargs and surface
+	// them as Properties on the per-method Operation entity (and stamp a
+	// per-method decorator summary on the parent class). Runs after the
+	// primary walk so the matching Operation/Class entities exist.
+	func() {
+		defer func() { _ = recover() }()
+		emitDRFActionProperties(root, file, &entities)
+	}()
+
+	// Issue #1990 — Django admin REFERENCES edges from the admin module
+	// to its registered Models / ModelAdmin classes, plus ModelAdmin
+	// property capture (list_display, search_fields, …) and @admin.action
+	// method tagging. No-op for non-admin files.
+	func() {
+		defer func() { _ = recover() }()
+		emitDjangoAdminEdges(root, file, &entities)
+	}()
+
+	// Issue #1982 — DEPENDS_ON_CONFIG consumer edges. Scans the file body
+	// for `settings.X` and `os.environ.get("X")` / `os.getenv("X")` shapes
+	// and emits an edge from the enclosing entity (or the file when at
+	// module scope) to the canonical settings.py / .env Config entity.
+	// Runs after extractImports so the import-binding scan in Phase 1
+	// observes IMPORTS edges already attached to the file entity.
+	func() {
+		defer func() { _ = recover() }()
+		emitConfigConsumerEdges(root, file, &entities)
+	}()
+
 	// Issue #1884 — supplemental package-module pass (Wave 1).
 	// Emits one Module entity per Python package boundary (__init__.py or
 	// plain .py module) so docgen can seed per-package pages and flow
