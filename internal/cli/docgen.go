@@ -1,4 +1,4 @@
-// Package cli — `archigraph docgen` subcommand (Tier 0–3, issue #1760).
+// Package cli — `archigraph docgen` subcommand (Tier 0–4, issue #1760).
 //
 // Tier 0 produces ONE markdown section for ONE seed entity with a <30 s
 // feedback loop. It is designed for rapid prompt-quality iteration:
@@ -33,6 +33,12 @@
 //	  --group=mygroup \
 //	  --repo=core
 //
+// Tier 4 produces a FULL DOC SET for ALL repos in a multi-repo group and
+// enforces CROSS-REPO coherence contracts. Wall-time target: <60 seconds
+// (deterministic stubs; repo Tier 3 runs are concurrent):
+//
+//	archigraph docgen --tier=4 --group=mygroup
+//
 // Output (Tier 0):
 //
 //	~/.archigraph/docs/<group>/.tier0-<RFC3339>/<entity-id>-<section>.md
@@ -54,7 +60,13 @@
 //	~/.archigraph/docs/<group>/.tier3-<RFC3339>/<repo>/<entity-id>-page.md
 //	~/.archigraph/docs/<group>/.tier3-<RFC3339>/<repo>/score.json
 //
-// Full-group rendering (Tier 4) is not yet wired.
+// Output (Tier 4):
+//
+//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/index.md
+//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/score.json
+//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/<repo>/index.md
+//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/<repo>/<entity-id>-page.md
+//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/<repo>/score.json
 package cli
 
 import (
@@ -152,9 +164,22 @@ TIER 3 (--tier=3) — full repo doc set (<20 min):
   Example:
     archigraph docgen --tier=3 --group=mygroup --repo=core
 
-TIER 4 — full group rendering:
-  Not yet implemented. Use the /generate-docs skill in Claude Code for
-  full-group documentation generation.
+TIER 4 (--tier=4) — full group doc set with cross-repo coherence (<60 s):
+  Runs Tier 3 for every repo in the group CONCURRENTLY (pool size 3) and
+  enforces three cross-repo contracts:
+    • Every cross-repo link target has a page in its target repo (cross-repo-coverage).
+    • Group index.md links to every repo's index (group-index).
+    • No mermaid flow block appears in pages of 2+ different repos (cross-repo-flow-dedup).
+
+  Output:
+    ~/.archigraph/docs/<group>/.tier4-<timestamp>/index.md        (group-level)
+    ~/.archigraph/docs/<group>/.tier4-<timestamp>/score.json      (group-level rollup)
+    ~/.archigraph/docs/<group>/.tier4-<timestamp>/<repo>/index.md
+    ~/.archigraph/docs/<group>/.tier4-<timestamp>/<repo>/score.json
+    ~/.archigraph/docs/<group>/.tier4-<timestamp>/<repo>/<entity-id>-page.md
+
+  Example:
+    archigraph docgen --tier=4 --group=mygroup
 
 Available sections (--section, used by --tier=0 only):
   ` + strings.Join(docgen.KnownSections, ", "),
@@ -175,14 +200,16 @@ Available sections (--section, used by --tier=0 only):
 				return runDocgenTier2(cmd, group, seedEntity, outputDir, maxPages, mermaidBudget)
 			case 3:
 				return runDocgenTier3(cmd, group, repoSlug, outputDir, maxPages, mermaidBudget)
+			case 4:
+				return runDocgenTier4(cmd, group, outputDir, maxPages, mermaidBudget)
 			default:
-				return fmt.Errorf("--tier=%d is not yet implemented; available: 0, 1, 2, 3", tier)
+				return fmt.Errorf("--tier=%d is not yet implemented; available: 0, 1, 2, 3, 4", tier)
 			}
 		},
 	}
 
 	cmd.Flags().IntVar(&tier, "tier", 0,
-		"docgen tier: 0 = single section snippet (<30 s); 1 = single complete page (<120 s); 2 = coherent slice cross-page (<10 min); 3 = full repo doc set (<20 min); 4 = full group (not yet implemented)")
+		"docgen tier: 0 = single section snippet (<30 s); 1 = single complete page (<120 s); 2 = coherent slice cross-page (<10 min); 3 = full repo doc set (<20 min); 4 = full group with cross-repo contracts (<60 s deterministic)")
 	cmd.Flags().IntVar(&maxPages, "max-pages", 5,
 		"maximum pages to generate for --tier=2 (seed + top-N dependents)")
 	cmd.Flags().IntVar(&mermaidBudget, "mermaid-budget", 0,
@@ -409,6 +436,60 @@ func runDocgenTier3(cmd *cobra.Command, group, repoSlug, outputDir string, maxPa
 	}
 
 	fmt.Fprintf(out, "\n  output:           %s\n", rootDir)
+	fmt.Fprintf(out, "\n--- score.json ---\n")
+	scoreBytes, _ := json.MarshalIndent(score, "", "  ")
+	fmt.Fprintln(out, string(scoreBytes))
+
+	return nil
+}
+
+// runDocgenTier4 executes the Tier 4 full-group doc set path (<60 s).
+func runDocgenTier4(cmd *cobra.Command, group, outputDir string, maxPages, mermaidBudget int) error {
+	resolvedGroup, err := resolveGroup(group)
+	if err != nil {
+		return err
+	}
+
+	opts := docgen.Tier4RunOpts{
+		Group:         resolvedGroup,
+		MaxPages:      maxPages,
+		MermaidBudget: mermaidBudget,
+		OutputDir:     outputDir,
+	}
+
+	rootDir, score, err := docgen.RunTier4(opts)
+	if err != nil {
+		return fmt.Errorf("docgen tier 4: %w", err)
+	}
+
+	out := cmd.OutOrStdout()
+	fmt.Fprintf(out, "tier4 complete\n\n")
+	fmt.Fprintf(out, "  group:                 %s\n", score.Group)
+	fmt.Fprintf(out, "  repos:                 %d\n", score.RepoCount)
+	fmt.Fprintf(out, "  total-pages:           %d\n", score.TotalPageCount)
+	fmt.Fprintf(out, "  wall:                  %d ms\n", score.WallTimeMS)
+	fmt.Fprintf(out, "  tokens:                ~%d\n", score.TotalTokenCount)
+	fmt.Fprintf(out, "  cross-repo-links:      %d (unresolved: %d)\n", score.CrossRepoLinkCount, score.CrossRepoLinkUnresolved)
+	fmt.Fprintf(out, "  flow-dedup-violations: %d\n", score.CrossRepoFlowDedupViolations)
+	fmt.Fprintf(out, "  group-index-unresolved:%d\n", score.GroupIndexUnresolved)
+
+	totalViolations := score.CrossRepoLinkUnresolved + score.CrossRepoFlowDedupViolations + score.GroupIndexUnresolved
+	if totalViolations > 0 || len(score.Violations) > 0 {
+		fmt.Fprintf(out, "\n  CROSS-REPO VIOLATIONS (%d):\n", len(score.Violations))
+		for _, v := range score.Violations {
+			fmt.Fprintf(out, "    - %s\n", v)
+		}
+	} else {
+		fmt.Fprintf(out, "  contracts:             PASS\n")
+	}
+
+	fmt.Fprintf(out, "\n  per-repo summary:\n")
+	for _, rs := range score.PerRepoScores {
+		fmt.Fprintf(out, "    %-20s  pages: %d  violations: %d\n",
+			rs.Repo, rs.PageCount, len(rs.Violations))
+	}
+
+	fmt.Fprintf(out, "\n  output:                %s\n", rootDir)
 	fmt.Fprintf(out, "\n--- score.json ---\n")
 	scoreBytes, _ := json.MarshalIndent(score, "", "  ")
 	fmt.Fprintln(out, string(scoreBytes))
