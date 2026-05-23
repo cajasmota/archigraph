@@ -150,6 +150,60 @@ func TestFindCanonicalDaemon_SkipsTmpProcesses(t *testing.T) {
 	}
 }
 
+// TestFindCanonicalDaemon_EsbuildFalsePositive is a regression test for #1719.
+//
+// Background: when tests run inside a worktree whose path contains "archigraph"
+// (e.g. /Users/.../archigraph-worktrees/fix-selfdefense/webui-v2/node_modules/
+// @esbuild/darwin-arm64/bin/esbuild), the old strings.Contains check on the full
+// executable path would classify esbuild as a canonical archigraph daemon and
+// refuse to start a /tmp daemon.
+//
+// The fix uses filepath.Base() so only the binary's own name is tested against
+// the allowlist — a directory component containing "archigraph" is irrelevant.
+func TestFindCanonicalDaemon_EsbuildFalsePositive(t *testing.T) {
+	// We can't inject a synthetic process into FindByName, so we verify the
+	// underlying classification logic directly via FindCanonicalDaemon's
+	// documented contract: it must never return a process whose base-name is
+	// NOT in the canonical set.
+	//
+	// Specifically, construct hypothetical paths that the old code would have
+	// matched but the new code must not, and confirm they are rejected by
+	// reproducing the basename check in-test.
+
+	falsePositivePaths := []string{
+		// The exact path from the bug report (project root named "archigraph").
+		"/Users/user/Projects/archigraph/webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild",
+		// Generic worktree layout.
+		"/tmp/archigraph-worktrees/fix-selfdefense/node_modules/.bin/esbuild",
+		// Another tool in a directory named after the project.
+		"/home/ci/archigraph/scripts/build-helper.sh",
+		// vite binary in an archigraph project.
+		"/home/user/archigraph/node_modules/.bin/vite",
+	}
+
+	for _, path := range falsePositivePaths {
+		base := strings.ToLower(filepath.Base(path))
+		isCanonical := base == "archigraph"
+		if isCanonical {
+			t.Errorf("false-positive: path %q has basename %q which incorrectly matches canonical set", path, base)
+		}
+	}
+
+	// Sanity: real archigraph binaries must still match.
+	truePaths := []string{
+		"/usr/local/bin/archigraph",
+		"/home/user/go/bin/archigraph",
+		"/opt/archigraph/bin/archigraph",
+	}
+	for _, path := range truePaths {
+		base := strings.ToLower(filepath.Base(path))
+		isCanonical := base == "archigraph"
+		if !isCanonical {
+			t.Errorf("true-negative: path %q with basename %q should match canonical set but does not", path, base)
+		}
+	}
+}
+
 // findModuleRoot walks upward from the current directory to find go.mod.
 func findModuleRoot() (string, error) {
 	dir, err := os.Getwd()

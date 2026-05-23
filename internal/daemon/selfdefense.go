@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime/pprof"
 	"strings"
 	"sync/atomic"
@@ -28,6 +29,15 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/process"
 )
+
+// canonicalBasenames is the set of binary base-names that identify a genuine
+// archigraph daemon process. A process whose executable base-name is NOT in
+// this set is never treated as canonical, even if the full path contains the
+// substring "archigraph" (e.g. node_modules paths like
+// "webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild" — see #1719).
+var canonicalBasenames = map[string]bool{
+	"archigraph": true,
+}
 
 // isTmpPath reports whether path starts with /tmp (a hard-coded exclusion zone
 // for canonical daemons; see issue #857).
@@ -136,7 +146,12 @@ func findCanonicalDaemon() (pid int, exe string) {
 		if isTmpPath(cmdBin) {
 			continue // also a temp daemon — not canonical
 		}
-		if strings.Contains(strings.ToLower(cmdBin), "archigraph") {
+		// Use an exact basename match rather than a substring search on the
+		// full path. A full-path substring check false-positives on executables
+		// whose *directory* contains "archigraph" — the classic example is an
+		// esbuild binary at webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild
+		// when the project root is named "archigraph" (fixes #1719).
+		if canonicalBasenames[strings.ToLower(filepath.Base(cmdBin))] {
 			return p.PID, cmdBin
 		}
 	}
