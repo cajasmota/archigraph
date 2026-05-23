@@ -193,12 +193,17 @@ func processKotlinSpringClass(
 			}
 			seen[id] = true
 
+			// Issue #1725 — populate QualifiedName with the canonical
+			// synthetic ID so http_endpoint_definition entities are not
+			// empty-qn. Mirrors the producer-side fix in
+			// http_endpoint_synthesis.go.
 			*entities = append(*entities, types.EntityRecord{
-				ID:       id,
-				Name:     id,
-				Kind:     httpEndpointDefinitionKind,
-				SourceFile: path,
-				Language: "kotlin",
+				ID:            id,
+				Name:          id,
+				QualifiedName: id,
+				Kind:          httpEndpointDefinitionKind,
+				SourceFile:    path,
+				Language:      "kotlin",
 				Properties: map[string]string{
 					"verb":            verb,
 					"path":            canonical,

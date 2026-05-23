@@ -1195,15 +1195,24 @@ func extractClassFields(
 					continue
 				}
 				seen[name] = true
+				// Issue #1725 — derive QualifiedName so SCOPE.Schema/field
+				// entities are not 100% empty-qn. Format mirrors the parent
+				// class QN: "<module>.<parentClass>.<field>" (or the bare
+				// dotted form when filePathToModule cannot derive a module).
+				qualName := parentClass + "." + name
+				if mod := filePathToModule(file.Path); mod != "" {
+					qualName = mod + "." + parentClass + "." + name
+				}
 				*out = append(*out, types.EntityRecord{
-					Name:       parentClass + "." + name,
-					Kind:       "SCOPE.Schema",
-					Subtype:    "field",
-					Language:   "python",
-					SourceFile: file.Path,
-					StartLine:  int(stmt.StartPoint().Row) + 1,
-					EndLine:    int(stmt.EndPoint().Row) + 1,
-					Signature:  name,
+					Name:          parentClass + "." + name,
+					QualifiedName: qualName,
+					Kind:          "SCOPE.Schema",
+					Subtype:       "field",
+					Language:      "python",
+					SourceFile:    file.Path,
+					StartLine:     int(stmt.StartPoint().Row) + 1,
+					EndLine:       int(stmt.EndPoint().Row) + 1,
+					Signature:     name,
 				})
 			}
 		}
