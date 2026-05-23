@@ -277,6 +277,22 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 // directory is `migrations` as generated, which matches both the numbered
 // migration files and the package `__init__.py`. Hand-written modules never
 // live directly inside a `migrations/` directory in idiomatic Django.
+//
+// Issue #1731 — extension catalogue for other migration frameworks (not yet
+// implemented; add a corresponding isXxxMigrationFile predicate and wire it
+// into the pruning gate above when needed):
+//
+//   - Rails (Ruby):  db/migrate/*.rb — immediate parent is "migrate" inside a
+//     "db/" directory; language guard: .rb suffix.
+//
+//   - Alembic (Python): versions/*.py under a repo subtree that contains an
+//     alembic.ini (walk up the directory tree from the file to find it).
+//     Predicate: suffix ".py" AND parent == "versions" AND alembic.ini exists
+//     in an ancestor directory within the repo root.
+//
+//   - Knex (JavaScript/TypeScript): migrations/*.js or migrations/*.ts files
+//     in a Node project. Predicate identical to Django but in the JS extractor:
+//     suffix ".js"/".ts" AND immediate parent dir == "migrations".
 func isDjangoMigrationFile(path string) bool {
 	if !strings.HasSuffix(path, ".py") {
 		return false

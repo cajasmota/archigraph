@@ -1,0 +1,33 @@
+"""Fixture for #1731: a real Django models.py that should be fully extracted.
+
+When the same class content lives outside a migrations/ directory the extractor
+must perform the full AST walk and emit entities for every class and method.
+
+Expected entities (semantic, non-file):
+  - SCOPE.Component/class  "Device"
+  - SCOPE.Operation/method "Device.__str__"
+  - SCOPE.Operation/method "Device.get_absolute_url"
+  - SCOPE.Component/class  "Device.Meta"   (inner Meta class)
+  - SCOPE.Schema/field     "Device.serial_number"
+  - SCOPE.Schema/field     "Device.firmware_version"
+  - SCOPE.Schema/field     "Device.updated_at"
+"""
+
+from django.db import models
+from django.urls import reverse
+
+
+class Device(models.Model):
+    serial_number = models.CharField(max_length=128, default="")
+    firmware_version = models.CharField(max_length=64, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "core_device"
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.serial_number
+
+    def get_absolute_url(self):
+        return reverse("device-detail", kwargs={"pk": self.pk})
