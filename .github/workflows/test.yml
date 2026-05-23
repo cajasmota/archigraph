@@ -8,16 +8,33 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Windows is allowed to fail until tree-sitter CGO bindings are confirmed
+    # on windows-latest — tracked in #937. Remove continue-on-error once #937
+    # and its prerequisites (#926, #928) are resolved.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
           cache: true
+
       - run: go mod download
+
       - run: go vet ./...
+
+      # gofmt check — only enforce on Linux to avoid CRLF noise from Windows
+      # tooling. macOS and Linux share the same line endings in the repo so
+      # running on ubuntu-latest is sufficient.
       - name: gofmt
+        if: runner.os == 'Linux'
+        shell: bash
         run: |
           diff=$(gofmt -l . 2>&1)
           if [ -n "$diff" ]; then
@@ -25,5 +42,7 @@ jobs:
             echo "$diff"
             exit 1
           fi
+
       - run: go build ./...
+
       - run: go test -race -count=1 ./...
