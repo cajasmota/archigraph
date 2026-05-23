@@ -503,7 +503,8 @@ function SectionHeader({
   );
 }
 
-/** EntityRow — wraps RefLine for PathEntity values (Downstream, Side-effects, Tests). */
+/** EntityRow — wraps RefLine for PathEntity values (Downstream, Side-effects, Tests).
+ *  Issue #1934: kind chip dropped from row — redundant with header-level metadata. */
 function EntityRow({ entity }: { entity: PathEntity }) {
   return (
     <RefLine
@@ -511,13 +512,13 @@ function EntityRow({ entity }: { entity: PathEntity }) {
       file={entity.source_file ?? ""}
       line={entity.start_line ?? 0}
       name={entity.label ?? entity.qualified_name ?? ""}
-      kind={entity.kind}
     />
   );
 }
 
 /** HandlerRefLine — renders a handler detail using the canonical RefLine format.
- *  Issue #1910: Defined-in section collapses from verbose card to one-line ref. */
+ *  Issue #1910: Defined-in section collapses from verbose card to one-line ref.
+ *  Issue #1934: framework/kind chip removed from RefLine — shown in header strip. */
 function HandlerRefLine({ handler }: { handler: HandlerDetail }) {
   return (
     <div className="flex items-start gap-2 py-1 px-4 hover:bg-surface-2 transition-colors">
@@ -526,7 +527,6 @@ function HandlerRefLine({ handler }: { handler: HandlerDetail }) {
         file={handler.source_file ?? ""}
         line={handler.start_line ?? 0}
         name={handler.qualified_name ?? handler.verb}
-        kind={handler.framework || handler.language || undefined}
         className="flex-1 px-0 py-0"
       />
       <div className="flex items-center gap-1 shrink-0">
