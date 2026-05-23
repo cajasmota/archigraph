@@ -16,6 +16,16 @@ import (
 // It tells agents to call archigraph_whoami first and act on suggested_action.
 const mcpInstructions = `archigraph code-graph MCP. Call archigraph_whoami on connect (cwd= set to caller dir); act on suggested_action. Set ARCHIGRAPH_WHOAMI_NUDGE=quiet to suppress doc-state (CI).`
 
+// sentinelToolName is the single tool returned when the caller's cwd is not
+// covered by any registered archigraph group (#1769).
+const sentinelToolName = "archigraph_status"
+
+// sentinelToolDescription is the description of the sentinel tool shown in the
+// Claude Code handshake when no registered group covers the session cwd.
+// Note: mid-session group registration is NOT reflected here; that requires
+// notifications/tools/list_changed (tracked in #1772).
+const sentinelToolDescription = "Archigraph: no indexed group covers this directory. Run `archigraph install` or `cd` into a registered repo. (Note: new groups registered mid-session are not reflected until restart — see #1772.)"
+
 // Config controls server construction.
 type Config struct {
 	RegistryPath string
@@ -114,6 +124,119 @@ func (s *Server) inferCWD(req mcpapi.CallToolRequest) string {
 		return wd
 	}
 	return ""
+}
+
+// ListToolsForCWD implements the cwd-gate for the tools/list handshake (#1769).
+//
+// Decision matrix:
+//   - cwd resolves to exactly one registered group → full tool list (current behavior).
+//   - cwd is inside multiple groups (ambiguous) → full tool list; agent must pass group= explicitly.
+//   - cwd outside ALL registered groups → sentinel only (archigraph_status).
+//   - cwd resolves to a group but that group has 0 repos loaded → sentinel + hint to rebuild.
+//
+// The returned slice contains daemon.MCPToolEntry values ready for wire serialisation.
+// When the full list is returned, the caller owns filtering/sorting.
+//
+// cwd may be empty — in that case the singleton-group fallback in resolveGroup
+// applies when there is exactly one registered group (same as tool-call routing).
+func (s *Server) ListToolsForCWD(cwd string) ([]MCPToolEntry, error) {
+	// Reload lazily so the registry is fresh (same as any tool call).
+	s.reloadBeforeCall()
+
+	// Determine group coverage for the given cwd.
+	group, candidates := groupFromRegistryWithCandidates(s.State, cwd)
+
+	var groupEmpty bool
+	if group != "" {
+		// Check if the resolved group has any repos loaded.
+		if grp, ok := s.State.registry.Groups[group]; !ok || len(grp.Repos) == 0 {
+			groupEmpty = true
+		}
+	}
+
+	// Three paths that lead to the sentinel:
+	//   1. No group covers cwd (group == "" and not ambiguous).
+	//   2. No groups are registered at all.
+	//   3. Group resolved but has 0 repos (empty group, needs rebuild).
+	noMatch := group == "" && len(candidates) == 0 && len(s.State.registry.Groups) > 0
+	unregistered := len(s.State.registry.Groups) == 0
+
+	if noMatch || unregistered || groupEmpty {
+		return s.sentinelToolList(cwd, group, groupEmpty), nil
+	}
+
+	// Ambiguous or unambiguous match: return the full catalog.
+	return s.fullToolList()
+}
+
+// sentinelToolList returns the single archigraph_status sentinel entry with a
+// context-aware description based on cwd, the (empty) group, and nearby groups.
+func (s *Server) sentinelToolList(cwd, group string, groupEmpty bool) []MCPToolEntry {
+	desc := sentinelToolDescription
+	if groupEmpty && group != "" {
+		desc = fmt.Sprintf("Archigraph: group %q is registered but has no repos indexed. Run `archigraph index` inside a repo in this group, then restart. (Mid-session registration requires restart — see #1772.)", group)
+	}
+	return []MCPToolEntry{
+		{
+			Name:        sentinelToolName,
+			Description: desc,
+		},
+	}
+}
+
+// MCPToolEntry mirrors daemon.MCPToolEntry but is defined here to avoid an
+// import cycle. The daemon package wraps these into its own MCPToolEntry type.
+// Fields must stay in sync with daemon.MCPToolEntry.
+type MCPToolEntry struct {
+	Name        string
+	Description string
+	InputSchema json.RawMessage
+}
+
+// fullToolList converts the registered tool map to MCPToolEntry values for
+// wire serialisation. The tool map comes from the underlying mcp-go server.
+// The sentinel tool (archigraph_status) is excluded from the full list — it
+// is only surfaced when the cwd-gate fires (#1769).
+func (s *Server) fullToolList() ([]MCPToolEntry, error) {
+	toolMap := s.MCP.ListTools()
+
+	names := make([]string, 0, len(toolMap))
+	for n := range toolMap {
+		if n == sentinelToolName {
+			continue // exclude sentinel from full handshake
+		}
+		names = append(names, n)
+	}
+	// Stable sort so callers get deterministic output.
+	for i := 0; i < len(names); i++ {
+		for j := i + 1; j < len(names); j++ {
+			if names[i] > names[j] {
+				names[i], names[j] = names[j], names[i]
+			}
+		}
+	}
+
+	out := make([]MCPToolEntry, 0, len(names))
+	for _, name := range names {
+		st := toolMap[name]
+		raw, err := json.Marshal(st.Tool)
+		if err != nil {
+			continue
+		}
+		var m map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &m); err != nil {
+			continue
+		}
+		entry := MCPToolEntry{Name: name}
+		if v, ok := m["description"]; ok {
+			_ = json.Unmarshal(v, &entry.Description)
+		}
+		if v, ok := m["inputSchema"]; ok {
+			entry.InputSchema = v
+		}
+		out = append(out, entry)
+	}
+	return out, nil
 }
 
 // registerTools registers every tool handler on the MCP server.
@@ -470,6 +593,52 @@ func (s *Server) registerTools() {
 	), s.wrap("archigraph_secrets", s.handleSecrets))
 
 	// archigraph_license_audit dropped (HTTP API still available); see registerTools comments.
+
+	// archigraph_status — cwd-gate sentinel (#1769).
+	// Registered as a real callable tool so agents can invoke it and receive
+	// guidance. Excluded from the full handshake returned to indexed sessions
+	// (see fullToolList). Shown ONLY when cwd is outside all registered groups.
+	s.MCP.AddTool(mcpapi.NewTool(sentinelToolName,
+		mcpapi.WithDescription(sentinelToolDescription),
+	), s.wrap(sentinelToolName, s.handleStatus))
+}
+
+// handleStatus is the handler for archigraph_status (#1769). It returns a
+// human-readable paragraph explaining the caller's cwd relative to the
+// registered groups, and what action would resolve the mismatch.
+func (s *Server) handleStatus(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	cwd := s.inferCWD(req)
+	if cwd == "" {
+		if wd, err := os.Getwd(); err == nil {
+			cwd = wd
+		}
+	}
+
+	group, candidates := groupFromRegistryWithCandidates(s.State, cwd)
+
+	var msg string
+	switch {
+	case len(s.State.registry.Groups) == 0:
+		msg = fmt.Sprintf("Archigraph has no groups registered. Run `archigraph install` inside a repo, then restart Claude Code. (cwd: %s)", cwd)
+	case group != "":
+		// Group resolved — check if it has repos.
+		if grp, ok := s.State.registry.Groups[group]; !ok || len(grp.Repos) == 0 {
+			msg = fmt.Sprintf("Archigraph: cwd %q resolves to group %q, but that group has no repos indexed. Run `archigraph index` inside a repo in this group, then restart.", cwd, group)
+		} else {
+			msg = fmt.Sprintf("Archigraph: cwd %q is covered by group %q (%d repo(s)). The full tool set is available — call archigraph_whoami for details.", cwd, group, len(grp.Repos))
+		}
+	case len(candidates) > 1:
+		msg = fmt.Sprintf("Archigraph: cwd %q matches multiple groups (%v). Pass group= explicitly to any tool to disambiguate.", cwd, candidates)
+	default:
+		// Build a list of registered group names for guidance.
+		known := make([]string, 0, len(s.State.registry.Groups))
+		for g := range s.State.registry.Groups {
+			known = append(known, g)
+		}
+		msg = fmt.Sprintf("Archigraph: cwd %q is not under any registered group (registered: %v). cd into a registered repo or run `archigraph install` here. Note: new groups registered mid-session are not reflected until restart (#1772).", cwd, known)
+	}
+
+	return mcpapi.NewToolResultText(msg), nil
 }
 
 // wrap is the shared handler middleware: telemetry + lazy reload + panic guard

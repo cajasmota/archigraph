@@ -37,7 +37,7 @@ func TestMCPToolList_ReturnsCatalog(t *testing.T) {
 		{Name: "archigraph_find", Description: "BM25 search", InputSchema: stubSchema},
 		{Name: "archigraph_stats", Description: "Corpus metrics", InputSchema: stubSchema},
 	}
-	svc := testService(func() ([]MCPToolEntry, error) {
+	svc := testService(func(_ string) ([]MCPToolEntry, error) {
 		return wantTools, nil
 	}, nil)
 
@@ -57,7 +57,7 @@ func TestMCPToolList_ReturnsCatalog(t *testing.T) {
 }
 
 func TestMCPToolList_PropagatesError(t *testing.T) {
-	svc := testService(func() ([]MCPToolEntry, error) {
+	svc := testService(func(_ string) ([]MCPToolEntry, error) {
 		return nil, fmt.Errorf("registry read failed")
 	}, nil)
 
@@ -70,7 +70,7 @@ func TestMCPToolList_PropagatesError(t *testing.T) {
 
 func TestMCPToolList_InputSchemaIncluded(t *testing.T) {
 	schema := json.RawMessage(`{"type":"object","properties":{"question":{"type":"string"}}}`)
-	svc := testService(func() ([]MCPToolEntry, error) {
+	svc := testService(func(_ string) ([]MCPToolEntry, error) {
 		return []MCPToolEntry{
 			{Name: "archigraph_find", Description: "BM25 search", InputSchema: schema},
 		}, nil
@@ -109,7 +109,7 @@ func TestMCPToolCall_NilFunc_ReturnsErrorBlock(t *testing.T) {
 }
 
 func TestMCPToolCall_NilArgs_ReturnsError(t *testing.T) {
-	svc := testService(func() ([]MCPToolEntry, error) { return nil, nil }, nil)
+	svc := testService(func(_ string) ([]MCPToolEntry, error) { return nil, nil }, nil)
 	var reply MCPToolCallReply
 	err := svc.MCPToolCall(nil, &reply)
 	if err == nil {
@@ -207,5 +207,67 @@ func TestMCPToolCall_EmptyContent_NormalisedToEmptySlice(t *testing.T) {
 	}
 	if reply.Content == nil {
 		t.Fatal("Content should be normalised to empty slice, not nil")
+	}
+}
+
+// ── cwd-gate (#1769) tests ────────────────────────────────────────────────────
+
+// TestMCPToolList_ForwardsCWD_ToListFunc verifies that the CWD from
+// MCPToolListArgs is forwarded to the injected MCPListToolsFunc (#1769).
+func TestMCPToolList_ForwardsCWD_ToListFunc(t *testing.T) {
+	var receivedCWD string
+	svc := testService(func(cwd string) ([]MCPToolEntry, error) {
+		receivedCWD = cwd
+		return []MCPToolEntry{{Name: "archigraph_find"}}, nil
+	}, nil)
+
+	const wantCWD = "/home/user/myproject"
+	var reply MCPToolListReply
+	if err := svc.MCPToolList(&MCPToolListArgs{CWD: wantCWD}, &reply); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if receivedCWD != wantCWD {
+		t.Errorf("CWD not forwarded to list func: got %q, want %q", receivedCWD, wantCWD)
+	}
+}
+
+// TestMCPToolList_NilArgs_EmptyCWD verifies that nil MCPToolListArgs is
+// handled gracefully (cwd treated as "").
+func TestMCPToolList_NilArgs_EmptyCWD(t *testing.T) {
+	var receivedCWD string
+	svc := testService(func(cwd string) ([]MCPToolEntry, error) {
+		receivedCWD = cwd
+		return []MCPToolEntry{{Name: "archigraph_find"}}, nil
+	}, nil)
+
+	var reply MCPToolListReply
+	if err := svc.MCPToolList(nil, &reply); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if receivedCWD != "" {
+		t.Errorf("expected empty cwd for nil args, got %q", receivedCWD)
+	}
+}
+
+// TestMCPToolList_SentinelReturned verifies that when the listing func returns
+// only the sentinel, the reply contains exactly one tool.
+func TestMCPToolList_SentinelReturned(t *testing.T) {
+	sentinel := MCPToolEntry{
+		Name:        "archigraph_status",
+		Description: "Archigraph: no indexed group covers this directory.",
+	}
+	svc := testService(func(_ string) ([]MCPToolEntry, error) {
+		return []MCPToolEntry{sentinel}, nil
+	}, nil)
+
+	var reply MCPToolListReply
+	if err := svc.MCPToolList(&MCPToolListArgs{CWD: "/tmp"}, &reply); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(reply.Tools) != 1 {
+		t.Fatalf("expected 1 sentinel tool, got %d", len(reply.Tools))
+	}
+	if reply.Tools[0].Name != "archigraph_status" {
+		t.Errorf("unexpected sentinel name: %q", reply.Tools[0].Name)
 	}
 }
