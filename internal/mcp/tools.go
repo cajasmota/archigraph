@@ -1540,8 +1540,11 @@ func (s *Server) handleGraphStats(ctx context.Context, req mcpapi.CallToolReques
 	totals["entities"] = totalE
 	totals["relationships"] = totalR
 	totals["repos"] = repoStats
-	// Fidelity: 1 − (unresolved / total import edges). Exposed so callers
-	// can track the docgen repair loop effect over successive runs.
+	// Fidelity: 1 − (unresolved IMPORTS / total IMPORTS). Scope is IMPORTS
+	// edges only — same as audit.AuditPath and health-history.bug_rate —
+	// so post-resolver improvements (e.g. ResolveGoInTreeImports) are
+	// immediately reflected here rather than being diluted by the larger
+	// CALLS + REFERENCES universe.
 	if totalImport > 0 {
 		fid := 1.0 - float64(totalBug)/float64(totalImport)
 		totals["fidelity"] = math.Round(fid*1000) / 1000 // 3 decimal places
