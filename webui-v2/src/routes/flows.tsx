@@ -16,7 +16,7 @@
    Per docs/screens/flows.md + design_handoff_archigraph/prototypes/.
    ============================================================ */
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   Globe, Database, Send, ArrowDownToLine, Wrench, Shield, AlertTriangle,
@@ -918,27 +918,33 @@ function FlowDag({
 
   const clampZoom = (z: number) => Math.min(2.5, Math.max(0.3, z));
 
-  const fitToView = () => {
+  // Fit the DAG to the available viewport using both width and height (#1933).
+  // Uses min(viewportW / dagW, viewportH / dagH) * 0.95 so the diagram fills
+  // the panel on both axes instead of being constrained to width only.
+  // Wrapped in useCallback so the ResizeObserver below can hold a stable ref.
+  const fitToView = useCallback(() => {
     const vp = viewportRef.current;
     if (!vp || totalWidth === 0 || totalHeight === 0) {
       setZoom(1);
       setPan({ x: 0, y: 0 });
       return;
     }
-    const pad = 24;
+    const MARGIN = 0.95;
     const z = clampZoom(
       Math.min(
-        (vp.clientWidth - pad) / totalWidth,
-        (vp.clientHeight - pad) / totalHeight,
-        1,
-      ),
+        vp.clientWidth / totalWidth,
+        vp.clientHeight / totalHeight,
+      ) * MARGIN,
     );
     setZoom(z);
     setPan({
       x: (vp.clientWidth - totalWidth * z) / 2,
       y: (vp.clientHeight - totalHeight * z) / 2,
     });
-  };
+  // clampZoom is defined inline above — stable; totalWidth/totalHeight come
+  // from useMemo and only change when steps/layout change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalWidth, totalHeight]);
 
   // Zoom around the viewport centre. Reads the *current* zoom/pan state
   // directly (no nested setState updaters — that was why the buttons no-op'd:
@@ -964,8 +970,19 @@ function FlowDag({
   useEffect(() => {
     const t = setTimeout(fitToView, 0);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowKey]);
+  }, [flowKey, fitToView]);
+
+  // Re-fit whenever the DAG container is resized (e.g. when the step inspector
+  // side panel opens/closes, shrinking the DAG from full-width to 60% — #1933).
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    const ro = new ResizeObserver(() => {
+      fitToView();
+    });
+    ro.observe(vp);
+    return () => ro.disconnect();
+  }, [fitToView]);
 
   // Scroll-to-zoom (anchored on cursor).
   const onWheel = (e: React.WheelEvent) => {
