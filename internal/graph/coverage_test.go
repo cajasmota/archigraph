@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -306,6 +307,136 @@ func TestComputeCoverage_HTTPEndpointHighSeverity(t *testing.T) {
 	}
 	if report.UncoveredEntities[0].Severity != "high" {
 		t.Errorf("HTTP endpoint severity want high, got %s", report.UncoveredEntities[0].Severity)
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ComputeEntityCoverage tests (#1774)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TestComputeEntityCoverage_KnownTested verifies that a production entity with
+// a direct TESTS inbound edge is reported as tested with the covering test ID.
+func TestComputeEntityCoverage_KnownTested(t *testing.T) {
+	entities := []Entity{
+		{ID: "prod1", Name: "HandleUser", Kind: "Function", SourceFile: "handler.go"},
+		{ID: "test1", Name: "TestHandleUser", Kind: "Function", SourceFile: "handler_test.go"},
+	}
+	rels := []Relationship{
+		{ID: "r1", FromID: "test1", ToID: "prod1", Kind: "TESTS"},
+	}
+	result, found := ComputeEntityCoverage(makeDoc(entities, rels), "prod1")
+	if !found {
+		t.Fatal("want found=true, got false")
+	}
+	if !result.Tested {
+		t.Errorf("want Tested=true, got false")
+	}
+	if result.CoverageFraction != 1.0 {
+		t.Errorf("want CoverageFraction=1.0, got %f", result.CoverageFraction)
+	}
+	if len(result.CoveringTests) != 1 || result.CoveringTests[0] != "test1" {
+		t.Errorf("want CoveringTests=[test1], got %v", result.CoveringTests)
+	}
+}
+
+// TestComputeEntityCoverage_KnownUntested verifies that a production entity
+// with no inbound TESTS edges (and no CALLS fallback) is reported as untested.
+func TestComputeEntityCoverage_KnownUntested(t *testing.T) {
+	entities := []Entity{
+		{ID: "prod1", Name: "UntestedFn", Kind: "Function", SourceFile: "lib.go"},
+		{ID: "test1", Name: "TestOther", Kind: "Function", SourceFile: "other_test.go"},
+	}
+	// No TESTS or CALLS edges to prod1.
+	result, found := ComputeEntityCoverage(makeDoc(entities, nil), "prod1")
+	if !found {
+		t.Fatal("want found=true, got false")
+	}
+	if result.Tested {
+		t.Errorf("want Tested=false, got true")
+	}
+	if result.CoverageFraction != 0.0 {
+		t.Errorf("want CoverageFraction=0.0, got %f", result.CoverageFraction)
+	}
+	if len(result.CoveringTests) != 0 {
+		t.Errorf("want CoveringTests=[], got %v", result.CoveringTests)
+	}
+}
+
+// TestComputeEntityCoverage_Unknown verifies that an unknown entity_id returns
+// found=false (triggering "entity not found" in the MCP handler).
+func TestComputeEntityCoverage_Unknown(t *testing.T) {
+	entities := []Entity{
+		{ID: "prod1", Name: "HandleUser", Kind: "Function", SourceFile: "handler.go"},
+	}
+	result, found := ComputeEntityCoverage(makeDoc(entities, nil), "does-not-exist")
+	if found {
+		t.Errorf("want found=false for unknown entity, got result=%+v", result)
+	}
+	if result != nil {
+		t.Errorf("want nil result for unknown entity, got %+v", result)
+	}
+}
+
+// TestComputeEntityCoverage_SyntheticCALLS verifies that the synthetic CALLS
+// fallback also works for the per-entity path.
+func TestComputeEntityCoverage_SyntheticCALLS(t *testing.T) {
+	entities := []Entity{
+		{ID: "t1", Name: "TestFoo", Kind: "Function", SourceFile: "foo_test.go"},
+		{ID: "p1", Name: "Foo", Kind: "Function", SourceFile: "foo.go"},
+	}
+	// No TESTS edge — only CALLS from test to prod.
+	rels := []Relationship{
+		{ID: "c1", FromID: "t1", ToID: "p1", Kind: "CALLS"},
+	}
+	result, found := ComputeEntityCoverage(makeDoc(entities, rels), "p1")
+	if !found {
+		t.Fatal("want found=true, got false")
+	}
+	if !result.Tested {
+		t.Errorf("want Tested=true (synthetic CALLS fallback), got false")
+	}
+	if len(result.CoveringTests) != 1 || result.CoveringTests[0] != "t1" {
+		t.Errorf("want CoveringTests=[t1], got %v", result.CoveringTests)
+	}
+}
+
+// TestComputeEntityCoverage_OutputSize verifies that the result struct is
+// compact — the covering_tests slice alone is bounded by the actual test count,
+// not the whole entity list. (Token-budget guard from #1774 spec.)
+func TestComputeEntityCoverage_OutputSize(t *testing.T) {
+	// Build 100 test entities and 100 production entities; only one covers prod1.
+	entities := []Entity{
+		{ID: "prod1", Name: "TargetFn", Kind: "Function", SourceFile: "target.go"},
+	}
+	for i := 0; i < 100; i++ {
+		id := fmt.Sprintf("prod%d", i+2)
+		entities = append(entities, Entity{
+			ID: id, Name: "OtherFn", Kind: "Function", SourceFile: "other.go",
+		})
+	}
+	// One test covers prod1; 99 other tests cover nothing relevant.
+	entities = append(entities, Entity{
+		ID: "test1", Name: "TestTarget", Kind: "Function", SourceFile: "target_test.go",
+	})
+	for i := 0; i < 99; i++ {
+		entities = append(entities, Entity{
+			ID: fmt.Sprintf("testother%d", i), Name: "TestOther", Kind: "Function",
+			SourceFile: "other_test.go",
+		})
+	}
+	rels := []Relationship{
+		{ID: "r1", FromID: "test1", ToID: "prod1", Kind: "TESTS"},
+	}
+	result, found := ComputeEntityCoverage(makeDoc(entities, rels), "prod1")
+	if !found {
+		t.Fatal("want found=true")
+	}
+	if !result.Tested {
+		t.Errorf("want Tested=true")
+	}
+	// Only the one covering test should appear — not all 100.
+	if len(result.CoveringTests) != 1 {
+		t.Errorf("want 1 covering test, got %d: %v", len(result.CoveringTests), result.CoveringTests)
 	}
 }
 

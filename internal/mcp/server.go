@@ -433,8 +433,10 @@ func (s *Server) registerTools() {
 	), s.wrap("archigraph_auth_coverage", s.handleAuthCoverage))
 
 	// #1323: test-coverage graph — link Test entities to the code they exercise.
+	// #1774: entity_id param added for single-entity focused queries.
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_test_coverage",
 		mcpapi.WithDescription("Find production entities with no TESTS edge, ranked by severity."),
+		mcpapi.WithString("entity_id"),
 		mcpapi.WithArray("repo_filter"),
 		mcpapi.WithAny("severity"),
 		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),
