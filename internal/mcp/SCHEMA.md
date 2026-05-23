@@ -1537,4 +1537,5 @@ additive on top of the minification savings from #1663.
 - ADR-0015 — Residual-edge repair flow (now `archigraph_repairs`)
 - ADR-0017 — No backwards compatibility guarantee for tool renames
 - Source — `internal/mcp/server.go`, `internal/mcp/tools.go`
+- Docgen LLM mode — 5-tier ladder, emit/apply loop, Pass 20 skill integration: [`docs/docgen-llm-mode.md`](../../docs/docgen-llm-mode.md)
 - Issues — #52 (initial rename), #62 (`archigraph_*` prefix), #57 (this doc), #661 (SCHEMA.md stale), #668 (tool rename + bundle)

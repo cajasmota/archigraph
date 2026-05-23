@@ -167,6 +167,17 @@ Pass 13 (LLM enrichment) should run with Haiku to avoid high costs. See
 [`docs/agent-hosts.md`](docs/agent-hosts.md) for per-host setup instructions
 (Claude Code, Cursor, Windsurf, Continue, Aider, Cline).
 
+### LLM-mode docgen and the 5-tier ladder
+
+Docgen uses a deterministic 5-tier validation ladder (Tier 0 → section stub,
+Tier 1 → full page, Tier 2 → coherent slice, Tier 3 → full repo, Tier 4 →
+full group). LLM prose-fill is an optional overlay via `--llm-mode=emit/apply`
+currently wired for Tier 0 and Tier 1. Pass 20 of the skill provides the
+Claude Code orchestrator half of the emit → orchestrate → apply loop.
+
+See [`docs/docgen-llm-mode.md`](docs/docgen-llm-mode.md) for the full workflow,
+command recipes, section cache details, and troubleshooting reference.
+
 ## Usage
 
 archigraph is a CLI plus a unified daemon process that manages indexing,
