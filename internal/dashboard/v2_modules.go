@@ -27,7 +27,9 @@
 //	        "modules_in_cycle": N,
 //	        "top_pagerank": [...],
 //	        "top_betweenness": [...],
-//	        "sccs": [...]
+//	        "sccs": [...],
+//	        "modules": [...],   // full centrality list, one per module
+//	        "edges":   [...]    // full directed module→module aggregated edges
 //	      }, ...
 //	    ],
 //	    "count": N
@@ -97,6 +99,16 @@ func (s *Server) handleV2ModulesAnalysis(w http.ResponseWriter, r *http.Request)
 		MemberNames []string           `json:"member_names"`
 		Edges       []graph.ModuleEdge `json:"edges"`
 	}
+	type edgeOut struct {
+		FromModule string `json:"from_module"`
+		ToModule   string `json:"to_module"`
+		Weight     int    `json:"weight"`
+		// SCCInternal=true when both endpoints are in the same SCC (cycle
+		// edge). Lets the UI tint these edges as part of the cycle group.
+		SCCInternal bool `json:"scc_internal"`
+		// SCCID is the SCC ID when both endpoints share an SCC, otherwise -1.
+		SCCID int `json:"scc_id"`
+	}
 	type repoOut struct {
 		Repo           string    `json:"repo"`
 		NumModules     int       `json:"num_modules"`
@@ -107,6 +119,13 @@ func (s *Server) handleV2ModulesAnalysis(w http.ResponseWriter, r *http.Request)
 		TopPageRank    []centOut `json:"top_pagerank"`
 		TopBetweenness []centOut `json:"top_betweenness"`
 		SCCs           []sccOut  `json:"sccs"`
+		// Modules carries the FULL centrality list (one entry per module) so
+		// the webui-v2 module-overview surface (#1386) can render every node
+		// — not just the top-N hubs — sized by PageRank and tinted by SCC.
+		Modules []centOut `json:"modules"`
+		// Edges carries the FULL directed module→module aggregated edges so
+		// the overview can draw weighted inter-module arrows.
+		Edges []edgeOut `json:"edges"`
 	}
 
 	out := make([]repoOut, 0)
@@ -142,6 +161,30 @@ func (s *Server) handleV2ModulesAnalysis(w http.ResponseWriter, r *http.Request)
 		}
 		for _, c := range graph.TopByBetweenness(res.Centrality, topN) {
 			ro.TopBetweenness = append(ro.TopBetweenness, toCent(c))
+		}
+		// #1386 — full module list (every module gets a node in the overview).
+		ro.Modules = make([]centOut, 0, len(res.Centrality))
+		for _, c := range res.Centrality {
+			ro.Modules = append(ro.Modules, toCent(c))
+		}
+		// #1386 — full directed module→module edges, prefixed + SCC-tagged so
+		// the UI can color cycle edges as a group.
+		ro.Edges = make([]edgeOut, 0, len(res.Edges))
+		for _, e := range res.Edges {
+			fromSCC := res.SCCOf[e.FromModule]
+			toSCC := res.SCCOf[e.ToModule]
+			internal := fromSCC >= 0 && fromSCC == toSCC
+			sccID := -1
+			if internal {
+				sccID = fromSCC
+			}
+			ro.Edges = append(ro.Edges, edgeOut{
+				FromModule:  dashPrefixedID(repo.Slug, e.FromModule),
+				ToModule:    dashPrefixedID(repo.Slug, e.ToModule),
+				Weight:      e.Weight,
+				SCCInternal: internal,
+				SCCID:       sccID,
+			})
 		}
 		for _, c := range res.SCCs {
 			if c.Size < minSCC {

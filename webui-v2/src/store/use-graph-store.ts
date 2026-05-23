@@ -283,6 +283,20 @@ interface GraphState {
   nodeSizing: NodeSizingConfig;
   render: RenderConfig;
 
+  // #1386 — Module overview mode (closes epic #1380 alongside #1384).
+  // When ON, the Graph screen renders a COLLAPSED view: one node per
+  // module (sized by entity count / PageRank), edges = weighted
+  // module→module aggregates, cycles (SCCs) highlighted as a group.
+  // Clicking a module sets `expandedModule` and pops back into the
+  // entity-level view filtered to that module's entities. Default OFF —
+  // this is a separate mode, NOT a replacement for the Repo/Module/
+  // Community/Degree color modes (which apply to the entity-level view).
+  moduleOverviewMode: boolean;
+  /** When non-null, the entity-level view is filtered to the entities of
+   *  this `${repo}::${moduleName}` pair (the user "expanded" a module).
+   *  Cleared by exiting via the focus banner. */
+  expandedModule: { repo: string; moduleName: string } | null;
+
   // Re-layout request flag (flips true to force a fresh settle)
   relayoutNonce: number;
 
@@ -315,6 +329,10 @@ interface GraphState {
   requestRelayout: () => void;
   clearAllFilters: () => void;
   resetView: () => void;
+
+  // #1386 — Module overview actions.
+  setModuleOverviewMode: (on: boolean) => void;
+  setExpandedModule: (m: { repo: string; moduleName: string } | null) => void;
 }
 
 // Fix #1567-4: run the migration ONCE at module init (before the store reads any
@@ -352,6 +370,10 @@ export const useGraphStore = create<GraphState>((set) => ({
   simulation: persistedJSON("ag.v2.graph.sim", DEFAULT_SIMULATION, STORED_DEFAULTS_VERSION),
   nodeSizing: persistedJSON("ag.v2.graph.sizing", DEFAULT_NODE_SIZING, STORED_DEFAULTS_VERSION),
   render: persistedJSON("ag.v2.graph.render", DEFAULT_RENDER, STORED_DEFAULTS_VERSION),
+
+  // #1386 — module-overview defaults OFF; expandedModule null.
+  moduleOverviewMode: false,
+  expandedModule: null,
 
   relayoutNonce: 0,
 
@@ -433,5 +455,21 @@ export const useGraphStore = create<GraphState>((set) => ({
       focusedCommunityId: null,
       focusNodeIds: null,
       focusRootId: null,
+      // #1386 — Reset also exits the module-overview / expanded-module state so
+      // the user lands back on the canonical full entity graph.
+      moduleOverviewMode: false,
+      expandedModule: null,
     }),
+
+  // #1386 — toggling the overview mode clears any in-flight focus state so the
+  // module-collapsed canvas renders cleanly; exiting also clears any expansion.
+  setModuleOverviewMode: (moduleOverviewMode) =>
+    set({
+      moduleOverviewMode,
+      expandedModule: null,
+      selectedNodeId: null,
+      focusNodeIds: null,
+      focusRootId: null,
+    }),
+  setExpandedModule: (expandedModule) => set({ expandedModule }),
 }));

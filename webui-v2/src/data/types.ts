@@ -1224,3 +1224,58 @@ export interface RecallReply {
   errors: string[];
   elapsed_ms: number;
 }
+
+/* ============================================================
+   Module overview (#1386 / #1380 / #1384)
+
+   Wire shape for GET /api/v2/groups/:group/modules/analysis — module-
+   level GDS (SCC + PageRank + betweenness on the aggregated module
+   graph). One repoOut per repo in the group. `modules` is the FULL
+   centrality list (one entry per module) and `edges` is the FULL set
+   of directed module→module aggregated edges, both used by the webui
+   to render the collapsed module-overview canvas.
+   ============================================================ */
+export interface ModuleCentralityWire {
+  module_id: string;
+  module_name: string;
+  pagerank: number;
+  betweenness: number;
+  in_degree: number;
+  out_degree: number;
+  in_cycle: boolean;
+}
+
+export interface ModuleEdgeWire {
+  from_module: string;
+  to_module: string;
+  weight: number;
+  scc_internal: boolean;
+  scc_id: number;
+}
+
+export interface ModuleSCCWire {
+  id: number;
+  size: number;
+  members: string[];
+  member_names: string[];
+  edges: { from_module: string; to_module: string; weight: number }[];
+}
+
+export interface ModuleAnalysisRepoWire {
+  repo: string;
+  num_modules: number;
+  num_module_edges: number;
+  num_sccs: number;
+  largest_scc_size: number;
+  modules_in_cycle: number;
+  top_pagerank: ModuleCentralityWire[];
+  top_betweenness: ModuleCentralityWire[];
+  sccs: ModuleSCCWire[];
+  modules: ModuleCentralityWire[];
+  edges: ModuleEdgeWire[];
+}
+
+export interface ModuleAnalysisResponse {
+  repos: ModuleAnalysisRepoWire[];
+  count: number;
+}

@@ -49,6 +49,7 @@ import type {
   ScanInspectReply,
   WizardRepo,
   FsListReply,
+  ModuleAnalysisResponse,
 } from "@/data/types";
 
 const BASE = import.meta.env.VITE_AG_API_BASE ?? "/api";
@@ -264,6 +265,31 @@ export const api = {
     if (params?.lod) qs.set("lod", params.lod);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return requestV2<GraphPayloadWire>(`/graph/${encodeURIComponent(groupId)}${suffix}`);
+  },
+
+  /**
+   * GET /api/v2/groups/:group/modules/analysis — module-level GDS (SCC,
+   * PageRank, betweenness over the aggregated module graph). Powers the
+   * "Module overview" mode on the Graph screen (#1386, closes epic #1380
+   * alongside #1384 which shipped the algorithms + endpoint).
+   *
+   * `topN` defaults to 10 (top hubs lists); `minSccSize` to 2; the full
+   * `modules` + `edges` arrays are returned regardless of `topN` so the
+   * UI can lay out every module-level node.
+   */
+  getModuleAnalysis: (
+    groupId: string,
+    params?: { topN?: number; minSccSize?: number; repoFilter?: string[] },
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.topN) qs.set("top_n", String(params.topN));
+    if (params?.minSccSize) qs.set("min_scc_size", String(params.minSccSize));
+    if (params?.repoFilter && params.repoFilter.length > 0)
+      qs.set("repo_filter", params.repoFilter.join(","));
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return requestV2<ModuleAnalysisResponse>(
+      `/groups/${encodeURIComponent(groupId)}/modules/analysis${suffix}`,
+    );
   },
 
   // --- Topology screen (#1440, epic #1432) ---
