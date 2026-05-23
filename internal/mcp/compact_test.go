@@ -252,11 +252,15 @@ func TestHitsToTOON_OneRepoSchema(t *testing.T) {
 	if len(lines) != 3 {
 		t.Fatalf("want 3 lines (schema + 2 rows), got %d:\n%s", len(lines), got)
 	}
-	if lines[0] != "[!schema {name,kind,file,line,score}]" {
+	if lines[0] != "[!schema {id,name,kind,file,line,score}]" {
 		t.Errorf("wrong schema line: %q", lines[0])
 	}
-	if !strings.HasPrefix(lines[1], "{Login,") {
-		t.Errorf("row 1 should start with {Login,: %q", lines[1])
+	// First cell is the prefixed id, second cell is the name.
+	if !strings.HasPrefix(lines[1], "{auth-svc::") {
+		t.Errorf("row 1 should start with prefixed id {auth-svc::: %q", lines[1])
+	}
+	if !strings.Contains(lines[1], "Login") {
+		t.Errorf("row 1 should contain Login: %q", lines[1])
 	}
 	if !strings.Contains(lines[1], "8.32") {
 		t.Errorf("row 1 should contain score 8.32: %q", lines[1])
@@ -273,8 +277,8 @@ func TestHitsToTOON_MultiRepoIncludesRepoColumn(t *testing.T) {
 		makeTestNode("repo-a", "OrderService", "class", "svc/orders.go", 10, 5.5),
 	}
 	got := hitsToTOON(nodes, false /* multi-repo */)
-	if !strings.HasPrefix(got, "[!schema {repo,name,kind,file,line,score}]") {
-		t.Errorf("expected repo as first schema column: %q", got)
+	if !strings.HasPrefix(got, "[!schema {id,repo,name,kind,file,line,score}]") {
+		t.Errorf("expected id as first schema column, then repo: %q", got)
 	}
 	if !strings.Contains(got, "repo-a") {
 		t.Errorf("expected repo name in row: %q", got)
@@ -327,8 +331,8 @@ func TestRenderCompact_TOONPath(t *testing.T) {
 	if !strings.HasPrefix(got, "# nodes (2 matched)") {
 		t.Errorf("expected markdown header, got: %q", got)
 	}
-	// TOON schema line must be present.
-	if !strings.Contains(got, "[!schema {name,kind,file,line,score}]") {
+	// TOON schema line must be present with id as first field.
+	if !strings.Contains(got, "[!schema {id,name,kind,file,line,score}]") {
 		t.Errorf("expected TOON schema line in output:\n%s", got)
 	}
 	// Both entity names must appear as rows.
@@ -372,12 +376,15 @@ func TestRenderCompact_MarkdownFallback(t *testing.T) {
 
 // TestRenderCompact_TOONTokenSavings verifies that for a representative find
 // result the TOON-encoded hits section is shorter than the equivalent JSON-array
-// encoding of the same {name,kind,file,line,score} fields — confirming the
-// tabular format pays off once all five fields are present (#1737).
+// encoding of the same {id,name,kind,file,line,score} fields — confirming the
+// tabular format pays off once all six fields are present (#1737, #1744).
 //
-// The comparison is against JSON because the alternative to TOON+kind+score is
-// not the stripped "Name  file:line" markdown (which omits kind/score entirely)
-// but the richer JSON payload that a client would need to parse those fields.
+// The comparison is against JSON because the alternative to TOON is not the
+// stripped "Name  file:line" markdown (which omits id/kind/score entirely) but
+// the richer JSON payload that a client would need to parse those fields.
+// In production the id column is further compressed by #1750's interning
+// (long "<repo>::<hex>" IDs become "@N" handles), but this test measures raw
+// TOON vs raw JSON savings before interning.
 func TestRenderCompact_TOONTokenSavings(t *testing.T) {
 	t.Setenv("MCP_WIRE_FORMAT", "")
 	t.Setenv("MCP_FIND_FORMAT", "")
@@ -423,8 +430,10 @@ func TestRenderCompact_TOONTokenSavings(t *testing.T) {
 	rr := renderResult{MatchedTotal: len(nodes), OneRepo: true, Nodes: nodes}
 	toonOut := renderCompact(rr, 0)
 
-	// Build the equivalent JSON array of the same 5 fields as the JSON baseline.
+	// Build the equivalent JSON array of the same 6 fields (id included per #1744)
+	// as the JSON baseline so we compare apples-to-apples.
 	type jsonHit struct {
+		ID    string  `json:"id"`
 		Name  string  `json:"name"`
 		Kind  string  `json:"kind"`
 		File  string  `json:"file"`
@@ -433,7 +442,14 @@ func TestRenderCompact_TOONTokenSavings(t *testing.T) {
 	}
 	jsonArr := make([]jsonHit, len(fixtures))
 	for i, f := range fixtures {
-		jsonArr[i] = jsonHit{f.name, f.kind, f.file, f.line, f.score}
+		jsonArr[i] = jsonHit{
+			ID:    prefixedID("auth-service", f.name),
+			Name:  f.name,
+			Kind:  f.kind,
+			File:  f.file,
+			Line:  f.line,
+			Score: f.score,
+		}
 	}
 	jsonBytes, _ := json.Marshal(jsonArr)
 

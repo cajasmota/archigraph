@@ -196,7 +196,7 @@ func (s *Server) handleTracesGet(_ context.Context, req mcpapi.CallToolRequest) 
 			if e.Kind != processEntityKind || e.ID != target {
 				continue
 			}
-			steps := buildProcessSteps(r.Doc, e, r.ByID, verbose)
+			steps := buildProcessSteps(r.Doc, e, r.ByID, r.Repo, verbose)
 			return jsonResult(map[string]any{
 				"process_id":  prefixedID(r.Repo, e.ID),
 				"repo":        r.Repo,
@@ -268,9 +268,11 @@ func (s *Server) handleTracesFollow(_ context.Context, req mcpapi.CallToolReques
 		for _, c := range chains {
 			steps := make([]map[string]any, 0, len(c))
 			for i, id := range c {
+				prefID := prefixedID(r.Repo, id)
 				step := map[string]any{
+					"id":         prefID,
 					"step_index": i,
-					"node_id":    prefixedID(r.Repo, id),
+					"node_id":    prefID,
 				}
 				if e, ok := byID[id]; ok {
 					step["name"] = e.Name
@@ -314,9 +316,14 @@ func (s *Server) handleTracesFollow(_ context.Context, req mcpapi.CallToolReques
 // from its STEP_IN_PROCESS edges, falling back to the `chain` property
 // when the edges are missing.
 //
-// Default (verbose=false): step_index, node_id, name, file, line.
+// Default (verbose=false): id, step_index, node_id, name, file, line.
 // Verbose (verbose=true): also includes kind.
-func buildProcessSteps(doc *graph.Document, proc *graph.Entity, byID map[string]*graph.Entity, verbose ...bool) []map[string]any {
+//
+// The id field carries the full ADR-0009 prefixed entity ID ("<repo>::<hex>")
+// so callers can pass it directly to archigraph_get_source without a separate
+// archigraph_inspect round-trip (#1744). node_id (local ID) is preserved for
+// backward compatibility.
+func buildProcessSteps(doc *graph.Document, proc *graph.Entity, byID map[string]*graph.Entity, repo string, verbose ...bool) []map[string]any {
 	wantVerbose := len(verbose) > 0 && verbose[0]
 	if byID == nil {
 		// Defensive fallback: callers should always pass a cached map (#1656),
@@ -352,7 +359,11 @@ func buildProcessSteps(doc *graph.Document, proc *graph.Entity, byID map[string]
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].idx < ordered[j].idx })
 	out := make([]map[string]any, 0, len(ordered))
 	for _, o := range ordered {
-		step := map[string]any{"step_index": o.idx, "node_id": o.id}
+		step := map[string]any{
+			"id":         prefixedID(repo, o.id),
+			"step_index": o.idx,
+			"node_id":    o.id,
+		}
 		if e, ok := byID[o.id]; ok {
 			step["name"] = e.Name
 			step["file"] = e.SourceFile

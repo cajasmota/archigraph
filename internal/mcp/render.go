@@ -234,8 +234,12 @@ func findFormatMarkdown() bool {
 }
 
 // hitsToTOON serialises the ranked-hit nodes from a renderResult as a TOON
-// table. Schema: {name, kind, file, line, score}. When oneRepo is false the
-// repo column is prepended: {repo, name, kind, file, line, score}.
+// table. Schema: {id, name, kind, file, line, score}. When oneRepo is false the
+// repo column is inserted after id: {id, repo, name, kind, file, line, score}.
+//
+// The id field carries the full ADR-0009 prefixed entity ID ("<repo>::<hex>"),
+// which is picked up by #1750's interning and emitted as "@N" handles in the
+// response — so the byte cost of the new field is small after interning.
 //
 // Token-budget enforcement is the caller's responsibility; this helper encodes
 // all rows and returns the full table plus the number of rows written so the
@@ -246,19 +250,20 @@ func hitsToTOON(nodes []nodeWithRepo, oneRepo bool) string {
 	}
 	var schema []string
 	if oneRepo {
-		schema = []string{"name", "kind", "file", "line", "score"}
+		schema = []string{"id", "name", "kind", "file", "line", "score"}
 	} else {
-		schema = []string{"repo", "name", "kind", "file", "line", "score"}
+		schema = []string{"id", "repo", "name", "kind", "file", "line", "score"}
 	}
 	rows := make([][]any, 0, len(nodes))
 	for _, nw := range nodes {
+		id := prefixedID(nw.Repo, nw.Entity.ID)
 		kind := stripScopePrefix(nw.Entity.Kind)
 		score := fmt.Sprintf("%.2f", nw.Score)
 		var row []any
 		if oneRepo {
-			row = []any{nw.Entity.Name, kind, nw.Entity.SourceFile, nw.Entity.StartLine, score}
+			row = []any{id, nw.Entity.Name, kind, nw.Entity.SourceFile, nw.Entity.StartLine, score}
 		} else {
-			row = []any{nw.Repo, nw.Entity.Name, kind, nw.Entity.SourceFile, nw.Entity.StartLine, score}
+			row = []any{id, nw.Repo, nw.Entity.Name, kind, nw.Entity.SourceFile, nw.Entity.StartLine, score}
 		}
 		rows = append(rows, row)
 	}
