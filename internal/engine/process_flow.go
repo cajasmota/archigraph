@@ -107,16 +107,60 @@ type processStats struct {
 // the document in place. Returns a stats summary. Safe to call on a
 // document with no CALLS edges (returns an empty stats record).
 func RunProcessFlow(doc *graph.Document, cfg ProcessFlowConfig) processStats {
+	return RunProcessFlowWithCompanions(doc, nil, cfg)
+}
+
+// RunProcessFlowWithCompanions is the cross-repo-aware variant of
+// RunProcessFlow (#1893). When companions is non-empty, the BFS extends past
+// phantom cross-repo CALLS edges into the target repo's handler chain by
+// unifying adjacency + entity index across all provided docs.
+//
+// Semantics:
+//   - Process entities + edges are still appended only to `doc` (the source
+//     repo). companions are read-only — never mutated.
+//   - The BFS traverses CALLS / FETCHES / phantom edges from `doc` AND from
+//     every companion. With phantom-edge targets indexed across docs, a chain
+//     that begins in the frontend and traverses
+//     caller → http_endpoint_call → http_endpoint_definition → backend handler
+//     → ... is one continuous walk rather than a frontend-only chain that
+//     dead-ends at the HTTP boundary.
+//   - chainCrossesRepoBoundary still uses the phantom edge as the
+//     authoritative cross-repo marker. The resulting Process is tagged
+//     cross_stack=true and gets a new `cross_stack_bridge_at_step` property
+//     recording the index of the first phantom step in the chain (useful for
+//     dashboards to highlight the boundary visually).
+//   - When companions is nil/empty the behavior is byte-identical to the
+//     pre-#1893 single-doc pass.
+func RunProcessFlowWithCompanions(doc *graph.Document, companions []*graph.Document, cfg ProcessFlowConfig) processStats {
 	if doc == nil {
 		return processStats{}
 	}
 	cfg = clampConfig(cfg)
 
-	// Index entities by ID for fast lookup of kind / source-file metadata.
-	byID := make(map[string]*graph.Entity, len(doc.Entities))
+	// Index entities by ID across doc + companions for fast lookup of kind /
+	// source-file metadata. Entity IDs include the repo as a hash salt (see
+	// graph.EntityID), so cross-doc collisions are impossible by construction.
+	totalEntities := len(doc.Entities)
+	for _, c := range companions {
+		if c != nil {
+			totalEntities += len(c.Entities)
+		}
+	}
+	byID := make(map[string]*graph.Entity, totalEntities)
 	for i := range doc.Entities {
 		e := &doc.Entities[i]
 		byID[e.ID] = e
+	}
+	for _, c := range companions {
+		if c == nil {
+			continue
+		}
+		for i := range c.Entities {
+			e := &c.Entities[i]
+			if _, exists := byID[e.ID]; !exists {
+				byID[e.ID] = e
+			}
+		}
 	}
 
 	// Build the same HTTP-boundary set used by entry ranking. Any chain
@@ -124,7 +168,7 @@ func RunProcessFlow(doc *graph.Document, cfg ProcessFlowConfig) processStats {
 	// makes the resulting Process cross-stack relevant even when the
 	// http_endpoint entity itself sits at the end of an IMPLEMENTS edge
 	// rather than the CALLS chain.
-	httpBoundary := buildHTTPBoundarySet(doc)
+	httpBoundary := buildHTTPBoundarySetMulti(doc, companions)
 
 	// #754 — file-level consumer endpoint index. Maps a source file path
 	// to whether it contains a CONSUMER-side synthetic http_endpoint.
@@ -139,9 +183,13 @@ func RunProcessFlow(doc *graph.Document, cfg ProcessFlowConfig) processStats {
 	// no-op overlay on top of the precise FETCHES-edge signal.
 	consumerEndpointFiles := buildConsumerEndpointFileSet(doc)
 
-	// Build CALLS adjacency. Edges with explicit `confidence < 0.5` are
-	// excluded so fuzzy global-fallback matches don't dominate traces.
-	adj := buildCallsAdjacency(doc)
+	// Build CALLS adjacency across doc + companions. Edges with explicit
+	// `confidence < 0.5` are excluded so fuzzy global-fallback matches don't
+	// dominate traces. Companion edges extend the adjacency past phantom
+	// cross-repo edge targets (#1893): the phantom edge in doc points at an
+	// entity that lives in a companion's Entities slice; without companion
+	// adjacency the BFS would dead-end there.
+	adj := buildCallsAdjacencyMulti(doc, companions)
 
 	// Score candidate entry points.
 	candidates := rankEntryPoints(doc, byID, adj, cfg)
@@ -330,6 +378,14 @@ func RunProcessFlow(doc *graph.Document, cfg ProcessFlowConfig) processStats {
 		if crossStack && crossReason != "" {
 			props["cross_stack_reason"] = crossReason
 		}
+		// #1893 — record the chain index of the first phantom cross-repo edge
+		// so dashboards / docs can visually mark the boundary step. -1 means no
+		// phantom edge was traversed (the chain may still be cross_stack via
+		// an unresolved consumer http_endpoint signal, in which case the
+		// boundary is the endpoint step itself; see chainCrossesRepoBoundary).
+		if bridgeIdx := firstPhantomStepIndex(chain, adj); bridgeIdx >= 0 {
+			props["cross_stack_bridge_at_step"] = strconv.Itoa(bridgeIdx)
+		}
 
 		doc.Entities = append(doc.Entities, graph.Entity{
 			ID:         processID,
@@ -419,14 +475,30 @@ type callsAdjacency struct {
 // edgeKey is a directed (from,to) edge identity.
 type edgeKey struct{ from, to string }
 
-// buildCallsAdjacency filters the document's edges down to CALLS + FETCHES
-// (#754) and produces a deterministic adjacency list. Edges with
-// confidence < 0.5 (as set by the resolver) are excluded — they're
-// typically global-fallback matches and inflate trace counts with false
-// branches. FETCHES edges are unconditionally included: they're emitted
-// at extraction/resolve time with no confidence property and represent
-// definite cross-repo fetch points, not fuzzy resolution candidates.
+// buildCallsAdjacency is the single-doc adjacency builder. Equivalent to
+// buildCallsAdjacencyMulti(doc, nil); preserved for tests that exercise the
+// single-doc shape directly.
 func buildCallsAdjacency(doc *graph.Document) *callsAdjacency {
+	return buildCallsAdjacencyMulti(doc, nil)
+}
+
+// buildCallsAdjacencyMulti filters CALLS + FETCHES edges (#754) across `doc`
+// AND every doc in `companions`, producing a single deterministic adjacency
+// list. The unified adjacency lets the BFS continue past phantom cross-repo
+// CALLS edges (whose target ID lives in a companion's Entities slice) into
+// the target repo's CALLS chain — the #1893 cross-repo flow extension.
+//
+// Edge filtering rules (per-relationship, identical across docs):
+//   - CALLS with confidence < 0.5 dropped (fuzzy global fallback noise).
+//   - FETCHES always kept (no confidence property; structural primitive).
+//   - Phantom CALLS (cross_repo="true") always kept; recorded in adj.phantom.
+//   - IMPLEMENTS edges to http_endpoint_definition reversed as handler-
+//     continuation edges (#1639). Reversal runs for every doc, so a frontend
+//     phantom edge can land on the backend's http_endpoint_definition and
+//     continue into the backend handler in one BFS step.
+//
+// Per-doc passes are merged into the same maps. Companion docs are read-only.
+func buildCallsAdjacencyMulti(doc *graph.Document, companions []*graph.Document) *callsAdjacency {
 	a := &callsAdjacency{
 		out:         make(map[string][]string),
 		in:          make(map[string]int),
@@ -435,6 +507,29 @@ func buildCallsAdjacency(doc *graph.Document) *callsAdjacency {
 		handlerCont: make(map[edgeKey]bool),
 	}
 	seen := make(map[string]map[string]bool)
+	docs := make([]*graph.Document, 0, 1+len(companions))
+	docs = append(docs, doc)
+	for _, c := range companions {
+		if c != nil {
+			docs = append(docs, c)
+		}
+	}
+	for _, d := range docs {
+		ingestCallsAdjacency(a, seen, d)
+	}
+	for k := range a.out {
+		sort.Strings(a.out[k])
+	}
+	return a
+}
+
+// ingestCallsAdjacency merges one document's edges into the shared adjacency.
+// Extracted so the multi-doc path can iterate without duplicating logic.
+// Sorting of out-lists is deferred to the caller.
+func ingestCallsAdjacency(a *callsAdjacency, seen map[string]map[string]bool, doc *graph.Document) {
+	if doc == nil {
+		return
+	}
 	for i := range doc.Relationships {
 		r := &doc.Relationships[i]
 		isFetches := r.Kind == RelationshipKindFetches
@@ -520,11 +615,6 @@ func buildCallsAdjacency(doc *graph.Document) *callsAdjacency {
 		a.in[to]++
 		a.handlerCont[edgeKey{from, to}] = true
 	}
-
-	for k := range a.out {
-		sort.Strings(a.out[k])
-	}
-	return a
 }
 
 // isPhantomCallsEdge reports whether a CALLS relationship is a phantom
@@ -686,14 +776,32 @@ func chainLabels(chain []string, byID map[string]*graph.Entity) []string {
 // Used by both rankEntryPoints (boost candidate score) and the cross-
 // stack detector (mark Process as cross_stack=true).
 func buildHTTPBoundarySet(doc *graph.Document) map[string]bool {
+	return buildHTTPBoundarySetMulti(doc, nil)
+}
+
+// buildHTTPBoundarySetMulti is the cross-repo-aware variant. Companion docs'
+// IMPLEMENTS / ROUTES_TO / SERVES endpoints (in particular the backend
+// handlers + http_endpoint_definition pairs) are included so cross-repo flow
+// extension can score backend handlers as legitimate entry-points / boundary
+// nodes (#1893).
+func buildHTTPBoundarySetMulti(doc *graph.Document, companions []*graph.Document) map[string]bool {
 	out := make(map[string]bool)
-	for i := range doc.Relationships {
-		r := &doc.Relationships[i]
-		switch r.Kind {
-		case "IMPLEMENTS", "ROUTES_TO", "SERVES":
-			out[r.FromID] = true
-			out[r.ToID] = true
+	add := func(d *graph.Document) {
+		if d == nil {
+			return
 		}
+		for i := range d.Relationships {
+			r := &d.Relationships[i]
+			switch r.Kind {
+			case "IMPLEMENTS", "ROUTES_TO", "SERVES":
+				out[r.FromID] = true
+				out[r.ToID] = true
+			}
+		}
+	}
+	add(doc)
+	for _, c := range companions {
+		add(c)
 	}
 	return out
 }
@@ -841,6 +949,23 @@ func phantomEdgeForStep(fromID, toID string, doc *graph.Document) *graph.Relatio
 		}
 	}
 	return nil
+}
+
+// firstPhantomStepIndex returns the (1-based-into-chain) index of the first
+// step reached via a phantom cross-repo CALLS edge, or -1 when no such edge
+// is traversed. The returned index points at the TARGET step of the phantom
+// edge — i.e. the first step that lives in the other repo. Used to stamp
+// cross_stack_bridge_at_step (#1893) so consumers can highlight the boundary.
+func firstPhantomStepIndex(chain []string, adj *callsAdjacency) int {
+	if adj == nil {
+		return -1
+	}
+	for i := 1; i < len(chain); i++ {
+		if adj.phantom[edgeKey{chain[i-1], chain[i]}] {
+			return i
+		}
+	}
+	return -1
 }
 
 // chainCrossesRepo is a convenience predicate that returns true iff any
