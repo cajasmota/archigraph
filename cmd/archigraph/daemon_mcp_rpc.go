@@ -16,7 +16,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"sync"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
@@ -49,43 +48,28 @@ func mcpServerInstance() (*mcp.Server, error) {
 }
 
 // daemonMCPListTools is the MCPListToolsFunc injected into daemon.Config.
-// It returns the 14-tool catalog derived from the *mcp.Server.
-func daemonMCPListTools() ([]daemon.MCPToolEntry, error) {
+// It gates the tool list to the caller's cwd (#1769): sessions whose cwd is
+// not under any registered group receive only the sentinel tool
+// (archigraph_status), reducing the handshake from ~2,319 to ~80 tokens.
+func daemonMCPListTools(cwd string) ([]daemon.MCPToolEntry, error) {
 	srv, err := mcpServerInstance()
 	if err != nil {
 		return nil, err
 	}
 
-	toolMap := srv.MCP.ListTools()
-
-	// Sort for deterministic output.
-	names := make([]string, 0, len(toolMap))
-	for n := range toolMap {
-		names = append(names, n)
+	// ListToolsForCWD handles the full cwd-gate decision: full list vs sentinel.
+	mcpEntries, err := srv.ListToolsForCWD(cwd)
+	if err != nil {
+		return nil, err
 	}
-	sort.Strings(names)
 
-	out := make([]daemon.MCPToolEntry, 0, len(names))
-	for _, name := range names {
-		st := toolMap[name]
-		// Marshal the Tool to get the canonical inputSchema JSON,
-		// which honours both InputSchema and RawInputSchema.
-		raw, err := json.Marshal(st.Tool)
-		if err != nil {
-			continue
-		}
-		var m map[string]json.RawMessage
-		if err := json.Unmarshal(raw, &m); err != nil {
-			continue
-		}
-		entry := daemon.MCPToolEntry{Name: name}
-		if v, ok := m["description"]; ok {
-			_ = json.Unmarshal(v, &entry.Description)
-		}
-		if v, ok := m["inputSchema"]; ok {
-			entry.InputSchema = v
-		}
-		out = append(out, entry)
+	out := make([]daemon.MCPToolEntry, 0, len(mcpEntries))
+	for _, e := range mcpEntries {
+		out = append(out, daemon.MCPToolEntry{
+			Name:        e.Name,
+			Description: e.Description,
+			InputSchema: e.InputSchema,
+		})
 	}
 	return out, nil
 }

@@ -48,7 +48,7 @@ var stubToolCatalog = []daemon.MCPToolEntry{
 	{Name: "archigraph_get_telemetry", Description: "server uptime + per-tool counters"},
 }
 
-func stubListTools() ([]daemon.MCPToolEntry, error) {
+func stubListTools(_ string) ([]daemon.MCPToolEntry, error) {
 	return stubToolCatalog, nil
 }
 

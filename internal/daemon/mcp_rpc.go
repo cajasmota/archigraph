@@ -47,9 +47,12 @@ type MCPCallResult struct {
 	IsError bool
 }
 
-// MCPListToolsFunc returns the registered tool catalog. Injected from
-// cmd/archigraph; nil means "not configured" (bridge returns empty list).
-type MCPListToolsFunc func() ([]MCPToolEntry, error)
+// MCPListToolsFunc returns the tool catalog for a given caller cwd (#1769).
+// When cwd is empty the function falls back to singleton/explicit-group mode.
+// The function returns either the full catalog (cwd matches a registered group)
+// or a single sentinel entry (cwd is outside all registered groups).
+// Injected from cmd/archigraph; nil means "not configured" (bridge returns empty list).
+type MCPListToolsFunc func(cwd string) ([]MCPToolEntry, error)
 
 // MCPCallToolFunc dispatches a single tool call. name is the tool name,
 // args are the caller's arguments, cwd is the caller's working directory
@@ -59,8 +62,11 @@ type MCPCallToolFunc func(name string, args map[string]any, cwd string) (MCPCall
 // ── Wire types ────────────────────────────────────────────────────────────────
 
 // MCPToolListArgs is the argument struct for Daemon.MCPToolList.
-// No fields are needed; the method returns the full, static catalog.
-type MCPToolListArgs struct{}
+// CWD is the caller's working directory forwarded by the bridge so the daemon
+// can gate the tool list to the cwd-covered group (#1769).
+type MCPToolListArgs struct {
+	CWD string `json:"cwd,omitempty"`
+}
 
 // MCPToolInfo is a single tool's metadata, matching the mcpToolInfo shape
 // the bridge uses for the MCP tools/list response.
@@ -94,11 +100,15 @@ type MCPToolCallReply struct {
 
 // ── RPC methods ───────────────────────────────────────────────────────────────
 
-// MCPToolList returns the full 14-tool archigraph catalog. The list is
-// derived from the injected MCPListTools function (wired from *mcp.Server
-// in cmd/archigraph), so the source of truth is always server.go's
-// registerTools() — no duplication.
-func (s *Service) MCPToolList(_ *MCPToolListArgs, reply *MCPToolListReply) error {
+// MCPToolList returns the tool list gated by the caller's cwd (#1769).
+// When cwd is inside a registered group the full catalog is returned.
+// When cwd is outside all registered groups only the sentinel tool
+// (archigraph_status) is returned, saving ~2,319 handshake tokens per session.
+//
+// The list is derived from the injected MCPListTools function (wired from
+// *mcp.Server in cmd/archigraph), so registerTools() remains the source of
+// truth — no duplication.
+func (s *Service) MCPToolList(args *MCPToolListArgs, reply *MCPToolListReply) error {
 	if s.mcpListTools == nil {
 		// Daemon started without MCP wiring (e.g. tests that only test
 		// the index/rebuild surface). Return empty rather than an error
@@ -107,7 +117,12 @@ func (s *Service) MCPToolList(_ *MCPToolListArgs, reply *MCPToolListReply) error
 		return nil
 	}
 
-	entries, err := s.mcpListTools()
+	cwd := ""
+	if args != nil {
+		cwd = args.CWD
+	}
+
+	entries, err := s.mcpListTools(cwd)
 	if err != nil {
 		return fmt.Errorf("MCPToolList: %w", err)
 	}

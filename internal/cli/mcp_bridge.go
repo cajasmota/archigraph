@@ -124,7 +124,11 @@ type mcpToolCallResult struct {
 // ── Daemon RPC types ──────────────────────────────────────────────────────────
 
 // MCPToolListArgs / MCPToolListReply are the wire types for Daemon.MCPToolList.
-type MCPToolListArgs struct{}
+// CWD is the bridge's startup working directory, forwarded so the daemon can
+// gate the tool list to the cwd-covered group (#1769).
+type MCPToolListArgs struct {
+	CWD string `json:"cwd,omitempty"`
+}
 
 type MCPToolListReply struct {
 	Tools []mcpToolInfo `json:"tools"`
@@ -352,6 +356,9 @@ func (b *bridge) handleInitialize(req rpc2Request) *rpc2Response {
 }
 
 // handleToolsList proxies the tools/list call to the daemon.
+// The bridge's startup cwd is forwarded so the daemon can gate the tool list
+// to the cwd-covered group (#1769): sessions outside all registered groups
+// receive only the sentinel tool (archigraph_status) instead of the full list.
 // Falls back to a static minimal tool catalog when the daemon is unreachable
 // so Claude Code always sees _some_ tools and can display a useful error.
 func (b *bridge) handleToolsList(req rpc2Request) *rpc2Response {
@@ -362,7 +369,7 @@ func (b *bridge) handleToolsList(req rpc2Request) *rpc2Response {
 	}
 
 	var reply MCPToolListReply
-	if err := rpcClient.Call("Daemon.MCPToolList", MCPToolListArgs{}, &reply); err != nil {
+	if err := rpcClient.Call("Daemon.MCPToolList", MCPToolListArgs{CWD: b.startupCWD}, &reply); err != nil {
 		b.log("Daemon.MCPToolList: %v", err)
 		// Drop the dead client so the next request reconnects.
 		if errors.Is(err, rpc.ErrShutdown) || errors.Is(err, io.EOF) {
