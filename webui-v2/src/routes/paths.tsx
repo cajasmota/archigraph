@@ -7,6 +7,14 @@
 
    Data: usePaths, usePathDetail, useOrphans via TanStack Query.
    All network calls go through lib/api.ts (never raw fetch).
+
+   Issue #1961: unified column layout rules:
+     - Entity-ref sections (Defined in / Called by / Downstream / Side effects):
+       all use RefLine with 60%/40% path/name split + repo chip right-anchored.
+       No verb/kind/framework chips on any row — only the repo chip.
+     - Param/response sections (Parameters / Response shapes):
+       both use table-fixed with identical <colgroup> widths:
+       Name 22% | In 12% | Type 28% | Description 38%.
    ============================================================ */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
@@ -482,39 +490,17 @@ function EntityRow({ entity }: { entity: PathEntity }) {
  *  Issue #1910: Defined-in section collapses from verbose card to one-line ref.
  *  Issue #1934: framework/kind chip removed from RefLine — shown in header strip.
  *  Issue #1957: verb chip dropped from Defined-in rows — verb is already shown
- *               in the panel header. Repo chip is now right-anchored inside RefLine. */
+ *               in the panel header. Repo chip is now right-anchored inside RefLine.
+ *  Issue #1961: auth/docs trailing badges dropped — only repo chip allowed on row.
+ *               Auth is visible in the sticky header chip row above. */
 function HandlerRefLine({ handler }: { handler: HandlerDetail }) {
-  const hasBadges = handler.auth || handler.has_docs;
-  if (!hasBadges) {
-    return (
-      <RefLine
-        repo={handler.repo ?? ""}
-        file={handler.source_file ?? ""}
-        line={handler.start_line ?? 0}
-        name={handler.qualified_name ?? handler.verb}
-      />
-    );
-  }
   return (
-    <div className="flex items-center gap-2 py-1 px-4 hover:bg-surface-2 transition-colors">
-      <RefLine
-        repo={handler.repo ?? ""}
-        file={handler.source_file ?? ""}
-        line={handler.start_line ?? 0}
-        name={handler.qualified_name ?? handler.verb}
-        className="flex-1 px-0 py-0"
-      />
-      <div className="flex items-center gap-1 shrink-0">
-        {handler.auth && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded bg-success-soft text-success">
-            <Lock size={8} /> auth
-          </span>
-        )}
-        {handler.has_docs && (
-          <span className="text-[10px] text-text-4 italic">docs</span>
-        )}
-      </div>
-    </div>
+    <RefLine
+      repo={handler.repo ?? ""}
+      file={handler.source_file ?? ""}
+      line={handler.start_line ?? 0}
+      name={handler.qualified_name ?? handler.verb}
+    />
   );
 }
 
@@ -692,7 +678,13 @@ function DetailPane({ detail: rawDetail, initialVerb }: { detail: PathDetail; in
               {filteredParams.length === 0 ? (
                 <p className="text-xs text-text-4 py-1">None</p>
               ) : (
-                <table className="w-full text-xs">
+                <table className="w-full text-xs table-fixed">
+                  <colgroup>
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "28%" }} />
+                    <col style={{ width: "38%" }} />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-1.5 text-text-4 font-medium pr-3">Name</th>
@@ -739,7 +731,13 @@ function DetailPane({ detail: rawDetail, initialVerb }: { detail: PathDetail; in
               {filteredShapes.length === 0 ? (
                 <p className="text-xs text-text-4 py-1">None</p>
               ) : (
-                <table className="w-full text-xs">
+                <table className="w-full text-xs table-fixed">
+                  <colgroup>
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "28%" }} />
+                    <col style={{ width: "38%" }} />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-1.5 text-text-4 font-medium pr-3">Name</th>
