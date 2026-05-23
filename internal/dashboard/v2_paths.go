@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/mcp"
 	"github.com/cajasmota/archigraph/internal/types"
 )
@@ -671,6 +672,10 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 		// Both are used to match inbound cross-repo links (#1891).
 		HandlerEntityIDs []string
 		DefEntityID      string
+		// Issue #1909 — JAX-RS / Spring request body type inferred from method
+		// parameter annotations (populated for POST/PUT/PATCH endpoints).
+		RequestBodyType      string
+		RequestBodyParamName string
 	}
 
 	var hits []matched
@@ -810,8 +815,11 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 				OutboundIDs:   classified.downstream,
 				SideEffectIDs: classified.sideEffects,
 				TestIDs:       classified.tests,
-				HandlerEntityIDs: prefixedHandlerIDs,
-				DefEntityID:      dashPrefixedID(repo.Slug, e.ID),
+				HandlerEntityIDs:     prefixedHandlerIDs,
+				DefEntityID:          dashPrefixedID(repo.Slug, e.ID),
+				// Issue #1909 — request body type from entity properties.
+				RequestBodyType:      e.Properties["request_body_type"],
+				RequestBodyParamName: e.Properties["request_body_param_name"],
 			})
 		}
 	}
@@ -917,6 +925,31 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 	// Extract parameters from path segments (dynamic path params).
 	params := extractPathParameters(pathStr, verbs)
 
+	// Issue #1909 — append request body parameter when the Java extractor
+	// captured a JAX-RS / Spring request body type. Collect from all matched
+	// hits (may differ per verb); first non-empty wins per verb.
+	{
+		seenBodyVerbs := map[string]bool{}
+		for _, h := range hits {
+			if h.RequestBodyType == "" || seenBodyVerbs[h.Verb] {
+				continue
+			}
+			seenBodyVerbs[h.Verb] = true
+			paramName := h.RequestBodyParamName
+			if paramName == "" {
+				paramName = "body"
+			}
+			params = append(params, v2PathParameter{
+				Name:     paramName,
+				In:       "body",
+				Type:     h.RequestBodyType,
+				Required: true,
+				Desc:     "Request body — inferred from method parameter annotation.",
+				Verbs:    []string{h.Verb},
+			})
+		}
+	}
+
 	// Resolve entity IDs (#1646: all collected from the resolved handler).
 	calledByIDs := collectUniqueIDs(hits, func(h matched) []string { return h.CalledByIDs })
 	outboundIDs := collectUniqueIDs(hits, func(h matched) []string { return h.OutboundIDs })
@@ -963,7 +996,9 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 	// Called-by: inbound callers resolved to this endpoint (frontend FETCHES
 	// retargeted to the definition + intra-repo CALLS into the handler, plus
 	// cross-repo http_endpoint_call sources from the links file).
-	inboundFetches := resolveEntitySlice(grp, calledByIDs, "CALLED_BY")
+	// Issue #1908 — use the specialized inbound resolver that unwraps
+	// http_endpoint_call entities to their actual calling code entity.
+	inboundFetches := resolveInboundFetches(grp, calledByIDs)
 	// Downstream: the handler's outbound CALLS (services, helpers, DB-access fns).
 	outboundAll := resolveEntitySlice(grp, outboundIDs, "CALLS")
 	// Side effects: DB writes / model mutation / pub-sub the handler performs.
@@ -1358,6 +1393,195 @@ func mergeUniqueStrings(base, extra []string) []string {
 		}
 	}
 	return base
+}
+
+// resolveInboundFetches resolves a list of caller entity IDs for the
+// "Called by" section. Issue #1908: when the resolved entity is an
+// http_endpoint_call (its name is an HTTP URL pattern like
+// "http:PUT:/transfers/..."), the useful information is NOT the URL template
+// but the ACTUAL calling code entity (the function/method that makes the call).
+//
+// Resolution strategy:
+//  1. Look up the entity by the prefixed ID.
+//  2. If the entity's kind contains "http_endpoint_call" OR its name starts
+//     with "http:" (the canonical http_endpoint_call naming convention), scan
+//     the owning repo's relationship list for an entity that has a FETCHES or
+//     CALLS edge TO this http_endpoint_call entity. Use that entity instead.
+//  3. Fall back to the http_endpoint_call entity itself when no caller is found
+//     (better than dropping the entry entirely).
+func resolveInboundFetches(grp *DashGroup, ids []string) []v2PathEntity {
+	out := make([]v2PathEntity, 0, len(ids))
+	for _, id := range ids {
+		repo, entity := findEntity(grp, id)
+		if entity == nil {
+			continue
+		}
+
+		// Determine if this entity is an http_endpoint_call that needs unwrapping.
+		// http_endpoint_call entities carry the URL pattern as their name
+		// (e.g. "http:PUT:/transfers/confirm/{transferId}") which is not useful
+		// as a "Called by" label. We unwrap these to the actual caller entity.
+		kind := dashStripScopePrefix(entity.Kind)
+		isCallEntity := strings.EqualFold(kind, "http_endpoint_call") ||
+			strings.EqualFold(entity.Kind, "http_endpoint_call") ||
+			strings.Contains(strings.ToLower(entity.Kind), "http_endpoint_call") ||
+			strings.HasPrefix(entity.Name, "http:")
+
+		if isCallEntity && repo != nil {
+			// Find the entity that FETCHES or CALLS this http_endpoint_call.
+			// Relationships are stored at the Doc level (not on Entity).
+			localID := entity.ID
+			// Build an entity-by-ID lookup for this repo so we can quickly look up
+			// the caller by its FromID.
+			entityByID := make(map[string]*graph.Entity, len(repo.Doc.Entities))
+			entityByName := make(map[string]*graph.Entity, len(repo.Doc.Entities))
+			for i := range repo.Doc.Entities {
+				e := &repo.Doc.Entities[i]
+				entityByID[e.ID] = e
+				entityByName[e.Name] = e
+			}
+			// resolveSyntheticFromID resolves synthetic "Kind:Name" IDs produced
+			// during JS/TS extraction (e.g. "Function:confirmTransfer"). These IDs
+			// don't match the real hex entity IDs, so we extract the name portion
+			// and fall back to an entity-by-name lookup in the same repo.
+			resolveSyntheticFromID := func(fromID string) *graph.Entity {
+				if e := entityByID[fromID]; e != nil {
+					return e
+				}
+				// Try "Kind:Name" synthetic id formats
+				if idx := strings.LastIndex(fromID, ":"); idx >= 0 {
+					name := fromID[idx+1:]
+					if e := entityByName[name]; e != nil {
+						return e
+					}
+				}
+				return nil
+			}
+			for i := range repo.Doc.Relationships {
+				rel := &repo.Doc.Relationships[i]
+				if rel.ToID == localID &&
+					(rel.Kind == "FETCHES" || rel.Kind == "CALLS") {
+					if caller := resolveSyntheticFromID(rel.FromID); caller != nil {
+						callerLabel := caller.Name
+						callerQN := caller.QualifiedName
+						if callerQN == "" {
+							callerQN = callerLabel
+						}
+						out = append(out, v2PathEntity{
+							Label:         callerLabel,
+							QualifiedName: callerQN,
+							Kind:          dashStripScopePrefix(caller.Kind),
+							Repo:          repo.Slug,
+							SourceFile:    caller.SourceFile,
+							StartLine:     caller.StartLine,
+							Edge:          "CALLED_BY",
+							Protocol:      caller.Properties["protocol"],
+						})
+						goto nextID
+					}
+				}
+			}
+			// No intra-repo caller relationship found — also scan all other repos in
+			// the group (cross-repo FETCHES edges from a consumer repo).
+			callerEntityLocalID := entity.ID
+			callerFound := false
+			for _, otherRepo := range sortedRepos(grp) {
+				if otherRepo.Slug == repo.Slug {
+					continue
+				}
+				otherEntityByID := make(map[string]*graph.Entity, len(otherRepo.Doc.Entities))
+				otherEntityByName := make(map[string]*graph.Entity, len(otherRepo.Doc.Entities))
+				for i := range otherRepo.Doc.Entities {
+					e := &otherRepo.Doc.Entities[i]
+					otherEntityByID[e.ID] = e
+					otherEntityByName[e.Name] = e
+				}
+				resolveOtherSyntheticID := func(fromID string) *graph.Entity {
+					if e := otherEntityByID[fromID]; e != nil {
+						return e
+					}
+					if idx := strings.LastIndex(fromID, ":"); idx >= 0 {
+						name := fromID[idx+1:]
+						if e := otherEntityByName[name]; e != nil {
+							return e
+						}
+					}
+					return nil
+				}
+				for i := range otherRepo.Doc.Relationships {
+					rel := &otherRepo.Doc.Relationships[i]
+					if rel.ToID == callerEntityLocalID &&
+						(rel.Kind == "FETCHES" || rel.Kind == "CALLS") {
+						if caller := resolveOtherSyntheticID(rel.FromID); caller != nil {
+							callerLabel := caller.Name
+							callerQN := caller.QualifiedName
+							if callerQN == "" {
+								callerQN = callerLabel
+							}
+							out = append(out, v2PathEntity{
+								Label:         callerLabel,
+								QualifiedName: callerQN,
+								Kind:          dashStripScopePrefix(caller.Kind),
+								Repo:          otherRepo.Slug,
+								SourceFile:    caller.SourceFile,
+								StartLine:     caller.StartLine,
+								Edge:          "CALLED_BY",
+								Protocol:      caller.Properties["protocol"],
+							})
+							callerFound = true
+							goto nextID
+						}
+					}
+				}
+			}
+			if !callerFound {
+				// Fallback: surface the http_endpoint_call entity as-is — the
+				// URL pattern is more informative than dropping the entry.
+				repoSlug := ""
+				if repo != nil {
+					repoSlug = repo.Slug
+				}
+				label := entity.Name
+				qn := entity.QualifiedName
+				if qn == "" {
+					qn = label
+				}
+				out = append(out, v2PathEntity{
+					Label:         label,
+					QualifiedName: qn,
+					Kind:          kind,
+					Repo:          repoSlug,
+					SourceFile:    entity.SourceFile,
+					StartLine:     entity.StartLine,
+					Edge:          "CALLED_BY",
+					Protocol:      entity.Properties["protocol"],
+				})
+			}
+		} else {
+			// Regular non-endpoint entity: use as-is.
+			label := entity.Name
+			qn := entity.QualifiedName
+			if qn == "" {
+				qn = label
+			}
+			repoSlug := ""
+			if repo != nil {
+				repoSlug = repo.Slug
+			}
+			out = append(out, v2PathEntity{
+				Label:         label,
+				QualifiedName: qn,
+				Kind:          kind,
+				Repo:          repoSlug,
+				SourceFile:    entity.SourceFile,
+				StartLine:     entity.StartLine,
+				Edge:          "CALLED_BY",
+				Protocol:      entity.Properties["protocol"],
+			})
+		}
+	nextID:
+	}
+	return out
 }
 
 // resolveEntitySlice resolves a list of prefixed entity IDs to v2PathEntity values.

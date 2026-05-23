@@ -525,9 +525,22 @@ func findEntity(g *DashGroup, key string) (*DashRepo, *graph.Entity) {
 	// Prefixed "<repo>::<local>".
 	if rp, local := dashSplitPrefixed(key); rp != "" {
 		if r, ok := g.Repos[rp]; ok && r.Doc != nil {
+			// First try exact ID match.
 			for i := range r.Doc.Entities {
 				if r.Doc.Entities[i].ID == local {
 					return r, &r.Doc.Entities[i]
+				}
+			}
+			// Synthetic IDs produced during JS/TS extraction have the form
+			// "Kind:Name" (e.g. "Function:confirmTransfer") — they never match
+			// hex entity IDs. Resolve by extracting the name portion and falling
+			// back to a name-based lookup within the same repo.
+			if idx := strings.LastIndex(local, ":"); idx >= 0 {
+				name := local[idx+1:]
+				for i := range r.Doc.Entities {
+					if r.Doc.Entities[i].Name == name {
+						return r, &r.Doc.Entities[i]
+					}
 				}
 			}
 		}

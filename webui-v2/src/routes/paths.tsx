@@ -13,15 +13,16 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   Search, X, ChevronRight, ChevronLeft, Lock, ExternalLink, Copy,
-  Database, Zap, Globe, FlaskConical, TestTube, Server,
+  Database, Zap, Globe, TestTube, Server,
   Layers, Box, List, Maximize2, FolderTree, Boxes, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Tabs, TabsList, TabsTrigger, TabsContent, Skeleton } from "@/components/ui";
+import { RefLine } from "@/components/RefLine";
 import { usePaths, usePathDetail, useOrphans } from "@/hooks/use-paths";
 import type {
   PathBackend, ControllerGroupShape, PathRoute, PathDetail,
-  OrphanCaller, HttpVerb, OrphanReason, PathEntity,
+  OrphanCaller, HttpVerb, OrphanReason, PathEntity, HandlerDetail,
 } from "@/data/types";
 
 /* ============================================================
@@ -116,21 +117,6 @@ function statusCodeClass(code: number): string {
   if (c === 2) return "text-success";
   if (c === 3) return "text-warning";
   return "text-danger";
-}
-
-function kindIcon(kind: string): React.ReactNode {
-  switch ((kind ?? "").toLowerCase()) {
-    case "component": return <Box size={12} />;
-    case "datastore":
-    case "db":        return <Database size={12} />;
-    case "event":     return <Zap size={12} />;
-    case "queue":     return <Layers size={12} />;
-    case "service":   return <Server size={12} />;
-    case "externalapi": return <Globe size={12} />;
-    case "function":  return <FlaskConical size={12} />;
-    case "test":      return <TestTube size={12} />;
-    default:          return <Box size={12} />;
-  }
 }
 
 /* ============================================================
@@ -478,23 +464,43 @@ function SectionHeader({
   );
 }
 
+/** EntityRow — wraps RefLine for PathEntity values (Downstream, Side-effects, Tests). */
 function EntityRow({ entity }: { entity: PathEntity }) {
   return (
-    <div className="flex items-center gap-2 py-1.5 px-4 hover:bg-surface-2 rounded group">
-      <span className="text-text-4 shrink-0">{kindIcon(entity.kind)}</span>
-      <span
-        className="font-mono text-xs text-text truncate flex-1"
-        title={entity.qualified_name}
-      >
-        {entity.label}
-      </span>
-      {entity.edge && (
-        <span className="text-[10px] text-text-4 font-mono shrink-0">{entity.edge}</span>
-      )}
-      <span className="text-[10px] text-text-4 font-mono shrink-0 truncate max-w-[140px]">
-        {entity.source_file}:{entity.start_line}
-      </span>
-      <span className="text-[10px] text-text-3 font-mono shrink-0">{entity.repo}</span>
+    <RefLine
+      repo={entity.repo ?? ""}
+      file={entity.source_file ?? ""}
+      line={entity.start_line ?? 0}
+      name={entity.label ?? entity.qualified_name ?? ""}
+      kind={entity.kind}
+    />
+  );
+}
+
+/** HandlerRefLine — renders a handler detail using the canonical RefLine format.
+ *  Issue #1910: Defined-in section collapses from verbose card to one-line ref. */
+function HandlerRefLine({ handler }: { handler: HandlerDetail }) {
+  return (
+    <div className="flex items-start gap-2 py-1 px-4 hover:bg-surface-2 transition-colors">
+      <RefLine
+        repo={handler.repo ?? ""}
+        file={handler.source_file ?? ""}
+        line={handler.start_line ?? 0}
+        name={handler.qualified_name ?? handler.verb}
+        kind={handler.framework || handler.language || undefined}
+        className="flex-1 px-0 py-0"
+      />
+      <div className="flex items-center gap-1 shrink-0">
+        <VerbChip verb={handler.verb} />
+        {handler.auth && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded bg-success-soft text-success">
+            <Lock size={8} /> auth
+          </span>
+        )}
+        {handler.has_docs && (
+          <span className="text-[10px] text-text-4 italic">docs</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -795,71 +801,17 @@ function DetailPane({ detail: rawDetail }: { detail: PathDetail }) {
             open={openSections.defined}
             onToggle={() => toggleSection("defined")}
           />
+          {/* Issue #1910: Defined-in uses canonical RefLine row format. */}
           {openSections.defined && (
-            <div className="px-4 py-2 space-y-2">
+            <div className="py-1">
               {filteredHandlers.length === 0 ? (
-                <div className="rounded-md border border-warning bg-warning-soft/50 px-3 py-2 text-sm text-warning">
+                <div className="mx-4 my-2 rounded-md border border-warning bg-warning-soft/50 px-3 py-2 text-sm text-warning">
                   Orphan call — no backend handler found. Check the Orphan callers tab.
                 </div>
               ) : (
-                filteredHandlers.map((h, i) => {
-                  const verbBorderColor =
-                    h.verb === "GET" ? "var(--pastel-1-ink)"
-                    : h.verb === "POST" ? "var(--pastel-2-ink)"
-                    : h.verb === "DELETE" ? "var(--pastel-4-ink)"
-                    : h.verb === "GRPC" ? "var(--pastel-9-ink)"
-                    : "var(--pastel-6-ink)";
-
-                  return (
-                    <div
-                      key={i}
-                      className="rounded-md border border-border overflow-hidden"
-                      style={{ borderLeftWidth: "3px", borderLeftColor: verbBorderColor }}
-                    >
-                      <div className="flex items-center gap-2 px-3 py-2 bg-bg-soft border-b border-border">
-                        <VerbChip verb={h.verb} />
-                        <span className="font-mono text-xs text-text truncate flex-1" title={h.qualified_name}>
-                          {h.qualified_name}
-                        </span>
-                        <span
-                          className="text-[10px] font-mono text-text-4 shrink-0"
-                          title={`${h.source_file}:${h.start_line}`}
-                        >
-                          {(h.source_file ?? "").split("/").slice(-1)[0]}:{h.start_line}
-                        </span>
-                      </div>
-                      <div className="px-3 py-2">
-                        {h.has_docs && h.docs_summary ? (
-                          <p className="text-xs text-text-2 leading-relaxed">{h.docs_summary}</p>
-                        ) : (
-                          <p className="text-xs text-text-4 italic">No handler docs yet.</p>
-                        )}
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {h.framework && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 text-text-3">
-                              {h.framework}
-                            </span>
-                          )}
-                          {h.language && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 text-text-3">
-                              {h.language}
-                            </span>
-                          )}
-                          {h.repo && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 text-text-3">
-                              {h.repo}
-                            </span>
-                          )}
-                          {h.auth && (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-success-soft text-success">
-                              <Lock size={8} /> {h.auth}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                filteredHandlers.map((h, i) => (
+                  <HandlerRefLine key={i} handler={h} />
+                ))
               )}
             </div>
           )}

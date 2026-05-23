@@ -401,6 +401,118 @@ public class AuthController {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Tests for #1909 — JAX-RS request body inference
+// ---------------------------------------------------------------------------
+
+// TestApplyJavaAnnotationRoutes_Issue1909_JAXRSImplicitBody verifies that a
+// JAX-RS PUT method whose only non-annotated parameter is treated as the
+// request body emits request_body_type correctly.
+//
+// Fixture is a client-fixture-X style transfer confirmation endpoint:
+//
+//	@PUT
+//	@Path("/transfers/confirm/{transferId}")
+//	public Response confirm(@PathParam("transferId") String id, ConfirmRequest body) { ... }
+//
+// Expected: request_body_type = "ConfirmRequest", request_body_param_name = "body"
+func TestApplyJavaAnnotationRoutes_Issue1909_JAXRSImplicitBody(t *testing.T) {
+	src := `package com.example.banking;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Response;
+
+@Path("/transfers")
+public class TransferResource {
+
+    @PUT
+    @Path("/confirm/{transferId}")
+    public Response confirm(@PathParam("transferId") String id, ConfirmRequest body) {
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/{id}")
+    public Response getTransfer(@PathParam("id") String id) {
+        return Response.ok().build();
+    }
+}
+`
+	got := collect(t, map[string]string{"TransferResource.java": src})
+	// Find the PUT endpoint.
+	var putEP *recordLike
+	for i := range got {
+		if got[i].ID == "http:PUT:/transfers/confirm/{transferId}" {
+			putEP = &got[i]
+			break
+		}
+	}
+	if putEP == nil {
+		ids := endpointIDs(got)
+		t.Fatalf("[#1909] PUT endpoint not found; got IDs: %v", ids)
+	}
+	if putEP.Props["request_body_type"] != "ConfirmRequest" {
+		t.Errorf("[#1909] PUT: want request_body_type=ConfirmRequest, got %q", putEP.Props["request_body_type"])
+	}
+	if putEP.Props["request_body_param_name"] != "body" {
+		t.Errorf("[#1909] PUT: want request_body_param_name=body, got %q", putEP.Props["request_body_param_name"])
+	}
+	// GET endpoint must NOT have request_body_type set.
+	for _, r := range got {
+		if r.ID == "http:GET:/transfers/{id}" && r.Props["request_body_type"] != "" {
+			t.Errorf("[#1909] GET endpoint should not have request_body_type, got %q", r.Props["request_body_type"])
+		}
+	}
+}
+
+// TestApplyJavaAnnotationRoutes_Issue1909_SpringExplicitRequestBody verifies
+// that a Spring controller with @RequestBody emits request_body_type correctly.
+func TestApplyJavaAnnotationRoutes_Issue1909_SpringExplicitRequestBody(t *testing.T) {
+	src := `package com.example.api;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    @PostMapping
+    public OrderResponse create(@RequestBody CreateOrderRequest req) {
+        return new OrderResponse();
+    }
+
+    @PutMapping("/{id}")
+    public OrderResponse update(@PathVariable Long id, @RequestBody UpdateOrderRequest req) {
+        return new OrderResponse();
+    }
+}
+`
+	got := collect(t, map[string]string{"OrderController.java": src})
+	// POST endpoint.
+	var postEP *recordLike
+	var putEP *recordLike
+	for i := range got {
+		if got[i].ID == "http:POST:/api/orders" {
+			postEP = &got[i]
+		}
+		if got[i].ID == "http:PUT:/api/orders/{id}" {
+			putEP = &got[i]
+		}
+	}
+	if postEP == nil {
+		ids := endpointIDs(got)
+		t.Fatalf("[#1909] POST endpoint not found; got IDs: %v", ids)
+	}
+	if postEP.Props["request_body_type"] != "CreateOrderRequest" {
+		t.Errorf("[#1909] POST: want request_body_type=CreateOrderRequest, got %q", postEP.Props["request_body_type"])
+	}
+	if putEP == nil {
+		ids := endpointIDs(got)
+		t.Fatalf("[#1909] PUT endpoint not found; got IDs: %v", ids)
+	}
+	if putEP.Props["request_body_type"] != "UpdateOrderRequest" {
+		t.Errorf("[#1909] PUT: want request_body_type=UpdateOrderRequest, got %q", putEP.Props["request_body_type"])
+	}
+}
+
 // TestApplyJavaAnnotationRoutes_Issue683_QuarkusDeepAnnotationStack verifies
 // that a realistic Quarkus annotation stack with 5+ annotations between
 // @GET and @Path is handled correctly. Covers @RateLimited, @Produces,
