@@ -257,26 +257,37 @@ func NormalizeSeedEntityID(id string) (string, error) {
 func normalizeSeedEntityID(id string) (string, error) { return NormalizeSeedEntityID(id) }
 
 // loadEntityContext loads all graphs for the group, finds the seed entity,
-// and returns it along with its 1-hop neighbours and the repo root of the
-// seed entity (Document.Repo from the graph document that contains it).
+// and returns it along with its 1-hop neighbours and the absolute repo root
+// path of the seed entity. The returned seedRepo is always an absolute path
+// resolved from the fleet config — never a bare slug — so callers can safely
+// join it with entity.SourceFile regardless of the working directory.
 func loadEntityContext(group, seedID string) (doc *graph.Document, seed *graph.Entity, neighbours []graph.Entity, seedRepo string, err error) {
 	seedID, err = normalizeSeedEntityID(seedID)
 	if err != nil {
 		return
 	}
-	repoGraphDirs, err := findGroupGraphDirs(group)
+	entries, err := findGroupRepoEntries(group)
 	if err != nil {
 		return
 	}
 
 	// Build a combined entity index and relationship index across all repos.
-	// repoByEntityID maps entity ID → Document.Repo for the document it was
-	// loaded from, so we can populate LLMGraphContext.Repo for the seed entity.
+	// repoByEntityID maps entity ID → absolute repo path (from the fleet config)
+	// so that callers can always form a valid absolute path to source files,
+	// regardless of the current working directory (#1834).
+	//
+	// We use the fleet config's absRepoPath rather than Document.Repo because
+	// Document.Repo stores the indexer's repoTag (a short slug such as
+	// "archigraph"), not an absolute filesystem path.
+	//
+	// Backward-compat note: if Document.Repo is already absolute (as in test
+	// harnesses that write the full path), we prefer it so existing tests keep
+	// working without changes. Otherwise we fall back to absRepoPath.
 	byID := make(map[string]*graph.Entity)
 	repoByEntityID := make(map[string]string)
 	var allRels []graph.Relationship
-	for _, dir := range repoGraphDirs {
-		d, loadErr := graph.LoadGraphFromDir(dir)
+	for _, entry := range entries {
+		d, loadErr := graph.LoadGraphFromDir(entry.stateDir)
 		if loadErr != nil {
 			// Non-fatal: some repos may not be indexed yet.
 			continue
@@ -284,10 +295,17 @@ func loadEntityContext(group, seedID string) (doc *graph.Document, seed *graph.E
 		if doc == nil {
 			doc = d // keep first as nominal doc; not critical for Tier 0
 		}
+		// Resolve the canonical absolute path for this document's repo.
+		// If Document.Repo is already absolute (test harnesses write it that
+		// way), prefer it; otherwise use the config-derived absolute path.
+		absPath := entry.absRepoPath
+		if filepath.IsAbs(d.Repo) {
+			absPath = d.Repo
+		}
 		for i := range d.Entities {
 			e := d.Entities[i]
 			byID[e.ID] = &e
-			repoByEntityID[e.ID] = d.Repo
+			repoByEntityID[e.ID] = absPath
 		}
 		allRels = append(allRels, d.Relationships...)
 	}
@@ -337,10 +355,17 @@ func loadEntityContext(group, seedID string) (doc *graph.Document, seed *graph.E
 	return
 }
 
-// findGroupGraphDirs returns all state directories for repos in the given
-// group. It reads the fleet config and resolves each repo's store path via
-// daemon.StateDirForRepo — the canonical location since issue #1626.
-func findGroupGraphDirs(group string) ([]string, error) {
+// repoEntry pairs a graph state directory with its absolute repo path from the
+// fleet config. Both paths are resolved by the time they leave findGroupRepoEntries.
+type repoEntry struct {
+	stateDir    string // daemon state dir (contains graph.fb / graph.json)
+	absRepoPath string // absolute path to the repo root on disk
+}
+
+// findGroupRepoEntries reads the fleet config for the given group and returns
+// a slice of repoEntry values — one per registered repo with a non-empty path.
+// Both stateDir and absRepoPath are ready-to-use absolute paths.
+func findGroupRepoEntries(group string) ([]repoEntry, error) {
 	cfgPath, err := registry.ConfigPathFor(group)
 	if err != nil {
 		return nil, err
@@ -359,17 +384,33 @@ func findGroupGraphDirs(group string) ([]string, error) {
 		return nil, fmt.Errorf("parse group config: %w", err)
 	}
 
-	var dirs []string
+	var entries []repoEntry
 	for _, r := range cfg.Repos {
 		if r.Path == "" {
 			continue
 		}
-		// Use daemon.StateDirForRepo — the canonical store location (#1626).
-		// It handles ARCHIGRAPH_DAEMON_ROOT isolation automatically.
-		dirs = append(dirs, daemon.StateDirForRepo(r.Path))
+		entries = append(entries, repoEntry{
+			stateDir:    daemon.StateDirForRepo(r.Path),
+			absRepoPath: r.Path,
+		})
 	}
-	if len(dirs) == 0 {
+	if len(entries) == 0 {
 		return nil, fmt.Errorf("no repos registered in group %q", group)
+	}
+	return entries, nil
+}
+
+// findGroupGraphDirs returns all state directories for repos in the given
+// group. It reads the fleet config and resolves each repo's store path via
+// daemon.StateDirForRepo — the canonical location since issue #1626.
+func findGroupGraphDirs(group string) ([]string, error) {
+	entries, err := findGroupRepoEntries(group)
+	if err != nil {
+		return nil, err
+	}
+	dirs := make([]string, 0, len(entries))
+	for _, e := range entries {
+		dirs = append(dirs, e.stateDir)
 	}
 	return dirs, nil
 }

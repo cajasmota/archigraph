@@ -381,7 +381,18 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 			}
 			if sw, swErr := mcp.ReadSourceWindow(absPath, startLine, endLine); swErr != nil {
 				// Non-fatal: log and continue — the rest of the bundle is valid.
-				fmt.Fprintf(os.Stderr, "docgen: source_window: cannot read %s: %v\n", absPath, swErr)
+				// Include the resolved absolute path, the original entity SourceFile,
+				// the repo root, and the current working directory so that future
+				// debugging is easy (#1834).
+				cwd, _ := os.Getwd()
+				fmt.Fprintf(os.Stderr,
+					"docgen: source_window: cannot read source file for entity %q:\n"+
+						"  resolved path : %s\n"+
+						"  entity source : %s\n"+
+						"  repo root     : %s\n"+
+						"  cwd           : %s\n"+
+						"  error         : %v\n",
+					entity.ID, absPath, entity.SourceFile, seedRepo, cwd, swErr)
 			} else {
 				gc.SourceWindow = sw
 			}

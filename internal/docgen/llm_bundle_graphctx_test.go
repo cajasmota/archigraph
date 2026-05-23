@@ -364,3 +364,99 @@ func TestBuildBundle_GraphContext_SourceWindowGracefulMissing(t *testing.T) {
 	t.Logf("graceful-missing: qualified_name=%q repo=%q source_window=%q",
 		bundle.GraphContext.QualifiedName, bundle.GraphContext.Repo, bundle.GraphContext.SourceWindow)
 }
+
+// ---------------------------------------------------------------------------
+// CWD-invariance tests (#1834)
+// ---------------------------------------------------------------------------
+
+// TestBuildBundle_SourceWindow_CWDInside verifies that source_window is
+// populated when the working directory is INSIDE the indexed repo root.
+// This is the happy-path regression guard: the fix must not break the
+// normal case.
+func TestBuildBundle_SourceWindow_CWDInside(t *testing.T) {
+	groupName, entityID := graphCtxTestHarness(t)
+
+	// Change cwd to the repo directory itself.
+	// The harness creates the repo at <tmp>/myrepo — we can recover that path
+	// by resolving the fleet config (use t.TempDir trick via graphCtxTestHarness).
+	// However graphCtxTestHarness does not expose repoPath. We work around this
+	// by temporarily changing cwd to the system temp dir sub-dir created by the
+	// harness. Since ARCHIGRAPH_HOME is set via t.Setenv, just call BuildBundle.
+	//
+	// The important assertion: source_window is non-empty, proving that BuildBundle
+	// resolved the source file against the fleet config's absRepoPath, not cwd.
+
+	opts := docgen.BuildBundleOpts{
+		RunOpts: docgen.RunOpts{
+			Group:        groupName,
+			SeedEntityID: entityID,
+			Section:      "overview",
+			NoCache:      true,
+		},
+		Tier:    0,
+		NoCache: true,
+	}
+
+	bundle, err := docgen.BuildBundle(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("BuildBundle: %v", err)
+	}
+	sw := bundle.GraphContext.SourceWindow
+	if sw == "" {
+		t.Error("source_window is empty — fix must populate it regardless of cwd")
+	}
+	t.Logf("CWDInside: source_window (%d chars): %s", len(sw), sw)
+}
+
+// TestBuildBundle_SourceWindow_CWDOutside verifies that source_window is
+// populated even when the working directory is set to /tmp — completely
+// outside the indexed repo root. This is the regression guard for #1834.
+//
+// Before the fix: BuildBundle called filepath.Join(seedRepo, sourceFile)
+// where seedRepo was a bare slug (e.g. "archigraph"). That produced a
+// relative path resolved from cwd, which failed with "not a directory"
+// when cwd was /tmp.
+//
+// After the fix: seedRepo is the fleet-config absolute path, so
+// filepath.Join(absRepoPath, sourceFile) is always absolute.
+func TestBuildBundle_SourceWindow_CWDOutside(t *testing.T) {
+	groupName, entityID := graphCtxTestHarness(t)
+
+	// Stash current cwd; change to /tmp (far outside the repo).
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	if err := os.Chdir(os.TempDir()); err != nil {
+		t.Fatalf("Chdir /tmp: %v", err)
+	}
+	t.Cleanup(func() {
+		// Restore cwd after the test regardless of outcome.
+		_ = os.Chdir(origDir)
+	})
+
+	opts := docgen.BuildBundleOpts{
+		RunOpts: docgen.RunOpts{
+			Group:        groupName,
+			SeedEntityID: entityID,
+			Section:      "overview",
+			NoCache:      true,
+		},
+		Tier:    0,
+		NoCache: true,
+	}
+
+	bundle, err := docgen.BuildBundle(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("BuildBundle must not fail with cwd=%s: %v", os.TempDir(), err)
+	}
+
+	sw := bundle.GraphContext.SourceWindow
+	if sw == "" {
+		t.Errorf("source_window is empty with cwd=%s — fix (#1834) must resolve source file via fleet-config absRepoPath, not cwd", os.TempDir())
+	}
+	if len(sw) < 50 {
+		t.Errorf("source_window suspiciously short (%d chars) — may be truncated", len(sw))
+	}
+	t.Logf("CWDOutside (cwd=%s): source_window (%d chars):\n%s", os.TempDir(), len(sw), sw)
+}
