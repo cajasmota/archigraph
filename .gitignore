@@ -41,7 +41,8 @@ SCRATCH.md
 /.verify/
 
 # Go module cache
-/vendor/
+# /vendor/ intentionally NOT ignored — vendored via go mod vendor for #1796
+# (CGO iter.go patch that cannot be applied without vendor)
 
 # archigraph index output
 .archigraph/
