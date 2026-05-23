@@ -2361,19 +2361,39 @@ type foldShadowStats struct {
 // node we fold AWAY into a framework-typed survivor (so a class with a View
 // resolves to ONE node), and it is itself the survivor only when no
 // framework-typed node exists (handled separately, never as a candidate here).
+//
+// Both bare kind names (emitted by Java/Django custom extractors) AND their
+// "SCOPE."-prefixed forms (emitted by Kotlin, TypeScript, proto, and pattern
+// extractors) must appear so that frameworkClassKindPriority[r.Kind] matches
+// regardless of which extractor emitted the survivor. Issue #1700.
 var frameworkClassKindPriority = map[string]int{
+	// Bare names (Java/Django/Spring-boot custom extractors)
 	"Model":          100,
 	"View":           100,
 	"Controller":     100,
 	"Service":        100,
 	"Middleware":     100,
 	"Repository":     100,
+	"Worker":         100,
+	"Job":            100,
+	"Topic":          100,
 	"TestClass":      90,
 	"Schema":         80,
 	"Plugin":         80,
 	"Implementation": 80,
 	"Interface":      80,
 	"Task":           70,
+
+	// SCOPE.-prefixed equivalents (Kotlin extractor, proto extractor, NestJS
+	// service_detector, and any other extractor that emits the canonical
+	// "SCOPE.<Kind>" form for a class-like entity). Priorities mirror the bare
+	// form so that the highest-fidelity named node always beats a generic shadow.
+	"SCOPE.Service":    100,
+	"SCOPE.View":       100,
+	"SCOPE.Model":      100,
+	"SCOPE.UIComponent": 100,
+	"SCOPE.GrpcService": 90,
+	"SCOPE.Schema":     80,
 }
 
 func isShadowRecord(r *types.EntityRecord) bool {
@@ -2382,9 +2402,20 @@ func isShadowRecord(r *types.EntityRecord) bool {
 
 // classLikeComponentSubtypes are the SCOPE.Component subtypes that denote a
 // class/type declaration (as opposed to subtype="file"/"import"/"module").
+// Language AST subtypes ("class", "struct", …) are the primary set. Framework-
+// injected subtypes from NestJS, Angular, Spring-boot, Quarkus, and similar
+// extractors are included so that an inferential SCOPE.Component(subtype="service")
+// node emitted alongside a real SCOPE.Service node for the same class symbol is
+// recognised as a fold source and collapsed into the typed survivor. Issue #1700.
 var classLikeComponentSubtypes = map[string]bool{
+	// Language AST subtypes
 	"class": true, "struct": true, "interface": true,
 	"protocol": true, "trait": true, "behaviour": true,
+	// Framework-injected subtypes (NestJS, Angular, Spring, Quarkus, …)
+	"service": true, "controller": true, "repository": true,
+	"guard": true, "interceptor": true, "pipe": true,
+	"middleware": true, "resolver": true, "gateway": true,
+	"worker": true, "job": true, "task": true,
 }
 
 // isFoldSource reports whether r is a class-representation node that should be
