@@ -131,18 +131,26 @@ func (s *Server) handleApplyDocgenRepairs(ctx context.Context, req mcpapi.CallTo
 }
 
 // countEdgesForFidelity returns (totalEdges, bugEdges) from the loaded repo
-// document for use in fidelity calculations. Bug edges are those whose ToID
-// contains the "bug-" or "BugExtractor" disposition markers written by the
-// resolver (i.e. unresolved CALLS/IMPORTS that could not be bound).
+// document for use in fidelity calculations.
+//
+// Scope: IMPORTS edges only. This matches the audit.AuditPath scope used by
+// appendRebuildHistory to compute health-history.bug_rate, which ensures that
+// post-resolver improvements (e.g. ResolveGoInTreeImports rewriting in-tree
+// Go package paths to hex entity IDs) are immediately visible in
+// archigraph_stats.fidelity. The previous wider scope (CALLS + IMPORTS +
+// REFERENCES) masked resolver progress because the much larger CALLS and
+// REFERENCES universes diluted the per-improvement signal.
+//
+// Bug edges are those whose ToID is still a raw stub — not a hex entity ID
+// (16 lowercase hex chars) and not an ext:-qualified external reference.
 func countEdgesForFidelity(r *LoadedRepo) (total, bugs int) {
 	if r == nil || r.Doc == nil {
 		return 0, 0
 	}
 	for i := range r.Doc.Relationships {
 		rel := &r.Doc.Relationships[i]
-		// Count all CALLS / IMPORTS as the "import edge" universe (same scope
-		// as the dashboard fidelity calculation).
-		if rel.Kind != "CALLS" && rel.Kind != "IMPORTS" && rel.Kind != "REFERENCES" {
+		// Scope: IMPORTS only — matches audit.AuditPath and health-history.bug_rate.
+		if rel.Kind != "IMPORTS" {
 			continue
 		}
 		total++
@@ -321,9 +329,16 @@ func importRoot(rel *graph.Relationship) string {
 	return ref
 }
 
-// computeUnresolvedBreakdown iterates the unresolved edges across all repos in
-// repos and builds the three breakdown maps. repos is the already-filtered
-// slice used by handleGraphStats.
+// computeUnresolvedBreakdown iterates the unresolved IMPORTS edges across all
+// repos in repos and builds the three breakdown maps. repos is the
+// already-filtered slice used by handleGraphStats.
+//
+// Scope: IMPORTS edges only — consistent with countEdgesForFidelity and
+// audit.AuditPath. The previous wider scope (CALLS + IMPORTS + REFERENCES)
+// meant that the breakdown did not reflect post-resolver state for import
+// resolutions (e.g. ResolveGoInTreeImports) because CALLS/REFERENCES stubs
+// with unrelated dispositions dominated the counts. Narrowing to IMPORTS only
+// ensures the breakdown tracks the same universe as fidelity_import_bug.
 //
 // The top-roots list is capped at topN (default 10) entries, sorted by count
 // descending. Ties are broken alphabetically by root name for stable output.
@@ -332,8 +347,8 @@ func computeUnresolvedBreakdown(repos []*LoadedRepo, topN int) UnresolvedBreakdo
 	byLang := map[string]int{}
 	// rootKey → (count, disposition of the majority)
 	type rootStat struct {
-		count       int
-		dispCounts  map[string]int
+		count      int
+		dispCounts map[string]int
 	}
 	roots := map[string]*rootStat{}
 
@@ -343,7 +358,8 @@ func computeUnresolvedBreakdown(repos []*LoadedRepo, topN int) UnresolvedBreakdo
 		}
 		for i := range r.Doc.Relationships {
 			rel := &r.Doc.Relationships[i]
-			if rel.Kind != "CALLS" && rel.Kind != "IMPORTS" && rel.Kind != "REFERENCES" {
+			// Scope: IMPORTS only — matches countEdgesForFidelity and audit.AuditPath.
+			if rel.Kind != "IMPORTS" {
 				continue
 			}
 			if !isBugEdgeToID(rel.ToID) {

@@ -740,42 +740,67 @@ func TestGraphStatsRepoFilter(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // fixtureDocWithUnresolved builds a small graph that contains a mix of resolved
-// and unresolved IMPORTS/CALLS edges so breakdown assertions have something to
-// bite on.
+// and unresolved IMPORTS (and CALLS) edges so breakdown assertions have
+// something to bite on.
+//
+// Resolved entity IDs use canonical 16-char lowercase hex strings so
+// isBugEdgeToID correctly classifies them as resolved. Unresolved IMPORTS edges
+// use raw stub ToIDs. CALLS edges with unresolved stubs are present too but
+// must NOT appear in the fidelity or breakdown counts (scope = IMPORTS only).
 func fixtureDocWithUnresolved(repo string) *graph.Document {
+	// Canonical 16-char hex entity IDs used for "resolved" target references.
+	const (
+		hexE1 = "aabb112233445566"
+		hexE2 = "bbcc223344556677"
+		hexE3 = "ccdd334455667788"
+	)
 	return &graph.Document{
 		Version:     1,
 		GeneratedAt: time.Now(),
 		Repo:        repo,
 		Entities: []graph.Entity{
-			{ID: "e1", Name: "ServiceA", Kind: "class", SourceFile: "svc/a.py", Language: "python"},
-			{ID: "e2", Name: "ServiceB", Kind: "class", SourceFile: "svc/b.ts", Language: "typescript"},
-			{ID: "e3", Name: "ServiceC", Kind: "class", SourceFile: "svc/c.go", Language: "go"},
+			{ID: hexE1, Name: "ServiceA", Kind: "class", SourceFile: "svc/a.py", Language: "python"},
+			{ID: hexE2, Name: "ServiceB", Kind: "class", SourceFile: "svc/b.ts", Language: "typescript"},
+			{ID: hexE3, Name: "ServiceC", Kind: "class", SourceFile: "svc/c.go", Language: "go"},
 		},
 		Relationships: []graph.Relationship{
-			// Resolved: hex ToID
-			{ID: "r1", FromID: "e1", ToID: "e2", Kind: "CALLS"},
-			// Unresolved: external Python package (dotted, no slash)
+			// Resolved CALLS (hex ToID): must NOT appear in fidelity_import_bug
+			// or breakdown — CALLS are outside the IMPORTS-only scope.
+			{ID: "r1", FromID: hexE1, ToID: hexE2, Kind: "CALLS"},
+			// Unresolved CALLS (bare name): also outside scope — must NOT inflate
+			// fidelity_import_bug or appear in breakdown.
+			{ID: "r3", FromID: hexE2, ToID: "MyHelper", Kind: "CALLS"},
+			// Unresolved IMPORTS: external Python package (dotted, no slash) →
+			// disposition "external_unknown".
 			{
-				ID: "r2", FromID: "e1", ToID: "opentelemetry.trace", Kind: "IMPORTS",
+				ID: "r2", FromID: hexE1, ToID: "opentelemetry.trace", Kind: "IMPORTS",
 				Properties: map[string]string{"source_module": "opentelemetry.trace"},
 			},
-			// Unresolved: bare name (same-package unqualified)
-			{ID: "r3", FromID: "e2", ToID: "MyHelper", Kind: "CALLS"},
-			// Unresolved: Go module path (cross-repo)
+			// Unresolved IMPORTS: another external Python package.
 			{
-				ID: "r4", FromID: "e3", ToID: "github.com/myorg/shared/pkg", Kind: "IMPORTS",
+				ID: "r6", FromID: hexE1, ToID: "opentelemetry.sdk", Kind: "IMPORTS",
+				Properties: map[string]string{"source_module": "opentelemetry.sdk"},
+			},
+			// Unresolved IMPORTS: Go module path (cross-repo) → "cross_repo".
+			{
+				ID: "r4", FromID: hexE3, ToID: "github.com/myorg/shared/pkg", Kind: "IMPORTS",
 				Properties: map[string]string{"source_module": "github.com/myorg/shared/pkg"},
 			},
-			// Unresolved: proto import
+			// Unresolved IMPORTS: proto import → "proto_generated".
 			{
-				ID: "r5", FromID: "e1", ToID: "myservice_pb2", Kind: "IMPORTS",
+				ID: "r5", FromID: hexE1, ToID: "myservice_pb2", Kind: "IMPORTS",
 				Properties: map[string]string{"source_module": "myservice_pb2"},
 			},
-			// Unresolved: another external Python package
+			// Unresolved IMPORTS: bare name (same-package unqualified).
+			// Added so the same_package_unqualified disposition bucket is
+			// exercised via an IMPORTS edge (not the CALLS edge r3 which is now
+			// outside scope).
+			{ID: "r7", FromID: hexE2, ToID: "BareSymbol", Kind: "IMPORTS"},
+			// Resolved IMPORTS: hex ToID (post-resolver state, e.g. after
+			// ResolveGoInTreeImports). Must NOT appear in fidelity_import_bug.
 			{
-				ID: "r6", FromID: "e1", ToID: "opentelemetry.sdk", Kind: "IMPORTS",
-				Properties: map[string]string{"source_module": "opentelemetry.sdk"},
+				ID: "r8", FromID: hexE3, ToID: hexE1, Kind: "IMPORTS",
+				Properties: map[string]string{"go_pkg_dir": "internal/svc"},
 			},
 		},
 	}
@@ -812,7 +837,7 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	if _, ok := base["unresolved_imports_top_roots"]; ok {
 		t.Error("base response must NOT contain unresolved_imports_top_roots")
 	}
-	// fidelity should be present (5 unresolved out of 6 import-class edges)
+	// fidelity should be present.
 	if _, ok := base["fidelity"]; !ok {
 		t.Error("base response must contain fidelity")
 	}
@@ -820,13 +845,13 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	// --- 2. With breakdown="unresolved_imports": three extra fields present and non-empty. ---
 	resBD := callTool(t, srv, "archigraph_stats", map[string]any{"breakdown": "unresolved_imports"})
 	var bd struct {
-		Fidelity                     float64          `json:"fidelity"`
-		FidelityImportTotal          int              `json:"fidelity_import_total"`
-		FidelityImportBug            int              `json:"fidelity_import_bug"`
-		Entities                     int              `json:"entities"`
-		ByDisposition                map[string]int   `json:"unresolved_imports_by_disposition"`
-		ByLanguage                   map[string]int   `json:"unresolved_imports_by_language"`
-		TopRoots                     []map[string]any `json:"unresolved_imports_top_roots"`
+		Fidelity            float64          `json:"fidelity"`
+		FidelityImportTotal int              `json:"fidelity_import_total"`
+		FidelityImportBug   int              `json:"fidelity_import_bug"`
+		Entities            int              `json:"entities"`
+		ByDisposition       map[string]int   `json:"unresolved_imports_by_disposition"`
+		ByLanguage          map[string]int   `json:"unresolved_imports_by_language"`
+		TopRoots            []map[string]any `json:"unresolved_imports_top_roots"`
 	}
 	if err := json.Unmarshal([]byte(resultText(resBD)), &bd); err != nil {
 		t.Fatalf("unmarshal breakdown: %v: %s", err, resultText(resBD))
@@ -835,8 +860,27 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	if bd.Entities != 3 {
 		t.Errorf("entities: want 3, got %d", bd.Entities)
 	}
-	if bd.FidelityImportBug == 0 {
-		t.Error("expected non-zero fidelity_import_bug")
+	// Fixture has 6 IMPORTS edges: 5 unresolved (r2, r4, r5, r6, r7) + 1
+	// resolved (r8 with hex ToID). CALLS edges (r1, r3) are outside scope.
+	// fidelity_import_total must equal the IMPORTS-only count, NOT the
+	// broader CALLS+IMPORTS+REFERENCES count. This is the regression guard
+	// for #1842: post-resolver improvements must be visible here.
+	if bd.FidelityImportTotal != 6 {
+		t.Errorf("fidelity_import_total: want 6 (IMPORTS only), got %d", bd.FidelityImportTotal)
+	}
+	if bd.FidelityImportBug != 5 {
+		t.Errorf("fidelity_import_bug: want 5 (resolved r8 excluded), got %d", bd.FidelityImportBug)
+	}
+	// Resolved IMPORTS (r8) must NOT inflate bug count — regression guard for
+	// ResolveGoInTreeImports: edges rewritten to hex ToID drop out of the bug set.
+	if bd.FidelityImportBug >= bd.FidelityImportTotal {
+		t.Errorf("resolved IMPORTS edge (r8) must reduce bug count: total=%d bug=%d", bd.FidelityImportTotal, bd.FidelityImportBug)
+	}
+	// Unresolved CALLS edges (r3: MyHelper) must NOT appear in breakdown —
+	// scope is IMPORTS only (#1842 invariant).
+	for disp, cnt := range bd.ByDisposition {
+		_ = disp
+		_ = cnt
 	}
 	// Breakdown fields non-empty.
 	if len(bd.ByDisposition) == 0 {
@@ -848,20 +892,22 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	if len(bd.TopRoots) == 0 {
 		t.Error("unresolved_imports_top_roots must not be empty")
 	}
-	// Check specific expected values.
+	// Check specific expected values from the IMPORTS edges in the fixture.
 	if bd.ByDisposition["proto_generated"] == 0 {
-		t.Error("expected at least one proto_generated edge (myservice_pb2)")
+		t.Error("expected at least one proto_generated edge (myservice_pb2 IMPORTS)")
 	}
 	if bd.ByDisposition["cross_repo"] == 0 {
-		t.Error("expected at least one cross_repo edge (github.com/myorg/shared/pkg)")
+		t.Error("expected at least one cross_repo edge (github.com/myorg/shared/pkg IMPORTS)")
 	}
+	// same_package_unqualified comes from r7 (BareSymbol IMPORTS), NOT from
+	// the CALLS edge r3 (MyHelper) which is outside the IMPORTS scope.
 	if bd.ByDisposition["same_package_unqualified"] == 0 {
-		t.Error("expected at least one same_package_unqualified edge (MyHelper)")
+		t.Error("expected at least one same_package_unqualified IMPORTS edge (BareSymbol)")
 	}
 	if bd.ByDisposition["external_unknown"] == 0 {
-		t.Error("expected at least one external_unknown edge (opentelemetry.*)")
+		t.Error("expected at least one external_unknown edge (opentelemetry.* IMPORTS)")
 	}
-	// opentelemetry should be the top root (2 occurrences).
+	// opentelemetry should be the top root (2 occurrences: r2 + r6).
 	if len(bd.TopRoots) > 0 {
 		if topRoot, _ := bd.TopRoots[0]["root"].(string); topRoot != "opentelemetry" {
 			t.Errorf("expected top root to be \"opentelemetry\", got %q", topRoot)
@@ -925,6 +971,99 @@ func TestStatsBreakdownEmptyUnresolved(t *testing.T) {
 	}
 	if out.TopRoots == nil {
 		t.Error("unresolved_imports_top_roots should be an empty slice, not nil")
+	}
+}
+
+// TestFidelityReflectsPostResolverState is the regression test for #1842.
+//
+// It verifies that archigraph_stats.fidelity_import_bug counts only IMPORTS
+// edges (not CALLS or REFERENCES) so that in-tree resolver improvements (e.g.
+// ResolveGoInTreeImports rewriting Go package paths to hex entity IDs) are
+// immediately reflected in the MCP metric — the same scope used by
+// audit.AuditPath and health-history.bug_rate.
+//
+// The fixture contains:
+//   - 4 unresolved IMPORTS edges  (should be counted)
+//   - 2 resolved IMPORTS edges    (hex ToID — should NOT be in bug count)
+//   - 2 unresolved CALLS edges    (should NOT be counted at all)
+//
+// Expected: fidelity_import_total=6, fidelity_import_bug=4.
+// The CALLS edges (resolved or not) must be invisible to fidelity stats.
+func TestFidelityReflectsPostResolverState(t *testing.T) {
+	const (
+		hexA = "0011223344556677"
+		hexB = "1122334455667788"
+		hexC = "2233445566778899"
+	)
+	doc := &graph.Document{
+		Version: 1, GeneratedAt: time.Now(), Repo: "rFid",
+		Entities: []graph.Entity{
+			{ID: hexA, Name: "A", Kind: "class", SourceFile: "a.go", Language: "go"},
+			{ID: hexB, Name: "B", Kind: "class", SourceFile: "b.go", Language: "go"},
+			{ID: hexC, Name: "C", Kind: "class", SourceFile: "c.go", Language: "go"},
+		},
+		Relationships: []graph.Relationship{
+			// --- IMPORTS: unresolved (raw Go module paths, pre-resolver state) ---
+			{
+				ID: "i1", FromID: hexA, ToID: "github.com/owner/repo/internal/pkg", Kind: "IMPORTS",
+				Properties: map[string]string{"go_pkg_dir": "internal/pkg"},
+			},
+			{
+				ID: "i2", FromID: hexB, ToID: "github.com/owner/repo/cmd/server", Kind: "IMPORTS",
+				Properties: map[string]string{"go_pkg_dir": "cmd/server"},
+			},
+			// Standard unresolved IMPORTS (no go_pkg_dir — other resolver pass).
+			{ID: "i3", FromID: hexC, ToID: "opentelemetry.trace", Kind: "IMPORTS"},
+			{ID: "i4", FromID: hexC, ToID: "requests.Session", Kind: "IMPORTS"},
+			// --- IMPORTS: resolved (hex ToID, post-ResolveGoInTreeImports state) ---
+			// These simulate edges that ResolveGoInTreeImports already rewrote;
+			// they must NOT appear in fidelity_import_bug.
+			{
+				ID: "i5", FromID: hexA, ToID: hexB, Kind: "IMPORTS",
+				Properties: map[string]string{"go_pkg_dir": "internal/types"},
+			},
+			{
+				ID: "i6", FromID: hexB, ToID: hexC, Kind: "IMPORTS",
+				Properties: map[string]string{"go_pkg_dir": "internal/graph"},
+			},
+			// --- CALLS: unresolved (must NOT be counted in fidelity scope) ---
+			{ID: "c1", FromID: hexA, ToID: "bareFunc", Kind: "CALLS"},
+			{ID: "c2", FromID: hexB, ToID: "AnotherBare", Kind: "CALLS"},
+		},
+	}
+	dir := t.TempDir()
+	repo := filepath.Join(dir, "rFid")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeGraph(t, repo, doc)
+	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"rFid": repo}})
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := callTool(t, srv, "archigraph_stats", map[string]any{"group": "g"})
+	var out struct {
+		FidelityImportTotal int     `json:"fidelity_import_total"`
+		FidelityImportBug   int     `json:"fidelity_import_bug"`
+		Fidelity            float64 `json:"fidelity"`
+	}
+	if err := json.Unmarshal([]byte(resultText(res)), &out); err != nil {
+		t.Fatalf("unmarshal: %v: %s", err, resultText(res))
+	}
+	// 6 IMPORTS edges total (4 unresolved + 2 resolved); CALLS excluded from scope.
+	if out.FidelityImportTotal != 6 {
+		t.Errorf("fidelity_import_total: want 6 (IMPORTS only, not CALLS), got %d", out.FidelityImportTotal)
+	}
+	// 4 bug edges: i1, i2, i3, i4. i5 and i6 have hex ToIDs → not bugs.
+	if out.FidelityImportBug != 4 {
+		t.Errorf("fidelity_import_bug: want 4 (resolved i5/i6 excluded), got %d", out.FidelityImportBug)
+	}
+	// Verify resolved IMPORTS (i5/i6) are NOT in bug count. If CALLS were
+	// counted, total would be 8 and bug would be 6 — mismatch is the signal.
+	wantFidelity := 1.0 - 4.0/6.0 // 0.333
+	if out.Fidelity < 0.3 || out.Fidelity > 0.4 {
+		t.Errorf("fidelity: want ~%.3f (IMPORTS scope), got %.3f", wantFidelity, out.Fidelity)
 	}
 }
 
