@@ -216,9 +216,23 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 	// Third pass (#713): platform-variant and test-file relationship emission.
 	// Detects React Native platform-specific file naming (.ios.tsx,
 	// .android.tsx, .tablet.tsx, …) and emits PLATFORM_VARIANT_OF edges.
-	// Also detects *.test.tsx / *.spec.tsx files and emits TESTS edges.
-	// Runs after the primary walk so the file entity already exists.
+	// Also detects *.test.tsx / *.spec.tsx files and emits a single
+	// file-to-file TESTS edge. Runs after the primary walk so the file
+	// entity already exists.
 	x.emitPlatformVariantRelationships()
+
+	// Fourth pass (#1726): per-operation TESTS edges. For files identified
+	// as JS/TS test files (*.test.{ts,tsx,js,jsx,mjs,cjs},
+	// *.spec.{...}, __tests__/, tests/), reclassify each CALLS edge from
+	// every Operation entity as ALSO carrying a TESTS edge to the same
+	// callee. This is the per-call equivalent of the file-to-file edge
+	// emitted above and the JS/TS counterpart to the gain the cross/
+	// testmap pass already delivers for Python (iter4: 87 → 459 TESTS
+	// edges, but all gain in upvate-core/Python; frontend produced 1 and
+	// mobile 0 across ~2500 test entities). emitTestsEdgesForTestFile is
+	// a no-op for non-test files (cheap filename check) so the hot path
+	// stays cheap.
+	x.emitTestsEdgesForTestFile()
 
 	// Secondary pass: error-handling patterns.
 	// Runs after the primary extraction so a detection failure here
