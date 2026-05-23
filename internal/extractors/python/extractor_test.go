@@ -1794,3 +1794,92 @@ class Migration(migrations.Migration):
 		t.Error("non-migration file with a class should emit semantic entities")
 	}
 }
+
+// TestExtract_DjangoMigrationFixtures pins the #1731 migration-prune behaviour
+// against on-disk fixtures so any regression is caught at the fixture level.
+//
+//   - django_migration.py.fixture  — lives under core/migrations/ → zero semantic
+//     entities (file-level entity only).
+//   - django_models.py.fixture     — lives under core/models/ → fully extracted;
+//     at least Device class + two methods emitted.
+func TestExtract_DjangoMigrationFixtures(t *testing.T) {
+	ext, ok := extractor.Get("python")
+	if !ok {
+		t.Fatal("python extractor not registered")
+	}
+
+	// --- migration fixture: must produce ZERO semantic entities ---
+	migSrc, err := os.ReadFile(filepath.Join("testdata", "django_migration.py.fixture"))
+	if err != nil {
+		t.Fatalf("read django_migration fixture: %v", err)
+	}
+	migEnts, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "core/migrations/0042_device_serial_number.py",
+		Content:  migSrc,
+		Language: "python",
+		Tree:     parse(t, migSrc),
+	})
+	if err != nil {
+		t.Fatalf("extract django_migration fixture: %v", err)
+	}
+	semantic := stripFileEntity(migEnts)
+	if len(semantic) > 0 {
+		names := make([]string, 0, len(semantic))
+		for _, e := range semantic {
+			names = append(names, e.Kind+"/"+e.Subtype+":"+e.Name)
+		}
+		t.Errorf("django_migration fixture: expected 0 semantic entities, got %d: %v", len(semantic), names)
+	}
+	if len(migEnts) == 0 {
+		t.Fatal("django_migration fixture: file-level entity must be preserved for import resolution")
+	}
+	fileEnt := migEnts[0]
+	if fileEnt.Kind != "SCOPE.Component" || fileEnt.Subtype != "file" {
+		t.Errorf("django_migration fixture: entities[0] must be file entity, got %s/%s", fileEnt.Kind, fileEnt.Subtype)
+	}
+
+	// --- models fixture: must be fully extracted ---
+	modSrc, err := os.ReadFile(filepath.Join("testdata", "django_models.py.fixture"))
+	if err != nil {
+		t.Fatalf("read django_models fixture: %v", err)
+	}
+	modEnts, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "core/models.py",
+		Content:  modSrc,
+		Language: "python",
+		Tree:     parse(t, modSrc),
+	})
+	if err != nil {
+		t.Fatalf("extract django_models fixture: %v", err)
+	}
+	modSemantic := stripFileEntity(modEnts)
+	if len(modSemantic) == 0 {
+		t.Fatal("django_models fixture: must emit semantic entities; got none")
+	}
+
+	// Assert at least the Device class and its two non-dunder methods are present.
+	var (
+		hasDeviceClass  bool
+		hasStrMethod    bool
+		hasGetURLMethod bool
+	)
+	for _, e := range modSemantic {
+		switch {
+		case e.Kind == "SCOPE.Component" && e.Subtype == "class" && e.Name == "Device":
+			hasDeviceClass = true
+		case e.Kind == "SCOPE.Operation" && e.Name == "Device.__str__":
+			hasStrMethod = true
+		case e.Kind == "SCOPE.Operation" && e.Name == "Device.get_absolute_url":
+			hasGetURLMethod = true
+		}
+	}
+	if !hasDeviceClass {
+		t.Error("django_models fixture: expected SCOPE.Component/class 'Device'")
+	}
+	if !hasStrMethod {
+		t.Error("django_models fixture: expected SCOPE.Operation 'Device.__str__'")
+	}
+	if !hasGetURLMethod {
+		t.Error("django_models fixture: expected SCOPE.Operation 'Device.get_absolute_url'")
+	}
+}

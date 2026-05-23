@@ -1,0 +1,38 @@
+"""Fixture for #1731: auto-generated Django migration file.
+
+A file under any `migrations/` package produced by `manage.py makemigrations`.
+The extractor must return ONLY the file-level SCOPE.Component entity and skip
+the full AST walk, producing zero semantic entities (no class, method, or
+field records) for this file.
+
+Extension catalogue (future issues — same isDjangoMigrationFile shape):
+  - Rails:   db/migrate/*.rb      — parent dir = "migrate" under "db/"
+  - Alembic: versions/*.py        — parent dir = "versions", ancestor has alembic.ini
+  - Knex:    migrations/*.js      — parent dir = "migrations", language = JS
+"""
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("core", "0041_device_prev"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="device",
+            name="serial_number",
+            field=models.CharField(max_length=128, default=""),
+        ),
+        migrations.AddField(
+            model_name="device",
+            name="firmware_version",
+            field=models.CharField(max_length=64, blank=True),
+        ),
+        migrations.AlterField(
+            model_name="device",
+            name="updated_at",
+            field=models.DateTimeField(auto_now=True),
+        ),
+    ]
