@@ -253,8 +253,123 @@ func pct(covered, total int) float64 {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Core algorithm
+// Relationship kind constants (shared by all coverage functions)
 // ─────────────────────────────────────────────────────────────────────────────
+
+const kindTests = "TESTS"
+const kindCalls = "CALLS"
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-entity coverage lookup (#1774)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// EntityCoverageResult is the single-entity output of ComputeEntityCoverage.
+type EntityCoverageResult struct {
+	EntityID         string   `json:"entity_id"`
+	Name             string   `json:"name"`
+	Kind             string   `json:"kind"`
+	SourceFile       string   `json:"source_file"`
+	StartLine        int      `json:"start_line"`
+	Severity         string   `json:"severity"`
+	Tested           bool     `json:"tested"`
+	CoveringTests    []string `json:"covering_tests"`
+	CoverageFraction float64  `json:"coverage_fraction"`
+}
+
+// ComputeEntityCoverage returns coverage details for a single entity ID within
+// doc. It applies the same two-phase algorithm as ComputeCoverage (real TESTS
+// edges, then synthetic fallback via CALLS) but only for the requested entity,
+// so it avoids iterating the entire graph for the output rendering step.
+//
+// Returns (result, true) when the entity is found and is a production entity.
+// Returns (nil, false) when the entity ID is not present in the document.
+// Returns a result with Tested=false and empty CoveringTests when the entity
+// exists but is a test entity or out-of-scope kind.
+func ComputeEntityCoverage(doc *Document, entityID string) (*EntityCoverageResult, bool) {
+	// ── find entity ────────────────────────────────────────────────────────────
+	var target *Entity
+	for i := range doc.Entities {
+		if doc.Entities[i].ID == entityID {
+			target = &doc.Entities[i]
+			break
+		}
+	}
+	if target == nil {
+		return nil, false
+	}
+
+	// ── index all entities needed for the two-phase algorithm ─────────────────
+	prodIDs := make(map[string]bool)
+	testIDs := make(map[string]bool)
+	for i := range doc.Entities {
+		e := &doc.Entities[i]
+		switch {
+		case isProductionEntity(e):
+			prodIDs[e.ID] = true
+		case isTestEntity(e):
+			testIDs[e.ID] = true
+		}
+	}
+
+	result := &EntityCoverageResult{
+		EntityID:   entityID,
+		Name:       target.Name,
+		Kind:       target.Kind,
+		SourceFile: target.SourceFile,
+		StartLine:  target.StartLine,
+		Severity:   entitySeverity(target),
+	}
+
+	if !prodIDs[entityID] {
+		// Entity exists but is not a production entity (test entity or out-of-scope).
+		// Report it as not applicable — Tested=false, empty covering tests.
+		return result, true
+	}
+
+	// ── phase 1: collect direct TESTS edges targeting entityID ────────────────
+	coveringSet := make(map[string]bool)
+	// testCallsTo: sets of production entity IDs each test entity calls.
+	testCallsToTarget := make(map[string]bool) // test entity IDs that CALL entityID
+
+	for i := range doc.Relationships {
+		rel := &doc.Relationships[i]
+		switch strings.ToUpper(rel.Kind) {
+		case kindTests:
+			if rel.ToID == entityID && testIDs[rel.FromID] {
+				coveringSet[rel.FromID] = true
+			}
+		case kindCalls:
+			if rel.ToID == entityID && testIDs[rel.FromID] {
+				testCallsToTarget[rel.FromID] = true
+			}
+		}
+	}
+
+	// ── phase 2: synthetic TESTS from CALLS (only when no direct TESTS exist) ──
+	if len(coveringSet) == 0 {
+		for testID := range testCallsToTarget {
+			coveringSet[testID] = true
+		}
+	}
+
+	// ── build sorted covering-tests slice ─────────────────────────────────────
+	coveringTests := make([]string, 0, len(coveringSet))
+	for id := range coveringSet {
+		coveringTests = append(coveringTests, id)
+	}
+	sort.Strings(coveringTests)
+
+	tested := len(coveringTests) > 0
+	fraction := 0.0
+	if tested {
+		fraction = 1.0
+	}
+
+	result.Tested = tested
+	result.CoveringTests = coveringTests
+	result.CoverageFraction = fraction
+	return result, true
+}
 
 // ComputeCoverage analyses doc and returns a CoverageReport.
 //
@@ -301,9 +416,6 @@ func ComputeCoverage(doc *Document) *CoverageReport {
 	covered := make(map[string]int, len(prodIDs))
 	// testCallsTo: per test-entity-ID, the set of CALLS target IDs.
 	testCallsTo := make(map[string][]string)
-
-	const kindTests = "TESTS"
-	const kindCalls = "CALLS"
 
 	for i := range doc.Relationships {
 		rel := &doc.Relationships[i]

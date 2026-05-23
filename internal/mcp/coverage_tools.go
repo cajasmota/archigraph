@@ -6,6 +6,9 @@
 //	resolved group. Identifies production entities that have no TESTS edge
 //	inbound (untested) and ranks them by severity.
 //
+// When entity_id is provided (#1774), returns a single-record focused answer:
+// "is THIS entity tested?" — skips the full dump-all path entirely.
+//
 // Severity rules:
 //
 //	high   — HTTP endpoint without tests (unprotected surface area)
@@ -27,6 +30,15 @@ func (s *Server) handleTestCoverage(ctx context.Context, req mcpapi.CallToolRequ
 	_, lg, toolErr := s.resolveAndGroup(req)
 	if toolErr != nil {
 		return toolErr, nil
+	}
+
+	// ── entity_id fast-path (#1774) ───────────────────────────────────────────
+	// When entity_id is provided, return a focused single-record answer instead
+	// of the full dump. This avoids the O(all-entities) output rendering and
+	// answers "is THIS entity tested?" in < 500 bytes.
+	entityID := argString(req, "entity_id", "")
+	if entityID != "" {
+		return s.handleTestCoverageEntity(lg, entityID)
 	}
 
 	repoFilter := argStringSlice(req, "repo_filter")
@@ -173,6 +185,69 @@ func (s *Server) handleTestCoverage(ctx context.Context, req mcpapi.CallToolRequ
 	}
 
 	return mcpapi.NewToolResultText(out), nil
+}
+
+// handleTestCoverageEntity is the entity_id fast-path for handleTestCoverage
+// (#1774). It searches all repos in the loaded group for the entity, runs the
+// two-phase coverage algorithm restricted to that single entity, and returns a
+// compact single-record result.
+func (s *Server) handleTestCoverageEntity(lg *LoadedGroup, entityID string) (*mcpapi.CallToolResult, error) {
+	// Search repos in sorted order for deterministic behaviour.
+	repoNames := make([]string, 0, len(lg.Repos))
+	for name := range lg.Repos {
+		repoNames = append(repoNames, name)
+	}
+	sort.Strings(repoNames)
+
+	for _, name := range repoNames {
+		rd := lg.Repos[name]
+		if rd == nil || rd.Doc == nil {
+			continue
+		}
+
+		result, found := graph.ComputeEntityCoverage(rd.Doc, entityID)
+		if !found {
+			continue
+		}
+
+		// Render compact single-record output.
+		testedStr := "no"
+		if result.Tested {
+			testedStr = "yes"
+		}
+		out := fmt.Sprintf(
+			"## Test Coverage — entity %q\n\n"+
+				"entity_id         : %s\n"+
+				"name              : %s\n"+
+				"kind              : %s\n"+
+				"source_file       : %s (line %d)\n"+
+				"severity          : %s\n"+
+				"tested            : %s\n"+
+				"coverage_fraction : %.2f\n"+
+				"covering_tests    : %d\n",
+			entityID,
+			result.EntityID,
+			result.Name,
+			result.Kind,
+			result.SourceFile, result.StartLine,
+			result.Severity,
+			testedStr,
+			result.CoverageFraction,
+			len(result.CoveringTests),
+		)
+		if len(result.CoveringTests) > 0 {
+			out += "\n### Covering test entity IDs\n\n"
+			for _, tid := range result.CoveringTests {
+				out += "- " + tid + "\n"
+			}
+		}
+		return mcpapi.NewToolResultText(out), nil
+	}
+
+	// Entity not found in any repo.
+	return mcpapi.NewToolResultText(
+		fmt.Sprintf("entity not found: %q — check the entity_id is correct and the group is fully loaded.", entityID),
+	), nil
 }
 
 // repoMatchesSlice returns true when slug matches any entry in filter.
