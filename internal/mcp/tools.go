@@ -314,7 +314,7 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 	var qVec []float32
 	var qHave bool
 	for _, r := range repos {
-		bm25Hits := r.BM25.Search(question, 50)
+		bm25Hits := r.BM25.Search(question, 10)
 		if r.Semantic != nil && r.Semantic.Len() > 0 {
 			if !qHave {
 				qVec, qHave = embedQuery(ctx, question)
@@ -324,7 +324,7 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 				}
 			}
 			if qHave && len(qVec) == r.Semantic.Dims {
-				semIDs := r.Semantic.Search(qVec, 50)
+				semIDs := r.Semantic.Search(qVec, 10)
 				semHits := make([]Hit, 0, len(semIDs))
 				for _, s := range semIDs {
 					if e, ok := r.byID[s.ID]; ok {
@@ -407,8 +407,8 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 	// Otherwise BFS-expand from each top hit and render compact.
 	matched := len(all)
 	keep := all
-	if len(keep) > 25 {
-		keep = keep[:25]
+	if len(keep) > 10 {
+		keep = keep[:10]
 	}
 	visibleNodes := []nodeWithRepo{}
 	visibleEdges := []renderEdge{}
