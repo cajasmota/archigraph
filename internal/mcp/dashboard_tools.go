@@ -12,6 +12,7 @@ package mcp
 
 import (
 	"context"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -937,9 +938,91 @@ func (s *Server) handleGetSubgraph(_ context.Context, req mcpapi.CallToolRequest
 	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
 }
 
+// reverseTraversalEdgeKinds is the set of edge kinds where the BFS in
+// find_paths should ALSO follow the reverse direction. These are the
+// "interface-style" edges where (handler --IMPLEMENTS--> endpoint) is
+// emitted from the implementation side but a cross-repo link lands on
+// the contract/endpoint node — to reach the handler, BFS must walk the
+// IMPLEMENTS edge in reverse. (#1690)
+var reverseTraversalEdgeKinds = map[string]bool{
+	"IMPLEMENTS":      true,
+	"GRPC_IMPLEMENTS": true,
+	"HANDLES":         true,
+	"GRPC_HANDLES":    true,
+}
+
+// buildRepoAliasMap returns a map of every recognised repo-prefix to the
+// canonical *LoadedRepo. A loaded repo can be addressed by:
+//
+//   - its registry slug (the key in lg.Repos)
+//   - the `repo` field embedded in its graph document
+//
+// These can DIVERGE when the on-disk repo directory uses underscores but
+// the fleet config lists the slug with dashes (or vice versa). The
+// cross-repo links file is written with the graph-encoded repo name, but
+// MCP resolves IDs through the registry slug — so without aliasing,
+// link.Target points at a repo prefix that lg.Repos doesn't contain and
+// BFS expansion stops at the cross-repo hop. (#1690)
+func buildRepoAliasMap(lg *LoadedGroup) map[string]*LoadedRepo {
+	if lg == nil {
+		return nil
+	}
+	aliases := make(map[string]*LoadedRepo, len(lg.Repos)*4)
+	register := func(key string, r *LoadedRepo) {
+		if key == "" || r == nil {
+			return
+		}
+		if _, exists := aliases[key]; !exists {
+			aliases[key] = r
+		}
+	}
+	for slug, r := range lg.Repos {
+		register(slug, r)
+		if r != nil && r.Doc != nil && r.Doc.Repo != "" {
+			register(r.Doc.Repo, r)
+		}
+		// Path basename — the links generator has historically derived the
+		// `repo` field of cross-repo Source/Target prefixes from the on-disk
+		// directory name, which uses underscores where the fleet slug uses
+		// dashes (e.g. /Projects/UpVate/upvate_core vs slug upvate-core). When
+		// the links file was written under that older convention but the
+		// current graph.fb is tagged with the new slug, neither slug nor
+		// doc.Repo match the link's prefix. Register the directory basename
+		// AND its dash/underscore swap so the prefix still resolves. (#1690)
+		if r != nil && r.Path != "" {
+			base := filepath.Base(r.Path)
+			register(base, r)
+			register(strings.ReplaceAll(base, "_", "-"), r)
+			register(strings.ReplaceAll(base, "-", "_"), r)
+		}
+		// Defensive: also register the slug/doc.Repo with `_`↔`-` swapped.
+		register(strings.ReplaceAll(slug, "-", "_"), r)
+		register(strings.ReplaceAll(slug, "_", "-"), r)
+		if r != nil && r.Doc != nil && r.Doc.Repo != "" {
+			register(strings.ReplaceAll(r.Doc.Repo, "-", "_"), r)
+			register(strings.ReplaceAll(r.Doc.Repo, "_", "-"), r)
+		}
+	}
+	return aliases
+}
+
+// lookupRepo resolves a repo prefix (either the registry slug or the
+// graph-encoded `Doc.Repo` name) to its LoadedRepo. Returns the canonical
+// slug + repo, or ("", nil) when nothing matches. (#1690)
+func lookupRepo(aliases map[string]*LoadedRepo, prefix string) (string, *LoadedRepo) {
+	if r, ok := aliases[prefix]; ok && r != nil {
+		return r.Repo, r
+	}
+	return "", nil
+}
+
 // handleFindPaths finds the shortest path between two entities up to max_hops.
 // #1650: traverses cross-repo edges via lg.Links, so an id in repo A can reach
 // an id in repo B when a link connects the two graphs.
+// #1690: aliases path-derived and slug-derived repo prefixes so links written
+// as `<doc.Repo>::<id>` resolve to the registry-loaded repo even when the
+// fleet slug uses dashes vs underscores; also walks IMPLEMENTS-style edges
+// in reverse so an endpoint cross-repo target can reach its handler.
 func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	from, err := req.RequireString("from")
 	if err != nil {
@@ -961,10 +1044,33 @@ func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) 
 		maxHops = 8
 	}
 
+	aliases := buildRepoAliasMap(lg)
+
+	// canonicalize normalises a "<repo>::<id>" prefix so its repo segment
+	// always matches a key in lg.Repos. Bare ids / labels fall through to
+	// normalizePrefixed.
+	canonicalize := func(s string) string {
+		if rPref, lid := splitPrefixed(s); rPref != "" {
+			if slug, r := lookupRepo(aliases, rPref); r != nil {
+				if _, ok := r.LabelIndex.ByID[lid]; ok {
+					return prefixedID(slug, lid)
+				}
+				// id may be a label/qname within this repo
+				if e := r.LabelIndex.Lookup(lid); e != nil {
+					return prefixedID(slug, e.ID)
+				}
+				return ""
+			}
+			return ""
+		}
+		return normalizePrefixed(lg, s)
+	}
+
 	// Resolve both endpoints to PREFIXED ids. Accept either a "<repo>::<id>"
-	// string or a bare local id / label that LabelIndex can resolve.
-	prefSrc := normalizePrefixed(lg, from)
-	prefDst := normalizePrefixed(lg, to)
+	// string (under either the registry slug or the graph-encoded repo name)
+	// or a bare local id / label that LabelIndex can resolve.
+	prefSrc := canonicalize(from)
+	prefDst := canonicalize(to)
 	if prefSrc == "" {
 		return jsonResult(map[string]any{
 			"from":  from,
@@ -989,29 +1095,76 @@ func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) 
 		Repo     string `json:"repo"`
 	}
 
+	// canonicalRepoOf returns the canonical slug for a prefixed id, falling
+	// back to the literal prefix when no alias matches (so dijkstra still
+	// has stable node ids to compare).
+	canonicalRepoOf := func(node string) (string, string, *LoadedRepo) {
+		rPref, lid := splitPrefixed(node)
+		if rPref == "" {
+			return "", node, nil
+		}
+		slug, r := lookupRepo(aliases, rPref)
+		if r == nil {
+			return rPref, lid, nil
+		}
+		return slug, lid, r
+	}
+
 	// Expand function: intra-repo CALLS/IMPORTS/etc. + cross-repo overlay.
+	// The expansion also walks IMPLEMENTS-class edges in reverse so that a
+	// cross-repo link landing on an http_endpoint_definition can reach the
+	// implementing handler. (#1690)
 	expand := func(node string) []edge {
-		repo, local := splitPrefixed(node)
+		slug, local, r := canonicalRepoOf(node)
 		out := []edge{}
-		if r, ok := lg.Repos[repo]; ok && r.Doc != nil {
+		if r != nil && r.Doc != nil && r.Adjacency != nil {
 			a := r.Adjacency
 			for _, e := range a.out[local] {
 				out = append(out, edge{
-					target: prefixedID(repo, e.target),
+					target: prefixedID(slug, e.target),
 					kind:   e.kind,
 					weight: 1, // unit cost — we want shortest hop count
 				})
 			}
-		}
-		// Cross-repo overlay: source-side matches the current node.
-		for _, l := range lg.Links {
-			if l.Source == node {
+			// Reverse traversal for interface-style edges (#1690).
+			for _, e := range a.in[local] {
+				if !reverseTraversalEdgeKinds[e.kind] {
+					continue
+				}
 				out = append(out, edge{
-					target: l.Target,
-					kind:   l.EffectiveKind(),
+					target: prefixedID(slug, e.target),
+					kind:   e.kind + "_REVERSED",
 					weight: 1,
 				})
 			}
+		}
+		// Cross-repo overlay: a link's source-side matches the current node
+		// under either the registry slug or the graph-encoded repo prefix.
+		// Re-canonicalise the link Target so dijkstra sees the slug used in
+		// lg.Repos — without this, BFS would store the target under the
+		// graph-encoded prefix and fail to expand further. (#1690)
+		for _, l := range lg.Links {
+			lSrcSlug, lSrcID := splitPrefixed(l.Source)
+			if lSrcSlug == "" {
+				continue
+			}
+			cSrcSlug, _ := lookupRepo(aliases, lSrcSlug)
+			if cSrcSlug == "" {
+				cSrcSlug = lSrcSlug
+			}
+			if prefixedID(cSrcSlug, lSrcID) != node {
+				continue
+			}
+			lTgtSlug, lTgtID := splitPrefixed(l.Target)
+			cTgtSlug, _ := lookupRepo(aliases, lTgtSlug)
+			if cTgtSlug == "" {
+				cTgtSlug = lTgtSlug
+			}
+			out = append(out, edge{
+				target: prefixedID(cTgtSlug, lTgtID),
+				kind:   l.EffectiveKind(),
+				weight: 1,
+			})
 		}
 		return out
 	}
@@ -1031,12 +1184,12 @@ func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) 
 	crosses := false
 	firstRepo, _ := splitPrefixed(prefSrc)
 	for _, pid := range path {
-		repo, local := splitPrefixed(pid)
-		if repo != firstRepo {
+		slug, local, r := canonicalRepoOf(pid)
+		if slug != firstRepo {
 			crosses = true
 		}
-		st := step{EntityID: pid, Repo: repo}
-		if r, ok := lg.Repos[repo]; ok && r.Doc != nil {
+		st := step{EntityID: pid, Repo: slug}
+		if r != nil && r.Doc != nil {
 			if e := r.LabelIndex.ByID[local]; e != nil {
 				st.Name = e.Name
 				st.Kind = e.Kind
