@@ -106,7 +106,172 @@ var javaProducesRe = regexp.MustCompile(`@Produces\s*\(([^)]+)\)`)
 // line-by-line in the file walker; this regex matches one method-decl line.
 //
 // We accept: modifiers, generic return type, method-name, opening paren.
-var javaMethodDeclRe = regexp.MustCompile(`^\s*(?:public|protected|private|static|final|abstract|synchronized|default|\s)+[\w<>\[\],.\s?]+?\s+(\w+)\s*\(`)
+// Group 1 = method name; group 2 = rest of line after the opening paren
+// (the parameter fragment, may be partial for multi-line signatures).
+var javaMethodDeclRe = regexp.MustCompile(`^\s*(?:public|protected|private|static|final|abstract|synchronized|default|\s)+[\w<>\[\],.\s?]+?\s+(\w+)\s*\((.*)`)
+
+// jaxrsNonBodyAnnotations is the set of JAX-RS / Spring parameter annotations
+// whose presence means the parameter is NOT the request body.
+// Issue #1909: a JAX-RS method parameter that carries none of these is the
+// implicit request body (applies to POST/PUT/PATCH/DELETE).
+var jaxrsNonBodyAnnotations = []string{
+	"@PathParam", "@QueryParam", "@HeaderParam", "@FormParam",
+	"@CookieParam", "@Context", "@MatrixParam", "@BeanParam",
+	"@PathVariable", "@RequestParam", "@RequestHeader", // Spring equivalents
+}
+
+// jaxrsVerbsThatHaveBody is the set of HTTP verbs where a request body is
+// plausible. GET/HEAD/OPTIONS are excluded to avoid false positives.
+var jaxrsVerbsThatHaveBody = map[string]bool{
+	"POST": true, "PUT": true, "PATCH": true, "DELETE": true,
+}
+
+// inferRequestBodyParam parses the parameter fragment from a method declaration
+// and returns the (type, name) of the first parameter that carries no JAX-RS
+// binding annotation. Returns ("","") when no body param is found or when the
+// verb set does not include a body-eligible verb.
+//
+// paramFrag is everything after the opening '(' on the method declaration line
+// (may not include the closing ')' for multi-line signatures — single-line is
+// the dominant case for REST controllers).
+func inferRequestBodyParam(paramFrag string, verbs []string) (bodyType, bodyName string) {
+	hasBodyVerb := false
+	for _, v := range verbs {
+		if jaxrsVerbsThatHaveBody[strings.ToUpper(v)] {
+			hasBodyVerb = true
+			break
+		}
+	}
+	if !hasBodyVerb {
+		return "", ""
+	}
+	// Trim trailing ')' or '{' if present.
+	paramFrag = strings.TrimRight(strings.TrimSpace(paramFrag), "){")
+	params := splitTopLevelCommas(paramFrag)
+	for _, chunk := range params {
+		chunk = strings.TrimSpace(chunk)
+		if chunk == "" {
+			continue
+		}
+		// @RequestBody (Spring) is an EXPLICIT body marker — highest priority.
+		if strings.Contains(chunk, "@RequestBody") {
+			t, n := extractParamTypeAndName(chunk)
+			if t != "" {
+				return t, n
+			}
+		}
+		// Skip if any non-body annotation is present.
+		skip := false
+		for _, anno := range jaxrsNonBodyAnnotations {
+			if strings.Contains(chunk, anno) {
+				skip = true
+				break
+			}
+		}
+		if skip {
+			continue
+		}
+		// No binding annotation — this parameter is the implicit body.
+		t, n := extractParamTypeAndName(chunk)
+		if t != "" && !isJavaNoisyType(t) {
+			return t, n
+		}
+	}
+	return "", ""
+}
+
+// isJavaNoisyType returns true for type names that are framework/context
+// objects and should NOT be surfaced as request body types.
+func isJavaNoisyType(t string) bool {
+	switch t {
+	case "void", "Response", "UriInfo", "SecurityContext",
+		"HttpServletRequest", "HttpServletResponse",
+		"Principal", "AsyncResponse", "SSEEventSink":
+		return true
+	}
+	return false
+}
+
+// splitTopLevelCommas splits s on commas that are not nested inside < > or ( ).
+func splitTopLevelCommas(s string) []string {
+	var out []string
+	depth := 0
+	start := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '<', '(':
+			depth++
+		case '>', ')':
+			if depth > 0 {
+				depth--
+			}
+		case ',':
+			if depth == 0 {
+				out = append(out, s[start:i])
+				start = i + 1
+			}
+		}
+	}
+	out = append(out, s[start:])
+	return out
+}
+
+// extractParamTypeAndName strips annotations from a parameter fragment and
+// returns (type, name). Returns ("","") when the fragment cannot be parsed.
+func extractParamTypeAndName(p string) (typ, name string) {
+	// Remove annotation tokens: @Word or @Word(args).
+	var sb strings.Builder
+	i := 0
+	for i < len(p) {
+		if p[i] == '@' {
+			i++ // skip '@'
+			for i < len(p) && (p[i] == '_' || (p[i] >= 'A' && p[i] <= 'Z') ||
+				(p[i] >= 'a' && p[i] <= 'z') || (p[i] >= '0' && p[i] <= '9')) {
+				i++
+			}
+			// Skip optional (...)
+			if i < len(p) && p[i] == '(' {
+				depth := 1
+				i++
+				for i < len(p) && depth > 0 {
+					if p[i] == '(' {
+						depth++
+					} else if p[i] == ')' {
+						depth--
+					}
+					i++
+				}
+			}
+			sb.WriteByte(' ')
+			continue
+		}
+		sb.WriteByte(p[i])
+		i++
+	}
+	tokens := strings.Fields(sb.String())
+	if len(tokens) < 2 {
+		return "", ""
+	}
+	// Last token = variable name, everything before = type.
+	// Strip trailing ')' or '{' that may appear when the method param list was
+	// captured on the same line as the opening brace (e.g. "body) {").
+	name = strings.TrimRight(tokens[len(tokens)-1], "){;")
+	// Strip leading "final" modifier from type.
+	typeTokens := tokens[:len(tokens)-1]
+	if len(typeTokens) > 0 && typeTokens[0] == "final" {
+		typeTokens = typeTokens[1:]
+	}
+	if len(typeTokens) == 0 {
+		return "", ""
+	}
+	typ = strings.TrimSpace(strings.Join(typeTokens, " "))
+	// Reject bare modifiers that leaked through.
+	switch typ {
+	case "final", "synchronized", "volatile", "transient", "static":
+		return "", ""
+	}
+	return typ, name
+}
 
 // ApplyJavaAnnotationRoutes scans the supplied Java files for JAX-RS or
 // Spring MVC annotation patterns and returns a slice of synthetic
@@ -249,13 +414,19 @@ func extractJavaEndpoints(src, relPath string) []types.EntityRecord {
 		// Method declaration?
 		if m := javaMethodDeclRe.FindStringSubmatch(line); m != nil {
 			methodName := m[1]
+			// m[2] is the rest of the line after the opening '(' — used for
+			// request body inference (#1909). May be empty for multi-line sigs.
+			paramFrag := ""
+			if len(m) > 2 {
+				paramFrag = m[2]
+			}
 			methodAnnos := flushAnnoBuf()
 			if cur.name == "" {
 				// Method declared before any class header (shouldn't happen
 				// in valid Java but harmless to skip).
 				continue
 			}
-			eps := buildMethodEndpoints(cur, methodName, methodAnnos, relPath)
+			eps := buildMethodEndpoints(cur, methodName, paramFrag, methodAnnos, relPath)
 			out = append(out, eps...)
 			continue
 		}
@@ -317,7 +488,10 @@ func buildClassFrame(className string, annos []string) classFrame {
 // (not a regex-windowed slice), it correctly handles annotation stacks of
 // any depth. @Path will be found regardless of how many @PermitAll,
 // @Consumes, @Operation, @RateLimited, etc. annotations precede it.
-func buildMethodEndpoints(cf classFrame, methodName string, annos []string, relPath string) []types.EntityRecord {
+//
+// Issue #1909: paramFrag is the rest of the method declaration line after the
+// opening '(' — used to infer the JAX-RS request body parameter type.
+func buildMethodEndpoints(cf classFrame, methodName, paramFrag string, annos []string, relPath string) []types.EntityRecord {
 	joined := strings.Join(annos, "\n")
 
 	// Collect method-level paths (may be empty).
@@ -404,6 +578,10 @@ func buildMethodEndpoints(cf classFrame, methodName string, annos []string, relP
 		uniqueVerbs = append(uniqueVerbs, v)
 	}
 
+	// Issue #1909 — infer request body type from the method parameter fragment.
+	// inferRequestBodyParam needs the full verb list to decide eligibility.
+	bodyType, bodyParamName := inferRequestBodyParam(paramFrag, uniqueVerbs)
+
 	var out []types.EntityRecord
 	for _, verb := range uniqueVerbs {
 		id := httproutes.SyntheticID(verb, canonical)
@@ -421,6 +599,14 @@ func buildMethodEndpoints(cf classFrame, methodName string, annos []string, relP
 		}
 		if methodProduces != "" {
 			props["produces"] = methodProduces
+		}
+		// Issue #1909 — emit request_body_type and request_body_param_name when
+		// the method carries an inferred or explicit JAX-RS / Spring request body.
+		if bodyType != "" && jaxrsVerbsThatHaveBody[strings.ToUpper(verb)] {
+			props["request_body_type"] = bodyType
+			if bodyParamName != "" {
+				props["request_body_param_name"] = bodyParamName
+			}
 		}
 
 		out = append(out, types.EntityRecord{
