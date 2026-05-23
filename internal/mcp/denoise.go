@@ -2,15 +2,25 @@
 //
 // The graph carries many synthetic / structural entities that are useful for
 // traversal but pure noise in a ranked find/search result: file-and-module
-// CONTAINER components, inferred class-hierarchy shadows, raw Pattern nodes, and
-// Process nodes for array built-ins. Worse, because these often share the BM25
-// score of a real match (label substring), they frequently rank ABOVE the real
-// lined entity the agent actually wants.
+// CONTAINER components, inferred class-hierarchy shadows, raw SCOPE.Pattern nodes
+// (e.g. error_handling:try_catch:N), Schema field members, and Process nodes for
+// array built-ins. Worse, because these often share the BM25 score of a real
+// match (label substring), they frequently rank ABOVE the real lined entity the
+// agent actually wants.
 //
 // This file classifies entities into noise buckets and provides a stable
 // re-rank comparator so that real, lined, qualified entities sort first. It is
 // purely a serving-layer concern — no extraction state is touched (other grinds
 // own internal/extractors and internal/engine).
+//
+// Noise tiers (ascending = worse rank):
+//
+//	noiseNone (0)       — real entity; ranks by BM25 and start_line presence
+//	noiseShadow (4)     — inferred class-hierarchy / implicit-method shadow
+//	noiseContainer (5)  — file/module CONTAINER Component
+//	noiseProcess (6)    — array/string built-in Process node
+//	noiseSchemaField (7) — SCOPE.Schema subtype=field member (#1715)
+//	noisePattern (8)    — SCOPE.Pattern structural node (#1733)
 package mcp
 
 import (
@@ -83,7 +93,9 @@ func classifyNoise(e *graph.Entity) noiseKind {
 
 	// Raw structural Pattern nodes (NOT the agent-learned AgentPattern kind,
 	// which has no SCOPE. prefix and is surfaced deliberately).
-	if e.Kind == string(types.EntityKindPattern) {
+	// Match both the canonical "SCOPE.Pattern" kind and any bare "pattern"
+	// variant that extractors may emit without the scope prefix.
+	if e.Kind == string(types.EntityKindPattern) || bareKind == "pattern" {
 		return noisePattern
 	}
 
@@ -159,18 +171,31 @@ func isNoise(e *graph.Entity) bool { return classifyNoise(e) != noiseNone }
 // lineless (endpoints/resources) tier 2, and every noise bucket tier 3+. The
 // caller combines tier with BM25 score so that within a tier the BM25 order is
 // preserved, but a real entity always outranks a shadow/container/pattern.
+//
+// Tier map (ascending = worse rank):
+//
+//	0 — real lined entity (start_line > 0)
+//	1 — lineless but legitimate (endpoint/resource)
+//	4 — noiseShadow (inferred class-hierarchy / implicit-method shadow)
+//	5 — noiseContainer (file/module CONTAINER Component)
+//	6 — noiseProcess (array/string built-in Process node)
+//	7 — noiseSchemaField (SCOPE.Schema subtype=field member, #1712)
+//	8 — noisePattern (SCOPE.Pattern structural node, #1733)
 func rankTier(e *graph.Entity) int {
 	switch classifyNoise(e) {
 	case noiseContainer:
 		return 5
 	case noiseShadow:
 		return 4
-	case noisePattern:
-		return 6
 	case noiseProcess:
 		return 6
 	case noiseSchemaField:
 		return 7
+	case noisePattern:
+		// SCOPE.Pattern nodes (e.g. error_handling:try_catch:N) rank below all
+		// other noise tiers — they are structural enrichment signals, never
+		// direct answers to a user search query (#1733).
+		return 8
 	}
 	// Real entity. Lined entities (whether or not they carry a qualified_name)
 	// share the top tier so that BM25 relevance — not the mere presence of a

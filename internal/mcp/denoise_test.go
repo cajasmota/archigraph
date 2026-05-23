@@ -159,6 +159,104 @@ func TestRankTierSchemaFieldBelowParent(t *testing.T) {
 	}
 }
 
+// TestClassifyNoiseScopePattern verifies that SCOPE.Pattern entities (structural
+// pattern nodes such as error_handling:try_catch:N) are classified as
+// noisePattern — tier 8, below all other noise tiers (#1733).
+func TestClassifyNoiseScopePattern(t *testing.T) {
+	cases := []struct {
+		name string
+		e    graph.Entity
+		want noiseKind
+	}{
+		{
+			name: "canonical SCOPE.Pattern kind",
+			e: graph.Entity{
+				Kind: "SCOPE.Pattern", Name: "error_handling:try_catch:19",
+				SourceFile: "src/api/handlers.go", StartLine: 42,
+			},
+			want: noisePattern,
+		},
+		{
+			name: "bare Pattern kind (no SCOPE. prefix)",
+			e: graph.Entity{
+				Kind: "Pattern", Name: "auth:jwt_verify:3",
+				SourceFile: "src/middleware/auth.go", StartLine: 7,
+			},
+			want: noisePattern,
+		},
+		{
+			name: "AgentPattern is NOT structural noise (agent-learned, ADR-0018)",
+			e: graph.Entity{
+				// AgentPattern entities are agent-learned (ADR-0018); they have a
+				// StartLine from their definition source and are real surfaceable
+				// results — not structural noise like SCOPE.Pattern.
+				Kind: "AgentPattern", Name: "use-retry-on-transient-errors",
+				QualifiedName: "patterns.use-retry-on-transient-errors", StartLine: 3,
+			},
+			want: noiseNone,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := classifyNoise(&c.e); got != c.want {
+				t.Fatalf("classifyNoise = %d, want %d", got, c.want)
+			}
+		})
+	}
+}
+
+// TestRankTierPatternBelowSchemaField verifies the tier-8 guarantee: SCOPE.Pattern
+// nodes must rank strictly below Schema field members (tier 7) and below all
+// other real entities (#1733).
+func TestRankTierPatternBelowSchemaField(t *testing.T) {
+	real := &graph.Entity{
+		Kind: "SCOPE.Operation", Name: "authenticateJWT",
+		QualifiedName: "middleware.authenticateJWT", StartLine: 12,
+	}
+	schemaField := &graph.Entity{
+		Kind: "SCOPE.Schema", Subtype: "field",
+		Name:       "TokenSerializer.expiry",
+		SourceFile: "core/serializers/token_serializer.py", StartLine: 5,
+	}
+	pattern := &graph.Entity{
+		Kind: "SCOPE.Pattern", Name: "error_handling:try_catch:19",
+		SourceFile: "src/api/handlers.go", StartLine: 42,
+	}
+
+	// Real entity should rank better than both schema field and pattern.
+	if rankTier(real) >= rankTier(schemaField) {
+		t.Fatalf("real entity tier (%d) should be lower (better) than schema field tier (%d)",
+			rankTier(real), rankTier(schemaField))
+	}
+	if rankTier(real) >= rankTier(pattern) {
+		t.Fatalf("real entity tier (%d) should be lower (better) than pattern tier (%d)",
+			rankTier(real), rankTier(pattern))
+	}
+	// Schema field (tier 7) should rank better than pattern (tier 8).
+	if rankTier(schemaField) >= rankTier(pattern) {
+		t.Fatalf("schema field tier (%d) should be lower (better) than pattern tier (%d)",
+			rankTier(schemaField), rankTier(pattern))
+	}
+}
+
+// TestRankTierPatternBelowProcess verifies that SCOPE.Pattern (tier 8) ranks
+// strictly below noiseProcess (tier 6) — process nodes are structural but at
+// least name a real call site, whereas pattern nodes are aggregated labels.
+func TestRankTierPatternBelowProcess(t *testing.T) {
+	process := &graph.Entity{
+		ID: "proc:aabbccdd11223344", Kind: "SCOPE.Process", Name: "Login → map",
+		SourceFile: "src/features/auth/login/index.tsx", StartLine: 0,
+	}
+	pattern := &graph.Entity{
+		Kind: "SCOPE.Pattern", Name: "error_handling:try_catch:7",
+		SourceFile: "src/api/users.ts", StartLine: 88,
+	}
+	if rankTier(process) >= rankTier(pattern) {
+		t.Fatalf("process tier (%d) should be lower (better) than pattern tier (%d)",
+			rankTier(process), rankTier(pattern))
+	}
+}
+
 func TestPageSlice(t *testing.T) {
 	s := []int{0, 1, 2, 3, 4}
 	if got := pageSlice(s, 0, 2); len(got) != 2 || got[0] != 0 {
