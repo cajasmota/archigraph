@@ -275,8 +275,18 @@ func runPhantomEdgePass(group string, cfg *registry.GroupConfig, linksPath strin
 		// starts clean. Process entities have Kind=engine.EntityKindProcess.
 		doc.Entities, doc.Relationships = stripProcessEntities(doc)
 
-		// Re-run process flow.
-		_ = engine.RunProcessFlow(doc, engine.DefaultProcessFlowConfig())
+		// Re-run process flow. #1893 — pass the group's other docs as
+		// companions so flows extend past phantom cross-repo edges into the
+		// target repo's handler chain instead of dead-ending at the HTTP
+		// boundary. Companions are read-only; only `doc` is mutated.
+		companions := make([]*graph.Document, 0, len(docs)-1)
+		for cslug, cdoc := range docs {
+			if cslug == slug || cdoc == nil {
+				continue
+			}
+			companions = append(companions, cdoc)
+		}
+		_ = engine.RunProcessFlowWithCompanions(doc, companions, engine.DefaultProcessFlowConfig())
 
 		// Update stats.
 		doc.Stats.Entities = len(doc.Entities)
