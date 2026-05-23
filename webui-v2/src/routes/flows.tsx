@@ -33,7 +33,6 @@ import type {
   Process, ProcessStep, FlowDeadEnd, EntryKind, StepKind, EntryKindGroup,
 } from "@/data/types";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Step-kind metadata ───────────────────────────────────────────────────────
@@ -1397,113 +1396,60 @@ function Section({
   );
 }
 
+// ─── Side-effects floating panel ─────────────────────────────────────────────
+
+function SideEffectsPanel({
+  flow,
+  onClose,
+}: {
+  flow: Process;
+  onClose: () => void;
+}) {
+  const effects = flow.flow_side_effects ?? [];
+  return (
+    <div
+      // Floating panel — same surface/border styling as the step-detail card.
+      // Anchored bottom-left of the DAG canvas overlay.
+      className="absolute left-3 right-3 bottom-3 z-20 rounded-md border border-border bg-surface shadow-[var(--shadow-3)] px-4 py-3 flex flex-col gap-2 max-h-[60%] overflow-y-auto"
+    >
+      <div className="flex items-center gap-2">
+        <AlertTriangle size={13} className="text-[var(--warning)] flex-none" />
+        <span className="text-sm font-semibold text-text flex-1">Side effects</span>
+        <span className="font-mono text-[11px] text-text-3">{effects.length}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          title="Close"
+          className="w-6 h-6 flex items-center justify-center rounded-sm text-text-3 hover:bg-surface-2 hover:text-text flex-none ml-1"
+        >
+          <X size={12} />
+        </button>
+      </div>
+      {effects.length > 0 ? (
+        <ul className="list-none m-0 p-0 flex flex-col gap-1">
+          {effects.map((s, i) => (
+            <li key={i} className="text-sm text-text-2 pl-3.5 relative">
+              <span className="absolute left-0 top-[8px] w-[5px] h-[5px] bg-text-4 rounded-full" />
+              {s}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className="text-sm text-text-4 italic">
+          No observed side effects across this chain.
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ─── Detail sections ──────────────────────────────────────────────────────────
 
-function DetailSections({ flow, groupId }: { flow: Process; groupId: string }) {
-  const [genQueued, setGenQueued] = useState(false);
+function DetailSections({ flow }: { flow: Process }) {
   const enr = flow.enrichment;
-  const hasInsights =
-    !!enr &&
-    (enr.ai_summary || (enr.preconditions?.length ?? 0) > 0 || enr.expected_outcome);
-  const status = flow.docgen_status;
-
-  async function handleGenerate() {
-    try {
-      await api.generateFlowDocs(groupId, flow.process_id);
-      setGenQueued(true);
-      toast.success("Queued — insights will appear after the next docgen run.");
-    } catch {
-      toast.error("Failed to queue enrichment.");
-    }
-  }
 
   return (
     <div className="px-5 pb-20 flex flex-col">
-      {/* AI Insights */}
-      <Section title="AI Insights" icon={<Sparkles size={11} />}>
-        {status === "stale" && (
-          <div
-            className="flex items-center gap-2 p-2 rounded-sm text-[12px] mb-1"
-            style={{ background: "var(--warning-soft)", color: "var(--warning)" }}
-          >
-            <Info size={11} />
-            Insights may be out of date — index has changed since they were generated.
-          </div>
-        )}
-        {genQueued ? (
-          <p className="text-sm text-text-3 italic m-0">
-            Queued — insights will appear after the next docgen run.
-          </p>
-        ) : hasInsights ? (
-          <>
-            {enr?.ai_summary && (
-              <p className="text-sm text-text-2 leading-relaxed max-w-[72ch] m-0">{enr.ai_summary}</p>
-            )}
-            {(enr?.preconditions?.length ?? 0) > 0 && (
-              <div>
-                <div className="text-[10px] text-text-3 uppercase tracking-wide mb-1">
-                  Preconditions
-                </div>
-                <ul className="list-none m-0 p-0 flex flex-col gap-1">
-                  {enr!.preconditions!.map((p, i) => (
-                    <li
-                      key={i}
-                      className="text-sm text-text-2 pl-3.5 relative"
-                    >
-                      <span className="absolute left-0 top-[8px] w-[5px] h-[5px] bg-text-4 rounded-full" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {enr?.expected_outcome && (
-              <div>
-                <div className="text-[10px] text-text-3 uppercase tracking-wide mb-1">
-                  Expected outcome
-                </div>
-                <div className="text-sm text-text-2 leading-relaxed">{enr.expected_outcome}</div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex items-center gap-2.5 p-3 bg-surface-2 rounded-sm text-sm text-text-2">
-            <Sparkles size={14} className="text-text-3 flex-none" />
-            <span className="flex-1">No AI insights yet.</span>
-            <button
-              type="button"
-              onClick={() => void handleGenerate()}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-sm text-sm bg-accent text-accent-text hover:bg-accent-strong ml-auto flex-none"
-            >
-              Generate insights
-            </button>
-          </div>
-        )}
-      </Section>
-
-      {/* Side effects */}
-      <Section
-        title="Side effects"
-        count={flow.flow_side_effects?.length ?? 0}
-        icon={<AlertTriangle size={11} />}
-        defaultOpen
-      >
-        {(flow.flow_side_effects?.length ?? 0) > 0 ? (
-          <ul className="list-none m-0 p-0 flex flex-col gap-1">
-            {flow.flow_side_effects!.map((s, i) => (
-              <li key={i} className="text-sm text-text-2 pl-3.5 relative">
-                <span className="absolute left-0 top-[8px] w-[5px] h-[5px] bg-text-4 rounded-full" />
-                {s}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <span className="text-sm text-text-4 italic">
-            No observed side effects across this chain.
-          </span>
-        )}
-      </Section>
-
       {/* Data sinks & sources */}
       {enr &&
         (enr.writes_db_table?.length ||
@@ -1775,10 +1721,12 @@ function DetailPanel({
   onClose: () => void;
 }) {
   const [selectedStepIdx, setSelectedStepIdx] = useState<number | null>(null);
+  const [sideEffectsOpen, setSideEffectsOpen] = useState(false);
 
   const selId = selection?.kind === "flow" ? selection.flow.process_id : null;
   useEffect(() => {
     setSelectedStepIdx(null);
+    setSideEffectsOpen(false);
   }, [selId]);
 
   useEffect(() => {
@@ -1934,6 +1882,23 @@ function DetailPanel({
           >
             <Share2 size={12} /> Share
           </button>
+          {(flow.flow_side_effects?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => setSideEffectsOpen((o) => !o)}
+              className={cn(
+                "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-sm text-sm border border-border bg-surface text-text-2 hover:bg-surface-2 hover:text-text",
+                sideEffectsOpen && "bg-surface-2 text-text",
+              )}
+              title={sideEffectsOpen ? "Hide side effects" : "Show side effects"}
+            >
+              <AlertTriangle size={12} />
+              Side effects
+              <span className="font-mono text-[10px] text-text-3 ml-0.5">
+                {flow.flow_side_effects!.length}
+              </span>
+            </button>
+          )}
           {flow.enrichment?.linked_endpoint_id && (
             <button
               type="button"
@@ -1964,16 +1929,21 @@ function DetailPanel({
           </div>
         )}
 
-        {/* DAG canvas + floating step-detail card overlay */}
+        {/* DAG canvas + floating overlays */}
         {(fullFlow.steps?.length ?? 0) > 0 && (
           <div className="relative flex-none">
             <FlowDag
               flow={fullFlow}
               detailSteps={fullFlow.steps}
               selectedStepIdx={selectedStepIdx}
-              onPickStep={setSelectedStepIdx}
+              onPickStep={(idx) => {
+                setSelectedStepIdx(idx);
+                // Selecting a step dismisses the side-effects panel so both
+                // don't overlap at once.
+                setSideEffectsOpen(false);
+              }}
             />
-            {/* Floating detail card — only when a step is selected. */}
+            {/* Floating step-detail card — only when a step is selected. */}
             {selectedStep && (
               <StepInspector
                 step={selectedStep}
@@ -1982,11 +1952,18 @@ function DetailPanel({
                 onClose={() => setSelectedStepIdx(null)}
               />
             )}
+            {/* Floating side-effects panel — only when toggled open. */}
+            {sideEffectsOpen && !selectedStep && (
+              <SideEffectsPanel
+                flow={fullFlow}
+                onClose={() => setSideEffectsOpen(false)}
+              />
+            )}
           </div>
         )}
 
         {/* Sections */}
-        <DetailSections flow={fullFlow} groupId={groupId} />
+        <DetailSections flow={fullFlow} />
       </div>
     </div>
   );
