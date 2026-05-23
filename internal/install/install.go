@@ -37,6 +37,7 @@ type Result struct {
 	GroupConfigPath string
 	HooksInstalled  []string // repo paths
 	WatcherUnits    []string // unit-file paths
+	WatcherStatuses []watchers.WatcherStatus // per-unit activation state
 	MCPSettings     []string // settings.json paths touched
 }
 
@@ -106,6 +107,17 @@ func Apply(opts Options) (*Result, error) {
 					return nil, fmt.Errorf("watcher for %s: %w", repo, err)
 				}
 				res.WatcherUnits = append(res.WatcherUnits, path)
+
+				// Activate the watcher unit through the OS-native loader
+				// (launchctl on macOS, systemctl on Linux, schtasks on Windows).
+				loader := watchers.NewLoader()
+				if lerr := loader.Load(u); lerr != nil && !watchers.IsNonFatal(lerr) {
+					return nil, fmt.Errorf("activate watcher for %s: %w", repo, lerr)
+				}
+				// Report activation state regardless of non-fatal /run failures.
+				if st, serr := loader.Status(u); serr == nil {
+					res.WatcherStatuses = append(res.WatcherStatuses, st)
+				}
 			} else {
 				p, _ := watchers.UnitPath(u)
 				res.WatcherUnits = append(res.WatcherUnits, p)
@@ -163,9 +175,14 @@ func Uninstall(group string, purge bool) error {
 	}
 	bin, _ := os.Executable()
 	if cfg != nil {
+		loader := watchers.NewLoader()
 		for _, r := range cfg.Repos {
 			_ = hooks.Uninstall(r.Path)
-			_ = watchers.Remove(watchers.Unit{Group: group, Repo: r.Path, BinPath: bin})
+			u := watchers.Unit{Group: group, Repo: r.Path, BinPath: bin}
+			// Deregister from the OS scheduler before removing the unit file so
+			// that the OS does not attempt to launch a missing binary.
+			_ = loader.Unload(u)
+			_ = watchers.Remove(u)
 		}
 	}
 	if err := registry.RemoveGroup(group); err != nil {

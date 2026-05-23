@@ -188,9 +188,83 @@ Get-Content "$env:APPDATA\archigraph\logs\daemon.log" -Tail 50
 
 ---
 
+---
+
+## Per-repo watcher smoke-test procedure (added by #933)
+
+The watcher is a separate scheduled task — one per watched repository — and
+follows the same install/uninstall/status lifecycle as the daemon service.
+Each task name uses the reverse-DNS convention
+`com.archigraph.watcher.<group>.<repo-slug>`.
+
+### W1. Install a watcher for a repo
+
+```powershell
+# Assuming a group named "mygroup" and a repo at C:\src\myrepo
+.\archigraph.exe install --group mygroup --repo C:\src\myrepo --watchers
+```
+
+Expected output (approximate):
+```
+watcher installed: com.archigraph.watcher.mygroup.myrepo  running=true
+```
+
+### W2. Verify the watcher task exists
+
+```powershell
+schtasks /query /tn com.archigraph.watcher.mygroup.myrepo /fo list /v
+```
+
+Key fields:
+
+| Field | Expected value |
+|---|---|
+| `Task Name` | `\com.archigraph.watcher.mygroup.myrepo` |
+| `Status` | `Running` |
+| `Logon Mode` | `Interactive/Background` |
+
+### W3. Verify the task XML was staged to disk
+
+```powershell
+ls "$env:LOCALAPPDATA\archigraph\tasks\com.archigraph.watcher.mygroup.myrepo.xml"
+# Expected: file exists
+```
+
+### W4. Verify idempotency
+
+```powershell
+.\archigraph.exe install --group mygroup --repo C:\src\myrepo --watchers
+# Expected: no error; returns current status without modifying anything
+```
+
+### W5. Uninstall the watcher
+
+```powershell
+.\archigraph.exe uninstall --group mygroup
+```
+
+After uninstall:
+
+```powershell
+schtasks /query /tn com.archigraph.watcher.mygroup.myrepo
+# Expected: ERROR: The system cannot find the file specified.
+
+ls "$env:LOCALAPPDATA\archigraph\tasks\com.archigraph.watcher.mygroup.myrepo.xml"
+# Expected: file not found
+```
+
+### W6. Expected file paths (per-repo watcher)
+
+| Artifact | Path |
+|---|---|
+| Task XML (staged) | `%LOCALAPPDATA%\archigraph\tasks\com.archigraph.watcher.<group>.<slug>.xml` |
+| Task name | `com.archigraph.watcher.<group>.<slug>` |
+
+---
+
 ## Sibling issues
 
 - **#856** — Platform parity parent epic
-- **#933** — SchtasksXML watcher unit tests
+- **#933** — SchtasksXML watcher unit — this PR
 - **#935** — CI matrix for Windows runner
 - **#937** — tree-sitter CGO bindings on Windows
