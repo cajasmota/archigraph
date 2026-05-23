@@ -393,3 +393,37 @@ func TestDenoise_Determinism(t *testing.T) {
 		t.Errorf("DenoisedCommunities differs: %d vs %d", r1.Stats.DenoisedCommunities, r2.Stats.DenoisedCommunities)
 	}
 }
+
+// TestRunAlgorithmsWithOptions_EmptyDoc verifies that passing zero entities does
+// not panic (regression for #937/#1795: gonum's PageRankSparse → mat.NewVecDense(0)
+// panicked with "mat: zero length in matrix dimension") and returns an empty,
+// well-formed AlgorithmResults.
+func TestRunAlgorithmsWithOptions_EmptyDoc(t *testing.T) {
+	// Must not panic.
+	res := RunAlgorithmsWithOptions(nil, nil, DefaultCommunityOptions())
+
+	if res == nil {
+		t.Fatal("expected non-nil AlgorithmResults for empty doc, got nil")
+	}
+	if len(res.Communities) != 0 {
+		t.Errorf("expected 0 communities for empty doc, got %d", len(res.Communities))
+	}
+	if len(res.CommunityID) != 0 {
+		t.Errorf("expected empty CommunityID map for empty doc, got %d entries", len(res.CommunityID))
+	}
+	if len(res.GodNodes) != 0 {
+		t.Errorf("expected no god nodes for empty doc, got %d", len(res.GodNodes))
+	}
+	if len(res.ArticulationPoints) != 0 {
+		t.Errorf("expected no articulation points for empty doc, got %d", len(res.ArticulationPoints))
+	}
+	if len(res.SurpriseEdges) != 0 {
+		t.Errorf("expected no surprise edges for empty doc, got %d", len(res.SurpriseEdges))
+	}
+
+	// Also exercise the convenience wrapper.
+	res2 := RunAlgorithms(nil, nil)
+	if res2 == nil {
+		t.Fatal("RunAlgorithms: expected non-nil result for empty doc")
+	}
+}

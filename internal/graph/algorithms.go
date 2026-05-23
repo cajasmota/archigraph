@@ -830,6 +830,15 @@ func RunAlgorithms(entities []Entity, rels []Relationship) *AlgorithmResults {
 // per-entity attributes onto the on-disk Document and where to emit the corpus
 // aggregate.
 func RunAlgorithmsWithOptions(entities []Entity, rels []Relationship, opts CommunityOptions) *AlgorithmResults {
+	// Guard: gonum's PageRankSparse (via ComputeCentrality) calls
+	// mat.NewVecDense(0, ...) when the graph has zero nodes, which panics with
+	// "mat: zero length in matrix dimension" (gonum/mat vector.go:103).
+	// Return an empty-but-valid result immediately so callers get a safe no-op
+	// rather than a crash. Tracked in #937 / #1795.
+	if len(entities) == 0 {
+		return &AlgorithmResults{} //nolint:exhaustruct // zero-entity fast path; all fields intentionally zero
+	}
+
 	start := time.Now()
 
 	g, idx := BuildGraph(entities, rels)
