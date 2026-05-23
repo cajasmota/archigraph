@@ -3,12 +3,15 @@ package cli
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
+	"sync"
 	"sync/atomic"
 
 	"github.com/spf13/cobra"
@@ -136,6 +139,58 @@ type bridge struct {
 
 	// callCount is used for integration test liveness only.
 	callCount int64
+
+	// rpcMu guards the lazy-init, single-flight reuse of rpcClient. The bridge
+	// dials the daemon once per session and reuses the same jsonrpc.Client for
+	// every tools/list and tools/call. net/rpc serialises calls per client, so
+	// no extra locking is needed around Call itself — rpcMu only guards the
+	// (re)connect lifecycle.
+	rpcMu     sync.Mutex
+	rpcClient *rpc.Client
+}
+
+// getRPCClient returns a cached jsonrpc client, dialling the daemon on first
+// use and after a previous transport error. The returned client is shared
+// across calls — net/rpc serialises in-flight requests per client.
+//
+// Perf rationale (#1671): the pre-#1671 bridge dialled the unix socket and
+// constructed a fresh jsonrpc.Client on every tools/call, then closed both on
+// return. Profiling showed ~300µs per call burnt on dial + codec setup with
+// no useful side-effect. Reusing one client eliminates that overhead and lets
+// the OS keep the socket's send/recv buffers hot.
+func (b *bridge) getRPCClient() (*rpc.Client, error) {
+	b.rpcMu.Lock()
+	defer b.rpcMu.Unlock()
+	if b.rpcClient != nil {
+		return b.rpcClient, nil
+	}
+	socketPath, err := b.defaultSocketPath()
+	if err != nil {
+		return nil, err
+	}
+	conn, err := net.Dial("unix", socketPath)
+	if err != nil {
+		return nil, err
+	}
+	b.rpcClient = jsonrpc.NewClient(conn)
+	return b.rpcClient, nil
+}
+
+// resetRPCClient drops the cached client. Call this after a transport error so
+// the next request reconnects rather than reusing a dead socket.
+func (b *bridge) resetRPCClient() {
+	b.rpcMu.Lock()
+	if b.rpcClient != nil {
+		_ = b.rpcClient.Close()
+		b.rpcClient = nil
+	}
+	b.rpcMu.Unlock()
+}
+
+// closeRPCClient is the shutdown counterpart to getRPCClient. Safe to call
+// multiple times.
+func (b *bridge) closeRPCClient() {
+	b.resetRPCClient()
 }
 
 // defaultSocketPath returns the daemon's default socket path.
@@ -151,45 +206,75 @@ func (b *bridge) defaultSocketPath() (string, error) {
 }
 
 // run is the main loop: reads from r (stdin), writes to w (stdout).
+//
+// Perf rationale (#1671):
+//   - Pre-#1671 the loop used bufio.Scanner with a 4MiB hard cap. MCP responses
+//     for big calls (expand d=2 has been observed at 1.3 MiB; future graph_export
+//     could exceed 4 MiB) would silently truncate. bufio.Reader.ReadBytes('\n')
+//     has no fixed cap and grows as needed.
+//   - The encoder is wrapped in a bufio.Writer sized for typical MCP payloads
+//     so large responses flush in one syscall instead of dribbling out through
+//     the default stdio buffer.
+//   - The cached jsonrpc client (getRPCClient) is closed on exit so the daemon
+//     sees a clean disconnect.
 func (b *bridge) run(r io.Reader, w io.Writer) error {
-	scanner := bufio.NewScanner(r)
-	// Expand the scanner buffer to handle large MCP messages.
-	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
+	defer b.closeRPCClient()
 
-	enc := json.NewEncoder(w)
+	br := bufio.NewReaderSize(r, 64*1024)
+	bw := bufio.NewWriterSize(w, 64*1024)
+	enc := json.NewEncoder(bw)
 
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
+	for {
+		line, err := br.ReadBytes('\n')
+		if len(line) > 0 {
+			// Trim trailing newline (and optional \r) before parsing.
+			trimmed := line
+			for len(trimmed) > 0 && (trimmed[len(trimmed)-1] == '\n' || trimmed[len(trimmed)-1] == '\r') {
+				trimmed = trimmed[:len(trimmed)-1]
+			}
+			if len(trimmed) > 0 {
+				if perr := b.processLine(trimmed, enc); perr != nil {
+					b.log("write error: %v", perr)
+					_ = bw.Flush()
+					return perr
+				}
+				if ferr := bw.Flush(); ferr != nil {
+					b.log("flush error: %v", ferr)
+					return ferr
+				}
+			}
 		}
-
-		var req rpc2Request
-		if err := json.Unmarshal(line, &req); err != nil {
-			b.log("parse error: %v", err)
-			// Write a parse error response. ID may be unknown; use null.
-			_ = enc.Encode(rpc2Response{
-				JSONRPC: "2.0",
-				Error:   &rpc2Error{Code: -32700, Message: "parse error: " + err.Error()},
-			})
-			continue
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return fmt.Errorf("stdin: %w", err)
 		}
-
-		resp := b.handle(req)
-		if resp == nil {
-			// Notification — no response needed.
-			continue
-		}
-		if err := enc.Encode(resp); err != nil {
-			b.log("write error: %v", err)
-			return err
-		}
-		atomic.AddInt64(&b.callCount, 1)
 	}
+}
 
-	if err := scanner.Err(); err != nil && err != io.EOF {
-		return fmt.Errorf("stdin: %w", err)
+// processLine parses one JSON-RPC 2.0 request and writes the response (if any)
+// through enc. It does NOT flush — the run loop batches the flush so large
+// payloads still go out in one go but multiple notifications would not pay
+// per-message flush cost.
+func (b *bridge) processLine(line []byte, enc *json.Encoder) error {
+	var req rpc2Request
+	if err := json.Unmarshal(line, &req); err != nil {
+		b.log("parse error: %v", err)
+		return enc.Encode(rpc2Response{
+			JSONRPC: "2.0",
+			Error:   &rpc2Error{Code: -32700, Message: "parse error: " + err.Error()},
+		})
 	}
+	resp := b.handle(req)
+	if resp == nil {
+		// Notification — no response needed.
+		return nil
+	}
+	if err := enc.Encode(resp); err != nil {
+		return err
+	}
+	atomic.AddInt64(&b.callCount, 1)
 	return nil
 }
 
@@ -249,24 +334,19 @@ func (b *bridge) handleInitialize(req rpc2Request) *rpc2Response {
 // Falls back to a static minimal tool catalog when the daemon is unreachable
 // so Claude Code always sees _some_ tools and can display a useful error.
 func (b *bridge) handleToolsList(req rpc2Request) *rpc2Response {
-	socketPath, err := b.defaultSocketPath()
+	rpcClient, err := b.getRPCClient()
 	if err != nil {
-		return b.daemonError(req.ID, "resolve socket path: "+err.Error())
-	}
-
-	conn, err := net.Dial("unix", socketPath)
-	if err != nil {
-		b.log("daemon not running (%v); returning offline stub for tools/list", err)
+		b.log("daemon not reachable (%v); returning offline stub for tools/list", err)
 		return b.offlineToolList(req.ID)
 	}
-	defer conn.Close()
-
-	rpcClient := jsonrpc.NewClient(conn)
-	defer rpcClient.Close()
 
 	var reply MCPToolListReply
 	if err := rpcClient.Call("Daemon.MCPToolList", MCPToolListArgs{}, &reply); err != nil {
 		b.log("Daemon.MCPToolList: %v", err)
+		// Drop the dead client so the next request reconnects.
+		if errors.Is(err, rpc.ErrShutdown) || errors.Is(err, io.EOF) {
+			b.resetRPCClient()
+		}
 		// Daemon is running but doesn't implement MCPToolList yet (pre-Phase D).
 		// Return the static list so Claude Code works in the interim.
 		return b.offlineToolList(req.ID)
@@ -297,20 +377,11 @@ func (b *bridge) handleToolsCall(req rpc2Request) *rpc2Response {
 		return b.errorResp(req.ID, -32602, "tools/call: name is required")
 	}
 
-	socketPath, err := b.defaultSocketPath()
+	rpcClient, err := b.getRPCClient()
 	if err != nil {
-		return b.daemonError(req.ID, "resolve socket path: "+err.Error())
-	}
-
-	conn, err := net.Dial("unix", socketPath)
-	if err != nil {
-		b.log("daemon not running (%v)", err)
+		b.log("daemon not reachable (%v)", err)
 		return b.daemonError(req.ID, "archigraph daemon is not running — run 'archigraph start' or 'archigraph install'")
 	}
-	defer conn.Close()
-
-	rpcClient := jsonrpc.NewClient(conn)
-	defer rpcClient.Close()
 
 	args := MCPToolCallArgs{
 		Name:      params.Name,
@@ -319,6 +390,9 @@ func (b *bridge) handleToolsCall(req rpc2Request) *rpc2Response {
 	var reply MCPToolCallReply
 	if err := rpcClient.Call("Daemon.MCPToolCall", args, &reply); err != nil {
 		b.log("Daemon.MCPToolCall %s: %v", params.Name, err)
+		if errors.Is(err, rpc.ErrShutdown) || errors.Is(err, io.EOF) {
+			b.resetRPCClient()
+		}
 		// Return a structured MCP tool error so Claude sees the message.
 		toolErr := mcpToolCallResult{
 			IsError: true,

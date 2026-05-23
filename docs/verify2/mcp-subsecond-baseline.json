@@ -1,0 +1,172 @@
+{
+  "binary": "/tmp/archigraph-perf",
+  "group": "polyglot-platform",
+  "target_id": "polyglot-platform-services-event-mesh::7a6d5a374c8b52e5",
+  "calls": [
+    {
+      "tool": "archigraph_whoami",
+      "args": {},
+      "timed_out": false,
+      "wall_ms_median": 2.36,
+      "handler_ms": 1,
+      "size_bytes": 351,
+      "delta_ms": 1.36,
+      "samples_ms": [
+        1.61,
+        2.36,
+        4.06
+      ]
+    },
+    {
+      "tool": "archigraph_find",
+      "args": {
+        "group": "polyglot-platform",
+        "question": "handler"
+      },
+      "timed_out": false,
+      "wall_ms_median": 3.1,
+      "handler_ms": 2,
+      "size_bytes": 215,
+      "delta_ms": 1.1,
+      "samples_ms": [
+        2.73,
+        3.1,
+        4.23
+      ]
+    },
+    {
+      "tool": "archigraph_inspect",
+      "args": {
+        "group": "polyglot-platform",
+        "label_or_id": "polyglot-platform-services-event-mesh::7a6d5a374c8b52e5"
+      },
+      "timed_out": false,
+      "wall_ms_median": 2.0,
+      "handler_ms": 1,
+      "size_bytes": 777,
+      "delta_ms": 1.0,
+      "samples_ms": [
+        2.0,
+        2.0,
+        2.6
+      ]
+    },
+    {
+      "tool": "archigraph_find_callers",
+      "args": {
+        "group": "polyglot-platform",
+        "entity_id": "polyglot-platform-services-event-mesh::7a6d5a374c8b52e5"
+      },
+      "timed_out": false,
+      "wall_ms_median": 2.27,
+      "handler_ms": 1,
+      "size_bytes": 664,
+      "delta_ms": 1.27,
+      "samples_ms": [
+        1.84,
+        2.27,
+        2.35
+      ]
+    },
+    {
+      "tool": "archigraph_endpoints",
+      "args": {
+        "group": "polyglot-platform",
+        "action": "list",
+        "path_contains": "order"
+      },
+      "timed_out": false,
+      "wall_ms_median": 1.69,
+      "handler_ms": null,
+      "size_bytes": 148,
+      "delta_ms": 1.69,
+      "samples_ms": [
+        1.55,
+        1.69,
+        2.09
+      ]
+    },
+    {
+      "tool": "archigraph_traces",
+      "args": {
+        "group": "polyglot-platform",
+        "action": "list",
+        "limit": 20
+      },
+      "timed_out": false,
+      "wall_ms_median": 8.79,
+      "handler_ms": 1,
+      "size_bytes": 12395,
+      "delta_ms": 7.79,
+      "samples_ms": [
+        7.94,
+        8.79,
+        10.22
+      ]
+    },
+    {
+      "tool": "archigraph_expand",
+      "args": {
+        "group": "polyglot-platform",
+        "node": "polyglot-platform-services-event-mesh::7a6d5a374c8b52e5",
+        "depth": 2
+      },
+      "timed_out": false,
+      "wall_ms_median": 8.37,
+      "handler_ms": 2,
+      "size_bytes": 9462,
+      "delta_ms": 6.37,
+      "samples_ms": [
+        6.22,
+        8.37,
+        9.04
+      ]
+    },
+    {
+      "tool": "archigraph_get_subgraph",
+      "args": {
+        "group": "polyglot-platform",
+        "entity_id": "polyglot-platform-services-event-mesh::7a6d5a374c8b52e5"
+      },
+      "timed_out": false,
+      "wall_ms_median": 17.2,
+      "handler_ms": 1,
+      "size_bytes": 32904,
+      "delta_ms": 16.2,
+      "samples_ms": [
+        16.85,
+        17.2,
+        19.22
+      ]
+    },
+    {
+      "tool": "archigraph_get_source",
+      "args": {
+        "group": "polyglot-platform",
+        "node_id": "polyglot-platform-services-event-mesh::7a6d5a374c8b52e5"
+      },
+      "timed_out": true,
+      "wall_ms_median": 8000.0,
+      "handler_ms": null,
+      "size_bytes": 0,
+      "delta_ms": 8000.0,
+      "samples_ms": [
+        8000.0
+      ]
+    },
+    {
+      "tool": "archigraph_stats",
+      "args": {
+        "group": "polyglot-platform"
+      },
+      "timed_out": true,
+      "wall_ms_median": 8000.0,
+      "handler_ms": null,
+      "size_bytes": 0,
+      "delta_ms": 8000.0,
+      "samples_ms": [
+        8000.0
+      ]
+    }
+  ]
+}
