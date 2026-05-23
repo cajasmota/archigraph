@@ -664,7 +664,23 @@ func extractFlowDocsWithResolver(entityID string, docgenState *mcp.DocgenState, 
 
 // readSourceLines reads start..end (+ context lines) from a source file.
 // Returns the snippet and any error.
+//
+// Zero-line guard: when startLine == 0 the entity has no recorded source
+// position (extractor did not emit start_line). Rather than silently reading
+// the file head (lines 1-contextLines), we return ("", nil) so the caller can
+// treat the snippet as absent. This prevents the step-click panel from
+// displaying the file header of the containing class as if it were the
+// clicked method's body (#1898).
+//
+// Partial-position guard: when startLine > 0 but endLine == 0 (end not
+// recorded), we read startLine ± contextLines so the function body is still
+// visible even though we don't know its exact extent.
 func readSourceLines(sourceFile, repoPath string, startLine, endLine, contextLines int) (string, error) {
+	// No position data — skip rather than emit the file head.
+	if startLine == 0 {
+		return "", nil
+	}
+
 	abs := sourceFile
 	if !filepath.IsAbs(abs) && repoPath != "" {
 		abs = filepath.Join(repoPath, sourceFile)
@@ -679,7 +695,14 @@ func readSourceLines(sourceFile, repoPath string, startLine, endLine, contextLin
 	if from < 1 {
 		from = 1
 	}
-	to := endLine + contextLines
+	// When endLine is not recorded, anchor the window on startLine instead of
+	// reading up to line (0 + contextLines) which would be the file head.
+	effectiveEnd := endLine
+	if effectiveEnd == 0 {
+		effectiveEnd = startLine
+	}
+	to := effectiveEnd + contextLines
+
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 512*1024), 32*1024*1024)
 
