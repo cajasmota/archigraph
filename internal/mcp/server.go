@@ -295,8 +295,10 @@ func (s *Server) registerTools() {
 	), s.wrap("archigraph_inspect", s.handleGetNode))
 
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_expand",
-		mcpapi.WithDescription("Return neighbors of a node up to a given depth."),
-		mcpapi.WithString("node", mcpapi.Required()),
+		mcpapi.WithDescription("Return neighbors of entity_id up to depth. 'node' is a deprecated alias."),
+		mcpapi.WithString("entity_id", mcpapi.Required()),
+		// 'node' kept as a deprecated alias for one release cycle (#1916).
+		mcpapi.WithString("node"),
 		mcpapi.WithNumber("depth", mcpapi.DefaultNumber(1)),
 		mcpapi.WithNumber("token_budget", mcpapi.DefaultNumber(800)),
 		mcpapi.WithArray("repo_filter"),
@@ -314,10 +316,10 @@ func (s *Server) registerTools() {
 	), s.wrap("archigraph_trace", s.handleShortestPath))
 
 	// archigraph_traces — process-flow query surface (#724).
-	// action=list|get|follow
+	// action=list|get|follow — defaults to "list" when omitted.
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_traces",
-		mcpapi.WithDescription("Process-flow traces: list=ranked, get=steps, follow=BFS."),
-		mcpapi.WithString("action", mcpapi.Required()),
+		mcpapi.WithDescription("Process-flow traces. action=list|get|follow (default: list)."),
+		mcpapi.WithString("action"),
 		mcpapi.WithAny("process_id"),
 		mcpapi.WithAny("entry_point_id"),
 		mcpapi.WithNumber("max_depth", mcpapi.DefaultNumber(8)),

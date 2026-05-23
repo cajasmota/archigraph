@@ -605,3 +605,97 @@ func TestJavaExtractor_DuplicateMethodsFromFixture(t *testing.T) {
 			describe.Kind, describe.Subtype)
 	}
 }
+
+// TestJavaExtractor_QualifiedName verifies that entities extracted from a file
+// with a package declaration carry a non-empty QualifiedName of the form
+// "<package>.<ClassName>" for classes and "<package>.<Class>.<method>" for
+// methods (#1917).
+func TestJavaExtractor_QualifiedName(t *testing.T) {
+	src := `package com.example.orders.controllers;
+
+public class OrderController {
+    public void createOrder() {}
+}
+`
+	tree := parseForTest(t, src)
+	ext, ok := extractor.Get("java")
+	if !ok {
+		t.Fatal("java extractor not registered")
+	}
+	entities, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:    "src/controllers/OrderController.java",
+		Content: []byte(src),
+		Tree:    tree,
+	})
+	if err != nil {
+		t.Fatalf("extract failed: %v", err)
+	}
+
+	byName := make(map[string]types.EntityRecord)
+	for _, e := range entities {
+		byName[e.Name] = e
+	}
+
+	cls, ok := byName["OrderController"]
+	if !ok {
+		t.Fatal("expected class entity OrderController")
+	}
+	wantClassQN := "com.example.orders.controllers.OrderController"
+	if cls.QualifiedName != wantClassQN {
+		t.Errorf("OrderController QualifiedName = %q, want %q", cls.QualifiedName, wantClassQN)
+	}
+
+	method, ok := byName["OrderController.createOrder"]
+	if !ok {
+		t.Fatal("expected method entity OrderController.createOrder")
+	}
+	wantMethodQN := "com.example.orders.controllers.OrderController.createOrder"
+	if method.QualifiedName != wantMethodQN {
+		t.Errorf("OrderController.createOrder QualifiedName = %q, want %q", method.QualifiedName, wantMethodQN)
+	}
+}
+
+// TestJavaExtractor_QualifiedName_NoPackage verifies that entities in a file
+// without a package declaration still get a non-empty QualifiedName equal to
+// the class/method name (default package, #1917).
+func TestJavaExtractor_QualifiedName_NoPackage(t *testing.T) {
+	src := `public class Foo {
+    public void bar() {}
+}
+`
+	tree := parseForTest(t, src)
+	ext, ok2 := extractor.Get("java")
+	if !ok2 {
+		t.Fatal("java extractor not registered")
+	}
+	entities, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:    "Foo.java",
+		Content: []byte(src),
+		Tree:    tree,
+	})
+	if err != nil {
+		t.Fatalf("extract failed: %v", err)
+	}
+
+	byName := make(map[string]types.EntityRecord)
+	for _, e := range entities {
+		byName[e.Name] = e
+	}
+
+	cls, ok := byName["Foo"]
+	if !ok {
+		t.Fatal("expected class entity Foo")
+	}
+	// No package → QualifiedName falls back to bare class name.
+	if cls.QualifiedName != "Foo" {
+		t.Errorf("Foo QualifiedName = %q, want \"Foo\"", cls.QualifiedName)
+	}
+
+	method, ok := byName["Foo.bar"]
+	if !ok {
+		t.Fatal("expected method entity Foo.bar")
+	}
+	if method.QualifiedName != "Foo.bar" {
+		t.Errorf("Foo.bar QualifiedName = %q, want \"Foo.bar\"", method.QualifiedName)
+	}
+}

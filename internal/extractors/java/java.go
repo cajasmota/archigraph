@@ -78,7 +78,10 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	entities = append(entities, extractor.FileEntity(file))
 	root := file.Tree.RootNode()
 	imports := collectImportNames(root, file.Content)
-	walk(root, file, "", nil, imports, &entities)
+	// Issue #1917 — extract the file's package declaration so QualifiedName
+	// can be set to "<package>.<ClassName>" and "<package>.<Class>.<method>".
+	pkgName := collectPackageName(root, file.Content)
+	walk(root, file, "", nil, imports, pkgName, &entities)
 
 	// Issue #681 — attach IMPORTS relationships directly to the file-level
 	// entity instead of emitting a separate SCOPE.Component placeholder
@@ -166,6 +169,7 @@ func walk(
 	parentType string,
 	cc *classCtx,
 	imports map[string]bool,
+	pkgName string,
 	out *[]types.EntityRecord,
 ) {
 	if node == nil {
@@ -181,12 +185,12 @@ func walk(
 		case "enum_declaration":
 			subtype = "enum"
 		}
-		rec, ok := buildComponent(node, file, subtype)
+		rec, ok := buildComponent(node, file, subtype, pkgName)
 		if !ok {
 			// Still recurse so nested types/imports below this node are
 			// captured even when the class itself is malformed.
 			for i := range node.ChildCount() {
-				walk(node.Child(int(i)), file, parentType, cc, imports, out)
+				walk(node.Child(int(i)), file, parentType, cc, imports, pkgName, out)
 			}
 			return
 		}
@@ -212,11 +216,11 @@ func walk(
 				child := body.Child(int(i))
 				if child != nil && child.Type() == "enum_body_declarations" {
 					for j := range child.ChildCount() {
-						walk(child.Child(int(j)), file, rec.Name, localCtx, imports, out)
+						walk(child.Child(int(j)), file, rec.Name, localCtx, imports, pkgName, out)
 					}
 					continue
 				}
-				walk(child, file, rec.Name, localCtx, imports, out)
+				walk(child, file, rec.Name, localCtx, imports, pkgName, out)
 			}
 			after := len(*out)
 			for k := before; k < after; k++ {
@@ -321,7 +325,7 @@ func walk(
 		return
 
 	case "method_declaration":
-		if rec, ok := buildOperation(node, file, "method", parentType); ok {
+		if rec, ok := buildOperation(node, file, "method", parentType, pkgName); ok {
 			// Self-recursion is detected by the bare callee identifier;
 			// extractCallRelationships compares against the caller name.
 			selfName := rec.Name
@@ -339,7 +343,7 @@ func walk(
 		return
 
 	case "constructor_declaration":
-		if rec, ok := buildOperation(node, file, "constructor", parentType); ok {
+		if rec, ok := buildOperation(node, file, "constructor", parentType, pkgName); ok {
 			selfName := rec.Name
 			if nameNode := node.ChildByFieldName("name"); nameNode != nil {
 				selfName = nodeText(nameNode, file.Content)
@@ -375,7 +379,7 @@ func walk(
 	// they have no stable enclosing-type identifier, and their receiver
 	// resolution starts from a fresh scope.
 	for i := range node.ChildCount() {
-		walk(node.Child(int(i)), file, "", nil, imports, out)
+		walk(node.Child(int(i)), file, "", nil, imports, pkgName, out)
 	}
 }
 
@@ -865,6 +869,36 @@ func collectImportNames(root *sitter.Node, src []byte) map[string]bool {
 	return out
 }
 
+// collectPackageName extracts the dotted package name from the file's
+// package_declaration node (issue #1917). Returns "" when no package
+// declaration is present (default package).
+//
+// Example: `package com.example.users.controllers;` → "com.example.users.controllers"
+func collectPackageName(root *sitter.Node, src []byte) string {
+	if root == nil {
+		return ""
+	}
+	for i := range root.ChildCount() {
+		child := root.Child(int(i))
+		if child == nil || child.Type() != "package_declaration" {
+			continue
+		}
+		// The package name is the entire text between "package" keyword and ";",
+		// captured by the scoped_identifier / identifier children. Using the raw
+		// node text minus the leading keyword and trailing semicolon is the most
+		// robust approach across grammar versions.
+		raw := string(src[child.StartByte():child.EndByte()])
+		raw = strings.TrimSpace(raw)
+		raw = strings.TrimPrefix(raw, "package ")
+		raw = strings.TrimSuffix(raw, ";")
+		raw = strings.TrimSpace(raw)
+		if raw != "" {
+			return raw
+		}
+	}
+	return ""
+}
+
 // findAllNodes returns every descendant of root whose Type() is in kinds.
 func findAllNodes(root *sitter.Node, kinds ...string) []*sitter.Node {
 	if root == nil {
@@ -890,14 +924,23 @@ func findAllNodes(root *sitter.Node, kinds ...string) []*sitter.Node {
 }
 
 // buildComponent creates a Component entity for class/interface declarations.
-func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string) (types.EntityRecord, bool) {
+//
+// Issue #1917 — QualifiedName is set to "<package>.<ClassName>" when pkgName
+// is non-empty, giving inspect consumers a fully-qualified type reference.
+func buildComponent(node *sitter.Node, file extractor.FileInput, subtype, pkgName string) (types.EntityRecord, bool) {
 	name := childFieldText(node, "name", file.Content)
 	if name == "" {
 		return types.EntityRecord{}, false
 	}
 
+	qn := name
+	if pkgName != "" {
+		qn = pkgName + "." + name
+	}
+
 	return types.EntityRecord{
 		Name:               name,
+		QualifiedName:      qn,
 		Kind:               "SCOPE.Component",
 		Subtype:            subtype,
 		SourceFile:         file.Path,
@@ -916,7 +959,10 @@ func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string)
 // same-named methods produce distinct ComputeID(SourceFile+Kind+Name) values.
 // The dotted form is the encoding consumed by resolve.Index.byMember, which
 // splits on the first '.'.
-func buildOperation(node *sitter.Node, file extractor.FileInput, subtype, parentType string) (types.EntityRecord, bool) {
+//
+// Issue #1917 — QualifiedName is set to "<package>.<emittedName>" when pkgName
+// is non-empty, giving inspect consumers a fully-qualified method reference.
+func buildOperation(node *sitter.Node, file extractor.FileInput, subtype, parentType, pkgName string) (types.EntityRecord, bool) {
 	name := childFieldText(node, "name", file.Content)
 	if name == "" {
 		return types.EntityRecord{}, false
@@ -927,8 +973,14 @@ func buildOperation(node *sitter.Node, file extractor.FileInput, subtype, parent
 		emittedName = parentType + "." + name
 	}
 
+	qn := emittedName
+	if pkgName != "" {
+		qn = pkgName + "." + emittedName
+	}
+
 	return types.EntityRecord{
 		Name:               emittedName,
+		QualifiedName:      qn,
 		Kind:               "SCOPE.Operation",
 		Subtype:            subtype,
 		SourceFile:         file.Path,

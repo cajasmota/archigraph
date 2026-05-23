@@ -38,11 +38,12 @@ const (
 )
 
 // handleTraces dispatches archigraph_traces to one of its sub-actions.
+//
+// action is optional; omitting it defaults to "list" for discoverability.
+// Valid values: list (ranked process flows), get (full step chain for a
+// process by id), follow (ad-hoc forward BFS from an entry-point entity).
 func (s *Server) handleTraces(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
-	action, err := req.RequireString("action")
-	if err != nil {
-		return mcpapi.NewToolResultError(err.Error()), nil
-	}
+	action := argString(req, "action", "list")
 	switch strings.ToLower(action) {
 	case "list":
 		return s.handleTracesList(ctx, req)

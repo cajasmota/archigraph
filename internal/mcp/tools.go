@@ -781,9 +781,16 @@ func serializeEntity(repo string, e *graph.Entity, scopeIsOne bool, verbose ...b
 // ---------------------------------------------------------------------------
 
 func (s *Server) handleGetNeighbors(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
-	key, err := req.RequireString("node")
-	if err != nil {
-		return mcpapi.NewToolResultError(err.Error()), nil
+	// canonical name is "entity_id"; accept legacy "node" with a deprecation log (#1916).
+	key := argString(req, "entity_id", "")
+	if key == "" {
+		key = argString(req, "node", "")
+		if key != "" {
+			fmt.Fprintln(os.Stderr, "[archigraph deprecation] archigraph_expand: param 'node' is deprecated, use 'entity_id'")
+		}
+	}
+	if key == "" {
+		return mcpapi.NewToolResultError("missing required argument: entity_id"), nil
 	}
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {

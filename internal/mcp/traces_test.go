@@ -157,6 +157,24 @@ func TestTraces_InvalidActionReturnsError(t *testing.T) {
 	}
 }
 
+// TestTraces_NoActionDefaultsList verifies that omitting the action argument
+// defaults to "list" instead of returning a hard error (#archigraph_traces).
+func TestTraces_NoActionDefaultsList(t *testing.T) {
+	srv := setupTracesServer(t)
+	// min_steps=0 so the short-flow filter doesn't hide the fixture processes.
+	res := callTool(t, srv, "archigraph_traces", map[string]any{"min_steps": 0})
+	if res == nil {
+		t.Fatal("nil result when action is omitted")
+	}
+	if res.IsError {
+		t.Errorf("omitting action should default to list, got tool error: %s", resultText(res))
+	}
+	txt := resultText(res)
+	if !strings.Contains(txt, "\"count\"") {
+		t.Errorf("expected list response with count, got: %s", txt)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // #1738: token_budget enforcement for traces action=list
 // ---------------------------------------------------------------------------

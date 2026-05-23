@@ -188,6 +188,61 @@ func TestInspectNewParamEntityID(t *testing.T) {
 	}
 }
 
+// (g) new name "entity_id" works for archigraph_expand — no deprecation warning (#1916).
+func TestExpandNewParamEntityID(t *testing.T) {
+	srv := newSmokeSrv(t)
+
+	var resultIsHardError bool
+	stderr := captureStderr(func() {
+		r := callTool(t, srv, "archigraph_expand", map[string]any{
+			"entity_id": "DashboardScreen",
+			"group":     "g",
+		})
+		if r.IsError {
+			text := resultText(r)
+			if strings.Contains(text, "missing required argument") {
+				resultIsHardError = true
+			}
+		}
+	})
+
+	if resultIsHardError {
+		t.Error("new param 'entity_id' should be accepted by archigraph_expand, got missing-arg error")
+	}
+	if strings.Contains(stderr, "[archigraph deprecation]") {
+		t.Errorf("new param 'entity_id' should NOT emit a deprecation warning, got stderr: %s", stderr)
+	}
+}
+
+// (h) old name "node" works for archigraph_expand AND deprecation log fires (#1916).
+func TestExpandOldParamNode_DeprecationFires(t *testing.T) {
+	srv := newSmokeSrv(t)
+
+	var resultIsHardError bool
+	stderr := captureStderr(func() {
+		r := callTool(t, srv, "archigraph_expand", map[string]any{
+			"node":  "DashboardScreen",
+			"group": "g",
+		})
+		if r.IsError {
+			text := resultText(r)
+			if strings.Contains(text, "missing required argument") {
+				resultIsHardError = true
+			}
+		}
+	})
+
+	if resultIsHardError {
+		t.Error("legacy param 'node' should still work (compat alias), got missing-arg error")
+	}
+	if !strings.Contains(stderr, "[archigraph deprecation]") {
+		t.Errorf("expected deprecation warning on stderr for legacy param 'node', got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "archigraph_expand") {
+		t.Errorf("deprecation message should name the tool, got: %q", stderr)
+	}
+}
+
 // (f) old name "label_or_id" works for archigraph_inspect AND deprecation log fires.
 func TestInspectOldParamLabelOrID_DeprecationFires(t *testing.T) {
 	srv := newSmokeSrv(t)
