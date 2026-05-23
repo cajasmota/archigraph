@@ -107,6 +107,13 @@ type RunOpts struct {
 	//   "apply" — (ticket D) read *-result.json and rebuild with prose fill.
 	// Any other value is an error.
 	LLMMode string
+	// CacheDir overrides the default section-level LLM cache directory:
+	//   ~/.archigraph/docs/<group>/.llm-cache/
+	// Ignored when NoCache is true.
+	CacheDir string
+	// NoCache disables both cache reads and writes (useful for benchmark /
+	// quality-check runs that must not use or pollute the section cache).
+	NoCache bool
 }
 
 // Run executes a Tier 0 section snippet render and returns the path to the

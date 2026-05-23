@@ -74,6 +74,13 @@ type Tier1RunOpts struct {
 	// ResultFile is the path to the LLMRunResult JSON file written by the
 	// external orchestrator.  Required when LLMMode == "apply".
 	ResultFile string
+	// CacheDir overrides the default section-level LLM cache directory:
+	//   ~/.archigraph/docs/<group>/.llm-cache/
+	// Ignored when NoCache is true.
+	CacheDir string
+	// NoCache disables both cache reads and writes (useful for benchmark /
+	// quality-check runs that must not use or pollute the section cache).
+	NoCache bool
 }
 
 // Tier1Score is the machine-readable quality scorecard written by Tier 1.
@@ -95,7 +102,13 @@ type Tier1Score struct {
 	ContractViolations     []string `json:"contract_violations,omitempty"`
 	// LLMMode is set to "emit" when the run was invoked with --llm-mode=emit.
 	// Empty string means the default deterministic-stub-only mode.
-	LLMMode                string   `json:"llm_mode,omitempty"`
+	LLMMode     string `json:"llm_mode,omitempty"`
+	// CacheHits is the number of sections that were satisfied from the section
+	// cache during --llm-mode=emit (i.e. LLM call skippable for those sections).
+	CacheHits   int `json:"cache_hits,omitempty"`
+	// CacheWrites is the number of section results written to the cache during
+	// --llm-mode=apply.
+	CacheWrites int `json:"cache_writes,omitempty"`
 }
 
 // sectionResult holds the output of one parallel section render.
@@ -221,21 +234,37 @@ func RunTier1(opts Tier1RunOpts) (mdPath string, scorePath string, score Tier1Sc
 
 	// --llm-mode=emit: build and persist the LLMPromptBundle alongside the page.
 	// The Tier 1 bundle contains ALL sections selected for the entity kind.
+	// Cache reads are wired via BuildBundleOpts so hit sections get
+	// cache_hit=true in the emitted bundle.
 	if opts.LLMMode == "emit" {
 		bundleOpts := BuildBundleOpts{
 			RunOpts: RunOpts{
 				Group:        opts.Group,
 				SeedEntityID: opts.SeedEntityID,
 				OutputDir:    opts.OutputDir,
+				CacheDir:     opts.CacheDir,
+				NoCache:      opts.NoCache,
 			},
-			PageID: pageID,
-			Tier:   1,
+			PageID:  pageID,
+			Tier:    1,
+			CacheDir: opts.CacheDir,
+			NoCache:  opts.NoCache,
 		}
 		bundle, bErr := BuildBundle(context.Background(), bundleOpts)
 		if bErr != nil {
 			err = fmt.Errorf("build tier1 llm bundle: %w", bErr)
 			return
 		}
+
+		// Count cache hits and record in score.
+		cacheHits := 0
+		for _, sp := range bundle.Sections {
+			if sp.CacheHit {
+				cacheHits++
+			}
+		}
+		score.CacheHits = cacheHits
+
 		bundleBytes, mErr := json.MarshalIndent(bundle, "", "  ")
 		if mErr != nil {
 			err = fmt.Errorf("marshal tier1 llm bundle: %w", mErr)
@@ -244,6 +273,17 @@ func RunTier1(opts Tier1RunOpts) (mdPath string, scorePath string, score Tier1Sc
 		bundleFile := filepath.Join(outDir, pageID+"-page-bundle.json")
 		if wErr := os.WriteFile(bundleFile, bundleBytes, 0o644); wErr != nil {
 			err = fmt.Errorf("write tier1 bundle file: %w", wErr)
+			return
+		}
+
+		// Re-write score.json now that CacheHits is populated.
+		scoreBytes, jErr := json.MarshalIndent(score, "", "  ")
+		if jErr != nil {
+			err = fmt.Errorf("marshal tier1 score (post-emit): %w", jErr)
+			return
+		}
+		if wErr := os.WriteFile(filepath.Join(outDir, "score.json"), scoreBytes, 0o644); wErr != nil {
+			err = fmt.Errorf("write score.json (post-emit): %w", wErr)
 			return
 		}
 	}

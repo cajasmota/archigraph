@@ -70,6 +70,8 @@ type LLMSectionPrompt struct {
 	// AnchorID is the HTML anchor slug for Tier 1 cross-section linking.
 	AnchorID string `json:"anchor_id"`
 	// StubMarkdown is the deterministic Tier 0/1 output for this section.
+	// When CacheHit is true this field is replaced with the cached LLM markdown
+	// so the orchestrator can skip the LLM call for this section.
 	StubMarkdown string `json:"stub_markdown"`
 	// Guidance is the section-specific prompt text for the LLM.
 	Guidance string `json:"guidance"`
@@ -79,6 +81,14 @@ type LLMSectionPrompt struct {
 	MaxMermaid int `json:"max_mermaid"`
 	// NeighbourIDs is the list of 1-hop neighbour entity IDs for context.
 	NeighbourIDs []string `json:"neighbour_ids"`
+	// PromptHash is the per-section cache key (sha256). Additive field; omitted
+	// when empty so older orchestrators that don't know the field ignore it.
+	PromptHash string `json:"prompt_hash,omitempty"`
+	// CacheHit is true when a cached LLM result was found for this section's
+	// PromptHash. When true, StubMarkdown is populated with the cached LLM
+	// markdown and the orchestrator should skip the LLM call for this section.
+	// Additive field: orchestrators that don't know it treat it as falsy/absent.
+	CacheHit bool `json:"cache_hit,omitempty"`
 }
 
 // LLMGraphContext carries the resolved entity metadata and neighbour summaries
@@ -283,6 +293,12 @@ type BuildBundleOpts struct {
 	// Tier is 0 (single-section bundle) or 1 (full-page bundle).
 	// Defaults to 0 when 0 and RunOpts.Section is set.
 	Tier int
+	// CacheDir overrides the default cache directory for this bundle.
+	// Defaults to DefaultCacheDir(group) when empty.
+	CacheDir string
+	// NoCache disables both cache reads and writes when true.
+	// Useful for benchmark / quality-check runs that must not use cached data.
+	NoCache bool
 }
 
 // BuildBundle constructs and returns an LLMPromptBundle for the given opts
@@ -366,6 +382,19 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 		sectionSet[s] = true
 	}
 
+	// Resolve cache directory (nil when NoCache is set).
+	cacheDir := ""
+	if !opts.NoCache {
+		cacheDir = opts.CacheDir
+		if cacheDir == "" {
+			// Compute default — ignore error; if we can't determine home we
+			// simply run without cache (cache miss is always safe).
+			if cd, cdErr := DefaultCacheDir(opts.Group); cdErr == nil {
+				cacheDir = cd
+			}
+		}
+	}
+
 	var sectionPrompts []LLMSectionPrompt
 	// Emit in KnownSections order for determinism.
 	for _, sec := range KnownSections {
@@ -388,7 +417,7 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 		sh := sectionPromptHash(LLMBundleVersion, sec, resolvedID, nodeHash, guidance)
 		sectionHashes[sec] = sh
 
-		sectionPrompts = append(sectionPrompts, LLMSectionPrompt{
+		sp := LLMSectionPrompt{
 			Section:      sec,
 			AnchorID:     sectionSlug(sec),
 			StubMarkdown: stub,
@@ -396,7 +425,22 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 			MaxWords:     sectionMaxWords(sec),
 			MaxMermaid:   sectionMaxMermaid(sec),
 			NeighbourIDs: nbIDs,
-		})
+			PromptHash:   sh,
+		}
+
+		// Cache read: if a cached result exists, stamp cache_hit=true and
+		// replace StubMarkdown with the cached LLM markdown so the orchestrator
+		// can skip the LLM call for this section.
+		if cacheDir != "" {
+			if ce, readErr := ReadCache(cacheDir, sh); readErr == nil && ce != nil {
+				sp.CacheHit = true
+				sp.StubMarkdown = ce.Markdown
+			}
+			// ReadCache errors (permissions, corrupt JSON) are silently ignored:
+			// a cache miss is always safe — we just re-run the LLM for this section.
+		}
+
+		sectionPrompts = append(sectionPrompts, sp)
 	}
 
 	// Compute bundle-level prompt hash.

@@ -30,6 +30,10 @@ import (
 //   - <outDir>/<pageID>-page.md  (final page, overwriting any stub)
 //   - <outDir>/score.json        (final score with llm_mode="apply")
 //
+// It also writes each section result to the section-level LLM cache so
+// subsequent --llm-mode=emit calls for the same prompt hash return cache_hit=true.
+// Cache writes are skipped when opts.NoCache is true.
+//
 // It returns the paths to those two files and the assembled score.
 //
 // Exported so the CLI layer and tests can call it directly.
@@ -155,6 +159,50 @@ func ApplyResult(opts Tier1RunOpts) (mdPath string, scorePath string, score Tier
 	}
 	tokens := estimateTokens(page)
 
+	// Write section results to the section-level cache so subsequent
+	// --llm-mode=emit calls for the same prompt_hash return cache_hit=true.
+	// We do this before file I/O so the cache is populated even if a later
+	// write fails. Errors are non-fatal: a cache write failure is silently
+	// ignored (the apply still succeeds; the next emit will just miss the cache).
+	cacheWrites := 0
+	if !opts.NoCache {
+		cacheDir := opts.CacheDir
+		if cacheDir == "" {
+			if cd, cdErr := DefaultCacheDir(bundle.Group); cdErr == nil {
+				cacheDir = cd
+			}
+		}
+		if cacheDir != "" {
+			// Build a per-section prompt_hash lookup from the bundle so we can
+			// match each result to its hash without recomputing hashes.
+			bundleHashBySection := make(map[string]string, len(bundle.Sections))
+			for _, sp := range bundle.Sections {
+				if sp.PromptHash != "" {
+					bundleHashBySection[sp.Section] = sp.PromptHash
+				}
+			}
+			for _, sr := range result.SectionResults {
+				ph, ok := bundleHashBySection[sr.Section]
+				if !ok || ph == "" {
+					continue // no hash available; skip this section
+				}
+				entry := CacheEntry{
+					PromptHash:   ph,
+					Section:      sr.Section,
+					Markdown:     sr.Markdown,
+					WordCount:    sr.WordCount,
+					MermaidCount: sr.MermaidCount,
+					LinkRefs:     sr.LinkRefs,
+					CachedAt:     time.Now().UTC().Format(time.RFC3339),
+				}
+				if writeErr := WriteCache(cacheDir, entry); writeErr == nil {
+					cacheWrites++
+				}
+				// silently ignore individual write errors
+			}
+		}
+	}
+
 	score = Tier1Score{
 		Tier:                   1,
 		WallTimeMS:             time.Since(start).Milliseconds(),
@@ -171,6 +219,7 @@ func ApplyResult(opts Tier1RunOpts) (mdPath string, scorePath string, score Tier
 		AnchorCount:            len(anchors),
 		ContractViolations:     violations,
 		LLMMode:                "apply",
+		CacheWrites:            cacheWrites,
 	}
 
 	// Resolve output directory.
