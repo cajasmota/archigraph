@@ -117,13 +117,14 @@ Agents using these names will receive a "tool not found" error — update to the
 | ~~`archigraph_quality_orphans`~~ | Dropped — use `archigraph_find_dead_code`. |
 | [`archigraph_graph_patterns`](#archigraph_graph_patterns) | Indexer-extracted graph patterns (action: list\|get). |
 | [`archigraph_search_entities`](#archigraph_search_entities) | Full-text substring search across entity names. |
-| [`archigraph_get_subgraph`](#archigraph_get_subgraph) | All nodes and edges within N hops of an entity. |
+| [`archigraph_subgraph`](#archigraph_subgraph) | Nodes+edges (format=raw) or Markdown summary (format=markdown) within N hops. |
+| ~~`archigraph_get_subgraph`~~ | Deprecated — use `archigraph_subgraph(format=raw)`. |
 | [`archigraph_find_paths`](#archigraph_find_paths) | Shortest path between two entities. |
 | [`archigraph_endpoints`](#archigraph_endpoints) | HTTP endpoint surface (action: definitions\|calls\|stats). |
 | [`archigraph_find_callers`](#archigraph_find_callers) | Inbound call graph up to N hops. |
 | [`archigraph_find_callees`](#archigraph_find_callees) | Outbound call graph up to N hops. |
 | [`archigraph_impact_radius`](#archigraph_impact_radius) | Blast-radius analysis with per-entity risk score. |
-| [`archigraph_summarize_subgraph`](#archigraph_summarize_subgraph) | Markdown summary of entity call neighbourhood. |
+| ~~`archigraph_summarize_subgraph`~~ | Deprecated — use `archigraph_subgraph(format=markdown)`. |
 | [`archigraph_find_dead_code`](#archigraph_find_dead_code) | Entities with 0 inbound/outbound project edges. |
 | [`archigraph_auth_coverage`](#archigraph_auth_coverage) | Security audit: flag HTTP endpoints missing auth decorators/middleware. |
 | [`archigraph_secrets`](#archigraph_secrets) | Security scan: detect hardcoded API keys, passwords, JWT tokens, and other credentials in source files. |
@@ -1148,6 +1149,46 @@ When `migrated: false`, `note` contains a migration reminder.
 
 When `token_budget` is exceeded the response carries a `truncation_note` explaining
 how many items were omitted and how to get more. Use `limit=N` for simple pagination.
+
+---
+
+### `archigraph_subgraph`
+
+> Added in #1754. Folds `archigraph_get_subgraph` + `archigraph_summarize_subgraph`
+> into a single entry point discriminated by `format`.
+
+Return nodes+edges within N hops of an entity (`format="raw"`) or an LLM-friendly
+Markdown summary of the same neighbourhood (`format="markdown"`).
+
+**Inputs**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `entity_id` | string | yes | — | Entity ID or prefixed cross-repo ID. |
+| `depth` | number | no | `2` | Hop depth. `raw`: clamped ≤5; `markdown`: clamped ≤4. |
+| `format` | string | no | `"raw"` | `"raw"` → JSON graph; `"markdown"` → Markdown summary. |
+| `group`, `cwd` | string | no | — | Common args. |
+
+**Output `format="raw"`** — JSON object:
+
+```json
+{
+  "root": "repo::abc123",
+  "repo": "my-service",
+  "depth": 2,
+  "node_count": 5,
+  "edge_count": 4,
+  "nodes": [
+    { "entity_id": "repo::abc123", "name": "processOrder", "kind": "Function", "source_file": "order.go", "start_line": 42, "depth": 0 }
+  ],
+  "edges": [
+    { "from_id": "repo::abc123", "to_id": "repo::def456", "kind": "CALLS" }
+  ]
+}
+```
+
+**Output `format="markdown"`** — plain Markdown text with `# EntityName`, `**Kind**`,
+`**Repo**`, `**File**`, `## Called by (N)`, and `## Calls (N)` sections.
 
 ---
 
