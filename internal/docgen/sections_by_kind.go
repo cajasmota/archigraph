@@ -78,6 +78,60 @@ type SectionProfile struct {
 	// excerpt for entities matching this profile.  Use the SourceWindowStrategy*
 	// constants.  Empty string selects SourceWindowStrategyDefault.
 	SourceWindowStrategy string
+
+	// SkipForKinds enumerates the canonical (lower-case) kind stems for which
+	// every section in this profile is suppressed.  It is informational metadata
+	// used by ShouldSkipSectionForKind and the bundle gating tests; the per-kind
+	// profile registry remains the primary mechanism for section selection.
+	//
+	// Introduced by #1860 / #1873 to make the gating contract explicit so that
+	// downstream consumers (and future profile authors) can audit which sections
+	// are intentionally suppressed for which seed kinds without re-deriving the
+	// rule from the section lists.
+	SkipForKinds []string
+}
+
+// SectionGating documents the per-section gating contract: each entry lists the
+// canonical (lower-case) kind stems for which the section is suppressed.  This
+// is the declarative form of the per-kind section curation expressed by the
+// profile registry — keep the two in sync when adding a new profile.
+//
+// Wiring (#1860 / #1873 / #2017):
+//
+//   - reference-deployment, reference-scripts → suppressed for leaf entity
+//     kinds (view, class, function, operation) because deployment / script
+//     surface is a module-aggregate concern.
+//   - how-to-local-dev → suppressed for EVERY non-module kind (#1873).  Module
+//     pages are the single source of truth for local-dev workflows.
+var SectionGating = map[string][]string{
+	"reference-deployment": {"view", "class", "function", "operation"},
+	"reference-scripts":    {"view", "class", "function", "operation"},
+	"how-to-local-dev":     {"view", "class", "function", "operation", "model", "react_component"},
+}
+
+// ShouldSkipSectionForKind reports whether a given section is gated out for the
+// supplied entity kind.  The kind is matched case-insensitively against the
+// canonical stems in SectionGating using substring containment so dotted
+// prefixes ("SCOPE.View") and compound names ("OperationHandler") resolve
+// correctly.
+//
+// Callers that already drive section selection through ResolveSectionProfile
+// do not need to consult this helper — the per-kind profile lists already omit
+// the gated sections.  ShouldSkipSectionForKind exists to expose the rule for
+// tests, audits, and downstream consumers that operate on the flat KnownSections
+// list and want a single authoritative answer per (section, kind) pair.
+func ShouldSkipSectionForKind(section, kind string) bool {
+	gated, ok := SectionGating[section]
+	if !ok {
+		return false
+	}
+	k := strings.ToLower(kind)
+	for _, stem := range gated {
+		if strings.Contains(k, stem) {
+			return true
+		}
+	}
+	return false
 }
 
 // sectionsByKind is the authoritative per-kind profile registry.
@@ -175,11 +229,16 @@ var sectionsByKind = map[string]SectionProfile{
 			"capabilities": "Enumerate the product capabilities this module owns, grouped by business outcome. " +
 				"Reference the key entities, handlers, or service objects that implement each capability.",
 			"flows": "Trace the primary request or event flow through this module using a mermaid sequence or flowchart. " +
-				"Show the entry point, internal orchestration, and outbound calls to external modules or services.",
+				"Show the entry point, internal orchestration, and outbound calls to external modules or services. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"Mermaid diagrams must only reference entities that exist in the bundle. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
 			"api": "Document the full public API surface of this module: exported functions, HTTP endpoints, event topics, or CLI flags. " +
 				"Include method signatures and a one-line usage note for each.",
-			"reference-config": "List every environment variable or configuration key this module reads, with type, default value, and effect. " +
-				"Separate required from optional keys.",
+			"reference-config": "List every APPLICATION environment variable or configuration key this module reads, with type, default value, and effect. " +
+				"Separate required from optional keys. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, language, etc.) — those are indexer-internal and not configuration. " +
+				"If the module has no application config, say so in one sentence.",
 			"reference-deployment": "Describe deployment concerns owned by this module: required env vars, exposed ports, " +
 				"scaling constraints, health-check endpoints, and any sidecar dependencies.",
 			"reference-scripts": "List all Makefile targets, npm/go scripts, or shell commands that operate on this module and explain what each does.",
@@ -223,14 +282,20 @@ var sectionsByKind = map[string]SectionProfile{
 			"capabilities": "List the discrete behaviours this operation provides. " +
 				"One bullet per observable side-effect or return-value contract.",
 			"flows": "Trace the execution flow through this operation using a mermaid sequence or flowchart. " +
-				"Show the caller → this operation → callees chain and any branching conditions.",
+				"Show the caller → this operation → callees chain and any branching conditions. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"Mermaid diagrams must only reference entities that exist in the bundle. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
 			"patterns": "Identify structural patterns present in this operation " +
 				"(guard clause, strategy delegation, saga step, command-query separation, etc.). " +
-				"Cite specific callee relationships as evidence.",
+				"Cite specific callee relationships as evidence. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
 			"api": "Document the function signature in full: parameters (name, type, purpose), return value(s), " +
 				"and raised errors or panics. Include a minimal usage example.",
-			"reference-config": "List any environment variables, feature flags, or config keys read inside this operation. " +
-				"Note which values alter branching behaviour.",
+			"reference-config": "List APPLICATION configuration read inside this operation: environment variables, settings module constants, " +
+				"feature flags, runtime parameters. Note which values alter branching behaviour. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, language, etc.) — those are indexer-internal and not configuration. " +
+				"If the operation has no application config, say so in one sentence.",
 			"reference-dependencies": "List direct external and internal dependencies called by this operation. " +
 				"Separate production callees from test-only callees.",
 			"reference-misc": "Capture performance notes, known edge cases, or links to the issue/ADR that introduced this operation.",
@@ -267,11 +332,16 @@ var sectionsByKind = map[string]SectionProfile{
 				"State its single responsibility clearly.",
 			"capabilities": "List the observable behaviours of this helper in 1–3 bullets. " +
 				"Keep it concise — small operations have narrow contracts.",
-			"flows": "Describe the execution path briefly. A single mermaid flowchart node or a short prose paragraph is sufficient.",
-			"patterns": "Note any design pattern (guard clause, delegation, pure function, etc.) in one sentence.",
+			"flows": "Describe the execution path briefly. A single mermaid flowchart node or a short prose paragraph is sufficient. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
+			"patterns": "Note any design pattern (guard clause, delegation, pure function, etc.) in one sentence. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
 			"api": "Document the function signature: parameters (name, type), return value, and any errors raised. " +
 				"One-liner usage example if the call site is non-obvious.",
-			"reference-config": "Note any config key or feature flag read by this helper, if any. Omit section if none.",
+			"reference-config": "Note any APPLICATION config key, environment variable, or feature flag read by this helper. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, etc.) — those are indexer-internal and not configuration. " +
+				"If the helper has no application config, say so in one sentence.",
 			"reference-misc": "Capture edge cases or performance notes specific to this helper, if any.",
 			"glossary": "Define any non-obvious domain term in the function or parameter names. Omit if all names are self-evident.",
 			"module-readme": "One sentence positioning this helper within its module. " +
@@ -311,14 +381,20 @@ var sectionsByKind = map[string]SectionProfile{
 			"capabilities": "Enumerate all discrete business capabilities this operation provides. " +
 				"Group by outcome category. One bullet per observable contract.",
 			"flows": "Trace the full execution flow using a mermaid sequence diagram. " +
-				"Show the caller → this operation → all major callees and any fork/join or retry loops.",
+				"Show the caller → this operation → all major callees and any fork/join or retry loops. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"Mermaid diagrams must only reference entities that exist in the bundle. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
 			"patterns": "Identify ALL structural and architectural patterns present " +
 				"(orchestrator, saga, pipeline, strategy, command, etc.). " +
-				"Cite specific neighbour relationships as evidence for each.",
+				"Cite specific neighbour relationships as evidence for each. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
 			"api": "Document the full function signature: every parameter (name, type, purpose), all return values, " +
 				"and every error or panic path. Include a realistic usage example showing a typical call site.",
-			"reference-config": "List every environment variable, config key, or feature flag read by this operation. " +
-				"Note which alter branching behaviour and which are required vs optional.",
+			"reference-config": "List every APPLICATION environment variable, config key, or feature flag read by this operation. " +
+				"Note which alter branching behaviour and which are required vs optional. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, language, etc.) — those are indexer-internal and not configuration. " +
+				"If the operation has no application config, say so in one sentence.",
 			"reference-dependencies": "List all external and internal dependencies called by this operation. " +
 				"Separate required production dependencies from optional/test-only dependencies.",
 			"reference-deployment": "Describe deployment concerns relevant to this operation: " +
@@ -377,6 +453,161 @@ var sectionsByKind = map[string]SectionProfile{
 			"reference-misc": "Capture accessibility notes (ARIA roles, keyboard nav), known edge cases, or performance considerations.",
 			"glossary": "Define any domain terms appearing in prop names or type names. One term per row.",
 			"module-readme": "Write a brief README-style intro for the module that owns this component. " +
+				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
+				"`module_manifest.functions`, or `neighbour_briefs`. " +
+				"If you cite a sibling, name the bundle field it came from.",
+		},
+	},
+
+	// -------------------------------------------------------------------------
+	// view — class-kind seed (Django ViewSet, FastAPI router class, Flask View,
+	// DRF APIView, Rails controller-class, etc.).
+	//
+	// #1860 — gate reference-deployment / reference-scripts / how-to-local-dev
+	// out of the section list: these are module-aggregate concerns and produced
+	// ~3 sections of "limited context" boilerplate per leaf-class page.
+	// #1865 — flows section MUST short-circuit fabrication when method bodies
+	// are out of the source_window (the seed window typically holds only the
+	// class header).
+	// #1866 — api section MUST forbid decorator/path inference when the
+	// decorator parameters are not in the source_window.
+	// -------------------------------------------------------------------------
+	"view": {
+		Sections: []string{
+			"overview",
+			"capabilities",
+			"flows",
+			"patterns",
+			"api",
+			"reference-config",
+			"reference-dependencies",
+			"reference-misc",
+			"glossary",
+			"module-readme",
+		},
+		SkipForKinds: []string{}, // applies TO view, not skipped FOR view
+		GuidanceOverrides: map[string]string{
+			"overview": "Write a 2–3 sentence description of what this view/controller class exposes and the request lifecycle it owns. " +
+				"State its role in the routing layer (collection endpoint, detail endpoint, RPC-style action handler, etc.).",
+			"capabilities": "List the HTTP-facing capabilities this class provides, one bullet per action or endpoint. " +
+				"Reference the action method name and the documented business outcome — not the implementation details, which live on per-method pages.",
+			"flows": "You will see only the source_window for the seed class header; method bodies are NOT in scope. " +
+				"Trace the DISPATCH-level flow (router → ViewSet method → serializer → response) and explicitly defer per-method internals to per-method pages. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"Mermaid diagrams must only reference entities that exist in the bundle. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
+			"patterns": "Identify class-level patterns (ViewSet mixin composition, generic-view inheritance, permission/throttle stacking, decorator-driven dispatch). " +
+				"Cite specific neighbour relationships as evidence. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
+			"api": "Document the HTTP surface this class exposes: one row per action method. " +
+				"For each action: name, HTTP verb(s), URL path, request body schema, response schema, status codes. " +
+				"If @action / @api_view / @router decorator parameters are NOT in source_window or neighbour Properties, " +
+				"mark verb=not-in-context and path=not-in-context rather than inferring from method name or convention. " +
+				"NEVER infer verbs or paths from naming conventions when the decorator string is unavailable.",
+			"reference-config": "List APPLICATION configuration the class reads or writes: environment variables, settings module constants " +
+				"(e.g. `settings.X`, `SETTINGS.Y`), feature flags, runtime parameters, permission classes referenced by name. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, language, etc.) — those are indexer-internal and not configuration. " +
+				"If the class has no application config, say so in one sentence rather than inventing config from the surrounding stack.",
+			"reference-dependencies": "List direct external and internal dependencies this class imports or composes " +
+				"(serializers, permission classes, filter backends, services). Separate production from test-only.",
+			"reference-misc": "Capture custom router wiring, ordering of mixins, or links to the ADR / issue that introduced this view.",
+			"glossary": "Define domain terms appearing in the class name, action names, or serializer field names. One term per row.",
+			"module-readme": "Write a brief README-style intro for the module that owns this view. " +
+				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
+				"`module_manifest.functions`, or `neighbour_briefs`. " +
+				"If you cite a sibling, name the bundle field it came from.",
+		},
+	},
+
+	// -------------------------------------------------------------------------
+	// class — generic class seed (non-View, non-Model, non-react_component).
+	//
+	// Same gating as `view`: drop deployment / scripts / local-dev because they
+	// are module-aggregate concerns (#1860 / #1873).  Same fabrication guards on
+	// flows and api as `view` (#1865 / #1866) — method bodies typically sit
+	// outside the source_window for class-kind seeds.
+	// -------------------------------------------------------------------------
+	"class": {
+		Sections: []string{
+			"overview",
+			"capabilities",
+			"flows",
+			"patterns",
+			"api",
+			"reference-config",
+			"reference-dependencies",
+			"reference-misc",
+			"glossary",
+			"module-readme",
+		},
+		GuidanceOverrides: map[string]string{
+			"overview": "Write a 2–3 sentence description of what this class represents and the responsibility it owns. " +
+				"State its role in the module (service, value object, adapter, coordinator, etc.).",
+			"capabilities": "List the discrete behaviours this class provides, one bullet per public method or observable contract. " +
+				"Defer per-method implementation details to the per-method pages.",
+			"flows": "You will see only the source_window for the seed class header; method bodies are NOT in scope. " +
+				"Trace the class-level collaboration (caller → this class → collaborators) and explicitly defer per-method internals to per-method pages. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"Mermaid diagrams must only reference entities that exist in the bundle. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
+			"patterns": "Identify class-level structural patterns (template method, strategy, factory, builder, value object, etc.). " +
+				"Cite specific neighbour relationships as evidence. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
+			"api": "Document the public method surface of this class: one row per public method (name, signature, returns, raises). " +
+				"If decorator parameters (e.g. @route, @action) are NOT in source_window or neighbour Properties, " +
+				"mark verbs/paths/params as not-in-context rather than inferring from method name or convention.",
+			"reference-config": "List APPLICATION configuration the class reads: environment variables, settings module constants, feature flags. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, language, etc.) — those are indexer-internal and not configuration. " +
+				"If the class has no application config, say so in one sentence rather than inventing config from the surrounding stack.",
+			"reference-dependencies": "List direct external and internal dependencies this class imports or composes. " +
+				"Separate production from test-only.",
+			"reference-misc": "Capture inheritance quirks, mixin ordering, known edge cases, or links to the ADR / issue that introduced this class.",
+			"glossary": "Define domain terms appearing in the class name or method names. One term per row.",
+			"module-readme": "Write a brief README-style intro for the module that owns this class. " +
+				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
+				"`module_manifest.functions`, or `neighbour_briefs`. " +
+				"If you cite a sibling, name the bundle field it came from.",
+		},
+	},
+
+	// -------------------------------------------------------------------------
+	// function — top-level function or free-standing callable.
+	//
+	// #1860 — drop reference-deployment / reference-scripts / how-to-local-dev:
+	// a free function is a leaf surface, not a deployment unit.
+	// #2017 — flows section must respect bundle-visible entities only.
+	// -------------------------------------------------------------------------
+	"function": {
+		Sections: []string{
+			"overview",
+			"capabilities",
+			"flows",
+			"patterns",
+			"api",
+			"reference-config",
+			"reference-dependencies",
+			"reference-misc",
+			"glossary",
+			"module-readme",
+		},
+		GuidanceOverrides: map[string]string{
+			"overview": "Write a 2–3 sentence description of what this function does and when it is called. " +
+				"Highlight whether it is a leaf helper, a dispatcher, or a critical-path entry point.",
+			"capabilities": "List the observable behaviours of this function in 1–3 bullets. One bullet per side-effect or return-value contract.",
+			"flows": "Trace the execution flow through this function using a mermaid sequence or short flowchart. " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+				"Mermaid diagrams must only reference entities that exist in the bundle. " +
+				"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
+			"patterns": "Note any design pattern (guard clause, delegation, pure function, decorator, etc.). " +
+				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
+			"api": "Document the function signature: parameters (name, type, purpose), return value(s), raised errors. Include a minimal usage example.",
+			"reference-config": "List APPLICATION configuration this function reads: environment variables, settings constants, feature flags. " +
+				"DO NOT include graph-metadata Properties (framework, module, role, etc.) — those are indexer-internal and not configuration. " +
+				"If the function has no application config, say so in one sentence.",
+			"reference-dependencies": "List direct external and internal dependencies called by this function. Separate production from test-only.",
+			"reference-misc": "Capture performance notes or edge cases specific to this function.",
+			"glossary": "Define domain terms in the function or parameter names. One term per row.",
+			"module-readme": "Write a brief README-style intro for the module that contains this function. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
 				"`module_manifest.functions`, or `neighbour_briefs`. " +
 				"If you cite a sibling, name the bundle field it came from.",

@@ -500,18 +500,28 @@ var defaultSectionGuidance = map[string]string{
 	"capabilities": "Enumerate the product capabilities this entity implements, grouped by business outcome. " +
 		"Each capability should be one bullet referencing the relevant functions or methods.",
 	"flows": "Trace the primary request or event flow through this entity using a mermaid sequence or flowchart. " +
-		"Reference upstream callers and downstream callees by name.",
+		"Reference upstream callers and downstream callees by name. " +
+		"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`. " +
+		"Mermaid diagrams must only reference entities that exist in the bundle. " +
+		"If thin context yields a one-step chain, render that one step honestly — do not pad with invented destinations.",
 	"patterns": "Identify the structural design patterns present (adapter, gateway, orchestrator, saga, etc.). " +
-		"Cite specific neighbour relationships as evidence for each pattern identified.",
+		"Cite specific neighbour relationships as evidence for each pattern identified. " +
+		"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
 	"api": "Document the full public API surface: exported functions, HTTP endpoints, event topics, or CLI flags. " +
-		"Include method signatures and a one-line usage note for each.",
-	"reference-config": "List every configuration key this entity reads or writes, with type, default value, and effect. " +
-		"Source from Properties, Metadata, and environment variable names visible in the source.",
+		"Include method signatures and a one-line usage note for each. " +
+		"If decorator parameters (e.g. @action, @api_view, @route) that carry verb/path/options metadata are NOT in source_window or neighbour Properties, " +
+		"mark those fields as not-in-context rather than inferring from method name or convention.",
+	"reference-config": "List APPLICATION configuration this entity reads or writes: environment variables, settings module constants " +
+		"(e.g. `settings.X`, `SETTINGS.Y`), feature flags, runtime parameters. " +
+		"DO NOT include graph-metadata Properties (framework, module, role, language, etc.) — those are indexer-internal and not configuration. " +
+		"If nothing applies locally to this entity, a 1–2 sentence honest note is preferred over inferring conventions from the surrounding stack.",
 	"reference-dependencies": "List direct dependencies separated into production and test/dev. " +
 		"For external dependencies include the import path; for internal ones include the entity ID.",
 	"reference-deployment": "Describe deployment concerns: required environment variables, exposed ports, scaling constraints, and health-check endpoints. " +
-		"Source from graph metadata and the Properties map.",
-	"reference-scripts": "List all Makefile targets, npm/go scripts, or shell commands associated with this entity and explain what each does.",
+		"Source from graph metadata and the Properties map. " +
+		"If nothing applies locally to this entity, a 1–2 sentence honest note is preferred over inferring conventions from the surrounding stack.",
+	"reference-scripts": "List all Makefile targets, npm/go scripts, or shell commands associated with this entity and explain what each does. " +
+		"If nothing applies locally to this entity, a 1–2 sentence honest note is preferred over inferring conventions from the surrounding stack.",
 	"reference-misc": "Capture any additional reference material not covered by the other sections: ADR links, architecture diagrams, or known limitations.",
 	"module-readme": "Write a README-style introduction for the module containing this entity: purpose, key entities, quickstart build/test/run commands, and link to the main documentation page.",
 	"glossary": "Define each domain-specific term that appears in this entity's name, signature, or immediate neighbourhood. " +
