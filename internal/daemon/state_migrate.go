@@ -274,10 +274,22 @@ func MigrateToRefStore(storeDir string) error {
 
 // migrateSlot migrates a single per-repo slot from legacy flat layout to
 // the per-ref sub-directory layout. It is idempotent.
+//
+// It also heals the partial-migration state introduced by PR #2126 (#2130):
+// when refs/_unknown/graph.fb exists alongside exactly one other
+// refs/<X>/ directory (X != "_unknown") that is missing graph.fb, the
+// _unknown artifacts are moved into refs/<X>/ so the daemon's read path
+// resolves correctly. If multiple non-_unknown refs exist the outcome is
+// ambiguous and the slot is left as-is.
 func migrateSlot(slotDir string) error {
 	// Fast path: slot already has a refs/ sub-directory (new layout).
 	refsDir := filepath.Join(slotDir, "refs")
 	if fi, err := os.Stat(refsDir); err == nil && fi.IsDir() {
+		// Check for the PH1a partial-migration state (#2130):
+		// refs/_unknown/graph.fb exists + exactly one other refs/<X>/ missing graph.fb.
+		if healed, err := healUnknownRef(refsDir); healed || err != nil {
+			return err
+		}
 		// Might still have a stale flat graph.fb alongside refs/ if a
 		// previous partial migration crashed. Clean up the top-level
 		// graph files if refs/ already holds something valid.
@@ -327,4 +339,81 @@ func migrateSlot(slotDir string) error {
 		log.Printf("migration: %s → refs/%s", slotDir, refSafe)
 	}
 	return firstErr
+}
+
+// healUnknownRef resolves the partial-migration state described in #2130:
+//
+//	refs/_unknown/graph.fb  ← stranded from PR #2126
+//	refs/<X>/enrichment-candidates.json  ← only sidecar, no graph.fb
+//
+// Precondition: refsDir exists.
+// Returns (true, nil) if it healed the state, (false, nil) if no action was
+// needed, or (false, err) on I/O failure.
+//
+// Safety rules (preserves data):
+//   - Only acts when refs/_unknown/ holds a graph file.
+//   - Only acts when exactly ONE non-_unknown ref dir exists.
+//   - The target ref dir must NOT already have a graph file (no clobber).
+//   - Idempotent: repeated calls are no-ops.
+func healUnknownRef(refsDir string) (healed bool, err error) {
+	unknownDir := filepath.Join(refsDir, "_unknown")
+	if !legacyHasGraph(unknownDir) {
+		return false, nil // nothing stranded in _unknown — no-op
+	}
+
+	// Enumerate sibling ref dirs.
+	entries, readErr := os.ReadDir(refsDir)
+	if readErr != nil {
+		return false, fmt.Errorf("healUnknownRef: read %s: %w", refsDir, readErr)
+	}
+	var nonUnknown []string
+	for _, e := range entries {
+		if !e.IsDir() || e.Name() == "_unknown" {
+			continue
+		}
+		nonUnknown = append(nonUnknown, e.Name())
+	}
+
+	// Ambiguous if multiple non-_unknown refs exist — leave alone.
+	if len(nonUnknown) != 1 {
+		return false, nil
+	}
+
+	targetDir := filepath.Join(refsDir, nonUnknown[0])
+	// Don't clobber a ref dir that already has its own graph.
+	if legacyHasGraph(targetDir) {
+		return false, nil
+	}
+
+	// Move all artifacts from _unknown into the single known ref dir.
+	var firstErr error
+	moveOne := func(name string) {
+		src := filepath.Join(unknownDir, name)
+		if _, e := os.Stat(src); e != nil {
+			return
+		}
+		dst := filepath.Join(targetDir, name)
+		if _, e := os.Stat(dst); e == nil {
+			_ = os.RemoveAll(src) // dst already there — finish partial move
+			return
+		}
+		if e := movePath(src, dst); e != nil && firstErr == nil {
+			firstErr = fmt.Errorf("healUnknownRef: move %s → %s: %w", src, dst, e)
+		}
+	}
+	for _, name := range graphArtifactNames {
+		moveOne(name)
+	}
+	for _, name := range graphArtifactDirs {
+		moveOne(name)
+	}
+
+	if firstErr != nil {
+		return false, firstErr
+	}
+
+	// Remove the now-empty _unknown dir (best-effort).
+	_ = os.Remove(unknownDir)
+	log.Printf("migration(#2130 heal): refs/_unknown → refs/%s in %s", nonUnknown[0], refsDir)
+	return true, nil
 }

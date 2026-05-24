@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -77,6 +78,9 @@ func runDaemonForTest(t *testing.T, idx daemon.IndexFunc, rb daemon.RebuildFunc)
 // Status reports a sensible RSS/pid/uptime. Anything reporting "RSS=0"
 // would be a clear sign the daemon never warmed up memstats.
 func TestDaemon_PingStatus(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	layout := runDaemonForTest(t, nil, nil)
 	c, err := client.DialPath(layout.SocketPath)
 	if err != nil {
@@ -98,6 +102,9 @@ func TestDaemon_PingStatus(t *testing.T) {
 // TestDaemon_IndexRPC stubs an IndexFunc and asserts the wire surface
 // (arg shape, stats handoff) before any real extractor runs.
 func TestDaemon_IndexRPC(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	idx := func(args proto.IndexArgs) (string, string, error) {
 		if args.RepoPath == "" {
 			return "", "", errors.New("empty repo")
@@ -127,6 +134,9 @@ func TestDaemon_IndexRPC(t *testing.T) {
 // subsequent dial reports ErrDaemonNotRunning, exactly as the CLI's
 // thin clients depend on.
 func TestDaemon_StopRPC(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	layout := runDaemonForTest(t, nil, nil)
 	c, err := client.DialPath(layout.SocketPath)
 	if err != nil {
@@ -151,6 +161,9 @@ func TestDaemon_StopRPC(t *testing.T) {
 // case: dialing a socket path that doesn't exist returns
 // ErrDaemonNotRunning, not some opaque syscall error.
 func TestDaemon_ClientReportsNotRunning(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	_, err := client.DialPath(filepath.Join(shortTempRoot(t), "nope.sock"))
 	if !errors.Is(err, client.ErrDaemonNotRunning) {
 		t.Fatalf("want ErrDaemonNotRunning, got %v", err)
@@ -163,6 +176,9 @@ func TestDaemon_ClientReportsNotRunning(t *testing.T) {
 // counting peak concurrency inside the stub RebuildFunc and asserting it
 // never exceeds 1.
 func TestDaemon_RebuildGroupSerialisedUnderLoad(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	if testing.Short() {
 		t.Skip("group-serialisation test skipped in short mode")
 	}
@@ -221,6 +237,9 @@ func TestDaemon_RebuildGroupSerialisedUnderLoad(t *testing.T) {
 // StatusReply: RebuildInFlight and RebuildGroupsActive are non-negative and
 // consistent while a rebuild is in flight.
 func TestDaemon_RebuildStatusObservability(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	if testing.Short() {
 		t.Skip("rebuild observability test skipped in short mode")
 	}

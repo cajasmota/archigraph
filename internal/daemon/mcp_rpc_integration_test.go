@@ -19,6 +19,7 @@ import (
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -157,6 +158,9 @@ func dialRPC(t *testing.T, socketPath string) *rpc.Client {
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 func TestMCPToolList_Integration_Returns14Tools(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	socketPath := runDaemonWithMCP(t)
 	c := dialRPC(t, socketPath)
 	defer c.Close()
@@ -192,6 +196,9 @@ func TestMCPToolList_Integration_Returns14Tools(t *testing.T) {
 }
 
 func TestMCPToolCall_Integration_StatsReturnsContent(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	socketPath := runDaemonWithMCP(t)
 	c := dialRPC(t, socketPath)
 	defer c.Close()
@@ -223,6 +230,9 @@ func TestMCPToolCall_Integration_StatsReturnsContent(t *testing.T) {
 }
 
 func TestMCPToolCall_Integration_NilCallTool_ReturnsErrorBlock(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	// Start a daemon where MCPCallTool is nil — the service should return
 	// a structured error block (IsError=true) rather than a protocol error.
 	root := shortTempRoot(t)

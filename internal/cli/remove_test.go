@@ -8,6 +8,7 @@ import (
 	"net/rpc/jsonrpc"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -112,6 +113,9 @@ func newTestCmd(buf *bytes.Buffer) *cobra.Command {
 // TestRemove_JSONOutputShape verifies the --json flag produces the expected
 // JSON shape and forwards the correct args to the daemon.
 func TestRemove_JSONOutputShape(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	home := t.TempDir()
 	t.Setenv("ARCHIGRAPH_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
@@ -164,6 +168,9 @@ func TestRemove_JSONOutputShape(t *testing.T) {
 // TestRemove_LastRepoBlockedWhenForced verifies that removing the last repo
 // with --force is rejected with a clear error (to avoid orphaned empty groups).
 func TestRemove_LastRepoBlockedWhenForced(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	home := t.TempDir()
 	t.Setenv("ARCHIGRAPH_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
@@ -188,6 +195,9 @@ func TestRemove_LastRepoBlockedWhenForced(t *testing.T) {
 // TestRemove_UnknownGroupReturnsClearError verifies that an unknown group is
 // caught before the daemon is contacted.
 func TestRemove_UnknownGroupReturnsClearError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	home := t.TempDir()
 	t.Setenv("ARCHIGRAPH_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
@@ -206,6 +216,9 @@ func TestRemove_UnknownGroupReturnsClearError(t *testing.T) {
 
 // TestRemove_KeepCachePropagatedToDaemon verifies --keep-cache is forwarded.
 func TestRemove_KeepCachePropagatedToDaemon(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	home := t.TempDir()
 	t.Setenv("ARCHIGRAPH_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
@@ -231,6 +244,9 @@ func TestRemove_KeepCachePropagatedToDaemon(t *testing.T) {
 // TestRemove_HumanOutputContainsFreedBytes verifies the non-JSON output
 // includes the freed-bytes value.
 func TestRemove_HumanOutputContainsFreedBytes(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows: TODO #2121-B (Unix socket not supported)")
+	}
 	home := t.TempDir()
 	t.Setenv("ARCHIGRAPH_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))

@@ -17,7 +17,7 @@ jobs:
           cache: true
       - name: gofmt
         run: |
-          diff=$(gofmt -l $(git ls-files '*.go') 2>&1)
+          diff=$(gofmt -l $(git ls-files '*.go' | grep -v '^vendor/') 2>&1)
           if [ -n "$diff" ]; then
             echo "::error::gofmt found unformatted files:"
             echo "$diff"
@@ -35,6 +35,9 @@ jobs:
         run: |
           npm ci
           npm run build
+      - name: dashboard (webui-v2) unit tests
+        working-directory: webui-v2
+        run: npm test
       - name: mcp-audit (handshake budget + description validation)
         run: go run ./cmd/mcp-audit
         env:
