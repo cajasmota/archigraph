@@ -481,6 +481,17 @@ type Index struct {
 	// instead of binding to an arbitrary same-named component in the same
 	// package (extremely rare in practice).
 	byPackageComponent map[string]map[string]string
+
+	// PlatformVariants maps a canonical platform-variant entity ID to the
+	// slice of non-canonical variant entity IDs that were merged into it
+	// during BuildIndex. Populated when byPackageOperation detects a
+	// mutually-exclusive build-tag pair (e.g. _unix.go "darwin||linux" vs
+	// _windows.go "windows") and keeps the alphabetically-first SourceFile
+	// as the canonical. The non-canonical IDs are stored here so that
+	// ReferencesEmbeddedWithAllowlist can clone resolved CALLS edges to
+	// point at both the canonical AND every non-canonical variant, giving
+	// each variant identical caller lists in the output graph (#1818).
+	PlatformVariants map[string][]string
 }
 
 // LocationIndex maps file_path -> name -> entity_id, retaining only entries
@@ -686,6 +697,7 @@ func BuildIndex(entities []types.EntityRecord) Index {
 		byPackageOperation: make(map[string]map[string]string),
 		byPackageComponent: make(map[string]map[string]string),
 		byQualifiedName:    make(map[string]string),
+		PlatformVariants:   make(map[string][]string),
 	}
 
 	// Issue #1811 — build-tag tracking side-tables.
@@ -1045,8 +1057,10 @@ func BuildIndex(entities []types.EntityRecord) Index {
 						// update it to the incoming ID if the incoming file
 						// sorts earlier.
 						canonicalID := existing
+						nonCanonicalID := e.ID
 						if sourceFile < srcBucket[e.Name] {
 							canonicalID = e.ID
+							nonCanonicalID = existing
 							srcBucket[e.Name] = sourceFile
 						}
 						pkgBucket[e.Name] = canonicalID
@@ -1054,6 +1068,12 @@ func BuildIndex(entities []types.EntityRecord) Index {
 						// so a third variant (if ever present) can extend
 						// the same mutual-exclusion check.
 						tagBucket[e.Name] = mergePlatformVariantTags(existingTag, incomingTag)
+						// Issue #1818 — record the non-canonical variant so
+						// ReferencesEmbeddedWithAllowlist can clone CALLS edges
+						// to both the canonical and every non-canonical variant,
+						// giving each platform-split function identical caller
+						// lists in the output graph.
+						idx.PlatformVariants[canonicalID] = append(idx.PlatformVariants[canonicalID], nonCanonicalID)
 					} else {
 						pkgBucket[e.Name] = "" // blank sentinel → ambiguous
 					}
@@ -1107,12 +1127,17 @@ func BuildIndex(entities []types.EntityRecord) Index {
 					existingTag := tagBucket[e.Name]
 					if buildTagsMutuallyExclusive(existingTag, incomingTag) {
 						canonicalID := existing
+						nonCanonicalID := e.ID
 						if sourceFile < srcBucket[e.Name] {
 							canonicalID = e.ID
+							nonCanonicalID = existing
 							srcBucket[e.Name] = sourceFile
 						}
 						pkgBucket[e.Name] = canonicalID
 						tagBucket[e.Name] = mergePlatformVariantTags(existingTag, incomingTag)
+						// Issue #1818 — mirror PlatformVariants tracking for
+						// Component-family platform splits (struct/interface).
+						idx.PlatformVariants[canonicalID] = append(idx.PlatformVariants[canonicalID], nonCanonicalID)
 					} else {
 						pkgBucket[e.Name] = "" // blank sentinel → ambiguous
 					}
@@ -5158,6 +5183,48 @@ func ReferencesEmbeddedWithAllowlist(records []types.EntityRecord, idx Index, al
 			}
 		}
 	}
+	// Issue #1818 — platform-variant CALLS fan-out.
+	//
+	// After the main resolution pass every CALLS edge whose ToID was resolved
+	// to the canonical platform-variant entity (e.g. the Unix variant that
+	// sorts alphabetically first) has been rewritten in place. The non-canonical
+	// variant (e.g. the Windows function) therefore still has zero inbound edges
+	// in the output graph, which makes find_callers return "no_incoming_edges"
+	// for it.
+	//
+	// For every entity that owns at least one CALLS relationship whose ToID is
+	// a canonical platform-variant entity, clone that relationship for each
+	// non-canonical sibling. The clone is appended to the calling entity's
+	// Relationships slice so the output graph carries identical caller lists
+	// for both the canonical and all non-canonical variants.
+	//
+	// We only do this when idx.PlatformVariants is non-empty (the vast majority
+	// of codebases have no platform splits — no-op path has no cost).
+	if len(idx.PlatformVariants) > 0 {
+		for k := range records {
+			rels := records[k].Relationships
+			var extras []types.RelationshipRecord
+			for j := range rels {
+				r := &rels[j]
+				if strings.ToUpper(r.Kind) != "CALLS" {
+					continue
+				}
+				nonCanonicals, ok := idx.PlatformVariants[r.ToID]
+				if !ok || len(nonCanonicals) == 0 {
+					continue
+				}
+				for _, ncID := range nonCanonicals {
+					clone := *r
+					clone.ToID = ncID
+					extras = append(extras, clone)
+				}
+			}
+			if len(extras) > 0 {
+				records[k].Relationships = append(records[k].Relationships, extras...)
+			}
+		}
+	}
+
 	stats.finalizeDispositions()
 	return stats
 }

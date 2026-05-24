@@ -379,3 +379,200 @@ func TestBuildIndex_PlatformVariant_NoTags_StillAmbiguous(t *testing.T) {
 		t.Fatalf("regression: no-tag ambiguity should not resolve; ToID=%q", got)
 	}
 }
+
+// -----------------------------------------------------------------------
+// Issue #1818 — CALLS fan-out: both platform variants receive caller edges.
+// -----------------------------------------------------------------------
+
+// TestBuildIndex_PlatformVariant_BothVariantsReceiveCallerEdge is the primary
+// regression test for #1818. After #1815 the resolver correctly resolves a
+// CALLS stub to the canonical (Unix) variant, but the Windows variant ends up
+// with zero inbound edges so find_callers returns "no_incoming_edges" for it.
+//
+// After the fix, ReferencesEmbeddedWithAllowlist must clone the resolved CALLS
+// relationship so both the canonical AND every non-canonical variant ID appear
+// as ToID in at least one CALLS edge in the output.
+func TestBuildIndex_PlatformVariant_BothVariantsReceiveCallerEdge(t *testing.T) {
+	// Mirrors the live dogfood scenario from #1818:
+	//   read_source_unix.go    //go:build darwin || linux   ID=aaaa…
+	//   read_source_windows.go //go:build windows           ID=bbbb…
+	//   tools.go               (no build tag)  CALLS readSourceWindow
+	entities := []types.EntityRecord{
+		{
+			ID:         "aaaaaaaaaaaaaaaa",
+			Kind:       "SCOPE.Operation",
+			Name:       "readSourceWindow",
+			SourceFile: "internal/mcp/read_source_unix.go",
+			Language:   "go",
+			Properties: map[string]string{"build_tag": "darwin || linux"},
+		},
+		{
+			ID:         "bbbbbbbbbbbbbbbb",
+			Kind:       "SCOPE.Operation",
+			Name:       "readSourceWindow",
+			SourceFile: "internal/mcp/read_source_windows.go",
+			Language:   "go",
+			Properties: map[string]string{"build_tag": "windows"},
+		},
+		{
+			ID:         "cccccccccccccccc",
+			Kind:       "SCOPE.Operation",
+			Name:       "handleGetSource",
+			SourceFile: "internal/mcp/tools.go",
+			Language:   "go",
+			Relationships: []types.RelationshipRecord{
+				{
+					FromID: "cccccccccccccccc",
+					ToID:   "scope:operation:method:go:internal/mcp/tools.go:readSourceWindow",
+					Kind:   "CALLS",
+					Properties: map[string]string{"language": "go"},
+				},
+			},
+		},
+	}
+	idx := BuildIndex(entities)
+	_ = ReferencesEmbedded(entities, idx)
+
+	// Collect all ToIDs emitted by the caller (entity index 2).
+	callerRels := entities[2].Relationships
+	toIDs := make(map[string]bool, len(callerRels))
+	for _, r := range callerRels {
+		toIDs[r.ToID] = true
+	}
+
+	// Both the canonical (unix) and the non-canonical (windows) variant must
+	// appear as a CALLS target. Before the fix, only one of them did.
+	if !toIDs["aaaaaaaaaaaaaaaa"] {
+		t.Errorf("#1818: unix variant aaaa… not present in caller's CALLS edges; toIDs=%v", toIDs)
+	}
+	if !toIDs["bbbbbbbbbbbbbbbb"] {
+		t.Errorf("#1818: windows variant bbbb… not present in caller's CALLS edges; toIDs=%v", toIDs)
+	}
+	if len(callerRels) < 2 {
+		t.Errorf("#1818: expected at least 2 CALLS relationships (one per variant), got %d", len(callerRels))
+	}
+}
+
+// TestBuildIndex_PlatformVariant_MultipleCallers_BothVariantsReceiveAll tests
+// that when there are MULTIPLE callers of a platform-split function, every
+// caller fans out its CALLS edge to both variants.
+func TestBuildIndex_PlatformVariant_MultipleCallers_BothVariantsReceiveAll(t *testing.T) {
+	entities := []types.EntityRecord{
+		{
+			ID:         "aaaaaaaaaaaaaaaa",
+			Kind:       "SCOPE.Operation",
+			Name:       "openPlatformFd",
+			SourceFile: "pkg/fd_unix.go",
+			Language:   "go",
+			Properties: map[string]string{"build_tag": "darwin || linux"},
+		},
+		{
+			ID:         "bbbbbbbbbbbbbbbb",
+			Kind:       "SCOPE.Operation",
+			Name:       "openPlatformFd",
+			SourceFile: "pkg/fd_windows.go",
+			Language:   "go",
+			Properties: map[string]string{"build_tag": "windows"},
+		},
+		// First caller.
+		{
+			ID:         "cccccccccccccccc",
+			Kind:       "SCOPE.Operation",
+			Name:       "callerA",
+			SourceFile: "pkg/caller_a.go",
+			Language:   "go",
+			Relationships: []types.RelationshipRecord{
+				{
+					FromID: "cccccccccccccccc",
+					ToID:   "scope:operation:method:go:pkg/caller_a.go:openPlatformFd",
+					Kind:   "CALLS",
+					Properties: map[string]string{"language": "go"},
+				},
+			},
+		},
+		// Second caller.
+		{
+			ID:         "dddddddddddddddd",
+			Kind:       "SCOPE.Operation",
+			Name:       "callerB",
+			SourceFile: "pkg/caller_b.go",
+			Language:   "go",
+			Relationships: []types.RelationshipRecord{
+				{
+					FromID: "dddddddddddddddd",
+					ToID:   "scope:operation:method:go:pkg/caller_b.go:openPlatformFd",
+					Kind:   "CALLS",
+					Properties: map[string]string{"language": "go"},
+				},
+			},
+		},
+	}
+	idx := BuildIndex(entities)
+	_ = ReferencesEmbedded(entities, idx)
+
+	// Both callers must have expanded their single stub into two CALLS edges.
+	for i, callerName := range []string{"callerA", "callerB"} {
+		rels := entities[2+i].Relationships
+		toIDs := make(map[string]bool, len(rels))
+		for _, r := range rels {
+			toIDs[r.ToID] = true
+		}
+		if !toIDs["aaaaaaaaaaaaaaaa"] || !toIDs["bbbbbbbbbbbbbbbb"] {
+			t.Errorf("#1818 multiple callers: %s missing variant edge; toIDs=%v", callerName, toIDs)
+		}
+	}
+}
+
+// TestBuildIndex_PlatformVariant_NoFanOutForAmbiguous verifies that the
+// platform-variant fan-out does NOT fire when the two definitions are
+// ambiguous (overlapping or missing build tags) — i.e. we never introduce
+// false caller edges for genuine same-name collisions.
+func TestBuildIndex_PlatformVariant_NoFanOutForAmbiguous(t *testing.T) {
+	// Two functions with no build tags — genuine ambiguity.
+	entities := []types.EntityRecord{
+		{
+			ID:         "aaaaaaaaaaaaaaaa",
+			Kind:       "SCOPE.Operation",
+			Name:       "doWork",
+			SourceFile: "pkg/a.go",
+			Language:   "go",
+		},
+		{
+			ID:         "bbbbbbbbbbbbbbbb",
+			Kind:       "SCOPE.Operation",
+			Name:       "doWork",
+			SourceFile: "pkg/b.go",
+			Language:   "go",
+		},
+		{
+			ID:         "cccccccccccccccc",
+			Kind:       "SCOPE.Operation",
+			Name:       "caller",
+			SourceFile: "pkg/caller.go",
+			Language:   "go",
+			Relationships: []types.RelationshipRecord{
+				{
+					FromID: "cccccccccccccccc",
+					ToID:   "scope:operation:method:go:pkg/caller.go:doWork",
+					Kind:   "CALLS",
+					Properties: map[string]string{"language": "go"},
+				},
+			},
+		},
+	}
+	idx := BuildIndex(entities)
+	_ = ReferencesEmbedded(entities, idx)
+
+	// The stub must remain unresolved (ambiguous sentinel → no rewrite).
+	// Crucially, PlatformVariants must be empty so no fan-out occurs.
+	if len(idx.PlatformVariants) != 0 {
+		t.Errorf("#1818 fan-out guard: PlatformVariants must be empty for ambiguous pair, got %v", idx.PlatformVariants)
+	}
+	rels := entities[2].Relationships
+	if len(rels) != 1 {
+		t.Errorf("#1818 fan-out guard: caller should still have exactly 1 relationship, got %d", len(rels))
+	}
+	if rels[0].ToID == "aaaaaaaaaaaaaaaa" || rels[0].ToID == "bbbbbbbbbbbbbbbb" {
+		t.Errorf("#1818 fan-out guard: ambiguous doWork must not resolve; ToID=%q", rels[0].ToID)
+	}
+}
