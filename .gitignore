@@ -47,3 +47,6 @@ SCRATCH.md
 # archigraph index output
 .archigraph/
 graph.json
+
+# Exception: golden fixtures need committed group.json manifests for smoke tests
+!/internal/quality/golden/**/.archigraph/group.json
