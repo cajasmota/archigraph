@@ -535,7 +535,21 @@ var defaultSectionGuidance = map[string]string{
 		"If nothing applies locally to this entity, a 1–2 sentence honest note is preferred over inferring conventions from the surrounding stack.",
 	"reference-scripts": "List all Makefile targets, npm/go scripts, or shell commands associated with this entity and explain what each does. " +
 		"If nothing applies locally to this entity, a 1–2 sentence honest note is preferred over inferring conventions from the surrounding stack.",
-	"reference-misc": "Capture any additional reference material not covered by the other sections: ADR links, architecture diagrams, or known limitations.",
+	// #1874 — reference-misc: narrow scope to cross-cutting observations that
+	// genuinely have no home in any other section.  The catch-all scope was
+	// attracting useful content (anti-patterns, scaffolding leftovers, hard-coded
+	// values) that belongs in `patterns`, `reference-config`, or a new named
+	// section.  By documenting the intended scope explicitly the LLM routes that
+	// content correctly and reference-misc stays small.
+	"reference-misc": "Capture reference material that does NOT fit any other section. " +
+		"Limit to three categories: " +
+		"(a) cross-cutting refactor notes (e.g. a planned split, a debt item that spans multiple modules), " +
+		"(b) security or compliance hooks (e.g. an audit trail requirement, a PII-handling note, a licence constraint), and " +
+		"(c) ADR/architecture links (links to decision records, architecture diagrams, or external specs). " +
+		"Do NOT use this section for anti-patterns or code smells (those belong in `patterns`), " +
+		"hardcoded values or feature flags (those belong in `reference-config`), " +
+		"or deployment / script concerns (those belong in `reference-deployment` / `reference-scripts`). " +
+		"If nothing fits the three categories above, omit this section or write one sentence saying so.",
 	"module-readme": "Write a README-style introduction for the module containing this entity: purpose, key entities, quickstart build/test/run commands, and link to the main documentation page.",
 	"glossary": "Define each domain-specific term that appears in this entity's name, signature, or immediate neighbourhood. " +
 		"One term per table row with a 1-sentence definition.",
@@ -820,6 +834,40 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 			{
 				var startLine, endLine int
 				var truncatedAt int // non-zero when the whole-body cap fires
+
+				// Issue #1872 — small-file whole-file strategy.
+				//
+				// When the source file is at or below SmallFileLineThreshold (80 lines)
+				// emit the ENTIRE file so that small frontend components, hooks, and
+				// Python helper modules are always fully visible to the LLM.  This fires
+				// BEFORE the per-kind profile switch so that even entities whose profile
+				// specifies StrategyDefault receive the whole file when it is small.
+				//
+				// Entities whose profile specifies StrategyWholeBody already emit the
+				// full class body; the small-file path is skipped for them so that the
+				// per-kind truncation cap and annotation logic remains in effect.
+				//
+				// The check reads at most SmallFileMaxBytes to guard against the (rare)
+				// case of a file with very few but very long lines.
+				if entityProfile.SourceWindowStrategy != SourceWindowStrategyWholeBody {
+					if fileContent, readErr := readEntireFileCapBytes(absPath, SmallFileMaxBytes); readErr == nil {
+						lineCount := strings.Count(fileContent, "\n")
+						// strings.Count counts '\n' so a file with no trailing newline
+						// has lineCount == actualLines-1; add 1 to normalise.
+						if !strings.HasSuffix(fileContent, "\n") {
+							lineCount++
+						}
+						if lineCount <= SmallFileLineThreshold {
+							gc.SourceWindow = fileContent
+							if fallbackUsed {
+								gc.SourceWindowFallback = true
+							}
+							goto skipSourceWindow
+						}
+					}
+					// File is larger than the threshold or unreadable: fall through
+					// to the normal strategy switch below.
+				}
 
 				switch entityProfile.SourceWindowStrategy {
 				case SourceWindowStrategyWholeBody:
@@ -1776,6 +1824,29 @@ func entityDeclPatterns(name, kind, subtype string) []*regexp.Regexp {
 		regexp.MustCompile(`(?m)^\s*(?:export\s+)?(?:const|let|var)\s+`+q+`\b`),
 	)
 	return out
+}
+
+// readEntireFileCapBytes reads the entire file at absPath and returns its
+// content as a string, capped at maxBytes.  When the file content exceeds
+// maxBytes the returned string is truncated at the last newline boundary
+// before the cap so partial lines are not included.
+//
+// Used by BuildBundle's small-file whole-file strategy (#1872).  Non-fatal:
+// the caller falls through to the regular source_window path on any error.
+func readEntireFileCapBytes(absPath string, maxBytes int) (string, error) {
+	data, err := os.ReadFile(absPath) //nolint:gosec // path constructed inside repo root
+	if err != nil {
+		return "", err
+	}
+	if len(data) <= maxBytes {
+		return string(data), nil
+	}
+	// Truncate at the last newline boundary within maxBytes to avoid a partial line.
+	chunk := data[:maxBytes]
+	if idx := strings.LastIndex(string(chunk), "\n"); idx >= 0 {
+		chunk = chunk[:idx+1]
+	}
+	return string(chunk), nil
 }
 
 // inferLanguageFromSourceFile maps a relative source-file path to the
