@@ -55,6 +55,32 @@ const SourceWindowStrategyDefault = ""
 // Model entities where every field declaration carries semantic information.
 const SourceWindowStrategyWholeBody = "whole-body"
 
+// SourceWindowStrategyWholeFile causes BuildBundle to emit the ENTIRE source
+// file when the file's total line count is at or below
+// SmallFileLineThreshold.  For files larger than the threshold the strategy
+// falls through to SourceWindowStrategyDefault (±20-line window) so that
+// large files are not accidentally included in full.
+//
+// This strategy is applied AUTOMATICALLY by BuildBundle for ALL entity kinds
+// when the source file is small (≤ SmallFileLineThreshold lines) — it does
+// not require a per-kind profile entry.  Profiles that explicitly set
+// SourceWindowStrategyWholeBody continue to use whole-body semantics
+// regardless of file size (issue #1872).
+const SourceWindowStrategyWholeFile = "whole-file"
+
+// SmallFileLineThreshold is the file-line count at or below which BuildBundle
+// emits the ENTIRE source file as the source_window, regardless of the entity
+// kind or its start/end lines.  Chosen at 80 lines so that typical small
+// frontend components, hooks, and Python helper modules are always fully
+// included (#1872).
+const SmallFileLineThreshold = 80
+
+// SmallFileMaxBytes is the byte-size safety cap applied when the whole-file
+// strategy is in effect.  Files exceeding this limit are read up to the cap
+// so that unusually large-but-few-lines files (e.g. one giant minified line)
+// do not blow up the bundle size.
+const SmallFileMaxBytes = 5 * 1024 // 5 KB
+
 // SourceWindowWholeBodyMaxLines is the safety cap applied when
 // SourceWindowStrategyWholeBody is in effect.  Models larger than this limit
 // are clipped and a "truncated_at_line" comment is appended to the window.
