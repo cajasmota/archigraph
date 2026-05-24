@@ -694,6 +694,23 @@ func dedupSynthByName(entities []types.EntityRecord) []types.EntityRecord {
 
 const panacheDSLSynthFrom = "quarkus_panache_dsl"
 
+// panacheDSLSyntheticSourceFile is a stable virtual path used as the SourceFile
+// for ALL Panache DSL stub entities (PanacheQuery / PanacheUpdate /
+// ReactivePanacheQuery interface components and their methods). Because
+// EntityRecord.ComputeID hashes (OrgID+ProjectID+SourceFile+Kind+Name), a
+// stable synthetic path makes every file's emission of the SAME interface
+// method hash to the SAME ID. Without this, each Java file that imports
+// Panache produced its own copy of PanacheQuery.list etc.; the resolver's
+// global byName index then flipped to ambiguous on collision (refs.go:1157),
+// orphaning every chained DSL call. Issue #2058.
+//
+// The token is intentionally not a real path on disk — it uses an angle-bracket
+// form that signals "synthetic runtime stub" in any UI surface and cannot
+// collide with a real Java file. It is the same string for every repo; the
+// repo dimension is provided by ProjectID in ComputeID, so per-repo
+// uniqueness is preserved without per-file duplication.
+const panacheDSLSyntheticSourceFile = "<panache-dsl-runtime>"
+
 // panacheDSLOp builds a DSL method entity owned by a synthetic interface.
 func panacheDSLOp(ownerIface, methodName, signature string, extraProps map[string]string) types.EntityRecord {
 	props := map[string]string{
@@ -812,12 +829,17 @@ func reactivePanacheQueryDSLMethods() []types.EntityRecord {
 //
 // Returns nil when no Panache import is detected (most Java files).
 //
-// The SourceFile field on returned entities is intentionally set to the
-// calling file — this lets the resolver's file-scope byName lookup bind
-// `PanacheQuery.list` references emitted from the same file. Cross-file
-// binding via the global byName/byMember index also works because the
-// same entity name is emitted from every Panache file and the indexer
-// merges by Name (keeping the first occurrence).
+// Issue #2058 — All emitted entities use a STABLE synthetic SourceFile
+// (`panacheDSLSyntheticSourceFile`) rather than the calling file. Because
+// EntityRecord.ComputeID hashes SourceFile, this makes every file's emission
+// of the same logical method (e.g. PanacheQuery.list) collapse to the same
+// ID, leaving exactly one canonical node per (Kind, Name) in the repo. Before
+// this fix, an 11-Panache-file repo emitted 11 copies of every DSL entity;
+// the resolver's global byName index (refs.go:1157) flipped to ambiguous on
+// the duplicates and refused to bind any of them, producing ~481 Panache
+// orphans on client-fixture-d. The function is still called per file because
+// (a) we only know "this file uses Panache" file-locally, and (b) repeating
+// the same canonical record is harmless — the indexer dedups on ID.
 func synthesizePanacheDSLEntities(sourceFile, rawFileImports string) []types.EntityRecord {
 	// Only emit DSL stubs when the file has a Quarkus Panache import.
 	hasPanache := false
@@ -832,6 +854,11 @@ func synthesizePanacheDSLEntities(sourceFile, rawFileImports string) []types.Ent
 	}
 
 	const synthFrom = panacheDSLSynthFrom
+	// Issue #2058 — use a stable synthetic path so all per-file emissions
+	// of the same canonical DSL entity collapse to the same ComputeID.
+	// The original calling-file path is retained in properties for debug.
+	_ = sourceFile // intentionally unused; retained in signature for symmetry with #818.
+	const dslFile = panacheDSLSyntheticSourceFile
 
 	// PanacheQuery interface component entity.
 	pqComponent := types.EntityRecord{
@@ -839,7 +866,7 @@ func synthesizePanacheDSLEntities(sourceFile, rawFileImports string) []types.Ent
 		Kind:         "SCOPE.Component",
 		Subtype:      "interface",
 		Language:     "java",
-		SourceFile:   sourceFile,
+		SourceFile:   dslFile,
 		Signature:    "interface PanacheQuery<T>",
 		QualityScore: panacheSynthQuality,
 		Properties: map[string]string{
@@ -854,7 +881,7 @@ func synthesizePanacheDSLEntities(sourceFile, rawFileImports string) []types.Ent
 		Kind:         "SCOPE.Component",
 		Subtype:      "interface",
 		Language:     "java",
-		SourceFile:   sourceFile,
+		SourceFile:   dslFile,
 		Signature:    "interface PanacheUpdate",
 		QualityScore: panacheSynthQuality,
 		Properties: map[string]string{
@@ -869,7 +896,7 @@ func synthesizePanacheDSLEntities(sourceFile, rawFileImports string) []types.Ent
 		Kind:         "SCOPE.Component",
 		Subtype:      "interface",
 		Language:     "java",
-		SourceFile:   sourceFile,
+		SourceFile:   dslFile,
 		Signature:    "interface ReactivePanacheQuery<T>",
 		QualityScore: panacheSynthQuality,
 		Properties: map[string]string{
@@ -887,11 +914,11 @@ func synthesizePanacheDSLEntities(sourceFile, rawFileImports string) []types.Ent
 	out = append(out, rpqComponent)
 	out = append(out, reactivePanacheQueryDSLMethods()...)
 
-	// Stamp SourceFile on all method entities.
+	// Stamp the synthetic SourceFile on every entity (interface components +
+	// DSL method ops) so all per-file emissions across the repo collapse to
+	// the same ComputeID and the resolver's byName index stays unambiguous.
 	for i := range out {
-		if out[i].SourceFile == "" {
-			out[i].SourceFile = sourceFile
-		}
+		out[i].SourceFile = dslFile
 	}
 	return out
 }
