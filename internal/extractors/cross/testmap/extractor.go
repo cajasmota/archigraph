@@ -241,11 +241,14 @@ func productionFunctionRef(prodFile, prodQName string) string {
 // nodes never appeared in the graph's "touched" set and were all counted as
 // degree-0 orphans.
 //
-// The fix: one entity per test function, with every TESTS relationship's
-// FromID left empty ("") so the graph assembly uses the entity's own hex
-// ID as the source. The entity is now the FROM node of its own TESTS edges,
-// making it non-orphan regardless of whether the test file uses parametrize
-// or how many production calls the test body makes.
+// The fix: one entity per test function with all TESTS edges embedded.
+// Each edge carries FromID = testCoverageEntityID(...), the same stub that
+// is stored in Properties["ref"]. The resolver indexes this stub via the
+// Properties["ref"] → byQualifiedName path (BuildIndex, scope:testcoverage:
+// branch) so the assembly resolves the FromID to the entity's own hex ID.
+// This makes the entity the FROM node of its own TESTS edges, ensuring it
+// appears in the "touched" set regardless of how many @pytest.mark.parametrize
+// parameter sets the test function has.
 //
 // Properties carry the data of the highest-confidence testedCall so that
 // existing consumers using Properties["tested_function"] continue to work.
@@ -305,20 +308,21 @@ func buildCollapsedEntity(
 		QualityScore: confidenceScore(primary.confidence),
 	}
 
-	// Emit one TESTS edge per unique production call. FromID is intentionally
-	// left empty: the graph assembly loop (cmd/archigraph/index.go) substitutes
-	// the entity's own hex ID when FromID == "", making the SCOPE.Pattern node
-	// the source of each TESTS edge. This ensures the entity ID appears in the
-	// "touched" set and the node is not counted as a degree-0 orphan.
+	// Emit one TESTS edge per unique production call. FromID is set to
+	// entityID (the scope:testcoverage: stub stored in Properties["ref"]).
+	// The resolver indexes this stub under byQualifiedName via the
+	// scope:testcoverage: ref-property branch in BuildIndex, so the assembly
+	// rewrites FromID to the entity's own hex ID. The entity then appears in
+	// the orphan-classifier's "touched" set as the source of a TESTS edge.
 	for _, tc := range calls {
 		toID := productionFunctionRef(tc.prodFile, tc.qname)
 		if toID == "" {
 			continue
 		}
 		rec.Relationships = append(rec.Relationships, types.RelationshipRecord{
-			// FromID == "" → assembly uses this entity's own hex ID.
-			ToID: toID,
-			Kind: "TESTS",
+			FromID: entityID,
+			ToID:   toID,
+			Kind:   "TESTS",
 			Properties: map[string]string{
 				"test_framework": framework,
 				"confidence":     tc.confidence,
