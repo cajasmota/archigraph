@@ -257,8 +257,89 @@ func emitDRFSerializerFieldRefs(
 					continue
 				}
 			}
+
+			// (5) Plain serializers.Serializer field without Meta.model (#2081 Cat-C).
+			//
+			// Classes that inherit from serializers.Serializer (not ModelSerializer)
+			// often have no Meta inner class at all. Their scalar field declarations
+			// have no meaningful external target entity. We emit a weak USES edge
+			// pointing at the parent serializer class so the field entity is non-orphan
+			// via an outbound structural relationship.
+			//
+			// For fields whose leafType itself ends in "Serializer" (custom nested
+			// serializer reference), rule (2) already fires via funcNode.Type() ==
+			// "identifier" check — so those fields have REFERENCES and won't reach
+			// here. For all other scalar shapes we emit USES → parentClass.
+			//
+			// USES_SCHEMA applies when the leafType is a registered graph entity (e.g.
+			// a custom field class defined in the same codebase). We detect this by
+			// checking whether leafType is capitalised AND not in the known DRF scalar
+			// list (which covers all stdlib DRF types). If it is capitalised and
+			// unknown to us, it may be a project-local custom field — emit USES_SCHEMA
+			// to the leaf type instead so the resolver can bind it.
+			if metaModel == "" {
+				if _, isScalar := drfScalarSerializerFieldTypes[leafType]; isScalar {
+					appendUsesEdge(&(*out)[idx], file.Path, parentClass, map[string]string{
+						"drf_field_type": leafType,
+						"binding":        "plain_serializer_parent",
+					})
+					continue
+				}
+				// Unknown capitalised leaf type that isn't a known DRF scalar — could
+				// be a project-local custom field class. Emit USES_SCHEMA → leafType.
+				if isCapitalisedIdent(leafType) && !strings.HasSuffix(leafType, "Serializer") {
+					appendUsesSchemaEdge(&(*out)[idx], file.Path, leafType, map[string]string{
+						"drf_field_type": leafType,
+						"binding":        "custom_field_type",
+					})
+					continue
+				}
+			}
 		}
 	}
+}
+
+// appendUsesEdge appends a USES edge from the field entity to the target
+// class (e.g. the parent serializer). Used for plain serializers.Serializer
+// fields that have no Meta.model binding target (#2081 Cat-C).
+func appendUsesEdge(field *types.EntityRecord, filePath, targetClass string, props map[string]string) {
+	if field == nil || targetClass == "" {
+		return
+	}
+	toID := buildDjangoModelClassRef(filePath, targetClass)
+	for _, r := range field.Relationships {
+		if r.Kind == "USES" && r.ToID == toID {
+			return
+		}
+	}
+	field.Relationships = append(field.Relationships,
+		types.RelationshipRecord{
+			ToID:       toID,
+			Kind:       "USES",
+			Properties: props,
+		})
+}
+
+// appendUsesSchemaEdge appends a USES_SCHEMA edge from the field entity to a
+// custom field type class. Used when a plain serializers.Serializer field uses
+// a project-local custom field class (e.g. MoneyField, PhoneField) that may
+// itself be a graph entity (#2081 Cat-C).
+func appendUsesSchemaEdge(field *types.EntityRecord, filePath, targetClass string, props map[string]string) {
+	if field == nil || targetClass == "" {
+		return
+	}
+	toID := buildDjangoModelClassRef(filePath, targetClass)
+	for _, r := range field.Relationships {
+		if r.Kind == "USES_SCHEMA" && r.ToID == toID {
+			return
+		}
+	}
+	field.Relationships = append(field.Relationships,
+		types.RelationshipRecord{
+			ToID:       toID,
+			Kind:       "USES_SCHEMA",
+			Properties: props,
+		})
 }
 
 // metaModelLeaf returns the bare class name of the parent serializer's

@@ -41,6 +41,48 @@ var structuralRelKinds = map[string]bool{
 	"DECLARES": true,
 }
 
+// isInherentlyLeafField returns true for SCOPE.Schema/field entities that are
+// inherently leaf nodes and should be excluded from the orphan metric.
+// Counting them as orphans inflates the rate without surfacing real bugs.
+//
+// Two categories are excluded (#2081):
+//
+//  1. Meta inner-class fields (e.g. "FooSerializer.Meta.model",
+//     "FooSerializer.Meta.fields"): these are configuration keys emitted by
+//     extractClassFields from the inner `class Meta:` body. They intentionally
+//     have no outbound structural edges — the containing class carries
+//     meta_model / db_table from the inner class, but the Meta.Y field entity
+//     itself is a dead-end by design. Heuristic: Name contains ".Meta." after
+//     stripping the leading class prefix.
+//
+//  2. Django model scalar fields (CharField, DateField, IntegerField, …):
+//     emitted by enrichDjangoModelFieldsAndManagers for every model field
+//     declaration. Only relational fields (FK/O2O/M2M) get REFERENCES edges;
+//     scalar fields have no meaningful target entity. The extractor stamps
+//     Properties["field_type"] on every Django model field, so its presence
+//     distinguishes this category from DRF serializer fields.
+func isInherentlyLeafField(e *graph.Entity) bool {
+	if e.Kind != "SCOPE.Schema" || e.Subtype != "field" {
+		return false
+	}
+	// Category A: Meta inner-class fields. The field name contains ".Meta."
+	// anywhere in the dotted path (e.g. "ContractSerializer.Meta.model").
+	if strings.Contains(e.Name, ".Meta.") {
+		return true
+	}
+	// Category B: Django model scalar fields stamped with field_type but no
+	// relational REFERENCES. We detect by presence of the field_type property
+	// (set by stampDjangoFieldProperties). Relational fields (FK/O2O/M2M) also
+	// carry field_type but they DO get REFERENCES edges and are therefore already
+	// in the connected set — this guard fires only for the scalar remainder.
+	if e.Properties != nil {
+		if _, ok := e.Properties["field_type"]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // Cluster groups orphan entities sharing the same (Kind, SourceFile pattern).
 type Cluster struct {
 	Kind            string   `json:"kind"`
@@ -196,6 +238,14 @@ func probeGroup(cfg *registry.GroupConfig, topN int) GroupResult {
 			// that no caller invokes. They exist in the graph but don't count toward orphan metrics
 			// (Issue #2071).
 			if isLombokSynthesized(e) {
+				continue
+			}
+			// Exclude inherently-leaf DRF/Django field nodes (#2081):
+			//   - SCOPE.Schema/field entities inside Meta inner classes (e.g. Meta.model)
+			//   - Django model scalar fields (CharField/IntegerField/…) with no relational target
+			// Both categories are structurally expected to be leaf nodes; counting them
+			// inflates the orphan metric without revealing real extraction gaps.
+			if isInherentlyLeafField(e) {
 				continue
 			}
 			nOrphans++
@@ -431,6 +481,16 @@ func printTextReport(report ProbeReport) {
 	fmt.Println("# Orphan Inventory Probe Report")
 	fmt.Println()
 	fmt.Println("Orphan definition: entity with degree-0 after excluding CONTAINS/DECLARES edges.")
+	fmt.Println()
+	fmt.Println("Exclusions (entities not counted as orphans even when degree-0):")
+	fmt.Println("  - synthetic Module entities with empty SourceFile (structural grouping nodes)")
+	fmt.Println("  - Lombok-synthesized / generated entities (getters, setters, builders)")
+	fmt.Println("  - SCOPE.Schema/field entities whose Name contains .Meta. (DRF/Django inner-class")
+	fmt.Println("    configuration keys — Meta.model, Meta.fields, Meta.db_table; these are design-")
+	fmt.Println("    intentional leaf nodes with no outbound structural edges) [#2081]")
+	fmt.Println("  - SCOPE.Schema/field entities stamped with Properties[field_type] (Django model")
+	fmt.Println("    scalar fields — CharField, DateField, IntegerField, …; only FK/O2O/M2M fields")
+	fmt.Println("    carry REFERENCES; scalars have no meaningful target entity) [#2081]")
 	fmt.Println()
 
 	// Per-group sections.
