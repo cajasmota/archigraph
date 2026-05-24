@@ -2949,6 +2949,15 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 	// http_endpoint nodes in the graph and inflate bug-rate.
 	var httpEndpointStats engine.ResolveHTTPEndpointStats
 	merged, httpEndpointStats = engine.ResolveHTTPEndpointHandlers(merged)
+	if httpEndpointStats.DTOHandlerEdgesEmitted > 0 || httpEndpointStats.DTOHandlerEdgesUnresolved > 0 {
+		// #1999 — log the DTO↔Handler bidirectional edge counters
+		// independently of the main http-endpoint stats line so the
+		// number is easy to grep when grinding the unresolved bucket.
+		fmt.Fprintf(os.Stderr,
+			"http-endpoint-dto-bidirectional: emitted=%d unresolved=%d (REFERENCES edges from DTO → handler for request_body_type/response_body_type properties)\n",
+			httpEndpointStats.DTOHandlerEdgesEmitted,
+			httpEndpointStats.DTOHandlerEdgesUnresolved)
+	}
 	if httpEndpointStats.Synthetics > 0 {
 		fmt.Fprintf(os.Stderr,
 			"http-endpoint-resolve: synthetics=%d handler_resolved=%d handler_dropped=%d no_handler_prop=%d caller_resolved=%d caller_unresolved=%d calls_linked=%d calls_unresolved=%d caller_edges_retargeted=%d\n",

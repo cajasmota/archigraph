@@ -443,6 +443,28 @@ func walk(
 			stampSynthLines(lombokSynth)
 			stampSynthLines(lombokFieldSynth)
 			stampSynthLines(panacheSynth)
+			// Issue #1887 — stamp QualifiedName on synthesized entities. The
+			// per-kind synthesizer helpers (synthOp/synthComp/synthConstructor
+			// in lombok.go, the panache helpers in panache.go) don't know the
+			// file's package, so they emit entities with an empty
+			// QualifiedName. Mirror the build{Component,Operation} convention:
+			// for non-empty pkgName, QualifiedName = "<pkg>.<Name>". Name is
+			// already qualified by parent class ("<Class>.<method>") for
+			// synthesized members, so concatenation produces the full
+			// "<pkg>.<Class>.<method>" form expected by inspect consumers.
+			stampSynthQN := func(slice []types.EntityRecord) {
+				if pkgName == "" {
+					return
+				}
+				for i := range slice {
+					if slice[i].QualifiedName == "" && slice[i].Name != "" {
+						slice[i].QualifiedName = pkgName + "." + slice[i].Name
+					}
+				}
+			}
+			stampSynthQN(lombokSynth)
+			stampSynthQN(lombokFieldSynth)
+			stampSynthQN(panacheSynth)
 			// Re-walk the *out tail to apply line numbers to entities that
 			// were appended-by-value (their stamped versions live only in the
 			// local slices above). We seek the matching name/kind in the tail
@@ -454,6 +476,10 @@ func walk(
 				}
 				if (*out)[i].EndLine == 0 {
 					(*out)[i].EndLine = classEnd
+				}
+				// Issue #1887 — same QualifiedName stamping for the tail.
+				if pkgName != "" && (*out)[i].QualifiedName == "" && (*out)[i].Name != "" {
+					(*out)[i].QualifiedName = pkgName + "." + (*out)[i].Name
 				}
 			}
 

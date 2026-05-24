@@ -91,6 +91,17 @@ type ResolveHTTPEndpointStats struct {
 	// #1615 — caller→call-synthetic FETCHES edges retargeted at the resolved
 	// definition so the call-site is no longer an orphan.
 	CallerEdgesRetargeted int
+	// #1999 — DTO → handler REFERENCES edges emitted from request_body_type /
+	// response_body_type properties on http_endpoint_definition entities. The
+	// handler → DTO direction is implicit via the property; this counts the
+	// new explicit DTO → handler direction that makes the DTO node
+	// self-documenting ("which handlers consume this DTO?").
+	DTOHandlerEdgesEmitted int
+	// #1999 — request_body_type / response_body_type values that did not
+	// resolve to a known SCOPE.Component / Model in the merged set. Counted
+	// separately from emitted so an external DTO (third-party SDK) doesn't
+	// look like a bug in the new pass.
+	DTOHandlerEdgesUnresolved int
 }
 
 // ResolveHTTPEndpointHandlers runs the Phase-2 post-pass over `merged`.
@@ -386,6 +397,96 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 					stats.CallerEdgesRetargeted++
 				}
 			}
+		}
+	}
+
+	// Issue #1999 — DTO ↔ Handler bidirectional REFERENCES edges.
+	//
+	// http_endpoint_definition entities carry `request_body_type` and/or
+	// `response_body_type` properties (post-#1909 for Java JAX-RS / Spring
+	// controllers). Those properties already encode the handler → DTO
+	// direction implicitly. But the inverse — "which handlers consume this
+	// DTO?" — is not directly walkable from the DTO node. Without it, the
+	// dashboard flows section has to text-scan source_window content of
+	// every handler to reconstruct the linkage.
+	//
+	// This pass walks every http_endpoint_definition with a non-empty
+	// {request,response}_body_type, resolves the DTO simple name to a
+	// candidate Schema / Component / Model in the merged set, and appends a
+	// REFERENCES edge FROM the DTO TO the handler (the inverse direction).
+	// The edge is annotated with reference_kind = "request_body" or
+	// "response_body" so downstream consumers can filter the surfacing.
+	//
+	// Resolution heuristic: first lookup by (kind, name) using globalIdx for
+	// the same handler kind family; failing that, scan globalIdx for any
+	// entity whose Name == typeName and whose Kind looks DTO-ish
+	// (SCOPE.Component, SCOPE.Schema, Model, Schema, DTO, Component). We
+	// pick the first match; ambiguity is rare for DTOs (project-scoped
+	// names), and a wrong match still produces useful navigation.
+	//
+	// Edges live on the DTO entity's embedded Relationships so the entity
+	// is self-documenting — the edge travels with the DTO record through
+	// the merge + resolver pipeline.
+	dtoKinds := map[string]bool{
+		"SCOPE.Component": true,
+		"SCOPE.Schema":    true,
+		"SCOPE.Class":     true,
+		"Model":           true,
+		"Schema":          true,
+		"DTO":             true,
+		"Component":       true,
+	}
+	resolveDTO := func(typeName string) int {
+		if typeName == "" {
+			return -1
+		}
+		for kind := range dtoKinds {
+			if idx, ok := globalIdx[knKey{kind, typeName}]; ok {
+				return idx
+			}
+		}
+		return -1
+	}
+	for i := range merged {
+		r := &merged[i]
+		if r.Kind != httpEndpointDefinitionKind {
+			continue
+		}
+		if r.Properties == nil {
+			continue
+		}
+		handlerID := r.ID
+		if handlerID == "" {
+			// Endpoint synthesis hasn't stamped IDs yet — fall back to the
+			// synthetic ID encoded in Name (e.g. "http:POST:/orders"). The
+			// resolver downstream re-stamps these consistently.
+			handlerID = httpEndpointDefinitionKind + ":" + r.Name
+		}
+		for _, propKey := range []string{"request_body_type", "response_body_type"} {
+			typeName := r.Properties[propKey]
+			if typeName == "" {
+				continue
+			}
+			dtoIdx := resolveDTO(typeName)
+			if dtoIdx < 0 {
+				stats.DTOHandlerEdgesUnresolved++
+				continue
+			}
+			refKind := "request_body"
+			if propKey == "response_body_type" {
+				refKind = "response_body"
+			}
+			merged[dtoIdx].Relationships = append(merged[dtoIdx].Relationships,
+				types.RelationshipRecord{
+					FromID: merged[dtoIdx].ID,
+					ToID:   handlerID,
+					Kind:   string(types.RelationshipKindReferences),
+					Properties: map[string]string{
+						"reference_kind": refKind,
+						"pattern_type":   "dto_handler_bidirectional",
+					},
+				})
+			stats.DTOHandlerEdgesEmitted++
 		}
 	}
 

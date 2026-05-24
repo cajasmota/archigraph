@@ -870,6 +870,21 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 		skipSourceWindow:
 		}
 
+		// Issue #1998 — Lombok-synthesised accessor Operations (@Data /
+		// @Getter / @Setter / @With / @Builder generated methods) have no
+		// real source code in the .java file, so the source_window helper
+		// above returns nothing. When the entity carries a
+		// "synthesized_from: lombok_*" property and SourceWindow is still
+		// empty, synthesise a stub from the recorded Signature + field
+		// metadata so the LLM can document the accessor with the same
+		// shape every Lombok-aware reader expects.
+		if gc.SourceWindow == "" {
+			if stub := buildLombokSynthStub(entity); stub != "" {
+				gc.SourceWindow = stub
+				gc.SourceWindowFallback = true
+			}
+		}
+
 		// Populate ClassManifest when the seed entity is class-like (#1861).
 		// Walk the neighbours collected above to build a structured enumeration
 		// of methods, fields, bases, interfaces, and decorators without requiring
