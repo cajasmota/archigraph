@@ -65,6 +65,7 @@ func newRoot() *cobra.Command {
 		newRegisterCmd(),
 		newRemoveCmd(),
 		newDeleteCmd(),
+		newBranchesCmd(),
 		newHelpCmd(),
 	)
 
@@ -125,6 +126,18 @@ Repair:
 Lifecycle:
   remove <group> <slug>           Remove a single repo from a group
   delete <group>                  Delete an entire group and all its repos
+  branches [group]                List per-ref graph tiers + lifecycle management
+
+Branch management (PH6):
+  branches [group]                List all refs: tier, idle, size, pin state
+  branches --json                 Machine-readable JSON output
+  branches --prune-stale [Nd]     Delete EXPIRED graphs (optional TTL override)
+  branches --pin <repo> --pin-ref <ref>
+                                  Mark a ref as pinned (never expires)
+  branches --unpin <repo> --unpin-ref <ref>
+                                  Un-pin a previously pinned ref
+  branches --keep-last N --keep-last-repo <repo>
+                                  Keep only N most-recent feature branches
 
 Maintenance:
   cleanup [--dry-run]             Remove orphaned registry entries

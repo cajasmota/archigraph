@@ -1,6 +1,7 @@
 package tier_test
 
 import (
+	"os"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -319,5 +320,99 @@ func TestDefaultTTLConfig(t *testing.T) {
 	}
 	if cfg.ExpiredWindow != 7*24*time.Hour {
 		t.Errorf("ExpiredWindow: got %v, want 7d", cfg.ExpiredWindow)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// PH6: COLD→EXPIRED disk eviction
+// ---------------------------------------------------------------------------
+
+// TestColdToExpiredDiskEviction verifies the full WARM→COLD→EXPIRED→disk-delete
+// path using a synthetic clock and a temporary directory as the "store".
+func TestColdToExpiredDiskEviction(t *testing.T) {
+	// Create a fake state directory with a graph.fb.
+	tmp := t.TempDir()
+	stateDir := tmp + "/repo-slot/refs/feat%2Fx"
+	if err := os.MkdirAll(stateDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(stateDir+"/graph.fb", make([]byte, 1024*1024), 0o644); err != nil {
+		t.Fatalf("write graph.fb: %v", err)
+	}
+
+	clock, advance := makeClock()
+	var diskEvictCalled atomic.Int32
+	diskEvict := func(k tier.SlotKey) (int64, error) {
+		diskEvictCalled.Add(1)
+		if err := os.RemoveAll(stateDir); err != nil {
+			return 0, err
+		}
+		return 1024 * 1024, nil
+	}
+
+	ttl := tier.TTLConfig{
+		HotWindow:             1 * time.Minute,
+		ColdWindow:            5 * time.Minute,
+		ColdWindowWorktree:    2 * time.Minute,
+		ExpiredWindow:         7 * 24 * time.Hour,
+		ExpiredWindowWorktree: 48 * time.Hour,
+	}
+	m := tier.NewManagerForTestWithDiskEvict(ttl, clock, noopEvict, noopReload, diskEvict)
+	key := tier.SlotKey{RepoPath: "/repo/a", Ref: "feat/x"}
+	m.Register(key, false, tier.SlotKindBranchFeature)
+
+	// HOT → WARM
+	advance(2 * time.Minute)
+	m.Scan()
+	if got := m.Get(key); got != tier.TierWarm {
+		t.Fatalf("want WARM, got %s", got)
+	}
+
+	// WARM → COLD
+	advance(6 * time.Minute)
+	m.Scan()
+	if got := m.Get(key); got != tier.TierCold {
+		t.Fatalf("want COLD, got %s", got)
+	}
+
+	// COLD → EXPIRED (advance past ExpiredWindow = 7d)
+	advance(8 * 24 * time.Hour)
+	m.Scan()
+	if got := m.Get(key); got != tier.TierExpired {
+		t.Fatalf("want EXPIRED, got %s", got)
+	}
+	if diskEvictCalled.Load() != 1 {
+		t.Fatalf("want 1 disk eviction, got %d", diskEvictCalled.Load())
+	}
+
+	// Verify the directory was actually removed.
+	if _, err := os.Stat(stateDir); !os.IsNotExist(err) {
+		t.Fatalf("stateDir should be deleted after disk eviction")
+	}
+}
+
+// TestPinnedMainNeverDiskEvicted verifies that isPinnedMain slots never reach
+// EXPIRED regardless of how long they have been idle.
+func TestPinnedMainNeverDiskEvicted(t *testing.T) {
+	clock, advance := makeClock()
+	var diskEvictCalled atomic.Int32
+	diskEvict := func(k tier.SlotKey) (int64, error) {
+		diskEvictCalled.Add(1)
+		return 0, nil
+	}
+
+	m := tier.NewManagerForTestWithDiskEvict(tier.DefaultTTLConfig(), clock, noopEvict, noopReload, diskEvict)
+	key := tier.SlotKey{RepoPath: "/repo/main", Ref: "main"}
+	m.Register(key, true /*isPinnedMain*/, tier.SlotKindBranchMain)
+
+	// Advance 10 days — well past the 7-day EXPIRED window.
+	advance(10 * 24 * time.Hour)
+	m.Scan()
+
+	if got := m.Get(key); got == tier.TierExpired {
+		t.Fatal("pinned main must never reach TierExpired")
+	}
+	if diskEvictCalled.Load() != 0 {
+		t.Fatalf("disk evict must not fire for pinned main, got %d calls", diskEvictCalled.Load())
 	}
 }
