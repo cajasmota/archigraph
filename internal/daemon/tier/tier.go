@@ -1,21 +1,23 @@
 // Package tier implements the HOT/WARM/COLD/EXPIRED state machine for loaded
-// graphs (PH2 of epic #2087 / issue #2090, extended by PH3 #2091).
+// graphs (PH2 of epic #2087 / issue #2090, extended by PH3 #2091, PH6 #2094).
 //
 // # Tier definitions
 //
 //   - HOT   – graph resident in memory, accessed within the hot window.
 //   - WARM  – graph resident in memory, idle longer than the hot window.
 //   - COLD  – graph evicted from memory; graph.fb is still on disk.
-//   - EXPIRED – disk artifact eligible for deletion (PH6, not acted on here).
+//   - EXPIRED – disk artifact eligible for deletion.
 //
 // # Transitions
 //
 //	HOT  → WARM  : 5 min idle  (status change only, no memory action)
 //	WARM → COLD  : 1 h  idle   (release in-memory reference; GC eligible)
 //	COLD → HOT   : demand wake (reload from disk; ≤ 300–500 ms typical)
+//	COLD → EXPIRED : idle past ExpiredWindow (PH6: also triggers disk delete)
 //
-// EXPIRED is tracked for completeness but disk deletion is deferred to PH6
-// (#2094). Pinned main branches (default branch of a registered repo) are
+// PH6 (#2094): when a slot reaches EXPIRED the Manager calls the optional
+// DiskEvictCallback which deletes the graph artifacts from disk.
+// Pinned main branches (default branch of a registered repo) are
 // disk-pinned: they can WARM→COLD but never COLD→EXPIRED.
 //
 // # Env-tunable TTLs
@@ -88,6 +90,13 @@ type EvictionCallback func(key SlotKey)
 // The implementation should reload the graph from disk and return nil on
 // success. On failure the slot stays COLD and Touch returns the error.
 type ReloadCallback func(key SlotKey) error
+
+// DiskEvictCallback is invoked by the Manager scanner when a COLD slot
+// transitions to EXPIRED (PH6 #2094). The implementation should delete the
+// graph artifacts from disk and return the number of bytes freed.
+// If nil, disk eviction is skipped (dry-run / test scenarios).
+// Invoked synchronously from the scanner goroutine outside the Manager lock.
+type DiskEvictCallback func(key SlotKey) (freedBytes int64, err error)
 
 // ---------------------------------------------------------------------------
 // SlotKey
@@ -222,30 +231,33 @@ type slot struct {
 // graph slots. Safe for concurrent use. A background scanner goroutine (every
 // 30 s) applies idle-TTL transitions and fires eviction callbacks.
 type Manager struct {
-	mu      sync.Mutex
-	slots   map[SlotKey]*slot
-	ttl     TTLConfig
-	onEvict EvictionCallback
-	reload  ReloadCallback
-	logger  *log.Logger
-	clock   func() time.Time
+	mu          sync.Mutex
+	slots       map[SlotKey]*slot
+	ttl         TTLConfig
+	onEvict     EvictionCallback
+	reload      ReloadCallback
+	onDiskEvict DiskEvictCallback // PH6: nil = no disk deletion
+	logger      *log.Logger
+	clock       func() time.Time
 }
 
 const defaultScanInterval = 30 * time.Second
 
 // NewManager creates and starts a Manager. The scanner runs until ctx is
-// cancelled. onEvict and reload must not be nil.
-func NewManager(ctx context.Context, ttl TTLConfig, onEvict EvictionCallback, reload ReloadCallback, logger *log.Logger) *Manager {
+// cancelled. onEvict and reload must not be nil. onDiskEvict may be nil
+// (disables disk deletion).
+func NewManager(ctx context.Context, ttl TTLConfig, onEvict EvictionCallback, reload ReloadCallback, onDiskEvict DiskEvictCallback, logger *log.Logger) *Manager {
 	if logger == nil {
 		logger = log.Default()
 	}
 	m := &Manager{
-		slots:   make(map[SlotKey]*slot),
-		ttl:     ttl,
-		onEvict: onEvict,
-		reload:  reload,
-		logger:  logger,
-		clock:   time.Now,
+		slots:       make(map[SlotKey]*slot),
+		ttl:         ttl,
+		onEvict:     onEvict,
+		reload:      reload,
+		onDiskEvict: onDiskEvict,
+		logger:      logger,
+		clock:       time.Now,
 	}
 	go m.scanLoop(ctx, defaultScanInterval)
 	return m
@@ -253,6 +265,7 @@ func NewManager(ctx context.Context, ttl TTLConfig, onEvict EvictionCallback, re
 
 // NewManagerForTest creates a Manager without starting the scan loop, using a
 // caller-supplied clock. Call Scan() explicitly to trigger transitions.
+// onDiskEvict may be nil.
 func NewManagerForTest(ttl TTLConfig, clock func() time.Time, onEvict EvictionCallback, reload ReloadCallback) *Manager {
 	return &Manager{
 		slots:   make(map[SlotKey]*slot),
@@ -261,6 +274,20 @@ func NewManagerForTest(ttl TTLConfig, clock func() time.Time, onEvict EvictionCa
 		reload:  reload,
 		logger:  log.Default(),
 		clock:   clock,
+	}
+}
+
+// NewManagerForTestWithDiskEvict is like NewManagerForTest but also accepts
+// a DiskEvictCallback (PH6 tests).
+func NewManagerForTestWithDiskEvict(ttl TTLConfig, clock func() time.Time, onEvict EvictionCallback, reload ReloadCallback, onDiskEvict DiskEvictCallback) *Manager {
+	return &Manager{
+		slots:       make(map[SlotKey]*slot),
+		ttl:         ttl,
+		onEvict:     onEvict,
+		reload:      reload,
+		onDiskEvict: onDiskEvict,
+		logger:      log.Default(),
+		clock:       clock,
 	}
 }
 
@@ -382,6 +409,7 @@ func (m *Manager) scan() {
 	m.mu.Lock()
 	now := m.clock()
 	var toEvict []SlotKey
+	var toExpire []SlotKey
 	for k, s := range m.slots {
 		idle := now.Sub(s.lastAccessedAt)
 
@@ -407,10 +435,11 @@ func (m *Manager) scan() {
 				m.logger.Printf("tier: %s@%s WARM→COLD (idle %s, kind=%s)", k.RepoPath, k.Ref, idle.Round(time.Second), s.kind)
 			}
 		case TierCold:
-			// COLD→EXPIRED: log eligibility but do not delete disk artifacts (PH6).
+			// PH6 (#2094): COLD→EXPIRED — delete disk artifacts when not pinned.
 			if !s.isPinnedMain && idle >= expiredWindow {
-				m.logger.Printf("tier: %s@%s COLD→EXPIRED eligible (idle %s, kind=%s, pinned=%v) — disk eviction deferred to PH6",
-					k.RepoPath, k.Ref, idle.Round(time.Hour), s.kind, s.isPinnedMain)
+				s.tier = TierExpired
+				toExpire = append(toExpire, k)
+				m.logger.Printf("tier: %s@%s COLD→EXPIRED (idle %s, kind=%s)", k.RepoPath, k.Ref, idle.Round(time.Hour), s.kind)
 			}
 		}
 	}
@@ -421,6 +450,18 @@ func (m *Manager) scan() {
 	}
 	if len(toEvict) > 0 {
 		runtime.GC() // nudge GC so released graph objects are reclaimed promptly
+	}
+
+	// PH6: perform disk eviction for newly expired slots.
+	if m.onDiskEvict != nil {
+		for _, k := range toExpire {
+			freed, err := m.onDiskEvict(k)
+			if err != nil {
+				m.logger.Printf("tier: expired-evict %s@%s FAILED: %v", k.RepoPath, k.Ref, err)
+			} else {
+				m.logger.Printf("tier: expired-evict %s@%s freed=%.1fMB", k.RepoPath, k.Ref, float64(freed)/(1024*1024))
+			}
+		}
 	}
 }
 

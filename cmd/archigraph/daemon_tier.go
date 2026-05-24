@@ -1,10 +1,10 @@
 package main
 
 // daemon_tier.go wires the tiered hibernation state machine (PH2 of epic
-// #2087 / issue #2090) into the daemon process.
+// #2087 / issue #2090, extended by PH3 #2091, PH6 #2094) into the daemon process.
 //
-// Process-global daemonTierMgr tracks HOT/WARM/COLD state for every indexed
-// (repoPath, ref) pair.  Integrations:
+// Process-global daemonTierMgr tracks HOT/WARM/COLD/EXPIRED state for every
+// indexed (repoPath, ref) pair.  Integrations:
 //
 //   - tierAfterIndex: called after every successful index pass; registers the
 //     slot as HOT (or re-activates it) and detects the default branch.
@@ -19,10 +19,14 @@ package main
 //   - Cold wake (COLD→HOT): the reload callback re-mmap's graph.fb by
 //     calling daemonMCPCache.Get; the dashboard cache reloads lazily on the
 //     next HTTP request.
+//
+//   - Disk eviction (COLD→EXPIRED, PH6): tierDiskEvictCallback deletes the
+//     refs/<ref>/ sub-directory for the expired slot and logs freed bytes.
 
 import (
 	"context"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/cajasmota/archigraph/internal/daemon"
@@ -37,7 +41,7 @@ var daemonTierMgr *tier.Manager
 // called once from runDaemon before the daemon begins serving requests.
 func startDaemonTierManager(ctx context.Context, logger *log.Logger) {
 	ttl := tier.EnvTTLConfig()
-	daemonTierMgr = tier.NewManager(ctx, ttl, tierEvictCallback, tierReloadCallback, logger)
+	daemonTierMgr = tier.NewManager(ctx, ttl, tierEvictCallback, tierReloadCallback, tierDiskEvictCallback, logger)
 
 	// Wire the MCP graph-cache access hook so every GetForRepoRef call
 	// updates lastAccessedAt in the tier manager without extra call-sites.
@@ -104,4 +108,39 @@ func tierReloadCallback(key tier.SlotKey) error {
 	}
 	release()
 	return nil
+}
+
+// tierDiskEvictCallback is the PH6 COLD→EXPIRED disk deletion hook.
+// It deletes the refs/<ref-safe>/ directory for the expired slot and returns
+// the bytes freed. Pinned-main slots never reach EXPIRED, so no guard needed
+// here — the tier Manager already suppresses transitions for isPinnedMain slots.
+func tierDiskEvictCallback(key tier.SlotKey) (int64, error) {
+	stateDir := daemon.StateDirForRepoRef(key.RepoPath, key.Ref)
+	freed, err := dirSize(stateDir)
+	if err != nil {
+		// Directory may not exist — not an error worth surfacing.
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	if err := os.RemoveAll(stateDir); err != nil {
+		return 0, err
+	}
+	return freed, nil
+}
+
+// dirSize returns the total byte size of all files under dir.
+func dirSize(dir string) (int64, error) {
+	var total int64
+	err := filepath.Walk(dir, func(_ string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !fi.IsDir() {
+			total += fi.Size()
+		}
+		return nil
+	})
+	return total, err
 }
