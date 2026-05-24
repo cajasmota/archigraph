@@ -35,7 +35,7 @@ import type {
   ChainStep,
 } from "@/data/types";
 import { cn } from "@/lib/utils";
-import { RepoChip as SharedRepoChip } from "@/lib/repo-color";
+import { RepoChip as SharedRepoChip, getRepoColorForGroup } from "@/lib/repo-color";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createFlowAnim, useFlowAnim,
@@ -975,6 +975,7 @@ function FlowDag({
   anim,
   reducedMotion = false,
   onBridgeMap,
+  groupId = "",
 }: {
   flow: Process;
   detailSteps?: ProcessStep[];
@@ -984,6 +985,8 @@ function FlowDag({
   anim?: FlowAnimSnapshot;
   reducedMotion?: boolean;
   onBridgeMap?: (bridges: boolean[]) => void;
+  /** Group id for stable repo-color slot assignment (#2116). */
+  groupId?: string;
 }) {
   const steps = detailSteps ?? flow.steps ?? [];
 
@@ -1330,15 +1333,16 @@ function FlowDag({
     <div
       ref={viewportRef}
       className={cn(
-        "relative overflow-hidden border-b border-border flex-none select-none",
+        // #2115: flex-1 + min-h-0 lets this viewport fill its flex parent
+        // instead of being constrained to a fixed pixel height. minHeight
+        // guards keep the canvas usable even at small window sizes.
+        "relative overflow-hidden border-b border-border flex-1 min-h-0 select-none",
         dragging ? "cursor-grabbing" : "cursor-grab",
       )}
       style={{
         background:
           "radial-gradient(circle at 1px 1px, var(--canvas-grid) 1px, transparent 1px) 0 0 / 18px 18px, var(--canvas-bg)",
         minHeight: mode === LAYOUT_MEDIUM ? 220 : 320,
-        height: mode === LAYOUT_LONG ? 520 : 400,
-        maxHeight: mode === LAYOUT_LONG ? 680 : 560,
       }}
       onWheel={onWheel}
       onPointerDown={onPointerDown}
@@ -1731,11 +1735,22 @@ function FlowDag({
           const isFanOutNode = fanOutMap.has(i);
           const isInTrail =
             anim != null && i < anim.playhead;
+
+          // #2116: left-edge accent stripe color = repo color (not step-kind color).
+          // This makes repo-transitions visible at a glance across the DAG.
+          const repoColors = getRepoColorForGroup(groupId, s.repo ?? "");
+          // Extract the hex/hsl foreground for use as the stripe color.
+          // getRepoColorForGroup returns CSS var strings for the first 8 repos
+          // (pastel-N-ink) and HSL literals for overflow repos. We use the
+          // foreground token so the stripe is vibrant in both themes.
+          const repoStripeColor = repoColors.foreground;
+
           return (
             <button
               key={s.entity_id}
               type="button"
               data-step-node
+              data-repo={s.repo}
               onClick={() => onPickStep(i)}
               className={cn(
                 "absolute flex flex-col gap-1 rounded-md border cursor-pointer text-left",
@@ -1757,8 +1772,9 @@ function FlowDag({
                   isEntry || isTerminal
                     ? `color-mix(in srgb, ${meta.color} 8%, var(--surface))`
                     : "var(--surface)",
+                // #2116: repo color on left edge stripe, not step-kind color.
                 borderLeftWidth: 4,
-                borderLeftColor: meta.color,
+                borderLeftColor: repoStripeColor,
                 boxShadow: selectedStepIdx === i
                   ? "0 0 0 2px var(--accent-ring), var(--shadow-2)"
                   : "var(--shadow-1)",
@@ -1872,31 +1888,50 @@ function FlowDag({
         </span>
       </div>
 
-      {/* Legend */}
-      <div className="absolute left-3 bottom-3 flex flex-wrap gap-2 rounded-sm border border-border bg-[var(--overlay)] px-2 py-1.5 max-w-xs backdrop-blur-sm z-10">
-        {(
-          [
-            "http_fetch",
-            "db_query",
-            "db_write",
-            "message_publish",
-            "function_call",
-            "component_render",
-          ] as StepKind[]
-        ).map((k) => {
-          const m = getStepMeta(k);
+      {/* Legend — #2116: vertical repo list (no kind chips — cards already show
+          kind via icon+label). Cross-repo dashed-line indicator is kept.
+          Branch-arm entry kept for DAG flows (#2027). */}
+      <div
+        className="absolute left-3 bottom-3 flex flex-col gap-1.5 rounded-sm border border-border bg-[var(--overlay)] px-2.5 py-2 backdrop-blur-sm z-10"
+        data-testid="flow-legend"
+      >
+        {/* Repos header */}
+        {steps.length > 0 && (() => {
+          // Collect unique repos in order of first appearance.
+          const seen: string[] = [];
+          for (const s of steps) {
+            if (s.repo && !seen.includes(s.repo)) seen.push(s.repo);
+          }
+          if (seen.length === 0) return null;
           return (
-            <span key={k} className="inline-flex items-center gap-1 text-[9px] text-text-3">
-              <span
-                className="w-[7px] h-[7px] rounded-[2px] flex-none"
-                style={{ background: m.color }}
-              />
-              {m.label}
-            </span>
+            <>
+              <span className="text-[8px] font-semibold uppercase tracking-wider text-text-4 select-none">
+                Repos
+              </span>
+              {seen.map((slug) => {
+                const colors = getRepoColorForGroup(groupId, slug);
+                return (
+                  <span
+                    key={slug}
+                    className="inline-flex items-center gap-1.5 text-[9px] text-text-3"
+                    data-repo-legend={slug}
+                  >
+                    <span
+                      className="w-[8px] h-[8px] rounded-full flex-none"
+                      style={{ background: colors.foreground }}
+                    />
+                    <span className="font-mono leading-none">{slug}</span>
+                  </span>
+                );
+              })}
+            </>
           );
-        })}
-        <span className="inline-flex items-center gap-1 text-[9px] text-text-3">
-          <svg width="14" height="10">
+        })()}
+        {/* Separator */}
+        <span className="border-t border-border-soft" />
+        {/* Cross-repo dashed edge */}
+        <span className="inline-flex items-center gap-1.5 text-[9px] text-text-3">
+          <svg width="14" height="10" className="flex-none">
             <line
               x1="0"
               y1="5"
@@ -1911,8 +1946,8 @@ function FlowDag({
         </span>
         {/* Branch-arm legend entry — only shown for DAG flows (#2027) */}
         {flow.is_dag && (
-          <span className="inline-flex items-center gap-1 text-[9px] text-text-3">
-            <svg width="14" height="10">
+          <span className="inline-flex items-center gap-1.5 text-[9px] text-text-3">
+            <svg width="14" height="10" className="flex-none">
               <line
                 x1="0"
                 y1="5"
@@ -2400,6 +2435,7 @@ function FlowDagWithAnim({
   controller: FlowAnimController | null;
   reducedMotion?: boolean;
   onBridgeMap?: (bridges: boolean[]) => void;
+  groupId?: string;
 }) {
   if (!controller) {
     return <FlowDag {...rest} />;
@@ -2419,6 +2455,7 @@ function FlowDagWithAnimInner({
   controller: FlowAnimController;
   reducedMotion?: boolean;
   onBridgeMap?: (bridges: boolean[]) => void;
+  groupId?: string;
 }) {
   const snap = useFlowAnim(controller);
   return <FlowDag {...rest} anim={snap} />;
@@ -3043,32 +3080,34 @@ function DetailPanel({
         </div>
       </header>
 
-      {/* Body — scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      {/* Body — #2115 fix: split into two sections so the DAG fills available
+          height. The DAG area is flex-1 min-h-0 (flex child that grows to fill
+          the panel). The sections below it scroll independently. */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* DAG skeleton */}
         {detailQ.isLoading && !fullFlow.steps?.length && (
-          <div className="flex items-center justify-center min-h-[280px] text-text-4 text-sm animate-pulse">
+          <div className="flex items-center justify-center min-h-[280px] text-text-4 text-sm animate-pulse flex-none">
             Loading flow chain…
           </div>
         )}
 
-        {/* DAG canvas — when a step is selected, switch to 60/40 side-by-side.
-            The DAG takes 60% and the StepInspector takes 40%. The side-effects
-            panel remains floating (anchored bottom-left inside the DAG area)
-            and is only shown when no step is selected. */}
+        {/* DAG canvas — #2115: flex-1 flex flex-col min-h-0 so the canvas fills
+            the remaining panel height and FlowDag's own flex-1 takes effect.
+            When a step is selected: 60/40 side-by-side split (same as before). */}
         {(fullFlow.steps?.length ?? 0) > 0 && (
           <div
             className={cn(
-              "flex-none",
-              selectedStep ? "flex" : "relative",
+              // #2115 key fix: was "flex-none" — now flex-1 so the DAG grows.
+              "flex-1 min-h-0 flex flex-col",
+              selectedStep ? "flex-row" : "",
             )}
-            style={selectedStep ? { minHeight: 400 } : undefined}
+            style={selectedStep ? { flexDirection: "row" } : undefined}
           >
             {/* DAG — 60% when step is open, full-width otherwise */}
             <div
               className={cn(
-                "relative",
-                selectedStep ? "flex-none" : "w-full",
+                "relative flex flex-col flex-1 min-h-0",
+                selectedStep ? "flex-none" : "",
               )}
               style={selectedStep ? { width: "60%" } : undefined}
             >
@@ -3088,6 +3127,7 @@ function DetailPanel({
                 onBridgeMap={(map) => {
                   bridgeRef.current = map;
                 }}
+                groupId={groupId}
               />
               {/* Scrubber — directly under the DAG, only when steps exist. */}
               {controller && (fullFlow.steps?.length ?? 0) >= 2 && (
@@ -3121,8 +3161,10 @@ function DetailPanel({
           </div>
         )}
 
-        {/* Sections */}
-        <DetailSections flow={fullFlow} />
+        {/* Sections — scroll independently below the DAG */}
+        <div className="flex-none overflow-y-auto">
+          <DetailSections flow={fullFlow} />
+        </div>
       </div>
     </div>
   );
