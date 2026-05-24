@@ -22,6 +22,8 @@
 //   - enum_declaration (TS)      → Kind="SCOPE.Schema" subtype="enum"
 //     Properties: members (comma-sep) (issue #1343)
 //   - import_statement + require → IMPORTS edge on file entity (issue #742)
+//   - top-level const FOO = <primitive> → Kind="SCOPE.Schema" subtype="constant"
+//     Properties: value (raw literal, quotes stripped for strings) (issue #1968)
 package javascript
 
 import (
@@ -1157,20 +1159,40 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 			if x.funcDepth > 0 {
 				x.tagLocalScope(before)
 			}
-		} else {
+		} else if n.ChildByFieldName("type") != nil {
 			// Issue #709 — TS `const x: MyType = ...` has a type annotation.
 			// We need to emit it as an entity so type-position REFERENCES edges
 			// can be attributed to it. This applies only when there's an explicit
 			// type annotation on the declarator.
-			if n.ChildByFieldName("type") != nil {
-				before := len(x.entities)
-				// Has a type annotation; emit as SCOPE.Component
-				x.emit(name, "SCOPE.Component", valueNode, "const", fmt.Sprintf("const %s: Type", name))
-				// Issue #1748 — type-annotated locals inside function bodies are
-				// non-addressable; tag as local_scope.
-				if x.funcDepth > 0 {
-					x.tagLocalScope(before)
+			before := len(x.entities)
+			// Has a type annotation; emit as SCOPE.Component
+			x.emit(name, "SCOPE.Component", valueNode, "const", fmt.Sprintf("const %s: Type", name))
+			// Issue #1748 — type-annotated locals inside function bodies are
+			// non-addressable; tag as local_scope.
+			if x.funcDepth > 0 {
+				x.tagLocalScope(before)
+			}
+		} else {
+			// Issue #1968 — top-level primitive const declarations must be
+			// emitted as SCOPE.Schema subtype="constant" so that constants like
+			//   export const PROPOSAL_COUNTS_QUERY_KEY = "proposalCounts"
+			// appear in the graph with the right kind/name rather than being
+			// swallowed into the file entity or incorrectly classified.
+			// Only applies at module scope (funcDepth==0) to avoid flooding the
+			// graph with transient locals. Object/array/call RHS shapes are NOT
+			// classified here — those remain handled by other extractors or
+			// deliberately un-emitted to avoid the orphan-count regression (#562).
+			// Type-annotated consts are handled by the branch above (issue #709).
+			if x.funcDepth == 0 && isPrimitiveLiteralNode(valueNode) {
+				props := map[string]string{
+					"kind":    "SCOPE.Schema",
+					"subtype": "constant",
 				}
+				if lit := x.primitiveNodeValue(valueNode); lit != "" {
+					props["value"] = lit
+				}
+				sig := fmt.Sprintf("const %s", name)
+				x.emitWithProps(name, "SCOPE.Schema", valueNode, "constant", sig, props, nil)
 			}
 		}
 		// Recurse so nested function/class declarations inside the value
@@ -1491,6 +1513,52 @@ func firstIdentifierChild(n *sitter.Node) *sitter.Node {
 		}
 	}
 	return nil
+}
+
+// isPrimitiveLiteralNode returns true when n is a tree-sitter node whose type
+// represents a JS/TS primitive literal (string, number, boolean, null, undefined,
+// template literal). Used by handleVariableDeclarator (#1968) to decide whether
+// a top-level const declaration should be emitted as SCOPE.Schema/constant.
+func isPrimitiveLiteralNode(n *sitter.Node) bool {
+	if n == nil {
+		return false
+	}
+	switch n.Type() {
+	case "string", "number", "true", "false", "null", "undefined",
+		"template_string", "template_literal",
+		// TypeScript grammar names for the same literals
+		"string_fragment", "escape_sequence":
+		return true
+	// unary_expression covers negative numbers: -1, -3.14
+	case "unary_expression":
+		return true
+	}
+	return false
+}
+
+// primitiveNodeValue returns the raw text of a primitive literal node, trimmed
+// of surrounding quotes for string nodes so the stored value is the bare string
+// content. Returns "" for non-string nodes or when the text is empty.
+func (x *extractor) primitiveNodeValue(n *sitter.Node) string {
+	if n == nil {
+		return ""
+	}
+	raw := x.nodeText(n)
+	if raw == "" {
+		return ""
+	}
+	// Strip surrounding single/double/backtick quotes from string literals.
+	if n.Type() == "string" || n.Type() == "template_string" || n.Type() == "template_literal" {
+		if len(raw) >= 2 {
+			first, last := raw[0], raw[len(raw)-1]
+			if (first == '"' && last == '"') ||
+				(first == '\'' && last == '\'') ||
+				(first == '`' && last == '`') {
+				return raw[1 : len(raw)-1]
+			}
+		}
+	}
+	return raw
 }
 
 // isStateHookCall returns true when the RHS is a call to one of the built-in
