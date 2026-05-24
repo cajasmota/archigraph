@@ -46,6 +46,15 @@ jobs:
           echo "DAEMON_PID=$DAEMON_PID" >> $GITHUB_ENV
           echo "ARCHIGRAPH_DAEMON_ROOT=$ARCHIGRAPH_DAEMON_ROOT" >> $GITHUB_ENV
 
+      - name: Initialize golden fixture as git repo
+        run: |
+          cd ./internal/quality/golden/go-chi-mini
+          git init
+          git config user.email "test@archigraph.local"
+          git config user.name "Archigraph Test"
+          git add -A
+          git commit -m "Golden fixture for smoke test"
+
       - name: Onboard golden fixture
         run: |
           export ARCHIGRAPH_DAEMON_ROOT=${{ env.ARCHIGRAPH_DAEMON_ROOT }}
