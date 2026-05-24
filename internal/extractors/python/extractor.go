@@ -324,6 +324,44 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		applyCeleryAnnotations(file, &entities)
 	}()
 
+	// Issues #2007 / #2009 — supplemental REFERENCES emission for
+	// shapes the primary `emitReferences` walker excludes: nested
+	// constructor calls inside method bodies (`SerializerClass()` in
+	// `get_<field>`) and capitalised attribute receivers inside
+	// class-body assignment RHSs (`choices=User.TYPE_CHOICES`). Runs
+	// after the primary REFERENCES pass and after the Django relational
+	// pass so the class-target table observes the full entity list.
+	func() {
+		defer func() { _ = recover() }()
+		emitNestedConstructorRefs(root, file, &entities)
+	}()
+
+	// Issue #2008 — DRF SerializerMethodField → method link. For every
+	// `<field> = serializers.SerializerMethodField(...)` declaration
+	// emit a RESOLVED_BY edge from the field entity to the sibling
+	// `get_<field>` (or `method_name=` kwarg) operation entity.
+	func() {
+		defer func() { _ = recover() }()
+		emitSerializerMethodFieldLinks(root, file, &entities)
+	}()
+
+	// Issue #2010 — DRF router.register(prefix, ViewSet, ...). Emit
+	// REFERENCES from urls.py / routers.py file entities to each
+	// registered ViewSet class, capturing url_prefix + basename props.
+	func() {
+		defer func() { _ = recover() }()
+		emitRouterRegisterEdges(root, file, &entities)
+	}()
+
+	// Issue #2011 — Generic CBV / DRF viewset inherited-method
+	// annotation (option A). Stamp `inherited_methods` and `cbv_bases`
+	// properties on each subclass of a recognised generic base, rather
+	// than synthesising fake Operation entities for inherited handlers.
+	func() {
+		defer func() { _ = recover() }()
+		emitCBVInheritedMethodAnnotations(root, file, &entities)
+	}()
+
 	// Issue #1991 — __init__.py re-export annotation.
 	// Stamps re_export / package_init / public / alias properties on
 	// IMPORTS edges of package __init__.py files. Returns the public

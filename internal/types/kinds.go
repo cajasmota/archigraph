@@ -403,6 +403,15 @@ const (
 	//                       config's directory contains downstream modules).
 	RelationshipKindDependsOnConfig RelationshipKind = "DEPENDS_ON_CONFIG"
 	RelationshipKindConfigures      RelationshipKind = "CONFIGURES"
+
+	// #2008: DRF SerializerMethodField → method link.
+	//   RESOLVED_BY : SCOPE.Schema/field → SCOPE.Operation/method
+	// Emitted for `<field> = serializers.SerializerMethodField(...)`
+	// declarations, pointing at the sibling `get_<field>` (or
+	// `method_name=` kwarg) operation that produces the field's value.
+	// Generalisable to any "value resolved by another entity" shape;
+	// kept narrow today to the DRF extractor producer.
+	RelationshipKindResolvedBy RelationshipKind = "RESOLVED_BY"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -480,6 +489,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		// #1885 first-class config entities:
 		RelationshipKindDependsOnConfig,
 		RelationshipKindConfigures,
+		// #2008 DRF SerializerMethodField → method link:
+		RelationshipKindResolvedBy,
 	}
 }
 
