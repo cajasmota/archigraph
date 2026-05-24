@@ -100,16 +100,33 @@ single group-level directory `~/.archigraph/docs/<group>/business/`, regardless
 of how many repos make up the group. The webui surfaces this set directly under
 the Business tab.
 
-> **Storage location (#1624 — important).** The generate-docs skill NEVER
-> writes into a source repo's working tree. All generated markdown (technical
-> and business) lives under the archigraph-managed store
-> `~/.archigraph/docs/<group>/...`. This keeps the source repos clean (no
-> commit noise) and matches the #1626 principle that archigraph owns its
-> outputs. The daemon dashboard reads from this location; pre-#1624
-> `<repo>/docs/` directories produced by an earlier run are migrated into
-> the store transparently on first read. If you ever see a writer subagent
-> emitting a path that starts with the repo working tree, redirect it to
-> the store path documented here.
+## CRITICAL STORAGE DISCIPLINE (enforced on every pass — parallel to TOOL DISCIPLINE)
+===========================
+
+All generated documentation MUST be written under:
+  `~/.archigraph/docs/<group>/...`
+
+This applies to BOTH the technical tier and the business tier. The `<group>` value
+comes from `archigraph_whoami` (called in the Pre-flight assertion above). Every pass
+computes `OUTPUT_ROOT=$HOME/.archigraph/docs/<group>/` and verifies it is writable
+before writing any file.
+
+You are STRICTLY FORBIDDEN from writing documentation files into:
+- The source repo's working tree (anywhere under `<repo>/docs/`, `<repo>/doc/`, etc.)
+- The CWD unless CWD is already inside `~/.archigraph/docs/<group>/`
+- Any path that is a git working directory
+
+If you find yourself about to write to a repo path, STOP and redirect to the
+store path. Writing elsewhere breaks the storage contract, pollutes the user's
+source repo with commit noise, and produces output invisible to the daemon dashboard.
+
+**Recovery:** If you encounter legacy in-repo docs from a pre-#1624 run, use
+`archigraph docgen migrate-in-repo <group>` to move them to the store. Use
+`archigraph docgen audit <group>` (or `archigraph doctor --audit-docs`) to detect
+in-repo docgen output without moving anything.
+
+The daemon dashboard reads exclusively from `~/.archigraph/docs/<group>/`.
+Closes #1624. Parallel to TOOL DISCIPLINE (#2177). Enforced by #2190.
 
 ## LLM-mode orchestrate (Pass 20)
 
