@@ -24,6 +24,7 @@ const (
 
 func newDoctorCmd() *cobra.Command {
 	var killStale bool
+	var auditDocs bool
 	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Run health checks across all groups",
@@ -32,12 +33,60 @@ func newDoctorCmd() *cobra.Command {
 			if err := runDoctor(w); err != nil {
 				return err
 			}
+			if auditDocs {
+				if err := runDoctorAuditDocs(w); err != nil {
+					return err
+				}
+			}
 			return runDoctorStaleDaemons(w, killStale)
 		},
 	}
 	cmd.Flags().BoolVar(&killStale, "kill-stale", false,
 		"kill stale archigraph daemons (default: dry-run list only)")
+	cmd.Flags().BoolVar(&auditDocs, "audit-docs", false,
+		"detect in-repo docgen output (storage discipline #2190); reports without moving anything")
 	return cmd
+}
+
+// runDoctorAuditDocs checks every registered group for in-repo docgen output
+// and reports offending directories to w. It never moves or deletes anything.
+func runDoctorAuditDocs(w io.Writer) error {
+	groups, err := registry.Groups()
+	if err != nil {
+		fmt.Fprintf(w, "%s audit-docs: registry unavailable: %v\n", statusWarn, err)
+		return nil
+	}
+
+	fmt.Fprintf(w, "\n--- Storage Discipline Audit (#2190) ---\n")
+	totalOffenders := 0
+
+	for _, g := range groups {
+		dirs, err := auditDocgenForGroup(w, g.Name)
+		if err != nil {
+			fmt.Fprintf(w, "  %s group %s: %v\n", statusWarn, g.Name, err)
+			continue
+		}
+		if len(dirs) == 0 {
+			fmt.Fprintf(w, "  %s group %s: no in-repo docgen output\n", statusOK, g.Name)
+			continue
+		}
+		fmt.Fprintf(w, "  %s group %s: %d in-repo docgen director(ies) found\n", statusWarn, g.Name, len(dirs))
+		for _, d := range dirs {
+			var markers []string
+			for _, name := range docgenHeuristics {
+				if _, err := os.Stat(filepath.Join(d, name)); err == nil {
+					markers = append(markers, name)
+				}
+			}
+			fmt.Fprintf(w, "       %s  (markers: %s)\n", d, strings.Join(markers, ", "))
+		}
+		totalOffenders += len(dirs)
+	}
+
+	if totalOffenders > 0 {
+		fmt.Fprintf(w, "\nRun 'archigraph docgen migrate-in-repo' per group to move output to the archigraph store.\n")
+	}
+	return nil
 }
 
 // runDoctor runs every health check and reports to w. It returns nil

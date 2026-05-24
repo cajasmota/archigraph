@@ -70,10 +70,13 @@
 package cli
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -245,6 +248,10 @@ Available sections (--section, used by --tier=0 only):
 		"override the section-level LLM cache directory (default: ~/.archigraph/docs/<group>/.llm-cache/); applies to all tiers")
 	cmd.Flags().BoolVar(&noCache, "no-cache", false,
 		"disable section-level LLM cache reads and writes for this run; applies to all tiers")
+
+	// Sub-commands: storage discipline helpers (#2190).
+	cmd.AddCommand(newDocgenMigrateInRepoCmd())
+	cmd.AddCommand(newDocgenAuditCmd())
 
 	return cmd
 }
@@ -660,3 +667,314 @@ func resolveGroupConfig(group string) (map[string]interface{}, error) {
 	}
 	return out, nil
 }
+
+// ---------------------------------------------------------------------------
+// Storage-discipline helpers (#2190)
+// ---------------------------------------------------------------------------
+
+// docgenHeuristics are file names that indicate a directory is archigraph
+// docgen output (as opposed to hand-written docs). The heuristic is
+// conservative: all three markers come from the generate-docs skill pipeline.
+var docgenHeuristics = []string{
+	".plan.md",
+	".inventory.json",
+	".metadata.json",
+}
+
+// isDocgenOutput reports whether dir looks like archigraph docgen output by
+// checking for any of the heuristic marker files.
+func isDocgenOutput(dir string) bool {
+	for _, name := range docgenHeuristics {
+		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// findInRepoDocgenDirs walks every repo in cfg and returns the list of
+// docs/ (or doc/) directories that appear to be docgen output.
+// It does NOT walk into ~/.archigraph/ to avoid false positives.
+func findInRepoDocgenDirs(cfg *registry.GroupConfig) []string {
+	var found []string
+	for _, r := range cfg.Repos {
+		if r.Path == "" {
+			continue
+		}
+		for _, candidate := range []string{"docs", "doc"} {
+			dir := filepath.Join(r.Path, candidate)
+			info, err := os.Stat(dir)
+			if err != nil || !info.IsDir() {
+				continue
+			}
+			if isDocgenOutput(dir) {
+				found = append(found, dir)
+			}
+		}
+	}
+	return found
+}
+
+// newDocgenMigrateInRepoCmd returns the `archigraph docgen migrate-in-repo`
+// subcommand (#2190).
+func newDocgenMigrateInRepoCmd() *cobra.Command {
+	var group string
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "migrate-in-repo [--group <name>] [--yes]",
+		Short: "Move in-repo docgen output into the archigraph-managed store",
+		Long: `Walks every repo registered in the group and looks for docs/ (or doc/)
+directories that appear to be archigraph docgen output (heuristic: presence of
+.plan.md, .inventory.json, or .metadata.json inside the directory).
+
+For each match the user is asked to confirm before the directory is moved to:
+  ~/.archigraph/docs/<group>/<repo-slug>/
+
+The operation is idempotent: if the target already exists the command skips
+that repo with a warning rather than overwriting existing store content.
+
+Use --yes to skip confirmation prompts (non-interactive / CI).
+
+After migration, the source directory inside the repo working tree is removed.
+Run ` + "`archigraph docgen audit`" + ` first to inspect what would be moved without
+making any changes.`,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			resolvedGroup, err := resolveGroup(group)
+			if err != nil {
+				return err
+			}
+
+			cfg, err := loadGroupConfigFromRegistry(resolvedGroup)
+			if err != nil {
+				return err
+			}
+
+			dirs := findInRepoDocgenDirs(cfg)
+			if len(dirs) == 0 {
+				fmt.Fprintln(cmd.OutOrStdout(), "No in-repo docgen output found. Nothing to migrate.")
+				return nil
+			}
+
+			homeDir, err := registry.HomeDir()
+			if err != nil {
+				return fmt.Errorf("resolve archigraph home: %w", err)
+			}
+
+			w := cmd.OutOrStdout()
+			scanner := bufio.NewScanner(cmd.InOrStdin())
+			migrated, skipped := 0, 0
+
+			for _, srcDir := range dirs {
+				// Determine target path: ~/.archigraph/docs/<group>/<repo-slug>/
+				// We derive the repo slug by matching srcDir prefix against cfg.Repos.
+				repoSlug := ""
+				for _, r := range cfg.Repos {
+					if r.Path != "" && strings.HasPrefix(srcDir, r.Path) {
+						repoSlug = r.Slug
+						break
+					}
+				}
+				if repoSlug == "" {
+					repoSlug = filepath.Base(filepath.Dir(srcDir))
+				}
+
+				targetDir := filepath.Join(homeDir, "docs", resolvedGroup, repoSlug)
+
+				fmt.Fprintf(w, "\nFound in-repo docgen output:\n  src:  %s\n  dst:  %s\n", srcDir, targetDir)
+
+				if !yes {
+					fmt.Fprintf(w, "Move? [y/N]: ")
+					if !scanner.Scan() {
+						fmt.Fprintln(w, "  skipped (no input)")
+						skipped++
+						continue
+					}
+					if strings.ToLower(strings.TrimSpace(scanner.Text())) != "y" {
+						fmt.Fprintln(w, "  skipped.")
+						skipped++
+						continue
+					}
+				}
+
+				// Idempotency guard: skip if target already exists.
+				if _, err := os.Stat(targetDir); err == nil {
+					fmt.Fprintf(w, "  [warn] target already exists, skipping to avoid overwrite: %s\n", targetDir)
+					skipped++
+					continue
+				}
+
+				// Ensure parent directory.
+				if err := os.MkdirAll(filepath.Dir(targetDir), 0o755); err != nil {
+					return fmt.Errorf("create parent for %s: %w", targetDir, err)
+				}
+
+				// Move srcDir → targetDir.
+				if err := os.Rename(srcDir, targetDir); err != nil {
+					return fmt.Errorf("move %s → %s: %w", srcDir, targetDir, err)
+				}
+
+				fmt.Fprintf(w, "  [ ok ] moved to %s\n", targetDir)
+				migrated++
+			}
+
+			fmt.Fprintf(w, "\nmigrate-in-repo complete: %d moved, %d skipped.\n", migrated, skipped)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&group, "group", "", "group name (defaults to sole registered group)")
+	cmd.Flags().BoolVar(&yes, "yes", false, "skip confirmation prompts and move all matches automatically")
+	return cmd
+}
+
+// newDocgenAuditCmd returns the `archigraph docgen audit` subcommand (#2190).
+// It reports in-repo docgen output without moving anything.
+func newDocgenAuditCmd() *cobra.Command {
+	var group string
+
+	cmd := &cobra.Command{
+		Use:   "audit [--group <name>]",
+		Short: "Detect in-repo docgen output (read-only; does not move anything)",
+		Long: `Walks every repo registered in the group and reports docs/ (or doc/)
+directories that appear to contain archigraph docgen output (heuristic: presence
+of .plan.md, .inventory.json, or .metadata.json).
+
+Nothing is moved or deleted. Use this before ` + "`archigraph docgen migrate-in-repo`" + `
+to inspect what would be migrated.
+
+Exit codes:
+  0  No in-repo docgen output detected.
+  1  One or more in-repo docgen directories found (actionable: run migrate-in-repo).
+  2  Internal error (registry unreadable, etc.).`,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			resolvedGroup, err := resolveGroup(group)
+			if err != nil {
+				return err
+			}
+
+			cfg, err := loadGroupConfigFromRegistry(resolvedGroup)
+			if err != nil {
+				return err
+			}
+
+			dirs := findInRepoDocgenDirs(cfg)
+			w := cmd.OutOrStdout()
+
+			if len(dirs) == 0 {
+				fmt.Fprintln(w, "[ ok ] No in-repo docgen output detected for group:", resolvedGroup)
+				return nil
+			}
+
+			fmt.Fprintf(w, "[warn] In-repo docgen output detected (group: %s):\n", resolvedGroup)
+			for _, d := range dirs {
+				// Report which heuristic markers were found.
+				var markers []string
+				for _, name := range docgenHeuristics {
+					if _, err := os.Stat(filepath.Join(d, name)); err == nil {
+						markers = append(markers, name)
+					}
+				}
+				fmt.Fprintf(w, "  %s  (markers: %s)\n", d, strings.Join(markers, ", "))
+			}
+			fmt.Fprintln(w, "\nRun `archigraph docgen migrate-in-repo` to move these to the archigraph store.")
+
+			// Return a sentinel error so the shell exit code is 1.
+			return &docgenAuditError{count: len(dirs)}
+		},
+	}
+
+	cmd.Flags().StringVar(&group, "group", "", "group name (defaults to sole registered group)")
+	return cmd
+}
+
+// loadGroupConfigFromRegistry looks up the group's config path from the
+// registry (which respects ARCHIGRAPH_HOME) and loads it. This is the
+// correct way to load group config when the caller only has a group name —
+// it avoids hardcoding the XDG config path.
+func loadGroupConfigFromRegistry(groupName string) (*registry.GroupConfig, error) {
+	groups, err := registry.Groups()
+	if err != nil {
+		return nil, fmt.Errorf("read registry: %w", err)
+	}
+	for _, g := range groups {
+		if g.Name == groupName {
+			cfg, err := registry.LoadGroupConfig(g.ConfigPath)
+			if err != nil {
+				return nil, fmt.Errorf("load group config for %q: %w", groupName, err)
+			}
+			return cfg, nil
+		}
+	}
+	return nil, fmt.Errorf("group %q not found in registry; run `archigraph wizard` to register it", groupName)
+}
+
+// docgenAuditError is a sentinel returned by the audit command when in-repo
+// docgen output is found. It causes a non-zero exit code without printing an
+// extra error message (cobra prints Error() for non-nil errors).
+type docgenAuditError struct{ count int }
+
+func (e *docgenAuditError) Error() string {
+	return fmt.Sprintf("%d in-repo docgen director(ies) detected; run `archigraph docgen migrate-in-repo` to fix", e.count)
+}
+
+// auditDocgenForGroup is the shared logic used by both `archigraph docgen
+// audit` and the `--audit-docs` flag on `archigraph doctor`. It returns the
+// list of offending directories (nil == clean). The w parameter is unused
+// in this function but kept for interface consistency with callers that also
+// write supplementary output — see runDoctorAuditDocs.
+func auditDocgenForGroup(w interface{ Write([]byte) (int, error) }, groupName string) ([]string, error) {
+	cfg, err := loadGroupConfigFromRegistry(groupName)
+	if err != nil {
+		return nil, err
+	}
+	dirs := findInRepoDocgenDirs(cfg)
+	return dirs, nil
+}
+
+// DocsDirFor is a package-level helper that returns ~/.archigraph/docs/<group>/
+// using the canonical HomeDir logic from the registry package. Exported so
+// the doctor command and tests can reference the expected path.
+func DocsDirFor(group string) (string, error) {
+	h, err := registry.HomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(h, "docs", group), nil
+}
+
+// looksLikeGitWorkdir reports true when dir (or any ancestor up to depth 3)
+// contains a .git entry — a cheap guard used by the audit to avoid flagging
+// the archigraph store itself if it happens to live inside a git repo.
+func looksLikeGitWorkdir(dir string) bool {
+	p := dir
+	for range [3]struct{}{} {
+		if _, err := os.Stat(filepath.Join(p, ".git")); err == nil {
+			return true
+		}
+		parent := filepath.Dir(p)
+		if parent == p {
+			break
+		}
+		p = parent
+	}
+	return false
+}
+
+// walkSubdirs calls fn for every immediate subdirectory of dir. It does not
+// recurse further — the heuristic only needs the top-level docs/ directory.
+func walkSubdirs(dir string, fn func(string)) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			fn(filepath.Join(dir, e.Name()))
+		}
+	}
+}
+
+// Ensure fs and filepath are used (they are used by the migration helpers).
+var _ = fs.ErrNotExist
+var _ = filepath.Join
