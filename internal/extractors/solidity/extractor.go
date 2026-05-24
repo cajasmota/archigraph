@@ -396,13 +396,21 @@ func collectCallsFromBody(body, callerName string) []types.RelationshipRecord {
 		if solidityKeywords[leaf] {
 			return
 		}
-		// Avoid self-recursion on simple name match.
-		callerLeaf := callerName
-		if dot := strings.LastIndexByte(callerName, '.'); dot >= 0 {
-			callerLeaf = callerName[dot+1:]
-		}
-		if leaf == callerLeaf {
-			return
+		// Self-recursion check: skip bare-name targets that match the
+		// caller's own leaf name (e.g. `transfer()` calling itself without
+		// a receiver). Dotted targets (e.g. "token.transfer") are
+		// cross-contract calls and MUST NOT be filtered even when the
+		// leaf matches the caller's leaf name — "ERC20Vault.transfer"
+		// calling "token.transfer" is a legitimate outbound call, not
+		// recursion (#2114). Restrict the check to undotted targets only.
+		if strings.IndexByte(target, '.') < 0 {
+			callerLeaf := callerName
+			if dot := strings.LastIndexByte(callerName, '.'); dot >= 0 {
+				callerLeaf = callerName[dot+1:]
+			}
+			if leaf == callerLeaf {
+				return
+			}
 		}
 		seen[target] = true
 		out = append(out, types.RelationshipRecord{

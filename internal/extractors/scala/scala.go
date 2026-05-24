@@ -404,12 +404,17 @@ func extractCallRelationships(
 		if scalaKeywordStop[target] {
 			continue
 		}
-		// Self-recursion check on the bare leaf name.
-		leaf := target
-		if dot := strings.LastIndexByte(target, '.'); dot >= 0 {
-			leaf = target[dot+1:]
-		}
-		if leaf == callerName {
+		// Self-recursion check: skip bare-name targets that match the
+		// caller's own leaf name (e.g. `process()` calling itself without
+		// a receiver). Dotted targets (e.g. "OrderService.process") are
+		// cross-type calls and MUST NOT be filtered even when the leaf
+		// matches the caller's name — "OrderController.process" calling
+		// "OrderService.process" is a legitimate outbound call, not
+		// recursion (#2114). The previous check applied the leaf match
+		// to all dotted targets, which incorrectly dropped every CALLS
+		// edge where the callee method shared its name with the enclosing
+		// method.
+		if strings.IndexByte(target, '.') < 0 && target == callerName {
 			continue
 		}
 		if seen[target] {
