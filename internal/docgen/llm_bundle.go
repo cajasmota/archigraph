@@ -427,6 +427,39 @@ type NeighbourBrief struct {
 	// Bundle C's dead-import detector stamps live=false on dead IMPORTS
 	// edges.
 	Live bool `json:"live,omitempty"`
+
+	// HTTPMethod is the canonical HTTP verb for a method neighbour decorated
+	// with `@action(methods=["..."])` (post-#2004), or any other framework
+	// decorator that surfaces a single verb. Sourced from the neighbour's
+	// entity Properties["http_method"]. Empty for non-HTTP neighbours.
+	// Surfaced on NeighbourBrief (#1862) so class-seed bundles can render
+	// a {method, verb, path} api table without an extra graph walk.
+	HTTPMethod string `json:"http_method,omitempty"`
+	// HTTPMethods is the comma-joined list of HTTP verbs when a single
+	// action declares multiple verbs. Sourced from
+	// Properties["http_methods"] (#1862).
+	HTTPMethods string `json:"http_methods,omitempty"`
+	// URLPath is the URL path pattern declared by an `@action(url_path=...)`
+	// decorator or equivalent (#1862). Sourced from Properties["url_path"].
+	URLPath string `json:"url_path,omitempty"`
+	// IsDetail mirrors Properties["is_detail"] == "true" for DRF actions.
+	// True for detail actions (operate on a single instance), false for
+	// list actions (#1862).
+	IsDetail bool `json:"is_detail,omitempty"`
+	// TypeHint surfaces type information for the neighbour (#1877). For
+	// SCOPE.Schema/field neighbours this is built from the entity's
+	// Properties["field_type"] + Properties["kwarg.<name>"] (Django Model
+	// fields stamped by django_relational.go) or from the Signature when
+	// the extractor recorded a Python type annotation. Empty for kinds
+	// where no meaningful type hint is available.
+	//
+	// Examples (Django fields):
+	//   "ForeignKey(Client) on_delete=CASCADE"
+	//   "CharField(max_length=10)"
+	//   "BooleanField default=False"
+	// Examples (Python type-annotated attributes):
+	//   "int", "list[str]", "Optional[User]"
+	TypeHint string `json:"type_hint,omitempty"`
 }
 
 // Canonical NeighbourBrief.Direction values.
@@ -744,6 +777,26 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 		if i < len(neighbourProperties) && neighbourProperties[i] != nil {
 			props = neighbourProperties[i]
 		}
+		// Issue #1862 — surface @action HTTP metadata (verb + path + detail)
+		// directly onto the NeighbourBrief so class-seed bundles can render
+		// {method, verb, path} api tables without an extra graph walk.
+		// Sourced from the NEIGHBOUR entity's Properties (stamped by
+		// internal/extractors/python/django_drf_actions.go), not from edge
+		// Properties.
+		// Issue #1877 — surface a compact TypeHint for SCOPE.Schema/field
+		// neighbours so the Schema section of Model pages becomes data-
+		// grounded. TypeHint is composed from Properties["field_type"] and
+		// the kwarg.<name> sidecars stamped by django_relational.go.
+		var httpMethod, httpMethods, urlPath, typeHint string
+		var isDetail bool
+		if n.Properties != nil {
+			httpMethod = n.Properties["http_method"]
+			httpMethods = n.Properties["http_methods"]
+			urlPath = n.Properties["url_path"]
+			isDetail = n.Properties["is_detail"] == "true"
+		}
+		typeHint = buildNeighbourTypeHint(&n)
+
 		briefs = append(briefs, NeighbourBrief{
 			EntityID:     n.ID,
 			Name:         n.Name,
@@ -760,7 +813,12 @@ func BuildBundle(_ context.Context, opts BuildBundleOpts) (*LLMPromptBundle, err
 			// Live defaults to true when unset (existing edges with no
 			// dead-import pass coverage stay visible) and is false only
 			// when explicitly stamped live=false by the dead-import pass.
-			Live: props["live"] != "false",
+			Live:        props["live"] != "false",
+			HTTPMethod:  httpMethod,
+			HTTPMethods: httpMethods,
+			URLPath:     urlPath,
+			IsDetail:    isDetail,
+			TypeHint:    typeHint,
 		})
 	}
 
@@ -1186,6 +1244,118 @@ func typeHintFromSignature(sig string) string {
 		return parts[0]
 	}
 	return ""
+}
+
+// buildNeighbourTypeHint computes a compact type-hint string for a neighbour
+// entity suitable for surfacing on NeighbourBrief.TypeHint (#1877).
+//
+// For SCOPE.Schema/field neighbours stamped by the Python Django relational
+// pass (django_relational.go) we synthesise an ORM-aware hint from
+// Properties["field_type"] + Properties["kwarg.<name>"]:
+//
+//	field_type=ForeignKey kwarg.to=Client kwarg.on_delete=CASCADE
+//	  → "ForeignKey(Client) on_delete=CASCADE"
+//
+//	field_type=CharField kwarg.max_length=10 kwarg.choices=STATUS_CHOICES
+//	  → "CharField(max_length=10, choices=STATUS_CHOICES)"
+//
+//	field_type=BooleanField kwarg.default=False
+//	  → "BooleanField default=False"
+//
+// For other SCOPE.Schema/field kinds (Python type-annotated assignments,
+// TypeScript class properties) we fall back to typeHintFromSignature which
+// parses the Signature ("x: int" → "int", "private String name" → "String").
+//
+// Returns "" for non-field kinds (Operation, Component, Module, ...) so the
+// JSON field stays absent (omitempty) and bundle size doesn't grow for the
+// 80% case.
+func buildNeighbourTypeHint(n *graph.Entity) string {
+	if n == nil {
+		return ""
+	}
+	// Only field-shaped Schema entities carry a meaningful type hint.
+	// Non-field kinds are returned with empty hint so the JSON field is
+	// elided via omitempty.
+	if n.Kind != "SCOPE.Schema" || n.Subtype != "field" {
+		return ""
+	}
+
+	// Django Model field: build a structured hint from field_type + kwargs.
+	if n.Properties != nil {
+		if ft := strings.TrimSpace(n.Properties["field_type"]); ft != "" {
+			return composeDjangoFieldTypeHint(ft, n.Properties)
+		}
+	}
+
+	// Fallback: parse the Signature for "name: Type" or "Type name" forms.
+	return typeHintFromSignature(n.Signature)
+}
+
+// composeDjangoFieldTypeHint builds the canonical TypeHint string for a
+// Django Model field given its field_type and kwarg.<name> property sidecars.
+//
+// Format conventions (kept stable so docgen prompt templates can rely on them):
+//
+//   - Relational fields (ForeignKey, OneToOneField, ManyToManyField) render
+//     with the target model in parens, then on_delete after a space:
+//     "ForeignKey(Client) on_delete=CASCADE"
+//
+//   - Length/max-aware fields render kwargs in parens, comma-joined:
+//     "CharField(max_length=10, choices=STATUS_CHOICES)"
+//
+//   - Boolean/Default-only fields render kwargs after a space:
+//     "BooleanField default=False"
+//
+// Kwargs are iterated in a deterministic key order (`to`, `on_delete`,
+// `max_length`, `default`, `choices`, `null`, `blank`, then the rest sorted)
+// so the rendered string is stable across runs / map iteration orders.
+func composeDjangoFieldTypeHint(fieldType string, props map[string]string) string {
+	// Canonical kwarg keys to surface (in this order) and the bucket each
+	// renders into: parens vs trailing space-separated.
+	parenKeys := []string{"max_length", "max_digits", "decimal_places", "choices"}
+	trailingKeys := []string{"on_delete", "default", "null", "blank", "related_name", "unique", "db_index"}
+
+	collect := func(keys []string) []string {
+		var out []string
+		for _, k := range keys {
+			if v, ok := props["kwarg."+k]; ok && v != "" {
+				out = append(out, k+"="+v)
+			}
+		}
+		return out
+	}
+
+	// Relational field: render target in parens, on_delete on the trailing
+	// side. Target is the `to` kwarg (django_relational.go captures the
+	// positional model as Properties["kwarg.to"] when expressed as keyword,
+	// and as REFERENCES edge when positional — for the hint we surface only
+	// the kwarg form to keep things deterministic; positional callers can
+	// inspect the REFERENCES edge separately).
+	isRelational := fieldType == "ForeignKey" || fieldType == "OneToOneField" || fieldType == "ManyToManyField"
+	if isRelational {
+		target := strings.TrimSpace(props["kwarg.to"])
+		head := fieldType
+		if target != "" {
+			head = fieldType + "(" + target + ")"
+		}
+		trailing := collect(trailingKeys)
+		if len(trailing) == 0 {
+			return head
+		}
+		return head + " " + strings.Join(trailing, " ")
+	}
+
+	parens := collect(parenKeys)
+	trailing := collect(trailingKeys)
+
+	head := fieldType
+	if len(parens) > 0 {
+		head = fieldType + "(" + strings.Join(parens, ", ") + ")"
+	}
+	if len(trailing) == 0 {
+		return head
+	}
+	return head + " " + strings.Join(trailing, " ")
 }
 
 // buildClassManifest constructs a ClassManifest for the seed entity by

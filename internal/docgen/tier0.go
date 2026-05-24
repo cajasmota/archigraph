@@ -398,6 +398,21 @@ func loadEntityContext(group, seedID string) (doc *graph.Document, seed *graph.E
 		seen[seed.ID] = true
 		collect(seed.ID)
 
+		// Issue #1867 — Class seeds: surface typed dependencies from method
+		// bodies as 1-hop neighbours. Direct CONTAINS children (methods)
+		// dominate the raw 1-hop neighbourhood, but the LLM-useful
+		// neighbours for a ViewSet/Model class are the foreign Models +
+		// services its methods touch (REFERENCES / CALLS / DEPENDS_ON
+		// targets reachable through a method). We walk one extra hop
+		// through each contained Operation to surface those typed
+		// dependencies on the class's neighbour_briefs. Cap the total
+		// expansion at classMethodHopCap so a god-class with hundreds of
+		// methods doesn't blow up the bundle.
+		if seed != nil && isClassSeedForMethodHop(seed) {
+			classMethodHopExpand(seed.ID, allRels, byID,
+				&neighbours, &neighbourKinds, &neighbourDirections, &neighbourProperties, seen)
+		}
+
 		// Issue #2020 — Python Module entities are dual-emitted alongside a
 		// parallel SCOPE.Component(file) entity for the same __init__.py
 		// source file. IMPORTS / CONTAINS edges attach to the file entity,
@@ -444,6 +459,148 @@ func isPythonModuleEntity(e *graph.Entity) bool {
 		return false
 	}
 	return e.Language == "python" || e.Language == ""
+}
+
+// classMethodHopCap bounds the number of depth-2 neighbours added by
+// classMethodHopExpand so a god-class with hundreds of methods cannot
+// produce a runaway bundle. Tuned to keep the neighbour_briefs payload
+// within the same ~25-entry visual budget the dogfood evidence
+// referenced in #1867.
+const classMethodHopCap = 25
+
+// isClassSeedForMethodHop reports whether seed should trigger the
+// #1867 method-body typed-dependency expansion. Class-like entities
+// across languages are recognised:
+//
+//   - SCOPE.Component subtype=class / view / viewset / model / controller / service / repository
+//   - Top-level Class / Model / View / Controller / Service kinds (other extractors)
+//
+// Module / file / function / operation kinds are intentionally excluded
+// so the second-hop walk runs only where the dogfood evidence found
+// useful: per-class api/flows/patterns sections.
+func isClassSeedForMethodHop(seed *graph.Entity) bool {
+	if seed == nil {
+		return false
+	}
+	switch seed.Kind {
+	case "SCOPE.Component":
+		switch seed.Subtype {
+		case "class", "view", "viewset", "model", "controller", "service", "repository":
+			return true
+		}
+	case "Class", "Model", "View", "Controller", "Service":
+		return true
+	}
+	return false
+}
+
+// classMethodHopExpand adds depth-2 neighbours reachable through any of
+// the seed's CONTAINS-children that are SCOPE.Operation entities. It
+// follows OUTBOUND REFERENCES / CALLS / DEPENDS_ON / FK_TO / IMPLEMENTS
+// edges from each contained method and surfaces the targets as
+// inbound-to-class neighbours so the LLM sees typed deps directly on the
+// class's neighbour_briefs.
+//
+// The expansion respects the shared `seen` map (so a target already
+// present as a direct child is not duplicated), caps total additions at
+// classMethodHopCap, and preserves the per-edge Properties map (so any
+// annotations the extractor stamped — disposition_hint, cross_repo,
+// import_alias, etc. — survive onto the depth-2 NeighbourBrief).
+//
+// Direction is recorded as outbound because, conceptually, the class
+// "depends on" the target (seed → target via its method body). Edge kind
+// is preserved verbatim so docgen can render the typed relationship.
+func classMethodHopExpand(
+	seedID string,
+	allRels []graph.Relationship,
+	byID map[string]*graph.Entity,
+	neighbours *[]graph.Entity,
+	neighbourKinds *[]string,
+	neighbourDirections *[]string,
+	neighbourProperties *[]map[string]string,
+	seen map[string]bool,
+) {
+	// 1. Collect the method/operation IDs contained by the class.
+	methodIDs := make([]string, 0, 16)
+	for _, rel := range allRels {
+		if rel.Kind != "CONTAINS" || rel.FromID != seedID {
+			continue
+		}
+		child, ok := byID[rel.ToID]
+		if !ok {
+			continue
+		}
+		if child.Kind != "SCOPE.Operation" {
+			continue
+		}
+		methodIDs = append(methodIDs, child.ID)
+	}
+	if len(methodIDs) == 0 {
+		return
+	}
+
+	// Build a set for O(1) source-id lookup.
+	methodSet := make(map[string]bool, len(methodIDs))
+	for _, id := range methodIDs {
+		methodSet[id] = true
+	}
+
+	// 2. Walk outbound REFERENCES / CALLS / DEPENDS_ON / FK_TO / IMPLEMENTS
+	//    edges from any contained method. Cap total additions.
+	added := 0
+	for _, rel := range allRels {
+		if added >= classMethodHopCap {
+			return
+		}
+		if !methodSet[rel.FromID] {
+			continue
+		}
+		if !isTypedDepKind(rel.Kind) {
+			continue
+		}
+		if seen[rel.ToID] {
+			continue
+		}
+		target, ok := byID[rel.ToID]
+		if !ok {
+			continue
+		}
+		// Skip targets that are themselves the seed or any of the seed's
+		// own contained methods — those are already in the bundle as
+		// direct CONTAINS children.
+		if target.ID == seedID || methodSet[target.ID] {
+			continue
+		}
+		seen[target.ID] = true
+		*neighbours = append(*neighbours, *target)
+		*neighbourKinds = append(*neighbourKinds, rel.Kind)
+		*neighbourDirections = append(*neighbourDirections, NeighbourDirectionOutbound)
+		// Clone+stamp a `via_method_hop=true` marker so consumers can
+		// distinguish a depth-2 typed-dep from a depth-1 direct child.
+		// Preserve any existing per-edge Properties stamped by the
+		// extractor (#2018 carries cross_repo / import_alias / etc.).
+		props := map[string]string{"via_method_hop": "true"}
+		for k, v := range rel.Properties {
+			props[k] = v
+		}
+		*neighbourProperties = append(*neighbourProperties, props)
+		added++
+	}
+}
+
+// isTypedDepKind reports whether edgeKind expresses a typed dependency
+// the #1867 method-hop expansion should surface. CONTAINS / IMPORTS /
+// EXTENDS are intentionally excluded — CONTAINS is the seed's own
+// container relationship, IMPORTS is already a direct 1-hop file/module
+// neighbour, and EXTENDS sits on the class itself rather than its
+// methods.
+func isTypedDepKind(edgeKind string) bool {
+	switch edgeKind {
+	case "REFERENCES", "CALLS", "DEPENDS_ON", "FK_TO", "IMPLEMENTS",
+		"DEPENDS_ON_CONFIG", "RESOLVED_BY":
+		return true
+	}
+	return false
 }
 
 // repoEntry pairs a graph state directory with its absolute repo path from the

@@ -362,6 +362,20 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		emitCBVInheritedMethodAnnotations(root, file, &entities)
 	}()
 
+	// Issue #2016 — generic decorator capture. For every decorated
+	// function/method, stamp `decorator_<name>` properties on the
+	// matching Operation entity. Generalises the pattern established
+	// by DRF @action (#2004) and Celery @shared_task (#2006) so that
+	// @property, @cached_property, @staticmethod, @classmethod,
+	// @contextmanager, @<name>.setter/.getter/.deleter, and arbitrary
+	// decorator factories become queryable graph signals. Runs last
+	// among the decorator-aware passes so specialised stamps from
+	// DRF / Celery / admin / signal passes win on key collisions.
+	func() {
+		defer func() { _ = recover() }()
+		emitGenericDecoratorProperties(root, file, &entities)
+	}()
+
 	// Issue #1991 — __init__.py re-export annotation.
 	// Stamps re_export / package_init / public / alias properties on
 	// IMPORTS edges of package __init__.py files. Returns the public
