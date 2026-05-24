@@ -27,6 +27,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/external"
 	"github.com/cajasmota/archigraph/internal/extractor"
 	"github.com/cajasmota/archigraph/internal/extractors"
+	bazelextract "github.com/cajasmota/archigraph/internal/extractors/bazel"
 	configextract "github.com/cajasmota/archigraph/internal/extractors/config"
 	"github.com/cajasmota/archigraph/internal/extractors/cross"
 	pyextr "github.com/cajasmota/archigraph/internal/extractors/python"
@@ -812,6 +813,22 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 	}
 	if len(configRels) > 0 {
 		pass2Rels = append(pass2Rels, configRels...)
+	}
+
+	// Pass 3.6 — Bazel BUILD-graph fusion (#2183 / M6).
+	// Parses BUILD/BUILD.bazel files as first-class dependency signals,
+	// emitting BAZEL_DEPENDS_ON edges between declared Bazel targets.
+	// Runs after config discovery so all graph entities are available for
+	// the resolver overlay.
+	bazelEntities, bazelRels, bazelErr := bazelextract.Discover(ctx, absRepo, allFiles)
+	if bazelErr != nil {
+		fmt.Fprintf(os.Stderr, "archigraph: bazel-discover warning: %v\n", bazelErr)
+	}
+	if len(bazelEntities) > 0 {
+		pass3Records = append(pass3Records, bazelEntities...)
+	}
+	if len(bazelRels) > 0 {
+		pass2Rels = append(pass2Rels, bazelRels...)
 	}
 
 	// Pass 2.6 — Django nested URLconf composition.
@@ -3196,6 +3213,30 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 			fmt.Fprintf(os.Stderr,
 				"file-component-fold: folded=%d (edges_repointed=%d)\n",
 				fileStats.Folded, fileStats.EdgesRepointed)
+		}
+	}
+
+	// Pass 3.7 — Bazel resolver overlay (#2183 / M6).
+	// Cross-references BAZEL_DEPENDS_ON (declared BUILD deps) against
+	// CALLS/IMPORTS (inferred runtime deps) and annotates each declared
+	// edge with "declared+used", "declared_unused", or emits a new
+	// "undeclared_used" edge for call crossings that lack a BUILD dep.
+	// Runs after all entity-ID rewrites and fold passes so IDs are stable.
+	{
+		mergedSlice := make([]types.EntityRecord, 0, len(merged))
+		for k := range merged {
+			mergedSlice = append(mergedSlice, merged[k])
+		}
+		bazelOverlay := resolve.RunBazelOverlay(mergedSlice, pass2Rels)
+		if len(bazelOverlay.AnnotatedRels) > 0 {
+			pass2Rels = append(pass2Rels, bazelOverlay.AnnotatedRels...)
+			fmt.Fprintf(os.Stderr,
+				"bazel-overlay: declared+used=%d declared_unused=%d undeclared_used=%d annotated_edges=%d\n",
+				bazelOverlay.Stats.DeclaredUsed,
+				bazelOverlay.Stats.DeclaredUnused,
+				bazelOverlay.Stats.UndeclaredUsed,
+				len(bazelOverlay.AnnotatedRels),
+			)
 		}
 	}
 

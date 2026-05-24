@@ -412,6 +412,22 @@ const (
 	// Generalisable to any "value resolved by another entity" shape;
 	// kept narrow today to the DRF extractor producer.
 	RelationshipKindResolvedBy RelationshipKind = "RESOLVED_BY"
+
+	// #2183 — Monorepo M6: Bazel BUILD-graph fusion.
+	//   BAZEL_DEPENDS_ON : bazel_target → bazel_target
+	//     Emitted for every entry in a BUILD rule's deps= list that can be
+	//     resolved to another target in the same workspace. External deps
+	//     (@maven//:guava etc.) also emit this edge; the ToID is a stable
+	//     synthetic ID for the external label.
+	//   BAZEL_DEP_STATUS : bazel_target → bazel_target
+	//     Emitted by the resolver overlay (internal/resolve/bazel_overlay.go)
+	//     after cross-referencing declared BUILD deps against inferred CALLS /
+	//     IMPORTS edges. Properties["status"] is one of:
+	//       "declared+used"   — dep confirmed by runtime usage
+	//       "declared_unused" — dep declared but no crossing call/import found
+	//       "undeclared_used" — call/import crossing with no BUILD dep declared
+	RelationshipKindBazelDependsOn RelationshipKind = "BAZEL_DEPENDS_ON"
+	RelationshipKindBazelDepStatus RelationshipKind = "BAZEL_DEP_STATUS"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -491,6 +507,9 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindConfigures,
 		// #2008 DRF SerializerMethodField → method link:
 		RelationshipKindResolvedBy,
+		// #2183 Bazel BUILD-graph fusion:
+		RelationshipKindBazelDependsOn,
+		RelationshipKindBazelDepStatus,
 	}
 }
 

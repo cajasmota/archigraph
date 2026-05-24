@@ -17,7 +17,9 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/classifier"
 	"github.com/cajasmota/archigraph/internal/engine"
+	bazelextract "github.com/cajasmota/archigraph/internal/extractors/bazel"
 	configextract "github.com/cajasmota/archigraph/internal/extractors/config"
+	"github.com/cajasmota/archigraph/internal/resolve"
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
@@ -284,6 +286,21 @@ func Coordinate(ctx context.Context, repoRoot string, files []string, cfg Coordi
 	} else {
 		res.NonFatalErrors = append(res.NonFatalErrors,
 			fmt.Sprintf("config_discover: %v", derr))
+	}
+
+	// #2183 — Bazel BUILD-graph fusion (M6). Parses BUILD/BUILD.bazel files
+	// and emits BAZEL_DEPENDS_ON edges + target entities. Failure is
+	// non-fatal — build-graph signal is supplemental.
+	if bazelEnts, bazelRels, derr := bazelextract.Discover(ctx, repoRoot, files); derr == nil {
+		res.Entities = append(res.Entities, bazelEnts...)
+		res.Relationships = append(res.Relationships, bazelRels...)
+
+		// Resolver overlay: cross-reference BAZEL_DEPENDS_ON against CALLS/IMPORTS.
+		overlayResult := resolve.RunBazelOverlay(res.Entities, res.Relationships)
+		res.Relationships = append(res.Relationships, overlayResult.AnnotatedRels...)
+	} else {
+		res.NonFatalErrors = append(res.NonFatalErrors,
+			fmt.Sprintf("bazel_discover: %v", derr))
 	}
 
 	// Issue #481 — deterministic ordering. Subprocesses complete in
