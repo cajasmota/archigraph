@@ -557,6 +557,103 @@ func TestPytest_UnderscoreTestFallback(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Issue #2080 — pytest @pytest.mark.parametrize must not emit per-tuple orphans
+// ---------------------------------------------------------------------------
+
+// TestPytest_ParametrizeCollapsedToOneEntity verifies that a parametrize-decorated
+// test function emits exactly ONE SCOPE.Pattern/unit entity regardless of N
+// parameter sets (Option A fix).
+//
+// Pre-#2080 the extractor could emit N entities for N testedCall entries per
+// test function, each with its own entity ID not referenced in any edge —
+// making every one a degree-0 orphan. The fix (buildCollapsedEntity) emits
+// one entity per test function with all TESTS edges embedded, using
+// FromID=="" so the entity's own hex ID becomes the edge source at assembly
+// time and the node is no longer degree-0.
+func TestPytest_ParametrizeCollapsedToOneEntity(t *testing.T) {
+	src := `import pytest
+
+@pytest.mark.parametrize("a,b", [(1, 2), (3, 4), (5, 6)])
+def test_addition(a, b):
+    assert a + b > 0
+`
+	recs := runExtract(t, "tests/test_math.py", "python", src)
+
+	// Option A: exactly 1 SCOPE.Pattern/unit entity emitted — one per def test_*,
+	// regardless of N parametrize parameter sets.
+	patternCount := 0
+	for _, r := range recs {
+		if r.Kind == "SCOPE.Pattern" && r.Subtype == "unit" {
+			patternCount++
+		}
+	}
+	if patternCount != 1 {
+		t.Errorf("expected exactly 1 SCOPE.Pattern/unit entity, got %d", patternCount)
+		for _, r := range recs {
+			t.Logf("  entity: Kind=%q Subtype=%q Name=%q", r.Kind, r.Subtype, r.Name)
+		}
+	}
+
+	// The entity must carry a TESTS relationship so it is NOT degree-0 in the
+	// graph — the FromID is left empty so the assembly uses the entity's own
+	// hex ID, making the coverage record the source of its own TESTS edge.
+	if len(recs) > 0 {
+		found := false
+		for _, rel := range recs[0].Relationships {
+			if rel.Kind == "TESTS" && rel.FromID == "" {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("expected TESTS relationship with empty FromID (self-ref), got: %v", recs[0].Relationships)
+		}
+	}
+}
+
+// TestPytest_ParametrizeWithDirectCall verifies that a parametrize test whose
+// body calls a production function emits exactly one entity with a high-confidence
+// TESTS edge pointing at the production function.
+func TestPytest_ParametrizeWithDirectCall(t *testing.T) {
+	src := `import pytest
+from myapp.math import add_numbers
+
+@pytest.mark.parametrize("a,b,expected", [(1, 2, 3), (4, 5, 9), (10, 20, 30)])
+def test_addition(a, b, expected):
+    result = add_numbers(a, b)
+    assert result == expected
+`
+	recs := runExtract(t, "tests/test_math.py", "python", src)
+
+	if len(recs) != 1 {
+		t.Fatalf("expected exactly 1 entity, got %d", len(recs))
+	}
+	rec := recs[0]
+	if rec.Kind != "SCOPE.Pattern" {
+		t.Errorf("Kind=%q, want SCOPE.Pattern", rec.Kind)
+	}
+	if rec.Subtype != "unit" {
+		t.Errorf("Subtype=%q, want unit", rec.Subtype)
+	}
+	if rec.Properties["test_function"] != "test_addition" {
+		t.Errorf("test_function=%q, want test_addition", rec.Properties["test_function"])
+	}
+	if rec.Properties["confidence"] != "high" {
+		t.Errorf("confidence=%q, want high (direct call to add_numbers)", rec.Properties["confidence"])
+	}
+
+	// Must have TESTS edge with empty FromID (self-ref) and ToID pointing at add_numbers.
+	testsEdge := false
+	for _, rel := range rec.Relationships {
+		if rel.Kind == "TESTS" && rel.FromID == "" && rel.Properties["tested"] == "add_numbers" {
+			testsEdge = true
+		}
+	}
+	if !testsEdge {
+		t.Errorf("expected TESTS edge with tested=add_numbers and FromID empty; got: %v", rec.Relationships)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // JavaScript / TypeScript Jest
 // ---------------------------------------------------------------------------
 

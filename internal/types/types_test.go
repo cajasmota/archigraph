@@ -216,12 +216,17 @@ func TestEntityRecord_ComputeID_DiffersWhenOrgIDDiffers(t *testing.T) {
 
 // --- RelationshipRecord.Validate() ---
 
-func TestRelationshipRecord_Validate_RejectsEmptyFromID(t *testing.T) {
-	r := RelationshipRecord{ToID: "b", Kind: "CALLS"}
-	if err := r.Validate(); err == nil {
-		t.Fatal("expected error for empty FromID")
-	} else if !strings.Contains(err.Error(), "from_id is required") {
-		t.Errorf("expected 'from_id is required', got: %s", err.Error())
+// TestRelationshipRecord_Validate_AllowsEmptyFromID verifies that empty
+// FromID is permitted by Validate(). An empty FromID is the canonical
+// "self-reference" sentinel for embedded entity relationships: the graph
+// assembly loop (cmd/archigraph/index.go) substitutes the entity's own hex
+// ID at build time, making the entity the source of its own TESTS edge.
+// This pattern was introduced in issue #2080 to eliminate SCOPE.Pattern/unit
+// orphans emitted by the testmap extractor.
+func TestRelationshipRecord_Validate_AllowsEmptyFromID(t *testing.T) {
+	r := RelationshipRecord{ToID: "b", Kind: "TESTS"}
+	if err := r.Validate(); err != nil {
+		t.Errorf("empty FromID should be allowed (self-ref sentinel): %s", err.Error())
 	}
 }
 

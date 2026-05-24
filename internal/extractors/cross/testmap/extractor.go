@@ -230,8 +230,113 @@ func productionFunctionRef(prodFile, prodQName string) string {
 	return "scope:operation:" + prodFile + "#" + prodQName
 }
 
+// buildCollapsedEntity assembles a single SCOPE.Pattern EntityRecord
+// (subtype "test_coverage") for one test function, collapsing ALL
+// testedCalls into TESTS edges on the same record.
+//
+// Issue #2080: the previous design emitted one entity per (test, production)
+// pair. For a test with N parametrize sets or multiple production calls that
+// meant N separate SCOPE.Pattern nodes. Each node's entity ID was distinct
+// from the TESTS edge's FromID (which used scope:operation: refs), so the
+// nodes never appeared in the graph's "touched" set and were all counted as
+// degree-0 orphans.
+//
+// The fix: one entity per test function, with every TESTS relationship's
+// FromID left empty ("") so the graph assembly uses the entity's own hex
+// ID as the source. The entity is now the FROM node of its own TESTS edges,
+// making it non-orphan regardless of whether the test file uses parametrize
+// or how many production calls the test body makes.
+//
+// Properties carry the data of the highest-confidence testedCall so that
+// existing consumers using Properties["tested_function"] continue to work.
+func buildCollapsedEntity(
+	filePath string,
+	language string,
+	framework string,
+	testType string,
+	testQName string,
+	calls []testedCall,
+) types.EntityRecord {
+	// Primary call: highest-confidence entry (calls is already sorted high→low).
+	var primary testedCall
+	if len(calls) > 0 {
+		primary = calls[0]
+	}
+
+	entityID := testCoverageEntityID(filePath, testQName, primary.qname)
+	props := map[string]string{
+		"test_framework":  framework,
+		"test_type":       testType,
+		"tested_function": primary.qname,
+		"confidence":      primary.confidence,
+		"test_function":   testQName,
+		"ref":             entityID,
+		"provenance":      confidenceProvenance(primary.confidence),
+		// pattern_kind preserves the original semantic ("test_coverage")
+		// after we collapsed the entity Kind into the SCOPE.Pattern bucket so
+		// the graph allowlist validation passes.
+		"pattern_kind": "test_coverage",
+	}
+	// tested_file is only stamped for the low-confidence naming-convention
+	// fallback (issue #2060) — for high/medium calls prodFile is now also
+	// populated as a resolver hint, but the file is a convention guess and
+	// not a verified location, so we keep the property meaning ("the
+	// best-guess tested file when no direct call/mock was found").
+	if primary.prodFile != "" && primary.confidence == "low" {
+		props["tested_file"] = primary.prodFile
+	}
+
+	name := testQName
+	if primary.qname != "" {
+		name = testQName + " -> " + primary.qname
+	}
+
+	rec := types.EntityRecord{
+		Name: name,
+		// SCOPE.TestCoverage is not in the 14-type allowlist.
+		// Coverage records map to SCOPE.Pattern (canonical bucket for inferred
+		// structural patterns); the framework-specific test type is preserved on
+		// Subtype, and the originating test framework remains on Properties.
+		Kind:         "SCOPE.Pattern",
+		SourceFile:   filePath,
+		Language:     language,
+		Subtype:      testType,
+		Properties:   props,
+		QualityScore: confidenceScore(primary.confidence),
+	}
+
+	// Emit one TESTS edge per unique production call. FromID is intentionally
+	// left empty: the graph assembly loop (cmd/archigraph/index.go) substitutes
+	// the entity's own hex ID when FromID == "", making the SCOPE.Pattern node
+	// the source of each TESTS edge. This ensures the entity ID appears in the
+	// "touched" set and the node is not counted as a degree-0 orphan.
+	for _, tc := range calls {
+		toID := productionFunctionRef(tc.prodFile, tc.qname)
+		if toID == "" {
+			continue
+		}
+		rec.Relationships = append(rec.Relationships, types.RelationshipRecord{
+			// FromID == "" → assembly uses this entity's own hex ID.
+			ToID: toID,
+			Kind: "TESTS",
+			Properties: map[string]string{
+				"test_framework": framework,
+				"confidence":     tc.confidence,
+				"test_function":  testQName,
+				"tested":         tc.qname,
+			},
+		})
+	}
+
+	return rec
+}
+
 // buildEntity assembles a SCOPE.Pattern EntityRecord (subtype "test_coverage")
 // plus its TESTS edge from the test function to the production function.
+//
+// Deprecated: prefer buildCollapsedEntity which emits one entity per test
+// function with all TESTS edges collapsed in, avoiding degree-0 orphans.
+// Retained for any callers that need the original one-entity-per-call form.
 func buildEntity(
 	filePath string,
 	language string,
@@ -372,12 +477,18 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	testType := inferTestType(file.Path)
 	prodFile, prodSymbol := productionFileFromTestPath(file.Path)
 
+	// Issue #2080: emit ONE SCOPE.Pattern entity per test function.
+	// buildCollapsedEntity folds all resolved production calls into a single
+	// record with multiple embedded TESTS edges (FromID="" → entity owns the
+	// edge) so the entity is never degree-0 in the graph regardless of how
+	// many @pytest.mark.parametrize parameter sets the test function has.
 	out := make([]types.EntityRecord, 0, len(tests))
 	for _, tf := range tests {
 		called := resolveCalls(tf, prodFile, prodSymbol)
-		for _, tc := range called {
-			out = append(out, buildEntity(file.Path, file.Language, fw.name, testType, tf.qname, tc))
+		if len(called) == 0 {
+			continue
 		}
+		out = append(out, buildCollapsedEntity(file.Path, file.Language, fw.name, testType, tf.qname, called))
 	}
 
 	span.SetAttributes(
