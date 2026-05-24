@@ -990,3 +990,69 @@ func TestDedupSynthByName_DirectFunction(t *testing.T) {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Issue #2058 — DSL stubs must use the stable synthetic SourceFile so per-file
+// emissions collapse to one ID and the resolver's byName index stays
+// unambiguous. Before this fix, an N-Panache-file repo produced N copies of
+// every DSL entity (e.g. PanacheQuery.list × 11 on client-fixture-de),
+// orphaning ~481 nodes.
+// ---------------------------------------------------------------------------
+
+func TestSynthesizePanacheDSL_StableSyntheticSourceFile_AcrossFiles(t *testing.T) {
+	rawImports := "import io.quarkus.hibernate.orm.panache.PanacheEntity;\n"
+
+	a := synthesizePanacheDSLEntities("/src/com/example/Foo.java", rawImports)
+	b := synthesizePanacheDSLEntities("/src/com/example/Bar.java", rawImports)
+	c := synthesizePanacheDSLEntities("/totally/different/path/Baz.java", rawImports)
+
+	if len(a) == 0 || len(b) == 0 || len(c) == 0 {
+		t.Fatalf("expected non-empty entity slices; got %d/%d/%d", len(a), len(b), len(c))
+	}
+	if len(a) != len(b) || len(b) != len(c) {
+		t.Fatalf("expected identical entity counts across files; got %d/%d/%d", len(a), len(b), len(c))
+	}
+
+	// Every entity must use the synthetic SourceFile, regardless of the
+	// per-file path passed in.
+	for _, e := range a {
+		if e.SourceFile != panacheDSLSyntheticSourceFile {
+			t.Errorf("SourceFile=%q want %q for entity %q",
+				e.SourceFile, panacheDSLSyntheticSourceFile, e.Name)
+		}
+	}
+
+	// ComputeID for the same Name+Kind must match across files. The IDs
+	// depend on SourceFile (via the OrgID+ProjectID+SourceFile+Kind+Name
+	// hash); a stable SourceFile is the load-bearing invariant.
+	mkID := func(e types.EntityRecord) string {
+		// Strip variability from non-identity fields; ComputeID uses
+		// SourceFile+Kind+Name (+ OrgID/ProjectID, both empty here).
+		return (&types.EntityRecord{
+			Kind:       e.Kind,
+			Name:       e.Name,
+			SourceFile: e.SourceFile,
+		}).ComputeID()
+	}
+
+	for i := range a {
+		if mkID(a[i]) != mkID(b[i]) || mkID(b[i]) != mkID(c[i]) {
+			t.Errorf("ComputeID drifted across files for %q (Kind=%q): "+
+				"a=%s b=%s c=%s — DSL stubs are no longer dedup-stable",
+				a[i].Name, a[i].Kind, mkID(a[i]), mkID(b[i]), mkID(c[i]))
+		}
+	}
+}
+
+func TestSynthesizePanacheDSL_SyntheticSourceFile_AppliedToAllKinds(t *testing.T) {
+	entities := dslEntities(t)
+	// Spot-check: every kind family (Component interfaces + Operation
+	// methods) must carry the synthetic path. Mixed paths would partially
+	// regress the dedup invariant.
+	for _, e := range entities {
+		if e.SourceFile != panacheDSLSyntheticSourceFile {
+			t.Errorf("entity %q (Kind=%q) has SourceFile=%q; want %q",
+				e.Name, e.Kind, e.SourceFile, panacheDSLSyntheticSourceFile)
+		}
+	}
+}
