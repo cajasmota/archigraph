@@ -655,6 +655,65 @@ public class OrderController {
 	}
 }
 
+// TestJavaExtractor_QualifiedName_LombokSynth verifies that Lombok-
+// synthesised accessor Operations (which have no real AST node in the
+// .java file) still carry a non-empty QualifiedName of the form
+// "<package>.<Class>.<accessor>" so cross-package symbol navigation
+// works for @Data / @Getter / @Setter generated methods (#1887).
+func TestJavaExtractor_QualifiedName_LombokSynth(t *testing.T) {
+	src := `package com.example.dto;
+
+import lombok.Data;
+
+@Data
+public class ListRequest {
+    private Integer pageSize;
+}
+`
+	tree := parseForTest(t, src)
+	ext, ok := extractor.Get("java")
+	if !ok {
+		t.Fatal("java extractor not registered")
+	}
+	entities, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:    "src/main/java/com/example/dto/ListRequest.java",
+		Content: []byte(src),
+		Tree:    tree,
+	})
+	if err != nil {
+		t.Fatalf("extract failed: %v", err)
+	}
+
+	byName := make(map[string]types.EntityRecord)
+	for _, e := range entities {
+		byName[e.Name] = e
+	}
+
+	// Lombok @Data synthesises getPageSize / setPageSize / equals /
+	// hashCode / toString on the class. We only assert the getter
+	// since that is the canonical W5R3 evidence entity in #1887.
+	getter, ok := byName["ListRequest.getPageSize"]
+	if !ok {
+		t.Fatalf("expected lombok-synth getter ListRequest.getPageSize, entities: %v", keys(byName))
+	}
+	if getter.Properties["synthesized_from"] == "" {
+		t.Errorf("getter missing synthesized_from property: %#v", getter.Properties)
+	}
+	wantQN := "com.example.dto.ListRequest.getPageSize"
+	if getter.QualifiedName != wantQN {
+		t.Errorf("lombok-synth getter QualifiedName = %q, want %q (#1887)", getter.QualifiedName, wantQN)
+	}
+}
+
+// keys returns the keys of a byName map for diagnostic output.
+func keys(m map[string]types.EntityRecord) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
 // TestJavaExtractor_QualifiedName_NoPackage verifies that entities in a file
 // without a package declaration still get a non-empty QualifiedName equal to
 // the class/method name (default package, #1917).
