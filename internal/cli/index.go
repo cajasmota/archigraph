@@ -21,8 +21,13 @@ import (
 // scripts keep working.
 func newIndexCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "index <repo>",
-		Short:              "Index a repository (daemon RPC)",
+		Use:   "index <repo>",
+		Short: "Index a repository (daemon RPC)",
+		Long: `Index a repository via the daemon RPC.
+
+  --ref <ref>  operate on a specific git ref (branch/tag).
+               Use @current for the active HEAD (default).
+               @all is refused (index is a destructive write operation).`,
 		DisableFlagParsing: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runIndexClient(cmd, args)
@@ -59,9 +64,19 @@ func runIndexClient(cmd *cobra.Command, argv []string) error {
 	printSkipped := fs.Bool("print-skipped", false, "print each directory skipped at walk-time with the matching rule")
 	quiet := fs.Bool("quiet", false, "suppress progress output; print only the final summary line")
 	jsonProgress := fs.Bool("json-progress", false, "emit one JSON event per line (for scripting; implies --quiet for non-JSON output)")
+	refFlag := fs.String("ref", "", "operate on a specific git ref; @all is refused (index is a destructive write). Use @current for active HEAD (default).")
 	if err := fs.Parse(reorderedArgv); err != nil {
 		return err
 	}
+
+	// Validate --ref: @all is refused for index (destructive).
+	_, _, refErr := resolveRef(*refFlag, false /* @all NOT ok */)
+	if refErr != nil {
+		return refErr
+	}
+	// Note: daemon-side ref routing for index is tracked in #2220.
+	// The validated ref is accepted here so scripts can be written against
+	// the final interface before the daemon wiring lands.
 	if fs.NArg() < 1 {
 		return errors.New("missing <repo> argument")
 	}

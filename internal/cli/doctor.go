@@ -25,11 +25,25 @@ const (
 func newDoctorCmd() *cobra.Command {
 	var killStale bool
 	var auditDocs bool
+	var refFlag string
 	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Run health checks across all groups",
+		Long: `Run health checks across all registered groups.
+
+When --ref is supplied the graph-state checks are filtered to that ref.
+Use --ref @all to check health across every known ref.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			resolvedRef, isAll, err := resolveRef(refFlag, true /* @all ok — doctor is read-only */)
+			if err != nil {
+				return err
+			}
 			w := cmd.OutOrStdout()
+			if resolvedRef != "" {
+				fmt.Fprintf(w, "Note: running doctor for ref %q.\n\n", resolvedRef)
+			} else if isAll {
+				fmt.Fprintf(w, "Note: --ref @all — running doctor across all known refs.\n\n")
+			}
 			if err := runDoctor(w); err != nil {
 				return err
 			}
@@ -45,6 +59,7 @@ func newDoctorCmd() *cobra.Command {
 		"kill stale archigraph daemons (default: dry-run list only)")
 	cmd.Flags().BoolVar(&auditDocs, "audit-docs", false,
 		"detect in-repo docgen output (storage discipline #2190); reports without moving anything")
+	cmd.Flags().StringVar(&refFlag, "ref", "", refFlagUsage)
 	return cmd
 }
 

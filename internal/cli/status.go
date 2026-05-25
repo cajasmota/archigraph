@@ -20,20 +20,47 @@ import (
 // Status is crash-safe: if the daemon is down we print "daemon not
 // running" and continue with the registry view, rather than erroring.
 func newStatusCmd() *cobra.Command {
-	return &cobra.Command{
+	var refFlag string
+	cmd := &cobra.Command{
 		Use:   "status [group]",
 		Short: "Show daemon + index status",
+		Long: `Show daemon health and per-repo index state.
+
+When --ref is supplied the registry view is filtered to repos that have a
+graph stored for that ref.  Use --ref @all to show state across every known
+ref (implies a per-ref breakdown in the output).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filterGroup := ""
 			if len(args) == 1 {
 				filterGroup = args[0]
 			}
-			return runStatus(cmd.OutOrStdout(), filterGroup)
+			resolvedRef, isAll, err := resolveRef(refFlag, true /* @all ok */)
+			if err != nil {
+				return err
+			}
+			return runStatus(cmd.OutOrStdout(), filterGroup, resolvedRef, isAll)
 		},
 	}
+	cmd.Flags().StringVar(&refFlag, "ref", "",
+		refFlagUsage)
+	return cmd
 }
 
-func runStatus(w io.Writer, filter string) error {
+// runStatus implements the status command.
+//
+// filter    — optional group name filter (positional arg).
+// ref       — "" means current HEAD (default / @current); a named ref
+//
+//	narrows the view to that ref's graph state.
+//
+// showAll   — true when --ref @all was passed; shows a per-ref breakdown.
+func runStatus(w io.Writer, filter string, ref string, showAll bool) error {
+	if showAll {
+		fmt.Fprintln(w, "Note: --ref @all shows per-ref graph state for all known refs.")
+		fmt.Fprintln(w)
+	} else if ref != "" {
+		fmt.Fprintf(w, "Note: showing state for ref %q.\n\n", ref)
+	}
 	// Daemon section first — gives the operator a fast-glance view.
 	c, err := client.Dial()
 	switch {

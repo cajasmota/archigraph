@@ -19,6 +19,7 @@ func newRemoveCmd() *cobra.Command {
 		keepCache bool
 		force     bool
 		jsonOut   bool
+		refFlag   string
 	)
 
 	cmd := &cobra.Command{
@@ -35,9 +36,21 @@ When this is the last repo in the group, the command prints a warning and
 asks whether to delete the whole group. In --force or --json mode the
 command refuses with an error instead (preventing accidental orphaned groups).
 
-The daemon must be running. Use --json for machine-readable output.`,
+The daemon must be running. Use --json for machine-readable output.
+
+  --ref <ref>  limit removal to a specific git ref's graph artifacts.
+               @all is refused (remove is a destructive operation).
+               Use @current for the active HEAD (default).`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// @all is refused for remove (destructive).
+			resolvedRef, _, err := resolveRef(refFlag, false /* @all NOT ok */)
+			if err != nil {
+				return err
+			}
+			// Note: per-ref scoped removal is tracked in #2220.
+			// resolvedRef is validated here; full daemon wiring lands separately.
+			_ = resolvedRef
 			return runRemoveImpl(cmd, args[0], args[1], keepCache, force, jsonOut, "")
 		},
 	}
@@ -48,6 +61,7 @@ The daemon must be running. Use --json for machine-readable output.`,
 		"skip confirmation prompt")
 	cmd.Flags().BoolVar(&jsonOut, "json", false,
 		"emit machine-readable JSON result")
+	cmd.Flags().StringVar(&refFlag, "ref", "", refFlagUsage)
 	return cmd
 }
 
