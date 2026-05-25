@@ -51,6 +51,29 @@ SCRATCH.md
 # archigraph index output
 .archigraph/
 graph.json
+graph.fb
+graph-stats.json
 
 # Exception: golden fixtures need committed group.json manifests for smoke tests
 !/internal/quality/golden/**/.archigraph/group.json
+
+# Root-level images — PR review screenshots accidentally committed (#cleanup)
+# Legitimate design assets go under docs/mockups/ or docs/screenshots/.
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
+# Catch the screenshots-<number>/ folder pattern at root
+/screenshots-*/
+# Catch design-handoff-* one-off folders at root
+/design-handoff-*/
+
+# Catch shell-redirect typos that create literal --flag files at repo root
+/--*
+
+# Catch tilde redirect typos (literal `~` directory)
+/~/
+
+# External worktrees should be siblings of the repo, not nested inside it
+/archigraph-worktrees/
