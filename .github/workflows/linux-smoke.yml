@@ -1,17 +1,10 @@
 name: Linux Smoke Test
 
 on:
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+  workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-  workflow_dispatch:
+    tags: ['v*']
 
 jobs:
   smoke:
