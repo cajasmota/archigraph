@@ -10,6 +10,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/mode"
 	"github.com/cajasmota/archigraph/internal/daemon/service"
+	"github.com/cajasmota/archigraph/internal/install"
 	"github.com/cajasmota/archigraph/internal/install/mcpreg"
 	"github.com/cajasmota/archigraph/internal/install/skilllink"
 )
@@ -64,12 +65,20 @@ func installSkillsInClaudeConfigs(out io.Writer, binPath, skillsSourceDir string
 // The --foreground flag skips service registration and just starts the
 // daemon in the foreground — useful when launchd/systemd isn't
 // cooperating and you need debug output directly in the terminal.
+//
+// The --copy flag (issue #2210) runs the full atomic COPY-mode install
+// transaction: skill copy, MCP registration, daemon restart, .gitignore
+// update, and install.json state persistence. This is the new default
+// per epic #2197; use --copy=false to revert to the legacy symlink path.
+// TODO(#2212): --dev flag for symlink mode.
 func newInstallCmd() *cobra.Command {
 	var foreground bool
 	var claudeConfigDirs []string
 	var skillsSourceDir string
 	var skipSkillLink bool
 	var installMode string
+	var copyMode bool
+	var force bool
 
 	cmd := &cobra.Command{
 		Use:   "install",
@@ -94,9 +103,14 @@ in this terminal — useful for debugging launchd/systemd issues.
 Use --mode to select the operational preset (background, workstation, readonly).
 The default is background. See 'archigraph mode --help' for details.
 
-Install also symlinks the 6 archigraph skills into every detected Claude Code
-config directory's skills/ subdirectory. Use --skip-skill-link to disable this,
-or --skills-source-dir to override the skills discovery location.`,
+Use --copy (default: true) to run the full atomic COPY-mode install
+transaction (issue #2210): copies skills into ~/.claude/skills/, registers
+the MCP server, restarts the daemon, updates .gitignore, and writes
+~/.archigraph/install.json with per-file SHA checksums. The second run is
+a fast no-op (idempotent). Use --force to bypass the partial-install guard.
+
+Install also copies or symlinks the archigraph skills into every detected
+Claude Code config directory's skills/ subdirectory.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
 
@@ -114,6 +128,23 @@ or --skills-source-dir to override the skills discovery location.`,
 			if err != nil {
 				return fmt.Errorf("resolve binary path: %w", err)
 			}
+
+			// ── COPY mode path (issue #2210, epic #2197) ──────────────────────
+			// When --copy is set (default: true), run the full atomic COPY-mode
+			// install transaction instead of the legacy symlink path. The COPY
+			// path handles skill copying, MCP, daemon restart, .gitignore, and
+			// writes ~/.archigraph/install.json. OS service registration is also
+			// performed (via service.Install inside RunCopy's step 4).
+			if copyMode {
+				return runInstallCopy(out, install.CopyOptions{
+					BinPath:          bin,
+					SkillsSourceDir:  skillsSourceDir,
+					ClaudeConfigDirs: claudeConfigDirs,
+					Force:            force,
+				})
+			}
+
+			// ── legacy path (preserved for backward compat; use --copy=false) ─
 
 			layout, err := daemon.DefaultLayout()
 			if err != nil {
@@ -187,8 +218,49 @@ or --skills-source-dir to override the skills discovery location.`,
 	cmd.Flags().StringVar(&skillsSourceDir, "skills-source-dir", "",
 		"override the skills directory location (default: auto-detect from binary location or dev paths)")
 	cmd.Flags().BoolVar(&skipSkillLink, "skip-skill-link", false,
-		"skip symlinking skills into Claude Code's skills/ directories")
+		"skip symlinking skills into Claude Code's skills/ directories (legacy path only)")
 	cmd.Flags().StringVar(&installMode, "mode", "",
 		"operational mode: background (default), workstation, or readonly")
+	// #2210: COPY mode flags.
+	cmd.Flags().BoolVar(&copyMode, "copy", true,
+		"run the full atomic COPY-mode install transaction (copies skills, registers MCP, restarts daemon, updates .gitignore, writes install.json)")
+	cmd.Flags().BoolVar(&force, "force", false,
+		"bypass the partial-install guard; use after a failed install or 'archigraph uninstall && archigraph install'")
 	return cmd
+}
+
+// runInstallCopy runs the COPY-mode install transaction (issue #2210) and
+// prints a structured summary. Called from newInstallCmd when --copy is set.
+func runInstallCopy(out io.Writer, opts install.CopyOptions) error {
+	result, err := install.RunCopy(opts)
+	if err != nil {
+		fmt.Fprintf(out, "✗ install (copy mode) failed: %v\n", err)
+		fmt.Fprintln(out, "")
+		fmt.Fprintln(out, "Run 'archigraph install --force' to retry, or")
+		fmt.Fprintln(out, "'archigraph uninstall && archigraph install' to start clean.")
+		return err
+	}
+
+	fmt.Fprintf(out, "✓ archigraph installed (copy mode)\n")
+	fmt.Fprintf(out, "  binary:  %s\n", result.CLIPath)
+	if len(result.CLISHA256) >= 16 {
+		fmt.Fprintf(out, "  sha256:  %s...\n", result.CLISHA256[:16])
+	}
+	if len(result.SkillsInstalled) > 0 {
+		fmt.Fprintf(out, "  skills:  %d copied\n", len(result.SkillsInstalled))
+	}
+	if len(result.MCPPaths) > 0 {
+		fmt.Fprintf(out, "  MCP:     registered in %d config file(s)\n", len(result.MCPPaths))
+		fmt.Fprintln(out, "           Restart Claude Code to load the archigraph MCP tools.")
+	}
+	if result.DaemonVersion != "" {
+		fmt.Fprintf(out, "  daemon:  %s\n", result.DaemonVersion)
+	}
+	if result.GitignoreRepo != "" {
+		fmt.Fprintf(out, "  .gitignore: /.archigraph/ added in %s\n", result.GitignoreRepo)
+	}
+	if result.StatePath != "" {
+		fmt.Fprintf(out, "  state:   %s\n", result.StatePath)
+	}
+	return nil
 }
