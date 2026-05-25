@@ -35,6 +35,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -403,7 +404,10 @@ func writeGroupIndex(group string, repoSlugs []string, indexPath string) error {
 	b.WriteString("| Repository | Index |\n")
 	b.WriteString("|------------|-------|\n")
 	for _, slug := range repoSlugs {
-		repoIndexLink := filepath.Join(slug, "index.md")
+		// Use path.Join (always forward slashes) because this is a markdown
+		// hyperlink, not an OS filesystem path.  filepath.Join would produce
+		// backslash paths on Windows (e.g. "alpha\index.md") breaking the link.
+		repoIndexLink := path.Join(slug, "index.md")
 		b.WriteString(fmt.Sprintf("| `%s` | [index](%s) |\n", slug, repoIndexLink))
 	}
 	b.WriteString("\n---\n\n")
