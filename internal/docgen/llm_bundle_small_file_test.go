@@ -168,9 +168,9 @@ func buildBundleSourceWindow(t *testing.T, groupName, entityID string) string {
 // ≤ SmallFileLineThreshold (80) lines, the entire file is emitted in
 // source_window — including lines far beyond the entity's start_line+20 boundary.
 func TestSmallFile_WholeFileEmitted(t *testing.T) {
-	const totalLines = 36  // small file: ≤ 80 lines
-	const entityStart = 8  // entity starts early; default ±20 clips at line 28
-	const entityEnd = 10   // entity ends at line 10
+	const totalLines = 36 // small file: ≤ 80 lines
+	const entityStart = 8 // entity starts early; default ±20 clips at line 28
+	const entityEnd = 10  // entity ends at line 10
 
 	groupName, entityID := smallFileHarness(t, totalLines, entityStart, entityEnd, "react_component")
 	sw := buildBundleSourceWindow(t, groupName, entityID)
@@ -245,9 +245,9 @@ func TestSmallFile_LargeFileUsesDefault(t *testing.T) {
 // small source file still uses the WholeBody strategy (end_line-based), not the
 // whole-file path — the two strategies must not interfere.
 func TestSmallFile_ModelWholeBodyNotAffected(t *testing.T) {
-	const totalLines = 40  // small: ≤ 80 lines
+	const totalLines = 40 // small: ≤ 80 lines
 	const entityStart = 2
-	const entityEnd = 40   // whole file anyway; test just checks no regression
+	const entityEnd = 40 // whole file anyway; test just checks no regression
 
 	// Build harness with a Python-language Model entity so ResolveSectionProfile
 	// picks SourceWindowStrategyWholeBody.

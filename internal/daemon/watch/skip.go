@@ -76,9 +76,9 @@ var SkipDirs = map[string]struct{}{
 	// Generated code (MANIFEST §25, D24)
 	"_generated": {},
 	// Build / cache (S4 #2154: aggressive filter)
-	".cache":    {},
-	".vite":     {},
-	".esbuild":  {},
+	".cache":   {},
+	".vite":    {},
+	".esbuild": {},
 }
 
 // SkipExts is the suffix list for files we never re-index for. Lock

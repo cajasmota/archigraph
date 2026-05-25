@@ -221,7 +221,7 @@ type LoadedRepo struct {
 	Path       string
 	GraphFile  string
 	Doc        *graph.Document
-	Reader     *fbreader.Reader         // mmap zero-copy reader (S8, #2159); nil when unavailable
+	Reader     *fbreader.Reader // mmap zero-copy reader (S8, #2159); nil when unavailable
 	LabelIndex *LabelIndex
 	BM25       *BM25Index
 	Adjacency  *adjacency               // in/out neighbor lists (#1656)

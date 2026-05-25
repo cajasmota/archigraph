@@ -85,9 +85,9 @@ type StatusReply struct {
 	// RebuildConcurrencyCap is the current parallel-repo cap for Rebuild RPCs
 	// (#2127). Auto-tuned from system memory (floor=2, cap=8); overrideable
 	// via ARCHIGRAPH_REBUILD_CONCURRENCY or --max-concurrent-groups.
-	RebuildGroupsActive    int `json:"rebuild_groups_active,omitempty"`
-	RebuildInFlight        int `json:"rebuild_in_flight,omitempty"`
-	RebuildConcurrencyCap  int `json:"rebuild_concurrency_cap,omitempty"`
+	RebuildGroupsActive   int `json:"rebuild_groups_active,omitempty"`
+	RebuildInFlight       int `json:"rebuild_in_flight,omitempty"`
+	RebuildConcurrencyCap int `json:"rebuild_concurrency_cap,omitempty"`
 
 	// PH2a (#2096): watcher pause/resume counters.
 	// WatcherActiveSlots is the number of (repoPath,ref) slots whose fsnotify

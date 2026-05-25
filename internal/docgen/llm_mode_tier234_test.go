@@ -479,4 +479,3 @@ func assertScoreJSONHasLLMMode(t *testing.T, scoreFile, wantMode string) {
 		t.Errorf("score.json llm_mode: got %v want %q", got, wantMode)
 	}
 }
-

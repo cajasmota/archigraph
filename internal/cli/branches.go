@@ -115,16 +115,16 @@ Examples:
 // ---------------------------------------------------------------------------
 
 type refInfo struct {
-	Group    string    `json:"group"`
-	Repo     string    `json:"repo"`
-	Ref      string    `json:"ref"`
-	Tier     string    `json:"tier"`
-	Idle     string    `json:"idle"`
-	SizeBytes int64    `json:"size_bytes"`
-	SizeFmt  string    `json:"size"`
-	Pinned   bool      `json:"pinned"`
-	PinReason string   `json:"pin_reason,omitempty"` // "main" | "user"
-	StateDir  string   `json:"state_dir"`
+	Group     string    `json:"group"`
+	Repo      string    `json:"repo"`
+	Ref       string    `json:"ref"`
+	Tier      string    `json:"tier"`
+	Idle      string    `json:"idle"`
+	SizeBytes int64     `json:"size_bytes"`
+	SizeFmt   string    `json:"size"`
+	Pinned    bool      `json:"pinned"`
+	PinReason string    `json:"pin_reason,omitempty"` // "main" | "user"
+	StateDir  string    `json:"state_dir"`
 	LastSeen  time.Time `json:"last_seen"`
 }
 

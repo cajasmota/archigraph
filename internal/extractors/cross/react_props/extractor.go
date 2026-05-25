@@ -817,11 +817,11 @@ func buildComponentEntity(file extractor.FileInput, c component, propNames []str
 		"provenance": "INFERRED_FROM_REACT_PROPS_EXTRACTOR",
 	}
 	return types.EntityRecord{
-		Name:         c.name,
-		Kind:         KindOperation,
-		SourceFile:   file.Path,
-		Language:     file.Language,
-		Subtype:      "react_component",
+		Name:       c.name,
+		Kind:       KindOperation,
+		SourceFile: file.Path,
+		Language:   file.Language,
+		Subtype:    "react_component",
 		// Issue #1964 — populate line range so docgen's source_window
 		// helper can read the JSX body. Before this fix every
 		// react_component entity emitted by this regex-based extractor

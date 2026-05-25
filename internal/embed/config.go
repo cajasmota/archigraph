@@ -31,12 +31,12 @@ const (
 
 // Env override variables (ADR-0019). Env always wins over the config file.
 const (
-	EnvBackend  = "ARCHIGRAPH_EMBEDDING_BACKEND"
-	EnvURL      = "ARCHIGRAPH_EMBEDDING_URL"
-	EnvModel    = "ARCHIGRAPH_EMBEDDING_MODEL"
-	EnvAPIKey   = "ARCHIGRAPH_EMBEDDING_API_KEY"
-	EnvDims     = "ARCHIGRAPH_EMBEDDING_DIMS"
-	EnvDisable  = "ARCHIGRAPH_EMBEDDING_DISABLE"
+	EnvBackend = "ARCHIGRAPH_EMBEDDING_BACKEND"
+	EnvURL     = "ARCHIGRAPH_EMBEDDING_URL"
+	EnvModel   = "ARCHIGRAPH_EMBEDDING_MODEL"
+	EnvAPIKey  = "ARCHIGRAPH_EMBEDDING_API_KEY"
+	EnvDims    = "ARCHIGRAPH_EMBEDDING_DIMS"
+	EnvDisable = "ARCHIGRAPH_EMBEDDING_DISABLE"
 )
 
 // DefaultBuiltinModel is the bundled-by-download MiniLM model. hugot fetches

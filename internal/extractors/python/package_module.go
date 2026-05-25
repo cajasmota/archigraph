@@ -72,10 +72,10 @@ var packageIgnoreDirs = map[string]bool{
 	"node_modules":  true,
 	".archigraph":   true,
 	// Python virtual environment directories — common names:
-	".venv":  true,
-	"venv":   true,
-	"env":    true,
-	".env":   true,
+	".venv":          true,
+	"venv":           true,
+	"env":            true,
+	".env":           true,
 	"__pypackages__": true,
 }
 

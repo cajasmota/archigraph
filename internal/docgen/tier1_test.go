@@ -219,9 +219,9 @@ func buildMinimalGroupForTier1(t *testing.T) (archHome string, group string, ent
 		"language":    "go",
 	}
 	graphDoc := map[string]interface{}{
-		"version":      1,
-		"repo":         repoPath,
-		"entities":     []interface{}{entity},
+		"version":       1,
+		"repo":          repoPath,
+		"entities":      []interface{}{entity},
 		"relationships": []interface{}{},
 	}
 	graphBytes, _ := json.Marshal(graphDoc)

@@ -73,18 +73,18 @@ type Tier4RunOpts struct {
 
 // Tier4Score is the group-level scorecard written by Tier 4.
 type Tier4Score struct {
-	Tier                        int          `json:"tier"`
-	WallTimeMS                  int64        `json:"wall_time_ms"`
-	Group                       string       `json:"group"`
-	RepoCount                   int          `json:"repo_count"`
-	TotalPageCount              int          `json:"total_page_count"`
-	TotalTokenCount             int          `json:"total_token_count"`
-	CrossRepoLinkCount          int          `json:"cross_repo_link_count"`
-	CrossRepoLinkUnresolved     int          `json:"cross_repo_link_unresolved"`
-	CrossRepoFlowDedupViolations int         `json:"cross_repo_flow_dedup_violations"`
-	GroupIndexUnresolved        int          `json:"group_index_unresolved"`
-	PerRepoScores               []Tier3Score `json:"per_repo_scores"`
-	Violations                  []string     `json:"violations,omitempty"`
+	Tier                         int          `json:"tier"`
+	WallTimeMS                   int64        `json:"wall_time_ms"`
+	Group                        string       `json:"group"`
+	RepoCount                    int          `json:"repo_count"`
+	TotalPageCount               int          `json:"total_page_count"`
+	TotalTokenCount              int          `json:"total_token_count"`
+	CrossRepoLinkCount           int          `json:"cross_repo_link_count"`
+	CrossRepoLinkUnresolved      int          `json:"cross_repo_link_unresolved"`
+	CrossRepoFlowDedupViolations int          `json:"cross_repo_flow_dedup_violations"`
+	GroupIndexUnresolved         int          `json:"group_index_unresolved"`
+	PerRepoScores                []Tier3Score `json:"per_repo_scores"`
+	Violations                   []string     `json:"violations,omitempty"`
 	// LLMMode is set to "emit" when the run was invoked with --llm-mode=emit.
 	// Empty string means the default deterministic-stub-only mode.
 	LLMMode string `json:"llm_mode,omitempty"`
@@ -154,7 +154,7 @@ func RunTier4(opts Tier4RunOpts) (outDir string, score Tier4Score, err error) {
 
 	// Aggregate per-repo results.
 	var perRepoScores []Tier3Score
-	var allPages []PageOutput            // all pages across all repos, tagged by repo
+	var allPages []PageOutput                    // all pages across all repos, tagged by repo
 	repoPageMap := make(map[string][]PageOutput) // slug → pages
 
 	for _, r := range results {

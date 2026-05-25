@@ -1183,9 +1183,9 @@ func extractCallRelationships(body *sitter.Node, src []byte, callerName, recvVar
 				if !seen[mvKey] {
 					seen[mvKey] = true
 					mvRec := types.RelationshipRecord{
-						FromID: callerName,
-						ToID:   mvTarget,
-						Kind:   "CALLS",
+						FromID:     callerName,
+						ToID:       mvTarget,
+						Kind:       "CALLS",
 						Properties: map[string]string{"via_value": "true"},
 					}
 					if mvRecvMatch && recvType != "" {
@@ -2071,11 +2071,11 @@ func extractImportEntities(root *sitter.Node, src []byte, filePath, moduleRoot s
 		}
 
 		records = append(records, types.EntityRecord{
-			Name:       importPath,
-			Kind:       "SCOPE.Component",
-			SourceFile: filePath,
-			Language:   "go",
-			Metadata:   metadata,
+			Name:          importPath,
+			Kind:          "SCOPE.Component",
+			SourceFile:    filePath,
+			Language:      "go",
+			Metadata:      metadata,
 			Relationships: []types.RelationshipRecord{rel},
 		})
 	}

@@ -223,7 +223,7 @@ func ResolveScoped(
 	return ScopedResult{
 		NewRelationships: merged,
 		InboundFixed:     inboundFixed,
-		SignatureRewired:  signatureRewired,
+		SignatureRewired: signatureRewired,
 	}
 }
 

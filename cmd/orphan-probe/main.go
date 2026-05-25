@@ -85,18 +85,18 @@ func isInherentlyLeafField(e *graph.Entity) bool {
 
 // Cluster groups orphan entities sharing the same (Kind, SourceFile pattern).
 type Cluster struct {
-	Kind            string   `json:"kind"`
-	SrcPattern      string   `json:"src_pattern"`
-	Count           int      `json:"count"`
+	Kind              string   `json:"kind"`
+	SrcPattern        string   `json:"src_pattern"`
+	Count             int      `json:"count"`
 	RepresentativeIDs []string `json:"representative_ids"`
 }
 
 // RepoSummary is per-repo aggregation inside a group.
 type RepoSummary struct {
-	Slug     string `json:"slug"`
-	RepoPath string `json:"repo_path"`
-	Entities int    `json:"entities"`
-	Orphans  int    `json:"orphans"`
+	Slug     string  `json:"slug"`
+	RepoPath string  `json:"repo_path"`
+	Entities int     `json:"entities"`
+	Orphans  int     `json:"orphans"`
 	Rate     float64 `json:"orphan_rate"`
 }
 
@@ -113,7 +113,7 @@ type GroupResult struct {
 
 // ProbeReport is the top-level output structure.
 type ProbeReport struct {
-	Groups          []GroupResult    `json:"groups"`
+	Groups             []GroupResult       `json:"groups"`
 	CrossGroupPatterns []CrossGroupPattern `json:"cross_group_patterns"`
 }
 
@@ -190,9 +190,9 @@ func probeGroup(cfg *registry.GroupConfig, topN int) GroupResult {
 
 	// Aggregate orphan entity list across all repos for clustering.
 	type orphanEntry struct {
-		id      string
-		kind    string
-		srcFile string
+		id       string
+		kind     string
+		srcFile  string
 		repoSlug string
 	}
 	var allOrphans []orphanEntry
@@ -315,9 +315,9 @@ func probeGroup(cfg *registry.GroupConfig, topN int) GroupResult {
 	}
 	for _, e := range entries[:n] {
 		gr.Clusters = append(gr.Clusters, Cluster{
-			Kind:            e.key.kind,
-			SrcPattern:      e.key.src,
-			Count:           e.count,
+			Kind:              e.key.kind,
+			SrcPattern:        e.key.src,
+			Count:             e.count,
 			RepresentativeIDs: clusterReps[e.key],
 		})
 	}

@@ -14,12 +14,12 @@ import (
 // and the bundle source_window was entirely missing for JSX components.
 func TestReactComponent_LineRangePopulated_Function(t *testing.T) {
 	src := "" +
-		"// header\n" +                            // line 1
-		"import React from 'react';\n" +           // line 2
-		"\n" +                                     // line 3
+		"// header\n" + // line 1
+		"import React from 'react';\n" + // line 2
+		"\n" + // line 3
 		"export function FixtureComponentA(props) {\n" + // line 4
-		"  return <div>{props.label}</div>;\n" +   // line 5
-		"}\n" +                                    // line 6
+		"  return <div>{props.label}</div>;\n" + // line 5
+		"}\n" + // line 6
 		""
 
 	e := &Extractor{}
@@ -53,14 +53,14 @@ func TestReactComponent_LineRangePopulated_Function(t *testing.T) {
 // component idiom used by the W1R4 ContractProposals reproducer).
 func TestReactComponent_LineRangePopulated_Arrow(t *testing.T) {
 	src := "" +
-		"import React from 'react';\n" +                    // line 1
-		"\n" +                                              // line 2
+		"import React from 'react';\n" + // line 1
+		"\n" + // line 2
 		"export const FixtureComponentB = (props) => {\n" + // line 3
-		"  const x = 1;\n" +                                // line 4
-		"  return (\n" +                                    // line 5
-		"    <span>{props.label}</span>\n" +                // line 6
-		"  );\n" +                                          // line 7
-		"};\n" +                                            // line 8
+		"  const x = 1;\n" + // line 4
+		"  return (\n" + // line 5
+		"    <span>{props.label}</span>\n" + // line 6
+		"  );\n" + // line 7
+		"};\n" + // line 8
 		""
 
 	e := &Extractor{}

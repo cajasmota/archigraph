@@ -10,11 +10,11 @@
 //   - Rendering ALL selected sections concurrently (goroutine pool of 4).
 //   - Assembling the sections into a single page with a generated TOC.
 //   - Running per-page contract checks:
-//     • Anchor-ID determinism (heading → slug).
-//     • Mermaid block count per-section (≤ MermaidBudgetPerSection).
-//     • Total mermaid blocks across the page (≤ MermaidBudgetPage).
-//     • Internal relative link target resolution against the page's own anchors.
-//     • Duplicate flow-block detection.
+//   - Anchor-ID determinism (heading → slug).
+//   - Mermaid block count per-section (≤ MermaidBudgetPerSection).
+//   - Total mermaid blocks across the page (≤ MermaidBudgetPage).
+//   - Internal relative link target resolution against the page's own anchors.
+//   - Duplicate flow-block detection.
 //   - Writing <entity-id>-page.md + score.json in the Tier 1 schema.
 //
 // LLM calls: Tier 1 does NOT call an external LLM. Like Tier 0 it produces a
@@ -102,10 +102,10 @@ type Tier1Score struct {
 	ContractViolations     []string `json:"contract_violations,omitempty"`
 	// LLMMode is set to "emit" when the run was invoked with --llm-mode=emit.
 	// Empty string means the default deterministic-stub-only mode.
-	LLMMode     string `json:"llm_mode,omitempty"`
+	LLMMode string `json:"llm_mode,omitempty"`
 	// CacheHits is the number of sections that were satisfied from the section
 	// cache during --llm-mode=emit (i.e. LLM call skippable for those sections).
-	CacheHits   int `json:"cache_hits,omitempty"`
+	CacheHits int `json:"cache_hits,omitempty"`
 	// CacheWrites is the number of section results written to the cache during
 	// --llm-mode=apply.
 	CacheWrites int `json:"cache_writes,omitempty"`

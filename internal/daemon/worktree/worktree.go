@@ -131,7 +131,7 @@ type WorktreeChild struct {
 // Safe for concurrent use.
 type Store struct {
 	mu       sync.Mutex
-	path     string          // absolute path to worktrees.json
+	path     string // absolute path to worktrees.json
 	children []*WorktreeChild
 }
 

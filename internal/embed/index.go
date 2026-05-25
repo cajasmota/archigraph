@@ -13,13 +13,13 @@ const embedBatchSize = 32
 
 // Result summarizes one EmbedDocument run for logging / stats.
 type Result struct {
-	Backend     string
-	Dims        int
-	Total       int // entities considered (embeddable)
-	Embedded    int // entities (re)embedded this run
-	Reused      int // entities served from the existing per-ref sidecar (hash hit)
-	CacheHit    int // entities served from the cross-ref content-hash cache (PH8)
-	Evicted     int // stale entities dropped from the sidecar
+	Backend  string
+	Dims     int
+	Total    int // entities considered (embeddable)
+	Embedded int // entities (re)embedded this run
+	Reused   int // entities served from the existing per-ref sidecar (hash hit)
+	CacheHit int // entities served from the cross-ref content-hash cache (PH8)
+	Evicted  int // stale entities dropped from the sidecar
 }
 
 // embeddable reports whether an entity is worth embedding. We skip container
@@ -59,7 +59,7 @@ func EmbedDocumentWithCache(ctx context.Context, doc *graph.Document, repoRoot, 
 	sr := newSnippetReader(repoRoot)
 
 	type pending struct {
-		idx  int    // index into doc.Entities
+		idx  int // index into doc.Entities
 		id   string
 		hash string
 		text string

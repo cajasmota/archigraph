@@ -445,9 +445,9 @@ func TestClassify_KnownBasenames(t *testing.T) {
 func TestClassify_IgnoredFiles(t *testing.T) {
 	for _, p := range []string{
 		"src/main.go",
-		".envrc",          // direnv — not an env file
-		"poetry.lock",     // skip per issue
-		".gitignore",      // explicitly skipped
+		".envrc",      // direnv — not an env file
+		"poetry.lock", // skip per issue
+		".gitignore",  // explicitly skipped
 		"foo.txt",
 		"random.json",
 	} {

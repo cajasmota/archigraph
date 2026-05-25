@@ -194,11 +194,11 @@ var goKnownExternalRoots = map[string]struct{}{
 	"github.com/rabbitmq/amqp091-go": {},
 
 	// Cloud SDKs
-	"github.com/aws/aws-sdk-go":          {},
-	"github.com/aws/aws-sdk-go-v2":       {},
-	"github.com/aws/aws-lambda-go":        {},
-	"cloud.google.com/go":                {},
-	"github.com/Azure/azure-sdk-for-go":  {},
+	"github.com/aws/aws-sdk-go":         {},
+	"github.com/aws/aws-sdk-go-v2":      {},
+	"github.com/aws/aws-lambda-go":      {},
+	"cloud.google.com/go":               {},
+	"github.com/Azure/azure-sdk-for-go": {},
 
 	// Observability
 	"github.com/prometheus/client_golang":   {},
@@ -222,18 +222,18 @@ var goKnownExternalRoots = map[string]struct{}{
 	"github.com/mailru/easyjson":   {},
 
 	// Misc utility
-	"github.com/google/wire":           {},
-	"github.com/google/go-github":      {},
-	"github.com/pquerna/cachecontrol":  {},
-	"github.com/patrickmn/go-cache":    {},
-	"github.com/dgraph-io/ristretto":   {},
-	"github.com/hashicorp/golang-lru":  {},
-	"github.com/robfig/cron":           {},
-	"github.com/cenkalti/backoff":       {},
-	"github.com/fsnotify/fsnotify":      {},
-	"github.com/davecgh/go-spew":        {},
-	"github.com/stretchr/objx":          {},
-	"github.com/uber-go/zap":            {},
+	"github.com/google/wire":          {},
+	"github.com/google/go-github":     {},
+	"github.com/pquerna/cachecontrol": {},
+	"github.com/patrickmn/go-cache":   {},
+	"github.com/dgraph-io/ristretto":  {},
+	"github.com/hashicorp/golang-lru": {},
+	"github.com/robfig/cron":          {},
+	"github.com/cenkalti/backoff":     {},
+	"github.com/fsnotify/fsnotify":    {},
+	"github.com/davecgh/go-spew":      {},
+	"github.com/stretchr/objx":        {},
+	"github.com/uber-go/zap":          {},
 
 	// TUI / UI
 	"github.com/charmbracelet/huh":       {},

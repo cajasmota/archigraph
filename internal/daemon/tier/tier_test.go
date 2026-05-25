@@ -228,7 +228,10 @@ func TestHeapEviction(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestTierString(t *testing.T) {
-	cases := []struct{ t tier.Tier; want string }{
+	cases := []struct {
+		t    tier.Tier
+		want string
+	}{
 		{tier.TierHot, "hot"},
 		{tier.TierWarm, "warm"},
 		{tier.TierCold, "cold"},

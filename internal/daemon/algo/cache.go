@@ -67,9 +67,9 @@ type Cache struct {
 // entry serialises concurrent Gets for the same key — only one compute
 // runs at a time. The channel is closed when the result is ready.
 type entry struct {
-	mu  sync.Mutex
-	res *Results
-	err error
+	mu   sync.Mutex
+	res  *Results
+	err  error
 	done chan struct{}
 }
 

@@ -23,12 +23,12 @@
 // for any `__init__.py` source file and stamps:
 //
 //   - re_export: "true"      — every IMPORTS edge whose source_module
-//                              starts with "." (relative).
+//     starts with "." (relative).
 //   - package_init: "true"   — every IMPORTS edge on an __init__.py file.
 //   - public: "true"         — when the local_name (or alias target)
-//                              appears in the file's __all__ declaration.
+//     appears in the file's __all__ declaration.
 //   - alias: "<target>"      — when the original import used `as <alias>`
-//                              (i.e. local_name differs from imported_name).
+//     (i.e. local_name differs from imported_name).
 //
 // The pass also coordinates with dead-imports detection (#1985) by
 // returning the set of names that should be treated as "live" regardless
@@ -44,7 +44,6 @@ import (
 	"github.com/cajasmota/archigraph/internal/extractor"
 	"github.com/cajasmota/archigraph/internal/types"
 )
-
 
 // dunderAllRe matches a module-level `__all__ = (...)` / `__all__ = [...]`
 // assignment and captures the inner contents (parens or brackets). It is
@@ -161,4 +160,3 @@ func parseDunderAll(src string) map[string]bool {
 	}
 	return out
 }
-

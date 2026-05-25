@@ -166,9 +166,9 @@ var recognisedRuleSuffixes = []string{
 
 // alwaysRecognised is the set of well-known rule kinds without a typed suffix.
 var alwaysRecognised = map[string]bool{
-	"filegroup":      true,
-	"alias":          true,
-	"proto_library":  true,
+	"filegroup":          true,
+	"alias":              true,
+	"proto_library":      true,
 	"grpc_proto_library": true,
 }
 

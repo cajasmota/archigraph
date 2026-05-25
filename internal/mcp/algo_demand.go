@@ -21,8 +21,8 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/algo"
-	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/archigraph/internal/graph"
 )
 
 // globalAlgoCache is the process-wide on-demand algo cache. It is

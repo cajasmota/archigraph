@@ -3,17 +3,17 @@
 // Each `TestRegression_*` test pins the post-merge contract Wave 6 evidence
 // surfaced was still violated by earlier "fix" PRs:
 //
-//   #1964 — every Python entity (Operation, Class, Schema/field, Constraint,
-//           Pattern, Config, Module) emits a non-zero end_line. W6R1 + W6R2
-//           saw end_line=0 on production Operations even though #1987 added
-//           a regression test for the buildFunction path; the leak came from
-//           supplemental passes whose entities never went through buildFunction.
-//   #1966 — every Python entity emits Language="python". W6R1 saw
-//           language: "" on Operations. The constraint pass was using
-//           file.Language (unset on some callers); the finalize sweep
-//           catches every other future leak.
-//   #1990 — admin.site.register(...) walks EVERY call in the file, not just
-//           the first. W6R4 saw 1 edge for 8 register calls.
+//	#1964 — every Python entity (Operation, Class, Schema/field, Constraint,
+//	        Pattern, Config, Module) emits a non-zero end_line. W6R1 + W6R2
+//	        saw end_line=0 on production Operations even though #1987 added
+//	        a regression test for the buildFunction path; the leak came from
+//	        supplemental passes whose entities never went through buildFunction.
+//	#1966 — every Python entity emits Language="python". W6R1 saw
+//	        language: "" on Operations. The constraint pass was using
+//	        file.Language (unset on some callers); the finalize sweep
+//	        catches every other future leak.
+//	#1990 — admin.site.register(...) walks EVERY call in the file, not just
+//	        the first. W6R4 saw 1 edge for 8 register calls.
 //
 // Fixture-name convention (memory feedback_archigraph_competitor_name_scrub):
 // `client_fixture_a`, never a real client.

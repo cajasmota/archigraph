@@ -26,10 +26,10 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon/watch"
 	"github.com/cajasmota/archigraph/internal/dashboard"
 	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/process"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/jobs"
 	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/archigraph/internal/process"
 	"github.com/cajasmota/archigraph/internal/progress"
 	"github.com/cajasmota/archigraph/internal/quality"
 	"github.com/cajasmota/archigraph/internal/quality/audit"
@@ -87,7 +87,7 @@ func systemTotalMemoryMB() int64 {
 //
 //   - sysMB ≤ 0 → 2 (sysinfo unavailable)
 //   - < 8 GB    → 2 (floor)
-//   -  8 GB     → 2
+//   - 8 GB     → 2
 //   - 16 GB     → 4
 //   - 32 GB     → 8
 //   - ≥ 32 GB   → 8 (ceiling; above this, file-I/O contention outweighs the gain)

@@ -1,11 +1,12 @@
 // bundle_c_test.go — Python Bundle C coverage tests.
 //
 // One file, five tickets:
-//   #1979 — Celery .delay() / .apply_async() emits CALLS edge caller→task.
-//   #1980 — @shared_task decorator kwargs captured + is_task property.
-//   #1984 — async def is_async property + channel_layer dispatch CALLS edge.
-//   #1985 — Dead imports stamped live=false / dead_import=true.
-//   #1991 — __init__.py from .X import Y annotated re_export / public / alias.
+//
+//	#1979 — Celery .delay() / .apply_async() emits CALLS edge caller→task.
+//	#1980 — @shared_task decorator kwargs captured + is_task property.
+//	#1984 — async def is_async property + channel_layer dispatch CALLS edge.
+//	#1985 — Dead imports stamped live=false / dead_import=true.
+//	#1991 — __init__.py from .X import Y annotated re_export / public / alias.
 //
 // Test fixtures use the synthetic "client-fixture-X" name for any pseudo-
 // package reference. No real client / product names are leaked.
@@ -17,8 +18,8 @@ import (
 	"testing"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
 	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	"github.com/cajasmota/archigraph/internal/types"
 )
 
 // extractPy is a small helper that drives the registered "python" extractor
@@ -84,7 +85,7 @@ func TestCeleryDecoratorKwargsCaptured(t *testing.T) {
 def do_work(self, x):
     return x + 1
 `
-	ents := extractBundleC(t,"client_fixture_x/tasks.py", src)
+	ents := extractBundleC(t, "client_fixture_x/tasks.py", src)
 
 	op := findEntityByLeaf(ents, "SCOPE.Operation", "do_work")
 	if op == nil {
@@ -116,7 +117,7 @@ func TestCeleryDefaultTaskNameFromModulePath(t *testing.T) {
 def send_email():
     pass
 `
-	ents := extractBundleC(t,"client_fixture_x/notifications/tasks.py", src)
+	ents := extractBundleC(t, "client_fixture_x/notifications/tasks.py", src)
 	op := findEntityByLeaf(ents, "SCOPE.Operation", "send_email")
 	if op == nil {
 		t.Fatal("Operation entity for send_email not found")
@@ -143,7 +144,7 @@ def create_order(order_id):
     process_payment.delay(order_id)
     process_payment.apply_async((order_id,), countdown=10)
 `
-	ents := extractBundleC(t,"client_fixture_x/orders.py", src)
+	ents := extractBundleC(t, "client_fixture_x/orders.py", src)
 	if !anyCallEdge(ents, "create_order", "process_payment") {
 		t.Error("expected CALLS edge create_order -> process_payment via .delay() / .apply_async()")
 	}
@@ -161,7 +162,7 @@ async def connect(scope):
 def sync_handler():
     pass
 `
-	ents := extractBundleC(t,"client_fixture_x/consumer.py", src)
+	ents := extractBundleC(t, "client_fixture_x/consumer.py", src)
 	asyncOp := findEntityByLeaf(ents, "SCOPE.Operation", "connect")
 	if asyncOp == nil {
 		t.Fatal("connect Operation not found")
@@ -189,7 +190,7 @@ func TestAsyncChannelLayerDispatchEmitsCallsEdge(t *testing.T) {
     async def broadcast(self, message):
         await self.channel_layer.group_send("notifications", {"type": "msg", "text": message})
 `
-	ents := extractBundleC(t,"client_fixture_x/consumer.py", src)
+	ents := extractBundleC(t, "client_fixture_x/consumer.py", src)
 
 	wantMethods := []struct {
 		leaf   string
@@ -230,7 +231,7 @@ class Foo(APIView):
     def get(self, request):
         return APIView()
 `
-	ents := extractBundleC(t,"client_fixture_x/views.py", src)
+	ents := extractBundleC(t, "client_fixture_x/views.py", src)
 	// Locate the file entity which carries the IMPORTS edges.
 	var fileEnt *types.EntityRecord
 	for i := range ents {
@@ -244,9 +245,9 @@ class Foo(APIView):
 	}
 
 	check := map[string]string{
-		"HasPermission":    "true", // expected dead
-		"IsAuthenticated":  "",     // live (used in permission_classes list)
-		"APIView":          "",     // live (used as base + constructed)
+		"HasPermission":   "true", // expected dead
+		"IsAuthenticated": "",     // live (used in permission_classes list)
+		"APIView":         "",     // live (used as base + constructed)
 	}
 	seen := map[string]bool{}
 	for _, r := range fileEnt.Relationships {
@@ -279,7 +280,7 @@ func TestInitPyReExportAnnotations(t *testing.T) {
 from .models import User
 __all__ = ("celery_app", "User")
 `
-	ents := extractBundleC(t,"client_fixture_x/__init__.py", src)
+	ents := extractBundleC(t, "client_fixture_x/__init__.py", src)
 	var fileEnt *types.EntityRecord
 	for i := range ents {
 		if ents[i].Kind == "SCOPE.Component" && ents[i].Subtype == "file" {
@@ -340,7 +341,7 @@ func TestReExportSuppressesDeadImport(t *testing.T) {
 	src := `from .celery import app as celery_app
 __all__ = ("celery_app",)
 `
-	ents := extractBundleC(t,"client_fixture_x/__init__.py", src)
+	ents := extractBundleC(t, "client_fixture_x/__init__.py", src)
 	var fileEnt *types.EntityRecord
 	for i := range ents {
 		if ents[i].Kind == "SCOPE.Component" && ents[i].Subtype == "file" {

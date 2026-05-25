@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
 	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	"github.com/cajasmota/archigraph/internal/graph/fbreader"
 	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
 )
 

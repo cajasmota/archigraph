@@ -389,4 +389,3 @@ public class AuthController {
 		t.Errorf("me auth props = %v", me)
 	}
 }
-

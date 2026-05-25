@@ -99,7 +99,7 @@ func issue1978Harness(t *testing.T) (groupName, classEntityID string) {
 				StartLine:  5,
 				Language:   "python",
 				Properties: map[string]string{
-					"field_type":     "CharField",
+					"field_type":       "CharField",
 					"kwarg.max_length": "200",
 				},
 			},

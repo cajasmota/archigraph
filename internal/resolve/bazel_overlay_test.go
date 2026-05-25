@@ -17,7 +17,7 @@ func makeTarget(id, label, pkg string) types.EntityRecord {
 		SourceFile: pkg + "/BUILD",
 		Language:   "bazel",
 		Properties: map[string]string{
-			"label":        label,
+			"label":         label,
 			"bazel_package": pkg,
 		},
 	}
