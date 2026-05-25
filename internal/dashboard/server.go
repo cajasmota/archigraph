@@ -556,6 +556,18 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("GET /api/source", s.handleSource)
 	mux.HandleFunc("GET /api/findings", s.handleListFindings)
 
+	// Multi-ref surface (#2220) — 6 read-only endpoints + /refs listing.
+	// All accept ?ref=<name>|@all|@current (missing ?ref= == current HEAD).
+	// NOTE: /refs must be registered before the wildcard /{repo}/... below so
+	// Go 1.22 ServeMux picks the more-specific static path first.
+	mux.HandleFunc("GET /api/groups/{group}/refs", s.handleGroupRefs)
+	mux.HandleFunc("GET /api/groups/{group}/stats", s.handleGroupStats)
+	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/entities", s.handleRepoEntities)
+	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/relationships", s.handleRepoRelationships)
+	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/cross-repo-edges", s.handleRepoCrossRepoEdges)
+	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/orphans", s.handleRepoOrphans)
+	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/patterns", s.handleRepoPatterns)
+
 	// WebSocket push
 	mux.HandleFunc("/ws/events", s.handleWSEvents)
 
