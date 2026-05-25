@@ -14,9 +14,9 @@
 //
 //  1. Trigger limit: if more than the effective limit files changed in the
 //     debounced batch we fall back to full reindex. The effective limit is:
-//       - ARCHIGRAPH_INCREMENTAL_MAX_FILES env var (if set to a valid int)
-//       - 50 when the active ref is the repo's default (main) branch
-//       - 20 otherwise (feature branches)
+//     - ARCHIGRAPH_INCREMENTAL_MAX_FILES env var (if set to a valid int)
+//     - 50 when the active ref is the repo's default (main) branch
+//     - 20 otherwise (feature branches)
 //     The #2167 conservative default of 5 is still the hard floor when the
 //     env override is absent; 20 is the raised default for feature branches.
 //

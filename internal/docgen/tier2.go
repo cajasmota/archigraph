@@ -53,11 +53,11 @@ const MermaidBudgetSlice = 15
 // OutboundRelKinds are the relationship kinds considered "outbound" for
 // dependent selection. CALLS-out and IMPORTS are the primary signals.
 var OutboundRelKinds = map[string]bool{
-	"CALLS":         true,
-	"CALLS-out":     true,
-	"IMPORTS":       true,
-	"DEPENDS_ON":    true,
-	"USES":          true,
+	"CALLS":      true,
+	"CALLS-out":  true,
+	"IMPORTS":    true,
+	"DEPENDS_ON": true,
+	"USES":       true,
 }
 
 // Tier2RunOpts contains the resolved inputs for a Tier 2 run.
@@ -90,19 +90,19 @@ type Tier2RunOpts struct {
 
 // Tier2Score is the slice-level scorecard written by Tier 2.
 type Tier2Score struct {
-	Tier                        int      `json:"tier"`
-	WallTimeMS                  int64    `json:"wall_time_ms"`
-	PageCount                   int      `json:"page_count"`
-	TotalTokenCount             int      `json:"total_token_count"`
-	CrossPageLinkCount          int      `json:"cross_page_link_count"`
-	CrossPageLinkUnresolved     int      `json:"cross_page_link_unresolved"`
-	FlowDuplicationViolations   int      `json:"flow_duplication_violations"`
-	PatternLinkViolations       int      `json:"pattern_link_violations"`
-	AnchorConsistencyViolations int      `json:"anchor_consistency_violations"`
-	SliceMermaidCount           int      `json:"slice_mermaid_count"`
-	SliceMermaidBudgetViolations int     `json:"slice_mermaid_budget_violations"`
-	SliceEntityIDs              []string `json:"slice_entity_ids"`
-	Violations                  []string `json:"violations,omitempty"`
+	Tier                         int      `json:"tier"`
+	WallTimeMS                   int64    `json:"wall_time_ms"`
+	PageCount                    int      `json:"page_count"`
+	TotalTokenCount              int      `json:"total_token_count"`
+	CrossPageLinkCount           int      `json:"cross_page_link_count"`
+	CrossPageLinkUnresolved      int      `json:"cross_page_link_unresolved"`
+	FlowDuplicationViolations    int      `json:"flow_duplication_violations"`
+	PatternLinkViolations        int      `json:"pattern_link_violations"`
+	AnchorConsistencyViolations  int      `json:"anchor_consistency_violations"`
+	SliceMermaidCount            int      `json:"slice_mermaid_count"`
+	SliceMermaidBudgetViolations int      `json:"slice_mermaid_budget_violations"`
+	SliceEntityIDs               []string `json:"slice_entity_ids"`
+	Violations                   []string `json:"violations,omitempty"`
 	// LLMMode is set to "emit" when the run was invoked with --llm-mode=emit.
 	// Empty string means the default deterministic-stub-only mode.
 	LLMMode string `json:"llm_mode,omitempty"`

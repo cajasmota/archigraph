@@ -276,4 +276,3 @@ func encodeDAGJSON(root *ChainStep) string {
 	}
 	return string(b)
 }
-

@@ -76,8 +76,8 @@ func TestResolveSectionProfile_CaseInsensitive(t *testing.T) {
 // and "SCOPE.Module" that the extractor may emit.
 func TestResolveSectionProfile_DottedPrefix(t *testing.T) {
 	cases := []struct {
-		kind        string
-		wantAbsent  string
+		kind       string
+		wantAbsent string
 	}{
 		{"SCOPE.Model", "how-to-local-dev"},
 		{"SCOPE.Module", ""},
@@ -390,9 +390,9 @@ func TestResolveSectionProfile_OperationNoLineCount(t *testing.T) {
 // boundary values for tier transitions.
 func TestResolveSectionProfile_OperationBoundary(t *testing.T) {
 	cases := []struct {
-		lines        int
-		wantSmall    bool // expects "operation.small" (no reference-deployment)
-		wantLarge    bool // expects "operation.large" (has reference-deployment)
+		lines     int
+		wantSmall bool // expects "operation.small" (no reference-deployment)
+		wantLarge bool // expects "operation.large" (has reference-deployment)
 	}{
 		{29, true, false},
 		{30, false, false},

@@ -178,8 +178,8 @@ func TestEnumerateRepoSeeds_Cap(t *testing.T) {
 
 func TestIsPageWorthy_KnownKinds(t *testing.T) {
 	cases := []struct {
-		kind  string
-		want  bool
+		kind string
+		want bool
 	}{
 		{"SCOPE.Service", true},
 		{"SCOPE.Module", true},

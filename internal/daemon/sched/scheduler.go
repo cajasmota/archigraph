@@ -225,12 +225,12 @@ type Scheduler struct {
 	algoSem chan struct{}
 
 	mu           sync.Mutex
-	inflight     map[string]int64         // repo → predicted MB charged against the ledger
-	pendingIndex map[string]bool          // repos already enqueued but not yet running
-	pendingRefs  map[string]string        // repo → ref captured at last Enqueue (overwritten on re-enqueue)
-	pendingQ     []string                 // ordered admission queue
-	queueLen     int                      // pending + admitted-but-not-yet-running
-	usedMB       int64                    // sum of inflight MB
+	inflight     map[string]int64  // repo → predicted MB charged against the ledger
+	pendingIndex map[string]bool   // repos already enqueued but not yet running
+	pendingRefs  map[string]string // repo → ref captured at last Enqueue (overwritten on re-enqueue)
+	pendingQ     []string          // ordered admission queue
+	queueLen     int               // pending + admitted-but-not-yet-running
+	usedMB       int64             // sum of inflight MB
 	linkTimers   map[string]*time.Timer
 	linkPending  map[string]bool
 	algoTimers   map[string]*time.Timer

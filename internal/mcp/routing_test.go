@@ -228,5 +228,3 @@ func TestResolveGroup_AmbiguousCWDIncludesCandidates(t *testing.T) {
 func mkdirp(p string) error {
 	return osMkdirAll(p, 0o755)
 }
-
-

@@ -908,15 +908,16 @@ var javaAPIResponseSchemaRe = regexp.MustCompile(
 // @ApiResponse (Swagger / JAX-RS 2.x). The annotation opens with a '('.
 //   - @APIResponse(responseCode = "200", ...)    — MicroProfile OpenAPI
 //   - @ApiResponse(code = 404, ...)              — Swagger / Jakarta RS
+//
 // The case-insensitive prefix `(?i)API` matches both `API` and `Api`.
 var javaAPIResponseAnnotationRe = regexp.MustCompile(`@(?i:API)Response\s*\(`)
 
 // APIResponseEntry holds one parsed @APIResponse annotation.
 type APIResponseEntry struct {
-	StatusCode     int    `json:"status_code"`
-	TypeEntityID   string `json:"type_entity_id,omitempty"`
-	TypeName       string `json:"type_name,omitempty"`
-	HasChildren    bool   `json:"has_children,omitempty"`
+	StatusCode   int    `json:"status_code"`
+	TypeEntityID string `json:"type_entity_id,omitempty"`
+	TypeName     string `json:"type_name,omitempty"`
+	HasChildren  bool   `json:"has_children,omitempty"`
 }
 
 // extractAPIResponseAnnotations scans the joined annotation block for all

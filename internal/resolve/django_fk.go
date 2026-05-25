@@ -24,11 +24,11 @@
 //     b. whose ToID is still an unresolved scope:component:ref:python:* stub.
 //  3. Tries to rewrite the stub using two strategies:
 //     (a) byPackageComponent[pkgDirOf(consumerFile)][className] — resolves
-//         cross-file same-app FKs where Building is in a sibling models file.
+//     cross-file same-app FKs where Building is in a sibling models file.
 //     (b) Properties["django_fk_string"] = "app_label.ClassName" — derives
-//         the app directory from the app_label segment and probes
-//         byPackageComponent[app_label][className]. Handles cross-app FKs
-//         like ForeignKey("auth.User", ...) pointing to django.contrib.auth.
+//     the app directory from the app_label segment and probes
+//     byPackageComponent[app_label][className]. Handles cross-app FKs
+//     like ForeignKey("auth.User", ...) pointing to django.contrib.auth.
 //
 // The pass runs AFTER BuildIndex so the byPackageComponent index is fully
 // populated, and BEFORE ReferencesEmbeddedWithAllowlist so the disposition

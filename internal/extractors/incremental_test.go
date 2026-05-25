@@ -9,9 +9,9 @@
 // We use a small synthetic Go repo as the reference corpus.  A full reindex
 // produces a baseline graph.fb. We then mutate one file and compare:
 //
-//   a) The output of a second full reindex against the mutated repo.
-//   b) The output of TryIncremental against the mutated repo starting from
-//      the baseline graph.fb.
+//	a) The output of a second full reindex against the mutated repo.
+//	b) The output of TryIncremental against the mutated repo starting from
+//	   the baseline graph.fb.
 //
 // Both outputs must produce the same set of entity names (sorted). We cannot
 // require byte-identical FB buffers because FlatBuffers builder offsets are
@@ -326,11 +326,11 @@ func TestIncremental_DeleteFile_EntitiesDisappear(t *testing.T) {
 	writeFile(t, repo, "b.go", "package p\n\nfunc Beta() {}\n")
 
 	entityA := graph.Entity{
-		ID: graph.EntityID("test-repo", "SCOPE.Operation", "Alpha", "a.go"),
+		ID:   graph.EntityID("test-repo", "SCOPE.Operation", "Alpha", "a.go"),
 		Name: "Alpha", Kind: "SCOPE.Operation", SourceFile: "a.go", Language: "go",
 	}
 	entityB := graph.Entity{
-		ID: graph.EntityID("test-repo", "SCOPE.Operation", "Beta", "b.go"),
+		ID:   graph.EntityID("test-repo", "SCOPE.Operation", "Beta", "b.go"),
 		Name: "Beta", Kind: "SCOPE.Operation", SourceFile: "b.go", Language: "go",
 	}
 	// Cross-file relationship: Beta CALLS Alpha.
@@ -712,11 +712,11 @@ func TestIncremental_GoldenSemanticEquivalence(t *testing.T) {
 	writeFile(t, repo, "core.go", "package core\n\nfunc Alpha() {}\n\nfunc Beta() {}\n")
 
 	entityAlpha := graph.Entity{
-		ID: graph.EntityID("test-repo", "SCOPE.Operation", "Alpha", "core.go"),
+		ID:   graph.EntityID("test-repo", "SCOPE.Operation", "Alpha", "core.go"),
 		Name: "Alpha", Kind: "SCOPE.Operation", SourceFile: "core.go", Language: "go",
 	}
 	entityBeta := graph.Entity{
-		ID: graph.EntityID("test-repo", "SCOPE.Operation", "Beta", "core.go"),
+		ID:   graph.EntityID("test-repo", "SCOPE.Operation", "Beta", "core.go"),
 		Name: "Beta", Kind: "SCOPE.Operation", SourceFile: "core.go", Language: "go",
 	}
 	buildMinimalGraph(t, stateDir, []graph.Entity{entityAlpha, entityBeta}, nil)

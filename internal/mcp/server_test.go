@@ -3051,7 +3051,7 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_neighbors":            {"group": "g", "entity_id": "r1::a2", "direction": "both"},
 		"archigraph_status":               {"group": "g"},
 		// PH5 (#2093): diff tool — repo/ref_a/ref_b all required.
-		"archigraph_diff_refs":            {"group": "g", "repo": "r1", "ref_a": "main", "ref_b": "feat/x"},
+		"archigraph_diff_refs": {"group": "g", "repo": "r1", "ref_a": "main", "ref_b": "feat/x"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:

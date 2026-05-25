@@ -219,9 +219,9 @@ func countEdgeRepairsFromCandidates(repairs []enrichment.DocgenRepairCandidate) 
 // UnresolvedBreakdown holds the three supplementary fields returned when
 // breakdown="unresolved_imports" is requested on archigraph_stats.
 type UnresolvedBreakdown struct {
-	ByDisposition map[string]int     `json:"unresolved_imports_by_disposition"`
-	ByLanguage    map[string]int     `json:"unresolved_imports_by_language"`
-	TopRoots      []importRootEntry  `json:"unresolved_imports_top_roots"`
+	ByDisposition map[string]int    `json:"unresolved_imports_by_disposition"`
+	ByLanguage    map[string]int    `json:"unresolved_imports_by_language"`
+	TopRoots      []importRootEntry `json:"unresolved_imports_top_roots"`
 }
 
 // importRootEntry is one row in the top-N import roots table.

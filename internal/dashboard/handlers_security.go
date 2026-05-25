@@ -20,8 +20,8 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
 	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	"github.com/cajasmota/archigraph/internal/graph/fbreader"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

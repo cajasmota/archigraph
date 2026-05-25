@@ -114,18 +114,18 @@ type Tier3RunOpts struct {
 
 // Tier3Score is the repo-level scorecard written by Tier 3.
 type Tier3Score struct {
-	Tier                     int      `json:"tier"`
-	WallTimeMS               int64    `json:"wall_time_ms"`
-	Repo                     string   `json:"repo"`
-	PageCount                int      `json:"page_count"`
-	SliceCount               int      `json:"slice_count"`
-	TotalTokenCount          int      `json:"total_token_count"`
-	MissingCoverageCount     int      `json:"missing_coverage_count"`
-	OwnershipConflictCount   int      `json:"ownership_conflict_count"`
-	IndexLinkCount           int      `json:"index_link_count"`
-	IndexLinkUnresolved      int      `json:"index_link_unresolved"`
-	SkippedBelowBudgetCount  int      `json:"skipped_below_budget_count"`
-	Violations               []string `json:"violations,omitempty"`
+	Tier                    int      `json:"tier"`
+	WallTimeMS              int64    `json:"wall_time_ms"`
+	Repo                    string   `json:"repo"`
+	PageCount               int      `json:"page_count"`
+	SliceCount              int      `json:"slice_count"`
+	TotalTokenCount         int      `json:"total_token_count"`
+	MissingCoverageCount    int      `json:"missing_coverage_count"`
+	OwnershipConflictCount  int      `json:"ownership_conflict_count"`
+	IndexLinkCount          int      `json:"index_link_count"`
+	IndexLinkUnresolved     int      `json:"index_link_unresolved"`
+	SkippedBelowBudgetCount int      `json:"skipped_below_budget_count"`
+	Violations              []string `json:"violations,omitempty"`
 	// LLMMode is set to "emit" when the run was invoked with --llm-mode=emit.
 	// Empty string means the default deterministic-stub-only mode.
 	LLMMode string `json:"llm_mode,omitempty"`

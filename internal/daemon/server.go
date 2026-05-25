@@ -36,8 +36,8 @@ type Config struct {
 	// repo returned by ReposToWatch. The Index field above remains
 	// the synchronous RPC entrypoint; the scheduler uses
 	// SchedulerIndex for fast (algo-skipped) reactive reindexes.
-	ReposToWatch   func() []string                                       // repos to subscribe at startup
-	GroupsForRepo  func(repoPath string) []string                        // for cross-repo link debounce
+	ReposToWatch   func() []string                                          // repos to subscribe at startup
+	GroupsForRepo  func(repoPath string) []string                           // for cross-repo link debounce
 	SchedulerIndex func(ctx context.Context, repo string, ref string) error // fast reindex (skip algo pass); ref is the git branch captured at enqueue time
 	SchedulerLinks func(ctx context.Context, group string) error
 	SchedulerAlgo  func(ctx context.Context, repo string) error

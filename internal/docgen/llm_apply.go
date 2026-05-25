@@ -5,11 +5,11 @@
 //
 //  1. (emit)  RunTier1 --llm-mode=emit  → writes stub page + LLMPromptBundle JSON.
 //  2. (fill)  External orchestrator reads bundle, calls LLM per section, writes
-//             LLMRunResult JSON (one markdown blob per section).
+//     LLMRunResult JSON (one markdown blob per section).
 //  3. (apply) applyResult --llm-mode=apply  → THIS FILE
-//             Reads bundle + result, validates hashes + section coverage,
-//             assembles the final page using assemblePage with LLM markdown,
-//             runs checkPageContract on real prose, writes final page + score.json.
+//     Reads bundle + result, validates hashes + section coverage,
+//     assembles the final page using assemblePage with LLM markdown,
+//     runs checkPageContract on real prose, writes final page + score.json.
 //
 // No LLM calls are made here.  No network access.  Pure file I/O + the
 // existing Tier 1 assembly and contract machinery.

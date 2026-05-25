@@ -177,9 +177,9 @@ func TestBuildIndex_PlatformVariant_DarwinLinuxVsWindows_Merged(t *testing.T) {
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:internal/mcp/tools.go:readSourceWindow",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:internal/mcp/tools.go:readSourceWindow",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -226,9 +226,9 @@ func TestBuildIndex_PlatformVariant_DarwinVsLinux_Merged(t *testing.T) {
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:pkg/caller.go:openFd",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:pkg/caller.go:openFd",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -271,9 +271,9 @@ func TestBuildIndex_PlatformVariant_DarwinVsDarwinLinux_StaysAmbiguous(t *testin
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:pkg/caller.go:openFd",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:pkg/caller.go:openFd",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -318,9 +318,9 @@ func TestBuildIndex_PlatformVariant_NoTagVsTagged_StaysAmbiguous(t *testing.T) {
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:pkg/caller.go:doWork",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:pkg/caller.go:doWork",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -364,9 +364,9 @@ func TestBuildIndex_PlatformVariant_NoTags_StillAmbiguous(t *testing.T) {
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:pkg/caller.go:doWork",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:pkg/caller.go:doWork",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -422,9 +422,9 @@ func TestBuildIndex_PlatformVariant_BothVariantsReceiveCallerEdge(t *testing.T) 
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:internal/mcp/tools.go:readSourceWindow",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:internal/mcp/tools.go:readSourceWindow",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -483,9 +483,9 @@ func TestBuildIndex_PlatformVariant_MultipleCallers_BothVariantsReceiveAll(t *te
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:pkg/caller_a.go:openPlatformFd",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:pkg/caller_a.go:openPlatformFd",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -499,9 +499,9 @@ func TestBuildIndex_PlatformVariant_MultipleCallers_BothVariantsReceiveAll(t *te
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "dddddddddddddddd",
-					ToID:   "scope:operation:method:go:pkg/caller_b.go:openPlatformFd",
-					Kind:   "CALLS",
+					FromID:     "dddddddddddddddd",
+					ToID:       "scope:operation:method:go:pkg/caller_b.go:openPlatformFd",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},
@@ -552,9 +552,9 @@ func TestBuildIndex_PlatformVariant_NoFanOutForAmbiguous(t *testing.T) {
 			Language:   "go",
 			Relationships: []types.RelationshipRecord{
 				{
-					FromID: "cccccccccccccccc",
-					ToID:   "scope:operation:method:go:pkg/caller.go:doWork",
-					Kind:   "CALLS",
+					FromID:     "cccccccccccccccc",
+					ToID:       "scope:operation:method:go:pkg/caller.go:doWork",
+					Kind:       "CALLS",
 					Properties: map[string]string{"language": "go"},
 				},
 			},

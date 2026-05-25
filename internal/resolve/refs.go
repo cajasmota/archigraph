@@ -714,9 +714,9 @@ func BuildIndex(entities []types.EntityRecord) Index {
 	// pkgOpSrc / pkgCompSrc: pkgDir → name → SourceFile of the current winner
 	// (needed to compare SourceFile strings for canonical selection without a
 	// separate ID→entity map).
-	pkgOpTag   := make(map[string]map[string]string)
+	pkgOpTag := make(map[string]map[string]string)
 	pkgCompTag := make(map[string]map[string]string)
-	pkgOpSrc   := make(map[string]map[string]string) // pkgDir → name → SourceFile of winner
+	pkgOpSrc := make(map[string]map[string]string)   // pkgDir → name → SourceFile of winner
 	pkgCompSrc := make(map[string]map[string]string) // pkgDir → name → SourceFile of winner
 
 	for k := range entities {

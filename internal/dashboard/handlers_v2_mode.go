@@ -6,7 +6,8 @@
 //
 // GET  /api/v2/daemon/mode  — returns the current mode + env defaults
 // POST /api/v2/daemon/mode  — writes daemon.config.json and restarts the
-//                             daemon (same code path as `archigraph mode <m>`)
+//
+//	daemon (same code path as `archigraph mode <m>`)
 //
 // Both handlers are registered in server.go. No authentication is required
 // beyond what the dashboard's existing withAuth middleware provides — the

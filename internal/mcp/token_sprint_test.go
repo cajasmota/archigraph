@@ -252,4 +252,3 @@ func TestRegistrySurfaceChangedSignal(t *testing.T) {
 		t.Errorf("post-mutation reload should report surfaceChanged=true")
 	}
 }
-

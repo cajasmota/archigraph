@@ -1,11 +1,11 @@
 // Package docgen_test — LLM-mode emit tests (tickets B + C, issue #1813).
 //
 // These tests verify:
-//   1. Tier 0 with --llm-mode=emit writes both .md AND -bundle.json.
-//   2. The bundle JSON unmarshals cleanly into LLMPromptBundle with correct fields.
-//   3. Tier 1 with --llm-mode=emit writes bundle with tier=1 and section count ≥ 1.
-//   4. --llm-mode=invalid returns an error mentioning valid options.
-//   5. --llm-mode="" (default) preserves existing behaviour — no bundle file written.
+//  1. Tier 0 with --llm-mode=emit writes both .md AND -bundle.json.
+//  2. The bundle JSON unmarshals cleanly into LLMPromptBundle with correct fields.
+//  3. Tier 1 with --llm-mode=emit writes bundle with tier=1 and section count ≥ 1.
+//  4. --llm-mode=invalid returns an error mentioning valid options.
+//  5. --llm-mode="" (default) preserves existing behaviour — no bundle file written.
 package docgen_test
 
 import (
@@ -524,27 +524,27 @@ func writeGraphForEmitTest(t *testing.T, archHome, repoPath, entityID string) {
 		map[string]interface{}{
 			"id": entityID, "name": "handleQueryGraph", "kind": "SCOPE.Function",
 			"source_file": "internal/daemon/query.go",
-			"start_line": 42, "end_line": 120, "language": "go",
+			"start_line":  42, "end_line": 120, "language": "go",
 			"signature": "func handleQueryGraph(w http.ResponseWriter, r *http.Request)",
 		},
 		map[string]interface{}{
 			"id": nb1ID, "name": "loadGraphFromCache", "kind": "SCOPE.Function",
 			"source_file": "internal/daemon/cache.go",
-			"start_line": 10, "end_line": 45, "language": "go",
+			"start_line":  10, "end_line": 45, "language": "go",
 		},
 		map[string]interface{}{
 			"id": nb2ID, "name": "GraphDocument", "kind": "SCOPE.Struct",
 			"source_file": "internal/graph/graph.go",
-			"start_line": 20, "end_line": 100, "language": "go",
+			"start_line":  20, "end_line": 100, "language": "go",
 		},
 	}
 	rels := []interface{}{
 		map[string]interface{}{
-			"id": fmt.Sprintf("rel001-%s", entityID[:8]),
+			"id":      fmt.Sprintf("rel001-%s", entityID[:8]),
 			"from_id": entityID, "to_id": nb1ID, "kind": "CALLS",
 		},
 		map[string]interface{}{
-			"id": fmt.Sprintf("rel002-%s", entityID[:8]),
+			"id":      fmt.Sprintf("rel002-%s", entityID[:8]),
 			"from_id": entityID, "to_id": nb2ID, "kind": "USES",
 		},
 	}

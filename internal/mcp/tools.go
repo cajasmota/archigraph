@@ -231,11 +231,11 @@ func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (
 
 	// Base response.
 	resp := map[string]any{
-		"group":           group,
-		"repo":            repo,
-		"source":          source,
-		"registry_path":   s.State.registry.Path,
-		"wire_version":    mcpWireVersion,
+		"group":         group,
+		"repo":          repo,
+		"source":        source,
+		"registry_path": s.State.registry.Path,
+		"wire_version":  mcpWireVersion,
 		// PH1c ref fields.
 		"cwd_resolved_to": cwdResolvedTo,
 		"is_worktree":     cwdRes.IsWorktree,

@@ -238,7 +238,7 @@ var sectionsByKind = map[string]SectionProfile{
 			"reference-config": "List every configuration key, environment variable, or feature flag that changes this model's " +
 				"storage behaviour (e.g. table-name overrides, encryption keys, tenant discriminator columns).",
 			"reference-misc": "Capture migration history highlights, known technical debt, or links to the ADR that introduced this model.",
-			"glossary": "Define domain terms that appear in field names, association names, or enum values. One term per row.",
+			"glossary":       "Define domain terms that appear in field names, association names, or enum values. One term per row.",
 			"module-readme": "Write a README-style intro for the module that owns this model: purpose, key sibling models, " +
 				"and how to run the associated tests. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
@@ -374,7 +374,7 @@ var sectionsByKind = map[string]SectionProfile{
 			"reference-dependencies": "List direct external and internal dependencies called by this operation. " +
 				"Separate production callees from test-only callees.",
 			"reference-misc": "Capture performance notes, known edge cases, or links to the issue/ADR that introduced this operation.",
-			"glossary": "Define domain terms appearing in the function name, parameter names, or return type. One term per row.",
+			"glossary":       "Define domain terms appearing in the function name, parameter names, or return type. One term per row.",
 			"module-readme": "Write a brief README-style intro for the module that contains this operation: " +
 				"purpose and key sibling operations. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
@@ -418,7 +418,7 @@ var sectionsByKind = map[string]SectionProfile{
 				"DO NOT include graph-metadata Properties (framework, module, role, etc.) — those are indexer-internal and not configuration. " +
 				"If the helper has no application config, say so in one sentence.",
 			"reference-misc": "Capture edge cases or performance notes specific to this helper, if any.",
-			"glossary": "Define any non-obvious domain term in the function or parameter names. Omit if all names are self-evident.",
+			"glossary":       "Define any non-obvious domain term in the function or parameter names. Omit if all names are self-evident.",
 			"module-readme": "One sentence positioning this helper within its module. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
 				"`module_manifest.functions`, or `neighbour_briefs`. " +
@@ -540,10 +540,10 @@ var sectionsByKind = map[string]SectionProfile{
 				"- Form orchestrator (owns form state, validation schema, and submission lifecycle for a multi-field form). " +
 				"Cite specific prop names, hook calls, or JSX structure as evidence for each identified pattern. " +
 				"Do NOT mention entities or edges that are not in `neighbour_briefs` or `module_manifest`.",
-			"reference-config": "List any environment variables, feature flags, or config context values that alter this component's behaviour.",
+			"reference-config":       "List any environment variables, feature flags, or config context values that alter this component's behaviour.",
 			"reference-dependencies": "List direct package dependencies (hooks, context providers, UI library components) used by this component.",
-			"reference-misc": "Capture accessibility notes (ARIA roles, keyboard nav), known edge cases, or performance considerations.",
-			"glossary": "Define any domain terms appearing in prop names or type names. One term per row.",
+			"reference-misc":         "Capture accessibility notes (ARIA roles, keyboard nav), known edge cases, or performance considerations.",
+			"glossary":               "Define any domain terms appearing in prop names or type names. One term per row.",
 			"module-readme": "Write a brief README-style intro for the module that owns this component. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
 				"`module_manifest.functions`, or `neighbour_briefs`. " +
@@ -691,7 +691,7 @@ var sectionsByKind = map[string]SectionProfile{
 			"reference-dependencies": "List direct external package dependencies (npm packages) and internal module dependencies imported by this module. " +
 				"Separate production from dev/test-only dependencies.",
 			"reference-misc": "Capture bundle-size impact notes, tree-shaking behaviour, known edge cases, or links to the ADR / issue that introduced this module.",
-			"glossary": "Define domain terms appearing in exported symbol names or type names. One term per row.",
+			"glossary":       "Define domain terms appearing in exported symbol names or type names. One term per row.",
 			// #1858 — module_configs[] grounding for js_module module-readme.
 			"module-readme": "Write a README-style introduction for this frontend module: purpose, key exports, " +
 				"quickstart dev/build commands, and any important caveats. " +
@@ -768,7 +768,7 @@ var sectionsByKind = map[string]SectionProfile{
 			"reference-dependencies": "List direct external and internal dependencies this class imports or composes " +
 				"(serializers, permission classes, filter backends, services). Separate production from test-only.",
 			"reference-misc": "Capture custom router wiring, ordering of mixins, or links to the ADR / issue that introduced this view.",
-			"glossary": "Define domain terms appearing in the class name, action names, or serializer field names. One term per row.",
+			"glossary":       "Define domain terms appearing in the class name, action names, or serializer field names. One term per row.",
 			"module-readme": "Write a brief README-style intro for the module that owns this view. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
 				"`module_manifest.functions`, or `neighbour_briefs`. " +
@@ -832,7 +832,7 @@ var sectionsByKind = map[string]SectionProfile{
 			"reference-dependencies": "List direct external and internal dependencies this class imports or composes. " +
 				"Separate production from test-only.",
 			"reference-misc": "Capture inheritance quirks, mixin ordering, known edge cases, or links to the ADR / issue that introduced this class.",
-			"glossary": "Define domain terms appearing in the class name or method names. One term per row.",
+			"glossary":       "Define domain terms appearing in the class name or method names. One term per row.",
 			"module-readme": "Write a brief README-style intro for the module that owns this class. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
 				"`module_manifest.functions`, or `neighbour_briefs`. " +
@@ -875,8 +875,8 @@ var sectionsByKind = map[string]SectionProfile{
 				"DO NOT include graph-metadata Properties (framework, module, role, etc.) — those are indexer-internal and not configuration. " +
 				"If the function has no application config, say so in one sentence.",
 			"reference-dependencies": "List direct external and internal dependencies called by this function. Separate production from test-only.",
-			"reference-misc": "Capture performance notes or edge cases specific to this function.",
-			"glossary": "Define domain terms in the function or parameter names. One term per row.",
+			"reference-misc":         "Capture performance notes or edge cases specific to this function.",
+			"glossary":               "Define domain terms in the function or parameter names. One term per row.",
 			"module-readme": "Write a brief README-style intro for the module that contains this function. " +
 				"Do NOT mention sibling entities unless they appear in `module_manifest.classes`, " +
 				"`module_manifest.functions`, or `neighbour_briefs`. " +

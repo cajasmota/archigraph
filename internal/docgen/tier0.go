@@ -74,21 +74,21 @@ var KnownSections = []string{
 // Score is the machine-readable quality scorecard written next to every Tier 0
 // output file.
 type Score struct {
-	Tier                    int    `json:"tier"`
-	Section                 string `json:"section"`
-	SeedEntity              string `json:"seed_entity"`
-	WallTimeMS              int64  `json:"wall_time_ms"`
-	TokenCountEstimate      int    `json:"token_count_estimate"`
-	MermaidCount            int    `json:"mermaid_count"`
-	InternalLinkCount       int    `json:"internal_link_count"`
-	InternalLinkUnresolved  int    `json:"internal_link_unresolved"`
-	Lines                   int    `json:"lines"`
-	Words                   int    `json:"words"`
-	NeighboursIncluded      int    `json:"neighbours_included"`
-	SeedEntityFound         bool   `json:"seed_entity_found"`
+	Tier                   int    `json:"tier"`
+	Section                string `json:"section"`
+	SeedEntity             string `json:"seed_entity"`
+	WallTimeMS             int64  `json:"wall_time_ms"`
+	TokenCountEstimate     int    `json:"token_count_estimate"`
+	MermaidCount           int    `json:"mermaid_count"`
+	InternalLinkCount      int    `json:"internal_link_count"`
+	InternalLinkUnresolved int    `json:"internal_link_unresolved"`
+	Lines                  int    `json:"lines"`
+	Words                  int    `json:"words"`
+	NeighboursIncluded     int    `json:"neighbours_included"`
+	SeedEntityFound        bool   `json:"seed_entity_found"`
 	// LLMMode is set to "emit" when the run was invoked with --llm-mode=emit.
 	// Empty string means the default deterministic-stub-only mode.
-	LLMMode                 string `json:"llm_mode,omitempty"`
+	LLMMode string `json:"llm_mode,omitempty"`
 }
 
 // RunOpts contains the resolved inputs for a Tier 0 run.
@@ -787,7 +787,7 @@ func sectionGuidance(section string) string {
 		"reference-deployment": "Describe deployment concerns: env vars, ports, scaling constraints. " +
 			"Source from graph metadata and Properties.",
 		"reference-scripts": "List CLI commands, Makefile targets, or scripts associated with this entity.",
-		"reference-misc": "Any additional reference material not covered by other sections.",
+		"reference-misc":    "Any additional reference material not covered by other sections.",
 		"module-readme": "Write a README-style intro for the module containing this entity. " +
 			"Cover purpose, key entities, and local-dev setup.",
 		"glossary": "Define domain terms appearing in this entity's name, signature, or neighbourhood. " +

@@ -217,4 +217,3 @@ func (s *Server) handleV2GroupRefs(w http.ResponseWriter, r *http.Request) {
 		"repos": repos,
 	}))
 }
-

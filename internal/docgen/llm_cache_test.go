@@ -1,19 +1,19 @@
 // Package docgen_test — section-level LLM cache tests (ticket E, issue #1813 chain).
 //
 // Test inventory (≥ 10 unit tests):
-//   1.  Write + Read roundtrip — all fields survive.
-//   2.  Cache miss returns nil,nil (no error).
-//   3.  Multi-section batch: hit + miss combined.
-//   4.  NoCache in BuildBundleOpts disables cache reads.
-//   5.  CacheStats accurate after writes.
-//   6.  CacheStats on absent directory returns 0,0,nil.
-//   7.  WriteCache is idempotent (overwrite same hash).
-//   8.  CacheHit field marshal round-trip (additive field, omitempty).
-//   9.  CacheHit absent from bundle when no cache is present.
-//  10.  PromptHash populated per-section in bundle sections.
-//  11.  ApplyResult writes cache entries (cache_writes in score).
-//  12.  Emit after apply shows cache_hit=true in bundle.
-//  13.  NoCache on ApplyResult suppresses cache writes.
+//  1. Write + Read roundtrip — all fields survive.
+//  2. Cache miss returns nil,nil (no error).
+//  3. Multi-section batch: hit + miss combined.
+//  4. NoCache in BuildBundleOpts disables cache reads.
+//  5. CacheStats accurate after writes.
+//  6. CacheStats on absent directory returns 0,0,nil.
+//  7. WriteCache is idempotent (overwrite same hash).
+//  8. CacheHit field marshal round-trip (additive field, omitempty).
+//  9. CacheHit absent from bundle when no cache is present.
+//  10. PromptHash populated per-section in bundle sections.
+//  11. ApplyResult writes cache entries (cache_writes in score).
+//  12. Emit after apply shows cache_hit=true in bundle.
+//  13. NoCache on ApplyResult suppresses cache writes.
 package docgen_test
 
 import (
@@ -110,10 +110,10 @@ func TestCache_MultiSectionBatchHitMiss(t *testing.T) {
 	dir := t.TempDir()
 
 	hashes := map[string]string{
-		"overview":  "ov0000000000000000000000000000000000000000000000000000000000000a",
-		"flows":     "fl0000000000000000000000000000000000000000000000000000000000000b",
-		"api":       "ap0000000000000000000000000000000000000000000000000000000000000c",
-		"glossary":  "gl0000000000000000000000000000000000000000000000000000000000000d",
+		"overview": "ov0000000000000000000000000000000000000000000000000000000000000a",
+		"flows":    "fl0000000000000000000000000000000000000000000000000000000000000b",
+		"api":      "ap0000000000000000000000000000000000000000000000000000000000000c",
+		"glossary": "gl0000000000000000000000000000000000000000000000000000000000000d",
 	}
 
 	// Write only overview and flows.

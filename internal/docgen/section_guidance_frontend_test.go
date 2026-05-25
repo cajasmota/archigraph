@@ -171,12 +171,12 @@ func TestReactComponent_PatternsGuidanceHasFrontendVocabulary(t *testing.T) {
 	lower := strings.ToLower(g)
 
 	required := []string{
-		"container",    // container/presentational
-		"render prop",  // render-prop pattern
-		"portal",       // React portal
-		"route",        // route-level component
-		"form",         // form orchestrator
-		"controlled",   // controlled/uncontrolled
+		"container",   // container/presentational
+		"render prop", // render-prop pattern
+		"portal",      // React portal
+		"route",       // route-level component
+		"form",        // form orchestrator
+		"controlled",  // controlled/uncontrolled
 	}
 	for _, term := range required {
 		if !strings.Contains(lower, term) {
@@ -214,10 +214,10 @@ func TestJSModule_PatternsGuidanceHasModulePatterns(t *testing.T) {
 	lower := strings.ToLower(g)
 
 	required := []string{
-		"barrel",    // barrel re-export
-		"singleton", // singleton service
+		"barrel",     // barrel re-export
+		"singleton",  // singleton service
 		"api client", // API client wrapper
-		"factory",   // factory function
+		"factory",    // factory function
 	}
 	for _, term := range required {
 		if !strings.Contains(lower, term) {

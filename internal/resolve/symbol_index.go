@@ -228,9 +228,9 @@ func MergeModuleBatch(si *SymbolIndex, offset, batchSize int) (Index, int) {
 	}
 
 	// Build-tag side-tables (mirrors BuildIndex local vars).
-	pkgOpTag   := make(map[string]map[string]string)
+	pkgOpTag := make(map[string]map[string]string)
 	pkgCompTag := make(map[string]map[string]string)
-	pkgOpSrc   := make(map[string]map[string]string)
+	pkgOpSrc := make(map[string]map[string]string)
 	pkgCompSrc := make(map[string]map[string]string)
 
 	for _, ms := range si.modules[offset:end] {
@@ -299,9 +299,9 @@ func BuildIndexFromModules(modules map[ModuleKey][]types.EntityRecord, batchSize
 	}
 	acc := accumulatorIndex(total)
 
-	pkgOpTag   := make(map[string]map[string]string)
+	pkgOpTag := make(map[string]map[string]string)
 	pkgCompTag := make(map[string]map[string]string)
-	pkgOpSrc   := make(map[string]map[string]string)
+	pkgOpSrc := make(map[string]map[string]string)
 	pkgCompSrc := make(map[string]map[string]string)
 
 	for _, ms := range si.modules {

@@ -63,6 +63,7 @@ import (
 //	@celery.task
 //	@celery.task(name="myapp.tasks.foo")
 //	@myapp_celery.task(...)
+//
 // celeryDecoratorHeadRe matches the @<celery-decorator> head (no
 // arguments). It is used to locate every Celery decorator start position;
 // matchCeleryDecorator then extracts the optional balanced `(...)` body
@@ -90,15 +91,15 @@ var celeryDispatchCallRe = regexp.MustCompile(
 // Decorator-kwarg sub-patterns. Each captures group 1 = value (raw token
 // or quoted string contents).
 var (
-	celeryKwBindRe          = regexp.MustCompile(`\bbind\s*=\s*(True|False)`)
-	celeryKwMaxRetriesRe    = regexp.MustCompile(`\bmax_retries\s*=\s*(\d+|None)`)
-	celeryKwDefaultDelayRe  = regexp.MustCompile(`\bdefault_retry_delay\s*=\s*(\d+)`)
-	celeryKwAutoretryRe     = regexp.MustCompile(`\bautoretry_for\s*=\s*\(([^)]*)\)`)
-	celeryKwRetryBackoffRe  = regexp.MustCompile(`\bretry_backoff\s*=\s*(True|False|\d+)`)
-	celeryKwNameRe          = regexp.MustCompile(`\bname\s*=\s*["']([^"']+)["']`)
-	celeryKwQueueRe         = regexp.MustCompile(`\bqueue\s*=\s*["']([^"']+)["']`)
-	celeryKwRoutingKeyRe    = regexp.MustCompile(`\brouting_key\s*=\s*["']([^"']+)["']`)
-	celeryKwSerializerRe    = regexp.MustCompile(`\bserializer\s*=\s*["']([^"']+)["']`)
+	celeryKwBindRe         = regexp.MustCompile(`\bbind\s*=\s*(True|False)`)
+	celeryKwMaxRetriesRe   = regexp.MustCompile(`\bmax_retries\s*=\s*(\d+|None)`)
+	celeryKwDefaultDelayRe = regexp.MustCompile(`\bdefault_retry_delay\s*=\s*(\d+)`)
+	celeryKwAutoretryRe    = regexp.MustCompile(`\bautoretry_for\s*=\s*\(([^)]*)\)`)
+	celeryKwRetryBackoffRe = regexp.MustCompile(`\bretry_backoff\s*=\s*(True|False|\d+)`)
+	celeryKwNameRe         = regexp.MustCompile(`\bname\s*=\s*["']([^"']+)["']`)
+	celeryKwQueueRe        = regexp.MustCompile(`\bqueue\s*=\s*["']([^"']+)["']`)
+	celeryKwRoutingKeyRe   = regexp.MustCompile(`\brouting_key\s*=\s*["']([^"']+)["']`)
+	celeryKwSerializerRe   = regexp.MustCompile(`\bserializer\s*=\s*["']([^"']+)["']`)
 )
 
 // applyCeleryAnnotations runs the post-extraction Celery annotation +

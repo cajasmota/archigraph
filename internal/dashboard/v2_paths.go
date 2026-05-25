@@ -207,33 +207,33 @@ type v2OutboundQueries struct {
 
 // v2PathDetail is the full detail for GET /api/v2/groups/:id/paths/:hash.
 type v2PathDetail struct {
-	PathHash        string             `json:"path_hash"`
-	Path            string             `json:"path"`
-	Verbs           []string           `json:"verbs"`
-	Repos           []string           `json:"repos"`
-	IsWebhook       bool               `json:"is_webhook"`
-	WebhookProvider string             `json:"webhook_provider,omitempty"`
-	Auth            bool               `json:"auth"`
-	AuthScheme      string             `json:"auth_scheme,omitempty"`
+	PathHash        string   `json:"path_hash"`
+	Path            string   `json:"path"`
+	Verbs           []string `json:"verbs"`
+	Repos           []string `json:"repos"`
+	IsWebhook       bool     `json:"is_webhook"`
+	WebhookProvider string   `json:"webhook_provider,omitempty"`
+	Auth            bool     `json:"auth"`
+	AuthScheme      string   `json:"auth_scheme,omitempty"`
 	// AuthPolicy is the structured posture resolved by the indexer
 	// (#1942 Phase 1). Frontend renders the header chip from AuthChip /
 	// AuthChipTone and the expandable evidence list from SourceChain.
-	AuthPolicy   *v2AuthPolicy      `json:"auth_policy,omitempty"`
-	AuthChip     string             `json:"auth_chip,omitempty"`
-	AuthChipTone string             `json:"auth_chip_tone,omitempty"`
-	Description     v2DescriptionBlock    `json:"description"`
-	Parameters      []v2PathParameter     `json:"parameters"`
-	ResponseShapes  []v2ResponseShape     `json:"response_shapes"`
+	AuthPolicy     *v2AuthPolicy      `json:"auth_policy,omitempty"`
+	AuthChip       string             `json:"auth_chip,omitempty"`
+	AuthChipTone   string             `json:"auth_chip_tone,omitempty"`
+	Description    v2DescriptionBlock `json:"description"`
+	Parameters     []v2PathParameter  `json:"parameters"`
+	ResponseShapes []v2ResponseShape  `json:"response_shapes"`
 	// PerStatusResponses carries per-status-code response metadata extracted
 	// from @APIResponse / @ApiResponse annotations (#1938 Phase 1). Non-empty
 	// only for Java endpoints using MicroProfile OpenAPI or JAX-RS 2.x.
 	// The frontend renders a tab strip above the ShapeTree when this is non-empty.
 	PerStatusResponses []v2PerStatusResponse `json:"per_status_responses,omitempty"`
-	Handlers        []v2HandlerDetail     `json:"handlers"`
-	InboundFetches  []v2PathEntity     `json:"inbound_fetches"`
-	Outbound        v2OutboundQueries  `json:"outbound"`
-	SideEffects     []v2PathEntity     `json:"side_effects"`
-	Tests           []v2PathEntity     `json:"tests"`
+	Handlers           []v2HandlerDetail     `json:"handlers"`
+	InboundFetches     []v2PathEntity        `json:"inbound_fetches"`
+	Outbound           v2OutboundQueries     `json:"outbound"`
+	SideEffects        []v2PathEntity        `json:"side_effects"`
+	Tests              []v2PathEntity        `json:"tests"`
 }
 
 // v2AuthSignal is one evidence row in the resolved auth_policy source chain.
@@ -925,29 +925,29 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 			}
 
 			hits = append(hits, matched{
-				Verb:          verb,
-				Handler:       handlerName,
-				QualifiedName: handlerQN,
-				Framework:     e.Properties["framework"],
-				IsWebhook:     e.Properties["is_webhook"] == "true",
-				WebhookProv:   e.Properties["webhook_provider"],
-				Auth:          e.Properties["auth"] == "true" || e.Properties["auth_scheme"] != "",
-				AuthScheme:    e.Properties["auth_scheme"],
-				Repo:          repo.Slug,
-				SourceFile:    handlerFile,
-				StartLine:     handlerLine,
-				Language:      handlerLang,
-				HasDocs:       hasDocs,
-				DocsSummary:   docsSummary,
-				DocsPath:      docsPath,
-				ResponseKeys:  respKeys,
-				StatusCodes:   statusCodes,
-				CalledByIDs:   classified.calledBy,
-				OutboundIDs:   classified.downstream,
-				SideEffectIDs: classified.sideEffects,
-				TestIDs:       classified.tests,
-				HandlerEntityIDs:     prefixedHandlerIDs,
-				DefEntityID:          dashPrefixedID(repo.Slug, e.ID),
+				Verb:             verb,
+				Handler:          handlerName,
+				QualifiedName:    handlerQN,
+				Framework:        e.Properties["framework"],
+				IsWebhook:        e.Properties["is_webhook"] == "true",
+				WebhookProv:      e.Properties["webhook_provider"],
+				Auth:             e.Properties["auth"] == "true" || e.Properties["auth_scheme"] != "",
+				AuthScheme:       e.Properties["auth_scheme"],
+				Repo:             repo.Slug,
+				SourceFile:       handlerFile,
+				StartLine:        handlerLine,
+				Language:         handlerLang,
+				HasDocs:          hasDocs,
+				DocsSummary:      docsSummary,
+				DocsPath:         docsPath,
+				ResponseKeys:     respKeys,
+				StatusCodes:      statusCodes,
+				CalledByIDs:      classified.calledBy,
+				OutboundIDs:      classified.downstream,
+				SideEffectIDs:    classified.sideEffects,
+				TestIDs:          classified.tests,
+				HandlerEntityIDs: prefixedHandlerIDs,
+				DefEntityID:      dashPrefixedID(repo.Slug, e.ID),
 				// Issue #1909 — request body type from entity properties.
 				RequestBodyType:      e.Properties["request_body_type"],
 				RequestBodyParamName: e.Properties["request_body_param_name"],

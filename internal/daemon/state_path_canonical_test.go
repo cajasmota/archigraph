@@ -182,7 +182,7 @@ func TestWarnCaseCollisions_DetectsStaleDir(t *testing.T) {
 	// but has a different hash suffix (anything != canonicalSlug).
 	base := strings.SplitN(canonicalSlug, "-", -1)
 	basePart := strings.Join(base[:len(base)-1], "-") // everything before last "-<hash>"
-	staleSlug := basePart + "-0000000000000000"        // obviously wrong hash
+	staleSlug := basePart + "-0000000000000000"       // obviously wrong hash
 	staleDir := filepath.Join(storeDir, staleSlug)
 	if err := os.Mkdir(staleDir, 0755); err != nil {
 		t.Fatalf("mkdir staleDir: %v", err)

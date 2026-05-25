@@ -14,30 +14,30 @@
 //
 // This pass:
 //
-//   1. Collects every imported local binding name from IMPORTS edges
-//      attached to the file entity (the local_name property, which
-//      defaults to the leaf imported name when no `as <alias>` clause
-//      is present — same encoding extractImports uses).
+//  1. Collects every imported local binding name from IMPORTS edges
+//     attached to the file entity (the local_name property, which
+//     defaults to the leaf imported name when no `as <alias>` clause
+//     is present — same encoding extractImports uses).
 //
-//   2. Builds the set of identifiers referenced in the source body
-//      EXCLUDING the import statements themselves. We use a simple
-//      identifier regex scan over the source minus the import lines;
-//      the goal is recall, not precision — false negatives (a name
-//      flagged dead but actually used dynamically) are worse than
-//      false positives (a dead-flagged name that is in fact dead).
+//  2. Builds the set of identifiers referenced in the source body
+//     EXCLUDING the import statements themselves. We use a simple
+//     identifier regex scan over the source minus the import lines;
+//     the goal is recall, not precision — false negatives (a name
+//     flagged dead but actually used dynamically) are worse than
+//     false positives (a dead-flagged name that is in fact dead).
 //
-//   3. For every IMPORTS edge whose local_name is NOT referenced AND
-//      is NOT a re-export (public via __all__ on a package __init__.py
-//      — coordinated with applyReExports), stamp:
+//  3. For every IMPORTS edge whose local_name is NOT referenced AND
+//     is NOT a re-export (public via __all__ on a package __init__.py
+//     — coordinated with applyReExports), stamp:
 //
-//        live: "false"
-//        dead_import: "true"
+//     live: "false"
+//     dead_import: "true"
 //
-//      The edge KIND remains "IMPORTS" — downstream consumers filter
-//      on Properties["live"] rather than splitting the edge into a
-//      separate DEAD_IMPORT kind. This preserves graph-walk semantics
-//      (existing "all imports" queries still return everything) while
-//      letting the resolver and docgen filter live vs dead.
+//     The edge KIND remains "IMPORTS" — downstream consumers filter
+//     on Properties["live"] rather than splitting the edge into a
+//     separate DEAD_IMPORT kind. This preserves graph-walk semantics
+//     (existing "all imports" queries still return everything) while
+//     letting the resolver and docgen filter live vs dead.
 //
 // Wildcard imports (`from x import *`) and module-level imports
 // (`import x` / `import x.y`) are intentionally NEVER flagged dead:

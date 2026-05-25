@@ -5,15 +5,15 @@
 // reference-* sections without filesystem-level entities for the files that
 // actually carry deployment, build, and runtime configuration:
 //
-//   Python:   pyproject.toml, setup.cfg, requirements*.txt, Pipfile,
-//             .flake8, mypy.ini, pytest.ini, .env, .env.*
-//   Java:     pom.xml, build.gradle, build.gradle.kts,
-//             application.properties, application.yml/.yaml,
-//             quarkus.properties
-//   JS/TS:    package.json, tsconfig.json, vite.config.*, next.config.*,
-//             .eslintrc.*, .prettierrc.*, .env, .env.*
-//   Go:       go.mod, Makefile
-//   General:  Dockerfile, docker-compose.yml/.yaml
+//	Python:   pyproject.toml, setup.cfg, requirements*.txt, Pipfile,
+//	          .flake8, mypy.ini, pytest.ini, .env, .env.*
+//	Java:     pom.xml, build.gradle, build.gradle.kts,
+//	          application.properties, application.yml/.yaml,
+//	          quarkus.properties
+//	JS/TS:    package.json, tsconfig.json, vite.config.*, next.config.*,
+//	          .eslintrc.*, .prettierrc.*, .env, .env.*
+//	Go:       go.mod, Makefile
+//	General:  Dockerfile, docker-compose.yml/.yaml
 //
 // The cross-language extractor framework (Pass 3) only runs on files that
 // survive classification. Many of these basenames have no language token and
@@ -57,19 +57,19 @@ const maxFileBytes = 256 * 1024 // 256 KiB
 type configKind string
 
 const (
-	formatTOML       configKind = "toml"
-	formatJSON       configKind = "json"
-	formatYAML       configKind = "yaml"
-	formatXML        configKind = "xml"
-	formatProperties configKind = "properties"
-	formatINI        configKind = "ini"
-	formatEnv        configKind = "env"
-	formatDockerfile configKind = "dockerfile"
-	formatMakefile   configKind = "makefile"
+	formatTOML         configKind = "toml"
+	formatJSON         configKind = "json"
+	formatYAML         configKind = "yaml"
+	formatXML          configKind = "xml"
+	formatProperties   configKind = "properties"
+	formatINI          configKind = "ini"
+	formatEnv          configKind = "env"
+	formatDockerfile   configKind = "dockerfile"
+	formatMakefile     configKind = "makefile"
 	formatRequirements configKind = "requirements"
-	formatGradle     configKind = "gradle"
-	formatGoMod      configKind = "go_mod"
-	formatJSConfig   configKind = "javascript"
+	formatGradle       configKind = "gradle"
+	formatGoMod        configKind = "go_mod"
+	formatJSConfig     configKind = "javascript"
 )
 
 // configSpec describes one recognised config file. Subtype is the value
@@ -84,15 +84,15 @@ type configSpec struct {
 // behaviour, but we lowercase Windows-style paths before lookup) to its
 // spec. Patterns that need glob behaviour are handled by matchPattern.
 var exactBasenames = map[string]configSpec{
-	"pyproject.toml":         {"python_project", formatTOML},
-	"setup.cfg":              {"python_project_legacy", formatINI},
-	"setup.py":               {"python_project_legacy", formatJSConfig}, // parsed as text
-	"requirements.txt":       {"python_requirements", formatRequirements},
-	"Pipfile":                {"python_pipenv", formatTOML},
-	".flake8":                {"python_flake8", formatINI},
-	"mypy.ini":               {"python_mypy", formatINI},
-	"pytest.ini":             {"python_pytest", formatINI},
-	"tox.ini":                {"python_tox", formatINI},
+	"pyproject.toml":   {"python_project", formatTOML},
+	"setup.cfg":        {"python_project_legacy", formatINI},
+	"setup.py":         {"python_project_legacy", formatJSConfig}, // parsed as text
+	"requirements.txt": {"python_requirements", formatRequirements},
+	"Pipfile":          {"python_pipenv", formatTOML},
+	".flake8":          {"python_flake8", formatINI},
+	"mypy.ini":         {"python_mypy", formatINI},
+	"pytest.ini":       {"python_pytest", formatINI},
+	"tox.ini":          {"python_tox", formatINI},
 
 	"pom.xml":                {"maven_project", formatXML},
 	"build.gradle":           {"gradle_project", formatGradle},
@@ -102,20 +102,20 @@ var exactBasenames = map[string]configSpec{
 	"application.yaml":       {"spring_yaml", formatYAML},
 	"quarkus.properties":     {"quarkus_properties", formatProperties},
 
-	"package.json":           {"node_project", formatJSON},
-	"tsconfig.json":          {"typescript_project", formatJSON},
+	"package.json":  {"node_project", formatJSON},
+	"tsconfig.json": {"typescript_project", formatJSON},
 
-	"go.mod":                 {"go_module", formatGoMod},
-	"go.sum":                 {"go_sum", formatGoMod}, // existence only
+	"go.mod": {"go_module", formatGoMod},
+	"go.sum": {"go_sum", formatGoMod}, // existence only
 
-	"Makefile":               {"makefile", formatMakefile},
-	"makefile":               {"makefile", formatMakefile},
-	"GNUmakefile":            {"makefile", formatMakefile},
+	"Makefile":    {"makefile", formatMakefile},
+	"makefile":    {"makefile", formatMakefile},
+	"GNUmakefile": {"makefile", formatMakefile},
 
-	"Dockerfile":             {"docker_image", formatDockerfile},
-	"Containerfile":          {"docker_image", formatDockerfile},
-	"docker-compose.yml":     {"docker_compose", formatYAML},
-	"docker-compose.yaml":    {"docker_compose", formatYAML},
+	"Dockerfile":          {"docker_image", formatDockerfile},
+	"Containerfile":       {"docker_image", formatDockerfile},
+	"docker-compose.yml":  {"docker_compose", formatYAML},
+	"docker-compose.yaml": {"docker_compose", formatYAML},
 }
 
 // requirementsPrefix matches requirements-dev.txt, requirements-test.txt, …
@@ -519,11 +519,11 @@ func parseXML(props map[string]string, spec configSpec, content []byte) {
 		Scope      string `xml:"scope"`
 	}
 	var pom struct {
-		XMLName      xml.Name   `xml:"project"`
-		GroupID      string     `xml:"groupId"`
-		ArtifactID   string     `xml:"artifactId"`
-		Version      string     `xml:"version"`
-		Name         string     `xml:"name"`
+		XMLName      xml.Name `xml:"project"`
+		GroupID      string   `xml:"groupId"`
+		ArtifactID   string   `xml:"artifactId"`
+		Version      string   `xml:"version"`
+		Name         string   `xml:"name"`
 		Dependencies struct {
 			Dep []mavenDep `xml:"dependency"`
 		} `xml:"dependencies"`

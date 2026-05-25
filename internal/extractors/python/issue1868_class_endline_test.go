@@ -122,8 +122,8 @@ class EllipsisOnly:
 		// Nested classes are emitted with dotted names.
 		"Outer.Inner": {minStart: 1, maxEnd: fileLineCount, minSpan: 2},
 		// Empty classes must still have end_line ≥ start_line.
-		"Empty":         {minStart: 1, maxEnd: fileLineCount, minSpan: 0},
-		"EllipsisOnly":  {minStart: 1, maxEnd: fileLineCount, minSpan: 0},
+		"Empty":        {minStart: 1, maxEnd: fileLineCount, minSpan: 0},
+		"EllipsisOnly": {minStart: 1, maxEnd: fileLineCount, minSpan: 0},
 	}
 
 	seen := map[string]bool{}

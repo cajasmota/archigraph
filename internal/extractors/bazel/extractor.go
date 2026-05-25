@@ -203,10 +203,10 @@ func ruleEntity(r *Rule) types.EntityRecord {
 		StartLine:  r.StartLine,
 		Language:   "bazel",
 		Properties: map[string]string{
-			"rule_kind":    r.Kind,
-			"target_name":  r.Name,
+			"rule_kind":     r.Kind,
+			"target_name":   r.Name,
 			"bazel_package": r.Package,
-			"label":        label,
+			"label":         label,
 		},
 		QualityScore:     1.0,
 		EnrichmentStatus: types.StatusPending,
