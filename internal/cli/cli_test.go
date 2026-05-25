@@ -127,7 +127,7 @@ func TestStatusFiltering(t *testing.T) {
 		}
 	}
 	out := &bytes.Buffer{}
-	if err := runStatus(out, "alpha"); err != nil {
+	if err := runStatus(out, "alpha", "", false); err != nil {
 		t.Fatal(err)
 	}
 	got := out.String()
@@ -159,7 +159,7 @@ func TestStatusGraphFileDetection(t *testing.T) {
 
 	// Test 1: No graph files exist
 	out := &bytes.Buffer{}
-	if err := runStatus(out, "demo"); err != nil {
+	if err := runStatus(out, "demo", "", false); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(out.String(), "indexed (never)") {
@@ -175,7 +175,7 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	out = &bytes.Buffer{}
-	if err := runStatus(out, "demo"); err != nil {
+	if err := runStatus(out, "demo", "", false); err != nil {
 		t.Fatal(err)
 	}
 	statusText := out.String()
@@ -195,7 +195,7 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	out = &bytes.Buffer{}
-	if err := runStatus(out, "demo"); err != nil {
+	if err := runStatus(out, "demo", "", false); err != nil {
 		t.Fatal(err)
 	}
 	statusText = out.String()
@@ -212,7 +212,7 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	out = &bytes.Buffer{}
-	if err := runStatus(out, "demo"); err != nil {
+	if err := runStatus(out, "demo", "", false); err != nil {
 		t.Fatal(err)
 	}
 	statusText = out.String()

@@ -9,16 +9,31 @@ import (
 )
 
 func newListCmd() *cobra.Command {
-	return &cobra.Command{
+	var refFlag string
+	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "List registered groups",
+		Long: `List registered groups.
+
+When --ref is supplied the output notes which ref is being targeted.
+Use --ref @all to show a note that all known refs are in scope (the
+group list itself is ref-independent — refs live inside groups).`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			resolvedRef, isAll, err := resolveRef(refFlag, true /* @all ok — list is read-only */)
+			if err != nil {
+				return err
+			}
 			groups, err := registry.Groups()
 			if err != nil {
 				return err
 			}
 			out := cmd.OutOrStdout()
+			if resolvedRef != "" {
+				fmt.Fprintf(out, "Note: showing groups for ref %q.\n\n", resolvedRef)
+			} else if isAll {
+				fmt.Fprintf(out, "Note: --ref @all — showing groups across all known refs.\n\n")
+			}
 			if len(groups) == 0 {
 				fmt.Fprintln(out, "No groups registered. Run `archigraph wizard` to create one.")
 				return nil
@@ -30,4 +45,6 @@ func newListCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringVar(&refFlag, "ref", "", refFlagUsage)
+	return cmd
 }

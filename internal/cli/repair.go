@@ -33,6 +33,7 @@ func newRebuildCmd() *cobra.Command {
 	var plain bool
 	var incremental bool
 	var full bool
+	var refFlag string
 
 	cmd := &cobra.Command{
 		Use:   "rebuild [group] [slug]",
@@ -46,11 +47,17 @@ Flags:
   --plain           no ANSI color or carriage-return overwriting (CI-safe)
   --json-progress   NDJSON output: one broker event per line (for scripting)
   --incremental     only re-process files changed since the last index (faster)
-  --full            force a full rebuild, ignoring any cached file-hash manifest`,
+  --full            force a full rebuild, ignoring any cached file-hash manifest
+  --ref <ref>       operate on a specific git ref; @all is refused (destructive)`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// @all is refused for destructive commands.
+			resolvedRef, _, err := resolveRef(refFlag, false /* @all NOT ok */)
+			if err != nil {
+				return err
+			}
 			// --full overrides --incremental.
 			inc := incremental && !full
-			return runRebuildClient(cmd, args, false, quiet, jsonProgress, plain, inc)
+			return runRebuildClient(cmd, args, false, quiet, jsonProgress, plain, resolvedRef, inc)
 		},
 	}
 	cmd.Flags().BoolVar(&quiet, "quiet", false, "suppress progress output; print only the final summary")
@@ -58,6 +65,7 @@ Flags:
 	cmd.Flags().BoolVar(&plain, "plain", false, "disable ANSI color and carriage-return overwrites (CI-safe)")
 	cmd.Flags().BoolVar(&incremental, "incremental", false, "only re-process files changed since the last index")
 	cmd.Flags().BoolVar(&full, "full", false, "force full rebuild, ignoring cached file-hash manifest")
+	cmd.Flags().StringVar(&refFlag, "ref", "", refFlagUsage)
 	return cmd
 }
 
@@ -65,17 +73,23 @@ func newResetCmd() *cobra.Command {
 	var quiet bool
 	var jsonProgress bool
 	var plain bool
+	var refFlag string
 
 	cmd := &cobra.Command{
 		Use:   "reset [group] [slug]",
 		Short: "Wipe .archigraph/ and rebuild via the daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRebuildClient(cmd, args, true, quiet, jsonProgress, plain)
+			resolvedRef, _, err := resolveRef(refFlag, false /* @all NOT ok — destructive */)
+			if err != nil {
+				return err
+			}
+			return runRebuildClient(cmd, args, true, quiet, jsonProgress, plain, resolvedRef, false)
 		},
 	}
 	cmd.Flags().BoolVar(&quiet, "quiet", false, "suppress progress output; print only the final summary")
 	cmd.Flags().BoolVar(&jsonProgress, "json-progress", false, "emit one NDJSON broker event per line (for scripting)")
 	cmd.Flags().BoolVar(&plain, "plain", false, "disable ANSI color and carriage-return overwrites (CI-safe)")
+	cmd.Flags().StringVar(&refFlag, "ref", "", refFlagUsage)
 	return cmd
 }
 
@@ -125,12 +139,17 @@ func fmtDuration(d time.Duration) string {
 //
 // The primary Rebuild RPC runs in a goroutine (it blocks until done); progress
 // is rendered concurrently from whichever source is available.
-func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, jsonProgress bool, plain bool, incremental ...bool) error {
+//
+// ref is the resolved --ref value ("" means current HEAD, a named string means
+// operate on that specific ref). @all is pre-rejected by the caller since
+// rebuild/reset are destructive. Wiring ref into the daemon RPC is tracked
+// separately (#2220); for now it is validated and stored but not forwarded.
+func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, jsonProgress bool, plain bool, ref string, incremental bool) error {
 	if len(args) == 0 {
 		return errors.New("supply [group] (and optional [slug])")
 	}
 
-	inc := len(incremental) > 0 && incremental[0]
+	inc := incremental
 
 	c, err := client.Dial()
 	if err != nil {
@@ -148,6 +167,11 @@ func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, 
 	}
 
 	w := cmd.OutOrStdout()
+
+	// Note when a specific ref is targeted (wiring into daemon RPC is #2220).
+	if ref != "" && !quiet && !jsonProgress {
+		fmt.Fprintf(w, "Note: --ref %q recorded; daemon-side ref routing is tracked in #2220.\n", ref)
+	}
 
 	// --quiet: skip progress, run synchronously with no token.
 	if quiet {

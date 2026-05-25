@@ -37,7 +37,7 @@ func TestStatusMissingFleetConfig(t *testing.T) {
 
 	// Run status.
 	var buf bytes.Buffer
-	if err := runStatus(&buf, ""); err != nil {
+	if err := runStatus(&buf, "", "", false); err != nil {
 		t.Fatalf("status failed: %v", err)
 	}
 
@@ -84,7 +84,7 @@ func TestStatusExistingFleetConfig(t *testing.T) {
 
 	// Run status.
 	var buf bytes.Buffer
-	if err := runStatus(&buf, ""); err != nil {
+	if err := runStatus(&buf, "", "", false); err != nil {
 		t.Fatalf("status failed: %v", err)
 	}
 

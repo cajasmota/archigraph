@@ -116,22 +116,22 @@ Setup (advanced):
 
 Operate:
   update [--refresh-rules-lite]   Update archigraph
-  doctor [--kill-stale]           Run health checks; --kill-stale terminates orphaned /tmp daemons
-  status [group]                  Show daemon health + per-repo state
-  list                            List registered groups (alias: ls)
+  doctor [--kill-stale] [--ref <ref>]  Run health checks; --kill-stale terminates orphaned /tmp daemons
+  status [group] [--ref <ref>]         Show daemon health + per-repo state
+  list [--ref <ref>]                   List registered groups (alias: ls)
 
 Repair:
-  rebuild [group] [slug]          Force AST rebuild (no cache, daemon RPC)
-  reset [group] [slug]            Wipe .archigraph/ and rebuild via daemon
+  rebuild [group] [slug] [--ref <ref>]  Force AST rebuild (no cache, daemon RPC)
+  reset [group] [slug]                  Wipe .archigraph/ and rebuild via daemon
 
 Daemon modes (S7):
   mode <background|workstation|readonly>
                                   Switch operational mode + restart daemon
 
 Lifecycle:
-  remove <group> <slug>           Remove a single repo from a group
-  delete <group>                  Delete an entire group and all its repos
-  branches [group]                List per-ref graph tiers + lifecycle management
+  remove <group> <slug> [--ref <ref>]  Remove a single repo from a group
+  delete <group>                       Delete an entire group and all its repos
+  branches [group]                     List per-ref graph tiers + lifecycle management
 
 Branch management (PH6):
   branches [group]                List all refs: tier, idle, size, pin state
@@ -160,7 +160,7 @@ Monorepo:
   monorepo list                   List indexed monorepo modules
 
 Indexing:
-  index <repo>                    Index a repository (daemon RPC)
+  index <repo> [--ref <ref>]      Index a repository (daemon RPC)
 
 MCP:
   mcp                             (removed) daemon serves MCP; see ADR-0017
