@@ -129,6 +129,13 @@ func (c *Cache) Put(bodyHash string, vec []float32) error {
 	}
 	if err := os.Rename(tmp, p); err != nil {
 		os.Remove(tmp)
+		// On Windows, renaming over a file that is concurrently held open by
+		// another writer fails with "Access is denied" (ERROR_ACCESS_DENIED).
+		// All concurrent writers compute the same vector, so if the target
+		// already exists with data we can treat the race as a success.
+		if fi, statErr := os.Stat(p); statErr == nil && fi.Size() > 0 {
+			return nil
+		}
 		return fmt.Errorf("embed cache: rename: %w", err)
 	}
 	return nil
