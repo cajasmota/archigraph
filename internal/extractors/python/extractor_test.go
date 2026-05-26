@@ -1745,9 +1745,10 @@ func entityNames(entities []types.EntityRecord) []string {
 }
 
 // TestExtract_MigrationFilePruned verifies that auto-generated Django migration
-// files (#1617) emit only the file-level SCOPE.Component and no per-class or
-// per-field entities, while a non-migration file with identical content is
-// fully extracted.
+// files (#1617 / #2283) emit exactly one Migration-kind entity (plus the
+// file-level SCOPE.Component for import resolution) and NOT per-class or
+// per-field/operation entities, while a non-migration file with identical
+// content is fully extracted.
 func TestExtract_MigrationFilePruned(t *testing.T) {
 	src := `from django.db import migrations, models
 
@@ -1768,7 +1769,8 @@ class Migration(migrations.Migration):
 		t.Fatal("python extractor not registered")
 	}
 
-	// Migration path → pruned to just the file entity.
+	// Migration path → exactly 1 Migration entity + 1 file entity; no AST
+	// walk entities (class bodies, SCOPE.Schema fields, etc.).
 	tree := parse(t, []byte(src))
 	migEnts, err := ext.Extract(context.Background(), extractor.FileInput{
 		Path: "core/migrations/0042_device_serial.py", Content: []byte(src),
@@ -1778,10 +1780,23 @@ class Migration(migrations.Migration):
 		t.Fatalf("extract migration: %v", err)
 	}
 	semantic := stripFileEntity(migEnts)
-	for _, e := range semantic {
-		t.Errorf("migration file should emit no semantic entities, got %s/%s %q", e.Kind, e.Subtype, e.Name)
+	if len(semantic) != 1 {
+		t.Fatalf("migration file should emit exactly 1 semantic (Migration) entity, got %d: %v", len(semantic), semantic)
 	}
-	if len(migEnts) == 0 {
+	migEntity := semantic[0]
+	if migEntity.Kind != "Migration" || migEntity.Subtype != "django" {
+		t.Errorf("migration entity should be kind=Migration subtype=django, got %s/%s", migEntity.Kind, migEntity.Subtype)
+	}
+	if migEntity.Name != "0042_device_serial" {
+		t.Errorf("migration entity name should be filename stem, got %q", migEntity.Name)
+	}
+	if migEntity.Properties["op_count"] != "1" {
+		t.Errorf("migration entity op_count should be 1, got %q", migEntity.Properties["op_count"])
+	}
+	if !strings.Contains(migEntity.Properties["operations"], "AddField") {
+		t.Errorf("migration entity operations should contain AddField, got %q", migEntity.Properties["operations"])
+	}
+	if len(migEnts) < 2 {
 		t.Fatal("migration file should still emit the file-level entity for import resolution")
 	}
 
@@ -1799,11 +1814,13 @@ class Migration(migrations.Migration):
 	}
 }
 
-// TestExtract_DjangoMigrationFixtures pins the #1731 migration-prune behaviour
-// against on-disk fixtures so any regression is caught at the fixture level.
+// TestExtract_DjangoMigrationFixtures pins the #1731 / #2283 migration-entity
+// behaviour against on-disk fixtures so any regression is caught at the
+// fixture level.
 //
-//   - django_migration.py.fixture  — lives under core/migrations/ → zero semantic
-//     entities (file-level entity only).
+//   - django_migration.py.fixture  — lives under core/migrations/ → exactly
+//     ONE semantic entity (kind=Migration, subtype=django) plus the file-level
+//     SCOPE.Component/file entity for import resolution.
 //   - django_models.py.fixture     — lives under core/models/ → fully extracted;
 //     at least Device class + two methods emitted.
 func TestExtract_DjangoMigrationFixtures(t *testing.T) {
@@ -1812,7 +1829,7 @@ func TestExtract_DjangoMigrationFixtures(t *testing.T) {
 		t.Fatal("python extractor not registered")
 	}
 
-	// --- migration fixture: must produce ZERO semantic entities ---
+	// --- migration fixture: must produce exactly ONE semantic (Migration) entity ---
 	migSrc, err := os.ReadFile(filepath.Join("testdata", "django_migration.py.fixture"))
 	if err != nil {
 		t.Fatalf("read django_migration fixture: %v", err)
@@ -1827,14 +1844,31 @@ func TestExtract_DjangoMigrationFixtures(t *testing.T) {
 		t.Fatalf("extract django_migration fixture: %v", err)
 	}
 	semantic := stripFileEntity(migEnts)
-	if len(semantic) > 0 {
+	if len(semantic) != 1 {
 		names := make([]string, 0, len(semantic))
 		for _, e := range semantic {
 			names = append(names, e.Kind+"/"+e.Subtype+":"+e.Name)
 		}
-		t.Errorf("django_migration fixture: expected 0 semantic entities, got %d: %v", len(semantic), names)
+		t.Fatalf("django_migration fixture: expected exactly 1 semantic (Migration) entity, got %d: %v", len(semantic), names)
 	}
-	if len(migEnts) == 0 {
+	migEnt := semantic[0]
+	if migEnt.Kind != "Migration" || migEnt.Subtype != "django" {
+		t.Errorf("django_migration fixture: semantic entity must be Migration/django, got %s/%s", migEnt.Kind, migEnt.Subtype)
+	}
+	if migEnt.Name != "0042_device_serial_number" {
+		t.Errorf("django_migration fixture: entity name must be filename stem, got %q", migEnt.Name)
+	}
+	// Fixture has 3 operations: AddField x2, AlterField x1.
+	if migEnt.Properties["op_count"] != "3" {
+		t.Errorf("django_migration fixture: expected op_count=3, got %q", migEnt.Properties["op_count"])
+	}
+	ops := migEnt.Properties["operations"]
+	for _, opType := range []string{"AddField", "AlterField"} {
+		if !strings.Contains(ops, opType) {
+			t.Errorf("django_migration fixture: operations should contain %q, got %q", opType, ops)
+		}
+	}
+	if len(migEnts) < 2 {
 		t.Fatal("django_migration fixture: file-level entity must be preserved for import resolution")
 	}
 	fileEnt := migEnts[0]
@@ -1885,5 +1919,113 @@ func TestExtract_DjangoMigrationFixtures(t *testing.T) {
 	}
 	if !hasGetURLMethod {
 		t.Error("django_models fixture: expected SCOPE.Operation 'Device.get_absolute_url'")
+	}
+}
+
+// TestExtract_DjangoMigration_OneEntityPerFile is the canonical regression
+// guard for #2283: a Django migration file with 3+ operations must emit
+// exactly one kind=Migration entity (plus the file-level SCOPE.Component for
+// import resolution). Operations are preserved in entity properties.
+func TestExtract_DjangoMigration_OneEntityPerFile(t *testing.T) {
+	src := `from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("core", "0043_prev"),
+        ("auth", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="user",
+            name="cognito_id",
+            field=models.CharField(max_length=255, blank=True),
+        ),
+        migrations.RemoveField(
+            model_name="user",
+            name="legacy_token",
+        ),
+        migrations.AlterField(
+            model_name="user",
+            name="email",
+            field=models.EmailField(max_length=254, unique=True),
+        ),
+        migrations.CreateModel(
+            name="Profile",
+            fields=[
+                ("id", models.AutoField(primary_key=True)),
+                ("bio", models.TextField(blank=True)),
+            ],
+        ),
+    ]
+`
+	ext, ok := extractor.Get("python")
+	if !ok {
+		t.Fatal("python extractor not registered")
+	}
+
+	path := "accounts/migrations/0044_user_cognito_id.py"
+	tree := parse(t, []byte(src))
+	ents, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path: path, Content: []byte(src), Language: "python", Tree: tree,
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+
+	// --- Entity count: exactly 1 Migration + 1 file entity ---
+	semantic := stripFileEntity(ents)
+	if len(semantic) != 1 {
+		t.Fatalf("#2283: expected exactly 1 Migration entity, got %d: %v", len(semantic), semantic)
+	}
+
+	// --- Kind guard ---
+	got := semantic[0]
+	if got.Kind != "Migration" {
+		t.Errorf("kind: want Migration, got %q", got.Kind)
+	}
+	if got.Subtype != "django" {
+		t.Errorf("subtype: want django, got %q", got.Subtype)
+	}
+
+	// --- Name = filename stem ---
+	if got.Name != "0044_user_cognito_id" {
+		t.Errorf("name: want 0044_user_cognito_id, got %q", got.Name)
+	}
+
+	// --- Operations preserved ---
+	if got.Properties["op_count"] != "4" {
+		t.Errorf("op_count: want 4, got %q", got.Properties["op_count"])
+	}
+	ops := got.Properties["operations"]
+	for _, opType := range []string{"AddField", "RemoveField", "AlterField", "CreateModel"} {
+		if !strings.Contains(ops, opType) {
+			t.Errorf("operations: missing %q in %q", opType, ops)
+		}
+	}
+	// Operation model/field metadata is present.
+	if !strings.Contains(ops, "cognito_id") {
+		t.Errorf("operations: expected field name cognito_id in %q", ops)
+	}
+
+	// --- Dependencies preserved ---
+	deps := got.Properties["dependencies"]
+	if !strings.Contains(deps, "core/0043_prev") {
+		t.Errorf("dependencies: expected core/0043_prev in %q", deps)
+	}
+	if !strings.Contains(deps, "auth/0001_initial") {
+		t.Errorf("dependencies: expected auth/0001_initial in %q", deps)
+	}
+
+	// --- File entity still present for import resolution ---
+	var fileEntCount int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Component" && e.Subtype == "file" {
+			fileEntCount++
+		}
+	}
+	if fileEntCount != 1 {
+		t.Errorf("file entity: want 1, got %d", fileEntCount)
 	}
 }
