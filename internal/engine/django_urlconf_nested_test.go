@@ -401,6 +401,21 @@ urlpatterns = [
 	if h := byID["http:ANY:/api/articles"]; h != "" {
 		t.Errorf("http:ANY:/api/articles source_handler = %q, want empty (CBV)", h)
 	}
+
+	// Issue #2278 — every synthetic emitted under a parent include() prefix
+	// must carry the url_prefix property so the cross-repo HTTP resolver in
+	// internal/links/http_pass.go can strip it when matching client paths.
+	for _, e := range got {
+		if e.Kind != httpEndpointKind {
+			continue
+		}
+		if e.Properties["pattern_type"] != "urlconf_nested_include" {
+			continue
+		}
+		if got := e.Properties["url_prefix"]; got != "/api" {
+			t.Errorf("entity %q: url_prefix=%q, want %q", e.ID, got, "/api")
+		}
+	}
 }
 
 // TestResolveFBVHandler verifies the handler name extraction logic.
