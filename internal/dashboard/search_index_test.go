@@ -158,9 +158,9 @@ func TestSearchIndex_Scale_10k(t *testing.T) {
 
 func TestSearchIndex_Scale_50k(t *testing.T) {
 	grp := makeScaleGroup(50_000)
-	assertSearchFast(t, grp, "alpha", 500*time.Millisecond)
-	assertSearchFast(t, grp, "entity", 500*time.Millisecond)
-	assertSearchFast(t, grp, "beta", 500*time.Millisecond)
+	assertSearchFast(t, grp, "alpha", 1000*time.Millisecond)  // 1000ms — bumped from 500ms (#2477) to accommodate macOS CI runners (639ms p99 measured). Ubuntu/Linux still well within budget.
+	assertSearchFast(t, grp, "entity", 1000*time.Millisecond) // 1000ms — bumped from 500ms (#2477) to accommodate macOS CI runners (639ms p99 measured). Ubuntu/Linux still well within budget.
+	assertSearchFast(t, grp, "beta", 1000*time.Millisecond)   // 1000ms — bumped from 500ms (#2477) to accommodate macOS CI runners (639ms p99 measured). Ubuntu/Linux still well within budget.
 }
 
 // ---------------------------------------------------------------------------
