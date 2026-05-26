@@ -123,6 +123,16 @@ var marketplaceCatalog = []CatalogSkill{
 		},
 	},
 	{
+		Slug:   "archigraph-business-docs",
+		Source: "archigraph-bundled",
+		SkillMeta: SkillMeta{
+			Name:        "archigraph-business-docs",
+			Description: "Generates PM-facing group documentation: capabilities, domain glossary, user journeys, business rules, and overview. Graph-only fallback built in — does not require tech docs.",
+			Type:        "action",
+			WhenToUse:   "When non-engineers need to understand the product, or when producing stakeholder-facing documentation. Run after /archigraph-resolve; /archigraph-tech-docs optional but improves fidelity.",
+		},
+	},
+	{
 		Slug:   "archigraph-graph-enrich",
 		Source: "archigraph-bundled",
 		SkillMeta: SkillMeta{
