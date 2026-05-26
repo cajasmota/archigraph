@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/cajasmota/archigraph/internal/install/mcpreg"
+	"github.com/cajasmota/archigraph/internal/install/skilllink"
 )
 
 // DoctorSchemaVersion is the JSON schema version for DoctorReport.
@@ -167,7 +168,7 @@ func RunDoctor(opts DoctorOptions) (*DoctorReport, error) {
 	if skillsDir == "" {
 		claudeDirs := mcpreg.DetectClaudeConfigDirs(opts.ClaudeConfigDirs)
 		if len(claudeDirs) > 0 {
-			skillsDir = filepath.Join(filepath.Dir(claudeDirs[0]), "skills")
+			skillsDir = skilllink.ClaudeSkillsDirForConfig(claudeDirs[0])
 		}
 	}
 

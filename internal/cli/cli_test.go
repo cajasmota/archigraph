@@ -538,8 +538,8 @@ func TestInstallSkillsInClaudeConfigs(t *testing.T) {
 		t.Fatalf("expected 2 installed dirs, got %d: %v", len(installed), installed)
 	}
 
-	// Verify symlinks in primary Claude config.
-	primarySkillsDir := filepath.Join(filepath.Dir(claudeDir), "skills")
+	// Verify symlinks in primary Claude config (HOME/.claude.json → HOME/.claude/skills).
+	primarySkillsDir := skilllink.ClaudeSkillsDirForConfig(claudeDir)
 	for _, skillName := range skillNames {
 		skillPath := filepath.Join(primarySkillsDir, skillName)
 		info, err := os.Lstat(skillPath)
@@ -561,8 +561,8 @@ func TestInstallSkillsInClaudeConfigs(t *testing.T) {
 		}
 	}
 
-	// Verify symlinks in secondary Claude config.
-	secondarySkillsDir := filepath.Join(filepath.Dir(claudePersonalJSON), "skills")
+	// Verify symlinks in secondary Claude config (sidecar layout).
+	secondarySkillsDir := skilllink.ClaudeSkillsDirForConfig(claudePersonalJSON)
 	for _, skillName := range skillNames {
 		skillPath := filepath.Join(secondarySkillsDir, skillName)
 		info, err := os.Lstat(skillPath)
@@ -618,7 +618,7 @@ func TestInstallSkillsIdempotent(t *testing.T) {
 	}
 
 	// Verify symlinks still exist and point correctly.
-	skillsSubdir := filepath.Join(filepath.Dir(claudeDir), "skills")
+	skillsSubdir := skilllink.ClaudeSkillsDirForConfig(claudeDir)
 	for _, skillName := range skillNames {
 		skillPath := filepath.Join(skillsSubdir, skillName)
 		target, err := os.Readlink(skillPath)
@@ -665,7 +665,7 @@ func TestRemoveSkillsFromClaudeConfigs(t *testing.T) {
 	installSkillsInClaudeConfigs(installOut, "/fake/bin", skillsDir, []string{claudeDir})
 
 	// Verify skills are installed.
-	skillsSubdir := filepath.Join(filepath.Dir(claudeDir), "skills")
+	skillsSubdir := skilllink.ClaudeSkillsDirForConfig(claudeDir)
 	for _, skillName := range skillNames {
 		_, err := os.Lstat(filepath.Join(skillsSubdir, skillName))
 		if err != nil {

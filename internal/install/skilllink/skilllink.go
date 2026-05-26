@@ -36,6 +36,86 @@ var SkillNames = []string{
 	"using-archigraph",
 }
 
+// ClaudeSkillsDirForConfig derives the skills directory associated with a
+// Claude Code config file.
+//
+// Claude Code's layout has two flavours:
+//
+//   - Primary config at HOME/.claude.json — skills live at HOME/.claude/skills/
+//     (the parent of the config file is HOME, NOT the instance dir).
+//   - Sidecar config at HOME/.claude-X/.claude.json — skills live at
+//     HOME/.claude-X/skills/ (the parent of the config IS the instance dir).
+//
+// The unifying rule is: if the config's parent directory basename already
+// starts with ".claude" (sidecar layout), the parent IS the instance dir
+// and skills sit alongside the config.  Otherwise, the instance dir is
+// derived by stripping ".json" from the config's basename and treating the
+// remainder as a subdirectory of the parent.
+//
+// Examples:
+//
+//	~/.claude.json                       → ~/.claude/skills
+//	~/.claude-personal/.claude.json      → ~/.claude-personal/skills
+//	~/.claude-extra/.claude.json         → ~/.claude-extra/skills
+//	/abs/path/.claude.json               → /abs/path/.claude/skills
+//	~/.claude-personal.json (flat)       → ~/.claude-personal/skills
+//
+// If configPath does not end in ".json", the empty string is returned.
+func ClaudeSkillsDirForConfig(configPath string) string {
+	if !strings.HasSuffix(configPath, ".json") {
+		return ""
+	}
+	parent := filepath.Dir(configPath)
+	if strings.HasPrefix(filepath.Base(parent), ".claude") {
+		// Sidecar layout — parent dir is the Claude instance dir.
+		return filepath.Join(parent, "skills")
+	}
+	// Primary / flat layout — derive the instance dir by stripping ".json".
+	stem := strings.TrimSuffix(filepath.Base(configPath), ".json")
+	return filepath.Join(parent, stem, "skills")
+}
+
+// PruneOrphanSkillSymlinks removes any *symlink* entries in skillsSubdir
+// whose basename is not in the current SkillNames set. This cleans up after
+// renamed or retired skills from earlier installs.
+//
+// Defensive: only symlinks are removed; regular directories (manual
+// installs) are left untouched.  Errors are reported via out but do not
+// abort the caller.
+func PruneOrphanSkillSymlinks(out io.Writer, skillsSubdir string) {
+	entries, err := os.ReadDir(skillsSubdir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Fprintf(out, "    ⚠ scan for orphan skills in %s: %v\n", skillsSubdir, err)
+		}
+		return
+	}
+	current := make(map[string]bool, len(SkillNames))
+	for _, name := range SkillNames {
+		current[name] = true
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if current[name] {
+			continue
+		}
+		full := filepath.Join(skillsSubdir, name)
+		info, err := os.Lstat(full)
+		if err != nil {
+			continue
+		}
+		if info.Mode()&os.ModeSymlink == 0 {
+			// Don't touch regular directories — those are manual installs.
+			continue
+		}
+		if err := os.Remove(full); err != nil {
+			fmt.Fprintf(out, "    ⚠ remove orphan skill symlink %s: %v\n", full, err)
+			continue
+		}
+		fmt.Fprintf(out, "    ⓘ removed orphan skill symlink: %s\n", name)
+	}
+}
+
 // DiscoverSkillsDir finds the source directory containing the archigraph
 // skills. It tries these locations in order:
 //
@@ -104,11 +184,20 @@ func InstallSkillsInClaudeConfigs(out io.Writer, binPath, skillsSourceDir string
 
 	installed := []string{}
 	for _, cfgPath := range claudeConfigDirs {
-		skillsSubdir := filepath.Join(filepath.Dir(cfgPath), "skills")
+		skillsSubdir := ClaudeSkillsDirForConfig(cfgPath)
+		if skillsSubdir == "" {
+			fmt.Fprintf(out, "  ⚠ cannot derive skills dir for %s (not a .json config); skipping\n", cfgPath)
+			continue
+		}
 		if err := os.MkdirAll(skillsSubdir, 0o755); err != nil {
 			fmt.Fprintf(out, "  ⚠ create skills dir %s: %v\n", skillsSubdir, err)
 			continue
 		}
+
+		// Prune orphan symlinks (renamed/retired skills from earlier installs)
+		// BEFORE adding the current set, so a stale entry never survives a
+		// re-install.
+		PruneOrphanSkillSymlinks(out, skillsSubdir)
 
 		allOK := true
 		for _, skillName := range SkillNames {
@@ -170,7 +259,11 @@ func InstallSkillsInClaudeConfigs(out io.Writer, binPath, skillsSourceDir string
 func RemoveSkillsFromClaudeConfigs(out io.Writer, claudeConfigDirs []string) []string {
 	removed := []string{}
 	for _, cfgPath := range claudeConfigDirs {
-		skillsSubdir := filepath.Join(filepath.Dir(cfgPath), "skills")
+		skillsSubdir := ClaudeSkillsDirForConfig(cfgPath)
+		if skillsSubdir == "" {
+			fmt.Fprintf(out, "  ⚠ cannot derive skills dir for %s (not a .json config); skipping\n", cfgPath)
+			continue
+		}
 
 		// Check if skills subdir exists.
 		info, err := os.Stat(skillsSubdir)

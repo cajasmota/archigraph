@@ -208,18 +208,38 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 		return nil, fmt.Errorf("step 2 – no Claude Code config directories detected")
 	}
 
-	// We install skills into the FIRST detected config dir (the primary
-	// ~/.claude/). Future improvement (#2213) could iterate over all dirs.
-	primaryClaudeDir := filepath.Dir(claudeDirs[0])
-	skillsDestDir := filepath.Join(primaryClaudeDir, "skills")
-
-	skillRecords, installedSkills, err := copySkills(skillsDir, skillsDestDir, opts.DryRun)
-	if err != nil {
-		rollback(2)
-		return nil, fmt.Errorf("step 2 – copy skills: %w", err)
+	// Copy skills into EVERY detected Claude config dir's skills/ subdir so
+	// users running multiple Claude profiles (~/.claude, ~/.claude-personal,
+	// etc.) see the skills in all of them.  The SkillRecord/Files manifest
+	// is identical regardless of how many destinations receive a copy.
+	skillRecords := map[string]SkillRecord{}
+	installedSet := map[string]bool{}
+	for _, cfgPath := range claudeDirs {
+		skillsDestDir := skilllink.ClaudeSkillsDirForConfig(cfgPath)
+		if skillsDestDir == "" {
+			fmt.Fprintf(os.Stderr,
+				"archigraph install: cannot derive skills dir for %s; skipping\n",
+				cfgPath)
+			continue
+		}
+		recs, installed, err := copySkills(skillsDir, skillsDestDir, opts.DryRun)
+		if err != nil {
+			rollback(2)
+			return nil, fmt.Errorf("step 2 – copy skills into %s: %w", skillsDestDir, err)
+		}
+		for name, rec := range recs {
+			skillRecords[name] = rec
+		}
+		for _, name := range installed {
+			installedSet[name] = true
+		}
 	}
 	state.Skills = skillRecords
-	result.SkillsInstalled = installedSkills
+	for _, name := range skilllink.SkillNames {
+		if installedSet[name] {
+			result.SkillsInstalled = append(result.SkillsInstalled, name)
+		}
+	}
 	completedSteps = append(completedSteps, 2)
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -400,6 +420,11 @@ func copySkills(srcDir, destDir string, dryRun bool) (map[string]SkillRecord, []
 		if err := os.MkdirAll(destDir, 0o755); err != nil {
 			return nil, nil, fmt.Errorf("create skills dir %s: %w", destDir, err)
 		}
+		// Prune orphan symlinks left behind by an earlier DEV install (or a
+		// previously-shipped skill that has since been renamed/retired).  We
+		// only remove symlinks here; regular directories are left intact in
+		// case a user installed a skill manually.
+		skilllink.PruneOrphanSkillSymlinks(os.Stderr, destDir)
 	}
 
 	records := make(map[string]SkillRecord)
@@ -565,18 +590,21 @@ func waitForHealthz(port int, timeout time.Duration) (string, error) {
 // ── rollback helpers ──────────────────────────────────────────────────────────
 
 // rollbackSkillsCopy removes any skill directories that were copied to
-// the destination during step 2.
+// every detected Claude config dir during step 2.
 func rollbackSkillsCopy(opts CopyOptions, state *State) {
 	claudeDirs := mcpreg.DetectClaudeConfigDirs(opts.ClaudeConfigDirs)
 	if len(claudeDirs) == 0 {
 		return
 	}
-	primaryClaudeDir := filepath.Dir(claudeDirs[0])
-	skillsDestDir := filepath.Join(primaryClaudeDir, "skills")
-
-	for skillName := range state.Skills {
-		dst := filepath.Join(skillsDestDir, skillName)
-		_ = os.RemoveAll(dst)
+	for _, cfgPath := range claudeDirs {
+		skillsDestDir := skilllink.ClaudeSkillsDirForConfig(cfgPath)
+		if skillsDestDir == "" {
+			continue
+		}
+		for skillName := range state.Skills {
+			dst := filepath.Join(skillsDestDir, skillName)
+			_ = os.RemoveAll(dst)
+		}
 	}
 }
 

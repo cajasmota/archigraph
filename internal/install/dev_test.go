@@ -565,6 +565,103 @@ func TestDoctorDevMode_NoPanicOnFileModification(t *testing.T) {
 	}
 }
 
+// TestRunDev_MultipleConfigsAndOrphanPruning verifies the #2269 fix:
+//
+//  1. When multiple Claude config dirs are passed, skill symlinks are
+//     created in EVERY config dir's skills/ subdir (primary HOME/.claude.json
+//     + sidecar HOME/.claude-*/.claude.json layouts).
+//  2. Pre-existing stale symlinks for renamed/retired skills are pruned
+//     before the current skill set is installed.
+//
+// Both bugs share a fix path so we cover them in one integration test.
+func TestRunDev_MultipleConfigsAndOrphanPruning(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink-based assertions only meaningful on non-Windows")
+	}
+	env := newDevTestEnv(t)
+
+	// Build the three real-world Claude config layouts: HOME/.claude.json
+	// (primary), HOME/.claude-personal/.claude.json and
+	// HOME/.claude-extra/.claude.json (sidecars).  newTestEnv already
+	// configured the primary at HOME/.claude/.claude.json — we add the
+	// sidecars and override ClaudeConfigDirs.
+	homeDir := filepath.Dir(filepath.Dir(env.claudeJSON)) // tmp
+	primaryCfg := env.claudeJSON                          // tmp/.claude/.claude.json
+	personalCfg := filepath.Join(homeDir, ".claude-personal", ".claude.json")
+	extraCfg := filepath.Join(homeDir, ".claude-extra", ".claude.json")
+	for _, p := range []string{personalCfg, extraCfg} {
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatalf("create sidecar dir: %v", err)
+		}
+		if err := os.WriteFile(p, []byte("{}"), 0o644); err != nil {
+			t.Fatalf("write sidecar .claude.json: %v", err)
+		}
+	}
+
+	// Pre-seed the primary skills dir with three stale orphan symlinks
+	// (renamed/retired skills from earlier installs).
+	primarySkillsDir := filepath.Join(filepath.Dir(primaryCfg), "skills")
+	if err := os.MkdirAll(primarySkillsDir, 0o755); err != nil {
+		t.Fatalf("mkdir primary skills dir: %v", err)
+	}
+	dummyTarget := filepath.Join(homeDir, "dummy-target")
+	if err := os.MkdirAll(dummyTarget, 0o755); err != nil {
+		t.Fatalf("mkdir dummy target: %v", err)
+	}
+	stale := []string{"archigraph-quality-check", "archigraph-repair", "generate-docs"}
+	for _, name := range stale {
+		if err := os.Symlink(dummyTarget, filepath.Join(primarySkillsDir, name)); err != nil {
+			t.Fatalf("seed orphan %s: %v", name, err)
+		}
+	}
+
+	opts := defaultDevOpts(env)
+	opts.ClaudeConfigDirs = []string{primaryCfg, personalCfg, extraCfg}
+
+	result, err := install.RunDev(opts)
+	if err != nil {
+		t.Fatalf("RunDev: %v", err)
+	}
+
+	// Every config dir should have the full skill set as symlinks.
+	configsAndSkillsDirs := map[string]string{
+		primaryCfg:  filepath.Join(filepath.Dir(primaryCfg), "skills"),
+		personalCfg: filepath.Join(filepath.Dir(personalCfg), "skills"),
+		extraCfg:    filepath.Join(filepath.Dir(extraCfg), "skills"),
+	}
+	for cfg, skillsSubdir := range configsAndSkillsDirs {
+		for _, name := range result.SkillsLinked {
+			dst := filepath.Join(skillsSubdir, name)
+			info, err := os.Lstat(dst)
+			if err != nil {
+				t.Errorf("config %s: skill %s missing at %s: %v", cfg, name, dst, err)
+				continue
+			}
+			if info.Mode()&os.ModeSymlink == 0 {
+				t.Errorf("config %s: skill %s at %s is not a symlink", cfg, name, dst)
+			}
+		}
+	}
+
+	// Stale orphan symlinks must be gone from the primary skills dir.
+	for _, name := range stale {
+		if _, err := os.Lstat(filepath.Join(primarySkillsDir, name)); !os.IsNotExist(err) {
+			t.Errorf("orphan symlink %s should have been pruned (err=%v)", name, err)
+		}
+	}
+
+	// The state file should record every current skill.
+	state := readState(t, result.StatePath)
+	if state == nil {
+		t.Fatal("install.json not written")
+	}
+	for _, name := range result.SkillsLinked {
+		if _, ok := state.Skills[name]; !ok {
+			t.Errorf("install.json missing skill record for %s", name)
+		}
+	}
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 // errorf is a test helper that returns a simple error value.

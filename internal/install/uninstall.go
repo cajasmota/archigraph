@@ -23,6 +23,7 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/daemon/service"
 	"github.com/cajasmota/archigraph/internal/install/mcpreg"
+	"github.com/cajasmota/archigraph/internal/install/skilllink"
 )
 
 // UninstallOptions controls RunUninstall behaviour.
@@ -108,26 +109,33 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 		return result, nil
 	}
 
-	// ── resolve skills destination ────────────────────────────────────────────
-	skillsDestDir := resolveSkillsDestDir(state)
+	// ── resolve skills destinations (every registered Claude config) ──────────
+	skillsDestDirs := resolveAllSkillsDestDirs(state)
 
 	// ── Step 1: Remove skills ─────────────────────────────────────────────────
-	if skillsDestDir != "" {
+	removedSet := map[string]bool{}
+	for _, skillsDestDir := range skillsDestDirs {
+		if skillsDestDir == "" {
+			continue
+		}
 		for skillName := range state.Skills {
 			dst := filepath.Join(skillsDestDir, skillName)
 			if opts.DryRun {
 				fmt.Fprintf(os.Stderr, "archigraph uninstall (dry-run): would remove skill %s\n", dst)
-				result.SkillsRemoved = append(result.SkillsRemoved, skillName)
+				removedSet[skillName] = true
 				continue
 			}
 			if _, err := os.Lstat(dst); err == nil {
 				if err := os.RemoveAll(dst); err != nil {
 					fmt.Fprintf(os.Stderr, "archigraph uninstall: remove skill %s: %v\n", dst, err)
 				} else {
-					result.SkillsRemoved = append(result.SkillsRemoved, skillName)
+					removedSet[skillName] = true
 				}
 			}
 		}
+	}
+	for skillName := range removedSet {
+		result.SkillsRemoved = append(result.SkillsRemoved, skillName)
 	}
 
 	// ── Step 2: Deregister MCP ────────────────────────────────────────────────
@@ -225,15 +233,18 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 	return result, nil
 }
 
-// resolveSkillsDestDir derives the skills destination directory from the
-// install state.  The primary Claude config path is the first element in
-// MCP.RegisteredPaths; the skills dir is its parent + "/skills".
-func resolveSkillsDestDir(state *State) string {
-	if len(state.MCP.RegisteredPaths) == 0 {
-		return ""
+// resolveAllSkillsDestDirs returns the skills directory for every Claude
+// config recorded in state.MCP.RegisteredPaths.  Each entry is mapped via
+// skilllink.ClaudeSkillsDirForConfig so primary vs sidecar layouts are
+// handled correctly.
+func resolveAllSkillsDestDirs(state *State) []string {
+	out := make([]string, 0, len(state.MCP.RegisteredPaths))
+	for _, cfgPath := range state.MCP.RegisteredPaths {
+		if d := skilllink.ClaudeSkillsDirForConfig(cfgPath); d != "" {
+			out = append(out, d)
+		}
 	}
-	primaryClaudeDir := filepath.Dir(state.MCP.RegisteredPaths[0])
-	return filepath.Join(primaryClaudeDir, "skills")
+	return out
 }
 
 // promptConfirm is the production confirmation prompt.

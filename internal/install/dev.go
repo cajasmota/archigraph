@@ -183,17 +183,46 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 		return nil, fmt.Errorf("step 2 – no Claude Code config directories detected")
 	}
 
-	primaryClaudeDir := filepath.Dir(claudeDirs[0])
-	skillsDestDir := filepath.Join(primaryClaudeDir, "skills")
-
-	skillRecords, linked, fallbackCopied, err := symlinkSkills(skillsDir, skillsDestDir, opts.DryRun)
-	if err != nil {
-		rollback(2)
-		return nil, fmt.Errorf("step 2 – symlink skills: %w", err)
+	// Symlink into EVERY detected Claude config dir's skills/ subdir so users
+	// running multiple Claude profiles (~/.claude, ~/.claude-personal, etc.)
+	// see the skills in all of them.  Records are merged across configs;
+	// each skill is keyed by name and the DevTarget is identical regardless
+	// of how many configs contain it.
+	skillRecords := map[string]SkillRecord{}
+	linkedSet := map[string]bool{}
+	fallbackSet := map[string]bool{}
+	for _, cfgPath := range claudeDirs {
+		skillsDestDir := skilllink.ClaudeSkillsDirForConfig(cfgPath)
+		if skillsDestDir == "" {
+			fmt.Fprintf(os.Stderr,
+				"archigraph install --dev: cannot derive skills dir for %s; skipping\n",
+				cfgPath)
+			continue
+		}
+		recs, linked, fallback, err := symlinkSkills(skillsDir, skillsDestDir, opts.DryRun)
+		if err != nil {
+			rollback(2)
+			return nil, fmt.Errorf("step 2 – symlink skills into %s: %w", skillsDestDir, err)
+		}
+		for name, rec := range recs {
+			skillRecords[name] = rec
+		}
+		for _, name := range linked {
+			linkedSet[name] = true
+		}
+		for _, name := range fallback {
+			fallbackSet[name] = true
+		}
 	}
 	state.Skills = skillRecords
-	result.SkillsLinked = linked
-	result.SkillsFallbackCopied = fallbackCopied
+	for _, name := range skilllink.SkillNames {
+		if linkedSet[name] {
+			result.SkillsLinked = append(result.SkillsLinked, name)
+		}
+		if fallbackSet[name] {
+			result.SkillsFallbackCopied = append(result.SkillsFallbackCopied, name)
+		}
+	}
 	completedSteps = append(completedSteps, 2)
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -335,6 +364,10 @@ func symlinkSkills(srcDir, destDir string, dryRun bool) (map[string]SkillRecord,
 		if err := os.MkdirAll(destDir, 0o755); err != nil {
 			return nil, nil, nil, fmt.Errorf("create skills dir %s: %w", destDir, err)
 		}
+		// Prune orphan symlinks (renamed/retired skills from earlier installs)
+		// BEFORE adding the current set, so a stale entry never survives a
+		// re-install.
+		skilllink.PruneOrphanSkillSymlinks(os.Stderr, destDir)
 	}
 
 	records := make(map[string]SkillRecord)
@@ -393,17 +426,20 @@ func symlinkSkills(srcDir, destDir string, dryRun bool) (map[string]SkillRecord,
 }
 
 // rollbackSkillsSymlinks removes any skill symlinks or directories that were
-// created under destDir during step 2 of a DEV install.
+// created under each detected Claude config dir during step 2 of a DEV install.
 func rollbackSkillsSymlinks(opts DevOptions, state *State) {
 	claudeDirs := mcpreg.DetectClaudeConfigDirs(opts.ClaudeConfigDirs)
 	if len(claudeDirs) == 0 {
 		return
 	}
-	primaryClaudeDir := filepath.Dir(claudeDirs[0])
-	skillsDestDir := filepath.Join(primaryClaudeDir, "skills")
-
-	for skillName := range state.Skills {
-		dst := filepath.Join(skillsDestDir, skillName)
-		_ = os.RemoveAll(dst)
+	for _, cfgPath := range claudeDirs {
+		skillsDestDir := skilllink.ClaudeSkillsDirForConfig(cfgPath)
+		if skillsDestDir == "" {
+			continue
+		}
+		for skillName := range state.Skills {
+			dst := filepath.Join(skillsDestDir, skillName)
+			_ = os.RemoveAll(dst)
+		}
 	}
 }
