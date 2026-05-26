@@ -205,6 +205,14 @@ func Run(ctx context.Context, cfg Config) error {
 			logger.Info("startup: MigrateToRefStore complete", "store", storeDir)
 		}
 
+		// #2085: prune old repo-hash generations so ~/.archigraph/store/ does not
+		// grow unboundedly. Runs after MigrateToRefStore so the layout is
+		// normalised before we inspect mtime order. Non-fatal.
+		keepN := KeepGenerations()
+		if removed, freed := PruneStaleGenerations(storeDir, keepN, logger); removed > 0 {
+			logger.Info("startup: pruned stale store generations",
+				"removed", removed, "freed_bytes", freed, "keep_n", keepN)
+		}
 	}
 
 	releasePID, err := AcquirePIDFile(cfg.Layout.PIDPath)
