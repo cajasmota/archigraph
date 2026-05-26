@@ -69,6 +69,7 @@ func newTestServer(t *testing.T, docs ...*graph.Document) *Server {
 			BM25:       BuildBM25(doc),
 			Adjacency:  buildAdjacency(doc, nd.name),
 			CallsAdj:   buildCallsAdjacency(doc),
+			StepAdj:    buildStepAdjacency(doc),
 			ByID:       byID,
 		}
 	}

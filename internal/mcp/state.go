@@ -205,8 +205,8 @@ func (l CrossRepoLink) EffectiveKind() string {
 
 // LoadedRepo is one repo's graph plus index plus mtime tracking.
 //
-// Pre-computed indexes (LabelIndex, BM25, Adjacency, CallsAdj, ByID) are
-// rebuilt only when the graph file mtime changes. This eliminates the
+// Pre-computed indexes (LabelIndex, BM25, Adjacency, CallsAdj, StepAdj, ByID)
+// are rebuilt only when the graph file mtime changes. This eliminates the
 // O(N) + O(R) cost per MCP query that handlers used to pay by calling
 // indexByID / buildAdjacency on every invocation (#1656).
 //
@@ -226,6 +226,7 @@ type LoadedRepo struct {
 	BM25         *BM25Index
 	Adjacency    *adjacency               // in/out neighbor lists (#1656)
 	CallsAdj     map[string][]string      // CALLS-only forward adjacency (#1656)
+	StepAdj      map[string][]stepEdge    // STEP_IN_PROCESS forward adjacency (#2417)
 	ByID         map[string]*graph.Entity // entity ID -> entity (#1656)
 	TopKPageRank []string                 // entity IDs sorted descending by PageRank (#2304)
 	Semantic     *embed.Store             // per-repo vector index (nil when no embeddings.bin)
@@ -473,6 +474,9 @@ func (s *State) reloadLocked() (int, bool, error) {
 				// CALLS-only forward adjacency for traces.followCallsBFS, which
 				// previously rebuilt this on every traces=follow query. (#1656)
 				lr.CallsAdj = buildCallsAdjacency(doc)
+				// STEP_IN_PROCESS forward adjacency for buildProcessStepsWithCrossRepo,
+				// which previously scanned Doc.Relationships at query time. (#2417)
+				lr.StepAdj = buildStepAdjacency(doc)
 				// Top-K PageRank-ordered entity ID cache for pickFallback (#2304).
 				// Eliminates the O(|Entities|) scan inside pickFallback by building
 				// the sorted slice once at index-load time.
