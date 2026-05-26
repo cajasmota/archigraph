@@ -21,14 +21,13 @@ import (
 
 	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
 	"github.com/cajasmota/archigraph/internal/graph/fbreader"
+	"github.com/cajasmota/archigraph/internal/graph/fbversion"
 )
 
 // minSupportedFBFormatVersion is the lowest graph.fb FormatVersion the loader
-// will accept. It must stay in sync with fbwriter.FormatVersion; we keep a
-// local copy here to avoid an import cycle (fbwriter imports the graph
-// package). Bumped for #2370 — Entity now carries `language` directly; old
-// graph.fb files lack the slot and must be reindexed.
-const minSupportedFBFormatVersion = 3
+// will accept. The value is sourced from internal/graph/fbversion — a leaf
+// package shared with fbwriter — so drift becomes a compile-time error.
+const minSupportedFBFormatVersion = fbversion.Version
 
 // LoadGraphFromDir loads a graph.Document from dir, where dir is the
 // .archigraph state directory for a repo (the directory that contains

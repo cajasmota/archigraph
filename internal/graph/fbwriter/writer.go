@@ -19,16 +19,13 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/graph"
 	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	"github.com/cajasmota/archigraph/internal/graph/fbversion"
 )
 
 // FormatVersion is the FlatBuffers schema version this writer emits.
-// Matches the default of Graph.version in graph.fbs.
-//
-// Bumped for #2370 — Entity now carries `language` slot directly; old
-// graph.fb files must be reindexed. archigraph is pre-1.0; there is no
-// backward-compat read path for older versions (the loader fails loudly
-// and instructs the user to run `archigraph index <repo>`).
-const FormatVersion = 3
+// The actual value lives in internal/graph/fbversion to avoid drift
+// with the loader's minimum-version gate (import-cycle-safe leaf pkg).
+const FormatVersion = fbversion.Version
 
 // WriteAtomic serializes doc to a FlatBuffers buffer and writes it to
 // outPath atomically via a sibling .tmp + rename. The on-disk file is
