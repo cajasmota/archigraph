@@ -22,7 +22,7 @@ func TestGroovyGrailsDynamic(t *testing.T) {
 		t.Skipf("groovy-grails-mini fixture not found at %s", abs)
 	}
 
-	idx := newTestIndexer(t, "groovy-grails-mini", nil)
+	idx := newTestIndexer(t, "groovy-grails-mini", nil, "")
 	doc, err := idx.Run(context.Background(), abs)
 	if err != nil {
 		t.Fatalf("Run: %v", err)

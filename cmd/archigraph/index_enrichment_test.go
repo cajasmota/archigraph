@@ -16,8 +16,8 @@ import (
 func TestEnrichmentCandidates_DjangoFixture(t *testing.T) {
 	// Copy the django_app fixture into a tmp dir so we can inspect the
 	// state output without polluting source-tree fixtures.
-	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT.
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	// #1626: per-repo state lives in the external store; use explicit stateDir.
+	stateDir := t.TempDir()
 	tmp := t.TempDir()
 	src, err := filepath.Abs("testdata/django_app")
 	if err != nil {
@@ -27,7 +27,7 @@ func TestEnrichmentCandidates_DjangoFixture(t *testing.T) {
 		t.Fatalf("copyTree: %v", err)
 	}
 
-	idx := newTestIndexer(t, "django_app", nil)
+	idx := newTestIndexer(t, "django_app", nil, stateDir)
 	doc, err := idx.Run(context.Background(), tmp)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -65,8 +65,9 @@ func TestEnrichmentCandidates_DjangoFixture(t *testing.T) {
 // next emit, and that the previously-resolved entity no longer produces
 // a describe_entity candidate.
 func TestEnrichmentResolutions_MergeBack(t *testing.T) {
-	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT.
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	// #1626: per-repo state lives in the external store; use explicit stateDir
+	// shared across both runs so the second run can load the pre-seeded resolutions.
+	stateDir := t.TempDir()
 	tmp := t.TempDir()
 	src, err := filepath.Abs("testdata/django_app")
 	if err != nil {
@@ -77,7 +78,7 @@ func TestEnrichmentResolutions_MergeBack(t *testing.T) {
 	}
 
 	// First run — discover an entity ID we can pre-resolve.
-	idx := newTestIndexer(t, "django_app", nil)
+	idx := newTestIndexer(t, "django_app", nil, stateDir)
 	doc, err := idx.Run(context.Background(), tmp)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -105,7 +106,7 @@ func TestEnrichmentResolutions_MergeBack(t *testing.T) {
 
 	// Second run — Pass 6 should merge the resolution back AND skip
 	// describe_entity for that subject.
-	idx2 := newTestIndexer(t, "django_app", nil)
+	idx2 := newTestIndexer(t, "django_app", nil, stateDir)
 	doc2, err := idx2.Run(context.Background(), tmp)
 	if err != nil {
 		t.Fatalf("Run 2: %v", err)

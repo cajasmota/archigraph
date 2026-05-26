@@ -20,7 +20,7 @@ import (
 func TestIndexerProgress_FixtureRun(t *testing.T) {
 	col := &progress.SliceCollector{}
 
-	idx := newTestIndexer(t, "crossfile_go", nil)
+	idx := newTestIndexer(t, "crossfile_go", nil, "")
 	idx.publisher = col
 	idx.groupSlug = "testgroup"
 	idx.repoSlug = "crossfile_go"
@@ -148,7 +148,7 @@ func TestIndexerProgress_NoOpPublisher(t *testing.T) {
 // emitted when Pass 4 runs (i.e. PassGraphAlgo is NOT skipped).
 func TestIndexerProgress_AlgorithmEvents(t *testing.T) {
 	col := &progress.SliceCollector{}
-	idx := newTestIndexer(t, "crossfile_go", nil)
+	idx := newTestIndexer(t, "crossfile_go", nil, "")
 	idx.publisher = col
 
 	_, err := idx.Run(context.Background(), "testdata/crossfile_go")
@@ -173,7 +173,7 @@ func TestIndexerProgress_AlgorithmEvents(t *testing.T) {
 // emitted when PassGraphAlgo is skipped.
 func TestIndexerProgress_SkipAlgorithms(t *testing.T) {
 	col := &progress.SliceCollector{}
-	idx := newTestIndexer(t, "crossfile_go", []string{PassGraphAlgo})
+	idx := newTestIndexer(t, "crossfile_go", []string{PassGraphAlgo}, "")
 	idx.publisher = col
 
 	_, err := idx.Run(context.Background(), "testdata/crossfile_go")

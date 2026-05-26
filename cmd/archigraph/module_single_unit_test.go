@@ -50,7 +50,7 @@ func TestIndex_PlainRepoSingleModule(t *testing.T) {
 	writeFile(t, filepath.Join(dir, ".windsurf/skills/skill.ts"), "export const sk = 1\n")
 
 	col := &progress.SliceCollector{}
-	idx := newTestIndexer(t, "upvate-frontend", nil)
+	idx := newTestIndexer(t, "upvate-frontend", nil, "")
 	idx.publisher = col
 	idx.repoSlug = "upvate-frontend"
 
@@ -104,7 +104,7 @@ func TestIndex_MonorepoKeepsModules(t *testing.T) {
 	writeFile(t, filepath.Join(dir, "packages/beta/index.ts"), "export const b = 1\n")
 
 	col := &progress.SliceCollector{}
-	idx := newTestIndexer(t, "polyrepo", nil)
+	idx := newTestIndexer(t, "polyrepo", nil, "")
 	idx.publisher = col
 	idx.repoSlug = "polyrepo"
 

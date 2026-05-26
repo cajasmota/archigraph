@@ -19,19 +19,18 @@ import (
 
 // newTestIndexer constructs an Indexer wired up to the embedded YAML rules
 // and the default classifier/parser. skipPasses is the optional set of
-// passes to skip — pass nil to run everything.
-func newTestIndexer(t *testing.T, repoTag string, skipPasses []string) *Indexer {
+// passes to skip — pass nil to run everything. stateDir is the per-repo state
+// directory; if empty, defaults to a fresh t.TempDir(). Callers needing
+// shared state across multiple runs should pass the same stateDir.
+func newTestIndexer(t *testing.T, repoTag string, skipPasses []string, stateDir string) *Indexer {
 	t.Helper()
-	// #1626 / #2083: per-repo state lives in the external store. Pin
-	// ARCHIGRAPH_DAEMON_ROOT to an isolated temp so indexer runs
-	// (a) don't pollute the source tree fixtures with state and
-	// (b) don't load stale state across runs.
-	// Only set if the caller hasn't already established an isolated root
-	// (e.g. index_enrichment_test.go sets it before seeding resolution files
-	// that the second run must find in the same dir).
-	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
-		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	if stateDir == "" {
+		stateDir = t.TempDir()
 	}
+	// #1626 / #2083: pin ARCHIGRAPH_DAEMON_ROOT to an isolated temp so
+	// indexer runs (a) don't pollute the source tree fixtures with state
+	// and (b) don't load stale state across runs.
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", stateDir)
 	cls, err := classifier.New("", nil)
 	if err != nil {
 		t.Fatalf("classifier: %v", err)
@@ -65,7 +64,7 @@ func runIndexerOn(t *testing.T, repoPath, repoTag string, skipPasses []string) *
 	if err != nil {
 		t.Fatalf("abs: %v", err)
 	}
-	idx := newTestIndexer(t, repoTag, skipPasses)
+	idx := newTestIndexer(t, repoTag, skipPasses, "")
 	doc, err := idx.Run(context.Background(), abs)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -653,7 +652,7 @@ func TestCSharpQuartzNetBuilderDynamic(t *testing.T) {
 		t.Skipf("csharp-quartz-net-mini fixture not found at %s: %v", abs, serr)
 	}
 
-	idx := newTestIndexer(t, "csharp-quartz-net-mini", nil)
+	idx := newTestIndexer(t, "csharp-quartz-net-mini", nil, "")
 	doc, err := idx.Run(context.Background(), abs)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -696,7 +695,7 @@ func TestKotlinSpringResponseEntityDynamic(t *testing.T) {
 		t.Skipf("kotlin-spring-mini fixture not found at %s: %v", abs, serr)
 	}
 
-	idx := newTestIndexer(t, "kotlin-spring-mini", nil)
+	idx := newTestIndexer(t, "kotlin-spring-mini", nil, "")
 	doc, err := idx.Run(context.Background(), abs)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -750,7 +749,7 @@ func TestScalaPlayMiniFutureStdlibDynamic(t *testing.T) {
 		t.Skipf("scala-play-mini fixture not found at %s: %v", abs, serr)
 	}
 
-	idx := newTestIndexer(t, "scala-play-mini", nil)
+	idx := newTestIndexer(t, "scala-play-mini", nil, "")
 	doc, err := idx.Run(context.Background(), abs)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -811,7 +810,7 @@ func TestRustTokioMiniChannelRecvDynamic(t *testing.T) {
 		t.Skipf("rust-tokio-mini fixture not found at %s: %v", abs, serr)
 	}
 
-	idx := newTestIndexer(t, "rust-tokio-mini", nil)
+	idx := newTestIndexer(t, "rust-tokio-mini", nil, "")
 	doc, err := idx.Run(context.Background(), abs)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
