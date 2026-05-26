@@ -301,7 +301,38 @@ func isOrphanDefinition(r *LoadedRepo, localID string, res endpointResolution) b
 // #2315: respondPaginated — generic paged response helper used by both
 // handleEndpointDefinitions and handleEndpointCalls. Avoids ~80 lines of
 // copy-paste (token budget, pageSlice, sort callback, response envelope).
+//
+// #2344: refactored to accept PaginationOpts instead of mcpapi.CallToolRequest
+// directly. Callers build a PaginationOpts from req; this decouples the helper
+// from the MCP request shape and makes it trivially testable in isolation.
 // ---------------------------------------------------------------------------
+
+// PaginationOpts carries the pagination and filter parameters extracted from an
+// MCP CallToolRequest. Callers construct this from req before calling
+// respondPaginated, keeping the helper free of MCP-API coupling.
+type PaginationOpts struct {
+	Offset       int
+	Limit        int
+	TokenBudget  int
+	Verbose      bool
+	PathContains string
+	Method       string
+}
+
+// paginationOptsFromReq extracts the standard pagination and filter arguments
+// from an MCP CallToolRequest into a PaginationOpts. The verbose flag is passed
+// separately because callers may have already resolved format="terse"|"full"
+// precedence before calling this function.
+func paginationOptsFromReq(req mcpapi.CallToolRequest, verbose bool, pathContains, method string) PaginationOpts {
+	return PaginationOpts{
+		Offset:       argInt(req, "offset", 0),
+		Limit:        argInt(req, "limit", 20),
+		TokenBudget:  argInt(req, "token_budget", 800),
+		Verbose:      verbose,
+		PathContains: pathContains,
+		Method:       method,
+	}
+}
 
 // paginatedResponse is the wire shape returned by respondPaginated. The
 // handler fills in the mode-specific payload keys (definitions / calls / lines)
@@ -322,17 +353,14 @@ type paginatedResponse struct {
 // The caller is responsible for marshalling the slice into the appropriate
 // response key ("definitions", "calls", or "lines").
 //
-// Parameters mirror the query args available in all three endpoint handlers.
+// #2344: opts replaces the raw mcpapi.CallToolRequest parameter, decoupling
+// this helper from the MCP wire type. Build opts via paginationOptsFromReq.
 func respondPaginated[T any](
-	req mcpapi.CallToolRequest,
+	opts PaginationOpts,
 	items []T,
 	total int,
-	verbose bool,
-	pathContains, method string,
 ) ([]T, paginatedResponse, string) {
-	offset := argInt(req, "offset", 0)
-	limit := argInt(req, "limit", 20)
-	tokenBudget := argInt(req, "token_budget", 800)
+	tokenBudget := opts.TokenBudget
 	if tokenBudget < 100 {
 		tokenBudget = 100
 	}
@@ -341,18 +369,18 @@ func respondPaginated[T any](
 		budgetBytes = 64 * 1024
 	}
 
-	paged := pageSlice(items, offset, limit)
+	paged := pageSlice(items, opts.Offset, opts.Limit)
 	preCapLen := len(paged)
-	paged = capByRenderedBytes(paged, budgetBytes, !verbose)
+	paged = capByRenderedBytes(paged, budgetBytes, !opts.Verbose)
 
 	env := paginatedResponse{
 		Count:        len(paged),
 		Total:        total,
-		Offset:       offset,
-		Truncated:    offset+len(paged) < total,
-		Format:       formatLabel(verbose),
-		PathContains: pathContains,
-		Method:       method,
+		Offset:       opts.Offset,
+		Truncated:    opts.Offset+len(paged) < total,
+		Format:       formatLabel(opts.Verbose),
+		PathContains: opts.PathContains,
+		Method:       opts.Method,
 		TokenBudget:  tokenBudget,
 	}
 
@@ -502,7 +530,9 @@ func (s *Server) handleEndpointDefinitions(_ context.Context, req mcpapi.CallToo
 	total := len(out)
 
 	// #2315: use respondPaginated helper (token budget + page + cap).
-	out, env, truncationNote := respondPaginated(req, out, total, verbose, pathContains, method)
+	// #2344: build PaginationOpts from req — keeps respondPaginated decoupled from MCP.
+	pOpts := paginationOptsFromReq(req, verbose, pathContains, method)
+	out, env, truncationNote := respondPaginated(pOpts, out, total)
 
 	resp := map[string]any{
 		"count":         env.Count,
@@ -834,7 +864,9 @@ func (s *Server) handleEndpointCalls(_ context.Context, req mcpapi.CallToolReque
 	total := len(out)
 
 	// #2315: use respondPaginated helper (token budget + page + cap).
-	out, env, truncationNote := respondPaginated(req, out, total, verbose, pathContains, method)
+	// #2344: build PaginationOpts from req — keeps respondPaginated decoupled from MCP.
+	pOpts := paginationOptsFromReq(req, verbose, pathContains, method)
+	out, env, truncationNote := respondPaginated(pOpts, out, total)
 
 	// #2311: mirror the #2288/#2309 fix — terse mode (default) emits lines
 	// only. The `calls` struct array is only present in format=full / verbose=true.
@@ -971,9 +1003,16 @@ func (s *Server) handleEndpointStats(_ context.Context, req mcpapi.CallToolReque
 	sort.Slice(perRepo, func(i, j int) bool { return perRepo[i].Repo < perRepo[j].Repo })
 
 	migrated := totalLegacy == 0
-	note := ""
+	// migration_note is non-empty only when legacy http_endpoint entities are
+	// still present in the graph (i.e. the Sub-A (#1217) indexer pass has not
+	// run yet). This is intentionally distinct from the "note" fields removed
+	// from handleEndpointDefinitions and handleEndpointCalls in #2317 — those
+	// were static schema prose. This field is a dynamic migration-hint that is
+	// only emitted when the graph is in a transitional state, so it carries its
+	// own weight in the response and is named accordingly.
+	migrationNote := ""
 	if !migrated {
-		note = "graph still contains legacy http_endpoint kind — run the indexer after Sub-A (#1217) lands to split into http_endpoint_definition / http_endpoint_call"
+		migrationNote = "graph still contains legacy http_endpoint kind — run the indexer after Sub-A (#1217) lands to split into http_endpoint_definition / http_endpoint_call"
 	}
 
 	return jsonResult(map[string]any{
@@ -985,8 +1024,8 @@ func (s *Server) handleEndpointStats(_ context.Context, req mcpapi.CallToolReque
 			"cross_repo_resolved": totalCross,
 			"cross_repo_links":    len(lg.Links),
 		},
-		"per_repo": perRepo,
-		"migrated": migrated,
-		"note":     note,
+		"per_repo":        perRepo,
+		"migrated":        migrated,
+		"migration_note":  migrationNote,
 	}), nil
 }
