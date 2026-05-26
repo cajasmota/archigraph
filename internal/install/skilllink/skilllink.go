@@ -1,7 +1,7 @@
 // Package skilllink handles symlinking archigraph skills into Claude Code's
 // discovery directories.
 //
-// The 9 archigraph skills are distributed with the binary and must be
+// The archigraph skills are distributed with the binary and must be
 // symlinked into ~/.claude/skills/, ~/.claude-*/skills/, etc. so that
 // Claude Code's skill discovery mechanism can find them.
 //
@@ -18,20 +18,22 @@ import (
 	"strings"
 )
 
-// SkillNames lists the 9 archigraph skills in canonical order.
+// SkillNames lists the archigraph skills in canonical order.
 var SkillNames = []string{
 	"archigraph-aware-review",
+	"archigraph-graph-enrich",
+	"archigraph-graph-quality",
 	"archigraph-patterns-discover",
 	"archigraph-patterns-sync",
-	"archigraph-quality-check",
-	"archigraph-repair",
+	"archigraph-resolve",
+	"archigraph-tech-docs",
 	"archigraph-test-page",
 	"extend-convention",
 	"generate-docs",
 	"using-archigraph",
 }
 
-// DiscoverSkillsDir finds the source directory containing the 9 archigraph
+// DiscoverSkillsDir finds the source directory containing the archigraph
 // skills. It tries these locations in order:
 //
 // 1. If skillsSourceDir is non-empty, use it as-is (no validation)
@@ -79,7 +81,7 @@ func DiscoverSkillsDir(binPath, skillsSourceDir string) string {
 	return ""
 }
 
-// InstallSkillsInClaudeConfigs symlinks the 9 archigraph skills into every
+// InstallSkillsInClaudeConfigs symlinks the archigraph skills into every
 // detected Claude Code config directory's skills/ subdirectory.
 //
 // claudeConfigDirs: list of ~/.claude.json paths (typically from mcpreg.DetectClaudeConfigDirs)
