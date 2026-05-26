@@ -409,29 +409,36 @@ func runDaemon(argv []string) error {
 
 // daemonReposToWatch returns every repo from every registered group
 // (deduped by absolute path). Called once at daemon startup.
+//
+// #2084: fleet config entries with relative paths or paths that no longer
+// exist on disk (e.g. deleted worktrees) are resolved to absolute and then
+// validated — entries that fail the stat check are skipped with a warning
+// log line so the daemon never spawns a watcher for a phantom directory.
 func daemonReposToWatch() []string {
 	groups, err := registry.Groups()
 	if err != nil {
 		return nil
 	}
 	seen := map[string]bool{}
-	var out []string
+	var raw []string
 	for _, g := range groups {
 		cfg, err := registry.LoadGroupConfig(g.ConfigPath)
 		if err != nil {
 			continue
 		}
 		for _, r := range cfg.Repos {
-			abs, err := filepath.Abs(r.Path)
-			if err != nil {
-				abs = r.Path
-			}
-			if seen[abs] {
-				continue
-			}
-			seen[abs] = true
-			out = append(out, abs)
+			raw = append(raw, r.Path)
 		}
+	}
+	// Resolve + validate — drops relative paths to gone worktrees.
+	resolved := daemon.ResolveFleetRepoPaths(raw, slog.Default())
+	var out []string
+	for _, abs := range resolved {
+		if seen[abs] {
+			continue
+		}
+		seen[abs] = true
+		out = append(out, abs)
 	}
 	return out
 }
