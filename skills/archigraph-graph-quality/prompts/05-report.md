@@ -53,13 +53,13 @@ At this token rate, a 1000-query session would cost roughly:
 ### Handler vs Transport (with-MCP only)
 
 The daemon logs handler-side latency per RPC at `internal/daemon/mcp_rpc.go:193`
-(`[mcp-rpc] tool=<X> elapsed=<N>ms`). Phase 3 captures every such line emitted
-during each question's MCP run and persists `mcp_rpc_count`,
-`mcp_rpc_handler_ms_sum`, `mcp_rpc_handler_ms_p50`, `mcp_rpc_handler_ms_p99` in
-`with-mcp.json`. This subsection splits the with-MCP wall-clock budget into
-handler time (work inside the daemon) and transport time (everything else —
-JSON-RPC bridge marshal, stdio pipe, host overhead, agent thinking between
-tool calls).
+(`[mcp-rpc] tool=<X> elapsed=<N>ms`). Phase 3 captures every such line by
+running `archigraph bench-capture rpc --start $START --end $END` (#2298) and
+persists `mcp_rpc_count`, `mcp_rpc_handler_ms_sum`, `mcp_rpc_handler_ms_p50`,
+`mcp_rpc_handler_ms_p99` in `with-mcp.json` (field definitions: `schema/with-mcp-artifact.schema.json`, #2302).
+This subsection splits the with-MCP wall-clock budget into handler time (work
+inside the daemon) and transport time (everything else — JSON-RPC bridge
+marshal, stdio pipe, host overhead, agent thinking between tool calls).
 
 | Metric | Value |
 |---|---:|

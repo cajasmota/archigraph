@@ -34,11 +34,12 @@ func main() {
 		runQuickDoctorHook()
 	}
 	cli.Execute(cli.Hooks{
-		RunDaemon:    runDaemon,
-		RunLinks:     runLinksHook,
-		RunDashboard: runDashboard,
-		RunQuality:   runQuality,
-		RunExtract:   runExtractSubprocess,
+		RunDaemon:       runDaemon,
+		RunLinks:        runLinksHook,
+		RunDashboard:    runDashboard,
+		RunQuality:      runQuality,
+		RunExtract:      runExtractSubprocess,
+		RunBenchCapture: runBenchCaptureDispatch,
 	})
 }
 

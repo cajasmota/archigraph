@@ -68,6 +68,7 @@ func newRoot() *cobra.Command {
 		newDeleteCmd(),
 		newBranchesCmd(),
 		newInstallHooksCmd(),
+		newBenchCaptureCmd(),
 		newHelpCmd(),
 	)
 
@@ -180,6 +181,10 @@ Documentation generation:
   docgen --tier=0 --seed-entity=<id> --section=<name>
                                   Render ONE section for ONE entity (<30 s feedback loop)
   docgen --list-sections          List all valid section names
+
+Bench skill helpers:
+  bench-capture rpc [--log <path>] [--start-offset N] [--end-offset N]
+                                  Parse daemon-log RPC window → JSON (mcp_rpc_count, handler ms p50/p99)
 
 Agent-learned patterns (ADR-0018):
   patterns list [--needs-attention]           Show patterns table (rejected/low-conf/stale with --needs-attention)

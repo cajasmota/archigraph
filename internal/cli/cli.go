@@ -33,6 +33,12 @@ type Hooks struct {
 	// stream JSONL records to stdout. Invoked by the daemon-side
 	// extract coordinator via fork-exec of the same binary.
 	RunExtract func(argv []string) error
+
+	// RunBenchCapture is the entrypoint for `archigraph bench-capture`.
+	// Wired from cmd/archigraph/bench_capture.go; reads a daemon log
+	// slice between byte offsets, parses [mcp-rpc] elapsed= lines, and
+	// emits JSON to stdout. See #2298.
+	RunBenchCapture func(argv []string) error
 }
 
 // Execute is the entrypoint called from cmd/archigraph/main.go.

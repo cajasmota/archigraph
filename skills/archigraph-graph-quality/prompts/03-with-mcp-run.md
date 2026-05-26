@@ -16,11 +16,15 @@ For each question in `questions.json`:
 
 1. Note the host's `usage_info` snapshot at question start (input/output/cache tokens emitted so far in this session).
 2. Note `wall_clock_start` (monotonic time, RFC3339 nanos).
-3. **Snapshot the daemon log byte-offset.** Read the current size of `~/.archigraph/logs/daemon.log` (`stat -f%z` on macOS, `stat -c%s` on Linux) and remember it as `log_start_offset`. If the file does not exist (rare; daemon may have just started and not yet flushed), set `log_start_offset = 0` and proceed.
+3. **Snapshot the daemon log byte-offset.** Read the current size of `~/.archigraph/logs/daemon.log` (`stat -f%z` on macOS, `stat -c%s` on Linux) and remember it as `log_start_offset` (= `$START`). If the file does not exist (rare; daemon may have just started and not yet flushed), set `log_start_offset = 0` and proceed.
 4. Answer the question using archigraph MCP tools. Take as many tool calls as needed but stop when you reach a defensible answer.
 5. Note `wall_clock_end`.
 6. Note the host's `usage_info` at question end.
-7. **Read daemon log lines emitted during this question.** `tail -c +<log_start_offset+1>` (or read from the snapshotted offset to current EOF). Filter to lines matching `[mcp-rpc] tool=<X> elapsed=<N>ms repo=<Y>` (the "elapsed" form, not the "received" form). Extract every `elapsed=<N>ms` integer and the tool name. These are the daemon-side handler durations for the RPC calls that ran while answering this question. See "Daemon RPC capture" below.
+7. **Capture daemon RPC metrics.** Note the current log size as `$END`, then run:
+   ```
+   archigraph bench-capture rpc --start $START --end $END
+   ```
+   Merge the resulting JSON directly into this question's `metrics` block (`mcp_rpc_count`, `mcp_rpc_handler_ms_sum`, `mcp_rpc_handler_ms_p50`, `mcp_rpc_handler_ms_p99`, `mcp_rpc_per_tool`). If the command fails (missing binary, permissions, sandbox), set `mcp_rpc_count: null` and add `"mcp_rpc_capture_error": "<reason>"` to the artifact. See "Daemon RPC capture" below for the field semantics.
 8. Compute the delta and record the metrics below.
 
 ## Daemon RPC capture (handler vs transport split)
@@ -29,27 +33,29 @@ For each question in `questions.json`:
 
 This split is the whole point of the capture: a question with `wall=8000ms, handler_sum=7500ms` says the handler is the lever; a question with `wall=8000ms, handler_sum=400ms` says the transport is the lever.
 
-**Where to read:** `~/.archigraph/logs/daemon.log`. Format (one line per call):
+**How to capture (step 7 above):** use the deterministic CLI helper:
 
 ```
-archigraph-daemon: 2026/05/26 22:40:38.695982 [mcp-rpc] tool=archigraph_search_entities elapsed=8095ms repo=/path/to/repo
+archigraph bench-capture rpc \
+  --log ~/.archigraph/logs/daemon.log \
+  --start-offset $START \
+  --end-offset $END
 ```
 
-A `received` companion line is emitted **before** dispatch and must be ignored — it has no `elapsed=` field. Only count lines containing `elapsed=`.
+`$START` = `log_start_offset` snapshotted in step 3 (before the first MCP call).
+`$END` = current log file size at step 7 (question end). The CLI reads the exact byte window, parses `[mcp-rpc] … elapsed=<N>ms` lines, and emits JSON ready to merge into `metrics`. Parsing regex, percentile math, and null rules are all encapsulated in the CLI (#2298). Do not re-implement them here.
 
-**Parsing regex:** `\[mcp-rpc\] tool=(\S+) elapsed=(\d+)ms repo=`. Two capture groups: tool name, integer milliseconds.
+**Field semantics** (canonical definition in `schema/with-mcp-artifact.schema.json`):
 
-**Bounding the window:** read the file slice `[log_start_offset, log_end_offset)` where `log_start_offset` was captured before the first MCP tool call of the question and `log_end_offset` is the file size at question end. This avoids cross-contamination if other sessions share the daemon. If the daemon log was rotated mid-question (file size shrank), reset `log_start_offset = 0` for that question and add a note in `notes`.
+- `mcp_rpc_count` — number of `elapsed=` lines in the window.
+- `mcp_rpc_handler_ms_sum` — sum of all elapsed_ms values.
+- `mcp_rpc_handler_ms_p50` — median handler duration; `null` when count = 0.
+- `mcp_rpc_handler_ms_p99` — 99th-percentile handler duration; `null` when count = 0.
+- `mcp_rpc_per_tool` — per-tool `{ "count": N, "sum_ms": M }` map.
 
-**Aggregation per question:**
+**Log rotation:** if the log shrank between step 3 and step 7, pass `--start-offset 0` and add a note in `notes`.
 
-- `mcp_rpc_count` = number of `elapsed=` lines captured in the window.
-- `mcp_rpc_handler_ms_sum` = sum of all elapsed_ms values.
-- `mcp_rpc_handler_ms_p50` = median (linear interpolation if even count). For `mcp_rpc_count == 0`, emit `null`.
-- `mcp_rpc_handler_ms_p99` = 99th percentile (same null rule).
-- `mcp_rpc_per_tool` (optional but recommended) = `{ "<tool>": { "count": N, "sum_ms": ... } }` — useful for spotting one slow tool dominating.
-
-If `~/.archigraph/logs/daemon.log` is unreadable (permissions, missing, host sandbox), record `mcp_rpc_count: null` for every question and add an `"mcp_rpc_capture_error": "<reason>"` field. Phase 5 will surface the failure in the report rather than silently drop the split.
+If `archigraph bench-capture rpc` fails (missing binary, permissions, sandbox), record `mcp_rpc_count: null` for every question and add an `"mcp_rpc_capture_error": "<reason>"` field. Phase 5 will surface the failure in the report rather than silently drop the split.
 
 ## Output schema (`with-mcp.json`)
 
