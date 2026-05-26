@@ -137,131 +137,51 @@ var intentionalGaps = []intentionalGap{
 	{"archigraph_traces", "branching_factor", "#1639 token ceiling pattern — follow-only arg"},
 }
 
-// handlerToTool maps every (*Server).handleXxx method name to its registered
-// MCP tool name. Source: the wrap("tool_name", s.handleXxx) calls in registerTools.
-// Sub-handlers reached via action-dispatch are listed separately in dispatchTree.
-var handlerToTool = map[string]string{
-	"handleWhoami":             "archigraph_whoami",
-	"handleGetNodeSource":      "archigraph_get_source",
-	"handleQueryGraph":         "archigraph_find",
-	"handleGetNode":            "archigraph_inspect",
-	"handleGetNeighbors":       "archigraph_expand",
-	"handleShortestPath":       "archigraph_trace",
-	"handleTraces":             "archigraph_traces",
-	"handleListCommunities":    "archigraph_clusters",
-	"handleGraphStats":         "archigraph_stats",
-	"handleEnrichments":        "archigraph_enrichments",
-	"handleRepairs":            "archigraph_repairs",
-	"handleApplyDocgenRepairs": "archigraph_apply_docgen_repairs",
-	"handlePatterns":           "archigraph_patterns",
-	"handleTopology":           "archigraph_topology",
-	"handleFlows":              "archigraph_flows",
-	"handleGraphPatterns":      "archigraph_graph_patterns",
-	"handleSearchEntities":     "archigraph_search_entities",
-	"handleSubgraph":           "archigraph_subgraph",
-	"handleFindPaths":          "archigraph_find_paths",
-	"handleEndpoints":          "archigraph_endpoints",
-	"handleNeighbors":          "archigraph_neighbors",
-	"handleFindCallers":        "archigraph_find_callers",
-	"handleFindCallees":        "archigraph_find_callees",
-	"handleImpactRadius":       "archigraph_impact_radius",
-	"handleFindDeadCode":       "archigraph_find_dead_code",
-	"handleQualityCycles":      "archigraph_quality_cycles",
-	"handleAuthCoverage":       "archigraph_auth_coverage",
-	"handleTestCoverage":       "archigraph_test_coverage",
-	"handleModuleAnalysis":     "archigraph_module_analysis",
-	"handleSecrets":            "archigraph_secrets",
-	"handleDiffRefs":           "archigraph_diff_refs",
-	"handleDocgenStartRun":     "archigraph_docgen_start_run",
-	"handleDocgenStatus":       "archigraph_docgen_status",
-	"handleDocgenValidate":     "archigraph_docgen_validate",
-	"handleDocgenPromote":      "archigraph_docgen_promote",
-	"handleDocgenAbort":        "archigraph_docgen_abort",
-	"handleDocgenList":         "archigraph_docgen_list",
-	"handleStatus":             "archigraph_status",
-}
+// handlerToTool and dispatchTree have been REMOVED.
+// Both are now auto-derived from server.go's registerTools() via buildFuncToToolFromAST
+// (see schema_contract_autoderiv_test.go). This eliminates the maintenance hazard
+// where a new wrap() registration without a table update silently skipped the handler.
+// Issue #2404.
 
-// dispatchTree maps each top-level handler to the set of sub-handlers it can
-// dispatch to (action-based bundles). Sub-handlers inherit the same tool name.
-// Source: switch action { case ...: return s.handleXxx } blocks in handler files.
-var dispatchTree = map[string][]string{
-	// archigraph_topology
-	"handleTopology": {
-		"handleTopologyOrphanPublishers",
-		"handleTopologyOrphanSubscribers",
-		"handleTopologyTopicDetail",
-	},
-	// archigraph_flows
-	"handleFlows": {
-		"handleFlowDeadEnds",
-		"handleFlowTruncated",
-		"handleFlowDetail",
-	},
-	// archigraph_graph_patterns
-	"handleGraphPatterns": {
-		"handlePatternsListGraph",
-		"handlePatternsGetGraph",
-	},
-	// archigraph_patterns
-	"handlePatterns": {
-		"handlePatternsQuery",
-		"handlePatternsRecord",
-		"handlePatternsRefine",
-		"handlePatternsApply",
-		"handlePatternsReject",
-		"handlePatternsPromote",
-		"handlePatternsGet",
-	},
-	// archigraph_traces
-	"handleTraces": {
-		"handleTracesList",
-		"handleTracesGet",
-		"handleTracesFollow",
-	},
-	// archigraph_enrichments
-	"handleEnrichments": {
-		"handleListEnrichmentCandidates",
-		"handleSubmitEnrichment",
-		"handleRejectEnrichment",
-		"handleListLinkCandidates",
-		"handleResolveLinkCandidateAction",
-	},
-	// archigraph_repairs
-	"handleRepairs": {
-		"handleListResiduals",
-		"handleSubmitRepairFromBundle",
-	},
-	// archigraph_endpoints
-	"handleEndpoints": {
-		"handleEndpointDefinitions",
-		"handleEndpointCalls",
-		"handleEndpointStats",
-	},
-	// archigraph_module_analysis
-	"handleModuleAnalysis": {
-		"handleModuleCombined",
-		"handleModuleCycles",
-		"handleModuleCentrality",
-	},
-	// archigraph_subgraph — sub-methods are helpers, not dispatch-pattern handlers
-	// but they do read args.
-	"handleSubgraph": {
-		"subgraphRaw",
-		"subgraphMarkdown",
-	},
-	// archigraph_neighbors — uses structured helpers.
-	"handleNeighbors": {
-		"findCallersStructured",
-		"findCalleesStructured",
-	},
-	// archigraph_find_callers — uses structured helper.
-	"handleFindCallers": {
-		"findCallersStructured",
-	},
-	// archigraph_find_callees — uses structured helper.
-	"handleFindCallees": {
-		"findCalleesStructured",
-	},
+// orphanedHandlers is the allowlist of handler functions whose corresponding MCP tool
+// was deliberately dropped (the wrap() call removed) but whose function body was not
+// yet deleted. They read argXxx but have no registered tool, so the scanner would
+// otherwise fail loudly — which is the correct behavior for NEW orphans.
+//
+// Tech-debt note (surfaced by #2404): each entry here is dead code that should be
+// deleted in a follow-up cleanup PR. The function still reads args but those args
+// are never reachable from any MCP tool call.
+//
+// Adding a new entry requires a comment explaining which tool was dropped and why.
+// Removing an entry means the dead code has been deleted — also correct.
+var orphanedHandlers = map[string]string{
+	// archigraph_cross_links was dropped (niche; see server.go line ~398).
+	// handleCrossLinks is gone but its sub-handlers still exist.
+	"handleListLinkCandidates":         "archigraph_cross_links dropped (niche; see registerTools comment)",
+	"handleResolveLinkCandidate":       "archigraph_cross_links dropped (niche; see registerTools comment)",
+	"handleResolveLinkCandidateAction": "archigraph_cross_links dropped (niche; see registerTools comment)",
+
+	// archigraph_save_result / archigraph_list_findings were dropped (use enrichments instead;
+	// see server.go registerTools comment).
+	"handleSaveResult":   "archigraph_save_result dropped (use enrichments; see registerTools comment)",
+	"handleListFindings": "archigraph_list_findings dropped (use enrichments; see registerTools comment)",
+
+	// archigraph_recent_activity was dropped (absorbed into whoami/dashboard).
+	"handleRecentActivity": "archigraph_recent_activity dropped (absorbed into whoami/dashboard)",
+
+	// archigraph_get_next_enrichment_task was dropped (niche).
+	"handleGetNextEnrichmentTask": "archigraph_get_next_enrichment_task dropped (niche)",
+
+	// archigraph_quality_cycles sub-handler handleQualityOrphans — the orphan
+	// sub-action was removed from the cycles bundle but the function body remains.
+	"handleQualityOrphans": "handleQualityOrphans orphaned from archigraph_quality_cycles (sub-action removed)",
+
+	// archigraph_license_audit was dropped (HTTP API still available).
+	"handleLicenseAudit": "archigraph_license_audit dropped (HTTP API still available; see registerTools comment)",
+
+	// handleSubmitRepair — standalone repair-submit handler, superseded by the
+	// bundled submit action in handleRepairs (handleSubmitRepairFromBundle).
+	"handleSubmitRepair": "standalone repair-submit superseded by handleSubmitRepairFromBundle",
 }
 
 // sharedHelpers are functions that call argXxx but are not handlers — their
@@ -310,14 +230,17 @@ func TestSchemaContract_AllHandlerArgsDeclared(t *testing.T) {
 	mcpDir := findMCPDir(t)
 
 	// -------------------------------------------------------------------------
-	// Step 2: build the full func→tool mapping (direct + transitive sub-handlers).
+	// Step 2: build the full func→tool mapping (direct + transitive sub-handlers)
+	// by parsing server.go's registerTools() via go/ast. Issue #2404.
 	// -------------------------------------------------------------------------
-	funcToTool := buildFuncToTool()
+	funcToTool := buildFuncToToolFromAST(t, mcpDir)
 
 	// -------------------------------------------------------------------------
-	// Step 3: AST scan — find all argXxx call sites in handler functions.
+	// Step 3: AST scan — find all argXxx call sites across all non-test files.
+	// Both registered and unregistered functions are included; step 6 below
+	// flags unregistered ones as errors (catch missing wrap() registrations).
 	// -------------------------------------------------------------------------
-	usages := scanArgUsages(t, mcpDir, funcToTool)
+	usages := scanArgUsages(t, mcpDir)
 
 	// -------------------------------------------------------------------------
 	// Step 4: build the intentional-gap lookup set.
@@ -342,12 +265,37 @@ func TestSchemaContract_AllHandlerArgsDeclared(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Step 6: cross-reference. For each (tool, arg) from handler code, assert it
 	// is declared in the schema OR in the allowlist.
+	//
+	// Additionally, assert that every function that reads args via argXxx is either:
+	//   (a) mapped to a registered tool via funcToTool, OR
+	//   (b) in the sharedHelpers allowlist (covered transitively by its callers).
+	// This catches the case where a new wrap() registration is added to server.go
+	// but a later deletion of that wrap() call leaves the handler unregistered —
+	// the handler's args would otherwise be silently skipped. (#2404)
 	// -------------------------------------------------------------------------
 	failures := 0
+	// Track functions already reported as unregistered to avoid duplicate errors.
+	reportedUnregistered := make(map[string]bool)
+
 	for _, u := range usages {
 		tool, ok := funcToTool[u.funcName]
 		if !ok {
-			// Not a registered handler — skip.
+			// Function reads args but is not reachable from any registered tool.
+			// If it is a known pre-existing orphan, skip silently (tech debt noted).
+			if _, isOrphaned := orphanedHandlers[u.funcName]; isOrphaned {
+				continue
+			}
+			// Otherwise it's a new unregistered handler — fail loudly so the developer
+			// knows they need to add a wrap() registration.
+			if !reportedUnregistered[u.funcName] {
+				reportedUnregistered[u.funcName] = true
+				t.Errorf("%s:%d: handler %q reads arg %q but has no registered tool — "+
+					"add s.wrap(\"archigraph_xxx\", s.%s) in registerTools, or "+
+					"add %q to sharedHelpers if it is a shared utility (not a direct handler), "+
+					"or add %q to orphanedHandlers if its tool was deliberately dropped",
+					u.file, u.line, u.funcName, u.argKey, u.funcName, u.funcName, u.funcName)
+				failures++
+			}
 			continue
 		}
 
@@ -386,37 +334,10 @@ func TestSchemaContract_AllHandlerArgsDeclared(t *testing.T) {
 	}
 }
 
-// buildFuncToTool builds the complete funcName→toolName map, including sub-handlers
-// reached transitively via the dispatch tree.
-func buildFuncToTool() map[string]string {
-	out := make(map[string]string, 128)
-
-	// Direct registrations from handlerToTool.
-	for fn, tool := range handlerToTool {
-		out[fn] = tool
-	}
-
-	// Transitively propagate via dispatchTree. One pass is sufficient because
-	// all sub-handlers are one hop from a directly-registered handler.
-	for parent, children := range dispatchTree {
-		tool, ok := out[parent]
-		if !ok {
-			continue // parent not registered; children inherit nothing
-		}
-		for _, child := range children {
-			if _, already := out[child]; !already {
-				out[child] = tool
-			}
-		}
-	}
-
-	return out
-}
-
 // scanArgUsages walks all *.go files in dir (non-test files only) and returns
-// every argInt/argString/argBool/argFloat call site found inside a function
-// that appears in funcToTool (or a shared helper we need to skip).
-func scanArgUsages(t *testing.T, dir string, funcToTool map[string]string) []handlerArgUsage {
+// every argInt/argString/argBool/argFloat call site found inside any non-helper function.
+// Both known handlers and unknown ones are returned — the caller differentiates them.
+func scanArgUsages(t *testing.T, dir string) []handlerArgUsage {
 	t.Helper()
 
 	entries, err := os.ReadDir(dir)
@@ -446,16 +367,17 @@ func scanArgUsages(t *testing.T, dir string, funcToTool map[string]string) []han
 			continue
 		}
 
-		usages = append(usages, extractArgUsages(fset, f, funcToTool)...)
+		usages = append(usages, extractArgUsages(fset, f)...)
 	}
 
 	return usages
 }
 
 // extractArgUsages walks a single parsed file and returns all argXxx call sites
-// found inside functions that are known handlers (or sub-handlers).
+// found inside any non-shared-helper function. The caller is responsible for
+// deciding whether the enclosing function is a registered handler.
 // It builds a position→funcName map via an outer FuncDecl walk.
-func extractArgUsages(fset *token.FileSet, f *ast.File, funcToTool map[string]string) []handlerArgUsage {
+func extractArgUsages(fset *token.FileSet, f *ast.File) []handlerArgUsage {
 	// Build an interval map: for each top-level FuncDecl, record (start, end, name).
 	type funcInterval struct {
 		start token.Pos
@@ -525,12 +447,6 @@ func extractArgUsages(fset *token.FileSet, f *ast.File, funcToTool map[string]st
 
 		// Skip shared helpers (their arg reads are covered by all callers).
 		if sharedHelpers[enc] {
-			return true
-		}
-
-		// Skip if not a known handler/sub-handler — could be a utility function
-		// not reachable from any tool (e.g. dropped handlers).
-		if _, known := funcToTool[enc]; !known {
 			return true
 		}
 
