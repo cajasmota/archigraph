@@ -134,10 +134,10 @@ var marketplaceCatalog = []CatalogSkill{
 		},
 	},
 	{
-		Slug:   "archigraph-repair",
+		Slug:   "archigraph-resolve",
 		Source: "archigraph-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-repair",
+			Name:        "archigraph-resolve",
 			Description: "Applies pending repair candidates from the graph — renames, merges, deletes.",
 			Type:        "action",
 			WhenToUse:   "When the pending queue is non-empty and repairs have been reviewed.",

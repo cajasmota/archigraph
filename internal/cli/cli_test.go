@@ -511,7 +511,7 @@ func TestInstallSkillsInClaudeConfigs(t *testing.T) {
 		"archigraph-quality-check",
 		"archigraph-patterns-discover",
 		"archigraph-patterns-sync",
-		"archigraph-repair",
+		"archigraph-resolve",
 		"extend-convention",
 		"generate-docs",
 	}
