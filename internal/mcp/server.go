@@ -791,12 +791,47 @@ func (s *Server) wrap(name string, fn func(ctx context.Context, req mcpapi.CallT
 		// the same regex parser works for both paths.
 		elapsed := time.Since(start).Milliseconds()
 		if res != nil {
-			// #1741: GraphQL-style `fields=` selection. Apply BEFORE elapsed-ms
-			// injection so the envelope key always survives.
-			if fl := fieldsArg(req); fl != nil {
-				res = applyFieldsToResult(res, fl)
+			fl := fieldsArg(req)
+			// #2287: single-marshal path. When the handler used
+			// jsonResult(v), v was stashed (not marshaled-only). Build
+			// the envelope on the structured value (TOON-encode items,
+			// inject elapsed_ms) and marshal ONCE here, replacing the
+			// eager marshal in res.Content[0]. This eliminates the
+			// legacy parse step (injectElapsedMS used to unmarshal the
+			// handler's bytes, mutate the map, and re-marshal). Net
+			// effect on the wire path: -1 parse per call, with the
+			// parse step being O(payload size).
+			//
+			// We always drain the deferred entry so the sync.Map cannot
+			// retain references after this call returns.
+			deferredV, hasDeferred := takeDeferred(res)
+			if hasDeferred && fl == nil {
+				if text, ferr := finalizeDeferred(deferredV, elapsed, nil); ferr == nil {
+					res.Content = []mcpapi.Content{mcpapi.NewTextContent(text)}
+				} else {
+					// finalize shouldn't fail for shapes that survived
+					// jsonResult's eager marshal, but if it does fall
+					// back to an error result so the caller learns.
+					res = mcpapi.NewToolResultError("marshal: " + ferr.Error())
+				}
+			} else {
+				// Fallback (legacy injectElapsedMS) path:
+				//   - Result was not produced by jsonResult (markdown,
+				//     errors, hand-built TextContent), OR
+				//   - fields= was requested. The legacy parse-based
+				//     filter is uniform across both map[string]any and
+				//     typed-struct returns (after marshal everything is
+				//     map[string]any), so we keep it as the fields= path
+				//     for now. #2287's win is on the no-fields hot path,
+				//     which is the dominant case.
+				// #1741: GraphQL-style `fields=` selection. Apply BEFORE
+				// elapsed-ms injection so the envelope key always
+				// survives.
+				if fl != nil {
+					res = applyFieldsToResult(res, fl)
+				}
+				res = injectElapsedMS(res, elapsed)
 			}
-			res = injectElapsedMS(res, elapsed)
 			// #1740: intern repeated entity IDs to short handles (@1, @2, …).
 			// Runs after elapsed-ms injection so the _id_table lands in the
 			// same top-level JSON object that carries elapsed_ms.

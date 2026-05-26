@@ -180,12 +180,26 @@ func reposToConsider(lg *LoadedGroup, filter []string) []*LoadedRepo {
 // `source_file`, `start_line`, etc. See #1663: pretty-printing was costing
 // ~20-30% of MCP payload tokens for zero semantic value (callers all
 // `json.Unmarshal` the response).
+//
+// #2287: jsonResult still marshals here (so direct-handler-call paths —
+// internal cross-handler dispatch like mergeNeighbors, and many tests —
+// continue to see valid JSON in res.Content[0].Text), but it ALSO
+// stashes the structured value v so wrap() can build the final envelope
+// (elapsed_ms + TOON conversion) directly from v in a single marshal —
+// no parse, no remarshal. The legacy injectElapsedMS path executed
+// marshal → parse → remarshal on every call, paying CPU proportional to
+// payload size on the parse step. By holding v we drop the parse step
+// entirely; net cost on the wire path is marshal + marshal (the second
+// for the elapsed-ms envelope), with the structured value reused from
+// memory rather than reconstructed from text.
 func jsonResult(v any) *mcpapi.CallToolResult {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return mcpapi.NewToolResultError("marshal: " + err.Error())
 	}
-	return mcpapi.NewToolResultText(string(data))
+	res := mcpapi.NewToolResultText(string(data))
+	stashDeferred(res, v)
+	return res
 }
 
 // ---------------------------------------------------------------------------
