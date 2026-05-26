@@ -516,9 +516,9 @@ func TestToolNameSurface(t *testing.T) {
 	for _, st := range srv.MCP.ListTools() {
 		registered[st.Tool.Name] = true
 	}
-	// 42 tools as of PR #2442 re-wires. 1 remaining intentional drop:
-	// archigraph_recent_activity (≤3k budget). 3 tools re-wired in #2442:
-	// archigraph_save_finding, archigraph_list_findings, archigraph_cross_links.
+	// 43 tools as of #2474 (+archigraph_persona_event). 42 baseline from PR #2442 re-wires.
+	// 1 remaining intentional drop: archigraph_recent_activity (≤3k budget).
+	// 3 tools re-wired in #2442: archigraph_save_finding, archigraph_list_findings, archigraph_cross_links.
 	// 4 dashboard-only tools dropped: archigraph_diagnostics, archigraph_quality_orphans,
 	//   archigraph_get_next_enrichment_task, archigraph_get_telemetry.
 	wantPresent := []string{
@@ -569,6 +569,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_module_analysis", "archigraph_diff_refs",
 		// #1742 subgraph retained (despite deprecation)
 		"archigraph_subgraph",
+		// #2474 persona lifecycle telemetry
+		"archigraph_persona_event",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -649,8 +651,9 @@ func TestToolNameSurface(t *testing.T) {
 	// find_callers + find_callees behind direction=) + archigraph_status
 	// sentinel registered as a real callable tool (#1769). find_callers /
 	// find_callees stay registered as deprecated aliases for one release.
-	if got := len(allRegisteredTools); got != 42 {
-		t.Errorf("expected 42 registered tools, got %d — update this count if tools are added/removed (added archigraph_docgen_* #2214)", got)
+	// +1 archigraph_persona_event (#2474 persona lifecycle telemetry).
+	if got := len(allRegisteredTools); got != 43 {
+		t.Errorf("expected 43 registered tools, got %d — update this count if tools are added/removed (added archigraph_persona_event #2474)", got)
 	}
 }
 
@@ -3138,6 +3141,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_list_findings": {"group": "g"},
 		"archigraph_cross_links":   {"group": "g", "action": "list"},
 		"archigraph_license_audit": {"group": "g"},
+		// #2474 persona lifecycle telemetry
+		"archigraph_persona_event": {"persona": "architect", "event_type": "invoke"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3182,8 +3187,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 42 {
-		t.Errorf("expected 42 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_docgen_* #2214)", len(tools))
+	if len(tools) != 43 {
+		t.Errorf("expected 43 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_persona_event #2474)", len(tools))
 	}
 
 	for _, st := range tools {
