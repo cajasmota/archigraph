@@ -3,7 +3,7 @@ package watch
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -99,7 +99,7 @@ func (c *Config) heartbeatInterval() time.Duration {
 // because the volume of mutations is low (handful of repos, lifecycle
 // is registration/deregistration, not per-event).
 type Watcher struct {
-	logger    *log.Logger
+	logger    *slog.Logger
 	cfg       Config
 	sink      EventSink
 	extraSkip map[string]struct{}
@@ -142,17 +142,17 @@ type repoState struct {
 // Deprecated convenience: callers that pass only a debounce duration should
 // migrate to NewWatcherConfig. This overload is kept for back-compat with
 // existing call sites in server.go.
-func NewWatcher(debounce time.Duration, sink EventSink, logger *log.Logger) (*Watcher, error) {
+func NewWatcher(debounce time.Duration, sink EventSink, logger *slog.Logger) (*Watcher, error) {
 	return NewWatcherConfig(Config{Debounce: debounce}, sink, logger)
 }
 
 // NewWatcherConfig constructs a Watcher with the full Config surface.
-func NewWatcherConfig(cfg Config, sink EventSink, logger *log.Logger) (*Watcher, error) {
+func NewWatcherConfig(cfg Config, sink EventSink, logger *slog.Logger) (*Watcher, error) {
 	if sink == nil {
 		return nil, errors.New("watch: sink is required")
 	}
 	if logger == nil {
-		logger = log.New(os.Stderr, "watch: ", log.LstdFlags)
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "watch")
 	}
 	fw, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -211,7 +211,7 @@ func (w *Watcher) AddRepo(repoPath string) (int, error) {
 	if err != nil {
 		return added, err
 	}
-	w.logger.Printf("watcher: registered repo=%s dirs=%d debounce=%s", abs, added, w.cfg.debounce())
+	w.logger.Info("watcher: registered", "repo", abs, "dirs", added, "debounce", w.cfg.debounce())
 	return added, nil
 }
 
@@ -243,13 +243,13 @@ func (w *Watcher) subscribeRepo(abs string) (int, error) {
 			if relErr == nil {
 				relPath = filepath.ToSlash(relPath)
 				if skip, reason := ShouldSkipDirGitignore(abs, p, relPath); skip {
-					w.logger.Printf("watcher: skip %s (%s)", p, reason)
+					w.logger.Info("watcher: skip", "path", p, "reason", reason)
 					return filepath.SkipDir
 				}
 			}
 		}
 		if err := w.fs.Add(p); err != nil {
-			w.logger.Printf("watcher: add %s: %v", p, err)
+			w.logger.Warn("watcher: add failed", "path", p, "err", err)
 			return nil
 		}
 		w.mu.Lock()
@@ -345,7 +345,7 @@ func (w *Watcher) ForceRescan() {
 	}
 	w.mu.Unlock()
 	for _, p := range paths {
-		w.logger.Printf("watcher: force-rescan repo=%s", p)
+		w.logger.Info("watcher: force-rescan", "repo", p)
 		w.sink(p, true)
 	}
 }
@@ -382,13 +382,13 @@ func (w *Watcher) heartbeat() {
 			// still healthy — nothing to do
 		case <-w.restartCh:
 			// loop goroutine detected unexpected channel closure.
-			w.logger.Printf("watcher: fsnotify closed unexpectedly — restarting")
+			w.logger.Warn("watcher: fsnotify closed unexpectedly — restarting")
 			atomic.AddUint64(&w.droppedReplay, 1)
 
 			// Recreate fsnotify.
 			fw, err := fsnotify.NewWatcher()
 			if err != nil {
-				w.logger.Printf("watcher: restart failed: %v", err)
+				w.logger.Error("watcher: restart failed", "err", err)
 				continue
 			}
 			w.mu.Lock()
@@ -404,9 +404,9 @@ func (w *Watcher) heartbeat() {
 			// Re-subscribe.
 			for _, abs := range repos {
 				if n, err := w.subscribeRepo(abs); err != nil {
-					w.logger.Printf("watcher: restart re-subscribe %s: %v", abs, err)
+					w.logger.Error("watcher: restart re-subscribe failed", "repo", abs, "err", err)
 				} else {
-					w.logger.Printf("watcher: restart re-subscribed repo=%s dirs=%d", abs, n)
+					w.logger.Info("watcher: restart re-subscribed", "repo", abs, "dirs", n)
 				}
 			}
 
@@ -465,7 +465,7 @@ func (w *Watcher) loop() {
 				return
 			}
 			if err != nil {
-				w.logger.Printf("watcher: error: %v", err)
+				w.logger.Error("watcher: error", "err", err)
 			}
 		case <-w.stopCh:
 			// Stop() was called while we were blocked waiting; drain
@@ -596,7 +596,7 @@ func (w *Watcher) recordAndArm(repo string) {
 		}
 		rs.pending = false
 		repoPath := repo
-		w.logger.Printf("watcher: bulk-detect repo=%s events_in_window=%d → full reindex", repoPath, rs.bulkCount)
+		w.logger.Info("watcher: bulk-detect", "repo", repoPath, "events_in_window", rs.bulkCount)
 		go w.sink(repoPath, true)
 		return
 	}

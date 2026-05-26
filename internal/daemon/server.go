@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net"
 	"net/rpc"
@@ -31,12 +30,9 @@ type Config struct {
 	Index        IndexFunc        // injected from cmd/archigraph
 	Rebuild      RebuildFunc      // injected from cmd/archigraph
 	QualityAudit QualityAuditFunc // injected from cmd/archigraph (Phase E)
-	// Logger is the legacy *log.Logger forwarded to sub-packages (sched,
-	// watch) that still accept *log.Logger. Daemon-internal log output uses
-	// a *slog.Logger constructed from this writer in Run. When nil, Run
-	// constructs a default stderr *log.Logger for the sub-packages and a
-	// corresponding slog.Logger for its own use.
-	Logger *log.Logger
+	// Logger is the *slog.Logger used by daemon-internal code and all sub-packages.
+	// When nil, Run constructs a default stderr slog.Logger.
+	Logger *slog.Logger
 
 	// Phase B optional wiring. When all four are non-nil the daemon
 	// starts the fsnotify watcher + scheduler and registers every
@@ -95,7 +91,7 @@ type Config struct {
 	//
 	// The hook receives the bind address and port to listen on, and the
 	// daemon logger. It should block until ctx is done.
-	DashboardServe func(ctx context.Context, bind string, port int, logger *log.Logger) error
+	DashboardServe func(ctx context.Context, bind string, port int, logger *slog.Logger) error
 
 	// DashboardPort is the TCP port for the embedded dashboard HTTP server
 	// (#929/#931). When 0 the dashboard is disabled. Default production
@@ -165,17 +161,14 @@ type Config struct {
 // daemon's entire public surface — cmd/archigraph just imports daemon
 // and calls Run.
 func Run(ctx context.Context, cfg Config) error {
-	// loggerLegacy is forwarded to sub-packages (sched, watch, selfdefense)
-	// that still accept *log.Logger. It is separate from slogger below.
-	loggerLegacy := cfg.Logger
-	if loggerLegacy == nil {
-		loggerLegacy = log.New(os.Stderr, "archigraph-daemon: ", log.LstdFlags|log.Lmicroseconds)
+	// slogger is the structured logger used by the daemon itself (Run + Service)
+	// and all sub-packages. Handler selection is based on ARCHIGRAPH_DAEMON_LOG_JSON
+	// at startup — this encodes the choice in the handler so call sites never check
+	// the env var.
+	slogger := cfg.Logger
+	if slogger == nil {
+		slogger = buildSlogLogger(os.Stderr)
 	}
-
-	// slogger is the structured logger used by the daemon itself (Run + Service).
-	// Handler selection is based on ARCHIGRAPH_DAEMON_LOG_JSON at startup —
-	// this encodes the choice in the handler so call sites never check the env var.
-	slogger := buildSlogLogger(loggerLegacy.Writer())
 	// Keep a short alias for readability in the long Run body below.
 	logger := slogger
 
@@ -183,7 +176,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// is already running and this binary lives under /tmp. This prevents the
 	// hot-loop runaway observed on 2026-05-20 where agent-spawned daemons were
 	// adopted by launchd after the agent exited and spun at ~1000% CPU.
-	if err := SelfDefenseCheck(loggerLegacy); err != nil {
+	if err := SelfDefenseCheck(logger); err != nil {
 		return err
 	}
 
@@ -249,7 +242,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// Layer 2 self-defense: start CPU watchdog for ephemeral /tmp daemons.
 	// The watchdog passes the service's real inFlight counter so it can
 	// distinguish hot-loops (no work) from legitimate sustained indexing.
-	StartCPUWatchdog(&svc.inFlight, loggerLegacy)
+	StartCPUWatchdog(&svc.inFlight, logger)
 
 	// Phase B — bring up the scheduler + watcher when the caller
 	// supplied the four hooks. They are optional so tests can exercise
@@ -261,7 +254,7 @@ func Run(ctx context.Context, cfg Config) error {
 			Links:         cfg.SchedulerLinks,
 			Algorithms:    cfg.SchedulerAlgo,
 			GroupsForRepo: cfg.GroupsForRepo,
-			Logger:        loggerLegacy,
+			Logger:        logger,
 			BudgetMB:      cfg.MaxRSSBudgetMB,
 			Predict:       sched.PredictRSS,
 			History:       history,
@@ -288,7 +281,7 @@ func Run(ctx context.Context, cfg Config) error {
 				logger.Info("watcher: bulk trigger — enqueuing full reindex", "repo", repo)
 			}
 			scheduler.Enqueue(repo)
-		}, loggerLegacy)
+		}, logger)
 		if werr != nil {
 			logger.Warn("watcher: disabled", "err", werr)
 		} else {
@@ -314,7 +307,7 @@ func Run(ctx context.Context, cfg Config) error {
 					cfg.BranchSwitchSink(ev.RepoPath, ev.OldRef)
 				}
 				scheduler.EnqueueRef(ev.RepoPath, ev.NewRef)
-			}, loggerLegacy)
+			}, logger)
 			headPoller.Start()
 			defer headPoller.Stop()
 
@@ -380,7 +373,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// .previous-* backups every 24 h. Opt-in: nil = disabled (--no-auto-cleanup).
 	if cfg.DocgenSweep != nil {
 		sweepCfg := *cfg.DocgenSweep
-		sweepCfg.Logger = loggerLegacy
+		sweepCfg.Logger = logger
 		sweepStop := make(chan struct{})
 		StartDocgenSweeper(sweepCfg, sweepStop)
 		defer close(sweepStop)
@@ -403,7 +396,7 @@ func Run(ctx context.Context, cfg Config) error {
 		dashCtx, dashCancel := context.WithCancel(ctx)
 		defer dashCancel()
 		go func() {
-			if err := cfg.DashboardServe(dashCtx, bind, cfg.DashboardPort, loggerLegacy); err != nil {
+			if err := cfg.DashboardServe(dashCtx, bind, cfg.DashboardPort, logger); err != nil {
 				logger.Error("dashboard", "err", err)
 			}
 		}()
@@ -599,10 +592,9 @@ func buildPatternDecayJob(groupDirs func() map[string]string, logger *slog.Logge
 //     with log shippers)
 //   - anything else → slog.NewTextHandler (human-readable logfmt)
 //
-// The writer w is inherited from the caller's *log.Logger so both the legacy
-// bridge and the slog logger share the same output sink. Handler selection at
-// construction time eliminates the prefix-corruption failure mode that required
-// the startup guard removed in #2375 — slog cannot be misconfigured this way.
+// Handler selection at construction time eliminates the prefix-corruption
+// failure mode that required the startup guard removed in #2375 — slog cannot
+// be misconfigured this way.
 func buildSlogLogger(w io.Writer) *slog.Logger {
 	v := strings.TrimSpace(os.Getenv(EnvDaemonLogJSON))
 	if v == "1" || strings.EqualFold(v, "true") {

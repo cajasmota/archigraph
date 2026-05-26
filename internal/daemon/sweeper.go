@@ -13,7 +13,8 @@ package daemon
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	"time"
 )
 
@@ -30,8 +31,8 @@ type DocgenSweeperConfig struct {
 	// Interval between sweeps. Default (zero value): 24 hours.
 	Interval time.Duration
 
-	// Logger is used for sweep diagnostics. When nil, log.Default() is used.
-	Logger *log.Logger
+	// Logger is used for sweep diagnostics. When nil, a default stderr slog.Logger is used.
+	Logger *slog.Logger
 }
 
 // StartDocgenSweeper launches the background docgen cleanup goroutine and
@@ -49,7 +50,7 @@ func StartDocgenSweeper(cfg DocgenSweeperConfig, stopCh <-chan struct{}) {
 	}
 	logger := cfg.Logger
 	if logger == nil {
-		logger = log.Default()
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "sweeper")
 	}
 
 	go runDocgenSweeper(interval, cfg.CleanupFn, logger, stopCh)
@@ -57,7 +58,7 @@ func StartDocgenSweeper(cfg DocgenSweeperConfig, stopCh <-chan struct{}) {
 
 // runDocgenSweeper is the goroutine body. It performs an initial sweep on
 // entry (after a short startup delay) and then sweeps on a ticker.
-func runDocgenSweeper(interval time.Duration, cleanupFn func() (int, int64, error), logger *log.Logger, stopCh <-chan struct{}) {
+func runDocgenSweeper(interval time.Duration, cleanupFn func() (int, int64, error), logger *slog.Logger, stopCh <-chan struct{}) {
 	// Short startup delay so the daemon socket is live before we do I/O.
 	startupDelay := 30 * time.Second
 	select {
@@ -69,10 +70,10 @@ func runDocgenSweeper(interval time.Duration, cleanupFn func() (int, int64, erro
 	sweep := func() {
 		n, freed, err := cleanupFn()
 		if err != nil {
-			logger.Printf("docgen sweeper: cleanup error: %v", err)
+			logger.Error("docgen sweeper: cleanup error", "err", err)
 			return
 		}
-		logger.Printf("docgen sweeper: removed %d item(s), freed %s", n, sweeperHumanBytes(freed))
+		logger.Info("docgen sweeper: removed items", "count", n, "freed", sweeperHumanBytes(freed))
 	}
 
 	// Initial sweep.

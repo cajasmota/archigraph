@@ -19,7 +19,7 @@ package daemon
 import (
 	"bytes"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime/pprof"
@@ -51,15 +51,15 @@ func isTmpPath(path string) bool {
 // running, the function returns a descriptive error and the caller must exit.
 //
 // logger may be nil; a default stderr logger will be used.
-func SelfDefenseCheck(logger *log.Logger) error {
+func SelfDefenseCheck(logger *slog.Logger) error {
 	if logger == nil {
-		logger = log.New(os.Stderr, "archigraph-daemon: ", log.LstdFlags)
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "selfdefense")
 	}
 
 	self, err := os.Executable()
 	if err != nil {
 		// Can't determine our own path — skip check rather than blocking startup.
-		logger.Printf("selfdefense: os.Executable() failed: %v (skipping check)", err)
+		logger.Warn("selfdefense: os.Executable() failed (skipping check)", "err", err)
 		return nil
 	}
 
@@ -90,9 +90,9 @@ func SelfDefenseCheck(logger *log.Logger) error {
 //
 // Both conditions must hold to avoid killing legitimate short-lived binaries
 // that happen to live under /tmp.
-func StartCPUWatchdog(inflightCounter *int64, logger *log.Logger) {
+func StartCPUWatchdog(inflightCounter *int64, logger *slog.Logger) {
 	if logger == nil {
-		logger = log.New(os.Stderr, "archigraph-daemon: ", log.LstdFlags)
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "selfdefense")
 	}
 
 	self, err := os.Executable()
@@ -171,14 +171,13 @@ func findCanonicalDaemon() (pid int, exe string) {
 //   - daemon enters hot-loop at ~1000% CPU
 //   - no inflight RPC work
 //   - watchdog self-terminates within ~5 minutes
-func cpuWatchdog(inflight *int64, logger *log.Logger) {
+func cpuWatchdog(inflight *int64, logger *slog.Logger) {
 	const (
 		pollInterval    = 60 * time.Second
 		cpuThresholdPct = 500.0
 		sustainedTicks  = 5 // 5 × 60s = 5 minutes
 	)
-	logger.Printf("selfdefense: CPU watchdog started (threshold=%.0f%% for %d ticks)",
-		cpuThresholdPct, sustainedTicks)
+	logger.Info("selfdefense: CPU watchdog started", "threshold_pct", cpuThresholdPct, "sustained_ticks", sustainedTicks)
 
 	hotTicks := 0
 	ticker := time.NewTicker(pollInterval)
@@ -193,18 +192,17 @@ func cpuWatchdog(inflight *int64, logger *log.Logger) {
 		pct := selfCPUPercent()
 		if pct > cpuThresholdPct {
 			hotTicks++
-			logger.Printf("selfdefense: hot-loop suspected (cpu=%.1f%% inflight=0 ticks=%d/%d)",
-				pct, hotTicks, sustainedTicks)
+			logger.Warn("selfdefense: hot-loop suspected", "cpu_pct", pct, "inflight", 0, "ticks", hotTicks, "max_ticks", sustainedTicks)
 			if hotTicks >= sustainedTicks {
 				// Dump a goroutine profile to stderr before exiting so the operator
 				// can inspect what was spinning. This is Layer 2 of the diagnostic.
 				dumpGoroutineProfile(logger)
-				logger.Printf("selfdefense: self-detecting hot-loop (cpu=%.1f%%), exiting", pct)
+				logger.Error("selfdefense: self-detecting hot-loop, exiting", "cpu_pct", pct)
 				os.Exit(0)
 			}
 		} else {
 			if hotTicks > 0 {
-				logger.Printf("selfdefense: CPU normalised (%.1f%%), resetting counter", pct)
+				logger.Info("selfdefense: CPU normalised, resetting counter", "cpu_pct", pct)
 			}
 			hotTicks = 0
 		}
@@ -224,23 +222,23 @@ func selfCPUPercent() float64 {
 // dumpGoroutineProfile writes a goroutine stack dump (for diagnosing the hot
 // function) to a temporary file and logs the path. Also logs a brief in-memory
 // summary to logger. This is the Layer 2 pprof integration mentioned in #857.
-func dumpGoroutineProfile(logger *log.Logger) {
+func dumpGoroutineProfile(logger *slog.Logger) {
 	var buf bytes.Buffer
 	p := pprof.Lookup("goroutine")
 	if p == nil {
 		return
 	}
 	if err := p.WriteTo(&buf, 1); err != nil {
-		logger.Printf("selfdefense: goroutine dump failed: %v", err)
+		logger.Error("selfdefense: goroutine dump failed", "err", err)
 		return
 	}
 
 	f, err := os.CreateTemp("", "archigraph-hotloop-*.pprof.txt")
 	if err != nil {
-		logger.Printf("selfdefense: goroutine dump (inline):\n%s", buf.String())
+		logger.Info("selfdefense: goroutine dump (inline)", "dump", buf.String())
 		return
 	}
 	_, _ = f.Write(buf.Bytes())
 	_ = f.Close()
-	logger.Printf("selfdefense: goroutine dump written to %s", f.Name())
+	logger.Info("selfdefense: goroutine dump written", "path", f.Name())
 }

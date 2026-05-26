@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -57,7 +57,7 @@ type ipcEvent struct {
 //	repoPath   — absolute path of the repository
 //	ref        — git ref captured at enqueue time (may be "")
 //	skipPasses — pass names forwarded via --skip-pass
-//	logger     — daemon's log.Logger for structured event lines
+//	logger     — daemon's slog.Logger for structured event lines
 //
 // The child's stderr is copied line-by-line to logger (prefixed with the
 // repo basename) so the daemon log file includes child extractor output
@@ -66,7 +66,7 @@ type ipcEvent struct {
 // Cancellation: ctx.Done() sends SIGTERM to the child. The child is
 // expected to exit on SIGTERM; if it does not, the parent waits and the
 // context timeout (if any) will eventually unblock the caller.
-func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []string, logger *log.Logger) error {
+func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []string, logger *slog.Logger) error {
 	binary, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("subprocess-indexer: resolve binary: %w", err)
@@ -104,7 +104,7 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 
 	pid := cmd.Process.Pid
 	if logger != nil {
-		logger.Printf("subprocess-indexer: started pid=%d repo=%s ref=%s", pid, repoPath, ref)
+		logger.Info("subprocess-indexer: started", "pid", pid, "repo", repoPath, "ref", ref)
 	}
 
 	// Drain child stderr in a goroutine — each line forwarded to the daemon
@@ -116,7 +116,7 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 		sc := bufio.NewScanner(stderrPipe)
 		for sc.Scan() {
 			if logger != nil {
-				logger.Printf("[child pid=%d] %s", pid, sc.Text())
+				logger.Info("[child]", "pid", pid, "line", sc.Text())
 			}
 		}
 	}()
@@ -134,7 +134,7 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 			}
 			lastEvent = ev
 			if logger != nil {
-				logger.Printf("subprocess-indexer: event=%s repo=%s ref=%s", ev.Event, ev.Repo, ev.Ref)
+				logger.Info("subprocess-indexer: event", "event", ev.Event, "repo", ev.Repo, "ref", ev.Ref)
 			}
 		}
 	}()
@@ -146,9 +146,9 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 
 	if logger != nil {
 		if waitErr != nil {
-			logger.Printf("subprocess-indexer: pid=%d exited with error: %v", pid, waitErr)
+			logger.Error("subprocess-indexer: exited with error", "pid", pid, "err", waitErr)
 		} else {
-			logger.Printf("subprocess-indexer: pid=%d completed successfully", pid)
+			logger.Info("subprocess-indexer: completed successfully", "pid", pid)
 		}
 	}
 
