@@ -39,7 +39,7 @@ package sched
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"runtime"
 	"sort"
@@ -134,7 +134,7 @@ type Config struct {
 	Links         LinksFn
 	Algorithms    AlgoFn
 	GroupsForRepo GroupsForRepoFn
-	Logger        *log.Logger
+	Logger        *slog.Logger
 
 	// BudgetMB caps the total predicted RSS of concurrently running
 	// index jobs (megabytes). 0 disables admission control entirely
@@ -211,7 +211,7 @@ type enqueueRequest struct {
 //   - an RSS-budget ledger that gates dispatch.
 type Scheduler struct {
 	cfg    Config
-	logger *log.Logger
+	logger *slog.Logger
 	enq    chan enqueueRequest // public enqueue input → dedup → pending queue
 	jobs   chan jobToken       // admitted jobs handed to workers
 	wake   chan struct{}       // poked when a worker frees budget
@@ -305,7 +305,7 @@ func New(cfg Config) *Scheduler {
 		cfg.AlgoDebounce = 30 * time.Second
 	}
 	if cfg.Logger == nil {
-		cfg.Logger = log.New(os.Stderr, "sched: ", log.LstdFlags)
+		cfg.Logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "sched")
 	}
 	algoCap := resolveAlgoCap(cfg.AlgoCap)
 	return &Scheduler{
@@ -527,8 +527,8 @@ func (s *Scheduler) checkDeadMan() {
 	s.deadManAt = time.Time{} // reset clock; the job is now admitted
 	s.logEventLocked("admit_deadman", repo,
 		"force-admitted after "+stuckFor.String()+" with no progress; predicted="+formatMB(smallestMB))
-	s.logger.Printf("sched: dead-man: force-admitting %s (predicted=%dMB) after queue stuck %s",
-		repo, smallestMB, stuckFor)
+	s.logger.Info("sched: dead-man: force-admitting",
+		"repo", repo, "predicted_mb", smallestMB, "stuck_for", stuckFor)
 
 	tok := jobToken{repoPath: repo, ref: ref, predictedMB: smallestMB}
 	// Dispatch asynchronously so we don't hold the lock while blocking on
@@ -645,8 +645,7 @@ func (s *Scheduler) runIndex(tok jobToken) {
 	s.logEvent("index_start", repoPath, "predicted="+formatMB(tok.predictedMB)+" ref="+tok.ref)
 	// Observability: log goroutine identity + ref so concurrent-indexer
 	// regressions are diagnosable without a pprof trace (#2141).
-	s.logger.Printf("indexer: starting repo=%s ref=%s goroutine_id=%d",
-		repoPath, tok.ref, goroutineID())
+	s.logger.Info("indexer: starting", "repo", repoPath, "ref", tok.ref, "goroutine_id", goroutineID())
 
 	// Spawn RSS sampler so we capture the peak the daemon hit during
 	// this job. Records into history on completion.
@@ -690,8 +689,7 @@ func (s *Scheduler) runIndex(tok jobToken) {
 		} else {
 			s.logEvent("incremental_fallback", repoPath,
 				"reason="+res.FallbackReason)
-			s.logger.Printf("sched: incremental fallback repo=%s reason=%s",
-				repoPath, res.FallbackReason)
+			s.logger.Info("sched: incremental fallback", "repo", repoPath, "reason", res.FallbackReason)
 		}
 	}
 
@@ -747,15 +745,14 @@ func (s *Scheduler) runIndex(tok jobToken) {
 
 	if err != nil {
 		s.logEvent("index_err", repoPath, err.Error())
-		s.logger.Printf("sched: index %s failed: %v (took %s)", repoPath, err, time.Since(t0))
+		s.logger.Error("sched: index failed", "repo", repoPath, "err", err, "took", time.Since(t0))
 		return
 	}
 	dur := time.Since(t0).Truncate(time.Millisecond)
 	allocDiff := observedPeakMB - tok.predictedMB
 	s.logEvent("index_ok", repoPath,
 		dur.String()+" peak="+formatMB(observedPeakMB))
-	s.logger.Printf("indexer: completed repo=%s took=%s peak_heap=%dMB alloc_diff=%dMB",
-		repoPath, dur, observedPeakMB, allocDiff)
+	s.logger.Info("indexer: completed", "repo", repoPath, "took", dur, "peak_heap_mb", observedPeakMB, "alloc_diff_mb", allocDiff)
 
 	// Schedule downstream passes.
 	s.scheduleAlgo(repoPath)
@@ -794,7 +791,7 @@ func (s *Scheduler) runLinks(group string) {
 	err := s.cfg.Links(context.Background(), group)
 	if err != nil {
 		s.logEvent("links_err", "", group+": "+err.Error())
-		s.logger.Printf("sched: links %s failed: %v", group, err)
+		s.logger.Error("sched: links failed", "group", group, "err", err)
 		return
 	}
 	s.logEvent("links_ok", "", group+" "+time.Since(t0).Truncate(time.Millisecond).String())
@@ -867,7 +864,7 @@ func (s *Scheduler) runAlgo(ctx context.Context, repoPath string) {
 	// / #2140 hyp-2). The acquire is interruptible via ctx so a cancellation
 	// (new write arrives for this repo) doesn't block forever.
 	cap := cap(s.algoSem)
-	s.logger.Printf("algo-pass: starting repo=%s cap=%d goroutines", repoPath, cap)
+	s.logger.Info("algo-pass: starting", "repo", repoPath, "cap", cap)
 	select {
 	case s.algoSem <- struct{}{}:
 		// acquired
@@ -888,7 +885,7 @@ func (s *Scheduler) runAlgo(ctx context.Context, repoPath string) {
 			return
 		}
 		s.logEvent("algo_err", repoPath, err.Error())
-		s.logger.Printf("sched: algo %s failed: %v", repoPath, err)
+		s.logger.Error("sched: algo failed", "repo", repoPath, "err", err)
 		return
 	}
 	s.mu.Lock()

@@ -46,7 +46,7 @@
 package watch
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -139,7 +139,7 @@ type commonDirGroup struct {
 type GitHeadPoller struct {
 	interval time.Duration
 	sink     BranchSwitchSink
-	logger   *log.Logger
+	logger   *slog.Logger
 
 	mu          sync.Mutex
 	groups      map[string]*commonDirGroup // key: absolute common-dir path
@@ -157,12 +157,12 @@ const defaultPollInterval = 2 * time.Second
 
 // NewGitHeadPoller constructs a poller. interval=0 uses the default (2 s).
 // sink must be non-nil. logger may be nil.
-func NewGitHeadPoller(interval time.Duration, sink BranchSwitchSink, logger *log.Logger) *GitHeadPoller {
+func NewGitHeadPoller(interval time.Duration, sink BranchSwitchSink, logger *slog.Logger) *GitHeadPoller {
 	if interval <= 0 {
 		interval = defaultPollInterval
 	}
 	if logger == nil {
-		logger = log.New(os.Stderr, "githead-poller: ", log.LstdFlags)
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "githead-poller")
 	}
 	return &GitHeadPoller{
 		interval:    interval,
@@ -369,7 +369,7 @@ func (p *GitHeadPoller) loop() {
 // smallDiffThreshold+1 to bound memory).
 //
 // If either SHA is empty or the git command fails, ReindexUnknown is returned.
-func classifyRefChange(repoPath, oldSHA, newSHA string, logger *log.Logger) (ReindexHint, []string) {
+func classifyRefChange(repoPath, oldSHA, newSHA string, logger *slog.Logger) (ReindexHint, []string) {
 	if oldSHA == "" || newSHA == "" {
 		return ReindexUnknown, nil
 	}
@@ -385,7 +385,7 @@ func classifyRefChange(repoPath, oldSHA, newSHA string, logger *log.Logger) (Rei
 	cmd.Dir = repoPath
 	out, err := cmd.Output()
 	if err != nil {
-		logger.Printf("classifyRefChange: git diff failed in %s: %v", repoPath, err)
+		logger.Warn("classifyRefChange: git diff failed", "repo", repoPath, "err", err)
 		return ReindexUnknown, nil
 	}
 
@@ -529,13 +529,14 @@ func (p *GitHeadPoller) poll() {
 			ev.ChangedFiles = changedFiles
 
 			if hint == ReindexNone {
-				p.logger.Printf("ref-change: %s %s..%s no-source-changes — skipping reindex",
-					repoPath, s.prev.SHA, current.SHA)
+				p.logger.Info("ref-change: no-source-changes — skipping reindex",
+					"repo", repoPath, "old_sha", s.prev.SHA, "new_sha", current.SHA)
 				continue
 			}
 
-			p.logger.Printf("branch-switch detected: %s %s@%s -> %s@%s hint=%d changed_files=%d",
-				repoPath, ev.OldRef, ev.OldSHA, ev.NewRef, ev.NewSHA, hint, len(changedFiles))
+			p.logger.Info("branch-switch detected",
+				"repo", repoPath, "old_ref", ev.OldRef, "old_sha", ev.OldSHA,
+				"new_ref", ev.NewRef, "new_sha", ev.NewSHA, "hint", hint, "changed_files", len(changedFiles))
 			p.sink(ev)
 		}
 	}

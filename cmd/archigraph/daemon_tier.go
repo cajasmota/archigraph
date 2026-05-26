@@ -48,7 +48,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -81,7 +81,7 @@ var daemonSchedulerEnqueue func(repoPath string)
 //
 // P0.3 (#2141): injects the real system memory size into TTLConfig so
 // the pressure-eviction threshold is computed against physical RAM.
-func startDaemonTierManager(ctx context.Context, logger *log.Logger) {
+func startDaemonTierManager(ctx context.Context, logger *slog.Logger) {
 	ttl := tier.EnvTTLConfig()
 
 	// P0.3: populate SystemMemoryBytes from the process package so the
@@ -91,7 +91,9 @@ func startDaemonTierManager(ctx context.Context, logger *log.Logger) {
 		ttl.SystemMemoryBytes = uint64(sysMB) * 1024 * 1024
 	}
 
-	daemonTierMgr = tier.NewManager(ctx, ttl, tierEvictCallback, tierReloadCallback, tierDiskEvictCallback, logger)
+	// tier.NewManager still accepts *log.Logger; bridge via slog.NewLogLogger.
+	tierLog := slog.NewLogLogger(logger.Handler(), slog.LevelInfo)
+	daemonTierMgr = tier.NewManager(ctx, ttl, tierEvictCallback, tierReloadCallback, tierDiskEvictCallback, tierLog)
 
 	// Wire the MCP graph-cache access hook so every GetForRepoRef call
 	// updates lastAccessedAt in the tier manager without extra call-sites.
@@ -114,13 +116,13 @@ func startDaemonTierManager(ctx context.Context, logger *log.Logger) {
 // state directory. Any ref directory that contains a graph.fb is registered.
 // If no refs/ dir exists, the _unknown sentinel is skipped (it would be
 // refused by GetForRepoRef anyway).
-func registerKnownGroupsCold(logger *log.Logger) {
+func registerKnownGroupsCold(logger *slog.Logger) {
 	if daemonTierMgr == nil {
 		return
 	}
 	groups, err := registry.Groups()
 	if err != nil {
-		logger.Printf("tier: lazy-hydration: registry.Groups: %v (skipping cold-register)", err)
+		logger.Warn("tier: lazy-hydration: registry.Groups failed (skipping cold-register)", "err", err)
 		return
 	}
 
@@ -165,7 +167,7 @@ func registerKnownGroupsCold(logger *log.Logger) {
 		}
 	}
 	if registered > 0 {
-		logger.Printf("tier: S1 lazy-hydration: cold-registered %d slot(s) from registry (no graph.fb opened)", registered)
+		logger.Info("tier: S1 lazy-hydration: cold-registered slots from registry (no graph.fb opened)", "count", registered)
 	}
 }
 
@@ -177,7 +179,7 @@ func registerKnownGroupsCold(logger *log.Logger) {
 // subscriptions. The first MCP query for a group calls SubscribeGroupWatcher
 // which lazily subscribes that group's repos. This means the watcher manager
 // starts with an empty slots map and a zero subscription count.
-func onWatcherReady(w *watch.Watcher, logger *log.Logger) {
+func onWatcherReady(w *watch.Watcher, logger *slog.Logger) {
 	mgr := watch.NewDefaultManager(w, logger)
 	daemonWatcherMgr = mgr
 
@@ -187,7 +189,7 @@ func onWatcherReady(w *watch.Watcher, logger *log.Logger) {
 
 	if daemonTierMgr != nil {
 		daemonTierMgr.SetWatcherHook(mgr)
-		logger.Printf("tier: watcher pause/resume hook wired (M2 lazy-subscribe — 0 subscriptions at boot)")
+		logger.Info("tier: watcher pause/resume hook wired (M2 lazy-subscribe — 0 subscriptions at boot)")
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -264,11 +265,10 @@ func runDaemon(argv []string) error {
 		return fmt.Errorf("open log %s: %w", layout.LogPath, err)
 	}
 	defer logFile.Close()
-	logger := log.New(io.MultiWriter(os.Stderr, logFile), "archigraph-daemon: ",
-		log.LstdFlags|log.Lmicroseconds)
+	logger := buildDaemonSlogLogger(io.MultiWriter(os.Stderr, logFile))
 	// ADR-0016 flip-day (#808): log the active graph format mode so users
 	// can confirm the daemon is running in the expected configuration.
-	logger.Printf("graph format: fb-default (json-fallback enabled) — graph.fb written on every index; --skip-json opt-in drops graph.json")
+	logger.Info("graph format: fb-default (json-fallback enabled) — graph.fb written on every index; --skip-json opt-in drops graph.json")
 
 	// Resolve dashboard port: env var > default. A future
 	// ~/.config/archigraph/daemon.toml can add more overrides.
@@ -477,7 +477,7 @@ func daemonSchedulerIndex(ctx context.Context, repoPath string, ref string) erro
 	var err error
 	if sched.SubprocessIndexEnabled() {
 		// S5 path: fork-exec `archigraph index-internal` for memory isolation.
-		err = sched.RunSubprocessIndex(ctx, repoPath, ref, []string{"graph-algo"}, log.Default())
+		err = sched.RunSubprocessIndex(ctx, repoPath, ref, []string{"graph-algo"}, slog.Default())
 	} else {
 		// In-process path (legacy default, enabled on existing installs).
 		// ADR-0016 flip-day (#808): graph.fb is always written by default now.
@@ -1026,8 +1026,8 @@ func daemonPatternGroupDirs() map[string]string {
 //
 // This function lives in cmd/archigraph (not internal/daemon) to avoid the
 // import cycle: internal/dashboard already imports internal/daemon.
-func makeDaemonDashboardServe(daemonStartedAt time.Time) func(ctx context.Context, bind string, port int, logger *log.Logger) error {
-	return func(ctx context.Context, bind string, port int, logger *log.Logger) error {
+func makeDaemonDashboardServe(daemonStartedAt time.Time) func(ctx context.Context, bind string, port int, logger *slog.Logger) error {
+	return func(ctx context.Context, bind string, port int, logger *slog.Logger) error {
 		addr := net.JoinHostPort(bind, strconv.Itoa(port))
 		l, err := net.Listen("tcp", addr)
 		if err != nil {
@@ -1104,8 +1104,18 @@ func makeDaemonDashboardServe(daemonStartedAt time.Time) func(ctx context.Contex
 
 		srv.UseListener(l)
 		if logger != nil {
-			logger.Printf("dashboard ready http://%s/", addr)
+			logger.Info("dashboard ready", "url", "http://"+addr+"/")
 		}
 		return srv.Serve(ctx)
 	}
+}
+
+// buildDaemonSlogLogger constructs a *slog.Logger for the daemon process.
+// Handler selection follows ARCHIGRAPH_DAEMON_LOG_JSON (same as daemon.buildSlogLogger).
+func buildDaemonSlogLogger(w io.Writer) *slog.Logger {
+	v := strings.TrimSpace(os.Getenv("ARCHIGRAPH_DAEMON_LOG_JSON"))
+	if v == "1" || strings.EqualFold(v, "true") {
+		return slog.New(slog.NewJSONHandler(w, nil))
+	}
+	return slog.New(slog.NewTextHandler(w, nil))
 }

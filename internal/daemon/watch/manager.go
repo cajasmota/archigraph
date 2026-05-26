@@ -32,7 +32,7 @@
 package watch
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
@@ -67,7 +67,7 @@ type slotState struct {
 // It is goroutine-safe.
 type DefaultManager struct {
 	watcher *Watcher
-	logger  *log.Logger
+	logger  *slog.Logger
 
 	mu sync.Mutex
 	// slots maps "repoPath\x00ref" → slotState
@@ -83,9 +83,9 @@ type DefaultManager struct {
 
 // NewDefaultManager creates a DefaultManager backed by w.
 // logger may be nil.
-func NewDefaultManager(w *Watcher, logger *log.Logger) *DefaultManager {
+func NewDefaultManager(w *Watcher, logger *slog.Logger) *DefaultManager {
 	if logger == nil {
-		logger = log.New(os.Stderr, "watch-mgr: ", log.LstdFlags)
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "watch-mgr")
 	}
 	return &DefaultManager{
 		watcher:   w,
@@ -165,7 +165,7 @@ func (m *DefaultManager) SubscribeGroup(groupName string, repoPaths []string) in
 	for _, rp := range toSubscribe {
 		n, err := m.watcher.AddRepo(rp)
 		if err != nil {
-			m.logger.Printf("watcher-mgr: SubscribeGroup %s repo=%s AddRepo err=%v", groupName, rp, err)
+			m.logger.Error("watcher-mgr: SubscribeGroup AddRepo failed", "group", groupName, "repo", rp, "err", err)
 			// Decrement on failure so the next call retries.
 			m.mu.Lock()
 			m.refCounts[rp]--
@@ -173,7 +173,7 @@ func (m *DefaultManager) SubscribeGroup(groupName string, repoPaths []string) in
 			m.mu.Unlock()
 			continue
 		}
-		m.logger.Printf("watcher-mgr: SubscribeGroup %s repo=%s dirs=%d (lazy subscribe)", groupName, rp, n)
+		m.logger.Info("watcher-mgr: SubscribeGroup lazy subscribe", "group", groupName, "repo", rp, "dirs", n)
 		added += n
 	}
 	return added
@@ -235,11 +235,10 @@ func (m *DefaultManager) Pause(repoPath, ref string) {
 
 	if removeRepo {
 		m.watcher.RemoveRepo(repoPath)
-		m.logger.Printf("watcher-mgr: paused repo=%s ref=%s — fsnotify unsubscribed (elapsed %s)",
-			repoPath, ref, time.Since(start).Round(time.Microsecond))
+		m.logger.Info("watcher-mgr: paused — fsnotify unsubscribed",
+			"repo", repoPath, "ref", ref, "elapsed", time.Since(start).Round(time.Microsecond))
 	} else {
-		m.logger.Printf("watcher-mgr: paused ref=%s repo=%s — other refs still active",
-			ref, repoPath)
+		m.logger.Info("watcher-mgr: paused — other refs still active", "ref", ref, "repo", repoPath)
 	}
 }
 
@@ -276,16 +275,15 @@ func (m *DefaultManager) Resume(repoPath, ref string) time.Duration {
 		n, err := m.watcher.AddRepo(repoPath)
 		elapsed := time.Since(start)
 		if err != nil {
-			m.logger.Printf("watcher-mgr: resume repo=%s ref=%s AddRepo err=%v (elapsed %s)",
-				repoPath, ref, err, elapsed.Round(time.Microsecond))
+			m.logger.Error("watcher-mgr: resume AddRepo failed",
+				"repo", repoPath, "ref", ref, "err", err, "elapsed", elapsed.Round(time.Microsecond))
 		} else {
-			m.logger.Printf("watcher-mgr: resumed repo=%s ref=%s dirs=%d (elapsed %s)",
-				repoPath, ref, n, elapsed.Round(time.Microsecond))
+			m.logger.Info("watcher-mgr: resumed",
+				"repo", repoPath, "ref", ref, "dirs", n, "elapsed", elapsed.Round(time.Microsecond))
 		}
 		return elapsed
 	}
-	m.logger.Printf("watcher-mgr: resumed ref=%s repo=%s — subscription already active",
-		ref, repoPath)
+	m.logger.Info("watcher-mgr: resumed — subscription already active", "ref", ref, "repo", repoPath)
 	return time.Since(start)
 }
 
