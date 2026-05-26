@@ -3,6 +3,7 @@ package mcp
 import (
 	"container/heap"
 	"math"
+	"strconv"
 
 	"github.com/cajasmota/archigraph/internal/graph"
 )
@@ -63,6 +64,37 @@ func buildAdjacency(doc *graph.Document, repo string) *adjacency {
 		a.in[r.ToID] = append(a.in[r.ToID], edge{target: r.FromID, kind: r.Kind, weight: w, relIdx: i})
 	}
 	return a
+}
+
+// stepEdge is a single STEP_IN_PROCESS edge entry stored in StepAdj.
+// It carries the step target ID and the step_index property so that
+// buildProcessStepsWithCrossRepo can sort and render without touching
+// Doc.Relationships at query time (#2417).
+type stepEdge struct {
+	toID string
+	idx  int
+}
+
+// buildStepAdjacency precomputes the forward STEP_IN_PROCESS adjacency
+// consumed by buildProcessStepsWithCrossRepo. Built ONCE per reload
+// (cached on LoadedRepo.StepAdj, #2417). Eliminates the O(R) scan over
+// Doc.Relationships that the function previously paid on every
+// process-flow query.
+func buildStepAdjacency(doc *graph.Document) map[string][]stepEdge {
+	adj := make(map[string][]stepEdge)
+	for i := range doc.Relationships {
+		r := &doc.Relationships[i]
+		if r.Kind != stepInProcessEdge {
+			continue
+		}
+		idxStr := ""
+		if r.Properties != nil {
+			idxStr = r.Properties["step_index"]
+		}
+		n, _ := strconv.Atoi(idxStr)
+		adj[r.FromID] = append(adj[r.FromID], stepEdge{toID: r.ToID, idx: n})
+	}
+	return adj
 }
 
 // buildCallsAdjacency precomputes the forward CALLS adjacency consumed by

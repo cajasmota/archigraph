@@ -391,17 +391,26 @@ func buildProcessStepsWithCrossRepo(r *LoadedRepo, proc *graph.Entity, crossRepo
 		id  string
 	}
 	var ordered []indexed
-	for i := range doc.Relationships {
-		rel := &doc.Relationships[i]
-		if rel.Kind != stepInProcessEdge || rel.FromID != proc.ID {
-			continue
+	// Consume the pre-built STEP_IN_PROCESS adjacency index (#2417).
+	// Falls back to the O(R) Doc.Relationships scan only when StepAdj is nil
+	// (e.g. a *LoadedRepo constructed in a test without calling buildStepAdjacency).
+	if r.StepAdj != nil {
+		for _, se := range r.StepAdj[proc.ID] {
+			ordered = append(ordered, indexed{se.idx, se.toID})
 		}
-		idxStr := ""
-		if rel.Properties != nil {
-			idxStr = rel.Properties["step_index"]
+	} else {
+		for i := range doc.Relationships {
+			rel := &doc.Relationships[i]
+			if rel.Kind != stepInProcessEdge || rel.FromID != proc.ID {
+				continue
+			}
+			idxStr := ""
+			if rel.Properties != nil {
+				idxStr = rel.Properties["step_index"]
+			}
+			n, _ := strconv.Atoi(idxStr)
+			ordered = append(ordered, indexed{n, rel.ToID})
 		}
-		n, _ := strconv.Atoi(idxStr)
-		ordered = append(ordered, indexed{n, rel.ToID})
 	}
 	if len(ordered) == 0 {
 		// Fallback to the chain property if the edges weren't emitted.
