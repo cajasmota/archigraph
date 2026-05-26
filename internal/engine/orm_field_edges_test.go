@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/types"
 )
 
 // fieldEdge is the minimal projection of a READS_FIELD / WRITES_FIELD
@@ -210,4 +211,67 @@ def by_author_name(name):
 			t.Errorf("emitted edge with un-split traversal field: %+v", e)
 		}
 	}
+}
+
+// Issue #2352: the plumbed Pass 1 side-channel takes precedence over
+// the regex source-scan. To prove this, we feed Pass1Entities for a
+// model that does NOT exist in the source — if the regex fallback were
+// still load-bearing, no edges would emit (the regex would find the
+// real model and reject "Phantom.id" as unknown). With the plumbed path
+// active, "Phantom.id" is canonically known and the edge IS emitted.
+func TestORMFieldEdges_PlumbedSideChannelTakesPrecedence(t *testing.T) {
+	src := `from django.db import models
+
+def fetch(uid):
+    return Phantom.objects.filter(id=uid)
+`
+	rules, err := LoadAllRules()
+	if err != nil {
+		t.Fatalf("LoadAllRules: %v", err)
+	}
+	det := New(rules)
+	res, err := det.Detect(context.Background(), extractor.FileInput{
+		Path:     "phantom.py",
+		Content:  []byte(src),
+		Language: "python",
+		Pass1Entities: []types.EntityRecord{
+			{
+				Kind:       "SCOPE.Schema",
+				Subtype:    "field",
+				Name:       "Phantom.id",
+				SourceFile: "phantom.py",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	found := false
+	for _, r := range res.Relationships {
+		if r.Kind == ormReadsFieldKind && r.Properties["model"] == "Phantom" && r.Properties["field"] == "id" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected READS_FIELD edge on Phantom.id via plumbed side-channel; got %d rels", len(res.Relationships))
+	}
+}
+
+// Symmetrical regression: when Pass1Entities is empty the regex
+// fallback MUST still serve (existing test fixtures that construct
+// FileInput directly continue working). This is implicitly covered by
+// every other test in this file, but assert it explicitly with a Model
+// the source DOES contain.
+func TestORMFieldEdges_FallbackWhenSideChannelEmpty(t *testing.T) {
+	src := `from django.db import models
+
+class User(models.Model):
+    cognito_id = models.CharField(max_length=64)
+
+def get_user(uid):
+    return User.objects.get(cognito_id=uid)
+`
+	edges := detectFieldEdges(t, src) // no Pass1Entities
+	assertFieldEdge(t, edges, ormReadsFieldKind, "User", "cognito_id")
 }

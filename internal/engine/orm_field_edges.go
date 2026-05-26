@@ -73,6 +73,7 @@ func applyORMFieldEdges(
 	lang string,
 	path string,
 	content []byte,
+	pass1Entities []types.EntityRecord,
 	entities []types.EntityRecord,
 	relationships []types.RelationshipRecord,
 ) ([]types.EntityRecord, []types.RelationshipRecord) {
@@ -85,42 +86,25 @@ func applyORMFieldEdges(
 
 	// Build a per-(model,field) index for THIS file.
 	//
-	// The Python extractor emits SCOPE.Schema(subtype=field) entities for
-	// each class-body assignment (python/extractor.go:1411-1421), but
-	// those run in a SEPARATE pipeline stage (Pass 1) from the YAML
-	// detector (Pass 2.5) — the entities slice handed to this pass
-	// contains only Pass 2.5 output, so the field entities are NOT
-	// visible here. We therefore reconstruct the field index from the
-	// source content directly using BuildFieldIndex (field_index.go),
-	// which uses a coarse `class … :` + indented `<name> = models.<Type>(`
-	// scan that matches the extractor's convention closely enough for
-	// Phase A (Django ORM).
+	// Preferred source: Pass 1 SCOPE.Schema(subtype=field) entities plumbed
+	// in via FileInput.Pass1Entities (issue #2352). These are the canonical
+	// records the Python extractor emits at python/extractor.go:1411-1421
+	// — exact, no regex re-parse.
 	//
-	// The resulting key `<Model>.<field>` is byte-identical to the Name
-	// the Python extractor emits, so consumers that DO see both can
-	// match by name without further normalisation.
-	fieldIdx := BuildFieldIndex(string(content))
-	if len(fieldIdx) == 0 {
-		// Defensive fallback: some files may have field entities visible
-		// in `entities` (e.g. when a future pass forwards them). Honour
-		// those too so we degrade gracefully if the extraction order
-		// changes.
-		for _, e := range entities {
-			if e.SourceFile != "" && e.SourceFile != path {
-				continue
-			}
-			if e.Kind != "SCOPE.Schema" || e.Subtype != "field" {
-				continue
-			}
-			if !strings.Contains(e.Name, ".") {
-				continue
-			}
-			fieldIdx[e.Name] = true
-		}
+	// Fallback: regex scan via BuildFieldIndex. Triggered when the
+	// side-channel is empty, which happens for (a) test fixtures that
+	// construct FileInput directly without going through Pass 1, and
+	// (b) the subprocess-extract path that merges Pass 1+2.5 outside the
+	// per-file detector loop.
+	fieldIdx := buildPlumbedFieldIndex(path, pass1Entities)
+	plumbed := len(fieldIdx) > 0
+	if !plumbed {
+		fieldIdx = BuildFieldIndex(string(content))
 	}
 	if len(fieldIdx) == 0 {
 		return entities, relationships
 	}
+	_ = plumbed // reserved for future telemetry / debug hooks
 
 	// Scan the source directly for Django ORM call chains. We can't
 	// rely on the QUERIES edges' filter_keys alone because orm_queries
