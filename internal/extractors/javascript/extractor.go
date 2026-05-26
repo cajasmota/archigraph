@@ -29,7 +29,6 @@ package javascript
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -56,15 +55,10 @@ import (
 //
 // Accepted truthy values: "1", "true" (case-sensitive). Anything else,
 // including unset, leaves destructure-detail emission disabled.
+//
+// Issue #2320: the preferred path is FileInput.Config.EmitDestructureDetail();
+// this env var remains as a backward-compatible fallback.
 const emitDestructureDetailEnv = "ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL"
-
-// emitDestructureDetailEnabled reports whether const_destructure /
-// const_destructure_call subtypes should be emitted. Reads the env var on
-// every call — cheap, and lets tests toggle via t.Setenv without restarting.
-func emitDestructureDetailEnabled() bool {
-	v := os.Getenv(emitDestructureDetailEnv)
-	return v == "1" || v == "true"
-}
 
 // New returns a new JSExtractor. Use this in tests or explicit registrations.
 func New() *JSExtractor {
@@ -129,6 +123,10 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		// Issue #1616 — derive the dotted module path once so emit() can
 		// stamp QualifiedName on every entity.
 		module: dottedModuleFromPath(file.Path),
+		// Issue #2320 — carry the typed Config channel so feature toggles
+		// use Config-first / env-fallback precedence without calling
+		// os.Getenv on the per-file hot path.
+		cfg: file.Config,
 	}
 
 	// Issue #570 — emit a file-level SCOPE.Component (subtype="file")
@@ -289,6 +287,10 @@ type extractor struct {
 	language      string
 	entities      []types.EntityRecord
 	relationships []types.RelationshipRecord
+	// cfg is the typed config channel populated from FileInput.Config.
+	// Issue #2320: used to resolve feature-toggle precedence (Config first,
+	// env var fallback) without calling os.Getenv on the hot per-file path.
+	cfg *extreg.ExtractorConfig
 
 	// funcDepth tracks how many function/method bodies deep the current
 	// walk is. Zero means module scope. Incremented before recursing into
@@ -338,6 +340,13 @@ type extractor struct {
 	// "ext:<module>" rather than the bare local-variable name, which
 	// would otherwise be unresolvable and land in bug-extractor.
 	hookVarToModule map[string]string
+}
+
+// emitDestructureDetailEnabled reports whether const_destructure /
+// const_destructure_call subtypes should be emitted for this file.
+// Issue #2320: Config takes precedence; env var is the backward-compat fallback.
+func (x *extractor) emitDestructureDetailEnabled() bool {
+	return x.cfg.EmitDestructureDetail()
 }
 
 // applyAlias attempts to substitute a path-alias prefix in spec using
@@ -1403,14 +1412,15 @@ func (x *extractor) emitDestructuredEntities(pattern, valueNode *sitter.Node, op
 		subtype = "const_destructure_call"
 		sigPrefix = "const"
 	}
-	// Issue #2338 — gate destructure-detail subtypes behind the env var.
+	// Issue #2338 — gate destructure-detail subtypes behind the toggle.
 	// Default-off: use the plain "const" subtype (same as other const
 	// declarations) so the binding entities are still emitted and the
 	// resolver can bind same-file REFERENCES / CALLS edges, but the
 	// const_destructure / const_destructure_call label is not stamped
 	// and the entity count stays low. The kind (Component vs Operation)
 	// is preserved so mutation-hook callables remain SCOPE.Operation.
-	if !emitDestructureDetailEnabled() {
+	// Issue #2320: Config channel takes precedence over env var.
+	if !x.emitDestructureDetailEnabled() {
 		subtype = "const"
 	}
 

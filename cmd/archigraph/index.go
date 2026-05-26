@@ -2034,6 +2034,12 @@ func (i *Indexer) runPass1ExtractWithProgress(ctx context.Context, absRepo strin
 // A tick is published every progress.TickEveryNFiles files to bound the
 // event rate on large repos.
 func (i *Indexer) classifyAndReadWithProgress(ctx context.Context, absRepo string, files []string, runExtract bool, trk *progress.Tracker) ([]classifiedFile, []types.EntityRecord) {
+	// Issue #2320 — build the typed ExtractorConfig once per index run from
+	// the process environment. This is stamped on every FileInput so extractors
+	// can consult feature toggles via the Config channel (Config wins; env var
+	// is the backward-compat fallback). Future work: merge a config file on top.
+	extractorCfg := extractor.ConfigFromEnv()
+
 	// Use a shared atomic counter so all workers contribute to the same
 	// tick cadence without needing an additional mutex acquisition per file.
 	var (
@@ -2111,6 +2117,9 @@ func (i *Indexer) classifyAndReadWithProgress(ctx context.Context, absRepo strin
 					Content:  content,
 					Language: cr.Language,
 					RepoRoot: absRepo,
+					// Issue #2320 — populate the typed Config channel so
+					// extractors use Config-first / env-fallback precedence.
+					Config: &extractorCfg,
 				}
 
 				// PLT #537 — route .tsx and .jsx through the tsx grammar

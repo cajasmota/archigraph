@@ -9,6 +9,8 @@ package extractor
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"sync"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -16,7 +18,149 @@ import (
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
+// ExtractorConfig carries per-extractor feature toggles that were previously
+// communicated exclusively via ad-hoc environment variables. The Config channel
+// is the primary source; env vars remain as a backward-compatible fallback so
+// that existing scripts (e.g. ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS=1) continue
+// to work unchanged.
+//
+// Priority: Config field (if non-nil and the relevant field is set) wins over
+// the corresponding env var. A nil Config pointer or an unset field falls
+// through to the env var. A missing env var uses the documented default.
+//
+// Population: the indexer constructs an ExtractorConfig from env vars (and
+// optionally a future config file) and stamps it on every FileInput before
+// dispatch. Extractors must not call os.Getenv directly — use the typed
+// accessor methods (EmitHeadings, EmitDestructureDetail, etc.) which implement
+// the Config-first / env-fallback logic in one place.
+type ExtractorConfig struct {
+	// Incremental reindex toggles (ARCHIGRAPH_INCREMENTAL_REINDEX,
+	// ARCHIGRAPH_INCREMENTAL_MAX_FILES). Non-pointer so the zero value
+	// is the documented default (disabled / auto-limit).
+	IncrementalReindex bool
+	IncrementalMaxFiles int // 0 means "auto" (gitmeta-based heuristic)
+
+	// MarkdownEmitHeadings controls SCOPE.Heading entity emission.
+	// Corresponds to ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS. Tri-state:
+	//   nil  — not set in Config; fall through to env var
+	//   &true — emit headings (overrides env)
+	//   &false — suppress headings (overrides env)
+	MarkdownEmitHeadings *bool
+
+	// JSEmitDestructureDetail controls const_destructure / const_destructure_call
+	// subtype emission. Corresponds to ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL.
+	// Tri-state: nil means "not set in Config; fall through to env var".
+	JSEmitDestructureDetail *bool
+
+	// IncrementalReindexSet records whether IncrementalReindex was explicitly
+	// set via Config (as opposed to being the zero value). This lets callers
+	// distinguish "Config says false" from "Config not consulted".
+	IncrementalReindexSet bool
+}
+
+// boolFromEnv parses a truthy env var ("1" or "true") and returns (value, true)
+// when the var is set to a recognised value. Returns (false, false) when the
+// var is unset or empty.
+func boolFromEnv(name string) (bool, bool) {
+	v := os.Getenv(name)
+	if v == "1" || v == "true" {
+		return true, true
+	}
+	if v != "" {
+		// Recognised-but-not-truthy value — var IS set, value is falsy.
+		return false, true
+	}
+	return false, false
+}
+
+// ConfigFromEnv builds an ExtractorConfig populated entirely from the process
+// environment. This is the default population path used by the indexer before
+// Config-file support is wired in. Calling this once per index run and
+// attaching the result to every FileInput keeps os.Getenv out of the hot
+// per-file extract path and makes the toggles testable without mutating the
+// process environment.
+func ConfigFromEnv() ExtractorConfig {
+	cfg := ExtractorConfig{}
+
+	// Incremental reindex.
+	if v, ok := boolFromEnv("ARCHIGRAPH_INCREMENTAL_REINDEX"); ok {
+		cfg.IncrementalReindex = v
+		cfg.IncrementalReindexSet = true
+	}
+	if raw := os.Getenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES"); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
+			cfg.IncrementalMaxFiles = n
+		}
+	}
+
+	// Markdown heading emission.
+	if v, ok := boolFromEnv("ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS"); ok {
+		cfg.MarkdownEmitHeadings = &v
+	}
+
+	// JS destructure-detail emission.
+	if v, ok := boolFromEnv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL"); ok {
+		cfg.JSEmitDestructureDetail = &v
+	}
+
+	return cfg
+}
+
+// EmitHeadings returns whether SCOPE.Heading entities should be emitted by
+// the markdown extractor. Config wins; env var is the fallback; default is false.
+func (c *ExtractorConfig) EmitHeadings() bool {
+	if c != nil && c.MarkdownEmitHeadings != nil {
+		return *c.MarkdownEmitHeadings
+	}
+	v, _ := boolFromEnv("ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS")
+	return v
+}
+
+// EmitDestructureDetail returns whether const_destructure / const_destructure_call
+// subtypes should be emitted by the JS/TS extractor. Config wins; env var is the
+// fallback; default is false.
+func (c *ExtractorConfig) EmitDestructureDetail() bool {
+	if c != nil && c.JSEmitDestructureDetail != nil {
+		return *c.JSEmitDestructureDetail
+	}
+	v, _ := boolFromEnv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL")
+	return v
+}
+
+// IsIncrementalEnabled reports whether the incremental reindex path is active.
+// Config (when IncrementalReindexSet=true) wins; env var is the fallback;
+// default is false.
+func (c *ExtractorConfig) IsIncrementalEnabled() bool {
+	if c != nil && c.IncrementalReindexSet {
+		return c.IncrementalReindex
+	}
+	v, _ := boolFromEnv("ARCHIGRAPH_INCREMENTAL_REINDEX")
+	return v
+}
+
+// EffectiveIncrementalMaxFiles returns the effective trigger-limit for the
+// incremental reindex path, given the current Config and the env var fallback.
+// Returns 0 when neither source sets a value (caller should apply branch-aware
+// heuristic).
+func (c *ExtractorConfig) EffectiveIncrementalMaxFiles() int {
+	if c != nil && c.IncrementalMaxFiles > 0 {
+		return c.IncrementalMaxFiles
+	}
+	if raw := os.Getenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES"); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
+			return n
+		}
+	}
+	return 0
+}
+
 // FileInput is the input contract for all language extractors.
+//
+// Config (issue #2320) is the typed channel for per-extractor feature toggles
+// that previously required ad-hoc environment variables. Callers (the indexer,
+// TryIncremental, and tests) should populate Config before dispatch. When Config
+// is nil the extractors fall through to their env-var fallbacks so existing
+// scripts and tests that set env vars directly continue to work unchanged.
 type FileInput struct {
 	// Path is the file path relative to repo root (used as source_file in entities).
 	Path string
@@ -32,6 +176,10 @@ type FileInput struct {
 	// / babel.config — issue #505) consult this. Empty string is
 	// permitted; alias-aware extractors fall back to a no-op map.
 	RepoRoot string
+	// Config carries typed per-extractor feature toggles (issue #2320).
+	// Nil is valid — all accessors fall through to the env-var fallbacks.
+	// The indexer populates this from ConfigFromEnv() before dispatch.
+	Config *ExtractorConfig
 }
 
 // Extractor is the interface all language extractors must implement.

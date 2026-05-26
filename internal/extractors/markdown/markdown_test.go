@@ -468,3 +468,130 @@ func TestHeadings_OptInRestoresLegacy(t *testing.T) {
 		t.Errorf("opt-in: heading should contain code block %q", codeQ)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Issue #2320 — Config channel tests for the markdown extractor.
+// Three sub-cases per toggle: Config-only, env-only (backward compat), both
+// set (Config wins). A fourth case checks default (nil Config + unset env).
+// ---------------------------------------------------------------------------
+
+// extractWithConfig is a test helper that runs the markdown extractor with an
+// explicit *extractor.ExtractorConfig injected into FileInput. The env var for
+// ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS is cleared so it does not interfere unless
+// the test explicitly sets it.
+func extractWithConfig(t *testing.T, name string, cfg *extractor.ExtractorConfig) []types.EntityRecord {
+	t.Helper()
+	t.Setenv(emitHeadingsEnv, "") // ensure env does not leak into Config-only tests
+	b, err := os.ReadFile(filepath.Join("testdata", name))
+	if err != nil {
+		t.Fatalf("read fixture %q: %v", name, err)
+	}
+	file := extractor.FileInput{
+		Path:     name,
+		Content:  b,
+		Language: "markdown",
+		Config:   cfg,
+	}
+	e := &Extractor{}
+	out, extractErr := e.Extract(context.Background(), file)
+	if extractErr != nil {
+		t.Fatalf("extract %q: %v", name, extractErr)
+	}
+	return out
+}
+
+// TestHeadingsConfig_ConfigOnly_On — Config.MarkdownEmitHeadings=true, env unset.
+// Headings MUST be emitted (Config wins over absent env).
+func TestHeadingsConfig_ConfigOnly_On(t *testing.T) {
+	on := true
+	cfg := &extractor.ExtractorConfig{MarkdownEmitHeadings: &on}
+	ents := extractWithConfig(t, "simple.md", cfg)
+
+	if c := countByKind(ents, "SCOPE.Heading"); c == 0 {
+		t.Error("Config-only on: expected SCOPE.Heading entities; none found")
+	}
+}
+
+// TestHeadingsConfig_ConfigOnly_Off — Config.MarkdownEmitHeadings=false, env unset.
+// Headings must NOT be emitted.
+func TestHeadingsConfig_ConfigOnly_Off(t *testing.T) {
+	off := false
+	cfg := &extractor.ExtractorConfig{MarkdownEmitHeadings: &off}
+	ents := extractWithConfig(t, "simple.md", cfg)
+
+	if c := countByKind(ents, "SCOPE.Heading"); c != 0 {
+		t.Errorf("Config-only off: expected 0 SCOPE.Heading entities, got %d", c)
+	}
+}
+
+// TestHeadingsConfig_EnvOnly — Config is nil, env var set to "1".
+// Backward-compat: env var must still enable headings.
+func TestHeadingsConfig_EnvOnly(t *testing.T) {
+	t.Setenv(emitHeadingsEnv, "1")
+	b, err := os.ReadFile(filepath.Join("testdata", "simple.md"))
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	file := extractor.FileInput{
+		Path:     "simple.md",
+		Content:  b,
+		Language: "markdown",
+		Config:   nil, // nil Config → pure env-var path
+	}
+	e := &Extractor{}
+	out, extractErr := e.Extract(context.Background(), file)
+	if extractErr != nil {
+		t.Fatalf("extract: %v", extractErr)
+	}
+	if c := countByKind(out, "SCOPE.Heading"); c == 0 {
+		t.Error("env-only: expected SCOPE.Heading entities from ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS=1; none found")
+	}
+}
+
+// TestHeadingsConfig_ConfigWins — Config says OFF, env says ON. Config must win.
+func TestHeadingsConfig_ConfigWins(t *testing.T) {
+	t.Setenv(emitHeadingsEnv, "1") // env says on
+	off := false
+	cfg := &extractor.ExtractorConfig{MarkdownEmitHeadings: &off} // Config says off
+	b, err := os.ReadFile(filepath.Join("testdata", "simple.md"))
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	file := extractor.FileInput{
+		Path:     "simple.md",
+		Content:  b,
+		Language: "markdown",
+		Config:   cfg,
+	}
+	e := &Extractor{}
+	out, extractErr := e.Extract(context.Background(), file)
+	if extractErr != nil {
+		t.Fatalf("extract: %v", extractErr)
+	}
+	if c := countByKind(out, "SCOPE.Heading"); c != 0 {
+		t.Errorf("Config-wins: Config=off should suppress headings even when env=1; got %d headings", c)
+	}
+}
+
+// TestHeadingsConfig_NilConfig_EnvUnset — nil Config + unset env → default off.
+func TestHeadingsConfig_NilConfig_EnvUnset(t *testing.T) {
+	t.Setenv(emitHeadingsEnv, "")
+	b, err := os.ReadFile(filepath.Join("testdata", "simple.md"))
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	file := extractor.FileInput{
+		Path:     "simple.md",
+		Content:  b,
+		Language: "markdown",
+		Config:   nil,
+	}
+	e := &Extractor{}
+	out, extractErr := e.Extract(context.Background(), file)
+	if extractErr != nil {
+		t.Fatalf("extract: %v", extractErr)
+	}
+	if c := countByKind(out, "SCOPE.Heading"); c != 0 {
+		t.Errorf("nil Config + unset env: default should be off; got %d headings", c)
+	}
+}

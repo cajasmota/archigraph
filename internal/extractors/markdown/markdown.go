@@ -47,7 +47,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -71,15 +70,19 @@ const langName = "markdown"
 //
 // Accepted truthy values: "1", "true" (case-sensitive). Anything else,
 // including unset, leaves heading emission disabled.
+//
+// Issue #2320: the preferred path is FileInput.Config.EmitHeadings(); the env
+// var remains as a backward-compatible fallback so existing scripts that set
+// ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS=1 continue to work unchanged.
 const emitHeadingsEnv = "ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS"
 
 // emitHeadingsEnabled reports whether SCOPE.Heading entities (and their
-// associated CONTAINS / REFERENCES relationships) should be emitted. Reads
-// the env var on every call — cheap, and lets tests toggle behavior via
-// t.Setenv without restarting the process.
-func emitHeadingsEnabled() bool {
-	v := os.Getenv(emitHeadingsEnv)
-	return v == "1" || v == "true"
+// associated CONTAINS / REFERENCES relationships) should be emitted for the
+// given file input. Issue #2320: Config channel takes precedence; env var is
+// the fallback (backward-compat). Reads env var on every call when Config is
+// nil — cheap, and lets tests toggle behaviour via t.Setenv.
+func emitHeadingsEnabled(file extractor.FileInput) bool {
+	return file.Config.EmitHeadings()
 }
 
 func init() {
@@ -123,7 +126,8 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	// edges, code-block parent attachment) produce no heading entities and
 	// code blocks fall back to a Document parent. We never materialise
 	// heading entities or their CONTAINS / REFERENCES edges in this mode.
-	if !emitHeadingsEnabled() {
+	// Issue #2320: Config channel takes precedence over env var.
+	if !emitHeadingsEnabled(file) {
 		headings = nil
 	}
 

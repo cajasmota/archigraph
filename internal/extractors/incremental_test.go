@@ -37,6 +37,7 @@ import (
 	// Pull in the Go extractor so it registers itself.
 	_ "github.com/cajasmota/archigraph/internal/extractors/golang"
 
+	"github.com/cajasmota/archigraph/internal/extractor"
 	"github.com/cajasmota/archigraph/internal/extractors"
 	"github.com/cajasmota/archigraph/internal/graph"
 	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
@@ -1019,5 +1020,107 @@ func assertFBBytesEqual(t *testing.T, a, b []byte, label string) {
 	t.Helper()
 	if !bytes.Equal(a, b) {
 		t.Errorf("%s: graph.fb bytes differ (len a=%d, len b=%d)", label, len(a), len(b))
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Issue #2320 — Config channel tests for incremental toggles.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_On verifies that
+// ExtractorConfig.IsIncrementalEnabled returns true when IncrementalReindexSet=true
+// and IncrementalReindex=true, even with env var cleared.
+func TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_On(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	cfg := extractor.ExtractorConfig{
+		IncrementalReindex:    true,
+		IncrementalReindexSet: true,
+	}
+	if !cfg.IsIncrementalEnabled() {
+		t.Error("Config-only on: IsIncrementalEnabled() should return true when Config sets it true and env is unset")
+	}
+}
+
+// TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_Off verifies that
+// Config=false overrides the default-off env (i.e., returns false deterministically).
+func TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_Off(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	cfg := extractor.ExtractorConfig{
+		IncrementalReindex:    false,
+		IncrementalReindexSet: true,
+	}
+	if cfg.IsIncrementalEnabled() {
+		t.Error("Config-only off: IsIncrementalEnabled() should return false when Config sets it false")
+	}
+}
+
+// TestIncrementalConfig_IsIncrementalEnabled_EnvOnly verifies backward compat:
+// nil Config + env=1 → enabled.
+func TestIncrementalConfig_IsIncrementalEnabled_EnvOnly(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "1")
+	var cfg *extractor.ExtractorConfig // nil → pure env path
+	if !cfg.IsIncrementalEnabled() {
+		t.Error("env-only: IsIncrementalEnabled() should return true when ARCHIGRAPH_INCREMENTAL_REINDEX=1 and Config is nil")
+	}
+}
+
+// TestIncrementalConfig_IsIncrementalEnabled_ConfigWins verifies that Config wins
+// over the env var when both are set.
+func TestIncrementalConfig_IsIncrementalEnabled_ConfigWins(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "1") // env says on
+	cfg := extractor.ExtractorConfig{
+		IncrementalReindex:    false, // Config says off
+		IncrementalReindexSet: true,
+	}
+	if cfg.IsIncrementalEnabled() {
+		t.Error("Config-wins: Config=false should suppress incremental even when env=1")
+	}
+}
+
+// TestIncrementalConfig_IsIncrementalEnabled_NilConfig_EnvUnset checks the
+// documented default: nil Config + unset env → false (disabled).
+func TestIncrementalConfig_IsIncrementalEnabled_NilConfig_EnvUnset(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	var cfg *extractor.ExtractorConfig
+	if cfg.IsIncrementalEnabled() {
+		t.Error("nil Config + unset env: default should be off (false)")
+	}
+}
+
+// TestIncrementalConfig_EffectiveMaxFiles_ConfigOnly verifies that Config.IncrementalMaxFiles
+// overrides the env var.
+func TestIncrementalConfig_EffectiveMaxFiles_ConfigOnly(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "")
+	cfg := extractor.ExtractorConfig{IncrementalMaxFiles: 42}
+	if got := cfg.EffectiveIncrementalMaxFiles(); got != 42 {
+		t.Errorf("Config-only maxFiles: got %d, want 42", got)
+	}
+}
+
+// TestIncrementalConfig_EffectiveMaxFiles_EnvOnly verifies backward compat:
+// nil Config + env → env value used.
+func TestIncrementalConfig_EffectiveMaxFiles_EnvOnly(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "99")
+	var cfg *extractor.ExtractorConfig
+	if got := cfg.EffectiveIncrementalMaxFiles(); got != 99 {
+		t.Errorf("env-only maxFiles: got %d, want 99", got)
+	}
+}
+
+// TestIncrementalConfig_EffectiveMaxFiles_ConfigWins verifies Config beats env.
+func TestIncrementalConfig_EffectiveMaxFiles_ConfigWins(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "7") // env says 7
+	cfg := extractor.ExtractorConfig{IncrementalMaxFiles: 30} // Config says 30
+	if got := cfg.EffectiveIncrementalMaxFiles(); got != 30 {
+		t.Errorf("Config-wins maxFiles: got %d, want 30 (Config should win over env=7)", got)
+	}
+}
+
+// TestIncrementalConfig_EffectiveMaxFiles_NilConfig_EnvUnset checks default: 0 (auto).
+func TestIncrementalConfig_EffectiveMaxFiles_NilConfig_EnvUnset(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "")
+	var cfg *extractor.ExtractorConfig
+	if got := cfg.EffectiveIncrementalMaxFiles(); got != 0 {
+		t.Errorf("nil Config + unset env: expected 0 (auto); got %d", got)
 	}
 }

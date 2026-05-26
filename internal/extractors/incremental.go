@@ -53,7 +53,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/cajasmota/archigraph/internal/classifier"
@@ -77,17 +76,17 @@ const defaultIncrementalFiles = 20
 // files before falling back to a full reindex.
 const mainBranchIncrementalFiles = 50
 
-// effectiveLimit returns the trigger-limit for the given repoPath.
+// effectiveLimit returns the trigger-limit for the given repoPath and optional
+// ExtractorConfig.
 //
-// Priority:
-//  1. ARCHIGRAPH_INCREMENTAL_MAX_FILES env var (must be a positive integer).
-//  2. mainBranchIncrementalFiles when the active ref is the repo's default branch.
-//  3. defaultIncrementalFiles (20) for feature branches.
-func effectiveLimit(repoPath string) int {
-	if raw := os.Getenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES"); raw != "" {
-		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
-			return n
-		}
+// Priority (issue #2320):
+//  1. cfg.IncrementalMaxFiles (when cfg is non-nil and > 0) — Config channel.
+//  2. ARCHIGRAPH_INCREMENTAL_MAX_FILES env var (backward-compat fallback).
+//  3. mainBranchIncrementalFiles when the active ref is the repo's default branch.
+//  4. defaultIncrementalFiles (20) for feature branches.
+func effectiveLimit(repoPath string, cfg *extractor.ExtractorConfig) int {
+	if n := cfg.EffectiveIncrementalMaxFiles(); n > 0 {
+		return n
 	}
 	if gitmeta.IsDefaultBranch(repoPath) {
 		return mainBranchIncrementalFiles
@@ -98,9 +97,13 @@ func effectiveLimit(repoPath string) int {
 // IncrementalEnabled reports whether S3 incremental reindex is opt-in active.
 // Reads ARCHIGRAPH_INCREMENTAL_REINDEX once per call — cheap, no caching needed
 // at this level (the scheduler gate is the hot path).
+//
+// Issue #2320: callers that have an ExtractorConfig should call
+// cfg.IsIncrementalEnabled() directly; this function is the backward-compat
+// entry point for callers that have not yet been migrated.
 func IncrementalEnabled() bool {
-	v := os.Getenv("ARCHIGRAPH_INCREMENTAL_REINDEX")
-	return v == "1" || v == "true"
+	var cfg *extractor.ExtractorConfig // nil → pure env-var path
+	return cfg.IsIncrementalEnabled()
 }
 
 // Result is the outcome of a TryIncremental call.
@@ -218,7 +221,9 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 	totalChanged := len(changedFiles) + len(deletedFiles)
 
 	// --- Step 2: trigger limit (#2170 raised limits + main-branch hot-path) ---
-	limit := effectiveLimit(absRepo)
+	// Issue #2320: TryIncremental does not (yet) receive an ExtractorConfig;
+	// pass nil so effectiveLimit falls through to the env-var / gitmeta path.
+	limit := effectiveLimit(absRepo, nil)
 	if totalChanged > limit {
 		return fallback(t0, fmt.Sprintf("too-many-changed files=%d limit=%d",
 			totalChanged, limit))
