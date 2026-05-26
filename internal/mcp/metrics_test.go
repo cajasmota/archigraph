@@ -281,6 +281,59 @@ func TestMCPMetricsToolShape(t *testing.T) {
 	}
 }
 
+// TestServerShutdownFlushed verifies that calling Server.Stop() flushes metrics to disk.
+// This tests the wiring for issue #2530 — ensuring metrics persist on daemon shutdown.
+func TestServerShutdownFlushed(t *testing.T) {
+	dir := t.TempDir()
+	regPath := filepath.Join(dir, "registry.json")
+	if err := os.WriteFile(regPath, []byte(`{"groups":{}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Override SessMet's metricsDir to use the temp dir.
+	srv.SessMet = NewSessionMetrics("shutdown-test-session", dir)
+
+	// Record some tool calls.
+	srv.SessMet.Record("archigraph_find", 10*time.Millisecond, false)
+	srv.SessMet.Record("archigraph_find", 20*time.Millisecond, false)
+	srv.SessMet.Record("archigraph_inspect", 50*time.Millisecond, true)
+
+	// Call Stop() to simulate shutdown (should flush metrics).
+	srv.Stop()
+
+	// Verify the rollup file was created with expected content.
+	date := time.Now().UTC().Format("2006-01-02")
+	path := filepath.Join(dir, "mcp-"+date+".jsonl")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("rollup file not created after Stop(): %v", err)
+	}
+
+	records, err := ReadRollups(dir, 1)
+	if err != nil {
+		t.Fatalf("ReadRollups: %v", err)
+	}
+	if len(records) < 2 {
+		t.Fatalf("expected at least 2 rollup records after Stop(), got %d", len(records))
+	}
+
+	// Verify both tools are in the rollup.
+	byTool := map[string]RollupRecord{}
+	for _, r := range records {
+		byTool[r.Tool] = r
+	}
+
+	if _, ok := byTool["archigraph_find"]; !ok {
+		t.Error("archigraph_find not in rollup after Stop()")
+	}
+	if _, ok := byTool["archigraph_inspect"]; !ok {
+		t.Error("archigraph_inspect not in rollup after Stop()")
+	}
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 // splitLines splits raw bytes into individual non-empty lines.

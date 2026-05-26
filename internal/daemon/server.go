@@ -158,6 +158,12 @@ type Config struct {
 	// invalidates stale CrossLinkCache entries keyed to (repo, oldRef) — this
 	// closes the stale-cache bug tracked in issue #2224.
 	BranchSwitchSink func(repoPath, oldRef string)
+
+	// ShutdownCleanup, when non-nil, is called during graceful shutdown to
+	// perform cleanup operations (e.g. flushing metrics). Best-effort: errors
+	// are logged but do not block shutdown. Injected from cmd/archigraph to call
+	// the MCP server's Stop method (issue #2530).
+	ShutdownCleanup func()
 }
 
 // Run starts the daemon. It blocks until either:
@@ -456,6 +462,12 @@ func Run(ctx context.Context, cfg Config) error {
 		// own we should treat that as fatal and exit.
 		logger.Error("listener closed unexpectedly")
 		return errors.New("listener closed")
+	}
+
+	// Cleanup hook: best-effort shutdown operations (e.g. metric flush).
+	// Does not block the shutdown path (issue #2530).
+	if cfg.ShutdownCleanup != nil {
+		cfg.ShutdownCleanup()
 	}
 
 	// Stop accepting new connections, then wait for in-flight ones.
