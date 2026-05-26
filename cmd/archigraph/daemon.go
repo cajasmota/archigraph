@@ -388,6 +388,14 @@ func runDaemon(argv []string) error {
 				},
 			}
 		}(),
+
+		// Shutdown cleanup: flush MCP session metrics to disk (issue #2530).
+		// Best-effort: does not block shutdown on error.
+		ShutdownCleanup: func() {
+			if mcpSrv, err := mcpServerInstance(); err == nil {
+				mcpSrv.Stop()
+			}
+		},
 	}
 
 	ctx := context.Background()

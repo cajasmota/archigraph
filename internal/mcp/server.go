@@ -111,6 +111,15 @@ func (s *Server) ServeStdio() error {
 	return mcpsrv.ServeStdio(s.MCP)
 }
 
+// Stop cleanly shuts down the server. It flushes session metrics (best-effort)
+// before returning. Called during daemon graceful shutdown to persist daily
+// rollups to ~/.archigraph/metrics/ (issue #2530).
+func (s *Server) Stop() {
+	if s.SessMet != nil {
+		s.SessMet.FlushRollup()
+	}
+}
+
 // reloadBeforeCall is the shared mtime-based lazy refresh hook.
 //
 // #1772: when the registry signature (group→repo set) mutated since the
