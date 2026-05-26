@@ -224,9 +224,10 @@ type LoadedRepo struct {
 	Reader     *fbreader.Reader // mmap zero-copy reader (S8, #2159); nil when unavailable
 	LabelIndex *LabelIndex
 	BM25       *BM25Index
-	Adjacency  *adjacency               // in/out neighbor lists (#1656)
-	CallsAdj   map[string][]string      // CALLS-only forward adjacency (#1656)
-	ByID       map[string]*graph.Entity // entity ID -> entity (#1656)
+	Adjacency     *adjacency               // in/out neighbor lists (#1656)
+	CallsAdj      map[string][]string      // CALLS-only forward adjacency (#1656)
+	ByID          map[string]*graph.Entity // entity ID -> entity (#1656)
+	TopKPageRank  []string                 // entity IDs sorted descending by PageRank (#2304)
 	Semantic   *embed.Store             // per-repo vector index (nil when no embeddings.bin)
 	semMtime   time.Time
 	byID       map[string]*graph.Entity // deprecated alias for ByID — kept for back-compat during #1656 rollout
@@ -474,6 +475,10 @@ func (s *State) reloadLocked() (int, bool, error) {
 				// CALLS-only forward adjacency for traces.followCallsBFS, which
 				// previously rebuilt this on every traces=follow query. (#1656)
 				lr.CallsAdj = buildCallsAdjacency(doc)
+				// Top-K PageRank-ordered entity ID cache for pickFallback (#2304).
+				// Eliminates the O(|Entities|) scan inside pickFallback by building
+				// the sorted slice once at index-load time.
+				lr.TopKPageRank = buildTopKPageRank(doc, 64)
 				// S8 (#2159): open the mmap reader alongside the Document.
 				// Best-effort: failures leave Reader nil; callers fall back to
 				// doc.Entities / doc.Relationships.
@@ -609,6 +614,40 @@ func readLinks(path string) ([]CrossRepoLink, error) {
 		return nil, fmt.Errorf("links %s: %w", path, err)
 	}
 	return asObj.Links, nil
+}
+
+// buildTopKPageRank returns a slice of the top-k entity IDs sorted by
+// descending PageRank. Built once at index-load time and cached on
+// LoadedRepo.TopKPageRank (#2304). pickFallback reads from this slice
+// instead of iterating Doc.Entities on every call.
+func buildTopKPageRank(doc *graph.Document, k int) []string {
+	if doc == nil || len(doc.Entities) == 0 {
+		return nil
+	}
+	type ranked struct {
+		id string
+		pr float64
+	}
+	all := make([]ranked, 0, len(doc.Entities))
+	for i := range doc.Entities {
+		e := &doc.Entities[i]
+		pr := 0.0
+		if e.PageRank != nil {
+			pr = *e.PageRank
+		}
+		all = append(all, ranked{id: e.ID, pr: pr})
+	}
+	sort.Slice(all, func(i, j int) bool {
+		return all[i].pr > all[j].pr
+	})
+	if k > len(all) {
+		k = len(all)
+	}
+	out := make([]string, k)
+	for i := 0; i < k; i++ {
+		out[i] = all[i].id
+	}
+	return out
 }
 
 // repoIndexedRef returns the git ref that was active when lr was last indexed.

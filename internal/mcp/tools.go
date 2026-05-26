@@ -211,6 +211,32 @@ func jsonResult(v any) *mcpapi.CallToolResult {
 // incompatible daemon versions without inspecting the binary.
 const mcpWireVersion = "0.1.0"
 
+// sessionMeta returns the session-stable ref/sha/worktree fields for a given
+// CWD resolution. These fields are exclusive to archigraph_whoami (#2335,
+// #2337) — no other handler should embed them.
+//
+// lr is optional; passing nil is safe (the function degrades gracefully).
+func sessionMeta(lr *LoadedRepo, cwdRes *CWDResolution) map[string]any {
+	ref := ""
+	sha := ""
+	isWorktree := false
+	parentRepo := interface{}(nil)
+	if cwdRes != nil {
+		ref = cwdRes.Ref
+		sha = cwdRes.SHA
+		isWorktree = cwdRes.IsWorktree
+		if cwdRes.IsWorktree && cwdRes.ParentRepoPath != "" {
+			parentRepo = cwdRes.ParentRepoPath
+		}
+	}
+	return map[string]any{
+		"indexed_ref":  ref,
+		"indexed_sha":  sha,
+		"is_worktree":  isWorktree,
+		"parent_repo":  parentRepo,
+	}
+}
+
 func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	cwd := s.inferCWD(req)
 	explicit := argString(req, "group", "")
@@ -243,23 +269,20 @@ func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (
 		}
 	}
 
-	// Base response.
+	// Base response. PH1c ref fields come from sessionMeta (#2337).
+	sm := sessionMeta(nil, &cwdRes)
 	resp := map[string]any{
 		"group":         group,
 		"repo":          repo,
 		"source":        source,
 		"registry_path": s.State.registry.Path,
 		"wire_version":  mcpWireVersion,
-		// PH1c ref fields.
+		// PH1c ref fields (via sessionMeta — exclusive to whoami per #2337).
 		"cwd_resolved_to": cwdResolvedTo,
-		"is_worktree":     cwdRes.IsWorktree,
-		"indexed_ref":     cwdRes.Ref,
-		"indexed_sha":     cwdRes.SHA,
-	}
-	if cwdRes.IsWorktree && cwdRes.ParentRepoPath != "" {
-		resp["parent_repo"] = cwdRes.ParentRepoPath
-	} else {
-		resp["parent_repo"] = nil
+		"is_worktree":     sm["is_worktree"],
+		"indexed_ref":     sm["indexed_ref"],
+		"indexed_sha":     sm["indexed_sha"],
+		"parent_repo":     sm["parent_repo"],
 	}
 	if cwdRes.Source == "worktree" {
 		resp["tier"] = "cold" // worktree refs may not be hot-loaded yet
@@ -636,10 +659,36 @@ type fallbackPick struct {
 	entity *graph.Entity
 }
 
+// pickFallback reads from the pre-built TopKPageRank cache on each LoadedRepo
+// (#2304) rather than iterating Doc.Entities on every call. The cache is built
+// once at index-load time by buildTopKPageRank (state.go) alongside Adjacency.
+// Falls back to a full linear scan when the cache is empty (e.g. in unit tests
+// that construct LoadedRepo directly without calling buildTopKPageRank).
 func pickFallback(repos []*LoadedRepo) *fallbackPick {
 	var best *fallbackPick
 	bestPR := -1.0
 	for _, r := range repos {
+		if r.Doc == nil {
+			continue
+		}
+		// Fast path: use pre-sorted cache.
+		if len(r.TopKPageRank) > 0 {
+			topID := r.TopKPageRank[0]
+			e := r.ByID[topID]
+			if e == nil {
+				continue
+			}
+			pr := 0.0
+			if e.PageRank != nil {
+				pr = *e.PageRank
+			}
+			if best == nil || pr > bestPR {
+				bestPR = pr
+				best = &fallbackPick{repo: r, entity: e}
+			}
+			continue
+		}
+		// Slow path fallback (no cache — e.g. unit tests without buildTopKPageRank).
 		for i := range r.Doc.Entities {
 			e := &r.Doc.Entities[i]
 			pr := 0.0
@@ -1075,6 +1124,7 @@ func (s *Server) handleShortestPath(ctx context.Context, req mcpapi.CallToolRequ
 					target: prefixedID(repo, e.target),
 					kind:   e.kind,
 					weight: -math.Log(0.95), // intra-repo confidence ~0.95
+					relIdx: -1,              // synthetic — no backing Relationship (#2305)
 				})
 			}
 		}
@@ -1093,6 +1143,7 @@ func (s *Server) handleShortestPath(ctx context.Context, req mcpapi.CallToolRequ
 					target: l.Target,
 					kind:   l.Kind,
 					weight: -math.Log(conf),
+					relIdx: -1, // synthetic — no backing Relationship (#2305)
 				})
 			}
 		}

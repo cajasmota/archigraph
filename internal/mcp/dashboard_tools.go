@@ -1053,7 +1053,8 @@ func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) 
 				out = append(out, edge{
 					target: prefixedID(slug, e.target),
 					kind:   e.kind,
-					weight: 1, // unit cost — we want shortest hop count
+					weight: 1,  // unit cost — we want shortest hop count
+					relIdx: -1, // synthetic (re-prefixed) — no direct Relationship backing (#2305)
 				})
 			}
 			// Reverse traversal for interface-style edges (#1690).
@@ -1065,6 +1066,7 @@ func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) 
 					target: prefixedID(slug, e.target),
 					kind:   e.kind + "_REVERSED",
 					weight: 1,
+					relIdx: -1, // synthetic reversed edge — no backing Relationship (#2305)
 				})
 			}
 		}
@@ -1094,6 +1096,7 @@ func (s *Server) handleFindPaths(_ context.Context, req mcpapi.CallToolRequest) 
 				target: prefixedID(cTgtSlug, lTgtID),
 				kind:   l.EffectiveKind(),
 				weight: 1,
+				relIdx: -1, // synthetic cross-repo overlay — no backing Relationship (#2305)
 			})
 		}
 		return out
