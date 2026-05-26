@@ -126,7 +126,9 @@ func TestClaudeSkillsDirForConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ClaudeSkillsDirForConfig(tt.in)
-			if got != tt.want {
+			// Normalize to forward slashes so the test data stays readable and
+			// the assertions hold on Windows (filepath.Join returns backslashes).
+			if filepath.ToSlash(got) != tt.want {
 				t.Errorf("ClaudeSkillsDirForConfig(%q) = %q, want %q", tt.in, got, tt.want)
 			}
 		})
