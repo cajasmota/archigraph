@@ -2258,6 +2258,15 @@ func (i *Indexer) runPass25FrameworkRules(ctx context.Context, absRepo string, c
 		}
 	}
 
+	// Cross-file ORM field lookup (issue #2448 / Phase B): build a single
+	// closure over the union of Pass-1 field entities across the WHOLE
+	// repo and attach it to every per-file FileInput below. Engine passes
+	// (notably applyORMFieldEdges) consult it when a Django ORM call site
+	// references a model defined in a SIBLING file — the canonical
+	// `models.py` + `views.py` split. Nil result (no field entities in
+	// Pass 1) is valid and leaves per-file detection unchanged.
+	crossFileFields := engine.BuildCrossFileFieldLookup(pass1Records)
+
 	// Pre-pass (#845): build the cross-file Java DI registry before the
 	// per-file synthesis pass runs. Scanning is cheap (regex, no AST),
 	// single-threaded to avoid lock contention on the global registry.
@@ -2297,11 +2306,12 @@ func (i *Indexer) runPass25FrameworkRules(ctx context.Context, absRepo string, c
 			defer wg.Done()
 			for cf := range work {
 				input := extractor.FileInput{
-					Path:          cf.relPath,
-					Content:       cf.content,
-					Language:      cf.language,
-					RepoRoot:      absRepo,
-					Pass1Entities: pass1ByFile[cf.relPath],
+					Path:            cf.relPath,
+					Content:         cf.content,
+					Language:        cf.language,
+					RepoRoot:        absRepo,
+					Pass1Entities:   pass1ByFile[cf.relPath],
+					CrossFileFields: crossFileFields,
 				}
 				// Issue #2447: count plumbed vs unplumbed before Detect.
 				if len(input.Pass1Entities) > 0 {

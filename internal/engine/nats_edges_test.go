@@ -20,7 +20,8 @@ import (
 // runNATSDetect is a lightweight in-process driver for the NATS pass.
 func runNATSDetect(t *testing.T, lang, path, src string) ([]entityResult, []relResult) {
 	t.Helper()
-	ents, rels := applyNATSEdges(lang, path, []byte(src), nil, nil)
+	res := applyNATSEdges(DetectorPassArgs{Lang: lang, Path: path, Content: []byte(src)})
+	ents, rels := res.Entities, res.Relationships
 	out := make([]entityResult, 0, len(ents))
 	for _, e := range ents {
 		out = append(out, entityResult{kind: e.Kind, name: e.Name, props: e.Properties})

@@ -18,7 +18,8 @@ import (
 // runPubSubDetect is a lightweight in-process driver for the Pub/Sub pass.
 func runPubSubDetect(t *testing.T, lang, path, src string) ([]entityResult, []relResult) {
 	t.Helper()
-	ents, rels := applyPubSubEdges(lang, path, []byte(src), nil, nil)
+	res := applyPubSubEdges(DetectorPassArgs{Lang: lang, Path: path, Content: []byte(src)})
+	ents, rels := res.Entities, res.Relationships
 	out := make([]entityResult, 0, len(ents))
 	for _, e := range ents {
 		out = append(out, entityResult{kind: e.Kind, name: e.Name, props: e.Properties})

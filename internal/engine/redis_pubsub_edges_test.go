@@ -8,7 +8,8 @@ import (
 // helper to run applyRedisPubSubEdges and return (entities, relationships).
 func runRedisPubSub(t *testing.T, lang, src string) ([]string, []string) {
 	t.Helper()
-	ents, rels := applyRedisPubSubEdges(lang, "test."+lang, []byte(src), nil, nil)
+	res := applyRedisPubSubEdges(DetectorPassArgs{Lang: lang, Path: "test." + lang, Content: []byte(src)})
+	ents, rels := res.Entities, res.Relationships
 	entityIDs := make([]string, 0, len(ents))
 	for _, e := range ents {
 		entityIDs = append(entityIDs, e.Name)

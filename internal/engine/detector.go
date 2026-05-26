@@ -390,14 +390,15 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	// cost. Entities and Relationships are updated after each pass via the
 	// returned DetectorPassResult. Refs #2446.
 	passArgs := DetectorPassArgs{
-		Ctx:           ctx,
-		Lang:          file.Language,
-		Path:          file.Path,
-		RepoRoot:      file.RepoRoot,
-		Content:       file.Content,
-		Pass1Entities: file.Pass1Entities,
-		Entities:      entities,
-		Relationships: relationships,
+		Ctx:             ctx,
+		Lang:            file.Language,
+		Path:            file.Path,
+		RepoRoot:        file.RepoRoot,
+		Content:         file.Content,
+		Pass1Entities:   file.Pass1Entities,
+		CrossFileFields: file.CrossFileFields,
+		Entities:        entities,
+		Relationships:   relationships,
 	}
 
 	// applyPass is a tiny closure that applies a DetectorPassArgs→DetectorPassResult
