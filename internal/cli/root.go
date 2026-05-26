@@ -70,6 +70,7 @@ func newRoot() *cobra.Command {
 		newInstallHooksCmd(),
 		newBenchCaptureCmd(),
 		newPersonasCmd(),
+		newFeedbackCmd(),
 		newHelpCmd(),
 	)
 

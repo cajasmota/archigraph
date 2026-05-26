@@ -1,0 +1,90 @@
+name: Feedback Report (archigraph feedback)
+description: >
+  Auto-generated quality report from the `archigraph feedback` skill.
+  Covers extractor coverage, orphan rate, resolution disposition, and framework
+  recognition. All identifiers are hashed; file paths are scrubbed.
+labels: ["feedback", "needs-triage"]
+body:
+  - type: checkboxes
+    id: anonymization
+    attributes:
+      label: Anonymization verification
+      description: >
+        Please confirm you have reviewed the report for any un-scrubbed content before
+        submitting. The `archigraph feedback` command scrubs all identifiers and paths,
+        but a final human review is the last line of defence.
+      options:
+        - label: >
+            I have verified this report contains no real source code,
+            file paths, or identifier names (all entity names look like ent_a3f7 or op_92c1;
+            all paths look like <go>/<seg-1>/<seg-2>.go).
+          required: true
+        - label: >
+            I generated this report with `archigraph feedback` v0.9+
+          required: false
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Feedback report
+      description: >
+        Paste the full contents of your `.md` file here.
+        The report was written to `~/.archigraph/feedback/<group>-<timestamp>.md`.
+      render: markdown
+      placeholder: |
+        # archigraph feedback report
+
+        Generated: ...
+        archigraph version: ...
+        Group profile: ...
+        Confidence: ...
+
+        ## 1. Extractor Coverage
+        ...
+
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Fixture tarball (optional, Phase 2)
+      description: >
+        If you generated a fixture tarball (Phase 2+), attach it here.
+        The tarball contains only synthetic code — no real source files.
+        Drag and drop the `.tar.gz` file into this field.
+      placeholder: Drag and drop the .tar.gz file here (optional)
+
+  - type: input
+    id: version
+    attributes:
+      label: archigraph version
+      description: >
+        Shown in the report header as "archigraph version: vN.M.K".
+      placeholder: "v1.2.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Impact
+      description: Which area does this report primarily indicate a problem in?
+      options:
+        - Extractor gap (entities missing for a language or kind)
+        - Resolver bug (edges missing or wrong disposition)
+        - Framework support (framework not recognized or incorrectly tagged)
+        - Docgen quality (incoherent or stub prose sections)
+        - Cross-stack linkage (frontend/backend edges not connected)
+        - Performance (indexing unusually slow for this group size)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context (optional)
+      description: >
+        Anything else that might help — e.g. the tech stack used, whether this is a
+        monorepo, whether the codebase uses unusual language features, or what the
+        expected vs actual behaviour was. Do NOT include source code or real file paths.
+      placeholder: >
+        e.g. "The codebase uses JAX-RS for REST endpoints; orphan rate on Endpoint kind is 81%."
