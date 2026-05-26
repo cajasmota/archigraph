@@ -33,7 +33,16 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      # SECURITY NOTE: pull_request_target runs with write permissions but defaults
+      # to checking out the BASE branch (main), not the PR's HEAD. This means CI
+      # would test main's code, not the PR's changes — a silent correctness failure.
+      # We explicitly ref the PR HEAD here. This is safe because the workflow is
+      # gated by the `ci:full` label (line 28 above), which only collaborators with
+      # write access can apply — making this functionally equivalent to pull_request.
+      # The `|| github.sha` fallback handles workflow_dispatch and push-to-main.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       # MinGW is required on Windows for CGO (tree-sitter bindings).
       # Resolves #937 / #1796 — no vendor patch needed with CGO_ENABLED=1.
