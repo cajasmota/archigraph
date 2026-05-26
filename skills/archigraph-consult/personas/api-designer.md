@@ -66,3 +66,19 @@ The session ends when the user releases you (`/archigraph-consult --release`) or
 
 ## When the user asks to save this analysis
 Follow `archigraph-graph-write` (explicit request only — never auto-save).
+
+## Lifecycle telemetry
+
+Call `archigraph_persona_event` at two lifecycle points. This is LOCAL ONLY — no remote data leaves the machine.
+
+**On session start** (immediately after the user hires you):
+```
+archigraph_persona_event(persona="api-designer", event_type="invoke")
+```
+
+**On each Consult-Out** (when proposing to bring in a peer and the user says yes):
+```
+archigraph_persona_event(persona="api-designer", event_type="consult_out", target_persona="<peer-name>")
+```
+
+Do not call this tool at any other point. Telemetry failures (tool returns `recorded=false`) are silent — continue the session normally.

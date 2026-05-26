@@ -329,7 +329,67 @@ A skill is worth extracting when: (a) the same prose appears in 3+ persona files
 
 ---
 
-## 10. Phasing
+## 10. Telemetry
+
+### 10.1 What is emitted
+
+Each persona calls `archigraph_persona_event` at two lifecycle points:
+
+| Lifecycle point | `event_type` | Required fields | Optional fields |
+|---|---|---|---|
+| Session start (user hires the persona) | `invoke` | `persona` | `metadata` |
+| Consult-Out (user confirms peer engagement) | `consult_out` | `persona`, `target_persona` | `metadata` |
+| Finding persisted via save_finding | `save_finding` | `persona` | `metadata` |
+
+The `save_finding` event_type is available for future use by the `archigraph-graph-write` shared skill; persona bodies currently only emit `invoke` and `consult_out`.
+
+### 10.2 Storage contract
+
+Events are appended to a daily JSONL file:
+
+```
+~/.archigraph/events/persona-events-YYYY-MM-DD.jsonl
+```
+
+Each line is a JSON object matching the `PersonaEvent` struct in `internal/mcp/persona_telemetry.go`:
+
+```json
+{"ts":"2026-05-27T14:03:22Z","persona":"architect","event_type":"invoke"}
+{"ts":"2026-05-27T14:07:11Z","persona":"architect","event_type":"consult_out","target_persona":"performance-reviewer"}
+```
+
+Files rotate by UTC calendar date. No compaction or deletion is performed by archigraph — the user is responsible for cleanup.
+
+### 10.3 Privacy promise
+
+**LOCAL ONLY.** `archigraph_persona_event` writes exclusively to the local filesystem (`~/.archigraph/events/`). No data is transmitted to any remote endpoint, no aggregation service is contacted, and no identifier beyond the persona name is captured. The `metadata` field is optional and caller-controlled — personas do not populate it with user data. This promise is enforced by the handler implementation in `internal/mcp/persona_telemetry.go` — there is no HTTP client, no gRPC call, and no queue write in that file.
+
+### 10.4 Viewing events
+
+```bash
+# Today's events
+cat ~/.archigraph/events/persona-events-$(date -u +%Y-%m-%d).jsonl | jq .
+
+# Invoke frequency by persona
+cat ~/.archigraph/events/persona-events-*.jsonl | jq -r 'select(.event_type=="invoke") | .persona' | sort | uniq -c | sort -rn
+
+# Consult-Out pairs
+cat ~/.archigraph/events/persona-events-*.jsonl | jq -r 'select(.event_type=="consult_out") | "\(.persona) → \(.target_persona)"' | sort | uniq -c | sort -rn
+```
+
+A `archigraph personas events --tail` viewer CLI is deferred (see Section 11 Phasing).
+
+### 10.5 Failure behaviour
+
+Telemetry failures (disk full, permissions error, missing HOME) do not surface as errors to the user. The tool returns `{"recorded": false, "warning": "<reason>"}` and the persona continues normally. Personas treat a non-`recorded=true` response as a no-op.
+
+### 10.6 Deferred personas
+
+The four deferred personas (`solutions-architect`, `devops-reviewer`, `compliance-officer`, `dx-engineer`) are NOT yet updated with the Lifecycle telemetry section. When those personas ship, they MUST mirror the pattern exactly as documented in Section 10.1 — the section text is boilerplate and should be copy-pasted with the correct persona name substituted.
+
+---
+
+## 11. Phasing
 
 ### v3 (PR #2449 / this doc)
 
@@ -347,7 +407,8 @@ A skill is worth extracting when: (a) the same prose appears in 3+ persona files
 | Codex / generic-markdown wrappers | Low user demand; defer until requested |
 | Persona-emitted findings → graph (opt-in) | **Shipped in #2472** — "When the user asks to save this analysis" section added to all 8 persona bodies; Section 2.4 defines the contract |
 | Consult-Out depth > 1 (peer of peer) | Single hop only in v3 |
-| Telemetry on persona usage / Consult-Out frequency | Needs privacy review |
+| Telemetry on persona usage / Consult-Out frequency | **Shipped in #2474** — `archigraph_persona_event` MCP tool; Section 10 defines the contract and privacy promise |
 | Per-persona model selection strategy | **Shipped in #2475** — `model:` frontmatter on all 8 personas with opinionated recommendations; Section 2.3 defines the mapping and override contract |
 | Cross-platform renderer CLI | Defer until 3+ platforms stable |
 | Solutions-architect / devops / compliance / dx personas | As per PR #2449 deferral reasons |
+| `archigraph personas events --tail` CLI viewer | Deferred; use `jq` one-liners from Section 10.4 in the meantime |

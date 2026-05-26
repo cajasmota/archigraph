@@ -259,11 +259,12 @@ func (s *Server) fullToolList() ([]MCPToolEntry, error) {
 
 // registerTools registers every tool handler on the MCP server.
 // Source of truth: AddTool calls below — keep internal/mcp/SCHEMA.md in sync.
-// Tool count: 42 (#1281: 9→4 bundles; #1293: desc trim; #1312: +quality_cycles; #1314: +auth_coverage;
+// Tool count: 43 (#1281: 9→4 bundles; #1293: desc trim; #1312: +quality_cycles; #1314: +auth_coverage;
 //
 //	#1322: +secrets; #1323: +test_coverage; #1333: desc ≤80 chars;
 //	refactor/mcp-real-3k: ≤3k handshake; #2424: +cross_links; #2426: +save_finding,+list_findings;
-//	#2427: +license_audit re-wired — no HTTP route found in internal/dashboard/).
+//	#2427: +license_audit re-wired — no HTTP route found in internal/dashboard/;
+//	#2474: +archigraph_persona_event persona lifecycle telemetry).
 //
 // Dropped (HTTP-only): archigraph_diagnostics, archigraph_quality_orphans,
 //
@@ -748,6 +749,18 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("group", mcpapi.Required()),
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_docgen_list", s.handleDocgenList))
+
+	// archigraph_persona_event — persona lifecycle telemetry (#2474).
+	// Personas call this at session start (event_type=invoke) and on each
+	// Consult-Out (event_type=consult_out, target_persona=<name>). Group-agnostic.
+	// Appends to ~/.archigraph/events/persona-events-YYYY-MM-DD.jsonl (LOCAL ONLY).
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_persona_event",
+		mcpapi.WithDescription("Record a persona lifecycle event (invoke/consult_out/save_finding). LOCAL ONLY."),
+		mcpapi.WithString("persona", mcpapi.Required()),
+		mcpapi.WithString("event_type", mcpapi.Required()),
+		mcpapi.WithAny("target_persona"),
+		mcpapi.WithAny("metadata"),
+	), s.wrap("archigraph_persona_event", s.handlePersonaEvent))
 
 	// archigraph_status — cwd-gate sentinel (#1769).
 	// Registered as a real callable tool so agents can invoke it and receive
