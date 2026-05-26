@@ -12,7 +12,12 @@
 // Refs #2295.
 package engine
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+
+	"github.com/cajasmota/archigraph/internal/types"
+)
 
 // djangoClassDeclRe locates Django model class declarations:
 //
@@ -81,6 +86,39 @@ func BuildFieldIndex(src string) map[string]bool {
 			}
 			out[className+"."+fieldName] = true
 		}
+	}
+	return out
+}
+
+// buildPlumbedFieldIndex constructs the same `<Model>.<field>` presence
+// set as BuildFieldIndex, but sources the data from Pass 1's
+// SCOPE.Schema(subtype=field) entities rather than re-parsing source
+// (issue #2352).
+//
+// `path` filters the input slice to entities whose SourceFile matches
+// (or is unset — defensive for in-memory records that don't carry a
+// path). Entries with Name lacking the `<Class>.<field>` dot convention
+// are skipped silently — matches the byte-identical key shape the
+// regex parser emits.
+//
+// Returns an empty map (never nil) when no field entities match; the
+// caller treats an empty result as "side-channel cold, use fallback".
+func buildPlumbedFieldIndex(path string, pass1Entities []types.EntityRecord) map[string]bool {
+	out := map[string]bool{}
+	if len(pass1Entities) == 0 {
+		return out
+	}
+	for _, e := range pass1Entities {
+		if e.Kind != "SCOPE.Schema" || e.Subtype != "field" {
+			continue
+		}
+		if e.SourceFile != "" && path != "" && e.SourceFile != path {
+			continue
+		}
+		if !strings.Contains(e.Name, ".") {
+			continue
+		}
+		out[e.Name] = true
 	}
 	return out
 }

@@ -798,7 +798,7 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 
 		// Pass 2.5 — YAML-driven framework rules.
 		trk.PhaseStart(progress.PhaseResolveRefs, len(files), len(pass1Records))
-		pass2Records, pass2Rels, err = i.runPass25FrameworkRules(ctx, absRepo, classified)
+		pass2Records, pass2Rels, err = i.runPass25FrameworkRules(ctx, absRepo, classified, pass1Records)
 		if err != nil {
 			trk.Fail(err.Error())
 			return nil, fmt.Errorf("pass 2.5: %w", err)
@@ -2197,9 +2197,32 @@ func (i *Indexer) classifyAndReadWithProgress(ctx context.Context, absRepo strin
 // runPass25FrameworkRules applies the YAML rule engine to every classified
 // file. Returns extra entity records (from source_patterns) plus standalone
 // relationship records (from relationship_rules).
-func (i *Indexer) runPass25FrameworkRules(ctx context.Context, absRepo string, classified []classifiedFile) ([]types.EntityRecord, []types.RelationshipRecord, error) {
+func (i *Indexer) runPass25FrameworkRules(ctx context.Context, absRepo string, classified []classifiedFile, pass1Records []types.EntityRecord) ([]types.EntityRecord, []types.RelationshipRecord, error) {
 	if i.skipPasses[PassFramework] {
 		return nil, nil, nil
+	}
+
+	// Pass 1 side-channel (issue #2352): group Pass 1 entity records by
+	// source file so each Pass 2.5 FileInput can carry the canonical
+	// extractor entities for ITS file forward to engine passes (notably
+	// applyORMFieldEdges, which previously re-parsed source with a regex
+	// because field entities weren't visible inside the detector loop).
+	//
+	// Only entity kinds the engine passes actually consume are forwarded
+	// today — SCOPE.Schema(subtype=field) for ORM field-access. Expanding
+	// the filter later is cheap: just relax the predicate.
+	var pass1ByFile map[string][]types.EntityRecord
+	if len(pass1Records) > 0 {
+		pass1ByFile = make(map[string][]types.EntityRecord, len(classified))
+		for _, e := range pass1Records {
+			if e.SourceFile == "" {
+				continue
+			}
+			if e.Kind != "SCOPE.Schema" || e.Subtype != "field" {
+				continue
+			}
+			pass1ByFile[e.SourceFile] = append(pass1ByFile[e.SourceFile], e)
+		}
 	}
 
 	// Pre-pass (#845): build the cross-file Java DI registry before the
@@ -2231,10 +2254,11 @@ func (i *Indexer) runPass25FrameworkRules(ctx context.Context, absRepo string, c
 			defer wg.Done()
 			for cf := range work {
 				input := extractor.FileInput{
-					Path:     cf.relPath,
-					Content:  cf.content,
-					Language: cf.language,
-					RepoRoot: absRepo,
+					Path:          cf.relPath,
+					Content:       cf.content,
+					Language:      cf.language,
+					RepoRoot:      absRepo,
+					Pass1Entities: pass1ByFile[cf.relPath],
 				}
 				res, err := i.detector.Detect(ctx, input)
 				if err != nil || res == nil {

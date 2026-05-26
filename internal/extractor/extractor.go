@@ -180,6 +180,22 @@ type FileInput struct {
 	// Nil is valid — all accessors fall through to the env-var fallbacks.
 	// The indexer populates this from ConfigFromEnv() before dispatch.
 	Config *ExtractorConfig
+	// Pass1Entities is the side-channel that threads Pass 1's per-file
+	// entity records forward to Pass 2.5 engine passes (issue #2352).
+	//
+	// The original ORM field-edge synthesis (#2279 / #2295) reconstructed
+	// the `<Model>.<field>` index by re-parsing the source with a regex
+	// because Pass 1's SCOPE.Schema(subtype=field) entities weren't
+	// visible inside the YAML-driven detector. This field plumbs them
+	// through: the indexer groups Pass 1 records by source file in
+	// runPass25FrameworkRules and stamps the matching slice here before
+	// calling Detector.Detect.
+	//
+	// Nil / empty is valid — engine passes that consume this MUST fall
+	// back to their pre-#2352 source-scan behaviour so direct test
+	// fixtures (which call Detector.Detect without going through the full
+	// pipeline) keep working unchanged.
+	Pass1Entities []types.EntityRecord
 }
 
 // Extractor is the interface all language extractors must implement.

@@ -449,7 +449,7 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	// pivots off the QUERIES edges that pass emits. Append-only —
 	// cannot regress the surrounding pipeline's bug-rate.
 	entities, relationships = applyORMFieldEdges(
-		file.Language, file.Path, file.Content, entities, relationships,
+		file.Language, file.Path, file.Content, file.Pass1Entities, entities, relationships,
 	)
 
 	// Kafka producer/consumer cross-repo edges (wave 1 of #726). Emits

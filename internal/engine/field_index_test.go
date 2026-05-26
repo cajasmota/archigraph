@@ -17,6 +17,8 @@ package engine
 
 import (
 	"testing"
+
+	"github.com/cajasmota/archigraph/internal/types"
 )
 
 // (a) Scalar fields — basic smoke test.
@@ -188,5 +190,50 @@ func TestBuildFieldIndex_EmptyOrNonDjango(t *testing.T) {
 		if len(idx) != 0 {
 			t.Errorf("BuildFieldIndex(%q) = %v, want empty map", src, idx)
 		}
+	}
+}
+
+// (h) buildPlumbedFieldIndex — the Pass 1 side-channel introduced in
+// issue #2352. The function takes the Pass 1 entity slice the Python
+// extractor would have emitted at python/extractor.go:1411-1421 and
+// returns the same `<Model>.<field>` presence set BuildFieldIndex
+// would have produced from source. The two paths MUST be byte-identical
+// on the key set, otherwise consumers (notably applyORMFieldEdges) will
+// behave differently depending on which path served them.
+func TestBuildPlumbedFieldIndex_HappyPath(t *testing.T) {
+	pass1 := []types.EntityRecord{
+		{Kind: "SCOPE.Schema", Subtype: "field", Name: "User.cognito_id", SourceFile: "users.py"},
+		{Kind: "SCOPE.Schema", Subtype: "field", Name: "User.email", SourceFile: "users.py"},
+		// Different file — must be filtered out.
+		{Kind: "SCOPE.Schema", Subtype: "field", Name: "Order.total", SourceFile: "orders.py"},
+		// Different kind — must be filtered out.
+		{Kind: "Function", Name: "User.save", SourceFile: "users.py"},
+		// Missing dot in Name — defensive skip.
+		{Kind: "SCOPE.Schema", Subtype: "field", Name: "loose", SourceFile: "users.py"},
+	}
+	idx := buildPlumbedFieldIndex("users.py", pass1)
+	want := map[string]bool{
+		"User.cognito_id": true,
+		"User.email":      true,
+	}
+	if len(idx) != len(want) {
+		t.Fatalf("buildPlumbedFieldIndex returned %d entries, want %d; got %v", len(idx), len(want), idx)
+	}
+	for k := range want {
+		if !idx[k] {
+			t.Errorf("buildPlumbedFieldIndex missing %q; got %v", k, idx)
+		}
+	}
+}
+
+// Empty input → empty (never-nil) map so callers can do an `if len == 0`
+// triage to decide between plumbed and fallback paths.
+func TestBuildPlumbedFieldIndex_EmptyInput(t *testing.T) {
+	idx := buildPlumbedFieldIndex("users.py", nil)
+	if idx == nil {
+		t.Fatal("buildPlumbedFieldIndex returned nil map, want empty non-nil")
+	}
+	if len(idx) != 0 {
+		t.Errorf("buildPlumbedFieldIndex returned %d entries, want 0", len(idx))
 	}
 }
