@@ -156,6 +156,16 @@ func ApplyDjangoNestedURLConf(
 					"framework":    "django",
 					"pattern_type": "urlconf_nested_include",
 				}
+				if parentPrefix != "" {
+					// Record the parent include() prefix so downstream consumers
+					// (cross-repo HTTP resolver in internal/links/http_pass.go)
+					// can strip it when matching against client-side API calls
+					// that use a baseURL (e.g. Axios baseURL = "/api/v1").
+					// Mirrors the non-nested emitter in django_drf_actions.go
+					// (fix #800) — without this, 95% of cross-repo HTTP calls
+					// fail to resolve on real corpora (issue #2278).
+					props["url_prefix"] = "/" + strings.Trim(parentPrefix, "/")
+				}
 				// Issue #527 — wire FBV view functions as source_handler so
 				// the ResolveHTTPEndpointHandlers pass emits an IMPLEMENTS
 				// edge from the view function to this http_endpoint entity.
