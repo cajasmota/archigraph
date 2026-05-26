@@ -100,10 +100,43 @@ func applyORMFieldEdges(args DetectorPassArgs) DetectorPassResult {
 	if !plumbed {
 		fieldIdx = BuildFieldIndex(string(content))
 	}
-	if len(fieldIdx) == 0 {
+	_ = plumbed // reserved for future telemetry / debug hooks
+
+	// Phase B (issue #2448): cross-file resolution via the closure attached
+	// by the coordinator. When the model is defined in a SIBLING file
+	// (canonical Django split — models.py defines User, views.py imports
+	// it), the intra-file fieldIdx misses; this closure lets us recover
+	// the field set without re-parsing the whole repo. Nil is valid —
+	// direct test fixtures that don't go through the coordinator path
+	// see the pre-#2448 intra-file-only behaviour.
+	crossFile := args.CrossFileFields
+	resolveCrossFile := func(modelName, field string) bool {
+		if crossFile == nil {
+			return false
+		}
+		ents := crossFile(modelName)
+		if len(ents) == 0 {
+			return false
+		}
+		needle := modelName + "." + field
+		for _, e := range ents {
+			if e.Kind != "SCOPE.Schema" || e.Subtype != "field" {
+				continue
+			}
+			if e.Name == needle {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Early-exit only when BOTH the intra-file index and the cross-file
+	// lookup are unavailable. Previously this short-circuited on an empty
+	// intra-file index — that's wrong under Phase B because views.py
+	// (no models) legitimately needs the cross-file branch to fire.
+	if len(fieldIdx) == 0 && crossFile == nil {
 		return DetectorPassResult{Entities: entities, Relationships: relationships}
 	}
-	_ = plumbed // reserved for future telemetry / debug hooks
 
 	// Scan the source directly for Django ORM call chains. We can't
 	// rely on the QUERIES edges' filter_keys alone because orm_queries
@@ -134,7 +167,13 @@ func applyORMFieldEdges(args DetectorPassArgs) DetectorPassResult {
 					continue
 				}
 				fqName := modelName + "." + field
-				if !fieldIdx[fqName] {
+				resolution := ""
+				if fieldIdx[fqName] {
+					resolution = "intra_file"
+				} else if resolveCrossFile(modelName, field) {
+					resolution = "cross_file"
+				}
+				if resolution == "" {
 					continue
 				}
 				relationships = append(relationships, types.RelationshipRecord{
@@ -146,6 +185,7 @@ func applyORMFieldEdges(args DetectorPassArgs) DetectorPassResult {
 						"verb":         link.verb,
 						"field":        field,
 						"model":        modelName,
+						"resolution":   resolution,
 						"pattern_type": ormFieldEdgesPatternType,
 					},
 				})

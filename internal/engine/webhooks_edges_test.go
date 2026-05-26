@@ -15,8 +15,8 @@ import (
 // runWebhookDetect is a lightweight in-process driver.
 func runWebhookDetect(t *testing.T, lang, path, src string) ([]types.EntityRecord, []types.RelationshipRecord) {
 	t.Helper()
-	ents, rels := applyWebhookEdges(lang, path, []byte(src), nil, nil)
-	return ents, rels
+	res := applyWebhookEdges(DetectorPassArgs{Lang: lang, Path: path, Content: []byte(src)})
+	return res.Entities, res.Relationships
 }
 
 func webhookEntities(ents []types.EntityRecord) []types.EntityRecord {

@@ -197,6 +197,52 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 		}
 	}
 
+	// Pre-pass (#2448 / Phase B): build the cross-file ORM field lookup
+	// for this batch. Engine pass applyORMFieldEdges resolves
+	// <Model>.<field> references first via FileInput.Pass1Entities
+	// (intra-file). When the model lives in a SIBLING file (canonical
+	// Django split — models.py defines User, views.py queries it), it
+	// falls back to this closure.
+	//
+	// Subprocess-scope caveat: the lookup only covers files in THIS
+	// batch. A model defined in a file assigned to a different
+	// subprocess is invisible here. The coordinator pre-groups batches
+	// per repo to keep imports together, but it does not formally
+	// guarantee co-location of models.py and views.py. Tech debt
+	// surfaced; see commit body.
+	//
+	// Cost model: one extra regex pass over each Python file's content
+	// at pre-pass time (no AST, no tree-sitter), keyed by model name in
+	// the returned closure. The closure is shared across all files via
+	// pointer; per-file extra memory is zero.
+	var crossFileBatchFields []types.EntityRecord
+	if runFramework {
+		for _, rel := range files {
+			if !strings.HasSuffix(strings.ToLower(rel), ".py") {
+				continue
+			}
+			abs := filepath.Join(opts.RepoRoot, rel)
+			pyContent, rerr := os.ReadFile(abs)
+			if rerr != nil {
+				continue
+			}
+			idx := engine.BuildFieldIndex(string(pyContent))
+			if len(idx) == 0 {
+				continue
+			}
+			for name := range idx {
+				crossFileBatchFields = append(crossFileBatchFields, types.EntityRecord{
+					Name:       name,
+					Kind:       "SCOPE.Schema",
+					Subtype:    "field",
+					SourceFile: rel,
+					Language:   "python",
+				})
+			}
+		}
+	}
+	crossFileFields := engine.BuildCrossFileFieldLookup(crossFileBatchFields)
+
 	for _, rel := range files {
 		abs := filepath.Join(opts.RepoRoot, rel)
 		st, statErr := os.Stat(abs)
@@ -313,6 +359,13 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 				}
 			}
 			file.Pass1Entities = fieldEnts
+		}
+		// Attach the batch-scoped cross-file lookup (issue #2448 / Phase B)
+		// so applyORMFieldEdges can resolve <Model>.<field> references
+		// across sibling files (e.g. views.py → User.cognito_id where
+		// User is defined in models.py).
+		if runFramework {
+			file.CrossFileFields = crossFileFields
 		}
 		if runFramework {
 			// Issue #2447: count how many files enter Detect() with

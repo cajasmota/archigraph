@@ -15,8 +15,8 @@ import (
 // runScheduledDetect is a lightweight in-process driver.
 func runScheduledDetect(t *testing.T, lang, path, src string) ([]types.EntityRecord, []types.RelationshipRecord) {
 	t.Helper()
-	ents, rels := applyScheduledJobEdges(lang, path, []byte(src), nil, nil)
-	return ents, rels
+	res := applyScheduledJobEdges(DetectorPassArgs{Lang: lang, Path: path, Content: []byte(src)})
+	return res.Entities, res.Relationships
 }
 
 func scheduledJobsByFramework(ents []types.EntityRecord, framework string) []types.EntityRecord {

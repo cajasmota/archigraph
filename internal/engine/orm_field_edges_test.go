@@ -258,6 +258,156 @@ def fetch(uid):
 	}
 }
 
+// Issue #2448 / Phase B: cross-file resolution. The model definition
+// lives in models.py; views.py imports it and queries it via the ORM.
+// The intra-file regex / Pass1Entities branch on views.py CANNOT see
+// the model — only the CrossFileFields closure can. Verifies that with
+// the closure attached, READS_FIELD edges land on User.cognito_id from
+// the views.py call sites; and that WITHOUT the closure, no edges land
+// (the byte-identical legacy behaviour).
+func TestORMFieldEdges_CrossFileResolution_Phase_B(t *testing.T) {
+	viewsSrc := `from .models import User
+
+def get_user(uid):
+    return User.objects.filter(cognito_id=uid)
+
+def rotate(uid, new_id):
+    User.objects.filter(id=uid).update(cognito_id=new_id)
+`
+	modelsFields := []types.EntityRecord{
+		{
+			Kind:       "SCOPE.Schema",
+			Subtype:    "field",
+			Name:       "User.cognito_id",
+			SourceFile: "models.py",
+		},
+		{
+			Kind:       "SCOPE.Schema",
+			Subtype:    "field",
+			Name:       "User.id",
+			SourceFile: "models.py",
+		},
+	}
+	lookup := BuildCrossFileFieldLookup(modelsFields)
+	if lookup == nil {
+		t.Fatalf("BuildCrossFileFieldLookup returned nil for non-empty input")
+	}
+	rules, err := LoadAllRules()
+	if err != nil {
+		t.Fatalf("LoadAllRules: %v", err)
+	}
+	det := New(rules)
+
+	// With cross-file lookup attached: edges should land.
+	res, err := det.Detect(context.Background(), extractor.FileInput{
+		Path:            "views.py",
+		Content:         []byte(viewsSrc),
+		Language:        "python",
+		CrossFileFields: lookup,
+	})
+	if err != nil {
+		t.Fatalf("Detect (with cross-file): %v", err)
+	}
+	readsCog := 0
+	writesCog := 0
+	for _, r := range res.Relationships {
+		if r.Properties["model"] != "User" || r.Properties["field"] != "cognito_id" {
+			continue
+		}
+		if r.Properties["resolution"] != "cross_file" {
+			t.Errorf("expected resolution=cross_file on %+v", r)
+		}
+		switch r.Kind {
+		case ormReadsFieldKind:
+			readsCog++
+		case ormWritesFieldKind:
+			writesCog++
+		}
+	}
+	if readsCog < 1 {
+		t.Errorf("expected at least 1 cross-file READS_FIELD on User.cognito_id, got 0")
+	}
+	if writesCog < 1 {
+		t.Errorf("expected at least 1 cross-file WRITES_FIELD on User.cognito_id, got 0")
+	}
+
+	// Without the closure: legacy behaviour — no edges land for the
+	// cross-file model.
+	res2, err := det.Detect(context.Background(), extractor.FileInput{
+		Path:     "views.py",
+		Content:  []byte(viewsSrc),
+		Language: "python",
+	})
+	if err != nil {
+		t.Fatalf("Detect (no cross-file): %v", err)
+	}
+	for _, r := range res2.Relationships {
+		if r.Kind == ormReadsFieldKind || r.Kind == ormWritesFieldKind {
+			t.Errorf("unexpected field edge without cross-file lookup: %+v", r)
+		}
+	}
+}
+
+// Phase-B regression: the intra-file branch still wins when both are
+// available — verify resolution=intra_file when the model IS defined
+// in the current file, even with a cross-file closure attached.
+func TestORMFieldEdges_IntraFileWinsOverCrossFile(t *testing.T) {
+	src := `from django.db import models
+
+class User(models.Model):
+    cognito_id = models.CharField(max_length=64)
+
+def get_user(uid):
+    return User.objects.get(cognito_id=uid)
+`
+	// Cross-file closure also "knows" about User — intra-file must still win.
+	lookup := BuildCrossFileFieldLookup([]types.EntityRecord{
+		{Kind: "SCOPE.Schema", Subtype: "field", Name: "User.cognito_id", SourceFile: "models.py"},
+	})
+	rules, err := LoadAllRules()
+	if err != nil {
+		t.Fatalf("LoadAllRules: %v", err)
+	}
+	det := New(rules)
+	res, err := det.Detect(context.Background(), extractor.FileInput{
+		Path:            "users.py",
+		Content:         []byte(src),
+		Language:        "python",
+		CrossFileFields: lookup,
+	})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	found := false
+	for _, r := range res.Relationships {
+		if r.Kind != ormReadsFieldKind {
+			continue
+		}
+		if r.Properties["model"] != "User" || r.Properties["field"] != "cognito_id" {
+			continue
+		}
+		found = true
+		if r.Properties["resolution"] != "intra_file" {
+			t.Errorf("resolution = %q, want intra_file", r.Properties["resolution"])
+		}
+	}
+	if !found {
+		t.Fatalf("expected intra-file READS_FIELD on User.cognito_id")
+	}
+}
+
+// BuildCrossFileFieldLookup edge cases.
+func TestBuildCrossFileFieldLookup_NilOnEmpty(t *testing.T) {
+	if BuildCrossFileFieldLookup(nil) != nil {
+		t.Error("nil input should return nil closure")
+	}
+	if BuildCrossFileFieldLookup([]types.EntityRecord{
+		{Kind: "Class", Name: "User", SourceFile: "models.py"},
+	}) != nil {
+		t.Error("input with no SCOPE.Schema(subtype=field) records should return nil")
+	}
+}
+
 // Symmetrical regression: when Pass1Entities is empty the regex
 // fallback MUST still serve (existing test fixtures that construct
 // FileInput directly continue working). This is implicitly covered by

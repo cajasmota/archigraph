@@ -56,6 +56,17 @@ type DetectorPassArgs struct {
 	// Other passes ignore it.
 	Pass1Entities []types.EntityRecord
 
+	// CrossFileFields is the cross-file ORM field-resolution lookup
+	// (issue #2448 / Phase B). Forwarded opaquely from
+	// extractor.FileInput.CrossFileFields by detector.go's Detect.
+	//
+	// applyORMFieldEdges consults this closure when the model targeted
+	// by a Django ORM call site is NOT defined in the current file —
+	// the canonical Django split (`models.py` defines `User`,
+	// `views.py` queries it). When nil or returning empty, the edge is
+	// dropped silently and no dangling reference is emitted.
+	CrossFileFields func(modelName string) []types.EntityRecord
+
 	// Entities holds the entity slice accumulated so far in the Detect
 	// pipeline.  Passes that emit or modify entities receive this as input
 	// and include their additions in DetectorPassResult.Entities.

@@ -90,6 +90,47 @@ func BuildFieldIndex(src string) map[string]bool {
 	return out
 }
 
+// BuildCrossFileFieldLookup constructs a CrossFileFields closure
+// (issue #2448 / Phase B) over the supplied Pass-1 entity slice. The
+// returned function, given a model class name, returns every
+// SCOPE.Schema(subtype=field) entity in the slice whose Name begins
+// with `<model>.`. Pre-bucketing by model keeps per-call work O(fields
+// in that model) rather than O(all fields in the indexed scope).
+//
+// The closure is built ONCE per indexing run by the coordinator (the
+// in-process indexer in cmd/archigraph/index.go runPass25FrameworkRules
+// and the subprocess in internal/daemon/extract/subproc.go) from the
+// union of Pass-1 entities across every file in the indexed scope (or
+// the batch, in the subprocess case), then attached to every per-file
+// extractor.FileInput.CrossFileFields before Detect.
+//
+// Returns nil when the input slice contains no usable field entities —
+// callers should treat a nil return value as "no cross-file resolution
+// available" and fall through to the intra-file branch only.
+func BuildCrossFileFieldLookup(pass1 []types.EntityRecord) func(modelName string) []types.EntityRecord {
+	if len(pass1) == 0 {
+		return nil
+	}
+	byModel := map[string][]types.EntityRecord{}
+	for _, e := range pass1 {
+		if e.Kind != "SCOPE.Schema" || e.Subtype != "field" {
+			continue
+		}
+		dot := strings.Index(e.Name, ".")
+		if dot <= 0 {
+			continue
+		}
+		model := e.Name[:dot]
+		byModel[model] = append(byModel[model], e)
+	}
+	if len(byModel) == 0 {
+		return nil
+	}
+	return func(modelName string) []types.EntityRecord {
+		return byModel[modelName]
+	}
+}
+
 // buildPlumbedFieldIndex constructs the same `<Model>.<field>` presence
 // set as BuildFieldIndex, but sources the data from Pass 1's
 // SCOPE.Schema(subtype=field) entities rather than re-parsing source

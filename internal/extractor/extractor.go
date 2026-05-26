@@ -196,6 +196,32 @@ type FileInput struct {
 	// fixtures (which call Detector.Detect without going through the full
 	// pipeline) keep working unchanged.
 	Pass1Entities []types.EntityRecord
+
+	// CrossFileFields is the cross-file ORM field-resolution closure
+	// (issue #2448 / Phase B).
+	//
+	// applyORMFieldEdges resolves <Model>.<field> references first via
+	// Pass1Entities (intra-file), and falls back to this closure when the
+	// model lives in a SIBLING file (the canonical Django split:
+	// `models.py` defines `class User` while `views.py` imports it and
+	// calls `User.objects.filter(cognito_id=…)`).
+	//
+	// The closure is built ONCE per indexing run by the coordinator
+	// (in-process: cmd/archigraph/index.go runPass25FrameworkRules;
+	// subprocess: internal/daemon/extract/subproc.go) from the union of
+	// SCOPE.Schema(subtype=field) records across ALL files in the
+	// indexed scope (or the batch, in the subprocess case). It is then
+	// attached to every per-file FileInput before Detect.
+	//
+	// Lookup contract: given a model class name (e.g. "User"), return
+	// every SCOPE.Schema(subtype=field) entity for that model regardless
+	// of source file. Returning nil / empty is valid and means "no
+	// cross-file fields known for this model" — the caller drops the
+	// edge silently.
+	//
+	// Nil is valid — direct test fixtures that don't go through the
+	// coordinator path get the intra-file-only behaviour unchanged.
+	CrossFileFields func(modelName string) []types.EntityRecord
 }
 
 // Extractor is the interface all language extractors must implement.

@@ -15,7 +15,8 @@ import (
 // runSQSDetect is a lightweight in-process driver for the SQS pass.
 func runSQSDetect(t *testing.T, lang, path, src string) ([]entityResult, []relResult) {
 	t.Helper()
-	ents, rels := applySQSEdges(lang, path, []byte(src), nil, nil)
+	res := applySQSEdges(DetectorPassArgs{Lang: lang, Path: path, Content: []byte(src)})
+	ents, rels := res.Entities, res.Relationships
 	out := make([]entityResult, 0, len(ents))
 	for _, e := range ents {
 		out = append(out, entityResult{kind: e.Kind, name: e.Name, props: e.Properties})
