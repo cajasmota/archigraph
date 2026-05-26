@@ -12,7 +12,6 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -38,41 +37,32 @@ func (s *Server) handleNeighbors(ctx context.Context, req mcpapi.CallToolRequest
 	case "out", "outbound", "callees":
 		return s.handleFindCallees(ctx, req)
 	case "", "both", "all":
-		// Run both and merge. We pull the JSON envelopes back as maps so the
-		// merged response carries entity_id/entity_name/repo + counts for each
-		// direction independently. Token budget is shared evenly.
-		inRes, _ := s.handleFindCallers(ctx, req)
-		outRes, _ := s.handleFindCallees(ctx, req)
-		return mergeNeighbors(inRes, outRes), nil
+		// #2325: cross-handler dispatch goes through the structured-return
+		// seam so mergeNeighbors does NOT have to parse wire bytes. The
+		// outer wire wrapping happens once, at the end, via jsonResult.
+		inVal, inErr := s.findCallersStructured(ctx, req)
+		outVal, outErr := s.findCalleesStructured(ctx, req)
+		return mergeNeighbors(inVal, inErr, outVal, outErr), nil
 	default:
 		return mcpapi.NewToolResultError("invalid direction: " + dir + " (want in|out|both)"), nil
 	}
 }
 
-// mergeNeighbors combines callers + callees JSON envelopes into one record.
-// On any parse failure it returns whichever input is non-nil first.
-func mergeNeighbors(inRes, outRes *mcpapi.CallToolResult) *mcpapi.CallToolResult {
-	parse := func(res *mcpapi.CallToolResult) map[string]any {
-		if res == nil || len(res.Content) == 0 {
-			return nil
-		}
-		tc, ok := res.Content[0].(mcpapi.TextContent)
-		if !ok {
-			return nil
-		}
-		var obj map[string]any
-		if err := json.Unmarshal([]byte(tc.Text), &obj); err != nil {
-			return nil
-		}
-		return obj
-	}
-	in := parse(inRes)
-	out := parse(outRes)
+// mergeNeighbors combines callers + callees structured envelopes into one
+// record. Either input may be nil (error from the inner handler); if both are
+// nil it returns the inbound error (or the outbound one if inbound was OK).
+//
+// #2325: this used to parse `res.Content[0].(TextContent).Text` to recover
+// the structured value the inner handlers had just marshaled. With
+// findCallersStructured / findCalleesStructured exposing the typed value
+// directly, the parse step is gone — the only marshal happens at the wire
+// boundary inside jsonResult.
+func mergeNeighbors(in map[string]any, inErr *mcpapi.CallToolResult, out map[string]any, outErr *mcpapi.CallToolResult) *mcpapi.CallToolResult {
 	if in == nil && out == nil {
-		if inRes != nil {
-			return inRes
+		if inErr != nil {
+			return inErr
 		}
-		return outRes
+		return outErr
 	}
 	merged := map[string]any{}
 	pick := in
@@ -112,14 +102,31 @@ func mergeNeighbors(inRes, outRes *mcpapi.CallToolResult) *mcpapi.CallToolResult
 // given entity. It walks the inbound adjacency up to `depth` hops and returns
 // results grouped by hop distance so the agent can see the call fan-in at each
 // level.
-func (s *Server) handleFindCallers(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+//
+// Wire wrapper: defers all work to findCallersStructured, then marshals via
+// jsonResult. Internal cross-handler callers (e.g. mergeNeighbors) call the
+// structured variant directly and skip the wire round-trip (#2325).
+func (s *Server) handleFindCallers(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	v, errRes := s.findCallersStructured(ctx, req)
+	if errRes != nil {
+		return errRes, nil
+	}
+	return jsonResult(v), nil
+}
+
+// findCallersStructured is the non-wire variant of handleFindCallers. It
+// returns the structured result map directly (or a *CallToolResult for the
+// error path). Internal cross-handler dispatch (mergeNeighbors) calls this
+// instead of the wire handler so no wire bytes are parsed back into a map
+// for the merge — closes #2325.
+func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolRequest) (map[string]any, *mcpapi.CallToolResult) {
 	entityID, err := req.RequireString("entity_id")
 	if err != nil {
-		return mcpapi.NewToolResultError(err.Error()), nil
+		return nil, mcpapi.NewToolResultError(err.Error())
 	}
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
-		return errRes, nil
+		return nil, errRes
 	}
 	depth := argInt(req, "depth", 1)
 	if depth < 1 {
@@ -321,9 +328,9 @@ func (s *Server) handleFindCallers(_ context.Context, req mcpapi.CallToolRequest
 			result["result"] = "no_incoming_edges"
 			result["note"] = "Graph shows no callers for this entity within the requested depth. Do not infer a relationship — report the absence."
 		}
-		return jsonResult(result), nil
+		return result, nil
 	}
-	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
+	return nil, mcpapi.NewToolResultError("entity not found: " + entityID)
 }
 
 // ---------------------------------------------------------------------------
@@ -333,14 +340,26 @@ func (s *Server) handleFindCallers(_ context.Context, req mcpapi.CallToolRequest
 // handleFindCallees returns entities called by the given entity. It walks the
 // outbound adjacency up to `depth` hops, returning results grouped by hop
 // distance so the agent sees the call fan-out at each level.
-func (s *Server) handleFindCallees(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+//
+// Wire wrapper: see handleFindCallers for the structured-variant rationale
+// (#2325).
+func (s *Server) handleFindCallees(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	v, errRes := s.findCalleesStructured(ctx, req)
+	if errRes != nil {
+		return errRes, nil
+	}
+	return jsonResult(v), nil
+}
+
+// findCalleesStructured is the non-wire variant of handleFindCallees (#2325).
+func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolRequest) (map[string]any, *mcpapi.CallToolResult) {
 	entityID, err := req.RequireString("entity_id")
 	if err != nil {
-		return mcpapi.NewToolResultError(err.Error()), nil
+		return nil, mcpapi.NewToolResultError(err.Error())
 	}
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
-		return errRes, nil
+		return nil, errRes
 	}
 	depth := argInt(req, "depth", 1)
 	if depth < 1 {
@@ -474,9 +493,9 @@ func (s *Server) handleFindCallees(_ context.Context, req mcpapi.CallToolRequest
 			result["result"] = "no_outgoing_edges"
 			result["note"] = "Graph shows no callees for this entity. Do not infer a relationship — report the absence."
 		}
-		return jsonResult(result), nil
+		return result, nil
 	}
-	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
+	return nil, mcpapi.NewToolResultError("entity not found: " + entityID)
 }
 
 // ---------------------------------------------------------------------------

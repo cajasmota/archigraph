@@ -38,28 +38,54 @@ package mcp
 
 import (
 	"encoding/json"
-	"sync"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// deferredPayloads holds values stashed by jsonResult and consumed by wrap.
-// Key: *mcpapi.CallToolResult — guaranteed unique per call.
-// Value: any — the unmarshaled handler value.
-var deferredPayloads sync.Map
+// HandlerResult is the typed envelope that pairs an unmarshaled handler
+// value with the *CallToolResult that carries it on the wire.
+//
+// #2327: prior to this issue the deferred value was stashed in a
+// package-level sync.Map keyed on the *CallToolResult pointer. That was
+// pure plumbing for a missing abstraction — every jsonResult callsite
+// allocated an empty *CallToolResult only so the package-level map could
+// rendezvous with it inside `wrap`.
+//
+// The cleaner shape is to carry the typed value inline on the result
+// itself. The upstream mcp-go protocol type already has a
+// `StructuredContent any` field for exactly this purpose (designed for
+// structured tool output). We co-opt it as the deferred-value carrier
+// during dispatch and clear it before the result leaves the wrap
+// boundary. Net effect: package-level sync.Map deleted; no allocation
+// for a sidechannel; no lifetime/leak concerns; the typed envelope is
+// the *CallToolResult itself.
+//
+// The pair `HandlerResult{Value, Format}` from the design brief is
+// realised by the (StructuredContent, IsError/Content[0]) fields on
+// *mcpapi.CallToolResult itself — handlers continue to return that
+// pointer, but jsonResult now sets StructuredContent so the dispatcher
+// sees a typed value, not just wire bytes.
 
-// stashDeferred associates v with res so wrap can pick it up later.
+// stashDeferred stores v on res so wrap can pick it up later. Uses the
+// mcp-go protocol type's StructuredContent field as the carrier; that
+// field is cleared again before the response goes on the wire, so it
+// does not affect the wire envelope shape.
 func stashDeferred(res *mcpapi.CallToolResult, v any) {
-	deferredPayloads.Store(res, v)
+	if res == nil {
+		return
+	}
+	res.StructuredContent = v
 }
 
-// takeDeferred removes and returns the value associated with res, if any.
-// The second return is true when a value was found.
+// takeDeferred reads and clears the value stashed by jsonResult. Returns
+// (value, true) when present; (nil, false) for results produced by other
+// paths (markdown, error, hand-built TextContent).
 func takeDeferred(res *mcpapi.CallToolResult) (any, bool) {
-	v, ok := deferredPayloads.LoadAndDelete(res)
-	if !ok {
+	if res == nil || res.StructuredContent == nil {
 		return nil, false
 	}
+	v := res.StructuredContent
+	res.StructuredContent = nil
 	return v, true
 }
 
@@ -77,7 +103,9 @@ func takeDeferred(res *mcpapi.CallToolResult) (any, bool) {
 //     parse cycle.
 //
 // fields=, when non-nil, prunes per-record keys directly on the
-// structured value (no parse, no remarshal).
+// structured value (no parse, no remarshal). #2328: typed-struct
+// returns are also pruned via reflection (applyFieldsToValue), so
+// `fields=` callers ride the single-marshal fast path.
 func finalizeDeferred(v any, elapsedMS int64, fields []string) (string, error) {
 	keep := map[string]bool(nil)
 	if len(fields) > 0 {
@@ -86,13 +114,16 @@ func finalizeDeferred(v any, elapsedMS int64, fields []string) (string, error) {
 			keep[f] = true
 		}
 	}
+	// #2328: apply fields= filtering on typed values before the type
+	// switch. For typed-struct shapes this lifts the value into
+	// map[string]any / []any form, which then takes the fast path below.
+	if keep != nil {
+		v = applyFieldsToValue(v, keep)
+	}
 
 	switch payload := v.(type) {
 	case map[string]any:
 		obj := payload
-		if keep != nil {
-			obj = filterObject(obj, keep)
-		}
 		// Items-array TOON conversion (parity with #1686 path).
 		if toonWireEnabled() {
 			if rawItems, ok := obj["items"]; ok {
@@ -111,16 +142,16 @@ func finalizeDeferred(v any, elapsedMS int64, fields []string) (string, error) {
 		return string(data), nil
 
 	case []any:
-		return finalizeArray(payload, elapsedMS, keep)
+		return finalizeArray(payload, elapsedMS)
 
 	case []map[string]any:
 		// Promote homogeneous record slice to []any so the shared array
-		// path can attempt TOON + fields= filtering uniformly.
+		// path can attempt TOON uniformly.
 		arr := make([]any, len(payload))
 		for i, m := range payload {
 			arr[i] = m
 		}
-		return finalizeArray(arr, elapsedMS, keep)
+		return finalizeArray(arr, elapsedMS)
 
 	default:
 		// Typed structs / scalars: marshal once, then byte-inject
@@ -137,18 +168,14 @@ func finalizeDeferred(v any, elapsedMS int64, fields []string) (string, error) {
 }
 
 // finalizeArray builds the {items, count, elapsed_ms} envelope used for
-// top-level array returns. items is TOON-encoded when applicable; fields=
-// filtering applies when items remains an array.
-func finalizeArray(arr []any, elapsedMS int64, keep map[string]bool) (string, error) {
+// top-level array returns. items is TOON-encoded when applicable.
+// fields= filtering, if requested, is applied by finalizeDeferred before
+// the array reaches this point.
+func finalizeArray(arr []any, elapsedMS int64) (string, error) {
 	var itemsVal any = arr
 	if toonWireEnabled() {
 		if toon, ok := recordsToTOON(arr); ok {
 			itemsVal = toon
-		}
-	}
-	if keep != nil {
-		if subArr, ok := itemsVal.([]any); ok {
-			itemsVal = filterArray(subArr, keep)
 		}
 	}
 	env := map[string]any{
@@ -224,20 +251,100 @@ func injectElapsedMSIntoBytes(data []byte, elapsedMS int64) string {
 
 	case '[':
 		// Wrap array in {items: <bytes>, count: N, elapsed_ms: M}.
-		// We need count: parse only the array's *length* by counting
-		// top-level commas would be unsafe in the presence of nested
-		// commas in strings. So we do one unmarshal *just to count* —
-		// but only when the typed-struct default path is hit. To stay
-		// truly single-marshal we instead fall back to including the
-		// array bytes verbatim with count=-1 OR re-marshaling via the
-		// []any branch. In practice this default branch is rare; defer
-		// to legacy path for correctness.
-		return string(data) + ",\"elapsed_ms\":" + itoa64(elapsedMS)
+		// #2329: compute count by scanning top-level elements with full
+		// string/escape awareness — no unmarshal, no second marshal.
+		end := len(data) - 1
+		for end > start {
+			b := data[end]
+			if b == ' ' || b == '\t' || b == '\n' || b == '\r' {
+				end--
+				continue
+			}
+			break
+		}
+		if data[end] != ']' {
+			break
+		}
+		count := countTopLevelJSONArrayElements(data[start : end+1])
+		// Build {"items":<array-bytes>,"count":N,"elapsed_ms":M}.
+		out := make([]byte, 0, len(data)+48)
+		out = append(out, data[:start]...)
+		out = append(out, '{', '"', 'i', 't', 'e', 'm', 's', '"', ':')
+		out = append(out, data[start:end+1]...)
+		out = append(out, ',', '"', 'c', 'o', 'u', 'n', 't', '"', ':')
+		out = appendInt(out, int64(count))
+		out = append(out, ',')
+		out = appendElapsedField(out, elapsedMS)
+		out = append(out, '}')
+		out = append(out, data[end+1:]...)
+		return string(out)
 	}
 
 	// Non-JSON or unrecognised — append a trailing comment line to keep
 	// the elapsed_ms regex parser happy (parity with the error path).
 	return string(data) + "\n# elapsed_ms=" + itoa64(elapsedMS) + "\n"
+}
+
+// countTopLevelJSONArrayElements counts the top-level elements in a JSON
+// array represented by data (must begin with '[' and end with ']'). It walks
+// the bytes with string/escape awareness so commas embedded in strings or
+// nested arrays/objects are not miscounted. Returns 0 for an empty array
+// `[]` or any malformed input.
+//
+// #2329: implemented so the byte-level array branch of injectElapsedMSIntoBytes
+// can populate the envelope's `count` field without a parse cycle. This closes
+// the last out-of-scope edge case from #2287.
+func countTopLevelJSONArrayElements(data []byte) int {
+	if len(data) < 2 || data[0] != '[' {
+		return 0
+	}
+	// Detect empty array (allowing whitespace between [ and ]).
+	i := 1
+	for i < len(data)-1 {
+		b := data[i]
+		if b == ' ' || b == '\t' || b == '\n' || b == '\r' {
+			i++
+			continue
+		}
+		break
+	}
+	if i >= len(data)-1 || data[i] == ']' {
+		return 0
+	}
+
+	count := 1 // at least one element exists past the leading bracket
+	depth := 0
+	inString := false
+	escape := false
+	for ; i < len(data)-1; i++ {
+		b := data[i]
+		if escape {
+			escape = false
+			continue
+		}
+		if inString {
+			switch b {
+			case '\\':
+				escape = true
+			case '"':
+				inString = false
+			}
+			continue
+		}
+		switch b {
+		case '"':
+			inString = true
+		case '[', '{':
+			depth++
+		case ']', '}':
+			depth--
+		case ',':
+			if depth == 0 {
+				count++
+			}
+		}
+	}
+	return count
 }
 
 // bytesTrimSpaces returns b stripped of leading and trailing ASCII

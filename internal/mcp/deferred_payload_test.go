@@ -199,6 +199,153 @@ func TestDeferredPayload_TOONItems(t *testing.T) {
 	}
 }
 
+// TestDeferredPayload_FieldsFastPath verifies that fields= filtering now
+// rides the single-marshal fast path (#2328). The filtered envelope is
+// produced directly by finalizeDeferred without a parse cycle.
+func TestDeferredPayload_FieldsFastPath(t *testing.T) {
+	t.Setenv("MCP_WIRE_FORMAT", "json")
+
+	v := map[string]any{
+		"results": []any{
+			map[string]any{"id": "a", "name": "Alpha", "kind": "function", "extra": "X"},
+			map[string]any{"id": "b", "name": "Beta", "kind": "class", "extra": "Y"},
+		},
+		"count": 2,
+	}
+	text, err := finalizeDeferred(v, 5, []string{"name", "id"})
+	if err != nil {
+		t.Fatalf("finalizeDeferred: %v", err)
+	}
+	var obj map[string]any
+	if err := json.Unmarshal([]byte(text), &obj); err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if obj["elapsed_ms"].(float64) != 5 {
+		t.Errorf("elapsed_ms=5 expected, got %v", obj["elapsed_ms"])
+	}
+	results, _ := obj["results"].([]any)
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+	for _, r := range results {
+		rec, _ := r.(map[string]any)
+		if _, present := rec["kind"]; present {
+			t.Errorf("fields= filter should have stripped 'kind' from %+v", rec)
+		}
+		if _, present := rec["extra"]; present {
+			t.Errorf("fields= filter should have stripped 'extra' from %+v", rec)
+		}
+	}
+}
+
+// TestDeferredPayload_FieldsFastPath_TypedStruct verifies fields= filtering
+// on typed-struct returns (#2328): a []struct passed via the envelope is
+// reflection-converted, filtered, and routed through the single-marshal
+// path with no marshal/unmarshal round trip in the legacy applyFieldsToResult.
+func TestDeferredPayload_FieldsFastPath_TypedStruct(t *testing.T) {
+	t.Setenv("MCP_WIRE_FORMAT", "json")
+
+	type item struct {
+		ID    string `json:"id"`
+		Name  string `json:"name"`
+		Kind  string `json:"kind,omitempty"`
+		Extra string `json:"extra,omitempty"`
+	}
+	v := map[string]any{
+		"results": []item{
+			{ID: "a", Name: "Alpha", Kind: "function", Extra: "X"},
+			{ID: "b", Name: "Beta", Kind: "class", Extra: "Y"},
+		},
+		"count": 2,
+	}
+	text, err := finalizeDeferred(v, 7, []string{"name", "id"})
+	if err != nil {
+		t.Fatalf("finalizeDeferred: %v", err)
+	}
+	var obj map[string]any
+	if err := json.Unmarshal([]byte(text), &obj); err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	results, _ := obj["results"].([]any)
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+	for _, r := range results {
+		rec, _ := r.(map[string]any)
+		if _, present := rec["kind"]; present {
+			t.Errorf("kind should be stripped from typed struct: %+v", rec)
+		}
+		if rec["name"] == nil || rec["id"] == nil {
+			t.Errorf("expected name+id present, got %+v", rec)
+		}
+	}
+}
+
+// TestStructuredContent_NotOnWire verifies #2327: the typed value carried
+// via res.StructuredContent during dispatch is cleared before the wire
+// envelope is emitted. (No package-level sync.Map; the carrier is the
+// result struct itself.)
+func TestStructuredContent_NotOnWire(t *testing.T) {
+	v := map[string]any{"id": "x"}
+	res := jsonResult(v)
+	if res.StructuredContent == nil {
+		t.Fatal("expected StructuredContent set by jsonResult")
+	}
+	got, ok := takeDeferred(res)
+	if !ok || got == nil {
+		t.Fatalf("takeDeferred should return the stashed value, got ok=%v v=%v", ok, got)
+	}
+	if res.StructuredContent != nil {
+		t.Errorf("takeDeferred should clear StructuredContent (got %v)", res.StructuredContent)
+	}
+}
+
+// TestCountTopLevelJSONArrayElements covers the #2329 byte-level count
+// implementation across edge cases: empty arrays, nested arrays/objects,
+// commas inside strings, escape sequences.
+func TestCountTopLevelJSONArrayElements(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want int
+	}{
+		{"empty", "[]", 0},
+		{"whitespace_empty", "[ \n ]", 0},
+		{"one_scalar", "[1]", 1},
+		{"three_scalars", "[1,2,3]", 3},
+		{"strings_with_commas", `["a,b","c,d","e"]`, 3},
+		{"nested_objects", `[{"a":1,"b":2},{"c":3}]`, 2},
+		{"nested_arrays", `[[1,2,3],[4,5],[6]]`, 3},
+		{"escaped_quote_in_string", `["a\",b","c"]`, 2},
+		{"deep_nesting", `[{"a":{"b":[1,2,3]}},{"x":[{"y":1}]}]`, 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := countTopLevelJSONArrayElements([]byte(tc.in))
+			if got != tc.want {
+				t.Errorf("count(%s) = %d, want %d", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestInjectElapsedMSIntoBytes_ArrayHasCount verifies #2329 — the byte-level
+// array branch wraps the array in {items, count, elapsed_ms} with count
+// correctly populated (was hard-omitted pre-#2329).
+func TestInjectElapsedMSIntoBytes_ArrayHasCount(t *testing.T) {
+	got := injectElapsedMSIntoBytes([]byte(`[{"a":1},{"a":2},{"a":3}]`), 11)
+	var obj map[string]any
+	if err := json.Unmarshal([]byte(got), &obj); err != nil {
+		t.Fatalf("byte-injected output is not valid JSON: %v — %s", err, got)
+	}
+	if obj["count"].(float64) != 3 {
+		t.Errorf("expected count=3, got %v in %s", obj["count"], got)
+	}
+	if obj["elapsed_ms"].(float64) != 11 {
+		t.Errorf("expected elapsed_ms=11, got %v", obj["elapsed_ms"])
+	}
+}
+
 // BenchmarkResponsePath_Legacy measures the legacy marshal → parse →
 // re-marshal cost on a representative endpoints-like payload.
 func BenchmarkResponsePath_Legacy(b *testing.B) {
@@ -228,6 +375,24 @@ func BenchmarkResponsePath_Deferred(b *testing.B) {
 		// no parse.
 		v, _ := takeDeferred(res)
 		_, _ = finalizeDeferred(v, int64(i), nil)
+	}
+}
+
+// BenchmarkResponsePath_DeferredWithFields measures the #2328 fast-path
+// for fields= callers — previously the legacy parse-based applyFieldsToResult
+// kicked in here, now the structured filter runs in-place and the wire
+// shape is built via finalizeDeferred. Numbers should be comparable to
+// BenchmarkResponsePath_Deferred (a small per-record reflection overhead
+// is the only delta when records are plain map[string]any).
+func BenchmarkResponsePath_DeferredWithFields(b *testing.B) {
+	payload := buildBenchPayload()
+	fields := []string{"id", "method"}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		res := jsonResult(payload)
+		v, _ := takeDeferred(res)
+		_, _ = finalizeDeferred(v, int64(i), fields)
 	}
 }
 
