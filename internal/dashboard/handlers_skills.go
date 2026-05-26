@@ -112,6 +112,16 @@ var marketplaceCatalog = []CatalogSkill{
 		},
 	},
 	{
+		Slug:   "archigraph-help",
+		Source: "archigraph-bundled",
+		SkillMeta: SkillMeta{
+			Name:        "archigraph-help",
+			Description: "Overview of the archigraph skill family: lists all skills, canonical execution chains, and which skill to start with based on your goal. Purely informational — does not run any analysis.",
+			Type:        "reference",
+			WhenToUse:   "When orienting to the skill family, onboarding a new team member, or deciding which skill to run next.",
+		},
+	},
+	{
 		Slug:   "archigraph-business-docs",
 		Source: "archigraph-bundled",
 		SkillMeta: SkillMeta{
