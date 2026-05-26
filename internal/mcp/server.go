@@ -795,21 +795,22 @@ func (s *Server) wrap(name string, fn func(ctx context.Context, req mcpapi.CallT
 		elapsed := time.Since(start).Milliseconds()
 		if res != nil {
 			fl := fieldsArg(req)
-			// #2287: single-marshal path. When the handler used
-			// jsonResult(v), v was stashed (not marshaled-only). Build
-			// the envelope on the structured value (TOON-encode items,
-			// inject elapsed_ms) and marshal ONCE here, replacing the
-			// eager marshal in res.Content[0]. This eliminates the
-			// legacy parse step (injectElapsedMS used to unmarshal the
-			// handler's bytes, mutate the map, and re-marshal). Net
-			// effect on the wire path: -1 parse per call, with the
-			// parse step being O(payload size).
+			// #2287 + #2328: single-marshal path. When the handler used
+			// jsonResult(v), v is carried on res.StructuredContent.
+			// finalizeDeferred builds the envelope on the structured
+			// value (apply fields=, TOON-encode items, inject
+			// elapsed_ms) and marshals ONCE here, replacing the eager
+			// marshal in res.Content[0]. This eliminates the legacy
+			// parse step entirely — including the fields= case, which
+			// post-#2328 also rides the fast path via reflection-aware
+			// applyFieldsToValue.
 			//
-			// We always drain the deferred entry so the sync.Map cannot
-			// retain references after this call returns.
+			// Drain the deferred slot so StructuredContent does not
+			// leak into the wire envelope (omitempty is set but we
+			// clear it for safety).
 			deferredV, hasDeferred := takeDeferred(res)
-			if hasDeferred && fl == nil {
-				if text, ferr := finalizeDeferred(deferredV, elapsed, nil); ferr == nil {
+			if hasDeferred {
+				if text, ferr := finalizeDeferred(deferredV, elapsed, fl); ferr == nil {
 					res.Content = []mcpapi.Content{mcpapi.NewTextContent(text)}
 				} else {
 					// finalize shouldn't fail for shapes that survived
@@ -818,18 +819,14 @@ func (s *Server) wrap(name string, fn func(ctx context.Context, req mcpapi.CallT
 					res = mcpapi.NewToolResultError("marshal: " + ferr.Error())
 				}
 			} else {
-				// Fallback (legacy injectElapsedMS) path:
-				//   - Result was not produced by jsonResult (markdown,
-				//     errors, hand-built TextContent), OR
-				//   - fields= was requested. The legacy parse-based
-				//     filter is uniform across both map[string]any and
-				//     typed-struct returns (after marshal everything is
-				//     map[string]any), so we keep it as the fields= path
-				//     for now. #2287's win is on the no-fields hot path,
-				//     which is the dominant case.
-				// #1741: GraphQL-style `fields=` selection. Apply BEFORE
-				// elapsed-ms injection so the envelope key always
-				// survives.
+				// Non-deferred fallback (markdown handlers, error
+				// results, hand-built TextContent). #2326: the JSON
+				// branches of injectElapsedMS have been retired — the
+				// only remaining responsibility is appending an
+				// elapsed_ms trailer to plain-text bodies (errors and
+				// markdown). fields= filtering is still applied here
+				// for non-JSON shapes that might carry structured
+				// content via TextContent (rare; preserved for parity).
 				if fl != nil {
 					res = applyFieldsToResult(res, fl)
 				}
@@ -846,11 +843,20 @@ func (s *Server) wrap(name string, fn func(ctx context.Context, req mcpapi.CallT
 	}
 }
 
-// injectElapsedMS rewrites the first TextContent in res whose body is a JSON
-// object so it carries an "elapsed_ms" field. JSON arrays are wrapped in an
-// envelope {"items":[...], "elapsed_ms": N} so the latency is still exposed
-// without breaking shape consumers (existing array consumers should switch to
-// the "items" key — none in current tree). Non-JSON payloads are untouched.
+// injectElapsedMS is the FALLBACK path for results that did not flow through
+// jsonResult — markdown handlers, hand-built TextContent in tests, and
+// occasionally results whose body happens to be JSON but was constructed
+// without going through jsonResult.
+//
+// #2326: the JSON object/array branches used to duplicate the TOON
+// conversion + envelope-build logic now centralised in finalizeDeferred.
+// To eliminate the duplication this function now parses (once) and
+// delegates to finalizeDeferred for the JSON paths, so the wire shape
+// stays byte-identical to the deferred fast path. Non-JSON payloads
+// (markdown, plain text, errors) get a trailing `# elapsed_ms=N` comment
+// — the cheap, no-parse path. The post-#2287 deferred path covers the
+// hot path; this fallback exists for legacy text-mode handlers and never
+// runs on the production JSON list-tools.
 func injectElapsedMS(res *mcpapi.CallToolResult, ms int64) *mcpapi.CallToolResult {
 	if res == nil || len(res.Content) == 0 {
 		return res
@@ -872,49 +878,18 @@ func injectElapsedMS(res *mcpapi.CallToolResult, ms int64) *mcpapi.CallToolResul
 		case '{':
 			var obj map[string]any
 			if err := json.Unmarshal([]byte(tc.Text), &obj); err == nil {
-				// #1686: when the object is the standard list-tool envelope
-				// {items:[...], count:N, elapsed_ms?} produced by #1661, attempt
-				// TOON conversion on the items array — same logic as the top-level
-				// array branch so consumers see an identical wire shape regardless
-				// of which path produced the response.
-				if toonWireEnabled() {
-					if rawItems, ok := obj["items"]; ok {
-						if arr, ok := rawItems.([]any); ok {
-							if toon, ok := recordsToTOON(arr); ok {
-								obj["items"] = toon
-							}
-						}
-					}
-				}
-				obj["elapsed_ms"] = ms
-				// #1663: minified JSON on the wire. Schema preserved.
-				if data, err := json.Marshal(obj); err == nil {
-					res.Content[i] = mcpapi.NewTextContent(string(data))
+				// #2326: delegate to finalizeDeferred so TOON conversion
+				// + elapsed_ms injection live in ONE place.
+				if text, ferr := finalizeDeferred(obj, ms, nil); ferr == nil {
+					res.Content[i] = mcpapi.NewTextContent(text)
 					return res
 				}
 			}
 		case '[':
 			var arr []any
 			if err := json.Unmarshal([]byte(tc.Text), &arr); err == nil {
-				// #1672: attempt TOON wire conversion for homogeneous record arrays.
-				// When MCP_WIRE_FORMAT=toon (default), replace the JSON array in
-				// "items" with a TOON-encoded text block. The envelope shape is
-				// preserved: {items:<TOON-text>, count:N, elapsed_ms:M}.
-				// Non-homogeneous arrays fall back to the minified-JSON items value.
-				var itemsVal any = arr
-				if toonWireEnabled() {
-					if toon, ok := recordsToTOON(arr); ok {
-						itemsVal = toon
-					}
-				}
-				env := map[string]any{
-					"items":      itemsVal,
-					"count":      len(arr),
-					"elapsed_ms": ms,
-				}
-				// #1663: minified JSON on the wire. items/count envelope preserved.
-				if data, err := json.Marshal(env); err == nil {
-					res.Content[i] = mcpapi.NewTextContent(string(data))
+				if text, ferr := finalizeDeferred(arr, ms, nil); ferr == nil {
+					res.Content[i] = mcpapi.NewTextContent(text)
 					return res
 				}
 			}

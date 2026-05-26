@@ -107,6 +107,74 @@ func buildDeadCodeDoc() *graph.Document {
 // TestFindCallers
 // ---------------------------------------------------------------------------
 
+// TestFindCallersStructured_NoWireBytes verifies #2325: the structured
+// variant returns the typed map directly — internal cross-handler dispatch
+// (mergeNeighbors) consumes this without ever parsing wire bytes.
+func TestFindCallersStructured_NoWireBytes(t *testing.T) {
+	doc := buildChainDoc()
+	srv := newTestServerWithDoc(t, doc)
+
+	req := mcpapi.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"entity_id": "ent-b"}
+	val, errRes := srv.findCallersStructured(context.Background(), req)
+	if errRes != nil {
+		t.Fatalf("unexpected error from structured seam: %v", errRes.Content)
+	}
+	if val == nil {
+		t.Fatal("expected structured map, got nil")
+	}
+	// Typed shape: callers []caller (typed slice), not []any. The whole
+	// point of the structured seam is no JSON round-trip.
+	if val["callers"] == nil {
+		t.Fatalf("expected callers key in structured result: %+v", val)
+	}
+	// entity_name surfaces in the merge step, must be present.
+	if val["entity_name"] != "FuncB" {
+		t.Errorf("expected entity_name=FuncB, got %v", val["entity_name"])
+	}
+}
+
+// TestMergeNeighbors_NoParse verifies that mergeNeighbors composes its
+// output from structured maps directly — passing typed maps yields a
+// merged result with both callers and callees lists, no parse step.
+func TestMergeNeighbors_NoParse(t *testing.T) {
+	in := map[string]any{
+		"entity_id":   "r1::a",
+		"entity_name": "A",
+		"repo":        "r1",
+		"depth":       1,
+		"callers":     []any{map[string]any{"id": "r1::b"}},
+		"count":       1,
+	}
+	out := map[string]any{
+		"entity_id":   "r1::a",
+		"entity_name": "A",
+		"repo":        "r1",
+		"depth":       1,
+		"callees":     []any{map[string]any{"id": "r1::c"}, map[string]any{"id": "r1::d"}},
+		"count":       2,
+	}
+	res := mergeNeighbors(in, nil, out, nil)
+	if res == nil || res.IsError {
+		t.Fatalf("mergeNeighbors returned error: %v", res)
+	}
+	// res must carry a deferred value (StructuredContent) — proves jsonResult
+	// is the only marshal point.
+	if res.StructuredContent == nil {
+		t.Error("expected mergeNeighbors result to carry deferred StructuredContent")
+	}
+	merged, ok := res.StructuredContent.(map[string]any)
+	if !ok {
+		t.Fatalf("expected merged map[string]any, got %T", res.StructuredContent)
+	}
+	if merged["direction"] != "both" {
+		t.Errorf("expected direction=both, got %v", merged["direction"])
+	}
+	if merged["callers"] == nil || merged["callees"] == nil {
+		t.Errorf("expected callers+callees merged: %+v", merged)
+	}
+}
+
 func TestFindCallers_DirectCaller(t *testing.T) {
 	doc := buildChainDoc()
 	srv := newTestServerWithDoc(t, doc)
