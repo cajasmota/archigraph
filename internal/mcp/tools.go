@@ -465,7 +465,7 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 				semIDs := r.Semantic.Search(qVec, 10)
 				semHits := make([]Hit, 0, len(semIDs))
 				for _, s := range semIDs {
-					if e, ok := r.byID[s.ID]; ok {
+					if e, ok := r.ByID[s.ID]; ok {
 						semHits = append(semHits, Hit{Entity: e, Score: s.Score, Source: "semantic"})
 					}
 				}

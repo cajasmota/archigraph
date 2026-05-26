@@ -230,7 +230,6 @@ type LoadedRepo struct {
 	TopKPageRank []string                 // entity IDs sorted descending by PageRank (#2304)
 	Semantic     *embed.Store             // per-repo vector index (nil when no embeddings.bin)
 	semMtime     time.Time
-	byID         map[string]*graph.Entity // deprecated alias for ByID — kept for back-compat during #1656 rollout
 	mtime        time.Time
 	loadErr      string // populated when last reload failed; doc may be stale
 }
@@ -467,7 +466,6 @@ func (s *State) reloadLocked() (int, bool, error) {
 				for i := range doc.Entities {
 					lr.ByID[doc.Entities[i].ID] = &doc.Entities[i]
 				}
-				lr.byID = lr.ByID // back-compat alias (deprecated)
 				// Pre-build adjacency once per reload. Eliminates the per-query
 				// O(R)=117k scan that every flow/traversal handler used to pay
 				// via buildAdjacency(r.Doc, r.Repo). (#1656)
