@@ -51,6 +51,7 @@
 package engine
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/types"
