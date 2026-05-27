@@ -52,6 +52,12 @@ func (a *adjacency) Incoming(id string) []edge {
 // Called ONCE per reload (cached on LoadedRepo.Adjacency, #1656). Handlers
 // must NOT call this per-query — they pay an O(R)=117k scan plus thousands
 // of allocations every time. Use repo.Adjacency instead.
+//
+// Edge weight: defaults to 1.0 but reads Properties["count"] or
+// Properties["weight"] when present. Extractors that deduplicate call sites
+// into a single CALLS edge with a numeric "count" property (e.g. "30" for a
+// file that calls a function 30 times) will have their frequency honoured by
+// any consumer that sums edge.weight instead of counting raw edges (#2591).
 func buildAdjacency(doc *graph.Document, repo string) *adjacency {
 	a := &adjacency{
 		out: make(map[string][]edge, len(doc.Entities)),
@@ -59,11 +65,29 @@ func buildAdjacency(doc *graph.Document, repo string) *adjacency {
 	}
 	for i := range doc.Relationships {
 		r := &doc.Relationships[i]
-		w := 1.0
+		w := edgeWeight(r)
 		a.out[r.FromID] = append(a.out[r.FromID], edge{target: r.ToID, kind: r.Kind, weight: w, relIdx: i})
 		a.in[r.ToID] = append(a.in[r.ToID], edge{target: r.FromID, kind: r.Kind, weight: w, relIdx: i})
 	}
 	return a
+}
+
+// edgeWeight returns the numeric weight for a relationship edge. It reads
+// Properties["count"] first (call-site count emitted by extractors that
+// deduplicate edges), then Properties["weight"] (module-aggregate weight),
+// falling back to 1.0. Values <= 0 are treated as 1.0.
+func edgeWeight(r *graph.Relationship) float64 {
+	for _, key := range []string{"count", "weight"} {
+		if r.Properties == nil {
+			break
+		}
+		if v, ok := r.Properties[key]; ok && v != "" {
+			if n, err := strconv.ParseFloat(v, 64); err == nil && n > 0 {
+				return n
+			}
+		}
+	}
+	return 1.0
 }
 
 // stepEdge is a single STEP_IN_PROCESS edge entry stored in StepAdj.

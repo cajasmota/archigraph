@@ -282,12 +282,21 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 			callers = append(callers, c)
 		}
 
-		// #2577: count CALLS edges per source entity to rank callers by frequency.
-		// Build a map: entity ID (unprefixed) -> count of CALLS edges to target.
-		callFrequency := make(map[string]int)
+		// #2577/#2591: rank callers by call frequency (descending).
+		//
+		// Frequency is the sum of edge weights for CALLS edges pointing from
+		// each source to target. edge.weight is 1.0 per raw edge, OR the
+		// numeric value of Properties["count"] when the extractor deduplicates
+		// multiple call sites into a single edge with a count property.
+		//
+		// Summing weights (not counting raw edges) means both representation
+		// styles are handled uniformly:
+		//   - Extractor emits N duplicate CALLS edges → each weight=1 → sum=N
+		//   - Extractor emits 1 CALLS edge with Properties["count"]="N" → weight=N → sum=N
+		callFrequency := make(map[string]float64)
 		for _, e := range adj.in[target] {
 			if e.kind == "CALLS" {
-				callFrequency[e.target]++
+				callFrequency[e.target] += e.weight
 			}
 		}
 
