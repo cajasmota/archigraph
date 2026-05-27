@@ -410,7 +410,8 @@ func (s *Server) registerTools() {
 		mcpapi.WithArray("fields"),
 		mcpapi.WithAny("group"),
 		mcpapi.WithAny("cwd"),
-		mcpapi.WithAny("ref"), // PH1c: optional git ref; defaults to CWD HEAD ref
+		mcpapi.WithAny("ref"),                // PH1c: optional git ref; defaults to CWD HEAD ref
+		mcpapi.WithAny("include_unresolved"), // #2640: when true, include unresolved calls[] with annotation
 	), s.wrap("archigraph_inspect", s.handleGetNode))
 
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_expand",

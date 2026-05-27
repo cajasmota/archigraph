@@ -72,9 +72,13 @@ Output: BM25-scored entities with BFS expansion. Tail trimmed below `min_score`.
 
 #### `archigraph_inspect`
 
-Key parameters: `entity_id` (required; accepts id, qname, or label), `verbose` (bool), `repo_filter[]`, `fields[]`.
+Key parameters: `entity_id` (required; accepts id, qname, or label), `verbose` (bool), `repo_filter[]`, `fields[]`, `include_unresolved` (bool, default `false`).
 
-Output: full entity record including all properties + attached findings. Also returns `calls[]` and `called_by[]` arrays with line-precise edges: each `calls` entry carries `{target, target_path, line, via}` where `line` is the line in the inspected entity's source where the call appears; each `called_by` entry carries `{source, source_path, line, context}` where `line` is the line in the caller's source and `context` is a ~40-char snippet around the call site.
+Output: full entity record including all properties + attached findings. Also returns:
+
+- `calls[]` — outbound CALLS edges with line-precise data. Each entry: `{target, target_path, line, via}`. Unresolved edges (where the target entity could not be found — empty `target_path` or bare repo prefix) are **filtered by default**. Pass `include_unresolved: true` to include them; unresolved entries carry an extra `"unresolved": true` field.
+- `called_by[]` — inbound CALLS edges (callers). Always present even when empty (`called_by: []`). Each entry: `{source, source_path, line, context}` where `context` is a ~40-char snippet of the call-site line.
+- `metadata` — index provenance block: `{indexed_ref, indexed_sha, indexed_at, age_seconds}`. Agents can use `age_seconds` to decide whether line numbers might be stale before calling `archigraph_get_source`.
 
 #### `archigraph_get_source`
 
