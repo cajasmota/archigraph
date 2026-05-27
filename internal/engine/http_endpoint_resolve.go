@@ -234,23 +234,32 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 		// emit UNRESOLVED_FETCH when no definition is found in the merged set.
 		if r.Kind == httpEndpointCallKind {
 			defIdx, found := definitionByName[r.Name]
+			var prefixNorm string
 			if !found {
 				// #1615 — structural fallback: match by normalized path shape
 				// + compatible verb when the exact Name missed.
-				defIdx, found = resolveCallByPath(r, merged, definitionByPath)
+				// #2547 — resolveCallByPath now also tries prefix-injection for
+				// frontend calls that omit the backend's API mount prefix.
+				defIdx, prefixNorm, found = resolveCallByPath(r, merged, definitionByPath)
 			}
 			if found {
 				def := &merged[defIdx]
 				callStub := r.Kind + ":" + r.Name
 				defStub := def.Kind + ":" + def.Name
+				edgeProps := map[string]string{
+					"pattern_type": "http_endpoint_split_resolved",
+					"resolved":     "true",
+				}
+				// #2547 — stamp prefix_normalized when tier-2 prefix-injection
+				// matched so the match strategy is traceable in the graph.
+				if prefixNorm != "" {
+					edgeProps["prefix_normalized"] = prefixNorm
+				}
 				r.Relationships = append(r.Relationships, types.RelationshipRecord{
-					FromID: callStub,
-					ToID:   defStub,
-					Kind:   fetchesEdgeKind,
-					Properties: map[string]string{
-						"pattern_type": "http_endpoint_split_resolved",
-						"resolved":     "true",
-					},
+					FromID:     callStub,
+					ToID:       defStub,
+					Kind:       fetchesEdgeKind,
+					Properties: edgeProps,
 				})
 				// #1615 — remember the stub rewrite so the post-loop sweep can
 				// retarget inbound caller→call-synthetic FETCHES edges at the

@@ -38,6 +38,36 @@
 //     verbs never match (DELETE/{*} must not resolve to PATCH/{*}).
 //   - The exact-Name match in the resolve pass always runs FIRST; this
 //     normalized match is a fallback used only when the exact match misses.
+//
+// Prefix-normalization extension (#2547)
+// ----------------------------------------
+// Frontend HTTP call extractors (axios, fetch, callApi wrappers) frequently
+// emit raw paths such as `/searchBuildings` or `/groups/filter` without the
+// `/api/v1/` mount prefix that Django+DRF backend endpoints use. The
+// definitionByPath index registers backend routes under BOTH their full path
+// AND a prefix-stripped alias (via endpointMatchKeys / stripEndpointAPIPrefix),
+// but that only helps when the BACKEND is the prefixed side. When the FRONTEND
+// omits the prefix entirely, the stripped alias is the same as the raw path and
+// no key collision occurs with the prefixed backend route.
+//
+// resolveCallByPath therefore adds a second fallback tier (after the structural
+// path-shape match): it tries prepending each of the well-known API prefix
+// candidates [/api/v1, /api/v2, /api, /v1] to the call's normalized path and
+// probes definitionByPath with those keys. The first match wins; the resolved
+// edge is stamped with prefix_normalized=<candidate> so the match is traceable
+// in the graph. This is resolution-time normalization — no changes are made to
+// the extracted entity names or paths, keeping the raw extractor output intact
+// for debugging.
+//
+// Resolution-time vs extraction-time: resolution-time was chosen because
+// (a) it requires touching only one file (the linker, not every extractor),
+// (b) it leaves the extracted paths intact for human inspection,
+// (c) the prefix is inherently a cross-repo / context-dependent property —
+//
+//	the same frontend call `/users` could target `/api/v1/users` in one
+//	group and `/v2/users` in another; the resolution pass sees both sides
+//	simultaneously and can pick the best match, whereas an extractor working
+//	on the frontend alone cannot know the backend's URL scheme.
 package engine
 
 import (
@@ -56,6 +86,13 @@ import (
 // Each is replaced with the canonical token {*} so matching is on path
 // STRUCTURE, not parameter name. Mirrors internal/links/http_pass.go.
 var endpointPathParamRe = regexp.MustCompile(`\{[^}]+\}|:[a-zA-Z][a-zA-Z0-9_]*|<[^>]+>`)
+
+// prefixCandidates is the ordered list of well-known API mount prefixes tried
+// when a call path has no prefix of its own and the structural match misses
+// (#2547). Order matters: more specific (longer) prefixes are tried first so
+// `/api/v1` is preferred over `/api` when both would match — avoids landing on
+// a coarser route in multi-version APIs.
+var prefixCandidates = []string{"/api/v1", "/api/v2", "/api", "/v1"}
 
 // endpointAPIPrefixRe matches a leading API/version mount prefix. Only the
 // FIRST segment group is matched and only the well-known `api` / `vN` forms —
@@ -121,21 +158,62 @@ func endpointMatchKeys(path string) []string {
 // looks the call's normalized path keys up in definitionByPath and returns the
 // first definition (in merged order, for determinism) whose verb is compatible.
 //
+// Two matching tiers are attempted in order:
+//
+//  1. Structural normalization (original #1615 behavior): normalize path-param
+//     tokens to {*}, lower-case, strip trailing slash, and also try the
+//     prefix-stripped form — so `/api/v1/users/{pk}` and `/users/{id}/` both
+//     normalize to `/users/{*}`.
+//
+//  2. Prefix-injection (#2547): when tier 1 misses AND the call path carries no
+//     API/version prefix of its own, retry by prepending each prefix candidate
+//     from prefixCandidates to the normalized call path and probing
+//     definitionByPath. This handles the upvate pattern where the frontend
+//     extractor emits `/searchBuildings` but the backend mounts the route at
+//     `/api/v1/searchBuildings`.
+//
+// Returns (index, prefixUsed, true) on a match, (0, "", false) otherwise.
+// prefixUsed is non-empty only when tier 2 matched, and carries the raw prefix
+// string (e.g. "/api/v1") so the caller can stamp prefix_normalized on the
+// emitted edge for traceability.
+//
 // Determinism: definitionByPath slices are appended in `merged` iteration
 // order, which is canonical by contract of ResolveHTTPEndpointHandlers, so the
 // first compatible candidate is stable across runs.
-//
-// Returns (index, true) on a match, (0, false) otherwise.
-func resolveCallByPath(call *types.EntityRecord, merged []types.EntityRecord, definitionByPath map[string][]int) (int, bool) {
+func resolveCallByPath(call *types.EntityRecord, merged []types.EntityRecord, definitionByPath map[string][]int) (int, string, bool) {
 	callVerb := propOr(call, "verb", "")
-	for _, key := range endpointMatchKeys(propOr(call, "path", "")) {
+	callPath := propOr(call, "path", "")
+
+	// Tier 1: structural normalization (path-param tokens + prefix stripping).
+	for _, key := range endpointMatchKeys(callPath) {
 		for _, idx := range definitionByPath[key] {
 			if verbsMatchCompat(callVerb, propOr(&merged[idx], "verb", "")) {
-				return idx, true
+				return idx, "", true
 			}
 		}
 	}
-	return 0, false
+
+	// Tier 2: prefix-injection (#2547).
+	// Only attempt when the call path has no API/version prefix itself —
+	// if it already has one and tier 1 missed, adding another prefix would
+	// produce a nonsensical double-prefixed path.
+	normCallPath := normalizeEndpointPath(callPath)
+	if _, hasPrefix := stripEndpointAPIPrefix(normCallPath); !hasPrefix {
+		for _, pfx := range prefixCandidates {
+			prefixed := pfx + normCallPath
+			// The definition index uses the same normalizeEndpointPath
+			// convention, so probe with the already-normalized prefixed path.
+			for _, idx := range definitionByPath[prefixed] {
+				if verbsMatchCompat(callVerb, propOr(&merged[idx], "verb", "")) {
+					// Return the prefix without leading slash for the
+					// prefix_normalized property value (e.g. "api/v1").
+					return idx, strings.TrimPrefix(pfx, "/"), true
+				}
+			}
+		}
+	}
+
+	return 0, "", false
 }
 
 // verbsMatchCompat reports whether a call verb and a definition verb may refer
