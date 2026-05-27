@@ -101,6 +101,7 @@ type pivotRow struct {
 	ORMs          int
 	Other         int
 	Uncategorized bool // true for the language-neutral "Uncategorized" row
+	Untracked     bool // true for supported-but-zero-record languages
 }
 
 // bucketSection is one rendered section on a by-language page. When a
@@ -129,13 +130,14 @@ type subSection struct {
 
 // summaryData feeds summary.md.tmpl.
 type summaryData struct {
-	Marker          string
-	TotalLanguages  int
-	TotalFrameworks int
-	TotalTools      int
-	TotalORMs       int
-	TotalOther      int
-	Rows            []pivotRow // sorted by language; Uncategorized last
+	Marker           string
+	TotalLanguages   int
+	TotalFrameworks  int
+	TotalTools       int
+	TotalORMs        int
+	TotalOther       int
+	Rows             []pivotRow // sorted by language; Uncategorized last
+	UntrackedLangs   []string   // display labels for footnote, sorted
 }
 
 // languagePageData feeds by-language/<lang>.md.tmpl.
@@ -147,6 +149,17 @@ type languagePageData struct {
 	ORMs       int
 	Other      int
 	Sections   []bucketSection // bucketOrder, empty sections omitted
+}
+
+// placeholderPageData feeds by-language-placeholder.md.tmpl. Rendered
+// for each extractor-supported language that has zero ecosystem records;
+// the page explains how to contribute records and cites the on-disk
+// extractor directory.
+type placeholderPageData struct {
+	Marker       string
+	Slug         string
+	Language     string
+	ExtractorDir string
 }
 
 // categoryLanguageCount is one element of the by-category banner.
@@ -312,13 +325,14 @@ func groupDigest(caps map[string]Capability) string {
 	return fmt.Sprintf("%s %d/%d", statusGlyph(worst), full, len(caps))
 }
 
-// languageDisplay maps a language slug to its human-facing label. Slugs
-// without an entry render verbatim. "jsts" expands to "JS/TS" because
-// the registry collapses JavaScript and TypeScript under one tag.
+// languageDisplay maps a language slug to its human-facing label. The
+// underlying table is shared with the placeholder by-language pages —
+// see languageDisplayName. Slugs that exist as records but lack an
+// override render verbatim (preserves existing per-record labelling for
+// languages like "python", "ruby", "go").
 func languageDisplay(slug string) string {
-	switch slug {
-	case "jsts":
-		return "JS/TS"
+	if v, ok := languageDisplayOverrides[slug]; ok {
+		return v
 	}
 	return slug
 }
@@ -442,23 +456,68 @@ func generate(reg *Registry, outRoot string) error {
 		}
 		rows = append(rows, row)
 	}
+
+	// Union with extractor-supported languages so the summary reflects
+	// every language archigraph CAN extract, not just languages with at
+	// least one ecosystem record. Languages discovered on disk that have
+	// no record set get a zero-count row + an Untracked marker so the
+	// footnote can enumerate them.
+	supported := SupportedLanguages(outRoot)
+	untrackedDisplay := make([]string, 0, len(supported))
+	for _, s := range supported {
+		if _, present := langSet[s]; present {
+			continue
+		}
+		display := languageDisplayName(s)
+		rows = append(rows, pivotRow{
+			Name:      s,
+			Display:   display,
+			Untracked: true,
+		})
+		untrackedDisplay = append(untrackedDisplay, display)
+	}
+	sort.Strings(untrackedDisplay)
+
 	sort.SliceStable(rows, func(i, j int) bool {
 		if rows[i].Uncategorized != rows[j].Uncategorized {
 			return !rows[i].Uncategorized
+		}
+		if rows[i].Frameworks != rows[j].Frameworks {
+			return rows[i].Frameworks > rows[j].Frameworks
 		}
 		return rows[i].Name < rows[j].Name
 	})
 
 	if err := renderToFile(tmpls, "summary.md.tmpl", filepath.Join(root, "summary.md"), summaryData{
 		Marker:          doNotEditMarker,
-		TotalLanguages:  len(langNames),
+		TotalLanguages:  len(langNames) + len(untrackedDisplay),
 		TotalFrameworks: totals.Frameworks,
 		TotalTools:      totals.Tools,
 		TotalORMs:       totals.ORMs,
 		TotalOther:      totals.Other,
 		Rows:            rows,
+		UntrackedLangs:  untrackedDisplay,
 	}); err != nil {
 		return err
+	}
+
+	// Emit placeholder by-language pages for each supported-but-untracked
+	// language so the summary links resolve and contributors land on a
+	// page that explains how to add records.
+	for _, s := range supported {
+		if _, present := langSet[s]; present {
+			continue
+		}
+		if err := renderToFile(tmpls, "by-language-placeholder.md.tmpl",
+			filepath.Join(root, "by-language", s+".md"),
+			placeholderPageData{
+				Marker:       doNotEditMarker,
+				Slug:         s,
+				Language:     languageDisplayName(s),
+				ExtractorDir: extractorDirForSlug(s),
+			}); err != nil {
+			return err
+		}
 	}
 
 	for _, n := range langNames {

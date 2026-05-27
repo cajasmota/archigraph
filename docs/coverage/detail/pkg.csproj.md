@@ -3,7 +3,7 @@
 
 Auto-generated. Back to [summary](../summary.md).
 
-- **Language:** [csharp](../by-language/csharp.md)
+- **Language:** [C#](../by-language/csharp.md)
 - **Category:** [package_manager](../by-category/package_manager.md)
 - **Capability cells:** 2
 

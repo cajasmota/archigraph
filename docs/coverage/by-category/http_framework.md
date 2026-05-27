@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # http_framework
 
-**Total**: 165 records · **csharp**: 15 · **elixir**: 9 · **go**: 17 · **java**: 19 · **JS/TS**: 30 · **kotlin**: 12 · **lua**: 2 · **php**: 12 · **python**: 20 · **ruby**: 8 · **rust**: 11 · **scala**: 9 · **swift**: 1
+**Total**: 165 records · **C#**: 15 · **elixir**: 9 · **go**: 17 · **java**: 19 · **JS/TS**: 30 · **kotlin**: 12 · **lua**: 2 · **php**: 12 · **python**: 20 · **ruby**: 8 · **rust**: 11 · **scala**: 9 · **swift**: 1
 
 Back to [summary](../summary.md). Bucket: **Frameworks**.
 
@@ -83,21 +83,21 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 
 | Language | Name | Auth Coverage | Endpoint Synthesis | Handler Attribution | Middleware Coverage | Notes |
 |---|---|---|---|---|---|---|
-| [csharp](../by-language/csharp.md) | [.NET MAUI](../detail/lang.csharp.framework.net-maui.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | ❌ | ✅ | ✅ | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | ❌ | ✅ | ✅ | ❌ | |
-| [csharp](../by-language/csharp.md) | [Blazor Server](../detail/lang.csharp.framework.blazor-server.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [Blazor Server / WebAssembly](../detail/lang.csharp.framework.blazor.md) | — | ❌ | — | — | |
-| [csharp](../by-language/csharp.md) | [Blazor WebAssembly](../detail/lang.csharp.framework.blazor-wasm.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [Carter](../detail/lang.csharp.framework.carter.md) | ❌ | ❌ | ❌ | ❌ | |
-| [csharp](../by-language/csharp.md) | [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | ❌ | ❌ | ❌ | ❌ | |
-| [csharp](../by-language/csharp.md) | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | ❌ | ❌ | ❌ | ❌ | |
-| [csharp](../by-language/csharp.md) | [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | ❌ | ❌ | ❌ | ❌ | |
-| [csharp](../by-language/csharp.md) | [Uno Platform](../detail/lang.csharp.framework.uno.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [WPF](../detail/lang.csharp.framework.wpf.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [Windows Forms](../detail/lang.csharp.framework.winforms.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [Xamarin](../detail/lang.csharp.framework.xamarin.md) | — | — | ⚠️ | — | |
-| [csharp](../by-language/csharp.md) | [grpc-dotnet](../detail/lang.csharp.framework.grpc-net.md) | ❌ | ⚠️ | ⚠️ | ❌ | |
+| [C#](../by-language/csharp.md) | [.NET MAUI](../detail/lang.csharp.framework.net-maui.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | ❌ | ✅ | ✅ | ⚠️ | |
+| [C#](../by-language/csharp.md) | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | ❌ | ✅ | ✅ | ❌ | |
+| [C#](../by-language/csharp.md) | [Blazor Server](../detail/lang.csharp.framework.blazor-server.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [Blazor Server / WebAssembly](../detail/lang.csharp.framework.blazor.md) | — | ❌ | — | — | |
+| [C#](../by-language/csharp.md) | [Blazor WebAssembly](../detail/lang.csharp.framework.blazor-wasm.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [Carter](../detail/lang.csharp.framework.carter.md) | ❌ | ❌ | ❌ | ❌ | |
+| [C#](../by-language/csharp.md) | [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | ❌ | ❌ | ❌ | ❌ | |
+| [C#](../by-language/csharp.md) | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | ❌ | ❌ | ❌ | ❌ | |
+| [C#](../by-language/csharp.md) | [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | ❌ | ❌ | ❌ | ❌ | |
+| [C#](../by-language/csharp.md) | [Uno Platform](../detail/lang.csharp.framework.uno.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [WPF](../detail/lang.csharp.framework.wpf.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [Windows Forms](../detail/lang.csharp.framework.winforms.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [Xamarin](../detail/lang.csharp.framework.xamarin.md) | — | — | ⚠️ | — | |
+| [C#](../by-language/csharp.md) | [grpc-dotnet](../detail/lang.csharp.framework.grpc-net.md) | ❌ | ⚠️ | ⚠️ | ❌ | |
 | [elixir](../by-language/elixir.md) | [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | ❌ | ⚠️ | ⚠️ | ❌ | |
 | [elixir](../by-language/elixir.md) | [Ash Framework](../detail/lang.elixir.framework.ash.md) | ❌ | ⚠️ | ⚠️ | ❌ | |
 | [elixir](../by-language/elixir.md) | [Bandit](../detail/lang.elixir.framework.bandit.md) | ❌ | ❌ | ❌ | ❌ | |

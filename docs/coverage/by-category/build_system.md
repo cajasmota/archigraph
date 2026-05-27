@@ -1,19 +1,19 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # build_system
 
-**Total**: 79 records · **csharp**: 6 · **elixir**: 4 · **go**: 7 · **groovy**: 1 · **java**: 8 · **JS/TS**: 20 · **multi**: 4 · **php**: 5 · **python**: 12 · **ruby**: 5 · **rust**: 5 · **scala**: 2
+**Total**: 79 records · **C#**: 6 · **elixir**: 4 · **go**: 7 · **groovy**: 1 · **java**: 8 · **JS/TS**: 20 · **multi**: 4 · **php**: 5 · **python**: 12 · **ruby**: 5 · **rust**: 5 · **scala**: 2
 
 Back to [summary](../summary.md). Bucket: **Tools**.
 
 
 | Language | Name | Dependency Graph | Lockfile Parsing | Manifest Parsing | Target Extraction | Notes |
 |---|---|---|---|---|---|---|
-| [csharp](../by-language/csharp.md) | [FluentAssertions](../detail/test.fluentassertions.md) | ❌ | — | — | ❌ | |
-| [csharp](../by-language/csharp.md) | [MSTest](../detail/test.mstest.md) | ⚠️ | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [NUnit](../detail/test.nunit.md) | ⚠️ | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [NuGet](../detail/build.nuget.md) | ⚠️ | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [dotnet CLI / MSBuild](../detail/build.dotnet.md) | ✅ | — | — | ✅ | |
-| [csharp](../by-language/csharp.md) | [xUnit](../detail/test.xunit.md) | ⚠️ | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [FluentAssertions](../detail/test.fluentassertions.md) | ❌ | — | — | ❌ | |
+| [C#](../by-language/csharp.md) | [MSTest](../detail/test.mstest.md) | ⚠️ | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [NUnit](../detail/test.nunit.md) | ⚠️ | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [NuGet](../detail/build.nuget.md) | ⚠️ | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [dotnet CLI / MSBuild](../detail/build.dotnet.md) | ✅ | — | — | ✅ | |
+| [C#](../by-language/csharp.md) | [xUnit](../detail/test.xunit.md) | ⚠️ | — | — | ⚠️ | |
 | [elixir](../by-language/elixir.md) | [ExUnit](../detail/test.exunit.md) | ✅ | — | — | ✅ | |
 | [elixir](../by-language/elixir.md) | [Hex](../detail/build.hex.md) | ⚠️ | — | — | ⚠️ | |
 | [elixir](../by-language/elixir.md) | [Mix (mix.exs)](../detail/build.mix.md) | ✅ | — | — | ✅ | |

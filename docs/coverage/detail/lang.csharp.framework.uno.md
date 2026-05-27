@@ -3,7 +3,7 @@
 
 Auto-generated. Back to [summary](../summary.md).
 
-- **Language:** [csharp](../by-language/csharp.md)
+- **Language:** [C#](../by-language/csharp.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Capability cells:** 4
 

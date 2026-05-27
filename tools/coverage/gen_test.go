@@ -183,6 +183,59 @@ func TestGenGoldenFixture(t *testing.T) {
 	}
 }
 
+// TestGenSummaryIncludesExtractorSupportedLanguages confirms that when a
+// synthetic internal/extractors/ tree contains languages with no records
+// in the loaded registry, those languages still appear in the summary
+// pivot (zero counts) and a footnote enumerates them. Also asserts that
+// placeholder by-language pages are emitted for each untracked language.
+func TestGenSummaryIncludesExtractorSupportedLanguages(t *testing.T) {
+	reg, err := loadRegistry(fixturePath(t))
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	root := t.TempDir()
+	// Synthetic extractor tree: zig (untracked) + python (tracked by fixture).
+	for _, d := range []string{"zig", "python", "complexity", "yaml"} {
+		if err := os.MkdirAll(filepath.Join(root, "internal", "extractors", d), 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", d, err)
+		}
+	}
+	if err := generate(reg, root); err != nil {
+		t.Fatalf("generate: %v", err)
+	}
+	summary, err := os.ReadFile(filepath.Join(root, "docs", "coverage", "summary.md"))
+	if err != nil {
+		t.Fatalf("read summary: %v", err)
+	}
+	if !bytes.Contains(summary, []byte("by-language/zig.md")) {
+		t.Errorf("expected summary to link zig.md, got:\n%s", summary)
+	}
+	if !bytes.Contains(summary, []byte("Extractor supported but no ecosystem records tracked yet")) {
+		t.Errorf("expected untracked footnote, got:\n%s", summary)
+	}
+	if !bytes.Contains(summary, []byte("Zig")) {
+		t.Errorf("expected Zig in footnote list, got:\n%s", summary)
+	}
+	// Placeholder page must exist and cite the extractor dir.
+	pl, err := os.ReadFile(filepath.Join(root, "docs", "coverage", "by-language", "zig.md"))
+	if err != nil {
+		t.Fatalf("read placeholder: %v", err)
+	}
+	if !bytes.Contains(pl, []byte("No ecosystem records tracked yet")) {
+		t.Errorf("placeholder missing notice")
+	}
+	if !bytes.Contains(pl, []byte("internal/extractors/zig/")) {
+		t.Errorf("placeholder missing extractor dir cite")
+	}
+	// Utility + non-language dirs must NOT produce placeholder pages.
+	if _, err := os.Stat(filepath.Join(root, "docs", "coverage", "by-language", "complexity.md")); !os.IsNotExist(err) {
+		t.Errorf("complexity.md should not exist: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "docs", "coverage", "by-language", "yaml.md")); !os.IsNotExist(err) {
+		t.Errorf("yaml.md should not exist: %v", err)
+	}
+}
+
 func TestGenSubcommandWiring(t *testing.T) {
 	reg, err := loadRegistry(fixturePath(t))
 	if err != nil {
