@@ -785,6 +785,26 @@ records:
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
           verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_ruby.go
+              functions: [sniffRubyEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
 
   lang.php.framework.laravel:
     capabilities:
@@ -813,6 +833,26 @@ records:
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_php.go
+              functions: [sniffPHPEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
           verified_at: "2026-05-28"
 
   lang.rust.framework.axum:
@@ -843,6 +883,26 @@ records:
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
           verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_rust.go
+              functions: [sniffRustEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
 
   lang.csharp.framework.aspnet-core:
     capabilities:
@@ -871,6 +931,26 @@ records:
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_csharp.go
+              functions: [sniffCSharpEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
           verified_at: "2026-05-28"
 
   lang.kotlin.framework.spring-boot:
@@ -901,6 +981,26 @@ records:
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
           verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_kotlin.go
+              functions: [sniffKotlinEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
 
   lang.elixir.framework.phoenix:
     capabilities:
@@ -929,6 +1029,26 @@ records:
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_elixir.go
+              functions: [sniffElixirEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
           verified_at: "2026-05-28"
 
   lang.scala.framework.play:
@@ -959,6 +1079,26 @@ records:
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
           verified_at: "2026-05-28"
+        reachability_analysis:
+          status: full
+          symbols:
+            - file: internal/substrate/entry_points_scala.go
+              functions: [sniffScalaEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
+        dead_code_detection:
+          status: full
+          symbols:
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
+          verified_at: "2026-05-28"
 
   lang.c-cpp.framework.crow:
     capabilities:
@@ -987,38 +1127,23 @@ records:
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
           issues_implemented: ["2762"]
-        db_effect:
-          status: partial
+        reachability_analysis:
+          status: full
           symbols:
-            - file: internal/substrate/effect_sinks_golang.go
-              functions: [sniffEffectsGo, appendGoMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2764"]
+            - file: internal/substrate/entry_points_c_cpp.go
+              functions: [sniffCCPPEntryPoints]
+            - file: internal/substrate/entry_points.go
+              functions: [RegisterEntryPoints, EntryPointSnifferFor]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+          issues_implemented: ["2767"]
           verified_at: "2026-05-28"
-        http_effect:
-          status: partial
+        dead_code_detection:
+          status: full
           symbols:
-            - file: internal/substrate/effect_sinks_golang.go
-              functions: [sniffEffectsGo]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass]
-          issues_implemented: ["2764"]
+            - file: internal/links/reachability.go
+              functions: [runReachabilityPass, isCodeBearing]
+            - file: internal/mcp/dead_code.go
+              functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
+          issues_implemented: ["2767"]
           verified_at: "2026-05-28"
-        fs_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_golang.go
-              functions: [sniffEffectsGo]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass]
-          issues_implemented: ["2764"]
-          verified_at: "2026-05-28"
-        mutation_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_golang.go
-              functions: [sniffEffectsGo]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass]
-          issues_implemented: ["2764"]
