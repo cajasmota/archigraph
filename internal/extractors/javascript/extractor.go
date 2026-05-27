@@ -256,6 +256,12 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		// emitReferences is wrapped in the same recover frame so a
 		// pathological AST shape can't take down the primary extraction.
 		x.emitReferences(root)
+
+		// Issue #2672: resolve variable references in params arguments.
+		// This pass finds const/let/var bindings for variables that were
+		// used as the params argument in navigation calls and extracts their
+		// object literal keys. Runs after walk() so paramsVarRefs is complete.
+		x.resolveParamsVarRefs(root)
 	}()
 
 	// Third pass (#713): platform-variant and test-file relationship emission.
@@ -406,6 +412,13 @@ type extractor struct {
 	// Properties["via"]="destructured_binding" (or the source-specific via).
 	// Nil when no relevant destructuring is found in the file (fast-path).
 	destructureBindings map[string]*destructureBinding
+
+	// paramsVarRefs — Issue #2672. Built during walk() when a variable
+	// reference is encountered as a params argument in a navigation call.
+	// After walk() completes, resolveParamsVarRefs performs a second pass
+	// to find the variable's binding and extract param keys from the
+	// referenced object literal. Nil when no variable references are found.
+	paramsVarRefs []*paramsVarRef
 }
 
 // dispatchMapInfo records the handlers registered in a Record<string, Fn>
@@ -1921,8 +1934,10 @@ func (x *extractor) extractCallRelationships(body *sitter.Node, callerName strin
 		// expression receiver check gates out plain array.push() calls;
 		// the normal CALLS edge is still emitted for the same call site so
 		// downstream flow BFS can traverse it.
-		if navRoute, navParams, navOK := extractNavigationCall(x, call); navOK {
-			navEdge := emitNavigationEdge(navRoute, navParams, call)
+		// Issue #2672: extractNavigationCall also tracks variable
+		// references for later resolution.
+		if navRoute, navParams, navVarRef, navOK := extractNavigationCall(x, call); navOK {
+			navEdge := emitNavigationEdge(navRoute, navParams, navVarRef, call)
 			navKey := "nav:" + navEdge.ToID
 			if !seen[navKey] {
 				seen[navKey] = true
