@@ -39,6 +39,20 @@ func homeDir() (string, error) {
 	return os.UserHomeDir()
 }
 
+// xdgConfigHome returns the XDG_CONFIG_HOME directory, defaulting to
+// ~/.config when the env var is not set. Tests can override via
+// t.Setenv("XDG_CONFIG_HOME", ...).
+func xdgConfigHome() (string, error) {
+	if x := os.Getenv("XDG_CONFIG_HOME"); x != "" {
+		return x, nil
+	}
+	home, err := homeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".config"), nil
+}
+
 // Entry is the per-tool MCP server entry.
 type Entry struct {
 	Command string   `json:"command"`
@@ -53,7 +67,85 @@ const (
 	ClaudeCode        Tool = "claude-code"
 	Windsurf          Tool = "windsurf"
 	WindsurfJetBrains Tool = "windsurf-jetbrains"
+	Cursor            Tool = "cursor"
+	Codex             Tool = "codex"
+	ContinueDev       Tool = "continue-dev"
+	Zed               Tool = "zed"
 )
+
+// ConfigShape describes the JSON layout of a host's config file for
+// purposes of mcpServers placement and key-preservation behaviour.
+type ConfigShape int
+
+const (
+	// ShapeFlat: mcpServers lives at the root of the JSON document.
+	// Example: { "mcpServers": { ... } }
+	ShapeFlat ConfigShape = iota
+
+	// ShapeNested: mcpServers is nested one level below an outer key.
+	// Example Continue.dev: { "models": [...], "mcpServers": { ... } }
+	// The shape is still a flat root for mcpServers in Continue.dev's
+	// case — all top-level keys are preserved, mcpServers is just one of
+	// many. Identical to ShapeFlat in practice; kept as a named constant
+	// for documentation purposes.
+	ShapeNested
+
+	// ShapeBroadSettings: the config file holds many unrelated settings;
+	// mcpServers is just one key among many (Zed, VS Code, etc.).
+	// Behaviour is identical to ShapeFlat — all keys outside mcpServers
+	// are left untouched. Named constant kept for documentation clarity.
+	ShapeBroadSettings
+)
+
+// HostTarget describes a single candidate config-file path for a host.
+type HostTarget struct {
+	// Path is the absolute path to the config file.
+	Path string
+	// Shape describes the JSON layout (flat, nested, broad-settings).
+	Shape ConfigShape
+}
+
+// DetectHostPaths returns HostTarget entries for a given host, identified
+// by a parent directory (relative to home or xdgConfigHome) and a config
+// file name. Only paths whose parent directory already exists are included —
+// if the host is not installed the slice is empty and the caller should skip
+// silently.
+//
+// parentDirParts are joined (via filepath.Join) to produce the parent dir
+// path. The first element may be the special string "$XDG_CONFIG_HOME" to
+// indicate that the base is xdgConfigHome() rather than homeDir().
+func DetectHostPaths(parentDirParts []string, configFile string, shape ConfigShape) []HostTarget {
+	var base string
+	parts := parentDirParts
+
+	if len(parts) > 0 && parts[0] == "$XDG_CONFIG_HOME" {
+		xdg, err := xdgConfigHome()
+		if err != nil {
+			return nil
+		}
+		base = xdg
+		parts = parts[1:]
+	} else {
+		h, err := homeDir()
+		if err != nil {
+			return nil
+		}
+		base = h
+	}
+
+	components := append([]string{base}, parts...)
+	parentDir := filepath.Join(components...)
+	configPath := filepath.Join(parentDir, configFile)
+
+	// Include if config file itself exists OR parent dir exists.
+	if _, err := os.Stat(configPath); err == nil {
+		return []HostTarget{{Path: configPath, Shape: shape}}
+	}
+	if _, err := os.Stat(parentDir); err == nil {
+		return []HostTarget{{Path: configPath, Shape: shape}}
+	}
+	return nil
+}
 
 // SettingsPath returns the absolute path to the settings file for a tool.
 // For ClaudeCode this is ~/.claude.json (the modern Claude Code format).
@@ -73,6 +165,22 @@ func SettingsPath(tool Tool) (string, error) {
 	case WindsurfJetBrains:
 		// Windsurf JetBrains plugin: ~/.codeium/mcp_config.json
 		return filepath.Join(home, ".codeium", "mcp_config.json"), nil
+	case Cursor:
+		// Cursor: ~/.cursor/mcp.json
+		return filepath.Join(home, ".cursor", "mcp.json"), nil
+	case Codex:
+		// Codex CLI: ~/.codex/config.json
+		return filepath.Join(home, ".codex", "config.json"), nil
+	case ContinueDev:
+		// Continue.dev: ~/.continue/config.json
+		return filepath.Join(home, ".continue", "config.json"), nil
+	case Zed:
+		// Zed: ~/.config/zed/settings.json
+		xdg, err := xdgConfigHome()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(xdg, "zed", "settings.json"), nil
 	}
 	return "", fmt.Errorf("unknown tool: %s", tool)
 }
@@ -109,6 +217,32 @@ func DetectWindsurfPaths() []string {
 		}
 	}
 	return out
+}
+
+// DetectCursorPaths returns Cursor config paths to register.
+// Uses ~/.cursor/mcp.json — ShapeFlat.
+func DetectCursorPaths() []HostTarget {
+	return DetectHostPaths([]string{".cursor"}, "mcp.json", ShapeFlat)
+}
+
+// DetectCodexPaths returns Codex CLI config paths to register.
+// Uses ~/.codex/config.json — ShapeFlat (mcpServers key at root).
+func DetectCodexPaths() []HostTarget {
+	return DetectHostPaths([]string{".codex"}, "config.json", ShapeFlat)
+}
+
+// DetectContinueDevPaths returns Continue.dev config paths to register.
+// Uses ~/.continue/config.json — ShapeNested (mcpServers sits alongside
+// other top-level keys such as "models"; all are preserved).
+func DetectContinueDevPaths() []HostTarget {
+	return DetectHostPaths([]string{".continue"}, "config.json", ShapeNested)
+}
+
+// DetectZedPaths returns Zed config paths to register.
+// Uses $XDG_CONFIG_HOME/zed/settings.json (defaults to ~/.config/zed/settings.json).
+// ShapeBroadSettings: mcpServers is upserted; all other Zed settings preserved.
+func DetectZedPaths() []HostTarget {
+	return DetectHostPaths([]string{"$XDG_CONFIG_HOME", "zed"}, "settings.json", ShapeBroadSettings)
 }
 
 // DetectClaudeConfigDirs returns the list of ~/.claude.json paths to

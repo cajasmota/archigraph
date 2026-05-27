@@ -408,3 +408,278 @@ func TestWindsurfRegistrationUpdatesPath(t *testing.T) {
 		t.Fatalf("Windsurf desktop: command not updated on re-register: %q", got.Command)
 	}
 }
+
+// ── Cursor tests ──────────────────────────────────────────────────────────────
+
+// TestInstall_RegistersCursor: ~/.cursor/ present → DetectCursorPaths returns
+// the mcp.json path and RegisterPath writes the archigraph entry.
+func TestInstall_RegistersCursor(t *testing.T) {
+	home := withHome(t)
+
+	cursorDir := filepath.Join(home, ".cursor")
+	if err := os.MkdirAll(cursorDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	targets := DetectCursorPaths()
+	wantPath := filepath.Join(cursorDir, "mcp.json")
+
+	if len(targets) != 1 || targets[0].Path != wantPath {
+		t.Fatalf("DetectCursorPaths: got %v, want [{%s ShapeFlat}]", targets, wantPath)
+	}
+	if targets[0].Shape != ShapeFlat {
+		t.Fatalf("Cursor shape: got %v, want ShapeFlat", targets[0].Shape)
+	}
+
+	if _, err := RegisterPath(wantPath, "/usr/local/bin/archigraph"); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(wantPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		McpServers map[string]Entry `json:"mcpServers"`
+	}
+	if err := json.Unmarshal(b, &doc); err != nil {
+		t.Fatal(err)
+	}
+	got := doc.McpServers[ServerName]
+	if got.Command != "/usr/local/bin/archigraph" {
+		t.Fatalf("cursor: command = %q, want /usr/local/bin/archigraph", got.Command)
+	}
+	if len(got.Args) != 1 || got.Args[0] != "mcp-bridge" {
+		t.Fatalf("cursor: args = %v, want [mcp-bridge]", got.Args)
+	}
+	if got.Type != "stdio" {
+		t.Fatalf("cursor: type = %q, want stdio", got.Type)
+	}
+}
+
+// TestInstall_SkipsAbsentCursor: no ~/.cursor dir → DetectCursorPaths is empty.
+func TestInstall_SkipsAbsentCursor(t *testing.T) {
+	withHome(t)
+	targets := DetectCursorPaths()
+	if len(targets) != 0 {
+		t.Fatalf("expected no Cursor paths when .cursor absent, got %v", targets)
+	}
+}
+
+// ── Codex tests ───────────────────────────────────────────────────────────────
+
+// TestInstall_RegistersCodex: ~/.codex/ present → DetectCodexPaths returns
+// config.json path and RegisterPath writes the archigraph entry.
+func TestInstall_RegistersCodex(t *testing.T) {
+	home := withHome(t)
+
+	codexDir := filepath.Join(home, ".codex")
+	if err := os.MkdirAll(codexDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	targets := DetectCodexPaths()
+	wantPath := filepath.Join(codexDir, "config.json")
+
+	if len(targets) != 1 || targets[0].Path != wantPath {
+		t.Fatalf("DetectCodexPaths: got %v, want [{%s ShapeFlat}]", targets, wantPath)
+	}
+	if targets[0].Shape != ShapeFlat {
+		t.Fatalf("Codex shape: got %v, want ShapeFlat", targets[0].Shape)
+	}
+
+	if _, err := RegisterPath(wantPath, "/usr/local/bin/archigraph"); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(wantPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		McpServers map[string]Entry `json:"mcpServers"`
+	}
+	if err := json.Unmarshal(b, &doc); err != nil {
+		t.Fatal(err)
+	}
+	got := doc.McpServers[ServerName]
+	if got.Command != "/usr/local/bin/archigraph" {
+		t.Fatalf("codex: command = %q, want /usr/local/bin/archigraph", got.Command)
+	}
+}
+
+// TestInstall_SkipsAbsentCodex: no ~/.codex dir → DetectCodexPaths is empty.
+func TestInstall_SkipsAbsentCodex(t *testing.T) {
+	withHome(t)
+	targets := DetectCodexPaths()
+	if len(targets) != 0 {
+		t.Fatalf("expected no Codex paths when .codex absent, got %v", targets)
+	}
+}
+
+// ── Continue.dev tests ────────────────────────────────────────────────────────
+
+// TestInstall_RegistersContinueDev: ~/.continue/ present →
+// DetectContinueDevPaths returns config.json and RegisterPath writes
+// mcpServers while preserving surrounding keys (ShapeNested).
+func TestInstall_RegistersContinueDev(t *testing.T) {
+	home := withHome(t)
+
+	continueDir := filepath.Join(home, ".continue")
+	if err := os.MkdirAll(continueDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cfgPath := filepath.Join(continueDir, "config.json")
+
+	// Pre-populate with existing Continue.dev content (models key must survive).
+	pre := `{"models":[{"title":"GPT-4","provider":"openai"}],"mcpServers":{"other-tool":{"command":"/bin/other"}}}`
+	if err := os.WriteFile(cfgPath, []byte(pre), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	targets := DetectContinueDevPaths()
+	if len(targets) != 1 || targets[0].Path != cfgPath {
+		t.Fatalf("DetectContinueDevPaths: got %v, want [{%s ShapeNested}]", targets, cfgPath)
+	}
+	if targets[0].Shape != ShapeNested {
+		t.Fatalf("Continue.dev shape: got %v, want ShapeNested", targets[0].Shape)
+	}
+
+	if _, err := RegisterPath(cfgPath, "/usr/local/bin/archigraph"); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(b, &doc); err != nil {
+		t.Fatal(err)
+	}
+
+	// models key must be preserved.
+	if _, ok := doc["models"]; !ok {
+		t.Fatalf("Continue.dev: 'models' key was clobbered: %s", b)
+	}
+
+	servers, _ := doc["mcpServers"].(map[string]any)
+	// Pre-existing sibling mcpServer entry must survive.
+	if _, ok := servers["other-tool"]; !ok {
+		t.Fatalf("Continue.dev: pre-existing mcpServer 'other-tool' was clobbered: %s", b)
+	}
+	// archigraph entry must be present.
+	arch, _ := servers[ServerName].(map[string]any)
+	if arch == nil {
+		t.Fatalf("Continue.dev: archigraph entry missing: %s", b)
+	}
+	if arch["command"] != "/usr/local/bin/archigraph" {
+		t.Fatalf("Continue.dev: command = %v, want /usr/local/bin/archigraph", arch["command"])
+	}
+}
+
+// TestInstall_SkipsAbsentContinueDev: no ~/.continue dir → empty.
+func TestInstall_SkipsAbsentContinueDev(t *testing.T) {
+	withHome(t)
+	targets := DetectContinueDevPaths()
+	if len(targets) != 0 {
+		t.Fatalf("expected no Continue.dev paths when .continue absent, got %v", targets)
+	}
+}
+
+// ── Zed tests ─────────────────────────────────────────────────────────────────
+
+// TestInstall_RegistersZed: ~/.config/zed/ present → DetectZedPaths returns
+// settings.json and RegisterPath performs a surgical upsert preserving other
+// Zed settings (ShapeBroadSettings).
+func TestInstall_RegistersZed(t *testing.T) {
+	home := withHome(t)
+
+	zedDir := filepath.Join(home, ".config", "zed")
+	if err := os.MkdirAll(zedDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cfgPath := filepath.Join(zedDir, "settings.json")
+
+	// Pre-populate with existing Zed settings that must survive.
+	pre := `{"theme":"one-dark","vim_mode":true,"font_size":14,"mcpServers":{"existing-tool":{"command":"/bin/existing"}}}`
+	if err := os.WriteFile(cfgPath, []byte(pre), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	targets := DetectZedPaths()
+	if len(targets) != 1 || targets[0].Path != cfgPath {
+		t.Fatalf("DetectZedPaths: got %v, want [{%s ShapeBroadSettings}]", targets, cfgPath)
+	}
+	if targets[0].Shape != ShapeBroadSettings {
+		t.Fatalf("Zed shape: got %v, want ShapeBroadSettings", targets[0].Shape)
+	}
+
+	if _, err := RegisterPath(cfgPath, "/usr/local/bin/archigraph"); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(b, &doc); err != nil {
+		t.Fatal(err)
+	}
+
+	// Other Zed settings must be preserved.
+	if doc["theme"] != "one-dark" {
+		t.Fatalf("Zed: 'theme' key was clobbered: %s", b)
+	}
+	if doc["vim_mode"] != true {
+		t.Fatalf("Zed: 'vim_mode' key was clobbered: %s", b)
+	}
+	if doc["font_size"] != float64(14) {
+		t.Fatalf("Zed: 'font_size' key was clobbered: %s", b)
+	}
+
+	servers, _ := doc["mcpServers"].(map[string]any)
+	// Pre-existing sibling mcpServer entry must survive.
+	if _, ok := servers["existing-tool"]; !ok {
+		t.Fatalf("Zed: pre-existing mcpServer 'existing-tool' was clobbered: %s", b)
+	}
+	// archigraph entry must be present.
+	arch, _ := servers[ServerName].(map[string]any)
+	if arch == nil {
+		t.Fatalf("Zed: archigraph entry missing: %s", b)
+	}
+	if arch["command"] != "/usr/local/bin/archigraph" {
+		t.Fatalf("Zed: command = %v, want /usr/local/bin/archigraph", arch["command"])
+	}
+}
+
+// TestInstall_SkipsAbsentZed: no ~/.config/zed dir → empty.
+func TestInstall_SkipsAbsentZed(t *testing.T) {
+	withHome(t)
+	targets := DetectZedPaths()
+	if len(targets) != 0 {
+		t.Fatalf("expected no Zed paths when .config/zed absent, got %v", targets)
+	}
+}
+
+// TestInstall_SkipsAbsentHost is a table-driven test checking that each new
+// host's Detect function returns empty when its parent directory is absent.
+func TestInstall_SkipsAbsentHost(t *testing.T) {
+	type detectFn struct {
+		name string
+		fn   func() []HostTarget
+	}
+	hosts := []detectFn{
+		{"Cursor", DetectCursorPaths},
+		{"Codex", DetectCodexPaths},
+		{"ContinueDev", DetectContinueDevPaths},
+		{"Zed", DetectZedPaths},
+	}
+	for _, h := range hosts {
+		t.Run(h.name, func(t *testing.T) {
+			withHome(t)
+			// No directories created — host not installed.
+			targets := h.fn()
+			if len(targets) != 0 {
+				t.Fatalf("%s: expected empty when host absent, got %v", h.name, targets)
+			}
+		})
+	}
+}
