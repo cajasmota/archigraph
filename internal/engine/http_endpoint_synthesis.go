@@ -379,6 +379,18 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// schema-first rather than REST, so resolver fields are emitted as
 		// graphql_field endpoint-ish entities keyed by operation + field.
 		synthesizeGraphQLResolvers(string(content), emit)
+		// Producer side: tRPC procedure resolvers (#2693). Each leaf
+		// procedure inside a `router({ ... })` literal becomes an
+		// addressable endpoint identified by its dotted path
+		// (`users.list`, `users.create`). Verb mapping: .query → GET,
+		// .mutation → POST, .subscription → SUBSCRIBE. The synthesizer
+		// uses emitDef so source_line points at the .query / .mutation /
+		// .subscription call site (the arrow function's def line);
+		// because the leaf is an inline arrow expression with no
+		// addressable handler symbol, no source_handler is stamped — the
+		// shared resolver short-circuits the rebind and preserves the
+		// precise attribution this synthesizer produces.
+		synthesizeTRPC(string(content), emitDef)
 		// Consumer side (#721): fetch / axios / generic *Client
 		// HTTP client calls. Now emits FETCHES edges at extraction time.
 		synthesizeFetchAxiosWithRuntime(string(content), emitClientRuntime)
