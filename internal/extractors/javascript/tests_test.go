@@ -76,8 +76,18 @@ function runUserTest() {
 		t.Fatalf("expected TESTS edges from runUserTest; got none. all ops=%v",
 			collectKindEdges(ents, "", "TESTS"))
 	}
-	if !containsAll(got, []string{"getUser"}) {
-		t.Errorf("TESTS edges missing getUser; got %v", got)
+	// Issue #2646: CALLS edges to relative imports now carry a structural ref
+	// (scope:operation:ref:<lang>:<file>:<name>) so the corresponding TESTS
+	// edges mirror that form. Accept both the bare name and the structural ref.
+	found := false
+	for _, g := range got {
+		if g == "getUser" || strings.HasSuffix(g, ":getUser") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("TESTS edges missing getUser (bare or structural ref); got %v", got)
 	}
 }
 
