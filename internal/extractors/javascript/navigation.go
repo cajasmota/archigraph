@@ -14,10 +14,14 @@
 //   - navigation.push('Screen')                → NAVIGATES_TO, route='Screen'
 //   - Linking.openURL('https://...')           → NAVIGATES_TO (external)
 //
-// Phase 2 (followup): dedicated archigraph_navigates MCP query tool.
+// Phase 2 additions (#2658):
+//   - Template-literal routes: router.push(`/users/${id}`) → route='/users/{*}'
+//   - Hook-rename binding: const nav = useNavigation(); nav.navigate('X')
+//     detected via hookVarToNavModule table scanned alongside hookVarToModule.
 package javascript
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -25,6 +29,41 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/types"
 )
+
+// templateExprRe matches JavaScript template-literal expression slots
+// (${...}) and is used to normalise dynamic route strings to a stable
+// pattern compatible with server-side route definitions (e.g. /users/{*}).
+// Phase 2 of #2658 — mirrors the {*} sentinel used by normalizePathForIndex
+// in internal/links/http_pass.go.
+var templateExprRe = regexp.MustCompile(`\$\{[^}]*\}`)
+
+// normalizeTemplateLiteralRoute converts a raw template-literal string
+// (including surrounding backticks and any ${…} interpolations) into a
+// stable route pattern by:
+//  1. Stripping the surrounding backtick delimiters.
+//  2. Replacing every ${…} slot with the {*} sentinel so the result can
+//     be matched against server-side route definitions like /users/{id}.
+//
+// Example:  "`/users/${id}/profile`"  →  "/users/{*}/profile"
+func normalizeTemplateLiteralRoute(raw string) string {
+	// Strip surrounding backticks added by nodeText for template_string nodes.
+	s := strings.Trim(raw, "`")
+	// Replace every ${…} interpolation with the {*} placeholder.
+	s = templateExprRe.ReplaceAllString(s, "{*}")
+	return s
+}
+
+// navigationHookNames is the set of hook function names whose return value
+// should be treated as a navigation object. When a variable is bound to one
+// of these hooks (e.g. `const nav = useNavigation()`), any .navigate/.push
+// call on that variable is recognised as a navigation call.
+//
+// Phase 2 of #2658 — hook-rename binding detection.
+var navigationHookNames = map[string]bool{
+	"useNavigation": true,
+	"useRouter":     true,
+	"useNavigate":   true,
+}
 
 // navigationMethodNames is the set of method names recognised as navigation
 // calls. "push" appears both here (router.push / navigation.push) and in
@@ -88,8 +127,10 @@ func extractNavigationCall(x *extractor, call *sitter.Node) (route string, param
 	receiver := x.nodeText(objNode)
 	method := x.nodeText(propNode)
 
-	// Receiver must be in the allowlist.
-	if !navigationReceiverNames[receiver] {
+	// Receiver must be in the static allowlist OR bound to a navigation hook
+	// via the hookVarToNavModule table built in buildNavigationHookVarTable.
+	// Phase 2 of #2658 — hook-rename binding detection.
+	if !navigationReceiverNames[receiver] && !x.isNavigationHookVar(receiver) {
 		return "", nil, false
 	}
 	// Method must be a navigation verb.
@@ -124,8 +165,9 @@ func extractNavigationCall(x *extractor, call *sitter.Node) (route string, param
 		return route, nil, true
 
 	case "template_string":
-		// Template literal — capture raw text as route (dynamic).
-		route = x.nodeText(firstArg)
+		// Template literal — normalise ${…} slots to {*} so the route
+		// can be matched against server-side definitions (Phase 2, #2658).
+		route = normalizeTemplateLiteralRoute(x.nodeText(firstArg))
 		return route, nil, true
 
 	case "object", "object_expression":
@@ -259,4 +301,67 @@ func emitNavigationEdge(route string, params []string, call *sitter.Node) types.
 		Kind:       "NAVIGATES_TO",
 		Properties: props,
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 (#2658) — Hook-rename binding helpers
+// ---------------------------------------------------------------------------
+
+// isNavigationHookVar reports whether varName is known to hold the result of a
+// useNavigation() / useRouter() / useNavigate() hook call. The table is
+// pre-built in Extract() via buildNavigationHookVarTable and stored on x.navHookVars.
+func (x *extractor) isNavigationHookVar(varName string) bool {
+	return x.navHookVars[varName]
+}
+
+// buildNavigationHookVarTable scans the AST for variable declarations of the
+// form `const <varName> = <hookName>(...)` where <hookName> is in
+// navigationHookNames. Returns a map from varName → true for every variable
+// that should be treated as a navigation receiver.
+//
+// This is called once per file from Extract() (alongside buildHookVarToModule)
+// and stored on x.navHookVars so extractNavigationCall can consult it via
+// isNavigationHookVar without needing to re-traverse the AST. Phase 2 of #2658.
+func buildNavigationHookVarTable(x *extractor, root *sitter.Node) map[string]bool {
+	if root == nil {
+		return nil
+	}
+	out := make(map[string]bool)
+
+	// Walk the AST looking for:
+	//   const <varName> = <hookName>(...)
+	// where <hookName> ∈ navigationHookNames.
+	stack := make([]*sitter.Node, 0, 64)
+	stack = append(stack, root)
+	for len(stack) > 0 {
+		n := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if n == nil {
+			continue
+		}
+		if n.Type() == "variable_declarator" {
+			nameNode := n.ChildByFieldName("name")
+			valNode := n.ChildByFieldName("value")
+			if nameNode != nil && valNode != nil && valNode.Type() == "call_expression" {
+				localName := x.nodeText(nameNode)
+				if localName != "" && !strings.ContainsAny(localName, "{}[].,") {
+					fnNode := valNode.ChildByFieldName("function")
+					if fnNode != nil {
+						hookName := x.nodeText(fnNode)
+						if navigationHookNames[hookName] {
+							out[localName] = true
+						}
+					}
+				}
+			}
+		}
+		count := int(n.ChildCount())
+		for i := count - 1; i >= 0; i-- {
+			stack = append(stack, n.Child(i))
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }

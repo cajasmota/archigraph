@@ -1,6 +1,6 @@
 # MCP tools
 
-archigraph exposes **43 MCP tools** (plus one cwd-gate sentinel), all prefixed `archigraph_`. The canonical source of truth for inputs, outputs, and response shapes is:
+archigraph exposes **44 MCP tools** (plus one cwd-gate sentinel), all prefixed `archigraph_`. (#2658 added archigraph_navigates) The canonical source of truth for inputs, outputs, and response shapes is:
 
 **[`internal/mcp/SCHEMA.md`](../internal/mcp/SCHEMA.md)**
 
@@ -151,6 +151,23 @@ Output: nodes+edges JSON (`raw`) or human-readable Markdown summary (`markdown`)
 | `archigraph_topology` | Message-channel topology: orphan publishers/subscribers, topic detail. |
 | `archigraph_flows` | Flow-process diagnostics: `dead_ends`, `truncated`, `detail`. |
 | `archigraph_graph_patterns` | Indexer-extracted structural patterns (not agent store): `list\|get`. |
+| `archigraph_navigates` | NAVIGATES_TO edge query: filter by route/param, direction, multi-hop flow. |
+
+#### `archigraph_navigates`
+
+Query NAVIGATES_TO edges emitted by the JS/TS navigation extractor (router.push, navigation.navigate, etc.). Phase 2 of #2655 (#2658).
+
+Key parameters:
+- `entity_id` — source (outgoing) or destination (incoming) entity, as `repo::id`.
+- `route` — substring filter on the route property (case-insensitive contains).
+- `with_param` — return only edges whose `params` list includes this key name.
+- `direction` — `outgoing` (default, what X navigates to) or `incoming` (what navigates to X).
+- `mode` — `list` (default, flat edge list) or `flow` (multi-hop BFS following NAVIGATES_TO chains).
+- `max_depth` — BFS depth limit for `mode=flow` (default 5).
+- `limit` — max edges returned (default 100).
+- `repo_filter[]` — restrict to named repos.
+
+Output: `{ count, total, truncated, mode, direction, edges[] }` where each edge carries `from_id`, `from_name`, `from_repo`, `to_id`, `route`, `params`, `line`, `source_file`, and (in flow mode) `hop`.
 
 #### `archigraph_cross_links`
 

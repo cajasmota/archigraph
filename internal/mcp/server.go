@@ -356,12 +356,13 @@ func (s *Server) fullToolList() ([]MCPToolEntry, error) {
 
 // registerTools registers every tool handler on the MCP server.
 // Source of truth: AddTool calls below — keep internal/mcp/SCHEMA.md in sync.
-// Tool count: 43 (#1281: 9→4 bundles; #1293: desc trim; #1312: +quality_cycles; #1314: +auth_coverage;
+// Tool count: 45 (#1281: 9→4 bundles; #1293: desc trim; #1312: +quality_cycles; #1314: +auth_coverage;
 //
 //	#1322: +secrets; #1323: +test_coverage; #1333: desc ≤80 chars;
 //	refactor/mcp-real-3k: ≤3k handshake; #2424: +cross_links; #2426: +save_finding,+list_findings;
 //	#2427: +license_audit re-wired — no HTTP route found in internal/dashboard/;
-//	#2474: +archigraph_persona_event persona lifecycle telemetry).
+//	#2474: +archigraph_persona_event persona lifecycle telemetry;
+//	#2658: +archigraph_navigates NAVIGATES_TO query tool).
 //
 // Dropped (HTTP-only): archigraph_diagnostics, archigraph_quality_orphans,
 //
@@ -848,6 +849,23 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("group", mcpapi.Required()),
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_docgen_list", s.handleDocgenList))
+
+	// archigraph_navigates — NAVIGATES_TO edge query tool (#2658).
+	// Phase 2 of #2655: filter NAVIGATES_TO edges by route, param, direction.
+	// mode=flow enables multi-hop BFS following navigation chains.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_navigates",
+		mcpapi.WithDescription("NAVIGATES_TO edge query: route/param filter; direction=out|in; mode=list|flow."),
+		mcpapi.WithAny("entity_id"),
+		mcpapi.WithAny("route"),
+		mcpapi.WithAny("with_param"),
+		mcpapi.WithString("direction", mcpapi.DefaultString("outgoing")),
+		mcpapi.WithString("mode", mcpapi.DefaultString("list")),
+		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),
+		mcpapi.WithNumber("max_depth", mcpapi.DefaultNumber(5)), // flow mode only
+		mcpapi.WithArray("repo_filter"),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+	), s.wrap("archigraph_navigates", s.handleNavigates))
 
 	// archigraph_persona_event — persona lifecycle telemetry (#2474).
 	// Personas call this at session start (event_type=invoke) and on each

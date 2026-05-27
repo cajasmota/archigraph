@@ -208,6 +208,11 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 	// so that callTarget can rewrite CALLS-to-hook-result edges.
 	x.hookVarToModule = x.buildHookVarToModule(root)
 
+	// Phase 2 of #2658 — build the navigation hook-var table before walk()
+	// so that extractNavigationCall can detect hook-rename bindings like
+	// `const nav = useNavigation(); nav.navigate('X')`.
+	x.navHookVars = buildNavigationHookVarTable(x, root)
+
 	// Issue #2553 — build the dispatch-map registry before walk() so that
 	// callTarget can synthesise CALLS edges when it sees RESOLVERS[k](args).
 	x.dispatchMaps = x.buildDispatchMaps(root)
@@ -355,6 +360,14 @@ type extractor struct {
 	// "ext:<module>" rather than the bare local-variable name, which
 	// would otherwise be unresolvable and land in bug-extractor.
 	hookVarToModule map[string]string
+
+	// navHookVars — Phase 2 of #2658 (hook-rename binding). Lazily
+	// populated by isNavigationHookVar on first call. Maps local variable
+	// names that hold the result of useNavigation() / useRouter() /
+	// useNavigate() to true, so that <var>.navigate(...) / <var>.push(...)
+	// calls are recognised as navigation edges even when the receiver name
+	// is not in the static navigationReceiverNames allowlist.
+	navHookVars map[string]bool
 
 	// dispatchMaps — Issue #2553. Built once per file in buildDispatchMaps
 	// (called from Extract before walk). Maps variable names that hold a

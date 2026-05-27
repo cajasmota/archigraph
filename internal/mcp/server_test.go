@@ -520,7 +520,7 @@ func TestToolNameSurface(t *testing.T) {
 	for _, st := range srv.MCP.ListTools() {
 		registered[st.Tool.Name] = true
 	}
-	// 43 tools as of #2474 (+archigraph_persona_event). 42 baseline from PR #2442 re-wires.
+	// 45 tools as of #2658 (+archigraph_navigates). 44 from #2474 (+archigraph_persona_event). 42 baseline from PR #2442 re-wires.
 	// 1 remaining intentional drop: archigraph_recent_activity (≤3k budget).
 	// 3 tools re-wired in #2442: archigraph_save_finding, archigraph_list_findings, archigraph_cross_links.
 	// 4 dashboard-only tools dropped: archigraph_diagnostics, archigraph_quality_orphans,
@@ -577,6 +577,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_persona_event",
 		// #2192 MCP session metrics
 		"archigraph_mcp_metrics",
+		// #2658 NAVIGATES_TO query tool (Phase 2 of #2655)
+		"archigraph_navigates",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -658,8 +660,9 @@ func TestToolNameSurface(t *testing.T) {
 	// sentinel registered as a real callable tool (#1769). find_callers /
 	// find_callees stay registered as deprecated aliases for one release.
 	// +1 archigraph_persona_event (#2474 persona lifecycle telemetry).
-	if got := len(allRegisteredTools); got != 44 {
-		t.Errorf("expected 44 registered tools, got %d — update this count if tools are added/removed (added archigraph_mcp_metrics #2192)", got)
+	// +1 archigraph_navigates (#2658 NAVIGATES_TO Phase 2 query tool).
+	if got := len(allRegisteredTools); got != 45 {
+		t.Errorf("expected 45 registered tools, got %d — update this count if tools are added/removed (added archigraph_navigates #2658)", got)
 	}
 }
 
@@ -3154,6 +3157,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_persona_event": {"persona": "architect", "event_type": "invoke"},
 		// #2192 MCP session metrics
 		"archigraph_mcp_metrics": {"days": float64(1)},
+		// #2658 NAVIGATES_TO Phase 2 query tool
+		"archigraph_navigates": {"group": "g"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3198,8 +3203,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 44 {
-		t.Errorf("expected 44 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_mcp_metrics #2192)", len(tools))
+	if len(tools) != 45 {
+		t.Errorf("expected 45 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_navigates #2658)", len(tools))
 	}
 
 	for _, st := range tools {
@@ -3237,11 +3242,11 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 // back-to-back whoami calls on an empty registry should have p50 < 50ms.
 //
 // Notes on test setup:
-//  - Empty registry: no graph stats() or git subprocess in reloadLocked().
-//  - Config.CWD set to a temp dir (non-git): prevents ResolveCWD step 2 from
-//    calling gitmeta.Capture; git exits immediately for non-repo paths but even
-//    that subprocess overhead is eliminated by pointing CWD at an isolated dir.
-//  - ARCHIGRAPH_WHOAMI_NUDGE=quiet: suppresses the doc-state block (no disk I/O).
+//   - Empty registry: no graph stats() or git subprocess in reloadLocked().
+//   - Config.CWD set to a temp dir (non-git): prevents ResolveCWD step 2 from
+//     calling gitmeta.Capture; git exits immediately for non-repo paths but even
+//     that subprocess overhead is eliminated by pointing CWD at an isolated dir.
+//   - ARCHIGRAPH_WHOAMI_NUDGE=quiet: suppresses the doc-state block (no disk I/O).
 //
 // archigraph_mcp_metrics is also validated as a "zero-handler-work" baseline.
 func TestMCP_WhoamiP50Under50ms(t *testing.T) {
