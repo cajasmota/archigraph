@@ -385,6 +385,17 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	case "go":
 		// Producer side: Gin / Echo / Chi route registrations. #722.
 		synthesizeGoRouters(string(content), emit)
+		// Producer side: gorilla/mux (#2684), net/http stdlib including
+		// Go 1.22 method-prefix patterns (#2685), and huma OpenAPI
+		// (#2686). Each synthesizer is independently import-guarded so
+		// it no-ops on files that don't use that framework. They use
+		// emitDef so the registration call's line number is stamped on
+		// each synthetic; the shared resolver then stashes that line as
+		// `registration_start_line` before rebinding StartLine to the
+		// handler def.
+		synthesizeGorillaMux(string(content), emitDef)
+		synthesizeNetHTTPStdlib(string(content), emitDef)
+		synthesizeHuma(string(content), emitDef)
 		// Consumer side (#721 wave 2a): net/http, resty, fasthttp.
 		synthesizeGoClientWithRuntime(string(content), emitClientRuntime)
 	case "kotlin":
