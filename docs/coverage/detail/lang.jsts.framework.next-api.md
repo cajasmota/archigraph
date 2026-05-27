@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Meta Framework
-- **Capability cells:** 13
+- **Capability cells:** 16
 
 ## Capabilities
 
@@ -63,6 +63,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
 | `tests_linkage` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/javascript/tests.go` | — |
+
+### Substrate
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `constant_propagation` | ✅ `full` | `2026-05-28` | — | — | `internal/substrate/jsts.go`<br>`internal/substrate/substrate.go`<br>`internal/links/constant_propagation.go` | — |
+| `env_fallback_recognition` | ✅ `full` | `2026-05-28` | — | — | `internal/substrate/jsts.go`<br>`internal/substrate/substrate.go`<br>`internal/links/constant_propagation.go` | — |
+| `import_resolution_quality` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/substrate/jsts.go`<br>`internal/substrate/substrate.go`<br>`internal/links/constant_propagation.go` | — |
 
 ## Framework-specific
 

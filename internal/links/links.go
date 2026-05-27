@@ -292,6 +292,28 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	}
 	res.Results = append(res.Results, p1)
 
+	// #2761 — Phase 0 substrate constant propagation. Runs after the
+	// import pass so the in-memory IMPORTS-edge index reflects everything
+	// the structural linker has seen. The returned Resolver is used to
+	// canonicalise consumer-side dynamic_baseurl HTTP endpoint paths
+	// before the HTTP pass below sees them, lifting those orphans into
+	// the resolvable bucket.
+	pCP, resolver, err := runConstantPropagationPass(graphs, paths, rejects)
+	if err != nil {
+		return nil, fmt.Errorf("constant propagation pass: %w", err)
+	}
+	// applyResolverToConsumerHTTP mutates the in-memory entityNode
+	// Properties (path / url_kind / substrate_*) for consumer-side
+	// http_endpoint_call entities whose url_kind was "dynamic_baseurl"
+	// before substitution. Mutated entities feed directly into the
+	// downstream HTTP pass below because Go slice-of-struct headers
+	// share the underlying array. Folded the mutated count into the
+	// pass's Candidates counter so it surfaces in PassResult telemetry
+	// without conflating with the cross-file RESOLVES_TO LinksAdded
+	// count emitted by runConstantPropagationPass.
+	pCP.Candidates = applyResolverToConsumerHTTP(graphs, resolver)
+	res.Results = append(res.Results, pCP)
+
 	p2, err := runLabelPass(graphs, paths, rejects)
 	if err != nil {
 		return nil, fmt.Errorf("label pass: %w", err)

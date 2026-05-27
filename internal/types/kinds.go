@@ -463,6 +463,19 @@ const (
 	RelationshipKindBazelDependsOn RelationshipKind = "BAZEL_DEPENDS_ON"
 	RelationshipKindBazelDepStatus RelationshipKind = "BAZEL_DEP_STATUS"
 
+	// #2761: Constant-binding cross-file propagation edge. Emitted by the
+	// Phase 0 substrate (internal/links/constant_propagation.go) once a
+	// use-site identifier resolves to a declaration in another file (or
+	// recursively via IMPORTS). The edge goes from the use-site entity →
+	// the declaring entity. Properties:
+	//   "resolved_value"  : the literal string value
+	//   "resolved_via"    : provenance chain (comma-joined steps)
+	//   "confidence"      : "1.00", "0.85", "0.60", ... (see propagation pass)
+	// Append-only. Consumers (http_endpoint canonicalizer, taint flow,
+	// payload-shape inference) read the resolved_value/confidence pair
+	// without modifying the underlying entity kind.
+	RelationshipKindResolvesTo RelationshipKind = "RESOLVES_TO"
+
 	// #2666: Discriminator comparison edges. Emitted by the JS/TS and Python
 	// extractors for every `identifier == literal` comparison detected in a
 	// function/method body (the discriminator pattern from #2659).
@@ -565,6 +578,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindBazelDepStatus,
 		// #2666 discriminator comparison edges:
 		RelationshipKindDiscriminatesOn,
+		// #2761 substrate Phase 0:
+		RelationshipKindResolvesTo,
 	}
 }
 

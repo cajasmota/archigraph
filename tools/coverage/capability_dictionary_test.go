@@ -26,7 +26,7 @@ func TestLoadCapabilityDictionaryFromDisk(t *testing.T) {
 	if got := d.SubcategoryDisplay("ui_frontend"); got != "UI Frontend" {
 		t.Errorf("SubcategoryDisplay = %q, want %q", got, "UI Frontend")
 	}
-	wantUI := []string{"Structure", "Data Flow", "Navigation", "Type System", "Lifecycle", "Testing"}
+	wantUI := []string{"Structure", "Data Flow", "Navigation", "Type System", "Lifecycle", "Testing", "Substrate"}
 	if got := d.GroupNames("ui_frontend"); !reflect.DeepEqual(got, wantUI) {
 		t.Errorf("GroupNames(ui_frontend) = %v, want %v", got, wantUI)
 	}

@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [java](../by-language/java.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 4
+- **Capability cells:** 7
 
 ## Capabilities
 
@@ -49,6 +49,14 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+
+### Substrate
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `constant_propagation` | ✅ `full` | `2026-05-28` | — | — | `internal/substrate/java.go`<br>`internal/substrate/substrate.go`<br>`internal/links/constant_propagation.go` | — |
+| `env_fallback_recognition` | ✅ `full` | `2026-05-28` | — | — | `internal/substrate/java.go`<br>`internal/substrate/substrate.go`<br>`internal/links/constant_propagation.go` | — |
+| `import_resolution_quality` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/substrate/java.go`<br>`internal/substrate/substrate.go`<br>`internal/links/constant_propagation.go` | — |
 
 ## Framework-specific
 

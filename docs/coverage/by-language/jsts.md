@@ -10,52 +10,52 @@ Back to [summary](../summary.md).
 
 ### Backend HTTP
 
-| Name | Routing | Security | Validation | Middleware | Testing | Observability | Data | Notes |
-|---|---|---|---|---|---|---|---|---|
-| [AdonisJS](../detail/lang.jsts.framework.adonisjs.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Express](../detail/lang.jsts.framework.express.md) | ✅ 2/2 | ❌ 0/1 | — | ⚠️ 0/1 | — | — | — | |
-| [Fastify](../detail/lang.jsts.framework.fastify.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Feathers](../detail/lang.jsts.framework.feathers.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Hapi](../detail/lang.jsts.framework.hapi.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Hono](../detail/lang.jsts.framework.hono.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Koa](../detail/lang.jsts.framework.koa.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Marble.js](../detail/lang.jsts.framework.marblejs.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [NestJS](../detail/lang.jsts.framework.nestjs.md) | ✅ 2/2 | ⚠️ 0/1 | — | ⚠️ 0/1 | — | — | — | |
-| [Polka](../detail/lang.jsts.framework.polka.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Restify](../detail/lang.jsts.framework.restify.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Sails](../detail/lang.jsts.framework.sails.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
+| Name | Routing | Security | Validation | Middleware | Testing | Observability | Data | Substrate | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| [AdonisJS](../detail/lang.jsts.framework.adonisjs.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Express](../detail/lang.jsts.framework.express.md) | ✅ 2/2 | ❌ 0/1 | — | ⚠️ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Fastify](../detail/lang.jsts.framework.fastify.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Feathers](../detail/lang.jsts.framework.feathers.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Hapi](../detail/lang.jsts.framework.hapi.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Hono](../detail/lang.jsts.framework.hono.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Koa](../detail/lang.jsts.framework.koa.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Marble.js](../detail/lang.jsts.framework.marblejs.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [NestJS](../detail/lang.jsts.framework.nestjs.md) | ✅ 2/2 | ⚠️ 0/1 | — | ⚠️ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Polka](../detail/lang.jsts.framework.polka.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Restify](../detail/lang.jsts.framework.restify.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Sails](../detail/lang.jsts.framework.sails.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
 
 
 ### UI Frontend
 
-| Name | Structure | Data Flow | Navigation | Type System | Lifecycle | Testing | Notes |
-|---|---|---|---|---|---|---|---|
-| [Angular](../detail/lang.jsts.framework.angular.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [React](../detail/lang.jsts.framework.react.md) | ⚠️ 3/5 | ⚠️ 2/4 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | |
-| [Svelte](../detail/lang.jsts.framework.svelte.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [Vue](../detail/lang.jsts.framework.vue.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| Name | Structure | Data Flow | Navigation | Type System | Lifecycle | Testing | Substrate | Notes |
+|---|---|---|---|---|---|---|---|---|
+| [Angular](../detail/lang.jsts.framework.angular.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [React](../detail/lang.jsts.framework.react.md) | ⚠️ 3/5 | ⚠️ 2/4 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Svelte](../detail/lang.jsts.framework.svelte.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Vue](../detail/lang.jsts.framework.vue.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
 
 
 ### Meta Framework
 
-| Name | Structure | Data Flow | Server | Routing | Build | Type System | Lifecycle | Testing | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| [Astro](../detail/lang.jsts.framework.astro.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [Gatsby](../detail/lang.jsts.framework.gatsby.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 0/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [Next.js API Routes / App Router](../detail/lang.jsts.framework.next-api.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ✅ 2/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [Nuxt](../detail/lang.jsts.framework.nuxt.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [Remix](../detail/lang.jsts.framework.remix.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [SvelteKit](../detail/lang.jsts.framework.sveltekit.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| Name | Structure | Data Flow | Server | Routing | Build | Type System | Lifecycle | Testing | Substrate | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| [Astro](../detail/lang.jsts.framework.astro.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Gatsby](../detail/lang.jsts.framework.gatsby.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 0/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Next.js API Routes / App Router](../detail/lang.jsts.framework.next-api.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ✅ 2/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Nuxt](../detail/lang.jsts.framework.nuxt.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Remix](../detail/lang.jsts.framework.remix.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [SvelteKit](../detail/lang.jsts.framework.sveltekit.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
 
 
 ### Mobile
 
-| Name | Structure | Navigation | Platform | Native Bridge | Data Flow | Type System | Lifecycle | Testing | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| [Expo](../detail/lang.jsts.framework.expo.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | |
-| [Ionic](../detail/lang.jsts.framework.ionic.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
-| [React Native](../detail/lang.jsts.framework.react-native.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | |
+| Name | Structure | Navigation | Platform | Native Bridge | Data Flow | Type System | Lifecycle | Testing | Substrate | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| [Expo](../detail/lang.jsts.framework.expo.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [Ionic](../detail/lang.jsts.framework.ionic.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | ⚠️ 2/3 | |
+| [React Native](../detail/lang.jsts.framework.react-native.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ⚠️ 2/3 | |
 
 
 ### Desktop
@@ -67,10 +67,10 @@ Back to [summary](../summary.md).
 
 ### RPC Framework
 
-| Name | Schema | Codegen | Transport | Notes |
-|---|---|---|---|---|
-| [GraphQL Resolvers (Apollo Server / GraphQL Yoga / etc.)](../detail/lang.jsts.framework.graphql-resolvers.md) | ✅ 2/2 | ❌ 0/1 | — | |
-| [tRPC](../detail/lang.jsts.framework.trpc.md) | ⚠️ 1/2 | ❌ 0/1 | — | |
+| Name | Schema | Codegen | Transport | Substrate | Notes |
+|---|---|---|---|---|---|
+| [GraphQL Resolvers (Apollo Server / GraphQL Yoga / etc.)](../detail/lang.jsts.framework.graphql-resolvers.md) | ✅ 2/2 | ❌ 0/1 | — | ⚠️ 2/3 | |
+| [tRPC](../detail/lang.jsts.framework.trpc.md) | ⚠️ 1/2 | ❌ 0/1 | — | ⚠️ 2/3 | |
 
 
 ### AI Integration

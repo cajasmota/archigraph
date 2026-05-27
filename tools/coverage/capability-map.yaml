@@ -160,6 +160,32 @@ records:
             - file: internal/extractors/javascript/tests.go
           issues_implemented: ["1726"]
           verified_at: "2026-05-28"
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/jsts.go
+              functions: [sniffJSTS, appendJSTSLiterals, appendJSTSEnvFallbacks, appendJSTSImports]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/jsts.go
+              functions: [appendJSTSEnvFallbacks]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/jsts.go
+              functions: [appendJSTSImports]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
 
   lang.jsts.framework.react-native:
     capabilities:
@@ -255,6 +281,32 @@ records:
             - file: internal/extractors/python/django_drf_actions.go
               functions: [parseActionKwargs, scanClassBodyForActions]
           issues_implemented: []
+          verified_at: "2026-05-28"
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/python.go
+              functions: [sniffPython]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/python.go
+              functions: [sniffPython]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/python.go
+              functions: [sniffPython]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2761"]
           verified_at: "2026-05-28"
 
   lang.python.framework.flask:
@@ -445,6 +497,32 @@ records:
                 - paramRecord
           issues_implemented: []
           verified_at: "2026-05-28"
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/java.go
+              functions: [sniffJava]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/java.go
+              functions: [sniffJava]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/java.go
+              functions: [sniffJava]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
 
   lang.go.framework.gin:
     capabilities:
@@ -468,4 +546,31 @@ records:
             - file: internal/engine/go_routes.go
               functions: [applyGoRouteComposition, extractGoHandlerBindings]
           issues_implemented: ["2679"]
+          verified_at: "2026-05-28"
+
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2761"]
           verified_at: "2026-05-28"

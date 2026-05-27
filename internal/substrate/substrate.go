@@ -1,0 +1,156 @@
+// Package substrate implements the Phase 0 static-analysis substrate (#2716).
+//
+// The substrate is a per-language data layer that lifts constant bindings out
+// of source files into a normalised IR so the generic propagation pass in
+// internal/links/constant_propagation.go can resolve identifiers across
+// files via the IMPORTS edge graph.
+//
+// Design notes:
+//   - Per-language sniffers are pure functions that take a file's source
+//     content and return a slice of Binding records. They do not touch the
+//     graph or the disk; they are stateless.
+//   - The propagation pass owns scope (file, line, ident) → Binding
+//     resolution, the IMPORTS-edge walk (max depth 3), and the property
+//     stamping. Sniffers are oblivious to that infrastructure.
+//   - There is intentionally no ConstantBinding entity kind. Bindings
+//     are decoration on existing declaration entities; the persistent
+//     graph surface is a property + a RESOLVES_TO edge (see kinds.go).
+//
+// Adding a new language: implement a sniffer with the SniffFn signature,
+// register it via Register("<lang>", sniffFn) in an init() in the
+// language file, and add capability cells per AGENTS.md.
+package substrate
+
+import "sort"
+
+// Binding is one constant-binding fact lifted from source by a per-language
+// sniffer.
+//
+// All fields are required except as noted.
+type Binding struct {
+	// Ident is the identifier being bound. For module-level constants
+	// it is the bare name (e.g. "API_URL"); the propagation pass scopes
+	// it by (repo, file).
+	Ident string
+
+	// Line is the 1-indexed source line of the declaration. Used by the
+	// propagation pass to resolve nearest-preceding declarations when a
+	// file contains multiple bindings of the same name in different
+	// scopes (rare for module-level constants, but possible).
+	Line int
+
+	// Value is the resolved literal value when Provenance == ProvenanceLiteral
+	// or ProvenanceEnvFallback. Empty for ProvenanceCrossFile until the
+	// propagation pass fills it in by following the import.
+	Value string
+
+	// EnvVar is the OS env-var name read by getenv/os.environ/etc. Set
+	// when Provenance == ProvenanceEnvFallback so downstream consumers
+	// can record that a fallback was the resolved value. Empty for the
+	// pure-literal case.
+	EnvVar string
+
+	// Provenance records how Value was determined. The propagation pass
+	// composes the chain across import hops.
+	Provenance Provenance
+
+	// Confidence is the per-binding confidence in [0, 1]. The
+	// propagation pass min()s confidences across hops.
+	Confidence float64
+
+	// ImportSource, when set, names the module path the binding was
+	// re-exported from. Used by the propagation pass to follow IMPORTS
+	// edges to the upstream declaration. Empty for in-file bindings.
+	ImportSource string
+}
+
+// Provenance is the discrete provenance label for a binding step.
+type Provenance string
+
+const (
+	// ProvenanceLiteral marks a direct string-literal binding
+	// (e.g. `const API = "https://x"`). Confidence: 1.0.
+	ProvenanceLiteral Provenance = "literal"
+
+	// ProvenanceEnvFallback marks an env-var read with a literal
+	// fallback (e.g. `os.Getenv("X")` with a `?? "default"`).
+	// Confidence: 0.85 — the literal default may not match production.
+	ProvenanceEnvFallback Provenance = "env_fallback"
+
+	// ProvenanceCrossFile marks a re-exported binding that the
+	// propagation pass must follow via IMPORTS to resolve. The
+	// per-hop sniffer leaves Value empty; the pass fills it in.
+	// Confidence: 0.6 baseline; the pass also min()s with upstream.
+	ProvenanceCrossFile Provenance = "cross_file"
+)
+
+// SniffFn is the contract every per-language sniffer satisfies. Inputs:
+// the raw file content. Output: a slice of Binding records (may be empty;
+// must be nil-safe).
+//
+// The function MUST be deterministic: identical content → identical output
+// in slice order, so byte-identical graph output across runs is preserved.
+type SniffFn func(content string) []Binding
+
+// registry holds the registered per-language sniffers. Populated by init()
+// in each language file.
+var registry = map[string]SniffFn{}
+
+// Register installs a sniffer for a language slug. Idempotent: a second
+// call with the same slug overwrites the prior registration. Intended for
+// init()-time wiring from the per-language files.
+func Register(lang string, fn SniffFn) {
+	if lang == "" || fn == nil {
+		return
+	}
+	registry[lang] = fn
+}
+
+// SnifferFor returns the registered sniffer for lang, or nil when none is
+// registered. Callers must nil-check before invocation.
+func SnifferFor(lang string) SniffFn {
+	return registry[lang]
+}
+
+// Languages returns the slugs of every registered language in sorted order.
+// Used by the propagation pass to know which languages have substrate
+// support enabled.
+func Languages() []string {
+	out := make([]string, 0, len(registry))
+	for k := range registry {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// LanguageForPath returns the canonical sniffer language slug for the given
+// file path, based on its extension. Returns "" when no T1 language matches.
+//
+// The slug list is the Phase 0 T1 set (#2761): jsts, python, java, go.
+func LanguageForPath(path string) string {
+	// Iterate suffixes longest-first so .test.ts matches "jsts" not a shorter
+	// .ts that would also match — though both yield "jsts" here, the
+	// longest-first pattern keeps the dispatcher honest for future T2 langs.
+	switch {
+	case hasSuffix(path, ".ts"), hasSuffix(path, ".tsx"),
+		hasSuffix(path, ".js"), hasSuffix(path, ".jsx"),
+		hasSuffix(path, ".mjs"), hasSuffix(path, ".cjs"):
+		return "jsts"
+	case hasSuffix(path, ".py"), hasSuffix(path, ".pyi"):
+		return "python"
+	case hasSuffix(path, ".java"):
+		return "java"
+	case hasSuffix(path, ".go"):
+		return "go"
+	}
+	return ""
+}
+
+// hasSuffix is a tiny stdlib-free helper to keep the import surface minimal.
+func hasSuffix(s, suf string) bool {
+	if len(s) < len(suf) {
+		return false
+	}
+	return s[len(s)-len(suf):] == suf
+}

@@ -65,11 +65,15 @@ func TestSubcategoryRenderKeysExcludesCategoryUnion(t *testing.T) {
 	want := []string{
 		"branch_conditions",
 		"component_extraction",
+		// #2761 substrate cross-cutting keys.
+		"constant_propagation",
 		"context_extraction",
 		"data_fetching",
 		"enum_extraction",
+		"env_fallback_recognition",
 		"hoc_wrapper_recognition",
 		"hook_recognition",
+		"import_resolution_quality",
 		"interface_extraction",
 		"jsx_template",
 		"prop_extraction",
@@ -91,13 +95,18 @@ func TestSubcategoryCapabilityKeysSorted(t *testing.T) {
 		"auth_coverage",
 		"branch_conditions",
 		"component_extraction",
+		// #2761 substrate keys live under the Substrate group across every
+		// subcategory that imports an HTTP / RPC client surface.
+		"constant_propagation",
 		"context_extraction",
 		"data_fetching",
 		"endpoint_synthesis",
 		"enum_extraction",
+		"env_fallback_recognition",
 		"handler_attribution",
 		"hoc_wrapper_recognition",
 		"hook_recognition",
+		"import_resolution_quality",
 		"interface_extraction",
 		"jsx_template",
 		"middleware_coverage",
@@ -214,7 +223,7 @@ func TestBuildBucketSectionGroupsBySubcategory(t *testing.T) {
 	if len(uiSec.CapabilityKeys) != 0 {
 		t.Errorf("ui_frontend should use group columns, got CapabilityKeys=%v", uiSec.CapabilityKeys)
 	}
-	wantGroups := []string{"Structure", "Data Flow", "Navigation", "Type System", "Lifecycle", "Testing"}
+	wantGroups := []string{"Structure", "Data Flow", "Navigation", "Type System", "Lifecycle", "Testing", "Substrate"}
 	if !reflect.DeepEqual(uiSec.GroupNames, wantGroups) {
 		t.Errorf("ui_frontend GroupNames = %v, want %v", uiSec.GroupNames, wantGroups)
 	}

@@ -83,6 +83,9 @@ subcategories:
       - request_validation
       - tests_linkage
       - dto_extraction
+      - constant_propagation
+      - env_fallback_recognition
+      - import_resolution_quality
     groups:
       - name: Routing
         keys: [endpoint_synthesis, handler_attribution, route_extraction]
@@ -98,6 +101,8 @@ subcategories:
         keys: []
       - name: Data
         keys: []
+      - name: Substrate
+        keys: [constant_propagation, env_fallback_recognition, import_resolution_quality]
 
   ui_frontend:
     display: "UI Frontend"
@@ -118,6 +123,9 @@ subcategories:
       - enum_extraction
       - state_setter_emission
       - tests_linkage
+      - constant_propagation
+      - env_fallback_recognition
+      - import_resolution_quality
     groups:
       - name: Structure
         keys: [component_extraction, hook_recognition, jsx_template, context_extraction, hoc_wrapper_recognition]
@@ -131,6 +139,8 @@ subcategories:
         keys: [state_setter_emission]
       - name: Testing
         keys: [tests_linkage]
+      - name: Substrate
+        keys: [constant_propagation, env_fallback_recognition, import_resolution_quality]
 
   meta_framework:
     display: "Meta Framework"
@@ -149,6 +159,9 @@ subcategories:
       - enum_extraction
       - state_setter_emission
       - tests_linkage
+      - constant_propagation
+      - env_fallback_recognition
+      - import_resolution_quality
     groups:
       - name: Structure
         keys: [component_extraction, hook_recognition]
@@ -166,6 +179,8 @@ subcategories:
         keys: [state_setter_emission]
       - name: Testing
         keys: [tests_linkage]
+      - name: Substrate
+        keys: [constant_propagation, env_fallback_recognition, import_resolution_quality]
 
   mobile:
     display: "Mobile"
@@ -185,6 +200,9 @@ subcategories:
       - enum_extraction
       - state_setter_emission
       - tests_linkage
+      - constant_propagation
+      - env_fallback_recognition
+      - import_resolution_quality
     groups:
       - name: Structure
         keys: [context_extraction, hoc_wrapper_recognition]
@@ -202,6 +220,8 @@ subcategories:
         keys: [state_setter_emission]
       - name: Testing
         keys: [tests_linkage]
+      - name: Substrate
+        keys: [constant_propagation, env_fallback_recognition, import_resolution_quality]
 
   desktop:
     display: "Desktop"
@@ -225,6 +245,9 @@ subcategories:
       - procedure_extraction
       - schema_extraction
       - client_codegen
+      - constant_propagation
+      - env_fallback_recognition
+      - import_resolution_quality
     groups:
       - name: Schema
         keys: [schema_extraction, procedure_extraction]
@@ -232,6 +255,8 @@ subcategories:
         keys: [client_codegen]
       - name: Transport
         keys: []
+      - name: Substrate
+        keys: [constant_propagation, env_fallback_recognition, import_resolution_quality]
 
   static_site:
     display: "Static Site"

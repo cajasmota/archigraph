@@ -65,6 +65,15 @@ func RunLinksForGroup(group string) error {
 		return err
 	}
 	defer cleanup()
+	// #2761 substrate Phase 0: register each repo's source path so the
+	// constant propagation pass can read .ts / .py / .java / .go files
+	// from the actual repo working tree (graphsDir contains symlinked
+	// graph files only, not source).
+	srcPaths := map[string]string{}
+	for _, r := range cfg.Repos {
+		srcPaths[r.Slug] = r.Path
+	}
+	links.SetRepoSourcePaths(srcPaths)
 	res, err := links.RunAllPasses(group, graphsDir, "")
 	if err != nil {
 		return err
@@ -122,6 +131,15 @@ func runLinksForGroup(cmd *cobra.Command, group string) error {
 		return err
 	}
 	defer cleanup()
+
+	// #2761 substrate Phase 0 (mirrors RunLinksForGroup): publish each
+	// repo's source root so the constant propagation pass can lift
+	// bindings from real source files.
+	srcPaths := map[string]string{}
+	for _, r := range cfg.Repos {
+		srcPaths[r.Slug] = r.Path
+	}
+	links.SetRepoSourcePaths(srcPaths)
 
 	res, err := links.RunAllPasses(group, graphsDir, "")
 	if err != nil {

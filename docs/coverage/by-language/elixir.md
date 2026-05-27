@@ -10,23 +10,23 @@ Back to [summary](../summary.md).
 
 ### Backend HTTP
 
-| Name | Routing | Security | Validation | Middleware | Testing | Observability | Data | Notes |
-|---|---|---|---|---|---|---|---|---|
-| [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Ash Framework](../detail/lang.elixir.framework.ash.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Bandit](../detail/lang.elixir.framework.bandit.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Cowboy](../detail/lang.elixir.framework.cowboy.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | |
-| [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | |
-| [Phoenix](../detail/lang.elixir.framework.phoenix.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
-| [Plug](../detail/lang.elixir.framework.plug.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | |
+| Name | Routing | Security | Validation | Middleware | Testing | Observability | Data | Substrate | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
+| [Ash Framework](../detail/lang.elixir.framework.ash.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
+| [Bandit](../detail/lang.elixir.framework.bandit.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
+| [Cowboy](../detail/lang.elixir.framework.cowboy.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
+| [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | — | |
+| [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | — | |
+| [Phoenix](../detail/lang.elixir.framework.phoenix.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
+| [Plug](../detail/lang.elixir.framework.plug.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
 
 
 ### Meta Framework
 
-| Name | Structure | Data Flow | Server | Routing | Build | Type System | Lifecycle | Testing | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| [Phoenix LiveView](../detail/lang.elixir.framework.phoenix-liveview.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 0/2 | ❌ 0/1 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | |
+| Name | Structure | Data Flow | Server | Routing | Build | Type System | Lifecycle | Testing | Substrate | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| [Phoenix LiveView](../detail/lang.elixir.framework.phoenix-liveview.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 0/2 | ❌ 0/1 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | — | |
 
 
 ## Tools
