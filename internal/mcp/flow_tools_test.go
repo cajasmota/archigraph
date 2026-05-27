@@ -1347,3 +1347,62 @@ func TestFindCallers_TieBreakAlphabetical(t *testing.T) {
 		t.Errorf("expected second caller=FuncB, got %v", second["name"])
 	}
 }
+
+// TestFindCallersIntegration_FrequencyRankedOnRealHandler exercises the full
+// MCP handler end-to-end (#2591). It verifies that when extractors emit ONE
+// CALLS edge per (caller, callee) pair with a Properties["count"] encoding the
+// call-site frequency (the real-world pattern), the MCP response honours that
+// frequency rather than falling back to alphabetical order.
+//
+// Fixture: A×1 call, B×3 calls, C×2 calls → expected order [B, C, A].
+// Each caller has exactly ONE relationship record but with "count" in Properties.
+// This matches how JS/Python extractors represent multi-site callers on upvate data.
+func TestFindCallersIntegration_FrequencyRankedOnRealHandler(t *testing.T) {
+	// One CALLS edge per caller, with Properties["count"] encoding frequency.
+	entities := []graph.Entity{
+		{ID: "ent-a", Name: "FuncA", Kind: "Function", SourceFile: "a.js", StartLine: 1},
+		{ID: "ent-b", Name: "FuncB", Kind: "Function", SourceFile: "b.js", StartLine: 1},
+		{ID: "ent-c", Name: "FuncC", Kind: "Function", SourceFile: "c.js", StartLine: 1},
+		{ID: "ent-t", Name: "callApi", Kind: "Function", SourceFile: "api.js", StartLine: 1},
+	}
+	rels := []graph.Relationship{
+		// A calls callApi 1 time (single edge, count=1)
+		{FromID: "ent-a", ToID: "ent-t", Kind: "CALLS", Properties: map[string]string{"count": "1"}},
+		// B calls callApi 3 times (single edge, count=3) — should rank first
+		{FromID: "ent-b", ToID: "ent-t", Kind: "CALLS", Properties: map[string]string{"count": "3"}},
+		// C calls callApi 2 times (single edge, count=2) — should rank second
+		{FromID: "ent-c", ToID: "ent-t", Kind: "CALLS", Properties: map[string]string{"count": "2"}},
+	}
+	doc := minDoc(entities, rels)
+	srv := newTestServer(t, doc)
+
+	// Call THROUGH handleFindCallers (the real MCP entry point), not the
+	// structured seam directly — this is what #2591 identified as broken.
+	out := callFlowTool(t, srv.handleFindCallers, map[string]any{
+		"entity_id": "ent-t",
+		"depth":     float64(1),
+	})
+
+	callers, ok := out["callers"].([]any)
+	if !ok {
+		t.Fatalf("expected callers array, got %T", out["callers"])
+	}
+	if len(callers) != 3 {
+		t.Fatalf("expected 3 callers, got %d: %v", len(callers), callers)
+	}
+
+	// Expected order by count desc: B(3), C(2), A(1).
+	names := make([]string, len(callers))
+	for i, c := range callers {
+		names[i] = c.(map[string]any)["name"].(string)
+	}
+	if names[0] != "FuncB" {
+		t.Errorf("rank 1: expected FuncB (count=3), got %q; full order=%v", names[0], names)
+	}
+	if names[1] != "FuncC" {
+		t.Errorf("rank 2: expected FuncC (count=2), got %q; full order=%v", names[1], names)
+	}
+	if names[2] != "FuncA" {
+		t.Errorf("rank 3: expected FuncA (count=1), got %q; full order=%v", names[2], names)
+	}
+}
