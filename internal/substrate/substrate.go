@@ -125,13 +125,24 @@ func Languages() []string {
 }
 
 // LanguageForPath returns the canonical sniffer language slug for the given
-// file path, based on its extension. Returns "" when no T1 language matches.
+// file path, based on its extension. Returns "" when no language matches.
 //
-// The slug list is the Phase 0 T1 set (#2761): jsts, python, java, go.
+// Slug list:
+//   - Phase 0 T1 (#2761): jsts, python, java, go
+//   - Phase 0 T3 (#2763): dart, groovy, lua, swift, clojure, crystal, elm,
+//     erlang, fsharp, haskell, nim, ocaml, reasonml, rescript, sml,
+//     solidity, zig, svelte, vue, astro
+//
+// Languages from the T3 issue scope that are intentionally not registered
+// (no meaningful constant-binding shape exists):
+//   - verilog / vhdl: hardware description languages — no runtime constants
+//   - idris: dependently-typed niche; constant idiom too varied
+//   - lisp: too generic (CL vs scheme dialects); no canonical const+env
+//   - pony: actor-typed; no env-fallback convention
+//   - multi: meta-language for CI / config records, not a real language
 func LanguageForPath(path string) string {
-	// Iterate suffixes longest-first so .test.ts matches "jsts" not a shorter
-	// .ts that would also match — though both yield "jsts" here, the
-	// longest-first pattern keeps the dispatcher honest for future T2 langs.
+	// Order matters when one extension is a suffix of another (e.g. .pyi /
+	// .py). Longer suffixes first.
 	switch {
 	case hasSuffix(path, ".ts"), hasSuffix(path, ".tsx"),
 		hasSuffix(path, ".js"), hasSuffix(path, ".jsx"),
@@ -143,6 +154,46 @@ func LanguageForPath(path string) string {
 		return "java"
 	case hasSuffix(path, ".go"):
 		return "go"
+	case hasSuffix(path, ".dart"):
+		return "dart"
+	case hasSuffix(path, ".groovy"), hasSuffix(path, ".gradle"):
+		return "groovy"
+	case hasSuffix(path, ".lua"):
+		return "lua"
+	case hasSuffix(path, ".swift"):
+		return "swift"
+	case hasSuffix(path, ".clj"), hasSuffix(path, ".cljs"), hasSuffix(path, ".cljc"), hasSuffix(path, ".edn"):
+		return "clojure"
+	case hasSuffix(path, ".cr"):
+		return "crystal"
+	case hasSuffix(path, ".elm"):
+		return "elm"
+	case hasSuffix(path, ".erl"), hasSuffix(path, ".hrl"):
+		return "erlang"
+	case hasSuffix(path, ".fs"), hasSuffix(path, ".fsi"), hasSuffix(path, ".fsx"):
+		return "fsharp"
+	case hasSuffix(path, ".hs"), hasSuffix(path, ".lhs"):
+		return "haskell"
+	case hasSuffix(path, ".nim"), hasSuffix(path, ".nims"):
+		return "nim"
+	case hasSuffix(path, ".ml"), hasSuffix(path, ".mli"):
+		return "ocaml"
+	case hasSuffix(path, ".re"), hasSuffix(path, ".rei"):
+		return "reasonml"
+	case hasSuffix(path, ".res"), hasSuffix(path, ".resi"):
+		return "rescript"
+	case hasSuffix(path, ".sml"), hasSuffix(path, ".sig"):
+		return "sml"
+	case hasSuffix(path, ".sol"):
+		return "solidity"
+	case hasSuffix(path, ".zig"):
+		return "zig"
+	case hasSuffix(path, ".svelte"):
+		return "svelte"
+	case hasSuffix(path, ".vue"):
+		return "vue"
+	case hasSuffix(path, ".astro"):
+		return "astro"
 	}
 	return ""
 }
