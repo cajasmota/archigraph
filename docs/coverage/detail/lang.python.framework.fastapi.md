@@ -9,12 +9,12 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_coverage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/python/frameworks/fastapi.yaml` |
-| `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/python/frameworks/fastapi.yaml` |
-| `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/python/frameworks/fastapi.yaml` |
-| `middleware_coverage` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_coverage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/python/frameworks/fastapi.yaml` | — |
+| `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/python/frameworks/fastapi.yaml` | — |
+| `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/python/frameworks/fastapi.yaml` | — |
+| `middleware_coverage` | ❌ `missing` | — | — | — | — | — |
 
 ## Provenance
 

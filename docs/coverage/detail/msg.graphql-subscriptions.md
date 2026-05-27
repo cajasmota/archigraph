@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `consumer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/graphql_subscriptions.go` |
-| `producer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/graphql_subscriptions.go` |
-| `topic_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/graphql_subscriptions.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `consumer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/graphql_subscriptions.go` | — |
+| `producer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/graphql_subscriptions.go` | — |
+| `topic_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/graphql_subscriptions.go` | — |
 
 ## Provenance
 

@@ -6,57 +6,65 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** UI Frontend
-- **Capability cells:** 7
+- **Capability cells:** 15
 
 ## Capabilities
 
 
 ### Structure
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `component_extraction` | ❌ `missing` | — | — | — | — |
-| `hook_recognition` | ❌ `missing` | — | — | — | — |
-| `jsx_template` | — `not_applicable` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `component_extraction` | ❌ `missing` | — | — | — | — | — |
+| `context_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2751) | — | — |
+| `hoc_wrapper_recognition` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2751) | — | — |
+| `hook_recognition` | ❌ `missing` | — | — | — | — | — |
+| `jsx_template` | — `not_applicable` | — | — | — | — | — |
 
 ### Data Flow
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `data_fetching` | ❌ `missing` | — | — | — | — |
-| `prop_extraction` | ❌ `missing` | — | — | — | — |
-| `state_management` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `branch_conditions` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2751) | — | — |
+| `data_fetching` | ❌ `missing` | — | — | — | — | — |
+| `prop_extraction` | ❌ `missing` | — | — | — | — | — |
+| `state_management` | ❌ `missing` | — | — | — | — | — |
 
 ### Navigation
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `router_pattern` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `router_pattern` | ❌ `missing` | — | — | — | — | — |
 
 ### Type System
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `enum_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/javascript/extractor.go` | — |
+| `interface_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/javascript/extractor.go` | — |
+| `type_alias_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/javascript/extractor.go` | — |
 
 ### Lifecycle
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `state_setter_emission` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2751) | — | — |
 
 ### Testing
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `tests_linkage` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/javascript/tests.go` | — |
 
 ## Framework-specific
 
 ### Vue Ecosystem
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `composition_api_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — |
-| `pinia_pattern_detection` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — |
-| `scoped_style_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `composition_api_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
+| `pinia_pattern_detection` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
+| `scoped_style_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
 
 ## Provenance
 

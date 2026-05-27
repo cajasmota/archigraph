@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `dependency_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/orm_queries.go` |
-| `resource_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/database_index/language.yaml`<br>`internal/extractors/sql` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `dependency_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/orm_queries.go` | — |
+| `resource_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/database_index/language.yaml`<br>`internal/extractors/sql` | — |
 
 ## Provenance
 

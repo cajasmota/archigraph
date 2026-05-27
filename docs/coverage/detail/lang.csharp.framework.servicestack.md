@@ -9,12 +9,12 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_coverage` | ❌ `missing` | — | — | — | — |
-| `endpoint_synthesis` | ❌ `missing` | — | — | — | — |
-| `handler_attribution` | ❌ `missing` | — | — | — | — |
-| `middleware_coverage` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_coverage` | ❌ `missing` | — | — | — | — | — |
+| `endpoint_synthesis` | ❌ `missing` | — | — | — | — | — |
+| `handler_attribution` | ❌ `missing` | — | — | — | — | — |
+| `middleware_coverage` | ❌ `missing` | — | — | — | — | — |
 
 ## Provenance
 

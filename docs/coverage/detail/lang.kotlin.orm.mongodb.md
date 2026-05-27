@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | — `not_applicable` | — | — | — | — |
-| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/orms/mongodb_kotlin.yaml` |
-| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/orms/mongodb_kotlin.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | — `not_applicable` | — | — | — | — | — |
+| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/orms/mongodb_kotlin.yaml` | — |
+| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/orms/mongodb_kotlin.yaml` | — |
 
 ## Provenance
 

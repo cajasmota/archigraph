@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `dependency_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/orm_queries_other.go` |
-| `resource_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/iac_sns_edges.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `dependency_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/orm_queries_other.go` | — |
+| `resource_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/iac_sns_edges.go` | — |
 
 ## Provenance
 

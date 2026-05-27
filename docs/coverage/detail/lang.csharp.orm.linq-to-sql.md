@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | ❌ `missing` | — | — | — | — |
-| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/csharp/orms/linqpad_linq_to_sql.yaml` |
-| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/csharp/orms/linqpad_linq_to_sql.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | ❌ `missing` | — | — | — | — | — |
+| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/csharp/orms/linqpad_linq_to_sql.yaml` | — |
+| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/csharp/orms/linqpad_linq_to_sql.yaml` | — |
 
 ## Provenance
 

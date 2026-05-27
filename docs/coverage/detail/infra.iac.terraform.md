@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `dependency_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/hcl` |
-| `resource_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/hcl` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `dependency_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/hcl` | — |
+| `resource_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/hcl` | — |
 
 ## Provenance
 

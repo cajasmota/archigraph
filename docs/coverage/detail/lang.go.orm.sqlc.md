@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/go/orms/sqlc.yaml` |
-| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/go/orms/sqlc.yaml` |
-| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/go/orms/sqlc.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/go/orms/sqlc.yaml` | — |
+| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/go/orms/sqlc.yaml` | — |
+| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/go/orms/sqlc.yaml` | — |
 
 ## Provenance
 

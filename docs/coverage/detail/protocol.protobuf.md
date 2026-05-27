@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `cross_repo_linkage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` |
-| `method_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/proto` |
-| `service_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/protobuf/_manifest.yaml`<br>`internal/extractors/proto` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `cross_repo_linkage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` | — |
+| `method_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/proto` | — |
+| `service_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/protobuf/_manifest.yaml`<br>`internal/extractors/proto` | — |
 
 ## Provenance
 

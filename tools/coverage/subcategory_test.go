@@ -63,13 +63,21 @@ func TestSubcategoryRenderKeysExcludesCategoryUnion(t *testing.T) {
 	// or middleware_coverage leaking into the UI Frontend table.
 	got := subcategoryRenderKeys("http_framework", "ui_frontend")
 	want := []string{
+		"branch_conditions",
 		"component_extraction",
+		"context_extraction",
 		"data_fetching",
+		"enum_extraction",
+		"hoc_wrapper_recognition",
 		"hook_recognition",
+		"interface_extraction",
 		"jsx_template",
 		"prop_extraction",
 		"router_pattern",
 		"state_management",
+		"state_setter_emission",
+		"tests_linkage",
+		"type_alias_extraction",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("render keys = %v, want %v", got, want)
@@ -81,16 +89,24 @@ func TestSubcategoryCapabilityKeysSorted(t *testing.T) {
 	// Must include all ui_frontend keys + category-wide keys, sorted, deduped.
 	want := []string{
 		"auth_coverage",
+		"branch_conditions",
 		"component_extraction",
+		"context_extraction",
 		"data_fetching",
 		"endpoint_synthesis",
+		"enum_extraction",
 		"handler_attribution",
+		"hoc_wrapper_recognition",
 		"hook_recognition",
+		"interface_extraction",
 		"jsx_template",
 		"middleware_coverage",
 		"prop_extraction",
 		"router_pattern",
 		"state_management",
+		"state_setter_emission",
+		"tests_linkage",
+		"type_alias_extraction",
 	}
 	if !reflect.DeepEqual(keys, want) {
 		t.Errorf("subcategoryCapabilityKeys ui_frontend = %v, want %v", keys, want)

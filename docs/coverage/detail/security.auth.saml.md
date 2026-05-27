@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_policy` | ❌ `missing` | — | — | — | — |
-| `secret_detection` | ❌ `missing` | — | — | — | — |
-| `sql_injection` | — `not_applicable` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_policy` | ❌ `missing` | — | — | — | — | — |
+| `secret_detection` | ❌ `missing` | — | — | — | — | — |
+| `sql_injection` | — `not_applicable` | — | — | — | — | — |
 
 ## Provenance
 

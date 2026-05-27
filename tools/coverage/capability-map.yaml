@@ -28,7 +28,6 @@ records:
           symbols:
             - file: internal/extractors/javascript/extractor.go
               functions: [extractJSXRendersRelationships]
-            - file: internal/engine/rules/javascript_typescript/frameworks/react.yaml
           issues_implemented: ["2735"]
           verified_at: "2026-05-28"
         hook_recognition:
@@ -36,17 +35,30 @@ records:
           symbols:
             - file: internal/extractors/javascript/destructure_bindings.go
               functions: [isZustandHookName, isReactQueryHook]
-            - file: internal/engine/rules/javascript_typescript/frameworks/react.yaml
           issues_implemented: ["2735"]
           verified_at: "2026-05-28"
         jsx_template:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/javascript/extractor.go
               functions: [extractJSXRendersRelationships]
           tests:
             - file: internal/extractors/javascript/issue610_jsx_renders_test.go
-          issues_implemented: ["2665", "2735"]
+          issues_implemented: ["610", "2665", "2735"]
+          verified_at: "2026-05-28"
+        context_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/extractor.go
+              functions: [isContextFactory]
+          issues_implemented: ["611"]
+          verified_at: "2026-05-28"
+        hoc_wrapper_recognition:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/extractor.go
+              functions: [isFunctionWrapperCall]
+          issues_implemented: []
           verified_at: "2026-05-28"
       Data Flow:
         state_management:
@@ -71,7 +83,7 @@ records:
           issues_implemented: ["2632", "2656", "2661"]
           verified_at: "2026-05-28"
         data_fetching:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/javascript/extractor.go
               functions: [extractReactQueryHookCalls]
@@ -87,6 +99,12 @@ records:
             - file: internal/extractors/javascript/navigation.go
               functions: [jsxNavRouteFromAttrs, extractParamKeys]
           issues_implemented: ["2665"]
+          verified_at: "2026-05-28"
+        branch_conditions:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/discriminator.go
+          issues_implemented: ["2654", "2659", "2666"]
           verified_at: "2026-05-28"
       Navigation:
         router_pattern:
@@ -105,6 +123,42 @@ records:
             - file: internal/extractors/javascript/issue2671_react_router_nav_test.go
             - file: internal/extractors/javascript/issue2665_navigation_params_keys_test.go
           issues_implemented: ["2657", "2658", "2664", "2665", "2671"]
+          verified_at: "2026-05-28"
+      Type System:
+        interface_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/extractor.go
+              functions: [handleInterfaceDeclaration]
+          issues_implemented: ["1343"]
+          verified_at: "2026-05-28"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/extractor.go
+              functions: [handleTypeAliasDeclaration]
+          issues_implemented: ["1343"]
+          verified_at: "2026-05-28"
+        enum_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/extractor.go
+              functions: [handleEnumDeclaration]
+          issues_implemented: ["1343"]
+          verified_at: "2026-05-28"
+      Lifecycle:
+        state_setter_emission:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/extractor.go
+          issues_implemented: ["513"]
+          verified_at: "2026-05-28"
+      Testing:
+        tests_linkage:
+          status: full
+          symbols:
+            - file: internal/extractors/javascript/tests.go
+          issues_implemented: ["1726"]
           verified_at: "2026-05-28"
 
   lang.jsts.framework.react-native:

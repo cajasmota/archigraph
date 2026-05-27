@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `lockfile_parsing` | ⚠️ `partial` | — | — | — | — |
-| `manifest_parsing` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/cross/manifest/extractor.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `lockfile_parsing` | ⚠️ `partial` | — | — | — | — | — |
+| `manifest_parsing` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/cross/manifest/extractor.go` | — |
 
 ## Provenance
 

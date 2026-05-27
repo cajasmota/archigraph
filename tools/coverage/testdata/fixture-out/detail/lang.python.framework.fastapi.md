@@ -9,9 +9,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `endpoint_synthesis` | ✅ `full` | `2026-05-27` | — | — | `internal/engine/http_endpoint_synthesis.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `endpoint_synthesis` | ✅ `full` | `2026-05-27` | — | — | `internal/engine/http_endpoint_synthesis.go` | — |
 
 ## Provenance
 

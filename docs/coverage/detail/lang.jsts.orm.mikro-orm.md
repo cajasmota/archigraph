@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | ❌ `missing` | — | — | — | — |
-| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/orms/mikro_orm.yaml` |
-| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/orms/mikro_orm.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | ❌ `missing` | — | — | — | — | — |
+| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/orms/mikro_orm.yaml` | — |
+| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/orms/mikro_orm.yaml` | — |
 
 ## Provenance
 

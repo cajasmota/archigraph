@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `consumer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/scheduled_jobs_edges.go` |
-| `producer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/scheduled_jobs_edges.go` |
-| `topic_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/topic_pass.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `consumer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/scheduled_jobs_edges.go` | — |
+| `producer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/scheduled_jobs_edges.go` | — |
+| `topic_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/topic_pass.go` | — |
 
 ## Provenance
 

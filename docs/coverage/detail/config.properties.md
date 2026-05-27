@@ -9,9 +9,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `file_parsing` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/java_auth_policy.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `file_parsing` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/java_auth_policy.go` | — |
 
 ## Provenance
 

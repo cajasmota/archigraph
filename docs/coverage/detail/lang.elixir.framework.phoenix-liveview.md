@@ -9,12 +9,12 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_coverage` | ❌ `missing` | — | — | — | — |
-| `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/elixir/frameworks/phoenix_liveview.yaml` |
-| `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/elixir/frameworks/phoenix_liveview.yaml` |
-| `middleware_coverage` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_coverage` | ❌ `missing` | — | — | — | — | — |
+| `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/elixir/frameworks/phoenix_liveview.yaml` | — |
+| `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/elixir/frameworks/phoenix_liveview.yaml` | — |
+| `middleware_coverage` | ❌ `missing` | — | — | — | — | — |
 
 ## Provenance
 
