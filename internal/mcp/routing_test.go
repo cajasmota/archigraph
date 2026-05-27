@@ -475,3 +475,75 @@ func TestHasGitDirInTree_WalksUp(t *testing.T) {
 		})
 	}
 }
+
+// TestResolveGroup_SingleGroup_RootCwd_ReturnsThatGroup — #2620: when exactly
+// one group is registered and cwd=/ (or any unmatched path), resolveGroup
+// returns that group via the singleton fallback (Source="singleton").
+// Note: ResolveCWD returns Source="none" for non-project cwd; the singleton
+// behaviour for tool-listing is implemented in ListToolsForCWD.
+func TestResolveGroup_SingleGroup_RootCwd_ReturnsThatGroup(t *testing.T) {
+	tmp := t.TempDir()
+	repoPath := filepath.Join(tmp, "upvate_core")
+	if err := mkdirp(repoPath); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	reg := &Registry{
+		Groups: map[string]RegistryGroup{
+			"upvate": {
+				Repos: map[string]RegistryRepo{
+					"upvate-core": {Path: repoPath},
+				},
+			},
+		},
+	}
+	st := NewState(reg)
+
+	// resolveGroup uses the singleton fallback when cwd doesn't match.
+	g, src, err := resolveGroup(st, "", "/")
+	if err != nil {
+		t.Fatalf("resolveGroup(cwd=/): unexpected error: %v", err)
+	}
+	if g != "upvate" {
+		t.Errorf("resolveGroup(cwd=/): want Group=upvate, got %q", g)
+	}
+	if src != "singleton" {
+		t.Errorf("resolveGroup(cwd=/): want Source=singleton, got %q", src)
+	}
+}
+
+// TestResolveGroup_MultipleGroups_RootCwd_AmbiguousError — #2620: when multiple
+// groups are registered and cwd=/ (unmatched), resolveGroup returns an ambiguous
+// error listing all registered groups. The ListToolsForCWD layer handles
+// returning the full catalog (not sentinel) for this case.
+func TestResolveGroup_MultipleGroups_RootCwd_AmbiguousError(t *testing.T) {
+	tmp := t.TempDir()
+	repoA := filepath.Join(tmp, "repoA")
+	repoB := filepath.Join(tmp, "repoB")
+	if err := mkdirp(repoA); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := mkdirp(repoB); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	reg := &Registry{
+		Groups: map[string]RegistryGroup{
+			"groupA": {Repos: map[string]RegistryRepo{"repoA": {Path: repoA}}},
+			"groupB": {Repos: map[string]RegistryRepo{"repoB": {Path: repoB}}},
+		},
+	}
+	st := NewState(reg)
+
+	// resolveGroup with no explicit group and unmatched cwd → ambiguous error
+	// listing registered groups.
+	_, _, err := resolveGroup(st, "", "/")
+	if err == nil {
+		t.Fatal("resolveGroup(multi-group, cwd=/): expected ambiguous error, got nil")
+	}
+	if !strings.Contains(err.Error(), "ambiguous group") {
+		t.Errorf("resolveGroup(multi-group, cwd=/): error should mention 'ambiguous group': %v", err)
+	}
+	// Error should list the registered group names.
+	if !strings.Contains(err.Error(), "groupA") || !strings.Contains(err.Error(), "groupB") {
+		t.Errorf("resolveGroup(multi-group, cwd=/): error should list registered groups: %v", err)
+	}
+}

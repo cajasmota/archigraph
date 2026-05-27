@@ -1,14 +1,15 @@
 package mcp
 
-// cwd_gate_test.go — unit tests for the tools/list cwd-gate (#1769).
+// cwd_gate_test.go — unit tests for the tools/list cwd-gate (#1769, #2620).
 //
 // Test matrix:
-//   - No registered groups      → only sentinel.
-//   - cwd outside all groups    → only sentinel.
-//   - cwd inside one group      → full list (minus sentinel).
-//   - cwd inside multiple groups (ambiguous) → full list.
-//   - cwd inside group with 0 repos (empty group) → only sentinel + hint.
-//   - archigraph_status call from no-match cwd → expected guidance text.
+//   - No registered groups                                  → only sentinel.
+//   - cwd outside all groups, single group registered       → full list (singleton fallback #2620).
+//   - cwd outside all groups, multiple groups registered    → full list (tools error per-call #2620).
+//   - cwd inside one group                                  → full list (minus sentinel).
+//   - cwd inside multiple groups (ambiguous)                → full list.
+//   - cwd inside group with 0 repos (empty group)           → only sentinel + hint.
+//   - archigraph_status call from no-match cwd              → expected guidance text.
 
 import (
 	"encoding/json"
@@ -69,19 +70,29 @@ func TestListToolsForCWD_NoGroups(t *testing.T) {
 	}
 }
 
-// TestListToolsForCWD_CWDOutsideAllGroups — cwd under /tmp, group registered elsewhere → sentinel.
-func TestListToolsForCWD_CWDOutsideAllGroups(t *testing.T) {
+// TestListToolsForCWD_CWDOutsideAllGroups_SingleGroup — #2620: cwd outside
+// the registered repo but exactly one group registered → singleton fallback
+// returns the FULL tool list (not sentinel). The fix makes the bridge usable
+// from hosts (Windsurf JetBrains) that launch with an unrelated cwd.
+func TestListToolsForCWD_CWDOutsideAllGroups_SingleGroup(t *testing.T) {
 	repoDir := t.TempDir()
 	srv := makeTestServer(t, map[string]map[string]string{
 		"mygroup": {"myrepo": repoDir},
 	})
 
+	// cwd is outside the registered repo, but singleton fallback should apply.
 	entries, err := srv.ListToolsForCWD("/tmp/unrelated-project")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !isSentinelOnly(entries) {
-		t.Fatalf("expected only sentinel tool for unrelated cwd, got %v", toolNames(entries))
+	// Fix #2620: singleton group → full list, not sentinel.
+	if isSentinelOnly(entries) {
+		t.Fatalf("expected full tool list via singleton fallback, got sentinel only (#2620)")
+	}
+	for _, e := range entries {
+		if e.Name == sentinelToolName {
+			t.Errorf("sentinel must not appear in full tool list when singleton fallback applies")
+		}
 	}
 }
 
@@ -167,9 +178,11 @@ func TestListToolsForCWD_EmptyGroup(t *testing.T) {
 	}
 }
 
-// TestListToolsForCWD_Ambiguous — cwd matches multiple groups → full list.
-func TestListToolsForCWD_Ambiguous(t *testing.T) {
-	// Create a shared parent dir so two groups' repos are ancestors of cwd.
+// TestListToolsForCWD_MultipleGroups_UnmatchedCWD_FullList — #2620: when cwd
+// matches no registered repo and multiple groups are registered, return the
+// FULL tool catalog (not sentinel). Each tool that requires a group will error
+// at call-time with a helpful "specify group=" message.
+func TestListToolsForCWD_MultipleGroups_UnmatchedCWD_FullList(t *testing.T) {
 	parentDir := t.TempDir()
 	repoA := filepath.Join(parentDir, "repoA")
 	repoB := filepath.Join(parentDir, "repoB")
@@ -185,22 +198,47 @@ func TestListToolsForCWD_Ambiguous(t *testing.T) {
 		"groupB": {"repoB": repoB},
 	})
 
-	// cwd is parentDir which is NOT under either repo → no match, returns sentinel.
-	// To create a true ambiguous scenario we'd need one cwd under both repos,
-	// which requires nested repos (parent is ancestor of both).
-	// Test the no-match case instead (parentDir is not under any repo).
+	// parentDir is NOT under either repo — multiple groups registered.
+	// Fix #2620: should return full tool list, NOT sentinel.
 	entries, err := srv.ListToolsForCWD(parentDir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// parentDir is not under repoA or repoB — it's the parent, so no match.
-	// Multiple groups registered → sentinel (can't do singleton fallback).
-	if !isSentinelOnly(entries) {
-		t.Logf("tools: %v", toolNames(entries))
-		// Ambiguous → full list is also acceptable; only sentinel is wrong here
-		// if we get the full list for a known-unregistered cwd.
-		// Re-check: parentDir is NOT under repoA or repoB, so it should be sentinel.
-		t.Fatalf("expected sentinel for cwd outside all groups with multiple groups, got %d tools", len(entries))
+	if isSentinelOnly(entries) {
+		t.Fatalf("expected full tool list for multi-group unmatched cwd (#2620), got sentinel only")
+	}
+	// Sentinel must NOT appear in the full list.
+	for _, e := range entries {
+		if e.Name == sentinelToolName {
+			t.Errorf("sentinel must not appear in full tool list for multi-group unmatched cwd")
+		}
+	}
+}
+
+// TestListToolsForCWD_SingleGroup_RootCwd_FullList — #2620: bridge launched
+// with cwd=/ (Windsurf JetBrains) and exactly one group registered → full
+// tool list via singleton fallback.
+func TestListToolsForCWD_SingleGroup_RootCwd_FullList(t *testing.T) {
+	repoDir := t.TempDir()
+	srv := makeTestServer(t, map[string]map[string]string{
+		"upvate": {"upvate_core": repoDir},
+	})
+
+	entries, err := srv.ListToolsForCWD("/")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if isSentinelOnly(entries) {
+		t.Fatalf("expected full tool list for single-group singleton fallback with cwd=/ (#2620), got sentinel only")
+	}
+	// Sentinel must NOT appear.
+	for _, e := range entries {
+		if e.Name == sentinelToolName {
+			t.Errorf("sentinel must not appear in full tool list for singleton fallback")
+		}
+	}
+	if len(entries) < 5 {
+		t.Errorf("full list suspiciously small: %d tools", len(entries))
 	}
 }
 

@@ -238,17 +238,42 @@ func (s *Server) ListToolsForCWD(cwd string) ([]MCPToolEntry, error) {
 	}
 
 	// Three paths that lead to the sentinel:
-	//   1. No group covers cwd (group == "" and not ambiguous).
-	//   2. No groups are registered at all.
-	//   3. Group resolved but has 0 repos (empty group, needs rebuild).
-	noMatch := group == "" && len(candidates) == 0 && len(s.State.registry.Groups) > 0
+	//   1. No groups are registered at all.
+	//   2. Group resolved but has 0 repos (empty group, needs rebuild).
+	//   3. No group covers cwd AND multiple groups registered AND none is singleton.
+	//      (Sentinel here would be unhelpful — handled below.)
 	unregistered := len(s.State.registry.Groups) == 0
 
-	if noMatch || unregistered || groupEmpty {
+	// cwd is outside ALL registered group paths (group == "" and not ambiguous).
+	noDirectMatch := group == "" && len(candidates) == 0 && len(s.State.registry.Groups) > 0
+
+	if noDirectMatch {
+		// #2620: Singleton-group fallback — when exactly one group is registered,
+		// use it as the implicit default regardless of cwd. This makes the bridge
+		// usable from hosts (Windsurf JetBrains, Codex) that launch with cwd=/
+		// or any directory that is not under a registered repo path.
+		if len(s.State.registry.Groups) == 1 {
+			for gname, grp := range s.State.registry.Groups {
+				group = gname
+				if len(grp.Repos) == 0 {
+					groupEmpty = true
+				}
+				break
+			}
+		} else {
+			// Multiple groups registered and cwd is unmatched: return the full tool
+			// catalog anyway. Each tool that requires a group will error at call time
+			// with a "specify group= (registered groups: ...)" message. Downgrading
+			// to sentinel here makes the bridge completely unusable (#2620).
+			return s.fullToolList()
+		}
+	}
+
+	if unregistered || groupEmpty {
 		return s.sentinelToolList(cwd, group, groupEmpty), nil
 	}
 
-	// Ambiguous or unambiguous match: return the full catalog.
+	// Ambiguous or unambiguous match (including singleton fallback): return the full catalog.
 	return s.fullToolList()
 }
 
