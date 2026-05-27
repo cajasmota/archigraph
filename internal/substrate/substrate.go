@@ -129,6 +129,7 @@ func Languages() []string {
 //
 // Slug list:
 //   - Phase 0 T1 (#2761): jsts, python, java, go
+//   - Phase 0 T2 (#2762): ruby, php, rust, csharp, kotlin, elixir, scala, c-cpp
 //   - Phase 0 T3 (#2763): dart, groovy, lua, swift, clojure, crystal, elm,
 //     erlang, fsharp, haskell, nim, ocaml, reasonml, rescript, sml,
 //     solidity, zig, svelte, vue, astro
@@ -154,6 +155,25 @@ func LanguageForPath(path string) string {
 		return "java"
 	case hasSuffix(path, ".go"):
 		return "go"
+	case hasSuffix(path, ".rb"), hasSuffix(path, ".rake"):
+		return "ruby"
+	case hasSuffix(path, ".php"), hasSuffix(path, ".phtml"):
+		return "php"
+	case hasSuffix(path, ".rs"):
+		return "rust"
+	case hasSuffix(path, ".cs"):
+		return "csharp"
+	case hasSuffix(path, ".kt"), hasSuffix(path, ".kts"):
+		return "kotlin"
+	case hasSuffix(path, ".ex"), hasSuffix(path, ".exs"):
+		return "elixir"
+	case hasSuffix(path, ".scala"), hasSuffix(path, ".sc"):
+		return "scala"
+	case hasSuffix(path, ".c"), hasSuffix(path, ".h"),
+		hasSuffix(path, ".cc"), hasSuffix(path, ".cpp"),
+		hasSuffix(path, ".cxx"), hasSuffix(path, ".hpp"),
+		hasSuffix(path, ".hh"), hasSuffix(path, ".hxx"):
+		return "c-cpp"
 	case hasSuffix(path, ".dart"):
 		return "dart"
 	case hasSuffix(path, ".groovy"), hasSuffix(path, ".gradle"):

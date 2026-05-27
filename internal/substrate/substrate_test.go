@@ -14,10 +14,26 @@ func TestLanguageForPath(t *testing.T) {
 		"a.pyi":    "python",
 		"a.java":   "java",
 		"a.go":     "go",
-		"a.rs":     "",
+		"a.rs":     "rust",
 		"":         "",
 		"a.txt":    "",
 		"foo/x.go": "go",
+		"a.rb":     "ruby",
+		"a.rake":   "ruby",
+		"a.php":    "php",
+		"a.phtml":  "php",
+		"a.cs":     "csharp",
+		"a.kt":     "kotlin",
+		"a.kts":    "kotlin",
+		"a.ex":     "elixir",
+		"a.exs":    "elixir",
+		"a.scala":  "scala",
+		"a.sc":     "scala",
+		"a.c":      "c-cpp",
+		"a.h":      "c-cpp",
+		"a.cc":     "c-cpp",
+		"a.cpp":    "c-cpp",
+		"a.hpp":    "c-cpp",
 		// T3 (#2763): one assertion per registered extension.
 		"a.dart":   "dart",
 		"a.groovy": "groovy",
@@ -55,6 +71,8 @@ func TestLanguageForPath(t *testing.T) {
 func TestRegisterAndSnifferFor(t *testing.T) {
 	for _, lang := range []string{
 		"jsts", "python", "java", "go",
+		// T2 (#2762) — every registered slug must have a sniffer.
+		"ruby", "php", "rust", "csharp", "kotlin", "elixir", "scala", "c-cpp",
 		// T3 (#2763) — every registered slug must have a sniffer.
 		"dart", "groovy", "lua", "swift", "clojure", "crystal", "elm",
 		"erlang", "fsharp", "haskell", "nim", "ocaml", "reasonml",

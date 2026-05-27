@@ -12,22 +12,22 @@ Back to [summary](../summary.md).
 
 | Name | Routing | Security | Validation | Middleware | Testing | Observability | Data | Substrate | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | — | |
-| [Javalin (Kotlin)](../detail/lang.kotlin.framework.javalin.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
-| [Ktor](../detail/lang.kotlin.framework.ktor.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
-| [Micronaut (Kotlin)](../detail/lang.kotlin.framework.micronaut.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
-| [Quarkus (Kotlin)](../detail/lang.kotlin.framework.quarkus.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
-| [Spring Boot (Kotlin)](../detail/lang.kotlin.framework.spring-boot.md) | ✅ 2/2 | ⚠️ 0/1 | — | ❌ 0/1 | — | — | — | — | |
-| [http4k](../detail/lang.kotlin.framework.http4k.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | — | |
-| [kotlinx.coroutines (structured concurrency)](../detail/lang.kotlin.framework.coroutines.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | — | |
+| [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Javalin (Kotlin)](../detail/lang.kotlin.framework.javalin.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Ktor](../detail/lang.kotlin.framework.ktor.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Micronaut (Kotlin)](../detail/lang.kotlin.framework.micronaut.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Quarkus (Kotlin)](../detail/lang.kotlin.framework.quarkus.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Spring Boot (Kotlin)](../detail/lang.kotlin.framework.spring-boot.md) | ✅ 2/2 | ⚠️ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [http4k](../detail/lang.kotlin.framework.http4k.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [kotlinx.coroutines (structured concurrency)](../detail/lang.kotlin.framework.coroutines.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | ⚠️ 2/3 | |
 
 
 ### Mobile
 
 | Name | Structure | Navigation | Platform | Native Bridge | Data Flow | Type System | Lifecycle | Testing | Substrate | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| [Jetpack Compose (Android UI)](../detail/lang.kotlin.framework.compose.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | — | |
-| [Kotlin Multiplatform (KMP / KMM)](../detail/lang.kotlin.framework.kmp.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | — | |
+| [Jetpack Compose (Android UI)](../detail/lang.kotlin.framework.compose.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 2/3 | |
+| [Kotlin Multiplatform (KMP / KMM)](../detail/lang.kotlin.framework.kmp.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 2/3 | |
 
 
 ### Desktop

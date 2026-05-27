@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [swift](../by-language/swift.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 4
+- **Capability cells:** 1
 
 ## Capabilities
 
@@ -51,9 +51,6 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `constant_propagation` | ✅ `full` | `2026-05-27` | — | [link](https://github.com/cajasmota/archigraph/issues/2763) | `internal/links/constant_propagation.go`<br>`internal/substrate/substrate.go`<br>`internal/substrate/swift.go` | — |
-| `env_fallback_recognition` | ✅ `full` | `2026-05-27` | — | [link](https://github.com/cajasmota/archigraph/issues/2763) | `internal/links/constant_propagation.go`<br>`internal/substrate/substrate.go`<br>`internal/substrate/swift.go` | — |
-| `import_resolution_quality` | ⚠️ `partial` | `2026-05-27` | — | [link](https://github.com/cajasmota/archigraph/issues/2763) | `internal/links/constant_propagation.go`<br>`internal/substrate/substrate.go`<br>`internal/substrate/swift.go` | — |
 
 ## Provenance
 
