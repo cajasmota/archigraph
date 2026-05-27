@@ -664,6 +664,8 @@ func (x *extractor) handleFunctionDeclaration(n *sitter.Node, parentClass string
 	// graph is complete.
 	rels = append(rels, x.extractJSXRendersRelationships(body, name)...)
 	x.emitWithRels(name, "SCOPE.Operation", n, subtype, sig, rels)
+	// Issue #2654 — stamp discriminator comparisons found in the body.
+	x.stampDiscriminators(body)
 
 	// Recurse into the body for nested declarations.
 	// Increment funcDepth so handleVariableDeclarator suppresses non-addressable
@@ -738,6 +740,8 @@ func (x *extractor) handleMethodDefinition(n *sitter.Node, _ string, cb *classBi
 	frame := x.functionParamFrame(params, cb)
 	rels := x.extractCallRelationships(body, name, frame)
 	x.emitWithRels(name, "SCOPE.Operation", n, "method", fmt.Sprintf("method %s", name), rels)
+	// Issue #2654 — stamp discriminator comparisons found in the body.
+	x.stampDiscriminators(body)
 }
 
 // handlePublicFieldDefinition handles class-body field assignments whose RHS
@@ -829,6 +833,8 @@ func (x *extractor) handlePublicFieldDefinition(n *sitter.Node, parentClass stri
 	sig := fmt.Sprintf("%s%s = (...) =>", sigParts, name)
 
 	x.emitWithRels(name, "SCOPE.Operation", valueNode, "method", sig, rels)
+	// Issue #2654 — stamp discriminator comparisons found in the body.
+	x.stampDiscriminators(body)
 
 	// Recurse into the body for nested declarations.
 	// Increment funcDepth so nested const declarations inside this arrow
@@ -1160,6 +1166,8 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 		// Issue #610 — PascalCase arrow components emit RENDERS edges.
 		rels = append(rels, x.extractJSXRendersRelationships(body, name)...)
 		x.emitWithRels(name, "SCOPE.Operation", valueNode, subtype, fmt.Sprintf("const %s = (...) =>", name), rels)
+		// Issue #2654 — stamp discriminator comparisons found in the body.
+		x.stampDiscriminators(body)
 		if body != nil {
 			// Increment funcDepth so nested const declarations inside this
 			// arrow body are not emitted as addressable entities (#1748).
@@ -1180,6 +1188,8 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 		// Issue #610 — PascalCase function-expression components emit RENDERS edges.
 		rels = append(rels, x.extractJSXRendersRelationships(body, name)...)
 		x.emitWithRels(name, "SCOPE.Operation", valueNode, subtype, fmt.Sprintf("const %s = function", name), rels)
+		// Issue #2654 — stamp discriminator comparisons found in the body.
+		x.stampDiscriminators(body)
 		if body != nil {
 			// Increment funcDepth so nested const declarations inside this
 			// function-expression body are not emitted as addressable entities (#1748).

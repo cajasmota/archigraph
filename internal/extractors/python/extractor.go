@@ -696,8 +696,11 @@ func walkNode(
 			}
 			rec.Relationships = append(rec.Relationships,
 				extractCallRelationships(node.ChildByFieldName("body"), file.Content, selfName, parentClass, imports, constReg)...)
+			funcIdx := len(*out)
 			*out = append(*out, rec)
 			*funcCount++
+			// Issue #2654 — stamp discriminator comparisons found in the body.
+			stampPythonDiscriminators(node.ChildByFieldName("body"), file.Content, out, funcIdx)
 		}
 		return // do not recurse into function body for nested definitions
 
@@ -719,8 +722,11 @@ func walkNode(
 				}
 				rec.Relationships = append(rec.Relationships,
 					extractCallRelationships(inner.ChildByFieldName("body"), file.Content, selfName, parentClass, imports, constReg)...)
+				decoratedFuncIdx := len(*out)
 				*out = append(*out, rec)
 				*funcCount++
+				// Issue #2654 — stamp discriminator comparisons found in the body.
+				stampPythonDiscriminators(inner.ChildByFieldName("body"), file.Content, out, decoratedFuncIdx)
 			}
 		case "class_definition":
 			rec := buildClass(inner, file)
