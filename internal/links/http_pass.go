@@ -141,6 +141,77 @@ func stripAPIPrefix(normalizedPath string) (string, bool) {
 	return stripped, stripped != normalizedPath
 }
 
+// urlParamNormRe matches all common path-parameter placeholder styles and
+// replaces them with the sentinel <PARAM> for confidence-boosted URL-pattern
+// normalization (#2588). Unlike pathParamRe (which collapses to {*} for byPath
+// index lookup), this sentinel is used exclusively in normalizeURLPattern to
+// decide whether two paths are structurally identical across param-syntax styles.
+//
+// Styles recognised:
+//   - {name}, {pk}, {userId}          — curly-brace (OpenAPI / DRF router)
+//   - <name>, <int:pk>, <slug:name>   — angle-bracket (Django URL conf)
+//   - :name, :pk                      — colon prefix (Express / Rails)
+var urlParamNormRe = regexp.MustCompile(`\{[^}]+\}|<[^>]+>|:[a-zA-Z][a-zA-Z0-9_]*`)
+
+// normalizeURLPattern returns a canonical form of a URL path suitable for
+// confidence-boosted cross-repo matching (#2588). It:
+//  1. Strips a query-string suffix (everything from the first `?`).
+//  2. Lowercases the path (HTTP paths are case-insensitive in practice).
+//  3. Replaces all path-parameter placeholders — {name}, <name>, <name:type>,
+//     :name — with the uniform sentinel <PARAM>.
+//  4. Strips a trailing slash (unless the path is just "/").
+//
+// This is intentionally a higher-level transform than normalizePathForIndex
+// (which uses {*} and is part of the byPath index key). normalizeURLPattern
+// is only used by applyURLPatternNorm to decide whether a candidate link
+// deserves a confidence boost, and is exported for unit-testing.
+func normalizeURLPattern(path string) string {
+	// 1. Strip query string.
+	if i := strings.IndexByte(path, '?'); i >= 0 {
+		path = path[:i]
+	}
+	// 2. Lowercase.
+	path = strings.ToLower(path)
+	// 3. Unify param placeholders to <PARAM>.
+	path = urlParamNormRe.ReplaceAllString(path, "<PARAM>")
+	// 4. Strip trailing slash (preserve bare "/").
+	if len(path) > 1 {
+		path = strings.TrimRight(path, "/")
+		if path == "" {
+			path = "/"
+		}
+	}
+	return path
+}
+
+// applyURLPatternNorm checks whether the consumer and producer canonical paths
+// match after normalizeURLPattern is applied. If they do, it returns a boosted
+// confidence value (urlPatternNormConfidence) and the annotation key
+// "url_pattern"; otherwise it returns 0 and "".
+//
+// Callers MUST only invoke this when the standard byPath lookup missed
+// (p == nil before the prefix-injection retry) so the boost is applied
+// exclusively to pairs that are structurally equivalent but syntactically
+// different.
+func applyURLPatternNorm(consumerPath, producerPath string) (confidence float64, annotation string) {
+	if consumerPath == "" || producerPath == "" {
+		return 0, ""
+	}
+	normC := normalizeURLPattern(consumerPath)
+	normP := normalizeURLPattern(producerPath)
+	if normC == normP {
+		return urlPatternNormConfidence, "url_pattern"
+	}
+	return 0, ""
+}
+
+// urlPatternNormConfidence is the boosted confidence score applied when two
+// HTTP endpoint paths differ only in their path-parameter syntax (e.g.
+// /users/{id} vs /users/<pk:int>) and normalizeURLPattern makes them identical.
+// Placed in the P1 band (structural, high-signal) because a param-syntax-only
+// difference is an implementation detail, not an architectural ambiguity.
+const urlPatternNormConfidence = 0.95
+
 // crossRepoPrefixCandidates is the ordered list of well-known API mount
 // prefixes tried when a consumer path has no prefix of its own and the
 // standard byPath probing misses (#2569). This mirrors prefixCandidates in
@@ -434,6 +505,33 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 		}
 	}
 
+	// #2588 — URL-pattern normalization index. Keyed by normalizeURLPattern(path)
+	// so that paths differing only in param syntax ({id} vs <pk:int>) or a
+	// trailing query string (/users?foo=bar vs /users) can be matched in the
+	// orphan-retry sweep below. Only producer hits are indexed here; consumer
+	// hits are looked up against it during the sweep.
+	byNormPattern := map[string][]*httpEndpointHit{}
+	for _, byRepo := range hits {
+		for _, perRepo := range byRepo {
+			for _, h := range perRepo {
+				if h.side != sideProducer {
+					continue
+				}
+				producerPath := h.canonicalPath
+				if producerPath == "" {
+					if _, p, ok := parseHTTPName(h.name); ok {
+						producerPath = p
+					}
+				}
+				if producerPath == "" {
+					continue
+				}
+				normKey := normalizeURLPattern(producerPath)
+				byNormPattern[normKey] = append(byNormPattern[normKey], h)
+			}
+		}
+	}
+
 	now := discoveredAt()
 	emitted := map[string]bool{}
 	var fresh []Link
@@ -605,6 +703,48 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 					}
 				}
 
+				// URL-pattern normalization retry (#2588): when both the standard
+				// byPath lookup AND the prefix-injection retry miss, attempt to
+				// match the consumer path against every producer in the target repo
+				// using normalizeURLPattern. This resolves the 374-candidate case
+				// where client emits /inspections/{id} and server emits
+				// /api/v1/inspections/<pk:int> — different param syntax only.
+				//
+				// When a normalized match is found, confidence is boosted to
+				// urlPatternNormConfidence (0.95) and Properties["normalization"]
+				// is set to "url_pattern" so the resolution is traceable.
+				var urlPatternNormAnnotation string
+				var urlPatternNormConfidenceVal float64
+				if p == nil {
+					consumerPath := c.canonicalPath
+					if consumerPath == "" {
+						if _, parsed, ok := parseHTTPName(c.name); ok {
+							consumerPath = parsed
+						}
+					}
+					if consumerPath != "" {
+						for _, candidate := range producersByRepo[pRepo] {
+							if !verbsCompatible(c.verb, candidate.verb) {
+								continue
+							}
+							producerPath := candidate.canonicalPath
+							if producerPath == "" {
+								if _, parsed, ok := parseHTTPName(candidate.name); ok {
+									producerPath = parsed
+								}
+							}
+							conf, ann := applyURLPatternNorm(consumerPath, producerPath)
+							if conf > 0 {
+								p = candidate
+								quality = matchQualityAnyFallback
+								urlPatternNormAnnotation = ann
+								urlPatternNormConfidenceVal = conf
+								break
+							}
+						}
+					}
+				}
+
 				if p == nil {
 					continue
 				}
@@ -635,13 +775,17 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 
 				ident := canonicalIdentifier(c, p)
 				ch := httpChannel
+				confidence := ScoreImport()
+				if urlPatternNormConfidenceVal > 0 {
+					confidence = urlPatternNormConfidenceVal
+				}
 				link := Link{
 					ID:           id,
 					Source:       source,
 					Target:       target,
 					Relation:     RelationCalls,
 					Method:       MethodHTTP,
-					Confidence:   ScoreImport(),
+					Confidence:   confidence,
 					Channel:      &ch,
 					Identifier:   &ident,
 					DiscoveredAt: now,
@@ -654,7 +798,121 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 				if prefixNormalized != "" {
 					link.Properties = map[string]string{"prefix_normalized": prefixNormalized}
 				}
+				if urlPatternNormAnnotation != "" {
+					if link.Properties == nil {
+						link.Properties = map[string]string{}
+					}
+					link.Properties["normalization"] = urlPatternNormAnnotation
+				}
 				fresh = append(fresh, link)
+			}
+		}
+	}
+
+	// #2588 — URL-pattern normalization orphan-retry sweep.
+	//
+	// Consumer hits that the main loop could not match (different entity-name
+	// bucket AND byPath missed) are retried here using the byNormPattern index.
+	// This resolves cases where:
+	//   • the consumer emits a query-string-carrying path (/users?foo=bar vs /users)
+	//   • the param syntax differs so radically that pathParamRe + byPath still
+	//     misses (edge cases not covered by the inline retry inside the main loop)
+	//
+	// We iterate all consumer hits, skip already-matched ones, and probe
+	// byNormPattern[normalizeURLPattern(consumerPath)] for same-verb producers
+	// in OTHER repos.
+	for _, byRepo := range hits {
+		for _, perRepo := range byRepo {
+			for _, c := range perRepo {
+				if c.side != sideConsumer {
+					continue
+				}
+				cKey := entityKey(c.repo, c.stampedID)
+				if matchedConsumers[cKey] {
+					continue // already resolved by main loop
+				}
+				consumerPath := c.canonicalPath
+				if consumerPath == "" {
+					if _, p, ok := parseHTTPName(c.name); ok {
+						consumerPath = p
+					}
+				}
+				if consumerPath == "" {
+					continue
+				}
+				normKey := normalizeURLPattern(consumerPath)
+				candidates := byNormPattern[normKey]
+				if len(candidates) == 0 {
+					continue
+				}
+				// Filter to other repos, verb-compatible producers.
+				var eligible []*httpEndpointHit
+				for _, p := range candidates {
+					if p.repo == c.repo {
+						continue
+					}
+					if !verbsCompatible(c.verb, p.verb) {
+						continue
+					}
+					eligible = appendUnique(eligible, p)
+				}
+				if len(eligible) == 0 {
+					continue
+				}
+				sort.SliceStable(eligible, func(i, j int) bool { return less(eligible[i], eligible[j]) })
+				// Group by producer repo and pick one per repo.
+				producersByRepo2 := map[string][]*httpEndpointHit{}
+				for _, p := range eligible {
+					producersByRepo2[p.repo] = append(producersByRepo2[p.repo], p)
+				}
+				pRepoNames2 := make([]string, 0, len(producersByRepo2))
+				for r := range producersByRepo2 {
+					pRepoNames2 = append(pRepoNames2, r)
+				}
+				sort.Strings(pRepoNames2)
+				allConsumers[cKey] = true
+				for _, pRepo := range pRepoNames2 {
+					p, _ := pickProducerForConsumer(c, producersByRepo2[pRepo])
+					if p == nil {
+						continue
+					}
+					srcID := c.callerID
+					if srcID == "" {
+						srcID = c.stampedID
+					}
+					tgtID := p.handlerID
+					if tgtID == "" {
+						tgtID = p.stampedID
+					}
+					source := entityKey(c.repo, srcID)
+					target := entityKey(p.repo, tgtID)
+					id := MakeID(source, target, MethodHTTP)
+					if emitted[id] {
+						continue
+					}
+					emitted[id] = true
+					matchedConsumers[cKey] = true
+					ident := canonicalIdentifier(c, p)
+					ch := httpChannel
+					link := Link{
+						ID:           id,
+						Source:       source,
+						Target:       target,
+						Relation:     RelationCalls,
+						Method:       MethodHTTP,
+						Confidence:   urlPatternNormConfidence,
+						Channel:      &ch,
+						Identifier:   &ident,
+						DiscoveredAt: now,
+						SourceLocations: [][]string{
+							{c.sourceFile},
+							{p.sourceFile},
+						},
+						MatchQuality: matchQualityAnyFallback,
+						Properties:   map[string]string{"normalization": "url_pattern"},
+					}
+					fresh = append(fresh, link)
+				}
 			}
 		}
 	}
