@@ -60,6 +60,7 @@ package links
 // import_pass, label_pass, and string_pass intact.
 
 import (
+	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -345,14 +346,32 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 	// so that placeholder names ({pk}, {param}, {id}, :id, etc.) from different
 	// extractors all collapse to the same bucket key {*}. The original
 	// canonicalPath is preserved on every hit object for identifier emission.
+	//
+	// #2558: When canonicalPath is empty, fall back to the parsed path from
+	// the hit.name to avoid silent skip. This handles consumer-side hits where
+	// canonicalPath may not be populated but the endpoint name carries the path.
 	byPath := map[string][]*httpEndpointHit{}
+	hitsProcessed := 0
+	hitsCanonicalEmpty := 0
 	for _, byRepo := range hits {
 		for _, perRepo := range byRepo {
 			for _, h := range perRepo {
-				if h.canonicalPath == "" {
+				hitsProcessed++
+				path := h.canonicalPath
+				if path == "" {
+					hitsCanonicalEmpty++
+					// Fallback: parse path from the canonical name if
+					// canonicalPath is empty. This mirrors the fallback
+					// logic above (lines 300-308) and ensures consumer
+					// hits without a populated path property still register.
+					if _, p, ok := parseHTTPName(h.name); ok {
+						path = p
+					}
+				}
+				if path == "" {
 					continue
 				}
-				key := normalizePathForIndex(h.canonicalPath)
+				key := normalizePathForIndex(path)
 				byPath[key] = append(byPath[key], h)
 
 				// #819 — also index under the prefix-stripped path when the
@@ -361,9 +380,9 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 				// API-version prefix (e.g. fetch('/buildings/') vs server at
 				// '/api/v1/buildings/') still find the producer via byPath.
 				// We only strip when h.urlPrefix is a valid path prefix of
-				// h.canonicalPath to avoid false-positive strip-downs.
-				if h.urlPrefix != "" && strings.HasPrefix(h.canonicalPath, h.urlPrefix) {
-					stripped := h.canonicalPath[len(h.urlPrefix):]
+				// the (possibly fallback) path to avoid false-positive strip-downs.
+				if h.urlPrefix != "" && strings.HasPrefix(path, h.urlPrefix) {
+					stripped := path[len(h.urlPrefix):]
 					if stripped == "" {
 						stripped = "/"
 					}
@@ -563,6 +582,15 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 	}
 	res.LinksAdded = added
 	res.Skipped = skipped
+
+	// Diagnostic logging: #2558 tracking of empty canonicalPath handling.
+	// These counters help identify if the fallback path resolution is covering
+	// consumer-side hits that would have been silently dropped in prior versions.
+	if hitsProcessed > 0 {
+		log.Printf("http_pass: hits_processed=%d, hits_canonical_empty=%d, links_registered=%d",
+			hitsProcessed, hitsCanonicalEmpty, len(fresh))
+	}
+
 	return res, nil
 }
 

@@ -1682,3 +1682,88 @@ func TestHTTPPass_CrossBucketConsumerCollision(t *testing.T) {
 		t.Errorf("#1445 regression: consumerA (http:GET:/roles) not linked to handler1 via prefix-strip; links=%+v", doc.Links)
 	}
 }
+
+// TestHTTPPass_HandlesEmptyCanonicalPath verifies that consumer-side hits with
+// empty canonicalPath (path property not populated) are still registered and
+// matched via the fallback path parsed from the hit.name. This addresses #2558:
+// previously such hits were silently dropped from the byPath index, causing
+// orphaned consumer synthetics and inflating the orphan-count metric.
+func TestHTTPPass_HandlesEmptyCanonicalPath(t *testing.T) {
+	root := fixtureRoot(t)
+	// Producer side: typical backend endpoint with full properties.
+	writeFixture(t, root, fixtureGraph{
+		Repo: "backend",
+		Entities: []map[string]any{
+			{
+				"id": "h1", "name": "ProductView", "kind": "Controller",
+				"source_file": "app/views.py",
+			},
+			{
+				"id": "ep1", "name": "http:GET:/products/{id}", "kind": "http_endpoint",
+				"source_file": "app/views.py",
+				"properties": map[string]any{
+					"verb":         "GET",
+					"path":         "/products/{id}",
+					"framework":    "django",
+					"pattern_type": "http_endpoint_synthesis",
+				},
+			},
+		},
+		Edges: []map[string]string{
+			{"from_id": "h1", "to_id": "ep1", "kind": "IMPLEMENTS"},
+		},
+	})
+	// Consumer side: endpoint with EMPTY canonicalPath but valid name.
+	// This simulates a consumer hit where the path property was not populated
+	// during synthesis but the name still carries the full http:VERB:path form.
+	writeFixture(t, root, fixtureGraph{
+		Repo: "frontend",
+		Entities: []map[string]any{
+			{
+				"id": "fn1", "name": "fetchProduct", "kind": "Function",
+				"source_file": "src/api.ts",
+			},
+			{
+				"id": "ep2", "name": "http:GET:/products/{id}", "kind": "http_endpoint_call",
+				"source_file": "src/api.ts",
+				"properties": map[string]any{
+					"verb":          "GET",
+					"path":          "", // EMPTY: this is the #2558 case
+					"framework":     "fetch",
+					"pattern_type":  "http_endpoint_client_synthesis",
+					"source_caller": "Function:fetchProduct",
+				},
+			},
+		},
+		Edges: []map[string]string{},
+	})
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("ghttp2558", root, home); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "ghttp2558-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var hit *Link
+	for i, l := range doc.Links {
+		if l.Method == MethodHTTP {
+			hit = &doc.Links[i]
+			break
+		}
+	}
+	// The fix: consumer hit with empty canonicalPath must still register and link.
+	if hit == nil {
+		t.Fatalf("#2558 regression: expected http-method link for consumer with empty canonicalPath, got none; links=%+v", doc.Links)
+	}
+	if hit.Source != "frontend::fn1" {
+		t.Errorf("source: want frontend::fn1 (resolved caller), got %s", hit.Source)
+	}
+	if hit.Target != "backend::h1" {
+		t.Errorf("target: want backend::h1 (resolved handler), got %s", hit.Target)
+	}
+	// Identifier should still use the path from the fallback, not empty.
+	if hit.Identifier == nil || !strings.Contains(*hit.Identifier, "/products/") {
+		t.Errorf("identifier should contain /products/; got %v", hit.Identifier)
+	}
+}
