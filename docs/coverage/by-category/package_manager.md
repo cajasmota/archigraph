@@ -1,14 +1,14 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # package_manager
 
-**Total**: 15 records · **csharp**: 1 · **dart**: 1 · **elixir**: 1 · **go**: 1 · **java**: 2 · **JS/TS**: 1 · **php**: 1 · **python**: 3 · **ruby**: 1 · **rust**: 1 · **scala**: 1 · **swift**: 1
+**Total**: 15 records · **C#**: 1 · **dart**: 1 · **elixir**: 1 · **go**: 1 · **java**: 2 · **JS/TS**: 1 · **php**: 1 · **python**: 3 · **ruby**: 1 · **rust**: 1 · **scala**: 1 · **swift**: 1
 
 Back to [summary](../summary.md). Bucket: **Tools**.
 
 
 | Language | Name | Dependency Graph | Lockfile Parsing | Manifest Parsing | Target Extraction | Notes |
 |---|---|---|---|---|---|---|
-| [csharp](../by-language/csharp.md) | [.csproj / packages.config](../detail/pkg.csproj.md) | — | ❌ | ❌ | — | |
+| [C#](../by-language/csharp.md) | [.csproj / packages.config](../detail/pkg.csproj.md) | — | ❌ | ❌ | — | |
 | [dart](../by-language/dart.md) | [pubspec.yaml](../detail/pkg.pubspec.md) | — | ❌ | ✅ | — | |
 | [elixir](../by-language/elixir.md) | [mix.exs](../detail/pkg.mix.md) | — | — | ❌ | — | |
 | [go](../by-language/go.md) | [go.mod](../detail/pkg.go-mod.md) | — | ⚠️ | ✅ | — | |

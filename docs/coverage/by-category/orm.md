@@ -1,27 +1,27 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 143 records · **csharp**: 14 · **elixir**: 10 · **go**: 17 · **java**: 13 · **JS/TS**: 18 · **kotlin**: 7 · **php**: 14 · **python**: 17 · **ruby**: 13 · **rust**: 14 · **scala**: 6
+**Total**: 143 records · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 13 · **JS/TS**: 18 · **kotlin**: 7 · **php**: 14 · **python**: 17 · **ruby**: 13 · **rust**: 14 · **scala**: 6
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
 
 | Language | Name | Migration Parsing | Model Extraction | Query Attribution | Notes |
 |---|---|---|---|---|---|
-| [csharp](../by-language/csharp.md) | [AWSSDK.DynamoDBv2](../detail/lang.csharp.driver.dynamodb.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [CassandraCSharpDriver](../detail/lang.csharp.driver.cassandra.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [Dapper](../detail/lang.csharp.orm.dapper.md) | ❌ | ⚠️ | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [Entity Framework Core](../detail/lang.csharp.orm.efcore.md) | ❌ | ✅ | ✅ | |
-| [csharp](../by-language/csharp.md) | [LINQ to SQL](../detail/lang.csharp.orm.linq-to-sql.md) | ❌ | ⚠️ | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [LinqToDB](../detail/lang.csharp.orm.linqtodb.md) | ❌ | ❌ | ❌ | |
-| [csharp](../by-language/csharp.md) | [Microsoft.Data.Sqlite](../detail/lang.csharp.driver.sqlite.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [MongoDB.Driver (C#)](../detail/lang.csharp.driver.mongodb.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [MySQL.Data / MySqlConnector](../detail/lang.csharp.driver.mysql.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [NEST (Elasticsearch .NET)](../detail/lang.csharp.driver.elastic.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [NHibernate](../detail/lang.csharp.orm.nhibernate.md) | ❌ | ⚠️ | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [Neo4j.Driver (C#)](../detail/lang.csharp.driver.neo4j.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [Npgsql (PostgreSQL)](../detail/lang.csharp.driver.npgsql.md) | — | — | ⚠️ | |
-| [csharp](../by-language/csharp.md) | [StackExchange.Redis](../detail/lang.csharp.driver.redis.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [AWSSDK.DynamoDBv2](../detail/lang.csharp.driver.dynamodb.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [CassandraCSharpDriver](../detail/lang.csharp.driver.cassandra.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [Dapper](../detail/lang.csharp.orm.dapper.md) | ❌ | ⚠️ | ⚠️ | |
+| [C#](../by-language/csharp.md) | [Entity Framework Core](../detail/lang.csharp.orm.efcore.md) | ❌ | ✅ | ✅ | |
+| [C#](../by-language/csharp.md) | [LINQ to SQL](../detail/lang.csharp.orm.linq-to-sql.md) | ❌ | ⚠️ | ⚠️ | |
+| [C#](../by-language/csharp.md) | [LinqToDB](../detail/lang.csharp.orm.linqtodb.md) | ❌ | ❌ | ❌ | |
+| [C#](../by-language/csharp.md) | [Microsoft.Data.Sqlite](../detail/lang.csharp.driver.sqlite.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [MongoDB.Driver (C#)](../detail/lang.csharp.driver.mongodb.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [MySQL.Data / MySqlConnector](../detail/lang.csharp.driver.mysql.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [NEST (Elasticsearch .NET)](../detail/lang.csharp.driver.elastic.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [NHibernate](../detail/lang.csharp.orm.nhibernate.md) | ❌ | ⚠️ | ⚠️ | |
+| [C#](../by-language/csharp.md) | [Neo4j.Driver (C#)](../detail/lang.csharp.driver.neo4j.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [Npgsql (PostgreSQL)](../detail/lang.csharp.driver.npgsql.md) | — | — | ⚠️ | |
+| [C#](../by-language/csharp.md) | [StackExchange.Redis](../detail/lang.csharp.driver.redis.md) | — | — | ⚠️ | |
 | [elixir](../by-language/elixir.md) | [Ecto](../detail/lang.elixir.orm.ecto.md) | ❌ | ✅ | ✅ | |
 | [elixir](../by-language/elixir.md) | [ExAws DynamoDB](../detail/lang.elixir.driver.dynamodb.md) | — | — | ⚠️ | |
 | [elixir](../by-language/elixir.md) | [MyXQL](../detail/lang.elixir.driver.myxql.md) | — | — | ⚠️ | |

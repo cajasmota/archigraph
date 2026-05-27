@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
-# csharp
+# C#
 
 **Frameworks**: 15 · **Tools**: 7 · **ORMs**: 14 · **Other**: 0
 

@@ -10,9 +10,13 @@
 {{- range .Rows}}
 {{- if .Uncategorized}}
 | {{.Display}} | {{.Frameworks}} | {{.Tools}} | {{.ORMs}} | {{.Other}} |
+{{- else if .Untracked}}
+| [{{.Display}}](by-language/{{.Name}}.md) † | 0 | 0 | 0 | 0 |
 {{- else}}
 | [{{.Display}}](by-language/{{.Name}}.md) | {{.Frameworks}} | {{.Tools}} | {{.ORMs}} | {{.Other}} |
 {{- end}}
 {{- end}}
-
+{{if .UntrackedLangs}}
+† Extractor supported but no ecosystem records tracked yet: {{range $i, $l := .UntrackedLangs}}{{if $i}}, {{end}}{{$l}}{{end}}.
+{{end}}
 Total: {{.TotalFrameworks}} frameworks · {{.TotalTools}} tools · {{.TotalORMs}} ORMs · {{.TotalOther}} other
