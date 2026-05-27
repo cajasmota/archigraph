@@ -313,9 +313,23 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 			continue
 		}
 
+		// #2691 — Rails-style cross-file hint: when the synthesizer
+		// supplied a `handler_file` property (derived from
+		// 'users#index' → app/controllers/users_controller.rb plus
+		// any enclosing namespace stack), prefer that file as the
+		// same-file lookup target. This disambiguates method names
+		// shared across many controllers (every Rails app has dozens
+		// of `index` / `show` / `create` methods) BEFORE the global
+		// (kind, name) fallback picks the first arbitrary match.
+		lookupFile := r.SourceFile
+		if r.Properties != nil {
+			if hf := r.Properties["handler_file"]; hf != "" {
+				lookupFile = hf
+			}
+		}
 		// Prefer same-file match (handlers and route synthetics are
 		// often emitted from the same file by Phase 1 construction).
-		handlerIdx, found := idx[key{hk, hn, r.SourceFile}]
+		handlerIdx, found := idx[key{hk, hn, lookupFile}]
 		if !found {
 			// Cross-file fallback (#753). Django composed routes record
 			// a `View:<ViewSet>` handler reference whose entity lives in
@@ -403,8 +417,9 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 				r.Language = handler.Language
 			}
 		}
-		// Clear the now-redundant property.
+		// Clear the now-redundant properties.
 		delete(r.Properties, "source_handler")
+		delete(r.Properties, "handler_file")
 		stats.HandlerResolved++
 	}
 
