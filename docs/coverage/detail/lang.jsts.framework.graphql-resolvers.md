@@ -13,21 +13,21 @@ Auto-generated. Back to [summary](../summary.md).
 
 ### Schema
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `procedure_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/graphql/frameworks/apollo_server.yaml`<br>`internal/engine/rules/graphql/frameworks/graphql_yoga.yaml` |
-| `schema_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/graphql/frameworks/graphql_schema.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `procedure_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/graphql/frameworks/apollo_server.yaml`<br>`internal/engine/rules/graphql/frameworks/graphql_yoga.yaml` | — |
+| `schema_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/graphql/frameworks/graphql_schema.yaml` | — |
 
 ### Codegen
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `client_codegen` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2735) | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `client_codegen` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2735) | — | — |
 
 ### Transport
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
 
 ## Provenance
 

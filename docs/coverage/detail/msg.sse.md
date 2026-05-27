@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `consumer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/sse_edges.go` |
-| `producer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/sse_edges.go` |
-| `topic_attribution` | — `not_applicable` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `consumer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/sse_edges.go` | — |
+| `producer_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/sse_edges.go` | — |
+| `topic_attribution` | — `not_applicable` | — | — | — | — | — |
 
 ## Provenance
 

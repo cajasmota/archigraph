@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `consumer_extraction` | ❌ `missing` | — | — | — | — |
-| `producer_extraction` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `consumer_extraction` | ❌ `missing` | — | — | — | — | — |
+| `producer_extraction` | ❌ `missing` | — | — | — | — | — |
 
 ## Provenance
 

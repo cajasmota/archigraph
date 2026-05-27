@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | ❌ `missing` | — | — | — | — |
-| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/ruby/frameworks/rom_rb_ruby_object_mapper.yaml`<br>`internal/engine/rules/ruby/orms/rom_rb_as_orm.yaml` |
-| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/ruby/orms/rom_rb_as_orm.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | ❌ `missing` | — | — | — | — | — |
+| `model_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/ruby/frameworks/rom_rb_ruby_object_mapper.yaml`<br>`internal/engine/rules/ruby/orms/rom_rb_as_orm.yaml` | — |
+| `query_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/ruby/orms/rom_rb_as_orm.yaml` | — |
 
 ## Provenance
 

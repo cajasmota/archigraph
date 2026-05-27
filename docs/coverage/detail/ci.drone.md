@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `env_resolution` | ❌ `missing` | — | — | — | — |
-| `file_parsing` | ❌ `missing` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `env_resolution` | ❌ `missing` | — | — | — | — | — |
+| `file_parsing` | ❌ `missing` | — | — | — | — | — |
 
 ## Provenance
 

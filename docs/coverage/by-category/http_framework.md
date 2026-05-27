@@ -29,32 +29,32 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 
 | Language | Name | Structure | Data Flow | Navigation | Type System | Lifecycle | Testing | Notes |
 |---|---|---|---|---|---|---|---|---|
-| [JS/TS](../by-language/jsts.md) | [Angular](../detail/lang.jsts.framework.angular.md) | ❌ 0/3 | ❌ 0/3 | ❌ 0/1 | — | — | — | |
-| [JS/TS](../by-language/jsts.md) | [React](../detail/lang.jsts.framework.react.md) | ⚠️ 0/3 | ⚠️ 0/3 | ✅ 1/1 | — | — | — | |
-| [JS/TS](../by-language/jsts.md) | [Svelte](../detail/lang.jsts.framework.svelte.md) | ❌ 0/3 | ❌ 0/3 | ❌ 0/1 | — | — | — | |
-| [JS/TS](../by-language/jsts.md) | [Vue](../detail/lang.jsts.framework.vue.md) | ❌ 0/3 | ❌ 0/3 | ❌ 0/1 | — | — | — | |
+| [JS/TS](../by-language/jsts.md) | [Angular](../detail/lang.jsts.framework.angular.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [React](../detail/lang.jsts.framework.react.md) | ⚠️ 3/5 | ⚠️ 2/4 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Svelte](../detail/lang.jsts.framework.svelte.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Vue](../detail/lang.jsts.framework.vue.md) | ❌ 0/5 | ❌ 0/4 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
 
 
 ## Meta Framework
 
-| Language | Name | Structure | Data Flow | Server | Routing | Build | Notes |
-|---|---|---|---|---|---|---|---|
-| [JS/TS](../by-language/jsts.md) | [Astro](../detail/lang.jsts.framework.astro.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | |
-| [JS/TS](../by-language/jsts.md) | [Gatsby](../detail/lang.jsts.framework.gatsby.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 0/2 | ❌ 0/1 | |
-| [JS/TS](../by-language/jsts.md) | [Next.js API Routes / App Router](../detail/lang.jsts.framework.next-api.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ✅ 2/2 | ❌ 0/1 | |
-| [JS/TS](../by-language/jsts.md) | [Nuxt](../detail/lang.jsts.framework.nuxt.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | |
-| [JS/TS](../by-language/jsts.md) | [Remix](../detail/lang.jsts.framework.remix.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | |
-| [JS/TS](../by-language/jsts.md) | [SvelteKit](../detail/lang.jsts.framework.sveltekit.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | |
+| Language | Name | Structure | Data Flow | Server | Routing | Build | Type System | Lifecycle | Testing | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| [JS/TS](../by-language/jsts.md) | [Astro](../detail/lang.jsts.framework.astro.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Gatsby](../detail/lang.jsts.framework.gatsby.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 0/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Next.js API Routes / App Router](../detail/lang.jsts.framework.next-api.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ✅ 2/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Nuxt](../detail/lang.jsts.framework.nuxt.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Remix](../detail/lang.jsts.framework.remix.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [SvelteKit](../detail/lang.jsts.framework.sveltekit.md) | ❌ 0/2 | ❌ 0/1 | ❌ 0/2 | ❌ 1/2 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
 
 
 ## Mobile
 
-| Language | Name | Navigation | Platform | Native Bridge | Data Flow | Lifecycle | Notes |
-|---|---|---|---|---|---|---|---|
-| [JS/TS](../by-language/jsts.md) | [Expo](../detail/lang.jsts.framework.expo.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 0/1 | — | |
-| [JS/TS](../by-language/jsts.md) | [Ionic](../detail/lang.jsts.framework.ionic.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/1 | — | |
-| [JS/TS](../by-language/jsts.md) | [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/1 | — | |
-| [JS/TS](../by-language/jsts.md) | [React Native](../detail/lang.jsts.framework.react-native.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 0/1 | — | |
+| Language | Name | Structure | Navigation | Platform | Native Bridge | Data Flow | Type System | Lifecycle | Testing | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| [JS/TS](../by-language/jsts.md) | [Expo](../detail/lang.jsts.framework.expo.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [Ionic](../detail/lang.jsts.framework.ionic.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ✅ 3/3 | ❌ 0/1 | ✅ 1/1 | |
+| [JS/TS](../by-language/jsts.md) | [React Native](../detail/lang.jsts.framework.react-native.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | |
 
 
 ## Desktop

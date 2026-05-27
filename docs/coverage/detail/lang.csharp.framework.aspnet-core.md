@@ -9,12 +9,12 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_coverage` | ❌ `missing` | — | — | — | — |
-| `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go`<br>`internal/engine/rules/csharp/frameworks/asp_net_core.yaml` |
-| `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go` |
-| `middleware_coverage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_coverage` | ❌ `missing` | — | — | — | — | — |
+| `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go`<br>`internal/engine/rules/csharp/frameworks/asp_net_core.yaml` | — |
+| `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go` | — |
+| `middleware_coverage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go` | — |
 
 ## Provenance
 

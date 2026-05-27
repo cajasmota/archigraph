@@ -143,13 +143,17 @@ type Record struct {
 	FrameworkSpecific map[string]map[string]Capability
 }
 
-// Capability is a single capability cell on a record.
+// Capability is a single capability cell on a record. Notes is an
+// optional free-form scope clarification surfaced on detail pages —
+// used when the capability's slug is broader than what the extractor
+// actually covers (e.g. React's prop_extraction is JSX-navigation only).
 type Capability struct {
 	Status      string   `json:"status"`
 	Cites       []string `json:"cites,omitempty"`
 	VerifiedAt  string   `json:"verified_at,omitempty"`
 	VerifiedSHA string   `json:"verified_sha,omitempty"`
 	Issue       string   `json:"issue,omitempty"`
+	Notes       string   `json:"notes,omitempty"`
 }
 
 // IsGrouped reports whether the record carries grouped capabilities.
@@ -191,11 +195,12 @@ func (r Record) MarshalJSON() ([]byte, error) {
 		VerifiedAt  string   `json:"verified_at,omitempty"`
 		VerifiedSHA string   `json:"verified_sha,omitempty"`
 		Issue       string   `json:"issue,omitempty"`
+		Notes       string   `json:"notes,omitempty"`
 	}
 	toWire := func(c Capability) capWire {
 		return capWire{
 			Status: c.Status, Cites: c.Cites, VerifiedAt: c.VerifiedAt,
-			VerifiedSHA: c.VerifiedSHA, Issue: c.Issue,
+			VerifiedSHA: c.VerifiedSHA, Issue: c.Issue, Notes: c.Notes,
 		}
 	}
 	out := struct {
@@ -439,6 +444,14 @@ var subcategoryCapabilities = map[string]map[string][]string{
 			"data_fetching",
 			"router_pattern",
 			"jsx_template",
+			"context_extraction",
+			"hoc_wrapper_recognition",
+			"branch_conditions",
+			"interface_extraction",
+			"type_alias_extraction",
+			"enum_extraction",
+			"state_setter_emission",
+			"tests_linkage",
 		},
 		"meta_framework": {
 			"server_components",
@@ -449,6 +462,11 @@ var subcategoryCapabilities = map[string]map[string][]string{
 			"component_extraction",
 			"hook_recognition",
 			"router_pattern",
+			"interface_extraction",
+			"type_alias_extraction",
+			"enum_extraction",
+			"state_setter_emission",
+			"tests_linkage",
 		},
 		"mobile": {
 			"navigation_extraction",
@@ -457,6 +475,14 @@ var subcategoryCapabilities = map[string]map[string][]string{
 			"screen_detection",
 			"deep_link_extraction",
 			"state_management",
+			"context_extraction",
+			"hoc_wrapper_recognition",
+			"branch_conditions",
+			"interface_extraction",
+			"type_alias_extraction",
+			"enum_extraction",
+			"state_setter_emission",
+			"tests_linkage",
 		},
 		"desktop": {
 			"ipc_extraction",
@@ -521,19 +547,22 @@ var subcategoryDisplay = map[string]string{
 // and column order in the pivot table both follow this slice.
 var subcategoryGroups = map[string][]capabilityGroup{
 	"ui_frontend": {
-		{Name: "Structure", Keys: []string{"component_extraction", "hook_recognition", "jsx_template"}},
-		{Name: "Data Flow", Keys: []string{"prop_extraction", "state_management", "data_fetching"}},
+		{Name: "Structure", Keys: []string{"component_extraction", "hook_recognition", "jsx_template", "context_extraction", "hoc_wrapper_recognition"}},
+		{Name: "Data Flow", Keys: []string{"prop_extraction", "state_management", "data_fetching", "branch_conditions"}},
 		{Name: "Navigation", Keys: []string{"router_pattern"}},
-		{Name: "Type System", Keys: []string{}},
-		{Name: "Lifecycle", Keys: []string{}},
-		{Name: "Testing", Keys: []string{}},
+		{Name: "Type System", Keys: []string{"interface_extraction", "type_alias_extraction", "enum_extraction"}},
+		{Name: "Lifecycle", Keys: []string{"state_setter_emission"}},
+		{Name: "Testing", Keys: []string{"tests_linkage"}},
 	},
 	"mobile": {
+		{Name: "Structure", Keys: []string{"context_extraction", "hoc_wrapper_recognition"}},
 		{Name: "Navigation", Keys: []string{"navigation_extraction", "deep_link_extraction", "screen_detection"}},
 		{Name: "Platform", Keys: []string{"platform_branching"}},
 		{Name: "Native Bridge", Keys: []string{"native_module_imports"}},
-		{Name: "Data Flow", Keys: []string{"state_management"}},
-		{Name: "Lifecycle", Keys: []string{}},
+		{Name: "Data Flow", Keys: []string{"state_management", "branch_conditions"}},
+		{Name: "Type System", Keys: []string{"interface_extraction", "type_alias_extraction", "enum_extraction"}},
+		{Name: "Lifecycle", Keys: []string{"state_setter_emission"}},
+		{Name: "Testing", Keys: []string{"tests_linkage"}},
 	},
 	"http_backend": {
 		{Name: "Routing", Keys: []string{"endpoint_synthesis", "handler_attribution", "route_extraction"}},
@@ -550,6 +579,9 @@ var subcategoryGroups = map[string][]capabilityGroup{
 		{Name: "Server", Keys: []string{"server_components", "hydration_boundaries"}},
 		{Name: "Routing", Keys: []string{"route_extraction", "router_pattern"}},
 		{Name: "Build", Keys: []string{"static_generation"}},
+		{Name: "Type System", Keys: []string{"interface_extraction", "type_alias_extraction", "enum_extraction"}},
+		{Name: "Lifecycle", Keys: []string{"state_setter_emission"}},
+		{Name: "Testing", Keys: []string{"tests_linkage"}},
 	},
 	"desktop": {
 		{Name: "Process", Keys: []string{"ipc_extraction", "main_renderer_split"}},

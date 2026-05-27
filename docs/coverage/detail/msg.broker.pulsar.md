@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `consumer_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/pulsar_edges.go` |
-| `producer_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/pulsar_edges.go` |
-| `topic_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/pulsar_edges.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `consumer_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/pulsar_edges.go` | — |
+| `producer_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/pulsar_edges.go` | — |
+| `topic_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/pulsar_edges.go` | — |
 
 ## Provenance
 

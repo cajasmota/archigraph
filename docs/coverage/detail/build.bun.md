@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `dependency_graph` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/build_tools.yaml` |
-| `target_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/build_tools.yaml` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `dependency_graph` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/build_tools.yaml` | — |
+| `target_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/javascript_typescript/build_tools.yaml` | — |
 
 ## Provenance
 

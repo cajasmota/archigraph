@@ -352,6 +352,7 @@ func writeCapability(buf *bytes.Buffer, indent, key string, cap Capability) erro
 		{"status", cap.Status, true},
 		{"cites", cap.Cites, len(cap.Cites) > 0},
 		{"issue", cap.Issue, cap.Issue != ""},
+		{"notes", cap.Notes, cap.Notes != ""},
 		{"verified_at", cap.VerifiedAt, cap.VerifiedAt != ""},
 		{"verified_sha", cap.VerifiedSHA, cap.VerifiedSHA != ""},
 	}

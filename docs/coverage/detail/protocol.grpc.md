@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `cross_repo_linkage` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` |
-| `method_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` |
-| `service_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `cross_repo_linkage` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` | — |
+| `method_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` | — |
+| `service_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/grpc_edges.go` | — |
 
 ## Provenance
 

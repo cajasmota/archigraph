@@ -9,9 +9,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_policy` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/1942) | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_policy` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/1942) | — | — |
 
 ## Provenance
 

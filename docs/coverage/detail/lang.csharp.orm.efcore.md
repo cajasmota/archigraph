@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | ❌ `missing` | — | — | — | — |
-| `model_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/csharp/frameworks/entity_framework_core.yaml`<br>`internal/engine/rules/csharp/orms/entity_framework_core.yaml` |
-| `query_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/orm_queries_other.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | ❌ `missing` | — | — | — | — | — |
+| `model_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/rules/csharp/frameworks/entity_framework_core.yaml`<br>`internal/engine/rules/csharp/orms/entity_framework_core.yaml` | — |
+| `query_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/orm_queries_other.go` | — |
 
 ## Provenance
 

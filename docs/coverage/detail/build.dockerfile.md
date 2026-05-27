@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `dependency_graph` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/dockerfile/dockerfile.go` |
-| `target_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/dockerfile/dockerfile.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `dependency_graph` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/dockerfile/dockerfile.go` | — |
+| `target_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/dockerfile/dockerfile.go` | — |
 
 ## Provenance
 

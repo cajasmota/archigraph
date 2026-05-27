@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `dependency_graph` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/tests_edges.go` |
-| `target_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/csharp/test_patterns.yaml`<br>`internal/engine/tests_edges.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `dependency_graph` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/tests_edges.go` | — |
+| `target_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/csharp/test_patterns.yaml`<br>`internal/engine/tests_edges.go` | — |
 
 ## Provenance
 

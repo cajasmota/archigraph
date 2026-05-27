@@ -9,12 +9,12 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `auth_coverage` | — `not_applicable` | — | — | — | — |
-| `endpoint_synthesis` | — `not_applicable` | — | — | — | — |
-| `handler_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/frameworks/compose_desktop.yaml` |
-| `middleware_coverage` | — `not_applicable` | — | — | — | — |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `auth_coverage` | — `not_applicable` | — | — | — | — | — |
+| `endpoint_synthesis` | — `not_applicable` | — | — | — | — | — |
+| `handler_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/frameworks/compose_desktop.yaml` | — |
+| `middleware_coverage` | — `not_applicable` | — | — | — | — | — |
 
 ## Provenance
 

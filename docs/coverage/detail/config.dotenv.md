@@ -9,10 +9,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `env_resolution` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/config/discover.go` |
-| `file_parsing` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/config/discover.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `env_resolution` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/config/discover.go` | — |
+| `file_parsing` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/config/discover.go` | — |
 
 ## Provenance
 

@@ -9,11 +9,11 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | ❌ `missing` | — | — | — | — |
-| `model_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/orm_field_edges.go`<br>`internal/engine/rules/java/orms/spring_data_jpa.yaml` |
-| `query_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/orm_queries.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `migration_parsing` | ❌ `missing` | — | — | — | — | — |
+| `model_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/orm_field_edges.go`<br>`internal/engine/rules/java/orms/spring_data_jpa.yaml` | — |
+| `query_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/orm_queries.go` | — |
 
 ## Provenance
 

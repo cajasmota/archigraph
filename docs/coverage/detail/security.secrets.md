@@ -9,9 +9,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `secret_detection` | ✅ `full` | `2026-05-28` | — | — | `internal/secrets/secrets.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `secret_detection` | ✅ `full` | `2026-05-28` | — | — | `internal/secrets/secrets.go` | — |
 
 ## Provenance
 

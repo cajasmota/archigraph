@@ -9,9 +9,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Capabilities
 
-| Capability | Status | Verified at | Verified SHA | Issue | Cites |
-|------------|--------|-------------|--------------|-------|-------|
-| `resource_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/workflow_edges.go` |
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `resource_extraction` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/workflow_edges.go` | — |
 
 ## Provenance
 
