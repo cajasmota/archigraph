@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites |
 |------------|--------|-------------|--------------|-------|-------|
-| `migration_parsing` | `full` | `2026-05-28` | — | — | `internal/extractors/python/extractor.go` |
-| `model_extraction` | `full` | `2026-05-28` | — | — | `internal/extractors/python/extractor.go` |
+| `migration_parsing` | `full` | `2026-05-28` | — | — | `internal/extractors/python/django_migration.go` |
+| `model_extraction` | `full` | `2026-05-28` | — | — | `internal/extractors/python/django_relational.go`<br>`internal/extractors/python/extractor.go` |
 | `query_attribution` | `full` | `2026-05-28` | — | — | `internal/engine/orm_queries_python.go` |
 
 ## Provenance

@@ -1,0 +1,24 @@
+<!-- DO NOT EDIT — generated from docs/coverage.json by 'go run ./tools/coverage gen' -->
+# `config.properties` — .properties (application.properties)
+
+Auto-generated. Back to [summary](../summary.md).
+
+- **Language:** [java](../by-language/java.md)
+- **Category:** [configuration](../by-category/configuration.md)
+- **Capability cells:** 1
+
+## Capabilities
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites |
+|------------|--------|-------------|--------------|-------|-------|
+| `file_parsing` | `full` | `2026-05-28` | — | — | `internal/engine/java_auth_policy.go` |
+
+## Provenance
+
+This record is sourced from `docs/coverage.json`. To update it, edit the JSON
+(or use `go run ./tools/coverage update config.properties ...`) then regenerate:
+
+```
+go run ./tools/coverage validate
+go run ./tools/coverage gen
+```

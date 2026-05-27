@@ -5,7 +5,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 - **Language:** [javascript](../by-language/javascript.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
-- **Capability cells:** 2
+- **Capability cells:** 3
 
 ## Capabilities
 
@@ -13,6 +13,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|--------------|-------|-------|
 | `auth_coverage` | `partial` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/1942) | `internal/engine/java_auth_policy.go` |
 | `endpoint_synthesis` | `full` | `2026-05-27` | — | — | `internal/engine/http_endpoint_synthesis.go` |
+| `handler_attribution` | `full` | `2026-05-28` | — | — | `internal/engine/http_endpoint_synthesis.go` |
 
 ## Provenance
 

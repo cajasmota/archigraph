@@ -1,0 +1,30 @@
+name: coverage-docs
+on:
+  pull_request:
+    paths:
+      - 'docs/coverage.json'
+      - 'tools/coverage/**'
+      - 'docs/coverage/**'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/coverage.json'
+      - 'tools/coverage/**'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Validate schema + cites
+        run: go run ./tools/coverage validate
+      - name: Regenerate docs
+        run: go run ./tools/coverage gen
+      - name: Verify docs are in sync with JSON
+        run: |
+          if ! git diff --exit-code docs/coverage/; then
+            echo "::error::docs/coverage/*.md is stale. Run 'go run ./tools/coverage gen' locally and commit."
+            exit 1
+          fi

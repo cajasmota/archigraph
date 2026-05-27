@@ -1,0 +1,24 @@
+<!-- DO NOT EDIT — generated from docs/coverage.json by 'go run ./tools/coverage gen' -->
+# `config.jenkins` — Jenkinsfile / Jenkins Pipeline DSL
+
+Auto-generated. Back to [summary](../summary.md).
+
+- **Language:** [multi](../by-language/multi.md)
+- **Category:** [configuration](../by-category/configuration.md)
+- **Capability cells:** 1
+
+## Capabilities
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites |
+|------------|--------|-------------|--------------|-------|-------|
+| `file_parsing` | `missing` | — | — | — | — |
+
+## Provenance
+
+This record is sourced from `docs/coverage.json`. To update it, edit the JSON
+(or use `go run ./tools/coverage update config.jenkins ...`) then regenerate:
+
+```
+go run ./tools/coverage validate
+go run ./tools/coverage gen
+```

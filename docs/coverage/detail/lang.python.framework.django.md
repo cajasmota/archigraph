@@ -1,0 +1,26 @@
+<!-- DO NOT EDIT — generated from docs/coverage.json by 'go run ./tools/coverage gen' -->
+# `lang.python.framework.django` — Django (URLconf)
+
+Auto-generated. Back to [summary](../summary.md).
+
+- **Language:** [python](../by-language/python.md)
+- **Category:** [http_framework](../by-category/http_framework.md)
+- **Capability cells:** 3
+
+## Capabilities
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites |
+|------------|--------|-------------|--------------|-------|-------|
+| `auth_coverage` | `partial` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/1942) | — |
+| `endpoint_synthesis` | `full` | `2026-05-28` | — | — | `internal/engine/django_routes.go`<br>`internal/engine/django_urlconf_nested.go`<br>`internal/engine/http_endpoint_synthesis.go` |
+| `handler_attribution` | `full` | `2026-05-28` | — | — | `internal/engine/django_drf_actions.go` |
+
+## Provenance
+
+This record is sourced from `docs/coverage.json`. To update it, edit the JSON
+(or use `go run ./tools/coverage update lang.python.framework.django ...`) then regenerate:
+
+```
+go run ./tools/coverage validate
+go run ./tools/coverage gen
+```

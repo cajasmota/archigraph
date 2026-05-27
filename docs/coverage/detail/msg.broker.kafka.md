@@ -12,7 +12,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Verified SHA | Issue | Cites |
 |------------|--------|-------------|--------------|-------|-------|
 | `consumer_extraction` | `full` | `2026-05-28` | — | — | `internal/engine/kafka_edges.go` |
-| `producer_extraction` | `full` | `2026-05-28` | — | — | `internal/engine/kafka_edges.go` |
+| `producer_extraction` | `full` | `2026-05-28` | — | — | `internal/engine/kafka_edges.go`<br>`internal/engine/kafka_wrapper_edges.go` |
 | `topic_attribution` | `full` | `2026-05-28` | — | — | `internal/links/topic_pass.go` |
 
 ## Provenance
