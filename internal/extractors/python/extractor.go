@@ -142,6 +142,10 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	// Issue #2548: Django migration files are now pruned by default (zero
 	// domain logic, pure ORM scaffolding). Opt-in via ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1
 	// for backward compatibility or when migration analysis is needed.
+	//
+	// Issue #2587: Ensure the file-level check actually skips semantic entity
+	// extraction. Return early with either just the file entity (default) or
+	// file + one Migration entity (opt-in).
 	if isDjangoMigrationFile(file.Path) {
 		emitMigrations := os.Getenv(emitMigrationEntitiesEnv) == "1" || os.Getenv(emitMigrationEntitiesEnv) == "true"
 		if emitMigrations {
