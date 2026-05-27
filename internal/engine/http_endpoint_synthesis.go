@@ -241,6 +241,28 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		}
 	}
 
+	// emitFile wraps emit and stamps `handler_file` (cross-file hint,
+	// #2691 — Rails maps "users#index" to app/controllers/users_controller.rb)
+	// plus StartLine (#2691 — Sinatra anchors the synthetic at its verb
+	// block line in the same file). Either may be empty / 0.
+	emitFile := func(method, canonicalPath, framework, refKind, refName, handlerFile string, defLine int) {
+		before := len(entities)
+		emit(method, canonicalPath, framework, refKind, refName)
+		if len(entities) == before {
+			return
+		}
+		last := &entities[len(entities)-1]
+		if handlerFile != "" {
+			if last.Properties == nil {
+				last.Properties = map[string]string{}
+			}
+			last.Properties["handler_file"] = handlerFile
+		}
+		if defLine > 0 {
+			last.StartLine = defLine
+		}
+	}
+
 	// makeRuntimeEmit wraps the consumer-side emit with a FETCHES edge
 	// emission (#721). The edge's FromID is a kind-qualified reference
 	// (`<kind>:<name>`) that the downstream resolver binds to a stamped
@@ -374,6 +396,16 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// languages share the same Spring APIs.
 		synthesizeJavaClientWithRuntime(string(content), emitClientRuntime)
 	case "ruby":
+		// Producer side (#2691): Rails routes.rb DSL + Sinatra verb blocks.
+		// Rails synthesizer derives the expected controller file path from the
+		// "users#index" handler ref + enclosing namespace stack and stamps it as
+		// `handler_file`; the resolver post-pass (#2680 rebind) consumes that hint
+		// for path-targeted same-file lookup.
+		synthesizeRailsRoutes(string(content), path, emitFile)
+		// Sinatra blocks are inline — same-file by construction. emitFile stamps
+		// StartLine on the synthetic so the audit2678 attribution lands on the
+		// verb block's line in app.rb.
+		synthesizeSinatra(string(content), path, emitFile)
 		// Consumer side (#721 wave 2b): Net::HTTP, Faraday, HTTParty, RestClient.
 		synthesizeRubyClientWithRuntime(string(content), emitClientRuntime)
 	case "csharp":
