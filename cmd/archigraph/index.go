@@ -1025,6 +1025,30 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 		}
 	}
 
+	// Pass 2.8 — multi-hop TESTS edges via HTTP client calls (#2549/#2556).
+	// Synthesises TESTS edges from test functions to ViewSet/handler entities
+	// by following HTTP client call sites through the ROUTES_TO graph.
+	// Must run before releaseClassifiedASTs since we need file content access.
+	if !i.skipPasses[PassFramework] && len(classified) > 0 {
+		// Gather all paths and build the file-content lookup.
+		var allPaths []string
+		contentByPath := make(map[string][]byte, len(classified))
+		for k := range classified {
+			cf := &classified[k]
+			allPaths = append(allPaths, cf.relPath)
+			if cf.content != nil {
+				contentByPath[cf.relPath] = cf.content
+			}
+		}
+		reader := func(p string) []byte { return contentByPath[p] }
+
+		testsEdges := engine.ApplyTestsMultiHopViaHTTP(allPaths, reader, pass2Rels)
+		if len(testsEdges) > 0 {
+			fmt.Fprintf(os.Stderr, "archigraph: tests_multi_hop_http=%d edges\n", len(testsEdges))
+			pass2Rels = append(pass2Rels, testsEdges...)
+		}
+	}
+
 	// Issue #633 — release per-file AST trees + source bytes now that the
 	// last consumer (Pass 3 cross-language extractors) has finished. The
 	// classified slice is otherwise retained until Run() returns, which on
