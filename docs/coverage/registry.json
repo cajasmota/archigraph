@@ -1640,6 +1640,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -1666,6 +1683,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -1694,6 +1728,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -1720,6 +1771,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -1748,6 +1816,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -1774,6 +1859,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -1802,6 +1904,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -1828,6 +1947,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -1856,6 +1992,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -1882,6 +2035,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -1910,6 +2080,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -1936,6 +2123,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2003,6 +2207,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2030,6 +2251,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2056,6 +2294,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2496,6 +2751,23 @@
             "cites": ["internal/engine/aspnet_core_routes.go"],
             "verified_at": "2026-05-28"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2526,6 +2798,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2593,6 +2882,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2658,6 +2964,23 @@
         "Testing": {
           "tests_linkage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2725,6 +3048,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2751,6 +3091,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2779,6 +3136,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2800,6 +3174,23 @@
         "Codegen": {
           "client_codegen": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2827,6 +3218,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -2895,6 +3303,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -2921,6 +3346,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -3054,6 +3496,23 @@
         "Testing": {
           "tests_linkage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -3339,6 +3798,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -3370,6 +3846,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -3397,6 +3890,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -3423,6 +3933,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -3453,6 +3980,23 @@
           "middleware_coverage": {
             "status": "not_applicable"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -3481,6 +4025,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "not_applicable"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -3512,6 +4073,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -3577,6 +4155,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -3603,6 +4198,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -3845,15 +4457,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -3901,15 +4504,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -3959,15 +4553,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4015,15 +4600,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4073,15 +4649,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4129,15 +4696,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4209,15 +4767,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4265,15 +4814,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4359,15 +4899,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4415,15 +4946,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4473,15 +4995,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4529,15 +5042,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4587,15 +5091,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4643,15 +5138,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4701,15 +5187,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4757,15 +5234,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -4990,15 +5458,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -5082,15 +5541,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5176,15 +5626,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -5232,15 +5673,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5325,15 +5757,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -5377,15 +5800,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5435,15 +5849,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -5487,15 +5892,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5546,15 +5942,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5628,15 +6015,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -5684,15 +6062,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5775,15 +6144,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -5833,15 +6193,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5894,15 +6245,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -5970,15 +6312,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -6026,15 +6359,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -6119,15 +6443,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -6175,15 +6490,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -6684,15 +6990,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -6787,15 +7084,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -6908,15 +7196,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -7056,15 +7335,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       },
@@ -7132,15 +7402,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -7189,15 +7450,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -7241,15 +7493,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -7344,15 +7587,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -7397,15 +7631,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -7449,15 +7674,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -7506,15 +7722,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -7612,15 +7819,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -7668,15 +7866,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -7750,15 +7939,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -7856,15 +8036,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -7916,15 +8087,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -8025,15 +8187,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -8139,15 +8292,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -8191,15 +8335,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -8319,15 +8454,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -8440,15 +8566,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       },
@@ -8553,15 +8670,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -8606,15 +8714,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -8658,15 +8757,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -8762,15 +8852,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -8876,15 +8957,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -8929,15 +9001,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -9033,15 +9096,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -9253,6 +9307,23 @@
           "middleware_coverage": {
             "status": "not_applicable"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -9319,6 +9390,23 @@
         "Testing": {
           "tests_linkage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -9393,6 +9481,23 @@
           "middleware_coverage": {
             "status": "not_applicable"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -9424,6 +9529,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -9450,6 +9572,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -9518,6 +9657,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -9548,6 +9704,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -9580,6 +9753,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -9610,6 +9800,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -9643,6 +9850,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -9805,26 +10029,6 @@
           "endpoint_synthesis": {
             "status": "missing"
           }
-        },
-        "Substrate": {
-          "constant_propagation": {
-            "status": "full",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go","internal/substrate/substrate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          },
-          "env_fallback_recognition": {
-            "status": "full",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go","internal/substrate/substrate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          },
-          "import_resolution_quality": {
-            "status": "partial",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go","internal/substrate/substrate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          }
         }
       }
     },
@@ -9838,26 +10042,6 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "missing"
-          }
-        },
-        "Substrate": {
-          "constant_propagation": {
-            "status": "full",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go","internal/substrate/substrate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          },
-          "env_fallback_recognition": {
-            "status": "full",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go","internal/substrate/substrate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          },
-          "import_resolution_quality": {
-            "status": "partial",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go","internal/substrate/substrate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10061,6 +10245,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -10091,6 +10292,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10123,6 +10341,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -10153,6 +10388,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10185,6 +10437,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -10211,6 +10480,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10243,6 +10529,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -10269,6 +10572,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10301,6 +10621,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -10331,6 +10668,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10363,6 +10717,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -10393,6 +10764,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -10694,15 +11082,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -10751,15 +11130,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -10806,15 +11176,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -10858,15 +11219,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -10920,15 +11272,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -10978,15 +11321,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -11048,15 +11382,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11100,15 +11425,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -11160,15 +11476,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11217,15 +11524,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11269,15 +11567,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -11349,15 +11638,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11406,15 +11686,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11458,15 +11729,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -11516,15 +11778,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11572,15 +11825,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -11630,15 +11874,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11687,15 +11922,6 @@
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
-            "verified_at": "2026-05-28"
           }
         }
       }
@@ -11743,15 +11969,6 @@
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
-            "verified_at": "2026-05-28"
-          },
-          "confidence_overlay": {
-            "status": "full",
-            "cites": [
-              "internal/types/confidence.go",
-              "internal/graph/graph.go",
-              "internal/mcp/tools.go"
-            ],
             "verified_at": "2026-05-28"
           }
         }
@@ -12124,6 +12341,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12152,6 +12386,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "not_applicable"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12184,6 +12435,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12214,6 +12482,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12246,6 +12531,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12276,6 +12578,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12308,6 +12627,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12338,6 +12674,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12646,6 +12999,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12676,6 +13046,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12708,6 +13095,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12738,6 +13142,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12770,6 +13191,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12801,6 +13239,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12827,6 +13282,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12881,6 +13353,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -12907,6 +13396,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -12938,6 +13444,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -13069,6 +13592,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -13095,6 +13635,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -13124,6 +13681,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "not_applicable"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -13156,6 +13730,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -13187,6 +13778,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -13217,6 +13825,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -13282,6 +13907,23 @@
           "tests_linkage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -13313,6 +13955,23 @@
           "middleware_coverage": {
             "status": "missing"
           }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          }
         }
       }
     },
@@ -13343,6 +14002,23 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Substrate": {
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
+          },
+          "import_resolution_quality": {
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-05-27"
           }
         }
       }
@@ -13483,26 +14159,6 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "missing"
-          }
-        },
-        "Substrate": {
-          "constant_propagation": {
-            "status": "full",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/substrate.go","internal/substrate/swift.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          },
-          "env_fallback_recognition": {
-            "status": "full",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/substrate.go","internal/substrate/swift.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
-          },
-          "import_resolution_quality": {
-            "status": "partial",
-            "cites": ["internal/links/constant_propagation.go","internal/substrate/substrate.go","internal/substrate/swift.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2763",
-            "verified_at": "2026-05-27"
           }
         }
       }

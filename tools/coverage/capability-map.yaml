@@ -575,89 +575,234 @@ records:
           issues_implemented: ["2761"]
           verified_at: "2026-05-28"
 
-  lang.lua.framework.lapis:
+  lang.ruby.framework.rails:
     capabilities:
       Substrate:
         constant_propagation:
           status: full
           symbols:
-            - file: internal/substrate/lua.go
-              functions: [sniffLua]
+            - file: internal/substrate/ruby.go
+              functions: [sniffRuby]
             - file: internal/links/constant_propagation.go
               functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
-          issues_implemented: ["2763"]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
         env_fallback_recognition:
           status: full
           symbols:
-            - file: internal/substrate/lua.go
-              functions: [sniffLua]
-          issues_implemented: ["2763"]
+            - file: internal/substrate/ruby.go
+              functions: [sniffRuby]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
         import_resolution_quality:
           status: partial
           symbols:
-            - file: internal/substrate/lua.go
-              functions: [sniffLua]
+            - file: internal/substrate/ruby.go
+              functions: [sniffRuby]
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
-          issues_implemented: ["2763"]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
 
-  lang.lua.framework.openresty:
+  lang.php.framework.laravel:
     capabilities:
       Substrate:
         constant_propagation:
           status: full
           symbols:
-            - file: internal/substrate/lua.go
-              functions: [sniffLua]
+            - file: internal/substrate/php.go
+              functions: [sniffPHP]
             - file: internal/links/constant_propagation.go
               functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
-          issues_implemented: ["2763"]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
         env_fallback_recognition:
           status: full
           symbols:
-            - file: internal/substrate/lua.go
-              functions: [sniffLua]
-          issues_implemented: ["2763"]
+            - file: internal/substrate/php.go
+              functions: [sniffPHP]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
         import_resolution_quality:
           status: partial
           symbols:
-            - file: internal/substrate/lua.go
-              functions: [sniffLua]
+            - file: internal/substrate/php.go
+              functions: [sniffPHP]
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
-          issues_implemented: ["2763"]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
 
-  lang.swift.framework.vapor:
+  lang.rust.framework.axum:
     capabilities:
       Substrate:
         constant_propagation:
           status: full
           symbols:
-            - file: internal/substrate/swift.go
-              functions: [sniffSwift]
+            - file: internal/substrate/rust.go
+              functions: [sniffRust]
             - file: internal/links/constant_propagation.go
               functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
-          issues_implemented: ["2763"]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
         env_fallback_recognition:
           status: full
           symbols:
-            - file: internal/substrate/swift.go
-              functions: [sniffSwift]
-          issues_implemented: ["2763"]
+            - file: internal/substrate/rust.go
+              functions: [sniffRust]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
         import_resolution_quality:
           status: partial
           symbols:
-            - file: internal/substrate/swift.go
-              functions: [sniffSwift]
+            - file: internal/substrate/rust.go
+              functions: [sniffRust]
             - file: internal/links/constant_propagation.go
               functions: [indexFileForLookup]
-          issues_implemented: ["2763"]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+
+  lang.csharp.framework.aspnet-core:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/csharp.go
+              functions: [sniffCSharp]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/csharp.go
+              functions: [sniffCSharp]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/csharp.go
+              functions: [sniffCSharp]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+
+  lang.kotlin.framework.spring-boot:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/kotlin.go
+              functions: [sniffKotlin]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/kotlin.go
+              functions: [sniffKotlin]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/kotlin.go
+              functions: [sniffKotlin]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+
+  lang.elixir.framework.phoenix:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/elixir.go
+              functions: [sniffElixir]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/elixir.go
+              functions: [sniffElixir]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/elixir.go
+              functions: [sniffElixir]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+
+  lang.scala.framework.play:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/scala.go
+              functions: [sniffScala]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/scala.go
+              functions: [sniffScala]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/scala.go
+              functions: [sniffScala]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+
+  lang.c-cpp.framework.crow:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/c_cpp.go
+              functions: [sniffCCPP]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/c_cpp.go
+              functions: [sniffCCPP]
+          issues_implemented: ["2762"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/c_cpp.go
+              functions: [sniffCCPP]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2762"]
           verified_at: "2026-05-28"
