@@ -82,6 +82,7 @@
 package python
 
 import (
+	"strconv"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -417,6 +418,7 @@ func inspectForStmt(
 	}
 
 	// Emit one CALLS edge per callable entry.
+	forLine := strconv.Itoa(int(forStmt.StartPoint().Row) + 1)
 	var rels []types.RelationshipRecord
 	for _, entry := range entries {
 		key := seenKeyDD{target: entry.callLeaf, alias: entry.importAlias}
@@ -432,6 +434,7 @@ func inspectForStmt(
 				"call_leaf":       entry.callLeaf,
 				"data_dispatch":   "1",
 				"dispatch_source": constName,
+				"line":            forLine,
 			},
 		})
 	}

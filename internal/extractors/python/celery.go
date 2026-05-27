@@ -43,6 +43,7 @@ package python
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
@@ -240,6 +241,7 @@ func applyCeleryAnnotations(file extractor.FileInput, entities *[]types.EntityRe
 		if dup {
 			continue
 		}
+		callLine := strconv.Itoa(strings.Count(src[:idx[0]], "\n") + 1)
 		(*entities)[callerIdx].Relationships = append((*entities)[callerIdx].Relationships,
 			types.RelationshipRecord{
 				ToID: toID,
@@ -250,6 +252,7 @@ func applyCeleryAnnotations(file extractor.FileInput, entities *[]types.EntityRe
 					"pattern_type": "celery_dispatch",
 					"dispatch":     "async",
 					"method":       src[idx[4]:idx[5]],
+					"line":         callLine,
 				},
 			})
 	}

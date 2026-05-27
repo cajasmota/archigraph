@@ -33,6 +33,7 @@ package python
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -174,6 +175,7 @@ func applyAsyncSemantics(root *sitter.Node, file extractor.FileInput, entities *
 		if dup {
 			continue
 		}
+		callLine := strconv.Itoa(strings.Count(srcStr[:idx[0]], "\n") + 1)
 		(*entities)[callerIdx].Relationships = append((*entities)[callerIdx].Relationships,
 			types.RelationshipRecord{
 				ToID: ext,
@@ -184,6 +186,7 @@ func applyAsyncSemantics(root *sitter.Node, file extractor.FileInput, entities *
 					"pattern_type": "channel_layer_dispatch",
 					"method":       method,
 					"dispatch":     "async",
+					"line":         callLine,
 				},
 			})
 	}

@@ -28,6 +28,7 @@ package python
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/types"
@@ -111,7 +112,7 @@ func emitRawSQLDBCallEdges(src string, filePath string, entities *[]types.Entity
 				appendEdgeToFunc(entities, filePath, caller, types.RelationshipRecord{
 					ToID:       procName,
 					Kind:       "CALLS",
-					Properties: map[string]string{"raw_sql": "true", "call_type": "procedure"},
+					Properties: map[string]string{"raw_sql": "true", "call_type": "procedure", "line": strconv.Itoa(lineNum)},
 				})
 			}
 			continue

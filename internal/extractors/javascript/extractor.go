@@ -29,6 +29,7 @@ package javascript
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -1917,6 +1918,11 @@ func (x *extractor) extractCallRelationships(body *sitter.Node, callerName strin
 				if dbRel.ToID != target {
 					seen[dbRel.ToID] = true
 				}
+				// Stamp the call-site line number from the tree-sitter node.
+				if dbRel.Properties == nil {
+					dbRel.Properties = make(map[string]string, 1)
+				}
+				dbRel.Properties["line"] = strconv.Itoa(int(call.StartPoint().Row) + 1)
 				rels = append(rels, *dbRel)
 			}
 			continue
@@ -1926,14 +1932,16 @@ func (x *extractor) extractCallRelationships(body *sitter.Node, callerName strin
 		// receiver was bound to an Express-family or NestJS application
 		// object. The resolver checks this property before
 		// classifyDispositionLang to route the edge to DispositionDynamic.
+		callLine := strconv.Itoa(int(call.StartPoint().Row) + 1)
 		rel := types.RelationshipRecord{
 			ToID: target,
 			Kind: "CALLS",
+			Properties: map[string]string{
+				"line": callLine,
+			},
 		}
 		if pkg := x.frameworkDSL.receiverPackageForCall(x, call); pkg != "" {
-			rel.Properties = map[string]string{
-				PropReceiverPackage: pkg,
-			}
+			rel.Properties[PropReceiverPackage] = pkg
 		}
 		rels = append(rels, rel)
 		// Issue #2554 — React Query / TanStack Query hook calls pass inline
@@ -2069,7 +2077,8 @@ func (x *extractor) extractReactQueryHookCalls(call *sitter.Node, callerName str
 					ToID: target,
 					Kind: "CALLS",
 					Properties: map[string]string{
-						"via": "react_query_hook",
+						"via":  "react_query_hook",
+						"line": strconv.Itoa(int(ic.StartPoint().Row) + 1),
 					},
 				})
 			}
@@ -2126,6 +2135,8 @@ func (x *extractor) dispatchMapCallEdges(call *sitter.Node, callerName string) [
 
 	const viaProp = "dynamic_dispatch_map"
 
+	callLine := strconv.Itoa(int(call.StartPoint().Row) + 1)
+
 	// Literal string index — resolve to single handler via byKey.
 	if indexNode.Type() == "string" {
 		// Extract the string content (strip surrounding quotes).
@@ -2139,7 +2150,8 @@ func (x *extractor) dispatchMapCallEdges(call *sitter.Node, callerName string) [
 				ToID: h,
 				Kind: "CALLS",
 				Properties: map[string]string{
-					"via": viaProp,
+					"via":  viaProp,
+					"line": callLine,
 				},
 			}}
 		}
@@ -2158,7 +2170,8 @@ func (x *extractor) dispatchMapCallEdges(call *sitter.Node, callerName string) [
 			ToID: h,
 			Kind: "CALLS",
 			Properties: map[string]string{
-				"via": viaProp,
+				"via":  viaProp,
+				"line": callLine,
 			},
 		})
 	}

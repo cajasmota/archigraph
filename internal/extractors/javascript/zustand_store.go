@@ -47,6 +47,7 @@
 package javascript
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/types"
@@ -579,7 +580,8 @@ func (t *zustandTracker) zustandGetStateActionEdges(x *extractor, callNode *sitt
 		ToID: actionName,
 		Kind: "CALLS",
 		Properties: map[string]string{
-			"via": PropViaZustandStore,
+			"via":  PropViaZustandStore,
+			"line": strconv.Itoa(int(callNode.StartPoint().Row) + 1),
 		},
 	}
 	return []types.RelationshipRecord{rel}
@@ -697,7 +699,8 @@ func (t *zustandTracker) zustandSelectorActionEdges(x *extractor, callNode *sitt
 		ToID: actionName,
 		Kind: "CALLS",
 		Properties: map[string]string{
-			"via": PropViaZustandStore,
+			"via":  PropViaZustandStore,
+			"line": strconv.Itoa(int(callNode.StartPoint().Row) + 1),
 		},
 	}
 	return []types.RelationshipRecord{rel}

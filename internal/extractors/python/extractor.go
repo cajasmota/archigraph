@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -1042,6 +1043,7 @@ func extractCallRelationships(
 			continue
 		}
 		seen[key] = true
+		callLine := strconv.Itoa(int(call.StartPoint().Row) + 1)
 		r := types.RelationshipRecord{
 			ToID: target,
 			Kind: "CALLS",
@@ -1056,9 +1058,15 @@ func extractCallRelationships(
 			r.Properties = map[string]string{
 				"import_alias": importAlias,
 				"call_leaf":    target,
+				"line":         callLine,
 			}
 		case ambiguous:
-			r.Properties = map[string]string{"disposition_hint": "ambiguous"}
+			r.Properties = map[string]string{
+				"disposition_hint": "ambiguous",
+				"line":             callLine,
+			}
+		default:
+			r.Properties = map[string]string{"line": callLine}
 		}
 		rels = append(rels, r)
 	}
