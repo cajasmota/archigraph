@@ -51,10 +51,22 @@
 package engine
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/types"
 )
+
+// goFrameworkRetargetAttribution is the allow-list of frameworks whose
+// http_endpoint synthetic entities should have their SourceFile/StartLine
+// re-stamped to the resolved handler's location instead of the router
+// registration file. Scoped to Go frameworks shipping in #2678's Go audit;
+// other languages land the same change via their own audits.
+var goFrameworkRetargetAttribution = map[string]bool{
+	"gin":  true,
+	"echo": true,
+	"chi":  true,
+}
 
 // resolverKindEquivalents maps a synthesizer-emitted handler Kind to
 // the list of fallback Kinds the resolver should try when the exact
@@ -373,6 +385,33 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 				"framework":    propOr(r, "framework", ""),
 			},
 		})
+		// #2678 (Go gin/echo audit) — re-attribute the synthetic endpoint's
+		// SourceFile/StartLine to the resolved handler so `archigraph_inspect`
+		// and `archigraph_find_callers` land in the handler body, not the
+		// router-registration site. The synthetic's identity (verb+path) is
+		// encoded in Name, so changing SourceFile does not destabilize the
+		// public ID — ComputeID still produces a unique value because Name is
+		// unique per (verb, path).
+		//
+		// Gated to Go frameworks whose audit ships in this PR. Other
+		// frameworks (Python DRF #2677, JS, JVM) land the same change via
+		// their own per-framework audits so we don't accidentally regress
+		// pipelines we haven't fixture-tested yet.
+		if goFrameworkRetargetAttribution[propOr(r, "framework", "")] &&
+			handler.SourceFile != "" {
+			origFile := r.SourceFile
+			origLine := r.StartLine
+			r.SourceFile = handler.SourceFile
+			r.StartLine = handler.StartLine
+			if r.Properties == nil {
+				r.Properties = map[string]string{}
+			}
+			r.Properties["attribution"] = "handler_resolved"
+			r.Properties["registration_file"] = origFile
+			if origLine > 0 {
+				r.Properties["registration_line"] = strconv.Itoa(origLine)
+			}
+		}
 		// Clear the now-redundant property.
 		delete(r.Properties, "source_handler")
 		stats.HandlerResolved++
