@@ -202,3 +202,92 @@ func TestPythonExtractor_NonMigrationUnaffected(t *testing.T) {
 		t.Errorf("non-migration file did not emit User class entity")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Issue #2587: Verify Migration kind is correctly set (not SCOPE.Component)
+// ---------------------------------------------------------------------------
+
+// TestPythonExtractor_MigrationEntitiesHaveCorrectKind verifies that when
+// ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1, emitted entities have kind="Migration"
+// (not "SCOPE.Component"), so that kind-based filters work correctly.
+func TestPythonExtractor_MigrationEntitiesHaveCorrectKind(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+
+	src := []byte(migrationFileSrc)
+	tree := parsePython(t, src)
+	entities := extractPythonWithPath(t, src, "core/migrations/0001_initial.py", tree)
+
+	semanticEntities := stripFileEntity(entities)
+
+	if len(semanticEntities) == 0 {
+		t.Fatal("no semantic entities emitted with ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1")
+	}
+
+	// Verify exactly one entity with kind="Migration"
+	migrationCount := 0
+	for _, e := range semanticEntities {
+		if e.Kind == "Migration" {
+			migrationCount++
+			if e.Subtype != "django" {
+				t.Errorf("Migration entity has subtype=%q, want 'django'", e.Subtype)
+			}
+		} else {
+			t.Errorf("migration file emitted entity with kind=%q (subtype=%q), want kind='Migration'",
+				e.Kind, e.Subtype)
+		}
+	}
+
+	if migrationCount != 1 {
+		t.Errorf("expected exactly 1 Migration entity, got %d", migrationCount)
+	}
+}
+
+// TestPythonExtractor_MigrationFileEmitZeroByDefault verifies that across
+// multiple migration files, zero Migration class entities escape when the
+// emission flag is off.
+func TestPythonExtractor_MigrationFileEmitZeroByDefault(t *testing.T) {
+	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+
+	// Multiple migration files
+	migrations := []struct {
+		path string
+		src  string
+	}{
+		{
+			path: "core/migrations/0001_initial.py",
+			src: `from django.db import migrations, models
+class Migration(migrations.Migration):
+    dependencies = []
+    operations = [migrations.CreateModel(name='User')]`,
+		},
+		{
+			path: "core/migrations/0002_add_field.py",
+			src: `from django.db import migrations
+class Migration(migrations.Migration):
+    dependencies = [('core', '0001_initial')]
+    operations = [migrations.AddField(model_name='User', name='email')]`,
+		},
+	}
+
+	totalSemanticEntities := 0
+	for _, mig := range migrations {
+		tree := parsePython(t, []byte(mig.src))
+		entities := extractPythonWithPath(t, []byte(mig.src), mig.path, tree)
+		semanticEntities := stripFileEntity(entities)
+		totalSemanticEntities += len(semanticEntities)
+
+		// Each migration file should emit zero semantic entities when flag is off
+		if len(semanticEntities) > 0 {
+			t.Errorf("%s: emitted %d semantic entities (expected 0); migration pruning failed",
+				mig.path, len(semanticEntities))
+			for _, e := range semanticEntities {
+				t.Logf("  - %s (%s/%s)", e.Name, e.Kind, e.Subtype)
+			}
+		}
+	}
+
+	if totalSemanticEntities > 0 {
+		t.Errorf("total semantic entities from 2 migration files: %d (expected 0)",
+			totalSemanticEntities)
+	}
+}
