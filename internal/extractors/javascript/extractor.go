@@ -2258,6 +2258,38 @@ func (x *extractor) callTarget(call *sitter.Node, frame *classBindings) string {
 		if mod, ok := x.hookVarToModule[name]; ok && mod != "" {
 			return "ext:" + mod
 		}
+		// Issue #2646 — bare relative-import call → structural ref.
+		// When the callee is a named import from a relative path (resolvedFile
+		// is non-empty), emit a Format A structural-ref keyed on the target
+		// file and the imported symbol name. This allows the resolver to bind
+		// the CALLS edge via lookupStructural → lookupLocationKind without
+		// requiring the caller and callee to be in the same file.
+		//
+		// Example:
+		//   import { useChecklistLocalStore } from '@/src/store/...';
+		//   const items = useChecklistLocalStore(s => s.items);
+		//
+		// Without this fix: CALLS edge ToID = "useChecklistLocalStore" (bare name, unresolved).
+		// With this fix:    CALLS edge ToID = "scope:operation:ref:typescript:<resolvedFile>:useChecklistLocalStore"
+		//                   which the resolver binds via byLocation[resolvedFile][useChecklistLocalStore].
+		//
+		// Only applies to relative imports (resolvedFile != ""). External npm
+		// imports already get the "ext:<module>" treatment or fall through to
+		// bare names handled by the external synthesiser.
+		//
+		// For default imports (importedName == "default"), the entity in the
+		// target file is the exported function under its real name. Use the
+		// local binding name (which matches whatever the caller used) since
+		// we can't know the canonical exported name from the import clause.
+		// For named imports (`import { foo as bar }`), use the original
+		// exported name (importedName) so rename-aliases resolve correctly.
+		if b := x.importByLocal[name]; b != nil && b.resolvedFile != "" {
+			symbolName := b.importedName
+			if symbolName == "" || symbolName == "default" || symbolName == "*" {
+				symbolName = name
+			}
+			return "scope:operation:ref:" + x.language + ":" + b.resolvedFile + ":" + symbolName
+		}
 		return name
 	case "member_expression":
 		prop := fn.ChildByFieldName("property")

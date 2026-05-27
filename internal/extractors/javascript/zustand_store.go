@@ -255,12 +255,24 @@ func (t *zustandTracker) isZustandCreateCall(x *extractor, callNode *sitter.Node
 //
 // Expected shape: create((set, get) => ({ key: fnVal, ... }))
 // Also handles:   create((set, get) => { return { key: fnVal, ... } })
+//
+// Issue #2646 — also handles the Zustand middleware (curried) pattern:
+//
+//	create<State>()(persist((set, get) => ({ ... })))
+//	create<State>()(devtools((set, get) => ({ ... }), opts))
+//	create<State>()(immer((set) => ({ ... })))
+//
+// When the first arg to the create() call is itself a call_expression
+// (a middleware wrapper like persist/devtools/immer), we unwrap one level
+// to find the factory arrow/function_expression inside the middleware call.
 func extractStoreActionsWithNodes(x *extractor, createCall *sitter.Node) (map[string]bool, map[string]*sitter.Node) {
 	args := createCall.ChildByFieldName("arguments")
 	if args == nil {
 		return nil, nil
 	}
 	// Find the first arrow_function or function_expression argument.
+	// If the first non-punctuation arg is a call_expression (middleware wrapper),
+	// unwrap one level to find the factory inside that middleware call.
 	var factoryNode *sitter.Node
 	for i := 0; i < int(args.ChildCount()); i++ {
 		ch := args.Child(i)
@@ -270,6 +282,15 @@ func extractStoreActionsWithNodes(x *extractor, createCall *sitter.Node) (map[st
 		if ch.Type() == "arrow_function" || ch.Type() == "function_expression" {
 			factoryNode = ch
 			break
+		}
+		// Issue #2646 — Zustand middleware pattern:
+		// create()(persist(factory, config)) or create()(devtools(factory))
+		// The first arg is a call_expression wrapping the real factory.
+		if ch.Type() == "call_expression" {
+			factoryNode = extractFactoryFromMiddlewareCall(x, ch)
+			if factoryNode != nil {
+				break
+			}
 		}
 	}
 	if factoryNode == nil {
@@ -290,6 +311,45 @@ func extractStoreActionsWithNodes(x *extractor, createCall *sitter.Node) (map[st
 	}
 
 	return collectFunctionValuedKeysWithNodes(x, objNode)
+}
+
+// extractFactoryFromMiddlewareCall handles the Zustand middleware pattern
+// (issue #2646):
+//
+//	persist((set, get) => ({ ... }), config)
+//	devtools((set, get) => ({ ... }), opts)
+//	immer((set) => ({ ... }))
+//	subscribeWithSelector(immer((set) => ({ ... })))  ← nested middleware
+//
+// It looks at the first argument of the middleware call_expression for an
+// arrow_function or function_expression (the factory). When the first arg is
+// itself a call_expression (nested middleware), it recurses one level.
+//
+// Returns the factory node or nil when the shape is not recognised.
+func extractFactoryFromMiddlewareCall(_ *extractor, middlewareCall *sitter.Node) *sitter.Node {
+	if middlewareCall == nil || middlewareCall.Type() != "call_expression" {
+		return nil
+	}
+	args := middlewareCall.ChildByFieldName("arguments")
+	if args == nil {
+		return nil
+	}
+	for i := 0; i < int(args.ChildCount()); i++ {
+		ch := args.Child(i)
+		if ch == nil {
+			continue
+		}
+		if ch.Type() == "arrow_function" || ch.Type() == "function_expression" {
+			return ch
+		}
+		// Nested middleware: persist(devtools(factory)) — recurse once.
+		if ch.Type() == "call_expression" {
+			if inner := extractFactoryFromMiddlewareCall(nil, ch); inner != nil {
+				return inner
+			}
+		}
+	}
+	return nil
 }
 
 // extractPartializeFields extracts the field names from the partialize function
