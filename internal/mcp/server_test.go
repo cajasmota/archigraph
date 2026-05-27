@@ -581,6 +581,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_navigates",
 		// #2766 Phase 1B reachability + dead-code identification
 		"archigraph_dead_code",
+		// #2764 Phase 1A effect classification surface
+		"archigraph_effects",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -666,6 +668,9 @@ func TestToolNameSurface(t *testing.T) {
 	// +1 archigraph_dead_code (#2766 Phase 1B reachability + dead-code).
 	if got := len(allRegisteredTools); got != 46 {
 		t.Errorf("expected 46 registered tools, got %d — update this count if tools are added/removed (added archigraph_dead_code #2766)", got)
+	// +1 archigraph_effects (#2764 Phase 1A effect classification).
+	if got := len(allRegisteredTools); got != 46 {
+		t.Errorf("expected 46 registered tools, got %d — update this count if tools are added/removed (added archigraph_effects #2764)", got)
 	}
 }
 
@@ -3164,6 +3169,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_navigates": {"group": "g"},
 		// #2766 Phase 1B reachability + dead-code identification
 		"archigraph_dead_code": {"group": "g"},
+		// #2764 Phase 1A effect classification — entity_id required.
+		"archigraph_effects": {"group": "g", "entity_id": "DashboardScreen"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3210,6 +3217,7 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	tools := srv.MCP.ListTools()
 	if len(tools) != 46 {
 		t.Errorf("expected 46 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_dead_code #2766)", len(tools))
+		t.Errorf("expected 46 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_effects #2764)", len(tools))
 	}
 
 	for _, st := range tools {
