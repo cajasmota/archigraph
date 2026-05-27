@@ -373,6 +373,32 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 				"framework":    propOr(r, "framework", ""),
 			},
 		})
+		// #2678 — rebind the synthetic's source_file / start_line / end_line
+		// to the resolved handler so the endpoint points at the method body,
+		// not the routing/registration site. Mirrors the DRF fix (#2677): for
+		// route-table frameworks (Laravel, Rust Axum, future Phoenix/ASP.NET)
+		// the synthetic was anchored to the routes file by construction. For
+		// annotation-based frameworks (Spring, JAX-RS) the file was already
+		// correct but the line was unset; this rebind populates it from the
+		// handler entity. Record the previous values as properties so the bug
+		// is auditable and the resolver's strategy is traceable in the graph.
+		if handler.SourceFile != "" {
+			if r.Properties == nil {
+				r.Properties = map[string]string{}
+			}
+			if r.SourceFile != "" && r.SourceFile != handler.SourceFile {
+				r.Properties["registration_source_file"] = r.SourceFile
+			}
+			if r.StartLine > 0 && r.StartLine != handler.StartLine {
+				r.Properties["registration_start_line"] = itoaSmall(r.StartLine)
+			}
+			r.SourceFile = handler.SourceFile
+			r.StartLine = handler.StartLine
+			r.EndLine = handler.EndLine
+			if r.Language == "" {
+				r.Language = handler.Language
+			}
+		}
 		// Clear the now-redundant property.
 		delete(r.Properties, "source_handler")
 		stats.HandlerResolved++
@@ -643,6 +669,23 @@ func callerKindAliases(declared string) []string {
 		return []string{"Function", "Method"}
 	}
 	return nil
+}
+
+// itoaSmall converts a non-negative int to its decimal string. Used by the
+// #2678 rebind to stash registration_start_line as a property without
+// pulling in strconv.
+func itoaSmall(n int) string {
+	if n <= 0 {
+		return "0"
+	}
+	var b [20]byte
+	p := len(b)
+	for n > 0 {
+		p--
+		b[p] = byte('0' + n%10)
+		n /= 10
+	}
+	return string(b[p:])
 }
 
 // propOr returns r.Properties[k] or fallback if missing/nil.

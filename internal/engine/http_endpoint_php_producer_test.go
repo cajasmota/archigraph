@@ -74,18 +74,19 @@ Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy']);
 	if len(matches) != 5 {
 		t.Fatalf("expected 5 matches, got %d: %+v", len(matches), matches)
 	}
-	// Check one entry in detail — handler is intentionally empty so the
-	// resolve pass keeps the synthetic (NoHandlerProp path) even when the
-	// controller class lives in a different file (normal PSR-4 layout).
+	// Check one entry in detail — post #2678, the handler is forwarded as
+	// SCOPE.Operation:Controller.method so ResolveHTTPEndpointHandlers can
+	// rebind the synthetic's source_file/start_line to the controller method
+	// (Laravel uses PSR-4: routes file ≠ controller file by construction).
 	found := false
 	for _, m := range matches {
 		if m.method == "GET" && m.path == "/invoices" && m.framework == "laravel" &&
-			m.handlerKind == "" && m.handlerName == "" {
+			m.handlerKind == "SCOPE.Operation" && m.handlerName == "InvoiceController.index" {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("missing GET /invoices with empty handler; got: %+v", matches)
+		t.Errorf("missing GET /invoices with SCOPE.Operation handler; got: %+v", matches)
 	}
 }
 
@@ -102,9 +103,11 @@ Route::post('/users', 'UserController@store');
 	if len(matches) != 2 {
 		t.Fatalf("expected 2, got %d: %+v", len(matches), matches)
 	}
-	// Handler is intentionally empty — controllers live in separate files.
-	if matches[0].handlerName != "" {
-		t.Errorf("handler=%q, want empty (PSR-4 cross-file convention)", matches[0].handlerName)
+	// #2678 — string-form handler is forwarded as SCOPE.Operation:Controller.method
+	// so the resolver can rebind the synthetic to the controller's source file.
+	if matches[0].handlerKind != "SCOPE.Operation" || matches[0].handlerName != "UserController.index" {
+		t.Errorf("handler=(%q,%q), want (SCOPE.Operation, UserController.index)",
+			matches[0].handlerKind, matches[0].handlerName)
 	}
 }
 

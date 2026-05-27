@@ -150,6 +150,30 @@ func laravelHandlerFromMatch(src string, m []int) string {
 	return ""
 }
 
+// laravelHandlerToScopeOp converts the parsed "Controller@method" form
+// produced by laravelHandlerFromMatch into the (kind, name) pair that
+// matches the PHP extractor's SCOPE.Operation naming convention
+// ("Controller.method"). Returns ("","") when the input is empty or not
+// in @-method form (e.g. closure handlers).
+//
+// Refs #2678 — fix Laravel endpoint attribution.
+func laravelHandlerToScopeOp(ref string) (kind, name string) {
+	if ref == "" {
+		return "", ""
+	}
+	at := strings.IndexByte(ref, '@')
+	if at <= 0 || at == len(ref)-1 {
+		return "", ""
+	}
+	cls := ref[:at]
+	method := ref[at+1:]
+	// Strip leading namespace separators just in case.
+	if i := strings.LastIndex(cls, "\\"); i >= 0 {
+		cls = cls[i+1:]
+	}
+	return "SCOPE.Operation", cls + "." + method
+}
+
 // ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
@@ -181,17 +205,19 @@ func synthesizeLaravel(content string, emit emitFn) {
 		}
 
 		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, raw)
-		// Laravel routes are always in a separate file from their controller
-		// classes (PSR-4 autoloading). Emitting the controller reference as
-		// source_handler causes the resolve pass to drop the synthetic when
-		// the controller entity is not in the same file (which is the normal
-		// case for routes/*.php files). We pass empty handler so the
-		// synthetic gets NoHandlerProp treatment (kept unconditionally) and
-		// survives as an http_endpoint_definition for cross-repo linking.
-		// The controller reference is captured by laravelHandlerFromMatch but
-		// intentionally not forwarded here — it can be added as a plain
-		// property in a follow-up when the cross-file resolver supports it.
-		emit(verb, canonical, "laravel", "", "")
+		// Forward the parsed handler reference so ResolveHTTPEndpointHandlers
+		// can rebind the synthetic's source_file/start_line to the controller
+		// method (fix for #2678 audit — Laravel was the DRF analogue:
+		// routes/*.php registration site, app/Http/Controllers/*.php handler).
+		//
+		// The cross-file resolver (#753 globalIdx) now finds handlers declared
+		// in a different module than the route synthetic, so emitting a real
+		// source_handler no longer drops the entity. We convert the parsed
+		// "Controller@method" form into the PHP extractor's SCOPE.Operation
+		// naming convention ("Controller.method") so the resolver hits.
+		ref := laravelHandlerFromMatch(content, m)
+		refKind, refName := laravelHandlerToScopeOp(ref)
+		emit(verb, canonical, "laravel", refKind, refName)
 	}
 
 	// --- Route::resource → 7 CRUD endpoints ---
