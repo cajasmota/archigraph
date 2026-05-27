@@ -574,3 +574,90 @@ records:
               functions: [indexFileForLookup]
           issues_implemented: ["2761"]
           verified_at: "2026-05-28"
+
+  lang.lua.framework.lapis:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/lua.go
+              functions: [sniffLua]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/lua.go
+              functions: [sniffLua]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/lua.go
+              functions: [sniffLua]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+
+  lang.lua.framework.openresty:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/lua.go
+              functions: [sniffLua]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/lua.go
+              functions: [sniffLua]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/lua.go
+              functions: [sniffLua]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+
+  lang.swift.framework.vapor:
+    capabilities:
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/swift.go
+              functions: [sniffSwift]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/swift.go
+              functions: [sniffSwift]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"
+        import_resolution_quality:
+          status: partial
+          symbols:
+            - file: internal/substrate/swift.go
+              functions: [sniffSwift]
+            - file: internal/links/constant_propagation.go
+              functions: [indexFileForLookup]
+          issues_implemented: ["2763"]
+          verified_at: "2026-05-28"

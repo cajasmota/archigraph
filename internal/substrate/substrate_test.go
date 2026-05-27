@@ -18,6 +18,32 @@ func TestLanguageForPath(t *testing.T) {
 		"":         "",
 		"a.txt":    "",
 		"foo/x.go": "go",
+		// T3 (#2763): one assertion per registered extension.
+		"a.dart":   "dart",
+		"a.groovy": "groovy",
+		"a.gradle": "groovy",
+		"a.lua":    "lua",
+		"a.swift":  "swift",
+		"a.clj":    "clojure",
+		"a.cljs":   "clojure",
+		"a.cr":     "crystal",
+		"a.elm":    "elm",
+		"a.erl":    "erlang",
+		"a.hrl":    "erlang",
+		"a.fs":     "fsharp",
+		"a.fsx":    "fsharp",
+		"a.hs":     "haskell",
+		"a.nim":    "nim",
+		"a.ml":     "ocaml",
+		"a.mli":    "ocaml",
+		"a.re":     "reasonml",
+		"a.res":    "rescript",
+		"a.sml":    "sml",
+		"a.sol":    "solidity",
+		"a.zig":    "zig",
+		"a.svelte": "svelte",
+		"a.vue":    "vue",
+		"a.astro":  "astro",
 	}
 	for in, want := range cases {
 		if got := LanguageForPath(in); got != want {
@@ -27,7 +53,13 @@ func TestLanguageForPath(t *testing.T) {
 }
 
 func TestRegisterAndSnifferFor(t *testing.T) {
-	for _, lang := range []string{"jsts", "python", "java", "go"} {
+	for _, lang := range []string{
+		"jsts", "python", "java", "go",
+		// T3 (#2763) — every registered slug must have a sniffer.
+		"dart", "groovy", "lua", "swift", "clojure", "crystal", "elm",
+		"erlang", "fsharp", "haskell", "nim", "ocaml", "reasonml",
+		"rescript", "sml", "solidity", "zig", "svelte", "vue", "astro",
+	} {
 		if SnifferFor(lang) == nil {
 			t.Errorf("expected sniffer registered for %q", lang)
 		}
