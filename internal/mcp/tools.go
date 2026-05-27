@@ -880,6 +880,9 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 	}
 	repos := reposToConsider(lg, argStringSlice(req, "repo_filter"))
 	verbose := argBool(req, "verbose", false)
+	// #2640: include_unresolved=false (default) filters calls[] rows where the
+	// target entity could not be resolved (empty target_path or bare repo prefix).
+	includeUnresolved := argBool(req, "include_unresolved", false)
 	allFindings := loadFindings(findingsMemDir(g, lg))
 	// Cross-repo prefixed ID? Resolve repo first for unambiguous lookup.
 	if rprefix, local := splitPrefixed(key); rprefix != "" {
@@ -895,12 +898,12 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 					out["agent_resolved_edges"] = agentEdges
 				}
 				// #2634: line-precise CALLS edges.
-				if calls := inspectOutboundCalls(r, e, scopeIsOne); len(calls) > 0 {
-					out["calls"] = calls
-				}
-				if calledBy := inspectInboundCalls(r, e, scopeIsOne); len(calledBy) > 0 {
-					out["called_by"] = calledBy
-				}
+				// #2640: filter unresolved by default.
+				out["calls"] = inspectOutboundCalls(r, e, scopeIsOne, includeUnresolved)
+				// #2641: called_by always present (empty array when no callers).
+				out["called_by"] = inspectInboundCalls(r, e, scopeIsOne)
+				// #2642: metadata block with index provenance.
+				out["metadata"] = inspectMetadata(r)
 				return jsonResult(out), nil
 			}
 		}
@@ -952,12 +955,12 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 		out["agent_resolved_edges"] = agentEdges
 	}
 	// #2634: line-precise CALLS edges.
-	if calls := inspectOutboundCalls(m.repo, m.ent, scopeIsOne); len(calls) > 0 {
-		out["calls"] = calls
-	}
-	if calledBy := inspectInboundCalls(m.repo, m.ent, scopeIsOne); len(calledBy) > 0 {
-		out["called_by"] = calledBy
-	}
+	// #2640: filter unresolved by default.
+	out["calls"] = inspectOutboundCalls(m.repo, m.ent, scopeIsOne, includeUnresolved)
+	// #2641: called_by always present (empty array when no callers).
+	out["called_by"] = inspectInboundCalls(m.repo, m.ent, scopeIsOne)
+	// #2642: metadata block with index provenance.
+	out["metadata"] = inspectMetadata(m.repo)
 	return jsonResult(out), nil
 }
 
@@ -1014,25 +1017,60 @@ func agentResolvedEdgesForEntity(lr *LoadedRepo, entityID string, scopeIsOne boo
 // #2634 — line-precise CALLS / called_by edges for archigraph_inspect
 // ---------------------------------------------------------------------------
 
+// isUnresolvedCallEdge reports whether an outbound CALLS edge should be
+// considered unresolved — i.e. the target entity could not be found in the
+// graph. An edge is unresolved when:
+//   - target_path is empty (no source file resolved), OR
+//   - the target ID contains no hex chars after the repo prefix (bare "::")
+func isUnresolvedCallEdge(targetPath, targetID string) bool {
+	if targetPath == "" {
+		return true
+	}
+	// Check for bare repo prefix pattern: "repo::" with nothing after.
+	if idx := strings.Index(targetID, "::"); idx >= 0 {
+		suffix := targetID[idx+2:]
+		if suffix == "" {
+			return true
+		}
+		// Entity IDs contain hex chars; if suffix has none, it's unresolved.
+		hasHex := false
+		for _, c := range suffix {
+			if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
+				hasHex = true
+				break
+			}
+		}
+		if !hasHex {
+			return true
+		}
+	}
+	return false
+}
+
 // inspectOutboundCalls returns outbound CALLS edges from entity e with line
 // numbers read from the edge Properties["line"] set by extractors.
 // Each entry: {target, target_path, line, via}.
-func inspectOutboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []map[string]any {
+//
+// When includeUnresolved is false (the default), edges where the target entity
+// could not be resolved are omitted. When true, all edges are returned and
+// unresolved ones carry an additional "unresolved: true" field. (#2640)
+func inspectOutboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool, includeUnresolved bool) []map[string]any {
 	if lr == nil || lr.Doc == nil {
-		return nil
+		return []map[string]any{}
 	}
-	var out []map[string]any
+	out := []map[string]any{}
 	rels := lr.Doc.Relationships
 	for _, ed := range lr.Adjacency.Outgoing(e.ID) {
 		if !strings.EqualFold(ed.kind, "CALLS") {
 			continue
 		}
-		entry := map[string]any{
-			"target":      ed.target,
-			"target_path": "",
-		}
+		targetID := ed.target
 		if !scopeIsOne {
-			entry["target"] = prefixedID(lr.Repo, ed.target)
+			targetID = prefixedID(lr.Repo, ed.target)
+		}
+		entry := map[string]any{
+			"target":      targetID,
+			"target_path": "",
 		}
 		// Resolve target path from entity index.
 		if tgt := lr.ByID[ed.target]; tgt != nil {
@@ -1041,6 +1079,13 @@ func inspectOutboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []ma
 			if !scopeIsOne {
 				entry["target"] = prefixedID(lr.Repo, ed.target)
 			}
+		}
+		// #2640: check whether this edge is unresolved.
+		targetPath, _ := entry["target_path"].(string)
+		targetVal, _ := entry["target"].(string)
+		unresolved := isUnresolvedCallEdge(targetPath, targetVal)
+		if unresolved && !includeUnresolved {
+			continue
 		}
 		// Line number from relationship properties.
 		lineNum := 0
@@ -1055,6 +1100,9 @@ func inspectOutboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []ma
 			}
 		}
 		entry["line"] = lineNum
+		if unresolved {
+			entry["unresolved"] = true
+		}
 		out = append(out, entry)
 	}
 	return out
@@ -1063,14 +1111,17 @@ func inspectOutboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []ma
 // inspectInboundCalls returns inbound CALLS edges (callers of entity e) with
 // line numbers and a short context snippet from the caller's source.
 // Each entry: {source, source_path, line, context}.
+//
+// Always returns a non-nil slice (empty when no callers) so called_by is
+// always present in the response (#2641).
 func inspectInboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []map[string]any {
 	if lr == nil || lr.Doc == nil {
-		return nil
+		return []map[string]any{}
 	}
 	// lineCache maps absolute source path → slice of trimmed line strings (0-indexed).
 	lineCache := map[string][]string{}
 
-	var out []map[string]any
+	out := []map[string]any{}
 	rels := lr.Doc.Relationships
 	for _, ed := range lr.Adjacency.Incoming(e.ID) {
 		if !strings.EqualFold(ed.kind, "CALLS") {
@@ -1129,6 +1180,29 @@ func inspectInboundCalls(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []map
 		out = append(out, entry)
 	}
 	return out
+}
+
+// inspectMetadata returns index provenance fields for the inspect response.
+// Surfaces indexed_ref, indexed_sha, indexed_at, and age_seconds so agents
+// know whether the line-number data might be stale. (#2642)
+func inspectMetadata(lr *LoadedRepo) map[string]any {
+	meta := map[string]any{
+		"indexed_ref": "",
+		"indexed_sha": "",
+		"indexed_at":  "",
+		"age_seconds": 0,
+	}
+	if lr == nil || lr.Doc == nil {
+		return meta
+	}
+	meta["indexed_ref"] = lr.Doc.IndexedRef
+	meta["indexed_sha"] = lr.Doc.IndexedSHA
+	if !lr.Doc.GeneratedAt.IsZero() {
+		indexedAt := lr.Doc.GeneratedAt.UTC()
+		meta["indexed_at"] = indexedAt.Format(time.RFC3339)
+		meta["age_seconds"] = int(time.Since(indexedAt).Seconds())
+	}
+	return meta
 }
 
 // readSourceLines opens path and returns all lines as a slice (0-indexed).
