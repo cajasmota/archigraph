@@ -10462,7 +10462,7 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/adonisjs.yaml","testdata/fixtures/typescript/adonisjs_routes.ts"],
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/http_endpoint_jsts_backend_test.go","internal/engine/rules/javascript_typescript/frameworks/adonisjs.yaml","testdata/fixtures/typescript/adonisjs_group_prefix.ts","testdata/fixtures/typescript/adonisjs_routes.ts"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2851",
             "verified_at": "2026-05-28"
           },
@@ -11032,7 +11032,7 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/javascript_typescript/frameworks/express.yaml","internal/extractors/javascript/framework_dsl.go"],
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_test.go","internal/engine/rules/javascript_typescript/frameworks/express.yaml","internal/extractors/javascript/framework_dsl.go"],
             "issue": "2932",
             "verified_at": "2026-05-28"
           },
@@ -11128,7 +11128,7 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/http_endpoint_jsts_extra.go","internal/engine/rules/javascript_typescript/frameworks/fastify.yaml"],
+            "cites": ["internal/engine/http_endpoint_jsts_extra.go","internal/engine/http_endpoint_synthesis_test.go","internal/engine/rules/javascript_typescript/frameworks/fastify.yaml"],
             "issue": "2932",
             "verified_at": "2026-05-28"
           },

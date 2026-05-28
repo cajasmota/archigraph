@@ -30,10 +30,50 @@ package engine
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/engine/httproutes"
 )
+
+// allIndexes returns the byte offsets of every (possibly overlapping at
+// distinct positions) occurrence of sub in s. Used to enumerate route-group
+// openers for #2934 prefix composition.
+func allIndexes(s, sub string) []int {
+	var out []int
+	for off := 0; ; {
+		i := strings.Index(s[off:], sub)
+		if i < 0 {
+			break
+		}
+		out = append(out, off+i)
+		off += i + len(sub)
+	}
+	return out
+}
+
+// matchBrace returns the byte offset of the `}` that closes the `{` at index
+// open in s, honoring nested braces. Returns -1 when unbalanced. String/
+// comment contents are not specially handled — adequate for the route-config
+// files this scans, where braces inside string literals are vanishingly rare.
+func matchBrace(s string, open int) int {
+	if open < 0 || open >= len(s) || s[open] != '{' {
+		return -1
+	}
+	depth := 0
+	for i := open; i < len(s); i++ {
+		switch s[i] {
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
+}
 
 // feathersServiceVerbs is the standard REST verb set a Feathers service
 // exposes at its mount path. `find` (list) and `create` map to the collection
@@ -91,34 +131,109 @@ var adonisResourceRoutes = []struct {
 	{"DELETE", "/{id}", "destroy"},
 }
 
+// adonisGroupSpan describes one `Route.group(() => { … }).prefix('/x')` block:
+// the byte range [bodyStart, bodyEnd) covering the callback body, and the
+// normalized prefix declared via the chained `.prefix(...)` (empty when the
+// group declares no prefix). #2934 composes the prefix of every group whose
+// body span ENCLOSES a route's match offset, so nested groups stack.
+type adonisGroupSpan struct {
+	bodyStart int
+	bodyEnd   int
+	prefix    string
+}
+
+// adonisGroupPrefixRe captures the `.prefix('/x')` chained onto a closed
+// Route.group(...) call. Scanned in the short window after the group body's
+// closing brace+paren. Group 1 = prefix string.
+var adonisGroupPrefixRe = regexp.MustCompile(
+	`^\s*\)?\s*\.prefix\s*\(\s*['"` + "`" + `]([^'"` + "`" + `\n\r]*)['"` + "`" + `]`,
+)
+
+// buildAdonisGroupSpans locates every `Route.group(` callback body via brace
+// matching and pairs it with the trailing `.prefix(...)` declaration (#2934).
+// Returns spans in source order; callers compose the prefixes of all enclosing
+// spans for a given route offset.
+func buildAdonisGroupSpans(content string) []adonisGroupSpan {
+	if !strings.Contains(content, "Route.group") {
+		return nil
+	}
+	var spans []adonisGroupSpan
+	for _, idx := range allIndexes(content, "Route.group") {
+		// Find the first `{` after `Route.group(` — the callback body open.
+		open := strings.IndexByte(content[idx:], '{')
+		if open < 0 {
+			continue
+		}
+		open += idx
+		end := matchBrace(content, open)
+		if end < 0 {
+			continue
+		}
+		// Scan the window after the body for `).prefix('/x')`.
+		prefix := ""
+		tail := content[end+1:]
+		if len(tail) > 64 {
+			tail = tail[:64]
+		}
+		if m := adonisGroupPrefixRe.FindStringSubmatch(tail); m != nil {
+			prefix = normalizeMountPrefix(m[1])
+		}
+		spans = append(spans, adonisGroupSpan{bodyStart: open, bodyEnd: end, prefix: prefix})
+	}
+	return spans
+}
+
+// adonisComposedPrefix returns the joined prefix of every group span whose
+// body encloses offset, outermost first (#2934). Empty when no enclosing group
+// declares a prefix.
+func adonisComposedPrefix(spans []adonisGroupSpan, offset int) string {
+	// Collect enclosing spans; they nest, so sorting by bodyStart gives
+	// outermost→innermost order.
+	var enclosing []adonisGroupSpan
+	for _, s := range spans {
+		if offset > s.bodyStart && offset < s.bodyEnd && s.prefix != "" {
+			enclosing = append(enclosing, s)
+		}
+	}
+	sort.Slice(enclosing, func(i, j int) bool { return enclosing[i].bodyStart < enclosing[j].bodyStart })
+	composed := ""
+	for _, s := range enclosing {
+		composed = joinPathFragments(composed, s.prefix)
+	}
+	return composed
+}
+
 func synthesizeAdonis(content string, emit emitFileFn) {
 	if !strings.Contains(content, "Route.") {
 		return
 	}
-	for _, m := range adonisVerbRe.FindAllStringSubmatch(content, -1) {
-		if len(m) < 3 {
+	groups := buildAdonisGroupSpans(content)
+	for _, m := range adonisVerbRe.FindAllStringSubmatchIndex(content, -1) {
+		// m holds index pairs: [fullStart, fullEnd, g1s, g1e, g2s, g2e, g3s, g3e].
+		if len(m) < 6 {
 			continue
 		}
-		verb := strings.ToUpper(m[1])
-		raw := m[2]
+		verb := strings.ToUpper(content[m[2]:m[3]])
+		raw := content[m[4]:m[5]]
 		handler := ""
-		if len(m) >= 4 {
-			handler = m[3]
+		if len(m) >= 8 && m[6] >= 0 {
+			handler = content[m[6]:m[7]]
 		}
-		canonical := httproutes.Canonicalize(httproutes.FrameworkAdonis, raw)
+		full := joinPathFragments(adonisComposedPrefix(groups, m[0]), raw)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkAdonis, full)
 		if canonical == "" {
 			continue
 		}
 		method, fileHint := splitControllerActionRef(handler)
 		emit(verb, canonical, "adonisjs", "Controller", method, fileHint, 0)
 	}
-	for _, m := range adonisResourceRe.FindAllStringSubmatch(content, -1) {
-		if len(m) < 3 {
+	for _, m := range adonisResourceRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 6 {
 			continue
 		}
-		name := strings.Trim(m[1], "/")
-		controller := m[2]
-		base := "/" + name
+		name := strings.Trim(content[m[2]:m[3]], "/")
+		controller := content[m[4]:m[5]]
+		base := joinPathFragments(adonisComposedPrefix(groups, m[0]), "/"+name)
 		for _, rr := range adonisResourceRoutes {
 			canonical := httproutes.Canonicalize(httproutes.FrameworkAdonis, base+rr.suffix)
 			emit(rr.verb, canonical, "adonisjs", "Controller", rr.action, controller, 0)

@@ -41,6 +41,25 @@ func TestSynth_Adonis(t *testing.T) {
 	requireContains(t, got, want, "adonis")
 }
 
+// TestSynth_Adonis_GroupPrefix covers #2934: routes enclosed by a
+// `Route.group(() => {...}).prefix('/x')` compose the group prefix, nested
+// groups stack, and an ungrouped route stays bare.
+func TestSynth_Adonis_GroupPrefix(t *testing.T) {
+	src := readBackendFixture(t, "adonisjs_group_prefix.ts")
+	got, _ := runDetect(t, "typescript", "start/routes.ts", src)
+	want := []string{
+		// Single-group prefix composition.
+		"http:GET:/admin/users",
+		"http:POST:/admin/users",
+		"http:GET:/admin/users/{id}",
+		// Nested-group prefix stacking.
+		"http:GET:/api/v1/reports",
+		// Ungrouped route — composition is a no-op.
+		"http:GET:/health",
+	}
+	requireContains(t, got, want, "adonis-group-prefix")
+}
+
 // TestSynth_Hapi covers server.route({ method, path, handler }) including the
 // array-method and {id?} optional-param forms.
 func TestSynth_Hapi(t *testing.T) {

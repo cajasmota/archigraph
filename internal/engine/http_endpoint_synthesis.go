@@ -1617,6 +1617,98 @@ var expressVerbRe = regexp.MustCompile(`([$\w][\w$]*)\.(get|post|put|patch|delet
 // capture group 1 = receiver, 2 = verb, 3 = path string.
 var expressVerbRePathOnly = regexp.MustCompile(`([$\w][\w$]*)\.(get|post|put|patch|delete|head|options|all)\s*\(\s*['"` + "`" + `]([^'"` + "`" + `\n\r]+)['"` + "`" + `]`)
 
+// expressMountRe captures an Express sub-router mount of the form
+// `<recv>.use('/prefix', <subRouter>)`, mirroring the express.yaml ROUTES_TO
+// rule (~:104). The mount prefix (group 2) is composed onto every route the
+// mounted sub-router (group 3) registers, so a route file's producer path
+// carries the full canonical mount path (#2934). Group 1 = mounting receiver
+// (unused — the prefix attaches to the sub-router var, which is what later
+// routes register against).
+//
+// Only string-literal first-argument mounts are captured; bare
+// `app.use(middleware)` (no path) is correctly ignored.
+var expressMountRe = regexp.MustCompile(
+	`([$\w][\w$]*)\.use\s*\(\s*['"` + "`" + `](/[^'"` + "`" + `\n\r]*)['"` + "`" + `]\s*,\s*([$\w][\w$]*)\s*[\),]`,
+)
+
+// buildExpressMountPrefixes returns a map of sub-router variable name → fully
+// composed mount prefix for every `<recv>.use('/prefix', subRouter)` mount in
+// the file, resolving NESTED mounts transitively (#2934). For
+//
+//	app.use('/api', v1)
+//	v1.use('/admin', adminRouter)
+//
+// the result is {v1: "/api", adminRouter: "/api/admin"}. Routes registered on
+// adminRouter then compose to `/api/admin/...`.
+//
+// The resolution is order-independent: we first collect every (parent, prefix,
+// child) mount edge, then walk the chains to a fixed point. Self-mounts and
+// cycles (pathological) are bounded by the edge count so the loop always
+// terminates. A child with no resolvable parent prefix simply maps to its own
+// literal prefix.
+func buildExpressMountPrefixes(content string) map[string]string {
+	type mount struct {
+		parent string
+		prefix string
+		child  string
+	}
+	var mounts []mount
+	for _, m := range expressMountRe.FindAllStringSubmatch(content, -1) {
+		if len(m) < 4 {
+			continue
+		}
+		mounts = append(mounts, mount{parent: m[1], prefix: m[2], child: m[3]})
+	}
+	if len(mounts) == 0 {
+		return nil
+	}
+	// Seed each child with its own literal mount prefix.
+	prefixes := make(map[string]string, len(mounts))
+	for _, mt := range mounts {
+		prefixes[mt.child] = normalizeMountPrefix(mt.prefix)
+	}
+	// Iterate to a fixed point, prepending each parent's resolved prefix.
+	// Bounded by len(mounts) passes (longest chain length).
+	for i := 0; i < len(mounts); i++ {
+		changed := false
+		for _, mt := range mounts {
+			if mt.parent == mt.child {
+				continue // self-mount guard
+			}
+			parentPrefix, ok := prefixes[mt.parent]
+			if !ok {
+				continue
+			}
+			composed := joinPathFragments(parentPrefix, normalizeMountPrefix(mt.prefix))
+			if prefixes[mt.child] != composed {
+				prefixes[mt.child] = composed
+				changed = true
+			}
+		}
+		if !changed {
+			break
+		}
+	}
+	return prefixes
+}
+
+// composeExpressMount prepends the resolved mount prefix for `receiver` (if
+// any) onto the raw route path (#2934). When the receiver var was never
+// mounted at a string-literal prefix the raw path is returned unchanged,
+// preserving the pre-#2934 producer path for the common single-file /
+// top-level-app case. The composed path is fed to Canonicalize so params and
+// slashes normalize uniformly.
+func composeExpressMount(mountPrefixes map[string]string, receiver, raw string) string {
+	if len(mountPrefixes) == 0 {
+		return raw
+	}
+	prefix, ok := mountPrefixes[receiver]
+	if !ok || prefix == "" {
+		return raw
+	}
+	return joinPathFragments(prefix, raw)
+}
+
 // isExpressReceiver returns true when the receiver identifier looks like an
 // Express app/router variable (allowlist) and is not on the hard blocklist.
 // It also consults the per-file HTTP-client symbol table built by
@@ -1672,6 +1764,12 @@ func synthesizeExpress(content string, emit emitFn) {
 	// Variables assigned from axios.create() / ky.create() / got.extend()
 	// are consumer-side and must never be emitted as Express producers (#684).
 	clientSymbols := buildExpressClientSymbolTable(content)
+	// #2934 — sub-router mount prefixes. `app.use('/api', router)` mounts
+	// `router` at `/api`, so routes registered on `router` must compose to
+	// `/api/<path>`. Resolves nested mounts transitively. nil when the file
+	// has no string-literal mounts (the common single-file case), making the
+	// composition lookup a no-op that preserves the pre-#2934 bare path.
+	mountPrefixes := buildExpressMountPrefixes(content)
 
 	// First pass: handler-named form (groups: receiver, verb, path, handler).
 	withHandler := map[string]bool{}
@@ -1707,7 +1805,7 @@ func synthesizeExpress(content string, emit emitFn) {
 		if isInlineExpressHandler(m[0], raw) {
 			handler = ""
 		}
-		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, raw)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, composeExpressMount(mountPrefixes, receiver, raw))
 		// Express `.all(...)` registers every verb on the path; emit as ANY.
 		if verb == "ALL" {
 			verb = "ANY"
@@ -1732,7 +1830,7 @@ func synthesizeExpress(content string, emit emitFn) {
 		if !looksLikeExpressPath(raw) {
 			continue
 		}
-		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, raw)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, composeExpressMount(mountPrefixes, receiver, raw))
 		if verb == "ALL" {
 			verb = "ANY"
 		}
@@ -1938,6 +2036,26 @@ func lineOfOffset(content string, off int) int {
 // path, mirroring the slash convention used by joinRoutePaths in
 // spring_routes.go. An empty prefix or method passes the other through
 // verbatim.
+// normalizeMountPrefix cleans a raw mount/group/plugin prefix into a leading-
+// slash, no-trailing-slash form suitable for joinPathFragments composition
+// (#2934). `"/api/"` → `"/api"`, `"api"` → `"/api"`, `"/"` and `""` → `""`
+// (root mount contributes nothing). The trailing-slash trim keeps the join
+// idempotent; the empty result lets a root-level `app.use('/', router)` mount
+// pass child paths through unchanged.
+func normalizeMountPrefix(raw string) string {
+	p := strings.TrimSpace(raw)
+	if p == "" || p == "/" {
+		return ""
+	}
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	for len(p) > 1 && strings.HasSuffix(p, "/") {
+		p = strings.TrimSuffix(p, "/")
+	}
+	return p
+}
+
 func joinPathFragments(prefix, method string) string {
 	switch {
 	case prefix == "" && method == "":

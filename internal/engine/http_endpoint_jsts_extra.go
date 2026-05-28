@@ -19,6 +19,7 @@ package engine
 import (
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/engine/httproutes"
@@ -69,6 +70,93 @@ var fastifyRouteRe = regexp.MustCompile(
 		`[^}]*?\}`,
 )
 
+// fastifyRegisterRe captures the opening of a `<recv>.register(` call so #2934
+// can locate plugin-registration spans and their `{ prefix: '/x' }` option.
+// Group 1 = receiver (gated by fastifyAllowedReceiverRe).
+var fastifyRegisterRe = regexp.MustCompile(`([$\w][\w$]*)\.register\s*\(`)
+
+// fastifyPrefixOptRe captures the `prefix: '/v1'` option inside a register
+// call's options object. Group 1 = prefix string.
+var fastifyPrefixOptRe = regexp.MustCompile(
+	`\bprefix\s*:\s*['"` + "`" + `]([^'"` + "`" + `\n\r]*)['"` + "`" + `]`,
+)
+
+// fastifyPluginSpan describes one `fastify.register(plugin, { prefix: '/x' })`
+// registration: the byte range [bodyStart, bodyEnd) covering the inline plugin
+// function body and the normalized prefix declared in the options object.
+// Routes registered on the plugin instance inside that body compose the prefix
+// (#2934). Only inline plugin functions (with a `{ … }` body in the same file)
+// are span-resolvable; imported plugins compose nothing here (the cross-repo
+// matcher's prefix-stripping still links those).
+type fastifyPluginSpan struct {
+	bodyStart int
+	bodyEnd   int
+	prefix    string
+}
+
+// buildFastifyPluginSpans locates each `<recv>.register(` call, brace-matches
+// the FIRST `{ … }` after the opening paren (the inline plugin function body),
+// and pairs it with the `prefix:` option found in the register call's argument
+// region (#2934). Registrations with no inline body or no prefix are skipped.
+func buildFastifyPluginSpans(content string) []fastifyPluginSpan {
+	if !strings.Contains(content, ".register") {
+		return nil
+	}
+	var spans []fastifyPluginSpan
+	for _, loc := range fastifyRegisterRe.FindAllStringSubmatchIndex(content, -1) {
+		recv := content[loc[2]:loc[3]]
+		if !fastifyAllowedReceiverRe.MatchString(recv) {
+			continue
+		}
+		openParen := loc[1] - 1 // index of `(`
+		// Plugin body: the first `{` after the open paren that is part of the
+		// callback (inline async (instance) => { … } or function (f) { … }).
+		bodyOpen := strings.IndexByte(content[openParen:], '{')
+		if bodyOpen < 0 {
+			continue
+		}
+		bodyOpen += openParen
+		bodyEnd := matchBrace(content, bodyOpen)
+		if bodyEnd < 0 {
+			continue
+		}
+		// The options object with `prefix:` follows the plugin body, before the
+		// register call's closing paren. Scan the window after the body.
+		tail := content[bodyEnd+1:]
+		if len(tail) > 128 {
+			tail = tail[:128]
+		}
+		m := fastifyPrefixOptRe.FindStringSubmatch(tail)
+		if m == nil {
+			continue
+		}
+		spans = append(spans, fastifyPluginSpan{
+			bodyStart: bodyOpen,
+			bodyEnd:   bodyEnd,
+			prefix:    normalizeMountPrefix(m[1]),
+		})
+	}
+	return spans
+}
+
+// fastifyComposedPrefix returns the joined prefix of every plugin span whose
+// body encloses offset, outermost first (#2934) — supporting nested
+// register(...) plugins. Empty when no enclosing plugin declares a prefix.
+func fastifyComposedPrefix(spans []fastifyPluginSpan, offset int) string {
+	var enclosing []fastifyPluginSpan
+	for _, s := range spans {
+		if offset > s.bodyStart && offset < s.bodyEnd && s.prefix != "" {
+			enclosing = append(enclosing, s)
+		}
+	}
+	sort.Slice(enclosing, func(i, j int) bool { return enclosing[i].bodyStart < enclosing[j].bodyStart })
+	composed := ""
+	for _, s := range enclosing {
+		composed = joinPathFragments(composed, s.prefix)
+	}
+	return composed
+}
+
 // synthesizeFastify emits http_endpoint_definition entities for Fastify
 // route registrations. It complements synthesizeExpress, which would miss
 // these because its receiver allowlist excludes "fastify".
@@ -77,25 +165,29 @@ func synthesizeFastify(content string, emit emitFn) {
 	if !strings.Contains(content, "fastify") && !strings.Contains(content, "Fastify") {
 		return
 	}
+	// #2934 — plugin-registration prefixes: routes registered inside an inline
+	// `fastify.register(plugin, { prefix: '/v1' })` body compose `/v1`.
+	pluginSpans := buildFastifyPluginSpans(content)
 	withHandler := map[string]bool{}
-	for _, m := range fastifyVerbRe.FindAllStringSubmatch(content, -1) {
-		if len(m) < 5 {
+	for _, m := range fastifyVerbRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 10 {
 			continue
 		}
-		receiver := m[1]
+		receiver := content[m[2]:m[3]]
 		if !fastifyAllowedReceiverRe.MatchString(receiver) {
 			continue
 		}
-		raw := m[3]
+		raw := content[m[6]:m[7]]
 		if !looksLikeExpressPath(raw) {
 			continue
 		}
-		verb := strings.ToUpper(m[2])
-		handler := m[4]
-		if isInlineExpressHandler(m[0], raw) {
+		verb := strings.ToUpper(content[m[4]:m[5]])
+		handler := content[m[8]:m[9]]
+		if isInlineExpressHandler(content[m[0]:m[1]], raw) {
 			handler = ""
 		}
-		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, raw)
+		full := joinPathFragments(fastifyComposedPrefix(pluginSpans, m[0]), raw)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, full)
 		if verb == "ALL" {
 			verb = "ANY"
 		}
@@ -103,20 +195,21 @@ func synthesizeFastify(content string, emit emitFn) {
 		withHandler[key] = true
 		emit(verb, canonical, "fastify", "Controller", handler)
 	}
-	for _, m := range fastifyVerbPathOnlyRe.FindAllStringSubmatch(content, -1) {
-		if len(m) < 4 {
+	for _, m := range fastifyVerbPathOnlyRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 8 {
 			continue
 		}
-		receiver := m[1]
+		receiver := content[m[2]:m[3]]
 		if !fastifyAllowedReceiverRe.MatchString(receiver) {
 			continue
 		}
-		raw := m[3]
+		raw := content[m[6]:m[7]]
 		if !looksLikeExpressPath(raw) {
 			continue
 		}
-		verb := strings.ToUpper(m[2])
-		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, raw)
+		verb := strings.ToUpper(content[m[4]:m[5]])
+		full := joinPathFragments(fastifyComposedPrefix(pluginSpans, m[0]), raw)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, full)
 		if verb == "ALL" {
 			verb = "ANY"
 		}
@@ -127,24 +220,25 @@ func synthesizeFastify(content string, emit emitFn) {
 		emit(verb, canonical, "fastify", "Controller", "")
 	}
 	// Structured form: fastify.route({ method, url, handler }).
-	for _, m := range fastifyRouteRe.FindAllStringSubmatch(content, -1) {
-		if len(m) < 4 {
+	for _, m := range fastifyRouteRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 8 {
 			continue
 		}
-		receiver := m[1]
+		receiver := content[m[2]:m[3]]
 		if !fastifyAllowedReceiverRe.MatchString(receiver) {
 			continue
 		}
-		verb := strings.ToUpper(m[2])
-		raw := m[3]
+		verb := strings.ToUpper(content[m[4]:m[5]])
+		raw := content[m[6]:m[7]]
 		handler := ""
-		if len(m) >= 5 {
-			handler = m[4]
+		if len(m) >= 10 && m[8] >= 0 {
+			handler = content[m[8]:m[9]]
 		}
 		if !looksLikeExpressPath(raw) {
 			continue
 		}
-		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, raw)
+		full := joinPathFragments(fastifyComposedPrefix(pluginSpans, m[0]), raw)
+		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, full)
 		emit(verb, canonical, "fastify", "Controller", handler)
 	}
 }

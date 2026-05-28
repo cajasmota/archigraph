@@ -145,6 +145,64 @@ func TestSynth_Express(t *testing.T) {
 	requireContains(t, got, want, "Express")
 }
 
+// TestSynth_Express_MountPrefix covers #2934: a sub-router mounted at a path
+// prefix via `app.use('/api', router)` composes that prefix onto every route
+// the sub-router registers, and nested mounts stack. Routes on the top-level
+// `app` (no mount) keep their bare path (regression guard).
+func TestSynth_Express_MountPrefix(t *testing.T) {
+	src := "const express = require('express');\n" +
+		"const app = express();\n" +
+		"const apiRouter = express.Router();\n" +
+		"const adminRouter = express.Router();\n" +
+		"\n" +
+		"apiRouter.get('/users/:id', getUser);\n" +
+		"apiRouter.post('/users', createUser);\n" +
+		"adminRouter.delete('/users/:id', deleteUser);\n" +
+		"\n" +
+		"// Nested mount: adminRouter under apiRouter under /api.\n" +
+		"apiRouter.use('/admin', adminRouter);\n" +
+		"app.use('/api', apiRouter);\n" +
+		"\n" +
+		"// Top-level route on app — NOT mounted, stays bare.\n" +
+		"app.get('/health', healthCheck);\n"
+	got, _ := runDetect(t, "javascript", "app.js", src)
+	want := []string{
+		"http:GET:/api/users/{id}",
+		"http:POST:/api/users",
+		"http:DELETE:/api/admin/users/{id}",
+		"http:GET:/health",
+	}
+	requireContains(t, got, want, "Express-mount-prefix")
+}
+
+// TestSynth_Fastify_PluginPrefix covers #2934: routes registered inside an
+// inline `fastify.register(plugin, { prefix: '/v1' })` body compose the plugin
+// prefix, nested register() plugins stack, and a top-level route (no plugin
+// prefix) stays bare.
+func TestSynth_Fastify_PluginPrefix(t *testing.T) {
+	src := "const fastify = require('fastify')();\n" +
+		"\n" +
+		"fastify.register(async (instance) => {\n" +
+		"  instance.get('/users/:id', getUser);\n" +
+		"  instance.post('/users', createUser);\n" +
+		"  // Nested plugin under /v1.\n" +
+		"  instance.register(async (adminInstance) => {\n" +
+		"    adminInstance.delete('/users/:id', deleteUser);\n" +
+		"  }, { prefix: '/admin' });\n" +
+		"}, { prefix: '/v1' });\n" +
+		"\n" +
+		"// Top-level route — no plugin prefix, stays bare.\n" +
+		"fastify.get('/health', healthCheck);\n"
+	got, _ := runDetect(t, "javascript", "server.js", src)
+	want := []string{
+		"http:GET:/v1/users/{id}",
+		"http:POST:/v1/users",
+		"http:DELETE:/v1/admin/users/{id}",
+		"http:GET:/health",
+	}
+	requireContains(t, got, want, "Fastify-plugin-prefix")
+}
+
 // ---------------------------------------------------------------------------
 // Express false-positive guard tests — round 1 (#653) + round 2 (#684)
 // ---------------------------------------------------------------------------
