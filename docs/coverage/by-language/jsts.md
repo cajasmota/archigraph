@@ -54,7 +54,7 @@ Back to [summary](../summary.md).
 |---|---|---|---|---|---|---|---|---|---|---|
 | [Expo](../detail/lang.jsts.framework.expo.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
 | [Ionic](../detail/lang.jsts.framework.ionic.md) | ✅ 2/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
-| [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ✅ 2/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
+| [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ✅ 2/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
 | [React Native](../detail/lang.jsts.framework.react-native.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
 
 

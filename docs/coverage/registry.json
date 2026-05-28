@@ -11707,10 +11707,10 @@
         },
         "Data Flow": {
           "branch_conditions": {
-            "status": "partial",
-            "cites": ["internal/extractors/javascript/discriminator.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2859",
-            "notes": "AUDIT(#2847) full-\u003epartial: NS branch_conditions relies on the discriminator pass, which stamped 0 discriminators across 19 real NativeScript view-models (official @nativescript app-templates) whose if-branches are member comparisons (if (this._x !== value)). Fires only on the toy fixture's bare-identifier compare. Follow-up filed.",
+            "status": "full",
+            "cites": ["internal/extractors/javascript/branchconditions.go","internal/extractors/javascript/issue2885_branch_conditions_test.go","internal/extractors/javascript/testdata/mobile_nativescript/counter-view-model.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2885",
+            "notes": "FIXED(#2885): general branch-condition pass (branchconditions.go) now emits branch_conditions + BRANCHES_ON for if/ternary/switch member comparisons the discriminator pass misses, e.g. this._counter !== value / this._counter le 0. Proven by counter-view-model.ts modelled on a real extends-Observable NS view-model.",
             "verified_at": "2026-05-28"
           },
           "state_management": {

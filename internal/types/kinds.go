@@ -497,6 +497,19 @@ const (
 	// BM25 doc terms so literal-value queries (e.g. "checklistType 2") rank
 	// the enclosing entity higher.
 	RelationshipKindDiscriminatesOn RelationshipKind = "DISCRIMINATES_ON"
+
+	// #2885: General branch-condition edges. Emitted by the JS/TS extractor for
+	// every `if`/ternary/`switch` whose controlling expression is a comparison
+	// in a function/method body — including member comparisons that the
+	// narrower discriminator pass (DISCRIMINATES_ON, bare-identifier ===/!==
+	// literal only) misses, e.g. real NativeScript view-model branches like
+	// `if (this._x !== value)` or `if (this._counter <= 0)`.
+	//   BRANCHES_ON : enclosing operation → synthetic "branch:<expr>" stub
+	// Properties:
+	//   "line"     : 1-indexed source line of the branch
+	//   "operator" : the comparison operator (===, !==, <=, <, >, >=, ==, !=)
+	//   "kind"     : "if", "ternary", or "switch"
+	RelationshipKindBranchesOn RelationshipKind = "BRANCHES_ON"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -588,6 +601,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindBazelDepStatus,
 		// #2666 discriminator comparison edges:
 		RelationshipKindDiscriminatesOn,
+		// #2885 general branch-condition edges:
+		RelationshipKindBranchesOn,
 		// #2761 substrate Phase 0:
 		RelationshipKindResolvesTo,
 	}

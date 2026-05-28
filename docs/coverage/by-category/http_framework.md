@@ -191,7 +191,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [java](../by-language/java.md) | [Android SDK (Activity/Fragment routing)](../detail/lang.java.framework.android-sdk.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 2/3 | |
 | [JS/TS](../by-language/jsts.md) | [Expo](../detail/lang.jsts.framework.expo.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
 | [JS/TS](../by-language/jsts.md) | [Ionic](../detail/lang.jsts.framework.ionic.md) | ✅ 2/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
-| [JS/TS](../by-language/jsts.md) | [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ✅ 2/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 1/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
+| [JS/TS](../by-language/jsts.md) | [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ✅ 2/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
 | [JS/TS](../by-language/jsts.md) | [React Native](../detail/lang.jsts.framework.react-native.md) | ✅ 2/2 | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/1 | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | ✅ 1/1 | ✅ 3/3 | |
 | [kotlin](../by-language/kotlin.md) | [Jetpack Compose (Android UI)](../detail/lang.kotlin.framework.compose.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 5/14 | |
 | [kotlin](../by-language/kotlin.md) | [Kotlin Multiplatform (KMP / KMM)](../detail/lang.kotlin.framework.kmp.md) | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ❌ 0/2 | ❌ 0/3 | ❌ 0/1 | ❌ 0/1 | ⚠️ 5/14 | |
