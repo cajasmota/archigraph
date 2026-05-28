@@ -12978,18 +12978,59 @@
         }
       },
       "framework_specific": {
-        "Vue Ecosystem": {
-          "composition_api_extraction": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2739"
+        "Vue Internals": {
+          "composition_api": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
           },
-          "pinia_pattern_detection": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2739"
+          "options_api": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/OptionsComp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
+          },
+          "sfc_block_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
+          },
+          "provide_inject": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
+          },
+          "props_emits_macros": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
+          },
+          "pinia_store": {
+            "status": "partial",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
+          },
+          "directive_recognition": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
+          },
+          "slot_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/vue/extractor.go","internal/extractors/vue/issue2876_internals_test.go","internal/extractors/javascript/testdata/vue_internals/Comp.vue"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
           },
           "scoped_style_extraction": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2739"
+            "status": "not_applicable",
+            "issue": "https://github.com/cajasmota/archigraph/issues/2876",
+            "verified_at": "2026-05-28"
           }
         }
       }

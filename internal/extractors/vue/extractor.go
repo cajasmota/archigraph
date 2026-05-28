@@ -169,6 +169,33 @@ var (
 	// Vue's conditional-rendering directives (branch_conditions).
 	reVueBranch = regexp.MustCompile(`\b(v-if|v-else-if|v-else|v-show)\b`)
 
+	// ── Template directives (issue #2876 — Vue Internals/directive_recognition) ─
+	// Vue template directives are `v-<name>` attributes. We recognise the full
+	// built-in set plus user-defined ones. The branch directives (v-if/v-else/
+	// v-show) are also captured by reVueBranch for Data-Flow branch_conditions;
+	// here we model the directive itself as a first-class template idiom. We
+	// capture the directive name and (for v-on:click / @click and :prop / v-bind)
+	// the argument so the directive entity carries the bound event/attribute.
+	//   v-model / v-model:value
+	//   v-for="item in items"
+	//   v-bind:href / :href            (shorthand `:`)
+	//   v-on:click  / @click           (shorthand `@`)
+	//   v-html / v-text / v-slot / v-cloak / v-once / v-pre / v-memo
+	//   custom: v-focus, v-tooltip, …
+	reVueDirective = regexp.MustCompile(`(?:\b(v-[a-z][a-z0-9-]*)(?::([a-zA-Z][\w.-]*))?|(?:^|\s)([:@])([a-zA-Z][\w.-]*))(?:=|\s|>|/)`)
+
+	// ── Slots (issue #2876 — Vue Internals/slot_extraction) ──────────────────
+	// Slot outlets declared in a child component's <template>:
+	//   <slot />                      default slot
+	//   <slot name="header" />        named slot
+	// Slot content provided by a parent at a usage site:
+	//   <template #header>            shorthand named-slot
+	//   <template v-slot:footer>      explicit v-slot
+	//   <template v-slot="{ row }">   default scoped slot
+	reSlotOutlet = regexp.MustCompile(`(?i)<slot\b([^>]*?)/?>`)
+	reSlotName   = regexp.MustCompile(`(?i)\bname\s*=\s*["']([^"']+)["']`)
+	reSlotUse    = regexp.MustCompile(`(?i)<template\b[^>]*?(?:#([a-zA-Z][\w.-]*)|v-slot:([a-zA-Z][\w.-]*)|(v-slot)\b)`)
+
 	// ── Navigation (issue #2856) ─────────────────────────────────────────────
 
 	// vue-router route table: createRouter({ routes: [ … ] }). We locate the
@@ -379,6 +406,20 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) (enti
 		// NAVIGATES_TO edges.
 		linkRels := extractRouterLinks(templateSrc, templateOffset, src, componentName)
 		entities[componentIdx].Relationships = append(entities[componentIdx].Relationships, linkRels...)
+
+		// Vue Internals (#2876) — directive_recognition: v-model/v-for/v-bind/
+		// v-on/etc. template directives → SCOPE.Operation subtype="directive"
+		// with CONTAINS edges from the component.
+		dirEntities, dirRels := extractDirectives(templateSrc, templateOffset, src, file.Path, componentName)
+		entities[componentIdx].Relationships = append(entities[componentIdx].Relationships, dirRels...)
+		entities = append(entities, dirEntities...)
+
+		// Vue Internals (#2876) — slot_extraction: <slot>/<slot name="x"> outlets
+		// and <template #x>/<template v-slot:x> usage → SCOPE.Operation
+		// subtype="slot" with CONTAINS edges from the component.
+		slotEntities, slotRels := extractSlots(templateSrc, templateOffset, src, file.Path, componentName)
+		entities[componentIdx].Relationships = append(entities[componentIdx].Relationships, slotRels...)
+		entities = append(entities, slotEntities...)
 	}
 
 	// --- 5. Tag relationships with language ----------------------------------
@@ -408,19 +449,49 @@ func extractScriptBlock(src string) (content string, offset int, isSetup bool) {
 	return src[contentStart:contentEnd], contentStart, isSetup
 }
 
-// extractTemplateBlock locates the first <template> section.
+// reTopTemplateOpen matches a top-level SFC <template …> block — anchored to
+// the start of a line so a `<template>` mention inside a <script> comment or a
+// nested (indented) slot template is not mistaken for the root block.
+var reTopTemplateOpen = regexp.MustCompile(`(?im)^<template(\s[^>]*)?>`)
+
+// extractTemplateBlock locates the outermost <template> section. Vue templates
+// nest <template> elements (slot content via <template #slot> / v-slot), so the
+// closing tag must be matched at the same depth as the opening one rather than
+// stopping at the first </template>. The root block is found via a line-anchored
+// match so a `<template>` literal inside a <script> comment is not picked up.
 func extractTemplateBlock(src string) (content string, offset int, found bool) {
-	openLoc := reTemplateOpen.FindStringIndex(src)
+	openLoc := reTopTemplateOpen.FindStringIndex(src)
+	if openLoc == nil {
+		// Fall back to a non-anchored match for minified/one-line SFCs.
+		openLoc = reTemplateOpen.FindStringIndex(src)
+	}
 	if openLoc == nil {
 		return "", 0, false
 	}
 	contentStart := openLoc[1]
-	closeLoc := reTemplateClose.FindStringIndex(src[contentStart:])
-	if closeLoc == nil {
-		return "", 0, false
+
+	// Walk forward, tracking <template …> open / </template> close depth.
+	depth := 1
+	pos := contentStart
+	for depth > 0 {
+		rest := src[pos:]
+		nextOpen := reTemplateOpen.FindStringIndex(rest)
+		nextClose := reTemplateClose.FindStringIndex(rest)
+		if nextClose == nil {
+			return "", 0, false
+		}
+		if nextOpen != nil && nextOpen[0] < nextClose[0] {
+			depth++
+			pos += nextOpen[1]
+			continue
+		}
+		depth--
+		if depth == 0 {
+			return src[contentStart : pos+nextClose[0]], contentStart, true
+		}
+		pos += nextClose[1]
 	}
-	contentEnd := contentStart + closeLoc[0]
-	return src[contentStart:contentEnd], contentStart, true
+	return "", 0, false
 }
 
 // extractSetupMacros scans a <script setup> block for defineProps, defineEmits,
@@ -900,6 +971,176 @@ func extractBranchConditions(templateSrc string, templateOffset int, fullSrc, fi
 			},
 		})
 	}
+	return ents, rels
+}
+
+// extractDirectives scans the <template> block for Vue template directives
+// (issue #2876 — Vue Internals/directive_recognition) and returns
+// SCOPE.Operation subtype="directive" entities plus CONTAINS edges from the
+// component. Vue's directives are `v-<name>` attributes (v-model, v-for,
+// v-bind, v-on, v-html, v-slot, custom directives, …) together with their
+// shorthands `:attr` (v-bind) and `@event` (v-on). Each distinct directive
+// (keyed by directive + argument) yields one entity so the component's template
+// surface is introspectable. The `directive` property holds the canonical
+// directive name (shorthand normalised to v-bind / v-on); `arg` holds the
+// bound argument when present (e.g. v-on:click → arg="click").
+func extractDirectives(templateSrc string, templateOffset int, fullSrc, filePath, componentName string) ([]types.EntityRecord, []types.RelationshipRecord) {
+	var ents []types.EntityRecord
+	var rels []types.RelationshipRecord
+	seen := map[string]bool{}
+
+	for _, m := range reVueDirective.FindAllStringSubmatchIndex(templateSrc, -1) {
+		var directive, arg string
+		off := m[0]
+		switch {
+		case m[2] >= 0: // v-<name>[:arg]
+			directive = templateSrc[m[2]:m[3]]
+			if m[4] >= 0 {
+				arg = templateSrc[m[4]:m[5]]
+			}
+		case m[6] >= 0: // shorthand `:` or `@`
+			short := templateSrc[m[6]:m[7]]
+			if m[8] >= 0 {
+				arg = templateSrc[m[8]:m[9]]
+			}
+			if short == "@" {
+				directive = "v-on"
+			} else {
+				directive = "v-bind"
+			}
+			// Shorthand match consumes a leading whitespace; align the offset to
+			// the sigil itself for accurate line numbers.
+			off = m[6]
+		}
+		if directive == "" {
+			continue
+		}
+		key := directive
+		if arg != "" {
+			key = directive + ":" + arg
+		}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
+		safe := strings.NewReplacer("-", "_", ":", "_", ".", "_").Replace(key)
+		lineNum := lineOf(fullSrc, templateOffset+off)
+		props := map[string]string{
+			"component": componentName,
+			"directive": directive,
+			"framework": "vue",
+		}
+		if arg != "" {
+			props["arg"] = arg
+		}
+		ents = append(ents, types.EntityRecord{
+			Name:             safe,
+			QualifiedName:    fmt.Sprintf("%s.%s", componentName, safe),
+			Kind:             "SCOPE.Operation",
+			Subtype:          "directive",
+			SourceFile:       filePath,
+			Language:         "vue",
+			StartLine:        lineNum,
+			EndLine:          lineNum,
+			Signature:        "template " + key,
+			QualityScore:     0.8,
+			EnrichmentStatus: types.StatusPending,
+			Properties:       props,
+		})
+		rels = append(rels, types.RelationshipRecord{
+			ToID: safe,
+			Kind: "CONTAINS",
+			Properties: map[string]string{
+				"component": componentName,
+				"directive": directive,
+				"framework": "vue",
+			},
+		})
+	}
+	return ents, rels
+}
+
+// extractSlots scans the <template> block for Vue slots (issue #2876 — Vue
+// Internals/slot_extraction) and returns SCOPE.Operation subtype="slot"
+// entities plus CONTAINS edges from the component. Two roles are recognised:
+//
+//	<slot /> / <slot name="header" />           → role="outlet" (this component
+//	                                               declares a slot)
+//	<template #header> / <template v-slot:footer>→ role="content" (this component
+//	                                               fills a child's slot)
+//
+// An unnamed <slot> or default v-slot is keyed as "default". The slot name is
+// carried in the `slot_name` property so the component's slot surface is
+// introspectable.
+func extractSlots(templateSrc string, templateOffset int, fullSrc, filePath, componentName string) ([]types.EntityRecord, []types.RelationshipRecord) {
+	var ents []types.EntityRecord
+	var rels []types.RelationshipRecord
+	seen := map[string]bool{}
+
+	emit := func(name, role string, off int) {
+		if name == "" {
+			name = "default"
+		}
+		dedupe := role + ":" + name
+		if seen[dedupe] {
+			return
+		}
+		seen[dedupe] = true
+		safe := strings.NewReplacer("-", "_", ".", "_").Replace(role + "_" + name)
+		lineNum := lineOf(fullSrc, templateOffset+off)
+		ents = append(ents, types.EntityRecord{
+			Name:             safe,
+			QualifiedName:    fmt.Sprintf("%s.%s", componentName, safe),
+			Kind:             "SCOPE.Operation",
+			Subtype:          "slot",
+			SourceFile:       filePath,
+			Language:         "vue",
+			StartLine:        lineNum,
+			EndLine:          lineNum,
+			Signature:        "slot " + role + " " + name,
+			QualityScore:     0.8,
+			EnrichmentStatus: types.StatusPending,
+			Properties: map[string]string{
+				"component": componentName,
+				"slot_name": name,
+				"slot_role": role,
+				"framework": "vue",
+			},
+		})
+		rels = append(rels, types.RelationshipRecord{
+			ToID: safe,
+			Kind: "CONTAINS",
+			Properties: map[string]string{
+				"component": componentName,
+				"slot_name": name,
+				"slot_role": role,
+				"framework": "vue",
+			},
+		})
+	}
+
+	// Slot outlets: <slot /> / <slot name="header" />.
+	for _, m := range reSlotOutlet.FindAllStringSubmatchIndex(templateSrc, -1) {
+		attrs := templateSrc[m[2]:m[3]]
+		name := ""
+		if nm := reSlotName.FindStringSubmatch(attrs); nm != nil {
+			name = nm[1]
+		}
+		emit(name, "outlet", m[0])
+	}
+
+	// Slot content: <template #name> / <template v-slot:name> / <template v-slot>.
+	for _, m := range reSlotUse.FindAllStringSubmatchIndex(templateSrc, -1) {
+		name := ""
+		if m[2] >= 0 {
+			name = templateSrc[m[2]:m[3]]
+		} else if m[4] >= 0 {
+			name = templateSrc[m[4]:m[5]]
+		}
+		emit(name, "content", m[0])
+	}
+
 	return ents, rels
 }
 

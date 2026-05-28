@@ -70,13 +70,19 @@ Auto-generated. Back to [summary](../summary.md).
 
 ## Framework-specific
 
-### Vue Ecosystem
+### Vue Internals
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `composition_api_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
-| `pinia_pattern_detection` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
-| `scoped_style_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
+| `composition_api` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
+| `directive_recognition` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
+| `options_api` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/OptionsComp.vue` | — |
+| `pinia_store` | ⚠️ `partial` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
+| `props_emits_macros` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
+| `provide_inject` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
+| `scoped_style_extraction` | — `not_applicable` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | — | — |
+| `sfc_block_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
+| `slot_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2876) | `internal/extractors/vue/extractor.go`<br>`internal/extractors/vue/issue2876_internals_test.go`<br>`internal/extractors/javascript/testdata/vue_internals/Comp.vue` | — |
 
 ## Provenance
 
