@@ -19,6 +19,12 @@ jobs:
           go-version: '1.22'
       - name: Validate schema + cites
         run: go run ./tools/coverage validate
+      - name: Verify registry.json is canonical (guards against recompaction, #2907)
+        run: |
+          if ! go run ./tools/coverage fmt --check; then
+            echo "::error::docs/coverage/registry.json is not canonical (likely whole-file re-serialized/compacted). Run 'go run ./tools/coverage fmt' locally and commit."
+            exit 1
+          fi
       - name: Regenerate docs
         run: go run ./tools/coverage gen
       - name: Verify docs are in sync with JSON
