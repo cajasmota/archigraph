@@ -403,7 +403,7 @@ func buildConstantEntities(scrubbed, filePath, lang string) []types.EntityRecord
 		seen[name] = true
 		out = append(out, types.EntityRecord{
 			Name:       name,
-			Kind:       "SCOPE.Constant",
+			Kind:       string(types.EntityKindConstant),
 			Subtype:    "equate",
 			SourceFile: filePath,
 			Language:   lang,

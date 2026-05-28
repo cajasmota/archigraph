@@ -41,6 +41,14 @@ const (
 	EntityKindProject  EntityKind = "SCOPE.Project"
 	EntityKindConfig   EntityKind = "SCOPE.Config"
 	EntityKindModel    EntityKind = "SCOPE.Model"
+
+	// #2839: Named constant declarations (e.g. assembly equ/const directives).
+	// Registered as a first-class kind so producers across all low-level
+	// languages can emit constant symbols without reusing SCOPE.Schema (which
+	// carries "data type / field" semantics). Subtype "equate" is used by the
+	// assembly extractor; future producers may use other subtypes (e.g. "define"
+	// for C preprocessor macros, "const" for Zig/Rust compile-time constants).
+	EntityKindConstant EntityKind = "SCOPE.Constant"
 	// AgentPattern is the kind for agent-learned Pattern entities introduced
 	// in ADR-0018. Stored as "AgentPattern" (no SCOPE. prefix) to distinguish
 	// from the structural SCOPE.Pattern kind used by static-analysis extractors.
@@ -157,6 +165,8 @@ func AllEntityKinds() []EntityKind {
 		EntityKindProject,
 		EntityKindConfig,
 		EntityKindModel,
+		// #2839:
+		EntityKindConstant,
 		EntityKindAgentPattern,
 		// #1884:
 		EntityKindModule,
