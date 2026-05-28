@@ -1103,12 +1103,17 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 		case "python_re_function":
 			return "re", "function", true
 		case "python_dbapi_function":
-			// Fold all DB-API 2.0 cursor verbs to a single
-			// `ext:sqlite3` placeholder (sqlite3 is the stdlib DB-API
-			// reference implementation and already on the known-
-			// packages allowlist). The concrete driver (psycopg2 / pymysql
-			// / etc.) is identified at the IMPORTS edge.
-			return "sqlite3", "function", true
+			// Fold DB-API 2.0 cursor verbs to the concrete driver the file
+			// imports (#2807). The verb names (`execute`/`cursor`/...) are
+			// engine-agnostic, so the only signal for which database engine
+			// the code talks to is the driver import on the same file. A
+			// hardcoded `sqlite3` placeholder mislabels mysql.connector /
+			// psycopg2 / etc. code as SQLite (iter9 q05/q09/q12). We read
+			// the driver root from `fromImports` and fold to its canonical
+			// placeholder; when no recognised driver is on the file we fall
+			// back to a generic `python-dbapi` placeholder (NOT sqlite3 —
+			// no hard default to a concrete engine).
+			return pythonDBAPIDriverPlaceholder(fromImports), "function", true
 		case "python_bs4_function":
 			return "bs4", "function", true
 		case "python_urllib_function":
@@ -14997,7 +15002,8 @@ var pythonDBAPIImportRoots = map[string]struct{}{
 	"sqlite3":           {},
 	"psycopg2":          {},
 	"psycopg":           {},
-	"mysql":             {},
+	"mysql":             {}, // mysql.connector
+	"MySQLdb":           {}, // mysqlclient
 	"pymysql":           {},
 	"cx_Oracle":         {},
 	"cx_oracle":         {},
@@ -15007,6 +15013,97 @@ var pythonDBAPIImportRoots = map[string]struct{}{
 	"asyncpg":           {},
 	"aiomysql":          {},
 	"aiosqlite":         {},
+	"pyodbc":            {},
+	"pymssql":           {},
+}
+
+// pythonDBAPIDriverPlaceholder maps the file's DB-API driver import to the
+// canonical external-package placeholder that names the concrete database
+// engine (#2807). The DB-API cursor verbs (`execute`/`cursor`/...) are
+// engine-agnostic, so the driver import is the only structural signal for
+// which engine the code talks to. We return the driver's own package name
+// (all entries below are on knownExternalPackages, so the resolver routes
+// the edge to ExternalKnown rather than synthesising a junk ext:* node).
+//
+// When the file imports several drivers we prefer a concrete non-SQLite
+// engine over sqlite3 (sqlite3 is the stdlib fallback and a no-op import in
+// much code), so a file that uses both mysql.connector and sqlite3 is
+// labelled by its server engine. When NO recognised driver is on the file
+// we return the generic `python-dbapi` placeholder — there is no hard
+// default to a concrete engine (the old code defaulted to sqlite3, which
+// mislabelled every server-DB consumer).
+func pythonDBAPIDriverPlaceholder(imports map[string]bool) string {
+	const generic = "python-dbapi"
+	if len(imports) == 0 {
+		return generic
+	}
+	best := ""
+	for p := range imports {
+		root := pythonImportRoot(p)
+		// django.db.* paths are DB-API-shaped but carry no engine signal
+		// (the engine lives in settings.DATABASES), so they leave `best`
+		// untouched and only contribute the generic fallback.
+		placeholder, ok := pythonDBAPIDriverPlaceholders[root]
+		if !ok {
+			continue
+		}
+		if best == "" {
+			best = placeholder
+			continue
+		}
+		// Prefer a concrete server engine over the sqlite3 stdlib fallback.
+		if best == "sqlite3" && placeholder != "sqlite3" {
+			best = placeholder
+		}
+	}
+	if best == "" {
+		return generic
+	}
+	return best
+}
+
+// pythonDBAPIDriverPlaceholders maps a driver import root to its canonical
+// external-package placeholder. Every value is on knownExternalPackages so
+// the resolver routes to ExternalKnown. Drivers for the same engine fold to
+// one canonical name (e.g. every MySQL driver → "mysql") so downstream
+// engine-label readers see a single stable token per engine.
+var pythonDBAPIDriverPlaceholders = map[string]string{
+	// MySQL family
+	"mysql":    "mysql", // mysql.connector
+	"MySQLdb":  "mysql", // mysqlclient
+	"pymysql":  "mysql",
+	"aiomysql": "mysql",
+	// PostgreSQL family
+	"psycopg2": "psycopg2",
+	"psycopg":  "psycopg2",
+	"asyncpg":  "psycopg2",
+	// SQLite family
+	"sqlite3":   "sqlite3",
+	"aiosqlite": "sqlite3",
+	// SQL Server family
+	"pyodbc":  "pyodbc",
+	"pymssql": "pyodbc",
+	// Oracle family
+	"cx_Oracle": "cx_Oracle",
+	"cx_oracle": "cx_Oracle",
+	"oracledb":  "cx_Oracle",
+	// Snowflake / ClickHouse
+	"snowflake":         "snowflake-connector-python",
+	"clickhouse_driver": "clickhouse-driver",
+}
+
+// pythonDBAPIEngineLabel maps a canonical driver placeholder (as returned
+// by pythonDBAPIDriverPlaceholder) to a human engine label. Used by
+// engine-label readers and exercised by the driver-matrix test (#2807).
+var pythonDBAPIEngineLabel = map[string]string{
+	"mysql":                      "MySQL",
+	"psycopg2":                   "PostgreSQL",
+	"sqlite3":                    "SQLite",
+	"pyodbc":                     "SQL Server",
+	"cx_Oracle":                  "Oracle",
+	"snowflake-connector-python": "Snowflake",
+	"clickhouse-driver":          "ClickHouse",
+	"python-dbapi":               "unknown",
 }
 
 // pythonDBAPIBareNames — receiver-stripped DB-API 2.0 verbs.
@@ -15994,94 +16091,104 @@ var knownExternalPackages = map[string]struct{}{
 	// Wave-4 (Django + Flask + Mongo + Postgres real-world). Python
 	// drivers and frameworks the resolver currently tags external-
 	// unknown because the allowlist had no row for them.
-	"pymongo":                {},
-	"motor":                  {},
-	"bson":                   {},
-	"psycopg2":               {},
-	"psycopg":                {},
-	"asyncpg":                {},
-	"mysqlclient":            {},
-	"pymysql":                {},
-	"flask_sqlalchemy":       {},
-	"flask_jwt_extended":     {},
-	"flask_jwt":              {},
-	"flask_login":            {},
-	"flask_migrate":          {},
-	"flask_caching":          {},
-	"flask_cache":            {},
-	"flask_restful":          {},
-	"flask_restplus":         {},
-	"flask_restx":            {},
-	"flask_marshmallow":      {},
-	"flask_apispec":          {},
-	"flask_bcrypt":           {},
-	"flask_cors":             {},
-	"flask_wtf":              {},
-	"flask_mail":             {},
-	"flask_session":          {},
-	"flask_socketio":         {},
-	"marshmallow":            {},
-	"marshmallow_sqlalchemy": {},
-	"webargs":                {},
-	"werkzeug":               {},
-	"jinja2":                 {},
-	"itsdangerous":           {},
-	"pyjwt":                  {},
-	"passlib":                {},
-	"cryptography":           {},
-	"arrow":                  {},
-	"pendulum":               {},
-	"dateutil":               {},
-	"factory_boy":            {},
-	"decouple":               {},
-	"python_dotenv":          {},
-	"environs":               {},
-	"dynaconf":               {},
-	"hypothesis":             {},
-	"pytest_factoryboy":      {},
-	"pytest_django":          {},
-	"pytest_flask":           {},
-	"pytest_mock":            {},
-	"pytest_asyncio":         {},
-	"webtest":                {},
-	"responses":              {},
-	"vcr":                    {},
-	"sentry_sdk":             {},
-	"structlog":              {},
-	"loguru":                 {},
-	"tenacity":               {},
-	"backoff":                {},
-	"prometheus_client":      {},
-	"aiohttp":                {},
-	"aiofiles":               {},
-	"uvicorn":                {},
-	"gunicorn":               {},
-	"starlette":              {},
-	"orjson":                 {},
-	"ujson":                  {},
-	"msgpack":                {},
-	"yaml":                   {},
-	"pyyaml":                 {},
-	"toml":                   {},
-	"tomllib":                {},
-	"tomli":                  {},
-	"lxml":                   {},
-	"bs4":                    {},
-	"beautifulsoup4":         {},
-	"pillow":                 {},
-	"pil":                    {},
-	"openpyxl":               {},
-	"xlrd":                   {},
-	"matplotlib":             {},
-	"seaborn":                {},
-	"sklearn":                {},
-	"scikit_learn":           {},
-	"torch":                  {},
-	"tensorflow":             {},
-	"transformers":           {},
-	"langchain":              {},
-	"openai":                 {},
-	"anthropic":              {},
+	"pymongo":     {},
+	"motor":       {},
+	"bson":        {},
+	"psycopg2":    {},
+	"psycopg":     {},
+	"asyncpg":     {},
+	"mysqlclient": {},
+	"pymysql":     {},
+	// DB-API driver placeholders (#2807). pythonDBAPIDriverPlaceholder
+	// folds cursor-verb call sites to these so the resolver routes to
+	// ExternalKnown rather than synthesising an ext:<verb> node, and the
+	// engine label reads the concrete driver. mysql/psycopg2/sqlite3 are
+	// already listed above/elsewhere; these are the remaining engines.
+	"pyodbc":                     {}, // SQL Server (also pymssql folds here)
+	"cx_oracle":                  {}, // Oracle (cx_Oracle / oracledb fold here)
+	"snowflake-connector-python": {}, // Snowflake
+	"clickhouse-driver":          {}, // ClickHouse
+	"python-dbapi":               {}, // generic fallback: driver not recognised
+	"flask_sqlalchemy":           {},
+	"flask_jwt_extended":         {},
+	"flask_jwt":                  {},
+	"flask_login":                {},
+	"flask_migrate":              {},
+	"flask_caching":              {},
+	"flask_cache":                {},
+	"flask_restful":              {},
+	"flask_restplus":             {},
+	"flask_restx":                {},
+	"flask_marshmallow":          {},
+	"flask_apispec":              {},
+	"flask_bcrypt":               {},
+	"flask_cors":                 {},
+	"flask_wtf":                  {},
+	"flask_mail":                 {},
+	"flask_session":              {},
+	"flask_socketio":             {},
+	"marshmallow":                {},
+	"marshmallow_sqlalchemy":     {},
+	"webargs":                    {},
+	"werkzeug":                   {},
+	"jinja2":                     {},
+	"itsdangerous":               {},
+	"pyjwt":                      {},
+	"passlib":                    {},
+	"cryptography":               {},
+	"arrow":                      {},
+	"pendulum":                   {},
+	"dateutil":                   {},
+	"factory_boy":                {},
+	"decouple":                   {},
+	"python_dotenv":              {},
+	"environs":                   {},
+	"dynaconf":                   {},
+	"hypothesis":                 {},
+	"pytest_factoryboy":          {},
+	"pytest_django":              {},
+	"pytest_flask":               {},
+	"pytest_mock":                {},
+	"pytest_asyncio":             {},
+	"webtest":                    {},
+	"responses":                  {},
+	"vcr":                        {},
+	"sentry_sdk":                 {},
+	"structlog":                  {},
+	"loguru":                     {},
+	"tenacity":                   {},
+	"backoff":                    {},
+	"prometheus_client":          {},
+	"aiohttp":                    {},
+	"aiofiles":                   {},
+	"uvicorn":                    {},
+	"gunicorn":                   {},
+	"starlette":                  {},
+	"orjson":                     {},
+	"ujson":                      {},
+	"msgpack":                    {},
+	"yaml":                       {},
+	"pyyaml":                     {},
+	"toml":                       {},
+	"tomllib":                    {},
+	"tomli":                      {},
+	"lxml":                       {},
+	"bs4":                        {},
+	"beautifulsoup4":             {},
+	"pillow":                     {},
+	"pil":                        {},
+	"openpyxl":                   {},
+	"xlrd":                       {},
+	"matplotlib":                 {},
+	"seaborn":                    {},
+	"sklearn":                    {},
+	"scikit_learn":               {},
+	"torch":                      {},
+	"tensorflow":                 {},
+	"transformers":               {},
+	"langchain":                  {},
+	"openai":                     {},
+	"anthropic":                  {},
 	// Python stdlib top-level
 	"os":              {},
 	"sys":             {},
