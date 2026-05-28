@@ -145,6 +145,7 @@ var intentionalGaps = []intentionalGap{
 	{"archigraph_list_findings", "since", "#2426 token ceiling pattern — optional RFC3339 filter"},
 	{"archigraph_list_findings", "entity_id", "#2426 token ceiling pattern — optional entity filter"},
 	{"archigraph_list_findings", "limit", "#2426 token ceiling pattern — optional result limit"},
+	{"archigraph_list_findings", "type", "#2810 token ceiling pattern — optional finding-type filter (e.g. security_finding)"},
 
 	// archigraph_cross_links: per-action args undeclared for token budget (#2424 / #1639 pattern).
 	{"archigraph_cross_links", "channel", "#2424 token ceiling pattern — list filter"},

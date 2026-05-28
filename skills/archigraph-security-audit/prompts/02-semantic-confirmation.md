@@ -6,7 +6,8 @@ Reads `phase1-findings.json`, confirms or dismisses each finding with LLM reason
 
 - Load `phase1-findings.json` from `~/.archigraph/groups/<group>/archigraph-security-audit/`.
 - Load prior `~/.archigraph/groups/<group>/archigraph-security-audit/state.json` (if exists) to skip already-confirmed findings by fingerprint.
-- If no findings remain after deduplication: print "No new findings to confirm." and exit.
+- Also call `archigraph_list_findings(type="security_finding")` to load findings already promoted to the graph (the `fingerprint=` trailer in each `answer` is the dedup key) so a re-run does not double-promote.
+- If no findings remain after deduplication: print "No new findings to confirm." and exit. An EMPTY finding set is the expected, correct outcome on a clean codebase — still write the index (Step 4) with all-zero counts; do not error or fabricate findings.
 
 ## Step 1 — Cost estimate
 
@@ -39,16 +40,27 @@ For each finding in priority order (critical first, then high, medium, low, info
 
 ## Step 3 — Persist confirmed findings
 
-For each confirmed finding, call:
+For each confirmed finding, call `archigraph_save_finding` to promote it into
+the group memory store as a first-class, queryable `security_finding` record:
 ```
 archigraph_save_finding(
   type="security_finding",
-  question="<check_name> on <entity_name>",
-  answer="<explanation>",
-  entity_id="<entity_id>",
-  severity="<severity>"
+  question="[<SEVERITY>] <check_name> on <entity_name>",
+  answer="<explanation>\n\nseverity=<severity>; fingerprint=<fingerprint>; check=<check_name>",
+  nodes=["<entity_id>"]
 )
 ```
+
+Field mapping (the tool persists `type`, `nodes`, and `repo_filter` alongside
+`question`/`answer`):
+- `type="security_finding"` — promotes the record so it is queryable in
+  isolation via `archigraph_list_findings(type="security_finding")`, separate
+  from ordinary `note` findings.
+- `nodes=["<entity_id>"]` — the entity reference. This is what makes the
+  finding graph-queryable by entity:
+  `archigraph_list_findings(entity_id="<entity_id>")`. Do NOT pass `entity_id`
+  or `severity` as top-level args — the tool ignores them; carry severity in
+  the `question` prefix and the `answer` trailer instead.
 
 Write a per-finding markdown page to `~/.archigraph/docs/<group>/security/findings/<fingerprint>.md`:
 

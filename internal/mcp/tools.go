@@ -1760,6 +1760,12 @@ func (s *Server) handleListFindings(ctx context.Context, req mcpapi.CallToolRequ
 		}
 		all = findingsForEntity(all, ids...)
 	}
+	// type filter (#2810): isolate a single finding kind, e.g.
+	// "security_finding" so the security-audit skill can query just the
+	// promoted SecurityFinding records without re-scanning notes.
+	if typ := argString(req, "type", ""); typ != "" {
+		all = findingsOfType(all, typ)
+	}
 	limit := argInt(req, "limit", 50)
 	return jsonResult(findingsToJSON(all, limit)), nil
 }

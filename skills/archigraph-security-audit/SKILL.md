@@ -91,8 +91,8 @@ Output: per-finding markdown pages at `~/.archigraph/docs/<group>/security/`.
 - `archigraph_security_findings` — Phase 2B taint-flow source→sink findings (#2772). Args: `category`, `min_confidence` (default 0.7), `limit`, `source_repo`. Returns deterministic SecurityFinding records ranked by confidence.
 - `archigraph_repairs` — check for residual edges on security-sensitive paths
 - `archigraph_enrichments` — read enriched endpoint metadata
-- `archigraph_save_finding` — persist confirmed security findings
-- `archigraph_list_findings` — load prior findings to avoid duplicates
+- `archigraph_save_finding` — promote a confirmed finding to a first-class `security_finding` record. Args: `question`, `answer` (required); `type="security_finding"`, `nodes=["<entity_id>"]`, `repo_filter` (optional). It does NOT accept `entity_id`/`severity` top-level — carry the entity in `nodes` and severity in the question/answer text.
+- `archigraph_list_findings` — load prior findings to avoid duplicates. Pass `type="security_finding"` to query only promoted security findings, or `entity_id=<id>` to find findings touching a specific entity.
 
 ## Related
 

@@ -131,6 +131,27 @@ func findingsSince(all []Finding, since time.Time) []Finding {
 	return out
 }
 
+// findingsOfType filters findings by their Type field (#2810). An empty
+// stored Type is normalised to "note" to match save_finding's default, so
+// list_findings(type="note") returns un-typed legacy findings too. A blank
+// `typ` argument is a no-op (caller-side guarded, but defensive here).
+func findingsOfType(all []Finding, typ string) []Finding {
+	if typ == "" {
+		return all
+	}
+	out := []Finding{}
+	for _, f := range all {
+		ft := f.Type
+		if ft == "" {
+			ft = "note"
+		}
+		if ft == typ {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
 // findingsToJSON renders a slice of findings as the wire shape (drops the
 // internal SavedAtFile field).
 func findingsToJSON(in []Finding, limit int) []map[string]any {
