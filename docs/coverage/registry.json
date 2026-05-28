@@ -10508,6 +10508,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11026,12 +11032,14 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/rules/javascript_typescript/frameworks/express.yaml","internal/extractors/javascript/framework_dsl.go"],
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/javascript_typescript/frameworks/express.yaml","internal/extractors/javascript/framework_dsl.go"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
             "status": "full",
-            "cites": ["internal/engine/rules/javascript_typescript/frameworks/express.yaml"],
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/javascript_typescript/frameworks/express.yaml"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           }
         },
@@ -11071,6 +11079,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11114,7 +11128,8 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/rules/javascript_typescript/frameworks/fastify.yaml"],
+            "cites": ["internal/engine/http_endpoint_jsts_extra.go","internal/engine/rules/javascript_typescript/frameworks/fastify.yaml"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
@@ -11158,6 +11173,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11247,6 +11268,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11394,12 +11421,14 @@
         "Schema": {
           "procedure_extraction": {
             "status": "full",
-            "cites": ["internal/engine/rules/graphql/frameworks/apollo_server.yaml","internal/engine/rules/graphql/frameworks/graphql_yoga.yaml"],
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/graphql/frameworks/apollo_server.yaml","internal/engine/rules/graphql/frameworks/graphql_yoga.yaml","internal/extractors/graphql/graphql.go"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
             "status": "full",
-            "cites": ["internal/engine/rules/graphql/frameworks/graphql_schema.yaml"],
+            "cites": ["internal/engine/rules/graphql/frameworks/graphql_schema.yaml","internal/extractors/graphql/graphql.go"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           }
         },
@@ -11476,6 +11505,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11563,6 +11598,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11762,6 +11803,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -11881,6 +11928,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -12040,12 +12093,14 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/rules/javascript_typescript/frameworks/nestjs.yaml"],
+            "cites": ["internal/custom/javascript/nestjs.go","internal/engine/http_endpoint_synthesis.go","internal/engine/rules/javascript_typescript/frameworks/nestjs.yaml"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
             "status": "full",
-            "cites": ["internal/engine/rules/javascript_typescript/frameworks/nestjs.yaml"],
+            "cites": ["internal/custom/javascript/nestjs.go","internal/engine/http_endpoint_synthesis.go","internal/engine/rules/javascript_typescript/frameworks/nestjs.yaml"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           }
         },
@@ -12085,6 +12140,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -12161,7 +12222,8 @@
         "Routing": {
           "route_extraction": {
             "status": "full",
-            "cites": ["internal/engine/rules/javascript_typescript/frameworks/next_js.yaml"],
+            "cites": ["internal/custom/javascript/nextjs.go","internal/engine/http_endpoint_jsts_extra.go","internal/engine/rules/javascript_typescript/frameworks/next_js.yaml"],
+            "issue": "2932",
             "verified_at": "2026-05-28"
           },
           "router_pattern": {
@@ -12398,6 +12460,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -12533,6 +12601,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -13048,6 +13122,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
@@ -13138,6 +13218,12 @@
           }
         },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "full",
+            "cites": ["internal/links/effect_propagation.go","internal/links/taint_flow.go","internal/substrate/jsts.go"],
+            "issue": "2932",
+            "verified_at": "2026-05-28"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
