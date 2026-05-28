@@ -1704,10 +1704,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -1801,10 +1821,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -1898,10 +1938,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -1995,10 +2055,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2046,8 +2126,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_c_cpp.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_c_cpp.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -2076,8 +2156,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_c_cpp.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_c_cpp.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -2092,10 +2172,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2189,10 +2289,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2286,10 +2406,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2383,10 +2523,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2480,10 +2640,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2577,10 +2757,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2674,10 +2874,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2771,10 +2991,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -2894,6 +3134,26 @@
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_c_cpp.go"],
             "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
           }
         }
       }
@@ -2986,10 +3246,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -3083,10 +3363,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_c_cpp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -3620,8 +3920,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_csharp.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -3650,8 +3950,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_csharp.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -3666,10 +3966,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -3767,10 +4087,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -3890,6 +4230,26 @@
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
             "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4007,6 +4367,26 @@
           "reachability_analysis": {
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -4126,6 +4506,26 @@
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
             "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4218,10 +4618,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -4315,10 +4735,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -4393,6 +4833,26 @@
           "reachability_analysis": {
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -4486,10 +4946,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -4610,6 +5090,26 @@
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
             "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
           }
         }
       }
@@ -4702,10 +5202,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5002,6 +5522,26 @@
           "reachability_analysis": {
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_csharp.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5352,10 +5892,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5453,10 +6013,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5550,10 +6130,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5647,10 +6247,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5746,10 +6366,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5845,10 +6485,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -5900,8 +6560,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_elixir.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_elixir.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -5930,8 +6590,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_elixir.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_elixir.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -5946,10 +6606,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -6067,6 +6747,26 @@
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_elixir.go"],
             "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
           }
         }
       }
@@ -6159,10 +6859,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -6862,14 +7582,34 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_golang.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_golang.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_golang.go"],
             "verified_at": "2026-05-27"
           },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_golang.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_golang.go"],
+            "verified_at": "2026-05-28"
+          },
           "template_pattern_catalog": {
             "status": "partial",
             "cites": ["internal/links/template_pattern_pass.go","internal/substrate/template_pattern.go","internal/substrate/template_pattern_golang.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_golang.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -8644,14 +9384,34 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_java.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_java.go"],
+            "verified_at": "2026-05-28"
+          },
           "template_pattern_catalog": {
             "status": "partial",
             "cites": ["internal/links/template_pattern_pass.go","internal/substrate/template_pattern.go","internal/substrate/template_pattern_java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_java.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -11017,9 +11777,29 @@
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_jsts.go"],
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_jsts.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_jsts.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_jsts.go"],
+            "verified_at": "2026-05-28"
+          },
           "template_pattern_catalog": {
             "status": "partial",
             "cites": ["internal/links/template_pattern_pass.go","internal/substrate/template_pattern.go","internal/substrate/template_pattern_jsts.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_jsts.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -11917,10 +12697,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12040,6 +12840,26 @@
           "reachability_analysis": {
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12253,10 +13073,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12354,10 +13194,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12451,10 +13311,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12575,6 +13455,26 @@
             "status": "full",
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
           }
         }
       }
@@ -12671,10 +13571,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12772,10 +13692,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12873,10 +13813,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -12930,8 +13890,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -12960,8 +13920,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -12976,10 +13936,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -13451,10 +14431,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -13552,10 +14552,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -13653,10 +14673,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -13754,10 +14794,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -13809,8 +14869,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_php.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -13839,8 +14899,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_php.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -13855,10 +14915,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -13952,10 +15032,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -14053,10 +15153,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -14150,10 +15270,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -14251,10 +15391,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -14352,10 +15512,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -14453,10 +15633,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -14554,10 +15754,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -15231,14 +16451,34 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
             "verified_at": "2026-05-27"
           },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "verified_at": "2026-05-28"
+          },
           "template_pattern_catalog": {
             "status": "partial",
             "cites": ["internal/links/template_pattern_pass.go","internal/substrate/template_pattern.go","internal/substrate/template_pattern_python.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -16518,10 +17758,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -16617,10 +17877,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -16718,10 +17998,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -16819,10 +18119,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -16920,10 +18240,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -16975,8 +18315,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_ruby.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_ruby.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -17005,8 +18345,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_ruby.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_ruby.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -17021,10 +18361,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -17122,10 +18482,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -17223,10 +18603,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_ruby.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -17600,10 +19000,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -17655,8 +19075,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_rust.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_rust.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -17685,8 +19105,8 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_rust.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_rust.go"],
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
@@ -17701,10 +19121,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -17802,10 +19242,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -17903,10 +19363,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18004,10 +19484,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18105,10 +19605,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18202,10 +19722,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18362,10 +19902,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18459,10 +20019,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18560,10 +20140,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_rust.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18760,10 +20360,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18857,10 +20477,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -18956,10 +20596,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -19057,10 +20717,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -19158,10 +20838,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -19259,10 +20959,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -19347,8 +21067,8 @@
             "verified_at": "2026-05-28"
           },
           "dead_code_detection": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
           "env_fallback_recognition": {
@@ -19377,8 +21097,28 @@
             "verified_at": "2026-05-28"
           },
           "reachability_analysis": {
-            "status": "full",
-            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -19476,10 +21216,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }
@@ -19577,10 +21337,30 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
+          "sanitizer_recognition": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-05-28"
+          },
+          "taint_sink_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "taint_source_detection": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
+            "verified_at": "2026-05-28"
+          },
+          "vulnerability_finding": {
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           }
         }

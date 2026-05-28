@@ -1128,6 +1128,42 @@ records:
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
           verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_ruby.go
+              functions: [sniffTaintRuby]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_ruby.go
+              functions: [sniffTaintRuby]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_ruby.go
+              functions: [sniffTaintRuby]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_ruby.go
+              functions: [sniffTaintRuby]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
 
   lang.php.framework.laravel:
     capabilities:
@@ -1212,6 +1248,42 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_php.go
+              functions: [sniffTaintPHP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_php.go
+              functions: [sniffTaintPHP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_php.go
+              functions: [sniffTaintPHP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_php.go
+              functions: [sniffTaintPHP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
           verified_at: "2026-05-28"
 
   lang.rust.framework.axum:
@@ -1298,6 +1370,42 @@ records:
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
           verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_rust.go
+              functions: [sniffTaintRust]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_rust.go
+              functions: [sniffTaintRust]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_rust.go
+              functions: [sniffTaintRust]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_rust.go
+              functions: [sniffTaintRust]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
 
   lang.csharp.framework.aspnet-core:
     capabilities:
@@ -1382,6 +1490,42 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_csharp.go
+              functions: [sniffTaintCSharp]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_csharp.go
+              functions: [sniffTaintCSharp]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_csharp.go
+              functions: [sniffTaintCSharp]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_csharp.go
+              functions: [sniffTaintCSharp]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
           verified_at: "2026-05-28"
 
   lang.kotlin.framework.spring-boot:
@@ -1468,6 +1612,42 @@ records:
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
           verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_kotlin.go
+              functions: [sniffTaintKotlin]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_kotlin.go
+              functions: [sniffTaintKotlin]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_kotlin.go
+              functions: [sniffTaintKotlin]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_kotlin.go
+              functions: [sniffTaintKotlin]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
 
   lang.elixir.framework.phoenix:
     capabilities:
@@ -1552,6 +1732,42 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_elixir.go
+              functions: [sniffTaintElixir]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_elixir.go
+              functions: [sniffTaintElixir]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_elixir.go
+              functions: [sniffTaintElixir]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_elixir.go
+              functions: [sniffTaintElixir]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
           verified_at: "2026-05-28"
 
   lang.scala.framework.play:
@@ -1638,6 +1854,42 @@ records:
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
           verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_scala.go
+              functions: [sniffTaintScala]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_scala.go
+              functions: [sniffTaintScala]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_scala.go
+              functions: [sniffTaintScala]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_scala.go
+              functions: [sniffTaintScala]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
 
   lang.c-cpp.framework.crow:
     capabilities:
@@ -1721,4 +1973,40 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_c_cpp.go
+              functions: [sniffTaintCCPP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_c_cpp.go
+              functions: [sniffTaintCCPP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_c_cpp.go
+              functions: [sniffTaintCCPP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_c_cpp.go
+              functions: [sniffTaintCCPP]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2773"]
           verified_at: "2026-05-28"
