@@ -4463,10 +4463,12 @@ func pythonGateCases() []pythonGateCase {
 		// re (regex).
 		{"re", "re", "sub", "re"},
 		{"re", "regex", "findall", "re"},
-		// DB-API 2.0.
+		// DB-API 2.0 — the cursor-verb call site folds to the concrete
+		// driver the file imports so the engine label is correct (#2807).
+		// django.db carries no engine signal → generic python-dbapi.
 		{"dbapi", "sqlite3", "execute", "sqlite3"},
-		{"dbapi", "psycopg2", "cursor", "sqlite3"},
-		{"dbapi", "django.db", "executemany", "sqlite3"},
+		{"dbapi", "psycopg2", "cursor", "psycopg2"},
+		{"dbapi", "django.db", "executemany", "python-dbapi"},
 		// bs4 / lxml.
 		{"bs4", "bs4", "find_all", "bs4"},
 		{"bs4", "lxml", "xpath", "bs4"},
@@ -4511,6 +4513,75 @@ func TestPythonPerImportGates_WithImport_LiftsToCanonical(t *testing.T) {
 			want := "ext:" + c.wantCanonical
 			if doc.Relationships[1].ToID != want {
 				t.Fatalf("gate=%q name=%q: ToID=%q, want %q", c.gate, c.bareName, doc.Relationships[1].ToID, want)
+			}
+		})
+	}
+}
+
+// TestPythonDBAPIDriverPlaceholder_EngineMatrix is the driver-matrix
+// guard for #2807: the DB-API cursor-verb fold must read the concrete
+// driver import so the engine label matches the real database engine,
+// instead of the old hard-coded sqlite3 default that mislabelled every
+// server-DB consumer as SQLite.
+func TestPythonDBAPIDriverPlaceholder_EngineMatrix(t *testing.T) {
+	cases := []struct {
+		name        string
+		imports     []string
+		placeholder string // pythonDBAPIDriverPlaceholder result
+		engine      string // pythonDBAPIEngineLabel[placeholder]
+	}{
+		// MySQL family — the iter9 q05/q09/q12 regression: mysql.connector
+		// was reported as SQLite.
+		{"mysql.connector", []string{"mysql.connector"}, "mysql", "MySQL"},
+		{"MySQLdb", []string{"MySQLdb"}, "mysql", "MySQL"},
+		{"pymysql", []string{"pymysql"}, "mysql", "MySQL"},
+		{"aiomysql", []string{"aiomysql"}, "mysql", "MySQL"},
+		// Postgres family.
+		{"psycopg2", []string{"psycopg2.extras"}, "psycopg2", "PostgreSQL"},
+		{"psycopg3", []string{"psycopg"}, "psycopg2", "PostgreSQL"},
+		{"asyncpg", []string{"asyncpg"}, "psycopg2", "PostgreSQL"},
+		// SQLite family — still labelled SQLite when the driver really is sqlite3.
+		{"sqlite3", []string{"sqlite3"}, "sqlite3", "SQLite"},
+		{"aiosqlite", []string{"aiosqlite"}, "sqlite3", "SQLite"},
+		// SQL Server family.
+		{"pyodbc", []string{"pyodbc"}, "pyodbc", "SQL Server"},
+		{"pymssql", []string{"pymssql"}, "pyodbc", "SQL Server"},
+		// Oracle.
+		{"cx_Oracle", []string{"cx_Oracle"}, "cx_Oracle", "Oracle"},
+		{"oracledb", []string{"oracledb"}, "cx_Oracle", "Oracle"},
+		// Snowflake / ClickHouse.
+		{"snowflake", []string{"snowflake.connector"}, "snowflake-connector-python", "Snowflake"},
+		{"clickhouse", []string{"clickhouse_driver"}, "clickhouse-driver", "ClickHouse"},
+		// No hard default to SQLite: unrecognised / engine-less imports
+		// fall back to the generic placeholder labelled "unknown".
+		{"django.db only", []string{"django.db"}, "python-dbapi", "unknown"},
+		{"no imports", nil, "python-dbapi", "unknown"},
+		{"unrelated import", []string{"os"}, "python-dbapi", "unknown"},
+		// Multi-driver: prefer the concrete server engine over the sqlite3
+		// stdlib fallback (sync_viewset.py imports both mysql.connector
+		// and psycopg2/sqlite3 in the wild).
+		{"mysql+sqlite -> mysql", []string{"sqlite3", "mysql.connector"}, "mysql", "MySQL"},
+		{"sqlite+psycopg2 -> psycopg2", []string{"sqlite3", "psycopg2"}, "psycopg2", "PostgreSQL"},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			imports := map[string]bool{}
+			for _, imp := range c.imports {
+				imports[imp] = true
+			}
+			got := pythonDBAPIDriverPlaceholder(imports)
+			if got != c.placeholder {
+				t.Fatalf("pythonDBAPIDriverPlaceholder(%v) = %q; want %q", c.imports, got, c.placeholder)
+			}
+			// The returned placeholder must route to ExternalKnown so the
+			// resolver does not synthesise a junk ext:* node.
+			if !IsKnownExternalPackage(got) {
+				t.Fatalf("placeholder %q is not on knownExternalPackages allowlist", got)
+			}
+			if eng := pythonDBAPIEngineLabel[got]; eng != c.engine {
+				t.Fatalf("engine label for %q = %q; want %q", got, eng, c.engine)
 			}
 		})
 	}
