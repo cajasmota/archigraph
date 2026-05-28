@@ -30,6 +30,11 @@ func cmdFmt(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	// Mirror saveRegistry exactly: canonical form is sorted-then-marshalled.
+	// Without this sort, --check would miss cite-order drift (a cell updated
+	// by `update` re-sorts its cites, so a registry with unsorted cites is not
+	// canonical even though its indentation is fine).
+	sortRegistry(reg)
 	want, err := marshalRegistry(reg)
 	if err != nil {
 		return err
