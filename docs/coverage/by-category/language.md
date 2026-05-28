@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # language
 
-**Total**: 8 records · **assembly**: 4 · **COBOL**: 4
+**Total**: 9 records · **assembly**: 4 · **COBOL**: 4 · **JCL**: 1
 
 Back to [summary](../summary.md). Bucket: **Other**.
 
@@ -15,3 +15,4 @@ Back to [summary](../summary.md). Bucket: **Other**.
 | [COBOL](../by-language/cobol.md) | [COBOL Embedded DB2 SQL](../detail/lang.cobol.embedded.db2-sql.md) | — | — | ✅ | — | — | — | — | — | ✅ | |
 | [COBOL](../by-language/cobol.md) | [GnuCOBOL](../detail/lang.cobol.runtime.gnucobol.md) | ✅ | ✅ | — | — | — | — | ✅ | — | ✅ | |
 | [COBOL](../by-language/cobol.md) | [IBM Enterprise COBOL](../detail/lang.cobol.runtime.ibm-enterprise.md) | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | — | ✅ | |
+| [JCL](../by-language/jcl.md) | [IBM z/OS JCL (JES2/JES3)](../detail/lang.jcl.runtime.zos.md) | ✅ | ✅ | — | — | — | — | — | — | ✅ | |

@@ -87,6 +87,7 @@ var languageDisplayOverrides = map[string]string{
 	"ocaml":    "OCaml",
 	"vhdl":     "VHDL",
 	"cobol":    "COBOL",
+	"jcl":      "JCL",
 }
 
 // SupportedLanguages returns the canonical, sorted, deduplicated list of

@@ -1,9 +1,9 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
-# `lang.cobol.embedded.cics` — COBOL CICS
+# `lang.jcl.runtime.zos` — IBM z/OS JCL (JES2/JES3)
 
 Auto-generated. Back to [summary](../summary.md).
 
-- **Language:** [COBOL](../by-language/cobol.md)
+- **Language:** [JCL](../by-language/jcl.md)
 - **Category:** [language](../by-category/language.md)
 - **Capability cells:** 2
 
@@ -11,13 +11,13 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `fs_effect` | ✅ `full` | `2026-05-28` | — | [link](2838) | `internal/substrate/effect_sinks_cobol.go` | — |
-| `http_effect` | ✅ `full` | `2026-05-28` | — | [link](2838) | `internal/extractors/cobol/depth.go`<br>`internal/substrate/effect_sinks_cobol.go` | — |
+| `call_line_precision` | ✅ `full` | `2026-05-28` | — | [link](2843) | `internal/extractors/jcl/extractor.go`<br>`internal/extractors/jcl/extractor_test.go` | — |
+| `core_extraction` | ✅ `full` | `2026-05-28` | — | [link](2843) | `internal/extractors/jcl/extractor.go`<br>`internal/extractors/jcl/testdata/payjob.jcl` | — |
 
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON
-(or use `go run ./tools/coverage update lang.cobol.embedded.cics ...`) then regenerate:
+(or use `go run ./tools/coverage update lang.jcl.runtime.zos ...`) then regenerate:
 
 ```
 go run ./tools/coverage validate

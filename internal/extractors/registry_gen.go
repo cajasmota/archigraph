@@ -33,6 +33,7 @@ import (
 	_ "github.com/cajasmota/archigraph/internal/extractors/idris"
 	_ "github.com/cajasmota/archigraph/internal/extractors/java"
 	_ "github.com/cajasmota/archigraph/internal/extractors/javascript"
+	_ "github.com/cajasmota/archigraph/internal/extractors/jcl"
 	_ "github.com/cajasmota/archigraph/internal/extractors/just"
 	_ "github.com/cajasmota/archigraph/internal/extractors/kotlin"
 	_ "github.com/cajasmota/archigraph/internal/extractors/lisp"

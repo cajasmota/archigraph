@@ -574,6 +574,11 @@ var extensionLanguageMap = map[string]string{
 	".cbl":   "cobol",
 	".cobol": "cobol",
 	".cpy":   "cobol",
+	// JCL — IBM Job Control Language. The mainframe batch-orchestration DSL
+	// that drives z/OS JES2/JES3 job submission; EXEC PGM= steps name the
+	// COBOL programs a job invokes. Routed to the jcl extractor, which emits
+	// the JCL→COBOL cross-language bridge (#2843).
+	".jcl": "jcl",
 	// Markdown / Documentation
 	".md":       "markdown",
 	".mdx":      "markdown",
