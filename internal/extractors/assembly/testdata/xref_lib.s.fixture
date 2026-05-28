@@ -1,0 +1,15 @@
+# Cross-file resolution fixture (#2836) — EXPORTER side.
+# Defines and exports `lib_func` via .globl so a caller in another file can
+# bind to it by name (cross-file CALLS resolution).
+
+	.text
+	.globl	lib_func
+lib_func:
+	push	%rbp
+	mov	%rsp, %rbp
+	pop	%rbp
+	ret
+
+	.globl	lib_helper
+lib_helper:
+	ret

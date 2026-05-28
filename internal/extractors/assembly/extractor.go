@@ -25,20 +25,36 @@
 //   - constants — `.equ NAME, val` / `NAME = val` / `.set NAME, val` /
 //     `%define NAME val` (NASM) / `NAME EQU val` (MASM) →
 //     SCOPE.Constant.
+//   - local-label anchors — `.L*`, numeric, and other non-procedure labels →
+//     SCOPE.CodeBlock(subtype=label). These are the intra-file branch
+//     destinations; emitting them lets a branch edge resolve to a concrete
+//     in-file entity rather than dangling on a bare name (#2836).
 //
 // Extracted edges (attached to the enclosing procedure):
 //   - CALLS — `call`/`callq` (x86), `bl`/`blx`/`blr` (ARM/ARM64),
-//     `jal`/`jalr` (RISC-V-style) targeting a label.
-//   - CALLS (subtype=branch) — `jmp`/`jXX` (x86), `b`/`bXX`/`br` (ARM) to a
-//     label — intra-procedure control flow.
+//     `jal`/`jalr` (RISC-V-style), `jsr`/`bsr` (m68k) targeting a label.
+//   - CALLS (edge_kind=branch) — `jmp`/`jXX` (x86), `b`/`bXX`/`br`/`cbz`
+//     (ARM/ARM64), `bra`/`Bcc`/`dbra` (m68k) to a label — control flow.
+//     Branch ToIDs that name a local label are rewritten to a file-scoped
+//     structural-ref stub so the resolver binds them intra-file (#2836).
+//   - CALLS edge classification (#2836): a self-targeting call/branch carries
+//     Properties["recursion"]="self"; an unconditional branch to another
+//     procedure carries Properties["tail_call"]="true".
 //   - CALLS to an external symbol declared via `.extern`/`.global` carry
 //     Properties["locality"]="external".
 //   - IMPORTS — `.include "file"` / `%include "file"` (NASM).
-//   - syscall effect — `syscall`/`int 0x80` (x86), `svc`/`swi` (ARM) emit a
-//     CALLS edge to the synthetic `__syscall` target with
-//     Properties["effect"]="syscall" and stamp Properties["has_syscall"] on
-//     the enclosing procedure. This is the meaningful OS-boundary effect
+//   - syscall effect — `syscall`/`int 0x80` (x86), `svc`/`swi` (ARM),
+//     `trap #0` (m68k) emit a CALLS edge to the synthetic `__syscall` target
+//     with Properties["effect"]="syscall" and stamp Properties["has_syscall"]
+//     on the enclosing procedure. This is the meaningful OS-boundary effect
 //     surface for assembly (#2744 Phase 1A).
+//
+// Operand parsing is syntax-agnostic across AT&T (gas) and Intel (NASM/MASM):
+// register-indirect (`*%rax`, `(a0)`, `[rax]`), memory refs
+// (`8(%rbp)`, `offset(%base,%index,scale)`, `[base+index*scale]`),
+// immediates (`$imm`, `#imm`), PLT/GOT relocations (`printf@PLT`), and Intel
+// size/distance keywords (`near`/`short`/`qword [..]`) are all recognised so
+// call/branch target extraction is independent of dialect/syntax (#2835).
 //
 // File extensions handled (via the classifier): .s, .S, .asm, .nasm.
 //
@@ -47,6 +63,7 @@ package assembly
 
 import (
 	"context"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -123,10 +140,14 @@ var (
 //	ARM/ARM64:  bl, blx, blr (blr/blx are register-indirect; target may be a
 //	            register, in which case no static label is recoverable)
 //	RISC-V:     jal, jalr
+//	m68k:       jsr (jump-to-subroutine), bsr (branch-to-subroutine) — these
+//	            are the call instructions; bsr also has size suffixes
+//	            (bsr.w/bsr.s/bsr.l) stripped by normalizeMnemonic.
 var callMnemonics = map[string]bool{
 	"call": true, "callq": true, "calll": true, "callw": true,
 	"bl": true, "blx": true, "blr": true,
 	"jal": true, "jalr": true,
+	"jsr": true, "bsr": true,
 }
 
 // branchMnemonics is the set of unconditional/conditional branch instructions
@@ -145,13 +166,26 @@ var branchMnemonics = map[string]bool{
 	"beq": true, "bne": true, "bgt": true, "bge": true, "blt": true, "ble": true,
 	"bhi": true, "bls": true, "bcs": true, "bcc": true, "bmi": true, "bpl": true,
 	"bvs": true, "bvc": true, "cbz": true, "cbnz": true,
-	// ARM compare-and-branch and m68k branches.
-	"bra": true, "bsr": true,
+	"tbz": true, "tbnz": true,
+	// m68k branches. `bra` is the unconditional branch; the Bcc family
+	// (beq/bne/bcc/bcs/bhi/bls/bge/blt/bgt/ble/bpl/bmi/bvc/bvs/bhs/blo)
+	// overlaps the ARM condition-suffix names above and is covered there.
+	// m68k-specific: dbra/dbcc decrement-and-branch (loop primitive), and
+	// the bhs/blo aliases. jmp is the unconditional jump (shared with x86).
+	"bra": true, "bhs": true, "blo": true,
+	"dbra": true, "dbf": true, "dbeq": true, "dbne": true, "dbcc": true,
+	"dbcs": true, "dbhi": true, "dbls": true, "dbge": true, "dblt": true,
+	"dbgt": true, "dble": true, "dbpl": true, "dbmi": true,
 }
 
-// syscallMnemonics triggers a syscall effect. `int` is special-cased (only
-// `int 0x80` / `int 80h` is the Linux syscall gate; other interrupts are
-// ignored to avoid false effects).
+// syscallMnemonics triggers a syscall effect. `int` and `trap` are
+// special-cased (see isSyscall): `int 0x80`/`int 80h` is the Linux i386
+// syscall gate, and m68k `trap #0` is the Linux/m68k syscall gate — other
+// interrupt/trap vectors are ignored to avoid false effects.
+//
+//	x86:    syscall, sysenter, int 0x80
+//	ARM:    svc, swi (legacy 32-bit gate)
+//	m68k:   trap #0 (Linux), and the unconditional trap variants
 var syscallMnemonics = map[string]bool{
 	"syscall": true, "sysenter": true,
 	"svc": true, "swi": true,
@@ -460,6 +494,13 @@ func buildProcedureEntities(lines []string, filePath, lang, dialect string, expo
 	var out []types.EntityRecord
 	curIdx := -1 // index into out of the current procedure entity
 
+	// Pre-scan local labels (#2836 intra-file branch resolution). Local labels
+	// (`.L*`, numeric) are not procedures but are real branch destinations; we
+	// emit each as a SCOPE.CodeBlock anchor so a branch CALLS edge can resolve
+	// to a concrete in-file entity via the resolver's byLocation index, instead
+	// of dangling on a bare name that might collide across files.
+	localLabels := collectLocalLabels(lines, exported)
+
 	// dedupe call/branch targets per procedure.
 	seenEdge := map[string]bool{}
 	edgeKey := func(proc, target, kind string) string { return proc + "\x00" + target + "\x00" + kind }
@@ -490,8 +531,24 @@ func buildProcedureEntities(lines []string, filePath, lang, dialect string, expo
 				out = append(out, rec)
 				continue
 			}
-			// Local label: extend current procedure's span but keep parsing
-			// the rest of the line for an instruction (gas allows `1: add ...`).
+			// Local label: emit a SCOPE.CodeBlock anchor (the branch target,
+			// #2836) and extend the current procedure's span. The anchor is
+			// scoped to this file via SourceFile so the resolver binds branch
+			// edges intra-file even when the same `.L*` name recurs elsewhere.
+			out = append(out, types.EntityRecord{
+				Name:       name,
+				Kind:       string(types.EntityKindCodeBlock),
+				Subtype:    "label",
+				SourceFile: filePath,
+				Language:   lang,
+				StartLine:  i + 1,
+				EndLine:    i + 1,
+				Signature:  name + ":",
+				Properties: map[string]string{"dialect": dialect, "local": "true"},
+			})
+			// curIdx still indexes the enclosing procedure — anchors are
+			// appended after it and never become the "current procedure", so
+			// out[curIdx] continues to reference the right entity.
 			if curIdx >= 0 {
 				out[curIdx].EndLine = i + 1
 			}
@@ -511,7 +568,7 @@ func buildProcedureEntities(lines []string, filePath, lang, dialect string, expo
 			out[curIdx].EndLine = i + 1
 		}
 
-		lower := strings.ToLower(mnem)
+		lower := normalizeMnemonic(mnem)
 
 		// Syscall effect.
 		if isSyscall(lower, operand) {
@@ -545,8 +602,6 @@ func buildProcedureEntities(lines []string, filePath, lang, dialect string, expo
 		if target == "" || curIdx < 0 {
 			continue
 		}
-		// Skip self-recursion noise on branches into the same proc label is
-		// fine (real recursion), but skip register-indirect (no static name).
 		kindTag := "call"
 		if isBranch {
 			kindTag = "branch"
@@ -564,13 +619,62 @@ func buildProcedureEntities(lines []string, filePath, lang, dialect string, expo
 		if external[target] {
 			props["locality"] = "external"
 		}
+
+		// #2836 — edge classification.
+		// Self-recursion: a call/branch whose target is the enclosing
+		// procedure's own label.
+		if target == out[curIdx].Name {
+			props["recursion"] = "self"
+		}
+		// Tail call: an unconditional branch (jmp/bra/b) to ANOTHER
+		// procedure (not a local label, not self) is a tail call — control
+		// transfers without a return frame.
+		if isBranch && !localLabels[target] && target != out[curIdx].Name &&
+			(lower == "jmp" || lower == "jmpq" || lower == "bra" || lower == "b") {
+			props["tail_call"] = "true"
+		}
+
+		// #2836 — intra-file branch-target resolution. When the destination
+		// is a local label, rewrite the ToID to a file-scoped structural-ref
+		// stub (Format A) so the resolver binds it to THIS file's anchor via
+		// byLocation, never to a same-named local label in another file.
+		toID := target
+		if localLabels[target] {
+			toID = localLabelStub(lang, filePath, target)
+			props["resolution"] = "intra_file"
+		}
 		out[curIdx].Relationships = append(out[curIdx].Relationships, types.RelationshipRecord{
-			ToID:       target,
+			ToID:       toID,
 			Kind:       "CALLS",
 			Properties: props,
 		})
 	}
 	return out
+}
+
+// collectLocalLabels returns the set of local-label names (`.L*`, numeric, and
+// other non-procedure labels) defined anywhere in the file. These are the
+// intra-file branch destinations emitted as SCOPE.CodeBlock anchors (#2836).
+func collectLocalLabels(lines []string, exported map[string]bool) map[string]bool {
+	out := map[string]bool{}
+	for _, line := range lines {
+		name := labelName(line)
+		if name == "" {
+			continue
+		}
+		if !isProcedureLabel(name, exported) {
+			out[name] = true
+		}
+	}
+	return out
+}
+
+// localLabelStub builds the Format A structural-ref stub the resolver uses to
+// bind a branch edge to the in-file SCOPE.CodeBlock anchor of the given local
+// label. Shape: scope:codeblock:label:<lang>:<file>:<name> — matched by the
+// resolver's byLocation[file][name] index.
+func localLabelStub(lang, filePath, name string) string {
+	return "scope:codeblock:label:" + lang + ":" + filepath.ToSlash(filePath) + ":" + name
 }
 
 // labelName returns the label defined on a line, or "" if the line is not a
@@ -610,6 +714,44 @@ func isProcedureLabel(name string, exported map[string]bool) bool {
 	return true
 }
 
+// normalizeMnemonic lowercases a mnemonic and strips ISA size/width suffixes
+// that decorate the operation but never change which control-flow family it
+// belongs to:
+//
+//   - m68k: `.b`/`.w`/`.l`/`.s` byte/word/long/short suffixes
+//     (`bsr.w`, `bra.s`, `jsr.l`, `movem.l`).
+//   - ARM Thumb-2: `.n`/`.w` narrow/wide encoding hints (`b.w`, `bl.w`).
+//   - gas branch-predication dot form is NOT stripped here (`b.eq` on
+//     AArch64 is handled at the mnemonic-split layer because the `.eq` is a
+//     real condition, but `b.eq`'s family — branch — is preserved since the
+//     base token `b` is a branch).
+//
+// Only a single trailing `.suffix` of a known width token is removed; an
+// unknown suffix is left intact so we never silently merge distinct ops.
+func normalizeMnemonic(mnem string) string {
+	m := strings.ToLower(strings.TrimSpace(mnem))
+	dot := strings.IndexByte(m, '.')
+	if dot <= 0 {
+		return m
+	}
+	base, suffix := m[:dot], m[dot+1:]
+	switch suffix {
+	case "b", "w", "l", "s", "n":
+		// m68k size suffix or ARM narrow/wide. Only strip when the base is a
+		// control-flow mnemonic we recognise, so data ops like `move.l` (not
+		// control flow) are unaffected by accident and `b.eq` (AArch64
+		// conditional) keeps its meaning as a branch via the base token.
+		if callMnemonics[base] || branchMnemonics[base] || base == "jmp" || base == "movem" {
+			return base
+		}
+	}
+	// AArch64 conditional branch `b.eq`, `b.ne`, ... — base `b` is a branch.
+	if base == "b" {
+		return "b"
+	}
+	return m
+}
+
 // mnemonicAndOperand splits a (label-stripped) instruction line into its
 // mnemonic and the operand text. Returns ("", "") for blank/directive lines.
 func mnemonicAndOperand(line string) (mnem, operand string) {
@@ -628,61 +770,129 @@ func mnemonicAndOperand(line string) (mnem, operand string) {
 	return t, ""
 }
 
-// callTarget extracts a static label target from a call/branch operand. Returns
-// "" when the target is a register (indirect) or an immediate address. For x86
-// indirect (`*%rax`, `*func`) and ARM register branches, no static label is
-// recoverable. ARM `bl func` / x86 `call func` / AArch64 `bl func` all pass a
-// bare label as the first operand.
+// callTarget extracts a static label target from a call/branch operand,
+// syntax-agnostically across AT&T (gas) and Intel (NASM/MASM) operand forms.
+// Returns "" when the target is a register (indirect), an immediate address,
+// or a memory reference (no statically-recoverable symbol).
+//
+// Handled operand shapes:
+//
+//	AT&T:   call greet            → greet
+//	        call printf@PLT       → printf  (relocation suffix stripped)
+//	        call *%rax            → ""      (register-indirect)
+//	        jmp  *table(,%rax,8)  → ""      (memory-indirect, parens)
+//	        bl   func             → func
+//	        cbz  x0, .Lbody       → .Lbody  (label is the last operand)
+//	Intel:  call work             → work
+//	        call qword [rax]      → ""      (memory-indirect, brackets)
+//	        call [rel func]       → ""      (RIP-relative indirect)
+//	        jmp  near .exit       → .exit   (size keyword stripped)
+//	        jmp  short loop       → loop
+//	m68k:   jsr  helper           → helper
+//	        bra  .Lloop           → .Lloop
+//	        jmp  (a0)             → ""      (register-indirect via parens)
+//	        dbra d0, .Lloop       → .Lloop  (counter reg first, label last)
+//
+// AArch64 multi-operand branches put the destination label last
+// (cbz/cbnz/tbz/tbnz), while x86/ARM/m68k call & unconditional branch put it
+// first; we try the last operand then the first and return the first
+// label-shaped candidate.
 func callTarget(operand string) string {
 	operand = strings.TrimSpace(operand)
 	if operand == "" {
 		return ""
 	}
-	// Take the first comma-separated token (ARM `b.eq label` style already
-	// handled by mnemonic split; AArch64 `cbz x0, label` puts the label last).
-	// For cbz/cbnz the label is the LAST operand; for call/b it's the first.
-	// Heuristic: pick the token that looks like a label (non-register,
-	// non-immediate). Prefer the last token for compare-and-branch shapes.
-	parts := strings.FieldsFunc(operand, func(r rune) bool { return r == ',' })
-	// Try last then first — labels are usually the branch destination.
+	// Split on commas that are NOT inside an AT&T `(...)` memory ref or an
+	// Intel `[...]` memory ref, so `*table(,%rax,8)` stays one token.
+	parts := splitOperandTokens(operand)
 	candidates := []string{}
 	if len(parts) > 0 {
 		candidates = append(candidates, strings.TrimSpace(parts[len(parts)-1]))
 		candidates = append(candidates, strings.TrimSpace(parts[0]))
 	}
 	for _, c := range candidates {
-		c = strings.TrimSpace(c)
-		// Strip x86 indirect/immediate prefixes.
+		c = cleanTargetToken(c)
 		if c == "" {
 			continue
 		}
-		if c[0] == '*' { // x86 indirect call/jmp — no static target
-			c = c[1:]
-		}
-		// PLT/GOT suffix (call printf@PLT) — strip the relocation suffix.
-		if at := strings.IndexByte(c, '@'); at > 0 {
-			c = c[:at]
-		}
-		// Drop NASM size/keyword decorations.
-		c = strings.TrimPrefix(c, "near ")
-		c = strings.TrimPrefix(c, "far ")
-		c = strings.TrimSpace(c)
-		if c == "" {
-			continue
-		}
-		if isRegister(c) {
-			continue
-		}
-		// Immediate numeric address / hex — not a symbolic target.
-		if c[0] == '#' || c[0] == '$' || isNumericOperand(c) {
-			continue
-		}
-		// Valid identifier-ish label.
 		if isLabelLike(c) {
 			return c
 		}
 	}
 	return ""
+}
+
+// cleanTargetToken strips operand decorations and returns "" if the token is a
+// register, immediate, or memory reference (i.e. not a static symbolic label).
+func cleanTargetToken(c string) string {
+	c = strings.TrimSpace(c)
+	if c == "" {
+		return ""
+	}
+	// Intel memory-indirect: bracketed operand, optionally with a size/segment
+	// prefix (`qword [rax]`, `[rel func]`, `dword ptr [rbx]`). No static label.
+	if strings.ContainsAny(c, "[]") {
+		return ""
+	}
+	// AT&T indirect prefix `*` (`*%rax`, `*table(,%rax,8)`).
+	if c[0] == '*' {
+		c = c[1:]
+	}
+	// AT&T / m68k memory-indirect via parentheses (`(a0)`, `8(%rbp)`,
+	// `func(%rip)`, `(,%rax,8)`). A parenthesised operand is a memory ref, not
+	// a static call target.
+	if strings.ContainsAny(c, "()") {
+		return ""
+	}
+	// PLT/GOT relocation suffix (`printf@PLT`, `sym@GOTPCREL`).
+	if at := strings.IndexByte(c, '@'); at > 0 {
+		c = c[:at]
+	}
+	// Intel size / distance keywords that may prefix a label target.
+	for _, kw := range []string{"near ", "far ", "short ", "dword ", "qword ", "word ", "ptr ", "rel "} {
+		c = strings.TrimPrefix(c, kw)
+	}
+	c = strings.TrimSpace(c)
+	if c == "" || isRegister(c) {
+		return ""
+	}
+	// Immediate numeric / hex address — AT&T `$`, ARM/m68k `#`, bare number.
+	if c[0] == '#' || c[0] == '$' || isNumericOperand(c) {
+		return ""
+	}
+	return c
+}
+
+// splitOperandTokens splits an operand list on top-level commas, treating
+// AT&T `(...)` and Intel `[...]` groupings as opaque so an AT&T memory ref
+// like `(,%rax,8)` is not torn apart on its internal commas.
+func splitOperandTokens(operand string) []string {
+	var out []string
+	depthParen, depthBrack := 0, 0
+	start := 0
+	for i := 0; i < len(operand); i++ {
+		switch operand[i] {
+		case '(':
+			depthParen++
+		case ')':
+			if depthParen > 0 {
+				depthParen--
+			}
+		case '[':
+			depthBrack++
+		case ']':
+			if depthBrack > 0 {
+				depthBrack--
+			}
+		case ',':
+			if depthParen == 0 && depthBrack == 0 {
+				out = append(out, operand[start:i])
+				start = i + 1
+			}
+		}
+	}
+	out = append(out, operand[start:])
+	return out
 }
 
 func isRegister(s string) bool {
@@ -722,6 +932,15 @@ func isSyscall(lowerMnem, operand string) bool {
 		op = strings.TrimPrefix(op, "$")
 		return op == "0x80" || op == "80h"
 	}
+	// m68k `trap #0` is the Linux/m68k syscall gate. `trap #15` is the
+	// classic 68k monitor/exception vector and other vectors are debugger
+	// traps, so we only treat `trap #0` as the OS syscall boundary.
+	if lowerMnem == "trap" {
+		op := strings.ToLower(strings.TrimSpace(operand))
+		op = strings.TrimPrefix(op, "#")
+		op = strings.TrimPrefix(op, "$")
+		return op == "0" || op == "0x0"
+	}
 	return false
 }
 
@@ -747,6 +966,8 @@ func atoiDefault(s string) int {
 //   - `/* ... */` block comment
 //   - `@`  ARM line comment
 //   - `!`  m68k / some ARM line comment
+//   - `|`  m68k line comment (only when it starts a token, so an in-operand
+//     bitwise-OR `#(A|B)` survives)
 //
 // Newlines are preserved so line numbering stays exact.
 func scrubComments(src string) string {
@@ -773,6 +994,17 @@ func scrubComments(src string) string {
 			i = blankToEOL(out, src, i)
 		case c == ';' || c == '@' || c == '!':
 			i = blankToEOL(out, src, i)
+		case c == '|':
+			// m68k line comment. `|` is also the bitwise-OR operator inside
+			// expression operands (`#(A|B)`), so only treat it as a comment
+			// when it starts a token (preceded by start-of-line or whitespace),
+			// mirroring the conservative `#` handling. This keeps an in-operand
+			// OR intact while blanking a trailing `| comment`.
+			if i == 0 || src[i-1] == ' ' || src[i-1] == '\t' || src[i-1] == '\n' {
+				i = blankToEOL(out, src, i)
+			} else {
+				i++
+			}
 		case c == '#':
 			// Could be a gas comment or an ARM immediate (`#4`). Only treat as
 			// a comment when not immediately followed by a digit/identifier

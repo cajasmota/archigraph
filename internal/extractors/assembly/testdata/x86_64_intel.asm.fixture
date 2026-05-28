@@ -1,0 +1,35 @@
+; x86-64 Intel-syntax (NASM) fixture — AT&T-vs-Intel operand coverage (#2835).
+; Demonstrates Intel operand forms that must be parsed syntax-agnostically:
+;   - bracketed memory-indirect calls/jumps `call [rax]`, `call qword [rbx]`
+;   - RIP-relative `call [rel sym]`
+;   - size/distance keywords `jmp near .next`, `jmp short loop`
+;   - direct symbolic call/jmp, extern external, syscall gate.
+
+%define SYS_write 1
+
+global  _start
+extern  printf
+
+section .text
+_start:
+        call    work                    ; direct intra-file call (Intel)
+        call    printf                  ; external call
+        call    qword [rax]             ; memory-indirect — NO static target
+        call    [rel handler]           ; RIP-relative indirect — NO static target
+        jmp     near .next              ; branch with size keyword → .next
+.next:
+        jmp     short .next             ; branch with distance keyword (self)
+        mov     rax, SYS_write
+        syscall                         ; OS boundary effect
+        ret
+
+work:
+        jmp     done                    ; tail call to another procedure (Intel)
+        ret
+
+done:
+        xor     rax, rax
+        ret
+
+handler:
+        ret

@@ -1,0 +1,15 @@
+# Cross-file resolution fixture (#2836) — CALLER side.
+# Calls `lib_func` (defined/exported in xref_lib.s) and a local `.Lretry`.
+# The call to lib_func carries a bare-name ToID so the resolver binds it
+# cross-file via the exported symbol; the .Lretry branch is file-scoped.
+
+	.extern	lib_func
+
+	.text
+	.globl	caller
+caller:
+	call	lib_func            # cross-file call to exported symbol
+.Lretry:
+	test	%rax, %rax
+	jne	.Lretry             # intra-file branch (file-scoped resolution)
+	ret

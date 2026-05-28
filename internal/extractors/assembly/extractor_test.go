@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/archigraph/internal/resolve"
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
@@ -95,9 +97,20 @@ func TestExtractX8664Gas(t *testing.T) {
 		t.Error("main should be exported (.globl)")
 	}
 
-	// .L local labels must NOT become procedures.
-	if byName(recs, ".Ldone") != nil || byName(recs, ".Lok") != nil {
-		t.Error("local .L labels must not be procedures")
+	// .L local labels must NOT become procedures, but ARE emitted as
+	// SCOPE.CodeBlock anchors (#2836 intra-file branch targets).
+	for _, ll := range []string{".Ldone", ".Lok"} {
+		a := byName(recs, ll)
+		if a == nil {
+			t.Errorf("local label %s should be emitted as an anchor", ll)
+			continue
+		}
+		if a.Kind != "SCOPE.CodeBlock" || a.Subtype != "label" {
+			t.Errorf("anchor %s kind=%q subtype=%q want SCOPE.CodeBlock/label", ll, a.Kind, a.Subtype)
+		}
+		if a.Properties["local"] != "true" {
+			t.Errorf("anchor %s should be marked local", ll)
+		}
 	}
 
 	// CALLS edges from main.
@@ -110,10 +123,15 @@ func TestExtractX8664Gas(t *testing.T) {
 	} else if e.Properties["locality"] != "external" {
 		t.Errorf("printf call locality=%q want external", e.Properties["locality"])
 	}
-	if e, ok := mc[".Ldone"]; !ok {
-		t.Error("main should branch to .Ldone")
+	// Branch to a local label is rewritten to a file-scoped Format A stub so
+	// it resolves intra-file (#2836).
+	doneStub := localLabelStub("assembly", "boot.s", ".Ldone")
+	if e, ok := mc[doneStub]; !ok {
+		t.Errorf("main should branch to .Ldone (stub %q); got %v", doneStub, mc)
 	} else if e.Properties["edge_kind"] != "branch" {
 		t.Errorf(".Ldone edge_kind=%q want branch", e.Properties["edge_kind"])
+	} else if e.Properties["resolution"] != "intra_file" {
+		t.Errorf(".Ldone resolution=%q want intra_file", e.Properties["resolution"])
 	}
 
 	// Syscall effect on greet.
@@ -166,8 +184,9 @@ func TestExtractARM64(t *testing.T) {
 	} else if e.Properties["locality"] != "external" {
 		t.Errorf("memcpy locality=%q want external", e.Properties["locality"])
 	}
-	if _, ok := sc[".Lloop"]; !ok {
-		t.Error("_start should branch to .Lloop (b)")
+	loopStub := localLabelStub("assembly", "start.s", ".Lloop")
+	if _, ok := sc[loopStub]; !ok {
+		t.Errorf("_start should branch to .Lloop (b) via stub %q; got %v", loopStub, sc)
 	}
 	if start.Properties["has_syscall"] != "true" {
 		t.Error("_start should have svc syscall effect")
@@ -297,6 +316,273 @@ func TestIsProcedureLabel(t *testing.T) {
 	}
 	if isProcedureLabel("1", nil) {
 		t.Error("numeric label is not a procedure")
+	}
+}
+
+// m68k depth (#2835) ---------------------------------------------------------
+
+func TestExtractM68k(t *testing.T) {
+	src := loadFixture(t, "m68k.s.fixture")
+	recs := extractAssembly(src, "boot68k.s", "assembly")
+
+	file := byName(recs, "boot68k.s")
+	if file == nil || file.Properties["dialect"] != "m68k" {
+		t.Fatalf("dialect=%v want m68k", file)
+	}
+
+	start := byName(recs, "_start")
+	setup := byName(recs, "setup")
+	helper := byName(recs, "helper")
+	if start == nil || setup == nil || helper == nil {
+		t.Fatalf("procedures missing: _start=%v setup=%v helper=%v", start, setup, helper)
+	}
+
+	sc := callTargets(start)
+	// jsr setup → call.
+	if e, ok := sc["setup"]; !ok {
+		t.Errorf("_start should jsr→CALL setup; got %v", sc)
+	} else if e.Properties["edge_kind"] != "call" {
+		t.Errorf("setup edge_kind=%q want call", e.Properties["edge_kind"])
+	}
+	// bsr.w helper → call (size suffix stripped).
+	if e, ok := sc["helper"]; !ok {
+		t.Error("_start should bsr.w→CALL helper (size suffix stripped)")
+	} else if e.Properties["edge_kind"] != "call" {
+		t.Errorf("helper edge_kind=%q want call", e.Properties["edge_kind"])
+	}
+	// jsr memcpy → external call.
+	if e, ok := sc["memcpy"]; !ok {
+		t.Error("_start should jsr→CALL memcpy")
+	} else if e.Properties["locality"] != "external" {
+		t.Errorf("memcpy locality=%q want external", e.Properties["locality"])
+	}
+	// dbra %d0, .Lloop → branch to local label (label is LAST operand).
+	loopStub := localLabelStub("assembly", "boot68k.s", ".Lloop")
+	if e, ok := sc[loopStub]; !ok {
+		t.Errorf("_start should dbra→branch .Lloop via stub %q; got %v", loopStub, sc)
+	} else if e.Properties["edge_kind"] != "branch" {
+		t.Errorf(".Lloop edge_kind=%q want branch", e.Properties["edge_kind"])
+	}
+	// bra .Ldone → branch to local label.
+	doneStub := localLabelStub("assembly", "boot68k.s", ".Ldone")
+	if _, ok := sc[doneStub]; !ok {
+		t.Errorf("_start should bra→branch .Ldone via stub %q; got %v", doneStub, sc)
+	}
+	// trap #0 → syscall effect.
+	if start.Properties["has_syscall"] != "true" {
+		t.Error("_start trap #0 should be a syscall effect")
+	}
+	if _, ok := sc[syntheticSyscallTarget]; !ok {
+		t.Error("_start should CALL __syscall via trap #0")
+	}
+
+	// helper bra helper → self-recursion classification.
+	hc := callTargets(helper)
+	if e, ok := hc["helper"]; !ok {
+		t.Error("helper should branch to itself")
+	} else if e.Properties["recursion"] != "self" {
+		t.Errorf("helper self-branch recursion=%q want self", e.Properties["recursion"])
+	}
+
+	// Local-label anchors emitted.
+	if a := byName(recs, ".Lloop"); a == nil || a.Kind != "SCOPE.CodeBlock" {
+		t.Error("missing .Lloop anchor")
+	}
+	// Constant + section.
+	if byName(recs, "SYS_exit") == nil {
+		t.Error("missing m68k constant SYS_exit")
+	}
+	if byName(recs, ".text") == nil {
+		t.Error("missing .text section")
+	}
+}
+
+// trap #N gate selectivity ----------------------------------------------------
+
+func TestTrapSyscallGate(t *testing.T) {
+	src := "	.globl a\n" +
+		"a:\n\ttrap #0\n\trts\n" +
+		"	.globl b\n" +
+		"b:\n\ttrap #15\n\trts\n"
+	recs := extractAssembly(src, "t.s", "assembly")
+	a, b := byName(recs, "a"), byName(recs, "b")
+	if a == nil || a.Properties["has_syscall"] != "true" {
+		t.Error("trap #0 should be a syscall gate")
+	}
+	if b == nil || b.Properties["has_syscall"] == "true" {
+		t.Error("trap #15 (monitor vector) must NOT be a syscall gate")
+	}
+}
+
+// Intel-syntax operand coverage (#2835) --------------------------------------
+
+func TestExtractX8664Intel(t *testing.T) {
+	src := loadFixture(t, "x86_64_intel.asm.fixture")
+	recs := extractAssembly(src, "intel.asm", "assembly")
+
+	start := byName(recs, "_start")
+	work := byName(recs, "work")
+	if start == nil || work == nil {
+		t.Fatalf("procedures missing: _start=%v work=%v", start, work)
+	}
+
+	sc := callTargets(start)
+	// Direct call resolves.
+	if _, ok := sc["work"]; !ok {
+		t.Error("_start should CALL work (direct Intel)")
+	}
+	if e, ok := sc["printf"]; !ok {
+		t.Error("_start should CALL printf (extern)")
+	} else if e.Properties["locality"] != "external" {
+		t.Errorf("printf locality=%q want external", e.Properties["locality"])
+	}
+	// Memory-indirect calls must NOT produce a static target.
+	for bad := range sc {
+		if bad == "rax" || bad == "handler" || bad == "rbx" || bad == "rel" {
+			t.Errorf("memory-indirect operand wrongly resolved to %q", bad)
+		}
+	}
+	// `jmp near .next` resolves to the local label .next (size keyword stripped).
+	nextStub := localLabelStub("assembly", "intel.asm", ".next")
+	if e, ok := sc[nextStub]; !ok {
+		t.Errorf("_start should branch to .next (near) via stub %q; got %v", nextStub, sc)
+	} else if e.Properties["edge_kind"] != "branch" {
+		t.Errorf(".next edge_kind=%q want branch", e.Properties["edge_kind"])
+	}
+	if start.Properties["has_syscall"] != "true" {
+		t.Error("_start should have syscall effect")
+	}
+
+	// work: jmp done → tail call to another procedure.
+	wc := callTargets(work)
+	if e, ok := wc["done"]; !ok {
+		t.Error("work should branch (tail call) to done")
+	} else if e.Properties["tail_call"] != "true" {
+		t.Errorf("work→done tail_call=%q want true", e.Properties["tail_call"])
+	}
+}
+
+// callTarget Intel/AT&T memory-ref forms -------------------------------------
+
+func TestCallTargetSyntaxAgnostic(t *testing.T) {
+	cases := map[string]string{
+		// AT&T forms.
+		"greet":           "greet",
+		"*%rax":           "", // register-indirect
+		"*table(,%rax,8)": "", // memory-indirect (commas inside parens)
+		"8(%rbp)":         "", // memory ref
+		"func(%rip)":      "", // RIP-relative AT&T
+		"$0x80":           "", // immediate
+		// Intel forms.
+		"qword [rbx]":   "",      // bracketed memory-indirect with size kw
+		"[rel handler]": "",      // RIP-relative Intel
+		"near label":    "label", // size keyword stripped
+		"short loop":    "loop",  // distance keyword stripped
+		// m68k forms.
+		"(a0)":   "", // register-indirect via parens
+		"helper": "helper",
+		"#0":     "", // m68k immediate
+		// multi-operand (label last).
+		"d0, .Lloop": ".Lloop", // dbra d0, .Lloop
+	}
+	for in, want := range cases {
+		if got := callTarget(in); got != want {
+			t.Errorf("callTarget(%q)=%q want %q", in, got, want)
+		}
+	}
+}
+
+// Cross-file resolution (#2836) ----------------------------------------------
+
+func TestCrossFileResolution(t *testing.T) {
+	libSrc := loadFixture(t, "xref_lib.s.fixture")
+	mainSrc := loadFixture(t, "xref_main.s.fixture")
+
+	lib := extractAssembly(libSrc, "xref_lib.s", "assembly")
+	main := extractAssembly(mainSrc, "xref_main.s", "assembly")
+
+	// The exporter defines lib_func as an exported procedure entity. The
+	// resolver's byName index binds the caller's bare-name CALLS ToID to it.
+	libFunc := byName(lib, "lib_func")
+	if libFunc == nil || libFunc.Properties["exported"] != "true" {
+		t.Fatalf("lib_func should be an exported procedure: %v", libFunc)
+	}
+
+	caller := byName(main, "caller")
+	if caller == nil {
+		t.Fatal("caller procedure missing")
+	}
+	cc := callTargets(caller)
+	// Cross-file call carries the bare exported name (resolved by byName).
+	if e, ok := cc["lib_func"]; !ok {
+		t.Errorf("caller should CALL lib_func (cross-file); got %v", cc)
+	} else if e.Properties["locality"] != "external" {
+		t.Errorf("lib_func locality=%q want external (declared .extern)", e.Properties["locality"])
+	}
+	// Intra-file branch to .Lretry is file-scoped, NOT a bare name (so it
+	// never mis-binds to a same-named local label in xref_lib.s).
+	retryStub := localLabelStub("assembly", "xref_main.s", ".Lretry")
+	if _, ok := cc[retryStub]; !ok {
+		t.Errorf("caller should branch to .Lretry via file-scoped stub %q; got %v", retryStub, cc)
+	}
+	if _, ok := cc[".Lretry"]; ok {
+		t.Error(".Lretry branch must NOT carry a bare name (would mis-resolve cross-file)")
+	}
+}
+
+// Resolver integration: branch/cross-file stubs actually bind (#2836) --------
+
+// assignIDs stamps deterministic graph IDs (as the pipeline does before
+// resolution) so BuildIndex — which skips ID-less entities — can index them.
+func assignIDs(recs []types.EntityRecord) {
+	for i := range recs {
+		recs[i].ID = graph.EntityID("", recs[i].Kind, recs[i].Name, recs[i].SourceFile)
+	}
+}
+
+func idForName(recs []types.EntityRecord, name, file string) string {
+	for _, r := range recs {
+		if r.Name == name && (file == "" || r.SourceFile == file) {
+			return r.ID
+		}
+	}
+	return ""
+}
+
+func TestResolverBindsBranchAndCrossFile(t *testing.T) {
+	lib := extractAssembly(loadFixture(t, "xref_lib.s.fixture"), "xref_lib.s", "assembly")
+	main := extractAssembly(loadFixture(t, "xref_main.s.fixture"), "xref_main.s", "assembly")
+	assignIDs(lib)
+	assignIDs(main)
+
+	// Merge all entities (as the pipeline does) and build the resolver index.
+	all := append(append([]types.EntityRecord{}, lib...), main...)
+	idx := resolve.BuildIndex(all)
+
+	// 1) Intra-file branch stub → the local-label anchor in xref_main.s.
+	//    The structural-ref (Format A) path is exercised via LookupStatus,
+	//    which routes "scope:" stubs through lookupStructural.
+	retryStub := localLabelStub("assembly", "xref_main.s", ".Lretry")
+	gotID, st := idx.LookupStatus(retryStub)
+	if gotID == "" {
+		t.Fatalf("intra-file branch stub %q did not resolve (status=%d)", retryStub, st)
+	}
+	wantAnchor := idForName(main, ".Lretry", "xref_main.s")
+	if wantAnchor == "" {
+		t.Fatal(".Lretry anchor has no ID")
+	}
+	if gotID != wantAnchor {
+		t.Errorf("stub resolved to %q want anchor %q", gotID, wantAnchor)
+	}
+
+	// 2) Cross-file call: caller's bare ToID "lib_func" binds to the exported
+	//    procedure entity defined in xref_lib.s (resolver byName).
+	libFuncID, ok := idx.Lookup("lib_func")
+	if !ok || libFuncID == "" {
+		t.Fatal("cross-file bare name lib_func did not resolve")
+	}
+	if want := idForName(lib, "lib_func", "xref_lib.s"); want != libFuncID {
+		t.Errorf("lib_func resolved to %q want %q (exporter entity)", libFuncID, want)
 	}
 }
 
