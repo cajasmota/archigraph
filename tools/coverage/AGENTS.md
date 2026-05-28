@@ -35,6 +35,38 @@ Because the taxonomy is data-driven:
 - Templates live in `templates/` and use Go's `text/template`.
 - Keep them deterministic: sort every map / slice before iterating. The `gen_test.go` snapshot test will catch nondeterministic ordering.
 
+## Errors vs warnings — the validate gate policy
+
+`go run ./tools/coverage validate` distinguishes two severities, and the CI
+gate (`.github/workflows/coverage-docs.yml`) treats them differently:
+
+- **Errors fail the build** (`main.go` returns non-zero when `totalErrors > 0`).
+  These are hard consistency violations: a capability-map citation pointing at a
+  registry cell that doesn't exist (or whose shape/group doesn't match), a cited
+  source file or function missing on disk, an invalid status enum, a stale
+  dictionary key, a duplicate capability key. **Errors must stay at 0.**
+- **Warnings never fail the build.** They are advisory nudges and are expected
+  to number in the thousands at the group's current breadth. Do not "fix" them
+  by deleting registry rows or capability-map content — that would silence
+  reality rather than reflect it. The two dominant warning classes are
+  structural and intentional:
+  1. *"capability has no mapping entry"* (`validate_map.go`, the
+     mapping-coverage nudge) — every registry cell with status `full`/`partial`
+     ideally has a `capability-map.yaml` symbol/function mapping. The mapping
+     section only enumerates archigraph's own code-delivering records (~18); the
+     hundreds of framework/language records (e.g. `lang.jsts.framework.*`,
+     `test.pytest`) are descriptive coverage entries served by *shared*
+     extractors, so per-record symbol mappings are deliberately absent. Adding
+     mapping is incremental, never required.
+  2. *"capability has no tracking issue"* (`validate.go`,
+     `validateCapabilityCell`) — `partial`/`missing` cells without an `issue:`
+     link get a nudge to file a ticket. These mark known framework-support gaps
+     and are advisory, not blocking.
+
+  If a warning is ever genuinely wrong (cell status misrepresents what the code
+  does), fix it at the source — flip the registry cell or correct the citation —
+  rather than suppressing the warning. (Ref: #2799.)
+
 ## Coverage matrix update rule
 
 The root `AGENTS.md` "Coverage matrix update" section is **the** rule for capability-changing PRs across the repo. Tooling changes inside this directory generally do NOT require a matrix update unless they alter the schema (in which case the schema PR + record migration must ship together).
