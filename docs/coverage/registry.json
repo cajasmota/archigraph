@@ -10399,10 +10399,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/adonisjs.yaml","testdata/fixtures/typescript/adonisjs_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/adonisjs.yaml","testdata/fixtures/typescript/adonisjs_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
@@ -10979,10 +10985,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/feathers.yaml","testdata/fixtures/typescript/feathers_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/feathers.yaml","testdata/fixtures/typescript/feathers_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
@@ -11150,10 +11162,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/hapi.yaml","testdata/fixtures/typescript/hapi_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/hapi.yaml","testdata/fixtures/typescript/hapi_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
@@ -11466,10 +11484,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/marblejs.yaml","testdata/fixtures/typescript/marblejs_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/marblejs.yaml","testdata/fixtures/typescript/marblejs_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
@@ -11868,10 +11892,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/polka.yaml","testdata/fixtures/typescript/polka_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/polka.yaml","testdata/fixtures/typescript/polka_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
@@ -12322,10 +12352,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/restify.yaml","testdata/fixtures/typescript/restify_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/restify.yaml","testdata/fixtures/typescript/restify_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
@@ -12381,10 +12417,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/sails.yaml","testdata/fixtures/typescript/sails_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/sails.yaml","testdata/fixtures/typescript/sails_routes.ts"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2851",
+            "verified_at": "2026-05-28"
           }
         },
         "Security": {
