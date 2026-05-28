@@ -16454,8 +16454,9 @@
         },
         "Security": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/engine/django_drf_actions.go"],
+            "status": "full",
+            "cites": ["internal/extractors/python/config_module.go","internal/extractors/python/django_drf_permissions.go","internal/mcp/auth_coverage.go"],
+            "issue": "2816",
             "verified_at": "2026-05-28"
           }
         },

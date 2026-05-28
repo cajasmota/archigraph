@@ -402,11 +402,30 @@ records:
           verified_at: "2026-05-28"
       Security:
         auth_coverage:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/python/django_drf_actions.go
               functions: [parseActionKwargs, scanClassBodyForActions]
-          issues_implemented: []
+            - file: internal/extractors/python/django_drf_permissions.go
+              functions:
+                - applyDRFPermissionProperties
+                - getPermissionsReferencedClasses
+                - collectPermissionAssignments
+                - permissionLeafName
+            - file: internal/extractors/python/config_module.go
+              functions: [extractDRFDefaultPermissionClasses, dictDefaultPermissionClasses]
+            - file: internal/mcp/auth_coverage.go
+              functions:
+                - determineAuthCoverage
+                - buildDRFClassAuthByFile
+                - repoDRFDefaultPolicy
+                - enclosingDRFClass
+                - fileDRFVerdict
+                - isProtectivePermissionList
+          tests:
+            - file: internal/extractors/python/django_drf_permissions_test.go
+            - file: internal/mcp/auth_coverage_test.go
+          issues_implemented: ["2816"]
           verified_at: "2026-05-28"
       Substrate:
         constant_propagation:

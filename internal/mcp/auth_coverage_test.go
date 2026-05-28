@@ -468,6 +468,204 @@ func TestAuthCoverage_IDORRiskDetection(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// DRF class-level / default-permission detection (#2816)
+// ---------------------------------------------------------------------------
+
+// drfViewClass builds a View entity carrying the permission properties stamped
+// by the python extractor's applyDRFPermissionProperties pass.
+func drfViewClass(id, name, file string, start, end int, props map[string]string) graph.Entity {
+	return graph.Entity{
+		ID: id, Name: name, Kind: "View", Subtype: "class",
+		SourceFile: file, StartLine: start, EndLine: end,
+		Language: "python", Properties: props,
+	}
+}
+
+func drfEndpoint(id, name, file, verb, path string, line int) graph.Entity {
+	return graph.Entity{
+		ID: id, Name: name, Kind: "http_endpoint_definition",
+		SourceFile: file, StartLine: line, Language: "python",
+		Properties: map[string]string{"verb": verb, "path": path},
+	}
+}
+
+func TestAuthCoverage_DRFClassPermissionClasses_Protected(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		drfViewClass("cls", "BuildingViewSet", "views/building.py", 10, 100,
+			map[string]string{"has_permission_classes": "true", "permission_classes": "IsAuthenticated"}),
+		drfEndpoint("ep", "list", "views/building.py", "GET", "/buildings", 20),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); !hasAuth {
+		t.Errorf("class-level permission_classes=[IsAuthenticated] should yield has_auth=true; evidence=%v", ep["auth_evidence"])
+	}
+}
+
+func TestAuthCoverage_DRFClassPermissionClasses_AllowAnyOpen(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		drfViewClass("cls", "LoginViewSet", "views/auth.py", 10, 50,
+			map[string]string{"has_permission_classes": "true", "permission_classes": "AllowAny"}),
+		// register is a sensitive op so it would be error severity if uncovered.
+		drfEndpoint("ep", "register", "views/auth.py", "POST", "/auth/register", 20),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); hasAuth {
+		t.Errorf("permission_classes=[AllowAny] should be recognised as genuinely public (has_auth=false)")
+	}
+}
+
+func TestAuthCoverage_DRFGetPermissions_Protected(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		drfViewClass("cls", "UserViewSet", "views/user.py", 10, 200,
+			map[string]string{"has_get_permissions": "true", "get_permissions_classes": "IsAuthenticated,CustomActionPermissionCheck"}),
+		drfEndpoint("ep", "list", "views/user.py", "GET", "/users", 30),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); !hasAuth {
+		t.Errorf("get_permissions referencing IsAuthenticated should yield has_auth=true")
+	}
+}
+
+// Router-synthesised endpoints carry no source line (StartLine==0); they must
+// be covered via the file-level aggregate verdict when the file's sole ViewSet
+// is protected.
+func TestAuthCoverage_DRFLineLessEndpoint_FileLevelFallback(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		drfViewClass("cls", "UserViewSet", "views/user.py", 10, 200,
+			map[string]string{"has_get_permissions": "true", "get_permissions_classes": "IsAuthenticated"}),
+		drfEndpoint("ep", "http:PUT:/users/{pk}", "views/user.py", "PUT", "/users/{pk}", 0),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); !hasAuth {
+		t.Errorf("line-less router endpoint should inherit the file's sole protected ViewSet verdict")
+	}
+}
+
+// A file with BOTH an open and a protected ViewSet cannot attribute a line-less
+// endpoint, so the file-level fallback must NOT decide (undecided → falls
+// through to the repo default, which is open here).
+func TestAuthCoverage_DRFLineLessEndpoint_MixedFileUndecided(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		drfViewClass("cls_open", "PublicViewSet", "views/mixed.py", 10, 100,
+			map[string]string{"has_permission_classes": "true", "permission_classes": "AllowAny"}),
+		drfViewClass("cls_prot", "PrivateViewSet", "views/mixed.py", 110, 200,
+			map[string]string{"has_permission_classes": "true", "permission_classes": "IsAuthenticated"}),
+		drfEndpoint("ep", "http:PUT:/thing/{pk}", "views/mixed.py", "PUT", "/thing/{pk}", 0),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); hasAuth {
+		t.Errorf("mixed-file line-less endpoint must remain undecided (no protective repo default), got has_auth=true")
+	}
+}
+
+// An endpoint inside the protected ViewSet's range is covered even when the
+// same file also hosts an AllowAny ViewSet (range attribution beats the
+// undecided file aggregate).
+func TestAuthCoverage_DRFMixedFile_RangeAttribution(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		drfViewClass("cls_open", "PublicViewSet", "views/mixed.py", 10, 100,
+			map[string]string{"has_permission_classes": "true", "permission_classes": "AllowAny"}),
+		drfViewClass("cls_prot", "PrivateViewSet", "views/mixed.py", 110, 200,
+			map[string]string{"has_permission_classes": "true", "permission_classes": "IsAuthenticated"}),
+		drfEndpoint("ep_open", "open", "views/mixed.py", "POST", "/public", 30),
+		drfEndpoint("ep_prot", "prot", "views/mixed.py", "GET", "/private", 130),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	eps := endpointsByID(t, out)
+	if hasAuth, _ := eps["ep_open"]["has_auth"].(bool); hasAuth {
+		t.Errorf("ep_open (inside AllowAny ViewSet range) should be open")
+	}
+	if hasAuth, _ := eps["ep_prot"]["has_auth"].(bool); !hasAuth {
+		t.Errorf("ep_prot (inside IsAuthenticated ViewSet range) should be covered")
+	}
+}
+
+// Global REST_FRAMEWORK DEFAULT_PERMISSION_CLASSES covers endpoints with no
+// explicit class/method auth signal.
+func TestAuthCoverage_DRFGlobalDefault_Protected(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		{
+			ID: "settings", Name: "settings", Kind: "SCOPE.Config", Subtype: "config_module",
+			SourceFile: "proj/settings.py", Language: "python",
+			Properties: map[string]string{
+				"config_type":                    "django_settings",
+				"drf_default_permission_present": "true",
+				"drf_default_permission_classes": "IsAuthenticated",
+			},
+		},
+		// No View entity / no permission props → relies purely on the global default.
+		drfEndpoint("ep", "list", "views/plain.py", "GET", "/plain", 10),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); !hasAuth {
+		t.Errorf("global DEFAULT_PERMISSION_CLASSES=[IsAuthenticated] should cover unmarked DRF endpoints; evidence=%v", ep["auth_evidence"])
+	}
+}
+
+func TestAuthCoverage_DRFGlobalDefault_AllowAnyOpen(t *testing.T) {
+	t.Parallel()
+	doc := &graph.Document{Entities: []graph.Entity{
+		{
+			ID: "settings", Name: "settings", Kind: "SCOPE.Config", Subtype: "config_module",
+			SourceFile: "proj/settings.py", Language: "python",
+			Properties: map[string]string{
+				"config_type":                    "django_settings",
+				"drf_default_permission_present": "true",
+				"drf_default_permission_classes": "AllowAny",
+			},
+		},
+		drfEndpoint("ep", "list", "views/plain.py", "GET", "/plain", 10),
+	}}
+	s := newTestServer(t, doc)
+	out := callAuthCoverageTool(t, s, map[string]any{"group": "test"})
+	ep := endpointsByID(t, out)["ep"]
+	if hasAuth, _ := ep["has_auth"].(bool); hasAuth {
+		t.Errorf("AllowAny global default should not cover unmarked endpoints")
+	}
+}
+
+func TestIsProtectivePermissionList(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		in       string
+		wantProt bool
+	}{
+		{"IsAuthenticated", true},
+		{"AllowAny", false},
+		{"", false},
+		{"AllowAny,IsAuthenticated", true},
+		{"IsAuthenticated,CustomActionPermissionCheck", true},
+		{"AllowAny,AllowAny", false},
+	}
+	for _, tc := range cases {
+		got, _ := isProtectivePermissionList(tc.in)
+		if got != tc.wantProt {
+			t.Errorf("isProtectivePermissionList(%q) = %v, want %v", tc.in, got, tc.wantProt)
+		}
+	}
+}
+
 func TestAuthCoverage_SeverityOrdering(t *testing.T) {
 	t.Parallel()
 	// Errors must appear before warns, warns before infos.

@@ -120,6 +120,89 @@ var authPropertyKeys = []string{
 	"annotation_name", // set by decorator_extractor
 }
 
+// openPermissionNames are DRF permission classes that grant access to ALL
+// callers (authenticated or not) — their presence does NOT constitute auth
+// coverage. Lookup is case-insensitive on the leaf class name.
+var openPermissionNames = map[string]bool{
+	"allowany": true,
+}
+
+// isProtectivePermissionList reports whether a comma-joined list of DRF
+// permission-class leaf names (as stamped by the python extractor in the
+// `permission_classes` / `get_permissions_classes` properties) represents real
+// protection.
+//
+// Rules:
+//   - empty list                       → not protective (permission-less; DRF
+//     treats an empty permission_classes as open)
+//   - every entry is AllowAny          → not protective (explicitly public)
+//   - at least one non-AllowAny entry  → protective (e.g. IsAuthenticated, a
+//     custom permission check, IsAdminUser)
+//
+// Returns (protective, evidenceName) where evidenceName is the first
+// non-AllowAny permission class found (for the auth_evidence string).
+func isProtectivePermissionList(joined string) (bool, string) {
+	parts := strings.Split(joined, ",")
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if openPermissionNames[strings.ToLower(p)] {
+			continue
+		}
+		return true, p
+	}
+	return false, ""
+}
+
+// drfClassAuth captures the class-level DRF authorisation posture of a single
+// ViewSet / APIView, keyed by its source-line range so an endpoint can be
+// attributed to its enclosing class.
+type drfClassAuth struct {
+	startLine int
+	endLine   int
+	// hasPermAttr is true when the class declares `permission_classes = [...]`
+	// (even if the value is AllowAny / empty).
+	hasPermAttr bool
+	// permClasses is the comma-joined leaf names of the class-level attribute.
+	permClasses string
+	// hasGetPermissions is true when the class defines get_permissions().
+	hasGetPermissions bool
+	// getPermClasses is the comma-joined leaf names referenced in
+	// get_permissions().
+	getPermClasses string
+}
+
+// evaluate returns (decided, hasAuth, evidence) for this class. decided=false
+// means the class carries no explicit DRF permission signal at all, so the
+// caller should fall back to the repo-level default policy.
+func (c drfClassAuth) evaluate() (decided, hasAuth bool, evidence string) {
+	// A dynamic get_permissions() override is the strongest class-level signal.
+	if c.hasGetPermissions {
+		if prot, name := isProtectivePermissionList(c.getPermClasses); prot {
+			return true, true, "DRF get_permissions: " + name
+		}
+		// get_permissions present but we could not extract a protective class
+		// (e.g. it returns AllowAny, or the body is too dynamic to parse). If
+		// the only thing we saw was AllowAny, treat as open; otherwise treat
+		// the mere presence of get_permissions as a (weak) protective signal —
+		// hand-written get_permissions almost always gates access.
+		if c.getPermClasses != "" {
+			return true, false, ""
+		}
+		return true, true, "DRF get_permissions override"
+	}
+	if c.hasPermAttr {
+		if prot, name := isProtectivePermissionList(c.permClasses); prot {
+			return true, true, "DRF permission_classes: " + name
+		}
+		// Explicit AllowAny / empty permission_classes → genuinely open.
+		return true, false, ""
+	}
+	return false, false, ""
+}
+
 // authPropertyValues — for annotation_name property, these values signal auth.
 var authPropertyValues = authAnnotationNames
 
@@ -201,6 +284,13 @@ func (s *Server) handleAuthCoverage(_ context.Context, req mcpapi.CallToolReques
 		// Build set of entity IDs reachable via TAGGED_AS edges to auth_policy.
 		taggedAuthIDs := buildTaggedAuthIDs(r.Doc)
 
+		// Issue #2816 — DRF class-level authorisation index: per source file,
+		// the line-range posture of every ViewSet/APIView carrying
+		// permission_classes / get_permissions, plus the repo-wide DRF default
+		// permission policy harvested from the settings REST_FRAMEWORK dict.
+		drfAuthByFile := buildDRFClassAuthByFile(r.Doc)
+		drfDefaultProtected, drfDefaultEvidence := repoDRFDefaultPolicy(r.Doc)
+
 		repoTotal := 0
 		repoCovered := 0
 		repoErrors := 0
@@ -218,7 +308,10 @@ func (s *Server) handleAuthCoverage(_ context.Context, req mcpapi.CallToolReques
 
 			repoTotal++
 
-			hasAuth, evidence := determineAuthCoverage(e, authPoliciesByFile, taggedAuthIDs)
+			hasAuth, evidence := determineAuthCoverage(
+				e, authPoliciesByFile, taggedAuthIDs,
+				drfAuthByFile, drfDefaultProtected, drfDefaultEvidence,
+			)
 
 			method := e.Properties["verb"]
 			path := e.Properties["path"]
@@ -417,12 +510,21 @@ func buildTaggedAuthIDs(doc *graph.Document) map[string]bool {
 	return tagged
 }
 
-// determineAuthCoverage checks three signals (in priority order) and returns
-// (hasAuth, evidenceDescription).
+// determineAuthCoverage checks the available signals (in priority order) and
+// returns (hasAuth, evidenceDescription).
+//
+// DRF class-level signals (issue #2816) take precedence over the coarse
+// file-level auth_policy match because they can both PROVE protection
+// (permission_classes=[IsAuthenticated], get_permissions()) AND prove that an
+// endpoint is genuinely public (permission_classes=[AllowAny]) — the latter is
+// essential to avoid mislabelling intentional login/public endpoints.
 func determineAuthCoverage(
 	e *graph.Entity,
 	authByFile map[string][]string,
 	taggedAuthIDs map[string]bool,
+	drfAuthByFile map[string][]drfClassAuth,
+	drfDefaultProtected bool,
+	drfDefaultEvidence string,
 ) (bool, string) {
 	// Signal 1: entity property directly on the endpoint.
 	for _, k := range authPropertyKeys {
@@ -436,16 +538,193 @@ func determineAuthCoverage(
 		}
 	}
 
-	// Signal 2: TAGGED_AS edge to auth_policy entity.
+	// Signal 2: DRF class-level authorisation. Attribute the endpoint to its
+	// enclosing ViewSet/APIView by source-line range and read that class's
+	// permission_classes / get_permissions posture. A decisive class verdict
+	// (protected OR explicitly-open) wins over the weaker file/edge signals.
+	fileClasses := drfAuthByFile[e.SourceFile]
+	if cls, ok := enclosingDRFClass(fileClasses, e.StartLine); ok {
+		if decided, hasAuth, evidence := cls.evaluate(); decided {
+			if hasAuth {
+				return true, evidence
+			}
+			// Class explicitly opts into AllowAny / empty perms → genuinely
+			// open. Do NOT fall through to weaker signals or the global
+			// default; an explicit class-level AllowAny overrides the default.
+			return false, ""
+		}
+		// Class present but carried no explicit permission signal → fall
+		// through to the repo-level DRF default below.
+	} else if len(fileClasses) > 0 {
+		// Router-synthesised endpoints (standard CRUD verbs) frequently carry
+		// no source line, so they cannot be attributed to an enclosing class by
+		// range. Fall back to a file-level aggregate verdict: when every DRF
+		// class in the file agrees on a posture we can apply it confidently.
+		if decided, hasAuth, evidence := fileDRFVerdict(fileClasses); decided {
+			if hasAuth {
+				return true, evidence
+			}
+			return false, ""
+		}
+	}
+
+	// Signal 3: TAGGED_AS edge to auth_policy entity.
 	if taggedAuthIDs[e.ID] {
 		return true, "TAGGED_AS auth_policy"
 	}
 
-	// Signal 3: an auth_policy entity shares the same source file.
+	// Signal 4: an auth_policy entity shares the same source file.
 	if evidences, ok := authByFile[e.SourceFile]; ok && len(evidences) > 0 {
 		return true, "file-level: " + strings.Join(deduplicateStrings(evidences), ", ")
 	}
 
+	// Signal 5: repo-wide DRF default permission policy. An endpoint with no
+	// explicit per-method/class permission inherits REST_FRAMEWORK's
+	// DEFAULT_PERMISSION_CLASSES; when that default is protective every
+	// otherwise-unmarked DRF endpoint is covered. Only applied to Python DRF
+	// endpoints (those whose enclosing source file participates in the DRF
+	// class index, or where the repo declares a protective default).
+	if drfDefaultProtected && isLikelyDRFEndpoint(e) {
+		return true, drfDefaultEvidence
+	}
+
+	return false, ""
+}
+
+// isLikelyDRFEndpoint reports whether an http endpoint entity originates from a
+// Python DRF view (so the repo-wide DEFAULT_PERMISSION_CLASSES applies to it).
+// We gate on the .py source suffix to avoid leaking a Python global default
+// onto endpoints from other languages/frameworks in a polyglot repo.
+func isLikelyDRFEndpoint(e *graph.Entity) bool {
+	if e.Language == "python" {
+		return true
+	}
+	return strings.HasSuffix(e.SourceFile, ".py")
+}
+
+// enclosingDRFClass returns the DRF class whose [startLine, endLine] range
+// contains line, preferring the innermost (smallest) range when nested. The
+// boolean is false when no class in classes contains line.
+func enclosingDRFClass(classes []drfClassAuth, line int) (drfClassAuth, bool) {
+	var best drfClassAuth
+	found := false
+	for _, c := range classes {
+		if c.startLine == 0 || line == 0 {
+			continue
+		}
+		// endLine may be 0 for malformed/partial entities — treat as unbounded.
+		within := line >= c.startLine && (c.endLine == 0 || line <= c.endLine)
+		if !within {
+			continue
+		}
+		if !found || (c.startLine >= best.startLine && rangeSize(c) <= rangeSize(best)) {
+			best = c
+			found = true
+		}
+	}
+	return best, found
+}
+
+// fileDRFVerdict computes an aggregate authorisation verdict for a source file
+// from the postures of all DRF classes it declares. Used for endpoints that
+// carry no source line (router-synthesised CRUD verbs) and therefore cannot be
+// attributed to a single enclosing class by range.
+//
+// Verdict rules:
+//   - at least one class is decisively protected AND none is decisively open →
+//     protected (the common single-ViewSet-per-file case, and files where all
+//     ViewSets gate access).
+//   - at least one class is decisively open AND none is decisively protected →
+//     open (e.g. auth_viewset.py: all AllowAny login/register endpoints).
+//   - mixed (some open, some protected) → undecided (decided=false): the file
+//     hosts both public and protected ViewSets, so a line-less endpoint cannot
+//     be safely attributed; the caller falls back to the repo default.
+//   - no class carries a decisive posture → undecided.
+func fileDRFVerdict(classes []drfClassAuth) (decided, hasAuth bool, evidence string) {
+	var anyProtected, anyOpen bool
+	var protectedEvidence string
+	for _, c := range classes {
+		d, ha, ev := c.evaluate()
+		if !d {
+			continue
+		}
+		if ha {
+			anyProtected = true
+			if protectedEvidence == "" {
+				protectedEvidence = ev
+			}
+		} else {
+			anyOpen = true
+		}
+	}
+	switch {
+	case anyProtected && !anyOpen:
+		return true, true, protectedEvidence
+	case anyOpen && !anyProtected:
+		return true, false, ""
+	default:
+		// mixed or no decisive posture
+		return false, false, ""
+	}
+}
+
+// rangeSize returns the line span of a class (large when unbounded).
+func rangeSize(c drfClassAuth) int {
+	if c.endLine == 0 {
+		return 1 << 30
+	}
+	return c.endLine - c.startLine
+}
+
+// buildDRFClassAuthByFile indexes every Python class entity that carries a
+// DRF class-level authorisation property, grouped by source file. These
+// properties are stamped by the python extractor's applyDRFPermissionProperties
+// pass (issue #2816).
+func buildDRFClassAuthByFile(doc *graph.Document) map[string][]drfClassAuth {
+	out := make(map[string][]drfClassAuth)
+	for i := range doc.Entities {
+		e := &doc.Entities[i]
+		if e.Properties == nil {
+			continue
+		}
+		_, hasAttr := e.Properties["has_permission_classes"]
+		_, hasGet := e.Properties["has_get_permissions"]
+		if !hasAttr && !hasGet {
+			continue
+		}
+		out[e.SourceFile] = append(out[e.SourceFile], drfClassAuth{
+			startLine:         e.StartLine,
+			endLine:           e.EndLine,
+			hasPermAttr:       hasAttr,
+			permClasses:       e.Properties["permission_classes"],
+			hasGetPermissions: hasGet,
+			getPermClasses:    e.Properties["get_permissions_classes"],
+		})
+	}
+	return out
+}
+
+// repoDRFDefaultPolicy inspects the repo's Django settings config_module entity
+// for the harvested REST_FRAMEWORK DEFAULT_PERMISSION_CLASSES (stamped by the
+// python config_module extractor, issue #2816) and reports whether the global
+// default protects endpoints. When the key is absent DRF's built-in default is
+// AllowAny → not protected.
+func repoDRFDefaultPolicy(doc *graph.Document) (protected bool, evidence string) {
+	for i := range doc.Entities {
+		e := &doc.Entities[i]
+		if e.Properties == nil {
+			continue
+		}
+		if e.Properties["drf_default_permission_present"] != "true" {
+			continue
+		}
+		if prot, name := isProtectivePermissionList(e.Properties["drf_default_permission_classes"]); prot {
+			return true, "DRF default permission: " + name
+		}
+		// Present but AllowAny/empty default → explicitly open. A later
+		// settings module won't override an explicit open default, so keep
+		// scanning only for a protective one.
+	}
 	return false, ""
 }
 

@@ -131,6 +131,22 @@ func emitConfigModuleEntity(root *sitter.Node, file extractor.FileInput, out *[]
 		props["top_level_symbols"] = strings.Join(symbolNames, ",")
 	}
 
+	// Issue #2816 — capture the DRF global default permission policy so the
+	// auth_coverage detector knows whether endpoints with no explicit perms
+	// are protected by default. We stamp two properties:
+	//
+	//	drf_default_permission_classes — comma-joined leaf names from
+	//	    REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] (empty when the key is
+	//	    absent — DRF's built-in default is then AllowAny, i.e. open).
+	//	drf_default_permission_present — "true" when the key is present at all
+	//	    (so "" can be distinguished from "explicit empty tuple").
+	if configType == "django_settings" || configType == "generic_config" {
+		if perms, present := extractDRFDefaultPermissionClasses(root, file.Content); present {
+			props["drf_default_permission_present"] = "true"
+			props["drf_default_permission_classes"] = strings.Join(perms, ",")
+		}
+	}
+
 	// Issue #1964 — emit the real file end line so the docgen
 	// source_window helper can excerpt the entire settings/manage/celery
 	// module body instead of clipping at line 1. The config_module entity
@@ -258,4 +274,104 @@ func collectTopLevelAssignmentNames(root *sitter.Node, src []byte) []string {
 		}
 	}
 	return names
+}
+
+// extractDRFDefaultPermissionClasses scans a Django settings module for
+//
+//	REST_FRAMEWORK = {
+//	    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated", ...),
+//	}
+//
+// and returns (leafPermissionNames, present). `present` is true when the
+// DEFAULT_PERMISSION_CLASSES key exists at all — a present-but-empty value
+// means the project explicitly opted into an open default. When the key is
+// absent the caller should treat the global default as AllowAny (DRF's
+// built-in), i.e. NOT auth coverage.
+//
+// Values may be string literals ("rest_framework.permissions.IsAuthenticated")
+// or bare identifiers (IsAuthenticated); both are reduced to their leaf class
+// name (IsAuthenticated). Only the top-level REST_FRAMEWORK assignment is
+// examined.
+func extractDRFDefaultPermissionClasses(root *sitter.Node, src []byte) ([]string, bool) {
+	if root == nil {
+		return nil, false
+	}
+	for i := 0; i < int(root.ChildCount()); i++ {
+		child := root.Child(i)
+		if child == nil || child.Type() != "expression_statement" {
+			continue
+		}
+		for j := 0; j < int(child.NamedChildCount()); j++ {
+			expr := child.NamedChild(j)
+			if expr == nil || expr.Type() != "assignment" {
+				continue
+			}
+			lhs := expr.ChildByFieldName("left")
+			if lhs == nil || lhs.Type() != "identifier" || nodeText(lhs, src) != "REST_FRAMEWORK" {
+				continue
+			}
+			rhs := expr.ChildByFieldName("right")
+			if rhs == nil || rhs.Type() != "dictionary" {
+				continue
+			}
+			return dictDefaultPermissionClasses(rhs, src)
+		}
+	}
+	return nil, false
+}
+
+// dictDefaultPermissionClasses reads a `dictionary` node and, if it has a
+// "DEFAULT_PERMISSION_CLASSES" key, returns the leaf names of its value list
+// plus present=true.
+func dictDefaultPermissionClasses(dict *sitter.Node, src []byte) ([]string, bool) {
+	for i := 0; i < int(dict.NamedChildCount()); i++ {
+		pair := dict.NamedChild(i)
+		if pair == nil || pair.Type() != "pair" {
+			continue
+		}
+		keyNode := pair.ChildByFieldName("key")
+		valNode := pair.ChildByFieldName("value")
+		if keyNode == nil || valNode == nil {
+			continue
+		}
+		if stripQuotes(strings.TrimSpace(nodeText(keyNode, src))) != "DEFAULT_PERMISSION_CLASSES" {
+			continue
+		}
+		raw := parseListLiteralStringsOrIdents(valNode, src)
+		out := make([]string, 0, len(raw))
+		for _, r := range raw {
+			if leaf := permissionLeafName(stripQuotes(r)); leaf != "" {
+				out = append(out, leaf)
+			}
+		}
+		return out, true
+	}
+	return nil, false
+}
+
+// parseListLiteralStringsOrIdents reads a list/tuple/set literal and returns
+// the raw source text of each element (string literal or identifier/attribute),
+// tolerating the mixed string-or-symbol forms common in DRF settings.
+func parseListLiteralStringsOrIdents(n *sitter.Node, src []byte) []string {
+	if n == nil {
+		return nil
+	}
+	switch n.Type() {
+	case "list", "tuple", "set":
+		var out []string
+		for i := 0; i < int(n.NamedChildCount()); i++ {
+			ch := n.NamedChild(i)
+			if ch == nil {
+				continue
+			}
+			switch ch.Type() {
+			case "string", "identifier", "attribute", "dotted_name":
+				out = append(out, strings.TrimSpace(nodeText(ch, src)))
+			}
+		}
+		return out
+	case "string", "identifier", "attribute", "dotted_name":
+		return []string{strings.TrimSpace(nodeText(n, src))}
+	}
+	return nil
 }

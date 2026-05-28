@@ -681,6 +681,11 @@ func walkNode(
 				// binding. Runs AFTER applyFrameworkInnerClassProperties so
 				// the parent's `meta_model` property is already stamped.
 				emitDRFSerializerFieldRefs(body, file, childParent, classIdx, before, after, out)
+				// Issue #2816 — stamp the DRF class-level authorisation surface
+				// (permission_classes attribute + get_permissions override) onto
+				// the ViewSet/APIView entity so archigraph_auth_coverage can
+				// recognise class-level auth, not just per-method decorators.
+				applyDRFPermissionProperties(&(*out)[classIdx], body, file.Content)
 			}
 		}
 		return // body handled above — do not recurse further
@@ -804,6 +809,10 @@ func walkNode(
 					// Issue #2061 — DRF serializer field REFERENCES (decorated
 					// class branch). See bare branch above for rationale.
 					emitDRFSerializerFieldRefs(body, file, childParent, classIdx, before, after, out)
+					// Issue #2816 — DRF class-level authorisation surface
+					// (decorated class branch, e.g. @method_decorator-wrapped
+					// ViewSets). See bare branch above for rationale.
+					applyDRFPermissionProperties(&(*out)[classIdx], body, file.Content)
 				}
 			}
 		}
