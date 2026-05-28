@@ -49,6 +49,8 @@ func run(argv []string, stdout, stderr io.Writer) error {
 		return cmdValidate(rest, stdout, stderr)
 	case "gen":
 		return cmdGen(rest, stdout)
+	case "fmt":
+		return cmdFmt(rest, stdout)
 	case "discover":
 		return cmdDiscover(rest, stdout)
 	case "map-status":
@@ -75,6 +77,7 @@ subcommands:
   stats     counters across the registry (--json)
   validate  schema + cite-exists + duplicate-id + stale checks
   gen       regenerate docs/coverage/*.md from docs/coverage/registry.json (--out, --file)
+  fmt       rewrite registry.json in canonical form (--check verifies only; CI guard against recompaction)
   discover  catalog capabilities from repo signals; emit proposal + orphans + drift (--registry, --repo-root, --json, --include-orphans, --include-drift)
   map-status show the capability-map.yaml entry for one capability:
               map-status <record-id>/<capability>             (flat)
