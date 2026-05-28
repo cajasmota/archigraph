@@ -54,19 +54,6 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [go](../by-language/go.md) | [fasthttp](../detail/lang.go.framework.fasthttp.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
 | [go](../by-language/go.md) | [go-zero](../detail/lang.go.framework.go-zero.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
 | [go](../by-language/go.md) | [net/http (stdlib)](../detail/lang.go.framework.net-http.md) | ✅ 2/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Akka HTTP (Java DSL)](../detail/lang.java.framework.akka-http.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Apache Struts](../detail/lang.java.framework.struts.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Dropwizard](../detail/lang.java.framework.dropwizard.md) | ✅ 2/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Eclipse MicroProfile](../detail/lang.java.framework.microprofile.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Helidon](../detail/lang.java.framework.helidon.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | ✅ 2/2 | ⚠️ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Jakarta EE (Servlet / EE Platform)](../detail/lang.java.framework.jakarta-ee.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Javalin](../detail/lang.java.framework.javalin.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Micronaut](../detail/lang.java.framework.micronaut.md) | ✅ 2/2 | ⚠️ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Quarkus](../detail/lang.java.framework.quarkus.md) | ✅ 2/2 | ⚠️ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | ✅ 2/2 | ✅ 1/1 | ⚠️ 7/20 | ❌ 0/4 | |
-| [java](../by-language/java.md) | [Spring WebFlux (reactive)](../detail/lang.java.framework.spring-webflux.md) | ✅ 2/2 | ⚠️ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
-| [java](../by-language/java.md) | [Vert.x](../detail/lang.java.framework.vertx.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 5/6 | ❌ 0/1 | |
 | [JS/TS](../by-language/jsts.md) | [AdonisJS](../detail/lang.jsts.framework.adonisjs.md) | ✅ 2/2 | ✅ 1/1 | ✅ 7/7 | ✅ 4/4 | |
 | [JS/TS](../by-language/jsts.md) | [Express](../detail/lang.jsts.framework.express.md) | ✅ 2/2 | ✅ 1/1 | ✅ 7/7 | ✅ 4/4 | |
 | [JS/TS](../by-language/jsts.md) | [Fastify](../detail/lang.jsts.framework.fastify.md) | ✅ 2/2 | ✅ 1/1 | ✅ 7/7 | ✅ 4/4 | |
@@ -79,14 +66,6 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [JS/TS](../by-language/jsts.md) | [Polka](../detail/lang.jsts.framework.polka.md) | ✅ 2/2 | ✅ 1/1 | ✅ 7/7 | ✅ 4/4 | |
 | [JS/TS](../by-language/jsts.md) | [Restify](../detail/lang.jsts.framework.restify.md) | ✅ 2/2 | ✅ 1/1 | ✅ 7/7 | ✅ 4/4 | |
 | [JS/TS](../by-language/jsts.md) | [Sails](../detail/lang.jsts.framework.sails.md) | ✅ 2/2 | ✅ 1/1 | ✅ 7/7 | ✅ 5/6 | |
-| [kotlin](../by-language/kotlin.md) | [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | ⚠️ 0/2 | — 0/1 | ⚠️ 8/17 | — 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [Javalin (Kotlin)](../detail/lang.kotlin.framework.javalin.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [Ktor](../detail/lang.kotlin.framework.ktor.md) | ✅ 2/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [Micronaut (Kotlin)](../detail/lang.kotlin.framework.micronaut.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [Quarkus (Kotlin)](../detail/lang.kotlin.framework.quarkus.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [Spring Boot (Kotlin)](../detail/lang.kotlin.framework.spring-boot.md) | ✅ 2/2 | ⚠️ 0/1 | ⚠️ 6/17 | ❌ 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [http4k](../detail/lang.kotlin.framework.http4k.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [kotlin](../by-language/kotlin.md) | [kotlinx.coroutines (structured concurrency)](../detail/lang.kotlin.framework.coroutines.md) | ⚠️ 0/2 | — 0/1 | ⚠️ 8/17 | — 0/1 | |
 | [lua](../by-language/lua.md) | [Lapis](../detail/lang.lua.framework.lapis.md) | ❌ 0/1 | — | — 0/4 | — | |
 | [lua](../by-language/lua.md) | [OpenResty](../detail/lang.lua.framework.openresty.md) | ❌ 0/1 | — | — 0/4 | — | |
 | [php](../by-language/php.md) | [CakePHP](../detail/lang.php.framework.cakephp.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
@@ -138,15 +117,42 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [rust](../by-language/rust.md) | [Tower (service abstraction)](../detail/lang.rust.framework.tower.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
 | [rust](../by-language/rust.md) | [Warp](../detail/lang.rust.framework.warp.md) | ✅ 2/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
 | [rust](../by-language/rust.md) | [hyper](../detail/lang.rust.framework.hyper.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [Akka HTTP / Pekko HTTP](../detail/lang.scala.framework.akka-http.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [Cask](../detail/lang.scala.framework.cask.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [Cats Effect (concurrency runtime)](../detail/lang.scala.framework.cats-effect.md) | ⚠️ 0/2 | — 0/1 | ⚠️ 8/17 | — 0/1 | |
-| [scala](../by-language/scala.md) | [Finatra (Twitter Finagle)](../detail/lang.scala.framework.finatra.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [Lagom](../detail/lang.scala.framework.lagom.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [Scalatra](../detail/lang.scala.framework.scalatra.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [ZIO HTTP / ZIO](../detail/lang.scala.framework.zio-http.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [scala](../by-language/scala.md) | [http4s](../detail/lang.scala.framework.http4s.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
 | [swift](../by-language/swift.md) | [Vapor](../detail/lang.swift.framework.vapor.md) | ❌ 0/1 | — | ⚠️ 0/8 | — | |
+
+
+## JVM Backend
+
+| Language | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
+|---|---|---|---|---|---|---|---|---|
+| [java](../by-language/java.md) | [Akka HTTP (Java DSL)](../detail/lang.java.framework.akka-http.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Apache Struts](../detail/lang.java.framework.struts.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Dropwizard](../detail/lang.java.framework.dropwizard.md) | ❌ 2/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Eclipse MicroProfile](../detail/lang.java.framework.microprofile.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Helidon](../detail/lang.java.framework.helidon.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Jakarta EE (Servlet / EE Platform)](../detail/lang.java.framework.jakarta-ee.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Javalin](../detail/lang.java.framework.javalin.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Micronaut](../detail/lang.java.framework.micronaut.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Quarkus](../detail/lang.java.framework.quarkus.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | ❌ 2/3 | ✅ 1/1 | ❌ 3/4 | ❌ 0/1 | ❌ 7/21 | ❌ 0/18 | |
+| [java](../by-language/java.md) | [Spring WebFlux (reactive)](../detail/lang.java.framework.spring-webflux.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Vert.x](../detail/lang.java.framework.vertx.md) | ❌ 0/3 | ❌ 0/1 | ❌ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [kotlin](../by-language/kotlin.md) | [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | ⚠️ 0/3 | — 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [Javalin (Kotlin)](../detail/lang.kotlin.framework.javalin.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [Ktor](../detail/lang.kotlin.framework.ktor.md) | ❌ 2/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [Micronaut (Kotlin)](../detail/lang.kotlin.framework.micronaut.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [Quarkus (Kotlin)](../detail/lang.kotlin.framework.quarkus.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [Spring Boot (Kotlin)](../detail/lang.kotlin.framework.spring-boot.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 6/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [http4k](../detail/lang.kotlin.framework.http4k.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlin](../by-language/kotlin.md) | [kotlinx.coroutines (structured concurrency)](../detail/lang.kotlin.framework.coroutines.md) | ⚠️ 0/3 | — 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [Akka HTTP / Pekko HTTP](../detail/lang.scala.framework.akka-http.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [Cask](../detail/lang.scala.framework.cask.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [Cats Effect (concurrency runtime)](../detail/lang.scala.framework.cats-effect.md) | ⚠️ 0/3 | — 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [Finatra (Twitter Finagle)](../detail/lang.scala.framework.finatra.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [Lagom](../detail/lang.scala.framework.lagom.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [Scalatra](../detail/lang.scala.framework.scalatra.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [ZIO HTTP / ZIO](../detail/lang.scala.framework.zio-http.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [scala](../by-language/scala.md) | [http4s](../detail/lang.scala.framework.http4s.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
 
 
 ## UI Frontend

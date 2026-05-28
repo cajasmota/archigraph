@@ -35,6 +35,11 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|--------------|-------|-------|-------|
 | `middleware_coverage` | — `not_applicable` | — | — | — | — | — |
 
+### Type System
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+
 ### Testing
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |

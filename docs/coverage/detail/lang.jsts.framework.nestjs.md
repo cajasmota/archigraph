@@ -36,6 +36,11 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|--------------|-------|-------|-------|
 | `middleware_coverage` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/http_endpoint_jsts_middleware.go`<br>`internal/engine/http_endpoint_jsts_middleware_test.go`<br>`testdata/fixtures/typescript/nestjs_middleware.ts` | — |
 
+### Type System
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+
 ### Testing
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |

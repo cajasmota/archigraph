@@ -35,6 +35,11 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|--------------|-------|-------|-------|
 | `middleware_coverage` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/aspnet_core_routes.go` | — |
 
+### Type System
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+
 ### Testing
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |

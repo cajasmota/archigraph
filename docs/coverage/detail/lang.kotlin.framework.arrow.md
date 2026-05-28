@@ -5,8 +5,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 - **Language:** [kotlin](../by-language/kotlin.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
-- **Subcategory:** Backend HTTP
-- **Capability cells:** 21
+- **Subcategory:** JVM Backend
+- **Capability cells:** 45
 
 ## Capabilities
 
@@ -15,35 +15,75 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `endpoint_synthesis` | — `not_applicable` | — | — | — | — | — |
+| `endpoint_synthesis` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
 | `handler_attribution` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/engine/rules/kotlin/frameworks/arrow_functional_kotlin.yaml` | — |
+| `route_extraction` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
 
 ### Auth
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `auth_coverage` | — `not_applicable` | — | — | — | — | — |
+| `auth_coverage` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
 
 ### Validation
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `dto_extraction` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `request_validation` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
 
 ### Middleware
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `middleware_coverage` | — `not_applicable` | — | — | — | — | — |
+| `middleware_coverage` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
 
 ### Testing
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `tests_linkage` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+
+### Type System
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `enum_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `interface_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `type_alias_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `type_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+
+### DI
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `di_binding_extraction` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `di_injection_point` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `di_scope_resolution` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+
+### Transactions
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `transaction_boundary_extraction` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `transaction_propagation` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `transaction_rollback_rules` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+
+### AOP
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `advice_attribution` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `aspect_extraction` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
+| `pointcut_resolution` | — `not_applicable` | — | — | — | — | Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container. |
 
 ### Observability
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `log_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `metric_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `trace_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 
 ### Data
 
@@ -58,11 +98,14 @@ Auto-generated. Back to [summary](../summary.md).
 | `constant_propagation` | ✅ `full` | `2026-05-27` | — | — | `internal/links/constant_propagation.go`<br>`internal/substrate/kotlin.go`<br>`internal/substrate/substrate.go` | — |
 | `db_effect` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_kotlin.go` | — |
 | `dead_code_detection` | ✅ `full` | `2026-05-28` | — | — | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_kotlin.go` | — |
+| `def_use_chain_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 | `env_fallback_recognition` | ✅ `full` | `2026-05-27` | — | — | `internal/links/constant_propagation.go`<br>`internal/substrate/kotlin.go`<br>`internal/substrate/substrate.go` | — |
 | `fs_effect` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_kotlin.go` | — |
 | `http_effect` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_kotlin.go` | — |
 | `import_resolution_quality` | ⚠️ `partial` | `2026-05-27` | — | — | `internal/links/constant_propagation.go`<br>`internal/substrate/kotlin.go`<br>`internal/substrate/substrate.go` | — |
+| `module_cycle_detection` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 | `mutation_effect` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_kotlin.go` | — |
+| `pure_function_tagging` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 | `reachability_analysis` | ✅ `full` | `2026-05-28` | — | — | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_kotlin.go` | — |
 | `request_shape_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_kotlin.go` | — |
 | `response_shape_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_kotlin.go` | — |
@@ -70,6 +113,7 @@ Auto-generated. Back to [summary](../summary.md).
 | `schema_drift_detection` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_kotlin.go` | — |
 | `taint_sink_detection` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_kotlin.go` | — |
 | `taint_source_detection` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_kotlin.go` | — |
+| `template_pattern_catalog` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 | `vulnerability_finding` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_kotlin.go` | — |
 
 ## Provenance

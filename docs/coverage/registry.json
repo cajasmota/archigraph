@@ -8621,7 +8621,7 @@
     {
       "id": "lang.java.framework.akka-http",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Akka HTTP (Java DSL)",
       "capabilities": {
@@ -8631,6 +8631,10 @@
           },
           "handler_attribution": {
             "status": "missing"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -8638,26 +8642,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -8669,10 +8808,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -8842,7 +9001,7 @@
     {
       "id": "lang.java.framework.dropwizard",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Dropwizard",
       "capabilities": {
@@ -8856,6 +9015,10 @@
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -8863,26 +9026,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -8894,10 +9192,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -8982,7 +9300,7 @@
     {
       "id": "lang.java.framework.helidon",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Helidon",
       "capabilities": {
@@ -8992,6 +9310,10 @@
           },
           "handler_attribution": {
             "status": "missing"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -8999,26 +9321,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9030,10 +9487,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9041,7 +9518,7 @@
     {
       "id": "lang.java.framework.jakarta-ee",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Jakarta EE (Servlet / EE Platform)",
       "capabilities": {
@@ -9055,6 +9532,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/java/frameworks/jakarta_ee.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9062,26 +9543,165 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "partial",
+            "cites": ["internal/custom/java/jakarta_ee_advanced.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          },
+          "di_injection_point": {
+            "status": "partial",
+            "cites": ["internal/custom/java/jakarta_ee_advanced.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9093,10 +9713,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9104,7 +9744,7 @@
     {
       "id": "lang.java.framework.javalin",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Javalin",
       "capabilities": {
@@ -9114,6 +9754,10 @@
           },
           "handler_attribution": {
             "status": "missing"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9121,26 +9765,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9152,10 +9931,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9163,7 +9962,7 @@
     {
       "id": "lang.java.framework.jaxrs",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "JAX-RS / Jakarta REST",
       "capabilities": {
@@ -9177,6 +9976,10 @@
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9186,26 +9989,161 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9217,10 +10155,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9250,7 +10208,7 @@
     {
       "id": "lang.java.framework.micronaut",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Micronaut",
       "capabilities": {
@@ -9264,6 +10222,10 @@
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9273,26 +10235,167 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "partial",
+            "cites": ["internal/custom/java/micronaut.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          },
+          "di_injection_point": {
+            "status": "partial",
+            "cites": ["internal/custom/java/micronaut.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          },
+          "di_scope_resolution": {
+            "status": "partial",
+            "cites": ["internal/custom/java/micronaut.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9304,10 +10407,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9315,7 +10438,7 @@
     {
       "id": "lang.java.framework.microprofile",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Eclipse MicroProfile",
       "capabilities": {
@@ -9329,6 +10452,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/java/frameworks/microprofile.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9336,26 +10463,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9367,10 +10629,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9442,7 +10724,7 @@
     {
       "id": "lang.java.framework.quarkus",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Quarkus",
       "capabilities": {
@@ -9456,6 +10738,10 @@
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9465,26 +10751,161 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9496,10 +10917,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9507,7 +10948,7 @@
     {
       "id": "lang.java.framework.spring-boot",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Spring Boot / Spring MVC",
       "capabilities": {
@@ -9521,6 +10962,10 @@
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go","internal/engine/spring_routes.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9530,6 +10975,16 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "partial",
@@ -9537,7 +10992,98 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_boot.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          },
+          "di_injection_point": {
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_boot.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-28"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
@@ -9660,7 +11206,7 @@
     {
       "id": "lang.java.framework.spring-webflux",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Spring WebFlux (reactive)",
       "capabilities": {
@@ -9674,6 +11220,10 @@
             "status": "full",
             "cites": ["internal/engine/spring_routes.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9683,26 +11233,161 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9714,10 +11399,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9725,7 +11430,7 @@
     {
       "id": "lang.java.framework.struts",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Apache Struts",
       "capabilities": {
@@ -9739,6 +11444,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/java/frameworks/apache_struts.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9746,26 +11455,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9777,10 +11621,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -9865,7 +11729,7 @@
     {
       "id": "lang.java.framework.vertx",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "java",
       "label": "Vert.x",
       "capabilities": {
@@ -9879,6 +11743,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/java/frameworks/vert_x.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -9886,26 +11754,161 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
           }
         },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "interface_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/java/java.go"],
+            "verified_at": "2026-05-28"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "constant_propagation": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "import_resolution_quality": {
             "status": "partial",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -9917,10 +11920,30 @@
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
           },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "schema_drift_detection": {
             "status": "full",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
             "verified_at": "2026-05-27"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
@@ -13972,28 +15995,125 @@
     {
       "id": "lang.kotlin.framework.arrow",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "Arrow (functional Kotlin)",
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
           },
           "handler_attribution": {
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/frameworks/arrow_functional_kotlin.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "request_validation": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "di_injection_point": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "di_scope_resolution": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "transaction_propagation": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "transaction_rollback_rules": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "aspect_extraction": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "pointcut_resolution": {
+            "status": "not_applicable",
+            "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -14017,6 +16137,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -14037,10 +16161,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -14079,6 +16211,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -14345,28 +16481,125 @@
     {
       "id": "lang.kotlin.framework.coroutines",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "kotlinx.coroutines (structured concurrency)",
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
           },
           "handler_attribution": {
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/frameworks/kotlinx_coroutines.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "request_validation": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "di_injection_point": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "di_scope_resolution": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "transaction_propagation": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "transaction_rollback_rules": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "aspect_extraction": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "pointcut_resolution": {
+            "status": "not_applicable",
+            "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -14390,6 +16623,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -14410,10 +16647,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -14453,6 +16698,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
@@ -14464,7 +16713,7 @@
     {
       "id": "lang.kotlin.framework.http4k",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "http4k",
       "capabilities": {
@@ -14478,6 +16727,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/frameworks/http4k.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -14485,9 +16738,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -14511,6 +16854,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -14531,10 +16878,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -14573,6 +16928,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -14585,7 +16944,7 @@
     {
       "id": "lang.kotlin.framework.javalin",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "Javalin (Kotlin)",
       "capabilities": {
@@ -14595,6 +16954,10 @@
           },
           "handler_attribution": {
             "status": "missing"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -14602,9 +16965,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -14628,6 +17081,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -14648,10 +17105,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -14690,6 +17155,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -14838,7 +17307,7 @@
     {
       "id": "lang.kotlin.framework.ktor",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "Ktor",
       "capabilities": {
@@ -14852,6 +17321,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/kotlin/frameworks/ktor.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -14859,9 +17332,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -14885,6 +17448,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -14905,10 +17472,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -14948,6 +17523,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
@@ -14959,7 +17538,7 @@
     {
       "id": "lang.kotlin.framework.micronaut",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "Micronaut (Kotlin)",
       "capabilities": {
@@ -14973,6 +17552,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/frameworks/micronaut_kotlin.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -14980,9 +17563,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -15006,6 +17679,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -15026,10 +17703,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -15069,6 +17754,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
@@ -15080,7 +17769,7 @@
     {
       "id": "lang.kotlin.framework.quarkus",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "Quarkus (Kotlin)",
       "capabilities": {
@@ -15094,6 +17783,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/frameworks/quarkus_kotlin.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -15101,9 +17794,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -15127,6 +17910,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -15147,10 +17934,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -15190,6 +17985,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
@@ -15201,7 +18000,7 @@
     {
       "id": "lang.kotlin.framework.spring-boot",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "kotlin",
       "label": "Spring Boot (Kotlin)",
       "capabilities": {
@@ -15215,6 +18014,10 @@
             "status": "full",
             "cites": ["internal/engine/spring_routes_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -15224,9 +18027,99 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -15250,6 +18143,10 @@
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points_kotlin.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
@@ -15270,10 +18167,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "partial",
@@ -15312,6 +18217,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_kotlin.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -21628,7 +24537,7 @@
     {
       "id": "lang.scala.framework.akka-http",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "Akka HTTP / Pekko HTTP",
       "capabilities": {
@@ -21642,6 +24551,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/akka_http_pekko_http.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -21649,9 +24562,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -21675,6 +24678,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -21695,10 +24702,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -21737,6 +24752,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -21749,7 +24768,7 @@
     {
       "id": "lang.scala.framework.cask",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "Cask",
       "capabilities": {
@@ -21759,6 +24778,10 @@
           },
           "handler_attribution": {
             "status": "missing"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -21766,9 +24789,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -21792,6 +24905,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -21812,10 +24929,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -21854,6 +24979,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -21866,28 +24995,125 @@
     {
       "id": "lang.scala.framework.cats-effect",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "Cats Effect (concurrency runtime)",
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
           },
           "handler_attribution": {
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/cats_effect.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "request_validation": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "not_applicable"
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "di_injection_point": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "di_scope_resolution": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "transaction_propagation": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "transaction_rollback_rules": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "aspect_extraction": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "pointcut_resolution": {
+            "status": "not_applicable",
+            "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -21911,6 +25137,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -21931,10 +25161,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -21974,6 +25212,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
@@ -21985,7 +25227,7 @@
     {
       "id": "lang.scala.framework.finatra",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "Finatra (Twitter Finagle)",
       "capabilities": {
@@ -21999,6 +25241,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/finatra.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -22006,9 +25252,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -22032,6 +25368,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -22052,10 +25392,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -22095,6 +25443,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
@@ -22106,7 +25458,7 @@
     {
       "id": "lang.scala.framework.http4s",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "http4s",
       "capabilities": {
@@ -22120,6 +25472,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/http4s.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -22127,9 +25483,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -22153,6 +25599,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -22173,10 +25623,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -22216,6 +25674,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
@@ -22227,7 +25689,7 @@
     {
       "id": "lang.scala.framework.lagom",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "Lagom",
       "capabilities": {
@@ -22241,6 +25703,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/lagom.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -22248,9 +25714,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -22274,6 +25830,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -22294,10 +25854,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -22336,6 +25904,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",
@@ -22484,7 +26056,7 @@
     {
       "id": "lang.scala.framework.scalatra",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "Scalatra",
       "capabilities": {
@@ -22498,6 +26070,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/scalatra.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -22505,9 +26081,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -22531,6 +26197,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -22551,10 +26221,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -22594,6 +26272,10 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "vulnerability_finding": {
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
@@ -22605,7 +26287,7 @@
     {
       "id": "lang.scala.framework.zio-http",
       "category": "http_framework",
-      "subcategory": "http_backend",
+      "subcategory": "jvm_backend",
       "language": "scala",
       "label": "ZIO HTTP / ZIO",
       "capabilities": {
@@ -22619,6 +26301,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/zio.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Auth": {
@@ -22626,9 +26312,99 @@
             "status": "missing"
           }
         },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
         "Middleware": {
           "middleware_coverage": {
             "status": "missing"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Transactions": {
+          "transaction_boundary_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "transaction_rollback_rules": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "AOP": {
+          "advice_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "aspect_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pointcut_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Substrate": {
@@ -22652,6 +26428,10 @@
             "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_scala.go"],
             "verified_at": "2026-05-28"
           },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
@@ -22672,10 +26452,18 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
           "mutation_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "reachability_analysis": {
             "status": "full",
@@ -22714,6 +26502,10 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_scala.go"],
             "verified_at": "2026-05-28"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           },
           "vulnerability_finding": {
             "status": "partial",

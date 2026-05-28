@@ -50,7 +50,7 @@ categories:
     capabilities: [call_line_precision, discriminates_on, navigates_to, core_extraction, import_resolution_quality, db_effect, fs_effect, http_effect]
   http_framework:
     capabilities: [endpoint_synthesis, handler_attribution, auth_coverage, middleware_coverage]
-    subcategory_order: [http_backend, ui_frontend, meta_framework, mobile, desktop, rpc_framework, static_site, ai_integration]
+    subcategory_order: [http_backend, jvm_backend, ui_frontend, meta_framework, mobile, desktop, rpc_framework, static_site, ai_integration]
   orm:
     capabilities: [model_extraction, query_attribution, migration_parsing]
   message_broker:
@@ -94,6 +94,79 @@ subcategories:
       - request_validation
       - tests_linkage
       - dto_extraction
+      - interface_extraction
+      - type_alias_extraction
+      - enum_extraction
+      - type_extraction
+      - constant_propagation
+      - env_fallback_recognition
+      - import_resolution_quality
+      - confidence_overlay
+      - reachability_analysis
+      - dead_code_detection
+      - db_effect
+      - http_effect
+      - fs_effect
+      - mutation_effect
+      - request_shape_extraction
+      - response_shape_extraction
+      - schema_drift_detection
+      - taint_source_detection
+      - taint_sink_detection
+      - sanitizer_recognition
+      - vulnerability_finding
+      - pure_function_tagging
+      - module_cycle_detection
+      - def_use_chain_extraction
+      - template_pattern_catalog
+      - trace_extraction
+      - log_extraction
+      - metric_extraction
+    groups:
+      - name: Routing
+        keys: [endpoint_synthesis, handler_attribution, route_extraction]
+      - name: Auth
+        keys: [auth_coverage]
+      - name: Validation
+        keys: [request_validation, dto_extraction]
+      - name: Middleware
+        keys: [middleware_coverage]
+      - name: Type System
+        keys: [interface_extraction, type_alias_extraction, enum_extraction, type_extraction]
+      - name: Testing
+        keys: [tests_linkage]
+      - name: Observability
+        keys: [trace_extraction, log_extraction, metric_extraction]
+      - name: Data
+        keys: [db_effect]
+      - name: Substrate
+        keys: [constant_propagation, env_fallback_recognition, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+
+  jvm_backend:
+    display: "JVM Backend"
+    parent_category: http_framework
+    capabilities:
+      - endpoint_synthesis
+      - handler_attribution
+      - auth_coverage
+      - middleware_coverage
+      - route_extraction
+      - request_validation
+      - tests_linkage
+      - dto_extraction
+      - interface_extraction
+      - type_alias_extraction
+      - enum_extraction
+      - type_extraction
+      - di_binding_extraction
+      - di_injection_point
+      - di_scope_resolution
+      - transaction_boundary_extraction
+      - transaction_propagation
+      - transaction_rollback_rules
+      - aspect_extraction
+      - pointcut_resolution
+      - advice_attribution
       - constant_propagation
       - env_fallback_recognition
       - import_resolution_quality
@@ -129,6 +202,14 @@ subcategories:
         keys: [middleware_coverage]
       - name: Testing
         keys: [tests_linkage]
+      - name: Type System
+        keys: [interface_extraction, type_alias_extraction, enum_extraction, type_extraction]
+      - name: DI
+        keys: [di_binding_extraction, di_injection_point, di_scope_resolution]
+      - name: Transactions
+        keys: [transaction_boundary_extraction, transaction_propagation, transaction_rollback_rules]
+      - name: AOP
+        keys: [aspect_extraction, pointcut_resolution, advice_attribution]
       - name: Observability
         keys: [trace_extraction, log_extraction, metric_extraction]
       - name: Data

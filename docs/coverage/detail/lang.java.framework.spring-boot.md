@@ -5,8 +5,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 - **Language:** [java](../by-language/java.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
-- **Subcategory:** Backend HTTP
-- **Capability cells:** 24
+- **Subcategory:** JVM Backend
+- **Capability cells:** 45
 
 ## Capabilities
 
@@ -17,6 +17,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|--------------|-------|-------|-------|
 | `endpoint_synthesis` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/java/frameworks/spring_boot.yaml`<br>`internal/engine/rules/java/frameworks/spring_mvc.yaml`<br>`internal/engine/spring_routes.go` | — |
 | `handler_attribution` | ✅ `full` | `2026-05-28` | — | — | `internal/engine/java_annotation_routes.go`<br>`internal/engine/spring_routes.go` | — |
+| `route_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 
 ### Auth
 
@@ -28,6 +29,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `dto_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `request_validation` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 
 ### Middleware
 
@@ -39,11 +42,48 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `tests_linkage` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+
+### Type System
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `enum_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/java/java.go` | — |
+| `interface_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/java/java.go` | — |
+| `type_alias_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `type_extraction` | ✅ `full` | `2026-05-28` | — | — | `internal/extractors/java/java.go` | — |
+
+### DI
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `di_binding_extraction` | ⚠️ `partial` | `2026-05-28` | — | [link](backfill:dictionary-completeness) | `internal/custom/java/spring_boot.go` | — |
+| `di_injection_point` | ⚠️ `partial` | `2026-05-28` | — | [link](backfill:dictionary-completeness) | `internal/custom/java/spring_boot.go` | — |
+| `di_scope_resolution` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+
+### Transactions
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `transaction_boundary_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `transaction_propagation` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `transaction_rollback_rules` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+
+### AOP
+
+| Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
+|------------|--------|-------------|--------------|-------|-------|-------|
+| `advice_attribution` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `aspect_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `pointcut_resolution` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 
 ### Observability
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `log_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `metric_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
+| `trace_extraction` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 
 ### Data
 
@@ -54,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
+| `confidence_overlay` | ❌ `missing` | — | — | [link](backfill:dictionary-completeness) | — | — |
 | `constant_propagation` | ✅ `full` | `2026-05-28` | — | — | `internal/links/constant_propagation.go`<br>`internal/substrate/java.go`<br>`internal/substrate/substrate.go` | — |
 | `db_effect` | ⚠️ `partial` | `2026-05-28` | — | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_java.go` | — |
 | `dead_code_detection` | ✅ `full` | `2026-05-28` | — | — | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_java.go` | — |

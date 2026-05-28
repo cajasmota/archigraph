@@ -8,18 +8,18 @@ Back to [summary](../summary.md).
 ## Frameworks
 
 
-### Backend HTTP
+### JVM Backend
 
-| Name | Routing | Auth | Substrate | Other capabilities | Notes |
-|---|---|---|---|---|---|
-| [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | ⚠️ 0/2 | — 0/1 | ⚠️ 8/17 | — 0/1 | |
-| [Javalin (Kotlin)](../detail/lang.kotlin.framework.javalin.md) | ❌ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [Ktor](../detail/lang.kotlin.framework.ktor.md) | ✅ 2/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [Micronaut (Kotlin)](../detail/lang.kotlin.framework.micronaut.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [Quarkus (Kotlin)](../detail/lang.kotlin.framework.quarkus.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [Spring Boot (Kotlin)](../detail/lang.kotlin.framework.spring-boot.md) | ✅ 2/2 | ⚠️ 0/1 | ⚠️ 6/17 | ❌ 0/1 | |
-| [http4k](../detail/lang.kotlin.framework.http4k.md) | ⚠️ 0/2 | ❌ 0/1 | ⚠️ 8/17 | ❌ 0/1 | |
-| [kotlinx.coroutines (structured concurrency)](../detail/lang.kotlin.framework.coroutines.md) | ⚠️ 0/2 | — 0/1 | ⚠️ 8/17 | — 0/1 | |
+| Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
+|---|---|---|---|---|---|---|---|
+| [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | ⚠️ 0/3 | — 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [Javalin (Kotlin)](../detail/lang.kotlin.framework.javalin.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [Ktor](../detail/lang.kotlin.framework.ktor.md) | ❌ 2/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [Micronaut (Kotlin)](../detail/lang.kotlin.framework.micronaut.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [Quarkus (Kotlin)](../detail/lang.kotlin.framework.quarkus.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [Spring Boot (Kotlin)](../detail/lang.kotlin.framework.spring-boot.md) | ❌ 2/3 | ⚠️ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 6/21 | ❌ 0/15 | |
+| [http4k](../detail/lang.kotlin.framework.http4k.md) | ❌ 0/3 | ❌ 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
+| [kotlinx.coroutines (structured concurrency)](../detail/lang.kotlin.framework.coroutines.md) | ⚠️ 0/3 | — 0/1 | ❌ 0/4 | ❌ 0/1 | ❌ 8/21 | ❌ 0/15 | |
 
 
 ### Mobile
