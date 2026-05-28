@@ -28,7 +28,7 @@ Auto-generated. Back to [summary](../summary.md).
 | `branch_conditions` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2855) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2855_angular_dataflow_test.go`<br>`testdata/fixtures/real-world/typescript/angular_dataflow_component.ts` | — |
 | `data_fetching` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2855) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2855_angular_dataflow_test.go`<br>`testdata/fixtures/real-world/typescript/angular_dataflow_component.ts` | — |
 | `prop_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2855) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2855_angular_dataflow_test.go`<br>`testdata/fixtures/real-world/typescript/angular_dataflow_component.ts` | — |
-| `state_management` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2855) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2855_angular_dataflow_test.go`<br>`testdata/fixtures/real-world/typescript/angular_dataflow_component.ts` | — |
+| `state_management` | ⚠️ `partial` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2855) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2855_angular_dataflow_test.go` | AUDIT(#2847) full->partial: angularStateManagement only detects ngrx Store (select/dispatch/pipe/selectSignal). On angular-realworld (gothinkster) all 11 stateful files use Angular signals + RxJS BehaviorSubject and 0 use ngrx, so the cell fired on the ngrx fixture but missed the dominant modern Angular state idiom. Follow-up filed for signal()/computed()/BehaviorSubject support. |
 
 ### Navigation
 
@@ -70,10 +70,13 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `decorator_recognition` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
-| `dependency_injection` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
-| `ngmodule_extraction` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
-| `rxjs_pattern_detection` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | — |
+| `decorator_recognition` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2847) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2854_angular_test.go` | AUDIT(#2847) taxonomy: angular.go angularClassDecorators emits component/service/directive/pipe/module subtypes. Verified on angular-realworld: angular_component x18, angular_service x6, angular_pipe x2, angular_directive x1. |
+| `dependency_injection` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2847) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2854_angular_test.go` | AUDIT(#2847) taxonomy: constructor-DI -> INJECTED_INTO edges. Verified on angular-realworld (5 INJECTED_INTO->ArticleComponent etc.), incl. modern inject() function-DI. |
+| `directive_recognition` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2847) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2854_angular_test.go` | AUDIT(#2847) NEW idiom cell: @Directive -> angular_directive subtype. Verified on angular-realworld + nativescript-ng. |
+| `ngmodule_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2847) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2854_angular_test.go` | AUDIT(#2847) taxonomy: @NgModule -> angular_module subtype. Verified on real NativeScript-Angular app (angular_module x47). |
+| `pipe_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2847) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2854_angular_test.go` | AUDIT(#2847) NEW idiom cell: @Pipe -> angular_pipe subtype. Verified on angular-realworld (angular_pipe x2). |
+| `rxjs_pattern_detection` | ❌ `missing` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2739) | — | AUDIT(#2847): genuinely unimplemented — angular.go does not extract Observable/pipe/subscribe operators as entities. Held at missing. |
+| `service_extraction` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2847) | `internal/extractors/javascript/angular.go`<br>`internal/extractors/javascript/issue2854_angular_test.go` | AUDIT(#2847) NEW idiom cell: @Injectable -> angular_service subtype. Verified on angular-realworld (angular_service x6). |
 
 ## Provenance
 

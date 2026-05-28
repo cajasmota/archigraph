@@ -42,8 +42,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Verified SHA | Issue | Cites | Notes |
 |------------|--------|-------------|--------------|-------|-------|-------|
-| `branch_conditions` | ✅ `full` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2859) | `internal/extractors/javascript/discriminator.go`<br>`internal/extractors/javascript/testdata/mobile_nativescript/main-view-model.ts` | — |
-| `state_management` | ✅ `full` | — | — | [link](https://github.com/cajasmota/archigraph/issues/2859) | `internal/extractors/javascript/extractor.go`<br>`internal/extractors/javascript/testdata/mobile_nativescript/main-view-model.ts` | — |
+| `branch_conditions` | ⚠️ `partial` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2859) | `internal/extractors/javascript/discriminator.go` | AUDIT(#2847) full->partial: NS branch_conditions relies on the discriminator pass, which stamped 0 discriminators across 19 real NativeScript view-models (official @nativescript app-templates) whose if-branches are member comparisons (if (this._x !== value)). Fires only on the toy fixture's bare-identifier compare. Follow-up filed. |
+| `state_management` | ✅ `full` | `2026-05-28` | — | [link](https://github.com/cajasmota/archigraph/issues/2859) | `internal/extractors/javascript/extractor.go`<br>`internal/extractors/javascript/testdata/mobile_nativescript/main-view-model.ts` | AUDIT(#2847) HOLDS: state_setter fires on 6 real NativeScript-Core view-models (notifyPropertyChange/this.set/set-accessor) from @nativescript app-templates. |
 
 ### Type System
 
