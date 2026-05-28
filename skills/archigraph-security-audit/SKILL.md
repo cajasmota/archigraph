@@ -8,7 +8,7 @@ when-to-use: User asks to "audit security", "find security issues", "run the sec
 
 Run a two-phase security audit against the indexed archigraph group.
 
-- **Phase 1 — Static analysis** (`prompts/01-static-analysis.md`): deterministic rule-based checks run against the graph. Finds missing auth decorators, publicly reachable endpoints with no permission check, orphan routes, exposed PII fields, and other structural patterns. Essentially free — no LLM calls.
+- **Phase 1 — Static analysis** (`prompts/01-static-analysis.md`): deterministic rule-based checks run against the graph. Finds missing auth decorators, publicly reachable endpoints with no permission check, orphan routes, exposed PII fields, and other structural patterns. Includes the Phase 2B taint-flow analysis (#2772) — `archigraph_security_findings` returns source→sink paths through the CALLS graph that lack an intervening sanitizer, ranked by confidence (default floor 0.7). Essentially free — no LLM calls.
 - **Phase 2 — LLM semantic pass** (`prompts/02-semantic-confirmation.md`): LLM-driven confirmation, ranking, and explanation. Confirms or dismisses Phase 1 findings, adds severity scores, writes human-readable explanations, and surfaces findings the static pass missed. Interactive by default — the user reviews findings before they are submitted to the graph.
 
 ## When to use this skill
@@ -49,6 +49,7 @@ Call `archigraph_whoami` first. If it errors: ABORT with "archigraph MCP not con
 
 Follow `prompts/01-static-analysis.md`. Key checks:
 
+0. **Taint-flow security findings (#2772)** — call `archigraph_security_findings(min_confidence=0.7)` first. Each finding is a source→sink path through the CALLS graph (request input / env var / deserialised JSON reaches SQL exec / shell exec / eval / regex constructor / file write / HTML output without an intervening sanitizer). The pass is deterministic, conservative (drops anything below 0.5 confidence), and language-aware across T1 (jsts, python, java, go). Treat every finding ≥0.85 confidence as a Phase 2 candidate by default; findings 0.7-0.85 deserve LLM confirmation. Categories surfaced: `sql_injection`, `command_injection`, `path_traversal`, `xss`, `redos`, `deserialization`, `ssrf`.
 1. **Auth coverage** — for every `http_endpoint` entity, check whether the graph contains an `AUTHENTICATED_BY` or `REQUIRES_PERMISSION` edge. Endpoints with no such edge are flagged `auth_missing`.
 2. **Reachability** — identify endpoints reachable from the public internet (no internal-only marker) with `auth_missing`. These become `severity=high` findings.
 3. **Orphan endpoints** — endpoints with no callers AND no auth edge. Could be dead code or unauthenticated surface.
@@ -87,6 +88,7 @@ Output: per-finding markdown pages at `~/.archigraph/docs/<group>/security/`.
 ## archigraph MCP tool surface
 
 - `archigraph_whoami`, `archigraph_find`, `archigraph_inspect`, `archigraph_expand`
+- `archigraph_security_findings` — Phase 2B taint-flow source→sink findings (#2772). Args: `category`, `min_confidence` (default 0.7), `limit`, `source_repo`. Returns deterministic SecurityFinding records ranked by confidence.
 - `archigraph_repairs` — check for residual edges on security-sensitive paths
 - `archigraph_enrichments` — read enriched endpoint metadata
 - `archigraph_save_finding` — persist confirmed security findings

@@ -91,11 +91,16 @@ func TestSubcategoryRenderKeysExcludesCategoryUnion(t *testing.T) {
 		"request_shape_extraction",
 		"response_shape_extraction",
 		"router_pattern",
+		// #2772 Phase 2B substrate taint-flow keys.
+		"sanitizer_recognition",
 		"schema_drift_detection",
 		"state_management",
 		"state_setter_emission",
+		"taint_sink_detection",
+		"taint_source_detection",
 		"tests_linkage",
 		"type_alias_extraction",
+		"vulnerability_finding",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("render keys = %v, want %v", got, want)
@@ -139,11 +144,16 @@ func TestSubcategoryCapabilityKeysSorted(t *testing.T) {
 		"request_shape_extraction",
 		"response_shape_extraction",
 		"router_pattern",
+		// #2772 Phase 2B substrate taint-flow keys.
+		"sanitizer_recognition",
 		"schema_drift_detection",
 		"state_management",
 		"state_setter_emission",
+		"taint_sink_detection",
+		"taint_source_detection",
 		"tests_linkage",
 		"type_alias_extraction",
+		"vulnerability_finding",
 	}
 	if !reflect.DeepEqual(keys, want) {
 		t.Errorf("subcategoryCapabilityKeys ui_frontend = %v, want %v", keys, want)

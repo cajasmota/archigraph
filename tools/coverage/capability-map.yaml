@@ -241,6 +241,41 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2764"]
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_jsts.go
+              functions: [sniffTaintJSTS]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_jsts.go
+              functions: [sniffTaintJSTS]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_jsts.go
+              functions: [sniffTaintJSTS]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_jsts.go
+              functions: [sniffTaintJSTS]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
           verified_at: "2026-05-28"
 
   lang.jsts.framework.react-native:
@@ -419,6 +454,41 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2764"]
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_python.go
+              functions: [sniffTaintPython]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_python.go
+              functions: [sniffTaintPython]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_python.go
+              functions: [sniffTaintPython]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_python.go
+              functions: [sniffTaintPython]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
           verified_at: "2026-05-28"
 
   lang.python.framework.flask:
@@ -690,6 +760,41 @@ records:
             - file: internal/links/effect_propagation.go
               functions: [runEffectPropagationPass]
           issues_implemented: ["2764"]
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_java.go
+              functions: [sniffTaintJava]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_java.go
+              functions: [sniffTaintJava]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_java.go
+              functions: [sniffTaintJava]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_java.go
+              functions: [sniffTaintJava]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
           verified_at: "2026-05-28"
 
   lang.go.framework.gin:
@@ -761,6 +866,42 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2766"]
+          verified_at: "2026-05-28"
+        taint_source_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_golang.go
+              functions: [sniffTaintGo]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        taint_sink_detection:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_golang.go
+              functions: [sniffTaintGo]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        sanitizer_recognition:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_golang.go
+              functions: [sniffTaintGo]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
+          verified_at: "2026-05-28"
+        vulnerability_finding:
+          status: partial
+          symbols:
+            - file: internal/substrate/taint_sites_golang.go
+              functions: [sniffTaintGo]
+            - file: internal/links/taint_flow.go
+              functions: [runTaintFlowPass, computeFindings]
+          issues_implemented: ["2772"]
           verified_at: "2026-05-28"
 
   lang.ruby.framework.rails:

@@ -326,6 +326,19 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	}
 	res.Results = append(res.Results, pEP)
 
+	// #2772 — Phase 2B taint-flow analysis. Runs after effect
+	// classification so taint roles share the same function-entity
+	// binding shape; runs before the label / string / HTTP passes so
+	// downstream queries reading entity.Properties see the taint_role
+	// annotation. Mutates entity.Properties in-memory and emits the
+	// <group>-links-taint.json sidecar consumed by the MCP
+	// archigraph_security_findings tool.
+	pTF, err := runTaintFlowPass(graphs, paths, rejects)
+	if err != nil {
+		return nil, fmt.Errorf("taint flow pass: %w", err)
+	}
+	res.Results = append(res.Results, pTF)
+
 	p2, err := runLabelPass(graphs, paths, rejects)
 	if err != nil {
 		return nil, fmt.Errorf("label pass: %w", err)

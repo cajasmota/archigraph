@@ -12,14 +12,14 @@ Back to [summary](../summary.md).
 
 | Name | Routing | Security | Validation | Middleware | Testing | Observability | Data | Substrate | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| [Cuba](../detail/lang.ruby.framework.cuba.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [Grape](../detail/lang.ruby.framework.grape.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [Hanami](../detail/lang.ruby.framework.hanami.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [Padrino](../detail/lang.ruby.framework.padrino.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [Roda](../detail/lang.ruby.framework.roda.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [Sinatra](../detail/lang.ruby.framework.sinatra.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 5/10 | |
-| [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | ⚠️ 5/10 | |
+| [Cuba](../detail/lang.ruby.framework.cuba.md) | ❌ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Grape](../detail/lang.ruby.framework.grape.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Hanami](../detail/lang.ruby.framework.hanami.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Padrino](../detail/lang.ruby.framework.padrino.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Roda](../detail/lang.ruby.framework.roda.md) | ⚠️ 0/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [Sinatra](../detail/lang.ruby.framework.sinatra.md) | ✅ 2/2 | ❌ 0/1 | — | ❌ 0/1 | — | — | — | ⚠️ 2/3 | |
+| [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | ⚠️ 0/2 | — 0/1 | — | — 0/1 | — | — | — | ⚠️ 2/3 | |
 
 
 ## Tools

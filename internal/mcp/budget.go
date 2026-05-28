@@ -13,6 +13,11 @@ package mcp
 //     (only declared args: group, cwd; severity/endpoint/repo/limit are
 //     undeclared per the #1639 token-ceiling pattern) but the corpus of
 //     existing tools already sits near the ceiling, leaving no
-//     headroom for a 48th tool entry without a bump. The +500 keeps
-//     us under the 6000 hard cap with comfortable room for Phase 2B.
-const TokenCeiling = 5500
+//     headroom for a 48th tool entry without a bump.
+//   - 5500 → 6000: PR for #2772 Phase 2B — adds
+//     archigraph_security_findings for taint-flow source→sink findings.
+//     With #2770's payload-drift tool already in (49 tools post-rebase),
+//     the new tool's category / min_confidence / limit / source_repo
+//     args push the handshake near the prior ceiling; +500 restores
+//     headroom under the 6500 next-bump line.
+const TokenCeiling = 6000

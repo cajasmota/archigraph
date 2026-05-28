@@ -496,6 +496,22 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_payload_drift", s.handlePayloadDrift))
 
+	// #2772 — Phase 2B taint flow / security findings. Returns
+	// SecurityFinding records emitted by the taint-flow pass:
+	// source→...→sink paths through the CALLS graph that lack an
+	// intervening sanitizer. Findings are ranked by confidence
+	// (default floor 0.7). Filterable by category, min_confidence,
+	// source repo, and limit.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_security_findings",
+		mcpapi.WithDescription("Taint-flow security findings: source→sink paths ranked by confidence."),
+		mcpapi.WithString("category"),
+		mcpapi.WithNumber("min_confidence"),
+		mcpapi.WithNumber("limit"),
+		mcpapi.WithString("source_repo"),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+	), s.wrap("archigraph_security_findings", s.handleSecurityFindings))
+
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_stats",
 		mcpapi.WithDescription("Corpus-level metrics. breakdown=unresolved_imports adds edge taxonomy."),
 		mcpapi.WithAny("group"),

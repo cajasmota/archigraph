@@ -585,6 +585,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_effects",
 		// #2770 Phase 2A payload-shape drift findings.
 		"archigraph_payload_drift",
+		// #2772 Phase 2B taint-flow security findings surface
+		"archigraph_security_findings",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -670,8 +672,9 @@ func TestToolNameSurface(t *testing.T) {
 	// +1 archigraph_dead_code (#2766 Phase 1B reachability + dead-code).
 	// +1 archigraph_effects (#2764 Phase 1A effect classification).
 	// +1 archigraph_payload_drift (#2770 Phase 2A drift findings).
-	if got := len(allRegisteredTools); got != 48 {
-		t.Errorf("expected 48 registered tools, got %d — update this count if tools are added/removed (added archigraph_dead_code #2766 + archigraph_effects #2764 + archigraph_payload_drift #2770)", got)
+	// +1 archigraph_security_findings (#2772 Phase 2B taint-flow).
+	if got := len(allRegisteredTools); got != 49 {
+		t.Errorf("expected 49 registered tools, got %d — update this count if tools are added/removed (added archigraph_security_findings #2772)", got)
 	}
 }
 
@@ -3174,6 +3177,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_effects": {"group": "g", "entity_id": "DashboardScreen"},
 		// #2770 Phase 2A payload-shape drift — no required args.
 		"archigraph_payload_drift": {"group": "g"},
+		// #2772 Phase 2B taint-flow — no required args.
+		"archigraph_security_findings": {"group": "g"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3218,8 +3223,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 48 {
-		t.Errorf("expected 48 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_dead_code #2766 + archigraph_effects #2764 + archigraph_payload_drift #2770)", len(tools))
+	if len(tools) != 49 {
+		t.Errorf("expected 49 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_security_findings #2772)", len(tools))
 	}
 
 	for _, st := range tools {
