@@ -1,0 +1,37 @@
+| Motorola 68000 (m68k) GNU as fixture — jsr/bsr calls, bra/dbra branches,
+| trap #0 syscall, movem, sections, .equ constant, .extern external.
+| Demonstrates m68k depth (#2835): subroutine call forms, decrement-branch
+| loop primitive, size suffixes, and the Linux/m68k trap syscall gate.
+| (`|` is the m68k line-comment marker.)
+
+	.equ	SYS_exit, 1
+
+	.extern	memcpy
+
+	.text
+	.globl	_start
+_start:
+	movem.l	%d0-%d7/%a0-%a6, -(%sp)   | save registers
+	jsr	setup                     | intra-file call (jump to subroutine)
+	bsr.w	helper                    | intra-file call (branch to subroutine, .w suffix)
+	jsr	memcpy                    | external call
+	moveq	#10, %d0
+.Lloop:
+	subq.l	#1, %d0
+	dbra	%d0, .Lloop               | decrement-and-branch loop primitive
+	bra	.Ldone                    | unconditional branch to local label
+.Ldone:
+	moveq	#0, %d0
+	trap	#0                        | Linux/m68k syscall gate
+	movem.l	(%sp)+, %d0-%d7/%a0-%a6
+	rts
+
+	.globl	setup
+setup:
+	clr.l	%d0
+	rts
+
+	.globl	helper
+helper:
+	bra	helper                    | self-recursion branch
+	rts
