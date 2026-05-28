@@ -10492,6 +10492,13 @@
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/adonisjs_middleware.ts"]
           }
         },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/adonisjs.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
+          }
+        },
         "Substrate": {
           "constant_propagation": {
             "status": "full",
@@ -11011,6 +11018,13 @@
             "verified_at": "2026-05-28"
           }
         },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/express.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
+          }
+        },
         "Substrate": {
           "constant_propagation": {
             "status": "full",
@@ -11082,6 +11096,13 @@
           "middleware_coverage": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/fastify_middleware.ts"]
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/fastify.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
@@ -11157,6 +11178,13 @@
           "middleware_coverage": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/feathers_middleware.ts"]
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/feathers.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
@@ -11363,6 +11391,13 @@
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/hapi_middleware.ts"]
           }
         },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/hapi.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
+          }
+        },
         "Substrate": {
           "constant_propagation": {
             "status": "full",
@@ -11434,6 +11469,13 @@
           "middleware_coverage": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/hono_middleware.ts"]
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/hono.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
@@ -11621,6 +11663,13 @@
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/koa_middleware.ts"]
           }
         },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/koa.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
+          }
+        },
         "Substrate": {
           "constant_propagation": {
             "status": "full",
@@ -11723,6 +11772,13 @@
           "middleware_coverage": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/marblejs_middleware.ts"]
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/marblejs.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
@@ -11913,6 +11969,13 @@
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/nestjs_middleware.ts"],
             "verified_at": "2026-05-28"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/nestjs.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
@@ -12180,6 +12243,13 @@
           "middleware_coverage": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/polka_middleware.ts"]
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/polka.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
@@ -12762,6 +12832,13 @@
             "cites": ["internal/engine/http_endpoint_jsts_middleware.go","internal/engine/http_endpoint_jsts_middleware_test.go","testdata/fixtures/typescript/restify_middleware.ts"]
           }
         },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/restify.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
+          }
+        },
         "Substrate": {
           "constant_propagation": {
             "status": "full",
@@ -12836,6 +12913,13 @@
           "middleware_coverage": {
             "status": "not_applicable",
             "notes": "Sails does not attach middleware to individual endpoints; its global middleware pipeline is the declarative `order` array under `middleware` in config/http.js. Covered by the framework_specific Middleware Pipeline / middleware_order_recognition cell (ParseSailsMiddlewareOrder)."
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/testdata/substrate_backend_db/sails.ts","internal/substrate/backend_db_effect_test.go","internal/substrate/effect_sinks_jsts.go"],
+            "issue": "2903"
           }
         },
         "Substrate": {
