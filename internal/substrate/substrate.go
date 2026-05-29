@@ -214,6 +214,8 @@ func LanguageForPath(path string) string {
 		return "vue"
 	case hasSuffix(path, ".astro"):
 		return "astro"
+	case hasSuffix(path, ".graphql"), hasSuffix(path, ".gql"):
+		return "graphql"
 	}
 	return ""
 }

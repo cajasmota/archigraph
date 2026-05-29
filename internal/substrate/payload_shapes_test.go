@@ -14,9 +14,10 @@ func TestPayloadShapeSnifferRegistry_T1AndT2AndT3(t *testing.T) {
 	// T1 (#2770): go, java, jsts, python.
 	// T2 (#2771): c-cpp, csharp, elixir, kotlin, php, ruby, rust, scala.
 	// T3 (#2777): astro, clojure, crystal, fsharp, nim, solidity, svelte, swift, vue.
+	// GraphQL SDL (#3076): graphql.
 	want := []string{
 		"astro", "c-cpp", "clojure", "crystal", "csharp", "elixir",
-		"fsharp", "go", "java", "jsts", "kotlin", "nim", "php", "python",
+		"fsharp", "go", "graphql", "java", "jsts", "kotlin", "nim", "php", "python",
 		"ruby", "rust", "scala", "solidity", "svelte", "swift", "vue",
 	}
 	got := PayloadShapeLanguages()

@@ -1,0 +1,44 @@
+# GraphQL SDL fixture for schema_drift_detection testing (#3076).
+# Exercises input-type (request shape) and object-type (response shape)
+# extraction by sniffPayloadShapesGraphQL.
+
+# Input types — resolver receives these as `args`; maps to request body.
+input CreateUserInput {
+  name: String!
+  email: String!
+  age: Int
+  role: String
+}
+
+input UpdateUserInput {
+  name: String
+  email: String
+  age: Int
+}
+
+# Object types — resolver returns these; maps to response body.
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  age: Int
+  role: String
+}
+
+type DeleteResult {
+  ok: Boolean!
+  deletedId: ID!
+}
+
+# Root operation type — operations with inline arg lists.
+type Query {
+  user(id: ID!): User
+  users(limit: Int, offset: Int): [User!]!
+  userByEmail(email: String!): User
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User
+  updateUser(id: ID!, input: UpdateUserInput!): User
+  deleteUser(id: ID!): DeleteResult
+}
