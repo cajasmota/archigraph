@@ -5829,6 +5829,39 @@ records:
             - file: internal/custom/golang/hertz_huma_test.go
           issues_implemented: ["2686", "3212"]
           verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # huma is OpenAPI-first: auth is declared via an Operation's Security
+          # field (per-operation requirement) and the OpenAPI SecuritySchemes
+          # registration (available schemes). huma.go emits an auth SCOPE.Pattern
+          # bound to the endpoint for each Security-protected Operation, and one
+          # per declared SecurityScheme, kinded via humaAuthKind (jwt/oauth/
+          # api_key/basic). Auth-classified UseMiddleware entries also yield auth
+          # patterns. Heuristic source match, no enforcement proof -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/huma.go
+              functions: [Extract, emitHumaSecuritySchemes, humaAuthKind]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # huma middleware registration: api.UseMiddleware(mw…) (API-level
+          # chain) and the huma.Middlewares{…} per-operation slice literal.
+          # emitHumaMiddleware parses each into an ordered SCOPE.Pattern
+          # (pattern_kind=middleware) via the shared parseMiddlewareChain, with
+          # auth classification. Heuristic source match, no enforcement proof or
+          # route-binding -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/huma.go
+              functions: [Extract, emitHumaMiddleware]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
       Validation:
         dto_extraction:
           # dto.go (custom_go_dto) resolves request-bind / response-
@@ -5842,6 +5875,21 @@ records:
               functions: [Extract, catalogStructs, resolveVarType, detectDtoFramework]
           tests:
             - file: internal/custom/golang/dto_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+        request_validation:
+          # huma derives request validation from OpenAPI schema tags on the
+          # input-struct fields (minimum/maximum/minLength/maxLength/pattern/
+          # enum/format/required/…). emitHumaValidation indexes struct heads by
+          # offset and emits one validation rule SCOPE.Pattern per constrained
+          # field, attributed to its enclosing struct. Heuristic source match; no
+          # proof the struct is bound as a real handler input -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/huma.go
+              functions: [Extract, emitHumaValidation]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
           issues_implemented: ["3255"]
           verified_at: "2026-05-30"
 
@@ -5929,6 +5977,39 @@ records:
             - file: internal/custom/golang/kratos_gozero_test.go
           issues_implemented: ["3212"]
           verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # kratos auth is the JWT middleware
+          # (kratos/v2/middleware/auth/jwt), registered in the global
+          # http.Middleware(...) chain or a selector.Server(...) per-route
+          # selector. emitKratosMiddlewareAndAuth parses both surfaces and emits
+          # a dedicated auth SCOPE.Pattern for any expression the shared
+          # classifier recognises as auth (jwt.Server -> auth_kind=jwt).
+          # Heuristic substring match, no enforcement proof -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/kratos.go
+              functions: [Extract, emitKratosMiddlewareAndAuth, isKratosFile]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # kratos middleware registration: the http.Middleware(mw…) transport
+          # server option (global chain) and selector.Server(mw…).Match(…).Build()
+          # (per-route selector). emitKratosMiddlewareAndAuth scans both balanced
+          # argument spans into ordered SCOPE.Pattern (pattern_kind=middleware)
+          # entities via the shared parseMiddlewareChain. Heuristic source match,
+          # no enforcement proof or route-binding -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/kratos.go
+              functions: [Extract, emitKratosMiddlewareAndAuth]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
       Validation:
         dto_extraction:
           # dto.go (custom_go_dto) resolves request-bind / response-
@@ -5942,6 +6023,21 @@ records:
               functions: [Extract, catalogStructs, resolveVarType, detectDtoFramework]
           tests:
             - file: internal/custom/golang/dto_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+        request_validation:
+          # kratos request validation is protoc-gen-validate (PGV): a generated
+          # Validate()/ValidateAll() method per request message, enforced by the
+          # validate middleware / handler. emitKratosValidation emits a rule
+          # SCOPE.Pattern per generated method definition and a binding pattern
+          # per enforcing in.Validate() call site. Heuristic source match; no
+          # proof the method is wired into a request path -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/kratos.go
+              functions: [Extract, emitKratosValidation]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
           issues_implemented: ["3255"]
           verified_at: "2026-05-30"
 
@@ -6029,6 +6125,38 @@ records:
             - file: internal/custom/golang/kratos_gozero_test.go
           issues_implemented: ["3212"]
           verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # go-zero ships a built-in JWT auth option, rest.WithJwt(secret) /
+          # rest.WithJwtTransition(...), attached to a route group in the
+          # generated routes.go. emitGoZeroMiddlewareAndAuth emits a dedicated
+          # auth SCOPE.Pattern (auth_kind=jwt) per occurrence (the option itself
+          # is the enforcement point), plus auth classification of middleware
+          # expressions. Heuristic source match, no enforcement proof -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/go_zero.go
+              functions: [Extract, emitGoZeroMiddlewareAndAuth, isGoZeroFile]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # go-zero middleware registration: rest.WithMiddleware(mw, …) /
+          # rest.WithMiddlewares([]rest.Middleware{…}) route-group options and the
+          # server.Use(mw) global form. emitGoZeroMiddlewareAndAuth parses each
+          # balanced argument span into ordered SCOPE.Pattern
+          # (pattern_kind=middleware) entities via the shared parseMiddlewareChain.
+          # Heuristic source match, no enforcement proof -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/go_zero.go
+              functions: [Extract, emitGoZeroMiddlewareAndAuth]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
       Validation:
         dto_extraction:
           # dto.go (custom_go_dto) resolves request-bind / response-
@@ -6042,6 +6170,22 @@ records:
               functions: [Extract, catalogStructs, resolveVarType, detectDtoFramework]
           tests:
             - file: internal/custom/golang/dto_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+        request_validation:
+          # go-zero request validation: typed request structs carry go-playground
+          # `validate:` tags, decoded-and-validated by httpx.Parse(r, &req) /
+          # httpx.ParseJsonBody(...). emitGoZeroValidation emits a rule
+          # SCOPE.Pattern per validated struct field (via the shared
+          # findValidationRules scanner) and a binding pattern per httpx.Parse
+          # call site. Heuristic source match; no proof every rule fires on a real
+          # request path -> partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/go_zero.go
+              functions: [Extract, emitGoZeroValidation]
+          tests:
+            - file: internal/custom/golang/kratos_gozero_huma_amv2_test.go
           issues_implemented: ["3255"]
           verified_at: "2026-05-30"
 
