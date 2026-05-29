@@ -12274,7 +12274,9 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/go_zero.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -12285,13 +12287,16 @@
             "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/golang/go_zero.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/go_zero.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -13114,7 +13119,9 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/huma.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -13125,13 +13132,16 @@
             "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/golang/huma.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/huma.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -13534,7 +13544,9 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/kratos.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -13545,13 +13557,16 @@
             "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/golang/kratos.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/kratos.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {

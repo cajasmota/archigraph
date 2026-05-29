@@ -68,6 +68,35 @@ var (
 	reKratosHandler = regexp.MustCompile(
 		`^_(\w+?)_(\w+?)(\d+)_HTTP_Handler$`,
 	)
+
+	// --- middleware (#3255) -------------------------------------------------
+	// http.Middleware(mw1, mw2, …) server option (and the grpc.Middleware twin)
+	// that registers a global middleware chain on a kratos transport server:
+	//
+	//	srv := http.NewServer(http.Middleware(recovery.Recovery(), auth.JWT(...)))
+	//
+	// The balanced argument span is scanned forward so nested middleware
+	// constructors are captured whole. Captures the receiver selector (e.g.
+	// "http") so we can stamp the transport on the chain.
+	reKratosMiddleware = regexp.MustCompile(`(\w+)\.Middleware\s*\(`)
+	// selector.Server(mw…).Match(fn).Build() — per-route middleware selector,
+	// a kratos idiom for applying middleware to a subset of operations. The
+	// Server(...) argument list is the middleware chain; captured by balanced
+	// scan from the opening paren.
+	reKratosSelectorServer = regexp.MustCompile(`selector\s*\.\s*Server\s*\(`)
+
+	// --- request validation (#3255) ----------------------------------------
+	// protoc-gen-validate (PGV) generates a Validate()/ValidateAll() method per
+	// message. kratos's validate middleware calls it on the decoded request.
+	// Two surfaces are detected:
+	//   1. the generated method definition: func (m *XReq) Validate() error
+	//   2. the call site that enforces it:  if err := in.Validate(); err != nil
+	reKratosValidateDef = regexp.MustCompile(
+		`(?m)func\s*\(\s*\w+\s+\*?(\w+)\s*\)\s*(Validate|ValidateAll)\s*\(\s*\)\s*error`,
+	)
+	reKratosValidateCall = regexp.MustCompile(
+		`(\w+)\.(Validate|ValidateAll)\s*\(\s*\)`,
+	)
 )
 
 // kratosMethodFromHandler recovers the underlying service method name from a
@@ -97,11 +126,15 @@ func (e *kratosExtractor) Extract(ctx context.Context, file extractor.FileInput)
 	}
 
 	src := string(file.Content)
-	// Gate on the generated-HTTP-transport signature: the registration entry
-	// point + the generated handler wrapper suffix. This keeps the extractor
-	// inert on hand-written kratos service/biz/data code (which carries no
-	// route registrations) and on unrelated Go files.
-	if !strings.Contains(src, "HTTPServer") || !strings.Contains(src, "_HTTP_Handler") {
+	// Routing is gated on the generated-HTTP-transport signature (registration
+	// entry point + generated handler wrapper suffix); middleware/auth/request-
+	// validation run on any kratos file, gated on the broader kratos import/
+	// transport marker so they also cover the hand-written server-wiring file
+	// (where http.Middleware(...)/selector.Server(...) live) and the generated
+	// *.pb.validate.go file (where the PGV Validate() methods live). A file with
+	// neither signature is not kratos — emit nothing.
+	hasRouting := strings.Contains(src, "HTTPServer") && strings.Contains(src, "_HTTP_Handler")
+	if !hasRouting && !isKratosFile(src) {
 		return nil, nil
 	}
 
@@ -115,6 +148,15 @@ func (e *kratosExtractor) Extract(ctx context.Context, file extractor.FileInput)
 		}
 		seen[key] = true
 		entities = append(entities, ent)
+	}
+
+	if !hasRouting {
+		// Non-routing kratos file (server wiring / generated PGV validators):
+		// only the middleware/auth/validation passes apply.
+		emitKratosMiddlewareAndAuth(add, src, file.Path, file.Language)
+		emitKratosValidation(add, src, file.Path, file.Language)
+		span.SetAttributes(attribute.Int("entity_count", len(entities)))
+		return entities, nil
 	}
 
 	// 1. RegisterXxxHTTPServer entry points -> SCOPE.Service (one per service).
@@ -166,6 +208,117 @@ func (e *kratosExtractor) Extract(ctx context.Context, file extractor.FileInput)
 		add(ent)
 	}
 
+	// 4. middleware / auth / request-validation surfaces (#3255). These also run
+	//    on the routing file when present (e.g. a hand-edited *_http.pb.go or a
+	//    server file that both registers routes and wires middleware).
+	emitKratosMiddlewareAndAuth(add, src, file.Path, file.Language)
+	emitKratosValidation(add, src, file.Path, file.Language)
+
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
 	return entities, nil
+}
+
+// isKratosFile reports whether src looks like a go-kratos source file — used to
+// gate the middleware/auth/validation passes on non-routing kratos files
+// (server wiring, generated PGV validators). The markers are the kratos import
+// path and its transport/middleware constructs.
+func isKratosFile(src string) bool {
+	return strings.Contains(src, "go-kratos/kratos") ||
+		strings.Contains(src, "kratos/v2/middleware") ||
+		strings.Contains(src, "transport/http") && strings.Contains(src, ".Middleware(")
+}
+
+// emitKratosMiddlewareAndAuth detects kratos middleware registration and
+// classifies auth middleware. Two surfaces:
+//
+//	http.Middleware(mw1, mw2, …)      — global transport middleware chain
+//	selector.Server(mw…).Match(…)     — per-route middleware selector
+//
+// Each middleware expression becomes an ordered SCOPE.Pattern
+// (pattern_kind=middleware); any expression that classifies as auth (jwt/…)
+// also yields a dedicated auth SCOPE.Pattern. JWT is the canonical kratos auth
+// middleware (github.com/go-kratos/kratos/v2/middleware/auth/jwt), so the
+// shared classifier already recognises it via the "jwt" needle.
+//
+// Honesty: heuristic substring/identifier match on source text; no import
+// resolution or data-flow proof that the value enforces auth, and no binding to
+// a specific route. Reported `partial`.
+func emitKratosMiddlewareAndAuth(add func(types.EntityRecord), src, filePath, language string) {
+	const mwProv = "INFERRED_FROM_KRATOS_MIDDLEWARE"
+	const authProv = "INFERRED_FROM_KRATOS_AUTH"
+
+	emit := func(headRe *regexp.Regexp, form string) {
+		for _, loc := range headRe.FindAllStringSubmatchIndex(src, -1) {
+			open := loc[1] - 1 // the '(' the head ends at
+			args, end := balancedArgs(src, open)
+			if end < 0 {
+				continue
+			}
+			chain := parseMiddlewareChain(args)
+			line := lineOf(src, loc[0])
+			for _, a := range chain {
+				mw := makeEntity(a.Expr, "SCOPE.Pattern", "", filePath, language, line)
+				setProps(&mw, "framework", "kratos", "provenance", mwProv,
+					"pattern_kind", "middleware",
+					"middleware_name", a.Name,
+					"middleware_form", form,
+					"mw_order", itoa(a.Order))
+				if a.AuthKind != "" {
+					setProps(&mw, "is_auth", "true", "auth_kind", a.AuthKind)
+				}
+				add(mw)
+				if a.AuthKind != "" {
+					au := makeEntity("auth:"+a.Name, "SCOPE.Pattern", "", filePath, language, line)
+					setProps(&au, "framework", "kratos", "provenance", authProv,
+						"pattern_kind", "auth", "auth_kind", a.AuthKind,
+						"middleware_name", a.Name, "middleware_expr", a.Expr)
+					add(au)
+				}
+			}
+		}
+	}
+
+	emit(reKratosMiddleware, "transport_middleware")
+	emit(reKratosSelectorServer, "selector_server")
+}
+
+// emitKratosValidation detects protoc-gen-validate (PGV) request validation.
+// PGV generates a Validate()/ValidateAll() method per request message and the
+// kratos validate middleware (or handler code) invokes it on the decoded
+// request. Two surfaces:
+//
+//	rule       — the generated `func (m *XReq) Validate() error` method def
+//	binding    — the enforcing call site `in.Validate()` / `req.ValidateAll()`
+//
+// Honesty: heuristic source match; it does not confirm the method is wired into
+// a request path or that every field rule is enforced. Reported `partial`.
+func emitKratosValidation(add func(types.EntityRecord), src, filePath, language string) {
+	const prov = "INFERRED_FROM_KRATOS_VALIDATION"
+
+	for _, m := range reKratosValidateDef.FindAllStringSubmatchIndex(src, -1) {
+		msg := submatch(src, m, 2)
+		method := submatch(src, m, 4)
+		name := "validation:rule:" + msg + "." + method
+		ent := makeEntity(name, "SCOPE.Pattern", "", filePath, language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "kratos", "provenance", prov,
+			"pattern_kind", "validation", "validation_kind", "rule",
+			"validation_subtype", "protoc_gen_validate",
+			"message_type", msg, "validate_method", method)
+		add(ent)
+	}
+
+	for _, m := range reKratosValidateCall.FindAllStringSubmatchIndex(src, -1) {
+		recv := submatch(src, m, 2)
+		method := submatch(src, m, 4)
+		// Skip the method-definition receiver lines (already emitted as rule);
+		// those carry the `func (...)` prefix which the call regex won't anchor,
+		// but a defensive dedup via the add() key handles any overlap.
+		name := "validation:binding:" + method + ":" + recv
+		ent := makeEntity(name, "SCOPE.Pattern", "", filePath, language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "kratos", "provenance", prov,
+			"pattern_kind", "validation", "validation_kind", "binding",
+			"validation_subtype", "validate_call",
+			"receiver", recv, "validate_method", method)
+		add(ent)
+	}
 }
