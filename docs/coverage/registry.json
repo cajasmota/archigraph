@@ -33329,8 +33329,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -33557,8 +33559,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -33731,8 +33735,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -33981,8 +33987,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -34212,8 +34220,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -34435,8 +34445,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -34619,8 +34631,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -34860,8 +34874,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -35091,8 +35107,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -35322,8 +35340,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -35553,8 +35573,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -35803,8 +35825,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -36031,8 +36055,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -36261,8 +36287,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -36488,8 +36516,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -36653,8 +36683,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "partial",
@@ -36897,8 +36929,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -37124,8 +37158,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -37350,8 +37386,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
@@ -37577,8 +37615,10 @@
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3068",
+            "verified_at": "2026-05-29"
           },
           "constant_propagation": {
             "status": "full",
