@@ -36352,32 +36352,40 @@
             "verified_at": "2026-05-29"
           },
           "schema_extraction": {
-            "status": "partial",
-            "cites": ["internal/extractors/python/extractor.go","internal/extractors/python/extractor_test.go"],
-            "notes": "Base Python extractor emits the model class (SCOPE.Component) and its annotated fields (SCOPE.Schema/field) via extractClassFields; no Pydantic-specific Field()/constraint parsing.",
+            "status": "full",
+            "cites": ["internal/extractors/python/extractor.go","internal/patterns/patterns_test.go","internal/patterns/schema_detector.go"],
+            "notes": "Base Python extractor emits the model class (SCOPE.Component) and its annotated fields (SCOPE.Schema/field) via extractClassFields; schema_detector.go classifies the BaseModel subclass as a pydantic schema_validation entity, exercised by TestSchemaDetector_PydanticBaseModel.",
             "verified_at": "2026-05-29"
           }
         },
         "Constraints": {
           "constraint_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/pydantic.go","internal/custom/python/testdata/pydantic_validators.py"],
+            "notes": "python_pydantic extractor parses Field(gt=, ge=, lt=, le=, min_length=, max_length=, min_items=, max_items=, multiple_of=, max_digits=, decimal_places=, pattern=, regex=) into a SCOPE.Pattern entity per field with constraint_* properties; constraint-free Field(default=...) is skipped. Issue #2984.",
+            "verified_at": "2026-05-29"
           },
           "custom_validator_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/pydantic.go","internal/custom/python/testdata/pydantic_validators.py"],
+            "notes": "python_pydantic extractor emits SCOPE.Pattern entities for @field_validator / @validator (v1) and @model_validator / @root_validator (v1), capturing target fields, mode (before/after, pre=True), validator fn, and dialect. Issue #2984.",
+            "verified_at": "2026-05-29"
           }
         },
         "Coercion": {
           "type_coercion_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/pydantic.go"],
+            "notes": "python_pydantic recognizes model-level coercion config (model_config = ConfigDict(...) in v2, inner class Config in v1) and surfaces coercion-affecting flags (strict, coerce_numbers_to_str, str_strip_whitespace, validate_assignment, use_enum_values, ...) as a SCOPE.Pattern model_config entity. Per-field type-coercion inference (annotation-driven int/str/datetime coercion) is not modeled.",
+            "verified_at": "2026-05-29"
           }
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/python/pytest.go"],
+            "notes": "python_pytest extracts pytest test functions/classes/fixtures; tests exercising Pydantic models are captured as test entities but no validator-to-test linkage edge is emitted.",
+            "verified_at": "2026-05-29"
           }
         }
       }

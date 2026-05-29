@@ -3006,3 +3006,55 @@ records:
             - file: internal/custom/python/extractors_test.go
           issues_implemented: ["2986"]
           verified_at: "2026-05-29"
+
+  lang.python.validation.pydantic:
+    capabilities:
+      Constraints:
+        custom_validator_extraction:
+          # @field_validator / @validator (v1) / @model_validator / @root_validator
+          # emitted as SCOPE.Pattern entities with target fields, mode, dialect;
+          # issue #2984.
+          status: full
+          symbols:
+            - file: internal/custom/python/pydantic.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+          issues_implemented: ["2984"]
+          verified_at: "2026-05-29"
+        constraint_extraction:
+          # Field(gt=, ge=, lt=, le=, min_length=, max_length=, pattern=, ...)
+          # constraints emitted as SCOPE.Pattern entities per field; issue #2984.
+          status: full
+          symbols:
+            - file: internal/custom/python/pydantic.go
+              functions: [Extract, extractConstraints]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+          issues_implemented: ["2984"]
+          verified_at: "2026-05-29"
+      Coercion:
+        type_coercion_recognition:
+          # model_config = ConfigDict(...) (v2) and inner class Config (v1)
+          # coercion flags recognized as a SCOPE.Pattern model_config entity;
+          # per-field coercion not modeled. issue #2984.
+          status: partial
+          symbols:
+            - file: internal/custom/python/pydantic.go
+              functions: [Extract, configEntity]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+          issues_implemented: ["2984"]
+          verified_at: "2026-05-29"
+      Schema:
+        schema_extraction:
+          # BaseModel subclass classified as a pydantic schema_validation entity
+          # by schema_detector.go; issue #2984.
+          status: full
+          symbols:
+            - file: internal/patterns/schema_detector.go
+              functions: [Detect]
+          tests:
+            - file: internal/patterns/patterns_test.go
+          issues_implemented: ["2984"]
+          verified_at: "2026-05-29"

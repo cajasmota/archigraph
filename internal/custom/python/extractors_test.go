@@ -2060,7 +2060,7 @@ func TestAllExtractors_EmptyInput(t *testing.T) {
 		"python_django", "python_fastapi", "python_flask", "python_celery",
 		"python_pytest", "python_langchain", "python_mongodb", "python_redis",
 		"python_sqlalchemy", "python_fastapi_reqresp", "python_flask_reqresp",
-		"python_dramatiq", "python_rq",
+		"python_dramatiq", "python_rq", "python_pydantic",
 	}
 	for _, key := range keys {
 		ext, ok := extractor.Get(key)
@@ -2080,6 +2080,244 @@ func TestAllExtractors_EmptyInput(t *testing.T) {
 }
 
 // ============================================================================
+// Pydantic tests (issue #2984)
+// ============================================================================
+
+// findByName returns the first entity with the given Name, or a zero value and
+// false if none matched.
+func findByName(ents []extractResult, name string) (extractResult, bool) {
+	for _, e := range ents {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return extractResult{}, false
+}
+
+func TestPydantic_FieldValidator(t *testing.T) {
+	src := `from pydantic import BaseModel, field_validator
+
+class User(BaseModel):
+    email: str
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v):
+        return v.lower()
+`
+	ents := extract(t, "python_pydantic", src)
+	e, ok := findByName(ents, "validate_normalize_email")
+	if !ok {
+		t.Fatalf("expected validate_normalize_email entity, got %+v", ents)
+	}
+	if e.Kind != "SCOPE.Pattern" {
+		t.Fatalf("kind = %q, want SCOPE.Pattern", e.Kind)
+	}
+	if e.Props["pattern_type"] != "field_validator" {
+		t.Fatalf("pattern_type = %q", e.Props["pattern_type"])
+	}
+	if e.Props["fields"] != "email" {
+		t.Fatalf("fields = %q, want email", e.Props["fields"])
+	}
+	if e.Props["mode"] != "before" {
+		t.Fatalf("mode = %q, want before", e.Props["mode"])
+	}
+	if e.Props["dialect"] != "v2" {
+		t.Fatalf("dialect = %q, want v2", e.Props["dialect"])
+	}
+}
+
+func TestPydantic_V1Validator(t *testing.T) {
+	src := `from pydantic import BaseModel, validator
+
+class Score(BaseModel):
+    value: int
+
+    @validator("value", pre=True)
+    def coerce(cls, v):
+        return int(v)
+`
+	ents := extract(t, "python_pydantic", src)
+	e, ok := findByName(ents, "validate_coerce")
+	if !ok {
+		t.Fatalf("expected validate_coerce entity, got %+v", ents)
+	}
+	if e.Props["dialect"] != "v1" {
+		t.Fatalf("dialect = %q, want v1", e.Props["dialect"])
+	}
+	if e.Props["mode"] != "before" {
+		t.Fatalf("mode = %q (pre=True should map to before)", e.Props["mode"])
+	}
+}
+
+func TestPydantic_ModelValidator(t *testing.T) {
+	src := `from pydantic import BaseModel, model_validator
+
+class Pair(BaseModel):
+    a: int
+    b: int
+
+    @model_validator(mode="after")
+    def check(self):
+        return self
+`
+	ents := extract(t, "python_pydantic", src)
+	e, ok := findByName(ents, "validate_check")
+	if !ok {
+		t.Fatalf("expected validate_check entity, got %+v", ents)
+	}
+	if e.Props["pattern_type"] != "model_validator" {
+		t.Fatalf("pattern_type = %q", e.Props["pattern_type"])
+	}
+	if e.Props["mode"] != "after" {
+		t.Fatalf("mode = %q, want after", e.Props["mode"])
+	}
+}
+
+func TestPydantic_Constraints(t *testing.T) {
+	src := `from pydantic import BaseModel, Field
+
+class Account(BaseModel):
+    username: str = Field(min_length=3, max_length=32, pattern=r"^[a-z]+$")
+    age: int = Field(gt=0, le=150)
+    note: str = Field(default="")
+`
+	ents := extract(t, "python_pydantic", src)
+	u, ok := findByName(ents, "constraint_username")
+	if !ok {
+		t.Fatalf("expected constraint_username, got %+v", ents)
+	}
+	if u.Props["constraint_min_length"] != "3" {
+		t.Fatalf("min_length = %q", u.Props["constraint_min_length"])
+	}
+	if u.Props["constraint_max_length"] != "32" {
+		t.Fatalf("max_length = %q", u.Props["constraint_max_length"])
+	}
+	if u.Props["constraint_pattern"] == "" {
+		t.Fatalf("expected pattern constraint, got %+v", u.Props)
+	}
+	a, ok := findByName(ents, "constraint_age")
+	if !ok {
+		t.Fatalf("expected constraint_age")
+	}
+	if a.Props["constraint_gt"] != "0" || a.Props["constraint_le"] != "150" {
+		t.Fatalf("age constraints = %+v", a.Props)
+	}
+	// A bare Field(default=...) carries no constraint and must not be emitted.
+	if _, ok := findByName(ents, "constraint_note"); ok {
+		t.Fatal("constraint_note should not be emitted for a constraint-free Field()")
+	}
+}
+
+func TestPydantic_ModelConfig(t *testing.T) {
+	src := `from pydantic import BaseModel, ConfigDict
+
+class S(BaseModel):
+    model_config = ConfigDict(strict=True, str_strip_whitespace=True)
+    x: int
+`
+	ents := extract(t, "python_pydantic", src)
+	e, ok := findByName(ents, "model_config_model_config")
+	if !ok {
+		t.Fatalf("expected model_config entity, got %+v", ents)
+	}
+	if e.Props["dialect"] != "v2" {
+		t.Fatalf("dialect = %q, want v2", e.Props["dialect"])
+	}
+	if !strings.Contains(e.Props["coercion_flags"], "strict") ||
+		!strings.Contains(e.Props["coercion_flags"], "str_strip_whitespace") {
+		t.Fatalf("coercion_flags = %q", e.Props["coercion_flags"])
+	}
+}
+
+func TestPydantic_V1ConfigClass(t *testing.T) {
+	src := `from pydantic import BaseModel
+
+class S(BaseModel):
+    x: int
+
+    class Config:
+        allow_population_by_field_name = True
+        use_enum_values = True
+`
+	ents := extract(t, "python_pydantic", src)
+	e, ok := findByName(ents, "model_config_Config")
+	if !ok {
+		t.Fatalf("expected v1 Config entity, got %+v", ents)
+	}
+	if e.Props["dialect"] != "v1" {
+		t.Fatalf("dialect = %q, want v1", e.Props["dialect"])
+	}
+	if !strings.Contains(e.Props["coercion_flags"], "use_enum_values") {
+		t.Fatalf("coercion_flags = %q", e.Props["coercion_flags"])
+	}
+}
+
+func TestPydantic_NoClassDuplicate(t *testing.T) {
+	// Issue #1501 discipline: the Pydantic extractor must never emit an entity
+	// named after the model class itself (the base Python extractor owns that).
+	src := `from pydantic import BaseModel, Field
+
+class Widget(BaseModel):
+    size: int = Field(gt=0)
+`
+	ents := extract(t, "python_pydantic", src)
+	if _, ok := findByName(ents, "Widget"); ok {
+		t.Fatal("python_pydantic must not emit an entity named after the class (issue #1501)")
+	}
+}
+
+func TestPydantic_NonPydanticNoMatch(t *testing.T) {
+	// A file that calls a function named Field() / validator() but never
+	// references Pydantic must not produce constraint/validator nodes.
+	src := `def Field(**kwargs):
+    return None
+
+x = Field(gt=0)
+`
+	ents := extract(t, "python_pydantic", src)
+	if len(ents) != 0 {
+		t.Fatalf("expected 0 entities for non-Pydantic code, got %d: %+v", len(ents), ents)
+	}
+}
+
+func TestPydantic_Fixture(t *testing.T) {
+	content, err := os.ReadFile("testdata/pydantic_validators.py")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	ext, _ := extractor.Get("python_pydantic")
+	ents, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "testdata/pydantic_validators.py",
+		Content:  content,
+		Language: "python",
+	})
+	if err != nil {
+		t.Fatalf("extract fixture: %v", err)
+	}
+	want := map[string]bool{
+		"validate_normalize_email":   false, // @field_validator
+		"validate_check_consistency": false, // @model_validator
+		"validate_coerce_score":      false, // v1 @validator
+		"constraint_username":        false, // Field(min_length, max_length, pattern)
+		"constraint_age":             false, // Field(gt, le)
+		"constraint_score":           false, // Field(ge, le)
+		"model_config_model_config":  false, // ConfigDict (v2)
+		"model_config_Config":        false, // class Config (v1)
+	}
+	for _, e := range ents {
+		if _, tracked := want[e.Name]; tracked {
+			want[e.Name] = true
+		}
+	}
+	for name, found := range want {
+		if !found {
+			t.Errorf("fixture: expected entity %q not emitted", name)
+		}
+	}
+}
+
+// ============================================================================
 // Registration test
 // ============================================================================
 
@@ -2088,7 +2326,7 @@ func TestAllExtractors_Registered(t *testing.T) {
 		"python_django", "python_fastapi", "python_flask", "python_celery",
 		"python_pytest", "python_langchain", "python_mongodb", "python_redis",
 		"python_sqlalchemy", "python_fastapi_reqresp", "python_flask_reqresp",
-		"python_dramatiq", "python_rq",
+		"python_dramatiq", "python_rq", "python_pydantic",
 	}
 	for _, key := range keys {
 		_, ok := extractor.Get(key)
