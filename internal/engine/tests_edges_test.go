@@ -270,6 +270,77 @@ async def test_items_httpx():
 		"View:items_async", "test_items_httpx")
 }
 
+func TestTestsEdges_StarletteTestClient(t *testing.T) {
+	// Starlette uses starlette.testclient.TestClient which assigns to `client`
+	// — same receiver token as FastAPI.
+	src := `from starlette.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_read_items():
+    response = client.get('/api/items')
+    assert response.status_code == 200
+`
+	runFrameworkTestClientCase(t, "starlette", "tests/test_starlette_client.py", src,
+		"View:items_handler", "test_read_items")
+}
+
+func TestTestsEdges_QuartTestClient(t *testing.T) {
+	// Quart async test client: `async with app.test_client() as client:`.
+	src := `import pytest
+
+@pytest.mark.asyncio
+async def test_read_items(app):
+    async with app.test_client() as client:
+        response = await client.get('/api/items')
+        assert response.status_code == 200
+`
+	runFrameworkTestClientCase(t, "quart", "tests/test_quart_client.py", src,
+		"View:items_handler", "test_read_items")
+}
+
+func TestTestsEdges_RobynTestClient(t *testing.T) {
+	// Robyn test helper exposes a `client` fixture backed by requests.
+	src := `def test_read_items(client):
+    response = client.get('/api/items')
+    assert response.status_code == 200
+`
+	runFrameworkTestClientCase(t, "robyn", "tests/test_robyn_client.py", src,
+		"View:items_handler", "test_read_items")
+}
+
+func TestTestsEdges_LitestarTestClient(t *testing.T) {
+	// Litestar ships litestar.testing.TestClient which assigns to `client`.
+	src := `from litestar.testing import TestClient
+from app.main import app
+
+client = TestClient(app=app)
+
+def test_list_items():
+    response = client.get('/api/items')
+    assert response.status_code == 200
+`
+	runFrameworkTestClientCase(t, "litestar", "tests/test_litestar_client.py", src,
+		"View:items_handler", "test_list_items")
+}
+
+func TestTestsEdges_StrawberryTestClient(t *testing.T) {
+	// Strawberry GraphQL uses a WSGI/ASGI TestClient (starlette or Django).
+	// Tests call client.post('/graphql', ...) with a JSON body.
+	src := `from starlette.testclient import TestClient
+from app.schema import app
+
+client = TestClient(app)
+
+def test_graphql_query():
+    response = client.post('/api/items', json={'query': '{ items { id } }'})
+    assert response.status_code == 200
+`
+	runFrameworkTestClientCase(t, "strawberry-graphql", "tests/test_strawberry_client.py", src,
+		"View:items_handler", "test_graphql_query")
+}
+
 // TestTestsEdges_NonClientReceiverIgnored guards against phantom edges from
 // unrelated `.get(...)` calls (cache.get, logger.get) that share an HTTP-verb
 // method name but are not test clients.

@@ -815,7 +815,7 @@ records:
           verified_at: "2026-05-28"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/custom/python/pytest.go
               functions: [Extract]
@@ -823,8 +823,8 @@ records:
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
-              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_UpvatePattern]
-          issues_implemented: ["2987"]
+              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_UpvatePattern, TestSynthesiseRoutesToFromEndpoints_DRFPattern]
+          issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
 
   lang.python.framework.flask:
@@ -925,7 +925,7 @@ records:
           verified_at: "2026-05-29"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/custom/python/pytest.go
               functions: [Extract]
@@ -934,7 +934,7 @@ records:
           tests:
             - file: internal/engine/tests_edges_test.go
               functions: [TestTestsEdges_FlaskTestClient]
-          issues_implemented: ["2977", "2987"]
+          issues_implemented: ["3051", "2977", "2987"]
           verified_at: "2026-05-29"
 
   lang.python.framework.sanic:
@@ -1008,14 +1008,14 @@ records:
           verified_at: "2026-05-29"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/engine/tests_edges.go
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
               functions: [TestTestsEdges_SanicTestClient]
-          issues_implemented: ["2987"]
+          issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
 
   lang.python.framework.litestar:
@@ -1089,14 +1089,14 @@ records:
           verified_at: "2026-05-29"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/engine/tests_edges.go
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
-              functions: [TestTestsEdges_FastAPITestClient]
-          issues_implemented: ["2987"]
+              functions: [TestTestsEdges_LitestarTestClient]
+          issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
 
   lang.python.framework.robyn:
@@ -1170,14 +1170,14 @@ records:
           verified_at: "2026-05-29"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/engine/tests_edges.go
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
-              functions: [TestTestsEdges_FastAPITestClient]
-          issues_implemented: ["2987"]
+              functions: [TestTestsEdges_RobynTestClient]
+          issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
 
   lang.python.framework.aiohttp:
@@ -1251,14 +1251,14 @@ records:
           verified_at: "2026-05-29"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/engine/tests_edges.go
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
               functions: [TestTestsEdges_AiohttpClientSession]
-          issues_implemented: ["2987"]
+          issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
 
   lang.python.framework.bottle:
@@ -1329,6 +1329,17 @@ records:
           tests:
             - file: internal/engine/http_endpoint_synthesis_aiohttp_bottle_test.go
           issues_implemented: ["2979"]
+          verified_at: "2026-05-29"
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+              functions: [TestPytest_TestFunction, TestPytest_TestClass, TestPytest_Fixture]
+          issues_implemented: ["3051"]
           verified_at: "2026-05-29"
 
   lang.python.framework.fastapi:
@@ -1421,7 +1432,7 @@ records:
           verified_at: "2026-05-29"
       Testing:
         tests_linkage:
-          status: partial
+          status: full
           symbols:
             - file: internal/custom/python/pytest.go
               functions: [Extract]
@@ -1430,7 +1441,7 @@ records:
           tests:
             - file: internal/engine/tests_edges_test.go
               functions: [TestTestsEdges_FastAPITestClient, TestTestsEdges_HttpxAsyncClient]
-          issues_implemented: ["2976", "2987"]
+          issues_implemented: ["3051", "2976", "2987"]
           verified_at: "2026-05-29"
       Auth:
         auth_coverage:
@@ -4320,6 +4331,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.cherrypy:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+              functions: [TestPytest_TestFunction, TestPytest_TestClass, TestPytest_Fixture]
+          issues_implemented: ["3051"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4359,6 +4381,19 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.django:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: full
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+            - file: internal/engine/tests_edges.go
+              functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
+          tests:
+            - file: internal/engine/tests_edges_test.go
+              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_UpvatePattern]
+          issues_implemented: ["3051", "2987"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4398,6 +4433,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.falcon:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+              functions: [TestPytest_TestFunction, TestPytest_TestClass, TestPytest_Fixture]
+          issues_implemented: ["3051"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4437,6 +4483,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.hug:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+              functions: [TestPytest_TestFunction, TestPytest_TestClass, TestPytest_Fixture]
+          issues_implemented: ["3051"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4476,6 +4533,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.pyramid:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+              functions: [TestPytest_TestFunction, TestPytest_TestClass, TestPytest_Fixture]
+          issues_implemented: ["3051"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4515,6 +4583,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.quart:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: full
+          symbols:
+            - file: internal/engine/tests_edges.go
+              functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
+          tests:
+            - file: internal/engine/tests_edges_test.go
+              functions: [TestTestsEdges_QuartTestClient]
+          issues_implemented: ["3051", "2987"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4554,6 +4633,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.starlette:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: full
+          symbols:
+            - file: internal/engine/tests_edges.go
+              functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
+          tests:
+            - file: internal/engine/tests_edges_test.go
+              functions: [TestTestsEdges_StarletteTestClient]
+          issues_implemented: ["3051", "2987"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4593,6 +4683,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.strawberry-graphql:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: full
+          symbols:
+            - file: internal/engine/tests_edges.go
+              functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
+          tests:
+            - file: internal/engine/tests_edges_test.go
+              functions: [TestTestsEdges_StrawberryTestClient]
+          issues_implemented: ["3051", "2987"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial
@@ -4632,6 +4733,17 @@ records:
           verified_at: "2026-05-29"
   lang.python.framework.tornado:
     capabilities:
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/python/pytest.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/python/extractors_test.go
+              functions: [TestPytest_TestFunction, TestPytest_TestClass, TestPytest_Fixture]
+          issues_implemented: ["3051"]
+          verified_at: "2026-05-29"
       Type System:
         interface_extraction:
           status: partial

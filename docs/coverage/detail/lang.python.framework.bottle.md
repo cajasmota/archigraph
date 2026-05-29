@@ -51,7 +51,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Tests linkage | ⚠️ `partial` | `2026-05-29` | 3051 | `internal/engine/tests_edges.go` | pytest.go extracts test functions and classes; native test clients (webtest, CherryPy test utilities) not matched by testClientHTTPCallRe so multi-hop TESTS edges are not synthesised |
 
 ### Observability
 

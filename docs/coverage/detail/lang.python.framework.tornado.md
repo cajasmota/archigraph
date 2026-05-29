@@ -51,7 +51,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | ⚠️ `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/python/pytest.go` | — |
+| Tests linkage | ⚠️ `partial` | `2026-05-29` | 3051 | `internal/engine/tests_edges.go` | pytest.go extracts test functions; Tornado's self.fetch() test pattern not matched by testClientHTTPCallRe so multi-hop TESTS edges are not synthesised |
 
 ### Observability
 
