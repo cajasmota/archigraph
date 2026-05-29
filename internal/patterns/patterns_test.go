@@ -1849,3 +1849,52 @@ func TestLineOf(t *testing.T) {
 		t.Errorf("expected line 3 for offset 12, got %d", lineOf(src, 12))
 	}
 }
+
+// ============================================================
+// Schema detector — Pydantic (issue #2984 A-win)
+// ============================================================
+
+func TestSchemaDetector_PydanticBaseModel(t *testing.T) {
+	d := &schemaDetector{}
+	src := `from pydantic import BaseModel, Field
+
+class SignupRequest(BaseModel):
+    username: str = Field(min_length=3)
+    age: int
+`
+	if !d.AppliesTo(src) {
+		t.Fatal("schemaDetector should apply to a Pydantic BaseModel file")
+	}
+	results := d.Detect("schemas.py", "python", src)
+	found := false
+	for _, e := range results {
+		if e.Properties["library"] == "pydantic" {
+			found = true
+			if e.Kind != "SCOPE.Component" {
+				t.Errorf("kind = %q, want SCOPE.Component", e.Kind)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected a pydantic schema_validation entity, got %+v", results)
+	}
+}
+
+func TestSchemaDetector_QualifiedPydanticBaseModel(t *testing.T) {
+	d := &schemaDetector{}
+	src := `import pydantic
+
+class Order(pydantic.BaseModel):
+    id: int
+`
+	results := d.Detect("order.py", "python", src)
+	found := false
+	for _, e := range results {
+		if e.Properties["library"] == "pydantic" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected pydantic detection for qualified BaseModel, got %+v", results)
+	}
+}

@@ -16,26 +16,26 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Nested model extraction | ⚠️ `partial` | `2026-05-29` | — | `internal/extractors/python/discriminator.go`<br>`internal/extractors/python/nested_ctor_refs.go` | Discriminated-union tags captured via DISCRIMINATES_ON (discriminator.go); nested model construction referenced via nested_ctor_refs. No structured nested-schema tree. |
-| Schema extraction | ⚠️ `partial` | `2026-05-29` | — | `internal/extractors/python/extractor.go`<br>`internal/extractors/python/extractor_test.go` | Base Python extractor emits the model class (SCOPE.Component) and its annotated fields (SCOPE.Schema/field) via extractClassFields; no Pydantic-specific Field()/constraint parsing. |
+| Schema extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/python/extractor.go`<br>`internal/patterns/patterns_test.go`<br>`internal/patterns/schema_detector.go` | Base Python extractor emits the model class (SCOPE.Component) and its annotated fields (SCOPE.Schema/field) via extractClassFields; schema_detector.go classifies the BaseModel subclass as a pydantic schema_validation entity, exercised by TestSchemaDetector_PydanticBaseModel. |
 
 ### Constraints
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Constraint extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Custom validator extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Constraint extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/pydantic.go`<br>`internal/custom/python/testdata/pydantic_validators.py` | python_pydantic extractor parses Field(gt=, ge=, lt=, le=, min_length=, max_length=, min_items=, max_items=, multiple_of=, max_digits=, decimal_places=, pattern=, regex=) into a SCOPE.Pattern entity per field with constraint_* properties; constraint-free Field(default=...) is skipped. Issue #2984. |
+| Custom validator extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/pydantic.go`<br>`internal/custom/python/testdata/pydantic_validators.py` | python_pydantic extractor emits SCOPE.Pattern entities for @field_validator / @validator (v1) and @model_validator / @root_validator (v1), capturing target fields, mode (before/after, pre=True), validator fn, and dialect. Issue #2984. |
 
 ### Coercion
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Type coercion recognition | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Type coercion recognition | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/pydantic.go` | python_pydantic recognizes model-level coercion config (model_config = ConfigDict(...) in v2, inner class Config in v1) and surfaces coercion-affecting flags (strict, coerce_numbers_to_str, str_strip_whitespace, validate_assignment, use_enum_values, ...) as a SCOPE.Pattern model_config entity. Per-field type-coercion inference (annotation-driven int/str/datetime coercion) is not modeled. |
 
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Tests linkage | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/pytest.go` | python_pytest extracts pytest test functions/classes/fixtures; tests exercising Pydantic models are captured as test entities but no validator-to-test linkage edge is emitted. |
 
 ## Provenance
 
