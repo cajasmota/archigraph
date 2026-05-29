@@ -33384,8 +33384,8 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/rules/python/frameworks/pyramid.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/pyramid.yaml"],
+            "verified_at": "2026-05-29"
           },
           "handler_attribution": {
             "status": "full",
@@ -33393,8 +33393,9 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_synthesis.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -33437,8 +33438,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/python/pytest.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Observability": {
@@ -34227,8 +34230,8 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/rules/python/frameworks/starlette.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/starlette.yaml"],
+            "verified_at": "2026-05-29"
           },
           "handler_attribution": {
             "status": "full",
@@ -34236,8 +34239,9 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_synthesis.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -34280,8 +34284,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/python/pytest.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Observability": {
@@ -34581,8 +34587,8 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "full",
-            "cites": ["internal/engine/rules/python/frameworks/tornado.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/tornado.yaml"],
+            "verified_at": "2026-05-29"
           },
           "handler_attribution": {
             "status": "full",
@@ -34590,8 +34596,9 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_synthesis.go"],
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -34634,8 +34641,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/python/pytest.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Observability": {
