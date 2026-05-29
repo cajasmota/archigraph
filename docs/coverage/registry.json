@@ -17988,8 +17988,11 @@
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/struts_dto_test.go","internal/custom/java/struts_routes.go","testdata/fixtures/sources/java/struts/StrutsDtoFixture.java"],
+            "issue": "3191",
+            "notes": "Detects Struts 1 ActionForm subclasses (incl. Validator/Dyna variants) and Struts 2 action field-binding (ActionSupport/Action/ModelDriven). Emits SCOPE.Schema DTO entities, SCOPE.Field bound fields from public OGNL setters (skipping framework plumbing), BINDS_INPUT relationships, and BINDS_MODEL for ModelDriven\u003cT\u003e. Heuristic regex over setters / extends-clauses, hence partial",
+            "verified_at": "2026-05-30"
           },
           "request_validation": {
             "status": "missing",

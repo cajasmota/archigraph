@@ -38,10 +38,25 @@ import (
 // Transactions are C (not_applicable): Struts has no transaction management;
 // projects use Spring @Transactional or JTA outside the framework.
 //
+// DTO extraction (#3191): Struts binds request parameters to action state in
+// two ways:
+//   1. Struts 1 — ActionForm subclasses (and Validator/Dyna variants) act as
+//      the form-backing DTO; their getter/setter properties are the bound
+//      request fields.
+//   2. Struts 2 — action classes (ActionSupport subclasses, Action /
+//      ModelDriven implementors) bind request params directly onto public
+//      setters via OGNL. ModelDriven<T> exposes a separate domain model T.
+// We emit a SCOPE.Schema DTO entity for each backing type and BINDS_INPUT
+// relationships from the action handler. This is heuristic (regex over public
+// setters / `extends ActionForm`), so the cell is `partial`.
+//
 // Coverage cells delivered (#3089):
 //   - Routing:    route_extraction                → partial
 //   - Auth:       auth_coverage                   → partial
 //   - Middleware: middleware_coverage              → partial
+//
+// Coverage cells delivered (#3191):
+//   - Validation: dto_extraction                  → partial
 //   - DI:         di_binding_extraction, di_injection_point, di_scope_resolution → not_applicable
 //   - AOP:        advice_attribution, aspect_extraction, pointcut_resolution     → not_applicable
 //   - Transactions: transaction_boundary_extraction, transaction_propagation,
@@ -50,12 +65,12 @@ import (
 // strutsFrameworks is the set of framework identifiers that activate the Struts
 // extractor.
 var strutsFrameworks = map[string]bool{
-	"struts":         true,
-	"struts2":        true,
-	"struts-2":       true,
-	"apache_struts":  true,
-	"apache-struts":  true,
-	"struts_2":       true,
+	"struts":        true,
+	"struts2":       true,
+	"struts-2":      true,
+	"apache_struts": true,
+	"apache-struts": true,
+	"struts_2":      true,
 }
 
 var (
@@ -106,7 +121,51 @@ var (
 	// @Namespace("/prefix") — package-level namespace annotation.
 	strutsNamespaceRE = regexp.MustCompile(
 		`@Namespace\s*\(\s*"([^"]+)"`)
+
+	// ── DTO extraction (#3191) ───────────────────────────────────────────────
+
+	// Struts 1 ActionForm subclass: `class FooForm extends ActionForm` and the
+	// common Struts/Validator/Dyna variants. Capture group 1: class name,
+	// group 2: the base class actually extended (for provenance/properties).
+	strutsActionFormRE = regexp.MustCompile(
+		`(?:public\s+)?(?:(?:abstract|final)\s+)?class\s+(\w+)\s+extends\s+` +
+			`(ActionForm|ValidatorForm|ValidatorActionForm|DynaActionForm|DynaValidatorForm)\b`)
+
+	// Struts 2 action base class: `class FooAction extends ActionSupport`
+	// (also bare implementors of the Action interface / ModelDriven).
+	// Capture group 1: class name, group 2: base/interface.
+	strutsActionClassRE = regexp.MustCompile(
+		`(?:public\s+)?(?:(?:abstract|final)\s+)?class\s+(\w+)\s+` +
+			`(?:extends\s+(ActionSupport)\b|` +
+			`(?:[\w<>, ]+\s+)?implements\s+[^{]*\b(ModelDriven|Action)\b)`)
+
+	// Public setter method — the OGNL field-binding surface for Struts 2
+	// actions. Capture group 1: property name (after `set`), group 2: param type.
+	strutsSetterRE = regexp.MustCompile(
+		`(?m)public\s+void\s+set([A-Z]\w*)\s*\(\s*([\w.<>\[\], ]+?)\s+\w+\s*\)`)
+
+	// ModelDriven<T>.getModel() return type — the bound domain model.
+	// Capture group 1: the model type.
+	strutsModelDrivenRE = regexp.MustCompile(
+		`implements\s+[^{]*\bModelDriven\s*<\s*([\w.]+)\s*>`)
 )
+
+// strutsDTOSkipProps lists setter property names that are framework plumbing
+// rather than bound request fields, so they are not surfaced as DTO fields.
+var strutsDTOSkipProps = map[string]bool{
+	"servletRequest":  true,
+	"servletResponse": true,
+	"session":         true,
+	"application":     true,
+	"request":         true,
+	"response":        true,
+	"parameters":      true,
+	"servletContext":  true,
+	"pageContext":     true,
+	"actionErrors":    true,
+	"actionMessages":  true,
+	"fieldErrors":     true,
+}
 
 // strutsXMLAction represents a parsed <action> element from struts.xml.
 type strutsXMLAction struct {
@@ -157,6 +216,8 @@ func ExtractStruts(ctx PatternContext) PatternResult {
 		if !strings.Contains(ctx.Source, "struts2") &&
 			!strings.Contains(ctx.Source, "Struts") &&
 			!strings.Contains(ctx.Source, "ActionSupport") &&
+			!strings.Contains(ctx.Source, "ActionForm") &&
+			!strings.Contains(ctx.Source, "ModelDriven") &&
 			!strings.Contains(ctx.Source, "opensymphony") &&
 			!strings.Contains(ctx.Source, "@Action") &&
 			!strings.Contains(ctx.Source, "Interceptor") {
@@ -259,14 +320,14 @@ func ExtractStruts(ctx PatternContext) PatternResult {
 					Provenance: "INFERRED_FROM_STRUTS_XML_ACTION",
 					Ref:        ref,
 					Properties: map[string]any{
-						"http_verb":      "ANY",
-						"path":           fullPath,
-						"framework":      "struts",
-						"route_type":     "xml_config",
-						"action_class":   action.Class,
-						"action_method":  method,
-						"package_name":   pkg.Name,
-						"namespace":      ns,
+						"http_verb":     "ANY",
+						"path":          fullPath,
+						"framework":     "struts",
+						"route_type":    "xml_config",
+						"action_class":  action.Class,
+						"action_method": method,
+						"package_name":  pkg.Name,
+						"namespace":     ns,
 					},
 				}
 				addEntity(&result, seen, e)
@@ -384,6 +445,12 @@ func ExtractStruts(ctx PatternContext) PatternResult {
 	}
 
 	// -------------------------------------------------------------------------
+	// DTO extraction (#3191): ActionForm (Struts 1) + action field-binding
+	// (Struts 2). Emits SCOPE.Schema DTO entities and BINDS_INPUT relationships.
+	// -------------------------------------------------------------------------
+	extractStrutsDTO(ctx, &result, seen, seenRels)
+
+	// -------------------------------------------------------------------------
 	// Auth: JAAS / Spring Security markers
 	// -------------------------------------------------------------------------
 	if strutsJAASLoginContextRE.MatchString(ctx.Source) {
@@ -455,4 +522,162 @@ func joinStrutsPath(namespace, path string) string {
 		return p
 	}
 	return ns + p
+}
+
+// extractStrutsDTO detects form-backing DTO types and request-binding fields
+// for both Struts 1 (ActionForm) and Struts 2 (ActionSupport / Action /
+// ModelDriven) and records them on result.
+//
+// Emitted records:
+//   - SCOPE.Schema DTO entity per ActionForm subclass / action class that
+//     binds request parameters (provenance INFERRED_FROM_STRUTS_*).
+//   - BINDS_INPUT relationship from the DTO entity to each bound field
+//     (the OGNL/getter-setter property surface).
+//   - For ModelDriven<T>: a SCOPE.Schema entity for the model type T plus a
+//     BINDS_MODEL relationship from the action to the model.
+func extractStrutsDTO(
+	ctx PatternContext,
+	result *PatternResult,
+	seen map[string]bool,
+	seenRels map[relKey]bool,
+) {
+	src := ctx.Source
+	fp := ctx.FilePath
+
+	// Collect the public-setter-bound field properties for the file once.
+	// Each entry maps the setter offset to its (property, type).
+	type setterProp struct {
+		prop   string
+		typ    string
+		offset int
+	}
+	var setters []setterProp
+	for _, m := range strutsSetterRE.FindAllStringSubmatchIndex(src, -1) {
+		prop := src[m[2]:m[3]]
+		typ := strings.TrimSpace(src[m[4]:m[5]])
+		// Lower-case the leading character to get the bean property name.
+		lcProp := strings.ToLower(prop[:1]) + prop[1:]
+		if strutsDTOSkipProps[lcProp] {
+			continue
+		}
+		setters = append(setters, setterProp{prop: lcProp, typ: typ, offset: m[0]})
+	}
+
+	// emitDTO records a DTO Schema entity + its bound fields. base describes the
+	// detected backing-type kind for provenance/properties.
+	emitDTO := func(className string, classOffset int, formKind, provenance string) {
+		dtoRef := fmt.Sprintf("scope:schema:struts_dto:%s:%s", fp, className)
+		addEntity(result, seen, SecondaryEntity{
+			Name:       className,
+			Kind:       "SCOPE.Schema",
+			SourceFile: fp,
+			LineStart:  lineOf(src, classOffset),
+			Provenance: provenance,
+			Ref:        dtoRef,
+			Properties: map[string]any{
+				"kind":      "dto",
+				"framework": "struts",
+				"form_kind": formKind,
+			},
+		})
+
+		// Bind the public setters that belong to this class (the next class
+		// declaration after classOffset bounds the field set).
+		nextClass := len(src)
+		for _, m := range classDeclRE.FindAllStringSubmatchIndex(src, -1) {
+			if m[0] > classOffset && m[0] < nextClass {
+				nextClass = m[0]
+			}
+		}
+		for _, s := range setters {
+			if s.offset <= classOffset || s.offset >= nextClass {
+				continue
+			}
+			fieldRef := fmt.Sprintf("scope:field:struts_dto:%s:%s:%s", fp, className, s.prop)
+			addEntity(result, seen, SecondaryEntity{
+				Name:       className + "." + s.prop,
+				Kind:       "SCOPE.Field",
+				SourceFile: fp,
+				LineStart:  lineOf(src, s.offset),
+				Provenance: "INFERRED_FROM_STRUTS_FIELD_BINDING",
+				Ref:        fieldRef,
+				Properties: map[string]any{
+					"framework":  "struts",
+					"field_name": s.prop,
+					"field_type": s.typ,
+					"dto":        className,
+				},
+			})
+			addRel(result, seenRels, Relationship{
+				SourceRef:        dtoRef,
+				TargetRef:        fieldRef,
+				RelationshipType: "BINDS_INPUT",
+				Properties: map[string]string{
+					"framework": "struts",
+					"via":       "ognl_setter",
+				},
+			})
+		}
+	}
+
+	// Struts 1: ActionForm subclasses (and Validator/Dyna variants).
+	for _, m := range strutsActionFormRE.FindAllStringSubmatchIndex(src, -1) {
+		className := src[m[2]:m[3]]
+		base := src[m[4]:m[5]]
+		emitDTO(className, m[0], base, "INFERRED_FROM_STRUTS_ACTIONFORM")
+	}
+
+	// Struts 2: ActionSupport / Action / ModelDriven implementors.
+	for _, m := range strutsActionClassRE.FindAllStringSubmatchIndex(src, -1) {
+		className := src[m[2]:m[3]]
+		// Determine the base/interface that matched (group 2 = ActionSupport,
+		// group 3 = ModelDriven/Action).
+		formKind := "action"
+		if m[4] >= 0 {
+			formKind = src[m[4]:m[5]]
+		} else if m[6] >= 0 {
+			formKind = src[m[6]:m[7]]
+		}
+		emitDTO(className, m[0], formKind, "INFERRED_FROM_STRUTS_ACTION_BINDING")
+	}
+
+	// ModelDriven<T>: surface the domain model type as its own DTO and link it.
+	for _, m := range strutsModelDrivenRE.FindAllStringSubmatchIndex(src, -1) {
+		modelType := src[m[2]:m[3]]
+		// Use the simple class name for the DTO entity.
+		if dot := strings.LastIndex(modelType, "."); dot >= 0 {
+			modelType = modelType[dot+1:]
+		}
+		if modelType == "" {
+			continue
+		}
+		modelRef := fmt.Sprintf("scope:schema:struts_dto:%s:%s", fp, modelType)
+		addEntity(result, seen, SecondaryEntity{
+			Name:       modelType,
+			Kind:       "SCOPE.Schema",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_STRUTS_MODELDRIVEN",
+			Ref:        modelRef,
+			Properties: map[string]any{
+				"kind":      "dto",
+				"framework": "struts",
+				"form_kind": "model_driven",
+			},
+		})
+		// Link the enclosing action class to the model it drives.
+		action := findEnclosingClass(src, m[0])
+		if action != "" {
+			actionRef := fmt.Sprintf("scope:schema:struts_dto:%s:%s", fp, action)
+			addRel(result, seenRels, Relationship{
+				SourceRef:        actionRef,
+				TargetRef:        modelRef,
+				RelationshipType: "BINDS_MODEL",
+				Properties: map[string]string{
+					"framework": "struts",
+					"via":       "model_driven",
+				},
+			})
+		}
+	}
 }

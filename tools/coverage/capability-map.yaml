@@ -4499,6 +4499,17 @@ records:
           verified_at: "2026-05-29"
   lang.java.framework.struts:
     capabilities:
+      Validation:
+        dto_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/java/struts_routes.go
+              functions: [ExtractStruts, extractStrutsDTO]
+          tests:
+            - file: internal/custom/java/struts_dto_test.go
+              functions: [TestStruts_DTO_ActionForm_Issue3191, TestStruts_DTO_ActionSupportBinding_Issue3191, TestStruts_DTO_ModelDriven_Issue3191, TestStruts_DTO_FixtureFile_Issue3191]
+          issues_implemented: ["3191"]
+          verified_at: "2026-05-30"
       Observability:
         log_extraction:
           status: partial
