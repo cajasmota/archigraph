@@ -2719,3 +2719,297 @@ func TestAttrs_FullFixture(t *testing.T) {
 		}
 	}
 }
+
+// ============================================================================
+// Observability tests (log/metric/trace) — Issue #3063
+// ============================================================================
+
+func TestObservability_StdlibLogging(t *testing.T) {
+	src := `import logging
+
+logger = logging.getLogger(__name__)
+app_log = logging.getLogger("myapp")
+
+logger.info("Server started")
+logger.debug("Debug message")
+logger.error("Error occurred")
+app_log.warning("Rate limit exceeded")
+`
+	ents := extract(t, "python_observability", src)
+
+	var loggers, logStmts int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" {
+			switch e.Subtype {
+			case "logger":
+				loggers++
+				if e.Props["library"] != "logging" {
+					t.Errorf("logger entity: expected library=logging, got %q", e.Props["library"])
+				}
+			case "log_statement":
+				logStmts++
+			}
+		}
+	}
+	if loggers == 0 {
+		t.Error("expected at least one logger entity for stdlib logging")
+	}
+	if logStmts == 0 {
+		t.Error("expected at least one log_statement entity for stdlib logging")
+	}
+}
+
+func TestObservability_Loguru(t *testing.T) {
+	src := `from loguru import logger
+
+logger.info("App started")
+logger.debug("debug msg")
+logger.error("Something went wrong")
+`
+	ents := extract(t, "python_observability", src)
+
+	var loggers int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "logger" && e.Props["library"] == "loguru" {
+			loggers++
+		}
+	}
+	if loggers == 0 {
+		t.Error("expected at least one logger entity for loguru")
+	}
+}
+
+func TestObservability_Structlog(t *testing.T) {
+	src := `import structlog
+
+structlog.configure(processors=[structlog.processors.JSONRenderer()])
+log = structlog.get_logger()
+log.info("structlog info")
+`
+	ents := extract(t, "python_observability", src)
+
+	var loggers int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "logger" && e.Props["library"] == "structlog" {
+			loggers++
+		}
+	}
+	if loggers == 0 {
+		t.Error("expected at least one logger entity for structlog")
+	}
+}
+
+func TestObservability_PrometheusClient(t *testing.T) {
+	src := `from prometheus_client import Counter, Gauge, Histogram
+
+REQUEST_COUNT = Counter("http_requests_total", "Total HTTP requests")
+LATENCY = Histogram("http_request_duration_seconds", "Request latency")
+IN_PROGRESS = Gauge("http_requests_in_progress", "In-progress requests")
+`
+	ents := extract(t, "python_observability", src)
+
+	metricNames := map[string]bool{}
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "metric" {
+			metricNames[e.Name] = true
+		}
+	}
+	for _, want := range []string{"http_requests_total", "http_request_duration_seconds", "http_requests_in_progress"} {
+		if !metricNames[want] {
+			t.Errorf("expected metric entity %q, got: %v", want, metricNames)
+		}
+	}
+}
+
+func TestObservability_Statsd(t *testing.T) {
+	src := `import statsd
+
+client = statsd.StatsClient("localhost", 8125)
+client.incr("page.views")
+client.gauge("queue.size", 42)
+client.timing("query.duration", 250)
+`
+	ents := extract(t, "python_observability", src)
+
+	var metrics int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "metric" && e.Props["library"] == "statsd" {
+			metrics++
+		}
+	}
+	if metrics == 0 {
+		t.Error("expected at least one metric entity for statsd")
+	}
+}
+
+func TestObservability_Datadog(t *testing.T) {
+	src := `from datadog import statsd
+
+statsd.increment("web.page_views")
+statsd.gauge("system.cpu.usage", 83.5)
+statsd.histogram("api.response.time", 0.12)
+`
+	ents := extract(t, "python_observability", src)
+
+	var metrics int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "metric" && e.Props["library"] == "datadog" {
+			metrics++
+		}
+	}
+	if metrics == 0 {
+		t.Error("expected at least one metric entity for datadog")
+	}
+}
+
+func TestObservability_OpenTelemetry(t *testing.T) {
+	src := `from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
+
+@tracer.start_as_current_span("process_request")
+def handle_request(request):
+    pass
+
+def process_order(order_id):
+    with tracer.start_as_current_span("process_order") as span:
+        return fetch(order_id)
+`
+	ents := extract(t, "python_observability", src)
+
+	spanNames := map[string]bool{}
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "trace_span" {
+			spanNames[e.Name] = true
+		}
+	}
+	for _, want := range []string{"process_request", "process_order"} {
+		if !spanNames[want] {
+			t.Errorf("expected trace_span entity %q, got: %v", want, spanNames)
+		}
+	}
+}
+
+func TestObservability_DDTrace(t *testing.T) {
+	src := `from ddtrace import tracer
+
+@tracer.wrap("order_service.place")
+def place_order(order):
+    with tracer.trace("order_service.validate") as span:
+        return validate(order)
+`
+	ents := extract(t, "python_observability", src)
+
+	var spans int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "trace_span" && e.Props["library"] == "ddtrace" {
+			spans++
+		}
+	}
+	if spans == 0 {
+		t.Error("expected at least one trace_span entity for ddtrace")
+	}
+}
+
+func TestObservability_JaegerClient(t *testing.T) {
+	src := `import jaeger_client
+from opentracing import tracer
+
+config = jaeger_client.Config(
+    config={"sampler": {"type": "const"}},
+    service_name="order-service",
+)
+
+with tracer.start_span("order_lookup") as span:
+    span.set_tag("order.id", "123")
+`
+	ents := extract(t, "python_observability", src)
+
+	var spans int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "trace_span" && e.Props["library"] == "jaeger_client" {
+			spans++
+		}
+	}
+	if spans == 0 {
+		t.Error("expected at least one trace_span entity for jaeger_client")
+	}
+}
+
+func TestObservability_NoFalsePositive(t *testing.T) {
+	src := `from django.db import models
+
+class Order(models.Model):
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20)
+`
+	ents := extract(t, "python_observability", src)
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && (e.Subtype == "logger" || e.Subtype == "metric" || e.Subtype == "trace_span" || e.Subtype == "log_statement") {
+			t.Errorf("unexpected observability entity in non-observability file: %+v", e)
+		}
+	}
+}
+
+func TestObservability_FixtureLogging(t *testing.T) {
+	content, err := os.ReadFile("testdata/observability_logging.py")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	ents := extract(t, "python_observability", string(content))
+
+	var loggers, logStmts int
+	for _, e := range ents {
+		if e.Kind != "SCOPE.Pattern" {
+			continue
+		}
+		switch e.Subtype {
+		case "logger":
+			loggers++
+		case "log_statement":
+			logStmts++
+		}
+	}
+	if loggers == 0 {
+		t.Error("fixture: expected logger entities")
+	}
+	if logStmts == 0 {
+		t.Error("fixture: expected log_statement entities")
+	}
+}
+
+func TestObservability_FixtureMetrics(t *testing.T) {
+	content, err := os.ReadFile("testdata/observability_metrics.py")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	ents := extract(t, "python_observability", string(content))
+
+	var metrics int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "metric" {
+			metrics++
+		}
+	}
+	if metrics == 0 {
+		t.Error("fixture: expected metric entities")
+	}
+}
+
+func TestObservability_FixtureTracing(t *testing.T) {
+	content, err := os.ReadFile("testdata/observability_tracing.py")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	ents := extract(t, "python_observability", string(content))
+
+	var spans int
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "trace_span" {
+			spans++
+		}
+	}
+	if spans == 0 {
+		t.Error("fixture: expected trace_span entities")
+	}
+}

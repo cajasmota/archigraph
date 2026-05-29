@@ -57,9 +57,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Metric extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Trace extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Log extraction | ⚠️ `partial` | — | 3063 | `internal/custom/python/observability.go` | — |
+| Metric extraction | ⚠️ `partial` | — | 3063 | `internal/custom/python/observability.go` | — |
+| Trace extraction | ⚠️ `partial` | — | 3063 | `internal/custom/python/observability.go` | — |
 
 ### Data
 
