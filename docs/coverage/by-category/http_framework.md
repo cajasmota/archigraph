@@ -127,11 +127,11 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [java](../by-language/java.md) | [Dropwizard](../detail/lang.java.framework.dropwizard.md) | ❌ 2/3 | ❌ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
 | [java](../by-language/java.md) | [Eclipse MicroProfile](../detail/lang.java.framework.microprofile.md) | ⚠️ 0/3 | ⚠️ 0/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 5/20 | ❌ 0/16 | |
 | [java](../by-language/java.md) | [Helidon](../detail/lang.java.framework.helidon.md) | ❌ 0/3 | ❌ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
-| [java](../by-language/java.md) | [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | ❌ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | ⚠️ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 5/20 | ❌ 0/16 | |
 | [java](../by-language/java.md) | [Jakarta EE (Servlet / EE Platform)](../detail/lang.java.framework.jakarta-ee.md) | ⚠️ 0/3 | ⚠️ 0/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 5/20 | ❌ 0/16 | |
 | [java](../by-language/java.md) | [Javalin](../detail/lang.java.framework.javalin.md) | ❌ 0/3 | ❌ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
-| [java](../by-language/java.md) | [Micronaut](../detail/lang.java.framework.micronaut.md) | ❌ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
-| [java](../by-language/java.md) | [Quarkus](../detail/lang.java.framework.quarkus.md) | ❌ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Micronaut](../detail/lang.java.framework.micronaut.md) | ⚠️ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 5/20 | ❌ 0/16 | |
+| [java](../by-language/java.md) | [Quarkus](../detail/lang.java.framework.quarkus.md) | ⚠️ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 5/20 | ❌ 0/16 | |
 | [java](../by-language/java.md) | [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | ⚠️ 2/3 | ✅ 1/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 7/21 | ❌ 0/18 | |
 | [java](../by-language/java.md) | [Spring WebFlux (reactive)](../detail/lang.java.framework.spring-webflux.md) | ❌ 2/3 | ⚠️ 0/1 | ✅ 3/4 | ⚠️ 0/1 | ❌ 5/20 | ❌ 0/16 | |
 | [java](../by-language/java.md) | [Vert.x](../detail/lang.java.framework.vertx.md) | ❌ 0/3 | ❌ 0/1 | ✅ 3/4 | ❌ 0/1 | ❌ 5/20 | ❌ 0/16 | |

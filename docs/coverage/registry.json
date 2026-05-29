@@ -15543,8 +15543,10 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -15556,12 +15558,16 @@
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_params.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
@@ -15571,8 +15577,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/junit5.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -15798,8 +15806,10 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/micronaut.go","internal/engine/java_annotation_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -15811,12 +15821,16 @@
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/micronaut.go","internal/engine/java_annotation_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_params.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
@@ -15826,8 +15840,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/junit5.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -16416,8 +16432,10 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/quarkus.go","internal/engine/java_annotation_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -16429,12 +16447,16 @@
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/quarkus.go","internal/engine/java_annotation_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_params.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
@@ -16444,8 +16466,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/junit5.go"],
+            "issue": "backfill:dictionary-completeness",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
