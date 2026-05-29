@@ -22,7 +22,7 @@ Back to [summary](../summary.md).
 | [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 12/16 | |
 | [Jakarta EE (Servlet / EE Platform)](../detail/lang.java.framework.jakarta-ee.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 15/16 | |
 | [Javalin](../detail/lang.java.framework.javalin.md) | ❌ 0/3 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ❌ 19/20 | ❌ 4/16 | |
-| [Micronaut](../detail/lang.java.framework.micronaut.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 12/16 | |
+| [Micronaut](../detail/lang.java.framework.micronaut.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ⚠️ 16/16 | |
 | [Quarkus](../detail/lang.java.framework.quarkus.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 15/16 | |
 | [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | ⚠️ 3/3 | ✅ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ⚠️ 21/21 | ⚠️ 18/18 | |
 | [Spring WebFlux (reactive)](../detail/lang.java.framework.spring-webflux.md) | ❌ 2/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 14/16 | |

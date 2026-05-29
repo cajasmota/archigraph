@@ -2641,6 +2641,283 @@ public class UserControllerTest {
 	}
 }
 
+// ---- Micronaut AOP + HttpServerFilter (#3084) --------------------------------
+
+// TestMicronautAOP_AspectExtraction_Issue3084 proves that ExtractMicronautAOP
+// emits SCOPE.Pattern(subtype=aspect) entities for @Around-annotated @interface
+// and MethodInterceptor-implementing classes.
+// Cite: internal/custom/java/micronaut_aop.go
+func TestMicronautAOP_AspectExtraction_Issue3084(t *testing.T) {
+	source := `
+package com.example.aop;
+
+import io.micronaut.aop.Around;
+import io.micronaut.aop.InterceptorBean;
+import io.micronaut.aop.MethodInterceptor;
+import io.micronaut.aop.MethodInvocationContext;
+import jakarta.inject.Singleton;
+import java.lang.annotation.*;
+
+@Around
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface Logged {}
+
+@Singleton
+@InterceptorBean(Logged.class)
+public class LoggingInterceptor implements MethodInterceptor<Object, Object> {
+    @Override
+    public Object intercept(MethodInvocationContext<Object, Object> context) {
+        return context.proceed();
+    }
+}
+`
+	r := ExtractMicronautAOP(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "micronaut",
+		FilePath:  "LoggingInterceptor.java",
+	})
+
+	var aspects []SecondaryEntity
+	for _, e := range r.Entities {
+		if e.Subtype == "aspect" {
+			aspects = append(aspects, e)
+		}
+	}
+	if len(aspects) < 2 {
+		t.Errorf("[#3084 micronaut aspect_extraction] expected >=2 aspect entities (binding annotation + interceptor class), got %d: %v",
+			len(aspects), entityNames(r.Entities))
+	}
+	// Verify both the binding annotation and the interceptor class are present.
+	aspectNames := make(map[string]bool)
+	for _, e := range aspects {
+		aspectNames[e.Name] = true
+	}
+	for _, want := range []string{"Logged", "LoggingInterceptor"} {
+		if !aspectNames[want] {
+			t.Errorf("[#3084 micronaut aspect_extraction] expected aspect entity %q, got: %v", want, entityNames(r.Entities))
+		}
+	}
+}
+
+// TestMicronautAOP_AdviceAttribution_Issue3084 proves that ExtractMicronautAOP
+// emits SCOPE.Pattern(subtype=advice) entities for interceptor methods, and
+// emits OWNS + REFERENCES relationships.
+// Cite: internal/custom/java/micronaut_aop.go
+func TestMicronautAOP_AdviceAttribution_Issue3084(t *testing.T) {
+	source := `
+package com.example.aop;
+
+import io.micronaut.aop.Around;
+import io.micronaut.aop.InterceptorBean;
+import io.micronaut.aop.MethodInterceptor;
+import io.micronaut.aop.MethodInvocationContext;
+import jakarta.inject.Singleton;
+import java.lang.annotation.*;
+
+@Around
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface Timed {}
+
+@Singleton
+@InterceptorBean(Timed.class)
+public class TimingInterceptor implements MethodInterceptor<Object, Object> {
+    @Override
+    public Object intercept(MethodInvocationContext<Object, Object> context) {
+        long start = System.nanoTime();
+        try { return context.proceed(); }
+        finally { System.out.println("elapsed: " + (System.nanoTime() - start)); }
+    }
+}
+`
+	r := ExtractMicronautAOP(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "micronaut",
+		FilePath:  "TimingInterceptor.java",
+	})
+
+	var adviceEntities []SecondaryEntity
+	for _, e := range r.Entities {
+		if e.Subtype == "advice" {
+			adviceEntities = append(adviceEntities, e)
+		}
+	}
+	if len(adviceEntities) < 1 {
+		t.Errorf("[#3084 micronaut advice_attribution] expected >=1 advice entity, got 0: %v", entityNames(r.Entities))
+	}
+	// Verify advice_type = "around".
+	for _, e := range adviceEntities {
+		if v, ok := e.Properties["advice_type"].(string); !ok || v != "around" {
+			t.Errorf("[#3084 micronaut advice_attribution] expected advice_type=around, got %v", e.Properties["advice_type"])
+		}
+	}
+	// Verify at least one OWNS relationship from interceptor → advice.
+	var ownsRels []Relationship
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == "OWNS" {
+			ownsRels = append(ownsRels, rel)
+		}
+	}
+	if len(ownsRels) < 1 {
+		t.Errorf("[#3084 micronaut advice_attribution] expected >=1 OWNS relationship, got 0")
+	}
+}
+
+// TestMicronautAOP_PointcutResolution_Issue3084 proves that ExtractMicronautAOP
+// emits SCOPE.Pattern(subtype=pointcut) entities for @Around binding annotations
+// and REFERENCES edges from advice to pointcut.
+// Cite: internal/custom/java/micronaut_aop.go
+func TestMicronautAOP_PointcutResolution_Issue3084(t *testing.T) {
+	source := `
+package com.example.aop;
+
+import io.micronaut.aop.Around;
+import io.micronaut.aop.InterceptorBean;
+import io.micronaut.aop.MethodInterceptor;
+import io.micronaut.aop.MethodInvocationContext;
+import jakarta.inject.Singleton;
+import java.lang.annotation.*;
+
+@Around
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Audited {}
+
+@Singleton
+@InterceptorBean(Audited.class)
+public class AuditInterceptor implements MethodInterceptor<Object, Object> {
+    @Override
+    public Object intercept(MethodInvocationContext<Object, Object> context) {
+        System.out.println("audit: " + context.getMethodName());
+        return context.proceed();
+    }
+}
+`
+	r := ExtractMicronautAOP(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "micronaut",
+		FilePath:  "AuditInterceptor.java",
+	})
+
+	var pointcuts []SecondaryEntity
+	for _, e := range r.Entities {
+		if e.Subtype == "pointcut" {
+			pointcuts = append(pointcuts, e)
+		}
+	}
+	if len(pointcuts) < 1 {
+		t.Errorf("[#3084 micronaut pointcut_resolution] expected >=1 pointcut entity, got 0: %v", entityNames(r.Entities))
+	}
+	pointcutNames := make(map[string]bool)
+	for _, e := range pointcuts {
+		pointcutNames[e.Name] = true
+	}
+	if !pointcutNames["Audited"] {
+		t.Errorf("[#3084 micronaut pointcut_resolution] expected pointcut entity 'Audited', got: %v", entityNames(r.Entities))
+	}
+	// Verify REFERENCES edge from advice → pointcut.
+	var refsRels []Relationship
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == "REFERENCES" {
+			refsRels = append(refsRels, rel)
+		}
+	}
+	if len(refsRels) < 1 {
+		t.Errorf("[#3084 micronaut pointcut_resolution] expected >=1 REFERENCES relationship (advice → pointcut), got 0")
+	}
+}
+
+// TestMicronautAOP_MiddlewareCoverage_Issue3084 proves that ExtractMicronautAOP
+// emits SCOPE.Component entities for @Filter-annotated HttpServerFilter classes.
+// Cite: internal/custom/java/micronaut_aop.go
+func TestMicronautAOP_MiddlewareCoverage_Issue3084(t *testing.T) {
+	source := `
+package com.example.filter;
+
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.filter.HttpServerFilter;
+import io.micronaut.http.filter.ServerFilterChain;
+import org.reactivestreams.Publisher;
+
+@Filter("/**")
+public class AuthFilter implements HttpServerFilter {
+    @Override
+    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+        return chain.proceed(request);
+    }
+}
+
+public class RateLimitFilter implements HttpServerFilter {
+    @Override
+    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+        return chain.proceed(request);
+    }
+}
+`
+	r := ExtractMicronautAOP(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "micronaut",
+		FilePath:  "Filters.java",
+	})
+
+	var filters []SecondaryEntity
+	for _, e := range r.Entities {
+		if e.Kind == "SCOPE.Component" {
+			if mw, ok := e.Properties["middleware"].(string); ok && mw == "http_server_filter" {
+				filters = append(filters, e)
+			}
+		}
+	}
+	if len(filters) < 2 {
+		t.Errorf("[#3084 micronaut middleware_coverage] expected >=2 HttpServerFilter entities, got %d: %v",
+			len(filters), entityNames(r.Entities))
+	}
+	// Verify url_pattern is captured for @Filter("/**").
+	var hasPattern bool
+	for _, f := range filters {
+		if f.Name == "AuthFilter" {
+			if pat, ok := f.Properties["url_pattern"].(string); ok && pat == "/**" {
+				hasPattern = true
+			}
+		}
+	}
+	if !hasPattern {
+		t.Errorf("[#3084 micronaut middleware_coverage] expected url_pattern='/**' on AuthFilter")
+	}
+}
+
+// TestMicronautAOP_NoFalsePositive_Issue3084 proves that ExtractMicronautAOP
+// does NOT emit entities for non-Micronaut frameworks.
+// Cite: internal/custom/java/micronaut_aop.go
+func TestMicronautAOP_NoFalsePositive_Issue3084(t *testing.T) {
+	source := `
+@Around
+public @interface Logged {}
+@InterceptorBean(Logged.class)
+public class LoggingInterceptor implements MethodInterceptor<Object, Object> {
+    public Object intercept(MethodInvocationContext<Object, Object> ctx) { return ctx.proceed(); }
+}
+`
+	// spring_boot framework should NOT trigger Micronaut AOP extractor.
+	r := ExtractMicronautAOP(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_boot",
+		FilePath:  "LoggingInterceptor.java",
+	})
+	if len(r.Entities) > 0 {
+		t.Errorf("[#3084 micronaut no_false_positive] expected 0 entities for spring_boot framework, got %d: %v",
+			len(r.Entities), entityNames(r.Entities))
+	}
+}
+
 // ---- JAX-RS (standalone / Jakarta EE) --------------------------------------
 
 // TestJAXRS_RouteExtraction_Issue2995 proves route_extraction for JAX-RS via
