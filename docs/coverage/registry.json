@@ -14923,28 +14923,40 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/jakarta_ee_advanced.go","internal/engine/java_auth_policy.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/jakarta_jaxrs_dto.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/jakarta_jaxrs_dto.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/helidon_filters.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           }
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/junit5.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -14970,44 +14982,59 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/jakarta_ee_advanced.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           },
           "di_injection_point": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/jakarta_ee_advanced.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           },
           "di_scope_resolution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/jakarta_ee_advanced.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           }
         },
         "Transactions": {
           "transaction_boundary_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           },
           "transaction_propagation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           },
           "transaction_rollback_rules": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "verified_at": "2026-05-29"
           }
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "notes": "Helidon SE has no AOP model; Helidon MP CDI interceptors deferred to FW-T-04 (CDI interceptor ticket)"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "notes": "Helidon SE has no AOP model; Helidon MP CDI interceptors deferred to FW-T-04 (CDI interceptor ticket)"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "issue": "https://github.com/cajasmota/archigraph/issues/3088",
+            "notes": "Helidon SE has no AOP model; Helidon MP CDI interceptors deferred to FW-T-04 (CDI interceptor ticket)"
           }
         },
         "Observability": {

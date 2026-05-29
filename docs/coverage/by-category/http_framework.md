@@ -126,7 +126,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [java](../by-language/java.md) | [Apache Struts](../detail/lang.java.framework.struts.md) | ❌ 2/3 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ❌ 6/20 | ❌ 3/16 | |
 | [java](../by-language/java.md) | [Dropwizard](../detail/lang.java.framework.dropwizard.md) | ⚠️ 3/3 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ❌ 19/20 | ❌ 4/16 | |
 | [java](../by-language/java.md) | [Eclipse MicroProfile](../detail/lang.java.framework.microprofile.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 12/16 | |
-| [java](../by-language/java.md) | [Helidon](../detail/lang.java.framework.helidon.md) | ⚠️ 3/3 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ❌ 19/20 | ❌ 4/16 | |
+| [java](../by-language/java.md) | [Helidon](../detail/lang.java.framework.helidon.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ⚠️ 13/13 | |
 | [java](../by-language/java.md) | [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 9/16 | |
 | [java](../by-language/java.md) | [Jakarta EE (Servlet / EE Platform)](../detail/lang.java.framework.jakarta-ee.md) | ⚠️ 3/3 | ⚠️ 1/1 | ✅ 3/3 | ⚠️ 1/1 | ❌ 19/20 | ❌ 12/16 | |
 | [java](../by-language/java.md) | [Javalin](../detail/lang.java.framework.javalin.md) | ❌ 0/3 | ❌ 0/1 | ✅ 3/3 | ❌ 0/1 | ❌ 19/20 | ❌ 4/16 | |

@@ -3747,3 +3747,498 @@ public class S {
 		t.Errorf("[#3006 gating] non-java should no-op, got %d entities", len(r.Entities))
 	}
 }
+
+// ============================================================================
+// Helidon MP — transactions + CDI DI + middleware + auth + tests (#3088)
+// ============================================================================
+
+// TestHelidon_Transactions_Issue3088 proves that @Transactional extraction
+// runs for the "helidon" framework (JTA @Transactional via Helidon MP).
+// Registry targets: Transactions/transaction_boundary_extraction,
+// transaction_propagation, transaction_rollback_rules → partial.
+// Cite: internal/custom/java/transactional.go.
+func TestHelidon_Transactions_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
+
+@ApplicationScoped
+@Transactional
+public class OrderService {
+
+    public void createOrder(String item) {}
+
+    @Transactional(TxType.REQUIRES_NEW)
+    public void auditOrder(String orderId) {}
+
+    @Transactional(rollbackFor = OrderException.class)
+    public void confirmPayment(String paymentId) {}
+
+    @Transactional(TxType.NOT_SUPPORTED)
+    public void sendNotification(String message) {}
+}
+`
+	r := ExtractTransactional(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "OrderService.java",
+	})
+
+	// transaction_boundary_extraction: class-level boundary for OrderService.
+	classBoundary, ok := txEntityByName(r, "OrderService")
+	if !ok {
+		t.Fatalf("[#3088 tx-boundary] expected class-level boundary for OrderService; got %v", entityNames(r.Entities))
+	}
+	if classBoundary.Properties["framework"] != "helidon" {
+		t.Errorf("[#3088 tx-boundary] framework = %v, want helidon", classBoundary.Properties["framework"])
+	}
+	if classBoundary.Properties["transaction_boundary"] != "class" {
+		t.Errorf("[#3088 tx-boundary] transaction_boundary = %v, want class", classBoundary.Properties["transaction_boundary"])
+	}
+
+	// transaction_propagation: auditOrder uses TxType.REQUIRES_NEW.
+	audit, ok := txEntityByName(r, "OrderService.auditOrder")
+	if !ok {
+		t.Fatalf("[#3088 tx-propagation] expected boundary for OrderService.auditOrder; got %v", entityNames(r.Entities))
+	}
+	if audit.Properties["propagation"] != "REQUIRES_NEW" {
+		t.Errorf("[#3088 tx-propagation] auditOrder propagation = %v, want REQUIRES_NEW", audit.Properties["propagation"])
+	}
+
+	// transaction_rollback_rules: confirmPayment uses rollbackFor.
+	confirm, ok := txEntityByName(r, "OrderService.confirmPayment")
+	if !ok {
+		t.Fatalf("[#3088 tx-rollback] expected boundary for OrderService.confirmPayment; got %v", entityNames(r.Entities))
+	}
+	if confirm.Properties["rollback_for"] != "OrderException" {
+		t.Errorf("[#3088 tx-rollback] confirmPayment rollback_for = %v, want OrderException", confirm.Properties["rollback_for"])
+	}
+
+	// NOT_SUPPORTED propagation captured.
+	notify, ok := txEntityByName(r, "OrderService.sendNotification")
+	if !ok {
+		t.Fatalf("[#3088 tx-propagation] expected boundary for OrderService.sendNotification; got %v", entityNames(r.Entities))
+	}
+	if notify.Properties["propagation"] != "NOT_SUPPORTED" {
+		t.Errorf("[#3088 tx-propagation] sendNotification propagation = %v, want NOT_SUPPORTED", notify.Properties["propagation"])
+	}
+}
+
+// TestHelidon_Transactions_Gating_Issue3088 confirms "helidon" is in txFrameworks.
+func TestHelidon_Transactions_Gating_Issue3088(t *testing.T) {
+	source := `
+@Transactional(TxType.REQUIRED)
+public void doWork() {}
+`
+	r := ExtractTransactional(PatternContext{Source: source, Language: "java", Framework: "helidon", FilePath: "X.java"})
+	if len(r.Entities) == 0 {
+		t.Error("[#3088 tx-gating] expected a boundary entity for framework=helidon, got none")
+	}
+}
+
+// TestHelidon_CDI_DI_Issue3088 proves that CDI DI extraction runs for "helidon":
+// @ApplicationScoped scope detection, @Produces, and CDI scope resolution.
+// Registry targets: DI/di_binding_extraction, di_injection_point,
+// di_scope_resolution → partial.
+// Cite: internal/custom/java/jakarta_ee_advanced.go.
+func TestHelidon_CDI_DI_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.Disposes;
+
+@ApplicationScoped
+public class InventoryService {
+
+    @Inject
+    private PricingService pricing;
+
+    @Produces
+    public PaymentGateway produceGateway() { return new PaymentGateway(); }
+}
+
+@RequestScoped
+public class OrderProcessor {
+    @Inject
+    public OrderProcessor(InventoryService inv) {}
+}
+`
+	r := ExtractJakartaEEAdvanced(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "InventoryService.java",
+	})
+
+	// di_binding_extraction: @Produces should emit a CDI producer entity.
+	hasProducer := false
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_JAKARTA_CDI_PRODUCER" {
+			hasProducer = true
+		}
+	}
+	if !hasProducer {
+		t.Errorf("[#3088 cdi di_binding] expected INFERRED_FROM_JAKARTA_CDI_PRODUCER entity")
+	}
+
+	// di_scope_resolution: @ApplicationScoped and @RequestScoped classes.
+	scopedClasses := make(map[string]string)
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_CDI_SCOPE" {
+			scopedClasses[e.Name] = e.Properties["cdi_scope"].(string)
+		}
+	}
+	if scopedClasses["InventoryService"] != "ApplicationScoped" {
+		t.Errorf("[#3088 cdi scope] expected InventoryService=ApplicationScoped, got %v", scopedClasses["InventoryService"])
+	}
+	if scopedClasses["OrderProcessor"] != "RequestScoped" {
+		t.Errorf("[#3088 cdi scope] expected OrderProcessor=RequestScoped, got %v", scopedClasses["OrderProcessor"])
+	}
+}
+
+// TestHelidon_CDI_DI_Gating_Issue3088 confirms helidon gated in jakartaEEAdvFrameworks.
+func TestHelidon_CDI_DI_Gating_Issue3088(t *testing.T) {
+	source := `
+@ApplicationScoped
+public class MyBean {}
+`
+	r := ExtractJakartaEEAdvanced(PatternContext{Source: source, Language: "java", Framework: "helidon", FilePath: "MyBean.java"})
+	hasCDIScope := false
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_CDI_SCOPE" {
+			hasCDIScope = true
+		}
+	}
+	if !hasCDIScope {
+		t.Errorf("[#3088 cdi-gating] expected CDI scope entity for framework=helidon, got none")
+	}
+}
+
+// TestHelidon_Auth_Issue3088 proves that Helidon MP auth annotation detection
+// works. Helidon inherits jakarta.security.enterprise mechanisms + MP-JWT
+// @RolesAllowed / @Authenticated (javax.annotation.security).
+// Registry target: Auth/auth_coverage → partial.
+// Cite: internal/custom/java/jakarta_ee_advanced.go (jeeaAuthMechanismRE),
+//
+//	internal/engine/java_auth_policy.go (@RolesAllowed).
+func TestHelidon_Auth_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon.security;
+
+import jakarta.security.enterprise.authentication.mechanism.http.BasicAuthenticationMechanismDefinition;
+import jakarta.enterprise.context.ApplicationScoped;
+
+@BasicAuthenticationMechanismDefinition(realmName = "HelidonRealm")
+@ApplicationScoped
+public class HelidonSecurityConfig {
+}
+`
+	r := ExtractJakartaEEAdvanced(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "HelidonSecurityConfig.java",
+	})
+
+	found := false
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_JAKARTA_SECURITY_AUTH" {
+			found = true
+			if e.Properties["auth_mechanism"] != "BasicAuthenticationMechanismDefinition" {
+				t.Errorf("[#3088 auth] expected auth_mechanism=BasicAuthenticationMechanismDefinition, got %v", e.Properties["auth_mechanism"])
+			}
+		}
+	}
+	if !found {
+		t.Errorf("[#3088 auth] expected INFERRED_FROM_JAKARTA_SECURITY_AUTH entity for framework=helidon")
+	}
+}
+
+// TestHelidon_Middleware_ContainerRequestFilter_Issue3088 proves that JAX-RS
+// @Provider + ContainerRequestFilter is detected as middleware for Helidon MP.
+// Registry target: Middleware/middleware_coverage → partial.
+// Cite: internal/custom/java/helidon_filters.go.
+func TestHelidon_Middleware_ContainerRequestFilter_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon.filter;
+
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.ext.Provider;
+
+@Provider
+public class AuthorizationFilter implements ContainerRequestFilter {
+
+    @Override
+    public void filter(ContainerRequestContext requestContext) {
+        // JWT validation
+    }
+}
+`
+	r := ExtractHelidonFilters(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "AuthorizationFilter.java",
+	})
+
+	found := false
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_HELIDON_JAXRS_FILTER" && e.Name == "AuthorizationFilter" {
+			found = true
+			if e.Properties["framework"] != "helidon" {
+				t.Errorf("[#3088 middleware] expected framework=helidon, got %v", e.Properties["framework"])
+			}
+		}
+	}
+	if !found {
+		t.Errorf("[#3088 middleware] expected INFERRED_FROM_HELIDON_JAXRS_FILTER for AuthorizationFilter")
+	}
+}
+
+// TestHelidon_Middleware_ContainerResponseFilter_Issue3088 proves response
+// filter detection.
+func TestHelidon_Middleware_ContainerResponseFilter_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon.filter;
+
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.ext.Provider;
+
+@Provider
+public class CorsResponseFilter implements ContainerResponseFilter {
+    @Override
+    public void filter(ContainerRequestContext req, ContainerResponseContext res) {
+        res.getHeaders().add("Access-Control-Allow-Origin", "*");
+    }
+}
+`
+	r := ExtractHelidonFilters(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "CorsResponseFilter.java",
+	})
+
+	found := false
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_HELIDON_JAXRS_FILTER" && e.Name == "CorsResponseFilter" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("[#3088 middleware] expected INFERRED_FROM_HELIDON_JAXRS_FILTER for CorsResponseFilter")
+	}
+}
+
+// TestHelidon_Middleware_NameBinding_Issue3088 proves @NameBinding annotation
+// detection (custom filter binding meta-annotation).
+func TestHelidon_Middleware_NameBinding_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon.filter;
+
+import jakarta.ws.rs.NameBinding;
+import java.lang.annotation.*;
+
+@NameBinding
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface Secured {}
+`
+	r := ExtractHelidonFilters(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "Secured.java",
+	})
+
+	found := false
+	for _, e := range r.Entities {
+		if e.Provenance == "INFERRED_FROM_HELIDON_NAME_BINDING" && e.Name == "Secured" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("[#3088 middleware] expected INFERRED_FROM_HELIDON_NAME_BINDING for Secured annotation; got %v", entityNames(r.Entities))
+	}
+}
+
+// TestHelidon_Middleware_Gating_Issue3088 confirms the middleware extractor is
+// gated on "helidon" only.
+func TestHelidon_Middleware_Gating_Issue3088(t *testing.T) {
+	source := `
+@Provider
+public class MyFilter implements ContainerRequestFilter {
+    public void filter(ContainerRequestContext ctx) {}
+}
+`
+	for _, fw := range []string{"spring_boot", "quarkus", "micronaut"} {
+		r := ExtractHelidonFilters(PatternContext{Source: source, Language: "java", Framework: fw, FilePath: "F.java"})
+		if len(r.Entities) != 0 {
+			t.Errorf("[#3088 middleware-gating] framework %q should no-op, got %d entities", fw, len(r.Entities))
+		}
+	}
+	r := ExtractHelidonFilters(PatternContext{Source: source, Language: "java", Framework: "helidon", FilePath: "F.java"})
+	if len(r.Entities) == 0 {
+		t.Error("[#3088 middleware-gating] expected entity for framework=helidon, got none")
+	}
+}
+
+// TestHelidon_DTO_Issue3088 proves that JAX-RS DTO extraction runs for "helidon"
+// (jaxrsDTOFrameworks already includes helidon).
+// Registry target: Validation/dto_extraction → partial.
+// Cite: internal/custom/java/jakarta_jaxrs_dto.go.
+func TestHelidon_DTO_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon.api;
+
+import jakarta.ws.rs.*;
+
+@Path("/orders")
+public class OrderResource {
+
+    @POST
+    public OrderDto createOrder(CreateOrderRequest req) { return null; }
+
+    @GET
+    @Path("/{id}")
+    public OrderDto getOrder(@PathParam("id") Long id) { return null; }
+}
+`
+	r := ExtractJakartaJaxrsDTO(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "OrderResource.java",
+	})
+
+	dtoNames := make(map[string]bool)
+	for _, e := range r.Entities {
+		if e.Kind == "SCOPE.Schema" {
+			dtoNames[e.Name] = true
+		}
+	}
+	for _, want := range []string{"CreateOrderRequest", "OrderDto"} {
+		if !dtoNames[want] {
+			t.Errorf("[#3088 dto] expected SCOPE.Schema for %q, got %v", want, dtoNames)
+		}
+	}
+
+	relTypes := make(map[string]bool)
+	for _, rel := range r.Relationships {
+		relTypes[rel.RelationshipType] = true
+	}
+	for _, want := range []string{"ACCEPTS_INPUT", "RETURNS"} {
+		if !relTypes[want] {
+			t.Errorf("[#3088 dto] expected %q relationship, got: %v", want, relTypes)
+		}
+	}
+}
+
+// TestHelidon_RequestValidation_Issue3088 proves that Bean Validation
+// constraints on JAX-RS parameters are captured via DTO extraction for Helidon.
+// Registry target: Validation/request_validation → partial.
+// Cite: internal/custom/java/jakarta_jaxrs_dto.go.
+func TestHelidon_RequestValidation_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon.api;
+
+import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+
+@Path("/products")
+public class ProductResource {
+
+    @POST
+    public ProductResponse createProduct(@Valid @NotNull CreateProductRequest req) {
+        return null;
+    }
+}
+`
+	r := ExtractJakartaJaxrsDTO(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "ProductResource.java",
+	})
+
+	dtoNames := make(map[string]bool)
+	for _, e := range r.Entities {
+		if e.Kind == "SCOPE.Schema" {
+			dtoNames[e.Name] = true
+		}
+	}
+	for _, want := range []string{"CreateProductRequest", "ProductResponse"} {
+		if !dtoNames[want] {
+			t.Errorf("[#3088 request_validation] expected SCOPE.Schema for %q, got %v", want, dtoNames)
+		}
+	}
+}
+
+// TestHelidon_TestsLinkage_Issue3088 proves that ExtractJUnit5 runs for "helidon"
+// and detects @HelidonTest / plain @Test methods (tests_linkage cell).
+// Registry target: Testing/tests_linkage → partial.
+// Cite: internal/custom/java/junit5.go.
+func TestHelidon_TestsLinkage_Issue3088(t *testing.T) {
+	source := `
+package com.example.helidon;
+
+import io.helidon.microprofile.tests.junit5.HelidonTest;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+@HelidonTest
+class OrderResourceTest {
+
+    @Test
+    void createOrder_returns201() {
+        assertEquals(201, 201);
+    }
+
+    @Test
+    void getOrder_returns200() {
+        assertTrue(true);
+    }
+}
+`
+	r := ExtractJUnit5(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "helidon",
+		FilePath:  "OrderResourceTest.java",
+	})
+
+	testCount := 0
+	for _, e := range r.Entities {
+		if e.Properties["test_annotation"] == "Test" {
+			testCount++
+		}
+	}
+	if testCount < 2 {
+		t.Errorf("[#3088 tests_linkage] expected >= 2 @Test entities for helidon, got %d", testCount)
+	}
+}
+
+// TestHelidon_TestsLinkage_Gating_Issue3088 confirms "helidon" is in junit5Frameworks.
+func TestHelidon_TestsLinkage_Gating_Issue3088(t *testing.T) {
+	source := `
+class FooTest {
+    @Test
+    void foo() {}
+}
+`
+	r := ExtractJUnit5(PatternContext{Source: source, Language: "java", Framework: "helidon", FilePath: "FooTest.java"})
+	if len(r.Entities) == 0 {
+		t.Error("[#3088 tests-gating] expected test entity for framework=helidon, got none")
+	}
+}

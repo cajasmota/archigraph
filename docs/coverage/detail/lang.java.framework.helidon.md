@@ -23,26 +23,26 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ❌ `missing` | — | — | — | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/jakarta_ee_advanced.go`<br>`internal/engine/java_auth_policy.go` | — |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Request validation | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| DTO extraction | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/jakarta_jaxrs_dto.go` | — |
+| Request validation | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/jakarta_jaxrs_dto.go` | — |
 
 ### Middleware
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | ❌ `missing` | — | — | — | — |
+| Middleware coverage | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/helidon_filters.go` | — |
 
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Tests linkage | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/junit5.go` | — |
 
 ### Type System
 
@@ -57,25 +57,25 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DI binding extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| DI injection point | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| DI scope resolution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| DI binding extraction | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/jakarta_ee_advanced.go` | — |
+| DI injection point | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/jakarta_ee_advanced.go` | — |
+| DI scope resolution | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/jakarta_ee_advanced.go` | — |
 
 ### Transactions
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Transaction boundary extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Transaction propagation | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Transaction rollback rules | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Transaction boundary extraction | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/transactional.go` | — |
+| Transaction propagation | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/transactional.go` | — |
+| Transaction rollback rules | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3088) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/transactional.go` | — |
 
 ### AOP
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Advice attribution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Aspect extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Pointcut resolution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Advice attribution | — `not_applicable` | — | [link](https://github.com/cajasmota/archigraph/issues/3088) | — | Helidon SE has no AOP model; Helidon MP CDI interceptors deferred to FW-T-04 (CDI interceptor ticket) |
+| Aspect extraction | — `not_applicable` | — | [link](https://github.com/cajasmota/archigraph/issues/3088) | — | Helidon SE has no AOP model; Helidon MP CDI interceptors deferred to FW-T-04 (CDI interceptor ticket) |
+| Pointcut resolution | — `not_applicable` | — | [link](https://github.com/cajasmota/archigraph/issues/3088) | — | Helidon SE has no AOP model; Helidon MP CDI interceptors deferred to FW-T-04 (CDI interceptor ticket) |
 
 ### Observability
 

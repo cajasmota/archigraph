@@ -32,6 +32,8 @@ var txFrameworks = map[string]bool{
 	"java_ee": true, "javaee": true,
 	"jaxrs": true, "jax-rs": true, "jax_rs": true,
 	"microprofile": true, "micro-profile": true, "micro_profile": true,
+	// Helidon MP uses JTA @Transactional (via MicroProfile / Jakarta EE).
+	"helidon": true,
 }
 
 var (
@@ -258,6 +260,8 @@ func canonicalTxFramework(framework string) string {
 		return "jaxrs"
 	case "microprofile", "micro-profile", "micro_profile":
 		return "microprofile"
+	case "helidon":
+		return "helidon"
 	default:
 		return framework
 	}
