@@ -16603,8 +16603,11 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_routes.go","internal/engine/spring_routes.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Annotation-driven route composition scanned (@RequestMapping/@GetMapping/etc.); path-variable expression resolution not implemented",
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -16616,12 +16619,18 @@
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_request_response.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "SCOPE.Schema(kind=dto) entities emitted for @RequestBody parameter types and ResponseEntity\u003cT\u003e/Mono\u003cT\u003e/Flux\u003cT\u003e return types; generic collections (List/Map/Set) skipped via srrSkipTypes",
+            "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_params.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Bean Validation annotations (@NotNull, @NotBlank, @NotEmpty, @Valid, @Min, @Max, @Size, @Pattern, @Email) captured per handler parameter; required flag set; no field-level constraint recursion",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
@@ -16874,12 +16883,18 @@
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_request_response.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "SCOPE.Schema(kind=dto) entities emitted for @RequestBody types and Mono\u003cT\u003e/Flux\u003cT\u003e return types; generic collections (List/Map/Set) skipped via srrSkipTypes",
+            "verified_at": "2026-05-29"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/engine/java_annotation_params.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Bean Validation annotations (@Valid, @NotNull, @NotBlank, @NotEmpty) captured per handler parameter; required flag set; same extractor as spring-boot; no field-level recursion",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {

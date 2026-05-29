@@ -258,3 +258,89 @@ func TestEncodeJavaParameters_EmptyReturnsEmpty(t *testing.T) {
 		t.Errorf("empty input should encode to \"\", got %q", got)
 	}
 }
+
+// ============================================================================
+// Issue #2988 — request_validation proving tests for spring-boot / spring-webflux
+// ============================================================================
+
+// TestSpringBoot_RequestValidation_Engine_Issue2988 proves that Bean Validation
+// annotations (@Valid, @NotNull, @NotBlank, @NotEmpty) on Spring MVC handler
+// parameters are recognised and set required=true on the emitted JavaParam
+// records.  This is the authoritative engine-layer proof for the
+// lang.java.framework.spring-boot / request_validation cell.
+// Registry target: partial (parameter-level only; no field-level recursion).
+// Cite: internal/engine/java_annotation_params.go (lines 120-129).
+func TestSpringBoot_RequestValidation_Engine_Issue2988(t *testing.T) {
+	// Canonical Spring Boot pattern: @Valid @RequestBody @NotNull on a POST handler.
+	frag := `@Valid @RequestBody @NotNull CreateOrderRequest req, @RequestParam String currency)`
+	params := extractJavaParameters(frag, []string{"POST"})
+
+	if len(params) < 2 {
+		t.Fatalf("[#2988 spring-boot request_validation] expected >=2 params, got %d: %+v", len(params), params)
+	}
+
+	body := findParamByIn(params, "body")
+	if body == nil {
+		t.Fatalf("[#2988 spring-boot request_validation] body param missing; params=%+v", params)
+	}
+	if !body.Required {
+		t.Errorf("[#2988 spring-boot request_validation] @Valid @NotNull body must be required=true")
+	}
+	if body.Type != "CreateOrderRequest" {
+		t.Errorf("[#2988 spring-boot request_validation] body type=%q, want CreateOrderRequest", body.Type)
+	}
+
+	// @Valid and @NotNull must appear in the Annotations list.
+	annoSet := make(map[string]bool)
+	for _, a := range body.Annotations {
+		annoSet[a] = true
+	}
+	for _, want := range []string{"@Valid", "@NotNull"} {
+		if !annoSet[want] {
+			t.Errorf("[#2988 spring-boot request_validation] annotation %q missing from body param; got %v",
+				want, body.Annotations)
+		}
+	}
+
+	// @NotBlank on a query param must also set required=true.
+	fragNB := `@NotBlank @RequestParam String currency)`
+	paramsNB := extractJavaParameters(fragNB, []string{"GET"})
+	if len(paramsNB) < 1 {
+		t.Fatalf("[#2988 spring-boot request_validation] expected 1 param for @NotBlank case")
+	}
+	if !paramsNB[0].Required {
+		t.Errorf("[#2988 spring-boot request_validation] @NotBlank @RequestParam must be required=true")
+	}
+}
+
+// TestSpringWebFlux_RequestValidation_Engine_Issue2988 proves that the same
+// validation-annotation capture logic applies to Spring WebFlux handler
+// parameters — the extractJavaParameters function is framework-agnostic (no
+// framework context arg); the test mirrors what a WebFlux reactive controller
+// handler would produce after line-buffer parsing.
+// Registry target: partial. Cite: internal/engine/java_annotation_params.go.
+func TestSpringWebFlux_RequestValidation_Engine_Issue2988(t *testing.T) {
+	// WebFlux uses the same @RequestBody / @Valid annotations as Spring MVC.
+	frag := `@Valid @RequestBody CreateProductRequest req, @RequestParam(required = false) String tag)`
+	params := extractJavaParameters(frag, []string{"POST"})
+
+	if len(params) < 2 {
+		t.Fatalf("[#2988 webflux request_validation] expected >=2 params, got %d: %+v", len(params), params)
+	}
+
+	body := findParamByIn(params, "body")
+	if body == nil {
+		t.Fatalf("[#2988 webflux request_validation] body param missing; params=%+v", params)
+	}
+	if !body.Required {
+		t.Errorf("[#2988 webflux request_validation] @Valid body must be required=true")
+	}
+
+	query := findParamByIn(params, "query")
+	if query == nil {
+		t.Fatalf("[#2988 webflux request_validation] query param missing")
+	}
+	if query.Required {
+		t.Errorf("[#2988 webflux request_validation] required=false @RequestParam should NOT be required")
+	}
+}

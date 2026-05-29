@@ -1198,6 +1198,277 @@ func TestQuartzJava_NonJavaLanguageSkipped(t *testing.T) {
 }
 
 // ============================================================================
+// Issue #2988 — Spring Boot / WebFlux proving tests
+// Cells: route_extraction, dto_extraction, request_validation
+// ============================================================================
+
+// TestSpringBoot_RouteExtraction_Issue2988 proves that ExtractSpringBoot
+// emits endpoint entities whose properties carry the composed HTTP route
+// path and method — confirming route_extraction is delivered by the
+// spring_boot custom extractor + the engine-level spring_routes.go pass.
+// The registry target is `partial` (annotations scanned; path-variable
+// resolution may be incomplete). Cite: internal/engine/spring_routes.go,
+// internal/engine/java_annotation_routes.go.
+func TestSpringBoot_RouteExtraction_Issue2988(t *testing.T) {
+	source := `
+package com.example;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
+public class OrderController {
+    @GetMapping("/orders")
+    public List<OrderDto> getOrders() { return null; }
+
+    @PostMapping("/orders")
+    public OrderDto createOrder(@RequestBody CreateOrderRequest req) { return null; }
+
+    @GetMapping("/orders/{id}")
+    public OrderDto getOrder(@PathVariable Long id) { return null; }
+}
+`
+	r := ExtractSpringBoot(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_boot",
+		FilePath:  "OrderController.java",
+	})
+
+	// Must emit at least 3 endpoint entities for the 3 handler methods.
+	var endpointNames []string
+	for _, e := range r.Entities {
+		if e.Subtype == "endpoint" {
+			endpointNames = append(endpointNames, e.Name)
+		}
+	}
+	if len(endpointNames) < 3 {
+		t.Errorf("[#2988 route_extraction] expected >= 3 endpoint entities, got %d: %v", len(endpointNames), endpointNames)
+	}
+
+	// Validate HTTP verbs are captured on the operation entities.
+	verbsSeen := make(map[string]bool)
+	for _, e := range r.Entities {
+		if e.Subtype == "endpoint" {
+			if raw, ok := e.Properties["http_method"]; ok {
+				if v, ok2 := raw.(string); ok2 && v != "" {
+					verbsSeen[v] = true
+				}
+			}
+		}
+	}
+	for _, want := range []string{"GET", "POST"} {
+		if !verbsSeen[want] {
+			t.Errorf("[#2988 route_extraction] HTTP method %q not found among endpoint entities", want)
+		}
+	}
+}
+
+// TestSpringBoot_DtoExtraction_Issue2988 proves that ExtractSpringRequestResponse
+// emits SCOPE.Schema(kind=dto) entities for @RequestBody parameter types and
+// return types, and wires ACCEPTS_INPUT / RETURNS relationships.
+// Registry target: partial. Cite: internal/custom/java/spring_request_response.go.
+func TestSpringBoot_DtoExtraction_Issue2988(t *testing.T) {
+	source := `
+package com.example;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
+public class OrderController {
+    @GetMapping("/orders")
+    public List<OrderDto> getOrders() { return null; }
+
+    @PostMapping("/orders")
+    public OrderDto createOrder(@RequestBody CreateOrderRequest req) { return null; }
+}
+`
+	r := ExtractSpringRequestResponse(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_boot",
+		FilePath:  "OrderController.java",
+	})
+
+	// Expect SCOPE.Schema entities for CreateOrderRequest and OrderDto.
+	dtoNames := make(map[string]bool)
+	for _, e := range r.Entities {
+		if e.Kind == "SCOPE.Schema" {
+			dtoNames[e.Name] = true
+			if e.Properties["kind"] != "dto" {
+				t.Errorf("[#2988 dto_extraction] entity %q has kind=%q, want dto",
+					e.Name, e.Properties["kind"])
+			}
+		}
+	}
+	for _, want := range []string{"CreateOrderRequest", "OrderDto"} {
+		if !dtoNames[want] {
+			t.Errorf("[#2988 dto_extraction] expected SCOPE.Schema entity for %q, got entities: %v", want, dtoNames)
+		}
+	}
+
+	// Expect ACCEPTS_INPUT and RETURNS relationships.
+	relTypes := make(map[string]bool)
+	for _, rel := range r.Relationships {
+		relTypes[rel.RelationshipType] = true
+	}
+	for _, want := range []string{"ACCEPTS_INPUT", "RETURNS"} {
+		if !relTypes[want] {
+			t.Errorf("[#2988 dto_extraction] expected %q relationship, got: %v", want, relTypes)
+		}
+	}
+}
+
+// TestSpringWebFlux_DtoExtraction_Issue2988 proves that ExtractSpringRequestResponse
+// also handles spring_webflux framework (springReqRespFrameworks includes it),
+// emitting dto entities for Mono<T>/Flux<T> return types and @RequestBody params.
+// Registry target: partial. Cite: internal/custom/java/spring_request_response.go.
+func TestSpringWebFlux_DtoExtraction_Issue2988(t *testing.T) {
+	source := `
+package com.example;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+
+@RestController
+@RequestMapping("/api/v1")
+public class ProductController {
+    @GetMapping("/products")
+    public Flux<ProductDto> listProducts() { return null; }
+
+    @PostMapping("/products")
+    public Mono<ProductDto> createProduct(@RequestBody CreateProductRequest req) { return null; }
+}
+`
+	r := ExtractSpringRequestResponse(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_webflux",
+		FilePath:  "ProductController.java",
+	})
+
+	dtoNames := make(map[string]bool)
+	for _, e := range r.Entities {
+		if e.Kind == "SCOPE.Schema" {
+			dtoNames[e.Name] = true
+		}
+	}
+	// Mono<T>/Flux<T> are unwrapped; CreateProductRequest is explicit via @RequestBody.
+	for _, want := range []string{"CreateProductRequest", "ProductDto"} {
+		if !dtoNames[want] {
+			t.Errorf("[#2988 webflux dto_extraction] expected SCOPE.Schema for %q, got: %v", want, dtoNames)
+		}
+	}
+
+	relTypes := make(map[string]bool)
+	for _, rel := range r.Relationships {
+		relTypes[rel.RelationshipType] = true
+	}
+	if !relTypes["ACCEPTS_INPUT"] {
+		t.Errorf("[#2988 webflux dto_extraction] expected ACCEPTS_INPUT relationship")
+	}
+	if !relTypes["RETURNS"] {
+		t.Errorf("[#2988 webflux dto_extraction] expected RETURNS relationship")
+	}
+}
+
+// TestSpringBoot_RequestValidation_Issue2988 proves that Bean Validation
+// annotations (@Valid, @NotNull) on Spring handler parameters drive the
+// required flag on the endpoint.  This test exercises the custom extractor
+// layer: a controller source containing @Valid @RequestBody must produce an
+// ACCEPTS_INPUT relationship — confirming the plumbing is wired.
+// The parameter-level @Required flag is asserted in the engine-level test
+// TestSpringBoot_RequestValidation_Engine_Issue2988 (java_annotation_params_test.go).
+// Registry target: partial. Cite: internal/engine/java_annotation_params.go.
+func TestSpringBoot_RequestValidation_Issue2988(t *testing.T) {
+	source := `
+package com.example;
+import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+
+@RestController
+@RequestMapping("/api/v1")
+public class OrderController {
+    @PostMapping("/orders")
+    public OrderDto createOrder(@Valid @RequestBody @NotNull CreateOrderRequest req) { return null; }
+}
+`
+	r := ExtractSpringRequestResponse(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_boot",
+		FilePath:  "OrderController.java",
+	})
+
+	// ACCEPTS_INPUT relationship must be emitted — proving request body
+	// was recognised even when combined with validation annotations.
+	hasAcceptsInput := false
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == "ACCEPTS_INPUT" {
+			hasAcceptsInput = true
+			break
+		}
+	}
+	if !hasAcceptsInput {
+		t.Errorf("[#2988 request_validation] expected ACCEPTS_INPUT relationship for @Valid @RequestBody param")
+	}
+
+	// The DTO entity must exist.
+	hasDtoEntity := false
+	for _, e := range r.Entities {
+		if e.Kind == "SCOPE.Schema" && e.Name == "CreateOrderRequest" {
+			hasDtoEntity = true
+			break
+		}
+	}
+	if !hasDtoEntity {
+		t.Errorf("[#2988 request_validation] expected SCOPE.Schema entity for CreateOrderRequest")
+	}
+}
+
+// TestSpringWebFlux_RequestValidation_Issue2988 proves Bean Validation
+// annotation handling for spring_webflux — the springReqRespFrameworks map
+// in spring_request_response.go includes spring_webflux, so @Valid @RequestBody
+// on a reactive controller must also yield ACCEPTS_INPUT + a DTO entity.
+// Registry target: partial. Cite: internal/engine/java_annotation_params.go,
+// internal/custom/java/spring_request_response.go.
+func TestSpringWebFlux_RequestValidation_Issue2988(t *testing.T) {
+	source := `
+package com.example;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/v1")
+public class ProductController {
+    @PostMapping("/products")
+    public Mono<ProductDto> createProduct(@Valid @RequestBody CreateProductRequest req) { return null; }
+}
+`
+	r := ExtractSpringRequestResponse(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_webflux",
+		FilePath:  "ProductController.java",
+	})
+
+	hasAcceptsInput := false
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == "ACCEPTS_INPUT" {
+			hasAcceptsInput = true
+			break
+		}
+	}
+	if !hasAcceptsInput {
+		t.Errorf("[#2988 webflux request_validation] expected ACCEPTS_INPUT for @Valid @RequestBody")
+	}
+}
+
+// ============================================================================
 // Helpers
 // ============================================================================
 

@@ -558,3 +558,99 @@ public class CatalogResource {
 		t.Fatalf("[#683] deep annotation stack: ids = %v\nwant %v", ids, want)
 	}
 }
+
+// ============================================================================
+// Issue #2988 — route_extraction proving tests for spring-boot / spring-webflux
+// ============================================================================
+
+// TestSpringBoot_RouteExtraction_Engine_Issue2988 proves that
+// ApplyJavaAnnotationRoutes (which underpins the spring-boot route_extraction
+// capability) emits composed http:VERB:/path endpoint records for a
+// representative Spring MVC @RestController with class-level
+// @RequestMapping prefix + method-level verb mappings.
+// Registry target: partial (annotations scanned; path-variable resolution
+// may be incomplete). Cite: internal/engine/java_annotation_routes.go,
+// internal/engine/spring_routes.go.
+func TestSpringBoot_RouteExtraction_Engine_Issue2988(t *testing.T) {
+	src := `package com.example;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
+public class OrderController {
+    @GetMapping("/orders")
+    public List<OrderDto> getOrders() { return null; }
+
+    @PostMapping("/orders")
+    public OrderDto createOrder(@RequestBody CreateOrderRequest req) { return null; }
+
+    @GetMapping("/orders/{id}")
+    public OrderDto getOrder(@PathVariable Long id) { return null; }
+
+    @DeleteMapping("/orders/{id}")
+    public void deleteOrder(@PathVariable Long id) {}
+}
+`
+	got := collect(t, map[string]string{"OrderController.java": src})
+	ids := endpointIDs(got)
+
+	wantIDs := []string{
+		"http:GET:/api/v1/orders",
+		"http:POST:/api/v1/orders",
+		"http:GET:/api/v1/orders/{id}",
+		"http:DELETE:/api/v1/orders/{id}",
+	}
+	sort.Strings(wantIDs)
+	sort.Strings(ids)
+	if strings.Join(ids, "|") != strings.Join(wantIDs, "|") {
+		t.Fatalf("[#2988 spring-boot route_extraction] ids=%v\nwant=%v", ids, wantIDs)
+	}
+
+	// Verify source_handler is correctly attributed.
+	for _, r := range got {
+		if !strings.HasPrefix(r.Props["source_handler"], "SCOPE.Operation:OrderController.") {
+			t.Errorf("[#2988 spring-boot route_extraction] bad source_handler %q on %s",
+				r.Props["source_handler"], r.ID)
+		}
+	}
+}
+
+// TestSpringWebFlux_RouteExtraction_Engine_Issue2988 proves route_extraction
+// for Spring WebFlux — WebFlux uses the same @RestController + @RequestMapping
+// / @GetMapping / @PostMapping annotations as Spring MVC, so
+// ApplyJavaAnnotationRoutes handles it identically.
+// Registry target: partial. Cite: internal/engine/java_annotation_routes.go.
+func TestSpringWebFlux_RouteExtraction_Engine_Issue2988(t *testing.T) {
+	src := `package com.example;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/api/v1")
+public class ProductController {
+    @GetMapping("/products")
+    public Flux<ProductDto> listProducts() { return null; }
+
+    @PostMapping("/products")
+    public Mono<ProductDto> createProduct(@RequestBody CreateProductRequest req) { return null; }
+
+    @PutMapping("/products/{id}")
+    public Mono<ProductDto> updateProduct(@PathVariable Long id, @RequestBody UpdateProductRequest req) { return null; }
+}
+`
+	got := collect(t, map[string]string{"ProductController.java": src})
+	ids := endpointIDs(got)
+
+	wantIDs := []string{
+		"http:GET:/api/v1/products",
+		"http:POST:/api/v1/products",
+		"http:PUT:/api/v1/products/{id}",
+	}
+	sort.Strings(wantIDs)
+	sort.Strings(ids)
+	if strings.Join(ids, "|") != strings.Join(wantIDs, "|") {
+		t.Fatalf("[#2988 webflux route_extraction] ids=%v\nwant=%v", ids, wantIDs)
+	}
+}
