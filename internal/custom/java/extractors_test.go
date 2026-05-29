@@ -3175,3 +3175,246 @@ public void doWork() {}
 		t.Errorf("[#3003 gating] non-java should no-op, got %d entities", len(r.Entities))
 	}
 }
+
+// ============================================================================
+// Spring AOP / AspectJ tests (#3004)
+// ============================================================================
+
+// aopEntityByName returns the AOP entity with the given subtype and name.
+func aopEntityByName(r PatternResult, subtype, name string) (SecondaryEntity, bool) {
+	for _, e := range r.Entities {
+		if e.Subtype == subtype && e.Name == name {
+			return e, true
+		}
+	}
+	return SecondaryEntity{}, false
+}
+
+func aopHasRel(r PatternResult, src, tgt, kind string) bool {
+	for _, rel := range r.Relationships {
+		if rel.SourceRef == src && rel.TargetRef == tgt && rel.RelationshipType == kind {
+			return true
+		}
+	}
+	return false
+}
+
+// TestSpringAOP_Aspect_Pointcut_Advice_Issue3004 is the proving fixture for the
+// AOP lane: an @Aspect class with a @Pointcut, an @Around advice that names the
+// pointcut, a @Before with an inline execution() expression, and the
+// @AfterReturning attribute form.
+// Registry target: lang.java.framework.spring-boot AOP/* = partial.
+func TestSpringAOP_Aspect_Pointcut_Advice_Issue3004(t *testing.T) {
+	source := `
+package com.example.aop;
+
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.springframework.stereotype.Component;
+
+@Aspect
+@Component
+public class LoggingAspect {
+
+    @Pointcut("execution(* com.example.service.*.*(..))")
+    public void serviceMethods() {}
+
+    @Around("serviceMethods()")
+    public Object logAround(ProceedingJoinPoint pjp) throws Throwable {
+        return pjp.proceed();
+    }
+
+    @Before("execution(* com.example.web.*.*(..))")
+    public void logBefore(JoinPoint jp) {
+    }
+
+    @AfterReturning(pointcut = "serviceMethods()", returning = "result")
+    public void logReturn(JoinPoint jp, Object result) {
+    }
+}
+`
+	r := ExtractSpringAOP(PatternContext{
+		Source:    source,
+		Language:  "java",
+		Framework: "spring_boot",
+		FilePath:  "LoggingAspect.java",
+	})
+
+	// aspect_extraction.
+	asp, ok := aopEntityByName(r, "aspect", "LoggingAspect")
+	if !ok {
+		t.Fatalf("[#3004 aspect] expected aspect entity LoggingAspect; got %v", entityNames(r.Entities))
+	}
+	if asp.Kind != "SCOPE.Pattern" {
+		t.Errorf("[#3004 aspect] aspect Kind = %q, want SCOPE.Pattern", asp.Kind)
+	}
+	if asp.Properties["kind"] != "aspect" {
+		t.Errorf("[#3004 aspect] aspect kind property = %v, want aspect", asp.Properties["kind"])
+	}
+	if asp.Properties["framework"] != "spring_boot" {
+		t.Errorf("[#3004 aspect] aspect framework = %v, want spring_boot", asp.Properties["framework"])
+	}
+
+	// pointcut_resolution.
+	pc, ok := aopEntityByName(r, "pointcut", "LoggingAspect.serviceMethods")
+	if !ok {
+		t.Fatalf("[#3004 pointcut] expected pointcut LoggingAspect.serviceMethods; got %v", entityNames(r.Entities))
+	}
+	if pc.Properties["pointcut_expression"] != "execution(* com.example.service.*.*(..))" {
+		t.Errorf("[#3004 pointcut] expression = %v", pc.Properties["pointcut_expression"])
+	}
+	if pc.Properties["aspect"] != "LoggingAspect" {
+		t.Errorf("[#3004 pointcut] aspect = %v, want LoggingAspect", pc.Properties["aspect"])
+	}
+
+	// advice_attribution: @Around naming the pointcut.
+	around, ok := aopEntityByName(r, "advice", "LoggingAspect.logAround")
+	if !ok {
+		t.Fatalf("[#3004 advice] expected advice LoggingAspect.logAround; got %v", entityNames(r.Entities))
+	}
+	if around.Properties["advice_type"] != "around" {
+		t.Errorf("[#3004 advice] logAround advice_type = %v, want around", around.Properties["advice_type"])
+	}
+	if around.Properties["pointcut_expression"] != "serviceMethods()" {
+		t.Errorf("[#3004 advice] logAround pointcut_expression = %v, want serviceMethods()", around.Properties["pointcut_expression"])
+	}
+	if around.Properties["aspect"] != "LoggingAspect" {
+		t.Errorf("[#3004 advice] logAround aspect = %v, want LoggingAspect", around.Properties["aspect"])
+	}
+
+	// advice_attribution: @Before with inline execution() expression.
+	before, ok := aopEntityByName(r, "advice", "LoggingAspect.logBefore")
+	if !ok {
+		t.Fatalf("[#3004 advice] expected advice LoggingAspect.logBefore")
+	}
+	if before.Properties["advice_type"] != "before" {
+		t.Errorf("[#3004 advice] logBefore advice_type = %v, want before", before.Properties["advice_type"])
+	}
+
+	// advice_attribution: @AfterReturning attribute (pointcut=...) form.
+	ret, ok := aopEntityByName(r, "advice", "LoggingAspect.logReturn")
+	if !ok {
+		t.Fatalf("[#3004 advice] expected advice LoggingAspect.logReturn")
+	}
+	if ret.Properties["advice_type"] != "after_returning" {
+		t.Errorf("[#3004 advice] logReturn advice_type = %v, want after_returning", ret.Properties["advice_type"])
+	}
+	if ret.Properties["pointcut_expression"] != "serviceMethods()" {
+		t.Errorf("[#3004 advice] logReturn pointcut_expression = %v, want serviceMethods()", ret.Properties["pointcut_expression"])
+	}
+
+	// OWNS: aspect -> pointcut, aspect -> each advice.
+	if !aopHasRel(r, asp.Ref, pc.Ref, "OWNS") {
+		t.Errorf("[#3004 aspect] expected OWNS edge aspect -> pointcut")
+	}
+	for _, adv := range []SecondaryEntity{around, before, ret} {
+		if !aopHasRel(r, asp.Ref, adv.Ref, "OWNS") {
+			t.Errorf("[#3004 advice] expected OWNS edge aspect -> %s", adv.Name)
+		}
+	}
+
+	// REFERENCES (pointcut_resolution): advice naming a declared pointcut links
+	// to it; advice with an inline execution() expression does not.
+	if !aopHasRel(r, around.Ref, pc.Ref, "REFERENCES") {
+		t.Errorf("[#3004 pointcut] expected REFERENCES edge logAround -> serviceMethods pointcut")
+	}
+	if !aopHasRel(r, ret.Ref, pc.Ref, "REFERENCES") {
+		t.Errorf("[#3004 pointcut] expected REFERENCES edge logReturn -> serviceMethods pointcut")
+	}
+	if aopHasRel(r, before.Ref, pc.Ref, "REFERENCES") {
+		t.Errorf("[#3004 pointcut] logBefore uses inline execution(); must NOT REFERENCES a named pointcut")
+	}
+}
+
+// TestSpringAOP_AllAdviceTypes_Issue3004 proves every advice annotation maps to
+// the right advice_type, on the spring-webflux framework.
+func TestSpringAOP_AllAdviceTypes_Issue3004(t *testing.T) {
+	source := `
+import org.aspectj.lang.annotation.Aspect;
+
+@Aspect
+public class AuditAspect {
+
+    @Before("execution(* *(..))")
+    public void b() {}
+
+    @After("execution(* *(..))")
+    public void a() {}
+
+    @Around("execution(* *(..))")
+    public Object ar(ProceedingJoinPoint p) throws Throwable { return p.proceed(); }
+
+    @AfterReturning("execution(* *(..))")
+    public void retn() {}
+
+    @AfterThrowing("execution(* *(..))")
+    public void thr() {}
+}
+`
+	r := ExtractSpringAOP(PatternContext{Source: source, Language: "java", Framework: "spring-webflux", FilePath: "AuditAspect.java"})
+
+	want := map[string]string{
+		"AuditAspect.b":    "before",
+		"AuditAspect.a":    "after",
+		"AuditAspect.ar":   "around",
+		"AuditAspect.retn": "after_returning",
+		"AuditAspect.thr":  "after_throwing",
+	}
+	for name, adviceType := range want {
+		e, ok := aopEntityByName(r, "advice", name)
+		if !ok {
+			t.Fatalf("[#3004 advice] expected advice %s; got %v", name, entityNames(r.Entities))
+		}
+		if e.Properties["advice_type"] != adviceType {
+			t.Errorf("[#3004 advice] %s advice_type = %v, want %s", name, e.Properties["advice_type"], adviceType)
+		}
+		if e.Properties["framework"] != "spring_webflux" {
+			t.Errorf("[#3004 advice] %s framework = %v, want spring_webflux", name, e.Properties["framework"])
+		}
+	}
+}
+
+// TestSpringAOP_NonAspectFile_Issue3004 proves advice annotations outside an
+// @Aspect class produce nothing (no phantom advice/aspect entities).
+func TestSpringAOP_NonAspectFile_Issue3004(t *testing.T) {
+	source := `
+@Service
+public class PlainService {
+    @Before("execution(* *(..))")
+    public void notReallyAdvice() {}
+}
+`
+	r := ExtractSpringAOP(PatternContext{Source: source, Language: "java", Framework: "spring_boot", FilePath: "PlainService.java"})
+	if len(r.Entities) != 0 {
+		t.Errorf("[#3004] non-aspect file should emit no AOP entities, got %v", entityNames(r.Entities))
+	}
+}
+
+// TestSpringAOP_FrameworkGating_Issue3004 proves the extractor runs only for the
+// Spring frameworks and no-ops elsewhere / for non-java.
+func TestSpringAOP_FrameworkGating_Issue3004(t *testing.T) {
+	source := `
+@Aspect
+public class A {
+    @Around("execution(* *(..))")
+    public Object x(ProceedingJoinPoint p) throws Throwable { return p.proceed(); }
+}
+`
+	for _, fw := range []string{"spring_boot", "spring-boot", "spring_webflux", "spring-webflux"} {
+		r := ExtractSpringAOP(PatternContext{Source: source, Language: "java", Framework: fw, FilePath: "A.java"})
+		if len(r.Entities) == 0 {
+			t.Errorf("[#3004 gating] framework %q expected AOP entities, got none", fw)
+		}
+	}
+	for _, fw := range []string{"quarkus", "micronaut", "jakarta_ee", "jaxrs", "django"} {
+		if r := ExtractSpringAOP(PatternContext{Source: source, Language: "java", Framework: fw, FilePath: "A.java"}); len(r.Entities) != 0 {
+			t.Errorf("[#3004 gating] framework %q should no-op, got %d entities", fw, len(r.Entities))
+		}
+	}
+	if r := ExtractSpringAOP(PatternContext{Source: source, Language: "python", Framework: "spring_boot", FilePath: "A.py"}); len(r.Entities) != 0 {
+		t.Errorf("[#3004 gating] non-java should no-op, got %d entities", len(r.Entities))
+	}
+}

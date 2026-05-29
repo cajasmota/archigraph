@@ -1782,6 +1782,28 @@ records:
 
   lang.java.framework.spring-boot:
     capabilities:
+      AOP:
+        aspect_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/java/spring_aop.go
+              functions: [ExtractSpringAOP]
+          issues_implemented: ["3004"]
+          verified_at: "2026-05-29"
+        advice_attribution:
+          status: partial
+          symbols:
+            - file: internal/custom/java/spring_aop.go
+              functions: [ExtractSpringAOP, aopAdviceType, aopAdviceMethodName, findEnclosingAspect]
+          issues_implemented: ["3004"]
+          verified_at: "2026-05-29"
+        pointcut_resolution:
+          status: partial
+          symbols:
+            - file: internal/custom/java/spring_aop.go
+              functions: [ExtractSpringAOP, aopReferencedPointcut]
+          issues_implemented: ["3004"]
+          verified_at: "2026-05-29"
       Transactions:
         transaction_boundary_extraction:
           status: partial
@@ -2155,6 +2177,31 @@ records:
             - file: internal/substrate/template_pattern_golang.go
           issues_implemented: ["2774"]
           verified_at: "2026-05-28"
+
+  lang.java.framework.spring-webflux:
+    capabilities:
+      AOP:
+        aspect_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/java/spring_aop.go
+              functions: [ExtractSpringAOP]
+          issues_implemented: ["3004"]
+          verified_at: "2026-05-29"
+        advice_attribution:
+          status: partial
+          symbols:
+            - file: internal/custom/java/spring_aop.go
+              functions: [ExtractSpringAOP, aopAdviceType, aopAdviceMethodName, findEnclosingAspect]
+          issues_implemented: ["3004"]
+          verified_at: "2026-05-29"
+        pointcut_resolution:
+          status: partial
+          symbols:
+            - file: internal/custom/java/spring_aop.go
+              functions: [ExtractSpringAOP, aopReferencedPointcut]
+          issues_implemented: ["3004"]
+          verified_at: "2026-05-29"
 
   lang.ruby.framework.rails:
     capabilities:
