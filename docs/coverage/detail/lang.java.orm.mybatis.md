@@ -23,8 +23,8 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Association extraction | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3007) | `internal/custom/java/mybatis.go`<br>`internal/custom/java/orm_extractors_test.go` | result_map result_type captured; <association>/<collection> nested joins not yet parsed. |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Foreign key extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/jpa_fk_lazy.go` | MyBatis mappers may co-exist with JPA annotations in hybrid projects; jpa_fk_lazy.go handles @JoinColumn/@FetchType patterns when present. Coverage is indirect (#3180). |
+| Lazy loading recognition | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/jpa_fk_lazy.go` | MyBatis mappers may co-exist with JPA annotations in hybrid projects; jpa_fk_lazy.go handles @JoinColumn/@FetchType patterns when present. Coverage is indirect (#3180). |
 | Relationship extraction | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3007) | `internal/custom/java/mybatis.go`<br>`internal/custom/java/orm_extractors_test.go` | Result maps + mapper->statement ownership; FK/join-result associations not modeled. |
 
 ### Queries
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record. |
+| Migration parsing | — `not_applicable` | `2026-05-29` | — | — | MyBatis is an SQL mapper; database migration files are owned by Flyway/Liquibase, not MyBatis. Same rationale as T1 ORM sweep (#3180). |
 
 ## Provenance
 

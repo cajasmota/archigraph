@@ -73,9 +73,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Advice attribution | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Aspect extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Pointcut resolution | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Advice attribution | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/cdi_interceptors.go` | MicroProfile uses CDI interceptors (@Interceptor/@AroundInvoke/@InterceptorBinding) identical to Jakarta EE. cdiFrameworks gate in cdi_interceptors.go now includes "microprofile" (#3175). |
+| Aspect extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/cdi_interceptors.go` | MicroProfile uses CDI interceptors (@Interceptor/@AroundInvoke/@InterceptorBinding) identical to Jakarta EE. cdiFrameworks gate in cdi_interceptors.go now includes "microprofile" (#3175). |
+| Pointcut resolution | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/cdi_interceptors.go` | MicroProfile uses CDI interceptors (@Interceptor/@AroundInvoke/@InterceptorBinding) identical to Jakarta EE. cdiFrameworks gate in cdi_interceptors.go now includes "microprofile" (#3175). |
 
 ### Observability
 

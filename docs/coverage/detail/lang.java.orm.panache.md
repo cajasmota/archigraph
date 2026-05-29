@@ -23,8 +23,8 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Association extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/hibernate.go`<br>`internal/extractors/java/panache.go`<br>`internal/extractors/java/panache_test.go` | Panache entity classes use JPA @OneToMany/@ManyToOne/@OneToOne/@ManyToMany annotations parsed by the Hibernate extractor; panache.go synthesizes operation entities for CRUD but does not itself parse association annotations |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Foreign key extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/jpa_fk_lazy.go` | Panache is a thin JPA wrapper; entity classes use standard JPA annotations (@JoinColumn/@ManyToOne/FetchType.LAZY). ExtractJPAFKAndLazy in jpa_fk_lazy.go handles these patterns for JPA-family extractors (#3180). |
+| Lazy loading recognition | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/jpa_fk_lazy.go` | Panache is a thin JPA wrapper; entity classes use standard JPA annotations (@JoinColumn/@ManyToOne/FetchType.LAZY). ExtractJPAFKAndLazy in jpa_fk_lazy.go handles these patterns for JPA-family extractors (#3180). |
 | Relationship extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/hibernate.go`<br>`internal/extractors/java/panache.go`<br>`internal/extractors/java/panache_test.go` | Relationships inferred via JPA annotation parsing in hibernate.go; panache.go synthesizes repository binding edges but no direct FK/join column resolution |
 
 ### Queries
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Migration parsing | — `not_applicable` | `2026-05-29` | — | — | Panache is a JPA wrapper (Quarkus-backed); database migration files are owned by Flyway/Liquibase. Same rationale as T1 ORM sweep (#3180). |
 
 ## Provenance
 

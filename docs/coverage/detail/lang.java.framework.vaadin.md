@@ -37,8 +37,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Enum extraction | 🔴 `missing` | — | — | — | — |
-| Interface extraction | 🔴 `missing` | — | — | — | — |
+| Enum extraction | 🟢 `partial` | `2026-05-29` | — | `internal/extractors/java/java.go` | Framework-blind Java extractor emits enum_declaration and interface_declaration nodes for all Java frameworks including Vaadin (#3178). |
+| Interface extraction | 🟢 `partial` | `2026-05-29` | — | `internal/extractors/java/java.go` | Framework-blind Java extractor emits enum_declaration and interface_declaration nodes for all Java frameworks including Vaadin (#3178). |
 | Type alias extraction | — `not_applicable` | — | 3091 | — | Vaadin is a server-side Java UI framework with no React-style concepts; type_alias_extraction is a React/JSX-paradigm capability that does not apply |
 
 ### Lifecycle
@@ -73,7 +73,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Request shape extraction | — `not_applicable` | — | 3154 | — | — |
 | Response shape extraction | — `not_applicable` | — | 3154 | — | — |
 | Sanitizer recognition | 🟢 `partial` | — | 3154 | `internal/links/effect_propagation.go`<br>`internal/links/module_cycle_pass.go`<br>`internal/substrate/def_use_java.go`<br>`internal/substrate/effect_sinks_java.go`<br>`internal/substrate/entry_points_java.go`<br>`internal/substrate/taint_sites_java.go`<br>`internal/substrate/template_pattern_java.go` | — |
-| Schema drift detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Schema drift detection | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_java.go` | Framework-blind payload shapes sniffer fires for all Java sources; no Vaadin-specific gate required (#3178). |
 | Taint sink detection | 🟢 `partial` | — | 3154 | `internal/links/effect_propagation.go`<br>`internal/links/module_cycle_pass.go`<br>`internal/substrate/def_use_java.go`<br>`internal/substrate/effect_sinks_java.go`<br>`internal/substrate/entry_points_java.go`<br>`internal/substrate/taint_sites_java.go`<br>`internal/substrate/template_pattern_java.go` | — |
 | Taint source detection | 🟢 `partial` | — | 3154 | `internal/links/effect_propagation.go`<br>`internal/links/module_cycle_pass.go`<br>`internal/substrate/def_use_java.go`<br>`internal/substrate/effect_sinks_java.go`<br>`internal/substrate/entry_points_java.go`<br>`internal/substrate/taint_sites_java.go`<br>`internal/substrate/template_pattern_java.go` | — |
 | Template pattern catalog | 🟢 `partial` | — | 3154 | `internal/links/effect_propagation.go`<br>`internal/links/module_cycle_pass.go`<br>`internal/substrate/def_use_java.go`<br>`internal/substrate/effect_sinks_java.go`<br>`internal/substrate/entry_points_java.go`<br>`internal/substrate/taint_sites_java.go`<br>`internal/substrate/template_pattern_java.go` | — |

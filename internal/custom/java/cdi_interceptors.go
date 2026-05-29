@@ -25,11 +25,14 @@ import "regexp"
 // so no new entity Kind registration is required.
 
 // cdiFrameworks gates the frameworks for which CDI interceptor extraction runs.
+// MicroProfile is a CDI-based spec built on Jakarta EE; its interceptor model
+// is identical to Jakarta EE CDI, so it shares the same extractor (#3175).
 var cdiFrameworks = map[string]bool{
 	"jakarta_ee": true, "jakarta-ee": true, "jakartaee": true,
 	"java_ee": true, "javaee": true,
 	"jaxrs": true, "jax-rs": true, "jax_rs": true,
 	"quarkus": true,
+	"microprofile": true, "micro_profile": true, "micro-profile": true,
 }
 
 var (

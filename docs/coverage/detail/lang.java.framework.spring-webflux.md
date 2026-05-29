@@ -59,7 +59,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | DI binding extraction | 🟢 `partial` | `2026-05-29` | [link](#2991) | `internal/custom/java/spring_boot.go` | spring_webflux shares same DI model as spring_boot; @Autowired field/setter/constructor injection and @Bean method extraction handled by ExtractSpringBoot. No @Qualifier resolution. |
 | DI injection point | 🟢 `partial` | `2026-05-29` | [link](#2991) | `internal/custom/java/spring_boot.go` | spring_webflux uses same @Autowired/@Bean extractor as spring_boot; field, setter, and constructor injection detected. No @Qualifier or @Primary resolution. |
-| DI scope resolution | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| DI scope resolution | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/java/spring_boot.go` | spring_boot.go gate includes spring-webflux (line 13); emits spring_scope property (line 427) for @Scope/@RequestScope/@SessionScope/@ApplicationScope annotations. Registry cite was missing (#3176). |
 
 ### Transactions
 

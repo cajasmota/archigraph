@@ -14894,10 +14894,16 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/extractors/java/java.go"],
+            "notes": "Framework-blind Java extractor emits enum_declaration and interface_declaration nodes for all Java frameworks including GWT (#3178).",
+            "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/extractors/java/java.go"],
+            "notes": "Framework-blind Java extractor emits enum_declaration and interface_declaration nodes for all Java frameworks including GWT (#3178).",
+            "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
             "status": "not_applicable",
@@ -14999,8 +15005,11 @@
             "issue": "3154"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Framework-blind payload shapes sniffer fires for all Java sources; no GWT-specific gate required (#3178).",
+            "verified_at": "2026-05-29"
           },
           "taint_sink_detection": {
             "status": "partial",
@@ -16629,16 +16638,25 @@
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/cdi_interceptors.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "MicroProfile uses CDI interceptors (@Interceptor/@AroundInvoke/@InterceptorBinding) identical to Jakarta EE. cdiFrameworks gate in cdi_interceptors.go now includes \"microprofile\" (#3175).",
+            "verified_at": "2026-05-29"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/cdi_interceptors.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "MicroProfile uses CDI interceptors (@Interceptor/@AroundInvoke/@InterceptorBinding) identical to Jakarta EE. cdiFrameworks gate in cdi_interceptors.go now includes \"microprofile\" (#3175).",
+            "verified_at": "2026-05-29"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/cdi_interceptors.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "MicroProfile uses CDI interceptors (@Interceptor/@AroundInvoke/@InterceptorBinding) identical to Jakarta EE. cdiFrameworks gate in cdi_interceptors.go now includes \"microprofile\" (#3175).",
+            "verified_at": "2026-05-29"
           }
         },
         "Observability": {
@@ -16797,15 +16815,21 @@
       "capabilities": {
         "Structure": {
           "component_extraction": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "Play Framework Java is a server-side MVC framework with no client-side component model, data-loading hooks, or state management system (#3178).",
+            "verified_at": "2026-05-29"
           },
           "hook_recognition": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "Play Framework Java is a server-side MVC framework with no client-side component model, data-loading hooks, or state management system (#3178).",
+            "verified_at": "2026-05-29"
           }
         },
         "Data Flow": {
           "data_loaders": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "Play Framework Java is a server-side MVC framework with no client-side component model, data-loading hooks, or state management system (#3178).",
+            "verified_at": "2026-05-29"
           }
         },
         "Server": {
@@ -16827,7 +16851,10 @@
             "issue": "3090"
           },
           "router_pattern": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/java/play_routes.go"],
+            "notes": "playRoutesLineRE in play_routes.go extracts HTTP verb+path patterns from conf/routes DSL (#3178).",
+            "verified_at": "2026-05-29"
           }
         },
         "Build": {
@@ -16839,10 +16866,16 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/extractors/java/java.go"],
+            "notes": "Framework-blind Java extractor emits enum_declaration nodes for all Java frameworks including Play (#3178).",
+            "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/extractors/java/java.go"],
+            "notes": "Framework-blind Java extractor emits interface_declaration nodes for all Java frameworks including Play (#3178).",
+            "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
             "status": "missing"
@@ -16850,7 +16883,9 @@
         },
         "Lifecycle": {
           "state_setter_emission": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "Play Framework Java is a server-side MVC framework with no client-side component model, data-loading hooks, or state management system (#3178).",
+            "verified_at": "2026-05-29"
           }
         },
         "Testing": {
@@ -16869,8 +16904,11 @@
             "verified_at": "2026-05-29"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Framework-blind Java constant sniffer fires for all Java sources including Play (#3178).",
+            "verified_at": "2026-05-29"
           },
           "db_effect": {
             "status": "partial",
@@ -16888,8 +16926,11 @@
             "issue": "3154"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Framework-blind Java substrate env-fallback sniffer fires for all Java sources (#3178).",
+            "verified_at": "2026-05-29"
           },
           "fs_effect": {
             "status": "partial",
@@ -16902,8 +16943,11 @@
             "issue": "3154"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Framework-blind Java import sniffer fires for all Java sources including Play (#3178).",
+            "verified_at": "2026-05-29"
           },
           "module_cycle_detection": {
             "status": "partial",
@@ -16940,8 +16984,11 @@
             "issue": "3154"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Framework-blind payload shapes sniffer fires for all Java sources; no Play-specific gate required (#3178).",
+            "verified_at": "2026-05-29"
           },
           "taint_sink_detection": {
             "status": "partial",
@@ -17686,8 +17733,11 @@
             "verified_at": "2026-05-29"
           },
           "di_scope_resolution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_boot.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "spring_boot.go gate includes spring-webflux (line 13); emits spring_scope property (line 427) for @Scope/@RequestScope/@SessionScope/@ApplicationScope annotations. Registry cite was missing (#3176).",
+            "verified_at": "2026-05-29"
           }
         },
         "Transactions": {
@@ -18205,10 +18255,16 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/extractors/java/java.go"],
+            "notes": "Framework-blind Java extractor emits enum_declaration and interface_declaration nodes for all Java frameworks including Vaadin (#3178).",
+            "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/extractors/java/java.go"],
+            "notes": "Framework-blind Java extractor emits enum_declaration and interface_declaration nodes for all Java frameworks including Vaadin (#3178).",
+            "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
             "status": "not_applicable",
@@ -18310,8 +18366,11 @@
             "issue": "3154"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_java.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Framework-blind payload shapes sniffer fires for all Java sources; no Vaadin-specific gate required (#3178).",
+            "verified_at": "2026-05-29"
           },
           "taint_sink_detection": {
             "status": "partial",
@@ -18738,8 +18797,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -18802,8 +18862,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -18866,7 +18927,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -18994,7 +19057,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19031,12 +19096,18 @@
             "verified_at": "2026-05-29"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/jpa_fk_lazy.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "MyBatis mappers may co-exist with JPA annotations in hybrid projects; jpa_fk_lazy.go handles @JoinColumn/@FetchType patterns when present. Coverage is indirect (#3180).",
+            "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/jpa_fk_lazy.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "MyBatis mappers may co-exist with JPA annotations in hybrid projects; jpa_fk_lazy.go handles @JoinColumn/@FetchType patterns when present. Coverage is indirect (#3180).",
+            "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
             "status": "partial",
@@ -19055,8 +19126,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "MyBatis is an SQL mapper; database migration files are owned by Flyway/Liquibase, not MyBatis. Same rationale as T1 ORM sweep (#3180).",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19155,12 +19227,18 @@
             "verified_at": "2026-05-29"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/jpa_fk_lazy.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Panache is a thin JPA wrapper; entity classes use standard JPA annotations (@JoinColumn/@ManyToOne/FetchType.LAZY). ExtractJPAFKAndLazy in jpa_fk_lazy.go handles these patterns for JPA-family extractors (#3180).",
+            "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/jpa_fk_lazy.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Panache is a thin JPA wrapper; entity classes use standard JPA annotations (@JoinColumn/@ManyToOne/FetchType.LAZY). ExtractJPAFKAndLazy in jpa_fk_lazy.go handles these patterns for JPA-family extractors (#3180).",
+            "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
             "status": "partial",
@@ -19181,8 +19259,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Panache is a JPA wrapper (Quarkus-backed); database migration files are owned by Flyway/Liquibase. Same rationale as T1 ORM sweep (#3180).",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19240,8 +19319,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19299,8 +19379,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19363,7 +19444,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19421,8 +19504,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
@@ -19480,8 +19564,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing",
-            "notes": "No Java ORM migration extractor. Flyway/Liquibase migration parsing is tracked separately as its own category; not a responsibility of this ORM record."
+            "status": "not_applicable",
+            "notes": "ORM model-definition layer; database migration files are owned by Flyway/Liquibase, not the ORM itself. Same rationale as lang.java.orm.jooq and lang.java.orm.neo4j N/A.",
+            "verified_at": "2026-05-29"
           }
         }
       }
