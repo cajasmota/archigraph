@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/django.go`<br>`internal/mcp/auth_coverage.go` | login_required and permission_required decorators extracted by django.go; auth_coverage.go MCP tool analyses coverage graph-wide |
+| Auth coverage | ✅ `full` | `2026-05-29` | 3052 | `internal/custom/python/django.go`<br>`internal/extractors/python/django_drf_permissions.go`<br>`internal/mcp/auth_coverage.go` | @login_required and @permission_required decorators explicitly extracted by django.go; DRF permission_classes + get_permissions() per-class + repo DEFAULT_PERMISSION_CLASSES analysed by auth_coverage.go; comprehensive multi-signal detection |
 
 ### Validation
 

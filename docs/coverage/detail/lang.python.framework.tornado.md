@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ❌ `missing` | — | — | — | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | 3052 | `internal/mcp/auth_coverage.go`<br>`internal/patterns/decorator_extractor.go` | Tornado @tornado.web.authenticated decorator now detected via authAnnotationNames (tornado.web.authenticated added in #3052) |
 
 ### Validation
 

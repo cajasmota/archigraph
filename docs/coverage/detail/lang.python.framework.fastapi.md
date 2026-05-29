@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/rules/python/frameworks/fastapi.yaml` | — |
+| Auth coverage | ✅ `full` | `2026-05-29` | 3052 | `internal/custom/python/fastapi.go`<br>`internal/mcp/auth_coverage.go`<br>`internal/patterns/auth_endpoint_linker.go` | Depends(get_current_user/get_current_active_user/oauth2_scheme/verify_token/authenticate/require_auth) detected by auth_endpoint_linker authFastAPIDependsRE; additional injection via fastapi.go decorator pass; comprehensive OAuth2/JWT coverage |
 
 ### Validation
 

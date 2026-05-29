@@ -106,6 +106,8 @@ var authAnnotationNames = map[string]bool{
 	// Rails
 	"before_action":      true, // commonly used with authenticate_user!
 	"authenticate_user!": true,
+	// Tornado
+	"tornado.web.authenticated": true,
 	// Generic
 	"auth":          true,
 	"authenticated": true,

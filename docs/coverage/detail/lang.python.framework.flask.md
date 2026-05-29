@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/flask.go` | — |
+| Auth coverage | ✅ `full` | `2026-05-29` | 3052 | `internal/custom/python/flask.go`<br>`internal/mcp/auth_coverage.go` | @login_required (Flask-Login) explicitly extracted by flask.go flLoginRequiredRe; jwt_required/fresh_jwt_required/roles_required/roles_accepted in authAnnotationNames; comprehensive Flask auth decorator coverage |
 
 ### Validation
 

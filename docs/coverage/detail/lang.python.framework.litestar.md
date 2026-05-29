@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ❌ `missing` | — | — | — | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | 3052 | `internal/mcp/auth_coverage.go`<br>`internal/patterns/decorator_extractor.go` | Litestar guards (AbstractAuthenticationMiddleware, guards=[]) not yet specifically extracted; generic decorator sniffer covers @login_required/@authorized patterns |
 
 ### Validation
 

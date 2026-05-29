@@ -32929,7 +32929,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "aiohttp-security @login_required decorator detected via generic sniffer in authAnnotationNames (decorator_extractor.go + auth_coverage.go isAuthPolicyEntity)",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -33150,7 +33154,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Bottle @require decorator captured by generic decorator sniffer; @authorized/@authenticated also detected via authAnnotationNames",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -33556,7 +33564,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "CherryPy auth via generic decorator sniffer (authorized/authenticated) in authAnnotationNames; no framework-specific extractor",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -33774,9 +33786,10 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/python/django.go","internal/mcp/auth_coverage.go"],
-            "notes": "login_required and permission_required decorators extracted by django.go; auth_coverage.go MCP tool analyses coverage graph-wide",
+            "status": "full",
+            "cites": ["internal/custom/python/django.go","internal/extractors/python/django_drf_permissions.go","internal/mcp/auth_coverage.go"],
+            "issue": "3052",
+            "notes": "@login_required and @permission_required decorators explicitly extracted by django.go; DRF permission_classes + get_permissions() per-class + repo DEFAULT_PERMISSION_CLASSES analysed by auth_coverage.go; comprehensive multi-signal detection",
             "verified_at": "2026-05-29"
           }
         },
@@ -34410,7 +34423,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Falcon auth via generic decorator sniffer (authorized/authenticated) in authAnnotationNames; no framework-specific extractor",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -34628,9 +34645,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/python/frameworks/fastapi.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/python/fastapi.go","internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go"],
+            "issue": "3052",
+            "notes": "Depends(get_current_user/get_current_active_user/oauth2_scheme/verify_token/authenticate/require_auth) detected by auth_endpoint_linker authFastAPIDependsRE; additional injection via fastapi.go decorator pass; comprehensive OAuth2/JWT coverage",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -34854,8 +34873,10 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/python/flask.go"],
+            "status": "full",
+            "cites": ["internal/custom/python/flask.go","internal/mcp/auth_coverage.go"],
+            "issue": "3052",
+            "notes": "@login_required (Flask-Login) explicitly extracted by flask.go flLoginRequiredRe; jwt_required/fresh_jwt_required/roles_required/roles_accepted in authAnnotationNames; comprehensive Flask auth decorator coverage",
             "verified_at": "2026-05-29"
           }
         },
@@ -35075,7 +35096,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Hug auth via generic decorator sniffer (authorized/authenticated) in authAnnotationNames; no framework-specific extractor",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -35315,7 +35340,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Litestar guards (AbstractAuthenticationMiddleware, guards=[]) not yet specifically extracted; generic decorator sniffer covers @login_required/@authorized patterns",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -35536,7 +35565,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Pyramid ACL + @login_required/@forbidden_view_config decorators detected via authAnnotationNames sniffer (login_required: true in map)",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -35750,7 +35783,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Quart is Flask-Login-compatible; @login_required detected via authAnnotationNames (login_required: true in map)",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -35970,7 +36007,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Robyn auth via generic decorator sniffer (authorized/authenticated) in authAnnotationNames; no framework-specific extractor",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -36372,7 +36413,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Sanic @authorized decorator detected via authAnnotationNames (authorized: true); Depends() patterns via auth_endpoint_linker",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -36592,7 +36637,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go"],
+            "issue": "3052",
+            "notes": "Starlette shares FastAPI Depends() auth injection mechanism; auth_endpoint_linker authFastAPIDependsRE detects Depends(get_current_user) etc.",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -36811,7 +36860,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Strawberry-GraphQL auth context not yet specifically extracted; generic decorator sniffer detects @authorized/@authenticated on resolver functions",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -37031,7 +37084,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3052",
+            "notes": "Tornado @tornado.web.authenticated decorator now detected via authAnnotationNames (tornado.web.authenticated added in #3052)",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {

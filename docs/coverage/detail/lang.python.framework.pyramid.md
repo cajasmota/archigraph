@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ❌ `missing` | — | — | — | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | 3052 | `internal/mcp/auth_coverage.go`<br>`internal/patterns/auth_endpoint_linker.go`<br>`internal/patterns/decorator_extractor.go` | Pyramid ACL + @login_required/@forbidden_view_config decorators detected via authAnnotationNames sniffer (login_required: true in map) |
 
 ### Validation
 

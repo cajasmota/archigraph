@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ❌ `missing` | — | — | — | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | 3052 | `internal/mcp/auth_coverage.go`<br>`internal/patterns/auth_endpoint_linker.go`<br>`internal/patterns/decorator_extractor.go` | aiohttp-security @login_required decorator detected via generic sniffer in authAnnotationNames (decorator_extractor.go + auth_coverage.go isAuthPolicyEntity) |
 
 ### Validation
 

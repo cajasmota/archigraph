@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ❌ `missing` | — | — | — | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | 3052 | `internal/mcp/auth_coverage.go`<br>`internal/patterns/auth_endpoint_linker.go` | Starlette shares FastAPI Depends() auth injection mechanism; auth_endpoint_linker authFastAPIDependsRE detects Depends(get_current_user) etc. |
 
 ### Validation
 
