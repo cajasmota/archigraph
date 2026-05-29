@@ -152,10 +152,14 @@
       "label": "Flit",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/rules/python/build_tools.yaml"],
+          "issue": "3078"
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/rules/python/build_tools.yaml"],
+          "issue": "3078"
         }
       }
     },
@@ -47149,10 +47153,13 @@
       "label": "doctest (stdlib)",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "not_applicable",
+          "issue": "3078"
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/py_doctest_targets.go"],
+          "issue": "3078"
         }
       }
     },
@@ -47269,10 +47276,13 @@
       "label": "Hypothesis (property tests)",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "not_applicable",
+          "issue": "3078"
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/py_hypothesis_targets.go","internal/engine/rules/python/test_patterns.yaml"],
+          "issue": "3078"
         }
       }
     },
@@ -47437,10 +47447,13 @@
       "label": "nose2",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "not_applicable",
+          "issue": "3078"
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/py_nose2_targets.go","internal/engine/rules/python/test_patterns.yaml"],
+          "issue": "3078"
         }
       }
     },
