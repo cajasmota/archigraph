@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,6 +65,38 @@ type timelineDoc struct {
 	GeneratedPhases []string                   `json:"generated_phases"`
 	Entries         []timelineEntry            `json:"entries"`
 	PerPhase        map[string]*phaseAggregate `json:"per_phase"`
+	Parity          *parityReport              `json:"parity,omitempty"`
+}
+
+// paritySnapshot is one periodic endpoint-count reading for a group, used to
+// chart 1:1 migration progress (old surface vs new reproduced over time).
+type paritySnapshot struct {
+	TS        string `json:"ts"`
+	Group     string `json:"group"`
+	Endpoints int    `json:"endpoints"`
+}
+
+// parityFileSchema is the JSON accepted by --parity-file. old_group/new_group
+// are optional in the file (flags/defaults fill them in).
+type parityFileSchema struct {
+	OldGroup  string           `json:"old_group,omitempty"`
+	NewGroup  string           `json:"new_group,omitempty"`
+	Snapshots []paritySnapshot `json:"snapshots"`
+}
+
+// parityReport is the computed 1:1-parity convergence emitted in timeline.json.
+type parityReport struct {
+	OldGroup    string        `json:"old_group"`
+	NewGroup    string        `json:"new_group"`
+	Denominator int           `json:"denominator"` // old-surface endpoint count
+	LatestPct   float64       `json:"latest_pct"`  // newest new/old, 0..100
+	Curve       []parityPoint `json:"curve"`       // new-group readings over time
+}
+
+type parityPoint struct {
+	TS        string  `json:"ts"`
+	Endpoints int     `json:"endpoints"`
+	Pct       float64 `json:"pct"`
 }
 
 // newFeedbackTimelineCmd returns `archigraph feedback timeline` (#3206).
@@ -75,6 +108,9 @@ func newFeedbackTimelineCmd() *cobra.Command {
 		rpcLog       string
 		repos        []string
 		phaseTrailer string
+		parityFile   string
+		oldGroup     string
+		newGroup     string
 	)
 	cmd := &cobra.Command{
 		Use:   "timeline",
@@ -103,6 +139,9 @@ All data is local; no network calls.`,
 				rpcLog:       rpcLog,
 				repos:        repos,
 				phaseTrailer: phaseTrailer,
+				parityFile:   parityFile,
+				oldGroup:     oldGroup,
+				newGroup:     newGroup,
 			})
 		},
 	}
@@ -112,6 +151,9 @@ All data is local; no network calls.`,
 	cmd.Flags().StringVar(&rpcLog, "rpc-log", "", "daemon log path for mcp_rpc query timeline (default: ~/.archigraph/logs/daemon.log; skipped if absent)")
 	cmd.Flags().StringArrayVar(&repos, "repo", nil, "path to a new repo whose git log supplies commit milestones (repeatable)")
 	cmd.Flags().StringVar(&phaseTrailer, "phase-trailer", "Archigraph-Phase", "git trailer key used for exact commit→phase correlation")
+	cmd.Flags().StringVar(&parityFile, "parity-file", "", "JSON of periodic endpoint-count snapshots → 1:1 parity convergence section")
+	cmd.Flags().StringVar(&oldGroup, "old-group", "legacy-backend", "group name for the old/source surface (parity denominator)")
+	cmd.Flags().StringVar(&newGroup, "new-group", "new-backend", "group name for the new/target surface (parity numerator)")
 	return cmd
 }
 
@@ -122,6 +164,9 @@ type timelineOpts struct {
 	rpcLog       string
 	repos        []string
 	phaseTrailer string
+	parityFile   string
+	oldGroup     string
+	newGroup     string
 }
 
 func runFeedbackTimeline(cmd *cobra.Command, opts timelineOpts) error {
@@ -247,6 +292,16 @@ func runFeedbackTimeline(cmd *cobra.Command, opts timelineOpts) error {
 	// Build per-phase aggregates and the phase ordering (first-seen ts, but
 	// "planning" forced first).
 	doc := buildTimelineDoc(opts.since, entries)
+
+	// Optional 1:1-parity convergence from periodic endpoint-count snapshots.
+	if opts.parityFile != "" {
+		parity, err := loadParity(opts.parityFile, opts.oldGroup, opts.newGroup, opts.since)
+		if err != nil {
+			fmt.Fprintf(errW, "warning: parity-file %s: %v\n", opts.parityFile, err)
+		} else {
+			doc.Parity = parity
+		}
+	}
 
 	if err := os.MkdirAll(opts.outDir, 0o755); err != nil {
 		return fmt.Errorf("feedback timeline: mkdir %s: %w", opts.outDir, err)
@@ -609,6 +664,83 @@ func afterSince(ts, since string) bool {
 // renderTimelineMarkdown produces the narrative timeline.md: a title + overall
 // span + totals, then one "## <phase>" chapter per phase (in GeneratedPhases
 // order) with a quantified header line and a chronological bullet list.
+// loadParity reads the --parity-file snapshots and computes the 1:1
+// convergence curve. The denominator is the latest old-group snapshot's
+// endpoint count; the curve is each new-group snapshot's count as a % of it.
+// File-level old_group/new_group override the flag defaults. since drops
+// snapshots dated before it.
+func loadParity(path, oldGroupFlag, newGroupFlag, since string) (*parityReport, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var sch parityFileSchema
+	if err := json.Unmarshal(b, &sch); err != nil {
+		return nil, fmt.Errorf("parse: %w", err)
+	}
+	oldG, newG := oldGroupFlag, newGroupFlag
+	if sch.OldGroup != "" {
+		oldG = sch.OldGroup
+	}
+	if sch.NewGroup != "" {
+		newG = sch.NewGroup
+	}
+
+	snaps := make([]paritySnapshot, 0, len(sch.Snapshots))
+	for _, s := range sch.Snapshots {
+		if since != "" && len(s.TS) >= 10 && s.TS[:10] < since {
+			continue
+		}
+		snaps = append(snaps, s)
+	}
+	sort.SliceStable(snaps, func(i, j int) bool { return snaps[i].TS < snaps[j].TS })
+
+	// Denominator = endpoints of the latest old-group snapshot.
+	denom := 0
+	for _, s := range snaps {
+		if s.Group == oldG {
+			denom = s.Endpoints // snaps are ts-sorted; last wins
+		}
+	}
+
+	rep := &parityReport{OldGroup: oldG, NewGroup: newG, Denominator: denom}
+	for _, s := range snaps {
+		if s.Group != newG {
+			continue
+		}
+		pct := 0.0
+		if denom > 0 {
+			pct = math.Round(float64(s.Endpoints)/float64(denom)*1000) / 10 // 0.1% precision
+		}
+		rep.Curve = append(rep.Curve, parityPoint{TS: s.TS, Endpoints: s.Endpoints, Pct: pct})
+	}
+	if n := len(rep.Curve); n > 0 {
+		rep.LatestPct = rep.Curve[n-1].Pct
+	}
+	return rep, nil
+}
+
+// renderParitySection appends the 1:1-parity convergence to the report.
+func renderParitySection(b *strings.Builder, p *parityReport) {
+	b.WriteString("## Parity (1:1 endpoint convergence)\n\n")
+	if p.Denominator == 0 {
+		fmt.Fprintf(b, "_No %q baseline snapshot found — cannot compute parity %%. "+
+			"Add an old-group snapshot to the parity file._\n\n", p.OldGroup)
+		return
+	}
+	fmt.Fprintf(b, "Old surface (`%s`): **%d** endpoints. New (`%s`) reproduced: **%.1f%%**.\n\n",
+		p.OldGroup, p.Denominator, p.NewGroup, p.LatestPct)
+	if len(p.Curve) == 0 {
+		b.WriteString("_No new-group snapshots yet._\n\n")
+		return
+	}
+	b.WriteString("| Date | New endpoints | Parity % |\n|---|---:|---:|\n")
+	for _, pt := range p.Curve {
+		fmt.Fprintf(b, "| %s | %d | %.1f%% |\n", pt.TS, pt.Endpoints, pt.Pct)
+	}
+	b.WriteString("\n")
+}
+
 func renderTimelineMarkdown(doc timelineDoc) string {
 	var b strings.Builder
 	b.WriteString("# archigraph migration timeline\n\n")
@@ -637,6 +769,10 @@ func renderTimelineMarkdown(doc timelineDoc) string {
 
 	fmt.Fprintf(&b, "Span: **%s → %s**. %d events, %d queries (~%d tokens), %d commits across %d phase(s).\n\n",
 		overallFirst, overallLast, len(doc.Entries), totalQueries, totalTokens, totalCommits, len(doc.GeneratedPhases))
+
+	if doc.Parity != nil {
+		renderParitySection(&b, doc.Parity)
+	}
 
 	for _, phase := range doc.GeneratedPhases {
 		agg := doc.PerPhase[phase]
