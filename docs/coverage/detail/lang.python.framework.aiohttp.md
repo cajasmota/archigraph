@@ -15,8 +15,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Endpoint synthesis | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/python/frameworks/aiohttp.yaml` | — |
-| Handler attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/python/frameworks/aiohttp.yaml` | — |
+| Endpoint synthesis | ❌ `missing` | `2026-05-28` | 2979 | `internal/engine/rules/python/frameworks/aiohttp.yaml` | — |
+| Handler attribution | ❌ `missing` | `2026-05-28` | 2979 | `internal/engine/rules/python/frameworks/aiohttp.yaml` | — |
 | Route extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Auth

@@ -31248,13 +31248,15 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/aiohttp.yaml"],
+            "issue": "2979",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/aiohttp.yaml"],
+            "issue": "2979",
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
@@ -31425,13 +31427,15 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/bottle.yaml"],
+            "issue": "2979",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/bottle.yaml"],
+            "issue": "2979",
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
@@ -33172,13 +33176,15 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/litestar.yaml"],
+            "issue": "2980",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/litestar.yaml"],
+            "issue": "2980",
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
@@ -33699,13 +33705,15 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/robyn.yaml"],
+            "issue": "2980",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/robyn.yaml"],
+            "issue": "2980",
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
@@ -34011,13 +34019,15 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/sanic.yaml"],
+            "issue": "2980",
             "verified_at": "2026-05-28"
           },
           "handler_attribution": {
-            "status": "full",
+            "status": "missing",
             "cites": ["internal/engine/rules/python/frameworks/sanic.yaml"],
+            "issue": "2980",
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
