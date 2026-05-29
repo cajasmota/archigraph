@@ -73,9 +73,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Advice attribution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Aspect extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Pointcut resolution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Advice attribution | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3004) | `internal/custom/java/spring_aop.go` | Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect->advice/pointcut and REFERENCES advice->named pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented. |
+| Aspect extraction | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3004) | `internal/custom/java/spring_aop.go` | Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect->advice/pointcut and REFERENCES advice->named pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented. |
+| Pointcut resolution | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3004) | `internal/custom/java/spring_aop.go` | Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect->advice/pointcut and REFERENCES advice->named pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented. |
 
 ### Observability
 

@@ -17052,16 +17052,25 @@
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3004",
+            "notes": "Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect-\u003eadvice/pointcut and REFERENCES advice-\u003enamed pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented.",
+            "verified_at": "2026-05-29"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3004",
+            "notes": "Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect-\u003eadvice/pointcut and REFERENCES advice-\u003enamed pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented.",
+            "verified_at": "2026-05-29"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3004",
+            "notes": "Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect-\u003eadvice/pointcut and REFERENCES advice-\u003enamed pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented.",
+            "verified_at": "2026-05-29"
           }
         },
         "Observability": {
@@ -17332,16 +17341,25 @@
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3004",
+            "notes": "Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect-\u003eadvice/pointcut and REFERENCES advice-\u003enamed pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented.",
+            "verified_at": "2026-05-29"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3004",
+            "notes": "Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect-\u003eadvice/pointcut and REFERENCES advice-\u003enamed pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented.",
+            "verified_at": "2026-05-29"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3004",
+            "notes": "Spring AOP / AspectJ: @Aspect classes, @Pointcut declarations, and @Before/@After/@Around/@AfterReturning/@AfterThrowing advice extracted as SCOPE.Pattern entities (subtype aspect/pointcut/advice) with advice_type + pointcut expression; OWNS aspect-\u003eadvice/pointcut and REFERENCES advice-\u003enamed pointcut. Regex-based, single-file scope; cross-file pointcut resolution not implemented.",
+            "verified_at": "2026-05-29"
           }
         },
         "Observability": {
