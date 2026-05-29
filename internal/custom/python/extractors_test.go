@@ -2630,6 +2630,125 @@ class UserSchema(Schema):
 	}
 }
 
+// TestMarshmallow_Constraint_Range verifies validate.Range(min,max) extraction.
+// Issue #3077.
+func TestMarshmallow_Constraint_Range(t *testing.T) {
+	src := `from marshmallow import Schema, fields, validate
+
+class PriceSchema(Schema):
+    price = fields.Float(validate=validate.Range(min=0, max=9999))
+`
+	ents := extract(t, "python_marshmallow", src)
+	found := false
+	for _, e := range ents {
+		if e.Name == "constraint_price" &&
+			e.Props["constraint_validator"] == "Range" &&
+			e.Props["constraint_min"] == "0" &&
+			e.Props["constraint_max"] == "9999" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected constraint_price with Range(min=0, max=9999), got %+v", ents)
+	}
+}
+
+// TestMarshmallow_Constraint_Length verifies validate.Length(min,max) extraction.
+// Issue #3077.
+func TestMarshmallow_Constraint_Length(t *testing.T) {
+	src := `from marshmallow import Schema, fields, validate
+
+class ItemSchema(Schema):
+    name = fields.Str(validate=validate.Length(min=1, max=100))
+`
+	ents := extract(t, "python_marshmallow", src)
+	found := false
+	for _, e := range ents {
+		if e.Name == "constraint_name" &&
+			e.Props["constraint_validator"] == "Length" &&
+			e.Props["constraint_min"] == "1" &&
+			e.Props["constraint_max"] == "100" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected constraint_name with Length(min=1, max=100), got %+v", ents)
+	}
+}
+
+// TestMarshmallow_Constraint_OneOf verifies validate.OneOf([...]) extraction.
+// Issue #3077.
+func TestMarshmallow_Constraint_OneOf(t *testing.T) {
+	src := `from marshmallow import Schema, fields, validate
+
+class StatusSchema(Schema):
+    status = fields.Str(validate=validate.OneOf(["active", "inactive"]))
+`
+	ents := extract(t, "python_marshmallow", src)
+	found := false
+	for _, e := range ents {
+		if e.Name == "constraint_status" &&
+			e.Props["constraint_validator"] == "OneOf" &&
+			e.Props["constraint_choices"] != "" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected constraint_status with OneOf, got %+v", ents)
+	}
+}
+
+// TestMarshmallow_Constraint_NoLambda ensures a plain lambda validate= does NOT
+// emit a constraint entity (no recognized validate.* validator call). Issue #3077.
+func TestMarshmallow_Constraint_NoLambda(t *testing.T) {
+	src := `from marshmallow import Schema, fields
+
+class OrderSchema(Schema):
+    amount = fields.Float(required=True, validate=lambda x: x > 0)
+`
+	ents := extract(t, "python_marshmallow", src)
+	for _, e := range ents {
+		if e.Name == "constraint_amount" {
+			t.Fatal("constraint_amount must not be emitted for a lambda validate=")
+		}
+	}
+}
+
+// TestMarshmallow_Constraint_FullFixture exercises constraint extraction against
+// testdata/marshmallow_nested.py. Proves constraint_extraction. Issue #3077.
+func TestMarshmallow_Constraint_FullFixture(t *testing.T) {
+	content, err := os.ReadFile("testdata/marshmallow_nested.py")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	ext, _ := extractor.Get("python_marshmallow")
+	ents, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "testdata/marshmallow_nested.py",
+		Content:  content,
+		Language: "python",
+	})
+	if err != nil {
+		t.Fatalf("extract fixture: %v", err)
+	}
+
+	// ProductSchema has price (Range), name (Length), status (OneOf).
+	want := map[string]bool{
+		"constraint_price":  false, // validate.Range(min=0, max=99999)
+		"constraint_name":   false, // validate.Length(min=1, max=100)
+		"constraint_status": false, // validate.OneOf([...])
+	}
+	for _, e := range ents {
+		if _, tracked := want[e.Name]; tracked {
+			want[e.Name] = true
+		}
+	}
+	for name, found := range want {
+		if !found {
+			t.Errorf("fixture: expected constraint entity %q not emitted", name)
+		}
+	}
+}
+
 func TestMarshmallow_NoMatch(t *testing.T) {
 	src := `def regular():
     pass
@@ -2805,6 +2924,125 @@ class Payment:
 	}
 	if !found {
 		t.Fatal("expected attrib entity with converter=float for amount")
+	}
+}
+
+// TestAttrs_Constraint_InstanceOf verifies that validators.instance_of() on an
+// attrib() / field() emits a constraint_<field> entity. Issue #3077.
+func TestAttrs_Constraint_InstanceOf(t *testing.T) {
+	src := `import attr
+
+@attr.s
+class Address:
+    street = attr.ib(validator=attr.validators.instance_of(str))
+    zip_code = attr.ib(default="")
+`
+	ents := extract(t, "python_attrs", src)
+	found := false
+	for _, e := range ents {
+		if e.Name == "constraint_street" &&
+			e.Props["pattern_type"] == "constraint" &&
+			e.Props["constraint_validator"] == "instance_of" &&
+			e.Props["constraint_type"] == "str" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected constraint_street with instance_of/str, got %+v", ents)
+	}
+	// zip_code has no validator= kwarg — must NOT emit a constraint entity.
+	for _, e := range ents {
+		if e.Name == "constraint_zip_code" {
+			t.Fatal("constraint_zip_code should not be emitted for a field with no validator")
+		}
+	}
+}
+
+// TestAttrs_Constraint_In verifies validators.in_([...]) constraint extraction.
+// Issue #3077.
+func TestAttrs_Constraint_In(t *testing.T) {
+	src := `import attr
+import attrs
+
+@attrs.define
+class Product:
+    status: str = field(validator=attr.validators.in_(["active", "inactive"]))
+`
+	ents := extract(t, "python_attrs", src)
+	found := false
+	for _, e := range ents {
+		if e.Name == "constraint_status" &&
+			e.Props["constraint_validator"] == "in_" &&
+			e.Props["constraint_values"] != "" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected constraint_status with in_ validator, got %+v", ents)
+	}
+}
+
+// TestAttrs_Constraint_And verifies validators.and_(...) constraint extraction.
+// Issue #3077.
+func TestAttrs_Constraint_And(t *testing.T) {
+	src := `import attr
+import attrs
+from attrs import define, field
+
+@attrs.define
+class Order:
+    quantity: int = field(
+        validator=attr.validators.and_(
+            attr.validators.instance_of(int),
+            attr.validators.in_([1, 5, 10]),
+        )
+    )
+`
+	ents := extract(t, "python_attrs", src)
+	found := false
+	for _, e := range ents {
+		if e.Name == "constraint_quantity" && e.Props["constraint_validator"] == "and_" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected constraint_quantity with and_ validator, got %+v", ents)
+	}
+}
+
+// TestAttrs_Constraint_FullFixture exercises the constraint entities against the
+// testdata/attrs_validators.py fixture. Proves constraint_extraction. Issue #3077.
+func TestAttrs_Constraint_FullFixture(t *testing.T) {
+	content, err := os.ReadFile("testdata/attrs_validators.py")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	ext, _ := extractor.Get("python_attrs")
+	ents, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "testdata/attrs_validators.py",
+		Content:  content,
+		Language: "python",
+	})
+	if err != nil {
+		t.Fatalf("extract fixture: %v", err)
+	}
+
+	// street/city use instance_of(str); status uses in_(); quantity uses and_().
+	want := map[string]bool{
+		"constraint_street": false, // instance_of(str)
+		"constraint_city":   false, // instance_of(str)
+		"constraint_status": false, // in_(["active", ...])
+		"constraint_quantity": false, // and_(...)
+	}
+	for _, e := range ents {
+		if _, tracked := want[e.Name]; tracked {
+			want[e.Name] = true
+		}
+	}
+	for name, found := range want {
+		if !found {
+			t.Errorf("fixture: expected constraint entity %q not emitted", name)
+		}
 	}
 }
 

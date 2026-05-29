@@ -1,15 +1,16 @@
-"""Dependency-free proving fixture for the attrs extractor (issue #2985).
+"""Dependency-free proving fixture for the attrs extractor (issue #2985, #3077).
 
 Exercises attrs class declarations (@attr.s, @attr.define, @define),
 attribute declarations (attrib / field), @<field>.validator decorator
-validators, validator= kwarg, and converter= for type coercion.
+validators, validator= kwarg, converter= for type coercion, and
+constraint extraction via validators.instance_of() / in_() / and_().
 """
 import attr
 import attrs
 from attrs import define, field, Factory
 
 
-# Classic @attr.s style
+# Classic @attr.s style — instance_of() constraints
 @attr.s
 class Address:
     street = attr.ib(validator=attr.validators.instance_of(str))
@@ -55,3 +56,15 @@ class Invoice:
     order: Order = attr.ib()
     billing_address: Address = attr.ib()
     total: float = attr.ib(default=0.0, converter=float)
+
+
+# Constraint extraction evidence — validators.in_() and validators.and_() (issue #3077)
+@attrs.define
+class Product:
+    status: str = field(validator=attr.validators.in_(["active", "inactive", "pending"]))
+    quantity: int = field(
+        validator=attr.validators.and_(
+            attr.validators.instance_of(int),
+            attr.validators.in_([1, 5, 10, 50, 100]),
+        )
+    )

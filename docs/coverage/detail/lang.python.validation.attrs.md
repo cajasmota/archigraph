@@ -22,7 +22,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Constraint extraction | ❌ `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/2985) | — | — |
+| Constraint extraction | ⚠️ `partial` | `2026-05-29` | 3077 | `internal/custom/python/attrs.go`<br>`internal/custom/python/extractors_test.go`<br>`internal/custom/python/testdata/attrs_validators.py` | validators.instance_of(), in_(), and and_() on attrib()/field() validator= kwargs emit constraint_<field> SCOPE.Pattern entities; tested in TestAttrs_Constraint_InstanceOf, TestAttrs_Constraint_In, TestAttrs_Constraint_And, TestAttrs_Constraint_FullFixture. |
 | Custom validator extraction | ✅ `full` | `2026-05-29` | 3061 | `internal/custom/python/attrs.go`<br>`internal/custom/python/extractors_test.go`<br>`internal/custom/python/testdata/attrs_validators.py` | @<field>.validator decorator-style validators (TestAttrs_FieldValidator) and validator= kwarg (TestAttrs_ValidatorKwarg) both fully extracted as SCOPE.Pattern field_validator entities; TestAttrs_FullFixture exercises the fixture end-to-end. |
 
 ### Coercion

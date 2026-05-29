@@ -66,6 +66,17 @@ var (
 
 	// Coercion kwarg on a field, e.g. load_default=, missing=, data_key=
 	mmCoercionKwargRe = regexp.MustCompile(`\b(?:load_default|missing|data_key|load_only|dump_only)\s*=`)
+
+	// Constraint validators: detect validate.Range / validate.Length / validate.OneOf
+	// in the field declaration's argument blob. The blob may be truncated at the first
+	// ")" by the field regex (which uses [^)]*), so regexes do not require closing ")".
+	mmValidateRangeRe  = regexp.MustCompile(`(?:[\w.]*validate\.)?Range\s*\(([^)]*)`)
+	mmValidateLengthRe = regexp.MustCompile(`(?:[\w.]*validate\.)?Length\s*\(([^)]*)`)
+	mmValidateOneOfRe  = regexp.MustCompile(`(?:[\w.]*validate\.)?OneOf\s*\(([^)]*)`)
+
+	// min= / max= inside Range/Length arg blobs
+	mmConstraintMinRe = regexp.MustCompile(`\bmin\s*=\s*([^\s,)]+)`)
+	mmConstraintMaxRe = regexp.MustCompile(`\bmax\s*=\s*([^\s,)]+)`)
 )
 
 // marshmallowReferenced reports whether the source likely uses marshmallow.
@@ -207,6 +218,59 @@ func (e *MarshmallowExtractor) Extract(ctx context.Context, file extractor.FileI
 				"hook_type":    hookType,
 				"hook_fn":      fnName,
 			},
+		))
+	}
+
+	// 7. Constraint extraction: validate.Range(min,max) / validate.Length(min,max) /
+	// validate.OneOf([...]) on field declarations. The field args blob may be truncated
+	// at the first ")" by mmFieldRe, but that is enough to detect the validator and
+	// extract min/max kwargs. Issue #3077.
+	for _, idx := range allMatchesIndex(mmFieldRe, source) {
+		fieldName := source[idx[2]:idx[3]]
+		args := source[idx[6]:idx[7]]
+		// Only process fields that have a validate= kwarg referencing a named validator
+		// (not a plain lambda — lambdas don't contain a word boundary before "Range" etc.)
+		if !strings.Contains(args, "validate") {
+			continue
+		}
+		props := map[string]string{
+			"framework":    "marshmallow",
+			"pattern_type": "constraint",
+			"field":        fieldName,
+		}
+		emitConstraint := false
+		if m := mmValidateRangeRe.FindStringSubmatch(args); m != nil {
+			innerArgs := m[1]
+			props["constraint_validator"] = "Range"
+			if mn := mmConstraintMinRe.FindStringSubmatch(innerArgs); mn != nil {
+				props["constraint_min"] = strings.TrimSpace(mn[1])
+			}
+			if mx := mmConstraintMaxRe.FindStringSubmatch(innerArgs); mx != nil {
+				props["constraint_max"] = strings.TrimSpace(mx[1])
+			}
+			emitConstraint = true
+		} else if m := mmValidateLengthRe.FindStringSubmatch(args); m != nil {
+			innerArgs := m[1]
+			props["constraint_validator"] = "Length"
+			if mn := mmConstraintMinRe.FindStringSubmatch(innerArgs); mn != nil {
+				props["constraint_min"] = strings.TrimSpace(mn[1])
+			}
+			if mx := mmConstraintMaxRe.FindStringSubmatch(innerArgs); mx != nil {
+				props["constraint_max"] = strings.TrimSpace(mx[1])
+			}
+			emitConstraint = true
+		} else if m := mmValidateOneOfRe.FindStringSubmatch(args); m != nil {
+			props["constraint_validator"] = "OneOf"
+			props["constraint_choices"] = strings.TrimSpace(m[1])
+			emitConstraint = true
+		}
+		if !emitConstraint {
+			continue
+		}
+		line := lineOf(source, idx[0])
+		out = append(out, entity(
+			"constraint_"+fieldName, string(types.EntityKindPattern), "",
+			file.Path, line, props,
 		))
 	}
 

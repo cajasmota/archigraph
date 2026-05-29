@@ -108,5 +108,5 @@ Back to [summary](../summary.md).
 | Name | Testing | Other capabilities | Notes |
 |---|---|---|---|
 | [Pydantic](../detail/lang.python.validation.pydantic.md) | ⚠️ 1/1 | ⚠️ 5/5 | |
-| [attrs](../detail/lang.python.validation.attrs.md) | ⚠️ 1/1 | ❌ 3/5 | |
-| [marshmallow](../detail/lang.python.validation.marshmallow.md) | ⚠️ 1/1 | ❌ 4/5 | |
+| [attrs](../detail/lang.python.validation.attrs.md) | ⚠️ 1/1 | ❌ 4/5 | |
+| [marshmallow](../detail/lang.python.validation.marshmallow.md) | ⚠️ 1/1 | ⚠️ 5/5 | |

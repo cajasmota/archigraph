@@ -61,6 +61,13 @@ var (
 
 	// converter= kwarg — type coercion
 	attrsConverterRe = regexp.MustCompile(`\bconverter\s*=\s*(\w[\w.]*)`)
+
+	// Constraint validators — match validators.instance_of(X), validators.in_([...]),
+	// validators.and_(...), and their attr.validators.* / attrs.validators.* prefixed forms.
+	// Note: closing ")" is optional because the attrib regex may truncate nested parens.
+	attrsInstanceOfRe = regexp.MustCompile(`(?:attr(?:s)?\.)?validators\.instance_of\(\s*(\w[\w.]*)`)
+	attrsInRe         = regexp.MustCompile(`(?:attr(?:s)?\.)?validators\.in_\(\s*(\[[^\]]*\]|[^\s,)]+)`)
+	attrsAndRe        = regexp.MustCompile(`(?:attr(?:s)?\.)?validators\.and_\(`)
 )
 
 // attrsReferenced reports whether the source likely uses the attrs library.
@@ -160,6 +167,49 @@ func (e *AttrsExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 				"target_field": targetAttr,
 				"validator_fn": fnName,
 			},
+		))
+	}
+
+	// 4. Constraint extraction: validators.instance_of() / in_() / and_()
+	// on attrib()/field() validator= kwargs. Emit a dedicated constraint_<field>
+	// entity per field so coverage/constraint_extraction can be cited. Issue #3077.
+	for _, idx := range allMatchesIndex(attrsAttribRe, source) {
+		attrName := source[idx[2]:idx[3]]
+		args := source[idx[4]:idx[5]]
+		validatorVal := ""
+		if m := attrsValidatorKwargRe.FindStringSubmatch(args); m != nil {
+			validatorVal = strings.TrimSpace(m[1])
+		}
+		if validatorVal == "" {
+			continue
+		}
+		props := map[string]string{
+			"framework":    "attrs",
+			"pattern_type": "constraint",
+			"field":        attrName,
+		}
+		emitConstraint := false
+		// Check and_() first — it wraps other validators and contains them as args,
+		// so instance_of/in_ would false-match inside an and_() call.
+		if attrsAndRe.MatchString(validatorVal) {
+			props["constraint_validator"] = "and_"
+			emitConstraint = true
+		} else if m := attrsInstanceOfRe.FindStringSubmatch(validatorVal); m != nil {
+			props["constraint_type"] = strings.TrimSpace(m[1])
+			props["constraint_validator"] = "instance_of"
+			emitConstraint = true
+		} else if m := attrsInRe.FindStringSubmatch(validatorVal); m != nil {
+			props["constraint_values"] = strings.TrimSpace(m[1])
+			props["constraint_validator"] = "in_"
+			emitConstraint = true
+		}
+		if !emitConstraint {
+			continue
+		}
+		line := lineOf(source, idx[0])
+		out = append(out, entity(
+			"constraint_"+attrName, string(types.EntityKindPattern), "",
+			file.Path, line, props,
 		))
 	}
 
