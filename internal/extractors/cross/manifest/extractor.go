@@ -8,6 +8,11 @@
 //   - go.mod               (go_modules)
 //   - Cargo.toml           (cargo)
 //   - pyproject.toml       (pip/poetry)
+//   - uv.lock              (uv lockfile)
+//   - pdm.lock             (pdm lockfile)
+//   - poetry.lock          (poetry lockfile)
+//   - Pipfile              (pipenv manifest)
+//   - Pipfile.lock         (pipenv lockfile)
 //   - pom.xml              (maven)
 //   - requirements.txt     (pip)
 //   - pubspec.yaml         (pub/dart)
@@ -95,6 +100,11 @@ var exactManifestNames = map[string]bool{
 	"go.mod":              true,
 	"Cargo.toml":          true,
 	"pyproject.toml":      true,
+	"uv.lock":             true,
+	"pdm.lock":            true,
+	"poetry.lock":         true,
+	"Pipfile":             true,
+	"Pipfile.lock":        true,
 	"pom.xml":             true,
 	"requirements.txt":    true,
 	"pubspec.yaml":        true,
@@ -118,6 +128,11 @@ func detectPackageManager(filePath string) string {
 		"go.mod":              "go_modules",
 		"Cargo.toml":          "cargo",
 		"pyproject.toml":      "pip",
+		"uv.lock":             "uv",
+		"pdm.lock":            "pdm",
+		"poetry.lock":         "poetry",
+		"Pipfile":             "pipenv",
+		"Pipfile.lock":        "pipenv",
 		"pom.xml":             "maven",
 		"requirements.txt":    "pip",
 		"pubspec.yaml":        "pub",
@@ -747,6 +762,229 @@ func parseGemfile(source string) []dep {
 }
 
 // ---------------------------------------------------------------------------
+// Parser: Pipfile (Pipenv manifest)
+// ---------------------------------------------------------------------------
+
+// pipfileDepLineRE matches a pipenv dependency line in [packages] or
+// [dev-packages] sections.  Both forms are supported:
+//
+//	requests = "*"
+//	Django = ">=3.2,<4"
+//	flask = {version = "^2.0", extras = ["async"]}
+var pipfileDepLineRE = regexp.MustCompile(
+	`(?m)^\s*([A-Za-z0-9](?:[A-Za-z0-9._-]*)?)\s*=\s*(?:"([^"]*)"|\{[^}]*version\s*=\s*"([^"]*)"[^}]*\}|'([^']*)')`,
+)
+
+func parsePipfile(source string) []dep {
+	// Build a minimal section index (same pattern as parseCargoToml).
+	type sectionEntry struct {
+		start int
+		name  string
+	}
+	sectionMatches := tomlSectionRE.FindAllStringSubmatchIndex(source, -1)
+	sections := make([]sectionEntry, 0, len(sectionMatches))
+	for _, m := range sectionMatches {
+		sections = append(sections, sectionEntry{
+			start: m[0],
+			name:  strings.TrimSpace(source[m[2]:m[3]]),
+		})
+	}
+	sections = append(sections, sectionEntry{start: len(source), name: "__end__"})
+
+	bodyFor := func(name string) string {
+		for i, s := range sections[:len(sections)-1] {
+			if s.name == name {
+				return source[s.start:sections[i+1].start]
+			}
+		}
+		return ""
+	}
+
+	extractDeps := func(body string, isDev bool, depKind string) []dep {
+		var out []dep
+		for _, m := range pipfileDepLineRE.FindAllStringSubmatch(body, -1) {
+			name := m[1]
+			if name == "python_version" || name == "python_full_version" {
+				continue
+			}
+			// version is in group 2 (plain string), 3 (table version=), or 4 (single-quoted string)
+			version := m[2]
+			if version == "" {
+				version = m[3]
+			}
+			if version == "" {
+				version = m[4]
+			}
+			if version == "*" {
+				version = ""
+			}
+			out = append(out, dep{name: name, version: version, isDev: isDev, kind: depKind})
+		}
+		return out
+	}
+
+	var out []dep
+	seen := map[string]bool{}
+	addDeps := func(deps []dep) {
+		for _, d := range deps {
+			if !seen[d.name] {
+				seen[d.name] = true
+				out = append(out, d)
+			}
+		}
+	}
+	addDeps(extractDeps(bodyFor("packages"), false, "runtime"))
+	addDeps(extractDeps(bodyFor("dev-packages"), true, "dev"))
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: Pipfile.lock (Pipenv lockfile)
+// ---------------------------------------------------------------------------
+
+// parsePipfileLock parses a Pipfile.lock JSON document.
+//
+// Structure:
+//
+//	{
+//	  "default": { "<name>": { "version": "==1.2.3" }, ... },
+//	  "develop": { "<name>": { "version": "==1.2.3" }, ... }
+//	}
+//
+// Versions are stored as PEP 440 constraints (e.g. "==1.2.3"); we strip
+// the leading "==" for a cleaner display.
+func parsePipfileLock(source string) []dep {
+	var data struct {
+		Default map[string]struct {
+			Version string `json:"version"`
+		} `json:"default"`
+		Develop map[string]struct {
+			Version string `json:"version"`
+		} `json:"develop"`
+	}
+	if err := json.Unmarshal([]byte(source), &data); err != nil {
+		return nil
+	}
+
+	var out []dep
+	seen := map[string]bool{}
+	add := func(name, version string, isDev bool) {
+		if name == "" || seen[name] {
+			return
+		}
+		seen[name] = true
+		// Strip leading "==" from locked version specifier.
+		version = strings.TrimPrefix(version, "==")
+		out = append(out, dep{name: name, version: version, isDev: isDev, kind: "locked"})
+	}
+	for name, pkg := range data.Default {
+		add(name, pkg.Version, false)
+	}
+	for name, pkg := range data.Develop {
+		add(name, pkg.Version, true)
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: uv.lock (uv lockfile, TOML-based)
+// ---------------------------------------------------------------------------
+
+// uvLockPackageNameRE matches a [[package]] entry name line in uv.lock.
+//
+//	[[package]]
+//	name = "requests"
+//	version = "2.31.0"
+var uvLockNameRE = regexp.MustCompile(`(?m)^name\s*=\s*"([^"]+)"`)
+var uvLockVersionRE = regexp.MustCompile(`(?m)^version\s*=\s*"([^"]+)"`)
+
+// parseUvLock parses a uv.lock file (TOML format, [[package]] array).
+//
+// Each [[package]] block lists one resolved package with name + version.
+// We scan all blocks and emit them as kind=locked deps.
+func parseUvLock(source string) []dep {
+	// Split on [[package]] boundaries.
+	blocks := strings.Split(source, "[[package]]")
+	var out []dep
+	seen := map[string]bool{}
+
+	for _, block := range blocks[1:] { // skip preamble before first [[package]]
+		nm := uvLockNameRE.FindStringSubmatch(block)
+		if nm == nil {
+			continue
+		}
+		name := nm[1]
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		version := ""
+		if vm := uvLockVersionRE.FindStringSubmatch(block); vm != nil {
+			version = vm[1]
+		}
+		out = append(out, dep{name: name, version: version, kind: "locked"})
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: pdm.lock (PDM lockfile, TOML-based)
+// ---------------------------------------------------------------------------
+
+// parsePdmLock parses a pdm.lock file.
+//
+// pdm.lock uses the same [[package]] array structure as uv.lock, though
+// it also includes a [metadata] block at the top.  We reuse the same
+// name/version extraction approach.
+func parsePdmLock(source string) []dep {
+	return parseUvLock(source) // identical structure
+}
+
+// ---------------------------------------------------------------------------
+// Parser: poetry.lock (Poetry lockfile, TOML-based)
+// ---------------------------------------------------------------------------
+
+// poetryLockNameRE / poetryLockVersionRE match the name and version fields
+// inside a [[package]] block in poetry.lock.
+var poetryLockNameRE = regexp.MustCompile(`(?m)^name\s*=\s*"([^"]+)"`)
+var poetryLockVersionRE = regexp.MustCompile(`(?m)^version\s*=\s*"([^"]+)"`)
+
+// parsePoetryLock parses a poetry.lock file.
+//
+// poetry.lock is TOML-based with [[package]] blocks, each carrying name,
+// version, and optional category ("main" vs "dev").  We emit kind=locked
+// deps and flag dev when category == "dev".
+func parsePoetryLock(source string) []dep {
+	blocks := strings.Split(source, "[[package]]")
+	var out []dep
+	seen := map[string]bool{}
+
+	categoryRE := regexp.MustCompile(`(?m)^category\s*=\s*"([^"]+)"`)
+
+	for _, block := range blocks[1:] {
+		nm := poetryLockNameRE.FindStringSubmatch(block)
+		if nm == nil {
+			continue
+		}
+		name := nm[1]
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		version := ""
+		if vm := poetryLockVersionRE.FindStringSubmatch(block); vm != nil {
+			version = vm[1]
+		}
+		isDev := false
+		if cm := categoryRE.FindStringSubmatch(block); cm != nil {
+			isDev = cm[1] == "dev"
+		}
+		out = append(out, dep{name: name, version: version, isDev: isDev, kind: "locked"})
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
 // Dispatch table
 // ---------------------------------------------------------------------------
 
@@ -761,6 +999,11 @@ var parsers = map[string]parserFn{
 	"go.mod":              parseGoMod,
 	"Cargo.toml":          parseCargoToml,
 	"pyproject.toml":      parsePyprojectToml,
+	"uv.lock":             parseUvLock,
+	"pdm.lock":            parsePdmLock,
+	"poetry.lock":         parsePoetryLock,
+	"Pipfile":             parsePipfile,
+	"Pipfile.lock":        parsePipfileLock,
 	"pom.xml":             parsePomXML,
 	"requirements.txt":    parseRequirementsTxt,
 	"pubspec.yaml":        parsePubspecYaml,

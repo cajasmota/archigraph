@@ -20,8 +20,8 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [java](../by-language/java.md) | [pom.xml](../detail/pkg.pom.md) | — | — | ✅ | — | |
 | [JS/TS](../by-language/jsts.md) | [package.json (npm/yarn/pnpm)](../detail/pkg.npm.md) | — | ✅ | ✅ | — | |
 | [php](../by-language/php.md) | [composer.json](../detail/pkg.composer.md) | — | ❌ | ❌ | — | |
-| [python](../by-language/python.md) | [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | ❌ | ❌ | — | |
-| [python](../by-language/python.md) | [pyproject.toml](../detail/pkg.pyproject.md) | — | ❌ | ✅ | — | |
+| [python](../by-language/python.md) | [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | ⚠️ | ⚠️ | — | |
+| [python](../by-language/python.md) | [pyproject.toml](../detail/pkg.pyproject.md) | — | ⚠️ | ✅ | — | |
 | [python](../by-language/python.md) | [requirements.txt](../detail/pkg.requirements.md) | — | — | ✅ | — | |
 | [ruby](../by-language/ruby.md) | [Gemfile](../detail/pkg.gemfile.md) | — | ❌ | ✅ | — | |
 | [rust](../by-language/rust.md) | [Cargo.toml](../detail/pkg.cargo.md) | — | ❌ | ✅ | — | |

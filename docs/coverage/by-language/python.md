@@ -57,12 +57,12 @@ Back to [summary](../summary.md).
 | [Hatch](../detail/build.hatch.md) | ⚠️ | — | — | ⚠️ | |
 | [Hypothesis (property tests)](../detail/test.hypothesis.md) | ❌ | — | — | ❌ | |
 | [Pipenv](../detail/build.pipenv.md) | ⚠️ | — | — | ⚠️ | |
-| [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | ❌ | ❌ | — | |
+| [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | ⚠️ | ⚠️ | — | |
 | [Poetry](../detail/build.poetry.md) | ✅ | — | — | ✅ | |
 | [doctest (stdlib)](../detail/test.doctest.md) | ❌ | — | — | ❌ | |
 | [nose2](../detail/test.nose2.md) | ❌ | — | — | ❌ | |
 | [pip (requirements.txt)](../detail/build.pip.md) | ✅ | — | — | ✅ | |
-| [pyproject.toml](../detail/pkg.pyproject.md) | — | ❌ | ✅ | — | |
+| [pyproject.toml](../detail/pkg.pyproject.md) | — | ⚠️ | ✅ | — | |
 | [pytest](../detail/test.pytest.md) | ✅ | — | — | ✅ | |
 | [requirements.txt](../detail/pkg.requirements.md) | — | — | ✅ | — | |
 | [setuptools / setup.py](../detail/build.setuptools.md) | ⚠️ | — | — | ⚠️ | |

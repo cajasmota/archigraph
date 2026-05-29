@@ -46301,10 +46301,16 @@
       "label": "Pipfile / Pipfile.lock",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go","internal/extractors/cross/manifest/pylock_test.go"],
+          "issue": "3075",
+          "verified_at": "2026-05-29"
         },
         "manifest_parsing": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go","internal/extractors/cross/manifest/pylock_test.go"],
+          "issue": "3075",
+          "verified_at": "2026-05-29"
         }
       }
     },
@@ -46344,7 +46350,10 @@
       "label": "pyproject.toml",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go","internal/extractors/cross/manifest/pylock_test.go"],
+          "issue": "3075",
+          "verified_at": "2026-05-29"
         },
         "manifest_parsing": {
           "status": "full",
