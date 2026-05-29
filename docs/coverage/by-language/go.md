@@ -78,9 +78,9 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Other capabilities | Notes |
 |---|---|---|
 | [AWS SDK DynamoDB (Go)](../detail/lang.go.driver.dynamodb.md) | 🟢 3/3 | |
-| [Bun (uptrace)](../detail/lang.go.orm.bun.md) | 🟡 2/8 | |
+| [Bun (uptrace)](../detail/lang.go.orm.bun.md) | 🟢 8/8 | |
 | [GORM](../detail/lang.go.orm.gorm.md) | 🟢 8/8 | |
-| [ent (Facebook)](../detail/lang.go.orm.ent.md) | 🟡 2/8 | |
+| [ent (Facebook)](../detail/lang.go.orm.ent.md) | 🟢 8/8 | |
 | [gen (gentleman / GORM gen)](../detail/lang.go.orm.gen.md) | 🟢 3/3 | |
 | [go-elasticsearch](../detail/lang.go.driver.elastic.md) | 🟢 4/4 | |
 | [go-redis](../detail/lang.go.driver.redis.md) | 🟢 2/2 | |

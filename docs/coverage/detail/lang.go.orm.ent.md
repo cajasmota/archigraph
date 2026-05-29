@@ -16,16 +16,16 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/go/orms/ent.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Schema extraction | ✅ `full` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | — |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | ✅ `full` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | — |
+| Foreign key extraction | 🟢 `partial` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | ent manages FKs implicitly via edges; owning edge.To captures relation but concrete FK column is codegen-generated, static extraction heuristic |
+| Lazy loading recognition | 🟢 `partial` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | ent eager-loads via .WithEdges() query-time chainers; no static eager/lazy declaration, heuristic |
+| Relationship extraction | ✅ `full` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | — |
 
 ### Queries
 
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | ✅ `full` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | — |
 
 ## Provenance
 
