@@ -3749,7 +3749,6 @@ public class S {
 }
 
 // ============================================================================
-<<<<<<< HEAD
 // Helidon MP — transactions + CDI DI + middleware + auth + tests (#3088)
 // ============================================================================
 
@@ -4241,7 +4240,10 @@ class FooTest {
 	r := ExtractJUnit5(PatternContext{Source: source, Language: "java", Framework: "helidon", FilePath: "FooTest.java"})
 	if len(r.Entities) == 0 {
 		t.Error("[#3088 tests-gating] expected test entity for framework=helidon, got none")
-=======
+	}
+}
+
+// ============================================================================
 // Issue #3081: Spring Boot missing cells
 // actuator_detection, autoconfiguration_detection, profile_detection, di_scope_resolution
 // ============================================================================
@@ -4490,6 +4492,5 @@ public class ApplicationScopedBean {
 	if scopeMap["ApplicationScopedBean"] != "application" {
 		t.Errorf("[#3081 di_scope_resolution] ApplicationScopedBean scope=%q, want application; map=%v",
 			scopeMap["ApplicationScopedBean"], scopeMap)
->>>>>>> c810d1fe5 (feat(java/spring-boot): add actuator, autoconfig, profile, di_scope extractors (#3081))
 	}
 }
