@@ -32672,27 +32672,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -32890,27 +32890,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -33293,27 +33293,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -33517,27 +33517,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -33745,27 +33745,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -34144,27 +34144,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -34367,27 +34367,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -34593,27 +34593,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -34806,27 +34806,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -35043,27 +35043,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -35261,27 +35261,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -35472,27 +35472,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -35689,27 +35689,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -36088,27 +36088,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -36305,27 +36305,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -36521,27 +36521,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
@@ -36738,27 +36738,27 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/types.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/2989",
+            "issue": "3049",
             "verified_at": "2026-05-29"
           }
         },
