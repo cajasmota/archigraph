@@ -202,10 +202,14 @@
       "label": "Hatch",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/rules/python/build_tools.yaml"],
+          "issue": "3060"
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/engine/rules/python/build_tools.yaml"],
+          "issue": "3060"
         }
       }
     },
@@ -628,14 +632,16 @@
       "label": "uv (Astral)",
       "capabilities": {
         "dependency_graph": {
-          "status": "partial",
+          "status": "full",
           "cites": ["internal/engine/rules/python/build_tools.yaml"],
-          "verified_at": "2026-05-28"
+          "issue": "3060",
+          "verified_at": "2026-05-29"
         },
         "target_extraction": {
-          "status": "partial",
+          "status": "full",
           "cites": ["internal/engine/rules/python/build_tools.yaml"],
-          "verified_at": "2026-05-28"
+          "issue": "3060",
+          "verified_at": "2026-05-29"
         }
       }
     },
@@ -32973,9 +32979,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/engine/rules/python/orms/postgresql_py.yaml","internal/extractors/python/raw_sql_db_calls.go"],
-            "verified_at": "2026-05-28"
+            "issue": "3060",
+            "verified_at": "2026-05-29"
           }
         },
         "Migrations": {
@@ -33021,9 +33028,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/engine/rules/python/orms/redis_py.yaml"],
-            "verified_at": "2026-05-28"
+            "issue": "3060",
+            "verified_at": "2026-05-29"
           }
         },
         "Migrations": {
@@ -37514,8 +37522,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/engine/rules/python/orms/alembic.yaml","internal/enrichers/migration_sequence_enricher.go"],
+            "issue": "3060",
             "notes": "YAML rule detects alembic.ini and versions/*.py files; migration_sequence_enricher.go parses Alembic filename convention ([A-Za-z0-9]{12}_\u003cname\u003e.py). upgrade()/downgrade() operation content is not yet parsed (full would require a dedicated alembic migration extractor analogous to django_migration.go).",
             "verified_at": "2026-05-29"
           }
@@ -37590,9 +37599,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/python/django_relational.go"],
-            "issue": "backfill:dictionary-completeness",
+            "issue": "3060",
             "notes": "field_type and all keyword arguments (max_length, null, blank, on_delete, related_name, etc.) are stamped on each SCOPE.Schema/field entity by stampDjangoFieldProperties(); structured JSON Schema or OpenAPI emission not yet implemented",
             "verified_at": "2026-05-29"
           }
@@ -37609,9 +37618,9 @@
             "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/engine/orm_queries_python.go"],
-            "issue": "backfill:dictionary-completeness",
+            "issue": "3060",
             "notes": "select_related() and prefetch_related() detected as is_join=true by pythonIsJoinDjango(); full recognition of all lazy strategies not yet implemented",
             "verified_at": "2026-05-29"
           },
@@ -37813,9 +37822,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/python/sqlalchemy.go","internal/engine/orm_field_edges.go"],
-            "issue": "backfill:dictionary-completeness",
+            "issue": "3060",
             "notes": "__tablename__, Mapped[] columns, relationship attributes, and ForeignKey targets are extracted as SCOPE.Schema entities; structured JSON Schema or OpenAPI emission not yet implemented",
             "verified_at": "2026-05-29"
           }
@@ -37832,9 +37841,9 @@
             "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/python/sqlalchemy.go"],
-            "issue": "backfill:dictionary-completeness",
+            "issue": "3060",
             "notes": "lazy= kwarg in relationship() calls is detected and recorded as lazy_strategy on the SCOPE.Schema entity; lazy_select_in, write_only, and dynamic_write_only strategies not yet distinguished",
             "verified_at": "2026-05-29"
           },
@@ -37853,9 +37862,10 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/engine/rules/python/orms/alembic.yaml"],
-            "verified_at": "2026-05-28"
+            "issue": "3060",
+            "verified_at": "2026-05-29"
           }
         }
       }

@@ -54,7 +54,7 @@ Back to [summary](../summary.md).
 | Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
 |---|---|---|---|---|---|
 | [Flit](../detail/build.flit.md) | ❌ | — | — | ❌ | |
-| [Hatch](../detail/build.hatch.md) | ❌ | — | — | ❌ | |
+| [Hatch](../detail/build.hatch.md) | ⚠️ | — | — | ⚠️ | |
 | [Hypothesis (property tests)](../detail/test.hypothesis.md) | ❌ | — | — | ❌ | |
 | [Pipenv](../detail/build.pipenv.md) | ⚠️ | — | — | ⚠️ | |
 | [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | ❌ | ❌ | — | |
@@ -67,7 +67,7 @@ Back to [summary](../summary.md).
 | [requirements.txt](../detail/pkg.requirements.md) | — | — | ✅ | — | |
 | [setuptools / setup.py](../detail/build.setuptools.md) | ⚠️ | — | — | ⚠️ | |
 | [unittest (stdlib)](../detail/test.unittest.md) | ✅ | — | — | ✅ | |
-| [uv (Astral)](../detail/build.uv.md) | ⚠️ | — | — | ⚠️ | |
+| [uv (Astral)](../detail/build.uv.md) | ✅ | — | — | ✅ | |
 
 ## ORMs
 
@@ -78,12 +78,12 @@ Back to [summary](../summary.md).
 |---|---|---|
 | [Alembic (migration tool)](../detail/lang.python.orm.alembic.md) | ❌ 1/6 | |
 | [Beanie (async MongoDB ODM)](../detail/lang.python.orm.beanie.md) | ❌ 2/7 | |
-| [Django ORM](../detail/lang.python.orm.django.md) | ⚠️ 8/8 | |
+| [Django ORM](../detail/lang.python.orm.django.md) | ✅ 8/8 | |
 | [MongoEngine](../detail/lang.python.orm.mongoengine.md) | ❌ 2/7 | |
 | [MySQL (PyMySQL / mysqlclient)](../detail/lang.python.driver.mysql.md) | ❌ 1/2 | |
 | [Peewee](../detail/lang.python.orm.peewee.md) | ❌ 2/8 | |
 | [Pony ORM](../detail/lang.python.orm.pony.md) | ❌ 2/8 | |
-| [SQLAlchemy](../detail/lang.python.orm.sqlalchemy.md) | ⚠️ 8/8 | |
+| [SQLAlchemy](../detail/lang.python.orm.sqlalchemy.md) | ✅ 8/8 | |
 | [SQLModel](../detail/lang.python.orm.sqlmodel.md) | ❌ 3/8 | |
 | [Tortoise ORM](../detail/lang.python.orm.tortoise.md) | ❌ 2/8 | |
 | [boto3 DynamoDB](../detail/lang.python.driver.dynamodb.md) | ⚠️ 1/1 | |
@@ -91,7 +91,7 @@ Back to [summary](../summary.md).
 | [elasticsearch-py](../detail/lang.python.driver.elastic.md) | ⚠️ 1/1 | |
 | [neo4j (Python driver)](../detail/lang.python.driver.neo4j.md) | ⚠️ 1/1 | |
 | [psycopg / asyncpg (PostgreSQL drivers)](../detail/lang.python.driver.postgres.md) | ❌ 1/2 | |
-| [redis-py](../detail/lang.python.driver.redis.md) | ⚠️ 1/1 | |
+| [redis-py](../detail/lang.python.driver.redis.md) | ✅ 1/1 | |
 | [sqlite3 (stdlib)](../detail/lang.python.driver.sqlite.md) | ❌ 1/2 | |
 
 

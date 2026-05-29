@@ -114,12 +114,12 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [php](../by-language/php.md) | [phpredis / Predis](../detail/lang.php.driver.redis.md) | ❌ 1/6 | |
 | [python](../by-language/python.md) | [Alembic (migration tool)](../detail/lang.python.orm.alembic.md) | ❌ 1/6 | |
 | [python](../by-language/python.md) | [Beanie (async MongoDB ODM)](../detail/lang.python.orm.beanie.md) | ❌ 2/7 | |
-| [python](../by-language/python.md) | [Django ORM](../detail/lang.python.orm.django.md) | ⚠️ 8/8 | |
+| [python](../by-language/python.md) | [Django ORM](../detail/lang.python.orm.django.md) | ✅ 8/8 | |
 | [python](../by-language/python.md) | [MongoEngine](../detail/lang.python.orm.mongoengine.md) | ❌ 2/7 | |
 | [python](../by-language/python.md) | [MySQL (PyMySQL / mysqlclient)](../detail/lang.python.driver.mysql.md) | ❌ 1/2 | |
 | [python](../by-language/python.md) | [Peewee](../detail/lang.python.orm.peewee.md) | ❌ 2/8 | |
 | [python](../by-language/python.md) | [Pony ORM](../detail/lang.python.orm.pony.md) | ❌ 2/8 | |
-| [python](../by-language/python.md) | [SQLAlchemy](../detail/lang.python.orm.sqlalchemy.md) | ⚠️ 8/8 | |
+| [python](../by-language/python.md) | [SQLAlchemy](../detail/lang.python.orm.sqlalchemy.md) | ✅ 8/8 | |
 | [python](../by-language/python.md) | [SQLModel](../detail/lang.python.orm.sqlmodel.md) | ❌ 3/8 | |
 | [python](../by-language/python.md) | [Tortoise ORM](../detail/lang.python.orm.tortoise.md) | ❌ 2/8 | |
 | [python](../by-language/python.md) | [boto3 DynamoDB](../detail/lang.python.driver.dynamodb.md) | ⚠️ 1/1 | |
@@ -127,7 +127,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [python](../by-language/python.md) | [elasticsearch-py](../detail/lang.python.driver.elastic.md) | ⚠️ 1/1 | |
 | [python](../by-language/python.md) | [neo4j (Python driver)](../detail/lang.python.driver.neo4j.md) | ⚠️ 1/1 | |
 | [python](../by-language/python.md) | [psycopg / asyncpg (PostgreSQL drivers)](../detail/lang.python.driver.postgres.md) | ❌ 1/2 | |
-| [python](../by-language/python.md) | [redis-py](../detail/lang.python.driver.redis.md) | ⚠️ 1/1 | |
+| [python](../by-language/python.md) | [redis-py](../detail/lang.python.driver.redis.md) | ✅ 1/1 | |
 | [python](../by-language/python.md) | [sqlite3 (stdlib)](../detail/lang.python.driver.sqlite.md) | ❌ 1/2 | |
 | [ruby](../by-language/ruby.md) | [AWS SDK DynamoDB (Ruby)](../detail/lang.ruby.driver.dynamodb.md) | ❌ 1/6 | |
 | [ruby](../by-language/ruby.md) | [ActiveRecord](../detail/lang.ruby.orm.activerecord.md) | ❌ 2/8 | |

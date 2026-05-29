@@ -76,7 +76,7 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [php](../by-language/php.md) | [PHPUnit](../detail/test.phpunit.md) | ✅ | — | — | ✅ | |
 | [php](../by-language/php.md) | [Pest](../detail/test.pest.md) | ❌ | — | — | ❌ | |
 | [python](../by-language/python.md) | [Flit](../detail/build.flit.md) | ❌ | — | — | ❌ | |
-| [python](../by-language/python.md) | [Hatch](../detail/build.hatch.md) | ❌ | — | — | ❌ | |
+| [python](../by-language/python.md) | [Hatch](../detail/build.hatch.md) | ⚠️ | — | — | ⚠️ | |
 | [python](../by-language/python.md) | [Hypothesis (property tests)](../detail/test.hypothesis.md) | ❌ | — | — | ❌ | |
 | [python](../by-language/python.md) | [Pipenv](../detail/build.pipenv.md) | ⚠️ | — | — | ⚠️ | |
 | [python](../by-language/python.md) | [Poetry](../detail/build.poetry.md) | ✅ | — | — | ✅ | |
@@ -86,7 +86,7 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [python](../by-language/python.md) | [pytest](../detail/test.pytest.md) | ✅ | — | — | ✅ | |
 | [python](../by-language/python.md) | [setuptools / setup.py](../detail/build.setuptools.md) | ⚠️ | — | — | ⚠️ | |
 | [python](../by-language/python.md) | [unittest (stdlib)](../detail/test.unittest.md) | ✅ | — | — | ✅ | |
-| [python](../by-language/python.md) | [uv (Astral)](../detail/build.uv.md) | ⚠️ | — | — | ⚠️ | |
+| [python](../by-language/python.md) | [uv (Astral)](../detail/build.uv.md) | ✅ | — | — | ✅ | |
 | [ruby](../by-language/ruby.md) | [Bundler (Gemfile)](../detail/build.bundler.md) | ✅ | — | — | ✅ | |
 | [ruby](../by-language/ruby.md) | [Cucumber](../detail/test.cucumber.md) | ❌ | — | — | ❌ | |
 | [ruby](../by-language/ruby.md) | [Minitest](../detail/test.minitest.md) | ⚠️ | — | — | ⚠️ | |

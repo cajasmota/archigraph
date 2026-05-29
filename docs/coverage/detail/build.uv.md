@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/rules/python/build_tools.yaml` | — |
-| Target extraction | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/rules/python/build_tools.yaml` | — |
+| Dependency graph | ✅ `full` | `2026-05-29` | 3060 | `internal/engine/rules/python/build_tools.yaml` | — |
+| Target extraction | ✅ `full` | `2026-05-29` | 3060 | `internal/engine/rules/python/build_tools.yaml` | — |
 
 ## Provenance
 
