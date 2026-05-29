@@ -84,7 +84,7 @@ Back to [summary](../summary.md).
 | [Peewee](../detail/lang.python.orm.peewee.md) | ❌ 2/8 | |
 | [Pony ORM](../detail/lang.python.orm.pony.md) | ❌ 2/8 | |
 | [SQLAlchemy](../detail/lang.python.orm.sqlalchemy.md) | ✅ 8/8 | |
-| [SQLModel](../detail/lang.python.orm.sqlmodel.md) | ❌ 3/8 | |
+| [SQLModel](../detail/lang.python.orm.sqlmodel.md) | ⚠️ 8/8 | |
 | [Tortoise ORM](../detail/lang.python.orm.tortoise.md) | ❌ 2/8 | |
 | [boto3 DynamoDB](../detail/lang.python.driver.dynamodb.md) | ⚠️ 1/1 | |
 | [cassandra-driver](../detail/lang.python.driver.cassandra.md) | ⚠️ 1/1 | |

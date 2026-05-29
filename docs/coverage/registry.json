@@ -38044,22 +38044,29 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/sqlalchemy.go"],
+            "issue": "3056",
+            "verified_at": "2026-05-29"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/sqlalchemy.go"],
+            "issue": "3056",
+            "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/sqlalchemy.go"],
+            "issue": "3056",
             "notes": "SQLModel delegates to SQLAlchemy relationship() for lazy loading, but the sqlalchemy extractor's lazy_strategy detection (issue #2986) applies only when the SQLAlchemy extractor fires on a SQLModel file. SQLModel-specific lazy loading is not yet explicitly tracked.",
             "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/sqlalchemy.go"],
+            "issue": "3056",
+            "verified_at": "2026-05-29"
           }
         },
         "Queries": {
@@ -38071,7 +38078,10 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "full",
+            "cites": ["internal/engine/rules/python/orms/alembic.yaml"],
+            "issue": "3056",
+            "verified_at": "2026-05-29"
           }
         }
       }
