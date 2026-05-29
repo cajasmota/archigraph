@@ -14896,7 +14896,11 @@
             "status": "missing"
           },
           "data_fetching": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/java/gwt_rpc.go"],
+            "issue": "3190",
+            "notes": "GWT RPC + RequestFactory client-side data fetching: @RemoteServiceRelativePath RPC service interfaces, GWT.create(*.class) proxy-creation sites (linked FETCHES_FROM to the service), AsyncCallback\u003cT\u003e completion sites, RequestFactory/RequestContext interfaces, @ProxyFor EntityProxy/ValueProxy beans, and Request.fire(Receiver) sites. Heuristic regex detection, hence partial.",
+            "verified_at": "2026-05-30"
           },
           "prop_extraction": {
             "status": "not_applicable",

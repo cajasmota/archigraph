@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Branch conditions | 🔴 `missing` | — | — | — | — |
-| Data fetching | 🔴 `missing` | — | — | — | — |
+| Data fetching | 🟢 `partial` | `2026-05-30` | 3190 | `internal/custom/java/gwt_rpc.go` | GWT RPC + RequestFactory client-side data fetching: @RemoteServiceRelativePath RPC service interfaces, GWT.create(*.class) proxy-creation sites (linked FETCHES_FROM to the service), AsyncCallback<T> completion sites, RequestFactory/RequestContext interfaces, @ProxyFor EntityProxy/ValueProxy beans, and Request.fire(Receiver) sites. Heuristic regex detection, hence partial. |
 | Prop extraction | — `not_applicable` | — | 3091 | — | GWT compiles Java to client-side JS but uses Java idioms with no React-style concepts; prop_extraction is a React/JSX-paradigm capability that does not apply |
 | State management | — `not_applicable` | — | 3091 | — | GWT compiles Java to client-side JS but uses Java idioms with no React-style concepts; state_management is a React/JSX-paradigm capability that does not apply |
 

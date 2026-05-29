@@ -2057,6 +2057,19 @@ records:
           issues_implemented: ["2906"]
           verified_at: "2026-05-28"
 
+  lang.java.framework.gwt:
+    capabilities:
+      Data Flow:
+        data_fetching:
+          status: partial
+          symbols:
+            - file: internal/custom/java/gwt_rpc.go
+              functions: [ExtractGWTDataFetching]
+          tests:
+            - file: internal/custom/java/gwt_rpc_test.go
+          issues_implemented: ["3190"]
+          verified_at: "2026-05-30"
+
   lang.java.framework.jakarta-ee:
     capabilities:
       Observability:

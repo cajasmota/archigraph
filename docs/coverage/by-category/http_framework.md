@@ -161,7 +161,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C#](../by-language/csharp.md) | [Blazor Server](../detail/lang.csharp.framework.blazor-server.md) | 🔴 0/3 | 🔴 0/1 | 🟡 14/21 | 🔴 0/8 | |
 | [C#](../by-language/csharp.md) | [Blazor Server / WebAssembly](../detail/lang.csharp.framework.blazor.md) | 🔴 0/3 | 🔴 0/1 | 🟡 14/21 | 🔴 0/8 | |
 | [C#](../by-language/csharp.md) | [Blazor WebAssembly](../detail/lang.csharp.framework.blazor-wasm.md) | 🔴 0/3 | 🔴 0/1 | 🟡 14/21 | 🔴 0/8 | |
-| [java](../by-language/java.md) | [Google Web Toolkit (GWT)](../detail/lang.java.framework.gwt.md) | 🟢 2/2 | 🟢 1/1 | 🟢 19/19 | 🟡 2/4 | |
+| [java](../by-language/java.md) | [Google Web Toolkit (GWT)](../detail/lang.java.framework.gwt.md) | 🟢 2/2 | 🟢 1/1 | 🟢 19/19 | 🟡 3/4 | |
 | [java](../by-language/java.md) | [Vaadin (UI-as-server)](../detail/lang.java.framework.vaadin.md) | 🟢 2/2 | 🟢 1/1 | 🟢 19/19 | 🟡 3/4 | |
 | [JS/TS](../by-language/jsts.md) | [Angular](../detail/lang.jsts.framework.angular.md) | ✅ 3/3 | ✅ 1/1 | 🟢 21/21 | ✅ 17/17 | |
 | [JS/TS](../by-language/jsts.md) | [React](../detail/lang.jsts.framework.react.md) | ✅ 3/3 | ✅ 1/1 | 🟢 21/21 | ✅ 21/21 | |

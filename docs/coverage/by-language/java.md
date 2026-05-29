@@ -45,7 +45,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|
-| [Google Web Toolkit (GWT)](../detail/lang.java.framework.gwt.md) | 🟢 2/2 | 🟢 1/1 | 🟢 19/19 | 🟡 2/4 | |
+| [Google Web Toolkit (GWT)](../detail/lang.java.framework.gwt.md) | 🟢 2/2 | 🟢 1/1 | 🟢 19/19 | 🟡 3/4 | |
 | [Vaadin (UI-as-server)](../detail/lang.java.framework.vaadin.md) | 🟢 2/2 | 🟢 1/1 | 🟢 19/19 | 🟡 3/4 | |
 
 
