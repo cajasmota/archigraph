@@ -2603,6 +2603,38 @@ records:
           issues_implemented: ["2679"]
           verified_at: "2026-05-28"
 
+      Middleware:
+        middleware_coverage:
+          # gin.go reads balanced .Use(...) chains via findUseCalls and emits one
+          # ordered SCOPE.Pattern (pattern_kind=middleware, mw_order) per
+          # middleware. Heuristic ordering, no data-flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/gin.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [findUseCalls, parseMiddlewareChain, emitMiddlewareChain, splitTopLevelArgs]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # classifyAuthMiddleware substring-matches middleware expressions
+          # against an auth-pattern catalog (jwt/oauth/basic/session/rbac/…),
+          # flagging is_auth + auth_kind and emitting an auth: SCOPE.Pattern.
+          # Pattern match only, no enforcement proof → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/gin.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [classifyAuthMiddleware, emitMiddlewareChain]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
+          verified_at: "2026-05-30"
+
       Substrate:
         constant_propagation:
           status: full
@@ -2793,6 +2825,35 @@ records:
           issues_implemented: ["3211"]
           verified_at: "2026-05-30"
 
+      Middleware:
+        middleware_coverage:
+          # echo.go reads balanced .Use(...) chains via findUseCalls and emits
+          # ordered middleware SCOPE.Pattern entities (mw_order). Heuristic → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/echo.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [findUseCalls, parseMiddlewareChain, emitMiddlewareChain, splitTopLevelArgs]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # classifyAuthMiddleware flags echo JWT/BasicAuth/etc middleware with
+          # auth_kind + an auth: SCOPE.Pattern. Pattern match only → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/echo.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [classifyAuthMiddleware, emitMiddlewareChain]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
+          verified_at: "2026-05-30"
+
       Substrate:
         constant_propagation:
           status: full
@@ -2878,6 +2939,36 @@ records:
           tests:
             - file: internal/custom/golang/extractors_test.go
           issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+
+      Middleware:
+        middleware_coverage:
+          # fiber.go reads balanced .Use(...) chains via findUseCalls; a leading
+          # string-literal mount prefix (app.Use("/api", mw)) is skipped so it is
+          # not mistaken for a middleware value. Heuristic ordering → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/fiber.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [findUseCalls, parseMiddlewareChain, emitMiddlewareChain, isStringLiteral]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # classifyAuthMiddleware flags fiber jwtware/keyauth/basicauth middleware
+          # with auth_kind + an auth: SCOPE.Pattern. Pattern match only → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/fiber.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [classifyAuthMiddleware, emitMiddlewareChain]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
           verified_at: "2026-05-30"
 
       Substrate:
@@ -2970,6 +3061,38 @@ records:
             - file: internal/custom/golang/extractors_test.go
             - file: internal/engine/go_routes_test.go
           issues_implemented: ["3212"]
+          verified_at: "2026-05-30"
+
+      Middleware:
+        middleware_coverage:
+          # chi.go reads balanced r.Use(...) chains via findUseCalls and emits
+          # ordered middleware SCOPE.Pattern entities (mw_order). chi commonly
+          # registers each middleware as a bare identifier (middleware.Logger).
+          # Heuristic ordering, no data-flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/chi.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [findUseCalls, parseMiddlewareChain, emitMiddlewareChain, splitTopLevelArgs]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # classifyAuthMiddleware flags chi jwtauth.Verifier/Authenticator and
+          # similar auth middleware with auth_kind + an auth: SCOPE.Pattern.
+          # Pattern match only → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/chi.go
+              functions: [Extract]
+            - file: internal/custom/golang/helpers.go
+              functions: [classifyAuthMiddleware, emitMiddlewareChain]
+          tests:
+            - file: internal/custom/golang/middleware_auth_test.go
+          issues_implemented: ["3213"]
           verified_at: "2026-05-30"
 
   lang.go.framework.gorilla-mux:

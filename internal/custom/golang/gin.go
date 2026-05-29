@@ -32,9 +32,6 @@ var (
 	reGinRoute = regexp.MustCompile(
 		`(?m)(\w+)\.(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|Any)\s*\(\s*"([^"]+)"`,
 	)
-	reGinUse = regexp.MustCompile(
-		`(?m)(\w+)\.Use\s*\(\s*((?:[^()]+|\([^)]*\))+?)\s*\)`,
-	)
 	reGinBind = regexp.MustCompile(
 		`(?m)c\.(ShouldBindJSON|BindJSON|ShouldBindQuery|ShouldBind|ShouldBindForm|ShouldBindUri|BindQuery)\s*\(\s*&?(\w+)`,
 	)
@@ -116,13 +113,12 @@ func (e *ginExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		add(ent)
 	}
 
-	// 4. .Use(middleware) -> SCOPE.Pattern
-	for _, m := range reGinUse.FindAllStringSubmatchIndex(src, -1) {
-		mwExpr := strings.TrimSpace(src[m[4]:m[5]])
-		ent := makeEntity(mwExpr, "SCOPE.Pattern", "", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "gin", "provenance", "INFERRED_FROM_GIN_MIDDLEWARE",
-			"pattern_kind", "middleware")
-		add(ent)
+	// 4. .Use(middleware, …) -> ordered SCOPE.Pattern middleware (+ auth)
+	for _, uc := range findUseCalls(src) {
+		chain := parseMiddlewareChain(uc.Args)
+		emitMiddlewareChain(add, chain, "gin",
+			"INFERRED_FROM_GIN_MIDDLEWARE", "INFERRED_FROM_GIN_AUTH",
+			file.Path, file.Language, uc.Line)
 	}
 
 	// 5. c.ShouldBindJSON etc -> SCOPE.Schema

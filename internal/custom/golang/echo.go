@@ -31,9 +31,6 @@ var (
 	reEchoRoute = regexp.MustCompile(
 		`(?m)(\w+)\.(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE|Any)\s*\(\s*"([^"]+)"`,
 	)
-	reEchoUse = regexp.MustCompile(
-		`(?m)(\w+)\.Use\s*\(\s*((?:[^()]+|\([^)]*\))+?)\s*\)`,
-	)
 	reEchoBind = regexp.MustCompile(
 		`(?m)c\.(Bind|BindJSON|BindQuery|BindParam|BindBody|BindHeader)\s*\(\s*&?(\w+)`,
 	)
@@ -112,13 +109,12 @@ func (e *echoExtractor) Extract(ctx context.Context, file extractor.FileInput) (
 		add(ent)
 	}
 
-	// 4. .Use(middleware) -> SCOPE.Pattern
-	for _, m := range reEchoUse.FindAllStringSubmatchIndex(src, -1) {
-		mwExpr := strings.TrimSpace(src[m[4]:m[5]])
-		ent := makeEntity(mwExpr, "SCOPE.Pattern", "", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "echo", "provenance", "INFERRED_FROM_ECHO_MIDDLEWARE",
-			"pattern_kind", "middleware")
-		add(ent)
+	// 4. .Use(middleware, …) -> ordered SCOPE.Pattern middleware (+ auth)
+	for _, uc := range findUseCalls(src) {
+		chain := parseMiddlewareChain(uc.Args)
+		emitMiddlewareChain(add, chain, "echo",
+			"INFERRED_FROM_ECHO_MIDDLEWARE", "INFERRED_FROM_ECHO_AUTH",
+			file.Path, file.Language, uc.Line)
 	}
 
 	// 5. c.Bind* -> SCOPE.Schema

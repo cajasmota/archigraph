@@ -31,9 +31,6 @@ var (
 	reFiberRoute = regexp.MustCompile(
 		`(?m)(\w+)\.(Get|Post|Put|Delete|Patch|Head|Options|All|Connect|Trace)\s*\(\s*"([^"]+)"`,
 	)
-	reFiberUse = regexp.MustCompile(
-		`(?m)(\w+)\.Use\s*\(\s*((?:[^()]+|\([^)]*\))+?)\s*\)`,
-	)
 	reFiberBind = regexp.MustCompile(
 		`(?m)c\.(BodyParser|QueryParser|ParamsParser|ReqHeaderParser)\s*\(\s*&?(\w+)`,
 	)
@@ -111,13 +108,12 @@ func (e *fiberExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		add(ent)
 	}
 
-	// 4. .Use(middleware) -> SCOPE.Pattern
-	for _, m := range reFiberUse.FindAllStringSubmatchIndex(src, -1) {
-		mwExpr := strings.TrimSpace(src[m[4]:m[5]])
-		ent := makeEntity(mwExpr, "SCOPE.Pattern", "", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "fiber", "provenance", "INFERRED_FROM_FIBER_MIDDLEWARE",
-			"pattern_kind", "middleware")
-		add(ent)
+	// 4. .Use(middleware, …) -> ordered SCOPE.Pattern middleware (+ auth)
+	for _, uc := range findUseCalls(src) {
+		chain := parseMiddlewareChain(uc.Args)
+		emitMiddlewareChain(add, chain, "fiber",
+			"INFERRED_FROM_FIBER_MIDDLEWARE", "INFERRED_FROM_FIBER_AUTH",
+			file.Path, file.Language, uc.Line)
 	}
 
 	// 5. c.BodyParser etc -> SCOPE.Schema

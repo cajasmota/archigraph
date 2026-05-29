@@ -43,9 +43,6 @@ var (
 	reChiMount = regexp.MustCompile(
 		`(?m)(\w+)\.Mount\s*\(\s*"([^"]+)"`,
 	)
-	reChiUse = regexp.MustCompile(
-		`(?m)(\w+)\.Use\s*\(\s*((?:[^()]+|\([^)]*\))+?)\s*\)`,
-	)
 )
 
 func (e *chiExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
@@ -133,13 +130,12 @@ func (e *chiExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		add(ent)
 	}
 
-	// 6. r.Use(middleware) -> SCOPE.Pattern
-	for _, m := range reChiUse.FindAllStringSubmatchIndex(src, -1) {
-		mwExpr := strings.TrimSpace(src[m[4]:m[5]])
-		ent := makeEntity(mwExpr, "SCOPE.Pattern", "", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "chi", "provenance", "INFERRED_FROM_CHI_MIDDLEWARE",
-			"pattern_kind", "middleware")
-		add(ent)
+	// 6. r.Use(middleware, …) -> ordered SCOPE.Pattern middleware (+ auth)
+	for _, uc := range findUseCalls(src) {
+		chain := parseMiddlewareChain(uc.Args)
+		emitMiddlewareChain(add, chain, "chi",
+			"INFERRED_FROM_CHI_MIDDLEWARE", "INFERRED_FROM_CHI_AUTH",
+			file.Path, file.Language, uc.Line)
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
