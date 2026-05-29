@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | ❌ `missing` | — | — | — | — |
+| Middleware coverage | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3084) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/micronaut_aop.go`<br>`testdata/fixtures/sources/java/micronaut/AuthFilter.java` | — |
 
 ### Testing
 
@@ -73,9 +73,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Advice attribution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Aspect extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Pointcut resolution | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Advice attribution | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3084) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/micronaut_aop.go`<br>`testdata/fixtures/sources/java/micronaut/LoggingInterceptor.java` | — |
+| Aspect extraction | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3084) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/micronaut_aop.go`<br>`testdata/fixtures/sources/java/micronaut/LoggingInterceptor.java` | — |
+| Pointcut resolution | ⚠️ `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3084) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/micronaut_aop.go`<br>`testdata/fixtures/sources/java/micronaut/LoggingInterceptor.java` | — |
 
 ### Observability
 
