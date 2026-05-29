@@ -12260,7 +12260,10 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/go_zero.go","internal/custom/golang/testdata/go_zero_server.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -12269,13 +12272,18 @@
             "issue": "backfill:dictionary-completeness"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/go_zero.go","internal/custom/golang/testdata/go_zero_server.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/go_zero.go","internal/custom/golang/testdata/go_zero_server.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -13091,7 +13099,10 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/huma.go","internal/custom/golang/testdata/huma_security.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -13100,13 +13111,18 @@
             "issue": "backfill:dictionary-completeness"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/huma.go","internal/custom/golang/testdata/huma_security.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/huma.go","internal/custom/golang/testdata/huma_security.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {
@@ -13507,7 +13523,10 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/kratos.go","internal/custom/golang/testdata/kratos_server.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Validation": {
@@ -13516,13 +13535,18 @@
             "issue": "backfill:dictionary-completeness"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/kratos.go","internal/custom/golang/testdata/kratos_request.pb.validate.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/golang/codegen_authmwval_test.go","internal/custom/golang/kratos.go","internal/custom/golang/testdata/kratos_server.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3255",
+            "verified_at": "2026-05-29"
           }
         },
         "Type System": {

@@ -5632,6 +5632,50 @@ records:
             - file: internal/custom/golang/hertz_huma_test.go
           issues_implemented: ["2686", "3212"]
           verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # huma.go scans api.UseMiddleware(...) and huma.Middlewares{...} chains
+          # (balancedArgs/balancedBraces + splitTopLevelArgs) and emits one
+          # ordered SCOPE.Pattern (pattern_kind=middleware, mw_order) per
+          # middleware. Heuristic, no data-flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/huma.go
+              functions: [extractMiddlewareAuth, balancedBraces]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # huma is OpenAPI-first: auth is a Security requirement on a
+          # huma.Operation naming schemes registered under
+          # Components.SecuritySchemes. huma.go emits an auth SCOPE.Pattern for
+          # each operation Security requirement and each scheme registration,
+          # classifying the scheme (jwt/oauth/api_key/basic). Static name match,
+          # no enforcement proof → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/huma.go
+              functions: [extractMiddlewareAuth, humaClassifyAuth]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Validation:
+        request_validation:
+          # huma auto-validates each input struct from its OpenAPI-schema field
+          # tags (required/minimum/maxLength/format/enum/pattern). huma.go emits
+          # one validation SCOPE.Pattern (validation_kind=rule) per validated
+          # field tag. Heuristic tag match, no rule→call-site flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/huma.go
+              functions: [extractRequestValidation]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
 
   lang.go.framework.kratos:
     capabilities:
@@ -5717,6 +5761,51 @@ records:
             - file: internal/custom/golang/kratos_gozero_test.go
           issues_implemented: ["3212"]
           verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # kratos.go scans http.Middleware(...)/grpc.Middleware(...) server
+          # options and per-operation selector.Server(...) chains, emitting one
+          # ordered SCOPE.Pattern (pattern_kind=middleware, mw_order, mw_scope)
+          # per middleware constructor. Heuristic, no data-flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/kratos.go
+              functions: [extractMiddlewareAuth]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # kratosClassifyAuth substring-matches each middleware expression
+          # against an auth catalog (jwt/oauth/basic/api_key/rbac/…), flagging
+          # is_auth + auth_kind and emitting a dedicated auth SCOPE.Pattern
+          # (covers jwt.Server / selector.Server(jwt.Server(...))). Pattern match
+          # only, no enforcement proof → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/kratos.go
+              functions: [extractMiddlewareAuth, kratosClassifyAuth]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Validation:
+        request_validation:
+          # kratos enforces request validation via protoc-gen-validate: each
+          # request message gets a generated Validate()/ValidateAll() method,
+          # invoked by the validate.Validator() middleware. kratos.go emits a
+          # validation SCOPE.Pattern per generated Validate method (named by its
+          # message type) and for the validate.Validator() install. Heuristic
+          # method/call match → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/kratos.go
+              functions: [extractRequestValidation]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
 
   lang.go.framework.go-zero:
     capabilities:
@@ -5801,6 +5890,49 @@ records:
           tests:
             - file: internal/custom/golang/kratos_gozero_test.go
           issues_implemented: ["3212"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # go_zero.go scans rest.WithMiddleware(...) server options and
+          # server.Use(...) registrations, emitting one ordered SCOPE.Pattern
+          # (pattern_kind=middleware, mw_order) per middleware expression.
+          # Heuristic, no data-flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/go_zero.go
+              functions: [extractMiddlewareAuth]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # go-zero ships first-class JWT auth via the rest.WithJwt(secret) route
+          # option. go_zero.go emits an auth SCOPE.Pattern for rest.WithJwt and
+          # for any middleware that goZeroClassifyAuth flags (jwt/oauth/…).
+          # Static option/name match, no enforcement proof → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/go_zero.go
+              functions: [extractMiddlewareAuth, goZeroClassifyAuth]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
+          verified_at: "2026-05-30"
+      Validation:
+        request_validation:
+          # go-zero request DTOs carry `validate:"…"` struct tags and are bound +
+          # validated via httpx.Parse(r, &req). go_zero.go emits a validation
+          # SCOPE.Pattern (validation_kind=rule) per validate-tagged field and a
+          # binding pattern per httpx.Parse call site. Heuristic tag/call match,
+          # no rule→call-site flow → partial.
+          status: partial
+          symbols:
+            - file: internal/custom/golang/go_zero.go
+              functions: [extractRequestValidation]
+          tests:
+            - file: internal/custom/golang/codegen_authmwval_test.go
+          issues_implemented: ["3255"]
           verified_at: "2026-05-30"
 
   lang.java.framework.spring-webflux:

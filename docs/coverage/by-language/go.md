@@ -33,13 +33,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Gin](../detail/lang.go.framework.gin.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 21/21 | 🟡 5/6 | |
 | [Gorilla Mux](../detail/lang.go.framework.gorilla-mux.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
 | [Hertz (CloudWeGo)](../detail/lang.go.framework.hertz.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
-| [Huma](../detail/lang.go.framework.huma.md) | 🟢 3/3 | 🔴 0/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 4/7 | |
+| [Huma](../detail/lang.go.framework.huma.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
 | [Iris](../detail/lang.go.framework.iris.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
-| [Kratos (Bilibili)](../detail/lang.go.framework.kratos.md) | 🟢 3/3 | 🔴 0/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 4/7 | |
+| [Kratos (Bilibili)](../detail/lang.go.framework.kratos.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
 | [Revel](../detail/lang.go.framework.revel.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 5/6 | |
 | [chi](../detail/lang.go.framework.chi.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
 | [fasthttp](../detail/lang.go.framework.fasthttp.md) | 🟢 3/3 | — | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 4/5 | |
-| [go-zero](../detail/lang.go.framework.go-zero.md) | 🟢 3/3 | 🔴 0/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 4/7 | |
+| [go-zero](../detail/lang.go.framework.go-zero.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 6/7 | |
 | [net/http (stdlib)](../detail/lang.go.framework.net-http.md) | 🟢 3/3 | — | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟡 5/6 | |
 
 
