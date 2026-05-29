@@ -17,26 +17,26 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Endpoint synthesis | ✅ `full` | `2026-05-28` | — | `internal/engine/django_routes.go`<br>`internal/engine/django_urlconf_nested.go`<br>`internal/engine/rules/python/frameworks/django.yaml` | — |
 | Handler attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/django_admin_routes.go`<br>`internal/engine/django_routes.go` | — |
-| Route extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Route extraction | ✅ `full` | `2026-05-29` | — | `internal/engine/django_routes.go`<br>`internal/engine/django_urlconf_nested.go` | — |
 
 ### Auth
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/django_drf_actions.go` | — |
+| Auth coverage | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/django.go`<br>`internal/mcp/auth_coverage.go` | login_required and permission_required decorators extracted by django.go; auth_coverage.go MCP tool analyses coverage graph-wide |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| DTO extraction | ⚠️ `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/python/django.go` | Django admin registrations (admin.site.register, @admin.register) and form patterns; full form field introspection not yet implemented |
 | Request validation | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Middleware
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/django_imports_rewrite.go` | — |
+| Middleware coverage | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/django.go` | Middleware class and process_request/process_response/process_view hooks extracted; MIDDLEWARE setting list analysis not yet implemented |
 
 ### Type System
 
@@ -51,7 +51,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Tests linkage | ⚠️ `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/python/pytest.go`<br>`internal/engine/tests_edges.go` | — |
 
 ### Observability
 
