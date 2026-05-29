@@ -47,7 +47,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Confidence overlay | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Confidence overlay | ⚠️ `partial` | `2026-05-29` | 3068 | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_python.go`<br>`internal/types/confidence.go` | — |
 | Constant propagation | ✅ `full` | `2026-05-28` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/python.go`<br>`internal/substrate/substrate.go` | — |
 | DB effect | ⚠️ `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/substrate/effect_sinks_python.go` | language-wide Python effect sniffer detects Django ORM / SQLAlchemy db writes and reads; partial because Celery-specific task context is not disambiguated |
 | Dead code detection | ⚠️ `partial` | `2026-05-29` | 3047 | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_python.go` | dead code derived from reachability.go + entry_points_python.go; fires on all Python; partial because Celery task entry wiring via @app.task is not modelled |
