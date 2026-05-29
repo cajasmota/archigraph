@@ -2635,6 +2635,216 @@ records:
             - file: internal/substrate/template_pattern_golang.go
           issues_implemented: ["2774"]
           verified_at: "2026-05-28"
+        request_shape_extraction:
+          # Payload-shape sniffer for Go struct types used as request bodies;
+          # sniffPayloadShapesGo walks struct field tags to derive field names
+          # and types, feeding the cross-framework schema_drift_detection pass.
+          status: full
+          symbols:
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo, scanGoStructFields, scanGoVarTypes]
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, sniffPayloadShapes]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        response_shape_extraction:
+          status: full
+          symbols:
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo, scanGoStructFields]
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, sniffPayloadShapes]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        schema_drift_detection:
+          status: full
+          symbols:
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, classifyDrift, buildDriftFinding]
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift, driftFindingToMap]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+
+  lang.go.framework.echo:
+    capabilities:
+      Routing:
+        endpoint_synthesis:
+          # echo.go custom extractor: reEchoRoute captures e.GET/POST/… with
+          # path resolution through reEchoGroup groups; go_routes.go AST pass
+          # rewrites bare-receiver edges → qualified handler methods.
+          # echo.yaml YAML rules provide static pattern extraction.
+          status: full
+          symbols:
+            - file: internal/custom/golang/echo.go
+              functions: [Extract]
+            - file: internal/engine/go_routes.go
+              functions:
+                - applyGoRouteComposition
+                - extractGoHandlerBindings
+                - buildGoVarTypeMap
+                - inferGoExprType
+                - typeNameFromExpr
+            - file: internal/engine/rules/go/frameworks/echo.yaml
+          tests:
+            - file: internal/custom/golang/extractors_test.go
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        handler_attribution:
+          status: full
+          symbols:
+            - file: internal/custom/golang/echo.go
+              functions: [Extract]
+            - file: internal/engine/go_routes.go
+              functions: [applyGoRouteComposition, extractGoHandlerBindings]
+          tests:
+            - file: internal/custom/golang/extractors_test.go
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        request_shape_extraction:
+          status: full
+          symbols:
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo, scanGoStructFields, scanGoVarTypes]
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, sniffPayloadShapes]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        response_shape_extraction:
+          status: full
+          symbols:
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo, scanGoStructFields]
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, sniffPayloadShapes]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        schema_drift_detection:
+          status: full
+          symbols:
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, classifyDrift, buildDriftFinding]
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift, driftFindingToMap]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+
+  lang.go.framework.fiber:
+    capabilities:
+      Routing:
+        endpoint_synthesis:
+          # fiber.go custom extractor: reFiberRoute captures app.Get/Post/…
+          # (Title-case methods) with group path resolution via reFiberGroup;
+          # go_routes.go AST pass rewrites bare-receiver ROUTES_TO edges.
+          # fiber.yaml YAML rules provide static pattern extraction.
+          status: full
+          symbols:
+            - file: internal/custom/golang/fiber.go
+              functions: [Extract]
+            - file: internal/engine/go_routes.go
+              functions:
+                - applyGoRouteComposition
+                - extractGoHandlerBindings
+                - buildGoVarTypeMap
+                - inferGoExprType
+                - typeNameFromExpr
+            - file: internal/engine/rules/go/frameworks/fiber.yaml
+          tests:
+            - file: internal/custom/golang/extractors_test.go
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        handler_attribution:
+          status: full
+          symbols:
+            - file: internal/custom/golang/fiber.go
+              functions: [Extract]
+            - file: internal/engine/go_routes.go
+              functions: [applyGoRouteComposition, extractGoHandlerBindings]
+          tests:
+            - file: internal/custom/golang/extractors_test.go
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+
+      Substrate:
+        constant_propagation:
+          status: full
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+            - file: internal/links/constant_propagation.go
+              functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        env_fallback_recognition:
+          status: full
+          symbols:
+            - file: internal/substrate/golang.go
+              functions: [sniffGo]
+          issues_implemented: ["2761"]
+          verified_at: "2026-05-28"
+        request_shape_extraction:
+          status: full
+          symbols:
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo, scanGoStructFields, scanGoVarTypes]
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, sniffPayloadShapes]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        response_shape_extraction:
+          status: full
+          symbols:
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo, scanGoStructFields]
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, sniffPayloadShapes]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
+        schema_drift_detection:
+          status: full
+          symbols:
+            - file: internal/links/payload_drift.go
+              functions: [runPayloadDriftPass, classifyDrift, buildDriftFinding]
+            - file: internal/substrate/payload_shapes_golang.go
+              functions: [sniffPayloadShapesGo]
+            - file: internal/mcp/payload_drift_tool.go
+              functions: [handlePayloadDrift, driftFindingToMap]
+          issues_implemented: ["3211"]
+          verified_at: "2026-05-30"
 
   lang.java.framework.spring-webflux:
     capabilities:
@@ -4847,3 +5057,85 @@ records:
             - file: internal/custom/javascript/knex_migrations_test.go
           issues_implemented: ["3187"]
           verified_at: "2026-05-30"
+  build.go-modules:
+    capabilities:
+      dependency_graph:
+        # parseGoMod walks require blocks and single-require lines in go.mod,
+        # emitting DEPENDS_ON edges for each declared module dependency.
+        # goModuleRoot provides the module-root stamp used by extractImportEntities
+        # to distinguish in-tree from external imports.
+        status: full
+        symbols:
+          - file: internal/extractors/cross/manifest/extractor.go
+            functions: [parseGoMod]
+          - file: internal/extractors/golang/gomod.go
+            functions: [goModuleRoot, parseGoModModule]
+        tests:
+          - file: internal/extractors/golang/gomod_test.go
+          - file: internal/extractors/cross/manifest/extractor_test.go
+        issues_implemented: ["3211"]
+        verified_at: "2026-05-30"
+      target_extraction:
+        # build_tools.yaml (go modules) detects go.mod presence as the
+        # definitive signal for module-aware mode; go.sum checksums confirm
+        # the locked dependency set. parseGoMod extracts versioned targets.
+        status: full
+        symbols:
+          - file: internal/extractors/cross/manifest/extractor.go
+            functions: [parseGoMod, detectPackageManager, IsManifest]
+          - file: internal/extractors/golang/gomod.go
+            functions: [goModuleRoot, parseGoModModule]
+        tests:
+          - file: internal/extractors/cross/manifest/extractor_test.go
+        issues_implemented: ["3211"]
+        verified_at: "2026-05-30"
+
+  test.go-testing:
+    capabilities:
+      target_extraction:
+        # test_patterns.yaml registers Go stdlib testing framework detection
+        # (func Test*/Benchmark*/Example* + *_test.go naming).
+        # tests_edges.go ApplyTestsMultiHopViaHTTP propagates TESTS edges
+        # from enclosing test functions to production entities via HTTP routes.
+        status: full
+        symbols:
+          - file: internal/engine/tests_edges.go
+            functions: [ApplyTestsMultiHopViaHTTP, isTestFilePath, buildRoutesToIndex]
+          - file: internal/engine/rules/go/test_patterns.yaml
+        tests:
+          - file: internal/engine/tests_edges_test.go
+        issues_implemented: ["3211"]
+        verified_at: "2026-05-30"
+      dependency_graph:
+        # tests_edges.go builds TESTS edges that link test functions to the
+        # production entities they exercise, forming the test dependency sub-graph.
+        status: full
+        symbols:
+          - file: internal/engine/tests_edges.go
+            functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, SynthesiseRoutesToFromEndpoints]
+        tests:
+          - file: internal/engine/tests_edges_test.go
+        issues_implemented: ["3211"]
+        verified_at: "2026-05-30"
+
+  pkg.go-mod:
+    capabilities:
+      manifest_parsing:
+        # parseGoMod extracts all require directives (block form and single-line)
+        # from go.mod, covering both direct and indirect dependencies.
+        status: full
+        symbols:
+          - file: internal/extractors/cross/manifest/extractor.go
+            functions: [parseGoMod, detectPackageManager, IsManifest]
+        tests:
+          - file: internal/extractors/cross/manifest/extractor_test.go
+        issues_implemented: ["3211"]
+        verified_at: "2026-05-30"
+      lockfile_parsing:
+        # go.sum records cryptographic checksums for each dependency module
+        # version. It is not a traditional lockfile (no pinned transitive tree)
+        # but does lock hashes. Full go.sum parsing is not yet implemented;
+        # the partial status reflects that go.mod already anchors versions.
+        status: partial
+        issues_implemented: ["3211"]
+        verified_at: "2026-05-30"
