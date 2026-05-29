@@ -16,20 +16,20 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Nested model extraction | ❌ `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/2985) | — | — |
-| Schema extraction | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/attrs.go`<br>`internal/custom/python/testdata/attrs_validators.py` | @attr.s/@define classes surface only as generic Python classes: PEP 526 annotated attributes are emitted as SCOPE.Schema/field by extractClassFields. No attrs-specific validator=/converter= recognition. |
+| Schema extraction | ✅ `full` | `2026-05-29` | 3061 | `internal/custom/python/attrs.go`<br>`internal/custom/python/extractors_test.go`<br>`internal/custom/python/testdata/attrs_validators.py` | @attr.s/@attrs.define/@define decorated classes emitted as SCOPE.Pattern attrs_class entities with decorator_form; tested in TestAttrs_ClassDecorator_AttrS, TestAttrs_ClassDecorator_Define, and TestAttrs_FullFixture. Nested attrs classes are referenced as attrib field types but no structural tree is emitted. |
 
 ### Constraints
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Constraint extraction | ❌ `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/2985) | — | — |
-| Custom validator extraction | ⚠️ `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/python/attrs.go`<br>`internal/custom/python/testdata/attrs_validators.py` | — |
+| Custom validator extraction | ✅ `full` | `2026-05-29` | 3061 | `internal/custom/python/attrs.go`<br>`internal/custom/python/extractors_test.go`<br>`internal/custom/python/testdata/attrs_validators.py` | @<field>.validator decorator-style validators (TestAttrs_FieldValidator) and validator= kwarg (TestAttrs_ValidatorKwarg) both fully extracted as SCOPE.Pattern field_validator entities; TestAttrs_FullFixture exercises the fixture end-to-end. |
 
 ### Coercion
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Type coercion recognition | ⚠️ `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/python/attrs.go`<br>`internal/custom/python/testdata/attrs_validators.py` | — |
+| Type coercion recognition | ✅ `full` | `2026-05-29` | 3061 | `internal/custom/python/attrs.go`<br>`internal/custom/python/extractors_test.go`<br>`internal/custom/python/testdata/attrs_validators.py` | — |
 
 ### Testing
 

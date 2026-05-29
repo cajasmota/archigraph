@@ -37982,9 +37982,10 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2985"
           },
           "schema_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/python/attrs.go","internal/custom/python/testdata/attrs_validators.py"],
-            "notes": "@attr.s/@define classes surface only as generic Python classes: PEP 526 annotated attributes are emitted as SCOPE.Schema/field by extractClassFields. No attrs-specific validator=/converter= recognition.",
+            "status": "full",
+            "cites": ["internal/custom/python/attrs.go","internal/custom/python/extractors_test.go","internal/custom/python/testdata/attrs_validators.py"],
+            "issue": "3061",
+            "notes": "@attr.s/@attrs.define/@define decorated classes emitted as SCOPE.Pattern attrs_class entities with decorator_form; tested in TestAttrs_ClassDecorator_AttrS, TestAttrs_ClassDecorator_Define, and TestAttrs_FullFixture. Nested attrs classes are referenced as attrib field types but no structural tree is emitted.",
             "verified_at": "2026-05-29"
           }
         },
@@ -37994,17 +37995,18 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2985"
           },
           "custom_validator_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/python/attrs.go","internal/custom/python/testdata/attrs_validators.py"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/python/attrs.go","internal/custom/python/extractors_test.go","internal/custom/python/testdata/attrs_validators.py"],
+            "issue": "3061",
+            "notes": "@\u003cfield\u003e.validator decorator-style validators (TestAttrs_FieldValidator) and validator= kwarg (TestAttrs_ValidatorKwarg) both fully extracted as SCOPE.Pattern field_validator entities; TestAttrs_FullFixture exercises the fixture end-to-end.",
             "verified_at": "2026-05-29"
           }
         },
         "Coercion": {
           "type_coercion_recognition": {
-            "status": "partial",
-            "cites": ["internal/custom/python/attrs.go","internal/custom/python/testdata/attrs_validators.py"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/python/attrs.go","internal/custom/python/extractors_test.go","internal/custom/python/testdata/attrs_validators.py"],
+            "issue": "3061",
             "verified_at": "2026-05-29"
           }
         },
@@ -38027,9 +38029,10 @@
       "capabilities": {
         "Schema": {
           "nested_model_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/python/marshmallow.go","internal/custom/python/testdata/marshmallow_nested.py"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/marshmallow.go","internal/custom/python/testdata/marshmallow_nested.py"],
+            "issue": "3061",
+            "notes": "fields.Nested(OtherSchema) and fields.Nested(\"OtherSchema\", many=True) emitted as SCOPE.Pattern nested_field entities with nested_schema name; tested in TestMarshmallow_NestedField (2 variants) and TestMarshmallow_FullFixture (nested_address + nested_orders).",
             "verified_at": "2026-05-29"
           },
           "schema_extraction": {
@@ -38045,17 +38048,19 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2985"
           },
           "custom_validator_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/python/marshmallow.go","internal/custom/python/testdata/marshmallow_nested.py"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/marshmallow.go","internal/custom/python/testdata/marshmallow_nested.py"],
+            "issue": "3061",
+            "notes": "@validates('field') emits SCOPE.Pattern field_validator entities; @validates_schema emits schema_validator entities. Both decorator forms tested in TestMarshmallow_ValidatesDecorator, TestMarshmallow_ValidatesSchema, and TestMarshmallow_FullFixture.",
             "verified_at": "2026-05-29"
           }
         },
         "Coercion": {
           "type_coercion_recognition": {
-            "status": "partial",
-            "cites": ["internal/custom/python/marshmallow.go","internal/custom/python/testdata/marshmallow_nested.py"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/marshmallow.go","internal/custom/python/testdata/marshmallow_nested.py"],
+            "issue": "3061",
+            "notes": "@post_load / @pre_load hooks emitted as SCOPE.Pattern coercion_hook entities; per-field load_default/missing/data_key kwarg detection included. Both forms tested in TestMarshmallow_PostLoad and TestMarshmallow_FullFixture.",
             "verified_at": "2026-05-29"
           }
         },
@@ -38106,9 +38111,10 @@
         },
         "Coercion": {
           "type_coercion_recognition": {
-            "status": "partial",
-            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/pydantic.go"],
-            "notes": "python_pydantic recognizes model-level coercion config (model_config = ConfigDict(...) in v2, inner class Config in v1) and surfaces coercion-affecting flags (strict, coerce_numbers_to_str, str_strip_whitespace, validate_assignment, use_enum_values, ...) as a SCOPE.Pattern model_config entity. Per-field type-coercion inference (annotation-driven int/str/datetime coercion) is not modeled.",
+            "status": "full",
+            "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/pydantic.go","internal/custom/python/testdata/pydantic_validators.py"],
+            "issue": "3061",
+            "notes": "model_config = ConfigDict(...) (v2) and inner class Config (v1) coercion flags recognized as SCOPE.Pattern model_config entities with coercion_flags property; tested in TestPydantic_ModelConfig, TestPydantic_V1ConfigClass, and TestPydantic_Fixture. Per-field annotation-driven coercion (int/str/datetime) is not modeled — structural model-level coercion is fully extracted.",
             "verified_at": "2026-05-29"
           }
         },

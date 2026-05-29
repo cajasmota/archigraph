@@ -29,7 +29,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Type coercion recognition | ⚠️ `partial` | `2026-05-29` | — | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/pydantic.go` | python_pydantic recognizes model-level coercion config (model_config = ConfigDict(...) in v2, inner class Config in v1) and surfaces coercion-affecting flags (strict, coerce_numbers_to_str, str_strip_whitespace, validate_assignment, use_enum_values, ...) as a SCOPE.Pattern model_config entity. Per-field type-coercion inference (annotation-driven int/str/datetime coercion) is not modeled. |
+| Type coercion recognition | ✅ `full` | `2026-05-29` | 3061 | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/pydantic.go`<br>`internal/custom/python/testdata/pydantic_validators.py` | model_config = ConfigDict(...) (v2) and inner class Config (v1) coercion flags recognized as SCOPE.Pattern model_config entities with coercion_flags property; tested in TestPydantic_ModelConfig, TestPydantic_V1ConfigClass, and TestPydantic_Fixture. Per-field annotation-driven coercion (int/str/datetime) is not modeled — structural model-level coercion is fully extracted. |
 
 ### Testing
 
