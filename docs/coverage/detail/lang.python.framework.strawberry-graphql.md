@@ -15,9 +15,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Endpoint synthesis | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/graphql/frameworks/strawberry_python.yaml`<br>`internal/engine/rules/python/frameworks/strawberry_graphql.yaml` | — |
-| Handler attribution | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/python/frameworks/strawberry_graphql.yaml` | — |
-| Route extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Endpoint synthesis | ✅ `full` | `2026-05-29` | 3066 | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/graphql/frameworks/strawberry_python.yaml`<br>`internal/engine/rules/python/frameworks/strawberry_graphql.yaml` | — |
+| Handler attribution | ✅ `full` | `2026-05-29` | 3066 | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/python/frameworks/strawberry_graphql.yaml` | — |
+| Route extraction | ✅ `full` | `2026-05-29` | 3066 | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/python/frameworks/strawberry_graphql.yaml` | — |
 
 ### Auth
 

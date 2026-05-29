@@ -377,6 +377,11 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		synthesizeFalcon(string(content), emitDef)
 		synthesizeHug(string(content), emitDef)
 		synthesizeQuart(string(content), emitDef)
+		// #3066 — Strawberry GraphQL operation synthesis. Maps @strawberry.type
+		// root classes (Query / Mutation / Subscription) and their methods to
+		// http:GRAPHQL:/graphql/<Root>/<field> synthetics. Gated on "strawberry"
+		// in the file so it is a no-op on all other Python framework files.
+		synthesizeStrawberry(string(content), emitDef)
 		// Producer side: Flask + FastAPI run FIRST so their synthetics —
 		// which carry a real handler function name as source_handler —
 		// claim each ID before the Django composed-route pass walks the
@@ -2746,6 +2751,136 @@ func synthesizeQuart(content string, emit emitDefFn) {
 		}
 		for _, verb := range methods {
 			emit(verb, canonical, "quart", "Controller", handler, defLine)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Strawberry GraphQL (Python) — #3066
+// ---------------------------------------------------------------------------
+//
+// Strawberry is a code-first GraphQL library for Python. Schemas are defined
+// by decorating Python classes with @strawberry.type and individual resolver
+// methods with @strawberry.field (or leaving them undecorated — any public
+// method in a @strawberry.type class is a potential resolver field).
+//
+// The three GraphQL root types are:
+//
+//	@strawberry.type
+//	class Query:
+//	    def users(self) -> list[User]: ...
+//
+//	@strawberry.type
+//	class Mutation:
+//	    @strawberry.mutation
+//	    def create_user(self, name: str) -> User: ...
+//
+//	@strawberry.type
+//	class Subscription:
+//	    @strawberry.subscription
+//	    async def user_added(self) -> typing.AsyncGenerator[User, None]: ...
+//
+// We map each method on a root type to:
+//
+//	http:GRAPHQL:/graphql/<RootType>/<fieldName>
+//
+// Handler attribution: the resolver method name is the handler (as
+// SCOPE.Operation:<ClassName>.<method>).
+//
+// Detection is gated on the presence of "strawberry" in the file so the
+// synthesizer is a no-op on plain Flask/FastAPI/etc. files.
+
+// strawberryRootTypeRe matches a `@strawberry.type` (or @strawberry.mutation /
+// @strawberry.subscription) decorator immediately preceding a class named
+// Query, Mutation, or Subscription.
+//
+// Capture groups:
+//
+//	1 = root type name (Query | Mutation | Subscription)
+var strawberryRootTypeRe = regexp.MustCompile(
+	`(?m)@strawberry\.(?:type|mutation|subscription)\s*\n(?:[ \t]*@[^\n]+\n)*[ \t]*class\s+(Query|Mutation|Subscription)\s*[:(]`,
+)
+
+// strawberryMethodRe matches a public method inside a class body. It matches
+// `def <name>(self` and optionally `async def <name>(self`.
+//
+// Capture groups:
+//
+//	1 = method name
+var strawberryMethodRe = regexp.MustCompile(
+	`(?m)^[ \t]+(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(\s*self`,
+)
+
+func synthesizeStrawberry(content string, emit emitDefFn) {
+	// File-signal gate: require a strawberry marker.
+	if !strings.Contains(content, "strawberry") {
+		return
+	}
+
+	// Find all @strawberry.type class declarations for the three root types.
+	for _, rm := range strawberryRootTypeRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(rm) < 4 {
+			continue
+		}
+		rootType := content[rm[2]:rm[3]] // "Query" | "Mutation" | "Subscription"
+
+		// Locate the class body by finding the colon that ends the class
+		// declaration line and scanning forward to find the indented block.
+		// We use a simplified approach: find all method defs in the class body
+		// by scanning from the class header until the next unindented line
+		// (i.e., the next `class` / top-level statement).
+		classStart := rm[1] // byte offset right after the class header match
+		// Find the end of the class body: next line that starts with a
+		// non-whitespace character (top-level), or end of file.
+		classEnd := len(content)
+		// Scan from classStart for the next occurrence of a line that begins
+		// with a non-space, non-tab character and is not a blank line or
+		// comment. We walk line by line.
+		searchIn := content[classStart:]
+		lines := strings.Split(searchIn, "\n")
+		bodyEnd := len(searchIn)
+		for i, line := range lines {
+			if i == 0 {
+				// The first "line" is the tail of the class header — skip it.
+				continue
+			}
+			if len(line) == 0 {
+				continue // blank line — still inside the class
+			}
+			if line[0] != ' ' && line[0] != '\t' {
+				// Top-level line — class body ends here.
+				bodyEnd = 0
+				for j := 0; j < i; j++ {
+					bodyEnd += len(lines[j]) + 1 // +1 for '\n'
+				}
+				break
+			}
+		}
+		classBody := content[classStart : classStart+bodyEnd]
+		classEnd = classStart + bodyEnd
+		_ = classEnd
+
+		// Extract each public method in the class body.
+		seen := map[string]bool{}
+		for _, mm := range strawberryMethodRe.FindAllStringSubmatchIndex(classBody, -1) {
+			if len(mm) < 4 {
+				continue
+			}
+			methodName := classBody[mm[2]:mm[3]]
+			// Skip dunder methods and already-seen names.
+			if strings.HasPrefix(methodName, "_") || seen[methodName] {
+				continue
+			}
+			seen[methodName] = true
+
+			// Compute the absolute def-line in the file (not just the class body).
+			methodOffsetInFile := classStart + mm[2]
+			defLine := lineOfOffset(content, methodOffsetInFile)
+
+			path := "/graphql/" + rootType + "/" + methodName
+			canonical := httproutes.Canonicalize(httproutes.FrameworkFastAPI, path)
+			handlerRef := rootType + "." + methodName
+			emit("GRAPHQL", canonical, "strawberry-graphql", "SCOPE.Operation", handlerRef, defLine)
 		}
 	}
 }

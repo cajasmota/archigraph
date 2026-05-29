@@ -37797,18 +37797,22 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/graphql/frameworks/strawberry_python.yaml","internal/engine/rules/python/frameworks/strawberry_graphql.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/graphql/frameworks/strawberry_python.yaml","internal/engine/rules/python/frameworks/strawberry_graphql.yaml"],
+            "issue": "3066",
+            "verified_at": "2026-05-29"
           },
           "handler_attribution": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/python/frameworks/strawberry_graphql.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/strawberry_graphql.yaml"],
+            "issue": "3066",
+            "verified_at": "2026-05-29"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/strawberry_graphql.yaml"],
+            "issue": "3066",
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {

@@ -1,3 +1,9 @@
+# Strawberry GraphQL framework extraction rules.
+#
+# Top-level `frameworks:` key is consumed by the modular_loader (detection).
+# Top-level extraction keys (file_conventions, source_patterns,
+# relationship_rules) are consumed by FrameworkExtractionSchema.
+#
 frameworks:
   name: Strawberry GraphQL
   pypi_package: strawberry-graphql
@@ -23,3 +29,95 @@ frameworks:
     Often paired with FastAPI or Litestar.
 
     '
+
+# ---------------------------------------------------------------------------
+# Extraction schema (FrameworkExtractionSchema)
+# ---------------------------------------------------------------------------
+
+# file_conventions: glob -> entity_type mapping from file naming conventions.
+file_conventions:
+  - glob: "schema.py"
+    entity_type: Route
+    name_from: filename
+  - glob: "*/graphql/*.py"
+    entity_type: Route
+    name_from: filename
+  - glob: "*/graphql/schema.py"
+    entity_type: Route
+    name_from: filename
+
+# source_patterns: regex patterns that match Strawberry GraphQL constructs in
+# source files. name_group references the capture group that provides the
+# entity name.
+source_patterns:
+  # Root type declarations: @strawberry.type class Query / Mutation / Subscription
+  - pattern: "@strawberry\\.type\\s*\\nclass\\s+(Query|Mutation|Subscription)\\s*[:(]"
+    entity_type: Route
+    name_group: 1
+    scope: class
+  # Resolver methods decorated with @strawberry.field
+  - pattern: "@strawberry\\.field[\\s\\S]{0,80}?def\\s+(\\w+)\\s*\\(\\s*self"
+    entity_type: Route
+    name_group: 1
+    scope: function
+  # Mutation resolver methods decorated with @strawberry.mutation
+  - pattern: "@strawberry\\.mutation[\\s\\S]{0,80}?def\\s+(\\w+)\\s*\\(\\s*self"
+    entity_type: Route
+    name_group: 1
+    scope: function
+  # Subscription resolver methods decorated with @strawberry.subscription
+  - pattern: "@strawberry\\.subscription[\\s\\S]{0,80}?def\\s+(\\w+)\\s*\\(\\s*self"
+    entity_type: Route
+    name_group: 1
+    scope: function
+  # Schema instantiation: schema = strawberry.Schema(query=Query, ...)
+  - pattern: "(\\w+)\\s*=\\s*strawberry\\.Schema\\s*\\("
+    entity_type: Service
+    name_group: 1
+    scope: file
+  # Input type declarations: @strawberry.input class Foo
+  - pattern: "@strawberry\\.input\\s*\\nclass\\s+(\\w+)\\s*[:(]"
+    entity_type: Model
+    name_group: 1
+    scope: class
+  # Interface declarations: @strawberry.interface class Foo
+  - pattern: "@strawberry\\.interface\\s*\\nclass\\s+(\\w+)\\s*[:(]"
+    entity_type: Model
+    name_group: 1
+    scope: class
+  # FastAPI/Litestar router mount: GraphQLRouter(schema) or GraphQLView
+  - pattern: "(\\w+)\\s*=\\s*(?:GraphQLRouter|GraphQLView)\\s*\\("
+    entity_type: Route
+    name_group: 1
+    scope: file
+
+# relationship_rules: regex patterns that produce edges between entities.
+relationship_rules:
+  # Schema wires query root to service: strawberry.Schema(query=Query)
+  - pattern: "strawberry\\.Schema\\s*\\(.*?query\\s*=\\s*(\\w+)"
+    source_type: Service
+    target_type: Route
+    relationship: ROUTES_TO
+    source_group: 1
+    target_group: 1
+  # Schema wires mutation root to service: strawberry.Schema(mutation=Mutation)
+  - pattern: "strawberry\\.Schema\\s*\\(.*?mutation\\s*=\\s*(\\w+)"
+    source_type: Service
+    target_type: Route
+    relationship: ROUTES_TO
+    source_group: 1
+    target_group: 1
+  # Schema wires subscription root to service: strawberry.Schema(subscription=Subscription)
+  - pattern: "strawberry\\.Schema\\s*\\(.*?subscription\\s*=\\s*(\\w+)"
+    source_type: Service
+    target_type: Route
+    relationship: ROUTES_TO
+    source_group: 1
+    target_group: 1
+  # FastAPI mount: app.include_router(graphql_app, prefix="/graphql")
+  - pattern: "(\\w+)\\.include_router\\s*\\(\\s*(\\w+)"
+    source_type: Service
+    target_type: Route
+    relationship: ROUTES_TO
+    source_group: 1
+    target_group: 2

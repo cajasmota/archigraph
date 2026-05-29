@@ -28,7 +28,7 @@ Back to [summary](../summary.md).
 | [Robyn](../detail/lang.python.framework.robyn.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟡 5/7 | |
 | [Sanic](../detail/lang.python.framework.sanic.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟡 5/7 | |
 | [Starlette](../detail/lang.python.framework.starlette.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟡 5/7 | |
-| [Strawberry GraphQL](../detail/lang.python.framework.strawberry-graphql.md) | 🟡 2/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟡 5/7 | |
+| [Strawberry GraphQL](../detail/lang.python.framework.strawberry-graphql.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟡 5/7 | |
 | [Tornado](../detail/lang.python.framework.tornado.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟢 20/20 | 🟡 5/7 | |
 | [aiohttp](../detail/lang.python.framework.aiohttp.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟡 5/7 | |
 
