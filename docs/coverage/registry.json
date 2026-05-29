@@ -17602,8 +17602,10 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_webflux_routes.go","internal/engine/http_endpoint_synthesis.go","testdata/fixtures/sources/java/spring_webflux/RouterConfig.java"],
+            "issue": "3080",
+            "verified_at": "2026-05-29"
           }
         },
         "Auth": {
@@ -17632,8 +17634,10 @@
         "Middleware": {
           "middleware_coverage": {
             "status": "partial",
-            "cites": ["internal/links/effect_propagation.go","internal/links/module_cycle_pass.go","internal/substrate/def_use_java.go","internal/substrate/effect_sinks_java.go","internal/substrate/entry_points_java.go","internal/substrate/taint_sites_java.go","internal/substrate/template_pattern_java.go"],
-            "issue": "3154"
+            "cites": ["internal/custom/java/spring_webflux_routes.go","testdata/fixtures/sources/java/spring_webflux/RouterConfig.java"],
+            "issue": "3080",
+            "notes": "WebFilter implementations detected via 'implements WebFilter' class declaration; Middleware entities emitted with middleware_type=web_filter and filter_class. Multiple WebFilter classes in one file each produce a distinct entity.",
+            "verified_at": "2026-05-29"
           }
         },
         "Testing": {

@@ -17,7 +17,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Endpoint synthesis | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/java/frameworks/spring_webflux.yaml`<br>`internal/engine/spring_routes.go` | — |
 | Handler attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/spring_routes.go` | — |
-| Route extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Route extraction | 🟢 `partial` | `2026-05-29` | 3080 | `internal/custom/java/spring_webflux_routes.go`<br>`internal/engine/http_endpoint_synthesis.go`<br>`testdata/fixtures/sources/java/spring_webflux/RouterConfig.java` | — |
 
 ### Auth
 
@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | — | 3154 | `internal/links/effect_propagation.go`<br>`internal/links/module_cycle_pass.go`<br>`internal/substrate/def_use_java.go`<br>`internal/substrate/effect_sinks_java.go`<br>`internal/substrate/entry_points_java.go`<br>`internal/substrate/taint_sites_java.go`<br>`internal/substrate/template_pattern_java.go` | — |
+| Middleware coverage | 🟢 `partial` | `2026-05-29` | 3080 | `internal/custom/java/spring_webflux_routes.go`<br>`testdata/fixtures/sources/java/spring_webflux/RouterConfig.java` | WebFilter implementations detected via 'implements WebFilter' class declaration; Middleware entities emitted with middleware_type=web_filter and filter_class. Multiple WebFilter classes in one file each produce a distinct entity. |
 
 ### Testing
 

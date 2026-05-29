@@ -340,6 +340,9 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		synthesizePlay(string(content), path, emit)
 		// Akka-HTTP (#3092): directive DSL `path("foo", () -> get(() -> ...))` routing.
 		synthesizeAkkaHTTP(string(content), emit)
+		// Spring WebFlux (#3080): functional DSL RouterFunctions.route().GET(...)
+		// and WebFilter middleware detection.
+		synthesizeSpringWebFlux(string(content), emit)
 		// Consumer side (#721): HttpClient / RestTemplate /
 		// WebClient / OkHttp / Apache HttpClient / Retrofit.
 		synthesizeJavaClientWithRuntime(string(content), emitClientRuntime)
@@ -1087,6 +1090,80 @@ func synthesizeAkkaHTTP(content string, emit emitFn) {
 				emit(verb, canonical, "akka-http", "Route", "")
 			}
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Spring WebFlux (Java) — functional DSL routing (#3080)
+// ---------------------------------------------------------------------------
+
+// webFluxChainedSynthRe captures chained .GET("/path", ...) / .POST("/path", ...)
+// method calls in a RouterFunctions.route() builder chain. These are always
+// uppercase method names used as direct DSL verbs on the RequestPredicates API.
+var webFluxChainedSynthRe = regexp.MustCompile(
+	`\.\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*\(\s*"([^"]+)"`)
+
+// webFluxPredicateSynthRe captures the two-argument overload:
+//
+//	RouterFunctions.route(RequestPredicates.GET("/path"), handler)
+var webFluxPredicateSynthRe = regexp.MustCompile(
+	`\bRequestPredicates\s*\.\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*\(\s*"([^"]+)"`)
+
+// synthesizeSpringWebFlux scans a Java file for Spring WebFlux functional-DSL
+// route registrations and emits one http_endpoint_definition per (verb, path)
+// pair.
+//
+// Two forms are detected:
+//  1. Chained builder: RouterFunctions.route().GET("/path", handler)
+//  2. Static predicate: RouterFunctions.route(RequestPredicates.GET("/path"), handler)
+//
+// Spring WebFlux uses `{param}` curly-brace path parameters (same as Spring
+// MVC), so FrameworkSpring is passed to Canonicalize.
+func synthesizeSpringWebFlux(content string, emit emitFn) {
+	// File-signal gate: require RouterFunction / RouterFunctions / RequestPredicates.
+	if !strings.Contains(content, "RouterFunction") &&
+		!strings.Contains(content, "RouterFunctions") &&
+		!strings.Contains(content, "RequestPredicates") {
+		return
+	}
+	// Secondary gate: must have the route() call or a @Bean RouterFunction annotation
+	// to confirm this is functional-DSL routing (not just an import or comment).
+	if !strings.Contains(content, "route(") && !strings.Contains(content, "RouterFunction<") {
+		return
+	}
+
+	seen := make(map[string]bool)
+
+	// Form 1: chained .GET/.POST/... verbs.
+	for _, m := range webFluxChainedSynthRe.FindAllStringSubmatch(content, -1) {
+		if len(m) < 3 {
+			continue
+		}
+		verb := m[1]
+		rawPath := m[2]
+		key := verb + ":" + rawPath
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		canonical := httproutes.Canonicalize(httproutes.FrameworkSpring, rawPath)
+		emit(verb, canonical, "spring_webflux", "Route", "")
+	}
+
+	// Form 2: RequestPredicates.GET("/path") — deduplicate against form 1.
+	for _, m := range webFluxPredicateSynthRe.FindAllStringSubmatch(content, -1) {
+		if len(m) < 3 {
+			continue
+		}
+		verb := m[1]
+		rawPath := m[2]
+		key := verb + ":" + rawPath
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		canonical := httproutes.Canonicalize(httproutes.FrameworkSpring, rawPath)
+		emit(verb, canonical, "spring_webflux", "Route", "")
 	}
 }
 
