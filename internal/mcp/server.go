@@ -401,7 +401,7 @@ func (s *Server) registerTools() {
 		mcpapi.WithArray("fields"),
 		mcpapi.WithAny("group"),
 		mcpapi.WithAny("cwd"),
-		mcpapi.WithAny("ref"),                                  // PH1c: optional git ref; defaults to CWD HEAD ref
+		mcpapi.WithAny("ref"),                                        // PH1c: optional git ref; defaults to CWD HEAD ref
 		mcpapi.WithNumber("min_confidence", mcpapi.DefaultNumber(0)), // #2769 Phase 1C
 	), s.wrap("archigraph_find", s.handleQueryGraph))
 
@@ -513,7 +513,6 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("group"),
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_security_findings", s.handleSecurityFindings))
-
 
 	// #2774 / #2775 — Phase 3A pure-function tagging. Lists function-
 	// like entities with no detected effects per the Phase 1A propag-
@@ -1003,6 +1002,21 @@ func (s *Server) registerTools() {
 		mcpapi.WithArray("chain"),
 		mcpapi.WithAny("metadata"),
 	), s.wrap("archigraph_persona_event", s.handlePersonaEvent))
+
+	// archigraph_feedback_event — agent-experience feedback for internal test
+	// runs (#3204). Agents call this opportunistically when an answer is
+	// wrong/incomplete or a library isn't recognized, and at phase checkpoints.
+	// Appends to ~/.archigraph/events/feedback-events-YYYY-MM-DD.jsonl (LOCAL ONLY).
+	// Aggregated by `archigraph feedback rollup`. Internal testing harness.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_feedback_event",
+		mcpapi.WithDescription("Record agent-experience feedback (outcome=helped|partial|wrong|missing_capability) for a test run. LOCAL ONLY."),
+		mcpapi.WithString("outcome", mcpapi.Required()),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("phase"),
+		mcpapi.WithAny("library"),
+		mcpapi.WithAny("capability"),
+		mcpapi.WithAny("note"),
+	), s.wrap("archigraph_feedback_event", s.handleFeedbackEvent))
 
 	// archigraph_mcp_metrics — per-tool session metrics + daily rollup (#2192).
 	// Returns in-memory per-tool counters (calls, errors, p50/p95 ms) for the
