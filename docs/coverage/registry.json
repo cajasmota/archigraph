@@ -45934,9 +45934,10 @@
           "verified_at": "2026-05-28"
         },
         "topic_attribution": {
-          "status": "partial",
+          "status": "full",
           "cites": ["internal/engine/django_signal_pubsub_edges.go"],
-          "verified_at": "2026-05-28"
+          "issue": "3058",
+          "verified_at": "2026-05-29"
         }
       }
     },
@@ -45947,10 +45948,16 @@
       "label": "Dramatiq (Python task queue)",
       "capabilities": {
         "consumer_extraction": {
-          "status": "missing"
+          "status": "full",
+          "cites": ["internal/custom/python/dramatiq.go"],
+          "issue": "3058",
+          "verified_at": "2026-05-29"
         },
         "producer_extraction": {
-          "status": "missing"
+          "status": "full",
+          "cites": ["internal/custom/python/dramatiq.go"],
+          "issue": "3058",
+          "verified_at": "2026-05-29"
         }
       }
     },

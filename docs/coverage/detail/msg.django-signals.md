@@ -13,7 +13,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Consumer extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/django_signal_pubsub_edges.go` | — |
 | Producer extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/django_signal_pubsub_edges.go` | — |
-| Topic attribution | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/django_signal_pubsub_edges.go` | — |
+| Topic attribution | ✅ `full` | `2026-05-29` | 3058 | `internal/engine/django_signal_pubsub_edges.go` | — |
 
 ## Provenance
 

@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Consumer extraction | ❌ `missing` | — | — | — | — |
-| Producer extraction | ❌ `missing` | — | — | — | — |
+| Consumer extraction | ✅ `full` | `2026-05-29` | 3058 | `internal/custom/python/dramatiq.go` | — |
+| Producer extraction | ✅ `full` | `2026-05-29` | 3058 | `internal/custom/python/dramatiq.go` | — |
 
 ## Provenance
 
