@@ -120,7 +120,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [python](../by-language/python.md) | [Peewee](../detail/lang.python.orm.peewee.md) | ❌ 2/8 | |
 | [python](../by-language/python.md) | [Pony ORM](../detail/lang.python.orm.pony.md) | ❌ 2/8 | |
 | [python](../by-language/python.md) | [SQLAlchemy](../detail/lang.python.orm.sqlalchemy.md) | ✅ 8/8 | |
-| [python](../by-language/python.md) | [SQLModel](../detail/lang.python.orm.sqlmodel.md) | ❌ 3/8 | |
+| [python](../by-language/python.md) | [SQLModel](../detail/lang.python.orm.sqlmodel.md) | ⚠️ 8/8 | |
 | [python](../by-language/python.md) | [Tortoise ORM](../detail/lang.python.orm.tortoise.md) | ❌ 2/8 | |
 | [python](../by-language/python.md) | [boto3 DynamoDB](../detail/lang.python.driver.dynamodb.md) | ⚠️ 1/1 | |
 | [python](../by-language/python.md) | [cassandra-driver](../detail/lang.python.driver.cassandra.md) | ⚠️ 1/1 | |

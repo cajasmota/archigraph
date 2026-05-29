@@ -22,10 +22,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | ❌ `missing` | `2026-05-29` | backfill:dictionary-completeness | — | SQLModel delegates to SQLAlchemy relationship() for lazy loading, but the sqlalchemy extractor's lazy_strategy detection (issue #2986) applies only when the SQLAlchemy extractor fires on a SQLModel file. SQLModel-specific lazy loading is not yet explicitly tracked. |
-| Relationship extraction | ❌ `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | ✅ `full` | `2026-05-29` | 3056 | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/sqlalchemy.go` | — |
+| Foreign key extraction | ✅ `full` | `2026-05-29` | 3056 | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/sqlalchemy.go` | — |
+| Lazy loading recognition | ✅ `full` | `2026-05-29` | 3056 | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/sqlalchemy.go` | SQLModel delegates to SQLAlchemy relationship() for lazy loading, but the sqlalchemy extractor's lazy_strategy detection (issue #2986) applies only when the SQLAlchemy extractor fires on a SQLModel file. SQLModel-specific lazy loading is not yet explicitly tracked. |
+| Relationship extraction | ✅ `full` | `2026-05-29` | 3056 | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/sqlalchemy.go` | — |
 
 ### Queries
 
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | ❌ `missing` | — | — | — | — |
+| Migration parsing | ✅ `full` | `2026-05-29` | 3056 | `internal/engine/rules/python/orms/alembic.yaml` | — |
 
 ## Provenance
 

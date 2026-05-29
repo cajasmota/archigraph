@@ -1608,6 +1608,143 @@ class HeroCreate(SQLModel):
 	}
 }
 
+// TestSQLModel_RelationshipExtraction verifies that relationship() calls inside
+// SQLModel table=True classes are extracted as relationship entities.
+// Issue #3056 — SQLModel Relationships:relationship_extraction recording-win.
+func TestSQLModel_RelationshipExtraction(t *testing.T) {
+	src := `from sqlmodel import SQLModel, Field
+from sqlalchemy.orm import relationship
+from typing import Optional, List
+
+class Team(SQLModel, table=True):
+    __tablename__ = "team"
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    heroes = relationship("Hero", back_populates="team")
+
+class Hero(SQLModel, table=True):
+    __tablename__ = "hero"
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    team = relationship("Team", back_populates="heroes")
+`
+	ents := extract(t, "python_sqlalchemy", src)
+	var found []extractResult
+	for _, e := range ents {
+		if e.Props["pattern_type"] == "relationship" {
+			found = append(found, e)
+		}
+	}
+	if len(found) < 2 {
+		t.Fatalf("expected at least 2 relationship entities for SQLModel table classes, got %d", len(found))
+	}
+	for _, e := range found {
+		if e.Props["framework"] != "sqlalchemy" {
+			t.Errorf("relationship entity %q: expected framework=sqlalchemy, got %q", e.Name, e.Props["framework"])
+		}
+	}
+}
+
+// TestSQLModel_ForeignKeyExtraction verifies that ForeignKey() calls inside
+// SQLModel table=True class bodies are extracted as foreign_key entities.
+// Issue #3056 — SQLModel Relationships:foreign_key_extraction recording-win.
+func TestSQLModel_ForeignKeyExtraction(t *testing.T) {
+	src := `from sqlmodel import SQLModel, Field
+from sqlalchemy import ForeignKey
+
+class Hero(SQLModel, table=True):
+    __tablename__ = "hero"
+    id: int = Field(default=None, primary_key=True)
+    team_id: int = Field(foreign_key=ForeignKey("team.id"))
+    city_id: int = Field(foreign_key=ForeignKey("city.id"))
+`
+	ents := extract(t, "python_sqlalchemy", src)
+	fkCount := 0
+	for _, e := range ents {
+		if e.Props["pattern_type"] == "foreign_key" {
+			fkCount++
+		}
+	}
+	if fkCount < 2 {
+		t.Fatalf("expected at least 2 foreign_key entities for SQLModel table class, got %d", fkCount)
+	}
+}
+
+// TestSQLModel_LazyLoadingRecognition verifies that lazy= kwarg on relationship()
+// inside a SQLModel table=True class is detected and recorded.
+// Issue #3056 — SQLModel Relationships:lazy_loading_recognition recording-win.
+func TestSQLModel_LazyLoadingRecognition(t *testing.T) {
+	src := `from sqlmodel import SQLModel, Field
+from sqlalchemy.orm import relationship
+from typing import Optional, List
+
+class Team(SQLModel, table=True):
+    __tablename__ = "team"
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    heroes_dynamic = relationship("Hero", back_populates="team", lazy="dynamic")
+    heroes_select = relationship("Member", lazy='select')
+`
+	ents := extract(t, "python_sqlalchemy", src)
+	var dynamicEnt, selectEnt *extractResult
+	for i := range ents {
+		e := &ents[i]
+		if e.Props["pattern_type"] != "relationship" {
+			continue
+		}
+		switch e.Props["target_model"] {
+		case "Hero":
+			dynamicEnt = e
+		case "Member":
+			selectEnt = e
+		}
+	}
+	if dynamicEnt == nil {
+		t.Fatal("expected relationship entity for Hero (lazy=dynamic) in SQLModel table class")
+	}
+	if dynamicEnt.Props["lazy_strategy"] != "dynamic" {
+		t.Errorf("expected lazy_strategy=dynamic, got %q", dynamicEnt.Props["lazy_strategy"])
+	}
+	if selectEnt == nil {
+		t.Fatal("expected relationship entity for Member (lazy=select) in SQLModel table class")
+	}
+	if selectEnt.Props["lazy_strategy"] != "select" {
+		t.Errorf("expected lazy_strategy=select, got %q", selectEnt.Props["lazy_strategy"])
+	}
+}
+
+// TestSQLModel_AssociationExtraction verifies that association tables (Table())
+// used alongside SQLModel table=True classes are extracted as association_table
+// entities. Issue #3056 — SQLModel Relationships:association_extraction recording-win.
+func TestSQLModel_AssociationExtraction(t *testing.T) {
+	src := `from sqlmodel import SQLModel, Field
+from sqlalchemy import Table, Column, ForeignKey, MetaData
+
+metadata = MetaData()
+
+hero_sidekick = Table("hero_sidekick", metadata,
+    Column("hero_id", ForeignKey("hero.id"), primary_key=True),
+    Column("sidekick_id", ForeignKey("hero.id"), primary_key=True),
+)
+
+class Hero(SQLModel, table=True):
+    __tablename__ = "hero"
+    id: int = Field(default=None, primary_key=True)
+    name: str
+`
+	ents := extract(t, "python_sqlalchemy", src)
+	var found *extractResult
+	for i := range ents {
+		if ents[i].Props["pattern_type"] == "association_table" && ents[i].Props["tablename"] == "hero_sidekick" {
+			found = &ents[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("expected association_table entity for hero_sidekick in SQLModel file")
+	}
+}
+
 // ============================================================================
 // FastAPI Request/Response tests
 // ============================================================================
