@@ -16,7 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ⚠️ `partial` | `2026-05-28` | — | `internal/engine/rules/python/orms/peewee.yaml` | — |
-| Schema extraction | ❌ `missing` | `2026-05-29` | backfill:dictionary-completeness | — | Peewee field definitions (CharField, IntegerField etc.) are not extracted; only model class detection and query attribution are handled. |
+| Schema extraction | ⚠️ `partial` | `2026-05-29` | 3072 | `internal/custom/python/orm_schema.go` | Peewee field definitions (CharField, IntegerField etc.) are not extracted; only model class detection and query attribution are handled. |
 
 ### Relationships
 

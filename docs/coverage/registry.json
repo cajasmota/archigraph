@@ -37696,8 +37696,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness",
+            "status": "partial",
+            "cites": ["internal/custom/python/orm_schema.go"],
+            "issue": "3072",
             "notes": "Beanie Document field definitions (via Pydantic annotations) are not extracted at the ORM level; the schema_detector.go detects Pydantic usage generally but does not emit per-field ORM schema entities.",
             "verified_at": "2026-05-29"
           }
@@ -37815,8 +37816,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness",
+            "status": "partial",
+            "cites": ["internal/custom/python/orm_schema.go"],
+            "issue": "3072",
             "notes": "MongoEngine Document field definitions (StringField, IntField etc.) are not extracted at the ORM schema level; the MongoDB custom extractor handles aggregations/change streams but not model field schema.",
             "verified_at": "2026-05-29"
           }
@@ -37873,8 +37875,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness",
+            "status": "partial",
+            "cites": ["internal/custom/python/orm_schema.go"],
+            "issue": "3072",
             "notes": "Peewee field definitions (CharField, IntegerField etc.) are not extracted; only model class detection and query attribution are handled.",
             "verified_at": "2026-05-29"
           }
@@ -37930,8 +37933,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness",
+            "status": "partial",
+            "cites": ["internal/custom/python/orm_schema.go"],
+            "issue": "3072",
             "notes": "Pony ORM entity field definitions (Required, Optional etc.) are not extracted; only model class detection and query attribution are handled.",
             "verified_at": "2026-05-29"
           }
@@ -38114,8 +38118,9 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness",
+            "status": "partial",
+            "cites": ["internal/custom/python/orm_schema.go"],
+            "issue": "3072",
             "notes": "Tortoise ORM field definitions (fields.CharField etc.) are not parsed by any Go extractor; only model class detection (model_extraction) is handled via YAML rules.",
             "verified_at": "2026-05-29"
           }
