@@ -286,6 +286,15 @@ const (
 	// Closes the orphan class on model entities referenced only via ORM.
 	RelationshipKindQueries RelationshipKind = "QUERIES"
 
+	// #3426: MongoDB aggregation-pipeline cross-collection join edge.
+	// Emitted from the aggregating collection/model entity → the `from`
+	// collection named in a `$lookup` / `$graphLookup` stage. This is the
+	// implicit (application-side) join the migration needs for data-flow
+	// reasoning, since MongoDB has no schema-level foreign keys. Properties
+	// on the edge: local_field, foreign_field, as, stage (lookup|graphLookup),
+	// pattern_type.
+	RelationshipKindJoinsCollection RelationshipKind = "JOINS_COLLECTION"
+
 	// #721: Consumer-side HTTP fetch edge. Emitted from a calling
 	// function/method entity → the synthetic http_endpoint entity that
 	// represents the URL the client invokes. Lets the process-flow BFS
@@ -591,6 +600,7 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindPlatformVariantOf,
 		// #723:
 		RelationshipKindQueries,
+		RelationshipKindJoinsCollection,
 		// #721:
 		RelationshipKindFetches,
 		// #726 wave 1:
