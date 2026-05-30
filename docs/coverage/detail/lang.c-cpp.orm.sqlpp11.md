@@ -15,29 +15,29 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🔴 `missing` | — | — | — | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Model extraction | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/orm.go` | Regex: struct T : sqlpp::table<T,...> declarations |
+| Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/cpp/orm.go` | Regex: column structs (trailing _) inside sqlpp::table body + SQLPP_ALIAS_PROVIDER |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | — `not_applicable` | `2026-05-30` | — | — | sqlpp11 is a type-safe SQL DSL; no ORM-level association layer |
+| Foreign key extraction | — `not_applicable` | `2026-05-30` | — | — | sqlpp11 has no ORM FK layer; FK constraints are in DB schema |
+| Lazy loading recognition | — `not_applicable` | `2026-05-30` | — | — | sqlpp11 is a type-safe SQL DSL; no lazy-loading concept |
+| Relationship extraction | — `not_applicable` | `2026-05-30` | — | — | sqlpp11 has no ORM relationship layer |
 
 ### Queries
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | — | — | — | — |
+| Query attribution | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/orm.go` | Regex: db(select/insert_into/update/remove_from) calls |
 
 ### Migrations
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | — `not_applicable` | `2026-05-30` | — | — | sqlpp11 has no built-in migration system |
 
 ## Provenance
 

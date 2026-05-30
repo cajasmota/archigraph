@@ -63,9 +63,9 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|---|---|---|
 | [Boost.Test](../detail/test.boost-test.md) | 🔴 | — | — | 🔴 | |
 | [Buck2](../detail/lang.c-cpp.tool.buck2.md) | 🔴 | — | — | 🔴 | |
-| [CMake](../detail/lang.c-cpp.tool.cmake.md) | 🔴 | — | — | 🔴 | |
+| [CMake](../detail/lang.c-cpp.tool.cmake.md) | 🟢 | — | — | 🟢 | |
 | [Catch2](../detail/test.catch2.md) | 🔴 | — | — | 🔴 | |
-| [Conan](../detail/lang.c-cpp.tool.conan.md) | — | 🔴 | 🔴 | — | |
+| [Conan](../detail/lang.c-cpp.tool.conan.md) | — | — | 🟢 | — | |
 | [CppUTest](../detail/test.cpputest.md) | 🔴 | — | — | 🔴 | |
 | [CppUnit](../detail/test.cppunit.md) | 🔴 | — | — | 🔴 | |
 | [GNU Make](../detail/lang.c-cpp.tool.make.md) | 🔴 | — | — | 🔴 | |
@@ -75,7 +75,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Ninja](../detail/lang.c-cpp.tool.ninja.md) | 🔴 | — | — | 🔴 | |
 | [build2](../detail/lang.c-cpp.tool.build2.md) | — | 🔴 | 🔴 | — | |
 | [doctest (C++)](../detail/test.doctest-cpp.md) | 🔴 | — | — | 🔴 | |
-| [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | 🔴 | 🔴 | — | |
+| [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | 🟢 | 🟢 | — | |
 | [xmake](../detail/lang.c-cpp.tool.xmake.md) | 🔴 | — | — | 🔴 | |
 
 ## ORMs
@@ -85,10 +85,10 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Other capabilities | Notes |
 |---|---|---|
-| [MySQL Connector/C++](../detail/lang.c-cpp.driver.mysql-connector-cpp.md) | 🔴 0/3 | |
-| [ODB](../detail/lang.c-cpp.orm.odb.md) | 🔴 0/8 | |
-| [SOCI](../detail/lang.c-cpp.orm.soci.md) | 🔴 0/8 | |
-| [libpqxx (PostgreSQL)](../detail/lang.c-cpp.driver.libpqxx.md) | 🔴 0/3 | |
-| [mongocxx](../detail/lang.c-cpp.driver.mongocxx.md) | 🔴 0/3 | |
+| [MySQL Connector/C++](../detail/lang.c-cpp.driver.mysql-connector-cpp.md) | 🟢 3/3 | |
+| [ODB](../detail/lang.c-cpp.orm.odb.md) | 🟢 7/7 | |
+| [SOCI](../detail/lang.c-cpp.orm.soci.md) | 🟢 3/3 | |
+| [libpqxx (PostgreSQL)](../detail/lang.c-cpp.driver.libpqxx.md) | 🟢 3/3 | |
+| [mongocxx](../detail/lang.c-cpp.driver.mongocxx.md) | 🟢 3/3 | |
 | [redis-plus-plus](../detail/lang.c-cpp.driver.redis-plus-plus.md) | 🔴 0/3 | |
-| [sqlpp11](../detail/lang.c-cpp.orm.sqlpp11.md) | 🔴 0/8 | |
+| [sqlpp11](../detail/lang.c-cpp.orm.sqlpp11.md) | 🟢 3/3 | |

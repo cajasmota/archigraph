@@ -19,6 +19,10 @@
 //   - Gemfile              (bundler/ruby)
 //   - *.csproj             (nuget — manifest_parsing via <PackageReference>)
 //   - packages.lock.json   (nuget — lockfile_parsing via NuGet v3 lock format)
+//   - CMakeLists.txt       (cmake) — find_package / target_link_libraries deps
+//   - conanfile.txt        (conan) — [requires] section
+//   - conanfile.py         (conan) — requires list in ConanFile class
+//   - vcpkg.json           (vcpkg) — dependencies array
 //
 // Entity kind: "SCOPE.Component"
 // Relationships emitted: DEPENDS_ON(kind=external_dependency)
@@ -117,6 +121,11 @@ var exactManifestNames = map[string]bool{
 	"pubspec.yaml":        true,
 	"Gemfile":             true,
 	"packages.lock.json":  true,
+	// C++ build/package manifests
+	"CMakeLists.txt": true,
+	"conanfile.txt":  true,
+	"conanfile.py":   true,
+	"vcpkg.json":     true,
 }
 
 // IsManifest returns true when filePath names a supported manifest file.
@@ -155,6 +164,11 @@ func detectPackageManager(filePath string) string {
 		"pubspec.yaml":        "pub",
 		"Gemfile":             "bundler",
 		"packages.lock.json":  "nuget",
+		// C++ build/package manifests
+		"CMakeLists.txt": "cmake",
+		"conanfile.txt":  "conan",
+		"conanfile.py":   "conan",
+		"vcpkg.json":     "vcpkg",
 	}
 	basename := filepath.Base(filePath)
 	if v, ok := pm[basename]; ok {
@@ -1016,6 +1030,243 @@ func parsePoetryLock(source string) []dep {
 }
 
 // ---------------------------------------------------------------------------
+// Parser: CMakeLists.txt
+// ---------------------------------------------------------------------------
+
+// cmakeFindPackageRE matches find_package(PkgName [REQUIRED] [...]) calls.
+// Captures: (1) package name.
+var cmakeFindPackageRE = regexp.MustCompile(
+	`(?im)\bfind_package\s*\(\s*([A-Za-z0-9_][A-Za-z0-9_.-]*)`)
+
+// cmakeTargetLinkRE matches target_link_libraries(target [scope] dep ...) calls.
+// We capture each dep token following the target and optional scope keyword.
+// Captures: (1) target name, (2) remainder of the argument list.
+var cmakeTargetLinkRE = regexp.MustCompile(
+	`(?im)\btarget_link_libraries\s*\(\s*([A-Za-z0-9_][A-Za-z0-9_.-]*)\s*((?:[^)]|\n)*)\)`)
+
+// cmakeScopeTokenRE matches PUBLIC/PRIVATE/INTERFACE scope keywords (stripped).
+var cmakeScopeTokenRE = regexp.MustCompile(`(?i)^(?:PUBLIC|PRIVATE|INTERFACE)$`)
+
+func parseCMakeLists(source string) []dep {
+	var out []dep
+	seen := map[string]bool{}
+
+	add := func(name, kind string) {
+		if name == "" || seen[name] {
+			return
+		}
+		seen[name] = true
+		out = append(out, dep{name: name, kind: kind})
+	}
+
+	// find_package() → runtime dep
+	for _, m := range cmakeFindPackageRE.FindAllStringSubmatch(source, -1) {
+		add(m[1], "runtime")
+	}
+
+	// target_link_libraries() → runtime deps (skip scope keywords and generator expressions)
+	for _, m := range cmakeTargetLinkRE.FindAllStringSubmatch(source, -1) {
+		argBlock := m[2]
+		for _, tok := range strings.Fields(argBlock) {
+			tok = strings.TrimSpace(tok)
+			// Skip scope keywords
+			if cmakeScopeTokenRE.MatchString(tok) {
+				continue
+			}
+			// Skip CMake generator expressions $<...>
+			if strings.HasPrefix(tok, "$<") {
+				continue
+			}
+			// Skip cmake variables ${...}
+			if strings.HasPrefix(tok, "${") {
+				continue
+			}
+			// Skip empty or purely numeric tokens
+			if tok == "" {
+				continue
+			}
+			add(tok, "runtime")
+		}
+	}
+
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: conanfile.txt
+// ---------------------------------------------------------------------------
+
+// conanTxtRequiresRE matches the [requires] section in a conanfile.txt.
+// Lines under [requires] look like:  boost/1.79.0   or  zlib/1.2.13
+var conanTxtSectionRE = regexp.MustCompile(`(?m)^\[([a-z_]+)\]`)
+var conanTxtDepLineRE = regexp.MustCompile(`(?m)^([A-Za-z0-9_][A-Za-z0-9_.-]*)(?:/([^\s#\n]*))?`)
+
+func parseConanfileTxt(source string) []dep {
+	// Build a section index.
+	sectionMatches := conanTxtSectionRE.FindAllStringSubmatchIndex(source, -1)
+	type sectionEntry struct {
+		start int
+		name  string
+	}
+	sections := make([]sectionEntry, 0, len(sectionMatches))
+	for _, m := range sectionMatches {
+		sections = append(sections, sectionEntry{
+			start: m[0],
+			name:  strings.TrimSpace(source[m[2]:m[3]]),
+		})
+	}
+	sections = append(sections, sectionEntry{start: len(source), name: "__end__"})
+
+	bodyFor := func(name string) string {
+		for i, s := range sections[:len(sections)-1] {
+			if s.name == name {
+				return source[s.start:sections[i+1].start]
+			}
+		}
+		return ""
+	}
+
+	var out []dep
+	seen := map[string]bool{}
+
+	parseDeps := func(body string, isDev bool, kind string) {
+		for _, m := range conanTxtDepLineRE.FindAllStringSubmatch(body, -1) {
+			name := m[1]
+			// Skip lines that are section headers themselves
+			if name == "" || strings.HasPrefix(name, "[") {
+				continue
+			}
+			version := ""
+			if len(m) > 2 {
+				version = m[2]
+			}
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			out = append(out, dep{name: name, version: version, isDev: isDev, kind: kind})
+		}
+	}
+
+	parseDeps(bodyFor("requires"), false, "runtime")
+	parseDeps(bodyFor("build_requires"), false, "runtime")
+	parseDeps(bodyFor("test_requires"), true, "dev")
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: conanfile.py
+// ---------------------------------------------------------------------------
+
+// conanPyRequiresRE matches Python list/tuple/string requires in a ConanFile:
+//
+//	requires = "boost/1.79.0", "zlib/1.2.13"
+//	requires = ("boost/1.79.0", "zlib/1.2.13")
+//	requires = ["boost/1.79.0"]
+var conanPyDepRE = regexp.MustCompile(`"([A-Za-z0-9_][A-Za-z0-9_.-]*)(?:/([^"]*))?"`)
+
+// conanPyRequiresBlockRE captures the content assigned to requires / build_requires.
+var conanPyRequiresBlockRE = regexp.MustCompile(
+	`(?m)^\s*(requires|build_requires|test_requires)\s*=\s*([^\n]+(?:\n\s+[^\n]+)*)`)
+
+func parseConanfilePy(source string) []dep {
+	var out []dep
+	seen := map[string]bool{}
+
+	for _, bm := range conanPyRequiresBlockRE.FindAllStringSubmatch(source, -1) {
+		attrName := bm[1]
+		block := bm[2]
+		isDev := attrName == "test_requires"
+		kind := "runtime"
+		if isDev {
+			kind = "dev"
+		}
+		for _, dm := range conanPyDepRE.FindAllStringSubmatch(block, -1) {
+			name := dm[1]
+			version := ""
+			if len(dm) > 2 {
+				version = dm[2]
+			}
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			out = append(out, dep{name: name, version: version, isDev: isDev, kind: kind})
+		}
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: vcpkg.json
+// ---------------------------------------------------------------------------
+
+// vcpkgManifest is a minimal vcpkg.json structure for JSON unmarshalling.
+type vcpkgManifest struct {
+	Dependencies    []vcpkgDep `json:"dependencies"`
+	DevDependencies []vcpkgDep `json:"dev-dependencies"`
+}
+
+// vcpkgDep can be either a plain string or an object {"name": "...", "version-gte": "..."}.
+// JSON unmarshalling for mixed types requires custom handling.
+type vcpkgDep struct {
+	Name    string
+	Version string
+	IsDev   bool
+}
+
+func parseVcpkgJSON(source string) []dep {
+	// Custom parse: vcpkg dependencies can be either a string or an object.
+	// We use a two-pass approach: unmarshal to raw messages, then inspect each element.
+	var raw struct {
+		Dependencies    []json.RawMessage `json:"dependencies"`
+		DevDependencies []json.RawMessage `json:"dev-dependencies"`
+	}
+	if err := json.Unmarshal([]byte(source), &raw); err != nil {
+		return nil
+	}
+
+	var out []dep
+	seen := map[string]bool{}
+
+	parseDep := func(msg json.RawMessage, isDev bool) {
+		var s string
+		if err := json.Unmarshal(msg, &s); err == nil {
+			// plain string
+			if s != "" && !seen[s] {
+				seen[s] = true
+				out = append(out, dep{name: s, isDev: isDev, kind: depKindStr(isDev)})
+			}
+			return
+		}
+		// object with "name" key
+		var obj struct {
+			Name       string `json:"name"`
+			VersionGte string `json:"version-gte"`
+		}
+		if err := json.Unmarshal(msg, &obj); err == nil && obj.Name != "" && !seen[obj.Name] {
+			seen[obj.Name] = true
+			out = append(out, dep{name: obj.Name, version: obj.VersionGte, isDev: isDev, kind: depKindStr(isDev)})
+		}
+	}
+
+	for _, msg := range raw.Dependencies {
+		parseDep(msg, false)
+	}
+	for _, msg := range raw.DevDependencies {
+		parseDep(msg, true)
+	}
+	return out
+}
+
+func depKindStr(isDev bool) string {
+	if isDev {
+		return "dev"
+	}
+	return "runtime"
+}
+
+// ---------------------------------------------------------------------------
 // Dispatch table
 // ---------------------------------------------------------------------------
 // Parser: *.csproj  (NuGet / MSBuild PackageReference manifest)
@@ -1106,6 +1357,11 @@ var parsers = map[string]parserFn{
 	"pubspec.yaml":        parsePubspecYaml,
 	"Gemfile":             parseGemfile,
 	"packages.lock.json":  parseNugetLockJSON,
+	// C++ build/package manifests
+	"CMakeLists.txt": parseCMakeLists,
+	"conanfile.txt":  parseConanfileTxt,
+	"conanfile.py":   parseConanfilePy,
+	"vcpkg.json":     parseVcpkgJSON,
 }
 
 func dispatchParser(filePath, source string) (string, []dep) {

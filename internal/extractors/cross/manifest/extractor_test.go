@@ -821,3 +821,241 @@ func TestNugetLockFile(t *testing.T) {
 		t.Errorf("expected package_manager=nuget, got %q", byName["Dapper"].Properties["package_manager"])
 	}
 }
+
+func TestCMake_FindPackage(t *testing.T) {
+	src := `cmake_minimum_required(VERSION 3.15)
+project(MyApp)
+find_package(Boost 1.79 REQUIRED COMPONENTS filesystem)
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB)
+`
+	records := runExtract(t, "CMakeLists.txt", src)
+	deps := depEntities(records)
+	byName := map[string]bool{}
+	for _, d := range deps {
+		byName[d.Name] = true
+	}
+	for _, pkg := range []string{"Boost", "OpenSSL", "ZLIB"} {
+		if !byName[pkg] {
+			t.Errorf("expected dep %q from find_package, not found", pkg)
+		}
+	}
+}
+
+func TestCMake_TargetLinkLibraries(t *testing.T) {
+	src := `add_executable(myapp main.cpp)
+target_link_libraries(myapp PRIVATE Boost::filesystem OpenSSL::SSL pthread)
+`
+	records := runExtract(t, "CMakeLists.txt", src)
+	deps := depEntities(records)
+	byName := map[string]bool{}
+	for _, d := range deps {
+		byName[d.Name] = true
+	}
+	for _, lib := range []string{"Boost::filesystem", "OpenSSL::SSL", "pthread"} {
+		if !byName[lib] {
+			t.Errorf("expected dep %q from target_link_libraries, not found", lib)
+		}
+	}
+}
+
+func TestCMake_PackageManager(t *testing.T) {
+	src := `find_package(Eigen3 REQUIRED)`
+	records := runExtract(t, "CMakeLists.txt", src)
+	for _, r := range records {
+		if r.Properties["package_manager"] != "" && r.Properties["package_manager"] != "cmake" {
+			t.Errorf("package_manager=%q want cmake", r.Properties["package_manager"])
+		}
+	}
+}
+
+func TestCMake_Empty(t *testing.T) {
+	src := `cmake_minimum_required(VERSION 3.15)
+project(Empty)
+add_executable(app main.cpp)
+`
+	records := runExtract(t, "CMakeLists.txt", src)
+	deps := depEntities(records)
+	if len(deps) != 0 {
+		t.Errorf("expected no dep entities for CMake without find_package/target_link_libraries deps, got %d", len(deps))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// conanfile.txt
+// ---------------------------------------------------------------------------
+
+func TestConanfileTxt_Requires(t *testing.T) {
+	src := `[requires]
+boost/1.79.0
+zlib/1.2.13
+openssl/3.1.0
+
+[generators]
+cmake
+`
+	records := runExtract(t, "conanfile.txt", src)
+	deps := depEntities(records)
+	byName := map[string]bool{}
+	for _, d := range deps {
+		byName[d.Name] = true
+	}
+	for _, pkg := range []string{"boost", "zlib", "openssl"} {
+		if !byName[pkg] {
+			t.Errorf("expected dep %q from conanfile.txt [requires], not found", pkg)
+		}
+	}
+}
+
+func TestConanfileTxt_BuildRequires(t *testing.T) {
+	src := `[requires]
+boost/1.79.0
+
+[build_requires]
+cmake/3.25.0
+`
+	records := runExtract(t, "conanfile.txt", src)
+	deps := depEntities(records)
+	if len(deps) < 2 {
+		t.Errorf("expected at least 2 deps (requires + build_requires), got %d", len(deps))
+	}
+}
+
+func TestConanfileTxt_Versions(t *testing.T) {
+	src := `[requires]
+fmt/9.1.0
+`
+	records := runExtract(t, "conanfile.txt", src)
+	deps := depEntities(records)
+	for _, d := range deps {
+		if d.Name == "fmt" {
+			if d.Properties["version"] != "9.1.0" {
+				t.Errorf("version=%q want 9.1.0", d.Properties["version"])
+			}
+			return
+		}
+	}
+	t.Error("dep fmt not found")
+}
+
+// ---------------------------------------------------------------------------
+// conanfile.py
+// ---------------------------------------------------------------------------
+
+func TestConanfilePy_Requires(t *testing.T) {
+	src := `from conans import ConanFile
+
+class MyConan(ConanFile):
+    name = "myproject"
+    requires = "boost/1.79.0", "zlib/1.2.13"
+    build_requires = "cmake/3.25.0"
+`
+	records := runExtract(t, "conanfile.py", src)
+	deps := depEntities(records)
+	byName := map[string]bool{}
+	for _, d := range deps {
+		byName[d.Name] = true
+	}
+	for _, pkg := range []string{"boost", "zlib", "cmake"} {
+		if !byName[pkg] {
+			t.Errorf("expected dep %q from conanfile.py, not found", pkg)
+		}
+	}
+}
+
+func TestConanfilePy_ListRequires(t *testing.T) {
+	src := `from conans import ConanFile
+
+class MyConan(ConanFile):
+    requires = [
+        "openssl/3.1.0",
+        "fmt/9.1.0",
+    ]
+`
+	records := runExtract(t, "conanfile.py", src)
+	deps := depEntities(records)
+	if len(deps) < 2 {
+		t.Errorf("expected at least 2 deps from list-style requires, got %d", len(deps))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// vcpkg.json
+// ---------------------------------------------------------------------------
+
+func TestVcpkgJSON_StringDeps(t *testing.T) {
+	src := `{
+  "name": "myproject",
+  "version": "1.0.0",
+  "dependencies": [
+    "boost",
+    "openssl",
+    "zlib"
+  ]
+}`
+	records := runExtract(t, "vcpkg.json", src)
+	deps := depEntities(records)
+	byName := map[string]bool{}
+	for _, d := range deps {
+		byName[d.Name] = true
+	}
+	for _, pkg := range []string{"boost", "openssl", "zlib"} {
+		if !byName[pkg] {
+			t.Errorf("expected dep %q from vcpkg.json, not found", pkg)
+		}
+	}
+}
+
+func TestVcpkgJSON_ObjectDeps(t *testing.T) {
+	src := `{
+  "name": "myproject",
+  "dependencies": [
+    { "name": "fmt", "version-gte": "9.1.0" },
+    { "name": "nlohmann-json", "version-gte": "3.11.0" },
+    "boost"
+  ]
+}`
+	records := runExtract(t, "vcpkg.json", src)
+	deps := depEntities(records)
+	byName := map[string]string{}
+	for _, d := range deps {
+		byName[d.Name] = d.Properties["version"]
+	}
+	if _, ok := byName["fmt"]; !ok {
+		t.Error("expected dep fmt from vcpkg.json object-style")
+	}
+	if _, ok := byName["nlohmann-json"]; !ok {
+		t.Error("expected dep nlohmann-json from vcpkg.json object-style")
+	}
+	if _, ok := byName["boost"]; !ok {
+		t.Error("expected dep boost from vcpkg.json string-style")
+	}
+}
+
+func TestVcpkgJSON_PackageManager(t *testing.T) {
+	src := `{"dependencies": ["zlib"]}`
+	records := runExtract(t, "vcpkg.json", src)
+	for _, r := range records {
+		pm := r.Properties["package_manager"]
+		if pm != "" && pm != "vcpkg" {
+			t.Errorf("package_manager=%q want vcpkg", pm)
+		}
+	}
+}
+
+func TestVcpkgJSON_Empty(t *testing.T) {
+	src := `{"name": "empty", "dependencies": []}`
+	records := runExtract(t, "vcpkg.json", src)
+	deps := depEntities(records)
+	if len(deps) != 0 {
+		t.Errorf("expected no dep entities for empty dependencies, got %d", len(deps))
+	}
+}
+
+func TestCMake_NotManifest(t *testing.T) {
+	// A file named differently should not be processed
+	records := runExtract(t, "CMakeListsCustom.txt", "find_package(Boost REQUIRED)")
+	if len(records) != 0 {
+		t.Errorf("expected 0 entities for non-manifest filename, got %d", len(records))
+	}
+}

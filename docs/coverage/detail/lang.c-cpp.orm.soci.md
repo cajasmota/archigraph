@@ -15,29 +15,29 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🔴 `missing` | — | — | — | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Model extraction | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/orm.go` | Regex: type_conversion<T> specialization → model entity |
+| Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/cpp/orm.go` | Regex: into(var)/use(var) column bindings |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | — `not_applicable` | `2026-05-30` | — | — | SOCI is a raw SQL library; no ORM-level association/relationship layer |
+| Foreign key extraction | — `not_applicable` | `2026-05-30` | — | — | SOCI is a raw SQL library; no ORM FK layer |
+| Lazy loading recognition | — `not_applicable` | `2026-05-30` | — | — | SOCI is a raw SQL library; no lazy-loading concept |
+| Relationship extraction | — `not_applicable` | `2026-05-30` | — | — | SOCI is a raw SQL library; no relationship layer |
 
 ### Queries
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | — | — | — | — |
+| Query attribution | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/orm.go` | Regex: sql << "SQL" string literal → verb + query entity |
 
 ### Migrations
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | — `not_applicable` | `2026-05-30` | — | — | SOCI has no built-in migration system |
 
 ## Provenance
 

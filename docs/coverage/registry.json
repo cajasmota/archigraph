@@ -1740,11 +1740,17 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "notes": "Regex: CREATE TABLE in exec() string literals → table entity",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: column definitions from embedded CREATE TABLE SQL",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -1767,7 +1773,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "notes": "Regex: SQL verb from exec()/exec_params() string literals",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
@@ -1787,11 +1796,17 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "notes": "Regex: db[\"collection\"] / db.collection() access → SCOPE.Schema entity",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: collection access as schema proxy; no field-level schema in document driver",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -1814,7 +1829,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "notes": "Regex: SQL verb in exec() calls (where applicable)",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
@@ -1834,11 +1852,17 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "notes": "Regex: CREATE TABLE in exec() string literals → table entity",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: column definitions from embedded CREATE TABLE SQL",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -1861,7 +1885,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/driver_schema.go"],
+            "notes": "Regex: SQL verb from exec()/exec_params() string literals",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
@@ -5062,39 +5089,62 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "notes": "Regex: #pragma db object → class/struct name",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: #pragma db member(field) → column entity",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: one_to_one/many_to_many in #pragma db member annotations",
+            "verified_at": "2026-05-30"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: inverse() in pragma member annotations",
+            "verified_at": "2026-05-30"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: odb::lazy_ptr\u003cT\u003e / lazy_shared_ptr\u003cT\u003e",
+            "verified_at": "2026-05-30"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: relationship kind from #pragma db member annotations",
+            "verified_at": "2026-05-30"
           }
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "notes": "Regex: odb::query\u003cT\u003e / odb::result\u003cT\u003e",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "ODB has no built-in migration system",
+            "verified_at": "2026-05-30"
           }
         }
       }
@@ -5108,39 +5158,54 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "notes": "Regex: type_conversion\u003cT\u003e specialization → model entity",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: into(var)/use(var) column bindings",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "SOCI is a raw SQL library; no ORM-level association/relationship layer",
+            "verified_at": "2026-05-30"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "SOCI is a raw SQL library; no ORM FK layer",
+            "verified_at": "2026-05-30"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "SOCI is a raw SQL library; no lazy-loading concept",
+            "verified_at": "2026-05-30"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "SOCI is a raw SQL library; no relationship layer",
+            "verified_at": "2026-05-30"
           }
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "notes": "Regex: sql \u003c\u003c \"SQL\" string literal → verb + query entity",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "SOCI has no built-in migration system",
+            "verified_at": "2026-05-30"
           }
         }
       }
@@ -5154,39 +5219,54 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "notes": "Regex: struct T : sqlpp::table\u003cT,...\u003e declarations",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Regex: column structs (trailing _) inside sqlpp::table body + SQLPP_ALIAS_PROVIDER",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlpp11 is a type-safe SQL DSL; no ORM-level association layer",
+            "verified_at": "2026-05-30"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlpp11 has no ORM FK layer; FK constraints are in DB schema",
+            "verified_at": "2026-05-30"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlpp11 is a type-safe SQL DSL; no lazy-loading concept",
+            "verified_at": "2026-05-30"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlpp11 has no ORM relationship layer",
+            "verified_at": "2026-05-30"
           }
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/orm.go"],
+            "notes": "Regex: db(select/insert_into/update/remove_from) calls",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "sqlpp11 has no built-in migration system",
+            "verified_at": "2026-05-30"
           }
         }
       }
@@ -5226,10 +5306,16 @@
       "label": "CMake",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "notes": "Regex: find_package() and target_link_libraries() → external dep entities + DEPENDS_ON edges",
+          "verified_at": "2026-05-30"
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "notes": "Regex: target names from target_link_libraries() first arg",
+          "verified_at": "2026-05-30"
         }
       }
     },
@@ -5240,10 +5326,15 @@
       "label": "Conan",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "not_applicable",
+          "notes": "conan.lock is a separate file format not in standard manifest names; conanfile.txt/.py are manifest-only",
+          "verified_at": "2026-05-30"
         },
         "manifest_parsing": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "notes": "Regex: [requires]/[build_requires] sections in conanfile.txt; requires= in conanfile.py",
+          "verified_at": "2026-05-30"
         }
       }
     },
@@ -5310,10 +5401,16 @@
       "label": "vcpkg",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "notes": "vcpkg.json also serves as a pinned manifest (version-gte semantics)",
+          "verified_at": "2026-05-30"
         },
         "manifest_parsing": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "notes": "JSON: vcpkg.json dependencies[] — string and object {name,version-gte} forms",
+          "verified_at": "2026-05-30"
         }
       }
     },

@@ -15,8 +15,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🔴 `missing` | — | — | — | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Model extraction | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/driver_schema.go` | Regex: db["collection"] / db.collection() access → SCOPE.Schema entity |
+| Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/cpp/driver_schema.go` | Regex: collection access as schema proxy; no field-level schema in document driver |
 
 ### Relationships
 
@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | — | — | — | — |
+| Query attribution | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/driver_schema.go` | Regex: SQL verb in exec() calls (where applicable) |
 
 ### Migrations
 

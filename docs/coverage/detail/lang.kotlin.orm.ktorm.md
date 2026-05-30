@@ -16,16 +16,16 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/kotlin/orms/ktorm.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/kotlin/orm_schema.go`<br>`internal/custom/kotlin/orm_schema_test.go` | — |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/kotlin/orm_schema.go`<br>`internal/custom/kotlin/orm_schema_test.go` | — |
+| Foreign key extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/kotlin/orm_schema.go`<br>`internal/custom/kotlin/orm_schema_test.go` | — |
+| Lazy loading recognition | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/kotlin/orm_schema.go`<br>`internal/custom/kotlin/orm_schema_test.go` | Ktorm supports lazy sequence loading; regex detects .references() FK bindings which imply eager joins |
+| Relationship extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/kotlin/orm_schema.go`<br>`internal/custom/kotlin/orm_schema_test.go` | — |
 
 ### Queries
 
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | — `not_applicable` | — | — | — | Ktorm has no built-in migration layer; migrations are handled externally (Flyway, Liquibase, etc.) |
 
 ## Provenance
 

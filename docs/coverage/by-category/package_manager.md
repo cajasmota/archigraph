@@ -8,10 +8,10 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 
 | Language | Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
 |---|---|---|---|---|---|---|
-| [C/C++](../by-language/c-cpp.md) | [Conan](../detail/lang.c-cpp.tool.conan.md) | — | 🔴 | 🔴 | — | |
+| [C/C++](../by-language/c-cpp.md) | [Conan](../detail/lang.c-cpp.tool.conan.md) | — | — | 🟢 | — | |
 | [C/C++](../by-language/c-cpp.md) | [Hunter](../detail/lang.c-cpp.tool.hunter.md) | — | 🔴 | 🔴 | — | |
 | [C/C++](../by-language/c-cpp.md) | [build2](../detail/lang.c-cpp.tool.build2.md) | — | 🔴 | 🔴 | — | |
-| [C/C++](../by-language/c-cpp.md) | [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | 🔴 | 🔴 | — | |
+| [C/C++](../by-language/c-cpp.md) | [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | 🟢 | 🟢 | — | |
 | [C#](../by-language/csharp.md) | [.csproj / packages.config](../detail/pkg.csproj.md) | — | ✅ | ✅ | — | |
 | [dart](../by-language/dart.md) | [pubspec.yaml](../detail/pkg.pubspec.md) | — | 🔴 | ✅ | — | |
 | [elixir](../by-language/elixir.md) | [mix.exs](../detail/pkg.mix.md) | — | — | 🔴 | — | |

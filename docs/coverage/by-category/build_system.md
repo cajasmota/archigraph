@@ -10,7 +10,7 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 |---|---|---|---|---|---|---|
 | [C/C++](../by-language/c-cpp.md) | [Boost.Test](../detail/test.boost-test.md) | 🔴 | — | — | 🔴 | |
 | [C/C++](../by-language/c-cpp.md) | [Buck2](../detail/lang.c-cpp.tool.buck2.md) | 🔴 | — | — | 🔴 | |
-| [C/C++](../by-language/c-cpp.md) | [CMake](../detail/lang.c-cpp.tool.cmake.md) | 🔴 | — | — | 🔴 | |
+| [C/C++](../by-language/c-cpp.md) | [CMake](../detail/lang.c-cpp.tool.cmake.md) | 🟢 | — | — | 🟢 | |
 | [C/C++](../by-language/c-cpp.md) | [Catch2](../detail/test.catch2.md) | 🔴 | — | — | 🔴 | |
 | [C/C++](../by-language/c-cpp.md) | [CppUTest](../detail/test.cpputest.md) | 🔴 | — | — | 🔴 | |
 | [C/C++](../by-language/c-cpp.md) | [CppUnit](../detail/test.cppunit.md) | 🔴 | — | — | 🔴 | |

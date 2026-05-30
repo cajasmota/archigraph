@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Lockfile parsing | 🔴 `missing` | — | — | — | — |
-| Manifest parsing | 🔴 `missing` | — | — | — | — |
+| Lockfile parsing | 🟢 `partial` | `2026-05-30` | — | `internal/extractors/cross/manifest/extractor.go` | vcpkg.json also serves as a pinned manifest (version-gte semantics) |
+| Manifest parsing | 🟢 `partial` | `2026-05-30` | — | `internal/extractors/cross/manifest/extractor.go` | JSON: vcpkg.json dependencies[] — string and object {name,version-gte} forms |
 
 ## Provenance
 

@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | 🔴 `missing` | — | — | — | — |
-| Target extraction | 🔴 `missing` | — | — | — | — |
+| Dependency graph | 🟢 `partial` | `2026-05-30` | — | `internal/extractors/cross/manifest/extractor.go` | Regex: find_package() and target_link_libraries() → external dep entities + DEPENDS_ON edges |
+| Target extraction | 🟢 `partial` | `2026-05-30` | — | `internal/extractors/cross/manifest/extractor.go` | Regex: target names from target_link_libraries() first arg |
 
 ## Provenance
 

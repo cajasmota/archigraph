@@ -17,7 +17,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Endpoint synthesis | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/kotlin/frameworks/quarkus_kotlin.yaml` | — |
 | Handler attribution | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/kotlin/frameworks/quarkus_kotlin.yaml` | — |
-| Route extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Route extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/kotlin/routing.go`<br>`internal/custom/kotlin/routing_test.go` | — |
 
 ### Auth
 
