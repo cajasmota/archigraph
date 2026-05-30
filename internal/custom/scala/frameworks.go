@@ -48,8 +48,18 @@
 //	framework.zio-http            Validation/request_validation   partial
 //
 //	all 9 framework records       Observability/log_extraction    partial
-//	all 9 framework records       Observability/metric_extraction partial
-//	all 9 framework records       Observability/trace_extraction  partial
+//	all 9 framework records       Observability/metric_extraction full
+//	all 9 framework records       Observability/trace_extraction  full
+//
+//	metric_extraction / trace_extraction are FULL: reScalaMetricNamed and
+//	reScalaTraceNamed capture the LITERAL metric/span name per call site
+//	(Kamon counter/gauge/histogram/timer, Micrometer builder/registry, Dropwizard
+//	meter; Kamon span(Builder), OTel tracer.spanBuilder, natchez Trace[F].span).
+//	The name is a literal string arg — no cross-file resolution. A file-local
+//	fallback still emits for dynamic (non-literal) names.
+//	log_extraction stays PARTIAL: log statements are detected but the logger
+//	identity and message<->logger binding require cross-file dataflow (logger
+//	field decl -> call site) — same honest limit as Java/PHP/Rust/Kotlin.
 //
 //	all 9 framework records       Testing/tests_linkage           partial
 //
@@ -278,9 +288,40 @@ var (
 	reScalaMetric = regexp.MustCompile(
 		`\b(?:Counter\s*\.\s*builder|Timer\s*\.\s*builder|Gauge\s*\.\s*builder|MeterRegistry|Kamon\.|metrics\s*\.\s*counter)\b`)
 
+	// reScalaMetricNamed captures the LITERAL metric name at the call site.
+	// Covers:
+	//   Kamon:        Kamon.counter("name") / .gauge("name") / .histogram("name") /
+	//                 .timer("name") / .rangeSampler("name")
+	//   Micrometer:   Counter.builder("name") / Timer.builder("name") /
+	//                 Gauge.builder("name", ...) / DistributionSummary.builder("name");
+	//                 registry.counter("name") / .timer("name") / .gauge("name") / .summary("name")
+	//   Dropwizard:   metrics.meter("name") / .counter("name") / .timer("name") /
+	//                 .histogram("name")
+	// Group 1 = instrument kind, group 2 = literal metric name. The name is a
+	// literal string arg at the call site — no cross-file resolution needed.
+	reScalaMetricNamed = regexp.MustCompile(
+		`\b(?:Kamon\s*\.\s*(counter|gauge|histogram|timer|rangeSampler)` +
+			`|(?:Counter|Timer|Gauge|DistributionSummary)\s*\.\s*(builder)` +
+			`|(?:registry|meterRegistry|metrics|metricRegistry|meters)\s*\.\s*(counter|timer|gauge|summary|meter|histogram))` +
+			`\s*\(\s*"([^"]+)"`)
+
 	// trace_extraction: OpenTelemetry, Jaeger, Zipkin, Kamon tracing
 	reScalaTrace = regexp.MustCompile(
 		`\b(?:Tracer\s*\.\s*start|tracer\s*\.\s*startSpan|Span\s*\.\s*current|GlobalTracer|DDTracer|Kamon\.span|b3Header)\b`)
+
+	// reScalaTraceNamed captures the LITERAL span name at the call site. Covers:
+	//   Kamon:        Kamon.span("name") / Kamon.spanBuilder("name") /
+	//                 Kamon.serverSpanBuilder("name") / Kamon.clientSpanBuilder("name")
+	//   OpenTelemetry:tracer.spanBuilder("name")
+	//   natchez:      Trace[F].span("name") / trace.span("name")
+	//   generic OTel: tracer.startSpan("name")
+	// Group with index 1 = literal span name. Literal arg at the call site.
+	reScalaTraceNamed = regexp.MustCompile(
+		`\b(?:Kamon\s*\.\s*(?:span|spanBuilder|serverSpanBuilder|clientSpanBuilder)` +
+			`|(?:tracer|Tracer)\s*\.\s*(?:spanBuilder|startSpan)` +
+			`|Trace\s*\[\s*\w+\s*\]\s*\.\s*span` +
+			`|(?:trace|tracing)\s*\.\s*span)` +
+			`\s*\(\s*"([^"]+)"`)
 )
 
 // ---------------------------------------------------------------------------
@@ -588,15 +629,54 @@ func (e *scalaFrameworksExtractor) Extract(ctx context.Context, file extractor.F
 		add(ent)
 	}
 
-	// metric_extraction
-	if reScalaMetric.MatchString(src) {
+	// metric_extraction — per-call-site, with the literal metric name captured.
+	// Each Kamon/Micrometer/Dropwizard instrument call with a string-literal name
+	// becomes its own entity carrying metric_name. The name is a literal arg at
+	// the call site, so no cross-file resolution is required.
+	metricNameSeen := map[string]bool{}
+	for _, m := range reScalaMetricNamed.FindAllStringSubmatchIndex(src, -1) {
+		metricName := src[m[8]:m[9]]
+		// instrument kind is whichever of the alternation groups matched
+		instrument := ""
+		for _, gi := range []int{2, 4, 6} {
+			if m[gi] >= 0 {
+				instrument = src[m[gi]:m[gi+1]]
+				break
+			}
+		}
+		key := metricName + "\x00" + instrument
+		if metricNameSeen[key] {
+			continue
+		}
+		metricNameSeen[key] = true
+		ent := makeEntity("metric:"+metricName, "SCOPE.Observability", "metric", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", framework, "provenance", "SCALA_METRIC_NAMED",
+			"metric_name", metricName, "instrument", instrument)
+		add(ent)
+	}
+	// Fallback: metric usage detected but no literal name captured (dynamic name,
+	// builder pattern split across lines, MeterRegistry passed around). File-local.
+	if len(metricNameSeen) == 0 && reScalaMetric.MatchString(src) {
 		ent := makeEntity("metrics:"+fileBaseName(file.Path), "SCOPE.Observability", "metric", file.Path, file.Language, 1)
 		setProps(&ent, "framework", framework, "provenance", "SCALA_METRIC")
 		add(ent)
 	}
 
-	// trace_extraction
-	if reScalaTrace.MatchString(src) {
+	// trace_extraction — per-call-site, with the literal span name captured.
+	spanNameSeen := map[string]bool{}
+	for _, m := range reScalaTraceNamed.FindAllStringSubmatchIndex(src, -1) {
+		spanName := src[m[2]:m[3]]
+		if spanNameSeen[spanName] {
+			continue
+		}
+		spanNameSeen[spanName] = true
+		ent := makeEntity("span:"+spanName, "SCOPE.Observability", "trace", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", framework, "provenance", "SCALA_TRACE_NAMED",
+			"span_name", spanName)
+		add(ent)
+	}
+	// Fallback: trace usage detected but no literal span name captured.
+	if len(spanNameSeen) == 0 && reScalaTrace.MatchString(src) {
 		ent := makeEntity("trace:"+fileBaseName(file.Path), "SCOPE.Observability", "trace", file.Path, file.Language, 1)
 		setProps(&ent, "framework", framework, "provenance", "SCALA_TRACE")
 		add(ent)

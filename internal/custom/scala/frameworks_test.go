@@ -1,6 +1,7 @@
 package scala_test
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -298,6 +299,127 @@ class MetricsService(registry: MeterRegistry) {
 	}
 	if !found {
 		t.Error("expected metric entity")
+	}
+}
+
+// TestFrameworksObservabilityMetricNamesMicrometer is value-asserting: it proves
+// the SPECIFIC literal metric name is captured for Micrometer builders and
+// MeterRegistry call sites. This is what justifies metric_extraction = full.
+func TestFrameworksObservabilityMetricNamesMicrometer(t *testing.T) {
+	src := `
+import io.micrometer.core.instrument.{Counter, Timer, MeterRegistry}
+class MetricsService(registry: MeterRegistry) {
+  val requestCounter = Counter.builder("http.server.requests").register(registry)
+  val latencyTimer = Timer.builder("http.server.latency").register(registry)
+  def hit(): Unit = registry.counter("cache.hits").increment()
+}
+`
+	ents := extract(t, "custom_scala_frameworks", fi("Metrics.scala", "scala", src))
+	want := map[string]string{
+		"metric:http.server.requests": "builder",
+		"metric:http.server.latency":  "builder",
+		"metric:cache.hits":           "counter",
+	}
+	for name, instrument := range want {
+		e := findEntity(ents, "SCOPE.Observability", name)
+		if e == nil {
+			t.Fatalf("expected metric entity %q", name)
+		}
+		if e.Subtype != "metric" {
+			t.Errorf("%s: subtype = %q, want metric", name, e.Subtype)
+		}
+		gotName := strings.TrimPrefix(name, "metric:")
+		if e.Props["metric_name"] != gotName {
+			t.Errorf("%s: metric_name = %q, want %q", name, e.Props["metric_name"], gotName)
+		}
+		if e.Props["instrument"] != instrument {
+			t.Errorf("%s: instrument = %q, want %q", name, e.Props["instrument"], instrument)
+		}
+		if e.Props["provenance"] != "SCALA_METRIC_NAMED" {
+			t.Errorf("%s: provenance = %q, want SCALA_METRIC_NAMED", name, e.Props["provenance"])
+		}
+	}
+}
+
+// TestFrameworksObservabilityMetricNamesKamonDropwizard proves literal metric
+// name capture for Kamon and Dropwizard instrument call sites.
+func TestFrameworksObservabilityMetricNamesKamonDropwizard(t *testing.T) {
+	src := `
+import kamon.Kamon
+class Svc(metrics: MetricRegistry) {
+  val orders = Kamon.counter("orders.placed")
+  val gauge = Kamon.gauge("queue.depth")
+  val hist = Kamon.histogram("payload.size")
+  val meter = metrics.meter("requests.rate")
+}
+`
+	ents := extract(t, "custom_scala_frameworks", fi("Svc.scala", "scala", src))
+	for _, name := range []string{
+		"metric:orders.placed",
+		"metric:queue.depth",
+		"metric:payload.size",
+		"metric:requests.rate",
+	} {
+		e := findEntity(ents, "SCOPE.Observability", name)
+		if e == nil {
+			t.Fatalf("expected metric entity %q", name)
+		}
+		if e.Props["metric_name"] != strings.TrimPrefix(name, "metric:") {
+			t.Errorf("%s: metric_name = %q", name, e.Props["metric_name"])
+		}
+	}
+}
+
+// TestFrameworksObservabilityTraceNames is value-asserting: it proves the
+// SPECIFIC literal span name is captured for Kamon, OpenTelemetry, and natchez
+// span call sites. This is what justifies trace_extraction = full.
+func TestFrameworksObservabilityTraceNames(t *testing.T) {
+	src := `
+import kamon.Kamon
+class Svc(tracer: Tracer) {
+  def a() = Kamon.span("place-order") { doWork() }
+  def b() = tracer.spanBuilder("http.request").startSpan()
+  def c[F[_]: Trace] = Trace[F].span("db.query")(run)
+}
+`
+	ents := extract(t, "custom_scala_frameworks", fi("Svc.scala", "scala", src))
+	for _, name := range []string{
+		"span:place-order",
+		"span:http.request",
+		"span:db.query",
+	} {
+		e := findEntity(ents, "SCOPE.Observability", name)
+		if e == nil {
+			t.Fatalf("expected trace entity %q", name)
+		}
+		if e.Subtype != "trace" {
+			t.Errorf("%s: subtype = %q, want trace", name, e.Subtype)
+		}
+		if e.Props["span_name"] != strings.TrimPrefix(name, "span:") {
+			t.Errorf("%s: span_name = %q, want %q", name, e.Props["span_name"], strings.TrimPrefix(name, "span:"))
+		}
+		if e.Props["provenance"] != "SCALA_TRACE_NAMED" {
+			t.Errorf("%s: provenance = %q, want SCALA_TRACE_NAMED", name, e.Props["provenance"])
+		}
+	}
+}
+
+// TestFrameworksObservabilityUnnamedFallback proves that metric/trace usage
+// WITHOUT a literal name still yields a file-local fallback entity (honest
+// partial: dynamic name not resolvable without cross-file dataflow).
+func TestFrameworksObservabilityUnnamedFallback(t *testing.T) {
+	src := `
+class Svc(registry: MeterRegistry, name: String) {
+  val c = registry.counter(name)
+  def trace() = Kamon.span(dynamicName) { run() }
+}
+`
+	ents := extract(t, "custom_scala_frameworks", fi("Svc.scala", "scala", src))
+	if !containsEntity(ents, "SCOPE.Observability", "metrics:Svc.scala") {
+		t.Error("expected file-local metric fallback entity")
+	}
+	if !containsEntity(ents, "SCOPE.Observability", "trace:Svc.scala") {
+		t.Error("expected file-local trace fallback entity")
 	}
 }
 
