@@ -57,9 +57,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/frameworks.go`<br>`internal/substrate/template_pattern_php.go` | Log::*/error_log/Monolog calls detected via regex and template pattern sniffer |
-| Metric extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/frameworks.go` | StatsD/Prometheus/Datadog metric calls detected via regex |
-| Trace extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/frameworks.go` | OpenTelemetry/Jaeger/Zipkin/DDTrace tracing calls detected via regex |
+| Log extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/php/frameworks.go`<br>`internal/custom/php/observability.go` | Per-call-site: Log::info/warning/error/debug/critical/alert/emergency/notice (facade + backslash form), Log::channel('name'), logger()->level() helper, logger('msg') shorthand, PSR-3/Monolog injected $logger->level(), $this->logger->level() Symfony-style injected LoggerInterface. Use-declaration fallback. Import/call-site heuristic; no cross-file dataflow binding logger to handler. Stays partial. |
+| Metric extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/php/frameworks.go`<br>`internal/custom/php/observability.go` | prometheus_client_php: new Counter/Gauge/Histogram/Summary, registerCounter/Gauge/Histogram call-sites. StatsD (League StatsD, Domnikl Statsd): $statsd->increment/gauge/timing/histogram with metric names. Laravel Metrics facade: Metrics::counter/gauge/histogram. Use-declaration fallback. Import/call-site heuristic; no cross-file dataflow. Stays partial. |
+| Trace extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/php/frameworks.go`<br>`internal/custom/php/observability.go` | OpenTelemetry PHP SDK: CachedInstrumentation/Globals::tracerProvider() bootstrap, $tracer->spanBuilder/startSpan('name'), $span->setAttribute/addEvent/setStatus/end lifecycle. Symfony Stopwatch: $stopwatch->start/stop/lap('name') event names. DDTrace: trace_function/trace_method. Use-declaration fallback. Import/call-site heuristic; no cross-file dataflow binding tracer to exporter. Stays partial. |
 
 ### Data
 

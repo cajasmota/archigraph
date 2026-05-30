@@ -34526,21 +34526,24 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/php/frameworks.go","internal/substrate/template_pattern_php.go"],
+            "cites": ["internal/custom/php/frameworks.go","internal/custom/php/observability.go"],
             "issue": "backfill:dictionary-completeness",
-            "notes": "Log::*/error_log/Monolog calls detected via regex and template pattern sniffer"
+            "notes": "Per-call-site: Log::info/warning/error/debug/critical/alert/emergency/notice (facade + backslash form), Log::channel('name'), logger()-\u003elevel() helper, logger('msg') shorthand, PSR-3/Monolog injected $logger-\u003elevel(), $this-\u003elogger-\u003elevel() Symfony-style injected LoggerInterface. Use-declaration fallback. Import/call-site heuristic; no cross-file dataflow binding logger to handler. Stays partial.",
+            "verified_at": "2026-05-30"
           },
           "metric_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/php/frameworks.go"],
+            "cites": ["internal/custom/php/frameworks.go","internal/custom/php/observability.go"],
             "issue": "backfill:dictionary-completeness",
-            "notes": "StatsD/Prometheus/Datadog metric calls detected via regex"
+            "notes": "prometheus_client_php: new Counter/Gauge/Histogram/Summary, registerCounter/Gauge/Histogram call-sites. StatsD (League StatsD, Domnikl Statsd): $statsd-\u003eincrement/gauge/timing/histogram with metric names. Laravel Metrics facade: Metrics::counter/gauge/histogram. Use-declaration fallback. Import/call-site heuristic; no cross-file dataflow. Stays partial.",
+            "verified_at": "2026-05-30"
           },
           "trace_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/php/frameworks.go"],
+            "cites": ["internal/custom/php/frameworks.go","internal/custom/php/observability.go"],
             "issue": "backfill:dictionary-completeness",
-            "notes": "OpenTelemetry/Jaeger/Zipkin/DDTrace tracing calls detected via regex"
+            "notes": "OpenTelemetry PHP SDK: CachedInstrumentation/Globals::tracerProvider() bootstrap, $tracer-\u003espanBuilder/startSpan('name'), $span-\u003esetAttribute/addEvent/setStatus/end lifecycle. Symfony Stopwatch: $stopwatch-\u003estart/stop/lap('name') event names. DDTrace: trace_function/trace_method. Use-declaration fallback. Import/call-site heuristic; no cross-file dataflow binding tracer to exporter. Stays partial.",
+            "verified_at": "2026-05-30"
           }
         },
         "Substrate": {
@@ -35627,21 +35630,24 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/php/frameworks.go","internal/substrate/template_pattern_php.go"],
+            "cites": ["internal/custom/php/frameworks.go","internal/custom/php/observability.go"],
             "issue": "backfill:dictionary-completeness",
-            "notes": "Log::*/error_log/Monolog calls detected via regex and template pattern sniffer"
+            "notes": "Per-call-site: PSR-3/Monolog injected $logger-\u003elevel() / $this-\u003elogger-\u003elevel() (LoggerInterface). Log::level() Laravel facade patterns also captured. Symfony-specific: $this-\u003elogger-\u003elog(LogLevel::X) calls. Use-declaration fallback for Monolog\\Logger and Psr\\Log\\LoggerInterface use-statements. Import/call-site heuristic; no cross-file dataflow binding logger to handler. Stays partial.",
+            "verified_at": "2026-05-30"
           },
           "metric_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/php/frameworks.go"],
+            "cites": ["internal/custom/php/frameworks.go","internal/custom/php/observability.go"],
             "issue": "backfill:dictionary-completeness",
-            "notes": "StatsD/Prometheus/Datadog metric calls detected via regex"
+            "notes": "prometheus_client_php: new Counter/Gauge/Histogram/Summary, registerCounter/Gauge/Histogram call-sites. StatsD (League\\StatsD, Domnikl\\Statsd): $statsd-\u003eincrement/gauge/timing/histogram with metric names. Import/call-site heuristic; no cross-file dataflow. Stays partial.",
+            "verified_at": "2026-05-30"
           },
           "trace_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/php/frameworks.go"],
+            "cites": ["internal/custom/php/frameworks.go","internal/custom/php/observability.go"],
             "issue": "backfill:dictionary-completeness",
-            "notes": "OpenTelemetry/Jaeger/Zipkin/DDTrace tracing calls detected via regex"
+            "notes": "OpenTelemetry PHP SDK: CachedInstrumentation/Globals::tracerProvider() bootstrap, $tracer-\u003espanBuilder/startSpan('name') call-sites, $span lifecycle markers (setAttribute/addEvent/setStatus/end). Symfony Stopwatch: $stopwatch-\u003estart/stop/lap('name') event names. DDTrace: trace_function/trace_method. Import/call-site heuristic; no cross-file dataflow binding tracer to exporter. Stays partial.",
+            "verified_at": "2026-05-30"
           }
         },
         "Substrate": {

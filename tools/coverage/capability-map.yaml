@@ -7161,6 +7161,52 @@ records:
             - file: internal/extractors/cross/testmap/extractor_test.go
               functions: [TestPHPUnit_TestPrefixMethod, TestPHPUnit_HashTestAttribute, TestPHPUnit_DocblockTestAnnotation, TestPHPUnit_ClassNameSubjectDerivation, TestPHPUnit_LaravelFeatureTest, TestPhpPest_ItBlock, TestPhpPest_UsesSubjectExtraction, TestPhpPest_LaravelFeatureTest]
           issues_implemented: ["3399"]
+      Observability:
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/php/observability.go
+              functions: [phpObsExtractLog, Extract]
+          tests:
+            - file: internal/custom/php/observability_test.go
+          issues_implemented: ["3400"]
+          notes: >
+            Per-call-site: Log::info/warning/error/debug/critical/alert/emergency/notice (facade
+            + \Log:: backslash form), Log::channel('name'), logger()->level() helper,
+            logger('msg') shorthand, PSR-3/Monolog $logger->level() injected-logger call-sites,
+            $this->logger->level() Symfony-style injected LoggerInterface. Use-declaration
+            fallback when no call-sites found. Import/call-site heuristic; no cross-file
+            dataflow binding logger to handler. Stays partial.
+          verified_at: "2026-05-30"
+        metric_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/php/observability.go
+              functions: [phpObsExtractMetric, Extract]
+          tests:
+            - file: internal/custom/php/observability_test.go
+          issues_implemented: ["3400"]
+          notes: >
+            prometheus_client_php: new Counter/Gauge/Histogram/Summary call-sites,
+            $registry->registerCounter/Gauge/Histogram. StatsD (League\StatsD, Domnikl\Statsd):
+            $statsd->increment/gauge/timing/histogram call-sites with metric names.
+            Laravel Metrics facade: Metrics::counter/gauge/histogram. Use-declaration fallback.
+            Import/call-site heuristic; no cross-file dataflow. Stays partial.
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/php/observability.go
+              functions: [phpObsExtractTrace, Extract]
+          tests:
+            - file: internal/custom/php/observability_test.go
+          issues_implemented: ["3400"]
+          notes: >
+            OpenTelemetry PHP SDK: CachedInstrumentation/Globals::tracerProvider() bootstrap,
+            $tracer->spanBuilder/startSpan('name'), $span->setAttribute/addEvent/setStatus/end
+            lifecycle markers. Symfony Stopwatch: $stopwatch->start/stop/lap('name') event names.
+            DDTrace: \DDTrace\trace_function/trace_method. Use-declaration fallback.
+            Import/call-site heuristic; no cross-file dataflow binding tracer to exporter. Stays partial.
           verified_at: "2026-05-30"
 
   lang.rust.framework.axum:
