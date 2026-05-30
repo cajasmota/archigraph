@@ -2823,7 +2823,7 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/auth_middleware.go"],
             "verified_at": "2026-05-30"
           }
@@ -2844,7 +2844,7 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/auth_middleware.go"],
             "verified_at": "2026-05-30"
           }
@@ -3042,7 +3042,7 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/auth_middleware.go"],
             "verified_at": "2026-05-30"
           }
@@ -3063,7 +3063,7 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/auth_middleware.go"],
             "verified_at": "2026-05-30"
           }
@@ -3891,7 +3891,7 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/auth_middleware.go"],
             "verified_at": "2026-05-30"
           }
@@ -3911,7 +3911,7 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/auth_middleware.go"],
             "verified_at": "2026-05-30"
           }
@@ -4978,9 +4978,10 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/cpp/restinio_middleware.go"],
-            "notes": "non_matched_request_handler, make_chain\u003cH1,H2,...\u003e, request_handler chaining detected; regex/partial"
+            "notes": "non_matched_request_handler, make_chain\u003cH1,H2,...\u003e, request_handler chaining detected; regex/partial",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {

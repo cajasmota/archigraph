@@ -565,19 +565,36 @@ func TestRestinioMakeChain(t *testing.T) {
 	src := `
 #include <restinio/all.hpp>
 
-auto handler = restinio::router::make_chain<LoggingHandler, AuthHandler, ApiRouter>();
+auto handler = restinio::router::make_chain<LoggingHandler, JwtAuthHandler, ApiRouter>();
 `
 	ents := extract(t, "custom_cpp_restinio_mw", fi("server.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" && len(e.Name) >= 22 &&
-			e.Name[:22] == "restinio:make_chain:Lo" {
-			found = true
-			break
+
+	// linkProp returns the value of prop on the chain-link entity named link.
+	linkProp := func(link, prop string) string {
+		for _, e := range ents {
+			if e.Kind == "SCOPE.Pattern" && e.Name == link {
+				return e.Props[prop]
+			}
 		}
+		return ""
 	}
-	if !found {
-		t.Errorf("expected restinio:make_chain entity, got %v", ents)
+
+	// Ordered chain links: Logging(0), JwtAuth(1), ApiRouter(2).
+	if got := linkProp("restinio:chain_link:LoggingHandler", "middleware_order"); got != "0" {
+		t.Errorf("LoggingHandler order = %q, want 0", got)
+	}
+	if got := linkProp("restinio:chain_link:JwtAuthHandler", "middleware_order"); got != "1" {
+		t.Errorf("JwtAuthHandler order = %q, want 1", got)
+	}
+	if got := linkProp("restinio:chain_link:ApiRouter", "middleware_order"); got != "2" {
+		t.Errorf("ApiRouter order = %q, want 2", got)
+	}
+	// The auth link is cross-emitted with its method + order.
+	if got := linkProp("restinio:auth:JwtAuthHandler", "auth_method"); got != "jwt" {
+		t.Errorf("JwtAuthHandler auth_method = %q, want jwt", got)
+	}
+	if got := linkProp("restinio:auth:JwtAuthHandler", "middleware_order"); got != "1" {
+		t.Errorf("JwtAuthHandler auth order = %q, want 1", got)
 	}
 }
 

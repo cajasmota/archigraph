@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/auth_middleware.go` | — |
+| Auth coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/cpp/auth_middleware.go` | — |
 
 ### Validation
 
@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | `2026-05-30` | — | `internal/custom/cpp/auth_middleware.go` | — |
+| Middleware coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/cpp/auth_middleware.go` | — |
 
 ### Type System
 

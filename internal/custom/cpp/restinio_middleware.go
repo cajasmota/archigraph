@@ -25,6 +25,7 @@ package cpp
 import (
 	"context"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -67,6 +68,26 @@ var (
 		`\b(?:\w+)\s*(?:->|\.)\s*(?:logger|set_logger)\s*\(`,
 	)
 )
+
+// restinioSplitChain splits a make_chain<...> template-arg list into trimmed,
+// bare handler type names, stripping any namespace qualifier so the link names
+// stay readable (e.g. `auth::JwtHandler` -> `JwtHandler`). Empty tokens drop.
+func restinioSplitChain(raw string) []string {
+	var out []string
+	for _, p := range strings.Split(raw, ",") {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if idx := strings.LastIndex(p, "::"); idx >= 0 {
+			p = p[idx+2:]
+		}
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
 
 func (e *restinioMwExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("archigraph/custom/cpp")
@@ -116,17 +137,38 @@ func (e *restinioMwExtractor) Extract(ctx context.Context, file extractor.FileIn
 		add(ent)
 	}
 
-	// make_chain<H1, H2, ...>
+	// make_chain<H1, H2, ...> — capture the ordered handler chain. Each link
+	// becomes its own ordered middleware entity (middleware_order = index),
+	// plus a summary entity carrying the full chain_types string. Links whose
+	// name carries an auth signal are cross-emitted as auth entities so the
+	// chain's auth step is attributable to a concrete handler type.
 	for _, m := range reRestinioMakeChain.FindAllStringSubmatchIndex(src, -1) {
 		chainTypes := strings.TrimSpace(src[m[2]:m[3]])
 		if len(chainTypes) > 100 {
 			chainTypes = chainTypes[:100]
 		}
+		line := lineOf(src, m[0])
 		name := "restinio:make_chain:" + chainTypes
-		ent := makeEntity(name, "SCOPE.Pattern", "", file.Path, file.Language, lineOf(src, m[0]))
+		ent := makeEntity(name, "SCOPE.Pattern", "", file.Path, file.Language, line)
 		setProps(&ent, "framework", "restinio", "provenance", "INFERRED_FROM_RESTINIO_MAKE_CHAIN",
 			"middleware_kind", "handler_chain", "chain_types", chainTypes)
 		add(ent)
+
+		for i, h := range restinioSplitChain(chainTypes) {
+			linkEnt := makeEntity("restinio:chain_link:"+h, "SCOPE.Pattern", "", file.Path, file.Language, line)
+			setProps(&linkEnt, "framework", "restinio", "provenance", "INFERRED_FROM_RESTINIO_MAKE_CHAIN",
+				"middleware_kind", "chain_link", "middleware_symbol", h,
+				"middleware_order", strconv.Itoa(i), "chain_types", chainTypes)
+			add(linkEnt)
+
+			if method := cppClassifyAuthMethod(h); method != "" {
+				authEnt := makeEntity("restinio:auth:"+h, "SCOPE.Pattern", "", file.Path, file.Language, line)
+				setProps(&authEnt, "framework", "restinio", "provenance", "INFERRED_FROM_RESTINIO_CHAIN_AUTH",
+					"pattern_kind", "auth", "auth_subtype", method, "auth_method", method,
+					"auth_symbol", h, "middleware_order", strconv.Itoa(i))
+				add(authEnt)
+			}
+		}
 	}
 
 	// Custom root request_handler (can implement middleware)

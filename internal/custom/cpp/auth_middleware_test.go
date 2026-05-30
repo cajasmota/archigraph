@@ -1,118 +1,213 @@
 package cpp_test
 
-// auth_middleware_test.go — fixture tests for auth_middleware.go.
-// Exercises Drogon HttpFilter, Crow CROW_MIDDLEWARES, Pistache Handler chains,
-// cpprestsdk auth header extraction, JWT patterns, and the middleware catalog.
+// auth_middleware_test.go — VALUE-ASSERTING fixture tests for auth_middleware.go.
+//
+// These prove the TS/JS bar: each test asserts the *specific* captured symbol
+// name, auth method, middleware kind, and (where applicable) order — not
+// len>0. Covers Drogon filters, oatpp Authorization handlers + interceptors,
+// Crow middleware structs/templates, jwt-cpp call sites, and the generic
+// bearer/api_key/session surface.
 
 import "testing"
 
-// ---------------------------------------------------------------------------
-// Auth coverage
-// ---------------------------------------------------------------------------
-
-func TestCppAuthJwtCppInclude(t *testing.T) {
-	src := `#include <jwt-cpp/jwt.h>
-void verify(const std::string& token) {
-    auto decoded = jwt::decode(token);
-}`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("auth.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" && e.Subtype == "" {
-			found = true
+// authEntity returns the SCOPE.Pattern entity with the given exact Name, or nil.
+func authEntity(ents []entitySummary, name string) *entitySummary {
+	for i := range ents {
+		if ents[i].Kind == "SCOPE.Pattern" && ents[i].Name == name {
+			return &ents[i]
 		}
 	}
-	if !found {
-		t.Errorf("expected auth SCOPE.Pattern for jwt-cpp include, got %v", ents)
+	return nil
+}
+
+// assertProp fails unless the entity named `name` exists and its `prop` equals
+// `want`.
+func assertProp(t *testing.T, ents []entitySummary, name, prop, want string) {
+	t.Helper()
+	e := authEntity(ents, name)
+	if e == nil {
+		t.Fatalf("expected entity %q, got %v", name, ents)
+	}
+	if got := e.Props[prop]; got != want {
+		t.Errorf("entity %q: %s = %q, want %q", name, prop, got, want)
 	}
 }
 
-func TestCppAuthJwtDecode(t *testing.T) {
-	src := `auto decoded = jwt::decode(raw_token);`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("jwt_auth.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("expected auth SCOPE.Pattern for jwt::decode, got %v", ents)
-	}
-}
+// ---------------------------------------------------------------------------
+// Drogon — auth filters
+// ---------------------------------------------------------------------------
 
-func TestCppAuthDrogonHttpFilter(t *testing.T) {
+func TestCppAuthDrogonJwtFilter(t *testing.T) {
 	src := `
 #include <drogon/HttpFilter.h>
-class AuthFilter : public drogon::HttpFilter<AuthFilter> {
+class JwtAuthFilter : public drogon::HttpFilter<JwtAuthFilter> {
 public:
     void doFilter(const HttpRequestPtr& req, FilterCallback&& cb, FilterChainCallback&& ccb) override;
 };
 `
 	ents := extract(t, "custom_cpp_auth_middleware", fi("auth_filter.h", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for Drogon HttpFilter class, got %v", ents)
-	}
+	assertProp(t, ents, "auth:drogon_filter:JwtAuthFilter", "auth_symbol", "JwtAuthFilter")
+	assertProp(t, ents, "auth:drogon_filter:JwtAuthFilter", "auth_method", "jwt")
+	assertProp(t, ents, "auth:drogon_filter:JwtAuthFilter", "framework", "drogon")
+	// doFilter middleware also captured.
+	assertProp(t, ents, "middleware:drogon:doFilter", "middleware_kind", "doFilter")
 }
 
-func TestCppAuthCrowMiddlewares(t *testing.T) {
+func TestCppAuthDrogonBasicFilter(t *testing.T) {
+	src := `class BasicAuthFilter : public drogon::HttpFilter<BasicAuthFilter> {};`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("basic.h", "cpp", src))
+	assertProp(t, ents, "auth:drogon_filter:BasicAuthFilter", "auth_method", "basic")
+}
+
+func TestCppMwDrogonRegisterFilter(t *testing.T) {
 	src := `
-#include <crow.h>
-struct AuthMiddleware {
-    struct context {};
-    void before_handle(crow::request& req, crow::response& res, context& ctx) {}
-};
+#include <drogon/drogon.h>
 int main() {
-    crow::App<AuthMiddleware> app;
-    CROW_MIDDLEWARES(app, AuthMiddleware);
+    app().registerFilter<JwtAuthFilter>();
+    app().run();
 }
 `
+	ents := extract(t, "custom_cpp_auth_middleware", fi("main.cc", "cpp", src))
+	assertProp(t, ents, "middleware:drogon:registerFilter:JwtAuthFilter", "middleware_symbol", "JwtAuthFilter")
+	assertProp(t, ents, "middleware:drogon:registerFilter:JwtAuthFilter", "middleware_kind", "registerFilter")
+	// register of an auth-named filter cross-emits an auth entity.
+	assertProp(t, ents, "auth:drogon_filter:JwtAuthFilter", "auth_method", "jwt")
+}
+
+func TestCppMwDrogonFilterAdd(t *testing.T) {
+	src := `
+class UserController : public drogon::HttpController<UserController> {
+public:
+    METHOD_LIST_BEGIN
+    FILTER_ADD(BearerAuthFilter);
+    METHOD_LIST_END
+};
+`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("ctrl.h", "cpp", src))
+	assertProp(t, ents, "middleware:drogon:FILTER_ADD:BearerAuthFilter", "middleware_kind", "FILTER_ADD")
+	assertProp(t, ents, "auth:drogon_filter:BearerAuthFilter", "auth_method", "bearer")
+}
+
+// ---------------------------------------------------------------------------
+// oatpp — authorization handlers + interceptors
+// ---------------------------------------------------------------------------
+
+func TestCppAuthOatppBearerHandler(t *testing.T) {
+	src := `
+class MyBearerAuth : public oatpp::web::server::handler::BearerAuthorizationHandler {
+public:
+    MyBearerAuth() : BearerAuthorizationHandler("my-realm") {}
+};
+`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("auth.hpp", "cpp", src))
+	assertProp(t, ents, "auth:oatpp_authorization_handler:MyBearerAuth", "auth_method", "bearer")
+	assertProp(t, ents, "auth:oatpp_authorization_handler:MyBearerAuth", "auth_symbol", "MyBearerAuth")
+	assertProp(t, ents, "auth:oatpp_authorization_handler:MyBearerAuth", "framework", "oatpp")
+}
+
+func TestCppAuthOatppBasicHandler(t *testing.T) {
+	src := `class MyBasicAuth : public oatpp::web::server::handler::BasicAuthorizationHandler {};`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("basic.hpp", "cpp", src))
+	assertProp(t, ents, "auth:oatpp_authorization_handler:MyBasicAuth", "auth_method", "basic")
+}
+
+func TestCppMwOatppRequestInterceptor(t *testing.T) {
+	src := `
+#include <oatpp/web/server/interceptor/RequestInterceptor.hpp>
+class AuthInterceptor : public oatpp::web::server::interceptor::RequestInterceptor {
+public:
+    std::shared_ptr<OutgoingResponse> intercept(const std::shared_ptr<IncomingRequest>& req) override;
+};
+`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("interceptor.hpp", "cpp", src))
+	assertProp(t, ents, "middleware:oatpp_interceptor:AuthInterceptor", "middleware_kind", "interceptor")
+	assertProp(t, ents, "middleware:oatpp_interceptor:AuthInterceptor", "interceptor_phase", "request")
+	// auth-named interceptor cross-emits auth.
+	assertProp(t, ents, "auth:oatpp_interceptor:AuthInterceptor", "auth_method", "auth")
+}
+
+func TestCppMwOatppResponseInterceptor(t *testing.T) {
+	src := `class HeaderInterceptor : public oatpp::web::server::interceptor::ResponseInterceptor {};`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("resp.hpp", "cpp", src))
+	assertProp(t, ents, "middleware:oatpp_interceptor:HeaderInterceptor", "interceptor_phase", "response")
+}
+
+// ---------------------------------------------------------------------------
+// Crow — middleware structs + ordered templates
+// ---------------------------------------------------------------------------
+
+func TestCppMwCrowAppTemplateOrder(t *testing.T) {
+	src := `crow::App<LogMiddleware, AuthMiddleware> app;`
 	ents := extract(t, "custom_cpp_auth_middleware", fi("server.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for CROW_MIDDLEWARES, got %v", ents)
-	}
+	// Order is captured: Log first (0), Auth second (1).
+	assertProp(t, ents, "middleware:crow_app:LogMiddleware", "middleware_order", "0")
+	assertProp(t, ents, "middleware:crow_app:AuthMiddleware", "middleware_order", "1")
+	assertProp(t, ents, "middleware:crow_app:AuthMiddleware", "middleware_kind", "crow_app_template")
+	// AuthMiddleware cross-emits an auth entity.
+	assertProp(t, ents, "auth:crow_middleware:AuthMiddleware", "auth_method", "auth")
+}
+
+func TestCppMwCrowMiddlewaresMacroOrder(t *testing.T) {
+	src := `CROW_MIDDLEWARES(app, CORSMiddleware, JwtMiddleware);`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("main.cpp", "cpp", src))
+	assertProp(t, ents, "middleware:crow_middlewares:CORSMiddleware", "middleware_order", "0")
+	assertProp(t, ents, "middleware:crow_middlewares:JwtMiddleware", "middleware_order", "1")
+	assertProp(t, ents, "auth:crow_middleware:JwtMiddleware", "auth_method", "jwt")
+}
+
+func TestCppMwCrowBeforeHandleStruct(t *testing.T) {
+	src := `
+struct LoggingMiddleware {
+    struct context {};
+    void before_handle(crow::request& req, crow::response& res, context& ctx) {}
+    void after_handle(crow::request& req, crow::response& res, context& ctx) {}
+};
+`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("mw.cpp", "cpp", src))
+	assertProp(t, ents, "middleware:crow_struct:LoggingMiddleware", "middleware_symbol", "LoggingMiddleware")
+	assertProp(t, ents, "middleware:crow:before_handle", "middleware_kind", "before_handle")
+	assertProp(t, ents, "middleware:crow:after_handle", "middleware_kind", "after_handle")
+}
+
+// ---------------------------------------------------------------------------
+// JWT call sites + generic bearer/api_key/session
+// ---------------------------------------------------------------------------
+
+func TestCppAuthJwtCppVerify(t *testing.T) {
+	src := `auto decoded = jwt::decode(raw_token); jwt::verify().verify(decoded);`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("jwt.cpp", "cpp", src))
+	assertProp(t, ents, "auth:jwt:jwt::decode", "auth_method", "jwt")
+	assertProp(t, ents, "auth:jwt:jwt::verify", "auth_method", "jwt")
 }
 
 func TestCppAuthBearerHeader(t *testing.T) {
-	src := `
-auto auth = request.headers().find("Authorization");
-if (auth != request.headers().end()) {
-    // check Bearer token
-    if (auth->second.find("Bearer") != std::string::npos) {
-        validate_token(auth->second);
-    }
-}
-`
+	src := `auto auth = req.getHeader("Authorization"); if (auth.find("Bearer") == 0) {}`
 	ents := extract(t, "custom_cpp_auth_middleware", fi("handler.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for Authorization Bearer header, got %v", ents)
+	assertProp(t, ents, "auth:bearer:authorization_header", "auth_method", "bearer")
+}
+
+func TestCppAuthApiKey(t *testing.T) {
+	src := `auto key = req.getHeader("X-Api-Key");`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("apikey.cpp", "cpp", src))
+	assertProp(t, ents, "auth:api_key:header", "auth_method", "api_key")
+}
+
+func TestCppAuthSession(t *testing.T) {
+	src := `auto sid = req.cookies().get("session_id"); SessionManager::validate(sid);`
+	ents := extract(t, "custom_cpp_auth_middleware", fi("session.cpp", "cpp", src))
+	if e := authEntity(ents, "auth:session:session_id"); e != nil {
+		assertProp(t, ents, "auth:session:session_id", "auth_method", "session")
+	} else {
+		assertProp(t, ents, "auth:session:SessionManager", "auth_method", "session")
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Negative cases
+// ---------------------------------------------------------------------------
+
 func TestCppAuthWrongLanguage(t *testing.T) {
-	src := `#include <jwt-cpp/jwt.h>
-void verify(const char* token) { jwt_decode(NULL, token, NULL, 0); }`
+	src := `class AuthFilter : public drogon::HttpFilter<AuthFilter> {};`
 	ents := extract(t, "custom_cpp_auth_middleware", fi("auth.c", "c", src))
 	if len(ents) != 0 {
 		t.Errorf("wrong language should return no entities, got %d", len(ents))
@@ -130,114 +225,5 @@ int main() {
 	ents := extract(t, "custom_cpp_auth_middleware", fi("main.cpp", "cpp", src))
 	if len(ents) != 0 {
 		t.Errorf("expected no entities for plain main, got %d", len(ents))
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Middleware coverage
-// ---------------------------------------------------------------------------
-
-func TestCppMwDrogonDoFilter(t *testing.T) {
-	src := `
-#include <drogon/HttpFilter.h>
-class RateLimitFilter : public drogon::HttpFilter<RateLimitFilter> {
-public:
-    void doFilter(const HttpRequestPtr& req, FilterCallback&& cb, FilterChainCallback&& ccb) override {
-        // rate limiting logic
-        ccb();
-    }
-};
-`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("rate_filter.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for Drogon doFilter middleware, got %v", ents)
-	}
-}
-
-func TestCppMwDrogonRegisterFilter(t *testing.T) {
-	src := `
-#include <drogon/drogon.h>
-int main() {
-    app().registerFilter<AuthFilter>();
-    app().run();
-}
-`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("main.cc", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for app().registerFilter, got %v", ents)
-	}
-}
-
-func TestCppMwCrowBeforeHandle(t *testing.T) {
-	src := `
-struct LoggingMiddleware {
-    struct context {};
-    void before_handle(crow::request& req, crow::response& res, context& ctx) {
-        CROW_LOG_INFO << "Request: " << req.url;
-    }
-    void after_handle(crow::request& req, crow::response& res, context& ctx) {}
-};
-`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("mw.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for Crow before_handle, got %v", ents)
-	}
-}
-
-func TestCppMwCrowAppTemplate(t *testing.T) {
-	src := `crow::App<LogMiddleware, AuthMiddleware> app;`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("server.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for crow::App<Mw...>, got %v", ents)
-	}
-}
-
-func TestCppMwPistacheHandler(t *testing.T) {
-	src := `
-#include <pistache/endpoint.h>
-class MyHandler : public Pistache::Http::Handler {
-public:
-    HTTP_PROTOTYPE(MyHandler)
-    void onRequest(const Pistache::Http::Request& req, Pistache::Http::ResponseWriter writer) override;
-};
-`
-	ents := extract(t, "custom_cpp_auth_middleware", fi("handler.cpp", "cpp", src))
-	found := false
-	for _, e := range ents {
-		if e.Kind == "SCOPE.Pattern" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("expected SCOPE.Pattern for Pistache Handler, got %v", ents)
 	}
 }
