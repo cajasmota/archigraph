@@ -6517,13 +6517,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -6534,7 +6534,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -6707,13 +6707,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -6724,7 +6724,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -6897,13 +6897,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -6914,7 +6914,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -7087,13 +7087,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -7104,7 +7104,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -7306,13 +7306,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -7323,7 +7323,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -7525,13 +7525,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -7542,7 +7542,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -7671,13 +7671,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -7688,7 +7688,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -7890,13 +7890,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -7907,7 +7907,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -8089,13 +8089,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -8106,7 +8106,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -8308,13 +8308,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -8325,7 +8325,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -8750,13 +8750,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -8767,7 +8767,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_csharp.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-29"
@@ -9660,13 +9660,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -9677,7 +9677,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -9875,13 +9875,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -9892,7 +9892,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10083,13 +10083,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10100,7 +10100,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10295,13 +10295,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10312,7 +10312,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10500,13 +10500,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10517,7 +10517,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10709,13 +10709,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -10726,7 +10726,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -11344,13 +11344,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -11361,7 +11361,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_elixir.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -29740,13 +29740,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -29757,7 +29757,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -30332,13 +30332,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -30349,7 +30349,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -30588,13 +30588,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -30605,7 +30605,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -30849,13 +30849,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -30866,7 +30866,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -31314,13 +31314,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -31331,7 +31331,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -31597,13 +31597,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -31614,7 +31614,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -31880,13 +31880,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -31897,7 +31897,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_kotlin.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -33702,13 +33702,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -33719,7 +33719,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -33926,13 +33926,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -33943,7 +33943,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -34150,13 +34150,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -34167,7 +34167,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -34374,13 +34374,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -34391,7 +34391,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -34822,13 +34822,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -34839,7 +34839,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35046,13 +35046,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35063,7 +35063,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35270,13 +35270,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35287,7 +35287,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35494,13 +35494,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35511,7 +35511,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35718,13 +35718,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35735,7 +35735,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35942,13 +35942,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -35959,7 +35959,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -36166,13 +36166,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -36183,7 +36183,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -42804,13 +42804,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -42821,7 +42821,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43010,13 +43010,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43027,7 +43027,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43220,13 +43220,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43237,7 +43237,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43430,13 +43430,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43447,7 +43447,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43640,13 +43640,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -43657,7 +43657,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -44059,13 +44059,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -44076,7 +44076,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -44269,13 +44269,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -44286,7 +44286,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_ruby.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -45211,13 +45211,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -45228,7 +45228,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -45647,13 +45647,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -45664,7 +45664,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -45865,13 +45865,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -45882,7 +45882,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46083,13 +46083,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46100,7 +46100,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46301,13 +46301,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46318,7 +46318,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46519,13 +46519,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46536,7 +46536,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46818,13 +46818,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -46835,7 +46835,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -47037,13 +47037,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -47054,7 +47054,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -47255,13 +47255,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -47272,7 +47272,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_rust.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -47824,13 +47824,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -47841,7 +47841,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -48108,13 +48108,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -48125,7 +48125,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -48376,13 +48376,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -48393,7 +48393,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -48667,13 +48667,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -48684,7 +48684,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -49240,13 +49240,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -49257,7 +49257,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -49732,13 +49732,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -49749,7 +49749,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -50023,13 +50023,13 @@
             "verified_at": "2026-05-28"
           },
           "request_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
           },
           "response_shape_extraction": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
@@ -50040,7 +50040,7 @@
             "verified_at": "2026-05-28"
           },
           "schema_drift_detection": {
-            "status": "full",
+            "status": "partial",
             "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_scala.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2771",
             "verified_at": "2026-05-28"
