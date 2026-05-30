@@ -25,12 +25,15 @@ func extract(t *testing.T, name string, file extreg.FileInput) []entitySummary {
 	}
 	var out []entitySummary
 	for _, ent := range ents {
-		out = append(out, entitySummary{Kind: ent.Kind, Subtype: ent.Subtype, Name: ent.Name})
+		out = append(out, entitySummary{Kind: ent.Kind, Subtype: ent.Subtype, Name: ent.Name, Props: ent.Properties})
 	}
 	return out
 }
 
-type entitySummary struct{ Kind, Subtype, Name string }
+type entitySummary struct {
+	Kind, Subtype, Name string
+	Props               map[string]string
+}
 
 func containsEntity(ents []entitySummary, kind, name string) bool {
 	for _, e := range ents {
@@ -39,6 +42,16 @@ func containsEntity(ents []entitySummary, kind, name string) bool {
 		}
 	}
 	return false
+}
+
+// findEntity returns the first entity matching kind+name, or nil.
+func findEntity(ents []entitySummary, kind, name string) *entitySummary {
+	for i := range ents {
+		if ents[i].Kind == kind && ents[i].Name == name {
+			return &ents[i]
+		}
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +119,100 @@ end
 	ents := extract(t, "custom_elixir_phoenix", fi("router.ex", "elixir", src))
 	if !containsEntity(ents, "SCOPE.Pattern", "pipeline:api") {
 		t.Error("expected api pipeline pattern")
+	}
+}
+
+// TestPhoenixPipelineOrderedPlugs asserts the exact ordered plug chain is
+// captured on the pipeline entity (not just the pipeline name).
+func TestPhoenixPipelineOrderedPlugs(t *testing.T) {
+	src := `
+pipeline :browser do
+  plug :accepts, ["html"]
+  plug :fetch_session
+  plug :fetch_live_flash
+  plug :protect_from_forgery
+  plug :put_secure_browser_headers
+end
+`
+	ents := extract(t, "custom_elixir_phoenix", fi("router.ex", "elixir", src))
+	pl := findEntity(ents, "SCOPE.Pattern", "pipeline:browser")
+	if pl == nil {
+		t.Fatal("expected pipeline:browser pattern")
+	}
+	if pl.Subtype != "pipeline" {
+		t.Errorf("expected subtype pipeline, got %q", pl.Subtype)
+	}
+	wantChain := ":accepts -> :fetch_session -> :fetch_live_flash -> :protect_from_forgery -> :put_secure_browser_headers"
+	if got := pl.Props["plug_chain"]; got != wantChain {
+		t.Errorf("plug_chain mismatch:\n got  %q\n want %q", got, wantChain)
+	}
+	if got := pl.Props["plug_count"]; got != "5" {
+		t.Errorf("expected plug_count 5, got %q", got)
+	}
+	if pl.Props["auth"] == "true" {
+		t.Error("browser pipeline (no auth plug) must not be flagged auth=true")
+	}
+	// Individual middleware entities carry their order index within the pipeline.
+	psf := findEntity(ents, "SCOPE.Pattern", "plug::protect_from_forgery")
+	if psf == nil {
+		t.Fatal("expected plug::protect_from_forgery middleware")
+	}
+	if got := psf.Props["plug_order"]; got != "3" {
+		t.Errorf("expected protect_from_forgery plug_order 3, got %q", got)
+	}
+	if got := psf.Props["pipeline_name"]; got != "browser" {
+		t.Errorf("expected pipeline_name browser, got %q", got)
+	}
+}
+
+// TestPhoenixGuardianAuthPipeline asserts a Guardian JWT pipeline is detected
+// with the correct provider + auth method, and that pipe_through binding
+// propagates the auth classification.
+func TestPhoenixGuardianAuthPipeline(t *testing.T) {
+	src := `
+pipeline :auth do
+  plug Guardian.Plug.VerifyHeader
+  plug Guardian.Plug.EnsureAuthenticated
+  plug Guardian.Plug.LoadResource
+end
+
+scope "/api", MyAppWeb do
+  pipe_through [:api, :auth]
+  get "/me", UserController, :show
+end
+`
+	ents := extract(t, "custom_elixir_phoenix", fi("router.ex", "elixir", src))
+	pl := findEntity(ents, "SCOPE.Pattern", "pipeline:auth")
+	if pl == nil {
+		t.Fatal("expected pipeline:auth pattern")
+	}
+	if pl.Props["auth"] != "true" {
+		t.Error("expected auth=true on :auth pipeline")
+	}
+	if got := pl.Props["auth_provider"]; got != "guardian" {
+		t.Errorf("expected auth_provider guardian, got %q", got)
+	}
+	if got := pl.Props["auth_method"]; got != "jwt" {
+		t.Errorf("expected auth_method jwt, got %q", got)
+	}
+	if got := pl.Props["auth_plug"]; got != "Guardian.Plug.VerifyHeader" {
+		t.Errorf("expected auth_plug Guardian.Plug.VerifyHeader, got %q", got)
+	}
+	wantChain := "Guardian.Plug.VerifyHeader -> Guardian.Plug.EnsureAuthenticated -> Guardian.Plug.LoadResource"
+	if got := pl.Props["plug_chain"]; got != wantChain {
+		t.Errorf("plug_chain mismatch:\n got  %q\n want %q", got, wantChain)
+	}
+	// pipe_through binding records ordered pipelines + propagates auth.
+	pt := findEntity(ents, "SCOPE.Pattern", "pipe_through:api,auth")
+	if pt == nil {
+		t.Fatal("expected pipe_through:api,auth pattern")
+	}
+	if got := pt.Props["pipelines"]; got != "api -> auth" {
+		t.Errorf("expected pipelines 'api -> auth', got %q", got)
+	}
+	if pt.Props["auth"] != "true" || pt.Props["auth_method"] != "jwt" {
+		t.Errorf("expected pipe_through to inherit jwt auth, got auth=%q method=%q",
+			pt.Props["auth"], pt.Props["auth_method"])
 	}
 }
 
