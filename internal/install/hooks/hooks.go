@@ -81,8 +81,23 @@ func Uninstall(repo string) error {
 }
 
 // BlockFor returns the managed hook body for a single hook name.
-// When group is non-empty the block also refreshes the cross-repo
-// links table by invoking `archigraph links pass <group>`.
+//
+// The reindex is enqueued ASYNCHRONOUSLY (`index --async`, #3366): the
+// daemon coalesces it onto its debounced scheduler and ACKs immediately,
+// so git writes (commit/checkout/merge) are never blocked waiting on a
+// full reindex. Because the call returns instantly we do NOT background it
+// with `&` — and `|| true` keeps the hook a no-op when the daemon is down.
+//
+// Rebase guard: when a rebase is in progress (`rebase-merge`/`rebase-apply`
+// directories exist) the hook does nothing. A rebase replays N commits and
+// would otherwise fire post-commit N times back-to-back; the final HEAD is
+// reindexed by the post-checkout/post-merge that completes the rebase, or
+// by the next ordinary commit.
+//
+// Cross-repo links: `archigraph links pass <group>` is run ONLY by the
+// post-merge hook (and only when group is non-empty). A merge is the point
+// at which cross-repo wiring can change; post-commit/post-checkout skip it
+// to keep ordinary writes cheap.
 //
 // The generated script resolves the repo path at runtime via
 // `git rev-parse --show-toplevel` so that hooks shared through
@@ -93,21 +108,22 @@ func BlockFor(hookName, binPath, repo string, group ...string) string {
 	if len(group) > 0 {
 		g = group[0]
 	}
-	if g == "" {
-		return fmt.Sprintf(`%s
-# archigraph %s — re-index the repo (or worktree) after %s.
-_ag_repo="$(git rev-parse --show-toplevel 2>/dev/null)"
-[ -n "$_ag_repo" ] && %q index "$_ag_repo" >/dev/null 2>&1 || true
-%s
-`, MarkerBegin, hookName, hookName, binPath, MarkerEnd)
+	// Links pass only on post-merge, and only when we know the group.
+	linksLine := ""
+	if hookName == "post-merge" && g != "" {
+		linksLine = fmt.Sprintf("  %q links pass %q >/dev/null 2>&1 || true\n", binPath, g)
 	}
 	return fmt.Sprintf(`%s
-# archigraph %s — re-index the repo (or worktree) and refresh cross-repo links for group %s.
+# archigraph %s — enqueue a debounced async reindex of the repo (or worktree).
+# Skipped mid-rebase so replaying N commits doesn't fire N reindexes (#3366).
 _ag_repo="$(git rev-parse --show-toplevel 2>/dev/null)"
-[ -n "$_ag_repo" ] && %q index "$_ag_repo" >/dev/null 2>&1 || true
-%q links pass %q >/dev/null 2>&1 || true
+_ag_rbm="$(git rev-parse --git-path rebase-merge 2>/dev/null)"
+_ag_rba="$(git rev-parse --git-path rebase-apply 2>/dev/null)"
+if [ -n "$_ag_repo" ] && [ ! -d "$_ag_rbm" ] && [ ! -d "$_ag_rba" ]; then
+  %q index --async "$_ag_repo" >/dev/null 2>&1 || true
+%sfi
 %s
-`, MarkerBegin, hookName, g, binPath, binPath, g, MarkerEnd)
+`, MarkerBegin, hookName, binPath, linksLine, MarkerEnd)
 }
 
 func hooksDir(repo string) (string, error) {

@@ -65,9 +65,12 @@ func runIndexClient(cmd *cobra.Command, argv []string) error {
 	quiet := fs.Bool("quiet", false, "suppress progress output; print only the final summary line")
 	jsonProgress := fs.Bool("json-progress", false, "emit one JSON event per line (for scripting; implies --quiet for non-JSON output)")
 	refFlag := fs.String("ref", "", "operate on a specific git ref; @all is refused (index is a destructive write). Use @current for active HEAD (default).")
+	async := fs.Bool("async", false, "enqueue a debounced/coalesced reindex on the daemon and return immediately without waiting for it to finish (used by git hooks; #3366)")
+	noWait := fs.Bool("no-wait", false, "alias for --async")
 	if err := fs.Parse(reorderedArgv); err != nil {
 		return err
 	}
+	asyncMode := *async || *noWait
 
 	// Validate --ref: @all is refused for index (destructive).
 	_, _, refErr := resolveRef(*refFlag, false /* @all NOT ok */)
@@ -110,6 +113,19 @@ func runIndexClient(cmd *cobra.Command, argv []string) error {
 		ExportFB:     *exportFB, // deprecated no-op; kept for back-compat
 		ExportJSON:   *exportJSON,
 		PrintSkipped: *printSkipped,
+		Async:        asyncMode,
+	}
+
+	if asyncMode {
+		// Async enqueue path (#3366): the daemon coalesces this onto its
+		// debounced scheduler and ACKs immediately — we do NOT wait for the
+		// reindex to finish and emit no heartbeat. Used by git hooks so git
+		// writes are never blocked. If the daemon is down the RPC errors,
+		// which the hook swallows via `|| true`.
+		if _, err := c.Index(indexArgs); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	if *quiet || *jsonProgress {

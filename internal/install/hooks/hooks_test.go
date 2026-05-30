@@ -59,13 +59,14 @@ func TestBlockForWorktreeResolution(t *testing.T) {
 			if !strings.Contains(block, `git rev-parse --show-toplevel`) {
 				t.Errorf("hook %s: missing git rev-parse --show-toplevel:\n%s", hookName, block)
 			}
-			if !strings.Contains(block, `index "$_ag_repo"`) {
-				t.Errorf("hook %s: missing `index \"$_ag_repo\"`:\n%s", hookName, block)
+			if !strings.Contains(block, `index --async "$_ag_repo"`) {
+				t.Errorf("hook %s: missing `index --async \"$_ag_repo\"`:\n%s", hookName, block)
 			}
 			// Must NOT hardcode the registered repo path as an index argument.
-			if strings.Contains(block, `index "`+registeredRepo+`"`) {
+			if strings.Contains(block, `index --async "`+registeredRepo+`"`) {
 				t.Errorf("hook %s: hardcoded repo path found — worktrees would be mis-indexed:\n%s", hookName, block)
 			}
+			assertRebaseGuard(t, hookName, block)
 		})
 
 		t.Run(hookName+"/with-group", func(t *testing.T) {
@@ -73,17 +74,39 @@ func TestBlockForWorktreeResolution(t *testing.T) {
 			if !strings.Contains(block, `git rev-parse --show-toplevel`) {
 				t.Errorf("hook %s+group: missing git rev-parse --show-toplevel:\n%s", hookName, block)
 			}
-			if !strings.Contains(block, `index "$_ag_repo"`) {
-				t.Errorf("hook %s+group: missing `index \"$_ag_repo\"`:\n%s", hookName, block)
+			if !strings.Contains(block, `index --async "$_ag_repo"`) {
+				t.Errorf("hook %s+group: missing `index --async \"$_ag_repo\"`:\n%s", hookName, block)
 			}
-			if strings.Contains(block, `index "`+registeredRepo+`"`) {
+			if strings.Contains(block, `index --async "`+registeredRepo+`"`) {
 				t.Errorf("hook %s+group: hardcoded repo path found — worktrees would be mis-indexed:\n%s", hookName, block)
 			}
-			// Group links pass must still be present.
-			if !strings.Contains(block, `links pass "`+group+`"`) {
+			assertRebaseGuard(t, hookName, block)
+			// Links pass must be present ONLY for post-merge (#3366): a merge
+			// is the point cross-repo wiring can change; ordinary commits and
+			// checkouts skip it to stay cheap.
+			hasLinks := strings.Contains(block, `links pass "`+group+`"`)
+			if hookName == "post-merge" && !hasLinks {
 				t.Errorf("hook %s+group: links pass line missing:\n%s", hookName, block)
 			}
+			if hookName != "post-merge" && hasLinks {
+				t.Errorf("hook %s+group: links pass must only appear in post-merge:\n%s", hookName, block)
+			}
 		})
+	}
+}
+
+// assertRebaseGuard verifies the managed block refuses to fire mid-rebase so
+// that replaying N commits during a rebase does not trigger N reindexes (#3366).
+func assertRebaseGuard(t *testing.T, hookName, block string) {
+	t.Helper()
+	for _, want := range []string{
+		`_ag_rbm="$(git rev-parse --git-path rebase-merge 2>/dev/null)"`,
+		`_ag_rba="$(git rev-parse --git-path rebase-apply 2>/dev/null)"`,
+		`[ ! -d "$_ag_rbm" ] && [ ! -d "$_ag_rba" ]`,
+	} {
+		if !strings.Contains(block, want) {
+			t.Errorf("hook %s: missing rebase-guard fragment %q:\n%s", hookName, want, block)
+		}
 	}
 }
 
@@ -104,8 +127,8 @@ func TestInstallWorktreeResolution(t *testing.T) {
 		if !strings.Contains(script, `git rev-parse --show-toplevel`) {
 			t.Errorf("%s: runtime worktree resolution missing:\n%s", name, script)
 		}
-		if !strings.Contains(script, `index "$_ag_repo"`) {
-			t.Errorf("%s: index with runtime var missing:\n%s", name, script)
+		if !strings.Contains(script, `index --async "$_ag_repo"`) {
+			t.Errorf("%s: async index with runtime var missing:\n%s", name, script)
 		}
 		if !strings.Contains(script, MarkerBegin) || !strings.Contains(script, MarkerEnd) {
 			t.Errorf("%s: managed markers missing:\n%s", name, script)

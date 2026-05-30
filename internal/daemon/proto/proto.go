@@ -148,6 +148,16 @@ type IndexArgs struct {
 	// per-group names from fleet.json's additional_skip_dirs field.
 	AdditionalSkipDirs []string `json:"additional_skip_dirs,omitempty"`
 	ExportJSON         bool     `json:"export_json,omitempty"` // when true, also write graph.json alongside graph.fb (ADR-0016 flip-day)
+	// Async, when true, makes the Index RPC ENQUEUE the repo onto the
+	// daemon's debounced/coalescing scheduler (the same fast reactive path
+	// the file-watcher uses) and ACK immediately, rather than running a full
+	// synchronous index and blocking until it completes. Used by git hooks
+	// (post-commit/-merge/-checkout) so git writes are never blocked on a
+	// reindex, and so concurrent worktrees + commit bursts coalesce into a
+	// single per-repo reindex instead of stampeding the daemon (#3366).
+	// When false (default) the RPC keeps its synchronous behaviour, used by
+	// `rebuild` and manual `archigraph index`.
+	Async bool `json:"async,omitempty"`
 }
 
 // IndexReply carries the post-index summary. The stats are an opaque

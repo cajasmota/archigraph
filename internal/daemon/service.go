@@ -312,6 +312,21 @@ func (s *Service) Index(args *proto.IndexArgs, reply *proto.IndexReply) error {
 	if args == nil || args.RepoPath == "" {
 		return errors.New("repo_path is required")
 	}
+
+	// Async fast path (#3366): enqueue onto the debounced/coalescing
+	// scheduler — the SAME reactive path the file-watcher uses — and ACK
+	// immediately. The scheduler dedups per-repo (an enqueue for a repo
+	// already pending or in-flight is coalesced, only the latest ref is
+	// kept), so a commit burst or concurrent worktrees collapse into one
+	// reindex instead of N back-to-back full reindexes. Used by git hooks
+	// so git writes never block on a reindex. Falls back to the synchronous
+	// path below when no scheduler is attached (e.g. a watcher-less daemon).
+	if args.Async && s.scheduler != nil {
+		s.scheduler.Enqueue(args.RepoPath)
+		reply.RepoPath = args.RepoPath
+		return nil
+	}
+
 	atomic.AddInt64(&s.inFlight, 1)
 	defer atomic.AddInt64(&s.inFlight, -1)
 	graphPath, stats, err := s.index(*args)
