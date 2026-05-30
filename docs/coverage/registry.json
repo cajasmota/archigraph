@@ -1298,10 +1298,16 @@
       "label": "Azure Bicep",
       "capabilities": {
         "dependency_attribution": {
-          "status": "missing"
+          "status": "full",
+          "cites": ["internal/extractors/bicep/extractor.go"],
+          "notes": "DEPENDS_ON edges from symbolic-name property references (foo.id / foo.properties.x / foo.outputs.y) and explicit dependsOn:[...] arrays between resources/modules (mirrors hcl depends_on-\u003eDEPENDS_ON edge kind); module 'path.bicep' -\u003e IMPORTS edge. Edges emitted as Format-A structural-refs bound via byLocation to sibling entities in the same file.",
+          "verified_at": "2026-05-30"
         },
         "resource_extraction": {
-          "status": "missing"
+          "status": "full",
+          "cites": ["internal/extractors/bicep/extractor.go","internal/extractors/bicep/kinds.go"],
+          "notes": "Regex/line-based .bicep extractor (no tree-sitter grammar vendored): SCOPE.InfraResource per 'resource' decl named by symbolic name, Kind-stable with resource_scope from the AzureRP type (bicepResourceCoarseScope); azure_rp_type + api_version + deployed_name on Metadata. SCOPE.Component/module per 'module' decl, SCOPE.Schema for param/var/output. Handles 'existing' resources and [for ...] loops.",
+          "verified_at": "2026-05-30"
         }
       }
     },

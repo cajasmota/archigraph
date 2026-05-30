@@ -469,6 +469,10 @@ var extensionLanguageMap = map[string]string{
 	".tf":     "terraform",
 	".tfvars": "terraform",
 	".hcl":    "hcl",
+	// Azure Bicep — Azure-native IaC DSL (resource/module/param/var/output).
+	// No tree-sitter grammar is vendored; the bicep extractor is regex/line-
+	// based (internal/extractors/bicep) so the tree is nil at dispatch time.
+	".bicep": "bicep",
 	// Protobuf
 	".proto": "protobuf",
 	// CSS / SCSS / LESS

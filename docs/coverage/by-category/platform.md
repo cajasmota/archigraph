@@ -18,7 +18,7 @@ Back to [summary](../summary.md). Bucket: **Other**.
 | [multi](../by-language/multi.md) | [AWS CloudFormation](../detail/infra.iac.cloudformation.md) | ✅ | — | — | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [AWS CloudFormation](../detail/infra.resource.cloudformation.md) | ✅ | — | — | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [Ansible (playbooks)](../detail/infra.iac.ansible.md) | 🟢 | — | — | 🟢 | 🟢 | |
-| [multi](../by-language/multi.md) | [Azure Bicep](../detail/infra.iac.bicep.md) | 🔴 | — | — | 🔴 | 🔴 | |
+| [multi](../by-language/multi.md) | [Azure Bicep](../detail/infra.iac.bicep.md) | ✅ | — | — | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [Dockerfile](../detail/infra.container.dockerfile.md) | ✅ | — | — | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [Helm charts](../detail/infra.container.helm.md) | ✅ | — | — | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [Helm charts](../detail/infra.resource.helm.md) | — | — | — | ✅ | ✅ | |

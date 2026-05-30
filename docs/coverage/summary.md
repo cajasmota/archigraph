@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # archigraph capabilities
 
-**Languages**: 37 (19 active · 18 placeholder) · **Frameworks**: 198 · **ORMs**: 151 · **Tools**: 110 · **Other**: 115
+**Languages**: 38 (19 active · 19 placeholder) · **Frameworks**: 197 · **ORMs**: 151 · **Tools**: 110 · **Other**: 115
 
 ## Coverage by language
 
@@ -17,7 +17,7 @@
 | [rust](by-language/rust.md) | 14 | 6 | 14 | 0 |
 | [elixir](by-language/elixir.md) | 13 | 5 | 10 | 0 |
 | [php](by-language/php.md) | 12 | 6 | 14 | 0 |
-| [scala](by-language/scala.md) | 12 | 3 | 6 | 0 |
+| [scala](by-language/scala.md) | 11 | 3 | 6 | 0 |
 | [ruby](by-language/ruby.md) | 8 | 6 | 13 | 1 |
 | [lua](by-language/lua.md) | 2 | 0 | 0 | 0 |
 | [swift](by-language/swift.md) | 1 | 1 | 0 | 0 |
@@ -32,14 +32,14 @@
 | Category | Records | Full | Partial | Missing |
 |---|---:|---:|---:|---:|
 | [Databases](by-category/databases.md) | 11 | 0 | 7 | 4 |
-| [Platform / k8s](by-category/platform.md) | 23 | 16 | 6 | 1 |
+| [Platform / k8s](by-category/platform.md) | 23 | 17 | 6 | 0 |
 | [Message Brokers](by-category/message_broker.md) | 20 | 9 | 9 | 2 |
 | [CI/CD](by-category/ci_cd.md) | 12 | 1 | 8 | 3 |
 | [Security](by-category/security.md) | 10 | 3 | 0 | 7 |
 | [Observability](by-category/observability.md) | 9 | 1 | 1 | 7 |
 | [Protocols](by-category/protocol.md) | 8 | 3 | 3 | 2 |
 | [Build Systems](by-category/build_system.md) | 4 | 3 | 0 | 1 |
-| **Total** | 97 | 36 | 34 | 27 |
+| **Total** | 97 | 37 | 34 | 26 |
 
 ## Languages with extractor support, no records yet
 
@@ -47,6 +47,7 @@
 
 | Language |
 |---|
+| [Bicep](by-language/bicep.md) |
 | [Clojure](by-language/clojure.md) |
 | [Crystal](by-language/crystal.md) |
 | [Elm](by-language/elm.md) |
@@ -66,4 +67,4 @@
 | [Verilog](by-language/verilog.md) |
 | [Zig](by-language/zig.md) |
 
-Total: 198 frameworks · 110 tools · 151 ORMs · 115 other
+Total: 197 frameworks · 110 tools · 151 ORMs · 115 other
