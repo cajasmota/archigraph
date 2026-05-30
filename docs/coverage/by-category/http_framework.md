@@ -25,8 +25,8 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C/C++](../by-language/c-cpp.md) | [libev](../detail/lang.c-cpp.framework.libev.md) | — | — | 🟢 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 3/3 | |
 | [C/C++](../by-language/c-cpp.md) | [libevent](../detail/lang.c-cpp.framework.libevent.md) | — | — | 🟢 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 3/3 | |
 | [C/C++](../by-language/c-cpp.md) | [libuv](../detail/lang.c-cpp.framework.libuv.md) | — | — | 🟢 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 3/3 | |
-| [C#](../by-language/csharp.md) | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | 🟢 3/3 | ✅ 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
-| [C#](../by-language/csharp.md) | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | 🟢 3/3 | ✅ 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [C#](../by-language/csharp.md) | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | ✅ 3/3 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [C#](../by-language/csharp.md) | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | ✅ 3/3 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [C#](../by-language/csharp.md) | [Carter](../detail/lang.csharp.framework.carter.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [C#](../by-language/csharp.md) | [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [C#](../by-language/csharp.md) | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |

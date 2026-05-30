@@ -643,19 +643,150 @@ func detectJUnit(source string) []testFunction {
 }
 
 // ---------------------------------------------------------------------------
-// C# — NUnit / xUnit / MSTest
+// C# — xUnit / NUnit / MSTest  (deep linkage, #3383)
 // ---------------------------------------------------------------------------
 
-var csharpTestRE = regexp.MustCompile(
-	`(?m)\[(?:Test|Fact|Theory|TestMethod)(?:\([^)]*\))?\]\s*(?:public\s+|private\s+|protected\s+)?(?:async\s+)?(?:Task|void)\s+(\w+)\s*\([^)]*\)\s*{`,
+// csharpXUnitMethodRE matches xUnit [Fact] and [Theory] test methods.
+//
+// Design notes:
+//   - Allows zero or more additional attribute lines between [Fact/Theory] and
+//     the method signature (e.g. [InlineData(...)], [MemberData(...)]).
+//   - Accepts any return type identifier (void, Task, int, Task<T>, etc.) so
+//     [Theory] methods returning a typed value are covered.
+//   - Captures: (1) method name.
+var csharpXUnitMethodRE = regexp.MustCompile(
+	`(?m)\[(?:Fact|Theory)(?:\([^)]*\))?\](?:\s*\[[^\]]*\])*\s*(?:(?:public|private|protected|internal|static|override|virtual|async|sealed)\s+)*[\w<>\[\]?]+\s+(\w+)\s*\([^)]*\)\s*\{`,
 )
 
-func detectCSharpTest(source string) []testFunction {
+// csharpNUnitMethodRE matches NUnit [Test] and [TestCase] test methods.
+//
+// Allows additional attribute lines between the test attribute and the method
+// signature (e.g. [TestCase(...)]) and accepts any return type.
+// Captures: (1) method name.
+var csharpNUnitMethodRE = regexp.MustCompile(
+	`(?m)\[(?:Test|TestCase)(?:\([^)]*\))?\](?:\s*\[[^\]]*\])*\s*(?:(?:public|private|protected|internal|static|override|virtual|async|sealed)\s+)*[\w<>\[\]?]+\s+(\w+)\s*\([^)]*\)\s*\{`,
+)
+
+// csharpMSTestMethodRE matches MSTest [TestMethod] test methods.
+//
+// Accepts any return type. Captures: (1) method name.
+var csharpMSTestMethodRE = regexp.MustCompile(
+	`(?m)\[TestMethod(?:\([^)]*\))?\](?:\s*\[[^\]]*\])*\s*(?:(?:public|private|protected|internal|static|override|virtual|async|sealed)\s+)*[\w<>\[\]?]+\s+(\w+)\s*\([^)]*\)\s*\{`,
+)
+
+// csharpXUnitClassRE detects the containing test class — xUnit does NOT require
+// a class-level attribute; the class is discovered by containing [Fact]/[Theory].
+// We capture the class name from `public class XTests` / `public class XTests :`.
+//
+// Captures: (1) class name.
+var csharpTestClassRE = regexp.MustCompile(
+	`(?m)^\s*(?:(?:public|internal|private|protected|abstract|sealed|partial)\s+)*class\s+(\w+)`,
+)
+
+// csharpNUnitFixtureRE detects `[TestFixture]` classes for NUnit.
+var csharpNUnitFixtureRE = regexp.MustCompile(`(?m)\[TestFixture(?:\([^)]*\))?\]`)
+
+// csharpMSTestClassRE detects `[TestClass]` classes for MSTest.
+var csharpMSTestClassAttrRE = regexp.MustCompile(`(?m)\[TestClass(?:\([^)]*\))?\]`)
+
+// csharpWebAppFactoryRE detects WebApplicationFactory<T> integration tests.
+// Group 1 captures the entry-point type T.
+var csharpWebAppFactoryRE = regexp.MustCompile(
+	`\bWebApplicationFactory\s*<\s*(\w+)\s*>`,
+)
+
+// csTestSubjectFromClassName derives the class under test from a C# test class
+// name by stripping trailing "Tests"/"Test" suffixes, mirroring the Java/Kotlin
+// convention already handled by productionFileFromTestPath.
+//
+//	OrderServiceTests → OrderService
+//	OrderServiceTest  → OrderService
+//	UserControllerTests → UserController
+//	(no suffix)       → ""
+func csTestSubjectFromClassName(className string) string {
+	for _, suf := range []string{"Tests", "Test"} {
+		if strings.HasSuffix(className, suf) && len(className) > len(suf) {
+			return className[:len(className)-len(suf)]
+		}
+	}
+	return ""
+}
+
+// csFirstClassName returns the first class name found in source.
+func csFirstClassName(source string) string {
+	if m := csharpTestClassRE.FindStringSubmatch(source); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
+// csWebAppFactoryType returns the T from WebApplicationFactory<T>, or "".
+func csWebAppFactoryType(source string) string {
+	if m := csharpWebAppFactoryRE.FindStringSubmatch(source); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
+// detectXUnitTest detects xUnit [Fact]/[Theory] test methods.
+// Annotates each test with the class-under-test derived from the class name
+// so the resolver can emit a TESTS edge even without explicit instantiation.
+func detectXUnitTest(source string) []testFunction {
+	className := csFirstClassName(source)
+	subject := csTestSubjectFromClassName(className)
+	// Integration tests: WebApplicationFactory<T> → subject = T (higher specificity)
+	if waf := csWebAppFactoryType(source); waf != "" {
+		subject = waf
+	}
 	var out []testFunction
-	for _, m := range csharpTestRE.FindAllStringSubmatchIndex(source, -1) {
+	for _, m := range csharpXUnitMethodRE.FindAllStringSubmatchIndex(source, -1) {
 		name := source[m[2]:m[3]]
 		body := extractBraceBody(source, m[1]-1)
-		out = append(out, testFunction{qname: name, body: body})
+		out = append(out, testFunction{
+			qname:           name,
+			body:            body,
+			describeSubject: subject,
+		})
+	}
+	return out
+}
+
+// detectNUnitTest detects NUnit [Test]/[TestCase] methods inside [TestFixture] classes.
+func detectNUnitTest(source string) []testFunction {
+	className := csFirstClassName(source)
+	subject := csTestSubjectFromClassName(className)
+	if waf := csWebAppFactoryType(source); waf != "" {
+		subject = waf
+	}
+	var out []testFunction
+	for _, m := range csharpNUnitMethodRE.FindAllStringSubmatchIndex(source, -1) {
+		name := source[m[2]:m[3]]
+		body := extractBraceBody(source, m[1]-1)
+		out = append(out, testFunction{
+			qname:           name,
+			body:            body,
+			describeSubject: subject,
+		})
+	}
+	return out
+}
+
+// detectMSTest detects MSTest [TestMethod] methods inside [TestClass] classes.
+func detectMSTest(source string) []testFunction {
+	className := csFirstClassName(source)
+	subject := csTestSubjectFromClassName(className)
+	if waf := csWebAppFactoryType(source); waf != "" {
+		subject = waf
+	}
+	var out []testFunction
+	for _, m := range csharpMSTestMethodRE.FindAllStringSubmatchIndex(source, -1) {
+		name := source[m[2]:m[3]]
+		body := extractBraceBody(source, m[1]-1)
+		out = append(out, testFunction{
+			qname:           name,
+			body:            body,
+			describeSubject: subject,
+		})
 	}
 	return out
 }
@@ -760,7 +891,38 @@ func detectScalaTest(source string) []testFunction {
 // frameworkOrder is deterministic. Ambiguous files (e.g. a Kotlin file that
 // imports both kotlin.test and org.junit) resolve to the first entry in this
 // list that matches.
+//
+// C# frameworks are listed FIRST so that .cs test files with known framework
+// imports (nunit.framework, microsoft.visualstudio.testtools) are selected
+// before go_testing, whose import hint "testing" is a suffix of the MSTest
+// namespace "microsoft.visualstudio.testtools.unittesting" and would otherwise
+// cause a false-positive match on C# files.
 var frameworkOrder = []frameworkEntry{
+	// C# — NUnit: import-hints only (no filenameHints so the xUnit fallback
+	// below is not shadowed when only the filename matches).
+	{
+		name:        "nunit",
+		importHints: []string{"nunit.framework", "nunit"},
+		detect:      detectNUnitTest,
+	},
+	// C# — MSTest: import-hints only.
+	{
+		name:        "mstest",
+		importHints: []string{"microsoft.visualstudio.testtools", "microsoft.visualstudio.testtools.unittesting"},
+		detect:      detectMSTest,
+	},
+	// C# — xUnit: listed AFTER nunit/mstest so those two win when a recognised
+	// import is present. Falls back to filename detection for files without a
+	// using directive (common in small xUnit projects).
+	{
+		name:        "xunit",
+		importHints: []string{"xunit", "xunit.abstractions", "xunit.core"},
+		filenameHints: []*regexp.Regexp{
+			regexp.MustCompile(`Test\.cs$`),
+			regexp.MustCompile(`Tests\.cs$`),
+		},
+		detect: detectXUnitTest,
+	},
 	{
 		name:        "go_testing",
 		importHints: []string{"testing"},
@@ -863,15 +1025,6 @@ var frameworkOrder = []frameworkEntry{
 			regexp.MustCompile(`Tests\.kt$`),
 		},
 		detect: detectKotlinTest,
-	},
-	{
-		name:        "nunit",
-		importHints: []string{"nunit.framework", "xunit", "microsoft.visualstudio.testtools"},
-		filenameHints: []*regexp.Regexp{
-			regexp.MustCompile(`Test\.cs$`),
-			regexp.MustCompile(`Tests\.cs$`),
-		},
-		detect: detectCSharpTest,
 	},
 	{
 		name:        "rust_test",

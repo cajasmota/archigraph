@@ -9843,16 +9843,33 @@ records:
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
-          # C# NUnit/xUnit/MSTest [Fact]/[Theory]/[Test]/[TestMethod] attrs
-          # detected via csharpTestRE in testmap/frameworks.go; TESTS edges
-          # emitted from test → production function; issue #3261.
-          status: partial
+          # xUnit [Fact]/[Theory], NUnit [Test]/[TestCase]/[TestFixture],
+          # MSTest [TestMethod]/[TestClass] detected via dedicated per-framework
+          # detectors; class-name convention (OrderServiceTests → OrderService)
+          # emits medium-confidence describe-subject TESTS edges; direct
+          # new OrderService() / sut.Method() calls → high-confidence edges;
+          # WebApplicationFactory<T> integration tests → TESTS to entry type T;
+          # C# assert stopwords added; issue #3383.
+          status: full
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
+            - file: internal/extractors/cross/testmap/resolver.go
+              functions: [isStopword, resolveCalls]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
-          issues_implemented: ["3261"]
+              functions:
+                - TestCSharp_xUnit_FactDirectCall
+                - TestCSharp_xUnit_TheoryDirectCall
+                - TestCSharp_xUnit_ClassSubjectFallback
+                - TestCSharp_NUnit_TestAnnotation
+                - TestCSharp_NUnit_TestCase
+                - TestCSharp_MSTest_TestMethod
+                - TestCSharp_xUnit_WebApplicationFactory
+                - TestCSharp_AssertStopwordsFiltered
+                - TestCSharp_SutMethodCallHighConfidence
+                - TestCSharp_NUnit_SubjectFallback
+          issues_implemented: ["3261", "3383"]
           verified_at: "2026-05-30"
 
   lang.csharp.framework.aspnet-mvc:
@@ -9956,14 +9973,23 @@ records:
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
-          # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
-          status: partial
+          # xUnit [Fact]/[Theory], NUnit [Test]/[TestCase]/[TestFixture],
+          # MSTest [TestMethod]/[TestClass]; class-name convention and direct
+          # calls emit TESTS edges; same detector set as aspnet-core; issue #3383.
+          status: full
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
+            - file: internal/extractors/cross/testmap/resolver.go
+              functions: [isStopword, resolveCalls]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
-          issues_implemented: ["3261"]
+              functions:
+                - TestCSharp_xUnit_FactDirectCall
+                - TestCSharp_NUnit_TestAnnotation
+                - TestCSharp_MSTest_TestMethod
+                - TestCSharp_xUnit_ClassSubjectFallback
+          issues_implemented: ["3261", "3383"]
           verified_at: "2026-05-30"
 
   lang.csharp.framework.blazor:
@@ -10096,7 +10122,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10225,7 +10251,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10354,7 +10380,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10498,7 +10524,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10635,7 +10661,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10694,7 +10720,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10755,7 +10781,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10816,7 +10842,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]
@@ -10876,7 +10902,7 @@ records:
           status: partial
           symbols:
             - file: internal/extractors/cross/testmap/frameworks.go
-              functions: [detectCSharpTest]
+              functions: [detectXUnitTest, detectNUnitTest, detectMSTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
           issues_implemented: ["3261"]

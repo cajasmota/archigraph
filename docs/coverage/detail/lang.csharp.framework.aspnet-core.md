@@ -17,7 +17,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Endpoint synthesis | ✅ `full` | `2026-05-28` | — | `internal/engine/aspnet_core_routes.go`<br>`internal/engine/rules/csharp/frameworks/asp_net_core.yaml` | — |
 | Handler attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/aspnet_core_routes.go` | — |
-| Route extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/csharp/aspnet_core.go` | Minimal-API app.MapGet/Post/Put/Delete route path strings extracted via reAspNetMinimalAPI; attribute routes via reAspNetHTTPMethod; route_path property set on each emitted entity. |
+| Route extraction | ✅ `full` | — | — | `internal/custom/csharp/aspnet_core.go`<br>`internal/engine/aspnet_core_routes.go` | Minimal-API app.MapGet/Post/Put/Delete route path strings extracted via reAspNetMinimalAPI; attribute routes via reAspNetHTTPMethod; route_path property set on each emitted entity. |
 
 ### Auth
 
@@ -51,7 +51,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/extractors/cross/testmap/frameworks.go` | C# NUnit/xUnit/MSTest: [Fact]/[Theory]/[Test]/[TestMethod] attrs detected via csharpTestRE |
+| Tests linkage | ✅ `full` | — | — | `internal/extractors/cross/testmap/extractor_test.go`<br>`internal/extractors/cross/testmap/frameworks.go`<br>`internal/extractors/cross/testmap/resolver.go` | C# NUnit/xUnit/MSTest: [Fact]/[Theory]/[Test]/[TestMethod] attrs detected via csharpTestRE |
 
 ### Observability
 

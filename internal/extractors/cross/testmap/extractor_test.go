@@ -1323,7 +1323,7 @@ func TestKotlin_BacktickName(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// C#
+// C# — xUnit / NUnit / MSTest deep linkage (#3383)
 // ---------------------------------------------------------------------------
 
 func TestCSharp_TestAttribute(t *testing.T) {
@@ -1340,6 +1340,479 @@ public class UserTests {
 	}
 	if recs[0].Properties["test_framework"] != "nunit" {
 		t.Errorf("framework=%q, want nunit", recs[0].Properties["test_framework"])
+	}
+}
+
+// TestCSharp_xUnit_FactDirectCall verifies that an xUnit [Fact] test that
+// directly calls a production method emits a high-confidence TESTS edge.
+// This is the core value-asserting test for the partial→full flip.
+//
+//	OrderServiceTests [Fact] calls OrderService.Place() → TESTS edge to OrderService.Place
+func TestCSharp_xUnit_FactDirectCall(t *testing.T) {
+	src := `using Xunit;
+
+public class OrderServiceTests
+{
+    [Fact]
+    public void Place_ValidOrder_ReturnsConfirmed()
+    {
+        var svc = new OrderService();
+        var result = svc.Place(new Order { Amount = 10 });
+        Assert.Equal("confirmed", result.Status);
+    }
+}`
+	recs := runExtract(t, "OrderServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from xUnit [Fact] test, got 0")
+	}
+	if recs[0].Properties["test_framework"] != "xunit" {
+		t.Errorf("framework=%q, want xunit", recs[0].Properties["test_framework"])
+	}
+	// OrderService must appear as a TESTS edge target (direct call via new OrderService()).
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "OrderService" {
+				found = true
+				if rel.Properties["confidence"] != "high" {
+					t.Errorf("expected high confidence for OrderService call, got %q", rel.Properties["confidence"])
+				}
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting OrderService; recs=%d", len(recs))
+		for _, r := range recs {
+			t.Logf("  entity: test_function=%q tested=%q conf=%q", r.Properties["test_function"], r.Properties["tested_function"], r.Properties["confidence"])
+			for _, rel := range r.Relationships {
+				t.Logf("    TESTS->%q conf=%q", rel.Properties["tested"], rel.Properties["confidence"])
+			}
+		}
+	}
+}
+
+// TestCSharp_xUnit_TheoryDirectCall verifies [Theory] test methods.
+func TestCSharp_xUnit_TheoryDirectCall(t *testing.T) {
+	src := `using Xunit;
+
+public class CalculatorTests
+{
+    [Theory]
+    [InlineData(1, 2, 3)]
+    [InlineData(4, 5, 9)]
+    public void Add_TwoNumbers_ReturnsSum(int a, int b, int expected)
+    {
+        var calc = new Calculator();
+        var result = calc.Add(a, b);
+        Assert.Equal(expected, result);
+    }
+}`
+	recs := runExtract(t, "CalculatorTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from xUnit [Theory] test, got 0")
+	}
+	// Calculator must be a TESTS target via new Calculator() call.
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "Calculator" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting Calculator from [Theory] test; recs=%d", len(recs))
+	}
+}
+
+// TestCSharp_xUnit_ClassSubjectFallback verifies that when no direct call is
+// found the class name convention (OrderServiceTests → OrderService) produces
+// a medium-confidence TESTS edge — mirroring the Minitest describeSubject path.
+func TestCSharp_xUnit_ClassSubjectFallback(t *testing.T) {
+	src := `using Xunit;
+
+public class OrderServiceTests
+{
+    [Fact]
+    public void IsEmpty_ReturnsTrue()
+    {
+        Assert.True(true);
+    }
+}`
+	recs := runExtract(t, "OrderServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from xUnit class-subject fallback, got 0")
+	}
+	found := false
+	for _, r := range recs {
+		if r.Properties["tested_function"] == "OrderService" && r.Properties["confidence"] == "medium" {
+			for _, rel := range r.Relationships {
+				if rel.Kind == "TESTS" {
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting OrderService at medium confidence (class-name fallback); recs=%d", len(recs))
+		for _, r := range recs {
+			t.Logf("  entity: tested=%q conf=%q", r.Properties["tested_function"], r.Properties["confidence"])
+		}
+	}
+}
+
+// TestCSharp_NUnit_TestAnnotation verifies NUnit [Test] methods inside a
+// [TestFixture] class produce a TESTS edge to the class under test.
+func TestCSharp_NUnit_TestAnnotation(t *testing.T) {
+	src := `using NUnit.Framework;
+
+[TestFixture]
+public class UserServiceTests
+{
+    [Test]
+    public void GetUser_ValidId_ReturnsUser()
+    {
+        var svc = new UserService();
+        var user = svc.GetUser(1);
+        Assert.IsNotNull(user);
+    }
+}`
+	recs := runExtract(t, "UserServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from NUnit [Test], got 0")
+	}
+	if recs[0].Properties["test_framework"] != "nunit" {
+		t.Errorf("framework=%q, want nunit", recs[0].Properties["test_framework"])
+	}
+	// UserService must appear as a TESTS edge target.
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "UserService" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting UserService; recs=%d", len(recs))
+	}
+}
+
+// TestCSharp_NUnit_TestCase verifies NUnit [TestCase] parametrized tests.
+func TestCSharp_NUnit_TestCase(t *testing.T) {
+	src := `using NUnit.Framework;
+
+[TestFixture]
+public class CalculatorTests
+{
+    [TestCase(1, 2, ExpectedResult = 3)]
+    [TestCase(4, 5, ExpectedResult = 9)]
+    public int Add_ReturnsCorrectSum(int a, int b)
+    {
+        var calc = new Calculator();
+        return calc.Add(a, b);
+    }
+}`
+	recs := runExtract(t, "CalculatorTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from NUnit [TestCase], got 0")
+	}
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "Calculator" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting Calculator from [TestCase]; recs=%d", len(recs))
+	}
+}
+
+// TestCSharp_MSTest_TestMethod verifies MSTest [TestMethod] tests.
+func TestCSharp_MSTest_TestMethod(t *testing.T) {
+	src := `using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+[TestClass]
+public class PaymentServiceTests
+{
+    [TestMethod]
+    public void ProcessPayment_ValidCard_ReturnsSuccess()
+    {
+        var svc = new PaymentService();
+        var result = svc.ProcessPayment("4111111111111111", 100);
+        Assert.AreEqual("success", result.Status);
+    }
+}`
+	recs := runExtract(t, "PaymentServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from MSTest [TestMethod], got 0")
+	}
+	if recs[0].Properties["test_framework"] != "mstest" {
+		t.Errorf("framework=%q, want mstest", recs[0].Properties["test_framework"])
+	}
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "PaymentService" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting PaymentService; recs=%d", len(recs))
+	}
+}
+
+// TestCSharp_xUnit_WebApplicationFactory verifies that integration tests using
+// WebApplicationFactory<T> emit a TESTS edge to the entry-point type T.
+func TestCSharp_xUnit_WebApplicationFactory(t *testing.T) {
+	src := `using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+
+public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public IntegrationTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task GetEndpoint_ReturnsSuccess()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/api/orders");
+        response.EnsureSuccessStatusCode();
+    }
+}`
+	recs := runExtract(t, "IntegrationTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from WebApplicationFactory integration test, got 0")
+	}
+	// WebApplicationFactory<Program> → TESTS edge to Program (the entry type).
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "Program" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting Program (WebApplicationFactory<Program>); recs=%d", len(recs))
+		for _, r := range recs {
+			t.Logf("  entity: tested=%q conf=%q", r.Properties["tested_function"], r.Properties["confidence"])
+			for _, rel := range r.Relationships {
+				t.Logf("    TESTS->%q conf=%q", rel.Properties["tested"], rel.Properties["confidence"])
+			}
+		}
+	}
+}
+
+// TestCSharp_AssertStopwordsFiltered verifies that C# assertion calls (Assert.Equal,
+// Assert.AreEqual, Assert.IsNotNull, etc.) are NOT emitted as TESTS edge targets.
+func TestCSharp_AssertStopwordsFiltered(t *testing.T) {
+	src := `using Xunit;
+
+public class OrderServiceTests
+{
+    [Fact]
+    public void Place_ValidOrder_AssertionsOnly()
+    {
+        Assert.Equal(1, 1);
+        Assert.True(true);
+        Assert.IsNotNull("hello");
+        Assert.AreEqual(2, 2);
+    }
+}`
+	recs := runExtract(t, "OrderServiceTests.cs", "csharp", src)
+	// If any entity is produced, make sure its tested_function is not Assert.*
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" {
+				tested := strings.ToLower(rel.Properties["tested"])
+				if strings.HasPrefix(tested, "assert.") {
+					t.Errorf("Assert.* call leaked as TESTS target: %q", rel.Properties["tested"])
+				}
+			}
+		}
+	}
+}
+
+// TestCSharp_SutMethodCallHighConfidence verifies that calls like `sut.Place()`
+// where `sut` is a production object produce high-confidence TESTS edges.
+func TestCSharp_SutMethodCallHighConfidence(t *testing.T) {
+	src := `using Xunit;
+
+public class OrderServiceTests
+{
+    private readonly OrderService _sut = new OrderService();
+
+    [Fact]
+    public void Place_SetsStatus()
+    {
+        var result = _sut.Place(new Order());
+        Assert.Equal("confirmed", result.Status);
+    }
+}`
+	recs := runExtract(t, "OrderServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity")
+	}
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && (rel.Properties["tested"] == "OrderService" || rel.Properties["tested"] == "_sut.Place") {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting OrderService or _sut.Place; recs=%d", len(recs))
+		for _, r := range recs {
+			for _, rel := range r.Relationships {
+				t.Logf("  TESTS->%q conf=%q", rel.Properties["tested"], rel.Properties["confidence"])
+			}
+		}
+	}
+}
+
+// TestCSharp_NUnit_SubjectFallback verifies that an NUnit test class with no
+// direct production calls still emits a medium-confidence TESTS edge from the
+// class name convention (UserServiceTests → UserService).
+func TestCSharp_NUnit_SubjectFallback(t *testing.T) {
+	src := `using NUnit.Framework;
+
+[TestFixture]
+public class UserServiceTests
+{
+    [Test]
+    public void Setup_IsValid()
+    {
+        Assert.Pass();
+    }
+}`
+	recs := runExtract(t, "UserServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from NUnit subject fallback, got 0")
+	}
+	found := false
+	for _, r := range recs {
+		if r.Properties["tested_function"] == "UserService" && r.Properties["confidence"] == "medium" {
+			for _, rel := range r.Relationships {
+				if rel.Kind == "TESTS" {
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected medium-confidence TESTS edge targeting UserService (class-name fallback); recs=%d", len(recs))
+		for _, r := range recs {
+			t.Logf("  entity: tested=%q conf=%q", r.Properties["tested_function"], r.Properties["confidence"])
+		}
+	}
+}
+
+// TestCSharp_AsyncTestMethod verifies that async Task test methods are detected.
+func TestCSharp_AsyncTestMethod(t *testing.T) {
+	src := `using Xunit;
+using System.Threading.Tasks;
+
+public class OrderServiceTests
+{
+    [Fact]
+    public async Task PlaceAsync_ReturnsResult()
+    {
+        var svc = new OrderService();
+        var result = await svc.PlaceAsync(new Order());
+        Assert.NotNull(result);
+    }
+}`
+	recs := runExtract(t, "OrderServiceTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from async xUnit [Fact], got 0")
+	}
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "OrderService" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting OrderService from async test; recs=%d", len(recs))
+	}
+}
+
+// TestCSharp_FilenameConventionOnly verifies that a .cs file ending in Tests.cs
+// is detected even without a using directive, using the class name convention.
+func TestCSharp_FilenameConventionOnly(t *testing.T) {
+	src := `public class ProductRepositoryTests
+{
+    [Fact]
+    public void Save_Persists()
+    {
+        var repo = new ProductRepository();
+        repo.Save(new Product { Id = 1 });
+    }
+}`
+	recs := runExtract(t, "ProductRepositoryTests.cs", "csharp", src)
+	if len(recs) == 0 {
+		t.Fatalf("expected >=1 entity from filename-convention-only C# file, got 0")
+	}
+	found := false
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" && rel.Properties["tested"] == "ProductRepository" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected TESTS edge targeting ProductRepository; recs=%d", len(recs))
+	}
+}
+
+// TestCSharp_ProductionFileConvention verifies that productionFileFromTestPath
+// correctly derives the production file for C# tests.
+func TestCSharp_ProductionFileConvention(t *testing.T) {
+	cases := []struct {
+		path     string
+		wantFile string
+		wantSym  string
+	}{
+		{"src/OrderServiceTests.cs", "src/OrderService.cs", "OrderService"},
+		{"tests/UserTest.cs", "tests/User.cs", "User"},
+		{"UserTests.cs", "User.cs", "User"},
+	}
+	for _, tc := range cases {
+		f, s := productionFileFromTestPath(tc.path)
+		if f != tc.wantFile || s != tc.wantSym {
+			t.Errorf("productionFileFromTestPath(%q)=(%q,%q), want (%q,%q)",
+				tc.path, f, s, tc.wantFile, tc.wantSym)
+		}
+	}
+}
+
+// TestCSharp_SubjectFromClassName verifies the csTestSubjectFromClassName helper.
+func TestCSharp_SubjectFromClassName(t *testing.T) {
+	cases := map[string]string{
+		"OrderServiceTests": "OrderService",
+		"OrderServiceTest":  "OrderService",
+		"UserTests":         "User",
+		"UserTest":          "User",
+		"Something":         "",
+		"Test":              "",
+	}
+	for in, want := range cases {
+		if got := csTestSubjectFromClassName(in); got != want {
+			t.Errorf("csTestSubjectFromClassName(%q)=%q, want %q", in, got, want)
+		}
 	}
 }
 

@@ -17,7 +17,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Endpoint synthesis | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/csharp/frameworks/asp_net_mvc.yaml` | — |
 | Handler attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/csharp/frameworks/asp_net_mvc.yaml` | — |
-| Route extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/csharp/aspnet_core.go`<br>`internal/engine/rules/csharp/frameworks/asp_net_mvc.yaml` | MVC controller [Route] + [HttpGet/Post/Put/Delete/Patch] attribute routes extracted; route path strings captured by asp_net_mvc.yaml source_patterns and aspnet_core.go reAspNetHTTPMethod/reAspNetMinimalAPI. |
+| Route extraction | ✅ `full` | — | — | `internal/custom/csharp/aspnet_core.go`<br>`internal/engine/aspnet_core_routes.go`<br>`internal/engine/rules/csharp/frameworks/asp_net_mvc.yaml` | MVC controller [Route] + [HttpGet/Post/Put/Delete/Patch] attribute routes extracted; route path strings captured by asp_net_mvc.yaml source_patterns and aspnet_core.go reAspNetHTTPMethod/reAspNetMinimalAPI. |
 
 ### Auth
 
@@ -51,7 +51,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/extractors/cross/testmap/frameworks.go` | C# NUnit/xUnit/MSTest: [Fact]/[Theory]/[Test]/[TestMethod] attrs detected via csharpTestRE |
+| Tests linkage | ✅ `full` | — | — | `internal/extractors/cross/testmap/extractor_test.go`<br>`internal/extractors/cross/testmap/frameworks.go`<br>`internal/extractors/cross/testmap/resolver.go` | C# NUnit/xUnit/MSTest: [Fact]/[Theory]/[Test]/[TestMethod] attrs detected via csharpTestRE |
 
 ### Observability
 

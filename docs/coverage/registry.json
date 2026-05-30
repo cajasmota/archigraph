@@ -6207,9 +6207,8 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/extractors/cross/testmap/frameworks.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/extractors/cross/testmap/extractor_test.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "notes": "C# NUnit/xUnit/MSTest: [Fact]/[Theory]/[Test]/[TestMethod] attrs detected via csharpTestRE"
           }
         },
@@ -6418,9 +6417,8 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/extractors/cross/testmap/frameworks.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/extractors/cross/testmap/extractor_test.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "notes": "C# NUnit/xUnit/MSTest: [Fact]/[Theory]/[Test]/[TestMethod] attrs detected via csharpTestRE"
           }
         },

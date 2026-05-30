@@ -112,6 +112,35 @@ var stopwords = map[string]bool{
 	"refute_equal": true, "refute_includes": true,
 	// Rust
 	"assert_eq": true, "assert_ne": true, "assert_ne!": true, "assert_eq!": true,
+	// C# — xUnit (non-duplicate entries only; assert.equal/true/false/empty/contains/notequal covered above)
+	"assert.null": true, "assert.notnull": true, "assert.same": true, "assert.notsame": true,
+	"assert.doesnotcontain": true, "assert.notempty": true,
+	"assert.throwsany": true, "assert.throwsasync": true,
+	"assert.istype": true, "assert.isnottype": true, "assert.isassignablefrom": true,
+	"assert.inrange": true, "assert.notinrange": true,
+	"assert.startswith": true, "assert.endswith": true, "assert.matches": true,
+	"assert.collection": true, "assert.single": true, "assert.multiple": true,
+	"assert.fail": true, "assert.skip": true,
+	// C# — NUnit (non-duplicate entries)
+	"assert.areequal": true, "assert.arenotequal": true, "assert.isnull": true, "assert.isnotnull": true,
+	"assert.istrue": true, "assert.isfalse": true, "assert.isempty": true, "assert.isnotempty": true,
+	"assert.isnan": true, "assert.ispositive": true, "assert.isnegative": true,
+	"assert.greater": true, "assert.greaterorequal": true, "assert.less": true, "assert.lessorequal": true,
+	"assert.catch": true, "assert.doesnotthrow": true,
+	"assert.pass": true, "assert.ignore": true, "assert.inconclusive": true,
+	"classicassert.areequal": true, "classicassert.istrue": true, "classicassert.isfalse": true,
+	// C# — MSTest
+	"assert.aresame": true, "assert.arenotsame": true, "assert.isinstanceoftype": true,
+	"assert.isnotinstanceoftype": true, "assert.throwsexception": true, "assert.throwsexceptionasync": true,
+	"collectionassert.areequal": true, "collectionassert.areequivalent": true,
+	"collectionassert.contains": true, "collectionassert.doesnotcontain": true,
+	"collectionassert.allitemsareinrangeof": true, "collectionassert.allitemsarenotnull": true,
+	"collectionassert.allitemsareunique": true, "collectionassert.issubsetof": true,
+	"stringassert.contains": true, "stringassert.startswith": true, "stringassert.endswith": true,
+	"stringassert.matches": true, "stringassert.doesnotmatch": true,
+	// C# common test framework helpers (all frameworks)
+	"testcontext.writeline": true, "testcontext.write": true,
+	"output.writeline": true, "output.write": true,
 	// Common language keywords that end up in call-like positions
 	"if": true, "for": true, "while": true, "switch": true, "return": true,
 	"func": true, "def": true, "class": true, "struct": true, "new": true,
@@ -161,9 +190,16 @@ func isStopword(id string) bool {
 	// We cover: Django (self.client.*), generic test clients (client.*),
 	// async clients (async_client.*, ac.*), and aiohttp sessions (session.*).
 	// (#3173)
+	//
+	// ASP.NET Core integration test infrastructure: _factory.CreateClient(),
+	// _client.GetAsync(), response.EnsureSuccessStatusCode() etc. are all test
+	// plumbing — not production calls. (#3383)
 	for _, prefix := range []string{
 		"self.client.", "client.", "self.async_client.", "async_client.", "ac.", "session.",
 		"self.app.", "app.test_client.", "requests.",
+		// ASP.NET Core / HttpClient test infrastructure
+		"_factory.", "factory.", "_client.", "httpclient.",
+		"response.", "_response.",
 	} {
 		if strings.HasPrefix(low, prefix) {
 			return true
