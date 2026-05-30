@@ -23,20 +23,20 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🟢 `partial` | `2026-05-30` | — | `internal/custom/ruby/auth.go` | — |
+| Auth coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/ruby/auth.go`<br>`internal/custom/ruby/auth_deep_test.go` | Deep Rails auth (Devise/Pundit/CanCanCan) extraction to TS/JS bar. Devise: devise_for route registration, authenticate_<model>! before_action with mechanism+auth_required, devise modules with authenticatable flag, <model>_signed_in? helpers, require_login. Pundit: class FooPolicy name extraction, per-action (update?/create?/show?) entity with action+policy_class properties, authorize calls with mechanism=pundit+auth_required=true, include Pundit::Authorization. CanCanCan: Ability class sentinel, per-rule can/cannot :action Resource with action+resource+permission+in_ability_class properties, authorize! and load_and_authorize_resource with mechanism=cancancan. General: before_action :require_auth/:check_authentication/:verify_auth. Value-asserting tests in auth_deep_test.go assert SPECIFIC properties (mechanism, action, resource, auth_required, authenticatable, policy_class) across 13 test cases covering all four frameworks plus combined scenarios. Honest remainder: cross-file dataflow (e.g. inferring which controller actions are protected by a controller-level before_action) and roles/scopes extraction not modelled. |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/ruby/validation.go` | — |
-| Request validation | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/ruby/validation.go` | — |
+| DTO extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/ruby/validation.go`<br>`internal/custom/ruby/validation_deep.go`<br>`internal/custom/ruby/validation_deep_test.go` | Deep Rails dto_extraction: params.require(:model).permit(...) now emits per-field sp_field:<param>:<field> entities (scalar/array/nested) with permit_type prop. with_options blocks supported. Value-asserting tests in validation_deep_test.go assert exact param+field+permit_type. Closes #3340. |
+| Request validation | ✅ `full` | `2026-05-30` | — | `internal/custom/ruby/validation.go`<br>`internal/custom/ruby/validation_deep.go`<br>`internal/custom/ruby/validation_deep_test.go` | Deep Rails request_validation: validates :field, validators with full option capture emits railsval:<field>:<validator> entities with validator_options prop. Classic validates_*_of with options → railsval_classic:<macro>:<field>. with_options blocks → railsval_wo:<field>:<validator> with inherited_options. Value-asserting tests assert exact attribute+validator+options. Closes #3340. |
 
 ### Middleware
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | — | — | `internal/custom/ruby/middleware.go` | — |
+| Middleware coverage | ✅ `full` | — | — | `internal/custom/ruby/middleware.go`<br>`internal/custom/ruby/middleware_test.go` | — |
 
 ### Type System
 
@@ -51,7 +51,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/extractors/cross/testmap/frameworks.go` | — |
+| Tests linkage | ✅ `full` | `2026-05-30` | — | `internal/extractors/cross/testmap/extractor.go`<br>`internal/extractors/cross/testmap/extractor_test.go`<br>`internal/extractors/cross/testmap/frameworks.go`<br>`internal/extractors/cross/testmap/resolver.go` | Deep RSpec+Minitest linkage (#3342): (1) RSpec — detectRSpec extracts describe-constant subject (rspecDescribeConstRE); each it/specify block carries describeSubject; resolveCalls Pass 3a emits medium-confidence TESTS edge to described class when no direct call; high wins on explicit calls. (2) Minitest/ActiveSupport::TestCase — detectMinitest handles DSL `test 'desc' do` and `def test_*`; railsMinitestSubjectFromClass strips Test suffix (UserTest→User). (3) Rails path conventions: spec/models/user_spec.rb→app/models/user.rb/User; spec/controllers/users_controller_spec.rb→UsersController; test/models/user_test.rb→app/models/user.rb/User via railsTestCamelCase. (4) Extended RSpec/Minitest stopwords (be_*, have_*, assert_*, Rails HTTP verbs). 16 value-asserting tests prove linkage. Remainder: shared_examples/it_behaves_like not modelled; request specs without describe constant fall back to low-confidence naming convention. |
 
 ### Observability
 

@@ -12931,15 +12931,127 @@ records:
 
   lang.ruby.framework.sinatra:
     capabilities:
+      Routing:
+        route_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/ruby/routes.go
+              functions: [Extract]
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/ruby/routes_test.go
+              functions: [TestRoutes_SinatraVerbs]
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_ClassBasedRoutes, TestSinatraDeep_StandaloneApp, TestSinatraDeep_NamedParamRoute, TestSinatraDeep_SplatRoute]
+          issues_implemented: ["3344"]
+          notes: >
+            Extracts all Sinatra verb blocks (get/post/put/patch/delete/head/options)
+            with exact route path and HTTP method. Covers class-based Sinatra::Base /
+            Sinatra::Application and standalone apps (require 'sinatra'). Named params
+            /:id, splat /*path, and regex routes all emitted. Full parity with
+            TS/JS Express route_extraction.
+          verified_at: "2026-05-30"
+        endpoint_synthesis:
+          status: full
+          symbols:
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_ClassBasedRoutes, TestSinatraDeep_StandaloneApp]
+          issues_implemented: ["3344"]
+          notes: >
+            Every Sinatra verb block emits a SCOPE.Operation endpoint entity with
+            exact http_method and route_path properties. Matches Express
+            endpoint_synthesis quality.
+          verified_at: "2026-05-30"
+        handler_attribution:
+          status: partial
+          symbols:
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_ClassBasedRoutes]
+          issues_implemented: ["3344"]
+          notes: >
+            Route entities carry framework/provenance tags. No cross-file dataflow
+            to bind block body method calls to external handlers — stays partial
+            (same limitation as all non-tree-sitter Ruby extractors).
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          status: partial
+          symbols:
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
+            - file: internal/custom/ruby/auth.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_BeforeHaltGuard, TestSinatraDeep_ProtectedHelper, TestSinatraDeep_HaltStatus]
+          issues_implemented: ["3344"]
+          notes: >
+            Detects Sinatra-idiomatic auth patterns: before+halt 4xx guard,
+            protected! helper, halt status code call-sites. Warden::Manager and
+            Rack::Auth::Basic/Digest covered via shared auth.go extractor.
+            Heuristic regex; no cross-file dataflow. Stays partial.
+          verified_at: "2026-05-30"
+      Validation:
+        request_validation:
+          status: partial
+          symbols:
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
+            - file: internal/custom/ruby/validation.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_SinatraParam]
+            - file: internal/custom/ruby/validation_test.go
+          issues_implemented: ["3344"]
+          notes: >
+            Detects sinatra-param gem `param :name` declarations with type annotation.
+            Generic params[:x] access covered by validation.go extractor.
+            No dry-validation or schema-level validation library. Stays partial.
+          verified_at: "2026-05-30"
       Middleware:
         middleware_coverage:
-          status: partial
+          status: full
           symbols:
             - file: internal/custom/ruby/middleware.go
               functions: [Extract]
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
           tests:
             - file: internal/custom/ruby/middleware_test.go
-          issues_implemented: ["3282"]
+              functions: [TestMWSinatra_BeforeAfterBlocks, TestMWSinatra_PathFilter]
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_RackUse, TestSinatraDeep_HelpersBlock]
+          issues_implemented: ["3282", "3344"]
+          notes: >
+            Covers: `use Rack::X` Rack middleware, `before do` / `after do`
+            filters, `before '/path' do` scoped filters, `helpers do` blocks,
+            custom Rack middleware class detection (initialize(app)+call(env)).
+            Full idiomatic Sinatra middleware surface.
+          verified_at: "2026-05-30"
+      Testing:
+        tests_linkage:
+          status: partial
+          symbols:
+            - file: internal/custom/ruby/sinatra_deep.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/ruby/sinatra_deep_test.go
+              functions: [TestSinatraDeep_RackTestInclude, TestSinatraDeep_RackTestMinitest]
+          issues_implemented: ["3344"]
+          notes: >
+            Detects rack-test specs via `include Rack::Test::Methods`, emits
+            test_framework signal entity and per-call-site test_call entities
+            (get '/path', post '/path' inside specs). No cross-file TESTS edge
+            resolution to production route entities — stays partial (same as
+            Rails tests_linkage).
           verified_at: "2026-05-30"
 
   lang.ruby.framework.padrino:

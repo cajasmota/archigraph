@@ -31,8 +31,8 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Hanami](../detail/lang.ruby.framework.hanami.md) | 🟢 3/3 | 🟢 1/1 | — | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [Padrino](../detail/lang.ruby.framework.padrino.md) | 🟢 3/3 | 🟢 1/1 | — | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [Roda](../detail/lang.ruby.framework.roda.md) | 🟢 3/3 | 🟢 1/1 | — | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
-| [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | ✅ 3/3 | 🟢 1/1 | — | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
-| [Sinatra](../detail/lang.ruby.framework.sinatra.md) | 🟢 3/3 | 🟢 1/1 | — | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | ✅ 3/3 | ✅ 1/1 | — | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [Sinatra](../detail/lang.ruby.framework.sinatra.md) | ✅ 3/3 | 🟢 1/1 | — | 🟢 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | 🟢 2/2 | — | 🟢 1/1 | 🟢 1/1 | 🟢 21/21 | 🟢 5/5 | |
 
 

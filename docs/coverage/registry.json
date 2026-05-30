@@ -44205,16 +44205,17 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/ruby/routes.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/ruby/routes.go","internal/custom/ruby/routes_test.go","internal/custom/ruby/sinatra_deep.go","internal/custom/ruby/sinatra_deep_test.go"],
+            "notes": "Extracts all Sinatra verb blocks (get/post/put/patch/delete/head/options) with exact route path and HTTP method. Covers class-based Sinatra::Base/Sinatra::Application and standalone apps (require 'sinatra'). Named params /:id, splat /*path, regex routes all emitted. Full parity with TS/JS Express route_extraction. Closes #3344.",
             "verified_at": "2026-05-30"
           }
         },
         "Auth": {
           "auth_coverage": {
             "status": "partial",
-            "cites": ["internal/custom/ruby/auth.go"],
+            "cites": ["internal/custom/ruby/auth.go","internal/custom/ruby/sinatra_deep.go","internal/custom/ruby/sinatra_deep_test.go"],
+            "notes": "Detects Sinatra-idiomatic auth: before+halt 4xx guard, protected! helper, halt status code call-sites. Warden::Manager and Rack::Auth::Basic/Digest covered via shared auth.go. Heuristic regex; no cross-file dataflow. Closes #3344.",
             "verified_at": "2026-05-30"
           }
         },
@@ -44227,16 +44228,18 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/ruby/validation.go"],
+            "cites": ["internal/custom/ruby/sinatra_deep.go","internal/custom/ruby/sinatra_deep_test.go","internal/custom/ruby/validation.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Detects sinatra-param gem param :name declarations with type annotation. Generic params[:x] access covered by validation.go. No dry-validation or schema-level validation. Closes #3344.",
             "verified_at": "2026-05-30"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/ruby/middleware.go"],
-            "notes": "Sinatra before/after blocks, before '/path' do path filters, Rack use. Part of #3282."
+            "status": "full",
+            "cites": ["internal/custom/ruby/middleware.go","internal/custom/ruby/middleware_test.go","internal/custom/ruby/sinatra_deep.go","internal/custom/ruby/sinatra_deep_test.go"],
+            "notes": "Covers: use Rack::X Rack middleware, before do / after do filters, before '/path' do scoped filters, helpers do blocks, custom Rack middleware class detection (initialize(app)+call(env)). Full idiomatic Sinatra middleware surface. Closes #3344.",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -44260,8 +44263,10 @@
         "Testing": {
           "tests_linkage": {
             "status": "partial",
-            "cites": ["internal/extractors/cross/testmap/frameworks.go"],
-            "issue": "backfill:dictionary-completeness"
+            "cites": ["internal/custom/ruby/sinatra_deep.go","internal/custom/ruby/sinatra_deep_test.go","internal/extractors/cross/testmap/frameworks.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Detects rack-test specs via include Rack::Test::Methods, emits test_framework signal entity and per-call-site test_call entities (get '/path', post '/path' inside specs). RSpec+Minitest both supported. No cross-file TESTS edge resolution to production route entities (same limitation as Rails tests_linkage). Closes #3344.",
+            "verified_at": "2026-05-30"
           }
         },
         "Observability": {
