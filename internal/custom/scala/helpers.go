@@ -3,6 +3,7 @@
 package scala
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/types"
@@ -10,6 +11,12 @@ import (
 
 func lineOf(source string, offset int) int {
 	return strings.Count(source[:offset], "\n") + 1
+}
+
+// lineStr renders the 1-based line number at offset as a decimal string,
+// used to keep otherwise-anonymous DI entity names stable and unique.
+func lineStr(source string, offset int) string {
+	return strconv.Itoa(lineOf(source, offset))
 }
 
 // boolStr renders a bool as a stable "true"/"false" string for entity props.

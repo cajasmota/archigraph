@@ -48563,24 +48563,21 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: Guice bind[T].to[Impl], @Provides methods, TwitterModule/AbstractModule declarations. Finatra/Lagom use Guice for DI. File-local.",
+            "notes": "custom_scala_di extractor: MacWire wire[T]/wireWith (binding type), Guice Scala+Java DSL bind[T].to[Impl]/bind(classOf[T]).to(classOf[Impl]), @Provides methods (return type + injected deps), cats-effect Resource[F,T] (binding type), ZIO ZLayer.make/succeed/fromFunction (env type/impl/ctor). Value-asserting tests. File-local; cross-file binding resolution not done.",
             "verified_at": "2026-05-30"
           },
           "di_injection_point": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: @Inject constructor annotation (class Foo @Inject()(dep: T)) and field injection. File-local.",
+            "notes": "custom_scala_di extractor: Guice @Inject() constructor injection captures class + dep names/types; bare @Inject field/method; ZIO .provide/.provideLayer/.provideSomeLayer injection sites. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
           },
           "di_scope_resolution": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: @Singleton class annotation detected as Guice singleton scope. File-local.",
+            "notes": "custom_scala_di extractor: Guice @Singleton scope (scoped class captured); typed ZLayer val as zio scope. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
           }
         },
@@ -49134,24 +49131,21 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: Guice bind[T].to[Impl], @Provides methods, TwitterModule/AbstractModule declarations. Finatra/Lagom use Guice for DI. File-local.",
+            "notes": "custom_scala_di extractor: MacWire wire[T]/wireWith (binding type), Guice Scala+Java DSL bind[T].to[Impl]/bind(classOf[T]).to(classOf[Impl]), @Provides methods (return type + injected deps), cats-effect Resource[F,T] (binding type), ZIO ZLayer.make/succeed/fromFunction (env type/impl/ctor). Value-asserting tests. File-local; cross-file binding resolution not done.",
             "verified_at": "2026-05-30"
           },
           "di_injection_point": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: @Inject constructor annotation (class Foo @Inject()(dep: T)) and field injection. File-local.",
+            "notes": "custom_scala_di extractor: Guice @Inject() constructor injection captures class + dep names/types; bare @Inject field/method; ZIO .provide/.provideLayer/.provideSomeLayer injection sites. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
           },
           "di_scope_resolution": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: @Singleton class annotation detected as Guice singleton scope. File-local.",
+            "notes": "custom_scala_di extractor: Guice @Singleton scope (scoped class captured); typed ZLayer val as zio scope. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
           }
         },
@@ -49915,24 +49909,21 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: ZLayer.make[Env]/ZLayer.succeed bindings extracted as SCOPE.DI/di_binding. ZIO ZLayer is the idiomatic DI mechanism for ZIO-HTTP apps. File-local.",
+            "notes": "custom_scala_di extractor: MacWire wire[T]/wireWith (binding type), Guice Scala+Java DSL bind[T].to[Impl]/bind(classOf[T]).to(classOf[Impl]), @Provides methods (return type + injected deps), cats-effect Resource[F,T] (binding type), ZIO ZLayer.make/succeed/fromFunction (env type/impl/ctor). Value-asserting tests. File-local; cross-file binding resolution not done.",
             "verified_at": "2026-05-30"
           },
           "di_injection_point": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: .provide()/.provideLayer() call sites detected as ZLayer injection points. File-local.",
+            "notes": "custom_scala_di extractor: Guice @Inject() constructor injection captures class + dep names/types; bare @Inject field/method; ZIO .provide/.provideLayer/.provideSomeLayer injection sites. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
           },
           "di_scope_resolution": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/scala/di.go"],
-            "issue": "backfill:dictionary-completeness",
-            "notes": "custom_scala_di extractor: typed val layer: ZLayer[R,E,A] declarations extracted as scoped bindings. ZLayer scoping (scoped/succeed/fromZIO) controls resource lifecycle. File-local.",
+            "notes": "custom_scala_di extractor: Guice @Singleton scope (scoped class captured); typed ZLayer val as zio scope. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
           }
         },

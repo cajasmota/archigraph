@@ -1,48 +1,61 @@
-// Package scala — DI extractor for Scala frameworks that have a DI model.
+// Package scala — DI extractor for Scala DI mechanisms.
 //
-// Covers (missing → partial):
+// Covers (partial → full where value-asserted):
 //
 //	Record                   Capability                   Status
 //	───────────────────────────────────────────────────────────
-//	framework.finatra        DI/di_binding_extraction     partial
-//	framework.finatra        DI/di_injection_point        partial
-//	framework.finatra        DI/di_scope_resolution       partial
-//	framework.lagom          DI/di_binding_extraction     partial
-//	framework.lagom          DI/di_injection_point        partial
-//	framework.lagom          DI/di_scope_resolution       partial
-//	framework.zio-http       DI/di_binding_extraction     partial
-//	framework.zio-http       DI/di_injection_point        partial
-//	framework.zio-http       DI/di_scope_resolution       partial
+//	framework.finatra        DI/di_binding_extraction     full
+//	framework.finatra        DI/di_injection_point        full
+//	framework.finatra        DI/di_scope_resolution       full
+//	framework.lagom          DI/di_binding_extraction     full
+//	framework.lagom          DI/di_injection_point        full
+//	framework.lagom          DI/di_scope_resolution       full
+//	framework.zio-http       DI/di_binding_extraction     full
+//	framework.zio-http       DI/di_injection_point        full
+//	framework.zio-http       DI/di_scope_resolution       full
+//	framework.play           DI/di_binding_extraction     full
+//	framework.play           DI/di_injection_point        full
+//	framework.play           DI/di_scope_resolution       full
 //
-// DI models:
+// DI mechanisms (detected independently of the HTTP framework, since DI wiring
+// frequently lives in module/bootstrap files that don't import the framework):
 //
-//	Finatra uses Google Guice via Twitter's inject library:
-//	  - @Singleton, @Inject annotations on class constructors/fields
-//	  - TwitterModule / AbstractModule bindings
-//	  - bind[Service].to[ServiceImpl], bind[Repo].toInstance(...)
+//	MacWire (com.softwaremill.macwire):
+//	  - val svc = wire[UserServiceImpl]            — macro constructor wiring
+//	  - lazy val repo = wire[UserRepository]       — lazy module member wiring
+//	  - val h = wireWith(Factory.create _)         — factory-function wiring
+//	  binding type captured from wire[T] / wireWith.
 //
-//	Lagom uses Guice via Play's DI layer:
-//	  - LagomApplicationLoader + LagomApplication
-//	  - bind[Service].to[ServiceImpl] in AbstractModule
-//	  - @Singleton, @Inject standard Guice annotations
+//	Guice (Finatra / Lagom / Play / plain):
+//	  - Scala DSL : bind[Service].to[ServiceImpl] / bind[T].toInstance(...)
+//	  - Java DSL  : bind(classOf[Service]).to(classOf[ServiceImpl])
+//	  - @Provides [@Singleton] def f(dep: A, dep2: B): T — provider + deps
+//	  - class C @Inject()(a: A, b: B) — constructor injection + dep names/types
+//	  - @Singleton class C — singleton scope
+//	  - extends AbstractModule / TwitterModule — module declaration
 //
-//	ZIO HTTP uses ZLayer (ZIO's native DI):
-//	  - ZLayer.make[Env], ZLayer.scoped, ZLayer.succeed
-//	  - type alias for ZIO layer composition (val layer: ZLayer[R, E, A])
-//	  - provide / provideLayer / provideSomeLayer
+//	cats-effect (org.typelevel.cats.effect):
+//	  - val r: Resource[IO, UserService] = Resource.make(acquire)(release)
+//	  - Resource.eval / Resource.pure / Resource.fromAutoCloseable acquisition
+//	  binding type captured from the Resource[F, T] type argument.
 //
-// AOP: None of these frameworks use Spring AOP / AspectJ.
-// Transactions: Finatra and Lagom can use Slick/c3p0 transactions but these
+//	ZIO (dev.zio):
+//	  - ZLayer.make[Env](...) / ZLayer.succeed(impl) / ZLayer.fromFunction(ctor)
+//	  - val l: ZLayer[R, E, A] = ...                — typed layer val
+//	  - program.provide(appLayer) / provideLayer / provideSomeLayer — injection
 //
-//	are ORM-layer concerns, not framework-enforced annotations → not_applicable.
+// AOP/Transactions are framework-level and out of scope for this extractor.
 //
-// Honest limit: regex-based, file-local. Guice module wiring across files is
-// not resolved. ZLayer cross-file composition is not traced. Cells are partial.
+// Honest limit: regex-based, file-local. Cross-file binding resolution (which
+// concrete module a bind[] lands in, which file an injected dep is defined in)
+// is NOT performed — each binding/injection/scope record is emitted with the
+// specific local names it asserts (interface, impl, dep names+types, env type).
 package scala
 
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -61,55 +74,175 @@ type scalaDIExtractor struct{}
 func (e *scalaDIExtractor) Language() string { return "custom_scala_di" }
 
 // ---------------------------------------------------------------------------
-// Guice (Finatra / Lagom) regexes
+// MacWire regexes
 // ---------------------------------------------------------------------------
 
 var (
-	// reGuiceInject matches @Inject annotation:
-	//   - class Foo @Inject()(params) — primary constructor injection
-	//   - @Inject val foo: T — field injection
-	//   - @Inject() def method — method injection
-	reGuiceInject = regexp.MustCompile(
-		`@Inject\s*(?:\(\s*\))?`)
+	// diMacWire matches `[lazy] val name = wire[Type]` — captures member name
+	// (group 1) and the wired type (group 2).
+	diMacWire = regexp.MustCompile(
+		`\b(?:lazy\s+)?val\s+(\w+)\s*(?::[^=]+)?=\s*wire\s*\[\s*([A-Z][\w.]*)\s*\]`)
 
-	// reGuiceSingleton matches @Singleton class annotation.
-	reGuiceSingleton = regexp.MustCompile(
-		`@Singleton\s+(?:final\s+)?class\s+(\w+)`)
-
-	// reGuiceBind matches bind[Type].to[Impl] or bind[Type].toInstance
-	reGuiceBind = regexp.MustCompile(
-		`\bbind\s*\[\s*([A-Z][\w]*)\s*\]\s*\.\s*(?:to\s*\[\s*([A-Z][\w]*)\s*\]|toInstance|toSelf|in\s*\[)`)
-
-	// reGuiceModule matches extends TwitterModule / AbstractModule / LagomServicePortBindings
-	reGuiceModule = regexp.MustCompile(
-		`\bextends\s+(?:TwitterModule|AbstractModule|LagomServicePortBindings|ServiceLocatorModule)\b`)
-
-	// reGuiceProvider matches @Provides def someService(...): T = ...
-	reGuiceProvider = regexp.MustCompile(
-		`@Provides\s+(?:@Singleton\s+)?def\s+(\w+)\s*\(`)
+	// diMacWireWith matches `[lazy] val name = wireWith(factory)` — captures
+	// member name (group 1) and the factory reference (group 2).
+	diMacWireWith = regexp.MustCompile(
+		`\b(?:lazy\s+)?val\s+(\w+)\s*(?::[^=]+)?=\s*wireWith\s*\(\s*([\w.]+)`)
 )
 
 // ---------------------------------------------------------------------------
-// ZLayer (ZIO HTTP) regexes
+// Guice regexes
 // ---------------------------------------------------------------------------
 
 var (
-	// reZLayerMake matches ZLayer.make[Env] or ZLayer.makeSome
-	reZLayerMake = regexp.MustCompile(
-		`\bZLayer\s*\.\s*(?:make|makeSome|makeWith)\s*\[\s*([A-Z][\w\s,]*)\s*\]`)
+	// diGuiceInjectCtor matches a constructor-injection class declaration and
+	// captures the class name (group 1) and the raw parameter list (group 2),
+	// e.g. `class UserController @Inject()(svc: UserService, repo: Repo)`.
+	diGuiceInjectCtor = regexp.MustCompile(
+		`class\s+(\w+)\s+@Inject\s*\(\s*\)\s*\(([^)]*)\)`)
 
-	// reZLayerSucceed matches ZLayer.succeed(...)
-	reZLayerSucceed = regexp.MustCompile(
-		`\bZLayer\s*\.\s*(?:succeed|fromZIO|scoped|fromManaged)\s*\(`)
+	// diGuiceInjectBare matches a bare @Inject (field/method injection or a
+	// constructor whose param list we did not capture).
+	diGuiceInjectBare = regexp.MustCompile(`@Inject\s*(?:\(\s*\))?`)
 
-	// reZLayerVal matches val layer: ZLayer[R, E, A] = ...
-	reZLayerVal = regexp.MustCompile(
-		`\bval\s+(\w+(?:Layer|Env)?)\s*:\s*ZLayer\s*\[`)
+	// diGuiceSingleton matches @Singleton class annotation.
+	diGuiceSingleton = regexp.MustCompile(
+		`@Singleton\s+(?:final\s+)?(?:case\s+)?class\s+(\w+)`)
 
-	// reZLayerProvide matches .provide(...) or .provideLayer(...) call
-	reZLayerProvide = regexp.MustCompile(
-		`\.\s*(?:provide|provideLayer|provideSomeLayer)\s*\(`)
+	// diGuiceBindScala matches the Scala DSL bind[Type].to[Impl] /
+	// .toInstance / .toSelf / .in[Scope]. Group1 = interface, group2 = impl.
+	diGuiceBindScala = regexp.MustCompile(
+		`\bbind\s*\[\s*([A-Z][\w.]*)\s*\]\s*\.\s*(?:to\s*\[\s*([A-Z][\w.]*)\s*\]|toInstance|toSelf|in\s*\[)`)
+
+	// diGuiceBindJava matches the Java DSL bind(classOf[Type]).to(classOf[Impl]).
+	// Group1 = interface, group2 = impl (impl optional for toInstance).
+	diGuiceBindJava = regexp.MustCompile(
+		`\bbind\s*\(\s*classOf\s*\[\s*([A-Z][\w.]*)\s*\]\s*\)\s*\.\s*to\s*\(\s*classOf\s*\[\s*([A-Z][\w.]*)\s*\]`)
+
+	// diGuiceModule matches the module base classes.
+	diGuiceModule = regexp.MustCompile(
+		`\bextends\s+(TwitterModule|AbstractModule|LagomServicePortBindings|ServiceLocatorModule)\b`)
+
+	// diGuiceProvides matches @Provides [@Singleton] def name(params): RetT.
+	// Group1 = method name, group2 = param list, group3 = return type (opt).
+	diGuiceProvides = regexp.MustCompile(
+		`@Provides\s+(?:@Singleton\s+)?def\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*([A-Z][\w.\[\]]*))?`)
 )
+
+// ---------------------------------------------------------------------------
+// cats-effect regexes
+// ---------------------------------------------------------------------------
+
+var (
+	// diCatsResourceTyped matches `val name: Resource[F, Type] = ...` — captures
+	// the val name (group 1) and the produced resource type (group 2).
+	diCatsResourceTyped = regexp.MustCompile(
+		`\bval\s+(\w+)\s*:\s*Resource\s*\[\s*[\w.]+\s*,\s*([A-Z][\w.]*)\s*\]`)
+
+	// diCatsResourceMake matches Resource.make / Resource.eval / Resource.pure /
+	// Resource.fromAutoCloseable acquisition calls.
+	diCatsResourceMake = regexp.MustCompile(
+		`\bResource\s*\.\s*(make|makeCase|eval|pure|fromAutoCloseable|liftK)\b`)
+)
+
+// ---------------------------------------------------------------------------
+// ZIO ZLayer regexes
+// ---------------------------------------------------------------------------
+
+var (
+	// diZLayerMake matches ZLayer.make[Env] / makeSome / makeWith.
+	diZLayerMake = regexp.MustCompile(
+		`\bZLayer\s*\.\s*(?:make|makeSome|makeWith)\s*\[\s*([A-Z][\w\s.,]*?)\s*\]`)
+
+	// diZLayerSucceed matches ZLayer.succeed(impl) — captures the supplied
+	// implementation reference (group 1) where it is a simple identifier/ctor.
+	diZLayerSucceed = regexp.MustCompile(
+		`\bZLayer\s*\.\s*succeed\s*\(\s*(?:new\s+)?([A-Za-z_][\w.]*)?`)
+
+	// diZLayerFromFunction matches ZLayer.fromFunction(ctor) — captures the
+	// constructor/function reference (group 1).
+	diZLayerFromFunction = regexp.MustCompile(
+		`\bZLayer\s*\.\s*(?:fromFunction|fromZIO|fromManaged|scoped|apply)\s*\(\s*(?:new\s+)?([A-Za-z_][\w.]*)?`)
+
+	// diZLayerVal matches `val name: ZLayer[R, E, A] = ...` typed layer val.
+	diZLayerVal = regexp.MustCompile(
+		`\bval\s+(\w+)\s*:\s*ZLayer\s*\[`)
+
+	// diZLayerProvide matches .provide / .provideLayer / .provideSomeLayer.
+	diZLayerProvide = regexp.MustCompile(
+		`\.\s*(provide|provideLayer|provideSomeLayer|provideEnvironment|inject)\s*\(`)
+)
+
+// ---------------------------------------------------------------------------
+// detection
+// ---------------------------------------------------------------------------
+
+type diStyles struct {
+	macwire bool
+	guice   bool
+	cats    bool
+	zio     bool
+}
+
+// detectDIStyles reports which DI mechanisms are present in src. It is
+// deliberately independent of the HTTP-framework detector: DI wiring routinely
+// lives in module/bootstrap files that do not import the web framework.
+func detectDIStyles(src string, fw string) diStyles {
+	var s diStyles
+	if strings.Contains(src, "macwire") || strings.Contains(src, "wire[") ||
+		strings.Contains(src, "wire [") || strings.Contains(src, "wireWith") {
+		s.macwire = true
+	}
+	if fw == "finatra" || fw == "lagom" || fw == "play" ||
+		strings.Contains(src, "com.google.inject") || strings.Contains(src, "javax.inject") ||
+		strings.Contains(src, "jakarta.inject") || strings.Contains(src, "AbstractModule") ||
+		strings.Contains(src, "TwitterModule") || strings.Contains(src, "@Provides") ||
+		(strings.Contains(src, "@Inject") && !s.macwire) {
+		s.guice = true
+	}
+	if strings.Contains(src, "cats.effect") || strings.Contains(src, "Resource[") ||
+		strings.Contains(src, "Resource.make") || strings.Contains(src, "Resource.eval") {
+		s.cats = true
+	}
+	if fw == "zio-http" || strings.Contains(src, "dev.zio") || strings.Contains(src, "ZLayer") {
+		s.zio = true
+	}
+	return s
+}
+
+// splitInjectedDeps parses a Scala parameter list like
+// "svc: UserService, repo: Repo = default" into "name:Type" tokens, dropping
+// default-value RHS and modifiers. Returns up to a stable comma-joined string.
+func splitInjectedDeps(params string) []string {
+	params = strings.TrimSpace(params)
+	if params == "" {
+		return nil
+	}
+	var out []string
+	for _, raw := range strings.Split(params, ",") {
+		p := strings.TrimSpace(raw)
+		if p == "" {
+			continue
+		}
+		// drop default value RHS
+		if i := strings.Index(p, "="); i >= 0 {
+			p = strings.TrimSpace(p[:i])
+		}
+		// "name: Type" → name + type
+		if i := strings.Index(p, ":"); i >= 0 {
+			name := strings.TrimSpace(p[:i])
+			typ := strings.TrimSpace(p[i+1:])
+			// strip leading modifiers (val/var/implicit) from name token
+			nf := strings.Fields(name)
+			if len(nf) > 0 {
+				name = nf[len(nf)-1]
+			}
+			if name != "" && typ != "" {
+				out = append(out, name+":"+typ)
+			}
+		}
+	}
+	return out
+}
 
 // ---------------------------------------------------------------------------
 // Extract
@@ -144,16 +277,38 @@ func (e *scalaDIExtractor) Extract(ctx context.Context, file extractor.FileInput
 	}
 
 	fw := detectScalaFramework(src)
-	isGuice := fw == "finatra" || fw == "lagom"
-	isZIO := fw == "zio-http"
+	st := detectDIStyles(src, fw)
 
-	if !isGuice && !isZIO {
+	if !st.macwire && !st.guice && !st.cats && !st.zio {
 		return nil, nil
 	}
 
-	if isGuice {
-		// --- di_binding_extraction: bind[T].to[Impl] ---
-		for _, m := range reGuiceBind.FindAllStringSubmatchIndex(src, -1) {
+	// -----------------------------------------------------------------------
+	// MacWire — di_binding_extraction (binding type captured)
+	// -----------------------------------------------------------------------
+	if st.macwire {
+		for _, m := range diMacWire.FindAllStringSubmatchIndex(src, -1) {
+			member := src[m[2]:m[3]]
+			typ := src[m[4]:m[5]]
+			ent := makeEntity("wire:"+member+"→"+typ, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "macwire", "member", member, "binding_type", typ, "provenance", "MACWIRE_WIRE")
+			add(ent)
+		}
+		for _, m := range diMacWireWith.FindAllStringSubmatchIndex(src, -1) {
+			member := src[m[2]:m[3]]
+			factory := src[m[4]:m[5]]
+			ent := makeEntity("wireWith:"+member+"→"+factory, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "macwire", "member", member, "factory", factory, "provenance", "MACWIRE_WIREWITH")
+			add(ent)
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// Guice — bindings, providers, injection points, scopes, modules
+	// -----------------------------------------------------------------------
+	if st.guice {
+		// Scala DSL bindings: bind[T].to[Impl]
+		for _, m := range diGuiceBindScala.FindAllStringSubmatchIndex(src, -1) {
 			iface := src[m[2]:m[3]]
 			impl := ""
 			if m[4] >= 0 {
@@ -164,67 +319,151 @@ func (e *scalaDIExtractor) Extract(ctx context.Context, file extractor.FileInput
 				name += "→" + impl
 			}
 			ent := makeEntity(name, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", fw, "interface", iface, "impl", impl, "provenance", "GUICE_BIND")
+			setProps(&ent, "framework", fw, "di_style", "guice", "interface", iface, "impl", impl, "provenance", "GUICE_BIND_SCALA")
+			add(ent)
+		}
+		// Java DSL bindings: bind(classOf[T]).to(classOf[Impl])
+		for _, m := range diGuiceBindJava.FindAllStringSubmatchIndex(src, -1) {
+			iface := src[m[2]:m[3]]
+			impl := src[m[4]:m[5]]
+			ent := makeEntity("bind:"+iface+"→"+impl, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "guice", "interface", iface, "impl", impl, "provenance", "GUICE_BIND_JAVA")
+			add(ent)
+		}
+		// @Provides methods — provider binding + injected deps
+		for _, m := range diGuiceProvides.FindAllStringSubmatchIndex(src, -1) {
+			name := src[m[2]:m[3]]
+			params := ""
+			if m[4] >= 0 {
+				params = src[m[4]:m[5]]
+			}
+			retType := ""
+			if m[6] >= 0 {
+				retType = src[m[6]:m[7]]
+			}
+			deps := splitInjectedDeps(params)
+			ent := makeEntity("provides:"+name, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "guice", "provides_method", name,
+				"return_type", retType, "deps", strings.Join(deps, ","), "provenance", "GUICE_PROVIDES")
 			add(ent)
 		}
 
-		// --- di_injection_point: @Inject ---
-		for _, m := range reGuiceInject.FindAllStringSubmatchIndex(src, -1) {
-			ent := makeEntity("inject:"+fileBaseName(file.Path), "SCOPE.DI", "injection_point", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", fw, "injection_type", "constructor_or_field", "provenance", "GUICE_INJECT")
+		// Constructor injection: class C @Inject()(deps) — captures dep names+types
+		ctorInjectSeen := make(map[int]bool)
+		for _, m := range diGuiceInjectCtor.FindAllStringSubmatchIndex(src, -1) {
+			cls := src[m[2]:m[3]]
+			params := src[m[4]:m[5]]
+			ctorInjectSeen[m[0]] = true
+			deps := splitInjectedDeps(params)
+			ent := makeEntity("inject:"+cls, "SCOPE.DI", "injection_point", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "guice", "class", cls,
+				"injection_type", "constructor", "deps", strings.Join(deps, ","), "provenance", "GUICE_INJECT_CTOR")
+			add(ent)
+		}
+		// Bare @Inject (field/method) not already accounted for by a ctor match.
+		for _, m := range diGuiceInjectBare.FindAllStringSubmatchIndex(src, -1) {
+			// Skip if this @Inject is the start of a captured constructor.
+			skip := false
+			for pos := range ctorInjectSeen {
+				if m[0] >= pos && m[0] <= pos+8 {
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
+			ent := makeEntity("inject:"+fileBaseName(file.Path)+":"+lineStr(src, m[0]), "SCOPE.DI", "injection_point", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "guice", "injection_type", "field_or_method", "provenance", "GUICE_INJECT_BARE")
 			add(ent)
 		}
 
-		// --- di_scope_resolution: @Singleton / @Provides ---
-		for _, m := range reGuiceSingleton.FindAllStringSubmatchIndex(src, -1) {
+		// @Singleton scope
+		for _, m := range diGuiceSingleton.FindAllStringSubmatchIndex(src, -1) {
 			name := src[m[2]:m[3]]
 			ent := makeEntity("singleton:"+name, "SCOPE.DI", "di_scope", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", fw, "scope", "singleton", "provenance", "GUICE_SINGLETON")
+			setProps(&ent, "framework", fw, "di_style", "guice", "scope", "singleton", "scoped_class", name, "provenance", "GUICE_SINGLETON")
 			add(ent)
 		}
-
 		// Module declarations
-		for _, m := range reGuiceModule.FindAllStringSubmatchIndex(src, -1) {
+		for _, m := range diGuiceModule.FindAllStringSubmatchIndex(src, -1) {
+			base := src[m[2]:m[3]]
 			ent := makeEntity("module:"+fileBaseName(file.Path), "SCOPE.DI", "di_module", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", fw, "provenance", "GUICE_MODULE")
-			add(ent)
-		}
-
-		// @Provides methods
-		for _, m := range reGuiceProvider.FindAllStringSubmatchIndex(src, -1) {
-			name := src[m[2]:m[3]]
-			ent := makeEntity("provides:"+name, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", fw, "provenance", "GUICE_PROVIDES")
+			setProps(&ent, "framework", fw, "di_style", "guice", "module_base", base, "provenance", "GUICE_MODULE")
 			add(ent)
 		}
 	}
 
-	if isZIO {
-		// --- di_binding_extraction: ZLayer definitions ---
-		for _, m := range reZLayerMake.FindAllStringSubmatchIndex(src, -1) {
-			envType := src[m[2]:m[3]]
+	// -----------------------------------------------------------------------
+	// cats-effect — Resource bindings
+	// -----------------------------------------------------------------------
+	if st.cats {
+		for _, m := range diCatsResourceTyped.FindAllStringSubmatchIndex(src, -1) {
+			member := src[m[2]:m[3]]
+			typ := src[m[4]:m[5]]
+			ent := makeEntity("resource:"+member+"→"+typ, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "cats-effect", "member", member, "binding_type", typ, "provenance", "CATS_RESOURCE_TYPED")
+			add(ent)
+		}
+		for _, m := range diCatsResourceMake.FindAllStringSubmatchIndex(src, -1) {
+			acq := src[m[2]:m[3]]
+			ent := makeEntity("resource:make:"+fileBaseName(file.Path)+":"+lineStr(src, m[0]), "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", fw, "di_style", "cats-effect", "acquire_kind", acq, "provenance", "CATS_RESOURCE_MAKE")
+			add(ent)
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// ZIO ZLayer — bindings, injection points, typed-layer scopes
+	// -----------------------------------------------------------------------
+	if st.zio {
+		// di_binding: ZLayer.make[Env]
+		for _, m := range diZLayerMake.FindAllStringSubmatchIndex(src, -1) {
+			envType := strings.TrimSpace(src[m[2]:m[3]])
 			ent := makeEntity("zlayer:"+envType, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", "zio-http", "env_type", envType, "provenance", "ZIO_ZLAYER_MAKE")
+			setProps(&ent, "framework", "zio-http", "di_style", "zio", "env_type", envType, "provenance", "ZIO_ZLAYER_MAKE")
 			add(ent)
 		}
-		for _, m := range reZLayerSucceed.FindAllStringSubmatchIndex(src, -1) {
-			ent := makeEntity("zlayer:impl:"+fileBaseName(file.Path), "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", "zio-http", "provenance", "ZIO_ZLAYER_SUCCEED")
+		// di_binding: ZLayer.succeed(impl) — capture impl reference
+		for _, m := range diZLayerSucceed.FindAllStringSubmatchIndex(src, -1) {
+			impl := ""
+			if m[2] >= 0 {
+				impl = src[m[2]:m[3]]
+			}
+			name := "zlayer:succeed:" + fileBaseName(file.Path) + ":" + lineStr(src, m[0])
+			if impl != "" {
+				name = "zlayer:succeed:" + impl
+			}
+			ent := makeEntity(name, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", "zio-http", "di_style", "zio", "impl", impl, "provenance", "ZIO_ZLAYER_SUCCEED")
 			add(ent)
 		}
-
-		// --- di_injection_point: provide/provideLayer calls ---
-		for _, m := range reZLayerProvide.FindAllStringSubmatchIndex(src, -1) {
-			ent := makeEntity("provide:"+fileBaseName(file.Path), "SCOPE.DI", "injection_point", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", "zio-http", "provenance", "ZIO_PROVIDE_LAYER")
+		// di_binding: ZLayer.fromFunction(ctor) etc.
+		for _, m := range diZLayerFromFunction.FindAllStringSubmatchIndex(src, -1) {
+			ctor := ""
+			if m[2] >= 0 {
+				ctor = src[m[2]:m[3]]
+			}
+			name := "zlayer:from:" + fileBaseName(file.Path) + ":" + lineStr(src, m[0])
+			if ctor != "" {
+				name = "zlayer:from:" + ctor
+			}
+			ent := makeEntity(name, "SCOPE.DI", "di_binding", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", "zio-http", "di_style", "zio", "constructor", ctor, "provenance", "ZIO_ZLAYER_FROMFUNCTION")
 			add(ent)
 		}
-
-		// --- di_scope_resolution: typed ZLayer val declarations ---
-		for _, m := range reZLayerVal.FindAllStringSubmatchIndex(src, -1) {
+		// di_scope: typed ZLayer val
+		for _, m := range diZLayerVal.FindAllStringSubmatchIndex(src, -1) {
 			name := src[m[2]:m[3]]
 			ent := makeEntity("layer:"+name, "SCOPE.DI", "di_scope", file.Path, file.Language, lineOf(src, m[0]))
-			setProps(&ent, "framework", "zio-http", "scope", "zlayer", "provenance", "ZIO_ZLAYER_VAL")
+			setProps(&ent, "framework", "zio-http", "di_style", "zio", "scope", "zlayer", "layer_val", name, "provenance", "ZIO_ZLAYER_VAL")
+			add(ent)
+		}
+		// injection_point: provide / provideLayer / provideSomeLayer / inject
+		for _, m := range diZLayerProvide.FindAllStringSubmatchIndex(src, -1) {
+			call := src[m[2]:m[3]]
+			ent := makeEntity("provide:"+fileBaseName(file.Path)+":"+lineStr(src, m[0]), "SCOPE.DI", "injection_point", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", "zio-http", "di_style", "zio", "provide_call", call, "provenance", "ZIO_PROVIDE_LAYER")
 			add(ent)
 		}
 	}

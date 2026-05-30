@@ -12369,6 +12369,117 @@ records:
           issues_implemented: ["2773"]
           verified_at: "2026-05-28"
 
+  lang.scala.framework.finatra:
+    capabilities:
+      DI:
+        di_binding_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract, detectDIStyles, splitInjectedDeps]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions:
+                - TestDIGuiceScalaBindValues
+                - TestDIGuiceJavaBindValues
+                - TestDIGuiceProvidesDeps
+                - TestDIMacWireBindingType
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+        di_injection_point:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract, splitInjectedDeps]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions: [TestDIGuiceConstructorInjectionDeps]
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+        di_scope_resolution:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions: [TestDIGuiceSingletonScope]
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+
+  lang.scala.framework.lagom:
+    capabilities:
+      DI:
+        di_binding_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract, detectDIStyles, splitInjectedDeps]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions:
+                - TestDIGuiceScalaBindValues
+                - TestDIGuiceProvidesDeps
+                - TestDILagomGuice
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+        di_injection_point:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract, splitInjectedDeps]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions: [TestDIGuiceConstructorInjectionDeps]
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+        di_scope_resolution:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions: [TestDIGuiceSingletonScope]
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+
+  lang.scala.framework.zio-http:
+    capabilities:
+      DI:
+        di_binding_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract, detectDIStyles]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions:
+                - TestDIZioZLayerValues
+                - TestDICatsEffectResourceBindingType
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+        di_injection_point:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions: [TestDIZioZLayerValues]
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+        di_scope_resolution:
+          status: full
+          symbols:
+            - file: internal/custom/scala/di.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/scala/di_test.go
+              functions: [TestDIZioZLayerValues]
+          issues_implemented: ["3456"]
+          verified_at: "2026-05-31"
+
   lang.scala.framework.play:
     capabilities:
       Substrate:

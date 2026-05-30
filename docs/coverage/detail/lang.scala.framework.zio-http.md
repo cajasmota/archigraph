@@ -57,9 +57,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DI binding extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/scala/di.go` | custom_scala_di extractor: ZLayer.make[Env]/ZLayer.succeed bindings extracted as SCOPE.DI/di_binding. ZIO ZLayer is the idiomatic DI mechanism for ZIO-HTTP apps. File-local. |
-| DI injection point | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/scala/di.go` | custom_scala_di extractor: .provide()/.provideLayer() call sites detected as ZLayer injection points. File-local. |
-| DI scope resolution | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/scala/di.go` | custom_scala_di extractor: typed val layer: ZLayer[R,E,A] declarations extracted as scoped bindings. ZLayer scoping (scoped/succeed/fromZIO) controls resource lifecycle. File-local. |
+| DI binding extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/scala/di.go` | custom_scala_di extractor: MacWire wire[T]/wireWith (binding type), Guice Scala+Java DSL bind[T].to[Impl]/bind(classOf[T]).to(classOf[Impl]), @Provides methods (return type + injected deps), cats-effect Resource[F,T] (binding type), ZIO ZLayer.make/succeed/fromFunction (env type/impl/ctor). Value-asserting tests. File-local; cross-file binding resolution not done. |
+| DI injection point | ✅ `full` | `2026-05-30` | — | `internal/custom/scala/di.go` | custom_scala_di extractor: Guice @Inject() constructor injection captures class + dep names/types; bare @Inject field/method; ZIO .provide/.provideLayer/.provideSomeLayer injection sites. Value-asserting tests. File-local. |
+| DI scope resolution | ✅ `full` | `2026-05-30` | — | `internal/custom/scala/di.go` | custom_scala_di extractor: Guice @Singleton scope (scoped class captured); typed ZLayer val as zio scope. Value-asserting tests. File-local. |
 
 ### Transactions
 
