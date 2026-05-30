@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # elixir
 
-**Frameworks**: 9 · **Tools**: 5 · **ORMs**: 10 · **Other**: 0
+**Frameworks**: 13 · **Tools**: 5 · **ORMs**: 10 · **Other**: 0
 
 Back to [summary](../summary.md).
 
@@ -30,10 +30,14 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟢 3/3 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 5/5 | |
 | [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟢 1/1 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 3/3 | |
 | [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟢 3/3 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 4/4 | |
+| [Finch](../detail/lang.elixir.framework.finch.md) | 🟡 1/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 3/20 | 🔴 0/7 | |
+| [Guardian](../detail/lang.elixir.framework.guardian.md) | 🔴 0/3 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/20 | 🔴 0/7 | |
 | [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | 🟢 1/1 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 1/1 | |
 | [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | 🟢 1/1 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 5/5 | |
 | [Phoenix](../detail/lang.elixir.framework.phoenix.md) | ✅ 3/3 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [Plug](../detail/lang.elixir.framework.plug.md) | 🟢 3/3 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/20 | 🔴 0/7 | |
+| [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/20 | 🟡 1/7 | |
 
 
 ### Meta Framework

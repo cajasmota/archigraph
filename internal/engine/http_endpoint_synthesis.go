@@ -791,6 +791,9 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		synthesizeAbsinthe(string(content), emit)
 		// Consumer side (#1483): Finch.build(:verb, url) + HTTPoison.<verb>(url).
 		synthesizeElixirHTTPClients(string(content), emitClient)
+		// Consumer side (#3511): Tesla (use Tesla + BaseUrl middleware + verb
+		// calls) + Req (Req.get!/Req.new base_url) outbound HTTP clients.
+		synthesizeElixirTeslaReq(string(content), emitClient)
 	case "lua":
 		// Producer side (#3484): Lapis verb/match/respond_to routes.
 		synthesizeLapis(string(content), emit)

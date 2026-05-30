@@ -2,6 +2,7 @@ package elixir_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	extreg "github.com/cajasmota/archigraph/internal/extractor"
@@ -213,6 +214,46 @@ end
 	if pt.Props["auth"] != "true" || pt.Props["auth_method"] != "jwt" {
 		t.Errorf("expected pipe_through to inherit jwt auth, got auth=%q method=%q",
 			pt.Props["auth"], pt.Props["auth_method"])
+	}
+}
+
+// TestGuardianImplModule asserts that a `use Guardian` implementation module
+// is recorded as an auth component (method=jwt) carrying its implemented
+// Guardian behaviour callbacks. (#3511)
+func TestGuardianImplModule(t *testing.T) {
+	src := `
+defmodule MyApp.Guardian do
+  use Guardian, otp_app: :my_app
+
+  def subject_for_token(resource, _claims) do
+    {:ok, to_string(resource.id)}
+  end
+
+  def resource_from_claims(%{"sub" => id}) do
+    {:ok, MyApp.Accounts.get_user!(id)}
+  end
+end
+`
+	ents := extract(t, "custom_elixir_phoenix", fi("guardian.ex", "elixir", src))
+	g := findEntity(ents, "SCOPE.Component", "MyApp.Guardian")
+	if g == nil {
+		t.Fatal("expected MyApp.Guardian auth component")
+	}
+	if got := g.Props["auth_provider"]; got != "guardian" {
+		t.Errorf("expected auth_provider guardian, got %q", got)
+	}
+	if got := g.Props["auth_method"]; got != "jwt" {
+		t.Errorf("expected auth_method jwt, got %q", got)
+	}
+	if got := g.Props["auth"]; got != "true" {
+		t.Errorf("expected auth=true, got %q", got)
+	}
+	cbs := g.Props["guardian_callbacks"]
+	if !strings.Contains(cbs, "subject_for_token") || !strings.Contains(cbs, "resource_from_claims") {
+		t.Errorf("expected guardian_callbacks to include subject_for_token and resource_from_claims, got %q", cbs)
+	}
+	if got := g.Props["guardian_callback_count"]; got != "2" {
+		t.Errorf("expected guardian_callback_count 2, got %q", got)
 	}
 }
 

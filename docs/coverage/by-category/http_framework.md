@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # http_framework
 
-**Total**: 191 records · **C/C++**: 19 · **C#**: 15 · **elixir**: 9 · **go**: 17 · **java**: 19 · **JS/TS**: 30 · **kotlin**: 14 · **lua**: 2 · **php**: 12 · **python**: 21 · **ruby**: 8 · **rust**: 13 · **scala**: 11 · **swift**: 1
+**Total**: 193 records · **C/C++**: 17 · **C#**: 15 · **elixir**: 13 · **go**: 17 · **java**: 19 · **JS/TS**: 30 · **kotlin**: 14 · **lua**: 2 · **php**: 12 · **python**: 21 · **ruby**: 8 · **rust**: 13 · **scala**: 11 · **swift**: 1
 
 Back to [summary](../summary.md). Bucket: **Frameworks**.
 
@@ -35,10 +35,14 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [elixir](../by-language/elixir.md) | [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟢 3/3 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 5/5 | |
 | [elixir](../by-language/elixir.md) | [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟢 1/1 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 3/3 | |
 | [elixir](../by-language/elixir.md) | [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟢 3/3 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 4/4 | |
+| [elixir](../by-language/elixir.md) | [Finch](../detail/lang.elixir.framework.finch.md) | 🟡 1/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 3/20 | 🔴 0/7 | |
+| [elixir](../by-language/elixir.md) | [Guardian](../detail/lang.elixir.framework.guardian.md) | 🔴 0/3 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/20 | 🔴 0/7 | |
 | [elixir](../by-language/elixir.md) | [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | 🟢 1/1 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 1/1 | |
 | [elixir](../by-language/elixir.md) | [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | 🟢 1/1 | — | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 5/5 | |
 | [elixir](../by-language/elixir.md) | [Phoenix](../detail/lang.elixir.framework.phoenix.md) | ✅ 3/3 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [elixir](../by-language/elixir.md) | [Plug](../detail/lang.elixir.framework.plug.md) | 🟢 3/3 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [elixir](../by-language/elixir.md) | [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/20 | 🔴 0/7 | |
+| [elixir](../by-language/elixir.md) | [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/20 | 🟡 1/7 | |
 | [go](../by-language/go.md) | [Beego](../detail/lang.go.framework.beego.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟢 7/7 | |
 | [go](../by-language/go.md) | [Buffalo](../detail/lang.go.framework.buffalo.md) | 🟢 3/3 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟢 7/7 | |
 | [go](../by-language/go.md) | [Echo](../detail/lang.go.framework.echo.md) | 🟢 3/3 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 20/20 | 🟢 7/7 | |
@@ -227,8 +231,6 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 
 | Language | Name | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|
-| [C/C++](../by-language/c-cpp.md) | [Protocol Buffers (C++)](../detail/lang.c-cpp.framework.protobuf.md) | 🟡 2/21 | 🟡 3/4 | |
-| [C/C++](../by-language/c-cpp.md) | [gRPC C++ (grpc++)](../detail/lang.c-cpp.framework.grpc.md) | 🟡 2/21 | 🟢 4/4 | |
 | [C#](../by-language/csharp.md) | [grpc-dotnet](../detail/lang.csharp.framework.grpc-net.md) | 🟢 21/21 | 🟢 4/4 | |
 | [JS/TS](../by-language/jsts.md) | [GraphQL Resolvers (Apollo Server / GraphQL Yoga / etc.)](../detail/lang.jsts.framework.graphql-resolvers.md) | 🟢 21/21 | ✅ 3/3 | |
 | [JS/TS](../by-language/jsts.md) | [tRPC](../detail/lang.jsts.framework.trpc.md) | 🟢 21/21 | ✅ 4/4 | |

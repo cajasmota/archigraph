@@ -64,6 +64,16 @@ var (
 	rePhoenixPlugLine = regexp.MustCompile(
 		`(?m)^\s*plug\s+(:?[\w.]+)`,
 	)
+	// A Guardian implementation module: `use Guardian, otp_app: :my_app`.
+	// Distinct from `Guardian.Plug.*` router plugs — this is the token
+	// issuer/verifier module that implements the Guardian behaviour callbacks.
+	reGuardianUse = regexp.MustCompile(
+		`(?m)^\s*use\s+Guardian\b`,
+	)
+	// Guardian behaviour callbacks implemented in a `use Guardian` module.
+	reGuardianCallback = regexp.MustCompile(
+		`(?m)^\s*def\s+(subject_for_token|resource_from_claims|build_claims|after_encode_and_sign|on_verify|on_revoke)\s*\(`,
+	)
 )
 
 // elixirPipeline holds an ordered list of plug invocations parsed from a
@@ -321,6 +331,34 @@ func (e *phoenixExtractor) Extract(ctx context.Context, file extractor.FileInput
 		ent := makeEntity("action:"+action, "SCOPE.Operation", "function", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "phoenix", "provenance", "INFERRED_FROM_PHOENIX_CONTROLLER_ACTION",
 			"action_name", action)
+		add(ent)
+	}
+
+	// 11. Guardian implementation module -> SCOPE.Component/auth (#3511).
+	//     `use Guardian` marks the token issuer/verifier module. We record the
+	//     enclosing defmodule as an auth component with method=jwt and the list
+	//     of implemented Guardian behaviour callbacks, so the graph carries the
+	//     auth-provider definition (not just the router-plug usage).
+	for _, m := range reGuardianUse.FindAllStringIndex(src, -1) {
+		prefix := src[:m[0]]
+		cm := rePhoenixModuleDecl.FindAllStringSubmatch(prefix, -1)
+		moduleName := "GuardianImpl"
+		if len(cm) > 0 {
+			moduleName = cm[len(cm)-1][1]
+		}
+		var callbacks []string
+		for _, cbm := range reGuardianCallback.FindAllStringSubmatch(src, -1) {
+			callbacks = append(callbacks, cbm[1])
+		}
+		callbacks = uniqueStrings(callbacks)
+		ent := makeEntity(moduleName, "SCOPE.Component", "auth", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "guardian",
+			"provenance", "INFERRED_FROM_GUARDIAN_USE",
+			"auth", "true",
+			"auth_provider", "guardian",
+			"auth_method", "jwt",
+			"guardian_callbacks", strings.Join(callbacks, ","),
+			"guardian_callback_count", itoa(len(callbacks)))
 		add(ent)
 	}
 

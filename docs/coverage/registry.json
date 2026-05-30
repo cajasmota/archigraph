@@ -10767,6 +10767,358 @@
       }
     },
     {
+      "id": "lang.elixir.framework.finch",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "elixir",
+      "label": "Finch",
+      "capabilities": {
+        "Routing": {
+          "endpoint_synthesis": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_client_1483.go","internal/engine/http_endpoint_jsts_client_1483_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Finch.build(:verb,url) literal + interpolated-variable -\u003e outbound http_endpoint_call (#1483/#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "handler_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_client_1483.go","internal/engine/http_endpoint_jsts_client_1483_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "@base_url module-attr resolution into Finch URL canonical path (#1483/#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "env_fallback_recognition": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_client_1483.go","internal/engine/http_endpoint_jsts_client_1483_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "@base_url System.get_env(VAR, default) fallback literal resolved for Finch URLs (#1496/#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_jsts_client_1483.go","internal/engine/http_endpoint_jsts_client_1483_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Finch.build modeled as outbound HTTP effect (#1483/#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        }
+      }
+    },
+    {
+      "id": "lang.elixir.framework.guardian",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "elixir",
+      "label": "Guardian",
+      "capabilities": {
+        "Routing": {
+          "endpoint_synthesis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "handler_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "full",
+            "cites": ["internal/custom/elixir/extractors_test.go","internal/custom/elixir/phoenix.go","internal/custom/elixir/plug_test.go"],
+            "notes": "Guardian.Plug pipeline (EnsureAuthenticated/VerifyHeader) flips protected routes to method=jwt; use Guardian impl module recorded as auth component method=jwt with behaviour callbacks (#3511)",
+            "verified_at": "2026-05-30"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "constant_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        }
+      }
+    },
+    {
       "id": "lang.elixir.framework.nerves",
       "category": "http_framework",
       "subcategory": "http_backend",
@@ -11843,6 +12195,364 @@
             "status": "partial",
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_elixir.go"],
             "verified_at": "2026-05-28"
+          }
+        }
+      }
+    },
+    {
+      "id": "lang.elixir.framework.req",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "elixir",
+      "label": "Req",
+      "capabilities": {
+        "Routing": {
+          "endpoint_synthesis": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Req.get!/Req.\u003cverb\u003e literal + interpolated + concat + url: keyword -\u003e outbound http_endpoint_call (#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "handler_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "constant_propagation": {
+            "status": "partial",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_jsts_client_1483.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3511",
+            "notes": "Req string-concat + @module-attr interpolation resolved; Req.new(base_url:) cross-call base merge pending (#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Req verb calls modeled as outbound HTTP effects (#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        }
+      }
+    },
+    {
+      "id": "lang.elixir.framework.tesla",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "elixir",
+      "label": "Tesla",
+      "capabilities": {
+        "Routing": {
+          "endpoint_synthesis": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Tesla use-module + BaseUrl middleware + Tesla.\u003cverb\u003e/bare-verb client calls -\u003e outbound http_endpoint_call with verb+canonical path (#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "handler_attribution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "route_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "partial",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3511",
+            "notes": "BaseUrl/JSON Tesla plug middleware parsed for base-url only; full middleware-chain modeling pending (#3511)",
+            "verified_at": "2026-05-30"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "constant_propagation": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_jsts_client_1483.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Tesla.Middleware.BaseUrl literal + @module-attr resolution into canonical path (#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Tesla verb calls modeled as outbound HTTP effects (#3511)",
+            "verified_at": "2026-05-30"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         }
       }
