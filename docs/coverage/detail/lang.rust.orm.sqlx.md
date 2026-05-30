@@ -22,10 +22,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | — `not_applicable` | — | — | — | sqlx is a compile-checked query layer; no relationship/association DSL |
+| Foreign key extraction | — `not_applicable` | — | — | — | sqlx is a compile-checked query layer; no relationship/association DSL |
+| Lazy loading recognition | — `not_applicable` | — | — | — | sqlx is a compile-checked query layer; no relationship/association DSL |
+| Relationship extraction | — `not_applicable` | — | — | — | sqlx is a compile-checked query layer; no relationship/association DSL |
 
 ### Queries
 

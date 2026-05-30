@@ -45,7 +45,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Enum extraction | — `not_applicable` | — | — | — | Ruby is dynamically typed — no enum keyword (duck typing idiom) |
 | Interface extraction | — `not_applicable` | — | — | — | Ruby is dynamically typed — no interface keyword (duck typing idiom) |
 | Type alias extraction | — `not_applicable` | — | — | — | Ruby is dynamically typed — no type keyword (duck typing idiom) |
-| Type extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Type extraction | — `not_applicable` | — | — | — | Ruby dynamically typed; framework exposes no static type DSL |
 
 ### Testing
 

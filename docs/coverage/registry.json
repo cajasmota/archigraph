@@ -40626,14 +40626,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40644,8 +40644,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40674,14 +40674,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40692,8 +40692,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40730,8 +40730,8 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40742,8 +40742,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40772,14 +40772,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40790,8 +40790,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40820,14 +40820,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40838,8 +40838,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40868,14 +40868,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40886,8 +40886,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40916,14 +40916,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40934,8 +40934,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -40964,14 +40964,14 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no ORM model/schema in user code"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no association DSL"
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
@@ -40982,8 +40982,8 @@
             "notes": "raw driver — no ORM relationship/lazy-load layer"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no relationship DSL"
           }
         },
         "Queries": {
@@ -41061,8 +41061,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -41473,8 +41473,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -41681,8 +41681,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -41889,8 +41889,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -42097,8 +42097,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -42305,8 +42305,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -42513,8 +42513,8 @@
             "notes": "Ruby is dynamically typed — no type keyword (duck typing idiom)"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Ruby dynamically typed; framework exposes no static type DSL"
           }
         },
         "Testing": {
@@ -42792,8 +42792,8 @@
             "issue": "backfill:dictionary-completeness"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Mongoid uses document references, not relational foreign keys"
           },
           "lazy_loading_recognition": {
             "status": "missing",
@@ -42940,8 +42940,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -42988,8 +42988,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43036,8 +43036,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43084,8 +43084,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43132,8 +43132,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43180,8 +43180,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43228,8 +43228,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43276,8 +43276,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -43324,8 +43324,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "raw client driver; no schema/model definitions in user code"
           }
         },
         "Relationships": {
@@ -45594,20 +45594,20 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "rbatis is a SQL/XML mapper; no relationship/association DSL"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "rbatis is a SQL/XML mapper; no relationship/association DSL"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "rbatis is a SQL/XML mapper; no relationship/association DSL"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "rbatis is a SQL/XML mapper; no relationship/association DSL"
           }
         },
         "Queries": {
@@ -45634,8 +45634,8 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "low-level SQLite binding; users write raw SQL, no schema model"
           }
         },
         "Relationships": {
@@ -45748,20 +45748,20 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlx is a compile-checked query layer; no relationship/association DSL"
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlx is a compile-checked query layer; no relationship/association DSL"
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlx is a compile-checked query layer; no relationship/association DSL"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "sqlx is a compile-checked query layer; no relationship/association DSL"
           }
         },
         "Queries": {
