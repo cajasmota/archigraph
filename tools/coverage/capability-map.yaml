@@ -7365,31 +7365,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -7587,31 +7596,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -7809,31 +7827,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -8005,31 +8032,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -8201,31 +8237,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -8397,31 +8442,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -8603,31 +8657,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -8799,31 +8862,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -8995,31 +9067,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -9191,31 +9272,40 @@ records:
           verified_at: "2026-05-30"
       Type System:
         interface_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustTraitMethods, rustSupertraits, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
+          verified_at: "2026-05-30"
+        type_alias_extraction:
+          status: full
+          symbols:
+            - file: internal/extractors/rust/rust.go
+              functions: [buildTypeAlias, rustGenerics]
+          tests:
+            - file: internal/extractors/rust/rust_test.go
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         enum_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustEnumVariants, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
         type_extraction:
-          status: partial
+          status: full
           symbols:
             - file: internal/extractors/rust/rust.go
-              functions: [Extract]
+              functions: [buildComponent, rustStructFields, rustDerives, rustGenerics]
           tests:
             - file: internal/extractors/rust/rust_test.go
-          issues_implemented: ["3268"]
+          issues_implemented: ["3268", "3411"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:

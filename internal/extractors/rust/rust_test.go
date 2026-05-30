@@ -730,6 +730,178 @@ pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Type System deep extraction — issue #3411
+// ---------------------------------------------------------------------------
+
+// findRustEntity returns the first entity matching subtype+name, or nil.
+func findRustEntity(t *testing.T, src, subtype, name string) map[string]string {
+	t.Helper()
+	tree := parseForTest(t, src)
+	ext, _ := extractor.Get("rust")
+	got, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path: "ts.rs", Content: []byte(src), Language: "rust", Tree: tree,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, e := range got {
+		if e.Subtype == subtype && e.Name == name {
+			return e.Properties
+		}
+	}
+	t.Fatalf("entity subtype=%s name=%s not found", subtype, name)
+	return nil
+}
+
+// enum_extraction: assert specific variant names (tuple, struct, discriminant)
+// and derive macros are captured.
+func TestRustExtractor_EnumVariants_Deep(t *testing.T) {
+	src := `
+#[derive(Debug, Clone, PartialEq)]
+enum Shape {
+    Circle(f64),
+    Rect { w: u8, h: u8 },
+    Unit = 1,
+    Empty,
+}
+`
+	props := findRustEntity(t, src, "enum", "Shape")
+	if props["variants"] != "Circle, Rect, Unit, Empty" {
+		t.Errorf("variants = %q, want %q", props["variants"], "Circle, Rect, Unit, Empty")
+	}
+	if props["derives"] != "Debug, Clone, PartialEq" {
+		t.Errorf("derives = %q, want %q", props["derives"], "Debug, Clone, PartialEq")
+	}
+}
+
+func TestRustExtractor_EnumGenerics_Deep(t *testing.T) {
+	src := `
+enum Either<L, R> {
+    Left(L),
+    Right(R),
+}
+`
+	props := findRustEntity(t, src, "enum", "Either")
+	if props["variants"] != "Left, Right" {
+		t.Errorf("variants = %q, want %q", props["variants"], "Left, Right")
+	}
+	if props["generics"] != "L, R" {
+		t.Errorf("generics = %q, want %q", props["generics"], "L, R")
+	}
+}
+
+// interface_extraction (trait): assert method names (required + default),
+// supertraits, EXTENDS edges, and generics.
+func TestRustExtractor_TraitMethods_Deep(t *testing.T) {
+	src := `
+trait Animal: Eq + Clone {
+    fn speak(&self) -> String;
+    fn legs(&self) -> u32 { 4 }
+}
+`
+	tree := parseForTest(t, src)
+	ext, _ := extractor.Get("rust")
+	got, _ := ext.Extract(context.Background(), extractor.FileInput{
+		Path: "animal.rs", Content: []byte(src), Language: "rust", Tree: tree,
+	})
+
+	var props map[string]string
+	var extendsTargets []string
+	for _, e := range got {
+		if e.Subtype == "trait" && e.Name == "Animal" {
+			props = e.Properties
+			for _, r := range e.Relationships {
+				if r.Kind == "EXTENDS" {
+					extendsTargets = append(extendsTargets, r.ToID)
+				}
+			}
+		}
+	}
+	if props == nil {
+		t.Fatal("trait Animal not found")
+	}
+	if props["methods"] != "speak, legs" {
+		t.Errorf("methods = %q, want %q", props["methods"], "speak, legs")
+	}
+	if props["supertraits"] != "Eq, Clone" {
+		t.Errorf("supertraits = %q, want %q", props["supertraits"], "Eq, Clone")
+	}
+	wantExtends := map[string]bool{"Eq": true, "Clone": true}
+	for _, tt := range extendsTargets {
+		delete(wantExtends, tt)
+	}
+	if len(wantExtends) != 0 {
+		t.Errorf("missing EXTENDS edges %v; got %v", wantExtends, extendsTargets)
+	}
+}
+
+func TestRustExtractor_TraitGenerics_Deep(t *testing.T) {
+	src := `
+trait Container<T> {
+    fn get(&self) -> T;
+    fn put(&mut self, item: T);
+}
+`
+	props := findRustEntity(t, src, "trait", "Container")
+	if props["methods"] != "get, put" {
+		t.Errorf("methods = %q, want %q", props["methods"], "get, put")
+	}
+	if props["generics"] != "T" {
+		t.Errorf("generics = %q, want %q", props["generics"], "T")
+	}
+}
+
+// type_alias_extraction: assert alias name, aliased type, and generic params.
+func TestRustExtractor_TypeAliasGenerics_Deep(t *testing.T) {
+	src := `type Pair<T> = (T, T);`
+	props := findRustEntity(t, src, "type_alias", "Pair")
+	if props["generics"] != "T" {
+		t.Errorf("generics = %q, want %q", props["generics"], "T")
+	}
+	if props["aliased_type"] != "(T, T)" {
+		t.Errorf("aliased_type = %q, want %q", props["aliased_type"], "(T, T)")
+	}
+}
+
+// type_extraction (struct): assert named field idents, generics, derives.
+func TestRustExtractor_StructFields_Deep(t *testing.T) {
+	src := `
+#[derive(Serialize, Deserialize)]
+struct User<T> {
+    id: u32,
+    name: String,
+    extra: T,
+}
+`
+	props := findRustEntity(t, src, "struct", "User")
+	if props["fields"] != "id, name, extra" {
+		t.Errorf("fields = %q, want %q", props["fields"], "id, name, extra")
+	}
+	if props["generics"] != "T" {
+		t.Errorf("generics = %q, want %q", props["generics"], "T")
+	}
+	if props["derives"] != "Serialize, Deserialize" {
+		t.Errorf("derives = %q, want %q", props["derives"], "Serialize, Deserialize")
+	}
+}
+
+// type_extraction: tuple struct fields are positional indices; unit struct has none.
+func TestRustExtractor_TupleAndUnitStruct_Deep(t *testing.T) {
+	src := `
+struct Point(i32, i32);
+struct Marker;
+`
+	tuple := findRustEntity(t, src, "struct", "Point")
+	if tuple["fields"] != "0, 1" {
+		t.Errorf("tuple fields = %q, want %q", tuple["fields"], "0, 1")
+	}
+	unit := findRustEntity(t, src, "struct", "Marker")
+	if unit["fields"] != "" {
+		t.Errorf("unit struct should have no fields, got %q", unit["fields"])
+	}
+}
+
 func TestRustExtractor_TypeAlias_Properties(t *testing.T) {
 	src := `type UserId = u64;`
 	tree := parseForTest(t, src)

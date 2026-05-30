@@ -45157,25 +45157,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -45375,25 +45374,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -45593,25 +45591,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -45811,25 +45808,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -46029,25 +46025,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -46247,25 +46242,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -46465,25 +46459,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -46764,25 +46757,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -46983,25 +46975,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {
@@ -47201,25 +47192,24 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "interface_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           },
           "type_alias_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-30"
           },
           "type_extraction": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/extractors/rust/rust.go"],
-            "issue": "backfill:dictionary-completeness"
+            "verified_at": "2026-05-30"
           }
         },
         "Testing": {

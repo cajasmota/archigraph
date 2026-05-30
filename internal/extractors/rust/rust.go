@@ -2,11 +2,19 @@
 //
 // Extracted entities:
 //   - struct_item     → Kind="SCOPE.Component", Subtype="struct"
+//     (Properties: fields, generics, derives)
 //   - enum_item       → Kind="SCOPE.Component", Subtype="enum"
+//     (Properties: variants, generics, derives)
 //   - trait_item      → Kind="SCOPE.Component", Subtype="trait"
+//     (Properties: methods, supertraits, generics; EXTENDS edges per supertrait)
+//   - type_item       → Kind="SCOPE.Component", Subtype="type_alias"
+//     (Properties: aliased_type, generics)
 //   - impl_item       → Kind="SCOPE.Component", Subtype="impl"
 //   - function_item   → Kind="SCOPE.Operation", Subtype="function"
 //   - use_declaration → IMPORTS relationship
+//
+// The struct/enum/trait/type_alias Properties realise the Type System deep
+// extraction bar (issue #3411), mirroring the JS/TS interface/enum emission.
 //
 // The extractor registers itself via init() and is auto-imported by the
 // generated registry_gen.go.
@@ -407,13 +415,23 @@ func findAllNodes(root *sitter.Node, kinds ...string) []*sitter.Node {
 }
 
 // buildComponent creates a Component entity for struct/enum/trait items.
+//
+// Issue #3411 — Type System deep extraction. Beyond the bare name, structured
+// Properties capture the type's internal shape (mirroring the JS/TS bar in
+// handleInterfaceDeclaration / handleEnumDeclaration):
+//
+//	struct → "fields" (named field idents or "0,1,.." for tuple structs),
+//	          "generics", "derives"
+//	enum   → "variants" (variant idents), "generics", "derives"
+//	trait  → "methods" (signature + default-body fn idents),
+//	          "supertraits", "generics", plus EXTENDS edges per supertrait
 func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string) (types.EntityRecord, bool) {
 	name := childFieldText(node, "name", file.Content)
 	if name == "" {
 		return types.EntityRecord{}, false
 	}
 
-	return types.EntityRecord{
+	rec := types.EntityRecord{
 		Name:               name,
 		Kind:               "SCOPE.Component",
 		Subtype:            subtype,
@@ -423,7 +441,242 @@ func buildComponent(node *sitter.Node, file extractor.FileInput, subtype string)
 		EndLine:            int(node.EndPoint().Row) + 1,
 		Signature:          buildTypeSignature(node, file.Content, name),
 		EnrichmentRequired: false,
-	}, true
+	}
+
+	props := map[string]string{}
+	if g := rustGenerics(node, file.Content); g != "" {
+		props["generics"] = g
+	}
+	switch subtype {
+	case "struct":
+		if f := rustStructFields(node, file.Content); f != "" {
+			props["fields"] = f
+		}
+		if d := rustDerives(node, file.Content); d != "" {
+			props["derives"] = d
+		}
+	case "enum":
+		if v := rustEnumVariants(node, file.Content); v != "" {
+			props["variants"] = v
+		}
+		if d := rustDerives(node, file.Content); d != "" {
+			props["derives"] = d
+		}
+	case "trait":
+		if m := rustTraitMethods(node, file.Content); m != "" {
+			props["methods"] = m
+		}
+		supers := rustSupertraits(node, file.Content)
+		if len(supers) > 0 {
+			props["supertraits"] = strings.Join(supers, ", ")
+			for _, s := range supers {
+				rec.Relationships = append(rec.Relationships, types.RelationshipRecord{
+					ToID: s,
+					Kind: "EXTENDS",
+				})
+			}
+		}
+	}
+	if len(props) > 0 {
+		rec.Properties = props
+	}
+	return rec, true
+}
+
+// rustGenerics returns a comma-separated list of generic type-parameter names
+// declared on a struct/enum/trait/type item (the `type_parameters` field).
+// Lifetime params (`'a`) and const params are included as written.
+func rustGenerics(node *sitter.Node, src []byte) string {
+	tp := node.ChildByFieldName("type_parameters")
+	if tp == nil {
+		return ""
+	}
+	var out []string
+	for i := 0; i < int(tp.ChildCount()); i++ {
+		ch := tp.Child(i)
+		switch ch.Type() {
+		case "type_identifier", "lifetime", "constrained_type_parameter":
+			out = append(out, strings.TrimSpace(string(src[ch.StartByte():ch.EndByte()])))
+		case "const_parameter", "optional_type_parameter":
+			out = append(out, strings.TrimSpace(string(src[ch.StartByte():ch.EndByte()])))
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
+// rustStructFields returns the field names of a struct_item. For a named-field
+// struct it returns the field identifiers; for a tuple struct it returns the
+// positional indices ("0, 1, ..."); for a unit struct it returns "".
+func rustStructFields(node *sitter.Node, src []byte) string {
+	body := node.ChildByFieldName("body")
+	if body == nil {
+		// Tuple/unit structs place the field list in an unnamed child.
+		for i := 0; i < int(node.ChildCount()); i++ {
+			ch := node.Child(i)
+			if ch.Type() == "ordered_field_declaration_list" {
+				body = ch
+				break
+			}
+		}
+	}
+	if body == nil {
+		return ""
+	}
+	switch body.Type() {
+	case "field_declaration_list":
+		var out []string
+		for i := 0; i < int(body.ChildCount()); i++ {
+			ch := body.Child(i)
+			if ch.Type() == "field_declaration" {
+				if nm := ch.ChildByFieldName("name"); nm != nil {
+					out = append(out, string(src[nm.StartByte():nm.EndByte()]))
+				}
+			}
+		}
+		return strings.Join(out, ", ")
+	case "ordered_field_declaration_list":
+		var out []string
+		idx := 0
+		for i := 0; i < int(body.ChildCount()); i++ {
+			if body.Child(i).ChildByFieldName("type") != nil ||
+				body.Child(i).Type() == "primitive_type" ||
+				isRustTypeNode(body.Child(i)) {
+				out = append(out, strconv.Itoa(idx))
+				idx++
+			}
+		}
+		return strings.Join(out, ", ")
+	}
+	return ""
+}
+
+// isRustTypeNode reports whether a node represents a type expression that would
+// occupy a positional slot in a tuple struct's ordered field list.
+func isRustTypeNode(n *sitter.Node) bool {
+	switch n.Type() {
+	case "(", ")", ",", "visibility_modifier":
+		return false
+	}
+	return true
+}
+
+// rustEnumVariants returns a comma-separated list of variant names declared in
+// an enum_item's enum_variant_list. Tuple (`Foo(i32)`), struct
+// (`Bar { x: u8 }`), and discriminant (`Baz = 1`) variants all contribute their
+// leading identifier.
+func rustEnumVariants(node *sitter.Node, src []byte) string {
+	body := node.ChildByFieldName("body")
+	if body == nil {
+		return ""
+	}
+	var out []string
+	for i := 0; i < int(body.ChildCount()); i++ {
+		ch := body.Child(i)
+		if ch.Type() != "enum_variant" {
+			continue
+		}
+		if nm := ch.ChildByFieldName("name"); nm != nil {
+			out = append(out, string(src[nm.StartByte():nm.EndByte()]))
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
+// rustTraitMethods returns a comma-separated list of method names declared in a
+// trait's declaration_list — both required signatures (function_signature_item)
+// and provided/default methods (function_item).
+func rustTraitMethods(node *sitter.Node, src []byte) string {
+	body := findRustDeclList(node)
+	if body == nil {
+		return ""
+	}
+	var out []string
+	for i := 0; i < int(body.ChildCount()); i++ {
+		ch := body.Child(i)
+		if ch.Type() == "function_signature_item" || ch.Type() == "function_item" {
+			if nm := ch.ChildByFieldName("name"); nm != nil {
+				out = append(out, string(src[nm.StartByte():nm.EndByte()]))
+			}
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
+// rustSupertraits returns the supertrait names from a trait_item's `bounds`
+// field (e.g. `trait A: B + C` → ["B", "C"]). Lifetime bounds are skipped.
+func rustSupertraits(node *sitter.Node, src []byte) []string {
+	bounds := node.ChildByFieldName("bounds")
+	if bounds == nil {
+		return nil
+	}
+	var out []string
+	for i := 0; i < int(bounds.ChildCount()); i++ {
+		ch := bounds.Child(i)
+		switch ch.Type() {
+		case "type_identifier":
+			out = append(out, string(src[ch.StartByte():ch.EndByte()]))
+		case "generic_type", "scoped_type_identifier":
+			if nm := ch.ChildByFieldName("name"); nm != nil {
+				out = append(out, string(src[nm.StartByte():nm.EndByte()]))
+			} else {
+				out = append(out, string(src[ch.StartByte():ch.EndByte()]))
+			}
+		}
+	}
+	return out
+}
+
+// rustDerives returns a comma-separated list of derive-macro names attached to
+// a type via `#[derive(...)]`. Derive attributes are emitted by the grammar as
+// `attribute_item` siblings immediately preceding the type item, so we scan
+// backwards over the previous siblings (skipping other attributes / comments).
+func rustDerives(node *sitter.Node, src []byte) string {
+	var out []string
+	for prev := node.PrevSibling(); prev != nil; prev = prev.PrevSibling() {
+		t := prev.Type()
+		if t == "line_comment" || t == "block_comment" {
+			continue
+		}
+		if t != "attribute_item" {
+			break
+		}
+		out = append(rustParseDerive(prev, src), out...)
+	}
+	return strings.Join(out, ", ")
+}
+
+// rustParseDerive extracts the derive names from a single attribute_item node
+// when it is a `#[derive(...)]`; returns nil for non-derive attributes.
+func rustParseDerive(attr *sitter.Node, src []byte) []string {
+	var inner *sitter.Node
+	for i := 0; i < int(attr.ChildCount()); i++ {
+		if attr.Child(i).Type() == "attribute" {
+			inner = attr.Child(i)
+			break
+		}
+	}
+	if inner == nil {
+		return nil
+	}
+	// First child identifier must be "derive".
+	id := inner.Child(0)
+	if id == nil || id.Type() != "identifier" ||
+		string(src[id.StartByte():id.EndByte()]) != "derive" {
+		return nil
+	}
+	args := inner.ChildByFieldName("arguments")
+	if args == nil {
+		return nil
+	}
+	var out []string
+	for i := 0; i < int(args.ChildCount()); i++ {
+		ch := args.Child(i)
+		switch ch.Type() {
+		case "identifier", "scoped_identifier", "type_identifier":
+			out = append(out, string(src[ch.StartByte():ch.EndByte()]))
+		}
+	}
+	return out
 }
 
 // buildImpl creates a Component entity for impl blocks.
@@ -506,8 +759,15 @@ func buildTypeAlias(node *sitter.Node, file extractor.FileInput) (types.EntityRe
 		Signature:          buildTypeSignature(node, file.Content, name),
 		EnrichmentRequired: false,
 	}
+	props := map[string]string{}
 	if aliasedType != "" {
-		rec.Properties = map[string]string{"aliased_type": aliasedType}
+		props["aliased_type"] = aliasedType
+	}
+	if g := rustGenerics(node, file.Content); g != "" {
+		props["generics"] = g
+	}
+	if len(props) > 0 {
+		rec.Properties = props
 	}
 	rec.ID = rec.ComputeID()
 	return rec, true

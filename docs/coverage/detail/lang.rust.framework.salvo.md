@@ -42,10 +42,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Enum extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/extractors/rust/rust.go` | — |
-| Interface extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/extractors/rust/rust.go` | — |
-| Type alias extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/extractors/rust/rust.go` | — |
-| Type extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/extractors/rust/rust.go` | — |
+| Enum extraction | ✅ `full` | `2026-05-30` | — | `internal/extractors/rust/rust.go` | — |
+| Interface extraction | ✅ `full` | `2026-05-30` | — | `internal/extractors/rust/rust.go` | — |
+| Type alias extraction | ✅ `full` | `2026-05-30` | — | `internal/extractors/rust/rust.go` | — |
+| Type extraction | ✅ `full` | `2026-05-30` | — | `internal/extractors/rust/rust.go` | — |
 
 ### Testing
 
