@@ -1342,6 +1342,234 @@ func TestKotlin_BacktickName(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Kotlin — deep TESTING linkage (#3437): junit5 / kotest / mockk / spek
+// ---------------------------------------------------------------------------
+
+// TestKotlin_JUnit5_DirectCallHighConfidence — a JUnit5 @Test that directly
+// calls a production method emits a high-confidence TESTS edge to that symbol.
+// Value-asserts the specific target (register), not len>0.
+func TestKotlin_JUnit5_DirectCall(t *testing.T) {
+	src := `import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+
+class UserServiceTest {
+    @Test
+    fun registersAUser() {
+        val svc = UserService()
+        val result = svc.register("ada")
+        assertEquals("ada", result.name)
+    }
+}`
+	recs := runExtract(t, "UserServiceTest.kt", "kotlin", src)
+	if recs[0].Properties["test_framework"] != "kotlin_test" {
+		t.Fatalf("framework=%q, want kotlin_test", recs[0].Properties["test_framework"])
+	}
+	// The direct call `svc.register("ada")` is captured at high confidence with
+	// its receiver preserved (the resolver does not strip the receiver).
+	if !hasEdgeAny(recs, "registersAUser", "svc.register") {
+		t.Fatalf("expected high-confidence TESTS edge registersAUser->svc.register; recs=%d", len(recs))
+	}
+	// Confidence must be high (direct call), and assertEquals must NOT leak.
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Properties["tested"] == "svc.register" && rel.Properties["confidence"] != "high" {
+				t.Errorf("register edge confidence=%q, want high", rel.Properties["confidence"])
+			}
+			if strings.Contains(rel.Properties["tested"], "assertEquals") {
+				t.Errorf("assertEquals leaked as a tested subject: %q", rel.Properties["tested"])
+			}
+		}
+	}
+}
+
+// TestKotlin_JUnit5_ParameterizedAndRepeated verifies @ParameterizedTest and
+// @RepeatedTest functions are detected and linked to a direct production call.
+func TestKotlin_JUnit5_ParameterizedAndRepeated(t *testing.T) {
+	src := `import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+
+class CalculatorTest {
+    @ParameterizedTest
+    @ValueSource(ints = [1, 2, 3])
+    fun addsNumbers(n: Int) {
+        val calc = Calculator()
+        calc.add(n, n)
+    }
+
+    @RepeatedTest(5)
+    fun resetsState() {
+        Calculator().reset()
+    }
+}`
+	recs := runExtract(t, "CalculatorTest.kt", "kotlin", src)
+	if !hasEdgeAny(recs, "addsNumbers", "calc.add") {
+		t.Errorf("expected @ParameterizedTest addsNumbers->calc.add edge")
+	}
+	if !hasEdgeAny(recs, "resetsState", "reset") {
+		t.Errorf("expected @RepeatedTest resetsState->reset edge")
+	}
+}
+
+// TestKotlin_JUnit5_ClassSubjectFallback — when a @Test body has no resolvable
+// production call, the test-class name convention (UserServiceTest →
+// UserService) yields a medium-confidence TESTS edge.
+func TestKotlin_JUnit5_ClassSubjectFallback(t *testing.T) {
+	src := `import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+
+class UserServiceTest {
+    @Test
+    fun isReady() {
+        assertTrue(true)
+    }
+}`
+	recs := runExtract(t, "UserServiceTest.kt", "kotlin", src)
+	found := false
+	for _, r := range recs {
+		if r.Properties["tested_function"] == "UserService" && r.Properties["confidence"] == "medium" {
+			for _, rel := range r.Relationships {
+				if rel.Kind == "TESTS" && rel.Properties["tested"] == "UserService" {
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected medium-confidence class-subject TESTS edge isReady->UserService; recs=%d", len(recs))
+	}
+}
+
+// TestKotlin_Kotest_StringSpec — a kotest StringSpec leaf case `"desc" { … }`
+// is detected and linked to the production call inside its lambda.
+func TestKotlin_Kotest_StringSpec(t *testing.T) {
+	src := `import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+
+class UserServiceSpec : StringSpec({
+    "registers a user" {
+        val svc = UserService()
+        svc.register("ada").name shouldBe "ada"
+    }
+})`
+	recs := runExtract(t, "UserServiceSpec.kt", "kotlin", src)
+	if recs[0].Properties["test_framework"] != "kotlin_test" {
+		t.Fatalf("framework=%q, want kotlin_test", recs[0].Properties["test_framework"])
+	}
+	if !hasEdgeAny(recs, "it_registers_a_user", "svc.register") {
+		t.Fatalf("expected kotest StringSpec edge ->svc.register; recs=%d", len(recs))
+	}
+	// shouldBe matcher must never leak as a tested subject.
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if strings.Contains(rel.Properties["tested"], "shouldBe") {
+				t.Errorf("kotest matcher shouldBe leaked as tested subject: %q", rel.Properties["tested"])
+			}
+		}
+	}
+}
+
+// TestKotlin_Kotest_FunSpec — FunSpec `test("x") { … }` verb-style cases.
+func TestKotlin_Kotest_FunSpec(t *testing.T) {
+	src := `import io.kotest.core.spec.style.FunSpec
+
+class OrderServiceTest : FunSpec({
+    test("places an order") {
+        val svc = OrderService()
+        svc.place(order)
+    }
+})`
+	recs := runExtract(t, "OrderServiceTest.kt", "kotlin", src)
+	if !hasEdgeAny(recs, "it_places_an_order", "svc.place") {
+		t.Fatalf("expected kotest FunSpec edge ->svc.place; recs=%d", len(recs))
+	}
+}
+
+// TestKotlin_Kotest_DescribeSpec — DescribeSpec describe/it nesting.
+func TestKotlin_Kotest_DescribeSpec(t *testing.T) {
+	src := `import io.kotest.core.spec.style.DescribeSpec
+
+class BillingSpec : DescribeSpec({
+    describe("billing") {
+        it("charges the card") {
+            val svc = BillingService()
+            svc.charge(100)
+        }
+    }
+})`
+	recs := runExtract(t, "BillingSpec.kt", "kotlin", src)
+	if !hasEdgeAny(recs, "it_charges_the_card", "svc.charge") {
+		t.Fatalf("expected kotest DescribeSpec edge ->svc.charge; recs=%d", len(recs))
+	}
+	// The container describe("billing") must not emit a redundant case.
+	for _, r := range recs {
+		if r.Properties["test_function"] == "it_billing" {
+			t.Errorf("container describe leaked as a case (it_billing); leaf should win")
+		}
+	}
+}
+
+// TestKotlin_Mockk_AssociatesMockedType — mockk<T>() records T as the subject;
+// the every{}/verify{} mocked call is NOT treated as the tested production
+// symbol. We assert the mocked type (PaymentGateway) is the subject and the
+// MockK verbs (every/verify) never leak.
+func TestKotlin_Mockk_AssociatesMockedType(t *testing.T) {
+	src := `import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.jupiter.api.Test
+
+class CheckoutTest {
+    @Test
+    fun completesCheckout() {
+        val gateway = mockk<PaymentGateway>()
+        every { gateway.charge(any()) } returns true
+        val svc = CheckoutService(gateway)
+        svc.checkout()
+        verify { gateway.charge(any()) }
+    }
+}`
+	recs := runExtract(t, "CheckoutTest.kt", "kotlin", src)
+	// The real production subject is the direct call CheckoutService.checkout.
+	if !hasEdgeAny(recs, "completesCheckout", "svc.checkout") {
+		t.Errorf("expected direct-call edge completesCheckout->svc.checkout")
+	}
+	// MockK DSL verbs/matchers AND the mocked call inside every{}/verify{}
+	// (gateway.charge) must never appear as tested subjects.
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			tested := rel.Properties["tested"]
+			switch tested {
+			case "every", "verify", "mockk", "any", "gateway.charge":
+				t.Errorf("MockK helper/mocked-call %q leaked as tested subject", tested)
+			}
+		}
+	}
+}
+
+// TestKotlin_Spek_Group — Spek2 describe/it DSL.
+func TestKotlin_Spek_Group(t *testing.T) {
+	src := `import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
+
+object ParserSpec : Spek({
+    describe("parser") {
+        it("parses input") {
+            val p = Parser()
+            p.parse("x")
+        }
+    }
+})`
+	recs := runExtract(t, "ParserSpec.kt", "kotlin", src)
+	if recs[0].Properties["test_framework"] != "kotlin_test" {
+		t.Fatalf("framework=%q, want kotlin_test", recs[0].Properties["test_framework"])
+	}
+	if !hasEdgeAny(recs, "it_parses_input", "p.parse") {
+		t.Fatalf("expected spek edge it_parses_input->p.parse; recs=%d", len(recs))
+	}
+}
+
+// ---------------------------------------------------------------------------
 // C# — xUnit / NUnit / MSTest deep linkage (#3383)
 // ---------------------------------------------------------------------------
 

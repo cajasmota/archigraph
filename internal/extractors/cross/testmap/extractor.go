@@ -222,7 +222,8 @@ func productionFileFromTestPath(filePath string) (prodFile, prodSymbol string) {
 			}
 		}
 	case ".kt":
-		for _, suf := range []string{"Tests", "Test"} {
+		// XxxTest.kt / XxxTests.kt → Xxx.kt; kotest specs XxxSpec.kt → Xxx.kt.
+		for _, suf := range []string{"Tests", "Test", "Spec"} {
 			if strings.HasSuffix(stem, suf) && len(stem) > len(suf) {
 				prodStem := stem[:len(stem)-len(suf)]
 				return path.Join(dir, prodStem+".kt"), prodStem

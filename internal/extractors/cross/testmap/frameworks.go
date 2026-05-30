@@ -1146,22 +1146,249 @@ func detectPhpPest(source string) []testFunction {
 }
 
 // ---------------------------------------------------------------------------
-// Kotlin — JUnit on Kotlin / kotlin.test
+// Kotlin — JUnit5 / kotlin.test / kotest / spek / mockk  (deep linkage, #3437)
+//
+// Deep linkage covers four families:
+//
+//	junit5  — @Test / @ParameterizedTest / @RepeatedTest fun (incl. backtick
+//	          names) and @Nested inner classes. Subject derived from the
+//	          enclosing class name (UserServiceTest → UserService) so a class-
+//	          level naming-convention edge is emitted when no direct call is
+//	          found, mirroring the C#/Java describeSubject path.
+//	kotest   — spec-style DSL test cases: StringSpec `"desc" { … }`,
+//	          FunSpec `test("x") { … }`, DescribeSpec/BehaviorSpec
+//	          (describe/context/given/when/then/it), ShouldSpec `should("x")`.
+//	          The case body is scanned for the production call.
+//	spek     — describe/context/group/it DSL (Spek2). Same body-scan approach.
+//	mockk    — `mockk<T>()` records the mocked type T as a describeSubject hint;
+//	          the mocked call (`every { svc.foo() }` / `verify { svc.foo() }`)
+//	          is NOT treated as the tested subject (its receiver is a mock) —
+//	          the mockk DSL verbs are stop-worded in resolver.go.
 // ---------------------------------------------------------------------------
 
-var kotlinTestRE = regexp.MustCompile(
-	`(?m)@Test(?:\s*\([^)]*\))?\s*(?:public\s+|private\s+|internal\s+)?fun\s+(` + "`" + `[^` + "`" + `]+` + "`" + `|\w+)\s*\([^)]*\)\s*(?::\s*\w+\s*)?{`,
+// kotlinJUnitTestRE matches a JUnit5/kotlin.test annotated function. It accepts
+// @Test, @ParameterizedTest and @RepeatedTest (each optionally carrying an
+// argument list), optional additional annotation lines (e.g. @DisplayName(…),
+// @ValueSource(…)) between the test annotation and the `fun`, and backtick fun
+// names containing spaces. Group 1 captures the function name (with backticks).
+var kotlinJUnitTestRE = regexp.MustCompile(
+	`(?m)@(?:Test|ParameterizedTest|RepeatedTest)(?:\s*\([^)]*\))?` +
+		`(?:\s*@\w+(?:\s*\([^)]*\))?)*` +
+		`\s*(?:public\s+|private\s+|internal\s+|protected\s+|override\s+|suspend\s+)*` +
+		`fun\s+(` + "`" + `[^` + "`" + `]+` + "`" + `|\w+)\s*\([^)]*\)\s*(?::\s*[\w<>.,? ]+\s*)?{`,
 )
 
+// kotlinClassRE captures the first declared class name in a Kotlin source file.
+// Used to derive the JUnit subject under test from the test-class name.
+var kotlinClassRE = regexp.MustCompile(
+	`(?m)^\s*(?:(?:public|private|internal|abstract|open|final|sealed|data)\s+)*class\s+(\w+)`,
+)
+
+// kotlinSpecClassRE captures a kotest/spek spec class or object and its spec
+// style. Group 1 is the class/object name, group 2 the spec base. Kotest specs
+// declare `class FooTest : StringSpec({ … })`; Spek2 declares
+// `object FooSpec : Spek({ … })`. Both `class` and `object` are accepted.
+var kotlinSpecClassRE = regexp.MustCompile(
+	`(?m)\b(?:class|object)\s+(\w+)\s*:\s*(StringSpec|FunSpec|DescribeSpec|BehaviorSpec|ShouldSpec|FreeSpec|WordSpec|AnnotationSpec|ExpectSpec|FeatureSpec|Spek)\b`,
+)
+
+// kotestStringCaseRE matches a StringSpec / FreeSpec leaf case: a string literal
+// immediately followed by a `{` lambda — `"adds two numbers" { … }`. Group 1 is
+// the description.
+var kotestStringCaseRE = regexp.MustCompile(
+	`(?m)"([^"]{1,200})"\s*{`,
+)
+
+// kotestFnCaseRE matches a kotest DSL case introduced by a verb taking a string
+// description: test("x"){}, describe("x"){}, context("x"){}, given("x"){},
+// `when`("x"){}, then("x"){}, it("x"){}, should("x"){}, feature/scenario/expect.
+// Group 1 = verb, group 2 = description.
+var kotestFnCaseRE = regexp.MustCompile(
+	"(?m)\\b(test|describe|context|given|`when`|when|then|it|should|feature|scenario|expect|xtest|xdescribe|xcontext|xit)\\s*\\(\\s*\"([^\"]{1,200})\"\\s*\\)\\s*{",
+)
+
+// kotlinMockkTypeRE captures the mocked type T in `mockk<T>()` / `spyk<T>()` /
+// `mockkClass(T::class)`. Group 1 or group 2 carries the type name. The mocked
+// type is the subject the test exercises through the mock.
+var kotlinMockkTypeRE = regexp.MustCompile(
+	`(?m)\b(?:mockk|spyk)\s*<\s*([A-Z]\w*)\s*>|\bmockkClass\s*\(\s*([A-Z]\w*)::class`,
+)
+
+// kotlinMockkBlockRE locates the start of a MockK stubbing/verification block —
+// `every {`, `coEvery {`, `verify {`, `coVerify {`, `verifyOrder {`,
+// `verifySequence {`, `verifyAll {`, `excludeRecords {`. The mocked call inside
+// these blocks is on a mock receiver, NOT the production subject, so the block
+// body is blanked before the resolver scans for production calls. The mocked
+// type is still recorded separately as the describeSubject (mockk<T>()).
+var kotlinMockkBlockRE = regexp.MustCompile(
+	`\b(?:every|coEvery|verify|coVerify|verifyOrder|verifySequence|verifyAll|excludeRecords)\s*(?:\([^)]*\))?\s*{`,
+)
+
+// blankKotlinMockkBlocks blanks out every MockK every/verify lambda body in body
+// (replacing characters with spaces, preserving offsets and newlines) so the
+// resolver never treats the mocked call (e.g. `gateway.charge(...)` inside
+// `every { … }`) as a tested production subject.
+func blankKotlinMockkBlocks(body string) string {
+	if !kotlinMockkBlockRE.MatchString(body) {
+		return body
+	}
+	out := body
+	for {
+		loc := kotlinMockkBlockRE.FindStringIndex(out)
+		if loc == nil {
+			break
+		}
+		// The lambda body starts at the trailing `{` of the match.
+		block := extractBraceBody(out, loc[1]-1)
+		if block == "" {
+			// Unbalanced — blank from the match start to end of the keyword to
+			// avoid an infinite loop, then stop.
+			out = out[:loc[0]] + strings.Repeat(" ", loc[1]-loc[0]) + out[loc[1]:]
+			continue
+		}
+		blockStart := strings.Index(out[loc[0]:], block) + loc[0]
+		blanked := subtractRanges(out, [][2]int{{loc[0], blockStart + len(block)}})
+		out = blanked
+	}
+	return out
+}
+
+// kotlinSubjectFromClassName derives the class under test from a Kotlin test
+// class name by stripping trailing "Tests"/"Test"/"Spec" suffixes.
+//
+//	UserServiceTest  → UserService
+//	UserServiceTests → UserService
+//	UserServiceSpec  → UserService
+//	(no suffix)      → ""
+func kotlinSubjectFromClassName(className string) string {
+	for _, suf := range []string{"Tests", "Test", "Spec"} {
+		if strings.HasSuffix(className, suf) && len(className) > len(suf) {
+			return className[:len(className)-len(suf)]
+		}
+	}
+	return ""
+}
+
+// kotlinFirstClassName returns the first class name declared in source.
+func kotlinFirstClassName(source string) string {
+	if m := kotlinClassRE.FindStringSubmatch(source); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
+// kotlinMockkSubject returns the first mocked type found via mockk<T>()/spyk<T>()
+// /mockkClass(T::class), or "".
+func kotlinMockkSubject(source string) string {
+	if m := kotlinMockkTypeRE.FindStringSubmatch(source); m != nil {
+		if m[1] != "" {
+			return m[1]
+		}
+		return m[2]
+	}
+	return ""
+}
+
+// detectKotlinTest detects Kotlin test cases across junit5, kotest, spek and
+// mockk. kotest/spek spec files are handled first (they declare a recognised
+// spec base class); plain annotated junit5 files fall through to the @Test path.
 func detectKotlinTest(source string) []testFunction {
+	// kotest / spek spec-class files: scan DSL cases inside the spec lambda.
+	if specClass := kotlinSpecClassRE.FindStringSubmatch(source); specClass != nil {
+		className := specClass[1]
+		subject := kotlinSubjectFromClassName(className)
+		// A mockk subject (mockk<UserService>()) is more specific than the class
+		// name when the spec name does not encode the subject.
+		if mockSub := kotlinMockkSubject(source); mockSub != "" {
+			subject = mockSub
+		}
+		return detectKotlinSpecCases(source, subject)
+	}
+
+	// junit5 / kotlin.test annotated functions.
+	className := kotlinFirstClassName(source)
+	subject := kotlinSubjectFromClassName(className)
+	if mockSub := kotlinMockkSubject(source); mockSub != "" && subject == "" {
+		subject = mockSub
+	}
+
 	var out []testFunction
-	for _, m := range kotlinTestRE.FindAllStringSubmatchIndex(source, -1) {
+	seen := map[string]bool{}
+	for _, m := range kotlinJUnitTestRE.FindAllStringSubmatchIndex(source, -1) {
 		name := strings.Trim(source[m[2]:m[3]], "`")
 		// Backtick names can contain spaces — normalise.
 		name = strings.ReplaceAll(name, " ", "_")
-		body := extractBraceBody(source, m[1]-1)
-		out = append(out, testFunction{qname: name, body: body})
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		body := blankKotlinMockkBlocks(extractBraceBody(source, m[1]-1))
+		out = append(out, testFunction{qname: name, body: body, describeSubject: subject})
 	}
+	return out
+}
+
+// detectKotlinSpecCases scans a kotest/spek spec file for leaf DSL cases and
+// returns one testFunction per case. Each case carries its body (scanned for
+// production calls) and the spec-level describeSubject (mockk type or class-name
+// convention) as a medium-confidence fallback.
+func detectKotlinSpecCases(source, subject string) []testFunction {
+	var out []testFunction
+	seen := map[string]bool{}
+	add := func(name, body string) {
+		if name == "" || seen[name] {
+			return
+		}
+		seen[name] = true
+		out = append(out, testFunction{
+			qname:           name,
+			body:            blankKotlinMockkBlocks(body),
+			describeSubject: subject,
+		})
+	}
+
+	// Leaf verbs introduce an actual test case; container verbs only group cases.
+	// We collect leaf-verb cases first; when at least one leaf exists, container
+	// cases (describe/context/given/feature/scenario/when) are skipped so the
+	// finest-grained leaf wins and we don't emit a redundant container case whose
+	// body merely re-scans the same nested production calls.
+	leafVerb := map[string]bool{
+		"test": true, "it": true, "should": true, "then": true,
+		"expect": true, "xtest": true, "xit": true, "scenario": true,
+	}
+
+	type caseHit struct {
+		verb, name, body string
+	}
+	var hits []caseHit
+	haveLeaf := false
+	for _, m := range kotestFnCaseRE.FindAllStringSubmatchIndex(source, -1) {
+		verb := strings.Trim(source[m[2]:m[3]], "`")
+		desc := source[m[4]:m[5]]
+		body := extractBraceBody(source, m[1]-1)
+		if leafVerb[verb] {
+			haveLeaf = true
+		}
+		hits = append(hits, caseHit{verb: verb, name: jestCaseQName(desc), body: body})
+	}
+	for _, h := range hits {
+		if haveLeaf && !leafVerb[h.verb] {
+			continue
+		}
+		add(h.name, h.body)
+	}
+
+	// StringSpec/FreeSpec leaf cases: "desc" { … }. Only scanned when no verb-
+	// style cases were found, to avoid double-counting the string argument of a
+	// verb-style case and to keep the finest-grained leaf as the case.
+	if len(hits) == 0 {
+		for _, m := range kotestStringCaseRE.FindAllStringSubmatchIndex(source, -1) {
+			desc := source[m[2]:m[3]]
+			body := extractBraceBody(source, m[1]-1)
+			add(jestCaseQName(desc), body)
+		}
+	}
+
 	return out
 }
 
@@ -1336,11 +1563,17 @@ var frameworkOrder = []frameworkEntry{
 		detect: detectJUnit,
 	},
 	{
-		name:        "kotlin_test",
-		importHints: []string{"kotlin.test", "org.junit", "junit.jupiter"},
+		name: "kotlin_test",
+		importHints: []string{
+			"kotlin.test", "org.junit", "junit.jupiter",
+			// kotest spec DSL + assertions, Spek2 DSL, and MockK.
+			"io.kotest", "kotest", "org.spekframework", "spek", "io.mockk", "mockk",
+		},
 		filenameHints: []*regexp.Regexp{
 			regexp.MustCompile(`Test\.kt$`),
 			regexp.MustCompile(`Tests\.kt$`),
+			// kotest specs conventionally end in Spec.kt.
+			regexp.MustCompile(`Spec\.kt$`),
 		},
 		detect: detectKotlinTest,
 	},
@@ -1412,6 +1645,18 @@ func selectFramework(tokens map[string]bool, filePath string) *frameworkEntry {
 		pathMatch := len(fe.pathHints) > 0 && matchesAnyPath(filePath, fe.pathHints)
 
 		switch fe.name {
+		case "junit":
+			// The Java JUnit entry shares import hints (org.junit / junit.jupiter)
+			// with Kotlin tests, and is listed before kotlin_test. A Kotlin test
+			// using org.junit.jupiter.* would otherwise be routed to detectJUnit
+			// (which scans for `void` Java methods) and yield zero results. Skip
+			// the Java entry for .kt files so the kotlin_test entry wins.
+			if strings.HasSuffix(strings.ToLower(filePath), ".kt") {
+				continue
+			}
+			if importMatch || fileMatch || pathMatch {
+				return fe
+			}
 		case "rust_test":
 			// Filename alone is not a signal — require the detector to
 			// actually yield at least one match, which is checked at the

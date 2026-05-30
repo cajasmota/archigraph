@@ -87,6 +87,38 @@ var stopwords = map[string]bool{
 	// JUnit
 	"assertions.assertequals": true, "assertequals": true,
 	"assertnull": true, "assertnotnull": true,
+	// Kotlin — kotest matchers (infix + paren forms), kotlin.test / JUnit5
+	// assertions, and MockK DSL verbs. These are test-harness identifiers and
+	// must never surface as the tested production subject. Lower-cased.
+	"shouldbe": true, "shouldnotbe": true, "shouldthrow": true,
+	"shouldthrowany": true, "shouldthrowexactly": true, "shouldnotthrow": true,
+	"shouldcontain": true, "shouldnotcontain": true, "shouldcontainall": true,
+	"shouldcontainexactly": true, "shouldstartwith": true, "shouldendwith": true,
+	"shouldbeempty": true, "shouldnotbeempty": true, "shouldbenull": true,
+	"shouldnotbenull": true, "shouldbetrue": true, "shouldbefalse": true,
+	"shouldhavesize": true, "shouldbegreaterthan": true, "shouldbelessthan": true,
+	"shouldhavekey": true, "shouldbeinstanceof": true, "shouldmatch": true,
+	"shouldbeequal": true, "shouldbesameinstanceas": true, "shouldcontainkey": true,
+	"assertthrows": true, "assertdoesnotthrow": true, "assertall": true,
+	"assertnotsame": true, "assertcontentequals": true,
+	"assertfailswith": true, "assertfails": true, "fail": true,
+	// MockK DSL — mock construction, stubbing and verification verbs. The mocked
+	// CALL inside every/verify is on a mock receiver, not the production subject,
+	// so the whole MockK surface is stop-worded (the real subject is recorded as
+	// the describeSubject from mockk<T>()).
+	"every": true, "coevery": true, "verify": true, "coverify": true,
+	"verifyall": true, "verifyorder": true, "verifysequence": true,
+	"confirmverified": true, "clearmocks": true, "clearallmocks": true,
+	"unmockkall": true, "unmockkstatic": true, "mockkstatic": true,
+	"mockkobject": true, "justrun": true, "answers": true, "returnsmany": true,
+	"mockk": true, "spyk": true, "mockkclass": true, "slot": true, "capture": true,
+	// kotest lifecycle / property-test DSL
+	"beforetest": true, "aftertest": true, "beforespec": true, "afterspec": true,
+	"forall": true, "checkall": true,
+	// MockK argument matchers (any()/eq()/match()/capture(slot)) — these are
+	// stubbing helpers, never the production subject under test.
+	"any": true, "anynullable": true, "neq": true, "less": true,
+	"more": true, "oftype": true, "allany": true,
 	// RSpec matchers and DSL helpers
 	"allow": true, "receive": true, "expect.to": true,
 	"be_valid": true, "be_nil": true, "be_present": true, "be_empty": true,

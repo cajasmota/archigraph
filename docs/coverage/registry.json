@@ -29623,9 +29623,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -29907,8 +29908,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"]
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Substrate": {
@@ -30215,9 +30218,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -30468,9 +30472,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -30726,9 +30731,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -31009,8 +31015,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"]
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Substrate": {
@@ -31177,9 +31185,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -31442,9 +31451,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -31722,9 +31732,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -32002,9 +32013,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/substrate/entry_points_kotlin.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/rules/kotlin/test_patterns.yaml","internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep Kotlin TESTING linkage (#3437): junit5 @Test/@ParameterizedTest/@RepeatedTest + class-name subject; kotest StringSpec/FunSpec/DescribeSpec/BehaviorSpec/ShouldSpec/Spek DSL leaf cases with body call-scan; MockK mockk\u003cT\u003e() subject association with every{}/verify{} blocks blanked so the mocked call never leaks; Kotlin assertion/mockk stopwords (shouldBe/assertThrows/every/verify/any). Value-asserted in extractor_test.go (TestKotlin_JUnit5_*/Kotest_*/Mockk_*/Spek_*).",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {

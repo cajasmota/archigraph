@@ -12203,13 +12203,50 @@ records:
           verified_at: "2026-05-28"
       Testing:
         tests_linkage:
-          status: partial
+          # Deep Kotlin TESTING linkage (#3437). Kotlin test files (*Test.kt /
+          # *Tests.kt / *Spec.kt) are routed to the cross-language testmap
+          # extractor's kotlin_test framework. detectKotlinTest covers four
+          # families:
+          #   junit5     — @Test / @ParameterizedTest / @RepeatedTest fun
+          #                (incl. backtick names) + @Nested; class-name subject
+          #                (UserServiceTest → UserService) as a medium-confidence
+          #                fallback when no direct call is found.
+          #   kotest     — StringSpec "desc"{…}, FunSpec test("x"){…},
+          #                DescribeSpec/BehaviorSpec/ShouldSpec describe/context/
+          #                given/when/then/it/should DSL leaf cases; case body
+          #                scanned for the production call (high confidence).
+          #                Container verbs are skipped when a leaf exists.
+          #   spek       — Spek2 object X : Spek({ describe/it … }) DSL.
+          #   mockk      — mockk<T>()/spyk<T>()/mockkClass(T::class) record the
+          #                mocked type T as the subject; every{}/verify{} blocks
+          #                are blanked so the mocked call never leaks as the
+          #                tested subject.
+          # resolver.go carries Kotlin assertion/harness stopwords (kotest
+          # matchers shouldBe/shouldThrow/…, kotlin.test/JUnit5 assertThrows/
+          # assertEquals/…, MockK every/verify/confirmVerified/coEvery + matchers
+          # any/eq). Value-asserted by the TestKotlin_* tests below.
+          status: full
           symbols:
-            - file: internal/substrate/entry_points_kotlin.go
-              functions: [sniffKotlinEntryPoints]
+            - file: internal/extractors/cross/testmap/frameworks.go
+              functions: [detectKotlinTest, detectKotlinSpecCases, blankKotlinMockkBlocks, kotlinSubjectFromClassName, kotlinMockkSubject]
+            - file: internal/extractors/cross/testmap/resolver.go
+              functions: [resolveCalls, isStopword]
+            - file: internal/extractors/cross/testmap/extractor.go
+              functions: [Extract, buildCollapsedEntity, productionFileFromTestPath]
             - file: internal/engine/rules/kotlin/test_patterns.yaml
-          issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
+          tests:
+            - file: internal/extractors/cross/testmap/extractor_test.go
+              functions:
+                - TestKotlin_JUnit5_DirectCall
+                - TestKotlin_JUnit5_ParameterizedAndRepeated
+                - TestKotlin_JUnit5_ClassSubjectFallback
+                - TestKotlin_Kotest_StringSpec
+                - TestKotlin_Kotest_FunSpec
+                - TestKotlin_Kotest_DescribeSpec
+                - TestKotlin_Mockk_AssociatesMockedType
+                - TestKotlin_Spek_Group
+          issues_implemented: ["3437"]
+          verified_at: "2026-05-31"
 
   lang.elixir.framework.phoenix:
     capabilities:
