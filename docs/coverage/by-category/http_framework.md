@@ -14,14 +14,14 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C/C++](../by-language/c-cpp.md) | [ACE (Adaptive Communication Environment)](../detail/lang.c-cpp.framework.ace.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [Boost (Boost.Asio + utilities)](../detail/lang.c-cpp.framework.boost.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [Boost.Asio](../detail/lang.c-cpp.framework.boost-asio.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
-| [C/C++](../by-language/c-cpp.md) | [Crow](../detail/lang.c-cpp.framework.crow.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
-| [C/C++](../by-language/c-cpp.md) | [Drogon](../detail/lang.c-cpp.framework.drogon.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
+| [C/C++](../by-language/c-cpp.md) | [Crow](../detail/lang.c-cpp.framework.crow.md) | 🟡 2/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
+| [C/C++](../by-language/c-cpp.md) | [Drogon](../detail/lang.c-cpp.framework.drogon.md) | 🟡 2/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [Oat++](../detail/lang.c-cpp.framework.oatpp.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [POCO C++ Libraries](../detail/lang.c-cpp.framework.poco.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
-| [C/C++](../by-language/c-cpp.md) | [Pistache](../detail/lang.c-cpp.framework.pistache.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
+| [C/C++](../by-language/c-cpp.md) | [Pistache](../detail/lang.c-cpp.framework.pistache.md) | 🟡 2/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [RESTinio](../detail/lang.c-cpp.framework.restinio.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [Restbed](../detail/lang.c-cpp.framework.restbed.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
-| [C/C++](../by-language/c-cpp.md) | [cpprestsdk (Casablanca)](../detail/lang.c-cpp.framework.cpprestsdk.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
+| [C/C++](../by-language/c-cpp.md) | [cpprestsdk (Casablanca)](../detail/lang.c-cpp.framework.cpprestsdk.md) | 🟡 2/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [libev](../detail/lang.c-cpp.framework.libev.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [libevent](../detail/lang.c-cpp.framework.libevent.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
 | [C/C++](../by-language/c-cpp.md) | [libuv](../detail/lang.c-cpp.framework.libuv.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 1/6 | |
@@ -97,14 +97,14 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [python](../by-language/python.md) | [Strawberry GraphQL](../detail/lang.python.framework.strawberry-graphql.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟢 7/7 | |
 | [python](../by-language/python.md) | [Tornado](../detail/lang.python.framework.tornado.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟢 20/20 | 🟢 7/7 | |
 | [python](../by-language/python.md) | [aiohttp](../detail/lang.python.framework.aiohttp.md) | ✅ 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 20/20 | 🟢 7/7 | |
-| [ruby](../by-language/ruby.md) | [Cuba](../detail/lang.ruby.framework.cuba.md) | 🔴 0/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [Grape](../detail/lang.ruby.framework.grape.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [Hanami](../detail/lang.ruby.framework.hanami.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [Padrino](../detail/lang.ruby.framework.padrino.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [Roda](../detail/lang.ruby.framework.roda.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [Sinatra](../detail/lang.ruby.framework.sinatra.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [ruby](../by-language/ruby.md) | [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | 🟡 1/2 | — | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/5 | |
+| [ruby](../by-language/ruby.md) | [Cuba](../detail/lang.ruby.framework.cuba.md) | 🔴 0/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [Grape](../detail/lang.ruby.framework.grape.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [Hanami](../detail/lang.ruby.framework.hanami.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [Padrino](../detail/lang.ruby.framework.padrino.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [Roda](../detail/lang.ruby.framework.roda.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [Sinatra](../detail/lang.ruby.framework.sinatra.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [ruby](../by-language/ruby.md) | [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | 🟡 1/2 | — | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/5 | |
 | [rust](../by-language/rust.md) | [Actix Web](../detail/lang.rust.framework.actix.md) | 🟡 2/3 | 🔴 0/1 | 🟡 3/4 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
 | [rust](../by-language/rust.md) | [Axum](../detail/lang.rust.framework.axum.md) | 🟡 2/3 | 🔴 0/1 | 🟡 3/4 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
 | [rust](../by-language/rust.md) | [Gotham](../detail/lang.rust.framework.gotham.md) | 🟡 2/3 | 🔴 0/1 | 🟡 3/4 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |

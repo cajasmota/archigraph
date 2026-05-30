@@ -15,8 +15,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Endpoint synthesis | 🔴 `missing` | — | — | — | — |
-| Handler attribution | 🔴 `missing` | — | — | — | — |
+| Endpoint synthesis | 🟢 `partial` | `2026-05-30` | 3280 | `internal/custom/cpp/pistache_routes.go` | — |
+| Handler attribution | 🟢 `partial` | `2026-05-30` | 3280 | `internal/custom/cpp/pistache_routes.go` | — |
 | Route extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Auth

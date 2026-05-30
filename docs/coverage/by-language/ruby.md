@@ -26,14 +26,14 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [Cuba](../detail/lang.ruby.framework.cuba.md) | 🔴 0/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [Grape](../detail/lang.ruby.framework.grape.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [Hanami](../detail/lang.ruby.framework.hanami.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [Padrino](../detail/lang.ruby.framework.padrino.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [Roda](../detail/lang.ruby.framework.roda.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [Sinatra](../detail/lang.ruby.framework.sinatra.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/6 | |
-| [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | 🟡 1/2 | — | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🔴 0/5 | |
+| [Cuba](../detail/lang.ruby.framework.cuba.md) | 🔴 0/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [Grape](../detail/lang.ruby.framework.grape.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [Hanami](../detail/lang.ruby.framework.hanami.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [Padrino](../detail/lang.ruby.framework.padrino.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [Roda](../detail/lang.ruby.framework.roda.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [Sinatra](../detail/lang.ruby.framework.sinatra.md) | 🟡 2/3 | 🟢 1/1 | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
+| [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | 🟡 1/2 | — | 🔴 0/1 | 🟢 1/1 | 🟢 21/21 | 🟡 3/5 | |
 
 
 ## Tools

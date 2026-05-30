@@ -2503,10 +2503,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/cpprestsdk_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/cpprestsdk_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -2696,10 +2702,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/crow_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/crow_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -2889,10 +2901,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/drogon_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/drogon_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -3854,10 +3872,16 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/pistache_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/pistache_routes.go"],
+            "issue": "3280",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
