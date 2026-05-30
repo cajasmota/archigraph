@@ -24,7 +24,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Association extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/gorm.go`<br>`internal/custom/golang/gorm_test.go` | — |
 | Foreign key extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/gorm.go`<br>`internal/custom/golang/gorm_test.go` | — |
-| Lazy loading recognition | 🟢 `partial` | `2026-05-30` | 3214 | `internal/custom/golang/gorm.go`<br>`internal/custom/golang/gorm_test.go` | — |
+| Lazy loading recognition | 🟢 `partial` | `2026-05-30` | 3214 | `internal/custom/golang/gorm.go` | GORM has no static eager/lazy declaration on models; loading is query-time via .Preload(name), .Joins(assoc), .Association(name) chain calls — detected as chainer ops but cannot statically infer which associations are always preloaded vs lazy |
 | Relationship extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/gorm.go`<br>`internal/custom/golang/gorm_test.go` | — |
 
 ### Queries

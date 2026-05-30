@@ -12375,16 +12375,18 @@
           },
           "route_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/golang/chi.go","internal/engine/go_routes.go","internal/engine/rules/go/frameworks/chi.yaml"],
+            "cites": ["internal/custom/golang/chi.go","internal/custom/golang/extractors_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "regex-based: direct .GET/.POST/.DELETE/.PATCH etc + .Group()/.Route() prefix resolution tested; misses cross-file route splits, dynamic path construction, indirect router variable aliasing, and conditional registration",
             "verified_at": "2026-05-29"
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/chi.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "heuristic substring catalog (jwt/oauth/basic/session/rbac/api_key/auth) against .Use() chain expressions; auth_kind + dedicated auth:NAME pattern emitted; fixture tests prove jwt/basic/oauth classification per-framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Validation": {
@@ -12396,16 +12398,18 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/golang/validation.go","internal/custom/golang/validation_test.go"],
+            "cites": ["internal/custom/golang/helpers.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3213",
+            "notes": "binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:\"required\" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths",
             "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/chi.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "balanced .Use(...) chain parser with paren-depth tracking; one SCOPE.Pattern per middleware in registration order (mw_order 0,1,2,...); string-literal mount prefix skipped; fixture-driven tests per framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -12422,6 +12426,7 @@
           "type_alias_extraction": {
             "status": "partial",
             "cites": ["internal/extractors/golang/extractor.go"],
+            "notes": "type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
@@ -12435,6 +12440,7 @@
             "status": "partial",
             "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented",
             "verified_at": "2026-05-29"
           }
         },
@@ -12442,11 +12448,13 @@
           "log_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
@@ -12459,6 +12467,7 @@
           "db_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_golang.go"],
+            "notes": "DB effect tracking is cross-cutting substrate analysis; current extractors capture ORM call sites (gorm/sqlx/pgx/bun) at call-site level but do not bind them to specific HTTP handlers via data-flow",
             "verified_at": "2026-05-28"
           }
         },
@@ -12586,16 +12595,18 @@
           },
           "route_extraction": {
             "status": "partial",
-            "cites": ["internal/engine/go_routes.go","internal/engine/rules/go/frameworks/echo.yaml"],
+            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/extractors_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "regex-based: direct .GET/.POST/.DELETE/.PATCH etc + .Group()/.Route() prefix resolution tested; misses cross-file route splits, dynamic path construction, indirect router variable aliasing, and conditional registration",
             "verified_at": "2026-05-29"
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "heuristic substring catalog (jwt/oauth/basic/session/rbac/api_key/auth) against .Use() chain expressions; auth_kind + dedicated auth:NAME pattern emitted; fixture tests prove jwt/basic/oauth classification per-framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Validation": {
@@ -12607,16 +12618,18 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/golang/validation.go","internal/custom/golang/validation_test.go"],
+            "cites": ["internal/custom/golang/helpers.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3213",
+            "notes": "binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:\"required\" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths",
             "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "balanced .Use(...) chain parser with paren-depth tracking; one SCOPE.Pattern per middleware in registration order (mw_order 0,1,2,...); string-literal mount prefix skipped; fixture-driven tests per framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -12633,6 +12646,7 @@
           "type_alias_extraction": {
             "status": "partial",
             "cites": ["internal/extractors/golang/extractor.go"],
+            "notes": "type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
@@ -12646,6 +12660,7 @@
             "status": "partial",
             "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented",
             "verified_at": "2026-05-29"
           }
         },
@@ -12653,11 +12668,13 @@
           "log_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
@@ -12670,6 +12687,7 @@
           "db_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_golang.go"],
+            "notes": "DB effect tracking is cross-cutting substrate analysis; current extractors capture ORM call sites (gorm/sqlx/pgx/bun) at call-site level but do not bind them to specific HTTP handlers via data-flow",
             "verified_at": "2026-05-28"
           }
         },
@@ -13007,16 +13025,18 @@
           },
           "route_extraction": {
             "status": "partial",
-            "cites": ["internal/engine/go_routes.go","internal/engine/rules/go/frameworks/fiber.yaml"],
+            "cites": ["internal/custom/golang/extractors_test.go","internal/custom/golang/fiber.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "regex-based: direct .GET/.POST/.DELETE/.PATCH etc + .Group()/.Route() prefix resolution tested; misses cross-file route splits, dynamic path construction, indirect router variable aliasing, and conditional registration",
             "verified_at": "2026-05-29"
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/fiber.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "heuristic substring catalog (jwt/oauth/basic/session/rbac/api_key/auth) against .Use() chain expressions; auth_kind + dedicated auth:NAME pattern emitted; fixture tests prove jwt/basic/oauth classification per-framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Validation": {
@@ -13028,16 +13048,18 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/golang/validation.go","internal/custom/golang/validation_test.go"],
+            "cites": ["internal/custom/golang/helpers.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3213",
+            "notes": "binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:\"required\" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths",
             "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/fiber.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "balanced .Use(...) chain parser with paren-depth tracking; one SCOPE.Pattern per middleware in registration order (mw_order 0,1,2,...); string-literal mount prefix skipped; fixture-driven tests per framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -13054,6 +13076,7 @@
           "type_alias_extraction": {
             "status": "partial",
             "cites": ["internal/extractors/golang/extractor.go"],
+            "notes": "type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
@@ -13067,6 +13090,7 @@
             "status": "partial",
             "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented",
             "verified_at": "2026-05-29"
           }
         },
@@ -13074,11 +13098,13 @@
           "log_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
@@ -13091,6 +13117,7 @@
           "db_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_golang.go"],
+            "notes": "DB effect tracking is cross-cutting substrate analysis; current extractors capture ORM call sites (gorm/sqlx/pgx/bun) at call-site level but do not bind them to specific HTTP handlers via data-flow",
             "verified_at": "2026-05-28"
           }
         },
@@ -13300,16 +13327,18 @@
           },
           "route_extraction": {
             "status": "partial",
-            "cites": ["internal/engine/go_routes.go","internal/engine/rules/go/frameworks/gin.yaml"],
+            "cites": ["internal/custom/golang/extractors_test.go","internal/custom/golang/gin.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "regex-based: direct .GET/.POST/.DELETE/.PATCH etc + .Group()/.Route() prefix resolution tested; misses cross-file route splits, dynamic path construction, indirect router variable aliasing, and conditional registration",
             "verified_at": "2026-05-29"
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/gin.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "heuristic substring catalog (jwt/oauth/basic/session/rbac/api_key/auth) against .Use() chain expressions; auth_kind + dedicated auth:NAME pattern emitted; fixture tests prove jwt/basic/oauth classification per-framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Validation": {
@@ -13321,16 +13350,18 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/golang/validation.go","internal/custom/golang/validation_test.go"],
+            "cites": ["internal/custom/golang/helpers.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3213",
+            "notes": "binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:\"required\" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths",
             "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/gin.go","internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_test.go"],
+            "notes": "balanced .Use(...) chain parser with paren-depth tracking; one SCOPE.Pattern per middleware in registration order (mw_order 0,1,2,...); string-literal mount prefix skipped; fixture-driven tests per framework",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -13347,6 +13378,7 @@
           "type_alias_extraction": {
             "status": "partial",
             "cites": ["internal/extractors/golang/extractor.go"],
+            "notes": "type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
@@ -13360,6 +13392,7 @@
             "status": "partial",
             "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented",
             "verified_at": "2026-05-29"
           }
         },
@@ -13367,11 +13400,13 @@
           "log_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
+            "notes": "prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
@@ -13924,16 +13959,18 @@
           },
           "route_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/golang/gorilla_mux.go","internal/engine/go_routes.go","internal/engine/rules/go/frameworks/gorilla_mux.yaml"],
+            "cites": ["internal/custom/golang/extractors_test.go","internal/custom/golang/gorilla_mux.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "regex-based: direct .GET/.POST/.DELETE/.PATCH etc + .Group()/.Route() prefix resolution tested; misses cross-file route splits, dynamic path construction, indirect router variable aliasing, and conditional registration",
             "verified_at": "2026-05-29"
           }
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_extend.go","internal/custom/golang/middleware_auth_extend_test.go"],
-            "verified_at": "2026-05-29"
+            "notes": "gorilla-mux .Use() chain scanned via shared middleware_auth_extend pass; auth_kind + dedicated auth:NAME pattern emitted; TestGorillaMuxMiddlewareAuthExtend proves jwt classification",
+            "verified_at": "2026-05-30"
           }
         },
         "Validation": {
@@ -13945,16 +13982,18 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/golang/validation.go","internal/custom/golang/validation_test.go"],
+            "cites": ["internal/custom/golang/helpers.go"],
             "issue": "3213",
+            "notes": "binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:\"required\" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths",
             "verified_at": "2026-05-29"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/golang/helpers.go","internal/custom/golang/middleware_auth_extend.go","internal/custom/golang/middleware_auth_extend_test.go"],
-            "verified_at": "2026-05-29"
+            "notes": "gorilla-mux .Use() chain scanned via shared middleware_auth_extend pass; one SCOPE.Pattern per middleware in registration order (mw_order); TestGorillaMuxMiddlewareAuthExtend proves ordering + auth classification",
+            "verified_at": "2026-05-30"
           }
         },
         "Type System": {
@@ -13971,6 +14010,7 @@
           "type_alias_extraction": {
             "status": "partial",
             "cites": ["internal/extractors/golang/extractor.go"],
+            "notes": "type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
@@ -13984,6 +14024,7 @@
             "status": "partial",
             "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented",
             "verified_at": "2026-05-29"
           }
         },
@@ -13992,12 +14033,14 @@
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
             "issue": "3215",
+            "notes": "heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes",
             "verified_at": "2026-05-29"
           },
           "metric_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
             "issue": "3215",
+            "notes": "prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes",
             "verified_at": "2026-05-29"
           },
           "trace_extraction": {
@@ -14010,6 +14053,7 @@
           "db_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_golang.go"],
+            "notes": "DB effect tracking is cross-cutting substrate analysis; current extractors capture ORM call sites (gorm/sqlx/pgx/bun) at call-site level but do not bind them to specific HTTP handlers via data-flow",
             "verified_at": "2026-05-28"
           }
         },
@@ -14991,8 +15035,9 @@
           },
           "route_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/golang/nethttp.go","internal/engine/go_routes.go","internal/engine/rules/go/frameworks/net_http_stdlib.yaml"],
+            "cites": ["internal/custom/golang/extractors_test.go","internal/custom/golang/nethttp.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "regex-based: http.HandleFunc + http.Handle on DefaultServeMux + http.NewServeMux() + Go 1.22+ method-prefixed patterns (GET /path) tested; misses cross-file route splits and dynamic path construction",
             "verified_at": "2026-05-29"
           }
         },
@@ -15011,8 +15056,9 @@
           },
           "request_validation": {
             "status": "partial",
-            "cites": ["internal/custom/golang/validation.go","internal/custom/golang/validation_test.go"],
+            "cites": ["internal/custom/golang/nethttp.go"],
             "issue": "3213",
+            "notes": "net/http has no binding primitive; r.Form/r.FormValue/r.PostForm call sites heuristic; no struct-tag validation chain analysis",
             "verified_at": "2026-05-29"
           }
         },
@@ -15036,6 +15082,7 @@
           "type_alias_extraction": {
             "status": "partial",
             "cites": ["internal/extractors/golang/extractor.go"],
+            "notes": "type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests",
             "verified_at": "2026-05-29"
           },
           "type_extraction": {
@@ -15049,6 +15096,7 @@
             "status": "partial",
             "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented",
             "verified_at": "2026-05-29"
           }
         },
@@ -15057,12 +15105,14 @@
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
             "issue": "3215",
+            "notes": "heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes",
             "verified_at": "2026-05-29"
           },
           "metric_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/observability.go","internal/custom/golang/observability_test.go"],
             "issue": "3215",
+            "notes": "prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes",
             "verified_at": "2026-05-29"
           },
           "trace_extraction": {
@@ -15075,6 +15125,7 @@
           "db_effect": {
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_golang.go"],
+            "notes": "DB effect tracking is cross-cutting substrate analysis; current extractors capture ORM call sites (gorm/sqlx/pgx/bun) at call-site level but do not bind them to specific HTTP handlers via data-flow",
             "verified_at": "2026-05-28"
           }
         },
@@ -15403,9 +15454,10 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/go/orms/bun.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/golang/bun.go","internal/custom/golang/bun_test.go"],
+            "notes": "bun.BaseModel embed + bun:\"table:...\" tag; field-level bun:\"col\" tags; TestBunModelsAndFields asserts exact table_name + column_name properties",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
             "status": "full",
@@ -15425,14 +15477,14 @@
             "status": "partial",
             "cites": ["internal/custom/golang/bun.go","internal/custom/golang/bun_test.go"],
             "issue": "3255",
-            "notes": "join:\u003cfk\u003e=\u003cpk\u003e captured as join_on; concrete FK column generated by bun, static extraction heuristic",
+            "notes": "join:\u003cfk\u003e=\u003cpk\u003e captured as join_on property; concrete FK column name is generated by bun at runtime, not declared statically; TestBunRelationships asserts join_table but FK column remains heuristic",
             "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
             "status": "partial",
-            "cites": ["internal/custom/golang/bun.go","internal/custom/golang/bun_test.go"],
+            "cites": ["internal/custom/golang/bun.go"],
             "issue": "3255",
-            "notes": "bun loads relations query-time via .Relation(); no static eager/lazy declaration, heuristic",
+            "notes": "bun loads relations query-time via .Relation() chain; no static eager/lazy declaration on model struct; relationship kind (has_many/belongs_to/many2many) extracted from rel:/m2m: tags but loading strategy is always runtime-determined",
             "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
@@ -15444,9 +15496,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/go/orms/bun.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/golang/bun.go","internal/custom/golang/bun_test.go"],
+            "notes": "query builder entry points (NewSelect/NewInsert/NewUpdate/NewDelete) + .Model(\u0026X)/(*X)(nil) attribution; TestBunQueries asserts exact model_name properties",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
@@ -15490,14 +15543,14 @@
             "status": "partial",
             "cites": ["internal/custom/golang/ent.go","internal/custom/golang/ent_test.go"],
             "issue": "3255",
-            "notes": "ent manages FKs implicitly via edges; owning edge.To captures relation but concrete FK column is codegen-generated, static extraction heuristic",
+            "notes": "ent manages FKs implicitly via edges; owning edge.To captures relation and target model, but concrete FK column name is code-generated (not statically declared)",
             "verified_at": "2026-05-29"
           },
           "lazy_loading_recognition": {
             "status": "partial",
-            "cites": ["internal/custom/golang/ent.go","internal/custom/golang/ent_test.go"],
+            "cites": ["internal/custom/golang/ent.go"],
             "issue": "3255",
-            "notes": "ent eager-loads via .WithEdges() query-time chainers; no static eager/lazy declaration, heuristic",
+            "notes": "ent eager-loads via .WithEdges() query-time chainers; no static eager/lazy declaration on schema fields; loading strategy is always query-time-determined",
             "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
@@ -15609,8 +15662,9 @@
           },
           "lazy_loading_recognition": {
             "status": "partial",
-            "cites": ["internal/custom/golang/gorm.go","internal/custom/golang/gorm_test.go"],
+            "cites": ["internal/custom/golang/gorm.go"],
             "issue": "3214",
+            "notes": "GORM has no static eager/lazy declaration on models; loading is query-time via .Preload(name), .Joins(assoc), .Association(name) chain calls — detected as chainer ops but cannot statically infer which associations are always preloaded vs lazy",
             "verified_at": "2026-05-30"
           },
           "relationship_extraction": {
@@ -15696,12 +15750,14 @@
             "status": "partial",
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "structs carrying db:\"col\" field tags are treated as schemas (heuristic — db: tag does not prove the struct is a DB table); fixture-tested (TestSqlxModelsAndQueries / TestPgxModelsAndQueries)",
             "verified_at": "2026-05-30"
           },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "columns from db: struct tags + CREATE TABLE SQL literals in double/backquoted strings; schema inferred from strings only, not from runtime DDL or migrate files (separate migration_parsing cell)",
             "verified_at": "2026-05-30"
           }
         },
@@ -15713,6 +15769,7 @@
             "status": "partial",
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "FOREIGN KEY clauses parsed from CREATE TABLE SQL string literals; only catches inline DDL, not FK declarations in external migration files or ALTER TABLE statements",
             "verified_at": "2026-05-30"
           },
           "lazy_loading_recognition": {
@@ -15725,8 +15782,9 @@
         "Queries": {
           "query_attribution": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/engine/rules/go/orms/pgx.yaml"],
+            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "Exec/Query/QueryRow/Get/Select/NamedExec call sites + SQL literal content captured; cannot bind a call site to a specific model without data-flow analysis",
             "verified_at": "2026-05-30"
           }
         },
@@ -15747,13 +15805,15 @@
         "Models": {
           "model_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sqlc.go"],
+            "cites": ["internal/custom/golang/sqlc.go","internal/custom/golang/sqlc_test.go"],
+            "notes": "generated structs in sqlc-stamped files (// Code generated by sqlc header) treated as table models; fields extracted with snake_case column name inference; TestSqlcModels asserts header gate and field extraction",
             "verified_at": "2026-05-29"
           },
           "schema_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sqlc.go"],
+            "cites": ["internal/custom/golang/sqlc.go","internal/custom/golang/sqlc_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "field columns from generated structs; no schema parsed from source SQL DDL (FK/type/nullable in source SQL not extracted into the graph)",
             "verified_at": "2026-05-29"
           }
         },
@@ -15778,14 +15838,16 @@
         "Queries": {
           "query_attribution": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sqlc.go"],
+            "cites": ["internal/custom/golang/sqlc.go","internal/custom/golang/sqlc_test.go"],
+            "notes": "-- name: X :verb annotations from source SQL + generated func (q *Queries) X(...) methods captured; SQL JOIN attribution (which models are joined) not extracted; TestSqlcQueryAnnotations + TestSqlcQueryFuncs prove both paths",
             "verified_at": "2026-05-29"
           }
         },
         "Migrations": {
           "migration_parsing": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sqlc.go"],
+            "cites": ["internal/custom/golang/sqlc.go","internal/custom/golang/sqlc_test.go"],
+            "notes": "file-based NNN_slug.up/down.sql migration file recognition; sqlc.yaml config has_schema/has_queries properties extracted; TestSqlcConfig + TestSqlcMigrationFile prove both",
             "verified_at": "2026-05-29"
           }
         }
@@ -15801,14 +15863,16 @@
         "Models": {
           "model_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/engine/rules/go/orms/sqlx.yaml"],
+            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "structs carrying db:\"col\" field tags are treated as schemas (heuristic — db: tag does not prove the struct is a DB table); fixture-tested (TestSqlxModelsAndQueries / TestPgxModelsAndQueries)",
             "verified_at": "2026-05-30"
           },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "columns from db: struct tags + CREATE TABLE SQL literals in double/backquoted strings; schema inferred from strings only, not from runtime DDL or migrate files (separate migration_parsing cell)",
             "verified_at": "2026-05-30"
           }
         },
@@ -15820,6 +15884,7 @@
             "status": "partial",
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "FOREIGN KEY clauses parsed from CREATE TABLE SQL string literals; only catches inline DDL, not FK declarations in external migration files or ALTER TABLE statements",
             "verified_at": "2026-05-30"
           },
           "lazy_loading_recognition": {
@@ -15832,8 +15897,9 @@
         "Queries": {
           "query_attribution": {
             "status": "partial",
-            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/engine/rules/go/orms/sqlx.yaml"],
+            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "Exec/Query/QueryRow/Get/Select/NamedExec call sites + SQL literal content captured; cannot bind a call site to a specific model without data-flow analysis",
             "verified_at": "2026-05-30"
           }
         },
@@ -15842,6 +15908,7 @@
             "status": "partial",
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
+            "notes": "file-based NNN_slug.up/down.sql migrations recognised by filename; no migration runner integration; ALTER TABLE in migration content not parsed for schema delta",
             "verified_at": "2026-05-30"
           }
         }

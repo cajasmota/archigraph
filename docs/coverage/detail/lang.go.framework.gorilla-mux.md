@@ -17,26 +17,26 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Endpoint synthesis | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/gorilla_mux.go`<br>`internal/engine/go_routes.go`<br>`internal/engine/rules/go/frameworks/gorilla_mux.yaml` | — |
 | Handler attribution | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/gorilla_mux.go`<br>`internal/engine/go_routes.go` | — |
-| Route extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/golang/gorilla_mux.go`<br>`internal/engine/go_routes.go`<br>`internal/engine/rules/go/frameworks/gorilla_mux.yaml` | — |
+| Route extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/golang/extractors_test.go`<br>`internal/custom/golang/gorilla_mux.go` | regex-based: direct .GET/.POST/.DELETE/.PATCH etc + .Group()/.Route() prefix resolution tested; misses cross-file route splits, dynamic path construction, indirect router variable aliasing, and conditional registration |
 
 ### Auth
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🟢 `partial` | `2026-05-29` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/middleware_auth_extend.go`<br>`internal/custom/golang/middleware_auth_extend_test.go` | — |
+| Auth coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/middleware_auth_extend.go`<br>`internal/custom/golang/middleware_auth_extend_test.go` | gorilla-mux .Use() chain scanned via shared middleware_auth_extend pass; auth_kind + dedicated auth:NAME pattern emitted; TestGorillaMuxMiddlewareAuthExtend proves jwt classification |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | DTO extraction | ✅ `full` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3255) | `internal/custom/golang/dto.go`<br>`internal/custom/golang/dto_test.go` | — |
-| Request validation | 🟢 `partial` | `2026-05-29` | 3213 | `internal/custom/golang/validation.go`<br>`internal/custom/golang/validation_test.go` | — |
+| Request validation | 🟢 `partial` | `2026-05-29` | 3213 | `internal/custom/golang/helpers.go` | binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:"required" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths |
 
 ### Middleware
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | `2026-05-29` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/middleware_auth_extend.go`<br>`internal/custom/golang/middleware_auth_extend_test.go` | — |
+| Middleware coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/middleware_auth_extend.go`<br>`internal/custom/golang/middleware_auth_extend_test.go` | gorilla-mux .Use() chain scanned via shared middleware_auth_extend pass; one SCOPE.Pattern per middleware in registration order (mw_order); TestGorillaMuxMiddlewareAuthExtend proves ordering + auth classification |
 
 ### Type System
 
@@ -44,28 +44,28 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Enum extraction | — `not_applicable` | `2026-05-29` | — | — | Go has no first-class enum keyword; the idiom is const(...iota). The Go extractor extracts no const/iota enum constructs, so this capability is not applicable. |
 | Interface extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/golang/extractor.go`<br>`internal/extractors/golang/extractor_test.go` | — |
-| Type alias extraction | 🟢 `partial` | `2026-05-29` | — | `internal/extractors/golang/extractor.go` | — |
+| Type alias extraction | 🟢 `partial` | `2026-05-29` | — | `internal/extractors/golang/extractor.go` | type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests |
 | Type extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/golang/extractor.go`<br>`internal/extractors/golang/extractor_test.go` | — |
 
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Tests linkage | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/extractors/cross/testmap/extractor.go`<br>`internal/extractors/cross/testmap/frameworks.go`<br>`internal/extractors/cross/testmap/resolver.go` | — |
+| Tests linkage | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/extractors/cross/testmap/extractor.go`<br>`internal/extractors/cross/testmap/frameworks.go`<br>`internal/extractors/cross/testmap/resolver.go` | Go test file + Test* func detection via tree-sitter base extractor; handler→test edge resolution and functional coverage mapping not implemented |
 
 ### Observability
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | 🟢 `partial` | `2026-05-29` | 3215 | `internal/custom/golang/observability.go`<br>`internal/custom/golang/observability_test.go` | — |
-| Metric extraction | 🟢 `partial` | `2026-05-29` | 3215 | `internal/custom/golang/observability.go`<br>`internal/custom/golang/observability_test.go` | — |
+| Log extraction | 🟢 `partial` | `2026-05-29` | 3215 | `internal/custom/golang/observability.go`<br>`internal/custom/golang/observability_test.go` | heuristic: logrus.New/WithFields, zap.NewProduction/New, slog.New/With, zerolog.New setup calls detected; does not trace log fields to handler context or correlate log entries to specific routes |
+| Metric extraction | 🟢 `partial` | `2026-05-29` | 3215 | `internal/custom/golang/observability.go`<br>`internal/custom/golang/observability_test.go` | prometheus.NewCounter(Vec)/NewHistogram(Vec)/NewGauge(Vec)/NewSummary(Vec) + promauto.NewXxx declarations detected; metric Name: field extracted when adjacent; does not track Observe/Add/Inc call sites or bind metrics to routes |
 | Trace extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/golang/observability.go`<br>`internal/custom/golang/observability_test.go` | — |
 
 ### Data
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DB effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_golang.go` | — |
+| DB effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_golang.go` | DB effect tracking is cross-cutting substrate analysis; current extractors capture ORM call sites (gorm/sqlx/pgx/bun) at call-site level but do not bind them to specific HTTP handlers via data-flow |
 
 ### Substrate
 

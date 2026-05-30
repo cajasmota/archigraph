@@ -23,8 +23,8 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Association extraction | ✅ `full` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | — |
-| Foreign key extraction | 🟢 `partial` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | ent manages FKs implicitly via edges; owning edge.To captures relation but concrete FK column is codegen-generated, static extraction heuristic |
-| Lazy loading recognition | 🟢 `partial` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | ent eager-loads via .WithEdges() query-time chainers; no static eager/lazy declaration, heuristic |
+| Foreign key extraction | 🟢 `partial` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | ent manages FKs implicitly via edges; owning edge.To captures relation and target model, but concrete FK column name is code-generated (not statically declared) |
+| Lazy loading recognition | 🟢 `partial` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go` | ent eager-loads via .WithEdges() query-time chainers; no static eager/lazy declaration on schema fields; loading strategy is always query-time-determined |
 | Relationship extraction | ✅ `full` | `2026-05-29` | 3255 | `internal/custom/golang/ent.go`<br>`internal/custom/golang/ent_test.go` | — |
 
 ### Queries
