@@ -15,9 +15,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Endpoint synthesis | 🔴 `missing` | — | — | — | — |
-| Handler attribution | 🔴 `missing` | — | — | — | — |
-| Route extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Endpoint synthesis | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/minor_routes.go` | nancyfx route endpoint_synthesis via regex extractor; heuristic |
+| Handler attribution | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/minor_routes.go` | nancyfx module/endpoint class declarations detected via regex; heuristic |
+| Route extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/minor_routes.go` | nancyfx route path strings extracted via regex; heuristic |
 
 ### Auth
 

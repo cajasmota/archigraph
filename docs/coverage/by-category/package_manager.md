@@ -12,7 +12,7 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [C/C++](../by-language/c-cpp.md) | [Hunter](../detail/lang.c-cpp.tool.hunter.md) | — | 🔴 | 🔴 | — | |
 | [C/C++](../by-language/c-cpp.md) | [build2](../detail/lang.c-cpp.tool.build2.md) | — | 🔴 | 🔴 | — | |
 | [C/C++](../by-language/c-cpp.md) | [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | 🔴 | 🔴 | — | |
-| [C#](../by-language/csharp.md) | [.csproj / packages.config](../detail/pkg.csproj.md) | — | 🔴 | 🔴 | — | |
+| [C#](../by-language/csharp.md) | [.csproj / packages.config](../detail/pkg.csproj.md) | — | ✅ | ✅ | — | |
 | [dart](../by-language/dart.md) | [pubspec.yaml](../detail/pkg.pubspec.md) | — | 🔴 | ✅ | — | |
 | [elixir](../by-language/elixir.md) | [mix.exs](../detail/pkg.mix.md) | — | — | 🔴 | — | |
 | [go](../by-language/go.md) | [go.mod](../detail/pkg.go-mod.md) | — | ✅ | ✅ | — | |

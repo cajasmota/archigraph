@@ -28,10 +28,10 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|---|---|---|---|---|
 | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | 🟡 2/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟢 6/6 | |
 | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | 🟡 2/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [Carter](../detail/lang.csharp.framework.carter.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [Carter](../detail/lang.csharp.framework.carter.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
 
 
 ### UI Frontend
@@ -71,7 +71,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
 |---|---|---|---|---|---|
-| [.csproj / packages.config](../detail/pkg.csproj.md) | — | 🔴 | 🔴 | — | |
+| [.csproj / packages.config](../detail/pkg.csproj.md) | — | ✅ | ✅ | — | |
 | [FluentAssertions](../detail/test.fluentassertions.md) | 🔴 | — | — | 🔴 | |
 | [MSTest](../detail/test.mstest.md) | 🟢 | — | — | 🟢 | |
 | [NUnit](../detail/test.nunit.md) | 🟢 | — | — | 🟢 | |
@@ -88,15 +88,15 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|
 | [AWSSDK.DynamoDBv2](../detail/lang.csharp.driver.dynamodb.md) | 🟡 1/2 | |
 | [CassandraCSharpDriver](../detail/lang.csharp.driver.cassandra.md) | 🟡 1/2 | |
-| [Dapper](../detail/lang.csharp.orm.dapper.md) | 🟡 2/7 | |
+| [Dapper](../detail/lang.csharp.orm.dapper.md) | 🟡 3/7 | |
 | [Entity Framework Core](../detail/lang.csharp.orm.efcore.md) | ✅ 8/8 | |
-| [LINQ to SQL](../detail/lang.csharp.orm.linq-to-sql.md) | 🟡 2/7 | |
-| [LinqToDB](../detail/lang.csharp.orm.linqtodb.md) | 🔴 0/7 | |
+| [LINQ to SQL](../detail/lang.csharp.orm.linq-to-sql.md) | 🟡 4/7 | |
+| [LinqToDB](../detail/lang.csharp.orm.linqtodb.md) | 🟡 3/7 | |
 | [Microsoft.Data.Sqlite](../detail/lang.csharp.driver.sqlite.md) | 🟡 1/2 | |
 | [MongoDB.Driver (C#)](../detail/lang.csharp.driver.mongodb.md) | 🟡 1/2 | |
 | [MySQL.Data / MySqlConnector](../detail/lang.csharp.driver.mysql.md) | 🟡 1/2 | |
 | [NEST (Elasticsearch .NET)](../detail/lang.csharp.driver.elastic.md) | 🟡 1/2 | |
-| [NHibernate](../detail/lang.csharp.orm.nhibernate.md) | 🟡 2/7 | |
+| [NHibernate](../detail/lang.csharp.orm.nhibernate.md) | 🟡 4/7 | |
 | [Neo4j.Driver (C#)](../detail/lang.csharp.driver.neo4j.md) | 🟡 1/2 | |
 | [Npgsql (PostgreSQL)](../detail/lang.csharp.driver.npgsql.md) | 🟡 1/2 | |
 | [StackExchange.Redis](../detail/lang.csharp.driver.redis.md) | 🟡 1/2 | |
