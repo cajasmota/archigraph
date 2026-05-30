@@ -141,6 +141,13 @@ func applyORMQueries(args DetectorPassArgs) DetectorPassResult {
 	case "javascript", "typescript":
 		scanJSORM(src, funcs, emit)
 		scanJSDrivers(src, funcs, emit)
+		// Sibling pass: parse the inline pipeline array of `.aggregate([...])`
+		// call sites into per-stage entities + $lookup/$graphLookup join
+		// edges. Does NOT re-emit the aggregate QUERIES edge (#3426).
+		scanJSMongoAggregation(src, funcs, path, lang,
+			func(ent types.EntityRecord) { entities = append(entities, ent) },
+			func(rel types.RelationshipRecord) { relationships = append(relationships, rel) },
+		)
 	case "go":
 		scanGoORM(src, funcs, emit)
 	case "java":
