@@ -7,8 +7,16 @@
 //   - AddAuthorization() / AddAuthorization(options => ...) service registration
 //   - AddPolicy("name", ...) policy definition
 //
+// csAuth — JWT bearer + ASP.NET Identity deepening (issue #3380):
+//   - AddAuthentication(...).AddJwtBearer(...) JWT bearer configuration
+//   - services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme) scheme registration
+//   - AddJwtBearer(options => { options.TokenValidationParameters = ... }) token params
+//   - services.AddIdentity<TUser,TRole>() / AddDefaultIdentity<T>() / AddIdentityCore<T>()
+//   - app.UseAuthentication() / app.UseAuthorization() pipeline registration
+//   - [Authorize(AuthenticationSchemes="...")] scheme-specific authorization
+//
 // Emits SCOPE.Pattern entities with subtype "auth_coverage" so the coverage
-// cells light up for the 6 backend frameworks.
+// cells light up for the C# backend frameworks.
 package csharp
 
 import (
@@ -67,6 +75,65 @@ var (
 	// options.AddPolicy("name", ...) — policy builder
 	reAddPolicy = regexp.MustCompile(
 		`\.AddPolicy\s*\(\s*"([^"]+)"`,
+	)
+
+	// csAuth: JWT bearer -------------------------------------------------------
+
+	// .AddAuthentication(...) — authentication service registration
+	csAuthAddAuthentication = regexp.MustCompile(
+		`\bAddAuthentication\s*\(`,
+	)
+
+	// .AddJwtBearer(...) — JWT bearer scheme registration (chained after AddAuthentication)
+	csAuthAddJwtBearer = regexp.MustCompile(
+		`\.AddJwtBearer\s*\(`,
+	)
+
+	// options.TokenValidationParameters = new TokenValidationParameters { ... }
+	csAuthTokenValidation = regexp.MustCompile(
+		`\bTokenValidationParameters\s*=`,
+	)
+
+	// ValidIssuer = "..." inside token validation params
+	csAuthIssuer = regexp.MustCompile(
+		`ValidIssuer\s*=\s*"([^"]+)"`,
+	)
+
+	// ValidAudience = "..." inside token validation params
+	csAuthAudience = regexp.MustCompile(
+		`ValidAudience\s*=\s*"([^"]+)"`,
+	)
+
+	// [Authorize(AuthenticationSchemes="...")] — scheme-specific authorization
+	csAuthSchemeAttr = regexp.MustCompile(
+		`\[Authorize\s*\(\s*(?:[^)]*,\s*)?AuthenticationSchemes\s*=\s*"([^"]+)"`,
+	)
+
+	// csAuth: ASP.NET Identity ------------------------------------------------
+
+	// services.AddIdentity<TUser, TRole>() — full Identity with roles
+	csAuthAddIdentity = regexp.MustCompile(
+		`\bAddIdentity\s*<\s*(\w+)\s*,\s*(\w+)\s*>`,
+	)
+
+	// services.AddDefaultIdentity<TUser>() — Identity without roles
+	csAuthAddDefaultIdentity = regexp.MustCompile(
+		`\bAddDefaultIdentity\s*<\s*(\w+)\s*>`,
+	)
+
+	// services.AddIdentityCore<TUser>() — minimal Identity
+	csAuthAddIdentityCore = regexp.MustCompile(
+		`\bAddIdentityCore\s*<\s*(\w+)\s*>`,
+	)
+
+	// app.UseAuthentication() — pipeline middleware registration
+	csAuthUseAuthentication = regexp.MustCompile(
+		`\bapp\.UseAuthentication\s*\(`,
+	)
+
+	// app.UseAuthorization() — pipeline middleware registration
+	csAuthUseAuthorization = regexp.MustCompile(
+		`\bapp\.UseAuthorization\s*\(`,
 	)
 )
 
@@ -187,6 +254,135 @@ func (e *csharpAuthExtractor) Extract(ctx context.Context, file extractor.FileIn
 		add(ent)
 	}
 
+	// -----------------------------------------------------------------------
+	// csAuth: JWT Bearer (issue #3380)
+	// -----------------------------------------------------------------------
+
+	// AddAuthentication(...) — authentication service registration (emit once per file)
+	if csAuthAddAuthentication.MatchString(src) {
+		idx := csAuthAddAuthentication.FindStringIndex(src)
+		line := 1
+		if idx != nil {
+			line = lineOf(src, idx[0])
+		}
+		name := "auth:AddAuthentication:" + file.Path
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "AddAuthentication", "mechanism", "jwt_bearer")
+		add(ent)
+	}
+
+	// .AddJwtBearer(...) — JWT bearer scheme (emit once per file)
+	if csAuthAddJwtBearer.MatchString(src) {
+		idx := csAuthAddJwtBearer.FindStringIndex(src)
+		line := 1
+		if idx != nil {
+			line = lineOf(src, idx[0])
+		}
+		name := "auth:AddJwtBearer:" + file.Path
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "AddJwtBearer", "mechanism", "jwt_bearer")
+		// Capture issuer + audience if present in file
+		if m := csAuthIssuer.FindStringSubmatch(src); len(m) > 1 {
+			ent.Properties["issuer"] = m[1]
+		}
+		if m := csAuthAudience.FindStringSubmatch(src); len(m) > 1 {
+			ent.Properties["audience"] = m[1]
+		}
+		add(ent)
+	}
+
+	// TokenValidationParameters — JWT validation config (emit once per file)
+	if csAuthTokenValidation.MatchString(src) {
+		idx := csAuthTokenValidation.FindStringIndex(src)
+		line := 1
+		if idx != nil {
+			line = lineOf(src, idx[0])
+		}
+		name := "auth:TokenValidationParameters:" + file.Path
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "TokenValidationParameters", "mechanism", "jwt_bearer")
+		add(ent)
+	}
+
+	// [Authorize(AuthenticationSchemes="...")] — scheme-specific
+	for _, m := range csAuthSchemeAttr.FindAllStringSubmatchIndex(src, -1) {
+		scheme := src[m[2]:m[3]]
+		line := lineOf(src, m[0])
+		name := "auth:Authorize:scheme:" + scheme
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "Authorize.AuthScheme", "scheme", scheme, "mechanism", "jwt_bearer")
+		add(ent)
+	}
+
+	// -----------------------------------------------------------------------
+	// csAuth: ASP.NET Identity (issue #3380)
+	// -----------------------------------------------------------------------
+
+	// services.AddIdentity<TUser, TRole>()
+	for _, m := range csAuthAddIdentity.FindAllStringSubmatchIndex(src, -1) {
+		userType := src[m[2]:m[3]]
+		roleType := src[m[4]:m[5]]
+		line := lineOf(src, m[0])
+		name := "auth:AddIdentity:" + userType + ":" + roleType
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "AddIdentity", "mechanism", "aspnet_identity",
+			"user_type", userType, "role_type", roleType)
+		add(ent)
+	}
+
+	// services.AddDefaultIdentity<TUser>()
+	for _, m := range csAuthAddDefaultIdentity.FindAllStringSubmatchIndex(src, -1) {
+		userType := src[m[2]:m[3]]
+		line := lineOf(src, m[0])
+		name := "auth:AddDefaultIdentity:" + userType
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "AddDefaultIdentity", "mechanism", "aspnet_identity",
+			"user_type", userType)
+		add(ent)
+	}
+
+	// services.AddIdentityCore<TUser>()
+	for _, m := range csAuthAddIdentityCore.FindAllStringSubmatchIndex(src, -1) {
+		userType := src[m[2]:m[3]]
+		line := lineOf(src, m[0])
+		name := "auth:AddIdentityCore:" + userType
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "AddIdentityCore", "mechanism", "aspnet_identity",
+			"user_type", userType)
+		add(ent)
+	}
+
+	// -----------------------------------------------------------------------
+	// csAuth: Pipeline registration (issue #3380)
+	// -----------------------------------------------------------------------
+
+	// app.UseAuthentication()
+	if csAuthUseAuthentication.MatchString(src) {
+		idx := csAuthUseAuthentication.FindStringIndex(src)
+		line := 1
+		if idx != nil {
+			line = lineOf(src, idx[0])
+		}
+		name := "auth:UseAuthentication:" + file.Path
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "UseAuthentication", "mechanism", "pipeline")
+		add(ent)
+	}
+
+	// app.UseAuthorization()
+	if csAuthUseAuthorization.MatchString(src) {
+		idx := csAuthUseAuthorization.FindStringIndex(src)
+		line := 1
+		if idx != nil {
+			line = lineOf(src, idx[0])
+		}
+		name := "auth:UseAuthorization:" + file.Path
+		ent := makeEntity(name, "SCOPE.Pattern", "auth_coverage", file.Path, "csharp", line)
+		setProps(&ent, "auth_pattern", "UseAuthorization", "mechanism", "pipeline")
+		add(ent)
+	}
+
+	span.SetAttributes(attribute.Int("entity_count", len(entities)))
 	return entities, nil
 }
 

@@ -23,20 +23,20 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🟢 `partial` | — | — | `internal/custom/csharp/auth.go` | [Authorize]/[AllowAnonymous]/RequireAuthorization/AddPolicy regex extractor; heuristic |
+| Auth coverage | ✅ `full` | — | — | `internal/custom/csharp/auth.go`<br>`internal/custom/csharp/auth_test.go` | [Authorize]/[AllowAnonymous]/RequireAuthorization/AddPolicy regex extractor; heuristic |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/csharp/validation.go` | DTO types inferred from FluentValidation AbstractValidator<T> type arg and DataAnnotation model classes; heuristic |
-| Request validation | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/csharp/validation.go` | FluentValidation AbstractValidator<T> + DataAnnotations [Required]/[StringLength]/[Range]/[RegularExpression] regex extractor; heuristic |
+| DTO extraction | ✅ `full` | — | — | `internal/custom/csharp/validation.go`<br>`internal/custom/csharp/validation_test.go` | DTO types inferred from FluentValidation AbstractValidator<T> type arg and DataAnnotation model classes; heuristic |
+| Request validation | ✅ `full` | — | — | `internal/custom/csharp/validation.go`<br>`internal/custom/csharp/validation_test.go` | FluentValidation AbstractValidator<T> + DataAnnotations [Required]/[StringLength]/[Range]/[RegularExpression] regex extractor; heuristic |
 
 ### Middleware
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | `2026-05-28` | — | `internal/engine/aspnet_core_routes.go` | — |
+| Middleware coverage | ✅ `full` | `2026-05-28` | — | `internal/custom/csharp/middleware_extra.go`<br>`internal/custom/csharp/middleware_extra_test.go` | — |
 
 ### Type System
 

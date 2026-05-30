@@ -1,11 +1,12 @@
-// Package csharp — Middleware extractor for minor C# web frameworks.
+// Package csharp — Middleware extractor for C# web frameworks.
 //
-// Covers the Middleware/middleware_coverage cells missing for:
-//   - lang.csharp.framework.aspnet-mvc  (Middleware/middleware_coverage)
-//   - lang.csharp.framework.carter      (Middleware/middleware_coverage)
+// Covers the Middleware/middleware_coverage cells for:
+//   - lang.csharp.framework.aspnet-core  (Middleware/middleware_coverage) [deepened #3380]
+//   - lang.csharp.framework.aspnet-mvc   (Middleware/middleware_coverage)
+//   - lang.csharp.framework.carter       (Middleware/middleware_coverage)
 //   - lang.csharp.framework.fastendpoints (Middleware/middleware_coverage)
-//   - lang.csharp.framework.nancyfx     (Middleware/middleware_coverage)
-//   - lang.csharp.framework.servicestack (Middleware/middleware_coverage)
+//   - lang.csharp.framework.nancyfx      (Middleware/middleware_coverage)
+//   - lang.csharp.framework.servicestack  (Middleware/middleware_coverage)
 //
 // Detection surface:
 //
@@ -27,8 +28,21 @@
 //	ASP.NET MVC: app.Use*()/[Filters] attribute middleware detection
 //	  → SCOPE.Component/middleware_coverage
 //
+// csMw — ASP.NET Core pipeline order tracking (issue #3380):
+//
+//	app.UseRouting() / app.UseStaticFiles() / app.UseCors(...)
+//	app.UseAuthentication() / app.UseAuthorization()
+//	app.UseEndpoints(...) / app.MapControllers()
+//	  → SCOPE.Component/middleware_coverage with pipeline_order property
+//
+//	custom IMiddleware/InvokeAsync(HttpContext, RequestDelegate) classes
+//	  → SCOPE.Component/middleware_coverage with class_name
+//
+//	IAsyncActionFilter / IActionFilter / [ServiceFilter] / [TypeFilter]
+//	  → SCOPE.Component/middleware_coverage
+//
 // Registration key: "custom_csharp_middleware_extra"
-// Issue #3261.
+// Issues #3261, #3380.
 package csharp
 
 import (
@@ -94,6 +108,58 @@ var (
 	reMWFilterInterface = regexp.MustCompile(
 		`(?m):\s*(?:\w+,\s*)*(?:IActionFilter|IResultFilter|IExceptionFilter|` +
 			`IAsyncActionFilter|IAsyncResultFilter|IAuthorizationFilter)\b`,
+	)
+
+	// csMw: ASP.NET Core pipeline order (issue #3380) -------------------------
+
+	// app.UseRouting() — routing middleware (order matters: before auth + endpoints)
+	csMwUseRouting = regexp.MustCompile(
+		`\bapp\.UseRouting\s*\(`,
+	)
+
+	// app.UseStaticFiles() — static file serving
+	csMwUseStaticFiles = regexp.MustCompile(
+		`\bapp\.UseStaticFiles\s*\(`,
+	)
+
+	// app.UseCors(...) — CORS middleware
+	csMwUseCors = regexp.MustCompile(
+		`\bapp\.UseCors\s*\(`,
+	)
+
+	// app.UseAuthentication() — must come before UseAuthorization
+	csMwUseAuthenticationPipeline = regexp.MustCompile(
+		`\bapp\.UseAuthentication\s*\(`,
+	)
+
+	// app.UseAuthorization() — must come after UseAuthentication
+	csMwUseAuthorizationPipeline = regexp.MustCompile(
+		`\bapp\.UseAuthorization\s*\(`,
+	)
+
+	// app.UseEndpoints(...) — endpoint dispatch (terminal middleware)
+	csMwUseEndpoints = regexp.MustCompile(
+		`\bapp\.UseEndpoints\s*\(`,
+	)
+
+	// app.MapControllers() / app.MapRazorPages() / app.MapHub<T>() — endpoint mapping
+	csMwMapBuiltins = regexp.MustCompile(
+		`\bapp\.Map(?:Controllers|RazorPages|Hub|Get|Post|Put|Delete|Patch)\s*\(`,
+	)
+
+	// app.UseExceptionHandler(...) — exception handling middleware
+	csMwUseExceptionHandler = regexp.MustCompile(
+		`\bapp\.UseExceptionHandler\s*\(`,
+	)
+
+	// app.UseHttpsRedirection() — HTTPS redirect middleware
+	csMwUseHttpsRedirection = regexp.MustCompile(
+		`\bapp\.UseHttpsRedirection\s*\(`,
+	)
+
+	// app.UseResponseCaching() / app.UseResponseCompression()
+	csMwUseResponseMiddleware = regexp.MustCompile(
+		`\bapp\.Use(?:ResponseCaching|ResponseCompression|RateLimiter|OutputCache)\s*\(`,
 	)
 
 	// Carter / FastEndpoints -------------------------------------------------
@@ -379,6 +445,39 @@ func (e *middlewareExtraExtractor) Extract(ctx context.Context, file extractor.F
 			"class_name", name)
 		add(ent)
 	}
+
+	// -------------------------------------------------------------------------
+	// csMw: ASP.NET Core pipeline order (issue #3380)
+	// Emit ordered pipeline middleware entities with pipeline_order property so
+	// the graph captures the canonical ASP.NET Core pipeline sequence.
+	// -------------------------------------------------------------------------
+
+	// Helper: emit a pipeline-order entity for a given Use* call.
+	addPipeline := func(re *regexp.Regexp, name, middlewareName string) {
+		for _, m := range re.FindAllStringIndex(src, -1) {
+			line := lineOf(src, m[0])
+			ent := makeEntity("aspnet:pipeline:"+name+":"+file.Path+":"+itoa(line),
+				"SCOPE.Component", "middleware_coverage", file.Path, "csharp", line)
+			setProps(&ent,
+				"framework", "aspnet-core",
+				"provenance", "INFERRED_FROM_PIPELINE_USE",
+				"middleware_name", middlewareName,
+				"pipeline_order", name,
+			)
+			add(ent)
+		}
+	}
+
+	addPipeline(csMwUseExceptionHandler, "UseExceptionHandler", "ExceptionHandler")
+	addPipeline(csMwUseHttpsRedirection, "UseHttpsRedirection", "HttpsRedirection")
+	addPipeline(csMwUseStaticFiles, "UseStaticFiles", "StaticFiles")
+	addPipeline(csMwUseRouting, "UseRouting", "Routing")
+	addPipeline(csMwUseCors, "UseCors", "Cors")
+	addPipeline(csMwUseAuthenticationPipeline, "UseAuthentication", "Authentication")
+	addPipeline(csMwUseAuthorizationPipeline, "UseAuthorization", "Authorization")
+	addPipeline(csMwUseResponseMiddleware, "UseResponseMiddleware", "ResponseMiddleware")
+	addPipeline(csMwUseEndpoints, "UseEndpoints", "Endpoints")
+	addPipeline(csMwMapBuiltins, "MapBuiltins", "MapBuiltins")
 
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
 	return entities, nil

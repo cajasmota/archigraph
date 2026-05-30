@@ -182,3 +182,195 @@ func TestValidationNoMatch(t *testing.T) {
 		t.Errorf("expected 0 validation entities, got %d", len(ents))
 	}
 }
+
+// ---------------------------------------------------------------------------
+// csVal: ModelState.IsValid (issue #3380)
+// ---------------------------------------------------------------------------
+
+func TestValidationModelStateIsValid(t *testing.T) {
+	src := `
+[HttpPost]
+public IActionResult Create([FromBody] CreateOrderDto dto)
+{
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(ModelState);
+    }
+    return Ok();
+}
+`
+	ents := extract(t, "custom_csharp_validation", fi("OrdersController.cs", "csharp", src))
+	found := false
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "request_validation" {
+			// Name pattern: "validation:ModelState.IsValid:OrdersController.cs:<line>"
+			if len(e.Name) > len("validation:ModelState.IsValid:") &&
+				e.Name[:len("validation:ModelState.IsValid:")] == "validation:ModelState.IsValid:" {
+				found = true
+				break
+			}
+		}
+	}
+	if !found {
+		t.Error("expected validation:ModelState.IsValid entity from ModelState.IsValid check")
+	}
+}
+
+func TestValidationModelStateIsValidMultiple(t *testing.T) {
+	src := `
+public IActionResult Create([FromBody] CreateDto dto)
+{
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+    return Ok();
+}
+public IActionResult Update([FromBody] UpdateDto dto)
+{
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+    return Ok();
+}
+`
+	ents := extract(t, "custom_csharp_validation", fi("Controller.cs", "csharp", src))
+	count := 0
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "request_validation" &&
+			len(e.Name) > len("validation:ModelState.IsValid:") &&
+			e.Name[:len("validation:ModelState.IsValid:")] == "validation:ModelState.IsValid:" {
+			count++
+		}
+	}
+	if count < 2 {
+		t.Errorf("expected at least 2 ModelState.IsValid entities, got %d", count)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// csVal: [FromBody] DTO binding → dto_extraction (issue #3380)
+// ---------------------------------------------------------------------------
+
+func TestValidationFromBodyDtoExtraction(t *testing.T) {
+	src := `
+[HttpPost]
+public IActionResult Create([FromBody] CreateOrderRequest dto) => Ok();
+
+[HttpPut("{id}")]
+public IActionResult Update([FromBody] UpdateOrderRequest request) => Ok();
+`
+	ents := extract(t, "custom_csharp_validation", fi("OrdersController.cs", "csharp", src))
+	createFound := false
+	updateFound := false
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Schema" && e.Subtype == "dto" {
+			if e.Name == "CreateOrderRequest" {
+				createFound = true
+			}
+			if e.Name == "UpdateOrderRequest" {
+				updateFound = true
+			}
+		}
+	}
+	if !createFound {
+		t.Error("expected SCOPE.Schema dto CreateOrderRequest from [FromBody] binding")
+	}
+	if !updateFound {
+		t.Error("expected SCOPE.Schema dto UpdateOrderRequest from [FromBody] binding")
+	}
+}
+
+func TestValidationFromBodyPrimitivesSkipped(t *testing.T) {
+	src := `
+public IActionResult Delete([FromBody] int id) => Ok();
+public IActionResult Toggle([FromBody] bool enabled) => Ok();
+`
+	ents := extract(t, "custom_csharp_validation", fi("Controller.cs", "csharp", src))
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Schema" && e.Subtype == "dto" && (e.Name == "int" || e.Name == "bool") {
+			t.Errorf("primitive type %q should not emit a dto entity", e.Name)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// csVal: Per-property RuleFor property name extraction (issue #3380)
+// ---------------------------------------------------------------------------
+
+func TestValidationFluentRuleForProperties(t *testing.T) {
+	src := `
+public class CreateUserValidator : AbstractValidator<CreateUserDto>
+{
+    public CreateUserValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.Age).InclusiveBetween(18, 120);
+    }
+}
+`
+	ents := extract(t, "custom_csharp_validation", fi("CreateUserValidator.cs", "csharp", src))
+
+	props := make(map[string]bool)
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "request_validation" &&
+			len(e.Name) > len("validation:fluent:rule_for_prop:") &&
+			e.Name[:len("validation:fluent:rule_for_prop:")] == "validation:fluent:rule_for_prop:" {
+			// extract property name from: validation:fluent:rule_for_prop:PropName:file:line
+			rest := e.Name[len("validation:fluent:rule_for_prop:"):]
+			colonIdx := 0
+			for i, c := range rest {
+				if c == ':' {
+					colonIdx = i
+					break
+				}
+			}
+			if colonIdx > 0 {
+				props[rest[:colonIdx]] = true
+			}
+		}
+	}
+
+	for _, expected := range []string{"Email", "Password", "Age"} {
+		if !props[expected] {
+			t.Errorf("expected RuleFor property %q to be extracted", expected)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// csVal: DataAnnotation args capture (issue #3380)
+// ---------------------------------------------------------------------------
+
+func TestValidationAnnotationArgsStringLength(t *testing.T) {
+	src := `
+public class RegisterRequest
+{
+    [StringLength(100, MinimumLength = 6)]
+    public string Username { get; set; }
+
+    [Range(1, 150)]
+    public int Age { get; set; }
+}
+`
+	ents := extract(t, "custom_csharp_validation", fi("RegisterRequest.cs", "csharp", src))
+
+	stringLenFound := false
+	rangeFound := false
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Pattern" && e.Subtype == "request_validation" &&
+			len(e.Name) > len("validation:annotation_args:") &&
+			e.Name[:len("validation:annotation_args:")] == "validation:annotation_args:" {
+			if len(e.Name) > len("validation:annotation_args:StringLength:") &&
+				e.Name[:len("validation:annotation_args:StringLength:")] == "validation:annotation_args:StringLength:" {
+				stringLenFound = true
+			}
+			if len(e.Name) > len("validation:annotation_args:Range:") &&
+				e.Name[:len("validation:annotation_args:Range:")] == "validation:annotation_args:Range:" {
+				rangeFound = true
+			}
+		}
+	}
+	if !stringLenFound {
+		t.Error("expected validation:annotation_args:StringLength entity with captured args")
+	}
+	if !rangeFound {
+		t.Error("expected validation:annotation_args:Range entity with captured args")
+	}
+}

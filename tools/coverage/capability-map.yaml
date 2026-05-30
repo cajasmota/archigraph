@@ -9732,6 +9732,115 @@ records:
             - file: internal/custom/csharp/extractors_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # [Authorize] (plain/roles/policy/positional/scheme), [AllowAnonymous],
+          # .RequireAuthorization() minimal-API, AddAuthorization()/AddPolicy() service
+          # registration detected by custom_csharp_auth extractor (auth.go).
+          # csAuth deepening (#3380): AddAuthentication()/AddJwtBearer() JWT bearer
+          # config, TokenValidationParameters (with issuer/audience capture),
+          # AddIdentity<TUser,TRole>()/AddDefaultIdentity<T>()/AddIdentityCore<T>()
+          # ASP.NET Identity registration, app.UseAuthentication()/UseAuthorization()
+          # pipeline registration. Emits mechanism + policy_name/role/scheme/user_type
+          # props. Cross-file JWT key config is partial; in-file detection is full.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/auth.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/auth_test.go
+              functions:
+                - TestAuthAuthorizeAttribute
+                - TestAuthAuthorizeRoles
+                - TestAuthAuthorizePolicy
+                - TestAuthAuthorizePositional
+                - TestAuthAllowAnonymous
+                - TestAuthRequireAuthorization
+                - TestAuthAddAuthorization
+                - TestAuthJwtBearerAddAuthentication
+                - TestAuthJwtBearerIssuerAudience
+                - TestAuthJwtBearerIssuerCapture
+                - TestAuthAuthorizeScheme
+                - TestAuthAddIdentityFullRoles
+                - TestAuthAddDefaultIdentity
+                - TestAuthAddIdentityCore
+                - TestAuthUseAuthenticationPipeline
+                - TestAuthFullProgram
+          issues_implemented: ["3380"]
+          verified_at: "2026-05-30"
+      Validation:
+        request_validation:
+          # FluentValidation AbstractValidator<T> with RuleFor chains (per-property
+          # names extracted), DataAnnotations [Required]/[StringLength]/[Range]/
+          # [RegularExpression]/[EmailAddress]/[MinLength]/[MaxLength]/[Compare]/
+          # [Phone]/[Url] (with argument capture), [ApiController] auto-validation.
+          # csVal deepening (#3380): ModelState.IsValid explicit check per call site,
+          # per-property RuleFor extraction with property_name prop, DataAnnotation
+          # args captured (e.g. StringLength(50), Range(1,100)) on separate entities.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/validation.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/validation_test.go
+              functions:
+                - TestValidationFluentAbstractValidator
+                - TestValidationFluentQualifiedNamespace
+                - TestValidationDataAnnotationsRequired
+                - TestValidationDataAnnotationsRangeRegex
+                - TestValidationApiControllerAutoValidation
+                - TestValidationModelStateIsValid
+                - TestValidationModelStateIsValidMultiple
+                - TestValidationFluentRuleForProperties
+                - TestValidationAnnotationArgsStringLength
+          issues_implemented: ["3380"]
+          verified_at: "2026-05-30"
+        dto_extraction:
+          # FluentValidation: SCOPE.Schema(dto) emitted for the AbstractValidator<T>
+          # type parameter. DataAnnotations: SCOPE.Schema(dto) emitted for every class
+          # in files bearing annotation attributes (INFERRED_FROM_DATA_ANNOTATION).
+          # csVal deepening (#3380): [FromBody] param binding emits SCOPE.Schema(dto)
+          # for the bound type (INFERRED_FROM_FROM_BODY); primitives are skipped.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/validation.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/validation_test.go
+              functions:
+                - TestValidationFluentAbstractValidator
+                - TestValidationFromBodyDtoExtraction
+                - TestValidationFromBodyPrimitivesSkipped
+          issues_implemented: ["3380"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # app.UseMiddleware<T>(), inline app.Use() lambda, app.UseWhen(), custom
+          # IMiddleware/InvokeAsync(HttpContext,RequestDelegate) classes, [ServiceFilter]/
+          # [TypeFilter]/IActionFilter/IAsyncActionFilter filter interfaces.
+          # csMw deepening (#3380): full ASP.NET Core pipeline order tracking —
+          # app.UseExceptionHandler/UseHttpsRedirection/UseStaticFiles/UseRouting/
+          # UseCors/UseAuthentication/UseAuthorization/UseEndpoints/MapControllers etc.
+          # Each pipeline Use* call emits SCOPE.Component/middleware_coverage with
+          # middleware_name and pipeline_order properties. In-file detection is full;
+          # cross-file middleware ordering (e.g. conditional branch) stays partial.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/middleware_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/middleware_extra_test.go
+              functions:
+                - TestMiddlewareExtraUseMiddleware
+                - TestMiddlewareExtraMiddlewareClass
+                - TestMiddlewareAspNetCorePipelineOrder
+                - TestMiddlewareAspNetCoreUseRouting
+                - TestMiddlewareAspNetCoreUseAuthentication
+                - TestMiddlewareAspNetCoreMapControllers
+                - TestMiddlewareAspNetCoreUseResponseCaching
+                - TestMiddlewareAspNetCoreUseExceptionHandler
+          issues_implemented: ["3380"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest [Fact]/[Theory]/[Test]/[TestMethod] attrs
@@ -9765,15 +9874,85 @@ records:
       Middleware:
         middleware_coverage:
           # app.UseMiddleware<T>, inline app.Use() lambda, IMiddleware+InvokeAsync class,
-          # [ServiceFilter]/[TypeFilter]/IActionFilter-based MVC filter coverage detected via
-          # custom_csharp_middleware_extra extractor; issue #3261.
-          status: partial
+          # [ServiceFilter]/[TypeFilter]/IActionFilter/IAsyncActionFilter-based MVC filter
+          # coverage detected via custom_csharp_middleware_extra extractor.
+          # csMw deepening (#3380): full ASP.NET Core pipeline order tracking shared with
+          # aspnet-core (UseRouting/UseAuthentication/UseAuthorization/MapControllers etc.)
+          status: full
           symbols:
             - file: internal/custom/csharp/middleware_extra.go
               functions: [Extract]
           tests:
             - file: internal/custom/csharp/middleware_extra_test.go
-          issues_implemented: ["3261"]
+              functions:
+                - TestMiddlewareExtraMVCFilter
+                - TestMiddlewareExtraUseMiddleware
+                - TestMiddlewareExtraMiddlewareClass
+                - TestMiddlewareAspNetCorePipelineOrder
+          issues_implemented: ["3261", "3380"]
+          verified_at: "2026-05-30"
+      Auth:
+        auth_coverage:
+          # Same custom_csharp_auth extractor: [Authorize] (plain/roles/policy/positional),
+          # [AllowAnonymous], AddAuthorization()/AddPolicy() service registration.
+          # csAuth deepening (#3380): AddAuthentication()/AddJwtBearer() JWT bearer,
+          # TokenValidationParameters, AddIdentity<TUser,TRole>()/AddDefaultIdentity<T>(),
+          # app.UseAuthentication()/UseAuthorization() pipeline registration.
+          # Full for in-file detection; cross-file JWT key config stays partial.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/auth.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/auth_test.go
+              functions:
+                - TestAuthAuthorizeAttribute
+                - TestAuthAuthorizeRoles
+                - TestAuthAuthorizePolicy
+                - TestAuthAuthorizePositional
+                - TestAuthAllowAnonymous
+                - TestAuthAddAuthorization
+                - TestAuthJwtBearerAddAuthentication
+                - TestAuthAddIdentityFullRoles
+                - TestAuthUseAuthenticationPipeline
+          issues_implemented: ["3380"]
+          verified_at: "2026-05-30"
+      Validation:
+        request_validation:
+          # Same custom_csharp_validation extractor: FluentValidation AbstractValidator<T>,
+          # DataAnnotations [Required]/[StringLength]/[Range]/[RegularExpression]/
+          # [EmailAddress] etc., [ApiController] auto-validation.
+          # csVal deepening (#3380): ModelState.IsValid explicit check, per-property
+          # RuleFor names, DataAnnotation argument capture.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/validation.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/validation_test.go
+              functions:
+                - TestValidationFluentAbstractValidator
+                - TestValidationDataAnnotationsRequired
+                - TestValidationApiControllerAutoValidation
+                - TestValidationModelStateIsValid
+                - TestValidationFluentRuleForProperties
+                - TestValidationAnnotationArgsStringLength
+          issues_implemented: ["3380"]
+          verified_at: "2026-05-30"
+        dto_extraction:
+          # SCOPE.Schema(dto) from AbstractValidator<T> type param, DataAnnotation model
+          # classes, [FromBody] binding. Shared extractor with aspnet-core.
+          status: full
+          symbols:
+            - file: internal/custom/csharp/validation.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/validation_test.go
+              functions:
+                - TestValidationFluentAbstractValidator
+                - TestValidationFromBodyDtoExtraction
+                - TestValidationFromBodyPrimitivesSkipped
+          issues_implemented: ["3380"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:

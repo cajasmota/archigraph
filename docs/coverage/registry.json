@@ -6161,29 +6161,27 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/csharp/auth.go"],
+            "status": "full",
+            "cites": ["internal/custom/csharp/auth.go","internal/custom/csharp/auth_test.go"],
             "notes": "[Authorize]/[AllowAnonymous]/RequireAuthorization/AddPolicy regex extractor; heuristic"
           }
         },
         "Validation": {
           "dto_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/csharp/validation.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/csharp/validation.go","internal/custom/csharp/validation_test.go"],
             "notes": "DTO types inferred from FluentValidation AbstractValidator\u003cT\u003e type arg and DataAnnotation model classes; heuristic"
           },
           "request_validation": {
-            "status": "partial",
-            "cites": ["internal/custom/csharp/validation.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/csharp/validation.go","internal/custom/csharp/validation_test.go"],
             "notes": "FluentValidation AbstractValidator\u003cT\u003e + DataAnnotations [Required]/[StringLength]/[Range]/[RegularExpression] regex extractor; heuristic"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/engine/aspnet_core_routes.go"],
+            "status": "full",
+            "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
             "verified_at": "2026-05-28"
           }
         },
@@ -6375,28 +6373,26 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/csharp/auth.go"],
+            "status": "full",
+            "cites": ["internal/custom/csharp/auth.go","internal/custom/csharp/auth_test.go"],
             "notes": "[Authorize]/[AllowAnonymous]/RequireAuthorization/AddPolicy regex extractor; heuristic"
           }
         },
         "Validation": {
           "dto_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/csharp/validation.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/csharp/validation.go","internal/custom/csharp/validation_test.go"],
             "notes": "DTO types inferred from FluentValidation + DataAnnotation model classes; heuristic"
           },
           "request_validation": {
-            "status": "partial",
-            "cites": ["internal/custom/csharp/validation.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/csharp/validation.go","internal/custom/csharp/validation_test.go"],
             "notes": "FluentValidation AbstractValidator\u003cT\u003e + DataAnnotations regex extractor; heuristic"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
             "notes": "app.UseMiddleware\u003cT\u003e typed registrations, inline app.Use() lambda middleware, IMiddleware class + InvokeAsync detection, [ServiceFilter]/[TypeFilter]/IActionFilter-based MVC filter coverage."
           }

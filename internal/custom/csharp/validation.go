@@ -14,8 +14,23 @@
 //  3. [ApiController] auto-validation: presence of [ApiController] attribute triggers
 //     automatic ModelState validation. Emits a single SCOPE.Pattern per file.
 //
+// csVal — deepening (issue #3380):
+//
+//  4. ModelState.IsValid — explicit manual validation check. Emits SCOPE.Pattern
+//     (subtype="request_validation") per call site so that controllers that do not use
+//     [ApiController] auto-validation are still covered.
+//
+//  5. [FromBody] DTO binding — [FromBody] T param (non-primitive) emits a
+//     SCOPE.Schema (subtype="dto") entity for the bound type. Distinct from
+//     aspnet_request_response.go which covers the component side; this emits the
+//     DTO schema entity to populate the dto_extraction cell.
+//
+//  6. Per-property validator args: DataAnnotation arguments (e.g. StringLength(50),
+//     Range(1,100)) captured and stored in Properties so the graph carries
+//     validation constraints without requiring source re-reads.
+//
 // These entities cause request_validation and dto_extraction coverage cells to light up
-// for the 6 C# backend framework records.
+// for the C# backend framework records.
 package csharp
 
 import (
@@ -70,6 +85,29 @@ var (
 	// [ApiController] auto-validation marker.
 	reApiController = regexp.MustCompile(
 		`\[ApiController\s*\]`,
+	)
+
+	// csVal: ModelState.IsValid — explicit validation check (issue #3380)
+	csValModelStateIsValid = regexp.MustCompile(
+		`\bModelState\.IsValid\b`,
+	)
+
+	// csVal: [FromBody] DTO binding — [FromBody] TypeName param (issue #3380)
+	// Captures the type name of the [FromBody] parameter.
+	csValFromBody = regexp.MustCompile(
+		`\[FromBody\]\s+(\w+)\s+\w+`,
+	)
+
+	// csVal: DataAnnotation with captured arguments for per-property constraint storage
+	// Matches [AttrName(args)] capturing AttrName and the raw args string.
+	csValAnnotationWithArgs = regexp.MustCompile(
+		`\[\s*(Required|StringLength|Range|RegularExpression|EmailAddress|MinLength|MaxLength|Compare|Phone|Url)\s*(\([^)]*\))?\s*\]`,
+	)
+
+	// csVal: RuleFor chain — capture property name from lambda x => x.Property
+	// Note: RuleFor may be called directly (no dot prefix) inside a validator constructor.
+	csValRuleForProperty = regexp.MustCompile(
+		`\bRuleFor\s*\(\s*\w+\s*=>\s*\w+\.(\w+)\s*\)`,
 	)
 )
 
@@ -208,6 +246,86 @@ func (e *csharpValidationExtractor) Extract(ctx context.Context, file extractor.
 		setProps(&ent,
 			"validation_framework", "ApiController",
 			"detail", "auto_model_state_validation",
+		)
+		add(ent)
+	}
+
+	// -----------------------------------------------------------------------
+	// csVal 4. ModelState.IsValid — explicit validation check (issue #3380)
+	// -----------------------------------------------------------------------
+	for _, m := range csValModelStateIsValid.FindAllStringIndex(src, -1) {
+		line := lineOf(src, m[0])
+		name := "validation:ModelState.IsValid:" + file.Path + ":" + itoa(line)
+		ent := makeEntity(name, "SCOPE.Pattern", "request_validation", file.Path, "csharp", line)
+		setProps(&ent,
+			"validation_framework", "ModelState",
+			"detail", "explicit_model_state_check",
+		)
+		add(ent)
+	}
+
+	// -----------------------------------------------------------------------
+	// csVal 5. [FromBody] DTO binding — emit SCOPE.Schema dto per bound type (issue #3380)
+	// -----------------------------------------------------------------------
+	for _, m := range csValFromBody.FindAllStringSubmatchIndex(src, -1) {
+		typeName := src[m[2]:m[3]]
+		if csharpPrimitives[typeName] {
+			continue
+		}
+		line := lineOf(src, m[0])
+		dtoEnt := makeEntity(typeName, "SCOPE.Schema", "dto", file.Path, "csharp", line)
+		setProps(&dtoEnt,
+			"validation_framework", "FromBody",
+			"provenance", "INFERRED_FROM_FROM_BODY",
+		)
+		add(dtoEnt)
+	}
+
+	// -----------------------------------------------------------------------
+	// csVal 6. Per-property FluentValidation RuleFor property names (issue #3380)
+	// Emits SCOPE.Pattern/request_validation with property_name so the graph
+	// carries the validated field name, not just "rule_for_present".
+	// -----------------------------------------------------------------------
+	if reAbstractValidator.MatchString(src) {
+		for _, m := range csValRuleForProperty.FindAllStringSubmatchIndex(src, -1) {
+			propName := src[m[2]:m[3]]
+			line := lineOf(src, m[0])
+			name := "validation:fluent:rule_for_prop:" + propName + ":" + file.Path + ":" + itoa(line)
+			ent := makeEntity(name, "SCOPE.Pattern", "request_validation", file.Path, "csharp", line)
+			setProps(&ent,
+				"validation_framework", "FluentValidation",
+				"detail", "rule_for_property",
+				"property_name", propName,
+			)
+			add(ent)
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// csVal 6b. DataAnnotation args capture — enrich existing annotation entities
+	// with their argument string (e.g. StringLength(50), Range(1,100)).
+	// Emits a separate "annotated" entity with the args captured.
+	// -----------------------------------------------------------------------
+	for _, m := range csValAnnotationWithArgs.FindAllStringSubmatchIndex(src, -1) {
+		attrName := src[m[2]:m[3]]
+		args := ""
+		if m[4] >= 0 {
+			args = src[m[4]:m[5]]
+			// strip outer parens
+			if len(args) >= 2 && args[0] == '(' && args[len(args)-1] == ')' {
+				args = args[1 : len(args)-1]
+			}
+		}
+		if args == "" {
+			continue // no args, already covered by reDataAnnotation path
+		}
+		line := lineOf(src, m[0])
+		name := "validation:annotation_args:" + attrName + ":" + file.Path + ":" + itoa(line)
+		ent := makeEntity(name, "SCOPE.Pattern", "request_validation", file.Path, "csharp", line)
+		setProps(&ent,
+			"validation_framework", "DataAnnotations",
+			"annotation", attrName,
+			"annotation_args", args,
 		)
 		add(ent)
 	}
