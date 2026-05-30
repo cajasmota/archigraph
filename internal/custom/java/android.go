@@ -66,6 +66,39 @@ var (
 	// (Camera, Sensor, fingerprint, usb, etc. — the native-device bridge surface).
 	adHardwareImportRE = regexp.MustCompile(
 		`(?m)^\s*import\s+(android\.hardware\.[A-Za-z0-9_.]+)\s*;`)
+
+	// context_extraction: Context-acquiring call sites in Java source.
+	// Captures the method name: getContext, getActivity, requireContext,
+	// getApplicationContext, getBaseContext, requireActivity.
+	adContextCallRE = regexp.MustCompile(
+		`(?m)\b(getContext|getActivity|requireContext|getApplicationContext|getBaseContext|requireActivity)\s*\(\s*\)`)
+
+	// context_extraction: Context parameter in method signature — the component
+	// explicitly receives an android.content.Context argument.
+	// Capture group 1: the Context variable name.
+	adContextParamRE = regexp.MustCompile(
+		`(?m)\b(?:android\.content\.)?Context\s+(\w+)\b`)
+
+	// deep_link_extraction: <data android:scheme="..."> inside an <intent-filter>
+	// block in AndroidManifest.xml.  We detect the scheme first, then look for
+	// host/pathPrefix in the same block.
+	// Capture group 1: scheme value.
+	adDeepLinkSchemeRE = regexp.MustCompile(
+		`(?m)<data\b[^>]*android:scheme\s*=\s*"([^"]+)"`)
+
+	// deep_link_extraction: <data android:host="..."> — the hostname component.
+	// Capture group 1: host value.
+	adDeepLinkHostRE = regexp.MustCompile(
+		`(?m)<data\b[^>]*android:host\s*=\s*"([^"]+)"`)
+
+	// deep_link_extraction: <data android:pathPrefix="..."> or android:path="..."
+	// Capture group 1: path/pathPrefix value.
+	adDeepLinkPathRE = regexp.MustCompile(
+		`(?m)<data\b[^>]*android:(?:path|pathPrefix|pathPattern)\s*=\s*"([^"]+)"`)
+
+	// deep_link_extraction: <intent-filter> block boundary.
+	adIntentFilterOpenRE  = regexp.MustCompile(`(?m)<intent-filter\b`)
+	adIntentFilterCloseRE = regexp.MustCompile(`(?m)</intent-filter>`)
 )
 
 func androidFrameworkMatches(fw string) bool {
@@ -343,7 +376,193 @@ func ExtractAndroid(ctx PatternContext) PatternResult {
 		}
 	}
 
+	// context_extraction: Context call sites and Context parameters (Java files only).
+	if !isManifest {
+		extractAndroidContexts(ctx, &result, seenRefs)
+	}
+
+	// deep_link_extraction: <intent-filter> with scheme/host deep links.
+	if isManifest {
+		extractAndroidDeepLinks(ctx, &result, seenRefs)
+	}
+
 	return result
+}
+
+// extractAndroidContexts scans Java source files for Context-acquiring call
+// sites (getContext(), requireContext(), getApplicationContext(), etc.) and
+// explicit Context parameters. Each unique site becomes a SCOPE.Reference with
+// subtype "context_site", providing the context_extraction capability signal.
+//
+// These are the primary surface for understanding Context propagation within
+// Android components — whether a Fragment fetches context from its host
+// Activity, a Service uses its own base context, or a helper class receives
+// Context as a dependency-injected parameter.
+func extractAndroidContexts(ctx PatternContext, result *PatternResult, seen map[string]bool) {
+	src := ctx.Source
+	fp := ctx.FilePath
+
+	// Emit per call-site (dedup by enclosing class + method name).
+	for _, m := range adContextCallRE.FindAllStringSubmatchIndex(src, -1) {
+		method := src[m[2]:m[3]]
+		enclosing := findEnclosingClass(src, m[0])
+		key := method
+		if enclosing != "" {
+			key = enclosing + "." + method
+		}
+		ref := "scope:reference:android_context:" + fp + ":" + key + ":" + lineToStr(src, m[0])
+		props := map[string]any{
+			"context_method": method,
+			"framework":      "android",
+			"context_kind":   "call_site",
+		}
+		if enclosing != "" {
+			props["enclosing_class"] = enclosing
+		}
+		addEntity(result, seen, SecondaryEntity{
+			Name:       key,
+			Kind:       "SCOPE.Reference",
+			Subtype:    "context_site",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			LineEnd:    lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_ANDROID_CONTEXT_CALL",
+			Ref:        ref,
+			Properties: props,
+		})
+	}
+
+	// Emit per Context-parameter declaration (fields/parameters).
+	for _, m := range adContextParamRE.FindAllStringSubmatchIndex(src, -1) {
+		varName := src[m[2]:m[3]]
+		// Skip common framework variable names that are not context injection.
+		if varName == "context" || varName == "ctx" || varName == "mContext" ||
+			varName == "appContext" || varName == "applicationContext" {
+			enclosing := findEnclosingClass(src, m[0])
+			ref := "scope:reference:android_context_param:" + fp + ":" + varName + ":" + lineToStr(src, m[0])
+			props := map[string]any{
+				"context_var":  varName,
+				"framework":    "android",
+				"context_kind": "parameter",
+			}
+			if enclosing != "" {
+				props["enclosing_class"] = enclosing
+			}
+			addEntity(result, seen, SecondaryEntity{
+				Name:       varName,
+				Kind:       "SCOPE.Reference",
+				Subtype:    "context_site",
+				SourceFile: fp,
+				LineStart:  lineOf(src, m[0]),
+				LineEnd:    lineOf(src, m[0]),
+				Provenance: "INFERRED_FROM_ANDROID_CONTEXT_PARAM",
+				Ref:        ref,
+				Properties: props,
+			})
+		}
+	}
+}
+
+// extractAndroidDeepLinks scans an AndroidManifest.xml for <intent-filter>
+// blocks that contain a <data android:scheme="..."> element, which defines a
+// custom URI deep-link.  Each discovered deep-link scheme (and its optional
+// host/path components) is emitted as a SCOPE.Reference with subtype
+// "deep_link", satisfying the deep_link_extraction capability.
+//
+// Pattern: a deep-link intent-filter contains at minimum:
+//
+//	<intent-filter>
+//	    <action android:name="android.intent.action.VIEW"/>
+//	    <data android:scheme="myapp" android:host="open" android:pathPrefix="/item"/>
+//	</intent-filter>
+func extractAndroidDeepLinks(ctx PatternContext, result *PatternResult, seen map[string]bool) {
+	src := ctx.Source
+	fp := ctx.FilePath
+
+	// Walk each <intent-filter> block.
+	opens := adIntentFilterOpenRE.FindAllStringIndex(src, -1)
+	closes := adIntentFilterCloseRE.FindAllStringIndex(src, -1)
+	if len(opens) == 0 || len(closes) == 0 {
+		return
+	}
+
+	// Pair each open with the next close.
+	ci := 0
+	for _, o := range opens {
+		// Find the first </intent-filter> after this <intent-filter>.
+		for ci < len(closes) && closes[ci][0] <= o[0] {
+			ci++
+		}
+		if ci >= len(closes) {
+			break
+		}
+		blockEnd := closes[ci][1]
+		block := src[o[0]:blockEnd]
+
+		// Only process blocks that contain a deep-link scheme.
+		schemesIdx := adDeepLinkSchemeRE.FindAllStringSubmatchIndex(block, -1)
+		if len(schemesIdx) == 0 {
+			continue
+		}
+
+		// Collect hosts and paths from this block.
+		hosts := []string{}
+		for _, hm := range adDeepLinkHostRE.FindAllStringSubmatch(block, -1) {
+			if len(hm) >= 2 {
+				hosts = append(hosts, hm[1])
+			}
+		}
+		paths := []string{}
+		for _, pm := range adDeepLinkPathRE.FindAllStringSubmatch(block, -1) {
+			if len(pm) >= 2 {
+				paths = append(paths, pm[1])
+			}
+		}
+
+		for _, sm := range schemesIdx {
+			scheme := block[sm[2]:sm[3]]
+			// Build a URI template for the entity name.
+			host := ""
+			if len(hosts) > 0 {
+				host = hosts[0]
+			}
+			path := ""
+			if len(paths) > 0 {
+				path = paths[0]
+			}
+			uri := scheme + "://"
+			if host != "" {
+				uri += host
+			}
+			if path != "" {
+				uri += path
+			}
+			line := lineOf(src, o[0])
+			ref := "scope:reference:android_deep_link:" + fp + ":" + uri + ":" + lineToStr(src, o[0])
+			props := map[string]any{
+				"scheme":    scheme,
+				"framework": "android",
+				"uri":       uri,
+			}
+			if host != "" {
+				props["host"] = host
+			}
+			if path != "" {
+				props["path"] = path
+			}
+			addEntity(result, seen, SecondaryEntity{
+				Name:       uri,
+				Kind:       "SCOPE.Reference",
+				Subtype:    "deep_link",
+				SourceFile: fp,
+				LineStart:  line,
+				LineEnd:    line,
+				Provenance: "INFERRED_FROM_ANDROID_DEEP_LINK",
+				Ref:        ref,
+				Properties: props,
+			})
+		}
+	}
 }
 
 // lineToStr returns the 1-indexed line number for offset as a string, for use

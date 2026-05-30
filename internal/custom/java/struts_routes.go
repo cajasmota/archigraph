@@ -148,6 +148,49 @@ var (
 	// Capture group 1: the model type.
 	strutsModelDrivenRE = regexp.MustCompile(
 		`implements\s+[^{]*\bModelDriven\s*<\s*([\w.]+)\s*>`)
+
+	// ── request_validation (#3256) ────────────────────────────────────────────
+
+	// Struts 2: validate() method override on ActionSupport (or plain Action
+	// implementors). This is the canonical programmatic validation hook — the
+	// Struts 2 workflow interceptor calls it before execute().
+	// Matches:  public void validate() {
+	strutsValidateMethodRE = regexp.MustCompile(
+		`(?m)public\s+void\s+validate\s*\(\s*\)`)
+
+	// Struts 1: ActionForm.validate(ActionMapping, HttpServletRequest) — the
+	// Struts 1 validation callback signature.
+	strutsActionFormValidateRE = regexp.MustCompile(
+		`(?m)public\s+ActionErrors\s+validate\s*\(`)
+
+	// Struts 2 @Validations annotation (wraps multiple field validators).
+	strutsValidationsAnnoRE = regexp.MustCompile(
+		`@Validations\s*\(`)
+
+	// Struts 2 @Validation class-level annotation (enables framework validation).
+	strutsValidationAnnoRE = regexp.MustCompile(
+		`@Validation\b`)
+
+	// Struts 2 field-validator annotations — each covers one constraint type.
+	// We match a broad set:  @RequiredStringValidator, @IntRangeFieldValidator,
+	// @EmailValidator, @RegexFieldValidator, @StringLengthFieldValidator,
+	// @RequiredFieldValidator, @UrlValidator, @CustomValidator.
+	strutsFieldValidatorAnnoRE = regexp.MustCompile(
+		`@(?:Required(?:String|Field)?Validator|IntRangeFieldValidator|EmailValidator|` +
+			`RegexFieldValidator|StringLengthFieldValidator|UrlValidator|CustomValidator|` +
+			`ConversionErrorFieldValidator|DateRangeFieldValidator|FieldExpressionValidator|` +
+			`ExpressionValidator)\b`)
+
+	// validation.xml: <field name="..."> inside a <validators> block.
+	// The Struts 1 validator framework and Struts 2 XML-based validators both
+	// use this pattern. Capture group 1: field name.
+	strutsValidationXMLFieldRE = regexp.MustCompile(
+		`(?m)<field\b[^>]*\bname\s*=\s*"([^"]+)"`)
+
+	// validation.xml: <validator type="..."> at the top level (Struts 2 action-
+	// level validator). Capture group 1: validator type.
+	strutsValidationXMLValidatorRE = regexp.MustCompile(
+		`(?m)<validator\b[^>]*\btype\s*=\s*"([^"]+)"`)
 )
 
 // strutsDTOSkipProps lists setter property names that are framework plumbing
@@ -365,6 +408,10 @@ func ExtractStruts(ctx PatternContext) PatternResult {
 			}
 		}
 
+		// XML files may contain validation descriptors (validation.xml).
+		// request_validation: <field> / <validator> elements.
+		extractStrutsRequestValidation(ctx, &result, seen)
+
 		// XML files have no interceptor or auth content — return early.
 		return result
 	}
@@ -506,6 +553,10 @@ func ExtractStruts(ctx PatternContext) PatternResult {
 		}
 		addEntity(&result, seen, e)
 	}
+
+	// request_validation: validate() overrides, @Validations/@Validation,
+	// field-validator annotations, and XML validation descriptors.
+	extractStrutsRequestValidation(ctx, &result, seen)
 
 	return result
 }
@@ -679,5 +730,192 @@ func extractStrutsDTO(
 				},
 			})
 		}
+	}
+}
+
+// extractStrutsRequestValidation detects Struts request-validation patterns:
+//
+//   - Struts 2: public void validate() override on ActionSupport / Action
+//     (programmatic validation hook called by the workflow interceptor).
+//   - Struts 2: @Validations / @Validation class-level annotations and
+//     per-field validator annotations (@RequiredStringValidator, etc.).
+//   - Struts 1: ActionForm.validate(ActionMapping, HttpServletRequest)
+//     override — the Struts 1 validation callback.
+//   - XML-based: <field name="..."> / <validator type="..."> in
+//     validation.xml / *-validation.xml descriptors.
+//
+// Each detected validation site emits a SCOPE.Operation entity with subtype
+// "validation" and provenance INFERRED_FROM_STRUTS_VALIDATION_*, providing
+// the request_validation capability signal for the struts registry record.
+func extractStrutsRequestValidation(ctx PatternContext, result *PatternResult, seen map[string]bool) {
+	src := ctx.Source
+	fp := ctx.FilePath
+	isXML := strings.HasSuffix(fp, ".xml")
+
+	if isXML {
+		// XML validation descriptors: <field name="..."> and <validator type="...">
+		for _, m := range strutsValidationXMLFieldRE.FindAllStringSubmatchIndex(src, -1) {
+			fieldName := src[m[2]:m[3]]
+			ref := fmt.Sprintf("struts:validation:xml_field:%s:%s", fieldName, fp)
+			addEntity(result, seen, SecondaryEntity{
+				Name:       fieldName,
+				Kind:       "SCOPE.Operation",
+				Subtype:    "validation",
+				SourceFile: fp,
+				LineStart:  lineOf(src, m[0]),
+				Provenance: "INFERRED_FROM_STRUTS_VALIDATION_XML_FIELD",
+				Ref:        ref,
+				Properties: map[string]any{
+					"framework":       "struts",
+					"validation_kind": "xml_field",
+					"field_name":      fieldName,
+				},
+			})
+		}
+		for _, m := range strutsValidationXMLValidatorRE.FindAllStringSubmatchIndex(src, -1) {
+			validatorType := src[m[2]:m[3]]
+			ref := fmt.Sprintf("struts:validation:xml_validator:%s:%s:%d", validatorType, fp, lineOf(src, m[0]))
+			addEntity(result, seen, SecondaryEntity{
+				Name:       validatorType,
+				Kind:       "SCOPE.Operation",
+				Subtype:    "validation",
+				SourceFile: fp,
+				LineStart:  lineOf(src, m[0]),
+				Provenance: "INFERRED_FROM_STRUTS_VALIDATION_XML_VALIDATOR",
+				Ref:        ref,
+				Properties: map[string]any{
+					"framework":       "struts",
+					"validation_kind": "xml_validator",
+					"validator_type":  validatorType,
+				},
+			})
+		}
+		return
+	}
+
+	// Java source: Struts 2 validate() override.
+	for _, m := range strutsValidateMethodRE.FindAllStringSubmatchIndex(src, -1) {
+		enclosing := findEnclosingClass(src, m[0])
+		name := "validate"
+		if enclosing != "" {
+			name = enclosing + ".validate"
+		}
+		ref := fmt.Sprintf("struts:validation:validate_method:%s:%s", name, fp)
+		props := map[string]any{
+			"framework":       "struts",
+			"validation_kind": "validate_override",
+		}
+		if enclosing != "" {
+			props["action_class"] = enclosing
+		}
+		addEntity(result, seen, SecondaryEntity{
+			Name:       name,
+			Kind:       "SCOPE.Operation",
+			Subtype:    "validation",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_STRUTS_VALIDATE_METHOD",
+			Ref:        ref,
+			Properties: props,
+		})
+	}
+
+	// Struts 1: ActionForm.validate() override.
+	for _, m := range strutsActionFormValidateRE.FindAllStringSubmatchIndex(src, -1) {
+		enclosing := findEnclosingClass(src, m[0])
+		name := "validate"
+		if enclosing != "" {
+			name = enclosing + ".validate"
+		}
+		ref := fmt.Sprintf("struts:validation:actionform_validate:%s:%s", name, fp)
+		props := map[string]any{
+			"framework":       "struts",
+			"validation_kind": "actionform_validate",
+		}
+		if enclosing != "" {
+			props["form_class"] = enclosing
+		}
+		addEntity(result, seen, SecondaryEntity{
+			Name:       name,
+			Kind:       "SCOPE.Operation",
+			Subtype:    "validation",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_STRUTS_ACTIONFORM_VALIDATE",
+			Ref:        ref,
+			Properties: props,
+		})
+	}
+
+	// Struts 2: @Validations annotation (class or method level).
+	for _, m := range strutsValidationsAnnoRE.FindAllStringSubmatchIndex(src, -1) {
+		enclosing := findEnclosingClass(src, m[0])
+		ref := fmt.Sprintf("struts:validation:validations_anno:%s:%d", fp, lineOf(src, m[0]))
+		props := map[string]any{
+			"framework":       "struts",
+			"validation_kind": "validations_annotation",
+		}
+		if enclosing != "" {
+			props["action_class"] = enclosing
+		}
+		addEntity(result, seen, SecondaryEntity{
+			Name:       "@Validations",
+			Kind:       "SCOPE.Operation",
+			Subtype:    "validation",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_STRUTS_VALIDATIONS_ANNOTATION",
+			Ref:        ref,
+			Properties: props,
+		})
+	}
+
+	// Struts 2: @Validation annotation (class-level framework-enable flag).
+	if strutsValidationAnnoRE.MatchString(src) {
+		m := strutsValidationAnnoRE.FindStringIndex(src)
+		enclosing := findEnclosingClass(src, m[0])
+		ref := fmt.Sprintf("struts:validation:validation_anno:%s", fp)
+		props := map[string]any{
+			"framework":       "struts",
+			"validation_kind": "validation_annotation",
+		}
+		if enclosing != "" {
+			props["action_class"] = enclosing
+		}
+		addEntity(result, seen, SecondaryEntity{
+			Name:       "@Validation",
+			Kind:       "SCOPE.Operation",
+			Subtype:    "validation",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_STRUTS_VALIDATION_ANNOTATION",
+			Ref:        ref,
+			Properties: props,
+		})
+	}
+
+	// Struts 2: field-validator annotations (@RequiredStringValidator, etc.).
+	for _, m := range strutsFieldValidatorAnnoRE.FindAllStringIndex(src, -1) {
+		annoName := src[m[0]:m[1]]
+		enclosing := findEnclosingClass(src, m[0])
+		ref := fmt.Sprintf("struts:validation:field_validator:%s:%s:%d", annoName, fp, lineOf(src, m[0]))
+		props := map[string]any{
+			"framework":       "struts",
+			"validation_kind": "field_validator_annotation",
+			"validator_type":  annoName,
+		}
+		if enclosing != "" {
+			props["action_class"] = enclosing
+		}
+		addEntity(result, seen, SecondaryEntity{
+			Name:       annoName,
+			Kind:       "SCOPE.Operation",
+			Subtype:    "validation",
+			SourceFile: fp,
+			LineStart:  lineOf(src, m[0]),
+			Provenance: "INFERRED_FROM_STRUTS_FIELD_VALIDATOR_ANNOTATION",
+			Ref:        ref,
+			Properties: props,
+		})
 	}
 }

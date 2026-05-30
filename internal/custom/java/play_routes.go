@@ -45,10 +45,10 @@ import (
 
 // playFrameworks is the set of framework identifiers that activate the Play extractor.
 var playFrameworks = map[string]bool{
-	"play":            true,
-	"play_framework":  true,
-	"play-framework":  true,
-	"playframework":   true,
+	"play":           true,
+	"play_framework": true,
+	"play-framework": true,
+	"playframework":  true,
 }
 
 var (
@@ -120,6 +120,22 @@ var (
 		`(?s)@Test\b(?:\s*\([^)]*\))?` +
 			`(?:\s*@\w+(?:\s*\([^)]*\))?\s*)*\s*(?:public\s+|protected\s+|private\s+)?(?:\w+\s+)*` +
 			`void\s+(\w+)\s*\(`)
+
+	// response_shape_extraction: Play's built-in Results factory methods.
+	// Play controllers return Result values via play.mvc.Results:
+	//   ok(content), created(content), accepted(), noContent(),
+	//   badRequest(content), notFound(content), forbidden(content),
+	//   internalServerError(content), redirect(url), status(code, content).
+	// Capture group 1: the result factory method name.
+	playResultFactoryRE = regexp.MustCompile(
+		`(?m)\b(ok|created|accepted|noContent|badRequest|notFound|forbidden|` +
+			`unauthorized|internalServerError|redirect|temporaryRedirect|` +
+			`movedPermanently|found|seeOther|notModified|status)\s*\(`)
+
+	// response_shape_extraction: play.mvc.Results static import — confirms
+	// we are in a Play controller context.
+	playResultsImportRE = regexp.MustCompile(
+		`(?m)import\s+play\.mvc\.(?:Results|Controller)\b|import\s+static\s+play\.mvc\.Results\b`)
 )
 
 // ExtractPlay runs the Play Framework extractor for route, middleware, DTO,
@@ -159,6 +175,7 @@ func ExtractPlay(ctx PatternContext) PatternResult {
 	extractPlayAuth(ctx, &result, seen, seenRels)
 	extractPlayDTOs(ctx, &result, seen)
 	extractPlayTests(ctx, &result, seen)
+	extractPlayResponseShapes(ctx, &result, seen)
 
 	return result
 }
@@ -539,6 +556,67 @@ func extractPlayTests(ctx PatternContext, result *PatternResult, seen map[string
 				"framework":       "play",
 				"test_annotation": "Test",
 			},
+		}
+		addEntity(result, seen, e)
+	}
+}
+
+// extractPlayResponseShapes detects Play result-factory call sites that reveal
+// the HTTP response shape of a controller method.
+//
+// Play controllers return play.mvc.Result values using the Results factory
+// methods (inherited by Controller or imported statically):
+//
+//	ok(Json.toJson(dto))     → 200 with body
+//	created(url)             → 201
+//	badRequest(form.errorsAsJson()) → 400
+//	notFound()               → 404
+//	redirect(url)            → 3xx
+//	status(418, body)        → custom status code
+//
+// Each distinct (enclosing method, result factory) pair becomes a
+// SCOPE.Reference entity with subtype "response_shape", providing the
+// response_shape_extraction substrate capability signal.
+func extractPlayResponseShapes(ctx PatternContext, result *PatternResult, seen map[string]bool) {
+	src := ctx.Source
+
+	// Quick gate: must have play.mvc imports or Result type in file.
+	if !playResultsImportRE.MatchString(src) &&
+		!strings.Contains(src, "play.mvc") &&
+		!strings.Contains(src, "import play") {
+		return
+	}
+
+	for _, idx := range playResultFactoryRE.FindAllStringSubmatchIndex(src, -1) {
+		if len(idx) < 4 {
+			continue
+		}
+		factoryMethod := src[idx[2]:idx[3]]
+		enclosing := findEnclosingClass(src, idx[0])
+		line := lineOf(src, idx[0])
+
+		key := factoryMethod
+		if enclosing != "" {
+			key = enclosing + "." + factoryMethod
+		}
+
+		ref := fmt.Sprintf("play:response_shape:%s:%s:%d", key, ctx.FilePath, line)
+		props := map[string]any{
+			"framework":      "play",
+			"result_factory": factoryMethod,
+		}
+		if enclosing != "" {
+			props["controller_class"] = enclosing
+		}
+		e := SecondaryEntity{
+			Name:       key,
+			Kind:       "SCOPE.Reference",
+			Subtype:    "response_shape",
+			SourceFile: ctx.FilePath,
+			LineStart:  line,
+			Provenance: "INFERRED_FROM_PLAY_RESULT_FACTORY",
+			Ref:        ref,
+			Properties: props,
 		}
 		addEntity(result, seen, e)
 	}

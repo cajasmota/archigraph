@@ -30,7 +30,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | DTO extraction | 🟢 `partial` | `2026-05-30` | 3191 | `internal/custom/java/struts_dto_test.go`<br>`internal/custom/java/struts_routes.go`<br>`testdata/fixtures/sources/java/struts/StrutsDtoFixture.java` | Detects Struts 1 ActionForm subclasses (incl. Validator/Dyna variants) and Struts 2 action field-binding (ActionSupport/Action/ModelDriven). Emits SCOPE.Schema DTO entities, SCOPE.Field bound fields from public OGNL setters (skipping framework plumbing), BINDS_INPUT relationships, and BINDS_MODEL for ModelDriven<T>. Heuristic regex over setters / extends-clauses, hence partial |
-| Request validation | 🔴 `missing` | — | 3256 | — | Genuine build: Struts 2 uses validate() method override on ActionSupport (and Struts 1 ActionForm.validate()) for request validation, not JAX-RS/Spring annotation patterns; no extractor currently detects this pattern |
+| Request validation | 🟢 `partial` | — | 3256 | `internal/custom/java/struts_routes.go` | extractStrutsRequestValidation() detects Struts 2 validate() overrides, @Validations/@Validation annotations, field-validator annotations (@RequiredStringValidator etc.), Struts 1 ActionForm.validate() overrides, and validation.xml field/validator elements (#3256) |
 
 ### Middleware
 

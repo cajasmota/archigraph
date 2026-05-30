@@ -15,13 +15,13 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Context extraction | 🔴 `missing` | — | 3256 | — | Genuine build: Android Context propagation not yet extracted; requires new regex patterns in android.go |
+| Context extraction | 🟢 `partial` | — | 3256 | `internal/custom/java/android.go` | extractAndroidContexts() detects getContext()/requireContext()/getApplicationContext()/getBaseContext()/requireActivity() call sites and Context parameter names as SCOPE.Reference context_site entities (#3256) |
 
 ### Navigation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Deep link extraction | 🔴 `missing` | — | 3256 | — | Genuine build: Android deep-link intent-filter patterns not yet extracted; same build as android-jetpack |
+| Deep link extraction | 🟢 `partial` | — | 3256 | `internal/custom/java/android.go` | extractAndroidDeepLinks() detects <intent-filter> blocks in AndroidManifest.xml with <data android:scheme> as SCOPE.Reference deep_link entities with scheme/host/path URI templates (#3256) |
 | Navigation extraction | 🟢 `partial` | — | — | `internal/custom/java/android.go` | adIntentExplicitRE+adFragmentTransactionRE emit navigation edges (#3179) |
 | Screen detection | 🟢 `partial` | — | — | `internal/custom/java/android.go` | adActivityClassRE+adFragmentClassRE detect Activity/Fragment screens (#3179) |
 
