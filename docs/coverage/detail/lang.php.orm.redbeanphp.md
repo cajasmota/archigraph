@@ -16,16 +16,16 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/php/orms/redbeanphp.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Schema extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | RedBeanPHP R::dispense/'table' implicit schema; R::related/associate relations. Zero-config ORM — no explicit FK/lazy/migration concepts. |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | RedBeanPHP R::dispense/'table' implicit schema; R::related/associate relations. Zero-config ORM — no explicit FK/lazy/migration concepts. |
+| Foreign key extraction | — `not_applicable` | — | — | — | RedBeanPHP zero-config ORM: foreign keys are auto-managed server-side via convention (ownXList/sharedXList), not extractable from PHP source. |
+| Lazy loading recognition | — `not_applicable` | — | — | — | RedBeanPHP loads eagerly by default; no lazy-loading configuration surface in PHP code. |
+| Relationship extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | RedBeanPHP R::dispense/'table' implicit schema; R::related/associate relations. Zero-config ORM — no explicit FK/lazy/migration concepts. |
 
 ### Queries
 
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | — `not_applicable` | — | — | — | RedBeanPHP is zero-config — schema is created/altered automatically at runtime; no migration files to parse. |
 
 ## Provenance
 

@@ -70,11 +70,11 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [multi](../by-language/multi.md) | [Dockerfile](../detail/build.dockerfile.md) | ✅ | — | — | ✅ | |
 | [multi](../by-language/multi.md) | [Justfile](../detail/build.justfile.md) | ✅ | — | — | ✅ | |
 | [multi](../by-language/multi.md) | [Makefile](../detail/build.makefile.md) | 🔴 | — | — | 🟢 | |
-| [php](../by-language/php.md) | [Behat](../detail/test.behat.md) | 🔴 | — | — | 🔴 | |
-| [php](../by-language/php.md) | [Codeception](../detail/test.codeception.md) | 🔴 | — | — | 🔴 | |
+| [php](../by-language/php.md) | [Behat](../detail/test.behat.md) | 🟢 | — | — | 🟢 | |
+| [php](../by-language/php.md) | [Codeception](../detail/test.codeception.md) | 🟢 | — | — | 🟢 | |
 | [php](../by-language/php.md) | [Composer](../detail/build.composer.md) | ✅ | — | — | ✅ | |
 | [php](../by-language/php.md) | [PHPUnit](../detail/test.phpunit.md) | ✅ | — | — | ✅ | |
-| [php](../by-language/php.md) | [Pest](../detail/test.pest.md) | 🔴 | — | — | 🔴 | |
+| [php](../by-language/php.md) | [Pest](../detail/test.pest.md) | 🟢 | — | — | 🟢 | |
 | [python](../by-language/python.md) | [Flit](../detail/build.flit.md) | 🟢 | — | — | 🟢 | |
 | [python](../by-language/python.md) | [Hatch](../detail/build.hatch.md) | 🟢 | — | — | 🟢 | |
 | [python](../by-language/python.md) | [Hypothesis (property tests)](../detail/test.hypothesis.md) | — | — | — | 🟢 | |

@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | 🔴 `missing` | — | — | — | — |
-| Target extraction | 🔴 `missing` | — | — | — | — |
+| Dependency graph | 🟢 `partial` | — | — | `internal/custom/php/test_data.go` | uses(ClassName::class) declarations + beforeEach/afterEach hooks + arch() architectural constraints scanned. |
+| Target extraction | 🟢 `partial` | — | — | `internal/custom/php/test_data.go`<br>`internal/engine/rules/php/test_patterns.yaml` | it()/test() declarations + describe() blocks + dataset() declarations extracted. |
 
 ## Provenance
 

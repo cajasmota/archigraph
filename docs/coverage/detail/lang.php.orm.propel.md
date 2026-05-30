@@ -16,16 +16,16 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/php/orms/propel.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Schema extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls. |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls. |
+| Foreign key extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls. |
+| Lazy loading recognition | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls. |
+| Relationship extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls. |
 
 ### Queries
 
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | 🟢 `partial` | — | — | `internal/custom/php/orm_data.go` | Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls. |
 
 ## Provenance
 

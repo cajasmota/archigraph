@@ -33004,26 +33004,26 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33052,26 +33052,26 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33100,26 +33100,26 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33148,26 +33148,26 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33196,26 +33196,28 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/driver_sql.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CREATE TABLE statements in PDO/mysqli execute calls scanned for table + column names (heuristic)."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33244,26 +33246,26 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33292,26 +33294,28 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/driver_sql.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CREATE TABLE statements in PDO::pgsql/pg_query execute calls scanned for table + column names (heuristic)."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33340,26 +33344,26 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -33388,26 +33392,28 @@
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/driver_sql.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CREATE TABLE statements in PDO::sqlite/SQLite3 execute calls scanned for table + column names (heuristic)."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           }
         },
         "Queries": {
@@ -36109,39 +36115,55 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           }
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           }
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           }
         }
       }
@@ -36160,26 +36182,36 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Doctrine #[ORM\\Column] attributes scanned forward to property names; association/FK/lazy/migration also extracted."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "ORM relation type attributes scanned (OneToMany/ManyToMany)."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "#[ORM\\JoinColumn] attributes scanned."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "fetch=LAZY / fetch='LAZY' annotation patterns scanned."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "OneToMany/ManyToOne/ManyToMany/OneToOne Doctrine attributes scanned."
           }
         },
         "Queries": {
@@ -36191,7 +36223,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "notes": "AbstractMigration subclasses + up/down methods scanned."
           }
         }
       }
@@ -36210,26 +36244,36 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL."
           }
         },
         "Queries": {
@@ -36241,7 +36285,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "notes": "Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL."
           }
         }
       }
@@ -36260,26 +36306,36 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls."
           }
         },
         "Queries": {
@@ -36291,7 +36347,9 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "notes": "Propel TableMap COL_* constants (schema); addRelation/addForeignKey (relations/FK); LAZY_LOAD constant; PropelMigration classes; XxxQuery::create() calls."
           }
         }
       }
@@ -36310,26 +36368,32 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "RedBeanPHP R::dispense/'table' implicit schema; R::related/associate relations. Zero-config ORM — no explicit FK/lazy/migration concepts."
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "RedBeanPHP R::dispense/'table' implicit schema; R::related/associate relations. Zero-config ORM — no explicit FK/lazy/migration concepts."
           },
           "foreign_key_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "RedBeanPHP zero-config ORM: foreign keys are auto-managed server-side via convention (ownXList/sharedXList), not extractable from PHP source."
           },
           "lazy_loading_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "not_applicable",
+            "notes": "RedBeanPHP loads eagerly by default; no lazy-loading configuration surface in PHP code."
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/php/orm_data.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "RedBeanPHP R::dispense/'table' implicit schema; R::related/associate relations. Zero-config ORM — no explicit FK/lazy/migration concepts."
           }
         },
         "Queries": {
@@ -36341,7 +36405,8 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "not_applicable",
+            "notes": "RedBeanPHP is zero-config — schema is created/altered automatically at runtime; no migration files to parse."
           }
         }
       }
@@ -51656,10 +51721,14 @@
       "label": "Behat",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/custom/php/test_data.go"],
+          "notes": "Behat Context class deps (implements Context/extends RawMinkContext) + step annotation targets scanned."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/custom/php/test_data.go","internal/engine/rules/php/test_patterns.yaml"],
+          "notes": "Feature/Scenario declarations in .feature files + step annotation patterns in PHP context classes extracted."
         }
       }
     },
@@ -51716,10 +51785,14 @@
       "label": "Codeception",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/custom/php/test_data.go"],
+          "notes": "Codeception module imports + Actor type dependencies (AcceptanceTester/FunctionalTester/UnitTester) scanned."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/custom/php/test_data.go","internal/engine/rules/php/test_patterns.yaml"],
+          "notes": "Cest class declarations + public test methods with Actor params extracted."
         }
       }
     },
@@ -52156,10 +52229,14 @@
       "label": "Pest",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/custom/php/test_data.go"],
+          "notes": "uses(ClassName::class) declarations + beforeEach/afterEach hooks + arch() architectural constraints scanned."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "partial",
+          "cites": ["internal/custom/php/test_data.go","internal/engine/rules/php/test_patterns.yaml"],
+          "notes": "it()/test() declarations + describe() blocks + dataset() declarations extracted."
         }
       }
     },

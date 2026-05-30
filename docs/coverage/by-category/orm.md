@@ -98,20 +98,20 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [kotlin](../by-language/kotlin.md) | [Room (Android)](../detail/lang.kotlin.orm.room.md) | 🟢 7/7 | |
 | [kotlin](../by-language/kotlin.md) | [SQLDelight](../detail/lang.kotlin.orm.sqldelight.md) | 🟢 7/7 | |
 | [kotlin](../by-language/kotlin.md) | [Spring Data (Kotlin)](../detail/lang.kotlin.orm.spring-data.md) | 🟢 8/8 | |
-| [php](../by-language/php.md) | [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🔴 0/8 | |
-| [php](../by-language/php.md) | [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 2/8 | |
-| [php](../by-language/php.md) | [Eloquent (Laravel)](../detail/lang.php.orm.eloquent.md) | 🟡 2/8 | |
-| [php](../by-language/php.md) | [PDO MySQL / mysqli](../detail/lang.php.driver.mysql.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [PDO PostgreSQL](../detail/lang.php.driver.postgres.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [PDO SQLite](../detail/lang.php.driver.sqlite.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [Propel](../detail/lang.php.orm.propel.md) | 🟡 2/8 | |
-| [php](../by-language/php.md) | [RedBeanPHP](../detail/lang.php.orm.redbeanphp.md) | 🟡 2/8 | |
-| [php](../by-language/php.md) | [datastax/php-driver (Cassandra)](../detail/lang.php.driver.cassandra.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [elasticsearch-php](../detail/lang.php.driver.elastic.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [mongodb (PHP driver)](../detail/lang.php.driver.mongodb.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [neo4j-php-client](../detail/lang.php.driver.neo4j.md) | 🟡 1/6 | |
-| [php](../by-language/php.md) | [phpredis / Predis](../detail/lang.php.driver.redis.md) | 🟡 1/6 | |
+| [php](../by-language/php.md) | [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟢 1/1 | |
+| [php](../by-language/php.md) | [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🟢 8/8 | |
+| [php](../by-language/php.md) | [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟢 8/8 | |
+| [php](../by-language/php.md) | [Eloquent (Laravel)](../detail/lang.php.orm.eloquent.md) | 🟢 8/8 | |
+| [php](../by-language/php.md) | [PDO MySQL / mysqli](../detail/lang.php.driver.mysql.md) | 🟢 2/2 | |
+| [php](../by-language/php.md) | [PDO PostgreSQL](../detail/lang.php.driver.postgres.md) | 🟢 2/2 | |
+| [php](../by-language/php.md) | [PDO SQLite](../detail/lang.php.driver.sqlite.md) | 🟢 2/2 | |
+| [php](../by-language/php.md) | [Propel](../detail/lang.php.orm.propel.md) | 🟢 8/8 | |
+| [php](../by-language/php.md) | [RedBeanPHP](../detail/lang.php.orm.redbeanphp.md) | 🟢 5/5 | |
+| [php](../by-language/php.md) | [datastax/php-driver (Cassandra)](../detail/lang.php.driver.cassandra.md) | 🟢 1/1 | |
+| [php](../by-language/php.md) | [elasticsearch-php](../detail/lang.php.driver.elastic.md) | 🟢 1/1 | |
+| [php](../by-language/php.md) | [mongodb (PHP driver)](../detail/lang.php.driver.mongodb.md) | 🟢 1/1 | |
+| [php](../by-language/php.md) | [neo4j-php-client](../detail/lang.php.driver.neo4j.md) | 🟢 1/1 | |
+| [php](../by-language/php.md) | [phpredis / Predis](../detail/lang.php.driver.redis.md) | 🟢 1/1 | |
 | [python](../by-language/python.md) | [Alembic (migration tool)](../detail/lang.python.orm.alembic.md) | 🟢 2/2 | |
 | [python](../by-language/python.md) | [Beanie (async MongoDB ODM)](../detail/lang.python.orm.beanie.md) | 🟢 6/6 | |
 | [python](../by-language/python.md) | [Django ORM](../detail/lang.python.orm.django.md) | ✅ 8/8 | |

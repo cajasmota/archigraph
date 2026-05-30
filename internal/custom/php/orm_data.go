@@ -1,0 +1,715 @@
+package php
+
+// orm_data.go — schema, relationship, and migration extractors for PHP ORMs:
+// Doctrine, Eloquent, CycleORM, Propel, RedBeanPHP.
+//
+// Coverage cells driven to green by this file:
+//   lang.php.orm.doctrine   : schema_extraction, relationship_extraction,
+//                             association_extraction, foreign_key_extraction,
+//                             lazy_loading_recognition, migration_parsing
+//   lang.php.orm.eloquent   : schema_extraction, relationship_extraction,
+//                             association_extraction, foreign_key_extraction,
+//                             lazy_loading_recognition, migration_parsing
+//   lang.php.orm.cycleorm   : model_extraction, schema_extraction,
+//                             relationship_extraction, association_extraction,
+//                             foreign_key_extraction, lazy_loading_recognition,
+//                             query_attribution, migration_parsing
+//   lang.php.orm.propel     : schema_extraction, relationship_extraction,
+//                             association_extraction, foreign_key_extraction,
+//                             lazy_loading_recognition, migration_parsing
+//   lang.php.orm.redbeanphp : schema_extraction, relationship_extraction,
+//                             association_extraction, foreign_key_extraction,
+//                             lazy_loading_recognition (migration_parsing → NA)
+
+import (
+	"context"
+	"regexp"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/types"
+)
+
+func init() {
+	extractor.Register("php_doctrine_orm_data", &doctrineORMDataExtractor{})
+	extractor.Register("php_eloquent_orm_data", &eloquentORMDataExtractor{})
+	extractor.Register("php_cycleorm_data", &cycleORMDataExtractor{})
+	extractor.Register("php_propel_orm_data", &propelORMDataExtractor{})
+	extractor.Register("php_redbeanphp_data", &redBeanPHPDataExtractor{})
+}
+
+// ============================================================================
+// Shared helpers
+// ============================================================================
+
+// ormAdd deduplicates by kind+name within a call.
+func ormAdd(seen map[string]bool, entities *[]types.EntityRecord, ent types.EntityRecord) {
+	key := ent.Kind + ":" + ent.Name
+	if seen[key] {
+		return
+	}
+	seen[key] = true
+	*entities = append(*entities, ent)
+}
+
+// ============================================================================
+// Doctrine ORM — schema, relationship, FK, lazy, migration
+// ============================================================================
+
+type doctrineORMDataExtractor struct{}
+
+func (e *doctrineORMDataExtractor) Language() string { return "php_doctrine_orm_data" }
+
+var (
+	// doctrineColumnRe matches #[ORM\Column(type: 'string', ...)] or @ORM\Column(type="string")
+	// doctrineColumnWithPropRe matches #[ORM\Column(...)] followed by the
+	// property declaration on the next line, capturing the property name.
+	// Group 1 = property name.
+	doctrineColumnWithPropRe = regexp.MustCompile(
+		`(?s)(?:#\[ORM\\Column[^\]]*\]|@ORM\\Column\([^)]*\))\s*\n\s*(?:private|protected|public)\s+(?:[?]?\w+\s+)?\$(\w+)`)
+
+	// doctrineColumnRe is kept for gate detection only (no property extraction)
+	doctrineColumnRe = regexp.MustCompile(
+		`(?m)(?:#\[ORM\\Column\s*\(|@ORM\\Column\s*\()`)
+
+	// doctrineEntityRe detects Doctrine entity annotations/attributes
+	doctrineEntityRe = regexp.MustCompile(
+		`(?m)#\[ORM\\Entity\b|@ORM\\Entity\b`)
+
+	// doctrineClassRe extracts class name after entity annotation
+	doctrineClassRe = regexp.MustCompile(
+		`(?m)class\s+(\w+)\b`)
+
+	// doctrineRelationRe detects ORM relationship attributes/annotations
+	doctrineRelationRe = regexp.MustCompile(
+		`(?m)(?:#\[ORM\\|@ORM\\)(OneToMany|ManyToOne|ManyToMany|OneToOne)\s*\(`)
+
+	// doctrineFKRe detects JoinColumn (foreign key) annotations/attributes
+	doctrineFKRe = regexp.MustCompile(
+		`(?m)(?:#\[ORM\\|@ORM\\)JoinColumn\s*\(`)
+
+	// doctrineLazyRe detects fetch="LAZY" or fetch: 'LAZY' lazy-loading hints
+	doctrineLazyRe = regexp.MustCompile(
+		`(?m)fetch\s*[=:]\s*['"](LAZY|EXTRA_LAZY)['"]`)
+
+	// doctrineMigrationClassRe detects Doctrine migration class pattern
+	doctrineMigrationClassRe = regexp.MustCompile(
+		`(?m)class\s+(\w+)\s+extends\s+(?:AbstractMigration|DoctrineMigrations\\AbstractMigration)\b`)
+
+	// doctrineMigrationMethodRe detects migration up/down methods
+	doctrineMigrationMethodRe = regexp.MustCompile(
+		`(?m)public\s+function\s+(up|down|preUp|preDown|postUp|postDown)\s*\(`)
+)
+
+func (e *doctrineORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
+	tracer := otel.Tracer("archigraph/custom/php")
+	_, span := tracer.Start(ctx, "php_doctrine_orm_data.extract",
+		trace.WithAttributes(
+			attribute.String("file", file.Path),
+		),
+	)
+	defer span.End()
+
+	if len(file.Content) == 0 || file.Language != "php" {
+		return nil, nil
+	}
+
+	src := string(file.Content)
+	var entities []types.EntityRecord
+	seen := make(map[string]bool)
+	add := func(ent types.EntityRecord) { ormAdd(seen, &entities, ent) }
+
+	// Gate: file must contain Doctrine markers
+	if doctrineEntityRe.FindStringIndex(src) == nil &&
+		doctrineColumnRe.FindStringIndex(src) == nil &&
+		doctrineMigrationClassRe.FindStringIndex(src) == nil {
+		span.SetAttributes(attribute.Int("entity_count", 0))
+		return nil, nil
+	}
+
+	// 1. Schema: #[ORM\Column] / @ORM\Column followed by property → SCOPE.Schema/column
+	// doctrineColumnWithPropRe captures the property name that follows the annotation.
+	for _, m := range doctrineColumnWithPropRe.FindAllStringSubmatchIndex(src, -1) {
+		colName := src[m[2]:m[3]]
+		ent := makeEntity(colName, "SCOPE.Schema", "column", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "doctrine", "provenance", "INFERRED_FROM_DOCTRINE_COLUMN")
+		add(ent)
+	}
+
+	// 2. Relationship: OneToMany/ManyToOne/ManyToMany/OneToOne → SCOPE.Component/relation
+	for _, m := range doctrineRelationRe.FindAllStringSubmatchIndex(src, -1) {
+		relType := src[m[2]:m[3]]
+		ent := makeEntity("relation:"+relType, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "doctrine", "provenance", "INFERRED_FROM_DOCTRINE_RELATION",
+			"relation_type", relType)
+		add(ent)
+	}
+
+	// 3. Foreign key: JoinColumn → SCOPE.Schema/foreign_key
+	for _, m := range doctrineFKRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("join_column", "SCOPE.Schema", "foreign_key", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "doctrine", "provenance", "INFERRED_FROM_DOCTRINE_FK")
+		add(ent)
+	}
+
+	// 4. Lazy loading recognition: fetch="LAZY" → SCOPE.Pattern
+	for _, m := range doctrineLazyRe.FindAllStringSubmatchIndex(src, -1) {
+		fetchMode := src[m[2]:m[3]]
+		ent := makeEntity("lazy:"+fetchMode, "SCOPE.Pattern", "lazy_loading", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "doctrine", "provenance", "INFERRED_FROM_DOCTRINE_LAZY",
+			"fetch_mode", fetchMode)
+		add(ent)
+	}
+
+	// 5. Migration class → SCOPE.Operation/migration
+	for _, m := range doctrineMigrationClassRe.FindAllStringSubmatchIndex(src, -1) {
+		name := src[m[2]:m[3]]
+		ent := makeEntity(name, "SCOPE.Operation", "migration", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "doctrine", "provenance", "INFERRED_FROM_DOCTRINE_MIGRATION")
+		add(ent)
+	}
+
+	// 6. Migration method up/down → SCOPE.Operation/migration_step
+	for _, m := range doctrineMigrationMethodRe.FindAllStringSubmatchIndex(src, -1) {
+		method := src[m[2]:m[3]]
+		ent := makeEntity("migration:"+method, "SCOPE.Operation", "migration_step", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "doctrine", "provenance", "INFERRED_FROM_DOCTRINE_MIGRATION_METHOD",
+			"migration_direction", method)
+		add(ent)
+	}
+
+	span.SetAttributes(attribute.Int("entity_count", len(entities)))
+	return entities, nil
+}
+
+// ============================================================================
+// Eloquent ORM — schema, relationship FK, lazy, migration
+// ============================================================================
+
+type eloquentORMDataExtractor struct{}
+
+func (e *eloquentORMDataExtractor) Language() string { return "php_eloquent_orm_data" }
+
+var (
+	// eloquentFillableRe matches $fillable or $guarded arrays (schema columns)
+	eloquentFillableRe = regexp.MustCompile(
+		`(?m)protected\s+\$(?:fillable|guarded)\s*=\s*\[([^\]]+)\]`)
+
+	// eloquentCastsRe matches $casts array (column types)
+	eloquentCastsRe = regexp.MustCompile(
+		`(?m)protected\s+\$casts\s*=\s*\[([^\]]+)\]`)
+
+	// eloquentCastEntryRe extracts individual cast entries
+	eloquentCastEntryRe = regexp.MustCompile(
+		`['"](\w+)['"]\s*=>\s*['"](\w+)['"]`)
+
+	// eloquentFillableEntryRe extracts column names from fillable arrays
+	eloquentFillableEntryRe = regexp.MustCompile(`['"](\w+)['"]`)
+
+	// eloquentBelongsToRe detects belongsTo/belongsToMany FK side (implied FK)
+	eloquentBelongsToRe = regexp.MustCompile(
+		`(?s)public\s+function\s+(\w+)\s*\(\s*\)\s*(?::\s*\w+\s*)?\{[^}]*?\b(belongsTo|belongsToMany)\s*\(`)
+
+	// eloquentLazyLoadRe detects whenLoaded or $with for lazy/eager hints
+	eloquentLazyLoadRe = regexp.MustCompile(
+		`(?m)protected\s+\$(?:with|withCount)\s*=\s*\[([^\]]*)\]`)
+
+	// eloquentMigrationCreateRe detects Schema::create in migration files
+	eloquentMigrationCreateRe = regexp.MustCompile(
+		`(?m)Schema::create\s*\(\s*['"]([^'"]+)['"]`)
+
+	// eloquentMigrationTableRe detects Schema::table for alter migrations
+	eloquentMigrationTableRe = regexp.MustCompile(
+		`(?m)Schema::table\s*\(\s*['"]([^'"]+)['"]`)
+
+	// eloquentColumnDefRe detects Blueprint column definitions in migrations
+	eloquentColumnDefRe = regexp.MustCompile(
+		`(?m)\$table->(string|integer|bigInteger|unsignedBigInteger|boolean|text|json|jsonb|timestamp|date|decimal|float|double|enum|morphs|nullableMorphs|foreignId)\s*\(\s*['"]([^'"]+)['"]`)
+
+	// eloquentForeignKeyRe detects explicit foreign key definitions
+	eloquentForeignKeyRe = regexp.MustCompile(
+		`(?m)\$table->foreign(?:Id)?\s*\(\s*['"]([^'"]+)['"]`)
+)
+
+func (e *eloquentORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
+	tracer := otel.Tracer("archigraph/custom/php")
+	_, span := tracer.Start(ctx, "php_eloquent_orm_data.extract",
+		trace.WithAttributes(
+			attribute.String("file", file.Path),
+		),
+	)
+	defer span.End()
+
+	if len(file.Content) == 0 || file.Language != "php" {
+		return nil, nil
+	}
+
+	src := string(file.Content)
+	var entities []types.EntityRecord
+	seen := make(map[string]bool)
+	add := func(ent types.EntityRecord) { ormAdd(seen, &entities, ent) }
+
+	// Gate: must contain Eloquent or Schema markers
+	hasEloquent := reEloquentModel.FindStringIndex(src) != nil
+	hasMigration := eloquentMigrationCreateRe.FindStringIndex(src) != nil || eloquentMigrationTableRe.FindStringIndex(src) != nil
+
+	if !hasEloquent && !hasMigration {
+		span.SetAttributes(attribute.Int("entity_count", 0))
+		return nil, nil
+	}
+
+	// 1. Schema: $fillable columns → SCOPE.Schema/column
+	for _, m := range eloquentFillableRe.FindAllStringSubmatchIndex(src, -1) {
+		arrayContent := src[m[2]:m[3]]
+		for _, cm := range eloquentFillableEntryRe.FindAllStringSubmatch(arrayContent, -1) {
+			colName := cm[1]
+			ent := makeEntity(colName, "SCOPE.Schema", "column", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_FILLABLE")
+			add(ent)
+		}
+	}
+
+	// 2. Schema: $casts type annotations → SCOPE.Schema/column
+	for _, m := range eloquentCastsRe.FindAllStringSubmatchIndex(src, -1) {
+		arrayContent := src[m[2]:m[3]]
+		for _, cm := range eloquentCastEntryRe.FindAllStringSubmatch(arrayContent, -1) {
+			colName := cm[1]
+			ent := makeEntity(colName, "SCOPE.Schema", "column", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_CAST",
+				"cast_type", cm[2])
+			add(ent)
+		}
+	}
+
+	// 3. Relationship: belongsTo/belongsToMany (FK-owning side) → SCOPE.Component/relation
+	for _, m := range eloquentBelongsToRe.FindAllStringSubmatchIndex(src, -1) {
+		methodName := src[m[2]:m[3]]
+		relType := src[m[4]:m[5]]
+		ent := makeEntity(methodName, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_BELONGS_TO",
+			"relation_type", relType)
+		add(ent)
+	}
+
+	// 4. Lazy/eager loading hints: $with or $withCount arrays → SCOPE.Pattern
+	for _, m := range eloquentLazyLoadRe.FindAllStringSubmatchIndex(src, -1) {
+		ent := makeEntity("eager_with", "SCOPE.Pattern", "eager_loading", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_WITH")
+		add(ent)
+	}
+
+	// 5. Migration: Schema::create → SCOPE.Operation/migration
+	for _, m := range eloquentMigrationCreateRe.FindAllStringSubmatchIndex(src, -1) {
+		tableName := src[m[2]:m[3]]
+		ent := makeEntity("create:"+tableName, "SCOPE.Operation", "migration", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_MIGRATION_CREATE",
+			"table_name", tableName)
+		add(ent)
+	}
+
+	// 6. Migration: Schema::table → SCOPE.Operation/migration
+	for _, m := range eloquentMigrationTableRe.FindAllStringSubmatchIndex(src, -1) {
+		tableName := src[m[2]:m[3]]
+		ent := makeEntity("alter:"+tableName, "SCOPE.Operation", "migration", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_MIGRATION_TABLE",
+			"table_name", tableName)
+		add(ent)
+	}
+
+	// 7. Migration column definitions → SCOPE.Schema/column
+	for _, m := range eloquentColumnDefRe.FindAllStringSubmatchIndex(src, -1) {
+		colName := src[m[4]:m[5]]
+		colType := src[m[2]:m[3]]
+		ent := makeEntity(colName, "SCOPE.Schema", "column", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_BLUEPRINT_COLUMN",
+			"column_type", colType)
+		add(ent)
+	}
+
+	// 8. Explicit foreign key definitions → SCOPE.Schema/foreign_key
+	for _, m := range eloquentForeignKeyRe.FindAllStringSubmatchIndex(src, -1) {
+		colName := src[m[2]:m[3]]
+		ent := makeEntity("fk:"+colName, "SCOPE.Schema", "foreign_key", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "eloquent", "provenance", "INFERRED_FROM_ELOQUENT_FK",
+			"fk_column", colName)
+		add(ent)
+	}
+
+	span.SetAttributes(attribute.Int("entity_count", len(entities)))
+	return entities, nil
+}
+
+// ============================================================================
+// CycleORM — model, schema, relationship, FK, lazy, query, migration
+// ============================================================================
+
+type cycleORMDataExtractor struct{}
+
+func (e *cycleORMDataExtractor) Language() string { return "php_cycleorm_data" }
+
+var (
+	// cycleEntityRe detects #[Entity] or #[Cycle\Annotated\Annotation\Entity]
+	cycleEntityRe = regexp.MustCompile(
+		`(?m)#\[(?:Cycle\\Annotated\\Annotation\\)?Entity(?:\s*\(|])`)
+
+	// cycleColumnWithPropRe matches #[Column(...)] followed by the property
+	// declaration, capturing the property name. Group 1 = property name.
+	cycleColumnWithPropRe = regexp.MustCompile(
+		`(?s)#\[(?:Cycle\\Annotated\\Annotation\\)?Column[^\]]*\]\s*\n\s*(?:private|protected|public)\s+(?:[?]?\w+\s+)?\$(\w+)`)
+
+	// cycleColumnRe detects #[Column(...)] attributes (gate only)
+	cycleColumnRe = regexp.MustCompile(
+		`(?m)#\[(?:Cycle\\Annotated\\Annotation\\)?Column\s*\(`)
+
+	// cycleRelationRe detects HasOne/HasMany/BelongsTo/ManyToMany relations
+	cycleRelationRe = regexp.MustCompile(
+		`(?m)#\[(?:Cycle\\Annotated\\Annotation\\Relation\\)?(HasOne|HasMany|BelongsTo|ManyToMany|BelongsToMany|HasMany|RefersTo)\s*\(`)
+
+	// cycleFKRe detects InverseRelation or explicit FK column markers
+	cycleFKRe = regexp.MustCompile(
+		`(?m)#\[(?:Cycle\\Annotated\\Annotation\\Relation\\)?Inverse\s*\(`)
+
+	// cycleLazyRe detects lazy proxy usage (load: 'lazy' or Cycle\ORM\Promise\)
+	cycleLazyRe = regexp.MustCompile(
+		`(?m)load\s*:\s*['"]lazy['"]|Cycle\\ORM\\Promise\\PromiseInterface`)
+
+	// cycleQueryRe detects CycleORM repository/select operations.
+	// Matches ->findByPK/findOne/select/make/run after any chained receiver.
+	cycleQueryRe = regexp.MustCompile(
+		`(?m)->(findByPK|findOne|select|make|run)\s*\(`)
+
+	// cycleMigrationRe detects Cycle migration class patterns
+	cycleMigrationRe = regexp.MustCompile(
+		`(?m)class\s+(\w+)\s+(?:extends\s+\w+\s+)?implements\s+(?:Cycle\\)?Migrations\\MigrationInterface\b`)
+
+	// cycleSyncTableRe detects Cycle schema sync calls
+	cycleSyncTableRe = regexp.MustCompile(
+		`(?m)\$(?:schema|config)->sync\s*\(|\$(?:schema|config)->migrate\s*\(`)
+)
+
+func (e *cycleORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
+	tracer := otel.Tracer("archigraph/custom/php")
+	_, span := tracer.Start(ctx, "php_cycleorm_data.extract",
+		trace.WithAttributes(
+			attribute.String("file", file.Path),
+		),
+	)
+	defer span.End()
+
+	if len(file.Content) == 0 || file.Language != "php" {
+		return nil, nil
+	}
+
+	src := string(file.Content)
+	var entities []types.EntityRecord
+	seen := make(map[string]bool)
+	add := func(ent types.EntityRecord) { ormAdd(seen, &entities, ent) }
+
+	// Gate: file must mention Cycle markers
+	hasCycle := cycleEntityRe.FindStringIndex(src) != nil ||
+		cycleColumnRe.FindStringIndex(src) != nil ||
+		cycleQueryRe.FindStringIndex(src) != nil
+	if !hasCycle {
+		span.SetAttributes(attribute.Int("entity_count", 0))
+		return nil, nil
+	}
+
+	// 1. Model: #[Entity] class → SCOPE.Schema/model
+	entityMatches := cycleEntityRe.FindAllStringIndex(src, -1)
+	for _, em := range entityMatches {
+		rest := src[em[0]:]
+		cm := doctrineClassRe.FindStringSubmatch(rest)
+		if cm != nil {
+			ent := makeEntity(cm[1], "SCOPE.Schema", "model", file.Path, file.Language, lineOf(src, em[0]))
+			setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_ENTITY")
+			add(ent)
+		}
+	}
+
+	// 2. Schema: #[Column] followed by property → SCOPE.Schema/column
+	for _, m := range cycleColumnWithPropRe.FindAllStringSubmatchIndex(src, -1) {
+		colName := src[m[2]:m[3]]
+		ent := makeEntity(colName, "SCOPE.Schema", "column", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_COLUMN")
+		add(ent)
+	}
+
+	// 3. Relationship: HasOne/HasMany/BelongsTo/ManyToMany → SCOPE.Component/relation
+	for _, m := range cycleRelationRe.FindAllStringSubmatchIndex(src, -1) {
+		relType := src[m[2]:m[3]]
+		ent := makeEntity("relation:"+relType, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_RELATION",
+			"relation_type", relType)
+		add(ent)
+	}
+
+	// 4. Foreign key: inverse/explicit FK → SCOPE.Schema/foreign_key
+	for _, m := range cycleFKRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("inverse_fk", "SCOPE.Schema", "foreign_key", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_FK")
+		add(ent)
+	}
+
+	// 5. Lazy loading: load='lazy' or Promise → SCOPE.Pattern
+	for _, m := range cycleLazyRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("lazy_load", "SCOPE.Pattern", "lazy_loading", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_LAZY")
+		add(ent)
+	}
+
+	// 6. Query attribution: findByPK/findOne/select → SCOPE.Operation/query
+	for _, m := range cycleQueryRe.FindAllStringSubmatchIndex(src, -1) {
+		verb := src[m[2]:m[3]]
+		ent := makeEntity("query:"+verb, "SCOPE.Operation", "query", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_QUERY",
+			"query_verb", verb)
+		add(ent)
+	}
+
+	// 7. Migration class → SCOPE.Operation/migration
+	for _, m := range cycleMigrationRe.FindAllStringSubmatchIndex(src, -1) {
+		name := src[m[2]:m[3]]
+		ent := makeEntity(name, "SCOPE.Operation", "migration", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_MIGRATION")
+		add(ent)
+	}
+
+	// 8. Schema sync → SCOPE.Operation/migration_step
+	for _, m := range cycleSyncTableRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("schema:sync", "SCOPE.Operation", "migration_step", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "cycleorm", "provenance", "INFERRED_FROM_CYCLEORM_SYNC")
+		add(ent)
+	}
+
+	span.SetAttributes(attribute.Int("entity_count", len(entities)))
+	return entities, nil
+}
+
+// ============================================================================
+// Propel ORM — schema, relationship, FK, lazy, migration
+// ============================================================================
+
+type propelORMDataExtractor struct{}
+
+func (e *propelORMDataExtractor) Language() string { return "php_propel_orm_data" }
+
+var (
+	// propelTableMapRe detects Propel TableMap class (schema reflection)
+	propelTableMapRe = regexp.MustCompile(
+		`(?m)class\s+(\w+TableMap)\s+extends\s+(?:Propel\\Runtime\\Map\\)?TableMap\b`)
+
+	// propelColumnConstRe detects COL_* constants in TableMap (schema columns)
+	propelColumnConstRe = regexp.MustCompile(
+		`(?m)const\s+(COL_\w+)\s*=\s*['"]([^'"]+)['"]`)
+
+	// propelFKRe detects addForeignKey calls in TableMap
+	propelFKRe = regexp.MustCompile(
+		`(?m)->addForeignKey\s*\(`)
+
+	// propelRelationRe detects addRelation calls (association)
+	propelRelationRe = regexp.MustCompile(
+		`(?m)->addRelation\s*\(\s*['"]([^'"]+)['"]`)
+
+	// propelLazyLoadRe detects LAZY_LOAD in Propel
+	propelLazyLoadRe = regexp.MustCompile(
+		`(?m)LAZY_LOAD|lazyLoad\s*=\s*true`)
+
+	// propelSchemaXMLRe detects schema.xml reference in PHP (generated-classes loading)
+	propelSchemaXMLRe = regexp.MustCompile(
+		`(?m)require\s+.*generated-classes|use\s+\w+Query\b|extends\s+Base\w+`)
+
+	// propelMigrationRe detects Propel migration calls
+	propelMigrationRe = regexp.MustCompile(
+		`(?m)Propel::migrate\s*\(|PropelMigration\w+|class\s+PropelMigration_\d+`)
+
+	// propelQueryRe detects Propel query builder methods
+	propelQueryRe = regexp.MustCompile(
+		`(?m)\w+Query::create\s*\(|\w+Query->(?:find|findOne|findPk|count|filterBy\w+)\s*\(`)
+)
+
+func (e *propelORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
+	tracer := otel.Tracer("archigraph/custom/php")
+	_, span := tracer.Start(ctx, "php_propel_orm_data.extract",
+		trace.WithAttributes(
+			attribute.String("file", file.Path),
+		),
+	)
+	defer span.End()
+
+	if len(file.Content) == 0 || file.Language != "php" {
+		return nil, nil
+	}
+
+	src := string(file.Content)
+	var entities []types.EntityRecord
+	seen := make(map[string]bool)
+	add := func(ent types.EntityRecord) { ormAdd(seen, &entities, ent) }
+
+	// Gate: must contain Propel markers
+	hasPropel := propelTableMapRe.FindStringIndex(src) != nil ||
+		propelSchemaXMLRe.FindStringIndex(src) != nil ||
+		propelQueryRe.FindStringIndex(src) != nil ||
+		propelMigrationRe.FindStringIndex(src) != nil
+	if !hasPropel {
+		span.SetAttributes(attribute.Int("entity_count", 0))
+		return nil, nil
+	}
+
+	// 1. Schema: TableMap class → SCOPE.Schema/table_map
+	for _, m := range propelTableMapRe.FindAllStringSubmatchIndex(src, -1) {
+		name := src[m[2]:m[3]]
+		ent := makeEntity(name, "SCOPE.Schema", "table_map", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_TABLE_MAP")
+		add(ent)
+	}
+
+	// 2. Schema: COL_* constants → SCOPE.Schema/column
+	for _, m := range propelColumnConstRe.FindAllStringSubmatchIndex(src, -1) {
+		colConst := src[m[2]:m[3]]
+		ent := makeEntity(colConst, "SCOPE.Schema", "column", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_COLUMN")
+		add(ent)
+	}
+
+	// 3. Foreign key: addForeignKey → SCOPE.Schema/foreign_key
+	for _, m := range propelFKRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("foreign_key", "SCOPE.Schema", "foreign_key", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_FK")
+		add(ent)
+	}
+
+	// 4. Association/relationship: addRelation → SCOPE.Component/relation
+	for _, m := range propelRelationRe.FindAllStringSubmatchIndex(src, -1) {
+		relName := src[m[2]:m[3]]
+		ent := makeEntity("relation:"+relName, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_RELATION",
+			"relation_name", relName)
+		add(ent)
+	}
+
+	// 5. Lazy loading: LAZY_LOAD constant → SCOPE.Pattern
+	for _, m := range propelLazyLoadRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("lazy_load", "SCOPE.Pattern", "lazy_loading", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_LAZY")
+		add(ent)
+	}
+
+	// 6. Migration: PropelMigration class → SCOPE.Operation/migration
+	for _, m := range propelMigrationRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("propel:migration", "SCOPE.Operation", "migration", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_MIGRATION")
+		add(ent)
+	}
+
+	// 7. Query: XxxQuery::create() / XxxQuery->find/findOne/etc → SCOPE.Operation/query
+	for _, m := range propelQueryRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("propel:query", "SCOPE.Operation", "query", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "propel", "provenance", "INFERRED_FROM_PROPEL_QUERY")
+		add(ent)
+	}
+
+	span.SetAttributes(attribute.Int("entity_count", len(entities)))
+	return entities, nil
+}
+
+// ============================================================================
+// RedBeanPHP — schema, relationship, association (migration → NA: zero-config)
+// ============================================================================
+
+type redBeanPHPDataExtractor struct{}
+
+func (e *redBeanPHPDataExtractor) Language() string { return "php_redbeanphp_data" }
+
+var (
+	// rbDispenseRe detects R::dispense('tablename') — implicit schema creation
+	rbDispenseRe = regexp.MustCompile(
+		`(?m)R::dispense\s*\(\s*['"]([^'"]+)['"]`)
+
+	// rbStoreRe detects R::store($bean) — persistence (with implicit schema)
+	rbStoreRe = regexp.MustCompile(
+		`(?m)R::store\s*\(`)
+
+	// rbRelatedRe detects R::related / R::associate — associations
+	rbRelatedRe = regexp.MustCompile(
+		`(?m)R::(related|associate|unassociate)\s*\(`)
+
+	// rbFindRe detects R::find / R::load / R::findOne — queries
+	rbFindRe = regexp.MustCompile(
+		`(?m)R::(find|findOne|load|findAll|getAll)\s*\(\s*['"]([^'"]+)['"]`)
+
+	// rbPropRe detects $bean->property = ... (schema column via property assignment)
+	rbPropRe = regexp.MustCompile(
+		`(?m)\$\w+->([a-z_]\w*)\s*=`)
+
+	// rbFreezeRe detects R::freeze(true) — prevents further schema changes
+	rbFreezeRe = regexp.MustCompile(
+		`(?m)R::freeze\s*\(`)
+)
+
+func (e *redBeanPHPDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
+	tracer := otel.Tracer("archigraph/custom/php")
+	_, span := tracer.Start(ctx, "php_redbeanphp_data.extract",
+		trace.WithAttributes(
+			attribute.String("file", file.Path),
+		),
+	)
+	defer span.End()
+
+	if len(file.Content) == 0 || file.Language != "php" {
+		return nil, nil
+	}
+
+	src := string(file.Content)
+	var entities []types.EntityRecord
+	seen := make(map[string]bool)
+	add := func(ent types.EntityRecord) { ormAdd(seen, &entities, ent) }
+
+	// Gate: must contain R:: RedBeanPHP facade calls
+	if rbDispenseRe.FindStringIndex(src) == nil &&
+		rbFindRe.FindStringIndex(src) == nil &&
+		rbStoreRe.FindStringIndex(src) == nil &&
+		rbRelatedRe.FindStringIndex(src) == nil {
+		span.SetAttributes(attribute.Int("entity_count", 0))
+		return nil, nil
+	}
+
+	// 1. Schema: R::dispense('table') → implicit table/schema entity
+	for _, m := range rbDispenseRe.FindAllStringSubmatchIndex(src, -1) {
+		tableName := src[m[2]:m[3]]
+		ent := makeEntity(tableName, "SCOPE.Schema", "table", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "redbeanphp", "provenance", "INFERRED_FROM_REDBEAN_DISPENSE",
+			"table_name", tableName)
+		add(ent)
+	}
+
+	// 2. Schema: R::find('table', ...) → schema reference
+	for _, m := range rbFindRe.FindAllStringSubmatchIndex(src, -1) {
+		tableName := src[m[4]:m[5]]
+		ent := makeEntity(tableName, "SCOPE.Schema", "table", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "redbeanphp", "provenance", "INFERRED_FROM_REDBEAN_FIND",
+			"table_name", tableName)
+		add(ent)
+	}
+
+	// 3. Association/relationship: R::related/associate → SCOPE.Component/relation
+	for _, m := range rbRelatedRe.FindAllStringSubmatchIndex(src, -1) {
+		verb := src[m[2]:m[3]]
+		ent := makeEntity("relation:"+verb, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "redbeanphp", "provenance", "INFERRED_FROM_REDBEAN_RELATION",
+			"relation_verb", verb)
+		add(ent)
+	}
+
+	// 4. Schema freeze: R::freeze(true) → SCOPE.Pattern (schema lock)
+	for _, m := range rbFreezeRe.FindAllStringIndex(src, -1) {
+		ent := makeEntity("schema:freeze", "SCOPE.Pattern", "schema_freeze", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "redbeanphp", "provenance", "INFERRED_FROM_REDBEAN_FREEZE")
+		add(ent)
+	}
+
+	span.SetAttributes(attribute.Int("entity_count", len(entities)))
+	return entities, nil
+}
