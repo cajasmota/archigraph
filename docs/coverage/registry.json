@@ -43788,13 +43788,13 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/gotham.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/gotham.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -43997,13 +43997,13 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/hyper.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/hyper.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -44206,13 +44206,13 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/poem.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/poem.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -44623,10 +44623,14 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -44901,13 +44905,13 @@
         "Routing": {
           "endpoint_synthesis": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/tide.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/rules/rust/frameworks/tide.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -45112,7 +45116,9 @@
             "status": "missing"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
@@ -45314,14 +45320,14 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "full",
-            "cites": ["internal/engine/rules/rust/frameworks/warp.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "partial",
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "full",
-            "cites": ["internal/engine/rules/rust/frameworks/warp.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "partial",
+            "cites": ["internal/custom/rust/minor_fw_routing.go"],
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
             "status": "missing",
