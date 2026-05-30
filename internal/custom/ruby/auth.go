@@ -119,9 +119,37 @@ var (
 	rbPunditPolicyScopeRe = regexp.MustCompile(
 		`(?m)\b(?:policy_scope|policy)\s*\(`)
 
-	// Pundit::Policy / include Pundit
+	// Pundit::Policy / include Pundit / include Pundit::Authorization
 	rbPunditClassRe = regexp.MustCompile(
-		`(?m)\b(?:Pundit::Policy\b|include Pundit\b)`)
+		`(?m)\b(?:Pundit::Policy\b|include Pundit\b|include Pundit::Authorization\b)`)
+
+	// class FooPolicy (Pundit policy class declaration)
+	raAuthPunditPolicyClassRe = regexp.MustCompile(
+		`(?m)^class\s+([A-Z][A-Za-z0-9_]*)Policy\b`)
+
+	// def update? / def create? / def show? etc. (Pundit policy action methods)
+	raAuthPunditActionRe = regexp.MustCompile(
+		`(?m)\bdef\s+([a-z_]+\?)\s*\n`)
+
+	// --------------- CanCanCan deep ---------------
+
+	// can :action, Model / cannot :action, Model — capture action + resource
+	raAuthCanCanRuleRe = regexp.MustCompile(
+		`(?m)\b(can|cannot)\s+:([a-z_]+),\s+([A-Za-z:_][A-Za-z0-9:_]*)`)
+
+	// include CanCan::Ability / include CanCanCan::Ability
+	raAuthCanCanAbilityClassRe = regexp.MustCompile(
+		`(?m)\binclude\s+CanCan(?:Can)?::Ability\b`)
+
+	// --------------- Devise deep ---------------
+
+	// user_signed_in? / admin_signed_in? helpers
+	raAuthDeviseSignedInRe = regexp.MustCompile(
+		`(?m)\b([a-z_]+)_signed_in\?`)
+
+	// general auth before_action: :authenticate, :require_auth, :login_required, :authorize_user
+	raAuthGeneralFilterRe = regexp.MustCompile(
+		`(?m)\bbefore_action\s+:(?:authenticate|require_auth|login_required|authorize_user|check_authentication|verify_auth)\b`)
 
 	// --------------- Doorkeeper ---------------
 
@@ -167,7 +195,13 @@ func (e *rubyAuthExtractor) Extract(ctx context.Context, file extractor.FileInpu
 		strings.Contains(src, "CanCan") || strings.Contains(src, "Pundit") ||
 		strings.Contains(src, "doorkeeper") || strings.Contains(src, "Doorkeeper") ||
 		strings.Contains(src, "OmniAuth") || strings.Contains(src, "Rack::Auth") ||
-		strings.Contains(src, "require_login") || strings.Contains(src, "login_required")
+		strings.Contains(src, "require_login") || strings.Contains(src, "login_required") ||
+		strings.Contains(src, "_signed_in?") || strings.Contains(src, "require_auth") ||
+		strings.Contains(src, "check_authentication") || strings.Contains(src, "verify_auth") ||
+		// Pundit policy class: "class FooPolicy" ends with "Policy" + inherits ApplicationPolicy
+		strings.Contains(src, "Policy") ||
+		// CanCanCan Ability class
+		strings.Contains(src, "Ability")
 	if !hasAuth {
 		return nil, nil
 	}
@@ -206,7 +240,8 @@ func extractDevise(src, fp string) []types.EntityRecord {
 		model := src[idx[2]:idx[3]]
 		ln := lineOf(src, idx[0])
 		e := makeEntity("authenticate_"+model+"!", string(types.EntityKindPattern), "auth_guard", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "devise", "kind", "before_action", "model", model)
+		setProps(&e, "signal", "auth", "library", "devise", "kind", "before_action",
+			"model", model, "mechanism", "before_action", "auth_required", "true")
 		out = append(out, e)
 	}
 
@@ -215,7 +250,8 @@ func extractDevise(src, fp string) []types.EntityRecord {
 		modules := src[idx[2]:idx[3]]
 		ln := lineOf(src, idx[0])
 		e := makeEntity("devise_modules", string(types.EntityKindPattern), "auth_config", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "devise", "kind", "modules", "modules_list", modules)
+		setProps(&e, "signal", "auth", "library", "devise", "kind", "modules", "modules_list", modules,
+			"mechanism", "devise", "authenticatable", boolStr(strings.Contains(modules, "authenticatable")))
 		out = append(out, e)
 	}
 
@@ -224,7 +260,19 @@ func extractDevise(src, fp string) []types.EntityRecord {
 		loc := rbRequireLoginRe.FindStringIndex(src)
 		ln := lineOf(src, loc[0])
 		e := makeEntity("require_login", string(types.EntityKindPattern), "auth_guard", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "devise_compat", "kind", "before_action")
+		setProps(&e, "signal", "auth", "library", "devise_compat", "kind", "before_action",
+			"mechanism", "before_action", "auth_required", "true")
+		out = append(out, e)
+	}
+
+	// general auth before_action filters (authenticate, require_auth, etc.)
+	if raAuthGeneralFilterRe.MatchString(src) {
+		loc := raAuthGeneralFilterRe.FindStringIndex(src)
+		ln := lineOf(src, loc[0])
+		callSite := strings.TrimSpace(src[loc[0]:loc[1]])
+		e := makeEntity(callSite, string(types.EntityKindPattern), "auth_guard", fp, "ruby", ln)
+		setProps(&e, "signal", "auth", "library", "rails", "kind", "before_action",
+			"mechanism", "before_action", "auth_required", "true")
 		out = append(out, e)
 	}
 
@@ -239,6 +287,17 @@ func extractDevise(src, fp string) []types.EntityRecord {
 				setProps(&e, "signal", "auth", "library", "devise", "kind", "helper", "model", model)
 				out = append(out, e)
 			}
+		}
+	}
+
+	// <model>_signed_in? helper (only when devise context present)
+	if rbDeviseForRe.MatchString(src) || rbDeviseModulesRe.MatchString(src) {
+		for _, idx := range raAuthDeviseSignedInRe.FindAllStringSubmatchIndex(src, -1) {
+			model := src[idx[2]:idx[3]]
+			ln := lineOf(src, idx[0])
+			e := makeEntity(model+"_signed_in?", string(types.EntityKindPattern), "auth_helper", fp, "ruby", ln)
+			setProps(&e, "signal", "auth", "library", "devise", "kind", "signed_in_helper", "model", model)
+			out = append(out, e)
 		}
 	}
 
@@ -337,15 +396,19 @@ func extractCanCanCan(src, fp string) []types.EntityRecord {
 	var out []types.EntityRecord
 
 	if !rbCanCanAuthorizeRe.MatchString(src) && !rbCanCanLoadRe.MatchString(src) &&
-		!rbCanCanAbilityRe.MatchString(src) {
+		!rbCanCanAbilityRe.MatchString(src) && !raAuthCanCanRuleRe.MatchString(src) {
 		return nil
 	}
+
+	// Detect Ability class inclusion
+	hasAbilityClass := raAuthCanCanAbilityClassRe.MatchString(src)
 
 	// authorize! :action
 	for _, idx := range rbCanCanAuthorizeRe.FindAllStringSubmatchIndex(src, -1) {
 		ln := lineOf(src, idx[0])
 		e := makeEntity("authorize!", string(types.EntityKindPattern), "auth_guard", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "authorization_check")
+		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "authorization_check",
+			"mechanism", "cancancan", "auth_required", "true")
 		out = append(out, e)
 	}
 
@@ -355,19 +418,39 @@ func extractCanCanCan(src, fp string) []types.EntityRecord {
 		ln := lineOf(src, loc[0])
 		callSite := src[loc[0]:loc[1]]
 		e := makeEntity(strings.TrimSpace(callSite), string(types.EntityKindPattern), "auth_guard", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "resource_authorization")
+		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "resource_authorization",
+			"mechanism", "cancancan", "auth_required", "true")
 		out = append(out, e)
 	}
 
-	// can :manage, :all / cannot :destroy, Article
-	for _, idx := range rbCanCanAbilityRe.FindAllStringSubmatchIndex(src, -1) {
-		ln := lineOf(src, idx[0])
-		callSite := strings.TrimSpace(src[idx[0]:idx[1]])
-		if len(callSite) > 50 {
-			callSite = callSite[:50]
+	// Deep: can/cannot :action, Resource — emit one entity per rule with action+resource
+	for _, idx := range raAuthCanCanRuleRe.FindAllStringSubmatchIndex(src, -1) {
+		if len(idx) < 8 {
+			continue
 		}
-		e := makeEntity(callSite, string(types.EntityKindPattern), "auth_policy", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "ability_rule")
+		permission := src[idx[2]:idx[3]] // "can" or "cannot"
+		action := src[idx[4]:idx[5]]     // action symbol without ":"
+		resource := src[idx[6]:idx[7]]   // resource name
+		ln := lineOf(src, idx[0])
+		entityName := permission + " :" + action + " " + resource
+		if len(entityName) > 60 {
+			entityName = entityName[:60]
+		}
+		e := makeEntity(entityName, string(types.EntityKindPattern), "auth_policy", fp, "ruby", ln)
+		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "ability_rule",
+			"permission", permission, "action", action, "resource", resource,
+			"mechanism", "cancancan",
+			"in_ability_class", boolStr(hasAbilityClass))
+		out = append(out, e)
+	}
+
+	// Ability class itself
+	if hasAbilityClass {
+		loc := raAuthCanCanAbilityClassRe.FindStringIndex(src)
+		ln := lineOf(src, loc[0])
+		e := makeEntity("Ability", string(types.EntityKindPattern), "auth_policy", fp, "ruby", ln)
+		setProps(&e, "signal", "auth", "library", "cancancan", "kind", "ability_class",
+			"mechanism", "cancancan")
 		out = append(out, e)
 	}
 
@@ -382,7 +465,7 @@ func extractPundit(src, fp string) []types.EntityRecord {
 	var out []types.EntityRecord
 
 	if !rbPunditAuthorizeRe.MatchString(src) && !rbPunditPolicyScopeRe.MatchString(src) &&
-		!rbPunditClassRe.MatchString(src) {
+		!rbPunditClassRe.MatchString(src) && !raAuthPunditPolicyClassRe.MatchString(src) {
 		return nil
 	}
 
@@ -390,7 +473,8 @@ func extractPundit(src, fp string) []types.EntityRecord {
 	for _, idx := range rbPunditAuthorizeRe.FindAllStringSubmatchIndex(src, -1) {
 		ln := lineOf(src, idx[0])
 		e := makeEntity("authorize", string(types.EntityKindPattern), "auth_guard", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "pundit", "kind", "authorize_call")
+		setProps(&e, "signal", "auth", "library", "pundit", "kind", "authorize_call",
+			"mechanism", "pundit", "auth_required", "true")
 		out = append(out, e)
 	}
 
@@ -399,16 +483,47 @@ func extractPundit(src, fp string) []types.EntityRecord {
 		ln := lineOf(src, idx[0])
 		callSite := strings.TrimSpace(src[idx[0]:idx[1]])
 		e := makeEntity(callSite, string(types.EntityKindPattern), "auth_policy", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "pundit", "kind", "policy_scope")
+		setProps(&e, "signal", "auth", "library", "pundit", "kind", "policy_scope",
+			"mechanism", "pundit")
 		out = append(out, e)
 	}
 
-	// Pundit::Policy / include Pundit
+	// Pundit::Policy / include Pundit / include Pundit::Authorization
 	if rbPunditClassRe.MatchString(src) {
 		loc := rbPunditClassRe.FindStringIndex(src)
 		ln := lineOf(src, loc[0])
 		e := makeEntity("Pundit::Policy", string(types.EntityKindPattern), "auth_policy", fp, "ruby", ln)
-		setProps(&e, "signal", "auth", "library", "pundit", "kind", "policy_class")
+		setProps(&e, "signal", "auth", "library", "pundit", "kind", "policy_class",
+			"mechanism", "pundit")
+		out = append(out, e)
+	}
+
+	// Deep: class FooPolicy — extract policy class name
+	for _, idx := range raAuthPunditPolicyClassRe.FindAllStringSubmatchIndex(src, -1) {
+		if len(idx) < 4 {
+			continue
+		}
+		className := src[idx[2]:idx[3]] + "Policy"
+		ln := lineOf(src, idx[0])
+		e := makeEntity(className, string(types.EntityKindPattern), "auth_policy", fp, "ruby", ln)
+		setProps(&e, "signal", "auth", "library", "pundit", "kind", "policy_class_definition",
+			"mechanism", "pundit", "policy_class", className)
+
+		// Also extract action methods within this policy class.
+		// Scan from the class declaration to end of file for def action?
+		classSrc := src[idx[0]:]
+		for _, actIdx := range raAuthPunditActionRe.FindAllStringSubmatchIndex(classSrc, -1) {
+			if len(actIdx) < 4 {
+				continue
+			}
+			action := classSrc[actIdx[2]:actIdx[3]]
+			actLn := lineOf(src, idx[0]+actIdx[0])
+			ae := makeEntity(className+"."+action, string(types.EntityKindPattern), "auth_policy", fp, "ruby", actLn)
+			setProps(&ae, "signal", "auth", "library", "pundit", "kind", "policy_action",
+				"mechanism", "pundit", "policy_class", className, "action", action)
+			out = append(out, ae)
+		}
+
 		out = append(out, e)
 	}
 

@@ -40,3 +40,11 @@ func setProps(e *types.EntityRecord, kv ...string) {
 		e.Properties[kv[i]] = kv[i+1]
 	}
 }
+
+// boolStr converts a bool to its "true"/"false" string representation.
+func boolStr(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
