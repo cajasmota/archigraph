@@ -217,22 +217,23 @@ func (l CrossRepoLink) EffectiveKind() string {
 // transient field-decode wrapper. Reader is nil when graph.fb is not
 // present (JSON-only fallback or old index format).
 type LoadedRepo struct {
-	Repo         string
-	Path         string
-	GraphFile    string
-	Doc          *graph.Document
-	Reader       *fbreader.Reader // mmap zero-copy reader (S8, #2159); nil when unavailable
-	LabelIndex   *LabelIndex
-	BM25         *BM25Index
-	Adjacency    *adjacency               // in/out neighbor lists (#1656)
-	CallsAdj     map[string][]string      // CALLS-only forward adjacency (#1656)
-	StepAdj      map[string][]stepEdge    // STEP_IN_PROCESS forward adjacency (#2417)
-	ByID         map[string]*graph.Entity // entity ID -> entity (#1656)
-	TopKPageRank []string                 // entity IDs sorted descending by PageRank (#2304)
-	Semantic     *embed.Store             // per-repo vector index (nil when no embeddings.bin)
-	semMtime     time.Time
-	mtime        time.Time
-	loadErr      string // populated when last reload failed; doc may be stale
+	Repo           string
+	Path           string
+	GraphFile      string
+	Doc            *graph.Document
+	Reader         *fbreader.Reader // mmap zero-copy reader (S8, #2159); nil when unavailable
+	LabelIndex     *LabelIndex
+	BM25           *BM25Index
+	Adjacency      *adjacency               // in/out neighbor lists (#1656)
+	CallsAdj       map[string][]string      // CALLS-only forward adjacency (#1656)
+	StepAdj        map[string][]stepEdge    // STEP_IN_PROCESS forward adjacency (#2417)
+	ByID           map[string]*graph.Entity // entity ID -> entity (#1656)
+	TopKPageRank   []string                 // entity IDs sorted descending by PageRank (#2304)
+	Semantic       *embed.Store             // per-repo vector index (nil when no embeddings.bin)
+	TestsEdgeCount int                      // count of TESTS-kind relationships; cached at load time
+	semMtime       time.Time
+	mtime          time.Time
+	loadErr        string // populated when last reload failed; doc may be stale
 }
 
 // LoadedGroup holds all loaded repos for a group plus cross-repo links.
@@ -496,6 +497,15 @@ func (s *State) reloadLocked() (int, bool, error) {
 				// STEP_IN_PROCESS forward adjacency for buildProcessStepsWithCrossRepo,
 				// which previously scanned Doc.Relationships at query time. (#2417)
 				lr.StepAdj = buildStepAdjacency(doc)
+				// TESTS-edge count cached once per reload so archigraph_whoami can
+				// return it in O(1) without rescanning all relationships. (#3325 perf)
+				testsCount := 0
+				for i := range doc.Relationships {
+					if doc.Relationships[i].Kind == "TESTS" {
+						testsCount++
+					}
+				}
+				lr.TestsEdgeCount = testsCount
 				// Top-K PageRank-ordered entity ID cache for pickFallback (#2304).
 				// Eliminates the O(|Entities|) scan inside pickFallback by building
 				// the sorted slice once at index-load time.

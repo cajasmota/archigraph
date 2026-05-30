@@ -400,6 +400,10 @@ func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (
 // TESTS-edge count aggregated across all loaded repos in the group. These
 // values are computed the same way archigraph_stats does so the two tools
 // always agree (Fix #1, the "docgen-trap" in archigraph_whoami).
+//
+// All three counts are read from pre-computed fields on LoadedRepo that are
+// populated once at graph-load time (on mtime change). This makes whoami O(1)
+// per repo rather than O(N) over all relationships (#3325 perf fix).
 func groupIndexCounts(lg *LoadedGroup) (entities, relationships, testsEdges int) {
 	for _, r := range lg.Repos {
 		if r == nil || r.Doc == nil {
@@ -407,11 +411,7 @@ func groupIndexCounts(lg *LoadedGroup) (entities, relationships, testsEdges int)
 		}
 		entities += len(r.Doc.Entities)
 		relationships += len(r.Doc.Relationships)
-		for i := range r.Doc.Relationships {
-			if r.Doc.Relationships[i].Kind == "TESTS" {
-				testsEdges++
-			}
-		}
+		testsEdges += r.TestsEdgeCount
 	}
 	return
 }

@@ -635,6 +635,83 @@ func TestHandleWhoami_indexCounts_quietMode(t *testing.T) {
 	}
 }
 
+// TestLoadedRepo_testsEdgeCachePopulated verifies that the TestsEdgeCount field
+// is populated at graph-load time so that groupIndexCounts can return the
+// tests_edges count in O(1) without rescanning relationships on every whoami
+// call (#3325 perf fix).
+func TestLoadedRepo_testsEdgeCachePopulated(t *testing.T) {
+	tmp := t.TempDir()
+	setTestHome(t, tmp)
+	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+
+	repoDir := filepath.Join(tmp, "repo-cache")
+	doc := &graph.Document{
+		Repo: "repo-cache",
+		Entities: []graph.Entity{
+			{ID: "e1", Name: "Prod1", Kind: "function", SourceFile: "a.go", StartLine: 1, EndLine: 5},
+			{ID: "e2", Name: "Prod2", Kind: "function", SourceFile: "a.go", StartLine: 6, EndLine: 10},
+			{ID: "t1", Name: "TestProd1", Kind: "function", SourceFile: "a_test.go", StartLine: 1, EndLine: 5},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "r1", FromID: "e1", ToID: "e2", Kind: "CALLS"},
+			{ID: "r2", FromID: "t1", ToID: "e1", Kind: "TESTS"},
+			{ID: "r3", FromID: "t1", ToID: "e2", Kind: "TESTS"},
+		},
+	}
+	writeGraph(t, repoDir, doc)
+
+	regPath := makeRegistry(t, tmp, map[string]map[string]string{
+		"g": {"repo-cache": repoDir},
+	})
+	srv, err := NewServer(Config{RegistryPath: regPath})
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+
+	// Force a reload so the State is warm.
+	lg := srv.State.Group("g")
+	if lg == nil {
+		t.Fatal("group 'g' not found after NewServer")
+	}
+
+	// The per-repo cached count must equal the number of TESTS edges (2).
+	lr := lg.Repos["repo-cache"]
+	if lr == nil {
+		t.Fatal("repo-cache not loaded")
+	}
+	if lr.TestsEdgeCount != 2 {
+		t.Errorf("LoadedRepo.TestsEdgeCount: got %d want 2 — cache not populated at load time", lr.TestsEdgeCount)
+	}
+
+	// groupIndexCounts must aggregate the cached value correctly.
+	entities, rels, testsEdges := groupIndexCounts(lg)
+	if entities != 3 {
+		t.Errorf("groupIndexCounts entities: got %d want 3", entities)
+	}
+	if rels != 3 {
+		t.Errorf("groupIndexCounts relationships: got %d want 3", rels)
+	}
+	if testsEdges != 2 {
+		t.Errorf("groupIndexCounts testsEdges: got %d want 2 — not reading cached TestsEdgeCount", testsEdges)
+	}
+
+	// Verify correctness via the whoami handler too — the end-to-end path.
+	req := mcpapi.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"group": "g"}
+	res, herr := srv.handleWhoami(context.Background(), req)
+	if herr != nil {
+		t.Fatalf("handleWhoami: %v", herr)
+	}
+	out := extractResultJSON(t, res)
+	idx, _ := out["index"].(map[string]any)
+	if idx == nil {
+		t.Fatal("index block missing from whoami response")
+	}
+	if v, _ := idx["tests_edges"].(float64); v != 2 {
+		t.Errorf("index.tests_edges: got %v want 2", idx["tests_edges"])
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Fix #2 — whoami must honor explicit group= for index-state fields
 // ---------------------------------------------------------------------------
