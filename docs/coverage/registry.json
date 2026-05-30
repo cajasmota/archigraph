@@ -42420,17 +42420,20 @@
             "verified_at": "2026-05-28"
           },
           "schema_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "foreign_key_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "lazy_loading_recognition": {
@@ -42438,7 +42441,8 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           }
         },
@@ -42451,7 +42455,8 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"]
           }
         }
       }
@@ -42476,11 +42481,13 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "foreign_key_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "lazy_loading_recognition": {
@@ -42488,7 +42495,8 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           }
         },
@@ -42576,11 +42584,13 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "foreign_key_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "lazy_loading_recognition": {
@@ -42588,7 +42598,8 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           }
         },
@@ -42626,11 +42637,13 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "foreign_key_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           },
           "lazy_loading_recognition": {
@@ -42638,7 +42651,8 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord.go"],
             "issue": "backfill:dictionary-completeness"
           }
         },

@@ -55,11 +55,11 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Other capabilities | Notes |
 |---|---|---|
 | [AWS SDK DynamoDB (Ruby)](../detail/lang.ruby.driver.dynamodb.md) | 🟡 1/4 | |
-| [ActiveRecord](../detail/lang.ruby.orm.activerecord.md) | 🟡 2/8 | |
-| [DataMapper / Hanami Model (legacy)](../detail/lang.ruby.orm.datamapper.md) | 🟡 2/8 | |
+| [ActiveRecord](../detail/lang.ruby.orm.activerecord.md) | 🟡 7/8 | |
+| [DataMapper / Hanami Model (legacy)](../detail/lang.ruby.orm.datamapper.md) | 🟡 5/8 | |
 | [Mongoid](../detail/lang.ruby.orm.mongoid.md) | 🟡 2/7 | |
-| [ROM (Ruby Object Mapper)](../detail/lang.ruby.orm.rom-rb.md) | 🟡 2/8 | |
-| [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟡 2/8 | |
+| [ROM (Ruby Object Mapper)](../detail/lang.ruby.orm.rom-rb.md) | 🟡 5/8 | |
+| [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟡 5/8 | |
 | [cassandra-driver (Ruby)](../detail/lang.ruby.driver.cassandra.md) | 🟡 1/4 | |
 | [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 1/4 | |
 | [mysql2 (Ruby driver)](../detail/lang.ruby.driver.mysql.md) | 🟡 1/4 | |
