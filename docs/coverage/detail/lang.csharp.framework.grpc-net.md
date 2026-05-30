@@ -15,20 +15,20 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Procedure extraction | 🔴 `missing` | — | — | — | — |
-| Schema extraction | 🔴 `missing` | — | — | — | — |
+| Procedure extraction | 🟢 `partial` | — | — | `internal/custom/csharp/grpc_net.go`<br>`internal/custom/csharp/grpc_net_test.go` | [ProtoContract] annotated C# classes, [ProtoMember] field annotations, and proto file service/rpc declarations emitted as SCOPE.Schema/procedure_extraction. |
+| Schema extraction | 🟢 `partial` | — | — | `internal/custom/csharp/grpc_net.go`<br>`internal/custom/csharp/grpc_net_test.go` | Proto message declarations, [DataContract] C# classes, and XxxService:XxxServiceBase generated implementation classes emitted as SCOPE.Schema/schema_extraction. |
 
 ### Codegen
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Client codegen | 🔴 `missing` | — | — | — | — |
+| Client codegen | 🟢 `partial` | — | — | `internal/custom/csharp/grpc_net.go`<br>`internal/custom/csharp/grpc_net_test.go` | GrpcChannel.ForAddress(), new XxxClient(channel), class XxxClient:ClientBase, and services.AddGrpcClient<T>() generated-client detection. |
 
 ### Transport
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Transport binding | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Transport binding | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/csharp/grpc_net.go`<br>`internal/custom/csharp/grpc_net_test.go` | app.MapGrpcService<T>() endpoint registration, services.AddGrpc(), ServerCredentials/SslServerCredentials security bindings, and GrpcServiceOptions/GrpcChannelOptions usage detected. |
 
 ### Substrate
 

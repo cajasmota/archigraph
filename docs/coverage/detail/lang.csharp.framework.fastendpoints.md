@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🔴 `missing` | — | — | — | — |
+| Middleware coverage | 🟢 `partial` | — | — | `internal/custom/csharp/middleware_extra.go`<br>`internal/custom/csharp/middleware_extra_test.go` | FastEndpoints AddFastEndpoints()/UseFastEndpoints() pipeline wiring and IGlobalPreProcessor/IGlobalPostProcessor/IPreProcessor/IPostProcessor class declarations detected. |
 
 ### Type System
 

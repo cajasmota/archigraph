@@ -6153,8 +6153,10 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/aspnet_core.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Minimal-API app.MapGet/Post/Put/Delete route path strings extracted via reAspNetMinimalAPI; attribute routes via reAspNetHTTPMethod; route_path property set on each emitted entity."
           }
         },
         "Auth": {
@@ -6365,8 +6367,10 @@
             "verified_at": "2026-05-28"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/aspnet_core.go","internal/engine/rules/csharp/frameworks/asp_net_mvc.yaml"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "MVC controller [Route] + [HttpGet/Post/Put/Delete/Patch] attribute routes extracted; route path strings captured by asp_net_mvc.yaml source_patterns and aspnet_core.go reAspNetHTTPMethod/reAspNetMinimalAPI."
           }
         },
         "Auth": {
@@ -6392,7 +6396,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
+            "notes": "app.UseMiddleware\u003cT\u003e typed registrations, inline app.Use() lambda middleware, IMiddleware class + InvokeAsync detection, [ServiceFilter]/[TypeFilter]/IActionFilter-based MVC filter coverage."
           }
         },
         "Type System": {
@@ -6565,10 +6571,14 @@
       "capabilities": {
         "Structure": {
           "component_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@page-annotated .razor files and ComponentBase/LayoutComponentBase subclasses emitted as SCOPE.UIComponent/component_extraction via reBEPage/reBEComponentBase/reBELayoutBase."
           },
           "context_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@inject service types and [CascadingParameter] cascade context providers emitted as SCOPE.Component/context_extraction via reBEInject/reBECascadingParam."
           }
         },
         "Data Flow": {
@@ -6595,7 +6605,9 @@
         },
         "Navigation": {
           "router_pattern": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@page route declarations emitted as SCOPE.Operation/router_pattern; NavigationManager.NavigateTo() and \u003cNavLink href\u003e patterns as SCOPE.Pattern/router_pattern."
           }
         },
         "Type System": {
@@ -6616,7 +6628,9 @@
         },
         "Lifecycle": {
           "state_setter_emission": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "OnInitialized/OnParametersSet/OnAfterRender/OnDispose lifecycle overrides and StateHasChanged() call sites emitted as SCOPE.Operation|Pattern/state_setter_emission."
           }
         },
         "Testing": {
@@ -6747,10 +6761,14 @@
       "capabilities": {
         "Structure": {
           "component_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@page-annotated .razor files and ComponentBase/LayoutComponentBase subclasses emitted as SCOPE.UIComponent/component_extraction via reBEPage/reBEComponentBase/reBELayoutBase."
           },
           "context_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@inject service types and [CascadingParameter] cascade context providers emitted as SCOPE.Component/context_extraction via reBEInject/reBECascadingParam."
           }
         },
         "Data Flow": {
@@ -6777,7 +6795,9 @@
         },
         "Navigation": {
           "router_pattern": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@page route declarations emitted as SCOPE.Operation/router_pattern; NavigationManager.NavigateTo() and \u003cNavLink href\u003e patterns as SCOPE.Pattern/router_pattern."
           }
         },
         "Type System": {
@@ -6798,7 +6818,9 @@
         },
         "Lifecycle": {
           "state_setter_emission": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "OnInitialized/OnParametersSet/OnAfterRender/OnDispose lifecycle overrides and StateHasChanged() call sites emitted as SCOPE.Operation|Pattern/state_setter_emission."
           }
         },
         "Testing": {
@@ -6929,10 +6951,14 @@
       "capabilities": {
         "Structure": {
           "component_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@page-annotated .razor files and ComponentBase/LayoutComponentBase subclasses emitted as SCOPE.UIComponent/component_extraction via reBEPage/reBEComponentBase/reBELayoutBase."
           },
           "context_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@inject service types and [CascadingParameter] cascade context providers emitted as SCOPE.Component/context_extraction via reBEInject/reBECascadingParam."
           }
         },
         "Data Flow": {
@@ -6959,7 +6985,9 @@
         },
         "Navigation": {
           "router_pattern": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "@page route declarations emitted as SCOPE.Operation/router_pattern; NavigationManager.NavigateTo() and \u003cNavLink href\u003e patterns as SCOPE.Pattern/router_pattern."
           }
         },
         "Type System": {
@@ -6980,7 +7008,9 @@
         },
         "Lifecycle": {
           "state_setter_emission": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/blazor_extra.go","internal/custom/csharp/blazor_extra_test.go"],
+            "notes": "OnInitialized/OnParametersSet/OnAfterRender/OnDispose lifecycle overrides and StateHasChanged() call sites emitted as SCOPE.Operation|Pattern/state_setter_emission."
           }
         },
         "Testing": {
@@ -7155,7 +7185,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
+            "notes": "Carter app.MapCarter()/AddCarter() pipeline wiring detected; ICarterModule.AddRoutes already covers route registration. Middleware wiring is the AddCarter/MapCarter registration surface."
           }
         },
         "Type System": {
@@ -7372,7 +7404,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
+            "notes": "FastEndpoints AddFastEndpoints()/UseFastEndpoints() pipeline wiring and IGlobalPreProcessor/IGlobalPostProcessor/IPreProcessor/IPostProcessor class declarations detected."
           }
         },
         "Type System": {
@@ -7545,21 +7579,29 @@
       "capabilities": {
         "Schema": {
           "procedure_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/grpc_net.go","internal/custom/csharp/grpc_net_test.go"],
+            "notes": "[ProtoContract] annotated C# classes, [ProtoMember] field annotations, and proto file service/rpc declarations emitted as SCOPE.Schema/procedure_extraction."
           },
           "schema_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/grpc_net.go","internal/custom/csharp/grpc_net_test.go"],
+            "notes": "Proto message declarations, [DataContract] C# classes, and XxxService:XxxServiceBase generated implementation classes emitted as SCOPE.Schema/schema_extraction."
           }
         },
         "Codegen": {
           "client_codegen": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/grpc_net.go","internal/custom/csharp/grpc_net_test.go"],
+            "notes": "GrpcChannel.ForAddress(), new XxxClient(channel), class XxxClient:ClientBase, and services.AddGrpcClient\u003cT\u003e() generated-client detection."
           }
         },
         "Transport": {
           "transport_binding": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/grpc_net.go","internal/custom/csharp/grpc_net_test.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "app.MapGrpcService\u003cT\u003e() endpoint registration, services.AddGrpc(), ServerCredentials/SslServerCredentials security bindings, and GrpcServiceOptions/GrpcChannelOptions usage detected."
           }
         },
         "Substrate": {
@@ -7727,7 +7769,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
+            "notes": "NancyFX DefaultNancyBootstrapper subclass, RequestStartup/ApplicationStartup overrides, and this.Before += / this.After += module pipeline hook registrations detected."
           }
         },
         "Type System": {
@@ -7900,28 +7944,40 @@
       "capabilities": {
         "Structure": {
           "context_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "Application.Current global context, DependencyService.Get\u003cT\u003e() service resolution, and IServiceProvider/MauiAppBuilder usages emitted as SCOPE.Component/context_extraction."
           }
         },
         "Navigation": {
           "deep_link_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "Shell.Current.GoToAsync() deep-link routes, [QueryProperty] shell parameter bindings, and AppLinks.RegisterRoute/AppendAppLink registrations emitted as SCOPE.Pattern/deep_link_extraction."
           },
           "navigation_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "Navigation.PushAsync/PopAsync/PushModalAsync/PopModalAsync stack operations, Shell.GoToAsync route-based navigation, and NavigationPage/TabbedPage/FlyoutPage constructor usages detected."
           },
           "screen_detection": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "ContentPage/Shell/TabbedPage/FlyoutPage/NavigationPage/MasterDetailPage subclass declarations emitted as SCOPE.UIComponent/screen_detection."
           }
         },
         "Platform": {
           "platform_branching": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "DeviceInfo.Platform == DevicePlatform.X, Device.RuntimePlatform == Device.X (Xamarin), DeviceInfo.Idiom comparisons, and #if ANDROID/#if IOS/#if WINDOWS preprocessor directives detected."
           }
         },
         "Native Bridge": {
           "native_module_imports": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "[DllImport] P/Invoke declarations, DependencyService.Register\u003cT\u003e(), [assembly:Dependency(typeof(T))] platform registrations, and using Android./UIKit./WinRT. platform bridge imports detected."
           }
         },
         "Data Flow": {
@@ -7938,10 +7994,14 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go","internal/extractors/csharp/csharp.go"],
+            "notes": "enum declarations emitted as SCOPE.Schema/enum_extraction via reMPEnum; the tree-sitter extractor also handles enums generically for all C# files."
           },
           "interface_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go","internal/extractors/csharp/csharp.go"],
+            "notes": "interface declarations emitted as SCOPE.Component/interface_extraction via reMPInterface; the tree-sitter extractor also handles interfaces generically for all C# files."
           },
           "type_alias_extraction": {
             "status": "not_applicable",
@@ -7950,7 +8010,9 @@
         },
         "Lifecycle": {
           "state_setter_emission": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "CreateMauiApp/OnStart/OnSleep/OnResume/OnAppearing/OnDisappearing/OnNavigatedTo lifecycle method overrides, PropertyChanged?.Invoke(), OnPropertyChanged(), and SetProperty(ref _field) MVVM setter patterns detected."
           }
         },
         "Testing": {
@@ -8125,7 +8187,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/middleware_extra.go","internal/custom/csharp/middleware_extra_test.go"],
+            "notes": "ServiceStack AppHostBase subclass, Plugins.Add\u003cT\u003e(), GlobalRequestFilters.Add, and Pre/PostResponseFilters pipeline registration patterns detected."
           }
         },
         "Type System": {
@@ -8298,15 +8362,21 @@
       "capabilities": {
         "Process": {
           "ipc_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "Named pipe (NamedPipeServerStream/Client), MemoryMappedFile, WCF ServiceHost/ChannelFactory, Dispatcher.Invoke cross-thread dispatch, Process.Start child-process, and named EventWaitHandle/Mutex sync primitives detected."
           },
           "main_renderer_split": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "Application subclass declarations, Application.Run() entry points, static Main() methods, InitializeComponent() XAML wiring, and new XxxForm/XxxWindow() renderer-side construction detected."
           }
         },
         "Native": {
           "native_module_imports": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "[DllImport] P/Invoke, unsafe keyword pointer interop, [ComImport]/[Guid]/[InterfaceType] COM interop, using Windows.Win32./PInvoke. (CsWin32), Marshal interop helpers, and NativeLibrary.Load/GetExport detected."
           }
         },
         "Substrate": {
@@ -8373,15 +8443,21 @@
       "capabilities": {
         "Process": {
           "ipc_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "Named pipe (NamedPipeServerStream/Client), MemoryMappedFile, WCF ServiceHost/ChannelFactory, Dispatcher.Invoke cross-thread dispatch, Process.Start child-process, and named EventWaitHandle/Mutex sync primitives detected."
           },
           "main_renderer_split": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "Application subclass declarations, Application.Run() entry points, static Main() methods, InitializeComponent() XAML wiring, and new XxxForm/XxxWindow() renderer-side construction detected."
           }
         },
         "Native": {
           "native_module_imports": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "[DllImport] P/Invoke, unsafe keyword pointer interop, [ComImport]/[Guid]/[InterfaceType] COM interop, using Windows.Win32./PInvoke. (CsWin32), Marshal interop helpers, and NativeLibrary.Load/GetExport detected."
           }
         },
         "Substrate": {
@@ -8448,15 +8524,21 @@
       "capabilities": {
         "Process": {
           "ipc_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "Named pipe (NamedPipeServerStream/Client), MemoryMappedFile, WCF ServiceHost/ChannelFactory, Dispatcher.Invoke cross-thread dispatch, Process.Start child-process, and named EventWaitHandle/Mutex sync primitives detected."
           },
           "main_renderer_split": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "Application subclass declarations, Application.Run() entry points, static Main() methods, InitializeComponent() XAML wiring, and new XxxForm/XxxWindow() renderer-side construction detected."
           }
         },
         "Native": {
           "native_module_imports": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/desktop_native.go","internal/custom/csharp/desktop_native_test.go"],
+            "notes": "[DllImport] P/Invoke, unsafe keyword pointer interop, [ComImport]/[Guid]/[InterfaceType] COM interop, using Windows.Win32./PInvoke. (CsWin32), Marshal interop helpers, and NativeLibrary.Load/GetExport detected."
           }
         },
         "Substrate": {
@@ -8523,28 +8605,40 @@
       "capabilities": {
         "Structure": {
           "context_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "Application.Current global context, DependencyService.Get\u003cT\u003e() service resolution, and IServiceProvider/MauiAppBuilder usages emitted as SCOPE.Component/context_extraction."
           }
         },
         "Navigation": {
           "deep_link_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "Shell.Current.GoToAsync() deep-link routes, [QueryProperty] shell parameter bindings, and AppLinks.RegisterRoute/AppendAppLink registrations emitted as SCOPE.Pattern/deep_link_extraction."
           },
           "navigation_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "Navigation.PushAsync/PopAsync/PushModalAsync/PopModalAsync stack operations, Shell.GoToAsync route-based navigation, and NavigationPage/TabbedPage/FlyoutPage constructor usages detected."
           },
           "screen_detection": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "ContentPage/Shell/TabbedPage/FlyoutPage/NavigationPage/MasterDetailPage subclass declarations emitted as SCOPE.UIComponent/screen_detection."
           }
         },
         "Platform": {
           "platform_branching": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "DeviceInfo.Platform == DevicePlatform.X, Device.RuntimePlatform == Device.X (Xamarin), DeviceInfo.Idiom comparisons, and #if ANDROID/#if IOS/#if WINDOWS preprocessor directives detected."
           }
         },
         "Native Bridge": {
           "native_module_imports": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "[DllImport] P/Invoke declarations, DependencyService.Register\u003cT\u003e(), [assembly:Dependency(typeof(T))] platform registrations, and using Android./UIKit./WinRT. platform bridge imports detected."
           }
         },
         "Data Flow": {
@@ -8561,10 +8655,14 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go","internal/extractors/csharp/csharp.go"],
+            "notes": "enum declarations emitted as SCOPE.Schema/enum_extraction via reMPEnum; the tree-sitter extractor also handles enums generically for all C# files."
           },
           "interface_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go","internal/extractors/csharp/csharp.go"],
+            "notes": "interface declarations emitted as SCOPE.Component/interface_extraction via reMPInterface; the tree-sitter extractor also handles interfaces generically for all C# files."
           },
           "type_alias_extraction": {
             "status": "not_applicable",
@@ -8573,7 +8671,9 @@
         },
         "Lifecycle": {
           "state_setter_emission": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/mobile_platform.go","internal/custom/csharp/mobile_platform_test.go"],
+            "notes": "CreateMauiApp/OnStart/OnSleep/OnResume/OnAppearing/OnDisappearing/OnNavigatedTo lifecycle method overrides, PropertyChanged?.Invoke(), OnPropertyChanged(), and SetProperty(ref _field) MVVM setter patterns detected."
           }
         },
         "Testing": {

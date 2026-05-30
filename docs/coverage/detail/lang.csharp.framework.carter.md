@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🔴 `missing` | — | — | — | — |
+| Middleware coverage | 🟢 `partial` | — | — | `internal/custom/csharp/middleware_extra.go`<br>`internal/custom/csharp/middleware_extra_test.go` | Carter app.MapCarter()/AddCarter() pipeline wiring detected; ICarterModule.AddRoutes already covers route registration. Middleware wiring is the AddCarter/MapCarter registration surface. |
 
 ### Type System
 

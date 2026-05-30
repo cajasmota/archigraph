@@ -9063,6 +9063,19 @@ records:
               functions: [runTaintFlowPass, computeFindings]
           issues_implemented: ["2773"]
           verified_at: "2026-05-28"
+      Routing:
+        route_extraction:
+          # Minimal-API app.MapGet/Post/Put/Delete route path strings extracted via
+          # reAspNetMinimalAPI; [HttpGet/Post/Put/Delete/Patch] action-method routes via
+          # reAspNetHTTPMethod; route_path property set on all emitted entities; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/aspnet_core.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/extractors_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest [Fact]/[Theory]/[Test]/[TestMethod] attrs
@@ -9079,6 +9092,33 @@ records:
 
   lang.csharp.framework.aspnet-mvc:
     capabilities:
+      Routing:
+        route_extraction:
+          # MVC [Route]+[HttpGet/Post/Put/Delete/Patch] attribute routes and minimal-API
+          # MapGet/Post/... paths extracted by asp_net_mvc.yaml source_patterns and
+          # aspnet_core.go reAspNetHTTPMethod/reAspNetMinimalAPI; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/engine/rules/csharp/frameworks/asp_net_mvc.yaml
+            - file: internal/custom/csharp/aspnet_core.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/extractors_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # app.UseMiddleware<T>, inline app.Use() lambda, IMiddleware+InvokeAsync class,
+          # [ServiceFilter]/[TypeFilter]/IActionFilter-based MVC filter coverage detected via
+          # custom_csharp_middleware_extra extractor; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/middleware_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/middleware_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9138,6 +9178,54 @@ records:
             - file: internal/custom/csharp/blazor_dataflow_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
+      Structure:
+        component_extraction:
+          # @page-annotated .razor files and ComponentBase/LayoutComponentBase subclasses
+          # emitted as SCOPE.UIComponent/component_extraction via reBEPage/reBEComponentBase;
+          # issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        context_extraction:
+          # @inject service types and [CascadingParameter] cascade context providers emitted
+          # as SCOPE.Component/context_extraction via reBEInject/reBECascadingParam; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Navigation:
+        router_pattern:
+          # @page route declarations as SCOPE.Operation/router_pattern; NavigateTo() and
+          # NavLink href patterns as SCOPE.Pattern/router_pattern; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Lifecycle:
+        state_setter_emission:
+          # OnInitialized/OnParametersSet/OnAfterRender/OnDispose lifecycle overrides and
+          # StateHasChanged()/InvokeAsync(StateHasChanged) call sites; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9191,6 +9279,49 @@ records:
               functions: [Extract]
           tests:
             - file: internal/custom/csharp/blazor_dataflow_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Structure:
+        component_extraction:
+          # @page-annotated .razor components and ComponentBase subclasses; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        context_extraction:
+          # @inject service types and [CascadingParameter] cascade context; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Navigation:
+        router_pattern:
+          # @page routes, NavigateTo(), NavLink href patterns; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Lifecycle:
+        state_setter_emission:
+          # OnInitialized/OnParametersSet/OnAfterRender and StateHasChanged() calls; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
       Testing:
@@ -9248,6 +9379,49 @@ records:
             - file: internal/custom/csharp/blazor_dataflow_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
+      Structure:
+        component_extraction:
+          # @page-annotated .razor components and ComponentBase subclasses; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        context_extraction:
+          # @inject service types and [CascadingParameter] cascade context; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Navigation:
+        router_pattern:
+          # @page routes, NavigateTo(), NavLink href patterns; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Lifecycle:
+        state_setter_emission:
+          # OnInitialized/OnParametersSet/OnAfterRender and StateHasChanged() calls; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/blazor_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/blazor_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9285,6 +9459,113 @@ records:
             - file: internal/custom/csharp/blazor_dataflow_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
+      Structure:
+        context_extraction:
+          # Application.Current, DependencyService.Get<T>(), IServiceProvider/MauiAppBuilder;
+          # issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Navigation:
+        deep_link_extraction:
+          # Shell.GoToAsync deep-link routes and [QueryProperty] shell bindings; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        navigation_extraction:
+          # Navigation.PushAsync/PopAsync, Shell.GoToAsync, NavigationPage/TabbedPage
+          # constructor usages; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        screen_detection:
+          # ContentPage/Shell/TabbedPage/FlyoutPage/NavigationPage subclass declarations;
+          # issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Platform:
+        platform_branching:
+          # DeviceInfo.Platform/Device.RuntimePlatform comparisons and #if ANDROID/#if IOS
+          # preprocessor branches; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Native Bridge:
+        native_module_imports:
+          # [DllImport] P/Invoke, DependencyService.Register<T>(), [assembly:Dependency],
+          # and platform bridge using imports; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Type System:
+        enum_extraction:
+          # enum declarations emitted via reMPEnum; tree-sitter extractor also covers
+          # generically; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+            - file: internal/extractors/csharp/csharp.go
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        interface_extraction:
+          # interface declarations emitted via reMPInterface; tree-sitter extractor also
+          # covers generically; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+            - file: internal/extractors/csharp/csharp.go
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Lifecycle:
+        state_setter_emission:
+          # CreateMauiApp/OnStart/OnSleep/OnResume/OnAppearing/OnDisappearing lifecycle
+          # overrides, PropertyChanged?.Invoke(), OnPropertyChanged(), SetProperty();
+          # issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9320,6 +9601,106 @@ records:
               functions: [Extract]
           tests:
             - file: internal/custom/csharp/blazor_dataflow_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Structure:
+        context_extraction:
+          # Application.Current, DependencyService.Get<T>(), IServiceProvider; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Navigation:
+        deep_link_extraction:
+          # Shell.GoToAsync deep links, [QueryProperty] bindings, AppLinks; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        navigation_extraction:
+          # Navigation.PushAsync/PopAsync, Shell nav, NavigationPage/TabbedPage; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        screen_detection:
+          # ContentPage/Shell/TabbedPage/FlyoutPage/NavigationPage subclasses; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Platform:
+        platform_branching:
+          # Device.RuntimePlatform == Device.X comparisons and #if ANDROID/#if IOS; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Native Bridge:
+        native_module_imports:
+          # [DllImport], DependencyService.Register<T>(), [assembly:Dependency], platform
+          # bridge imports; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Type System:
+        enum_extraction:
+          # enum declarations detected via reMPEnum; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+            - file: internal/extractors/csharp/csharp.go
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        interface_extraction:
+          # interface declarations detected via reMPInterface; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+            - file: internal/extractors/csharp/csharp.go
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Lifecycle:
+        state_setter_emission:
+          # OnStart/OnSleep/OnResume/OnAppearing/OnDisappearing lifecycle overrides,
+          # PropertyChanged?.Invoke(), OnPropertyChanged(), SetProperty(); issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/mobile_platform.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/mobile_platform_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
       Testing:
@@ -9370,6 +9751,17 @@ records:
             - file: internal/custom/csharp/minor_routes_test.go
           issues_implemented: ["3263"]
           verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # Carter app.MapCarter()/AddCarter() pipeline wiring; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/middleware_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/middleware_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9418,6 +9810,18 @@ records:
           tests:
             - file: internal/custom/csharp/minor_routes_test.go
           issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # FastEndpoints AddFastEndpoints()/UseFastEndpoints() and IGlobalPreProcessor/
+          # IGlobalPostProcessor class declarations; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/middleware_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/middleware_extra_test.go
+          issues_implemented: ["3261"]
           verified_at: "2026-05-30"
       Testing:
         tests_linkage:
@@ -9468,6 +9872,18 @@ records:
             - file: internal/custom/csharp/minor_routes_test.go
           issues_implemented: ["3263"]
           verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # NancyFX DefaultNancyBootstrapper subclass, RequestStartup/ApplicationStartup
+          # overrides, and this.Before += / this.After += module pipeline hooks; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/middleware_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/middleware_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9516,6 +9932,18 @@ records:
             - file: internal/custom/csharp/minor_routes_test.go
           issues_implemented: ["3263"]
           verified_at: "2026-05-30"
+      Middleware:
+        middleware_coverage:
+          # ServiceStack AppHostBase subclass, Plugins.Add<T>(), GlobalRequestFilters.Add,
+          # Pre/PostResponseFilters pipeline registration; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/middleware_extra.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/middleware_extra_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
       Testing:
         tests_linkage:
           # C# NUnit/xUnit/MSTest test detection via csharpTestRE; issue #3261.
@@ -9525,6 +9953,169 @@ records:
               functions: [detectCSharpTest]
           tests:
             - file: internal/extractors/cross/testmap/extractor_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.grpc-net:
+    capabilities:
+      Schema:
+        procedure_extraction:
+          # [ProtoContract] C# classes, [ProtoMember] field annotations, proto file
+          # service/rpc declarations; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/grpc_net.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/grpc_net_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        schema_extraction:
+          # Proto message declarations, [DataContract] C# classes, XxxServiceBase
+          # generated implementation classes; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/grpc_net.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/grpc_net_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Codegen:
+        client_codegen:
+          # GrpcChannel.ForAddress(), new XxxClient(channel), class XxxClient:ClientBase,
+          # services.AddGrpcClient<T>(); issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/grpc_net.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/grpc_net_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Transport:
+        transport_binding:
+          # app.MapGrpcService<T>(), services.AddGrpc(), ServerCredentials/SslCredentials,
+          # GrpcServiceOptions/GrpcChannelOptions; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/grpc_net.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/grpc_net_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.wpf:
+    capabilities:
+      Process:
+        ipc_extraction:
+          # Named pipe, MemoryMappedFile, WCF ServiceHost/ChannelFactory, Dispatcher.Invoke,
+          # Process.Start, named EventWaitHandle/Mutex; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        main_renderer_split:
+          # Application subclass, Application.Run(), static Main(), InitializeComponent(),
+          # new XxxForm/XxxWindow() renderer detection; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Native:
+        native_module_imports:
+          # [DllImport] P/Invoke, unsafe keyword, [ComImport]/COM interop,
+          # using Windows.Win32./PInvoke., Marshal interop, NativeLibrary.Load; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.winforms:
+    capabilities:
+      Process:
+        ipc_extraction:
+          # Named pipe, MemoryMappedFile, Dispatcher.Invoke, Process.Start,
+          # named sync primitives; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        main_renderer_split:
+          # Application subclass, Application.Run(), static Main(), InitializeComponent(),
+          # new XxxForm window creation; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Native:
+        native_module_imports:
+          # [DllImport] P/Invoke, unsafe keyword, COM interop attributes,
+          # Windows.Win32./PInvoke. imports, NativeLibrary.Load; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.uno:
+    capabilities:
+      Process:
+        ipc_extraction:
+          # Named pipe, MemoryMappedFile, Dispatcher.Invoke, Process.Start; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+        main_renderer_split:
+          # Application subclass, Application.Run(), static Main(), InitializeComponent(),
+          # Uno CreateWindow/CreateRootFrame detection; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
+          issues_implemented: ["3261"]
+          verified_at: "2026-05-30"
+      Native:
+        native_module_imports:
+          # [DllImport] P/Invoke, unsafe keyword, COM interop, Win32 imports,
+          # NativeLibrary.Load; issue #3261.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/desktop_native.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/desktop_native_test.go
           issues_implemented: ["3261"]
           verified_at: "2026-05-30"
 

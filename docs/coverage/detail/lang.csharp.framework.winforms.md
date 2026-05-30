@@ -15,14 +15,14 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| IPC extraction | 🔴 `missing` | — | — | — | — |
-| Main renderer split | 🔴 `missing` | — | — | — | — |
+| IPC extraction | 🟢 `partial` | — | — | `internal/custom/csharp/desktop_native.go`<br>`internal/custom/csharp/desktop_native_test.go` | Named pipe (NamedPipeServerStream/Client), MemoryMappedFile, WCF ServiceHost/ChannelFactory, Dispatcher.Invoke cross-thread dispatch, Process.Start child-process, and named EventWaitHandle/Mutex sync primitives detected. |
+| Main renderer split | 🟢 `partial` | — | — | `internal/custom/csharp/desktop_native.go`<br>`internal/custom/csharp/desktop_native_test.go` | Application subclass declarations, Application.Run() entry points, static Main() methods, InitializeComponent() XAML wiring, and new XxxForm/XxxWindow() renderer-side construction detected. |
 
 ### Native
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Native module imports | 🔴 `missing` | — | — | — | — |
+| Native module imports | 🟢 `partial` | — | — | `internal/custom/csharp/desktop_native.go`<br>`internal/custom/csharp/desktop_native_test.go` | [DllImport] P/Invoke, unsafe keyword pointer interop, [ComImport]/[Guid]/[InterfaceType] COM interop, using Windows.Win32./PInvoke. (CsWin32), Marshal interop helpers, and NativeLibrary.Load/GetExport detected. |
 
 ### Updates
 

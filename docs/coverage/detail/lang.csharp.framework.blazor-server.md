@@ -15,8 +15,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Component extraction | 🔴 `missing` | — | — | — | — |
-| Context extraction | 🔴 `missing` | — | — | — | — |
+| Component extraction | 🟢 `partial` | — | — | `internal/custom/csharp/blazor_extra.go`<br>`internal/custom/csharp/blazor_extra_test.go` | @page-annotated .razor files and ComponentBase/LayoutComponentBase subclasses emitted as SCOPE.UIComponent/component_extraction via reBEPage/reBEComponentBase/reBELayoutBase. |
+| Context extraction | 🟢 `partial` | — | — | `internal/custom/csharp/blazor_extra.go`<br>`internal/custom/csharp/blazor_extra_test.go` | @inject service types and [CascadingParameter] cascade context providers emitted as SCOPE.Component/context_extraction via reBEInject/reBECascadingParam. |
 
 ### Data Flow
 
@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Router pattern | 🔴 `missing` | — | — | — | — |
+| Router pattern | 🟢 `partial` | — | — | `internal/custom/csharp/blazor_extra.go`<br>`internal/custom/csharp/blazor_extra_test.go` | @page route declarations emitted as SCOPE.Operation/router_pattern; NavigationManager.NavigateTo() and <NavLink href> patterns as SCOPE.Pattern/router_pattern. |
 
 ### Type System
 
@@ -45,7 +45,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| State setter emission | 🔴 `missing` | — | — | — | — |
+| State setter emission | 🟢 `partial` | — | — | `internal/custom/csharp/blazor_extra.go`<br>`internal/custom/csharp/blazor_extra_test.go` | OnInitialized/OnParametersSet/OnAfterRender/OnDispose lifecycle overrides and StateHasChanged() call sites emitted as SCOPE.Operation|Pattern/state_setter_emission. |
 
 ### Testing
 

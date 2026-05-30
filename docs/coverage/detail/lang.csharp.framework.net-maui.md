@@ -15,27 +15,27 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Context extraction | 🔴 `missing` | — | — | — | — |
+| Context extraction | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | Application.Current global context, DependencyService.Get<T>() service resolution, and IServiceProvider/MauiAppBuilder usages emitted as SCOPE.Component/context_extraction. |
 
 ### Navigation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Deep link extraction | 🔴 `missing` | — | — | — | — |
-| Navigation extraction | 🔴 `missing` | — | — | — | — |
-| Screen detection | 🔴 `missing` | — | — | — | — |
+| Deep link extraction | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | Shell.Current.GoToAsync() deep-link routes, [QueryProperty] shell parameter bindings, and AppLinks.RegisterRoute/AppendAppLink registrations emitted as SCOPE.Pattern/deep_link_extraction. |
+| Navigation extraction | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | Navigation.PushAsync/PopAsync/PushModalAsync/PopModalAsync stack operations, Shell.GoToAsync route-based navigation, and NavigationPage/TabbedPage/FlyoutPage constructor usages detected. |
+| Screen detection | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | ContentPage/Shell/TabbedPage/FlyoutPage/NavigationPage/MasterDetailPage subclass declarations emitted as SCOPE.UIComponent/screen_detection. |
 
 ### Platform
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Platform branching | 🔴 `missing` | — | — | — | — |
+| Platform branching | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | DeviceInfo.Platform == DevicePlatform.X, Device.RuntimePlatform == Device.X (Xamarin), DeviceInfo.Idiom comparisons, and #if ANDROID/#if IOS/#if WINDOWS preprocessor directives detected. |
 
 ### Native Bridge
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Native module imports | 🔴 `missing` | — | — | — | — |
+| Native module imports | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | [DllImport] P/Invoke declarations, DependencyService.Register<T>(), [assembly:Dependency(typeof(T))] platform registrations, and using Android./UIKit./WinRT. platform bridge imports detected. |
 
 ### Data Flow
 
@@ -48,15 +48,15 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Enum extraction | 🔴 `missing` | — | — | — | — |
-| Interface extraction | 🔴 `missing` | — | — | — | — |
+| Enum extraction | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go`<br>`internal/extractors/csharp/csharp.go` | enum declarations emitted as SCOPE.Schema/enum_extraction via reMPEnum; the tree-sitter extractor also handles enums generically for all C# files. |
+| Interface extraction | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go`<br>`internal/extractors/csharp/csharp.go` | interface declarations emitted as SCOPE.Component/interface_extraction via reMPInterface; the tree-sitter extractor also handles interfaces generically for all C# files. |
 | Type alias extraction | — `not_applicable` | — | — | — | C# has only file-scoped using-aliases, not first-class type aliases |
 
 ### Lifecycle
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| State setter emission | 🔴 `missing` | — | — | — | — |
+| State setter emission | 🟢 `partial` | — | — | `internal/custom/csharp/mobile_platform.go`<br>`internal/custom/csharp/mobile_platform_test.go` | CreateMauiApp/OnStart/OnSleep/OnResume/OnAppearing/OnDisappearing/OnNavigatedTo lifecycle method overrides, PropertyChanged?.Invoke(), OnPropertyChanged(), and SetProperty(ref _field) MVVM setter patterns detected. |
 
 ### Testing
 
