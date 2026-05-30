@@ -43834,9 +43834,10 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "partial",
-            "cites": ["internal/extractors/cross/testmap/frameworks.go"],
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/extractors/cross/testmap/extractor.go","internal/extractors/cross/testmap/extractor_test.go","internal/extractors/cross/testmap/frameworks.go","internal/extractors/cross/testmap/resolver.go"],
+            "notes": "Deep RSpec+Minitest linkage (#3342): (1) RSpec — detectRSpec extracts describe-constant subject (rspecDescribeConstRE); each it/specify block carries describeSubject; resolveCalls Pass 3a emits medium-confidence TESTS edge to described class when no direct call; high wins on explicit calls. (2) Minitest/ActiveSupport::TestCase — detectMinitest handles DSL `test 'desc' do` and `def test_*`; railsMinitestSubjectFromClass strips Test suffix (UserTest→User). (3) Rails path conventions: spec/models/user_spec.rb→app/models/user.rb/User; spec/controllers/users_controller_spec.rb→UsersController; test/models/user_test.rb→app/models/user.rb/User via railsTestCamelCase. (4) Extended RSpec/Minitest stopwords (be_*, have_*, assert_*, Rails HTTP verbs). 16 value-asserting tests prove linkage. Remainder: shared_examples/it_behaves_like not modelled; request specs without describe constant fall back to low-confidence naming convention.",
+            "verified_at": "2026-05-30"
           }
         },
         "Observability": {

@@ -139,10 +139,79 @@ func productionFileFromTestPath(filePath string) (prodFile, prodSymbol string) {
 			}
 		}
 	case ".rb":
-		// foo_spec.rb → foo.rb
+		// Normalise: add a leading "/" so that paths like "spec/models/user_spec.rb"
+		// (no leading slash, the common repo-relative form) are also matched by the
+		// "/spec/" prefix. The original filePath (no leading /) is used for output.
+		normPath := "/" + filepath.ToSlash(filePath)
+
+		// Rails spec/ convention:
+		//   spec/models/user_spec.rb          → app/models/user.rb, "User"
+		//   spec/controllers/users_controller_spec.rb → app/controllers/users_controller.rb, "UsersController"
+		//   spec/jobs/import_job_spec.rb       → app/jobs/import_job.rb, "ImportJob"
+		//   (etc. for any spec/TYPE/ layer)
+		if specIdx := strings.Index(normPath, "/spec/"); specIdx >= 0 {
+			rel := normPath[specIdx+len("/spec/"):]
+			relParts := strings.SplitN(rel, "/", 2)
+			if len(relParts) == 2 {
+				specDir := relParts[0]
+				switch specDir {
+				case "models", "controllers", "jobs", "mailers", "helpers",
+					"services", "serializers", "presenters", "decorators",
+					"validators", "policies", "uploaders", "workers", "forms":
+					specBase := path.Base(relParts[1])
+					specExt := path.Ext(specBase)
+					specStem := strings.TrimSuffix(specBase, specExt)
+					if strings.HasSuffix(strings.ToLower(specStem), "_spec") {
+						prodStem := specStem[:len(specStem)-len("_spec")]
+						// Reconstruct the app/ prefix: everything before /spec/ + app/TYPE/.
+						appPrefix := normPath[:specIdx] // may be "" for top-level spec/
+						if appPrefix == "" {
+							appPrefix = "."
+						}
+						prodFile := path.Join(strings.TrimPrefix(appPrefix, "/"), "app", specDir, prodStem+".rb")
+						sym := railsTestCamelCase(prodStem)
+						return prodFile, sym
+					}
+				}
+			}
+		}
+		// Rails test/ convention:
+		//   test/models/user_test.rb          → app/models/user.rb, "User"
+		//   test/controllers/users_controller_test.rb → app/controllers/users_controller.rb, "UsersController"
+		if testIdx := strings.Index(normPath, "/test/"); testIdx >= 0 {
+			rel := normPath[testIdx+len("/test/"):]
+			relParts := strings.SplitN(rel, "/", 2)
+			if len(relParts) == 2 {
+				testDir := relParts[0]
+				switch testDir {
+				case "models", "controllers", "jobs", "mailers", "helpers",
+					"services", "serializers", "presenters", "decorators",
+					"validators", "policies", "uploaders", "workers", "forms":
+					testBase := path.Base(relParts[1])
+					testExtStr := path.Ext(testBase)
+					testStem := strings.TrimSuffix(testBase, testExtStr)
+					if strings.HasSuffix(strings.ToLower(testStem), "_test") {
+						prodStem := testStem[:len(testStem)-len("_test")]
+						appPrefix := normPath[:testIdx]
+						if appPrefix == "" {
+							appPrefix = "."
+						}
+						prodFile := path.Join(strings.TrimPrefix(appPrefix, "/"), "app", testDir, prodStem+".rb")
+						sym := railsTestCamelCase(prodStem)
+						return prodFile, sym
+					}
+				}
+			}
+		}
+		// Generic: foo_spec.rb → foo.rb
 		if strings.HasSuffix(lowerStem, "_spec") {
 			prodStem := stem[:len(stem)-len("_spec")]
 			return path.Join(dir, prodStem+".rb"), prodStem
+		}
+		// Generic: foo_test.rb → foo.rb
+		if strings.HasSuffix(lowerStem, "_test") {
+			prodStem := stem[:len(stem)-len("_test")]
+			return path.Join(dir, prodStem+".rb"), titleCase(prodStem)
 		}
 	case ".java":
 		// XxxTest.java / XxxTests.java / XxxIT.java → Xxx.java

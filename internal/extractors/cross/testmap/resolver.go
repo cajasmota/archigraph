@@ -87,8 +87,29 @@ var stopwords = map[string]bool{
 	// JUnit
 	"assertions.assertequals": true, "assertequals": true,
 	"assertnull": true, "assertnotnull": true,
-	// RSpec
+	// RSpec matchers and DSL helpers
 	"allow": true, "receive": true, "expect.to": true,
+	"be_valid": true, "be_nil": true, "be_present": true, "be_empty": true,
+	"be_persisted": true, "be_new_record": true, "be_truthy": true, "be_falsy": true,
+	"have_http_status": true, "render_template": true, "redirect_to": true,
+	"be_successful": true, "be_redirect": true, "be_created": true,
+	"have_received": true, "change": true, "include": true, "match": true,
+	"eq": true, "eql": true, "equal": true, "respond_to": true,
+	"raise_error": true, "raise_exception": true, "output": true,
+	"have_attributes": true, "satisfy": true, "be_a": true, "be_an": true,
+	"be_kind_of": true, "be_instance_of": true, "be_between": true,
+	// RSpec Capybara / request helpers
+	"have_content": true, "have_text": true, "have_selector": true,
+	"have_css": true, "have_link": true, "have_button": true,
+	"visit": true, "click_on": true, "click_link": true, "click_button": true,
+	"fill_in": true, "choose": true, "check": true, "uncheck": true,
+	// Minitest assertions
+	"assert_equal": true, "assert_nil": true, "assert_not_nil": true,
+	"assert_includes": true, "assert_response": true, "assert_redirected_to": true,
+	"assert_template": true, "assert_difference": true, "assert_no_difference": true,
+	"assert_raises": true, "assert_enqueued_jobs": true, "assert_performed_jobs": true,
+	"assert_enqueued_with": true, "assert_emails": true, "refute_nil": true,
+	"refute_equal": true, "refute_includes": true,
 	// Rust
 	"assert_eq": true, "assert_ne": true, "assert_ne!": true, "assert_eq!": true,
 	// Common language keywords that end up in call-like positions
@@ -114,6 +135,18 @@ func isStopword(id string) bool {
 	// Any identifier that starts with "test" or "mock" is not a production
 	// call for mapping purposes.
 	if strings.HasPrefix(low, "test") || strings.HasPrefix(low, "mock") {
+		return true
+	}
+	// RSpec matcher helpers that start with "be_", "have_", "match_" are always
+	// assertion helpers, never production calls.
+	if strings.HasPrefix(low, "be_") || strings.HasPrefix(low, "have_") || strings.HasPrefix(low, "match_") {
+		return true
+	}
+	// Rails integration/controller test HTTP dispatch methods: `get :index`,
+	// `post :create`, etc. — these are test-framework helpers, not production
+	// calls, even though `get`/`post` also appear in production route helpers.
+	// We only drop single-word bare names (length <= 6) that match HTTP verbs.
+	if low == "get" || low == "post" || low == "put" || low == "patch" || low == "delete" || low == "head" {
 		return true
 	}
 	// Cypress global object — cy.visit(), cy.get(), etc.
@@ -220,7 +253,16 @@ func resolveCalls(tf testFunction, prodFile, convSymbol string) []testedCall {
 		}
 	}
 
-	// Pass 3: naming convention fallback when no call/mock was found.
+	// Pass 3a: RSpec/Minitest describe-subject linkage.
+	// When the test function was extracted from a describe/context block whose
+	// subject is a named constant (e.g. `describe User do` / `class UserTest`),
+	// use it as a medium-confidence target — the it-block exercises the described
+	// class even when there is no explicit call site in the body.
+	if len(seen) == 0 && tf.describeSubject != "" {
+		seen[tf.describeSubject] = "medium"
+	}
+
+	// Pass 3b: naming convention fallback when no call/mock was found.
 	if len(seen) == 0 {
 		sym := convSymbol
 		if sym == "" {

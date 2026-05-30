@@ -16,8 +16,9 @@ import (
 // testFunction is an internal record describing a single test case found
 // inside a test file.
 type testFunction struct {
-	qname string // fully qualified test function name
-	body  string // textual body used for call/mock scanning
+	qname           string // fully qualified test function name
+	body            string // textual body used for call/mock scanning
+	describeSubject string // RSpec/Minitest: the described class/module name (e.g. "User", "UsersController")
 }
 
 // testedCall is an internal record describing a single (test function,
@@ -363,20 +364,121 @@ func jestCaseQName(raw string) string {
 // Ruby — RSpec
 // ---------------------------------------------------------------------------
 
-// it 'name' do ... end  OR  it "name" do ... end
+// rspecDescribeConstRE matches `describe SomeConst do` / `RSpec.describe SomeConst do`
+// / `context SomeConst do` at the TOP level (or any nesting). It captures the
+// constant name so we can derive the test subject.
+var rspecDescribeConstRE = regexp.MustCompile(
+	`(?m)^\s*(?:RSpec\.)?(?:describe|context)\s+([A-Z][A-Za-z0-9_:]*)\b`,
+)
+
+// rspecDescribeStringRE matches `describe "some thing" do` (string form).
+var rspecDescribeStringRE = regexp.MustCompile(
+	`(?m)^\s*(?:RSpec\.)?(?:describe|context)\s+['"]([^'"]+)['"]`,
+)
+
+// rspecItRE matches `it 'name' do` or `it "name" do`.
 var rspecItRE = regexp.MustCompile(
 	`(?m)\bit\s+['"]([^'"]{1,200})['"]\s+do\b`,
 )
 
-// rspecEndRE is greedy — we capture from `do` to the next matching `end`.
-// Ruby nesting is tricky with regex; we approximate by scanning ahead until
-// a line starting with `end` at the same or lower indentation.
+// rspecItBlockRE also matches `specify 'name' do`.
+var rspecSpecifyRE = regexp.MustCompile(
+	`(?m)\bspecify\s+['"]([^'"]{1,200})['"]\s+do\b`,
+)
+
+// railsSpecSubjectFromPath derives the expected class/module name from a Rails
+// spec file path using the Rails spec/ directory convention:
+//
+//	spec/models/user_spec.rb              → User
+//	spec/controllers/users_controller_spec.rb → UsersController
+//	spec/requests/users_spec.rb           → (blank — too ambiguous)
+//	spec/jobs/import_job_spec.rb          → ImportJob
+//	spec/mailers/notification_mailer_spec.rb → NotificationMailer
+//	spec/helpers/application_helper_spec.rb  → ApplicationHelper
+//	spec/services/billing_service_spec.rb → BillingService
+//	spec/serializers/user_serializer_spec.rb → UserSerializer
+//
+// When the path does not follow a recognisable Rails spec convention, an empty
+// string is returned and the caller falls back to the generic _spec suffix rule.
+func railsSpecSubjectFromPath(filePath string) string {
+	norm := filepath.ToSlash(filePath)
+	// Strip spec/ prefix segments — handle paths like app/spec/... or spec/...
+	idx := strings.Index(norm, "/spec/")
+	if idx < 0 {
+		return ""
+	}
+	rel := norm[idx+len("/spec/"):]
+	parts := strings.SplitN(rel, "/", 2)
+	if len(parts) < 2 {
+		return ""
+	}
+	dir := parts[0]
+	base := parts[1]
+	ext := filepath.Ext(base)
+	stem := strings.TrimSuffix(filepath.Base(base), ext)
+	// strip trailing _spec
+	if strings.HasSuffix(stem, "_spec") {
+		stem = stem[:len(stem)-len("_spec")]
+	}
+
+	switch dir {
+	case "models", "controllers", "jobs", "mailers", "helpers",
+		"services", "serializers", "presenters", "decorators",
+		"validators", "policies", "uploaders", "workers", "forms":
+		return railsTestCamelCase(stem)
+	case "requests", "features", "system", "integration":
+		// These specs test HTTP endpoints / browser flows, not a single class.
+		return ""
+	}
+	return ""
+}
+
+// railsTestCamelCase converts a snake_case stem (e.g. "users_controller") to
+// CamelCase (e.g. "UsersController"). Already-capitalised words are preserved.
+func railsTestCamelCase(snake string) string {
+	parts := strings.Split(snake, "_")
+	var sb strings.Builder
+	for _, p := range parts {
+		if p == "" {
+			continue
+		}
+		r := []rune(p)
+		if r[0] >= 'a' && r[0] <= 'z' {
+			r[0] -= 'a' - 'A'
+		}
+		sb.WriteString(string(r))
+	}
+	return sb.String()
+}
+
+// rspecDescribeSubject returns the primary describe/RSpec.describe subject for
+// the file. It prefers a constant-form subject (e.g. `describe User do`) over a
+// string label, and returns the first top-level match found.
+func rspecDescribeSubject(source string) string {
+	// Prefer constant-form (e.g. `describe User do`)
+	if m := rspecDescribeConstRE.FindStringSubmatch(source); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
+// detectRSpec detects RSpec it/specify examples and annotates each with the
+// described subject so that the resolver can emit a TESTS edge even when the
+// example body contains no explicit production call.
 func detectRSpec(source string) []testFunction {
+	subject := rspecDescribeSubject(source)
+
 	var out []testFunction
-	for _, m := range rspecItRE.FindAllStringSubmatchIndex(source, -1) {
-		name := source[m[2]:m[3]]
-		body := rspecBlockBody(source, m[1])
-		out = append(out, testFunction{qname: rspecQName(name), body: body})
+	for _, re := range []*regexp.Regexp{rspecItRE, rspecSpecifyRE} {
+		for _, m := range re.FindAllStringSubmatchIndex(source, -1) {
+			name := source[m[2]:m[3]]
+			body := rspecBlockBody(source, m[1])
+			out = append(out, testFunction{
+				qname:           rspecQName(name),
+				body:            body,
+				describeSubject: subject,
+			})
+		}
 	}
 	return out
 }
@@ -402,6 +504,82 @@ func rspecBlockBody(source string, start int) string {
 		body = append(body, line)
 	}
 	return strings.Join(body, "\n")
+}
+
+// ---------------------------------------------------------------------------
+// Ruby — Minitest / ActiveSupport::TestCase
+// ---------------------------------------------------------------------------
+
+// railsMinitestClassRE matches `class FooTest < Minitest::Test` or
+// `class FooTest < ActiveSupport::TestCase` (and the generic `< Minitest::Spec`).
+var railsMinitestClassRE = regexp.MustCompile(
+	`(?m)^\s*class\s+(\w+Test\w*)\s*<\s*(?:Minitest::(?:Test|Spec|Unit)|ActiveSupport::TestCase|ActionController::TestCase|ActionDispatch::IntegrationTest|ActionMailer::TestCase|ActionView::TestCase)\b`,
+)
+
+// railsMinitestTestBlockRE matches the DSL-style `test "description" do` form.
+var railsMinitestTestBlockRE = regexp.MustCompile(
+	`(?m)^\s*test\s+['"]([^'"]{1,200})['"]\s+do\b`,
+)
+
+// railsMinitestDefRE matches the method-style `def test_something` form.
+var railsMinitestDefRE = regexp.MustCompile(
+	`(?m)^\s*def\s+(test_\w+)\b`,
+)
+
+// railsMinitestSubjectFromClass derives the tested subject name from the test
+// class name by stripping trailing "Test(s)". Examples:
+//
+//	UserTest        → User
+//	UsersControllerTest → UsersController
+//	ImportJobTest   → ImportJob
+func railsMinitestSubjectFromClass(className string) string {
+	for _, suf := range []string{"Tests", "Test"} {
+		if strings.HasSuffix(className, suf) && len(className) > len(suf) {
+			return className[:len(className)-len(suf)]
+		}
+	}
+	return ""
+}
+
+// detectMinitest detects Minitest / ActiveSupport::TestCase test functions.
+// It handles:
+//   - DSL form:    test "description" do ... end
+//   - Method form: def test_foo ... end
+//
+// Each detected test function carries the class name's derived subject
+// (e.g. UserTest → User) as describeSubject.
+func detectMinitest(source string) []testFunction {
+	// Derive the described subject from the class name.
+	subject := ""
+	if m := railsMinitestClassRE.FindStringSubmatch(source); m != nil {
+		subject = railsMinitestSubjectFromClass(m[1])
+	}
+
+	var out []testFunction
+
+	// DSL-style: test "description" do ... end
+	for _, m := range railsMinitestTestBlockRE.FindAllStringSubmatchIndex(source, -1) {
+		name := source[m[2]:m[3]]
+		body := rspecBlockBody(source, m[1])
+		out = append(out, testFunction{
+			qname:           rspecQName(name),
+			body:            body,
+			describeSubject: subject,
+		})
+	}
+
+	// Method-style: def test_foo ... end
+	for _, m := range railsMinitestDefRE.FindAllStringSubmatchIndex(source, -1) {
+		name := source[m[2]:m[3]]
+		body := rspecBlockBody(source, m[1])
+		out = append(out, testFunction{
+			qname:           name,
+			body:            body,
+			describeSubject: subject,
+		})
+	}
+
+	return out
 }
 
 // ---------------------------------------------------------------------------
@@ -602,7 +780,28 @@ var frameworkOrder = []frameworkEntry{
 		filenameHints: []*regexp.Regexp{
 			regexp.MustCompile(`_spec\.rb$`),
 		},
+		// Rails projects keep all specs under spec/ regardless of import markers.
+		pathHints: []*regexp.Regexp{
+			regexp.MustCompile(`/spec/.*_spec\.rb$`),
+		},
 		detect: detectRSpec,
+	},
+	{
+		// Minitest / ActiveSupport::TestCase — Rails default test framework.
+		// Detected by import tokens (require 'minitest', 'minitest/autorun') OR
+		// by the file name convention (*_test.rb inside a test/ directory).
+		// NOTE: listed AFTER rspec so that spec/_spec.rb files always win.
+		name:        "minitest",
+		importHints: []string{"minitest", "minitest/autorun", "minitest/spec", "active_support/test_case"},
+		filenameHints: []*regexp.Regexp{
+			regexp.MustCompile(`_test\.rb$`),
+		},
+		pathHints: []*regexp.Regexp{
+			regexp.MustCompile(`/test/.*_test\.rb$`),
+			// Rails also accepts plain files under test/ subdirectories.
+			regexp.MustCompile(`/test/(?:models|controllers|helpers|jobs|mailers|integration|system)/.*\.rb$`),
+		},
+		detect: detectMinitest,
 	},
 	{
 		name:        "junit",
