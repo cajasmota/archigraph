@@ -16,16 +16,16 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/php/orms/eloquent_laravel_orm.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Schema extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL. |
 
 ### Relationships
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Association extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL. |
+| Foreign key extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL. |
+| Lazy loading recognition | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL. |
+| Relationship extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL. |
 
 ### Queries
 
@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🔴 `missing` | — | — | — | — |
+| Migration parsing | 🟢 `partial` | — | — | `internal/custom/php/orm_data.go` | Eloquent $fillable/$casts/Schema::create/Blueprint columns; belongsTo/belongsToMany FK relations; $with eager hints; migration DDL. |
 
 ## Provenance
 

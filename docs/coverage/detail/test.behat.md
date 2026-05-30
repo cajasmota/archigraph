@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | 🔴 `missing` | — | — | — | — |
-| Target extraction | 🔴 `missing` | — | — | — | — |
+| Dependency graph | 🟢 `partial` | — | — | `internal/custom/php/test_data.go` | Behat Context class deps (implements Context/extends RawMinkContext) + step annotation targets scanned. |
+| Target extraction | 🟢 `partial` | — | — | `internal/custom/php/test_data.go`<br>`internal/engine/rules/php/test_patterns.yaml` | Feature/Scenario declarations in .feature files + step annotation patterns in PHP context classes extracted. |
 
 ## Provenance
 

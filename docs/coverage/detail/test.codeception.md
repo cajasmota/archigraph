@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | 🔴 `missing` | — | — | — | — |
-| Target extraction | 🔴 `missing` | — | — | — | — |
+| Dependency graph | 🟢 `partial` | — | — | `internal/custom/php/test_data.go` | Codeception module imports + Actor type dependencies (AcceptanceTester/FunctionalTester/UnitTester) scanned. |
+| Target extraction | 🟢 `partial` | — | — | `internal/custom/php/test_data.go`<br>`internal/engine/rules/php/test_patterns.yaml` | Cest class declarations + public test methods with Actor params extracted. |
 
 ## Provenance
 
