@@ -6819,14 +6819,25 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "carter route endpoint_synthesis via regex extractor; heuristic",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "carter module/endpoint class declarations detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "carter route path strings extracted via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Auth": {
@@ -7023,14 +7034,25 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "fastendpoints route endpoint_synthesis via regex extractor; heuristic",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "fastendpoints module/endpoint class declarations detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "fastendpoints route path strings extracted via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Auth": {
@@ -7365,14 +7387,25 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "nancyfx route endpoint_synthesis via regex extractor; heuristic",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "nancyfx module/endpoint class declarations detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "nancyfx route path strings extracted via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Auth": {
@@ -7744,14 +7777,25 @@
       "capabilities": {
         "Routing": {
           "endpoint_synthesis": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "servicestack route endpoint_synthesis via regex extractor; heuristic",
+            "verified_at": "2026-05-30"
           },
           "handler_attribution": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "servicestack module/endpoint class declarations detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "route_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/minor_routes.go"],
+            "issue": "3263",
+            "notes": "servicestack route path strings extracted via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Auth": {
@@ -8349,12 +8393,17 @@
         "Models": {
           "model_extraction": {
             "status": "partial",
-            "cites": ["internal/engine/rules/csharp/orms/dapper.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "POCO classes with [Table] attribute detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Column] attribute annotation on POCO properties detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -8378,8 +8427,10 @@
         "Queries": {
           "query_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/rules/csharp/orms/dapper.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "Dapper Query\u003cT\u003e/Execute/ExecuteScalar calls detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
@@ -8457,12 +8508,17 @@
         "Models": {
           "model_extraction": {
             "status": "partial",
-            "cites": ["internal/engine/rules/csharp/orms/linqpad_linq_to_sql.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Table]/DataContext/DataConnection class patterns detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Column] attribute and Table\u003cT\u003e property patterns detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -8479,8 +8535,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Association] attribute detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Queries": {
@@ -8507,11 +8566,18 @@
       "capabilities": {
         "Models": {
           "model_extraction": {
-            "status": "missing"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Table]/DataContext/DataConnection class patterns detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Column] attribute and Table\u003cT\u003e property patterns detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -8528,8 +8594,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "[Association] attribute detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Queries": {
@@ -8555,12 +8624,17 @@
         "Models": {
           "model_extraction": {
             "status": "partial",
-            "cites": ["internal/engine/rules/csharp/orms/nhibernate.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "FluentNHibernate ClassMap\u003cT\u003e subclass declarations detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           },
           "schema_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "FluentNHibernate Map(x =\u003e x.Prop) column mapping detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Relationships": {
@@ -8577,15 +8651,20 @@
             "issue": "backfill:dictionary-completeness"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "FluentNHibernate References/HasMany fluent relationship calls detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Queries": {
           "query_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/rules/csharp/orms/nhibernate.yaml"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/custom/csharp/dapper_models.go"],
+            "issue": "3263",
+            "notes": "ISession.Query\u003cT\u003e/Get\u003cT\u003e/Load\u003cT\u003e calls detected via regex; heuristic",
+            "verified_at": "2026-05-30"
           }
         },
         "Migrations": {
@@ -48838,10 +48917,18 @@
       "label": ".csproj / packages.config",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "full",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "issue": "3263",
+          "notes": "packages.lock.json NuGet v3 lock format parsed via JSON unmarshalling; covers direct and transitive deps with resolved versions",
+          "verified_at": "2026-05-30"
         },
         "manifest_parsing": {
-          "status": "missing"
+          "status": "full",
+          "cites": ["internal/extractors/cross/manifest/extractor.go"],
+          "issue": "3263",
+          "notes": ".csproj \u003cPackageReference Include= Version=\u003e elements parsed via regex; full coverage of NuGet PackageReference format",
+          "verified_at": "2026-05-30"
         }
       }
     },

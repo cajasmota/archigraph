@@ -17,6 +17,8 @@
 //   - requirements.txt     (pip)
 //   - pubspec.yaml         (pub/dart)
 //   - Gemfile              (bundler/ruby)
+//   - *.csproj             (nuget — manifest_parsing via <PackageReference>)
+//   - packages.lock.json   (nuget — lockfile_parsing via NuGet v3 lock format)
 //
 // Entity kind: "SCOPE.Component"
 // Relationships emitted: DEPENDS_ON(kind=external_dependency)
@@ -114,12 +116,22 @@ var exactManifestNames = map[string]bool{
 	"requirements.txt":    true,
 	"pubspec.yaml":        true,
 	"Gemfile":             true,
+	"packages.lock.json":  true,
 }
 
 // IsManifest returns true when filePath names a supported manifest file.
+// In addition to the exact-name set, *.csproj files (NuGet project manifests)
+// are recognised by extension.
 func IsManifest(filePath string) bool {
 	basename := filepath.Base(filePath)
-	return exactManifestNames[basename]
+	if exactManifestNames[basename] {
+		return true
+	}
+	// *.csproj — NuGet <PackageReference> manifest
+	if strings.HasSuffix(basename, ".csproj") {
+		return true
+	}
+	return false
 }
 
 // detectPackageManager returns the package manager for a manifest path.
@@ -142,9 +154,15 @@ func detectPackageManager(filePath string) string {
 		"requirements.txt":    "pip",
 		"pubspec.yaml":        "pub",
 		"Gemfile":             "bundler",
+		"packages.lock.json":  "nuget",
 	}
-	if v, ok := pm[filepath.Base(filePath)]; ok {
+	basename := filepath.Base(filePath)
+	if v, ok := pm[basename]; ok {
 		return v
+	}
+	// *.csproj → nuget
+	if strings.HasSuffix(basename, ".csproj") {
+		return "nuget"
 	}
 	return "unknown"
 }
@@ -1000,6 +1018,72 @@ func parsePoetryLock(source string) []dep {
 // ---------------------------------------------------------------------------
 // Dispatch table
 // ---------------------------------------------------------------------------
+// Parser: *.csproj  (NuGet / MSBuild PackageReference manifest)
+// ---------------------------------------------------------------------------
+
+// csprojPackageRefRE matches <PackageReference Include="PkgName" Version="x.y.z" />
+// or the two-line block form (<PackageReference Include="…"><Version>x</Version>).
+var csprojPackageRefRE = regexp.MustCompile(
+	`<PackageReference\s+Include\s*=\s*"([^"]+)"(?:[^/]*Version\s*=\s*"([^"]*)")?`,
+)
+var csprojVersionTagRE = regexp.MustCompile(
+	`<Version>\s*([^<]+)\s*</Version>`,
+)
+
+func parseCsproj(source string) []dep {
+	var out []dep
+	// Find all <PackageReference> occurrences.
+	for _, m := range csprojPackageRefRE.FindAllStringSubmatch(source, -1) {
+		name := m[1]
+		version := m[2]
+		if name == "" {
+			continue
+		}
+		out = append(out, dep{name: name, version: version, isDev: false, kind: "runtime"})
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: packages.lock.json  (NuGet v3 lock file)
+// ---------------------------------------------------------------------------
+
+// nugetLockFile is a minimal representation of the NuGet packages.lock.json format.
+// The top-level key is the target framework (e.g. "net8.0"); each framework maps
+// package names to version objects.
+type nugetLockFile struct {
+	Dependencies map[string]map[string]struct {
+		Resolved string `json:"resolved"`
+		Type     string `json:"type"`
+	} `json:"dependencies"`
+}
+
+func parseNugetLockJSON(source string) []dep {
+	var lock nugetLockFile
+	if err := json.Unmarshal([]byte(source), &lock); err != nil {
+		return nil
+	}
+	seen := map[string]bool{}
+	var out []dep
+	for _, pkgs := range lock.Dependencies {
+		for name, info := range pkgs {
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			isDev := info.Type == "Dev" || info.Type == "dev"
+			out = append(out, dep{
+				name:    name,
+				version: info.Resolved,
+				isDev:   isDev,
+				kind:    "locked",
+			})
+		}
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
 
 type parserFn func(source string) []dep
 
@@ -1021,6 +1105,7 @@ var parsers = map[string]parserFn{
 	"requirements.txt":    parseRequirementsTxt,
 	"pubspec.yaml":        parsePubspecYaml,
 	"Gemfile":             parseGemfile,
+	"packages.lock.json":  parseNugetLockJSON,
 }
 
 func dispatchParser(filePath, source string) (string, []dep) {
@@ -1028,6 +1113,10 @@ func dispatchParser(filePath, source string) (string, []dep) {
 	if fn, ok := parsers[basename]; ok {
 		pm := detectPackageManager(filePath)
 		return pm, fn(source)
+	}
+	// *.csproj — NuGet project manifest
+	if strings.HasSuffix(basename, ".csproj") {
+		return "nuget", parseCsproj(source)
 	}
 	return "unknown", nil
 }

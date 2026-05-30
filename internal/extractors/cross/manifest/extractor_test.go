@@ -715,3 +715,109 @@ func TestDependencyKind_PackageJSON(t *testing.T) {
 		t.Errorf("react-dom dependency_kind=%q want peer", byName["react-dom"].Properties["dependency_kind"])
 	}
 }
+
+// ---------------------------------------------------------------------------
+// .csproj — NuGet manifest_parsing (#3263)
+// ---------------------------------------------------------------------------
+
+func TestCsprojPackageReference(t *testing.T) {
+	src := `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.28" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Carter" Version="8.1.0" />
+  </ItemGroup>
+</Project>`
+
+	records := runExtract(t, "MyApp.csproj", src)
+	deps := depEntities(records)
+	if len(deps) < 3 {
+		t.Fatalf("expected ≥3 dep entities from .csproj, got %d", len(deps))
+	}
+	byName := map[string]types.EntityRecord{}
+	for _, d := range deps {
+		byName[d.Name] = d
+	}
+	for _, pkg := range []string{"Dapper", "Microsoft.Extensions.DependencyInjection", "Carter"} {
+		if _, ok := byName[pkg]; !ok {
+			t.Errorf("expected package %q in csproj dependencies", pkg)
+		}
+	}
+	if byName["Carter"].Properties["package_manager"] != "nuget" {
+		t.Errorf("expected package_manager=nuget, got %q", byName["Carter"].Properties["package_manager"])
+	}
+}
+
+func TestCsprojIsManifest(t *testing.T) {
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{"MyApp.csproj", true},
+		{"src/MyLib/MyLib.csproj", true},
+		{"packages.lock.json", true},
+		{"go.mod", true},
+		{"SomeOtherFile.xml", false},
+		{"myapp.json", false},
+	}
+	for _, c := range cases {
+		got := IsManifest(c.path)
+		if got != c.want {
+			t.Errorf("IsManifest(%q) = %v, want %v", c.path, got, c.want)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// packages.lock.json — NuGet lockfile_parsing (#3263)
+// ---------------------------------------------------------------------------
+
+func TestNugetLockFile(t *testing.T) {
+	src := `{
+  "version": 1,
+  "dependencies": {
+    "net8.0": {
+      "Dapper": {
+        "type": "Direct",
+        "requested": "[2.1.28, )",
+        "resolved": "2.1.28",
+        "contentHash": "abc123"
+      },
+      "Microsoft.Extensions.DependencyInjection": {
+        "type": "Direct",
+        "requested": "[8.0.0, )",
+        "resolved": "8.0.0",
+        "contentHash": "def456"
+      },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.3",
+        "contentHash": "ghi789"
+      }
+    }
+  }
+}`
+	records := runExtract(t, "packages.lock.json", src)
+	deps := depEntities(records)
+	if len(deps) < 3 {
+		t.Fatalf("expected ≥3 dep entities from packages.lock.json, got %d", len(deps))
+	}
+	byName := map[string]types.EntityRecord{}
+	for _, d := range deps {
+		byName[d.Name] = d
+	}
+	for _, pkg := range []string{"Dapper", "Microsoft.Extensions.DependencyInjection", "Newtonsoft.Json"} {
+		if _, ok := byName[pkg]; !ok {
+			t.Errorf("expected package %q in packages.lock.json dependencies", pkg)
+		}
+	}
+	if byName["Dapper"].Properties["dependency_kind"] != "locked" {
+		t.Errorf("expected dependency_kind=locked for Dapper, got %q", byName["Dapper"].Properties["dependency_kind"])
+	}
+	if byName["Dapper"].Properties["package_manager"] != "nuget" {
+		t.Errorf("expected package_manager=nuget, got %q", byName["Dapper"].Properties["package_manager"])
+	}
+}

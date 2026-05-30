@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Lockfile parsing | 🔴 `missing` | — | — | — | — |
-| Manifest parsing | 🔴 `missing` | — | — | — | — |
+| Lockfile parsing | ✅ `full` | `2026-05-30` | 3263 | `internal/extractors/cross/manifest/extractor.go` | packages.lock.json NuGet v3 lock format parsed via JSON unmarshalling; covers direct and transitive deps with resolved versions |
+| Manifest parsing | ✅ `full` | `2026-05-30` | 3263 | `internal/extractors/cross/manifest/extractor.go` | .csproj <PackageReference Include= Version=> elements parsed via regex; full coverage of NuGet PackageReference format |
 
 ## Provenance
 

@@ -15,8 +15,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/csharp/orms/nhibernate.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Model extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | FluentNHibernate ClassMap<T> subclass declarations detected via regex; heuristic |
+| Schema extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | FluentNHibernate Map(x => x.Prop) column mapping detected via regex; heuristic |
 
 ### Relationships
 
@@ -25,13 +25,13 @@ Auto-generated. Back to [summary](../summary.md).
 | Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Relationship extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | FluentNHibernate References/HasMany fluent relationship calls detected via regex; heuristic |
 
 ### Queries
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/csharp/orms/nhibernate.yaml` | — |
+| Query attribution | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | ISession.Query<T>/Get<T>/Load<T> calls detected via regex; heuristic |
 
 ### Migrations
 

@@ -9004,6 +9004,347 @@ records:
           issues_implemented: ["2773"]
           verified_at: "2026-05-28"
 
+  lang.csharp.framework.carter:
+    capabilities:
+      Routing:
+        endpoint_synthesis:
+          # Carter app.MapGet/MapPost/MapDelete/... calls detected inside
+          # ICarterModule.AddRoutes via reCarterMapRoute; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        handler_attribution:
+          # ICarterModule subclass declarations detected via reCarterModule;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        route_extraction:
+          # Route path strings from app.MapGet/... extracted via regex;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.fastendpoints:
+    capabilities:
+      Routing:
+        endpoint_synthesis:
+          # FastEndpoints Endpoint<TReq> subclass and Get("/path")/Post("/path")
+          # calls inside Configure() detected via reFastEndpoint/reFastRoute;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        handler_attribution:
+          # Endpoint<TReq> class declarations detected via reFastEndpoint;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        route_extraction:
+          # Get/Post/Put/Delete/Patch("/path") calls extracted via reFastRoute;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.nancyfx:
+    capabilities:
+      Routing:
+        endpoint_synthesis:
+          # NancyFX Get["/path"]=... index-syntax (Nancy 1.x) and Get("/path")
+          # call-syntax (Nancy 2.x, only inside NancyModule) detected;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        handler_attribution:
+          # NancyModule subclass declarations detected via reNancyModule;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        route_extraction:
+          # Route path strings from index/call-style Nancy registrations;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.framework.servicestack:
+    capabilities:
+      Routing:
+        endpoint_synthesis:
+          # ServiceStack [Route("/path")] and [Route("/path", "GET POST")]
+          # attribute detected via reSSRoute; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        handler_attribution:
+          # Service subclass declarations detected via reSSService;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        route_extraction:
+          # Any/Get/Post/Put/Delete handler methods detected via reSSHandler
+          # and route paths from [Route] attribute; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/minor_routes.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/minor_routes_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.orm.dapper:
+    capabilities:
+      Models:
+        model_extraction:
+          # POCO classes annotated with [Table] detected via reDapperTable;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        schema_extraction:
+          # [Column] attribute annotations on POCO properties detected via
+          # reDapperColumn; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+      Queries:
+        query_attribution:
+          # Dapper Query<T>/Execute/ExecuteScalar calls detected via
+          # reDapperQuery; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.orm.linq-to-sql:
+    capabilities:
+      Models:
+        model_extraction:
+          # DataContext subclass + [Table] attribute patterns detected via
+          # reLinqContext/reDapperTable; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        schema_extraction:
+          # [Column] attribute and Table<T> property patterns detected;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+      Relationships:
+        relationship_extraction:
+          # [Association(ThisKey="...", OtherKey="...")] attribute detected
+          # via reLinqAssociation; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.orm.linqtodb:
+    capabilities:
+      Models:
+        model_extraction:
+          # DataConnection subclass + [Table] attribute patterns detected;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        schema_extraction:
+          # [Column] attribute and Table<T> property patterns detected;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+      Relationships:
+        relationship_extraction:
+          # [Association] attribute detected via reLinqAssociation;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  lang.csharp.orm.nhibernate:
+    capabilities:
+      Models:
+        model_extraction:
+          # FluentNHibernate ClassMap<T> subclass declarations detected via
+          # reNHClassMap; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+        schema_extraction:
+          # FluentNHibernate Map(x => x.Prop) column mapping calls detected
+          # via reNHMap; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+      Relationships:
+        relationship_extraction:
+          # References(x => x.Nav) and HasMany(x => x.Col) fluent calls
+          # detected via reNHReferences/reNHHasMany; issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+      Queries:
+        query_attribution:
+          # ISession.Query<T>/Get<T>/Load<T> calls detected via reNHQuery;
+          # issue #3263.
+          status: partial
+          symbols:
+            - file: internal/custom/csharp/dapper_models.go
+              functions: [Extract]
+          tests:
+            - file: internal/custom/csharp/dapper_models_test.go
+          issues_implemented: ["3263"]
+          verified_at: "2026-05-30"
+
+  pkg.csproj:
+    capabilities:
+      manifest_parsing:
+        # .csproj <PackageReference Include="..." Version="..."/> elements
+        # parsed via csprojPackageRefRE regex; covers NuGet PackageReference
+        # format; issue #3263.
+        status: full
+        symbols:
+          - file: internal/extractors/cross/manifest/extractor.go
+            functions: [parseCsproj, IsManifest, detectPackageManager, dispatchParser]
+        tests:
+          - file: internal/extractors/cross/manifest/extractor_test.go
+        issues_implemented: ["3263"]
+        verified_at: "2026-05-30"
+      lockfile_parsing:
+        # packages.lock.json NuGet v3 lock format parsed via
+        # parseNugetLockJSON; covers direct and transitive deps with resolved
+        # versions; issue #3263.
+        status: full
+        symbols:
+          - file: internal/extractors/cross/manifest/extractor.go
+            functions: [parseNugetLockJSON, IsManifest, detectPackageManager]
+        tests:
+          - file: internal/extractors/cross/manifest/extractor_test.go
+        issues_implemented: ["3263"]
+        verified_at: "2026-05-30"
+
   lang.kotlin.framework.spring-boot:
     capabilities:
       Substrate:

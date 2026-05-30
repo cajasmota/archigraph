@@ -27,10 +27,10 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C/C++](../by-language/c-cpp.md) | [libuv](../detail/lang.c-cpp.framework.libuv.md) | 🔴 0/3 | 🔴 0/1 | 🟡 2/4 | 🟢 1/1 | 🟢 21/21 | 🟡 3/6 | |
 | [C#](../by-language/csharp.md) | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | 🟡 2/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟢 6/6 | |
 | [C#](../by-language/csharp.md) | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | 🟡 2/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [C#](../by-language/csharp.md) | [Carter](../detail/lang.csharp.framework.carter.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [C#](../by-language/csharp.md) | [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [C#](../by-language/csharp.md) | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
-| [C#](../by-language/csharp.md) | [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🔴 0/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [C#](../by-language/csharp.md) | [Carter](../detail/lang.csharp.framework.carter.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [C#](../by-language/csharp.md) | [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [C#](../by-language/csharp.md) | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
+| [C#](../by-language/csharp.md) | [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/6 | |
 | [elixir](../by-language/elixir.md) | [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 17/21 | 🔴 0/6 | |
 | [elixir](../by-language/elixir.md) | [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 17/21 | 🔴 0/6 | |
 | [elixir](../by-language/elixir.md) | [Bandit](../detail/lang.elixir.framework.bandit.md) | 🔴 0/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 17/21 | 🔴 0/6 | |

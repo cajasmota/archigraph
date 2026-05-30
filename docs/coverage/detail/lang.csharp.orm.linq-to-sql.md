@@ -15,8 +15,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/csharp/orms/linqpad_linq_to_sql.yaml` | — |
-| Schema extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Model extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | [Table]/DataContext/DataConnection class patterns detected via regex; heuristic |
+| Schema extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | [Column] attribute and Table<T> property patterns detected via regex; heuristic |
 
 ### Relationships
 
@@ -25,7 +25,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Association extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Foreign key extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Lazy loading recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Relationship extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Relationship extraction | 🟢 `partial` | `2026-05-30` | 3263 | `internal/custom/csharp/dapper_models.go` | [Association] attribute detected via regex; heuristic |
 
 ### Queries
 
