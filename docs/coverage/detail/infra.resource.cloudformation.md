@@ -5,13 +5,14 @@ Auto-generated. Back to [summary](../summary.md).
 
 - **Language:** [multi](../by-language/multi.md)
 - **Category:** [platform](../by-category/platform.md)
-- **Capability cells:** 1
+- **Capability cells:** 2
 
 ## Capabilities
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Resource extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/workflow_edges.go` | — |
+| Dependency attribution | ✅ `full` | `2026-05-30` | — | `internal/engine/iac_cloudformation_edges.go` | — |
+| Resource extraction | ✅ `full` | `2026-05-30` | — | `internal/engine/iac_cloudformation_edges.go` | — |
 
 ## Provenance
 

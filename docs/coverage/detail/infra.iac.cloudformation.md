@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency attribution | 🟢 `partial` | `2026-05-28` | — | `internal/extractors/yaml/extractor.go` | — |
-| Resource extraction | ✅ `full` | `2026-05-28` | — | `internal/extractors/yaml/extractor.go` | — |
+| Dependency attribution | ✅ `full` | `2026-05-30` | — | `internal/engine/iac_cloudformation_edges.go` | — |
+| Resource extraction | ✅ `full` | `2026-05-30` | — | `internal/engine/iac_cloudformation_edges.go` | — |
 
 ## Provenance
 

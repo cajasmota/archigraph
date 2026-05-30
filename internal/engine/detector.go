@@ -569,6 +569,20 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	// follow under their own language buckets). Append-only — cannot regress the
 	// surrounding pipeline's bug-rate.
 	applyPass(applyCDKEdges)
+	// CloudFormation / SAM resource modeling + dependency edges (#3518,
+	// epic #3512). Detects CloudFormation and SAM templates (YAML or JSON)
+	// and emits one SCOPE.* entity per `LogicalId: { Type: AWS::*, ... }`
+	// resource (Kind mapped via cfnResourceKind), plus Parameter / Mapping /
+	// Output-Export nodes. The core gap it closes is dependency attribution:
+	// `!Ref`/`Ref`, `!GetAtt`/`Fn::GetAtt`, `DependsOn`, and `!Sub ${X}`
+	// references become DEPENDS_ON / USES edges between resources (and to
+	// Parameters). Cross-stack `Fn::ImportValue` / `Outputs.Export` collapse
+	// onto a shared `cfn-export:<name>` node; SAM `AWS::Serverless::Function`
+	// Events become ROUTES_TO (Api) / SUBSCRIBES_TO (SQS/SNS) / TRIGGERS
+	// (Schedule) and join the serverless_edges.go `aws-lambda:` synthetic;
+	// nested `AWS::CloudFormation::Stack` TemplateURL → IMPORTS. Append-only —
+	// cannot regress the surrounding pipeline's bug-rate.
+	applyPass(applyCloudFormationEdges)
 
 	// Debezium / Kafka-Connect CDC connector edges (#1708). Parses the
 	// JSON config of a CDC connector and emits a SCOPE.Component
