@@ -92,12 +92,12 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [JS/TS](../by-language/jsts.md) | [node-postgres / pg](../detail/lang.jsts.driver.postgres.md) | ✅ 1/1 | |
 | [JS/TS](../by-language/jsts.md) | [supabase-js](../detail/lang.jsts.driver.supabase.md) | ✅ 1/1 | |
 | [kotlin](../by-language/kotlin.md) | [Exposed (JetBrains)](../detail/lang.kotlin.orm.exposed.md) | 🟡 2/8 | |
-| [kotlin](../by-language/kotlin.md) | [Hibernate (Kotlin)](../detail/lang.kotlin.orm.hibernate.md) | 🟡 2/8 | |
+| [kotlin](../by-language/kotlin.md) | [Hibernate (Kotlin)](../detail/lang.kotlin.orm.hibernate.md) | 🟡 5/8 | |
 | [kotlin](../by-language/kotlin.md) | [Ktorm](../detail/lang.kotlin.orm.ktorm.md) | 🟡 2/8 | |
 | [kotlin](../by-language/kotlin.md) | [MongoDB (Kotlin driver)](../detail/lang.kotlin.orm.mongodb.md) | 🟡 2/7 | |
 | [kotlin](../by-language/kotlin.md) | [Room (Android)](../detail/lang.kotlin.orm.room.md) | 🟡 2/8 | |
 | [kotlin](../by-language/kotlin.md) | [SQLDelight](../detail/lang.kotlin.orm.sqldelight.md) | 🟡 2/8 | |
-| [kotlin](../by-language/kotlin.md) | [Spring Data (Kotlin)](../detail/lang.kotlin.orm.spring-data.md) | 🟡 2/8 | |
+| [kotlin](../by-language/kotlin.md) | [Spring Data (Kotlin)](../detail/lang.kotlin.orm.spring-data.md) | 🟡 5/8 | |
 | [php](../by-language/php.md) | [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟡 1/6 | |
 | [php](../by-language/php.md) | [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🔴 0/8 | |
 | [php](../by-language/php.md) | [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 2/8 | |
