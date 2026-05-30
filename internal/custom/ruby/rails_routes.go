@@ -394,14 +394,14 @@ func (p *railsRouteParser) walk(lo, hi int, st rrScopeState) {
 			}
 			// inline concerns: on the resource declaration
 			p.expandConcerns(opts, rrScopeState{
-				pathPrefix:   base + "/:" + singularize(name) + "_id",
+				pathPrefix:   base + "/:" + railsRouteSingularize(name) + "_id",
 				modulePrefix: st.modulePrefix,
 			}, line.num)
 			if hasBlock {
 				end := p.matchEnd(i + 1)
 				child := st
 				// Nested children compose under /photos/:photo_id.
-				child.pathPrefix = base + "/:" + singularize(name) + "_id"
+				child.pathPrefix = base + "/:" + railsRouteSingularize(name) + "_id"
 				child.resource = name
 				child.resourceMember = false
 				// member/collection inside resolve relative to /photos (not :photo_id).
@@ -862,11 +862,11 @@ func normalizeRRPath(p string) string {
 	return p
 }
 
-// singularize is a small, convention-driven singularizer sufficient for Rails
+// railsRouteSingularize is a small, convention-driven singularizer sufficient for Rails
 // nested-resource id segments (photos→photo, comments→comment, categories→
 // category, addresses→address). Not a full inflector — covers the common
 // English plural endings that appear in routes.rb.
-func singularize(s string) string {
+func railsRouteSingularize(s string) string {
 	switch {
 	case strings.HasSuffix(s, "ies"):
 		return s[:len(s)-3] + "y"
