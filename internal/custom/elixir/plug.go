@@ -3,6 +3,7 @@ package elixir
 import (
 	"context"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -111,11 +112,21 @@ func (e *plugExtractor) Extract(ctx context.Context, file extractor.FileInput) (
 	}
 
 	// 3. plug :name / plug Module  → SCOPE.Pattern/middleware
-	for _, m := range rePlugStep.FindAllStringSubmatchIndex(src, -1) {
+	//    Capture chain order (the Plug.Builder / Plug.Router plug pipeline is
+	//    an ordered list) and classify auth plugs (Guardian / Pow / custom).
+	for order, m := range rePlugStep.FindAllStringSubmatchIndex(src, -1) {
 		plugName := strings.TrimSpace(src[m[2]:m[3]])
 		ent := makeEntity("plug:"+plugName, "SCOPE.Pattern", "middleware", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "plug", "provenance", "INFERRED_FROM_PLUG_STEP",
-			"plug_name", plugName)
+		props := []string{
+			"framework", "plug",
+			"provenance", "INFERRED_FROM_PLUG_STEP",
+			"plug_name", plugName,
+			"plug_order", strconv.Itoa(order),
+		}
+		if prov, meth := authPlugMethod(plugName); prov != "" {
+			props = append(props, "auth", "true", "auth_provider", prov, "auth_method", meth)
+		}
+		setProps(&ent, props...)
 		add(ent)
 	}
 

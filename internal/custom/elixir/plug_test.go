@@ -50,6 +50,51 @@ end
 	}
 }
 
+// TestPlugBuilderAuthChain asserts the ordered Plug.Builder plug chain is
+// captured with per-plug order indices and that the Guardian auth plug is
+// classified with the right provider + method.
+func TestPlugBuilderAuthChain(t *testing.T) {
+	src := `
+defmodule MyApp.AuthPipeline do
+  use Plug.Builder
+
+  plug Plug.Logger
+  plug Guardian.Plug.VerifyHeader
+  plug Guardian.Plug.EnsureAuthenticated
+  plug MyApp.LoadCurrentUser
+end
+`
+	ents := extract(t, "custom_elixir_plug", fi("auth_pipeline.ex", "elixir", src))
+
+	logger := findEntity(ents, "SCOPE.Pattern", "plug:Plug.Logger")
+	if logger == nil {
+		t.Fatal("expected plug:Plug.Logger middleware")
+	}
+	if got := logger.Props["plug_order"]; got != "0" {
+		t.Errorf("expected Plug.Logger order 0, got %q", got)
+	}
+	if logger.Props["auth"] == "true" {
+		t.Error("Plug.Logger must not be classified as auth")
+	}
+
+	guard := findEntity(ents, "SCOPE.Pattern", "plug:Guardian.Plug.EnsureAuthenticated")
+	if guard == nil {
+		t.Fatal("expected Guardian.Plug.EnsureAuthenticated middleware")
+	}
+	if got := guard.Props["plug_order"]; got != "2" {
+		t.Errorf("expected EnsureAuthenticated order 2, got %q", got)
+	}
+	if guard.Props["auth"] != "true" {
+		t.Error("expected auth=true on Guardian.Plug.EnsureAuthenticated")
+	}
+	if got := guard.Props["auth_provider"]; got != "guardian" {
+		t.Errorf("expected auth_provider guardian, got %q", got)
+	}
+	if got := guard.Props["auth_method"]; got != "jwt" {
+		t.Errorf("expected auth_method jwt, got %q", got)
+	}
+}
+
 func TestPlugCallImpl(t *testing.T) {
 	src := `
 defmodule MyApp.AuthPlug do

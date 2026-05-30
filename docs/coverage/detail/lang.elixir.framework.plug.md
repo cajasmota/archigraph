@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🟢 `partial` | — | — | `internal/custom/elixir/plug.go`<br>`internal/substrate/taint_sites_elixir.go` | Plug.Crypto.MessageVerifier.verify + Phoenix.Token.verify tracked as sanitisers; conn.params taint sources; plug :authenticate patterns extracted |
+| Auth coverage | ✅ `full` | — | — | `internal/custom/elixir/plug.go` | Guardian/Pow/custom auth plugs in Plug.Builder chains classified by provider+method; test asserts Guardian.Plug.EnsureAuthenticated => provider=guardian method=jwt at order 2. |
 
 ### Validation
 
@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | — | — | `internal/custom/elixir/plug.go` | plug :name / plug Module steps extracted as SCOPE.Pattern/middleware from Plug.Router and Plug.Builder modules |
+| Middleware coverage | ✅ `full` | — | — | `internal/custom/elixir/plug.go` | plugExtractor captures the ordered Plug.Builder/Plug.Router plug chain with plug_order per step (plug :name and plug Module). Test asserts Plug.Logger order 0 within builder chain. |
 
 ### Type System
 

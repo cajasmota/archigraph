@@ -10771,9 +10771,9 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/elixir/frameworks/phoenix.yaml","internal/substrate/taint_sites_elixir.go"],
-            "notes": "Phoenix.Token.verify and Plug.Crypto.MessageVerifier tracked as sanitisers; conn.params sources tracked; Guardian-style pattern in taint sinks"
+            "status": "full",
+            "cites": ["internal/custom/elixir/phoenix.go"],
+            "notes": "Guardian/Pow/custom auth plugs classified by provider+method (jwt/session/token) within pipelines; pipe_through propagates auth classification to bound scopes. Tests assert Guardian.Plug.VerifyHeader -\u003e EnsureAuthenticated chain =\u003e provider=guardian method=jwt and pipe_through inheritance."
           }
         },
         "Validation": {
@@ -10792,9 +10792,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/elixir/phoenix.go","internal/substrate/taint_sites_elixir.go"],
-            "notes": "Phoenix pipeline/plug declarations extracted by phoenixExtractor; Plug.Conn flow tracked via taint substrate"
+            "status": "full",
+            "cites": ["internal/custom/elixir/phoenix.go"],
+            "notes": "phoenixExtractor parses pipeline :name do...end blocks into ordered plug chains (plug_chain, plug_order per step) and binds scopes to pipelines via pipe_through [:a,:b]; module + function plugs captured. Tests assert exact :browser chain order + protect_from_forgery index + pipe_through 'api -\u003e auth' binding."
           }
         },
         "Type System": {
@@ -11189,9 +11189,9 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "partial",
-            "cites": ["internal/custom/elixir/plug.go","internal/substrate/taint_sites_elixir.go"],
-            "notes": "Plug.Crypto.MessageVerifier.verify + Phoenix.Token.verify tracked as sanitisers; conn.params taint sources; plug :authenticate patterns extracted"
+            "status": "full",
+            "cites": ["internal/custom/elixir/plug.go"],
+            "notes": "Guardian/Pow/custom auth plugs in Plug.Builder chains classified by provider+method; test asserts Guardian.Plug.EnsureAuthenticated =\u003e provider=guardian method=jwt at order 2."
           }
         },
         "Validation": {
@@ -11210,9 +11210,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "partial",
+            "status": "full",
             "cites": ["internal/custom/elixir/plug.go"],
-            "notes": "plug :name / plug Module steps extracted as SCOPE.Pattern/middleware from Plug.Router and Plug.Builder modules"
+            "notes": "plugExtractor captures the ordered Plug.Builder/Plug.Router plug chain with plug_order per step (plug :name and plug Module). Test asserts Plug.Logger order 0 within builder chain."
           }
         },
         "Type System": {

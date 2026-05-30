@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🟢 `partial` | — | — | `internal/engine/rules/elixir/frameworks/phoenix.yaml`<br>`internal/substrate/taint_sites_elixir.go` | Phoenix.Token.verify and Plug.Crypto.MessageVerifier tracked as sanitisers; conn.params sources tracked; Guardian-style pattern in taint sinks |
+| Auth coverage | ✅ `full` | — | — | `internal/custom/elixir/phoenix.go` | Guardian/Pow/custom auth plugs classified by provider+method (jwt/session/token) within pipelines; pipe_through propagates auth classification to bound scopes. Tests assert Guardian.Plug.VerifyHeader -> EnsureAuthenticated chain => provider=guardian method=jwt and pipe_through inheritance. |
 
 ### Validation
 
@@ -36,7 +36,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Middleware coverage | 🟢 `partial` | — | — | `internal/custom/elixir/phoenix.go`<br>`internal/substrate/taint_sites_elixir.go` | Phoenix pipeline/plug declarations extracted by phoenixExtractor; Plug.Conn flow tracked via taint substrate |
+| Middleware coverage | ✅ `full` | — | — | `internal/custom/elixir/phoenix.go` | phoenixExtractor parses pipeline :name do...end blocks into ordered plug chains (plug_chain, plug_order per step) and binds scopes to pipelines via pipe_through [:a,:b]; module + function plugs captured. Tests assert exact :browser chain order + protect_from_forgery index + pipe_through 'api -> auth' binding. |
 
 ### Type System
 
