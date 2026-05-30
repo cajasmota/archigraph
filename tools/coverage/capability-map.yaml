@@ -7448,6 +7448,34 @@ records:
               functions: [Extract, parseValidateRules, parseDTOFields]
           issues_implemented: ["3413"]
           verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
+          verified_at: "2026-05-30"
 
   lang.rust.framework.actix:
     capabilities:
@@ -7688,6 +7716,34 @@ records:
               functions: [Extract, parseValidateRules, parseDTOFields]
           issues_implemented: ["3413"]
           verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
+          verified_at: "2026-05-30"
 
   lang.rust.framework.gotham:
     capabilities:
@@ -7904,6 +7960,34 @@ records:
             - file: internal/extractors/cross/testmap/extractor_test.go
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
+          verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
           verified_at: "2026-05-30"
 
   lang.rust.framework.hyper:
@@ -8123,6 +8207,34 @@ records:
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
           verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
+          verified_at: "2026-05-30"
 
   lang.rust.framework.poem:
     capabilities:
@@ -8339,6 +8451,34 @@ records:
             - file: internal/extractors/cross/testmap/extractor_test.go
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
+          verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
           verified_at: "2026-05-30"
 
   lang.rust.framework.rocket:
@@ -8572,6 +8712,34 @@ records:
               functions: [Extract, parseValidateRules, parseDTOFields]
           issues_implemented: ["3413"]
           verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
+          verified_at: "2026-05-30"
 
   lang.rust.framework.salvo:
     capabilities:
@@ -8789,6 +8957,34 @@ records:
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
           verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
+          verified_at: "2026-05-30"
 
   lang.rust.framework.tide:
     capabilities:
@@ -9005,6 +9201,34 @@ records:
             - file: internal/extractors/cross/testmap/extractor_test.go
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
+          verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
           verified_at: "2026-05-30"
 
   lang.rust.framework.tower:
@@ -9224,6 +9448,34 @@ records:
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
           verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
+          verified_at: "2026-05-30"
 
   lang.rust.framework.warp:
     capabilities:
@@ -9440,6 +9692,34 @@ records:
             - file: internal/extractors/cross/testmap/extractor_test.go
               functions: [TestRust_TestAttribute]
           issues_implemented: ["3268"]
+          verified_at: "2026-05-30"
+      Observability:
+        metric_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        trace_extraction:
+          status: full
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework, rustObsProvenance]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416", "3409"]
+          verified_at: "2026-05-30"
+        log_extraction:
+          status: partial
+          symbols:
+            - file: internal/custom/rust/observability.go
+              functions: [Extract, detectRustObsFramework]
+          tests:
+            - file: internal/custom/rust/observability_auth_test.go
+          issues_implemented: ["3416"]
           verified_at: "2026-05-30"
 
   lang.rust.framework.tauri:

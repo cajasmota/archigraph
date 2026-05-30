@@ -34,11 +34,11 @@ fn handler() {
 }
 `
 	ents := extract(t, "custom_rust_observability", fi("handler.rs", "rust", src))
-	if !containsEntity(ents, "SCOPE.Pattern", "obs:logging:tracing_macro:info") {
-		t.Error("expected obs:logging:tracing_macro:info")
+	if !containsEntity(ents, "SCOPE.Pattern", "obs:logging:tracing_macro:info:user logged in") {
+		t.Error("expected obs:logging:tracing_macro:info:user logged in")
 	}
-	if !containsEntity(ents, "SCOPE.Pattern", "obs:logging:tracing_macro:warn") {
-		t.Error("expected obs:logging:tracing_macro:warn")
+	if !containsEntity(ents, "SCOPE.Pattern", "obs:logging:tracing_macro:warn:low memory") {
+		t.Error("expected obs:logging:tracing_macro:warn:low memory")
 	}
 }
 
@@ -75,11 +75,11 @@ fn record() {
 }
 `
 	ents := extract(t, "custom_rust_observability", fi("metrics.rs", "rust", src))
-	if !containsEntity(ents, "SCOPE.Pattern", "obs:metrics:metrics_macro:counter") {
-		t.Error("expected obs:metrics:metrics_macro:counter")
+	if !containsEntity(ents, "SCOPE.Pattern", "obs:metrics:metrics_macro:counter:requests_total") {
+		t.Error("expected obs:metrics:metrics_macro:counter:requests_total")
 	}
-	if !containsEntity(ents, "SCOPE.Pattern", "obs:metrics:metrics_macro:histogram") {
-		t.Error("expected obs:metrics:metrics_macro:histogram")
+	if !containsEntity(ents, "SCOPE.Pattern", "obs:metrics:metrics_macro:histogram:latency_seconds") {
+		t.Error("expected obs:metrics:metrics_macro:histogram:latency_seconds")
 	}
 }
 
@@ -102,6 +102,176 @@ fn setup() {
 	}
 	if !found {
 		t.Error("expected prometheus metric entity")
+	}
+}
+
+// obsNameOf returns the observability_name prop of the first entity whose Name
+// matches, or "" if absent. Used by value-asserting tests.
+func obsNameOf(ents []entitySummary, entName string) string {
+	for _, e := range ents {
+		if e.Name == entName {
+			return e.Props["observability_name"]
+		}
+	}
+	return ""
+}
+
+// ---------------------------------------------------------------------------
+// Observability — metric_extraction (value-asserting; basis for `full`)
+// ---------------------------------------------------------------------------
+
+func TestRustObs_MetricsMacro_CapturesName_Issue3416(t *testing.T) {
+	src := `
+use axum::Router;
+fn record() {
+    metrics::counter!("http_requests_total", 1);
+    gauge!("queue_depth", 7.0);
+    metrics::histogram!("request_latency_seconds", 0.05);
+}
+`
+	ents := extract(t, "custom_rust_observability", fi("m.rs", "rust", src))
+	cases := map[string]string{
+		"obs:metrics:metrics_macro:counter:http_requests_total":       "http_requests_total",
+		"obs:metrics:metrics_macro:gauge:queue_depth":                 "queue_depth",
+		"obs:metrics:metrics_macro:histogram:request_latency_seconds": "request_latency_seconds",
+	}
+	for name, want := range cases {
+		if got := obsNameOf(ents, name); got != want {
+			t.Errorf("metric %q: observability_name = %q, want %q", name, got, want)
+		}
+	}
+}
+
+func TestRustObs_PrometheusName_Issue3416(t *testing.T) {
+	src := `
+use axum::Router;
+use prometheus::{IntCounter, Opts, register_counter};
+fn setup() {
+    let c = prometheus::IntCounter::new("api_calls", "total api calls").unwrap();
+    register_counter!("jobs_processed", "jobs done").unwrap();
+    let opts = Opts::new("build_info", "build metadata");
+}
+`
+	ents := extract(t, "custom_rust_observability", fi("p.rs", "rust", src))
+	for _, want := range []string{"api_calls", "jobs_processed", "build_info"} {
+		found := false
+		for _, e := range ents {
+			if e.Props["observability_type"] == "metrics" && e.Props["observability_name"] == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected a metric entity with observability_name=%q", want)
+		}
+	}
+}
+
+func TestRustObs_OtelMeter_Issue3416(t *testing.T) {
+	src := `
+use axum::Router;
+fn setup(meter: Meter) {
+    let c = meter.u64_counter("orders_created");
+    let h = meter.f64_histogram("payment_amount");
+}
+`
+	ents := extract(t, "custom_rust_observability", fi("otelm.rs", "rust", src))
+	for _, want := range []string{"orders_created", "payment_amount"} {
+		found := false
+		for _, e := range ents {
+			if e.Props["observability_type"] == "metrics" && e.Props["observability_name"] == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected otel meter metric with observability_name=%q", want)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Observability — trace_extraction (value-asserting; basis for `full`)
+// ---------------------------------------------------------------------------
+
+func TestRustObs_SpanName_Issue3416(t *testing.T) {
+	src := `
+use axum::Router;
+use tracing::{span, info_span, Level};
+fn work() {
+    let s1 = span!(Level::INFO, "db_query");
+    let s2 = info_span!("handle_request");
+    let s3 = tracing::error_span!("recover_panic");
+}
+`
+	ents := extract(t, "custom_rust_observability", fi("s.rs", "rust", src))
+	cases := map[string]string{
+		"obs:tracing:tracing_span:INFO:db_query":             "db_query",
+		"obs:tracing:tracing_level_span:info:handle_request": "handle_request",
+		"obs:tracing:tracing_level_span:error:recover_panic": "recover_panic",
+	}
+	for name, want := range cases {
+		if got := obsNameOf(ents, name); got != want {
+			t.Errorf("span %q: observability_name = %q, want %q", name, got, want)
+		}
+	}
+}
+
+func TestRustObs_OtelSpanName_Issue3416(t *testing.T) {
+	src := `
+use axum::Router;
+fn setup() {
+    let tracer = opentelemetry::global::tracer("checkout_service");
+    let span = tracer.start("process_order");
+    let b = tracer.span_builder("validate_cart");
+}
+`
+	ents := extract(t, "custom_rust_observability", fi("ot.rs", "rust", src))
+	for _, want := range []string{"checkout_service", "process_order", "validate_cart"} {
+		found := false
+		for _, e := range ents {
+			if e.Props["observability_type"] == "tracing" && e.Props["observability_name"] == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected tracing entity with observability_name=%q", want)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Observability — log crate + bare macros + event! + slog (call-site surface)
+// ---------------------------------------------------------------------------
+
+func TestRustObs_LogCrateAndVariants_Issue3416(t *testing.T) {
+	src := `
+use axum::Router;
+fn handlers() {
+    info!("bare tracing macro");
+    log::error!("disk full");
+    event!(Level::WARN, "deprecated path");
+    slog::info!(logger, "slog message");
+}
+`
+	ents := extract(t, "custom_rust_observability", fi("logs.rs", "rust", src))
+	wantNames := []string{
+		"obs:logging:tracing_macro_bare:info:bare tracing macro",
+		"obs:logging:log_macro:error:disk full",
+		"obs:logging:tracing_event:WARN:deprecated path",
+		"obs:logging:slog_macro:info:slog message",
+	}
+	for _, n := range wantNames {
+		if !containsEntity(ents, "SCOPE.Pattern", n) {
+			t.Errorf("expected log entity %q", n)
+		}
+	}
+	// library prop must be set per call site.
+	for _, e := range ents {
+		if e.Props["observability_type"] == "logging" && e.Props["observability_library"] == "" {
+			t.Errorf("logging entity %q missing observability_library", e.Name)
+		}
 	}
 }
 

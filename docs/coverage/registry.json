@@ -45184,20 +45184,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -45398,20 +45399,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -45614,20 +45616,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -45831,20 +45834,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -46047,20 +46051,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -46261,20 +46266,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -46477,20 +46483,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -46774,20 +46781,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -46992,20 +47000,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
@@ -47208,20 +47217,21 @@
         "Observability": {
           "log_extraction": {
             "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
             "issue": "backfill:dictionary-completeness",
+            "notes": "tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger-\u003esubscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells)",
             "verified_at": "2026-05-30"
           },
           "metric_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "metrics crate counter!/gauge!/histogram!(\"name\"), prometheus register_*!/IntCounter::new/Opts::new(\"name\"), opentelemetry meter.u64_counter(\"name\"); metric NAME captured as observability_name + observability_kind/library props; value-asserting tests TestRustObs_MetricsMacro_CapturesName_Issue3416 + TestRustObs_PrometheusName_Issue3416 + TestRustObs_OtelMeter_Issue3416. Per-call-site literal name needs no cross-file resolution; binding meter-\u003eexporter stays out of scope",
             "verified_at": "2026-05-30"
           },
           "trace_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/rust/observability.go"],
-            "issue": "backfill:dictionary-completeness",
+            "status": "full",
+            "cites": ["internal/custom/rust/observability.go","internal/custom/rust/observability_auth_test.go"],
+            "notes": "tracing span!(Level,\"name\")/info_span!(\"name\"), opentelemetry global::tracer(\"svc\")/tracer.start(\"name\")/span_builder(\"name\"); span NAME captured as observability_name; value-asserting tests TestRustObs_SpanName_Issue3416 + TestRustObs_OtelSpanName_Issue3416. Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer-\u003eexporter binding stay out of scope",
             "verified_at": "2026-05-30"
           }
         },
