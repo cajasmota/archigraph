@@ -96,28 +96,16 @@ func cdkSupportsLanguage(lang string) bool {
 // `new s3.Bucket(this, 'Id', {...})` form.
 func cdkIsPython(lang string) bool { return lang == "python" }
 
-// cdkResourceCoarseScope maps a CDK construct type (e.g. "s3.Bucket",
-// "lambda.Function", "sqs.Queue", "dynamodb.Table", "CfnDBInstance") to a coarse
-// architectural scope class. Mirrors the intent of the (dead) iacResourceKind
-// helper but returns a bare class string recorded as a property — the entity
-// Kind stays SCOPE.InfraResource so all CDK resources remain a single queryable
-// class. Matching is on the lower-cased construct type.
+// cdkResourceCoarseScope returns the uniform IaC resource_category for a CDK
+// construct type (e.g. "s3.Bucket", "lambda.Function", "sqs.Queue",
+// "dynamodb.Table", "CfnDBInstance"). It now delegates to the ONE shared
+// classifier (types.IaCResourceCategory) so CDK resources carry exactly the same
+// `resource_category` values as Terraform / Pulumi / CFN / Bicep, making a
+// cross-tool "all datastores" query possible (#3549). The entity Kind stays
+// SCOPE.InfraResource so existing CDK QualifiedNames and DEPENDS_ON edges are
+// unchanged. Matching is on the lower-cased construct type.
 func cdkResourceCoarseScope(constructType string) string {
-	t := strings.ToLower(constructType)
-	switch {
-	case strings.Contains(t, "rds") || strings.Contains(t, "dynamodb") ||
-		strings.Contains(t, "database") || strings.Contains(t, "dbinstance") ||
-		strings.Contains(t, "dbcluster") || strings.Contains(t, "table") ||
-		strings.Contains(t, "bucket") || strings.Contains(t, "elasticache") ||
-		strings.Contains(t, "redshift"):
-		return "datastore"
-	case strings.Contains(t, "sqs") || strings.Contains(t, "queue") ||
-		strings.Contains(t, "sns") || strings.Contains(t, "topic") ||
-		strings.Contains(t, "kinesis") || strings.Contains(t, "eventbus"):
-		return "queue"
-	default:
-		return "service"
-	}
+	return types.IaCResourceCategory(constructType)
 }
 
 // cdkConstructDeclRe captures `const|let|var VAR = new <ns>.<Type>(this, 'LogicalId'`.
@@ -287,8 +275,11 @@ func applyCDKEdges(args DetectorPassArgs) DetectorPassResult {
 			Language:   lang,
 			StartLine:  matchStartLine(src, offset),
 			Properties: map[string]string{
-				"iac_tool":       "aws-cdk",
-				"construct_type": constructType,
+				"iac_tool":          "aws-cdk",
+				"construct_type":    constructType,
+				"resource_category": cdkResourceCoarseScope(constructType),
+				// resource_scope kept (== resource_category) for back-compat with
+				// any consumer reading the older property name.
 				"resource_scope": cdkResourceCoarseScope(constructType),
 				"logical_id":     logicalID,
 				"pattern_type":   "cdk_synthesis",

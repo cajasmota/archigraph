@@ -62,8 +62,11 @@ const fn = new aws.lambda.Function("fn", {
 	if data.props["iac_tool"] != "pulumi" {
 		t.Errorf("data iac_tool = %q, want pulumi", data.props["iac_tool"])
 	}
-	if data.props["resource_scope"] != "datastore" {
-		t.Errorf("data resource_scope = %q, want datastore", data.props["resource_scope"])
+	if data.props["resource_category"] != "storage" {
+		t.Errorf("data resource_category = %q, want storage", data.props["resource_category"])
+	}
+	if data.props["resource_scope"] != "storage" {
+		t.Errorf("data resource_scope = %q, want storage", data.props["resource_scope"])
 	}
 
 	fn := pulumiResourceByName(ents, "fn")
@@ -174,8 +177,11 @@ fn = aws.lambda_.Function("fn",
 	if data.props["construct_type"] != "aws.s3.Bucket" {
 		t.Errorf("data construct_type = %q, want aws.s3.Bucket", data.props["construct_type"])
 	}
-	if data.props["resource_scope"] != "datastore" {
-		t.Errorf("data resource_scope = %q, want datastore", data.props["resource_scope"])
+	if data.props["resource_category"] != "storage" {
+		t.Errorf("data resource_category = %q, want storage", data.props["resource_category"])
+	}
+	if data.props["resource_scope"] != "storage" {
+		t.Errorf("data resource_scope = %q, want storage", data.props["resource_scope"])
 	}
 
 	fn := pulumiResourceByName(ents, "fn")

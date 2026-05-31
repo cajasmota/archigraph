@@ -166,12 +166,15 @@ func extractResources(src, path string, symbolic map[string]bool) []types.Entity
 
 		rpType, apiVersion := splitAzureType(azureType)
 
+		category := bicepResourceCoarseScope(rpType)
 		meta := map[string]interface{}{
-			"subtype":        "resource",
-			"iac_tool":       "bicep",
-			"symbolic_name":  symName,
-			"azure_rp_type":  rpType,
-			"resource_scope": bicepResourceCoarseScope(rpType),
+			"subtype":           "resource",
+			"iac_tool":          "bicep",
+			"symbolic_name":     symName,
+			"azure_rp_type":     rpType,
+			"resource_category": category,
+			// resource_scope kept (== resource_category) for back-compat.
+			"resource_scope": category,
 		}
 		if apiVersion != "" {
 			meta["api_version"] = apiVersion

@@ -93,8 +93,13 @@ module network './modules/network.bicep' = {
 	if got := sa.Metadata["deployed_name"]; got != "mystg" {
 		t.Errorf("storageAccount deployed_name = %v, want mystg", got)
 	}
-	if got := sa.Metadata["resource_scope"]; got != "datastore" {
-		t.Errorf("storageAccount resource_scope = %v, want datastore", got)
+	// Storage accounts now classify as the more precise "storage" category via
+	// the shared cross-tool classifier (#3549); resource_scope aliases it.
+	if got := sa.Metadata["resource_category"]; got != "storage" {
+		t.Errorf("storageAccount resource_category = %v, want storage", got)
+	}
+	if got := sa.Metadata["resource_scope"]; got != "storage" {
+		t.Errorf("storageAccount resource_scope = %v, want storage", got)
 	}
 
 	// --- resource entity 2: blobService, references storageAccount ---
@@ -164,6 +169,9 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = {
 		t.Errorf("subnet missing explicit DEPENDS_ON → vnet; rels=%+v", subnet.Relationships)
 	}
 	vnet := findByName(recs, "vnet")
+	if got := vnet.Metadata["resource_category"]; got != "network" {
+		t.Errorf("vnet resource_category = %v, want network", got)
+	}
 	if got := vnet.Metadata["resource_scope"]; got != "network" {
 		t.Errorf("vnet resource_scope = %v, want network", got)
 	}

@@ -1306,8 +1306,8 @@
         "resource_extraction": {
           "status": "full",
           "cites": ["internal/extractors/bicep/extractor.go","internal/extractors/bicep/kinds.go"],
-          "notes": "Regex/line-based .bicep extractor (no tree-sitter grammar vendored): SCOPE.InfraResource per 'resource' decl named by symbolic name, Kind-stable with resource_scope from the AzureRP type (bicepResourceCoarseScope); azure_rp_type + api_version + deployed_name on Metadata. SCOPE.Component/module per 'module' decl, SCOPE.Schema for param/var/output. Handles 'existing' resources and [for ...] loops.",
-          "verified_at": "2026-05-30"
+          "notes": "Regex/line-based .bicep extractor (no tree-sitter grammar vendored): SCOPE.InfraResource per 'resource' decl named by symbolic name, Kind-stable with uniform resource_category from the shared types.IaCResourceCategory classifier (#3549; bicepResourceCoarseScope now delegates to it, resource_scope kept as an alias); azure_rp_type + api_version + deployed_name on Metadata. SCOPE.Component/module per 'module' decl, SCOPE.Schema for param/var/output. Handles 'existing' resources and [for ...] loops.",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -1576,7 +1576,7 @@
           "status": "partial",
           "cites": ["internal/engine/cdk_edges.go","internal/engine/rules/javascript_typescript/frameworks/aws_cdk.yaml","internal/engine/rules/python/frameworks/aws_cdk.yaml"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3512",
-          "notes": "CDK-TS + CDK-Python: applyCDKEdges (TS) / applyCDKEdgesPython emit SCOPE.InfraResource per construct named by its 'LogicalId' literal (construct_type + coarse resource_scope). CDK-Java/Go/C# not yet implemented. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
+          "notes": "CDK-TS + CDK-Python: applyCDKEdges (TS) / applyCDKEdgesPython emit SCOPE.InfraResource per construct named by its 'LogicalId' literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier, #3549; resource_scope kept as an alias). CDK-Java/Go/C# not yet implemented. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
           "verified_at": "2026-05-31"
         }
       }
@@ -1595,7 +1595,8 @@
         "resource_extraction": {
           "status": "full",
           "cites": ["internal/engine/iac_cloudformation_edges.go"],
-          "verified_at": "2026-05-30"
+          "notes": "cfnResourceKind now derives the SCOPE.Datastore/Queue/ServerlessFunction entity Kind from the shared types.IaCResourceCategory classifier and stamps the uniform resource_category property (#3549), so the CFN Kind and the cross-tool category can never diverge.",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -1635,7 +1636,7 @@
           "status": "partial",
           "cites": ["internal/engine/pulumi_edges.go","internal/engine/rules/javascript_typescript/frameworks/pulumi.yaml","internal/engine/rules/python/frameworks/pulumi.yaml"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3528",
-          "notes": "Pulumi-TS + Pulumi-Python only: applyPulumiEdges emits SCOPE.InfraResource per resource constructor named by its logical-name string literal (construct_type + coarse resource_scope). Pulumi-Go/C#/Java not yet implemented. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
+          "notes": "Pulumi-TS + Pulumi-Python only: applyPulumiEdges emits SCOPE.InfraResource per resource constructor named by its logical-name string literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier, #3549; resource_scope kept as an alias). Pulumi-Go/C#/Java not yet implemented. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
           "verified_at": "2026-05-31"
         }
       }
@@ -1654,7 +1655,8 @@
         "resource_extraction": {
           "status": "full",
           "cites": ["internal/extractors/hcl/extractor.go","internal/extractors/hcl/relationships.go"],
-          "verified_at": "2026-05-28"
+          "notes": "resource blocks now carry the uniform resource_category metadata from the shared types.IaCResourceCategory classifier (#3549), so aws_db_instance→datastore, aws_sqs_queue→queue, aws_lambda_function→function are queryable cross-tool. Entity Kind stays SCOPE.Component/resource (edges unchanged).",
+          "verified_at": "2026-05-31"
         }
       }
     },

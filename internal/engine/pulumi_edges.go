@@ -79,26 +79,15 @@ func pulumiSupportsLanguage(lang string) bool {
 
 func pulumiIsPython(lang string) bool { return lang == "python" }
 
-// pulumiResourceCoarseScope maps a Pulumi resource type (e.g. "aws.s3.Bucket",
-// "aws.lambda.Function", "aws.sqs.Queue", "aws.dynamodb.Table") to a coarse
-// architectural scope class, recorded as a property (the Kind stays
-// SCOPE.InfraResource). Matching is on the lower-cased type.
+// pulumiResourceCoarseScope returns the uniform IaC resource_category for a
+// Pulumi resource type (e.g. "aws.s3.Bucket", "aws.lambda.Function",
+// "aws.sqs.Queue", "aws.dynamodb.Table"). It now delegates to the ONE shared
+// classifier (types.IaCResourceCategory) so Pulumi resources carry exactly the
+// same `resource_category` values as Terraform / CDK / CFN / Bicep (#3549). The
+// entity Kind stays SCOPE.InfraResource so existing Pulumi QualifiedNames and
+// DEPENDS_ON edges are unchanged. Matching is on the lower-cased type.
 func pulumiResourceCoarseScope(resourceType string) string {
-	t := strings.ToLower(resourceType)
-	switch {
-	case strings.Contains(t, "rds") || strings.Contains(t, "dynamodb") ||
-		strings.Contains(t, "database") || strings.Contains(t, "dbinstance") ||
-		strings.Contains(t, "dbcluster") || strings.Contains(t, "table") ||
-		strings.Contains(t, "bucket") || strings.Contains(t, "elasticache") ||
-		strings.Contains(t, "redshift") || strings.Contains(t, "s3."):
-		return "datastore"
-	case strings.Contains(t, "sqs") || strings.Contains(t, "queue") ||
-		strings.Contains(t, "sns") || strings.Contains(t, "topic") ||
-		strings.Contains(t, "kinesis") || strings.Contains(t, "eventbus"):
-		return "queue"
-	default:
-		return "service"
-	}
+	return types.IaCResourceCategory(resourceType)
 }
 
 // pulumiCrossStackNodeID is the canonical node id for a StackReference target,
@@ -248,8 +237,10 @@ func applyPulumiEdges(args DetectorPassArgs) DetectorPassResult {
 			Language:   lang,
 			StartLine:  matchStartLine(src, offset),
 			Properties: map[string]string{
-				"iac_tool":       "pulumi",
-				"construct_type": resourceType,
+				"iac_tool":          "pulumi",
+				"construct_type":    resourceType,
+				"resource_category": scope,
+				// resource_scope kept (== resource_category) for back-compat.
 				"resource_scope": scope,
 				"logical_id":     logicalName,
 				"pattern_type":   "pulumi_program",
@@ -304,11 +295,12 @@ func applyPulumiEdges(args DetectorPassArgs) DetectorPassResult {
 				Language:   lang,
 				StartLine:  matchStartLine(src, offset),
 				Properties: map[string]string{
-					"iac_tool":       "pulumi",
-					"construct_type": "pulumi.StackReference",
-					"resource_scope": "stack_reference",
-					"logical_id":     ref,
-					"pattern_type":   "pulumi_program",
+					"iac_tool":          "pulumi",
+					"construct_type":    "pulumi.StackReference",
+					"resource_category": "stack_reference",
+					"resource_scope":    "stack_reference",
+					"logical_id":        ref,
+					"pattern_type":      "pulumi_program",
 				},
 				EnrichmentRequired: false,
 				EnrichmentStatus:   types.StatusPending,

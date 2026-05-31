@@ -55,10 +55,9 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	cfnResourceEntityKind = "SCOPE.InfraResource"
-	cfnSchemaEntityKind   = "SCOPE.Schema"
-	cfnConfigEntityKind   = "SCOPE.Config"
-	cfnScheduledJobKind   = "SCOPE.ScheduledJob"
+	cfnSchemaEntityKind = "SCOPE.Schema"
+	cfnConfigEntityKind = "SCOPE.Config"
+	cfnScheduledJobKind = "SCOPE.ScheduledJob"
 
 	cfnDependsOnEdgeKind = "DEPENDS_ON"
 	cfnUsesEdgeKind      = "USES"
@@ -69,28 +68,16 @@ const (
 )
 
 // cfnResourceKind maps an AWS CloudFormation resource Type (e.g.
-// "AWS::S3::Bucket") to the SCOPE.* scope used for the resource entity. It is
-// the CloudFormation analogue of patterns.iacResourceKind but operates on the
-// `AWS::Service::Resource` triple and keeps datastore / queue precision.
+// "AWS::S3::Bucket") to the SCOPE.* scope used for the resource entity. It now
+// delegates to the ONE shared classifier (types.IaCResourceCategory →
+// types.IaCKindForCategory) so the CFN entity Kind can never diverge from the
+// uniform `resource_category` property stamped on every IaC tool's resources
+// (#3549). The historical CFN Kinds (SCOPE.Datastore / SCOPE.Queue /
+// SCOPE.ServerlessFunction) are preserved by IaCKindForCategory's mapping:
+// datastore/storage/cache→Datastore, queue/topic/stream→Queue, function→
+// ServerlessFunction, everything else→SCOPE.InfraResource.
 func cfnResourceKind(awsType string) string {
-	t := strings.ToLower(awsType)
-	switch {
-	case strings.Contains(t, "::rds::") || strings.Contains(t, "::dynamodb::") ||
-		strings.Contains(t, "::elasticache::") || strings.Contains(t, "::redshift::") ||
-		strings.Contains(t, "::s3::") || strings.Contains(t, "::docdb::") ||
-		strings.Contains(t, "database") || strings.Contains(t, "::neptune::") ||
-		strings.Contains(t, "::timestream::") || strings.Contains(t, "::efs::"):
-		return "SCOPE.Datastore"
-	case strings.Contains(t, "::sqs::") || strings.Contains(t, "::sns::") ||
-		strings.Contains(t, "::kinesis::") || strings.Contains(t, "::mq::") ||
-		strings.Contains(t, "::events::") || strings.Contains(t, "queue") ||
-		strings.Contains(t, "topic"):
-		return "SCOPE.Queue"
-	case strings.Contains(t, "::lambda::") || strings.Contains(t, "::serverless::function"):
-		return "SCOPE.ServerlessFunction"
-	default:
-		return cfnResourceEntityKind
-	}
+	return types.IaCKindForCategory(types.IaCResourceCategory(awsType))
 }
 
 // ---------------------------------------------------------------------------
@@ -519,10 +506,11 @@ func applyCloudFormationEdges(args DetectorPassArgs) DetectorPassResult {
 		kind := cfnResourceKind(r.typ)
 		eid := resourceRef(r.logicalID)
 		props := map[string]string{
-			"kind":          "iac",
-			"iac_tool":      "cloudformation",
-			"resource_type": r.typ,
-			"logical_id":    r.logicalID,
+			"kind":              "iac",
+			"iac_tool":          "cloudformation",
+			"resource_type":     r.typ,
+			"logical_id":        r.logicalID,
+			"resource_category": types.IaCResourceCategory(r.typ),
 		}
 		if strings.HasPrefix(r.typ, "AWS::Serverless::") {
 			props["iac_tool"] = "sam"

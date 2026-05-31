@@ -82,8 +82,13 @@ export class DataStack extends cdk.Stack {
 	if bucket.props["iac_tool"] != "aws-cdk" {
 		t.Errorf("DataBucket iac_tool = %q, want aws-cdk", bucket.props["iac_tool"])
 	}
-	if bucket.props["resource_scope"] != "datastore" {
-		t.Errorf("DataBucket resource_scope = %q, want datastore", bucket.props["resource_scope"])
+	// #3549 — uniform cross-tool category. s3.Bucket → "storage" (more precise
+	// than the old coarse "datastore"); resource_scope aliases resource_category.
+	if bucket.props["resource_category"] != "storage" {
+		t.Errorf("DataBucket resource_category = %q, want storage", bucket.props["resource_category"])
+	}
+	if bucket.props["resource_scope"] != "storage" {
+		t.Errorf("DataBucket resource_scope = %q, want storage", bucket.props["resource_scope"])
 	}
 
 	// Resource: lambda.Function named Handler.
@@ -94,8 +99,12 @@ export class DataStack extends cdk.Stack {
 	if handler.props["construct_type"] != "lambda.Function" {
 		t.Errorf("Handler construct_type = %q, want lambda.Function", handler.props["construct_type"])
 	}
-	if handler.props["resource_scope"] != "service" {
-		t.Errorf("Handler resource_scope = %q, want service", handler.props["resource_scope"])
+	// lambda.Function → "function" (was the coarse "service").
+	if handler.props["resource_category"] != "function" {
+		t.Errorf("Handler resource_category = %q, want function", handler.props["resource_category"])
+	}
+	if handler.props["resource_scope"] != "function" {
+		t.Errorf("Handler resource_scope = %q, want function", handler.props["resource_scope"])
 	}
 
 	// Dependency edge: Handler --DEPENDS_ON--> DataBucket (the grantRead grant).
@@ -280,8 +289,11 @@ class DataStack(Stack):
 	if data.props["iac_tool"] != "aws-cdk" {
 		t.Errorf("Data iac_tool = %q, want aws-cdk", data.props["iac_tool"])
 	}
-	if data.props["resource_scope"] != "datastore" {
-		t.Errorf("Data resource_scope = %q, want datastore", data.props["resource_scope"])
+	if data.props["resource_category"] != "storage" {
+		t.Errorf("Data resource_category = %q, want storage", data.props["resource_category"])
+	}
+	if data.props["resource_scope"] != "storage" {
+		t.Errorf("Data resource_scope = %q, want storage", data.props["resource_scope"])
 	}
 
 	fn := cdkResourceByName(ents, "Fn")

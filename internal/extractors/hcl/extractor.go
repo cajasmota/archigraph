@@ -209,7 +209,18 @@ func extractResourceBlock(n *sitter.Node, src []byte, path, lang string, start, 
 		Language:      lang,
 		QualityScore:  0.9,
 		QualifiedName: "resource." + resourceType + "." + resourceName,
-		Metadata:      map[string]interface{}{"subtype": "resource", "resource_type": resourceType, "label": resourceName},
+		// Issue #3549 — stamp the uniform cross-tool resource_category from the
+		// ONE shared classifier so a Terraform aws_db_instance, a CDK
+		// dynamodb.Table, a Pulumi aws.rds.Instance, a CFN AWS::RDS::DBInstance
+		// and a Bicep Microsoft.Sql/servers all answer a single "datastores"
+		// query. The Kind stays SCOPE.Component/resource so existing
+		// QualifiedNames and DEPENDS_ON/CALLS edges are unchanged.
+		Metadata: map[string]interface{}{
+			"subtype":           "resource",
+			"resource_type":     resourceType,
+			"label":             resourceName,
+			"resource_category": types.IaCResourceCategory(resourceType),
+		},
 	}
 
 	// Extract depends_on relationships.
