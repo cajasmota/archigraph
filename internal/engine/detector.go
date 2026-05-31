@@ -531,6 +531,15 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	// broker. Append-only — cannot regress the surrounding pipeline's bug-rate.
 	applyPass(applyRabbitMQEdges)
 
+	// C/C++ ZeroMQ + MQTT producer/consumer cross-repo edges (#3559,
+	// epic #3505). Emits SCOPE.MessageTopic entities + PUBLISHES_TO /
+	// SUBSCRIBES_TO edges for libzmq/cppzmq sockets (keyed by endpoint) and
+	// Paho/Mosquitto MQTT topics (keyed by topic), using the same identical-ID
+	// cross-repo matching strategy as the Kafka pass. librdkafka C/C++ topics
+	// are handled inside applyKafkaEdges. Append-only — cannot regress the
+	// surrounding pipeline's bug-rate.
+	applyPass(applyCppMessagingEdges)
+
 	// AWS SQS producer/consumer cross-repo edges (wave 2 of #726). Emits
 	// SCOPE.Queue entities + PUBLISHES_TO / SUBSCRIBES_TO edges for boto3
 	// (Python), aws-sdk v2/v3 (Node), aws-sdk-go-v2 (Go), AWS SDK v2

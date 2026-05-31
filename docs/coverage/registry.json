@@ -3826,6 +3826,32 @@
       }
     },
     {
+      "id": "lang.c-cpp.framework.librdkafka",
+      "category": "message_broker",
+      "language": "c-cpp",
+      "label": "librdkafka (C/C++ Kafka client)",
+      "capabilities": {
+        "consumer_extraction": {
+          "status": "partial",
+          "cites": ["internal/engine/kafka_edges.go"],
+          "notes": "Literal topics via rd_kafka_topic_partition_list_add / consumer-\u003esubscribe({...}).",
+          "verified_at": "2026-05-31"
+        },
+        "producer_extraction": {
+          "status": "partial",
+          "cites": ["internal/engine/kafka_edges.go"],
+          "notes": "Literal topics via rd_kafka_topic_new / RdKafka::Topic::create / producer-\u003eproduce. No const/config resolution.",
+          "verified_at": "2026-05-31"
+        },
+        "topic_attribution": {
+          "status": "partial",
+          "cites": ["internal/engine/kafka_edges.go"],
+          "notes": "Canonical kafka:\u003ctopic\u003e node shared with all other Kafka languages for cross-repo linkage.",
+          "verified_at": "2026-05-31"
+        }
+      }
+    },
+    {
       "id": "lang.c-cpp.framework.libuv",
       "category": "http_framework",
       "subcategory": "http_backend",
@@ -4032,6 +4058,32 @@
             "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
+        }
+      }
+    },
+    {
+      "id": "lang.c-cpp.framework.mqtt",
+      "category": "message_broker",
+      "language": "c-cpp",
+      "label": "MQTT (Paho C/C++ / Mosquitto)",
+      "capabilities": {
+        "consumer_extraction": {
+          "status": "partial",
+          "cites": ["internal/engine/cpp_messaging_edges.go"],
+          "notes": "Literal topics via mosquitto_subscribe / MQTTClient_subscribe / Paho C++ client.subscribe.",
+          "verified_at": "2026-05-31"
+        },
+        "producer_extraction": {
+          "status": "partial",
+          "cites": ["internal/engine/cpp_messaging_edges.go"],
+          "notes": "Literal topics via mosquitto_publish / MQTTClient publish / Paho C++ client.publish.",
+          "verified_at": "2026-05-31"
+        },
+        "topic_attribution": {
+          "status": "partial",
+          "cites": ["internal/engine/cpp_messaging_edges.go"],
+          "notes": "mqtt:\u003ctopic\u003e node (supports +/# wildcards); cross-repo joinable. Literal-only.",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -5656,6 +5708,32 @@
             "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_c_cpp.go"],
             "verified_at": "2026-05-28"
           }
+        }
+      }
+    },
+    {
+      "id": "lang.c-cpp.framework.zeromq",
+      "category": "message_broker",
+      "language": "c-cpp",
+      "label": "ZeroMQ (libzmq/cppzmq)",
+      "capabilities": {
+        "consumer_extraction": {
+          "status": "partial",
+          "cites": ["internal/engine/cpp_messaging_edges.go"],
+          "notes": "Literal endpoints only; SUB/PULL socket roles + connect→subscriber heuristic.",
+          "verified_at": "2026-05-31"
+        },
+        "producer_extraction": {
+          "status": "partial",
+          "cites": ["internal/engine/cpp_messaging_edges.go"],
+          "notes": "Literal endpoints only; PUB/PUSH socket roles + bind→publisher heuristic. No const/config resolution.",
+          "verified_at": "2026-05-31"
+        },
+        "topic_attribution": {
+          "status": "partial",
+          "cites": ["internal/engine/cpp_messaging_edges.go"],
+          "notes": "Endpoint-keyed MessageTopic (zmq:\u003cendpoint\u003e); ZeroMQ has no broker-side topic, endpoints joined cross-repo.",
+          "verified_at": "2026-05-31"
         }
       }
     },

@@ -697,3 +697,115 @@ class ConsumePaymentsSettled {
 		t.Errorf("expected SCOPE.Operation:ConsumePaymentsSettled.handle → kafka:payments.settled edge, got %v", subs)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// C / C++ — librdkafka (C API) + rdkafkacpp (C++ API)
+// ---------------------------------------------------------------------------
+
+// edgeWithTo returns the first edge of `kind` whose ToID has the given suffix.
+func edgeWithTo(rels []types.RelationshipRecord, kind, toSuffix string) *types.RelationshipRecord {
+	for i := range rels {
+		if rels[i].Kind == kind && strings.Contains(rels[i].ToID, toSuffix) {
+			return &rels[i]
+		}
+	}
+	return nil
+}
+
+// TestKafka_C_RdKafkaProducer covers the C-API rd_kafka_topic_new producer
+// path: rd_kafka_topic_new(rk, "events", NULL) → PUBLISHES_TO kafka:events.
+func TestKafka_C_RdKafkaProducer(t *testing.T) {
+	src := `
+#include <librdkafka/rdkafka.h>
+void send_event(rd_kafka_t *rk) {
+    rd_kafka_topic_t *rkt = rd_kafka_topic_new(rk, "events", NULL);
+    rd_kafka_produce(rkt, RD_KAFKA_PARTITION_UA, RD_KAFKA_MSG_F_COPY, payload, len, NULL, 0, NULL);
+}`
+	ents, rels := runKafkaDetect(t, "c", "svc/producer.c", src)
+	tp := topicByName(ents, "events")
+	if tp == nil {
+		t.Fatalf("expected MessageTopic events, got: %+v", ents)
+	}
+	if tp.Properties["messaging_layer"] != "librdkafka" {
+		t.Errorf("messaging_layer = %q, want librdkafka", tp.Properties["messaging_layer"])
+	}
+	e := edgeWithTo(rels, publishesToEdgeKind, "kafka:events")
+	if e == nil {
+		t.Fatalf("expected PUBLISHES_TO kafka:events, got: %+v", rels)
+	}
+	if e.FromID != "SCOPE.Operation:send_event" {
+		t.Errorf("FromID = %q, want SCOPE.Operation:send_event", e.FromID)
+	}
+}
+
+// TestKafka_C_RdKafkaConsumer covers the C-API subscribe path:
+// rd_kafka_topic_partition_list_add(topics, "orders", -1) → SUBSCRIBES_TO.
+func TestKafka_C_RdKafkaConsumer(t *testing.T) {
+	src := `
+#include <librdkafka/rdkafka.h>
+void start(rd_kafka_t *rk) {
+    rd_kafka_topic_partition_list_t *topics = rd_kafka_topic_partition_list_new(1);
+    rd_kafka_topic_partition_list_add(topics, "orders", -1);
+    rd_kafka_subscribe(rk, topics);
+}`
+	ents, rels := runKafkaDetect(t, "c", "svc/consumer.c", src)
+	if topicByName(ents, "orders") == nil {
+		t.Fatalf("expected MessageTopic orders, got: %+v", ents)
+	}
+	e := edgeWithTo(rels, subscribesToEdgeKind, "kafka:orders")
+	if e == nil {
+		t.Fatalf("expected SUBSCRIBES_TO kafka:orders, got: %+v", rels)
+	}
+	if e.FromID != "SCOPE.Operation:start" {
+		t.Errorf("FromID = %q, want SCOPE.Operation:start", e.FromID)
+	}
+}
+
+// TestKafka_Cpp_RdKafkaCppProduce covers the C++-API producer->produce("topic")
+// path → PUBLISHES_TO kafka:metrics with the rdkafkacpp messaging layer.
+func TestKafka_Cpp_RdKafkaCppProduce(t *testing.T) {
+	src := `
+#include <librdkafka/rdkafkacpp.h>
+void Reporter::flush(RdKafka::Producer *producer) {
+    producer->produce("metrics", RdKafka::Topic::PARTITION_UA,
+                      RdKafka::Producer::RK_MSG_COPY, buf, size, NULL, NULL);
+}`
+	ents, rels := runKafkaDetect(t, "cpp", "svc/reporter.cpp", src)
+	tp := topicByName(ents, "metrics")
+	if tp == nil {
+		t.Fatalf("expected MessageTopic metrics, got: %+v", ents)
+	}
+	if tp.Properties["messaging_layer"] != "rdkafkacpp" {
+		t.Errorf("messaging_layer = %q, want rdkafkacpp", tp.Properties["messaging_layer"])
+	}
+	e := edgeWithTo(rels, publishesToEdgeKind, "kafka:metrics")
+	if e == nil {
+		t.Fatalf("expected PUBLISHES_TO kafka:metrics, got: %+v", rels)
+	}
+	if e.FromID != "SCOPE.Operation:Reporter::flush" {
+		t.Errorf("FromID = %q, want SCOPE.Operation:Reporter::flush", e.FromID)
+	}
+}
+
+// TestKafka_Cpp_RdKafkaCppSubscribe covers the C++-API consumer->subscribe
+// brace-list path → SUBSCRIBES_TO for each literal topic.
+func TestKafka_Cpp_RdKafkaCppSubscribe(t *testing.T) {
+	src := `
+#include <librdkafka/rdkafkacpp.h>
+void Worker::run(RdKafka::KafkaConsumer *consumer) {
+    consumer->subscribe({"payments", "refunds"});
+}`
+	ents, rels := runKafkaDetect(t, "cpp", "svc/worker.cpp", src)
+	if topicByName(ents, "payments") == nil || topicByName(ents, "refunds") == nil {
+		t.Fatalf("expected MessageTopics payments & refunds, got: %+v", ents)
+	}
+	for _, want := range []string{"kafka:payments", "kafka:refunds"} {
+		e := edgeWithTo(rels, subscribesToEdgeKind, want)
+		if e == nil {
+			t.Fatalf("expected SUBSCRIBES_TO %s, got: %+v", want, rels)
+		}
+		if e.FromID != "SCOPE.Operation:Worker::run" {
+			t.Errorf("FromID = %q, want SCOPE.Operation:Worker::run", e.FromID)
+		}
+	}
+}
