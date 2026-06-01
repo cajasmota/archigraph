@@ -12,7 +12,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Env resolution | 🟢 `partial` | `2026-05-28` | — | `internal/extractors/yaml/extractor.go` | — |
-| File parsing | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/cicd/frameworks/gitlab_ci.yaml` | — |
+| File parsing | ✅ `full` | `2026-05-28` | — | `internal/extractors/yaml/extractor.go` | — |
 
 ## Provenance
 

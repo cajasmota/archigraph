@@ -723,9 +723,10 @@
           "verified_at": "2026-05-28"
         },
         "file_parsing": {
-          "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/azure_pipelines.yaml"],
-          "verified_at": "2026-05-28"
+          "status": "partial",
+          "cites": ["internal/extractors/yaml/extractor.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3593",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -741,9 +742,10 @@
           "verified_at": "2026-05-28"
         },
         "file_parsing": {
-          "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/bitbucket_pipelines.yaml"],
-          "verified_at": "2026-05-28"
+          "status": "partial",
+          "cites": ["internal/extractors/yaml/extractor.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3593",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -759,9 +761,10 @@
           "verified_at": "2026-05-28"
         },
         "file_parsing": {
-          "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/buildkite.yaml"],
-          "verified_at": "2026-05-28"
+          "status": "partial",
+          "cites": ["internal/extractors/yaml/extractor.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3593",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -777,9 +780,10 @@
           "verified_at": "2026-05-28"
         },
         "file_parsing": {
-          "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/circleci.yaml"],
-          "verified_at": "2026-05-28"
+          "status": "partial",
+          "cites": ["internal/extractors/yaml/extractor.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3593",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -810,7 +814,7 @@
         },
         "file_parsing": {
           "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/github_actions.yaml","internal/extractors/yaml/extractor.go"],
+          "cites": ["internal/extractors/yaml/extractor.go"],
           "verified_at": "2026-05-28"
         }
       }
@@ -828,7 +832,7 @@
         },
         "file_parsing": {
           "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/gitlab_ci.yaml"],
+          "cites": ["internal/extractors/yaml/extractor.go"],
           "verified_at": "2026-05-28"
         }
       }
@@ -843,9 +847,9 @@
           "status": "missing"
         },
         "file_parsing": {
-          "status": "partial",
-          "cites": ["internal/engine/rules/cicd/_manifest.yaml"],
-          "verified_at": "2026-05-28"
+          "status": "missing",
+          "issue": "https://github.com/cajasmota/archigraph/issues/3593",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -861,9 +865,10 @@
           "verified_at": "2026-05-28"
         },
         "file_parsing": {
-          "status": "full",
-          "cites": ["internal/engine/rules/cicd/frameworks/travis_ci.yaml"],
-          "verified_at": "2026-05-28"
+          "status": "partial",
+          "cites": ["internal/extractors/yaml/extractor.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3593",
+          "verified_at": "2026-05-31"
         }
       }
     },
@@ -1196,7 +1201,7 @@
         },
         "resource_extraction": {
           "status": "full",
-          "cites": ["internal/engine/rules/docker/frameworks/docker_compose.yaml","internal/extractors/yaml/extractor.go"],
+          "cites": ["internal/extractors/yaml/extractor.go"],
           "verified_at": "2026-05-28"
         }
       }
@@ -1214,7 +1219,7 @@
         },
         "resource_extraction": {
           "status": "full",
-          "cites": ["internal/engine/rules/docker/frameworks/dockerfile.yaml","internal/extractors/dockerfile/dockerfile.go"],
+          "cites": ["internal/extractors/dockerfile/dockerfile.go"],
           "verified_at": "2026-05-28"
         }
       }
@@ -1251,7 +1256,7 @@
         },
         "resource_extraction": {
           "status": "full",
-          "cites": ["internal/engine/rules/kubernetes/frameworks/kubernetes_manifests.yaml","internal/extractors/yaml/extractor.go"],
+          "cites": ["internal/extractors/yaml/extractor.go"],
           "notes": "#3551: CustomResourceDefinition captured as a crd_definition entity (spec.names/group/scope in Properties); known CRD instances (ArgoCD Application/AppProject, Argo Rollouts Rollout, cert-manager Certificate/Issuer, Prometheus ServiceMonitor/PodMonitor) typed meaningfully instead of generic Component; metadata.namespace stamped as k8s_namespace Property.",
           "verified_at": "2026-05-31"
         }
@@ -1283,12 +1288,12 @@
       "capabilities": {
         "dependency_attribution": {
           "status": "partial",
-          "cites": ["internal/engine/rules/ansible/_manifest.yaml"],
+          "cites": ["internal/extractors/yaml/extractor.go"],
           "verified_at": "2026-05-28"
         },
         "resource_extraction": {
           "status": "partial",
-          "cites": ["internal/engine/rules/ansible/_manifest.yaml"],
+          "cites": ["internal/extractors/yaml/extractor.go"],
           "verified_at": "2026-05-28"
         }
       }
