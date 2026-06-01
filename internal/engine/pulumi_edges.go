@@ -73,7 +73,7 @@ func pulumiSupportsLanguage(lang string) bool {
 	case "javascript", "typescript", "python":
 		return true
 	default:
-		return false
+		return pulumiSupportsLanguageGoNet(lang)
 	}
 }
 
@@ -200,8 +200,11 @@ func applyPulumiEdges(args DetectorPassArgs) DetectorPassResult {
 
 	// Fast pre-filter: a Pulumi program imports the Pulumi SDK. TS:
 	// `@pulumi/pulumi` / `@pulumi/aws`; Python: `import pulumi` / `pulumi_aws`.
+	// Go imports `github.com/pulumi/pulumi-aws/sdk/.../go/aws/...` and
+	// `github.com/pulumi/pulumi/sdk/.../go/pulumi`; C# imports `using Pulumi;`.
 	if !strings.Contains(src, "@pulumi/") && !strings.Contains(src, "pulumi_") &&
-		!strings.Contains(src, "import pulumi") && !strings.Contains(src, "* as pulumi") {
+		!strings.Contains(src, "import pulumi") && !strings.Contains(src, "* as pulumi") &&
+		!strings.Contains(src, "pulumi/pulumi") && !strings.Contains(src, "Pulumi") {
 		return DetectorPassResult{Entities: entities, Relationships: relationships}
 	}
 
@@ -311,6 +314,11 @@ func applyPulumiEdges(args DetectorPassArgs) DetectorPassResult {
 
 	if pulumiIsPython(lang) {
 		applyPulumiEdgesPython(src, emitResource, emitDependsOn, emitCrossStack, varToName, resourceNames)
+		return DetectorPassResult{Entities: entities, Relationships: relationships}
+	}
+
+	if pulumiSupportsLanguageGoNet(lang) {
+		applyPulumiEdgesGoNet(lang, src, emitResource, emitDependsOn, varToName, resourceNames)
 		return DetectorPassResult{Entities: entities, Relationships: relationships}
 	}
 

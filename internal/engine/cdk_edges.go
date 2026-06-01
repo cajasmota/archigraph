@@ -87,7 +87,7 @@ func cdkSupportsLanguage(lang string) bool {
 	case "javascript", "typescript", "python":
 		return true
 	default:
-		return false
+		return cdkSupportsLanguageJVMGoNet(lang)
 	}
 }
 
@@ -240,8 +240,12 @@ func applyCDKEdges(args DetectorPassArgs) DetectorPassResult {
 	// Guards against matching the generic `X(self,'id',...)` / `new X(this,…)`
 	// idiom in non-CDK files. Python CDK imports read `from aws_cdk import ...`
 	// or `import aws_cdk as cdk`.
+	// Java CDK imports `software.amazon.awscdk`; C# imports `Amazon.CDK`;
+	// Go imports `github.com/aws/aws-cdk-go/awscdk` (contains "aws-cdk").
 	if !strings.Contains(src, "aws-cdk") && !strings.Contains(src, "aws_cdk") &&
-		!strings.Contains(src, "constructs") {
+		!strings.Contains(src, "constructs") &&
+		!strings.Contains(src, "software.amazon.awscdk") &&
+		!strings.Contains(src, "Amazon.CDK") {
 		return DetectorPassResult{Entities: entities, Relationships: relationships}
 	}
 
@@ -321,6 +325,11 @@ func applyCDKEdges(args DetectorPassArgs) DetectorPassResult {
 
 	if cdkIsPython(lang) {
 		applyCDKEdgesPython(src, path, lang, emitResource, emitDependsOn, varToLogical, logicalIDs)
+		return DetectorPassResult{Entities: entities, Relationships: relationships}
+	}
+
+	if cdkSupportsLanguageJVMGoNet(lang) {
+		applyCDKEdgesJVMGoNet(lang, src, emitResource, emitDependsOn, varToLogical, logicalIDs)
 		return DetectorPassResult{Entities: entities, Relationships: relationships}
 	}
 

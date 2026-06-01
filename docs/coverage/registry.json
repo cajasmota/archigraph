@@ -1392,16 +1392,16 @@
       "capabilities": {
         "dependency_attribution": {
           "status": "partial",
-          "cites": ["internal/engine/pulumi_edges.go"],
+          "cites": ["internal/engine/pulumi_edges.go","internal/engine/pulumi_edges_go_net.go"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3528",
-          "notes": "Pulumi-TS + Pulumi-Python dependency edges implemented (applyPulumiEdges / applyPulumiEdgesPython): DEPENDS_ON from output references (other.arn/.id/.url passed into a resource's args), explicit dependsOn/depends_on lists, and StackReference cross-stack nodes (collapsed onto pulumi-stack:\u003cref\u003e). Mirrors the hcl extractor's DEPENDS_ON edge kind. Pulumi-Go/C#/Java pending. Was citing the dormant rules/pulumi/_manifest.yaml (never fired: loader keys rules by top-level dir, no file is tagged 'pulumi').",
+          "notes": "Pulumi-TS + Pulumi-Python (applyPulumiEdges / applyPulumiEdgesPython) and Pulumi-Go + Pulumi-C# (applyPulumiEdgesGoNet, #3550): DEPENDS_ON from output references (TS other.arn/.id; Go/C# .Arn/.Id/.ID() passed into a resource's args), explicit dependsOn/depends_on (TS/Py) and DependsOn lists (Go pulumi.DependsOn([]pulumi.Resource{...}) / C# CustomResourceOptions.DependsOn). StackReference cross-stack nodes for TS/Py (collapsed onto pulumi-stack:\u003cref\u003e). Mirrors the hcl extractor's DEPENDS_ON edge kind. Pulumi-Java pending; Go/C# StackReference + ComponentResource deferred. Was citing the dormant rules/pulumi/_manifest.yaml (never fired: loader keys rules by top-level dir, no file is tagged 'pulumi').",
           "verified_at": "2026-05-31"
         },
         "resource_extraction": {
           "status": "partial",
-          "cites": ["internal/engine/pulumi_edges.go","internal/engine/rules/javascript_typescript/frameworks/pulumi.yaml","internal/engine/rules/python/frameworks/pulumi.yaml"],
+          "cites": ["internal/engine/pulumi_edges.go","internal/engine/pulumi_edges_go_net.go","internal/engine/rules/javascript_typescript/frameworks/pulumi.yaml","internal/engine/rules/python/frameworks/pulumi.yaml"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3528",
-          "notes": "Pulumi-TS + Pulumi-Python implemented (applyPulumiEdges / applyPulumiEdgesPython): SCOPE.InfraResource per resource constructor named by its logical-name string literal (construct_type + coarse resource_scope); ComponentResource subclasses recorded as component-scoped nodes. Program-scope idioms via rules/{javascript_typescript,python}/frameworks/pulumi.yaml. Pulumi-Go/C#/Java pending. Was over-stamped via the dormant rules/pulumi/_manifest.yaml.",
+          "notes": "Pulumi-TS + Pulumi-Python (applyPulumiEdges / applyPulumiEdgesPython) and Pulumi-Go + Pulumi-C# (applyPulumiEdgesGoNet, #3550): SCOPE.InfraResource per resource constructor named by its logical-name string literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier; Go factory pkg.NewType maps to pkg.Type via New-strip). ComponentResource subclasses recorded as component-scoped nodes for TS/Py. Program-scope idioms via rules/{javascript_typescript,python}/frameworks/pulumi.yaml. Pulumi-Java pending. Was over-stamped via the dormant rules/pulumi/_manifest.yaml.",
           "verified_at": "2026-05-31"
         }
       }
@@ -1607,9 +1607,9 @@
       "capabilities": {
         "resource_extraction": {
           "status": "partial",
-          "cites": ["internal/engine/cdk_edges.go","internal/engine/rules/javascript_typescript/frameworks/aws_cdk.yaml","internal/engine/rules/python/frameworks/aws_cdk.yaml"],
+          "cites": ["internal/engine/cdk_edges.go","internal/engine/cdk_edges_jvm_go_net.go","internal/engine/rules/javascript_typescript/frameworks/aws_cdk.yaml","internal/engine/rules/python/frameworks/aws_cdk.yaml"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3512",
-          "notes": "CDK-TS + CDK-Python: applyCDKEdges (TS) / applyCDKEdgesPython emit SCOPE.InfraResource per construct named by its 'LogicalId' literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier, #3549; resource_scope kept as an alias). CDK-Java/Go/C# not yet implemented. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
+          "notes": "CDK-TS + CDK-Python (applyCDKEdges / applyCDKEdgesPython) and CDK-Java + CDK-Go + CDK-C# (applyCDKEdgesJVMGoNet, #3550): SCOPE.InfraResource per construct named by its 'LogicalId' literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier, #3549; resource_scope kept as an alias). Java covers new-form + Type.Builder.create(...) fluent form; Go covers pkg.NewType(scope, jsii.String(\"Id\"), ...) (New-strip to pkg.Type); C# covers new Type(this, \"Id\", ...). Java/C# bare construct types (Bucket/Table/Function) aliased to provider-qualified forms (s3.Bucket/dynamodb.Table/lambda.Function) so the classifier fires. grant*/Grant* calls -\u003e grantee DEPENDS_ON resource. All five JSII bindings now extract; remains partial (single-file regex; event-source/L1-escape-hatch/cross-file deferred). TS/JS+Python depth deferred to follow-up. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
           "verified_at": "2026-05-31"
         }
       }
@@ -1667,9 +1667,9 @@
       "capabilities": {
         "resource_extraction": {
           "status": "partial",
-          "cites": ["internal/engine/pulumi_edges.go","internal/engine/rules/javascript_typescript/frameworks/pulumi.yaml","internal/engine/rules/python/frameworks/pulumi.yaml"],
+          "cites": ["internal/engine/pulumi_edges.go","internal/engine/pulumi_edges_go_net.go","internal/engine/rules/javascript_typescript/frameworks/pulumi.yaml","internal/engine/rules/python/frameworks/pulumi.yaml"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3528",
-          "notes": "Pulumi-TS + Pulumi-Python only: applyPulumiEdges emits SCOPE.InfraResource per resource constructor named by its logical-name string literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier, #3549; resource_scope kept as an alias). Pulumi-Go/C#/Java not yet implemented. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
+          "notes": "Pulumi-TS + Pulumi-Python (applyPulumiEdges) and Pulumi-Go + Pulumi-C# (applyPulumiEdgesGoNet, #3550): SCOPE.InfraResource per resource constructor named by its logical-name string literal (construct_type + uniform resource_category from the shared types.IaCResourceCategory classifier, #3549; resource_scope kept as an alias). Go covers v, err := pkg.NewType(ctx, \"name\", ...) (New-strip to pkg.Type) + output-ref/DependsOn edges; C# covers new Provider.Svc.Type(\"name\", ...) + output-ref/DependsOn edges. Pulumi-Java not yet implemented; Go/C# StackReference + ComponentResource deferred. TS/JS+Python depth deferred to follow-up. Previously over-stamped full citing the hcl/Terraform extractor, which cannot parse .ts/.py.",
           "verified_at": "2026-05-31"
         }
       }

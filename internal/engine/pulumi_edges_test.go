@@ -247,15 +247,40 @@ func TestPulumi_NonPulumiFileEmitsNothing(t *testing.T) {
 	}
 }
 
-// TestPulumi_UnsupportedLanguageSkipped asserts Go/C#/Java are skipped.
-func TestPulumi_UnsupportedLanguageSkipped(t *testing.T) {
+// TestPulumi_GoSupported asserts the Pulumi Go binding (added in #3550) now
+// extracts a resource. (This test previously asserted Go was UNSUPPORTED.)
+func TestPulumi_GoSupported(t *testing.T) {
 	src := `package main
 import "github.com/pulumi/pulumi-aws/sdk/v6/go/aws/s3"
 func main() {
     s3.NewBucket(ctx, "data", &s3.BucketArgs{})
 }
 `
-	ents, rels := runPulumiDetect(t, "go", "main.go", src)
+	ents, _ := runPulumiDetect(t, "go", "main.go", src)
+	b := pulumiResourceByName(ents, "data")
+	if b == nil {
+		t.Fatalf("expected SCOPE.InfraResource 'data', got %+v", ents)
+	}
+	if b.props["construct_type"] != "s3.Bucket" {
+		t.Errorf("data construct_type = %q, want s3.Bucket", b.props["construct_type"])
+	}
+	if b.props["resource_category"] != "storage" {
+		t.Errorf("data resource_category = %q, want storage", b.props["resource_category"])
+	}
+}
+
+// TestPulumi_UnsupportedLanguageSkipped asserts a language with NO Pulumi
+// binding (e.g. Java) is still skipped cleanly.
+func TestPulumi_UnsupportedLanguageSkipped(t *testing.T) {
+	src := `import com.pulumi.Pulumi;
+import com.pulumi.aws.s3.Bucket;
+class App {
+    static void main(String[] args) {
+        var bucket = new Bucket("data");
+    }
+}
+`
+	ents, rels := runPulumiDetect(t, "java", "App.java", src)
 	if len(ents) != 0 || len(rels) != 0 {
 		t.Errorf("unsupported language should be skipped, got %d ents %d rels", len(ents), len(rels))
 	}

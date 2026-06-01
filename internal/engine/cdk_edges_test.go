@@ -236,9 +236,12 @@ func TestCDK_NonCDKFileEmitsNothing(t *testing.T) {
 	}
 }
 
-// TestCDK_UnsupportedLanguageSkipped asserts languages without a CDK
-// implementation (Java/Go/C#) are skipped.
-func TestCDK_UnsupportedLanguageSkipped(t *testing.T) {
+// TestCDK_JavaBuilderFormSupported asserts the Java CDK binding (added in #3550)
+// extracts a builder-form construct. (This test previously asserted Java was
+// UNSUPPORTED; the JVM/Go/.NET bindings now implement it, so it asserts the
+// extracted shape instead.) A bare `Bucket` construct type is aliased to
+// `s3.Bucket` so the shared classifier yields the "storage" category.
+func TestCDK_JavaBuilderFormSupported(t *testing.T) {
 	src := `import software.amazon.awscdk.Stack;
 class DataStack extends Stack {
     DataStack() {
@@ -246,7 +249,26 @@ class DataStack extends Stack {
     }
 }
 `
-	ents, rels := runCDKDetect(t, "java", "DataStack.java", src)
+	ents, _ := runCDKDetect(t, "java", "DataStack.java", src)
+	b := cdkResourceByName(ents, "DataBucket")
+	if b == nil {
+		t.Fatalf("expected SCOPE.InfraResource 'DataBucket', got %+v", ents)
+	}
+	if b.props["construct_type"] != "s3.Bucket" {
+		t.Errorf("DataBucket construct_type = %q, want s3.Bucket", b.props["construct_type"])
+	}
+	if b.props["resource_category"] != "storage" {
+		t.Errorf("DataBucket resource_category = %q, want storage", b.props["resource_category"])
+	}
+}
+
+// TestCDK_UnsupportedLanguageSkipped asserts a language with NO CDK binding
+// (e.g. Ruby) is still skipped cleanly.
+func TestCDK_UnsupportedLanguageSkipped(t *testing.T) {
+	src := `require "aws-cdk-lib"
+bucket = Bucket.new(self, "DataBucket")
+`
+	ents, rels := runCDKDetect(t, "ruby", "data_stack.rb", src)
 	if len(ents) != 0 || len(rels) != 0 {
 		t.Errorf("unsupported language should be skipped, got %d entities %d rels", len(ents), len(rels))
 	}
