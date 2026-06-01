@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # http_framework
 
-**Total**: 207 records · **C/C++**: 19 · **C#**: 15 · **dart**: 1 · **elixir**: 14 · **go**: 17 · **java**: 19 · **JS/TS**: 30 · **kotlin**: 17 · **lua**: 4 · **php**: 15 · **python**: 21 · **ruby**: 8 · **rust**: 14 · **scala**: 12 · **swift**: 1
+**Total**: 209 records · **C/C++**: 19 · **C#**: 15 · **dart**: 1 · **elixir**: 14 · **go**: 17 · **java**: 19 · **JS/TS**: 30 · **kotlin**: 17 · **lua**: 4 · **php**: 15 · **python**: 21 · **ruby**: 8 · **rust**: 14 · **scala**: 14 · **swift**: 1
 
 Back to [summary](../summary.md). Bucket: **Frameworks**.
 
@@ -170,6 +170,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [scala](../by-language/scala.md) | [Scalatra](../detail/lang.scala.framework.scalatra.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [scala](../by-language/scala.md) | [ZIO HTTP / ZIO](../detail/lang.scala.framework.zio-http.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 9/9 | |
 | [scala](../by-language/scala.md) | [http4s](../detail/lang.scala.framework.http4s.md) | 🟢 3/3 | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [scala](../by-language/scala.md) | [sttp (HTTP client)](../detail/lang.scala.framework.sttp.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 1/20 | 🔴 0/16 | |
 | [scala](../by-language/scala.md) | [tapir (endpoint DSL)](../detail/lang.scala.framework.tapir.md) | ✅ 3/3 | 🔴 0/1 | 🔴 0/4 | 🟢 1/1 | 🟡 2/20 | 🟡 5/16 | |
 
 
@@ -248,6 +249,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [elixir](../by-language/elixir.md) | [elixir-grpc](../detail/lang.elixir.framework.grpc.md) | 🟡 3/21 | 🟡 3/4 | |
 | [JS/TS](../by-language/jsts.md) | [GraphQL Resolvers (Apollo Server / GraphQL Yoga / etc.)](../detail/lang.jsts.framework.graphql-resolvers.md) | 🟢 21/21 | ✅ 3/3 | |
 | [JS/TS](../by-language/jsts.md) | [tRPC](../detail/lang.jsts.framework.trpc.md) | 🟢 21/21 | ✅ 4/4 | |
+| [scala](../by-language/scala.md) | [ScalaPB / zio-grpc / fs2-grpc](../detail/lang.scala.framework.scalapb-grpc.md) | 🟡 2/21 | 🟢 4/4 | |
 
 
 ## AI Integration

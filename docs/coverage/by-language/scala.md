@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # scala
 
-**Frameworks**: 12 · **Tools**: 3 · **ORMs**: 6 · **Other**: 0
+**Frameworks**: 14 · **Tools**: 3 · **ORMs**: 6 · **Other**: 0
 
 Back to [summary](../summary.md).
 
@@ -36,6 +36,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Scalatra](../detail/lang.scala.framework.scalatra.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
 | [ZIO HTTP / ZIO](../detail/lang.scala.framework.zio-http.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 9/9 | |
 | [http4s](../detail/lang.scala.framework.http4s.md) | 🟢 3/3 | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 6/6 | |
+| [sttp (HTTP client)](../detail/lang.scala.framework.sttp.md) | 🟡 2/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 1/20 | 🔴 0/16 | |
 | [tapir (endpoint DSL)](../detail/lang.scala.framework.tapir.md) | ✅ 3/3 | 🔴 0/1 | 🔴 0/4 | 🟢 1/1 | 🟡 2/20 | 🟡 5/16 | |
 
 
@@ -44,6 +45,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Routing | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|
 | [Play Framework (Scala)](../detail/lang.scala.framework.play.md) | 🟢 2/2 | ✅ 3/3 | ✅ 1/1 | 🟢 21/21 | ✅ 2/2 | |
+
+
+### RPC Framework
+
+| Name | Substrate | Other capabilities | Notes |
+|---|---|---|---|
+| [ScalaPB / zio-grpc / fs2-grpc](../detail/lang.scala.framework.scalapb-grpc.md) | 🟡 2/21 | 🟢 4/4 | |
 
 
 ## Tools
