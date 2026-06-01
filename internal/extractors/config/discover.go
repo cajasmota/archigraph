@@ -1771,11 +1771,12 @@ func parseExpoManifest(props map[string]string, content []byte) {
 		manifest = wrapper.Expo
 	}
 	var expo struct {
-		Name    string          `json:"name"`
-		Slug    string          `json:"slug"`
-		Version string          `json:"version"`
-		Scheme  json.RawMessage `json:"scheme"`
-		Plugins json.RawMessage `json:"plugins"`
+		Name       string          `json:"name"`
+		Slug       string          `json:"slug"`
+		Version    string          `json:"version"`
+		SDKVersion string          `json:"sdkVersion"`
+		Scheme     json.RawMessage `json:"scheme"`
+		Plugins    json.RawMessage `json:"plugins"`
 	}
 	if err := json.Unmarshal(manifest, &expo); err != nil {
 		return
@@ -1788,6 +1789,9 @@ func parseExpoManifest(props map[string]string, content []byte) {
 	}
 	if expo.Version != "" {
 		props["expo_version"] = expo.Version
+	}
+	if expo.SDKVersion != "" {
+		props["expo_sdk_version"] = expo.SDKVersion
 	}
 	if scheme := decodeStringOrArray(expo.Scheme); len(scheme) > 0 {
 		sort.Strings(scheme)

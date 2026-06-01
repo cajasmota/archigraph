@@ -115,6 +115,37 @@ var nativeBridgeCallees = map[string]bool{
 	"requireNativeComponent": true,
 	"requireNativeModule":    true, // Expo modules core
 	"NativeEventEmitter":     true,
+	"codegenNativeComponent": true, // RN new-arch (Fabric) component spec
+	"codegenNativeCommands":  true, // RN new-arch native commands spec
+}
+
+// nativeBridgeKindForCallee maps a native-bridge call-expression callee to the
+// subtype recorded on the emitted SCOPE.External native-boundary entity. A
+// component callee yields "native_component"; a module/registry callee yields
+// "native_module".
+var nativeBridgeKindForCallee = map[string]string{
+	"requireNativeComponent": "native_component",
+	"codegenNativeComponent": "native_component",
+	"codegenNativeCommands":  "native_component",
+	"requireNativeModule":    "native_module",
+}
+
+// turboModuleRegistryGetters are the TurboModuleRegistry methods whose string
+// argument names the requested TurboModule (RN new architecture).
+var turboModuleRegistryGetters = map[string]bool{
+	"get":          true,
+	"getEnforcing": true,
+}
+
+// nativeBridgeDep is a discovered JS↔native boundary dependency: a native
+// module or native component the JS code reaches across the bridge. `name` is
+// the module/component name (e.g. "BiometricAuth", "RCTMapView"); `subtype` is
+// "native_module" or "native_component"; `via` records how it was discovered.
+type nativeBridgeDep struct {
+	name    string
+	subtype string
+	via     string
+	line    int
 }
 
 // platformBranchReceivers are receiver identifiers whose member-comparison is a
@@ -208,6 +239,7 @@ func isNativeModuleSpecifier(spec string) bool {
 // on the matching IMPORTS edge (no new edge kind).
 func (x *extractor) emitNativeModuleSignals(root *sitter.Node, fileEnt *types.EntityRecord) {
 	var mods []string
+	var deps []nativeBridgeDep
 
 	// 1. Native package imports — both the IMPORTS edges already on the file
 	//    entity and the raw import bindings (importByLocal) are inspected.
@@ -237,18 +269,82 @@ func (x *extractor) emitNativeModuleSignals(root *sitter.Node, fileEnt *types.En
 	}
 
 	// 2. Member access: NativeModules.Foo / TurboModuleRegistry.get('Foo').
+	//    A bare `NativeModules.BiometricAuth` names the module "BiometricAuth";
+	//    `TurboModuleRegistry.get('Foo')` / `.getEnforcing('Foo')` names the
+	//    requested TurboModule via its string argument.
 	for _, mem := range findAllNodes(root, "member_expression") {
 		obj := mem.ChildByFieldName("object")
 		prop := mem.ChildByFieldName("property")
 		if obj == nil || prop == nil {
 			continue
 		}
-		if nativeBridgeMembers[x.nodeText(obj)] {
-			mods = append(mods, x.nodeText(obj)+"."+x.nodeText(prop))
+		recv := x.nodeText(obj)
+		if !nativeBridgeMembers[recv] {
+			continue
+		}
+		member := x.nodeText(prop)
+		mods = append(mods, recv+"."+member)
+		switch recv {
+		case "NativeModules":
+			// NativeModules.BiometricAuth — `member` is the native module name.
+			deps = append(deps, nativeBridgeDep{
+				name: member, subtype: "native_module",
+				via: "NativeModules", line: int(mem.StartPoint().Row) + 1,
+			})
+		case "TurboModuleRegistry":
+			// TurboModuleRegistry.get('Foo') / .getEnforcing('Foo') — the name is
+			// the string argument of the enclosing call, not `member` itself.
+			if turboModuleRegistryGetters[member] {
+				if call := enclosingCall(mem); call != nil {
+					if name := stringArg(x, call); name != "" {
+						deps = append(deps, nativeBridgeDep{
+							name: name, subtype: "native_module",
+							via:  "TurboModuleRegistry." + member,
+							line: int(mem.StartPoint().Row) + 1,
+						})
+					}
+				}
+			}
 		}
 	}
 
-	// 3. Native-bridge calls: requireNativeComponent('X'), new NativeEventEmitter().
+	// 2b. Destructured native modules: `const { BiometricAuth } = NativeModules`
+	//     — the idiomatic RN form. Each destructured binding names a module.
+	for _, decl := range findAllNodes(root, "variable_declarator") {
+		val := decl.ChildByFieldName("value")
+		if val == nil || val.Type() != "identifier" || x.nodeText(val) != "NativeModules" {
+			continue
+		}
+		nameNode := decl.ChildByFieldName("name")
+		if nameNode == nil || nameNode.Type() != "object_pattern" {
+			continue
+		}
+		for i := 0; i < int(nameNode.ChildCount()); i++ {
+			c := nameNode.Child(i)
+			if c == nil {
+				continue
+			}
+			var local string
+			switch c.Type() {
+			case "shorthand_property_identifier_pattern", "shorthand_property_identifier":
+				local = x.nodeText(c)
+			case "pair_pattern":
+				local = strings.Trim(x.nodeText(c.ChildByFieldName("key")), `"'`+"`")
+			}
+			if local == "" {
+				continue
+			}
+			mods = append(mods, "NativeModules."+local)
+			deps = append(deps, nativeBridgeDep{
+				name: local, subtype: "native_module",
+				via: "NativeModules", line: int(decl.StartPoint().Row) + 1,
+			})
+		}
+	}
+
+	// 3. Native-bridge calls: requireNativeComponent('RCTFoo'), new
+	//    NativeEventEmitter(), codegenNativeComponent('RCTFoo') (RN new arch),
+	//    requireNativeModule('ExpoFoo') (Expo modules core).
 	for _, call := range findAllNodes(root, "call_expression", "new_expression") {
 		fn := call.ChildByFieldName("function")
 		var callee string
@@ -267,6 +363,12 @@ func (x *extractor) emitNativeModuleSignals(root *sitter.Node, fileEnt *types.En
 			arg := stringArg(x, call)
 			if arg != "" {
 				mods = append(mods, callee+"('"+arg+"')")
+				if subtype, ok := nativeBridgeKindForCallee[callee]; ok {
+					deps = append(deps, nativeBridgeDep{
+						name: arg, subtype: subtype,
+						via: callee, line: int(call.StartPoint().Row) + 1,
+					})
+				}
 			} else {
 				mods = append(mods, callee+"()")
 			}
@@ -277,6 +379,88 @@ func (x *extractor) emitNativeModuleSignals(root *sitter.Node, fileEnt *types.En
 		ensureProps(fileEnt)
 		fileEnt.Properties["native_modules"] = joinSorted(mods)
 	}
+
+	x.emitNativeBridgeEntities(fileEnt, deps)
+}
+
+// enclosingCall walks up from a member_expression to the call_expression that
+// invokes it (so TurboModuleRegistry.get('Foo') resolves from the .get member
+// to the call carrying the 'Foo' argument), or returns nil.
+func enclosingCall(mem *sitter.Node) *sitter.Node {
+	for n := mem.Parent(); n != nil; n = n.Parent() {
+		switch n.Type() {
+		case "call_expression":
+			// Confirm `mem` is the function being called, not an argument.
+			if fn := n.ChildByFieldName("function"); fn != nil &&
+				fn.StartByte() <= mem.StartByte() && fn.EndByte() >= mem.EndByte() {
+				return n
+			}
+			return nil
+		case "arguments", "statement_block", "program":
+			return nil
+		}
+	}
+	return nil
+}
+
+// emitNativeBridgeEntities materialises one SCOPE.External entity per distinct
+// JS↔native boundary dependency (native module / native component) and a
+// DEPENDS_ON edge from the file entity to it. This makes the bridge boundary
+// first-class and queryable (vs. the summary `native_modules` property). The
+// edge ToID uses the `native_module:<name>` synthetic form mirrored by
+// addFileNavEdge's `route:` convention so the resolver binds it by name.
+func (x *extractor) emitNativeBridgeEntities(fileEnt *types.EntityRecord, deps []nativeBridgeDep) {
+	seen := make(map[string]bool, len(deps))
+	var ents []types.EntityRecord
+	// Append every DEPENDS_ON edge to the file entity FIRST, then append the
+	// SCOPE.External entities. Appending entities to x.entities may reallocate
+	// its backing array and invalidate the fileEnt pointer, so all writes
+	// through fileEnt must complete before x.entities grows.
+	for _, d := range deps {
+		if d.name == "" {
+			continue
+		}
+		key := d.subtype + ":" + d.name
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
+		fileEnt.Relationships = append(fileEnt.Relationships, types.RelationshipRecord{
+			ToID: "native_module:" + d.name,
+			Kind: string(types.RelationshipKindDependsOn),
+			Properties: map[string]string{
+				"native_bridge": "1",
+				"native_name":   d.name,
+				"subtype":       d.subtype,
+				"via":           d.via,
+				"line":          strconv.Itoa(d.line),
+			},
+		})
+
+		ent := types.EntityRecord{
+			Name:          d.name,
+			QualifiedName: x.qualify(d.name),
+			Kind:          string(types.EntityKindExternal),
+			SourceFile:    x.filePath,
+			StartLine:     d.line,
+			EndLine:       d.line,
+			Language:      x.language,
+			Subtype:       d.subtype,
+			Properties: map[string]string{
+				"kind":          string(types.EntityKindExternal),
+				"subtype":       d.subtype,
+				"native_bridge": "1",
+				"native_name":   d.name,
+				"via":           d.via,
+			},
+			EnrichmentStatus: types.StatusPending,
+			QualityScore:     1.0,
+		}
+		ent.ID = ent.ComputeID()
+		ents = append(ents, ent)
+	}
+	x.entities = append(x.entities, ents...)
 }
 
 func ensurePropsRel(rel *types.RelationshipRecord) {

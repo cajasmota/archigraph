@@ -25011,7 +25011,8 @@
             "status": "full",
             "cites": ["internal/extractors/config/discover.go","internal/extractors/config/testdata/mobile/expo_config/app.json"],
             "issue": "https://github.com/cajasmota/archigraph/issues/2879",
-            "verified_at": "2026-05-29"
+            "notes": "parseExpoManifest mines app.json / app.config.{js,ts} Expo manifest → expo_name, expo_slug, expo_version, expo_sdk_version, expo_scheme, expo_plugins. #3580 added sdkVersion (expo_sdk_version), value-asserted in TestDiscover_MobileFixtures (51.0.0).",
+            "verified_at": "2026-06-02"
           },
           "expo_router_specifics": {
             "status": "full",
@@ -25024,6 +25025,12 @@
             "status": "full",
             "cites": ["internal/extractors/javascript/extractor.go"],
             "verified_at": "2026-05-28"
+          },
+          "native_module_bridge": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/issue3580_native_bridge_test.go","internal/extractors/javascript/mobile_navigation.go","internal/extractors/javascript/testdata/mobile_react_native/NativeBridge.tsx"],
+            "issue": "3580",
+            "notes": "Shared mobile_navigation.go emitNativeBridgeEntities pass (RN-and-Expo). Expo modules-core requireNativeModule('ExpoBattery') → SCOPE.External native_module entity 'ExpoBattery' + DEPENDS_ON edge; same path also covers TurboModuleRegistry/codegenNativeComponent/requireNativeComponent/NativeModules-destructuring. Value-asserting test issue3580_native_bridge_test.go."
           }
         }
       }
@@ -29110,6 +29117,12 @@
             "status": "full",
             "cites": ["internal/extractors/javascript/extractor.go"],
             "verified_at": "2026-05-28"
+          },
+          "native_module_bridge": {
+            "status": "full",
+            "cites": ["internal/extractors/javascript/issue3580_native_bridge_test.go","internal/extractors/javascript/mobile_navigation.go","internal/extractors/javascript/testdata/mobile_react_native/NativeBridge.tsx"],
+            "issue": "3580",
+            "notes": "emitNativeBridgeEntities materialises the JS↔native boundary as first-class SCOPE.External entities (subtype native_module | native_component) + DEPENDS_ON edges from the file entity, beyond the #2860 summary native_modules property. Value-asserting test proves: const {BiometricAuth}=NativeModules → native_module 'BiometricAuth'; TurboModuleRegistry.getEnforcing('RNDeviceInfo') → native_module 'RNDeviceInfo' (new arch); requireNativeComponent('RCTMapView') → native_component 'RCTMapView'; codegenNativeComponent('RCTWebView') → native_component 'RCTWebView' (Fabric); requireNativeModule('ExpoBattery') → native_module 'ExpoBattery'. via property records the bridge mechanism."
           }
         }
       }

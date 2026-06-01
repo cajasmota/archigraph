@@ -978,6 +978,9 @@ func TestDiscover_MobileFixtures(t *testing.T) {
 	if expo.Properties["expo_scheme"] != "fixtureapp" {
 		t.Errorf("expo_scheme=%q", expo.Properties["expo_scheme"])
 	}
+	if expo.Properties["expo_sdk_version"] != "51.0.0" {
+		t.Errorf("expo_sdk_version=%q want 51.0.0", expo.Properties["expo_sdk_version"])
+	}
 	if !strings.Contains(expo.Properties["expo_plugins"], "expo-router") ||
 		!strings.Contains(expo.Properties["expo_plugins"], "expo-build-properties") {
 		t.Errorf("expo_plugins wrong: %q", expo.Properties["expo_plugins"])
