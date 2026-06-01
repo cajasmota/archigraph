@@ -19659,10 +19659,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing",
-            "cites": ["internal/custom/java/jaxrs_filters.go","internal/custom/java/jaxrs_filters_test.go","testdata/fixtures/sources/java/jaxrs/JaxrsFiltersFixture.java"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/jaxrs_filters.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "verified_at": "2026-06-01"
           }
         },
         "Testing": {
@@ -19697,68 +19696,66 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/jakarta_ee_advanced.go","internal/custom/java/jaxrs_filters_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "partial",
+            "cites": ["internal/custom/java/jakarta_ee.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "CDI/EJB bean entities (SCOPE.Service/Component) emit live for jaxrs files carrying jakarta_ee markers; the @EJB/@Inject DEPENDS_ON injection edge is dropped by the no-carrier policy in patternResultToRecords.",
+            "verified_at": "2026-06-01"
           },
           "di_injection_point": {
             "status": "missing",
-            "cites": ["internal/custom/java/jakarta_ee_advanced.go","internal/custom/java/jaxrs_filters_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "cites": ["internal/custom/java/jakarta_ee.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "@Inject/@EJB injection DEPENDS_ON edges are constructed but DROPPED live: their SourceRef (scope:dependency:jakarta:...) has no carrier entity in patternResultToRecords, so the edge never reaches the graph. Genuinely not produced.",
+            "verified_at": "2026-06-01"
           },
           "di_scope_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/jakarta_ee_advanced.go","internal/custom/java/jaxrs_filters_test.go","testdata/fixtures/sources/java/jaxrs/JaxrsFiltersFixture.java"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "partial",
+            "cites": ["internal/custom/java/jakarta_ee.go","internal/custom/java/java_di_scope_deepen.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "CDI scope components (@RequestScoped/@ConversationScoped) emit live with cdi_scope/scope props; no DEPENDS_ON injection wiring (that edge is dropped).",
+            "verified_at": "2026-06-01"
           }
         },
         "Transactions": {
           "transaction_boundary_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Transactional class/method boundaries; jaxrs in txFrameworks; OWNS edge; TestTransactional_FrameworkGating_Issue3003 verifies jaxrs",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_propagation": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "propagation/TxType; jaxrs in txFrameworks; TestTransactional_FrameworkGating_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_rollback_rules": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "rollbackFor/noRollbackFor; jaxrs in txFrameworks; TestTransactional_FrameworkGating_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           }
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/cdi_interceptors.go","internal/custom/java/cdi_interceptors_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/cdi_interceptors.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "CDI @Interceptor + @AroundInvoke/@AroundConstruct methods extracted as SCOPE.Pattern(subtype=advice) with advice_type (around_invoke/around_construct) + aspect + framework properties; OWNS edge; value-asserting TestCDI_JAXRS_InterceptorClass_Issue3082",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/cdi_interceptors.go","internal/custom/java/cdi_interceptors_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/cdi_interceptors.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Interceptor-annotated classes detected as SCOPE.Pattern(subtype=aspect, kind=cdi_interceptor) with framework=jaxrs; TestCDI_JAXRS_InterceptorClass_Issue3082 value-asserting",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/cdi_interceptors.go","internal/custom/java/cdi_interceptors_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "@InterceptorBinding annotation type declarations extracted as SCOPE.Pattern(subtype=pointcut, kind=interceptor_binding); REFERENCES edge from advice to binding; value-asserting TestCDI_JAXRS_InterceptorBinding_Issue3082",
-            "verified_at": "2026-05-30"
+            "status": "partial",
+            "cites": ["internal/custom/java/cdi_interceptors.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Pointcut entities emit only via the @InterceptorBinding selector path; a plain @Interceptor+@AroundInvoke pair emits aspect+advice but no separate pointcut entity.",
+            "verified_at": "2026-06-01"
           }
         },
         "Observability": {
@@ -20002,10 +19999,9 @@
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/micronaut_aop.go","testdata/fixtures/sources/java/micronaut/AuthFilter.java"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/micronaut_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "verified_at": "2026-06-01"
           }
         },
         "Testing": {
@@ -20040,68 +20036,60 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/micronaut.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/java/micronaut.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "verified_at": "2026-06-01"
           },
           "di_injection_point": {
-            "status": "missing",
-            "cites": ["internal/custom/java/micronaut.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/java/micronaut.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "verified_at": "2026-06-01"
           },
           "di_scope_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/micronaut.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/java/micronaut.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "verified_at": "2026-06-01"
           }
         },
         "Transactions": {
           "transaction_boundary_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Transactional class/method boundaries; micronaut in txFrameworks; OWNS edge; TestTransactional_FrameworkGating_Issue3003 verifies micronaut activation",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_propagation": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "propagation/TxType captured; micronaut in txFrameworks; TestTransactional_FrameworkGating_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_rollback_rules": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "rollbackFor/noRollbackFor; micronaut in txFrameworks; TestTransactional_FrameworkGating_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           }
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/micronaut_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/micronaut_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "Micronaut AOP: @InterceptorBean binding + intercept() method extracted as SCOPE.Pattern(subtype=advice) with advice_type=around + binding property; OWNS edge from interceptor class; REFERENCES edge to pointcut; value-asserting tests TestMicronautAOP_AdviceAttribution_Issue3084",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/micronaut_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/micronaut_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Around @interface + MethodInterceptor-implementing classes detected as SCOPE.Pattern(subtype=aspect); TestMicronautAOP_AspectExtraction_Issue3084 proves binding annotation + interceptor class both emitted",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/micronaut_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "@Around-annotated binding annotation type emitted as SCOPE.Pattern(subtype=pointcut); REFERENCES edge from advice to pointcut; TestMicronautAOP_PointcutResolution_Issue3084 value-asserting",
-            "verified_at": "2026-05-30"
+            "status": "partial",
+            "cites": ["internal/custom/java/micronaut_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Pointcut entities emit only for the @Around @interface binding-annotation path; the MethodInterceptor-implementation path emits aspect+advice but no separate pointcut entity.",
+            "verified_at": "2026-06-01"
           }
         },
         "Observability": {
@@ -21169,56 +21157,49 @@
             "verified_at": "2026-06-02"
           },
           "di_scope_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_boot.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/spring_di_deepen.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "verified_at": "2026-06-01"
           }
         },
         "Transactions": {
           "transaction_boundary_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Transactional on class/method detected; class-level boundary + method-level SCOPE.Pattern(subtype=transaction_boundary) with declaring_class, framework; OWNS edges from class to method boundaries; Jakarta/JTA TxType positional form handled; value-asserting fixture TestTransactional_Boundary_Propagation_Rollback_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_propagation": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "propagation=Propagation.\u003cMODE\u003e (Spring) and TxType.\u003cMODE\u003e (JTA) extracted into propagation property; isolation + readOnly also captured; all Spring propagation modes + JTA TxType modes covered; value-asserting test TestTransactional_Boundary_Propagation_Rollback_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_rollback_rules": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "rollbackFor/noRollbackFor X.class single + {A.class,B.class} list captured as rollback_for/no_rollback_for properties; value-asserting test covers single + multi-class rollback + noRollbackFor",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           }
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/spring_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "Spring AOP: @Aspect classes, @Before/@After/@Around/@AfterReturning/@AfterThrowing advice methods extracted as SCOPE.Pattern(subtype=advice) with advice_type+pointcut_expression+aspect properties; OWNS edge from aspect; REFERENCES edge for named pointcuts; all 5 advice types covered; value-asserting tests in TestSpringAOP_AdviceAttribution_Issue3004",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/spring_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Aspect-annotated classes detected as SCOPE.Pattern(subtype=aspect) with kind=aspect + framework properties; Spring Boot + Spring WebFlux gated; value-asserting tests in TestSpringAOP_Fixture_Issue3004",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/spring_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Pointcut declarations detected as SCOPE.Pattern(subtype=pointcut) with pointcut_expression; named pointcut references resolved via REFERENCES edges from advice; inline AspectJ execution() excluded from named-reference resolution; value-asserting tests",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           }
         },
         "Observability": {
@@ -21467,71 +21448,67 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/spring_boot.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "spring_webflux shares same DI model as spring_boot; @Autowired field/setter/constructor injection and @Bean method extraction handled by ExtractSpringBoot. No @Qualifier resolution.",
-            "verified_at": "2026-05-29"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_di_deepen.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Spring @Autowired field/ctor DEPENDS_ON edges emit live; activation requires a spring_webflux source marker (reactor/Mono/Flux) co-present so the dispatcher selects the spring_webflux token.",
+            "verified_at": "2026-06-01"
           },
           "di_injection_point": {
-            "status": "missing",
-            "cites": ["internal/custom/java/spring_boot.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "spring_webflux uses same @Autowired/@Bean extractor as spring_boot; field, setter, and constructor injection detected. No @Qualifier or @Primary resolution.",
-            "verified_at": "2026-05-29"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_di_deepen.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Injection-point DEPENDS_ON edges emit live under the spring_webflux token; same co-marker activation caveat as di_binding.",
+            "verified_at": "2026-06-01"
           },
           "di_scope_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/spring_boot.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/spring_di_deepen.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "spring_boot.go gate includes spring-webflux (line 13); emits spring_scope property (line 427) for @Scope/@RequestScope/@SessionScope/@ApplicationScope annotations. Registry cite was missing (#3176).",
-            "verified_at": "2026-05-29"
+            "verified_at": "2026-06-01"
           }
         },
         "Transactions": {
           "transaction_boundary_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "@Transactional class/method boundaries; spring-webflux in txFrameworks; OWNS edge; same extractor as spring-boot; TestTransactional_FrameworkGating_Issue3003 verifies spring_webflux activation",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_propagation": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "propagation=Propagation.\u003cMODE\u003e and TxType.\u003cMODE\u003e; isolation + readOnly; spring-webflux in txFrameworks; TestTransactional_FrameworkGating_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           },
           "transaction_rollback_rules": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/transactional.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/transactional.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "rollbackFor/noRollbackFor single + list; spring-webflux in txFrameworks; TestTransactional_FrameworkGating_Issue3003",
-            "verified_at": "2026-05-30"
+            "verified_at": "2026-06-01"
           }
         },
         "AOP": {
           "advice_attribution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "Spring AOP shares same extractor as spring-boot; all 5 advice types (@Before/@After/@Around/@AfterReturning/@AfterThrowing) with advice_type+pointcut_expression+aspect; OWNS+REFERENCES edges; spring-webflux in aopFrameworks gate; value-asserting tests TestSpringAOP_AllAdviceTypes_Issue3004 uses spring-webflux framework",
-            "verified_at": "2026-05-30"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Advice entities + OWNS edges emit under spring_webflux token; webflux co-marker activation caveat.",
+            "verified_at": "2026-06-01"
           },
           "aspect_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "@Aspect-annotated classes detected as SCOPE.Pattern(subtype=aspect); spring-webflux is explicitly gated in aopFrameworks; same extraction as spring-boot; TestSpringAOP_AllAdviceTypes_Issue3004 uses spring-webflux framework",
-            "verified_at": "2026-05-30"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "@Aspect/@Pointcut/@Around emit under the spring_webflux token; activation requires a webflux source marker co-present.",
+            "verified_at": "2026-06-01"
           },
           "pointcut_resolution": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_aop.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "@Pointcut declarations extracted; named reference resolution via REFERENCES; spring-webflux in aopFrameworks; TestSpringAOP_AllAdviceTypes_Issue3004 uses spring-webflux framework",
-            "verified_at": "2026-05-30"
+            "status": "partial",
+            "cites": ["internal/custom/java/spring_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Pointcut entities + REFERENCES edges emit under spring_webflux token; webflux co-marker activation caveat.",
+            "verified_at": "2026-06-01"
           }
         },
         "Observability": {
@@ -23343,18 +23320,17 @@
       "capabilities": {
         "Schema": {
           "nested_model_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/bean_validation.go","internal/custom/java/bean_validation_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "@Valid (cascade/nested validation marker) is recognized and lifts the annotated parameter to required; no recursion into the nested type's own fields.",
-            "verified_at": "2026-05-29"
+            "status": "partial",
+            "cites": ["internal/custom/java/bean_validation.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
+            "notes": "Nested @Valid field schema entities emit live; the VALIDATES edge (owner class -\u003e nested type) is dropped by the no-carrier policy because its SourceRef (scope:class:bean_validation:...) has no carrier entity.",
+            "verified_at": "2026-06-01"
           },
           "schema_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/bean_validation.go","internal/custom/java/bean_validation_test.go","testdata/fixtures/sources/java/bean_validation/ValidatedDtoFixture.java"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/bean_validation.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "Parameter-level Bean Validation constraints (@NotNull, @NotBlank, @Size, @Min, @Max, @Email, @Pattern) are captured in the Annotations slice on each handler parameter and drive the Required flag. Field-level recursion into nested DTO classes is not implemented (partial scope). Proven by TestBeanValidation_SchemaExtraction_Issue3002 and TestBeanValidation_MultipleConstraints_Issue3002.",
-            "verified_at": "2026-05-29"
+            "verified_at": "2026-06-01"
           }
         },
         "Constraints": {
@@ -23366,11 +23342,10 @@
             "verified_at": "2026-05-29"
           },
           "custom_validator_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/bean_validation.go","internal/custom/java/bean_validation_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
+            "status": "full",
+            "cites": ["internal/custom/java/bean_validation.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "notes": "Extracting classes that implement ConstraintValidator\u003cA,T\u003e requires scanning for the interface-implementation pattern. No current extractor does this. Leave red — out of scope for #3002.",
-            "verified_at": "2026-05-29"
+            "verified_at": "2026-06-01"
           }
         },
         "Coercion": {

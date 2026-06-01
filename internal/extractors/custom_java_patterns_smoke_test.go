@@ -220,3 +220,343 @@ func names(recs []types.EntityRecord) []string {
 	}
 	return out
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DI / AOP / Transactions / Validation re-verification (issue #3589, epic #3584)
+//
+// These value-asserting tests drive the LIVE custom dispatch (via runJavaPatterns)
+// and prove the now-wired DI/AOP/Tx/validation pattern extractors emit specific
+// entities/edges. They are the evidence backing the coverage re-flips in
+// docs/coverage/registry.json for lang.java.framework.{spring-boot,spring-webflux,
+// micronaut,jaxrs} and lang.java.validation.bean-validation.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// findByRef returns the first record whose Properties["ref"] equals ref.
+func findByRef(recs []types.EntityRecord, ref string) *types.EntityRecord {
+	for i := range recs {
+		if recs[i].Properties["ref"] == ref {
+			return &recs[i]
+		}
+	}
+	return nil
+}
+
+// TestJavaPatternsSpringAOPLive proves Spring AOP aspect_extraction,
+// advice_attribution, and pointcut_resolution reach the graph live.
+func TestJavaPatternsSpringAOPLive(t *testing.T) {
+	src := `
+package x;
+import org.springframework.stereotype.Component;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.Around;
+@Aspect
+@Component
+public class LoggingAspect {
+    @Pointcut("execution(* com.example..*(..))")
+    public void anyOp() {}
+    @Around("anyOp()")
+    public Object logAround(ProceedingJoinPoint pjp) throws Throwable { return pjp.proceed(); }
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/LoggingAspect.java", src)
+
+	// aspect_extraction
+	aspect := findByRef(recs, "scope:pattern:aspect:src/main/java/x/LoggingAspect.java:LoggingAspect")
+	if aspect == nil {
+		t.Fatalf("expected @Aspect LoggingAspect to emit SCOPE.Pattern(aspect); got %v", names(recs))
+	}
+	if got := aspect.Properties["kind"]; got != "aspect" {
+		t.Errorf("aspect kind = %q, want aspect", got)
+	}
+
+	// advice_attribution — advice_type must be the resolved around designator.
+	advice := findByRef(recs, "scope:pattern:advice:src/main/java/x/LoggingAspect.java:LoggingAspect.logAround")
+	if advice == nil {
+		t.Fatalf("expected @Around advice LoggingAspect.logAround to emit; got %v", names(recs))
+	}
+	if got := advice.Properties["advice_type"]; got != "around" {
+		t.Errorf("advice_type = %q, want around", got)
+	}
+	// aspect OWNS advice
+	if !hasRel(aspect, "OWNS", advice.Properties["ref"]) {
+		t.Errorf("expected aspect OWNS advice edge to %s; got %v", advice.Properties["ref"], aspect.Relationships)
+	}
+
+	// pointcut_resolution — pointcut entity + advice REFERENCES pointcut.
+	pc := findByRef(recs, "scope:pattern:pointcut:src/main/java/x/LoggingAspect.java:LoggingAspect.anyOp")
+	if pc == nil {
+		t.Fatalf("expected @Pointcut LoggingAspect.anyOp to emit; got %v", names(recs))
+	}
+	if got := pc.Properties["pointcut_expression"]; got != "execution(* com.example..*(..))" {
+		t.Errorf("pointcut_expression = %q", got)
+	}
+	if !hasRel(advice, "REFERENCES", pc.Properties["ref"]) {
+		t.Errorf("expected advice REFERENCES pointcut edge to %s; got %v", pc.Properties["ref"], advice.Relationships)
+	}
+}
+
+// TestJavaPatternsTransactionalLive proves @Transactional boundary, propagation,
+// and rollback-rule extraction reach the graph live.
+func TestJavaPatternsTransactionalLive(t *testing.T) {
+	src := `
+package x;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+@Service
+public class OrderService {
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = IllegalStateException.class)
+    public void placeOrder() {}
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/OrderService.java", src)
+
+	tx := findByRef(recs, "scope:pattern:transaction_boundary:src/main/java/x/OrderService.java:OrderService.placeOrder")
+	if tx == nil {
+		t.Fatalf("expected @Transactional method to emit a transaction_boundary entity; got %v", names(recs))
+	}
+	if got := tx.Properties["transaction_boundary"]; got != "method" {
+		t.Errorf("transaction_boundary = %q, want method", got)
+	}
+	// transaction_propagation
+	if got := tx.Properties["propagation"]; got != "REQUIRES_NEW" {
+		t.Errorf("propagation = %q, want REQUIRES_NEW", got)
+	}
+	// transaction_rollback_rules
+	if got := tx.Properties["rollback_for"]; got != "IllegalStateException" {
+		t.Errorf("rollback_for = %q, want IllegalStateException", got)
+	}
+}
+
+// TestJavaPatternsMicronautDIAOPLive proves Micronaut DI binding/injection/scope,
+// AOP aspect/advice, and HttpServerFilter middleware reach the graph live.
+func TestJavaPatternsMicronautDIAOPLive(t *testing.T) {
+	bean := `
+package x;
+import io.micronaut.context.annotation.Bean;
+import jakarta.inject.Singleton;
+@Singleton
+public class OrderService {
+    private final OrderRepository repo;
+    public OrderService(OrderRepository repo) { this.repo = repo; }
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/OrderService.java", bean)
+	// di_binding_extraction + di_scope_resolution: @Singleton bean.
+	svc := findByRef(recs, "scope:service:micronaut_bean:src/main/java/x/OrderService.java:OrderService")
+	if svc == nil {
+		t.Fatalf("expected @Singleton OrderService micronaut bean; got %v", names(recs))
+	}
+	if got := svc.Properties["scope"]; got != "Singleton" {
+		t.Errorf("micronaut bean scope = %q, want Singleton", got)
+	}
+	// di_injection_point: constructor DEPENDS_ON OrderRepository.
+	if !hasRel(svc, "DEPENDS_ON", "scope:dependency:micronaut:src/main/java/x/OrderService.java:OrderRepository") {
+		t.Errorf("expected ctor DEPENDS_ON OrderRepository edge; got %v", svc.Relationships)
+	}
+
+	interceptor := `
+package x;
+import io.micronaut.aop.MethodInterceptor;
+import io.micronaut.aop.MethodInvocationContext;
+import jakarta.inject.Singleton;
+@Singleton
+public class LoggingInterceptor implements MethodInterceptor<Object, Object> {
+    public Object intercept(MethodInvocationContext<Object, Object> context) { return context.proceed(); }
+}
+`
+	recs2 := runJavaPatterns(t, "src/main/java/x/LoggingInterceptor.java", interceptor)
+	// AOP aspect_extraction: MethodInterceptor class is an aspect.
+	asp := findByRef(recs2, "scope:pattern:aspect:src/main/java/x/LoggingInterceptor.java:LoggingInterceptor")
+	if asp == nil {
+		t.Fatalf("expected MethodInterceptor to emit aspect; got %v", names(recs2))
+	}
+	// AOP advice_attribution: intercept() method advice_type=around + OWNS.
+	adv := findByRef(recs2, "scope:pattern:advice:src/main/java/x/LoggingInterceptor.java:LoggingInterceptor.intercept")
+	if adv == nil {
+		t.Fatalf("expected intercept() advice; got %v", names(recs2))
+	}
+	if got := adv.Properties["advice_type"]; got != "around" {
+		t.Errorf("micronaut advice_type = %q, want around", got)
+	}
+	if !hasRel(asp, "OWNS", adv.Properties["ref"]) {
+		t.Errorf("expected interceptor OWNS advice edge; got %v", asp.Relationships)
+	}
+
+	filter := `
+package x;
+import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.filter.HttpServerFilter;
+@Filter("/**")
+public class AuthFilter implements HttpServerFilter {
+}
+`
+	recs3 := runJavaPatterns(t, "src/main/java/x/AuthFilter.java", filter)
+	// middleware_coverage: HttpServerFilter.
+	mw := findByRef(recs3, "scope:component:micronaut_filter:src/main/java/x/AuthFilter.java:AuthFilter")
+	if mw == nil {
+		t.Fatalf("expected @Filter HttpServerFilter middleware; got %v", names(recs3))
+	}
+	if got := mw.Properties["middleware"]; got != "http_server_filter" {
+		t.Errorf("micronaut middleware = %q, want http_server_filter", got)
+	}
+}
+
+// TestJavaPatternsJaxrsCDILive proves JAX-RS / CDI AOP (aspect/advice) and the
+// @Provider filter middleware reach the graph live.
+func TestJavaPatternsJaxrsCDILive(t *testing.T) {
+	cdi := `
+package x;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.InvocationContext;
+import jakarta.ws.rs.Path;
+@Interceptor
+public class LoggingInterceptor {
+    @AroundInvoke
+    public Object logInvocation(InvocationContext ctx) throws Exception { return ctx.proceed(); }
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/LoggingInterceptor.java", cdi)
+	asp := findByRef(recs, "scope:pattern:cdi_interceptor:src/main/java/x/LoggingInterceptor.java:LoggingInterceptor")
+	if asp == nil {
+		t.Fatalf("expected @Interceptor CDI aspect; got %v", names(recs))
+	}
+	if got := asp.Properties["kind"]; got != "cdi_interceptor" {
+		t.Errorf("CDI aspect kind = %q, want cdi_interceptor", got)
+	}
+	adv := findByRef(recs, "scope:pattern:cdi_advice:src/main/java/x/LoggingInterceptor.java:LoggingInterceptor.logInvocation")
+	if adv == nil {
+		t.Fatalf("expected @AroundInvoke advice; got %v", names(recs))
+	}
+	if got := adv.Properties["advice_type"]; got != "around_invoke" {
+		t.Errorf("CDI advice_type = %q, want around_invoke", got)
+	}
+	if !hasRel(asp, "OWNS", adv.Properties["ref"]) {
+		t.Errorf("expected interceptor OWNS advice edge; got %v", asp.Relationships)
+	}
+
+	filter := `
+package x;
+import jakarta.ws.rs.ext.Provider;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.ContainerRequestContext;
+@Provider
+public class AuthFilter implements ContainerRequestFilter {
+    public void filter(ContainerRequestContext ctx) {}
+}
+`
+	recs2 := runJavaPatterns(t, "src/main/java/x/AuthFilter.java", filter)
+	mw := findByRef(recs2, "scope:component:jaxrs_filter:src/main/java/x/AuthFilter.java:AuthFilter")
+	if mw == nil {
+		t.Fatalf("expected @Provider ContainerRequestFilter middleware; got %v", names(recs2))
+	}
+	if got := mw.Properties["filter_type"]; got != "container_request_filter" {
+		t.Errorf("jaxrs filter_type = %q, want container_request_filter", got)
+	}
+}
+
+// TestJavaPatternsJaxrsDIScopeLive proves JAX-RS/CDI di_scope_resolution
+// (@RequestScoped) AND di_binding (the bean entity) reach the graph live.
+// NOTE: the @Inject/@EJB injection-point DEPENDS_ON edge is intentionally NOT
+// asserted here — it is dropped by the no-carrier policy in
+// patternResultToRecords (see di_injection_point left missing for jaxrs).
+func TestJavaPatternsJaxrsDIScopeLive(t *testing.T) {
+	src := `
+package x;
+import jakarta.ws.rs.Path;
+import jakarta.enterprise.context.RequestScoped;
+@Path("/users")
+@RequestScoped
+public class UserResource {
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/UserResource.java", src)
+	scoped := findByRef(recs, "scope:component:cdi_scoped_bean:src/main/java/x/UserResource.java:UserResource")
+	if scoped == nil {
+		t.Fatalf("expected @RequestScoped CDI scope component; got %v", names(recs))
+	}
+	if got := scoped.Properties["cdi_scope"]; got != "RequestScoped" {
+		t.Errorf("cdi_scope = %q, want RequestScoped", got)
+	}
+}
+
+// TestJavaPatternsSpringWebfluxMiddlewareLive proves spring-webflux WebFilter
+// middleware reaches the graph live (the spring_webflux token activates via the
+// reactor/Mono marker present in the source).
+func TestJavaPatternsSpringWebfluxMiddlewareLive(t *testing.T) {
+	src := `
+package x;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
+public class AuthWebFilter implements WebFilter {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) { return chain.filter(exchange); }
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/AuthWebFilter.java", src)
+	mw := findRecord(recs, "Middleware", "AuthWebFilter")
+	if mw == nil {
+		t.Fatalf("expected WebFilter Middleware AuthWebFilter; got %v", names(recs))
+	}
+	if got := mw.Properties["middleware_type"]; got != "web_filter" {
+		t.Errorf("webflux middleware_type = %q, want web_filter", got)
+	}
+}
+
+// TestJavaPatternsBeanValidationLive proves bean-validation schema_extraction
+// (field constraints) and custom_validator_extraction reach the graph live.
+// The nested-model VALIDATES edge is NOT asserted (dropped by no-carrier policy;
+// nested_model_extraction is recorded partial, not full).
+func TestJavaPatternsBeanValidationLive(t *testing.T) {
+	dto := `
+package x;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.Valid;
+public class CreateUserRequest {
+    @NotNull
+    @Email
+    private String email;
+    @Valid
+    private Address address;
+}
+`
+	recs := runJavaPatterns(t, "src/main/java/x/CreateUserRequest.java", dto)
+	// schema_extraction: field-level constraints.
+	field := findByRef(recs, "scope:schema:bean_validation_field:src/main/java/x/CreateUserRequest.java:CreateUserRequest.email")
+	if field == nil {
+		t.Fatalf("expected @NotNull @Email field schema entity; got %v", names(recs))
+	}
+	if got := field.Properties["constraints"]; got != "@NotNull,@Email" {
+		t.Errorf("field constraints = %q, want @NotNull,@Email", got)
+	}
+	// nested_model_extraction: the @Valid nested field entity still emits.
+	nested := findByRef(recs, "scope:schema:bean_validation_field:src/main/java/x/CreateUserRequest.java:CreateUserRequest.address")
+	if nested == nil {
+		t.Fatalf("expected @Valid nested field schema entity; got %v", names(recs))
+	}
+
+	cv := `
+package x;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+public class PhoneValidator implements ConstraintValidator<ValidPhone, String> {
+    public boolean isValid(String value, ConstraintValidatorContext ctx) { return true; }
+}
+`
+	recs2 := runJavaPatterns(t, "src/main/java/x/PhoneValidator.java", cv)
+	// custom_validator_extraction: ConstraintValidator implementor.
+	cve := findByRef(recs2, "scope:custom_validator:bean_validation:src/main/java/x/PhoneValidator.java:PhoneValidator")
+	if cve == nil {
+		t.Fatalf("expected ConstraintValidator SCOPE.CustomValidator; got %v", names(recs2))
+	}
+	if got := cve.Properties["annotation_type"]; got != "ValidPhone" {
+		t.Errorf("custom validator annotation_type = %q, want ValidPhone", got)
+	}
+	if got := cve.Properties["validated_type"]; got != "String" {
+		t.Errorf("custom validator validated_type = %q, want String", got)
+	}
+}
