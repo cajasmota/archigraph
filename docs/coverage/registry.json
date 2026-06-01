@@ -18100,16 +18100,16 @@
             "notes": "extractAndroidDeepLinks() detects \u003cintent-filter\u003e blocks in AndroidManifest.xml with \u003cdata android:scheme\u003e as SCOPE.Reference deep_link entities with scheme/host/path URI templates (#3256)"
           },
           "navigation_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adIntentExplicitRE+adFragmentTransactionRE emit navigation edges (#3179)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): adIntentExplicitRE+adFragmentTransactionRE emit navigation edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsAndroidActivityLive asserts the MainActivity-\u003eDetailActivity explicit-Intent navigation operation emits live",
+            "verified_at": "2026-06-02"
           },
           "screen_detection": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adActivityClassRE+adFragmentClassRE detect Activity/Fragment screens (#3179)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): adActivityClassRE+adFragmentClassRE detect Activity/Fragment screens through RunCustomExtractors; value-asserting smoke test TestJavaPatternsAndroidActivityLive asserts the MainActivity SCOPE.UIComponent activity entity emits live",
+            "verified_at": "2026-06-02"
           }
         },
         "Platform": {
@@ -21157,16 +21157,16 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/spring_boot.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/java/patterns_dispatch.go","internal/custom/java/spring_boot.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): @Service/@Repository/@Component/@Configuration stereotype beans emit as SCOPE.Component through RunCustomExtractors; value-asserting smoke test TestJavaPatternsSpringControllerLive asserts the UserService SCOPE.Component stereotype entity emits live",
+            "verified_at": "2026-06-02"
           },
           "di_injection_point": {
-            "status": "missing",
-            "cites": ["internal/custom/java/spring_boot.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/java/patterns_dispatch.go","internal/custom/java/spring_boot.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): @Autowired field/setter/constructor injection emits DEPENDS_ON edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsSpringControllerLive asserts the UserService-\u003eUserRepository DEPENDS_ON edge emits live",
+            "verified_at": "2026-06-02"
           },
           "di_scope_resolution": {
             "status": "missing",
@@ -22655,10 +22655,10 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/hibernate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/hibernate.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): @OneToMany/@ManyToOne/@OneToOne/@ManyToMany associations emit DEPENDS_ON edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsJpaEntityLive asserts the Order-\u003eLineItem @OneToMany DEPENDS_ON edge emits live",
+            "verified_at": "2026-06-02"
           },
           "foreign_key_extraction": {
             "status": "partial",
@@ -22675,10 +22675,10 @@
             "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/hibernate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/hibernate.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): JPA association annotations emit directed DEPENDS_ON relationship edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsJpaEntityLive asserts the Order-\u003eLineItem DEPENDS_ON edge emits live",
+            "verified_at": "2026-06-02"
           }
         },
         "Queries": {
@@ -22783,10 +22783,10 @@
         },
         "Relationships": {
           "association_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/hibernate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/hibernate.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): jakarta.persistence @OneToMany/@ManyToOne/@OneToOne/@ManyToMany associations emit DEPENDS_ON edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsJpaEntityLive asserts the Order-\u003eLineItem @OneToMany DEPENDS_ON edge emits live",
+            "verified_at": "2026-06-02"
           },
           "foreign_key_extraction": {
             "status": "partial",
@@ -22803,10 +22803,10 @@
             "verified_at": "2026-05-29"
           },
           "relationship_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/hibernate.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "verified_at": "2026-05-29"
+            "status": "full",
+            "cites": ["internal/custom/java/hibernate.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_smoke_test.go"],
+            "notes": "Re-wired live via custom_java_patterns dispatch (#3586): JPA association annotations emit directed DEPENDS_ON relationship edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsJpaEntityLive asserts the Order-\u003eLineItem DEPENDS_ON edge emits live",
+            "verified_at": "2026-06-02"
           }
         },
         "Queries": {
