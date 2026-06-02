@@ -1055,6 +1055,26 @@
       }
     },
     {
+      "id": "db.cache",
+      "category": "databases",
+      "language": "multi",
+      "label": "Caching (regions/keys)",
+      "capabilities": {
+        "dependency_attribution": {
+          "status": "partial",
+          "cites": ["internal/custom/java/caching.go","internal/custom/javascript/caching.go","internal/custom/python/caching.go","internal/custom/ruby/caching.go"],
+          "issue": "3692",
+          "notes": "CACHES (read-through/write) + INVALIDATES (evict) edges from function/method to cache region/key. Cross-language consistent target ref cache:\u003cfw\u003e:\u003cregion\u003e."
+        },
+        "resource_extraction": {
+          "status": "partial",
+          "cites": ["internal/custom/java/caching.go","internal/custom/javascript/caching.go","internal/custom/python/caching.go","internal/custom/ruby/caching.go"],
+          "issue": "3692",
+          "notes": "Cache-region/key SCOPE.Datastore nodes from Spring @Cacheable/@CacheEvict/@CachePut, Python lru_cache/Flask-Caching/cachetools, Rails.cache.fetch/delete, NestJS @CacheKey + cache-manager. Dynamic keys honest-partial."
+        }
+      }
+    },
+    {
       "id": "db.cassandra",
       "category": "databases",
       "language": "multi",

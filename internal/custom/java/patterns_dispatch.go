@@ -74,6 +74,7 @@ var allPatternExtractors = []patternFn{
 	ExtractJakartaEE,
 	ExtractJakartaEEAdvanced,
 	ExtractJakartaJaxrsDTO,
+	ExtractJavaCaching,
 	ExtractJavaDIScopeDeepen,
 	ExtractJavaMethodSecurity,
 	ExtractJavalin,
