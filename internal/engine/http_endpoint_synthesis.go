@@ -649,6 +649,18 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// file just emitted when an adapter signal is present in the module.
 		applyRPCTransportBinding(string(content), entities, gqlTransportBefore,
 			"graphql", gqlHTTPAdapterSignals, gqlWSAdapterSignals)
+		// Producer side (#3619): Pothos + TypeGraphQL code-first GraphQL
+		// servers. These build the schema from TS code (a `builder` object /
+		// @Resolver classes) rather than the SDL-string resolver maps that
+		// synthesizeGraphQLResolvers (Apollo, #1422) recognises, so they need
+		// dedicated synthesizers. Both emit the SAME canonical operation-
+		// endpoint shape (http:GRAPHQL:/graphql/<Root>/<field>) as gqlgen /
+		// Apollo / Strawberry so GraphQL client links (#3667) join. emitDef so
+		// source_line points at the resolver method / field registration; each
+		// is import-/marker-gated so it no-ops on non-Pothos / non-TypeGraphQL
+		// files.
+		synthesizePothos(string(content), emitDef)
+		synthesizeTypeGraphQL(string(content), emitDef)
 		// Producer side: tRPC procedure resolvers (#2693). Each leaf
 		// procedure inside a `router({ ... })` literal becomes an
 		// addressable endpoint identified by its dotted path
