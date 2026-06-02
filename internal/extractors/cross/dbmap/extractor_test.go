@@ -639,3 +639,166 @@ func ListAdults(db *gorm.DB) {
 		t.Errorf("edge function_qname=%q, want ListAdults", edge.Properties["function_qname"])
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Raw-SQL table topology for high-traffic drivers (#3644)
+// Python DB-API (sqlite3/pymysql/...), Go raw driver, plain JDBC.
+// ---------------------------------------------------------------------------
+
+// findEdge returns the ACCESSES_TABLE edge on rec (fatals if absent).
+func findEdge(t *testing.T, rec types.EntityRecord) types.RelationshipRecord {
+	t.Helper()
+	for _, rel := range rec.Relationships {
+		if rel.Kind == RelAccessesTable {
+			return rel
+		}
+	}
+	t.Fatalf("no ACCESSES_TABLE edge on entity: %+v", rec)
+	return types.RelationshipRecord{}
+}
+
+// --- Python stdlib sqlite3: cursor.execute("SELECT id FROM users WHERE x=1")
+func TestPyDBAPISqlite3SelectReadsUsers(t *testing.T) {
+	src := `import sqlite3
+def load(db):
+    cur = db.cursor()
+    cur.execute("SELECT id FROM users WHERE x=1")`
+	recs := runExtract(t, "load.py", "python", src)
+	r := findByOpTable(t, recs, OpSelect, "users")
+	if r.Properties["orm"] != "dbapi" {
+		t.Errorf("orm=%q, want dbapi", r.Properties["orm"])
+	}
+	edge := findEdge(t, r)
+	if edge.Properties["table"] != "users" {
+		t.Errorf("edge table=%q, want users", edge.Properties["table"])
+	}
+	if edge.Properties["operation"] != OpSelect {
+		t.Errorf("edge operation=%q, want %s", edge.Properties["operation"], OpSelect)
+	}
+	if edge.Properties["function_qname"] != "load" {
+		t.Errorf("edge function_qname=%q, want load", edge.Properties["function_qname"])
+	}
+}
+
+// --- Python pymysql write: INSERT INTO orders -> table orders (write/INSERT)
+func TestPyDBAPIPymysqlInsertWritesOrders(t *testing.T) {
+	src := `import pymysql
+def add(conn):
+    cur = conn.cursor()
+    cur.execute("INSERT INTO orders (id) VALUES (1)")`
+	recs := runExtract(t, "add.py", "python", src)
+	r := findByOpTable(t, recs, OpInsert, "orders")
+	edge := findEdge(t, r)
+	if edge.Properties["table"] != "orders" || edge.Properties["operation"] != OpInsert {
+		t.Errorf("edge=%v, want table=orders op=INSERT", edge.Properties)
+	}
+}
+
+// --- Negative: dynamic/concatenated SQL must not fabricate a table.
+func TestPyDBAPIDynamicSQLNoFabricatedTable(t *testing.T) {
+	src := `import sqlite3
+def run(db, q):
+    db.cursor().execute(q)`
+	recs := runExtract(t, "dyn.py", "python", src)
+	for _, r := range recs {
+		if r.Kind == KindDataAccess && r.Properties["table"] != UnknownTable && r.Properties["table"] != "" {
+			t.Errorf("fabricated table %q from dynamic SQL", r.Properties["table"])
+		}
+	}
+}
+
+// --- Negative: a Python file with no recognised driver import emits nothing.
+func TestPyDBAPINoDriverImportSkipped(t *testing.T) {
+	src := `def run(cur):
+    cur.execute("SELECT id FROM users")`
+	recs := runExtract(t, "nodriver.py", "python", src)
+	if len(recs) != 0 {
+		t.Errorf("expected no records without a driver import, got %d: %+v", len(recs), recs)
+	}
+}
+
+// --- Go raw driver imported directly (lib/pq), no "database/sql" token.
+func TestGoSQLDriverLibPQSelect(t *testing.T) {
+	src := `package main
+import _ "github.com/lib/pq"
+func Fetch(db *DB) {
+    db.Query("SELECT name FROM accounts WHERE id = $1")
+}`
+	recs := runExtract(t, "fetch.go", "go", src)
+	r := findByOpTable(t, recs, OpSelect, "accounts")
+	if r.Properties["orm"] != "go_sql_driver" {
+		t.Errorf("orm=%q, want go_sql_driver", r.Properties["orm"])
+	}
+	edge := findEdge(t, r)
+	if edge.Properties["table"] != "accounts" {
+		t.Errorf("edge table=%q, want accounts", edge.Properties["table"])
+	}
+}
+
+// --- Go: importing BOTH database/sql and a driver must not double-emit.
+func TestGoSQLDriverNoDoubleEmitWithDatabaseSQL(t *testing.T) {
+	src := `package main
+import (
+    "database/sql"
+    _ "github.com/lib/pq"
+)
+func Fetch(db *sql.DB) { db.Query("SELECT name FROM accounts") }`
+	recs := runExtract(t, "both.go", "go", src)
+	count := 0
+	for _, r := range recs {
+		if r.Kind == KindDataAccess && r.Properties["table"] == "accounts" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected exactly 1 accounts access, got %d: %+v", count, recs)
+	}
+}
+
+// --- Java plain JDBC: stmt.executeQuery("SELECT ... FROM t")
+func TestJDBCExecuteQueryReadsTable(t *testing.T) {
+	src := `import java.sql.Connection;
+import java.sql.Statement;
+class Dao {
+    void load(Connection c) throws Exception {
+        Statement st = c.createStatement();
+        st.executeQuery("SELECT id FROM employees WHERE active = 1");
+    }
+}`
+	recs := runExtract(t, "Dao.java", "java", src)
+	r := findByOpTable(t, recs, OpSelect, "employees")
+	if r.Properties["orm"] != "jdbc" {
+		t.Errorf("orm=%q, want jdbc", r.Properties["orm"])
+	}
+	edge := findEdge(t, r)
+	if edge.Properties["table"] != "employees" || edge.Properties["operation"] != OpSelect {
+		t.Errorf("edge=%v, want table=employees op=SELECT", edge.Properties)
+	}
+}
+
+// --- Java JDBC write + JOIN: INSERT writes, JOIN yields both tables.
+func TestJDBCJoinYieldsBothTables(t *testing.T) {
+	src := `import java.sql.Statement;
+class Rep {
+    void j(Statement st) throws Exception {
+        st.executeQuery("SELECT * FROM orders JOIN customers ON orders.cid = customers.id");
+    }
+}`
+	recs := runExtract(t, "Rep.java", "java", src)
+	findByOpTable(t, recs, OpSelect, "orders")
+	findByOpTable(t, recs, OpSelect, "customers")
+}
+
+// --- Negative: JDBC dynamic SQL string variable -> no fabricated table.
+func TestJDBCDynamicSQLNoFabricatedTable(t *testing.T) {
+	src := `import java.sql.Statement;
+class D {
+    void run(Statement st, String q) throws Exception { st.executeQuery(q); }
+}`
+	recs := runExtract(t, "D.java", "java", src)
+	for _, r := range recs {
+		if r.Kind == KindDataAccess && r.Properties["table"] != UnknownTable && r.Properties["table"] != "" {
+			t.Errorf("fabricated table %q from dynamic JDBC SQL", r.Properties["table"])
+		}
+	}
+}

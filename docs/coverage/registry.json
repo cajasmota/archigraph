@@ -13839,9 +13839,9 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/3644",
-            "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
+            "status": "full",
+            "cites": ["internal/extractors/cross/dbmap/extractor_test.go","internal/extractors/cross/dbmap/orms.go"],
+            "notes": "Raw db.Query/Exec(\"…\") SQL resolves table topology: dbmap.detectGoSQLDriver (import-gated on github.com/go-sql-driver/mysql, lib/pq, go-sqlite3, jackc/pgx, jmoiron/sqlx) parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb. Value-asserting tests TestGoSQLDriverLibPQSelect + TestGoSQLDriverNoDoubleEmitWithDatabaseSQL (#3644).",
             "verified_at": "2026-06-02"
           }
         },
@@ -13992,10 +13992,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/engine/rules/go/orms/sqlite_go.yaml"],
-            "issue": "3214",
-            "verified_at": "2026-05-30"
+            "status": "full",
+            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/engine/rules/go/orms/sqlite_go.yaml","internal/extractors/cross/dbmap/orms.go"],
+            "notes": "Raw db.Query/Exec(\"…\") SQL resolves table topology: dbmap.detectGoSQLDriver (import-gated on github.com/mattn/go-sqlite3) parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb (#3644).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {
@@ -18159,11 +18159,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
-            "issue": "3214",
-            "notes": "Exec/Query/QueryRow/Get/Select/NamedExec call sites + SQL literal content captured; cannot bind a call site to a specific model without data-flow analysis",
-            "verified_at": "2026-05-30"
+            "status": "full",
+            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/extractors/cross/dbmap/extractor_test.go","internal/extractors/cross/dbmap/orms.go"],
+            "notes": "Exec/Query/QueryRow/Get/Select/NamedExec call sites captured; raw SQL literal table topology now resolved by dbmap.detectGoSQLDriver (import-gated on github.com/jackc/pgx) which parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb (#3644).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {
@@ -18274,11 +18273,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
-            "issue": "3214",
-            "notes": "Exec/Query/QueryRow/Get/Select/NamedExec call sites + SQL literal content captured; cannot bind a call site to a specific model without data-flow analysis",
-            "verified_at": "2026-05-30"
+            "status": "full",
+            "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go","internal/extractors/cross/dbmap/extractor_test.go","internal/extractors/cross/dbmap/orms.go"],
+            "notes": "Exec/Query/QueryRow/Get/Select/NamedExec call sites captured; raw SQL literal table topology now resolved by dbmap.detectGoSQLDriver (import-gated on github.com/jmoiron/sqlx) which parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb (#3644).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {
@@ -24101,10 +24099,10 @@
         "Queries": {
           "query_attribution": {
             "status": "partial",
-            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_other.go","internal/engine/orm_queries_test.go"],
+            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_other.go","internal/engine/orm_queries_test.go","internal/extractors/cross/dbmap/extractor_test.go","internal/extractors/cross/dbmap/orms.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3096",
-            "notes": "Engine pass scanJavaORM handles EntityManager.find/persist/remove/merge and Spring Data repository call patterns (findByX, save, etc.); emits QUERIES edges with orm=jpa or orm=spring_data; inline JPQL string content and @NamedQuery body text not parsed",
-            "verified_at": "2026-05-29"
+            "notes": "Engine pass scanJavaORM handles EntityManager.find/persist/remove/merge and Spring Data repository call patterns; emits QUERIES edges with orm=jpa or orm=spring_data. Plain JDBC raw SQL (Statement.executeQuery/executeUpdate(\"…\")) table topology now resolved by dbmap.detectJDBC (import-gated on java.sql/javax.sql) which parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb; value-asserting tests TestJDBCExecuteQueryReadsTable + TestJDBCJoinYieldsBothTables (#3644). Inline JPQL string content still unparsed for engine QUERIES edges.",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {
@@ -42037,9 +42035,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/python/orms/mysql_py.yaml","internal/extractors/python/raw_sql_db_calls.go"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/engine/rules/python/orms/mysql_py.yaml","internal/extractors/cross/dbmap/orms.go","internal/extractors/python/raw_sql_db_calls.go"],
+            "notes": "Raw cursor.execute(\"…\") SQL now resolves table topology: dbmap.detectPyDBAPI (import-gated on pymysql/mysqlclient) parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb. Value-asserting test TestPyDBAPIPymysqlInsertWritesOrders. Dynamic/concatenated SQL → no fabricated table (#3644).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {
@@ -42146,9 +42145,9 @@
         "Queries": {
           "query_attribution": {
             "status": "full",
-            "cites": ["internal/engine/rules/python/orms/postgresql_py.yaml","internal/extractors/python/raw_sql_db_calls.go"],
-            "issue": "3060",
-            "verified_at": "2026-05-29"
+            "cites": ["internal/engine/rules/python/orms/postgresql_py.yaml","internal/extractors/cross/dbmap/orms.go","internal/extractors/python/raw_sql_db_calls.go"],
+            "notes": "Raw cursor.execute(\"…\") SQL resolves table topology: dbmap.detectPyDBAPI/detectPsycopg2 (asyncpg/psycopg2 import-gated) parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb (#3644).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {
@@ -42247,9 +42246,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/python/orms/sqlite_py.yaml","internal/extractors/python/raw_sql_db_calls.go"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/engine/rules/python/orms/sqlite_py.yaml","internal/extractors/cross/dbmap/orms.go","internal/extractors/python/raw_sql_db_calls.go"],
+            "notes": "Raw cursor.execute(\"…\") SQL now resolves table topology: dbmap.detectPyDBAPI (import-gated on sqlite3/aiosqlite) parses FROM/INTO/UPDATE/JOIN and emits SCOPE.DataAccess + ACCESSES_TABLE edges with read/write verb. Value-asserting tests TestPyDBAPISqlite3SelectReadsUsers + negative TestPyDBAPIDynamicSQLNoFabricatedTable (#3644).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {

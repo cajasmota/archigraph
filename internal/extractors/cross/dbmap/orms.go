@@ -40,6 +40,21 @@ var importCallRE = regexp.MustCompile(
 	`(?mi)\b(?:require|import)\s*\(\s*["']([\w@][\w\-./:]*)["']\s*\)`,
 )
 
+// quotedImportRE captures quoted import paths inside Go-style grouped/blank
+// import blocks where the token does not directly follow the `import`
+// keyword:
+//
+//	import (
+//	    _ "github.com/lib/pq"
+//	    "database/sql"
+//	)
+//
+// It deliberately requires the path to contain a `/` or `.` so it does not
+// match arbitrary string literals (e.g. SQL fragments) — only module paths.
+var quotedImportRE = regexp.MustCompile(
+	`(?m)^\s*(?:import\s+)?(?:[\w.]+\s+)?"([\w@][\w\-]*[./][\w\-./:]*)"\s*$`,
+)
+
 // extractImportTokens returns the lower-cased set of import tokens found in source.
 func extractImportTokens(source string) map[string]bool {
 	out := map[string]bool{}
@@ -59,6 +74,11 @@ func extractImportTokens(source string) map[string]bool {
 		}
 	}
 	for _, m := range importCallRE.FindAllStringSubmatch(source, -1) {
+		if len(m) >= 2 {
+			add(m[1])
+		}
+	}
+	for _, m := range quotedImportRE.FindAllStringSubmatch(source, -1) {
 		if len(m) >= 2 {
 			add(m[1])
 		}
@@ -566,6 +586,46 @@ func detectJPA(source string) []access {
 }
 
 // ---------------------------------------------------------------------------
+// Java — plain JDBC (java.sql)
+// ---------------------------------------------------------------------------
+
+// JDBC raw SQL is passed as a string literal to Statement.executeQuery /
+// executeUpdate / execute / Connection.prepareStatement / prepareCall.
+// We reuse the shared raw-SQL table scanner (FROM/INTO/UPDATE/JOIN) over the
+// whole source — it already handles double-quoted SELECT/INSERT/UPDATE/DELETE
+// literals — and retag the hits as orm=jdbc. Files reach this detector only
+// when a java.sql / javax.sql import gate matched (see ormOrder), so the
+// scan is import-gated like every other driver.
+//
+// Honest-partial: dynamically built SQL ("SELECT * FROM " + tbl) is not a
+// single literal and resolves to no table (no fabricated edge).
+func detectJDBC(source string) []access {
+	return retagRaw(detectRawSQL(source), "jdbc")
+}
+
+// ---------------------------------------------------------------------------
+// Python — raw stdlib / third-party DB-API drivers (sqlite3, pymysql,
+// mysql.connector, cx_Oracle/oracledb, pyodbc, asyncpg, aiosqlite, MySQLdb).
+// These hand raw SQL strings to cursor.execute(...)/conn.execute(...). The
+// shared raw-SQL scanner resolves the table(s); we retag as orm=dbapi.
+// ---------------------------------------------------------------------------
+
+func detectPyDBAPI(source string) []access {
+	return retagRaw(detectRawSQL(source), "dbapi")
+}
+
+// ---------------------------------------------------------------------------
+// Go — raw database/sql drivers imported directly (lib/pq, go-sql-driver,
+// go-sqlite3, jackc/pgx, jmoiron/sqlx). Files using sqlx or a driver via a
+// blank import may never import "database/sql" by that literal token, so we
+// gate on the driver import as well and reuse the shared raw-SQL scanner.
+// ---------------------------------------------------------------------------
+
+func detectGoSQLDriver(source string) []access {
+	return retagRaw(detectRawSQL(source), "go_sql_driver")
+}
+
+// ---------------------------------------------------------------------------
 // Ruby — ActiveRecord
 // ---------------------------------------------------------------------------
 
@@ -969,6 +1029,41 @@ var ormOrder = []ormEntry{
 		detect:      detectPsycopg2,
 	},
 	{
+		// Raw Python DB-API drivers (stdlib + third-party). Reuses the
+		// shared raw-SQL table scanner. psycopg2/sqlalchemy keep their own
+		// entries above so their orm tags are preserved.
+		name: "dbapi",
+		importHints: []string{
+			"sqlite3", "aiosqlite",
+			"pymysql", "mysql.connector", "mysqldb", "mysqlclient",
+			"oracledb", "cx_oracle",
+			"pyodbc", "asyncpg",
+		},
+		detect: detectPyDBAPI,
+	},
+	{
+		// Raw Go SQL drivers imported directly (driver token, sqlx, pgx).
+		// database/sql keeps its own entry above; this catches files that
+		// import only the driver / sqlx wrapper.
+		name: "go_sql_driver",
+		importHints: []string{
+			"github.com/lib/pq",
+			"github.com/go-sql-driver/mysql",
+			"github.com/mattn/go-sqlite3",
+			"github.com/jackc/pgx",
+			"github.com/jmoiron/sqlx",
+		},
+		detect: detectGoSQLDriver,
+	},
+	{
+		// Plain JDBC (java.sql / javax.sql). Hibernate/JPA keep their own
+		// entry below; this catches Statement.executeQuery("SELECT … FROM t")
+		// style raw SQL.
+		name:        "jdbc",
+		importHints: []string{"java.sql", "javax.sql"},
+		detect:      detectJDBC,
+	},
+	{
 		name:        "hibernate",
 		importHints: []string{"javax.persistence", "jakarta.persistence", "hibernate"},
 		detect:      detectJPA,
@@ -1017,6 +1112,35 @@ func selectORMs(tokens map[string]bool) []ormEntry {
 		if matchesAnyImport(tokens, ormOrder[i].importHints) {
 			out = append(out, ormOrder[i])
 		}
+	}
+	// The "database_sql" and "go_sql_driver" entries both run the shared
+	// raw-SQL scanner over the same source; when a file matches both (e.g.
+	// imports "database/sql" and "github.com/lib/pq") keep only the first
+	// so the SCOPE.DataAccess entities are not duplicated under two orm tags.
+	out = dropDuplicateRawScanner(out, "database_sql", "go_sql_driver")
+	return out
+}
+
+// dropDuplicateRawScanner removes the `drop` entry from sel when `keep` is
+// also present — both delegate to detectRawSQL and would otherwise emit
+// identical table edges differing only by the orm tag.
+func dropDuplicateRawScanner(sel []ormEntry, keep, drop string) []ormEntry {
+	hasKeep := false
+	for i := range sel {
+		if sel[i].name == keep {
+			hasKeep = true
+			break
+		}
+	}
+	if !hasKeep {
+		return sel
+	}
+	out := sel[:0]
+	for i := range sel {
+		if sel[i].name == drop {
+			continue
+		}
+		out = append(out, sel[i])
 	}
 	return out
 }
