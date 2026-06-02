@@ -1412,6 +1412,149 @@ r.hset("hash", "field", "value")
 	}
 }
 
+// findCacheOpAtLine returns the cache_op entity on a given source line.
+func findCacheOpAtLine(t *testing.T, ents []extractResult, line int) extractResult {
+	t.Helper()
+	for _, e := range ents {
+		if e.Subtype == "cache_op" && e.StartLine == line {
+			return e
+		}
+	}
+	t.Fatalf("no cache_op found on line %d", line)
+	return extractResult{}
+}
+
+func hasRel(rels []relResult, kind, toID string) bool {
+	for _, r := range rels {
+		if r.Kind == kind && r.ToID == toID {
+			return true
+		}
+	}
+	return false
+}
+
+func findKeyspace(ents []extractResult, label string) (extractResult, bool) {
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Datastore" && e.Props["keyspace"] == label {
+			return e, true
+		}
+	}
+	return extractResult{}, false
+}
+
+// TestRedis_CacheOp_LiteralKey asserts the SPECIFIC key `session:abc` is
+// captured as a read access target with a READS_FROM edge.
+func TestRedis_CacheOp_LiteralKey(t *testing.T) {
+	src := `r.get("session:abc")
+`
+	ents := extract(t, "python_redis", src)
+	op := findCacheOpAtLine(t, ents, 1)
+	if op.Props["key"] != "session:abc" {
+		t.Fatalf("expected key=session:abc, got key=%q", op.Props["key"])
+	}
+	if !hasRel(op.Rels, "READS_FROM", "Datastore:redis:session:abc") {
+		t.Fatalf("expected READS_FROM edge to Datastore:redis:session:abc, got %+v", op.Rels)
+	}
+	ks, ok := findKeyspace(ents, "session:abc")
+	if !ok {
+		t.Fatal("expected keyspace entity for session:abc")
+	}
+	if ks.Props["key_type"] != "key" {
+		t.Fatalf("expected key_type=key, got %q", ks.Props["key_type"])
+	}
+}
+
+// TestRedis_CacheOp_SetWritesTo asserts a write verb emits WRITES_TO.
+func TestRedis_CacheOp_SetWritesTo(t *testing.T) {
+	src := `r.set("user:42", value)
+`
+	ents := extract(t, "python_redis", src)
+	op := findCacheOpAtLine(t, ents, 1)
+	if op.Props["key"] != "user:42" {
+		t.Fatalf("expected key=user:42, got %q", op.Props["key"])
+	}
+	if !hasRel(op.Rels, "WRITES_TO", "Datastore:redis:user:42") {
+		t.Fatalf("expected WRITES_TO edge to Datastore:redis:user:42, got %+v", op.Rels)
+	}
+}
+
+// TestRedis_CacheOp_ConcatPrefix asserts `r.set("user:" + id, v)` yields a
+// key-prefix `user:*`, not a fabricated concrete key.
+func TestRedis_CacheOp_ConcatPrefix(t *testing.T) {
+	src := `r.set("user:" + id, v)
+`
+	ents := extract(t, "python_redis", src)
+	op := findCacheOpAtLine(t, ents, 1)
+	if op.Props["key_prefix"] != "user:*" {
+		t.Fatalf("expected key_prefix=user:*, got %q", op.Props["key_prefix"])
+	}
+	if op.Props["key"] != "" {
+		t.Fatalf("expected no concrete key, got key=%q", op.Props["key"])
+	}
+	if !hasRel(op.Rels, "WRITES_TO", "Datastore:redis:user:*") {
+		t.Fatalf("expected WRITES_TO edge to Datastore:redis:user:*, got %+v", op.Rels)
+	}
+}
+
+// TestRedis_CacheOp_FStringPrefix asserts `r.get(f"session:{sid}")` yields a
+// key-prefix `session:*`.
+func TestRedis_CacheOp_FStringPrefix(t *testing.T) {
+	src := `r.get(f"session:{sid}")
+`
+	ents := extract(t, "python_redis", src)
+	op := findCacheOpAtLine(t, ents, 1)
+	if op.Props["key_prefix"] != "session:*" {
+		t.Fatalf("expected key_prefix=session:*, got %q", op.Props["key_prefix"])
+	}
+	if !hasRel(op.Rels, "READS_FROM", "Datastore:redis:session:*") {
+		t.Fatalf("expected READS_FROM edge to Datastore:redis:session:*, got %+v", op.Rels)
+	}
+}
+
+// TestRedis_CacheOp_DynamicKey is the negative case: a fully-dynamic key
+// (variable only) must emit the op with NO key edge and NO fabricated key.
+func TestRedis_CacheOp_DynamicKey(t *testing.T) {
+	src := `r.get(k)
+`
+	ents := extract(t, "python_redis", src)
+	op := findCacheOpAtLine(t, ents, 1)
+	if op.Props["key"] != "" {
+		t.Fatalf("expected no concrete key for dynamic key, got %q", op.Props["key"])
+	}
+	if op.Props["key_prefix"] != "" {
+		t.Fatalf("expected no key_prefix for dynamic key, got %q", op.Props["key_prefix"])
+	}
+	if len(op.Rels) != 0 {
+		t.Fatalf("expected no access edge for fully-dynamic key, got %+v", op.Rels)
+	}
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Datastore" {
+			t.Fatalf("expected no keyspace target for dynamic key, got %q", e.Props["keyspace"])
+		}
+	}
+}
+
+// TestRedis_CacheOp_FStringNoStaticHead asserts an f-string whose first token
+// is an interpolation (`f"{tenant}:cfg"`) is marked dynamic with no edge and
+// no fabricated keyspace — the key arg matched but could not be resolved.
+func TestRedis_CacheOp_FStringNoStaticHead(t *testing.T) {
+	src := `r.get(f"{tenant}:cfg")
+`
+	ents := extract(t, "python_redis", src)
+	op := findCacheOpAtLine(t, ents, 1)
+	if op.Props["key"] != "<dynamic>" {
+		t.Fatalf("expected key=<dynamic>, got %q", op.Props["key"])
+	}
+	if len(op.Rels) != 0 {
+		t.Fatalf("expected no edge for unresolved f-string, got %+v", op.Rels)
+	}
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Datastore" {
+			t.Fatalf("expected no keyspace node, got %q", e.Props["keyspace"])
+		}
+	}
+}
+
 func TestRedis_PubSub(t *testing.T) {
 	src := `r.publish("channel", "message")
 `
@@ -1424,6 +1567,87 @@ func TestRedis_PubSub(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("expected pubsub entity")
+	}
+}
+
+// TestRedis_PubSub_Channel asserts `r.publish("events", m)` captures channel
+// `events` with a PUBLISHES_TO edge.
+func TestRedis_PubSub_Channel(t *testing.T) {
+	src := `r.publish("events", m)
+`
+	ents := extract(t, "python_redis", src)
+	var op extractResult
+	for _, e := range ents {
+		if e.Subtype == "pubsub" && e.StartLine == 1 {
+			op = e
+		}
+	}
+	if op.Props["channel"] != "events" {
+		t.Fatalf("expected channel=events, got %q", op.Props["channel"])
+	}
+	if !hasRel(op.Rels, "PUBLISHES_TO", "Datastore:redis:events") {
+		t.Fatalf("expected PUBLISHES_TO edge to Datastore:redis:events, got %+v", op.Rels)
+	}
+	ks, ok := findKeyspace(ents, "events")
+	if !ok || ks.Props["key_type"] != "channel" {
+		t.Fatalf("expected channel keyspace events, got %+v", ks)
+	}
+}
+
+// TestRedis_PubSub_Subscribe asserts subscribe emits SUBSCRIBES_TO.
+func TestRedis_PubSub_Subscribe(t *testing.T) {
+	src := `pubsub.subscribe("notifications")
+`
+	ents := extract(t, "python_redis", src)
+	var op extractResult
+	for _, e := range ents {
+		if e.Subtype == "pubsub" && e.StartLine == 1 {
+			op = e
+		}
+	}
+	if op.Props["channel"] != "notifications" {
+		t.Fatalf("expected channel=notifications, got %q", op.Props["channel"])
+	}
+	if !hasRel(op.Rels, "SUBSCRIBES_TO", "Datastore:redis:notifications") {
+		t.Fatalf("expected SUBSCRIBES_TO edge, got %+v", op.Rels)
+	}
+}
+
+// TestRedis_Stream_Key asserts `r.xadd("orders", ...)` captures stream
+// `orders` with a WRITES_TO edge.
+func TestRedis_Stream_Key(t *testing.T) {
+	src := `r.xadd("orders", {"id": 1})
+`
+	ents := extract(t, "python_redis", src)
+	var op extractResult
+	for _, e := range ents {
+		if e.Subtype == "stream_op" && e.StartLine == 1 {
+			op = e
+		}
+	}
+	if op.Props["stream"] != "orders" {
+		t.Fatalf("expected stream=orders, got %q", op.Props["stream"])
+	}
+	if !hasRel(op.Rels, "WRITES_TO", "Datastore:redis:orders") {
+		t.Fatalf("expected WRITES_TO edge to Datastore:redis:orders, got %+v", op.Rels)
+	}
+}
+
+// TestRedis_Keyspace_Dedup asserts two ops on the same key converge on a
+// single keyspace target node.
+func TestRedis_Keyspace_Dedup(t *testing.T) {
+	src := `r.set("cart:1", v)
+r.get("cart:1")
+`
+	ents := extract(t, "python_redis", src)
+	count := 0
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Datastore" && e.Props["keyspace"] == "cart:1" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly 1 keyspace node for cart:1, got %d", count)
 	}
 }
 

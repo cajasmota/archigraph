@@ -40509,9 +40509,10 @@
         "Queries": {
           "query_attribution": {
             "status": "full",
-            "cites": ["internal/engine/rules/python/orms/redis_py.yaml"],
-            "issue": "3060",
-            "verified_at": "2026-05-29"
+            "cites": ["internal/custom/python/redis.go"],
+            "issue": "3643",
+            "notes": "Key/channel/stream topology extracted: concrete keys, prefix globs (user:*) from concat and f-strings; READS_FROM/WRITES_TO/PUBLISHES_TO/SUBSCRIBES_TO edges to SCOPE.Datastore keyspace targets. Matches JS scanJSRedis shape (#3643).",
+            "verified_at": "2026-06-02"
           }
         },
         "Migrations": {

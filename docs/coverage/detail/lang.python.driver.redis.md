@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | ✅ `full` | `2026-05-29` | 3060 | `internal/engine/rules/python/orms/redis_py.yaml` | — |
+| Query attribution | ✅ `full` | `2026-06-02` | 3643 | `internal/custom/python/redis.go` | Key/channel/stream topology extracted: concrete keys, prefix globs (user:*) from concat and f-strings; READS_FROM/WRITES_TO/PUBLISHES_TO/SUBSCRIBES_TO edges to SCOPE.Datastore keyspace targets. Matches JS scanJSRedis shape (#3643). |
 
 ### Migrations
 
