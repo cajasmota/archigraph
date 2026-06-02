@@ -345,7 +345,7 @@ func runTopicPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pas
 
 				ident := name
 				ch := broker
-				fresh = append(fresh, Link{
+				topicLink := Link{
 					ID:           id,
 					Source:       source,
 					Target:       target,
@@ -359,7 +359,11 @@ func runTopicPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pas
 						{pub.sourceFile},
 						{sub.sourceFile},
 					},
-				})
+				}
+				// #3628 — publisher and subscriber both matched on the same
+				// canonical topic/channel name; both sides AST-grounded. resolved.
+				topicLink.WithEdgeConfidence(ConfidenceResolved)
+				fresh = append(fresh, topicLink)
 			}
 		}
 	}

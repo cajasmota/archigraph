@@ -449,6 +449,10 @@ func runLabelPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pas
 					Identifier:   strPtr(label),
 					DiscoveredAt: now,
 				}
+				// #3628 — label_pass is a TF-IDF + kind-compatibility fuzzy
+				// match over shared labels; a statistical guess, not a proven
+				// endpoint contract. heuristic.
+				link.WithEdgeConfidence(ConfidenceHeuristic)
 				if raw >= labelLinkThreshold {
 					freshLinks = append(freshLinks, link)
 				} else {

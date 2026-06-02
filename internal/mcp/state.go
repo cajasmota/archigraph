@@ -194,6 +194,12 @@ type CrossRepoLink struct {
 	Confidence float64 `json:"confidence,omitempty"`
 	Channel    string  `json:"channel,omitempty"`
 	Method     string  `json:"method,omitempty"`
+	// Properties carries the on-disk links-pass annotations (resolve_strategy,
+	// normalization, and — since #3628 — the categorical extraction-confidence
+	// honesty marker under the "confidence" key). Surfaced read-side via
+	// EdgeConfidence() so MCP consumers can tell a fully-resolved cross-repo
+	// edge from a heuristically-/runtime-synthesised one.
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // EffectiveKind returns the link's relation, preferring the explicit "kind"
@@ -203,6 +209,26 @@ func (l CrossRepoLink) EffectiveKind() string {
 		return l.Kind
 	}
 	return l.Relation
+}
+
+// edgeConfidenceProp is the Properties key under which the links layer stamps
+// the categorical honesty marker (mirrors links.EdgeConfidenceKey; duplicated
+// here to avoid an MCP→links import edge for a single string constant).
+const edgeConfidenceProp = "confidence"
+
+// EdgeConfidence returns the extraction-confidence honesty marker for this
+// cross-repo edge (#3628): "resolved" (both endpoints matched on a canonical
+// id), "heuristic" (fuzzy / single-side-grounded), or "inferred" (derived from
+// a runtime-dynamic value). Per the honesty contract, an absent marker means
+// the edge is structurally grounded, so this returns "resolved" as the
+// default — AST-grounded passes (import_pass) deliberately do not stamp it.
+func (l CrossRepoLink) EdgeConfidence() string {
+	if l.Properties != nil {
+		if v := l.Properties[edgeConfidenceProp]; v != "" {
+			return v
+		}
+	}
+	return "resolved"
 }
 
 // LoadedRepo is one repo's graph plus index plus mtime tracking.

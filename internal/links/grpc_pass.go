@@ -226,7 +226,7 @@ func runGRPCPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 
 				ident := name // "grpc:ServiceName/MethodName"
 				ch := grpcChannel
-				fresh = append(fresh, Link{
+				grpcLink := Link{
 					ID:           id,
 					Source:       source,
 					Target:       target,
@@ -240,7 +240,11 @@ func runGRPCPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 						{client.sourceFile},
 						{server.sourceFile},
 					},
-				})
+				}
+				// #3628 — client stub and server impl matched on the same
+				// canonical grpc:Service/Method id; both sides AST-grounded. resolved.
+				grpcLink.WithEdgeConfidence(ConfidenceResolved)
+				fresh = append(fresh, grpcLink)
 			}
 		}
 	}

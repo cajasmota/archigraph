@@ -1637,6 +1637,12 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 						}
 						link.Properties["intra_repo"] = "true"
 					}
+					// #3628 — honesty marker. Every link emitted from this block
+					// pairs an AST-grounded consumer caller with an AST-grounded
+					// producer handler matched on the canonical (verb, path) id —
+					// even through prefix/case/param normalisation, both sides are
+					// real endpoints. That is the highest-honesty `resolved` class.
+					link.WithEdgeConfidence(ConfidenceResolved)
 					fresh = append(fresh, link)
 				} // end for _, c := range consumersByRepo[cRepo]
 			}
@@ -1770,6 +1776,9 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 						MatchQuality: quality,
 						Properties:   map[string]string{"resolve_strategy": "case_style_normalized"},
 					}
+					// #3628 — both endpoints are AST-grounded; only the casing
+					// style of the route segments differed. resolved.
+					link.WithEdgeConfidence(ConfidenceResolved)
 					fresh = append(fresh, link)
 				}
 			}
@@ -1883,6 +1892,9 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 						MatchQuality: matchQualityAnyFallback,
 						Properties:   map[string]string{"normalization": "url_pattern"},
 					}
+					// #3628 — both endpoints AST-grounded; only path-param syntax
+					// (or a trailing query string) differed. resolved.
+					link.WithEdgeConfidence(ConfidenceResolved)
 					fresh = append(fresh, link)
 				}
 			}
@@ -2007,6 +2019,11 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 						MatchQuality: quality,
 						Properties:   props,
 					}
+					// #3628 — the producer side is AST-grounded, but the consumer's
+					// concrete segment is *interpreted* as the value filling a
+					// producer param slot. That binding is reconstructed, not
+					// proven from a real param on the call side. inferred.
+					link.WithEdgeConfidence(ConfidenceInferred)
 					fresh = append(fresh, link)
 				}
 			}
@@ -2150,6 +2167,10 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 						"dynamic_suffix":    suffixKey,
 						"dynamic_prefix":    "stripped",
 						"suffix_static_seg": strconv.Itoa(leadingStatic),
+						// #3628 — the consumer URL was a runtime-dynamic
+						// `${apiUrl}/x/y` expression; only the static suffix was
+						// matched after stripping the runtime base. inferred.
+						EdgeConfidenceKey: ConfidenceInferred,
 					},
 				}
 				fresh = append(fresh, link)

@@ -462,6 +462,11 @@ func runStringPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pa
 						{fmt.Sprintf("%s:%d", hb.file, hb.line)},
 					},
 				}
+				// #3628 — string_pass matches two endpoints by a shared string
+				// literal (ARN, topic name, URL path, redis key, …). The match is
+				// a name collision, not a proven contract, and each side is
+				// independently AST-grounded only as a literal. heuristic.
+				link.WithEdgeConfidence(ConfidenceHeuristic)
 				if conf >= stringLinkThreshold {
 					freshLinks = append(freshLinks, link)
 				} else {
