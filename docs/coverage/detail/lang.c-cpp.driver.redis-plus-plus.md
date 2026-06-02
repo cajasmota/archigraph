@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [C/C++](../by-language/c-cpp.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | redis-plus-plus is a schemaless key-value client; no relational/document models |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | — `not_applicable` | — | — | — | Redis is schemaless; no schema to extract |
 
 ### Relationships

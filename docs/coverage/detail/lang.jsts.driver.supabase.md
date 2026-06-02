@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | — `not_applicable` | — | 3069 | — | Raw driver binding executes SQL/query strings directly; no ORM model layer, no schema declarations, no associations, no FK definitions, no lazy-loading. N/A per issue #3069. |
 
 ### Relationships

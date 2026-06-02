@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [scala](../by-language/scala.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/scala/orms/elastic4s.yaml` | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | ✅ `full` | — | — | `internal/custom/scala/orm_extractors.go` | elastic4sIndexRe captures createIndex/indexInto index defs; elastic4sHitReaderRe captures HitReader[T]/HitWriter[T] document type mappings; elastic4sCaseClassRe captures document case classes |
 
 ### Relationships

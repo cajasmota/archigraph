@@ -69,9 +69,9 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Other capabilities | Notes |
 |---|---|---|
-| [Doobie](../detail/lang.scala.orm.doobie.md) | 🟡 3/5 | |
-| [Elastic4s](../detail/lang.scala.orm.elastic4s.md) | 🟡 3/5 | |
-| [Quill](../detail/lang.scala.orm.quill.md) | 🟡 5/7 | |
-| [ScalikeJDBC](../detail/lang.scala.orm.scalikejdbc.md) | 🟡 6/8 | |
-| [Scanamo (DynamoDB)](../detail/lang.scala.orm.scanamo.md) | 🟡 3/5 | |
-| [Slick](../detail/lang.scala.orm.slick.md) | 🟡 7/9 | |
+| [Doobie](../detail/lang.scala.orm.doobie.md) | 🟡 3/6 | |
+| [Elastic4s](../detail/lang.scala.orm.elastic4s.md) | 🟡 3/6 | |
+| [Quill](../detail/lang.scala.orm.quill.md) | 🟡 5/8 | |
+| [ScalikeJDBC](../detail/lang.scala.orm.scalikejdbc.md) | 🟡 6/9 | |
+| [Scanamo (DynamoDB)](../detail/lang.scala.orm.scanamo.md) | 🟡 3/6 | |
+| [Slick](../detail/lang.scala.orm.slick.md) | 🟡 7/10 | |

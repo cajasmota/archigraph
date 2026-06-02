@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [ruby](../by-language/ruby.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/ruby/frameworks/rom_rb_ruby_object_mapper.yaml`<br>`internal/engine/rules/ruby/orms/rom_rb_as_orm.yaml` | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/ruby/routes.go` | — |
 
 ### Relationships

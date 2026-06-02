@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [java](../by-language/java.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3096) | `internal/custom/java/mybatis.go`<br>`internal/custom/java/orm_extractors_test.go`<br>`internal/engine/rules/java/orms/mybatis.yaml` | Annotation @Results + XML <resultMap> become result_map schema entities (SCOPE.Schema); column DDL not parsed; model class references extracted from resultMap type attribute only |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3007) | `internal/custom/java/mybatis.go`<br>`internal/custom/java/orm_extractors_test.go` | Annotation @Results + XML <resultMap> become result_map schema entities; column DDL not parsed. |
 
 ### Relationships

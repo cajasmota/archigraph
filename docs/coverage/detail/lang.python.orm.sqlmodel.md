@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [python](../by-language/python.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/python/orms/sqlmodel.yaml` | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/python/extractors_test.go`<br>`internal/custom/python/sqlalchemy.go` | SQLModel table=True class detection added to python_sqlalchemy extractor (issue #2990). Only classes with both SQLModel base and table=True kwarg are emitted; schema-only classes are excluded. |
 
 ### Relationships

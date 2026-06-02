@@ -586,6 +586,7 @@ subcategories:
     capabilities:
       - model_extraction
       - schema_extraction
+      - model_lifecycle_extraction
       - relationship_extraction
       - foreign_key_extraction
       - association_extraction
@@ -596,7 +597,7 @@ subcategories:
       - transaction_function_stamping
     groups:
       - name: Models
-        keys: [model_extraction, schema_extraction]
+        keys: [model_extraction, schema_extraction, model_lifecycle_extraction]
       - name: Relationships
         keys: [relationship_extraction, foreign_key_extraction, association_extraction, lazy_loading_recognition]
       - name: Queries

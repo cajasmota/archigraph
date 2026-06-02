@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [kotlin](../by-language/kotlin.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/kotlin/orm_query.go`<br>`internal/custom/kotlin/orm_query_test.go` | @Document collection models extracted with concrete collection name (mongodb:@Document:<collection>); value-asserted in TestOrmQuery_MongoDocumentAndRepo |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | — `not_applicable` | — | — | — | MongoDB is a schemaless document database. There is no DDL schema to extract — documents have arbitrary fields and there is no enforced schema at the database level. Spring Data MongoDB @Document annotations define class-level hints, not a database schema. N/A is honest. |
 
 ### Relationships

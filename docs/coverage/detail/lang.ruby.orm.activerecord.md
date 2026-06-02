@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [ruby](../by-language/ruby.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/ruby/orms/activerecord.yaml` | — |
+| Model lifecycle extraction | 🟢 `partial` | `2026-06-02` | 3628 | `internal/custom/ruby/activerecord_deep.go`<br>`internal/custom/ruby/activerecord_lifecycle_test.go`<br>`internal/lifecycle/lifecycle.go`<br>`internal/lifecycle/lifecycle_test.go` | soft_delete + soft_delete_column from model body (acts_as_paranoid / paranoia, or default_scope { where(deleted_at: nil) } -> deleted_at), and audit_columns (created_by/updated_by) referenced in the model. Honesty: a plain 'deleted' bool or unrelated default_scope (e.g. ordering) is NOT soft_delete. timestamps stay honest-partial: Rails timestamps live in the schema/migration, not the model body, so they are not asserted here. |
 | Schema extraction | ✅ `full` | — | — | `internal/custom/ruby/activerecord.go`<br>`internal/custom/ruby/activerecord_deep.go`<br>`internal/custom/ruby/activerecord_deep_test.go` | db/schema.rb create_table parsed into table+typed columns (name/type/null/default/limit), t.references→FK column+key, t.timestamps; table linked to model by Rails inflection (users→User). Migrations also emit columns. Test: TestDeepSchema_ExactColumnsAndModelLink/IrregularModelLink assert exact columns+types+options+model link. |
 
 ### Relationships

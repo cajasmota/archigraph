@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [rust](../by-language/rust.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-31` | 3558 | `internal/custom/rust/sea_query.go`<br>`internal/custom/rust/sea_query_test.go` | #[derive(Iden)] enum declarations emitted as SCOPE.Component(orm_model) recording the Iden enum as the logical table identity. Partial: the physical table name from an #[iden="..."] / impl Iden rename is not resolved (enum name used as table identity). |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-31` | 3558 | `internal/custom/rust/sea_query.go`<br>`internal/custom/rust/sea_query_test.go` | .columns([Table::Col,...]) and .column(Table::Col) projections emitted as SCOPE.Component(schema_column) with the literal table+column Iden names. Partial: only columns referenced as Iden paths in the statement window are captured; dynamically-built column lists are not resolved. |
 
 ### Relationships

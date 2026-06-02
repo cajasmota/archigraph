@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [python](../by-language/python.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-30` | 3189 | `internal/custom/python/driver_schema.go` | Heuristic: parses CREATE TABLE DDL embedded in raw-driver cursor.execute(...) string literals into SCOPE.Schema table + column entities. Single-literal SQL only; string-concatenated DDL not stitched. |
 
 ### Relationships

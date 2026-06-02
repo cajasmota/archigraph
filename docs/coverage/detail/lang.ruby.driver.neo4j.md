@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [ruby](../by-language/ruby.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-06-02` | 3614 | `internal/custom/ruby/neo4j_activegraph.go`<br>`internal/custom/ruby/neo4j_activegraph_test.go` | activegraph / neo4j.rb OGM (not just the raw driver): each class that includes ActiveGraph::Node (or legacy Neo4j::ActiveNode) is extracted as a SCOPE.Schema/node (the graph node label) and each `property :name` declaration as a SCOPE.Schema/property. Regex over class bodies; partial (no inheritance/mixin node resolution). |
 
 ### Relationships

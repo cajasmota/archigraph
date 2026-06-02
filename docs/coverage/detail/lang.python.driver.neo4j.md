@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [python](../by-language/python.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-06-02` | 3609 | `internal/custom/python/neo4j_neomodel.go`<br>`internal/custom/python/neo4j_neomodel_test.go` | neomodel OGM (not just the raw driver): each StructuredNode subclass is extracted as a SCOPE.Schema/node (the graph node label) and each *Property() attribute as a SCOPE.Schema/property. Regex over class bodies; partial (no inheritance/mixin StructuredNode resolution). |
 
 ### Relationships

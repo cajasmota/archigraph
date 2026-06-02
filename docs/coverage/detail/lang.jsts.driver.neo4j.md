@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-06-02` | 3610 | `internal/custom/javascript/neogma.go`<br>`internal/custom/javascript/neogma_test.go` | neogma OGM (not just the raw driver): each ModelFactory({ label, schema, relationships }) call is extracted as a SCOPE.Schema/node keyed on its Neo4j `label`. Regex over the balanced config object; partial (schema field types not individually emitted). |
 
 ### Relationships

@@ -55,20 +55,20 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Other capabilities | Notes |
 |---|---|---|
-| [AWS SDK DynamoDB (Ruby)](../detail/lang.ruby.driver.dynamodb.md) | 🟡 1/3 | |
-| [ActiveRecord](../detail/lang.ruby.orm.activerecord.md) | ✅ 10/10 | |
-| [DataMapper / Hanami Model (legacy)](../detail/lang.ruby.orm.datamapper.md) | 🟡 8/10 | |
-| [Mongoid](../detail/lang.ruby.orm.mongoid.md) | 🟡 5/8 | |
-| [ROM (Ruby Object Mapper)](../detail/lang.ruby.orm.rom-rb.md) | 🟡 8/10 | |
-| [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟡 8/10 | |
-| [cassandra-driver (Ruby)](../detail/lang.ruby.driver.cassandra.md) | 🟡 1/3 | |
-| [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 1/4 | |
-| [mongo Ruby Driver](../detail/lang.ruby.driver.mongodb.md) | 🟡 1/3 | |
-| [mysql2 (Ruby driver)](../detail/lang.ruby.driver.mysql.md) | 🔴 0/3 | |
-| [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 3/6 | |
-| [pg (Ruby driver)](../detail/lang.ruby.driver.postgres.md) | 🔴 0/3 | |
-| [redis-rb](../detail/lang.ruby.driver.redis.md) | 🟡 1/3 | |
-| [sqlite3 (Ruby driver)](../detail/lang.ruby.driver.sqlite.md) | 🔴 0/3 | |
+| [AWS SDK DynamoDB (Ruby)](../detail/lang.ruby.driver.dynamodb.md) | 🟡 1/4 | |
+| [ActiveRecord](../detail/lang.ruby.orm.activerecord.md) | 🟢 11/11 | |
+| [DataMapper / Hanami Model (legacy)](../detail/lang.ruby.orm.datamapper.md) | 🟡 8/11 | |
+| [Mongoid](../detail/lang.ruby.orm.mongoid.md) | 🟡 5/9 | |
+| [ROM (Ruby Object Mapper)](../detail/lang.ruby.orm.rom-rb.md) | 🟡 8/11 | |
+| [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟡 8/11 | |
+| [cassandra-driver (Ruby)](../detail/lang.ruby.driver.cassandra.md) | 🟡 1/4 | |
+| [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 1/5 | |
+| [mongo Ruby Driver](../detail/lang.ruby.driver.mongodb.md) | 🟡 1/4 | |
+| [mysql2 (Ruby driver)](../detail/lang.ruby.driver.mysql.md) | 🔴 0/4 | |
+| [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 3/7 | |
+| [pg (Ruby driver)](../detail/lang.ruby.driver.postgres.md) | 🔴 0/4 | |
+| [redis-rb](../detail/lang.ruby.driver.redis.md) | 🟡 1/4 | |
+| [sqlite3 (Ruby driver)](../detail/lang.ruby.driver.sqlite.md) | 🔴 0/4 | |
 
 
 ## Other

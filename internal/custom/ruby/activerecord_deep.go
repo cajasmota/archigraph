@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/lifecycle"
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
@@ -295,6 +296,13 @@ func extractARModelsAndAssociations(src string, file extractor.FileInput, add fu
 			"model_class", modelName,
 			"table_name", tableName,
 		)
+		// Data-lifecycle traits (#3628 child). soft-delete is observable in the
+		// model body (acts_as_paranoid / default_scope deleted_at); timestamps
+		// live in the schema, not the class body, so they stay honest-partial
+		// here (omitted). Columns referenced via belongs_to (x_by) feed audit
+		// detection.
+		lifecycle.RailsModelTraits(src, arReferencedColumns(src)).
+			Stamp(func(kv ...string) { setProps(&me, kv...) })
 		modelEnt = &me
 	}
 
@@ -400,6 +408,29 @@ func extractARModelsAndAssociations(src string, file extractor.FileInput, add fu
 	if modelEnt != nil {
 		add(*modelEnt)
 	}
+}
+
+// reARAuditCol matches conventional audit-column identifiers referenced in a
+// model body — e.g. `belongs_to :created_by`, `attribute :updated_by`, or a
+// bare `created_by` symbol. Bounded to the closed convention set so arbitrary
+// identifiers are never mistaken for audit columns.
+var reARAuditCol = regexp.MustCompile(
+	`(?m)\b(created_by|updated_by|creator_id|updater_id|deleted_by)\b`,
+)
+
+// arReferencedColumns returns the conventional audit-column names referenced
+// anywhere in the model body. lifecycle.RailsModelTraits filters these against
+// its own audit convention; this just surfaces candidate tokens.
+func arReferencedColumns(src string) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, m := range reARAuditCol.FindAllStringSubmatch(src, -1) {
+		if !seen[m[1]] {
+			seen[m[1]] = true
+			out = append(out, m[1])
+		}
+	}
+	return out
 }
 
 // arAssocCardinality maps an ActiveRecord association macro to the shared ORM

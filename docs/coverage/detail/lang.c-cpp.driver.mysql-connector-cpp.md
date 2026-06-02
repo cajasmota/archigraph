@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [C/C++](../by-language/c-cpp.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/cpp/driver_schema.go` | Regex: CREATE TABLE in exec()/mysql_query() string literals → table entity with table_name |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/cpp/driver_schema.go` | Regex: paren-balanced CREATE TABLE body → columns with column_name/column_type/parent_table |
 
 ### Relationships

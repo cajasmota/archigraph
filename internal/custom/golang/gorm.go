@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/lifecycle"
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
@@ -155,14 +156,24 @@ func (e *gormExtractor) Extract(ctx context.Context, file extractor.FileInput) (
 		}
 	}
 
-	// 3. struct with gorm.Model embed -> SCOPE.Schema
+	// 3. struct with gorm.Model embed -> SCOPE.Schema.
+	//    The model entity is deferred (built here, added at the end of the
+	//    struct-field pass) so data-lifecycle traits derived from the struct
+	//    body (#3628 child) can be stamped onto the same node before it is
+	//    emitted. modelEnts maps struct name -> deferred entity; modelEmbeds
+	//    records the gorm.Model embed so trait resolution sees it.
 	gormModelStructs := make(map[string]bool)
+	modelEnts := make(map[string]*types.EntityRecord)
+	modelEmbeds := make(map[string]bool)
+	var modelOrder []string
 	for _, m := range reGORMModel.FindAllStringSubmatchIndex(src, -1) {
 		modelName := src[m[2]:m[3]]
 		gormModelStructs[modelName] = true
+		modelEmbeds[modelName] = true
 		ent := makeEntity(modelName, "SCOPE.Schema", "", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "gorm", "provenance", "INFERRED_FROM_GORM_MODEL")
-		add(ent)
+		modelEnts[modelName] = &ent
+		modelOrder = append(modelOrder, modelName)
 	}
 
 	// 3b. Models / Relationships from struct field tags.
@@ -180,12 +191,16 @@ func (e *gormExtractor) Extract(ctx context.Context, file extractor.FileInput) (
 		}
 
 		// Promote the struct to a schema even without gorm.Model when it
-		// carries gorm field tags.
-		if !gormModelStructs[structName] {
+		// carries gorm field tags; defer the model node like the embed case.
+		if _, ok := modelEnts[structName]; !ok {
 			ent := makeEntity(structName, "SCOPE.Schema", "", file.Path, file.Language, structLine)
 			setProps(&ent, "framework", "gorm", "provenance", "INFERRED_FROM_GORM_FIELD_TAGS")
-			add(ent)
+			modelEnts[structName] = &ent
+			modelOrder = append(modelOrder, structName)
 		}
+
+		// Data-lifecycle trait inputs gathered while iterating fields.
+		li := lifecycle.GORMInput{EmbedsGormModel: modelEmbeds[structName]}
 
 		for _, fm := range fields {
 			fieldName := fm[1]
@@ -196,6 +211,22 @@ func (e *gormExtractor) Extract(ctx context.Context, file extractor.FileInput) (
 			if cm := reGORMColumnTag.FindStringSubmatch(tag); cm != nil {
 				column = cm[1]
 			}
+
+			// Data-lifecycle trait inputs (#3628 child). A gorm.DeletedAt-typed
+			// field marks soft-delete with this field's column; CreatedAt /
+			// UpdatedAt presence marks timestamps; all resolved columns feed
+			// audit-column detection.
+			li.Columns = append(li.Columns, column)
+			if strings.HasSuffix(fieldType, "gorm.DeletedAt") {
+				li.DeletedAtColumn = column
+			}
+			switch fieldName {
+			case "CreatedAt":
+				li.HasCreatedAt = true
+			case "UpdatedAt":
+				li.HasUpdatedAt = true
+			}
+
 			fieldEnt := makeEntity("field:"+structName+"."+fieldName, "SCOPE.Component", "field", file.Path, file.Language, structLine)
 			setProps(&fieldEnt, "framework", "gorm", "provenance", "INFERRED_FROM_GORM_FIELD_TAGS",
 				"model_name", structName, "field_name", fieldName, "column_name", column, "go_type", fieldType)
@@ -224,6 +255,31 @@ func (e *gormExtractor) Extract(ctx context.Context, file extractor.FileInput) (
 			}
 			add(relEnt)
 		}
+
+		// Stamp resolved data-lifecycle traits onto the (deferred) model node.
+		if me := modelEnts[structName]; me != nil {
+			lifecycle.GORM(li).Stamp(func(kv ...string) { setProps(me, kv...) })
+		}
+	}
+
+	// Emit deferred GORM model nodes (now carrying lifecycle traits) in
+	// discovery order. Structs that embed gorm.Model but carry no gorm field
+	// tags never entered the field loop, so resolve their traits from the
+	// embed alone here.
+	for _, name := range modelOrder {
+		me := modelEnts[name]
+		if me == nil {
+			continue
+		}
+		if _, stamped := me.Properties["soft_delete"]; !stamped {
+			if _, ts := me.Properties["timestamps"]; !ts {
+				if modelEmbeds[name] {
+					lifecycle.GORM(lifecycle.GORMInput{EmbedsGormModel: true}).
+						Stamp(func(kv ...string) { setProps(me, kv...) })
+				}
+			}
+		}
+		add(*me)
 	}
 
 	// 4. db.Model(&T{}) / db.Table("name") queries -> SCOPE.Operation

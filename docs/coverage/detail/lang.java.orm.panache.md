@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [java](../by-language/java.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/java/panache.go`<br>`internal/extractors/java/panache_test.go` | Panache entity records synthesized from PanacheEntity/PanacheEntityBase subclasses; field schema parsed via Hibernate extractor (hibernate.go) for JPA annotations; panache.go does not independently extract column-level schema |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/extractors/java/panache.go` | Panache entities use standard JPA @Entity/@Table/@Column annotations parsed by the Hibernate extractor; panache.go synthesizes entity records but does not independently parse field schemas |
 
 ### Relationships

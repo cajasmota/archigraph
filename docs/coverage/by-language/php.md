@@ -61,17 +61,17 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Other capabilities | Notes |
 |---|---|---|
-| [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟡 1/3 | |
-| [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🟡 8/10 | |
-| [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 8/10 | |
-| [Eloquent (Laravel)](../detail/lang.php.orm.eloquent.md) | 🟡 8/10 | |
-| [PDO MySQL / mysqli](../detail/lang.php.driver.mysql.md) | 🟡 1/4 | |
-| [PDO PostgreSQL](../detail/lang.php.driver.postgres.md) | 🟡 1/4 | |
-| [PDO SQLite](../detail/lang.php.driver.sqlite.md) | 🟡 1/4 | |
-| [Propel](../detail/lang.php.orm.propel.md) | 🟡 8/10 | |
-| [RedBeanPHP](../detail/lang.php.orm.redbeanphp.md) | 🟡 5/7 | |
-| [datastax/php-driver (Cassandra)](../detail/lang.php.driver.cassandra.md) | 🟡 1/3 | |
-| [elasticsearch-php](../detail/lang.php.driver.elastic.md) | 🟡 1/3 | |
-| [mongodb (PHP driver)](../detail/lang.php.driver.mongodb.md) | 🟡 1/3 | |
-| [neo4j-php-client](../detail/lang.php.driver.neo4j.md) | 🟡 3/5 | |
-| [phpredis / Predis](../detail/lang.php.driver.redis.md) | 🟡 1/3 | |
+| [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟡 1/4 | |
+| [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🟡 8/11 | |
+| [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 8/11 | |
+| [Eloquent (Laravel)](../detail/lang.php.orm.eloquent.md) | 🟡 8/11 | |
+| [PDO MySQL / mysqli](../detail/lang.php.driver.mysql.md) | 🟡 1/5 | |
+| [PDO PostgreSQL](../detail/lang.php.driver.postgres.md) | 🟡 1/5 | |
+| [PDO SQLite](../detail/lang.php.driver.sqlite.md) | 🟡 1/5 | |
+| [Propel](../detail/lang.php.orm.propel.md) | 🟡 8/11 | |
+| [RedBeanPHP](../detail/lang.php.orm.redbeanphp.md) | 🟡 5/8 | |
+| [datastax/php-driver (Cassandra)](../detail/lang.php.driver.cassandra.md) | 🟡 1/4 | |
+| [elasticsearch-php](../detail/lang.php.driver.elastic.md) | 🟡 1/4 | |
+| [mongodb (PHP driver)](../detail/lang.php.driver.mongodb.md) | 🟡 1/4 | |
+| [neo4j-php-client](../detail/lang.php.driver.neo4j.md) | 🟡 3/6 | |
+| [phpredis / Predis](../detail/lang.php.driver.redis.md) | 🟡 1/4 | |

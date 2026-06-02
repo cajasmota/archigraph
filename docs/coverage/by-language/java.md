@@ -96,21 +96,21 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Other capabilities | Notes |
 |---|---|---|
-| [AWS SDK DynamoDB (Java)](../detail/lang.java.orm.dynamodb.md) | 🟡 3/5 | |
-| [Ebean ORM](../detail/lang.java.orm.ebean.md) | 🟡 7/9 | |
-| [EclipseLink](../detail/lang.java.orm.eclipselink.md) | 🟡 7/9 | |
-| [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟡 7/9 | |
-| [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟡 8/9 | |
-| [MongoDB Java Driver](../detail/lang.java.driver.mongodb.md) | 🟡 1/3 | |
-| [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟡 7/9 | |
-| [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟡 4/7 | |
-| [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟡 7/9 | |
-| [Spring Data Cassandra](../detail/lang.java.orm.spring-data-cassandra.md) | 🔴 0/5 | |
-| [Spring Data Elasticsearch](../detail/lang.java.orm.spring-data-elastic.md) | 🔴 0/5 | |
-| [Spring Data JPA](../detail/lang.java.orm.spring-data-jpa.md) | 🟡 5/9 | |
-| [Spring Data MongoDB](../detail/lang.java.orm.spring-data-mongo.md) | 🔴 0/5 | |
-| [Spring Data Redis](../detail/lang.java.orm.spring-data-redis.md) | 🔴 0/5 | |
-| [jOOQ](../detail/lang.java.orm.jooq.md) | 🟡 6/8 | |
+| [AWS SDK DynamoDB (Java)](../detail/lang.java.orm.dynamodb.md) | 🟡 3/6 | |
+| [Ebean ORM](../detail/lang.java.orm.ebean.md) | 🟡 7/10 | |
+| [EclipseLink](../detail/lang.java.orm.eclipselink.md) | 🟡 7/10 | |
+| [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟡 7/10 | |
+| [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟡 8/10 | |
+| [MongoDB Java Driver](../detail/lang.java.driver.mongodb.md) | 🟡 1/4 | |
+| [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟡 7/10 | |
+| [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟡 4/8 | |
+| [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟡 7/10 | |
+| [Spring Data Cassandra](../detail/lang.java.orm.spring-data-cassandra.md) | 🔴 0/6 | |
+| [Spring Data Elasticsearch](../detail/lang.java.orm.spring-data-elastic.md) | 🔴 0/6 | |
+| [Spring Data JPA](../detail/lang.java.orm.spring-data-jpa.md) | 🟡 5/10 | |
+| [Spring Data MongoDB](../detail/lang.java.orm.spring-data-mongo.md) | 🔴 0/6 | |
+| [Spring Data Redis](../detail/lang.java.orm.spring-data-redis.md) | 🔴 0/6 | |
+| [jOOQ](../detail/lang.java.orm.jooq.md) | 🟡 6/9 | |
 
 
 ## Other

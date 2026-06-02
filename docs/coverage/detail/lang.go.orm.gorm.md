@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [go](../by-language/go.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/orm_field_edges.go`<br>`internal/engine/rules/go/frameworks/gorm.yaml`<br>`internal/engine/rules/go/orms/gorm.yaml` | — |
+| Model lifecycle extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/golang/gorm.go`<br>`internal/custom/golang/gorm_lifecycle_test.go`<br>`internal/lifecycle/lifecycle.go`<br>`internal/lifecycle/lifecycle_test.go` | soft_delete + soft_delete_column (gorm.Model embed->deleted_at, or explicit gorm.DeletedAt field->its column), timestamps (gorm.Model embed or CreatedAt+UpdatedAt), audit_columns (created_by/updated_by/...). Honesty: a plain 'deleted' bool with no DeletedAt type / deleted_at convention is NOT soft_delete. |
 | Schema extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/gorm.go`<br>`internal/custom/golang/gorm_test.go` | — |
 
 ### Relationships

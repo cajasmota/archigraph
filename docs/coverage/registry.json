@@ -2137,6 +2137,10 @@
             "notes": "Regex: CREATE TABLE in exec()/exec_params() string literals → table entity with table_name",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/cpp/driver_schema.go"],
@@ -2201,6 +2205,10 @@
             "cites": ["internal/custom/cpp/driver_schema.go"],
             "notes": "Regex: db[\"coll\"]/db.collection(\"coll\") → SCOPE.Schema with collection_name",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -2268,6 +2276,10 @@
             "notes": "Regex: CREATE TABLE in exec()/mysql_query() string literals → table entity with table_name",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/cpp/driver_schema.go"],
@@ -2330,6 +2342,10 @@
           "model_extraction": {
             "status": "not_applicable",
             "notes": "redis-plus-plus is a schemaless key-value client; no relational/document models"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -6956,6 +6972,10 @@
             "notes": "Regex: #pragma db object + table(\"…\") → model with resolved table_name",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/cpp/orm.go"],
@@ -7030,6 +7050,10 @@
             "notes": "Regex: type_conversion\u003cT\u003e specialization → model with class_name",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/cpp/orm.go"],
@@ -7100,6 +7124,10 @@
             "cites": ["internal/custom/cpp/orm.go"],
             "notes": "Regex: struct T : sqlpp::table\u003cT,...\u003e → model with class_name",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -7429,6 +7457,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/csharp/driver_schema.go"],
@@ -7489,6 +7521,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -7551,6 +7587,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/csharp/driver_schema.go"],
@@ -7611,6 +7651,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -7673,6 +7717,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw ADO.NET/graph driver — no attribute-based schema mapping; models are plain SQL or driver-specific graph queries"
@@ -7731,6 +7779,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -7791,6 +7843,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw ADO.NET/graph driver — no attribute-based schema mapping; models are plain SQL or driver-specific graph queries"
@@ -7849,6 +7905,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -7909,6 +7969,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -11343,6 +11407,10 @@
             "notes": "POCO classes with [Table] attribute detected via regex; heuristic",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/csharp/dapper_models.go"],
@@ -11406,6 +11474,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/csharp/frameworks/entity_framework_core.yaml","internal/engine/rules/csharp/orms/entity_framework_core.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -11475,6 +11547,10 @@
             "issue": "3263",
             "notes": "[Table]/DataContext/DataConnection class patterns detected via regex; heuristic",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -11551,6 +11627,10 @@
             "notes": "[Table]/DataContext/DataConnection class patterns detected via regex; heuristic",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/csharp/dapper_models.go"],
@@ -11623,6 +11703,10 @@
             "issue": "3263",
             "notes": "FluentNHibernate ClassMap\u003cT\u003e subclass declarations detected via regex; heuristic",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -11872,6 +11956,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw Elixir DB driver; no schema/model definition. Schema belongs to Ecto ORM layer, not the driver."
@@ -11930,6 +12018,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -11990,6 +12082,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw Elixir DB driver; no schema/model definition. Schema belongs to Ecto ORM layer, not the driver."
@@ -12049,6 +12145,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw Elixir DB driver; no schema/model definition. Schema belongs to Ecto ORM layer, not the driver."
@@ -12107,6 +12207,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -12172,6 +12276,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw Elixir DB driver; no schema/model definition. Schema belongs to Ecto ORM layer, not the driver."
@@ -12231,6 +12339,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Raw Elixir DB driver; no schema/model definition. Schema belongs to Ecto ORM layer, not the driver."
@@ -12289,6 +12401,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -15865,6 +15981,10 @@
             "cites": ["internal/engine/rules/elixir/frameworks/ecto_standalone.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/elixir/ecto.go"],
@@ -15936,6 +16056,10 @@
             "cites": ["internal/engine/rules/elixir/frameworks/ecto_sqlite3.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/elixir/ecto.go"],
@@ -16005,6 +16129,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/gocql.go","internal/custom/golang/nosql_drivers_test.go","internal/engine/rules/go/orms/cassandra_go.yaml"],
@@ -16069,6 +16197,10 @@
             "issue": "3214",
             "verified_at": "2026-05-29"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/dynamodb.go","internal/custom/golang/nosql_drivers_test.go","internal/engine/rules/go/orms/dynamodb_go.yaml"],
@@ -16132,6 +16264,10 @@
             "cites": ["internal/custom/golang/elasticsearch.go","internal/custom/golang/nosql_drivers_test.go","internal/engine/rules/go/orms/elasticsearch_go.yaml"],
             "issue": "3214",
             "verified_at": "2026-05-29"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -16200,6 +16336,10 @@
             "issue": "3214",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/mongo_driver.go","internal/custom/golang/mongo_redis_test.go"],
@@ -16256,6 +16396,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -16322,6 +16466,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/neo4j.go","internal/custom/golang/nosql_drivers_test.go","internal/engine/rules/go/orms/neo4j.yaml"],
@@ -16385,6 +16533,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/mongo_redis_test.go","internal/custom/golang/redis_driver.go"],
@@ -16444,6 +16596,10 @@
             "cites": ["internal/custom/golang/sql_drivers.go","internal/custom/golang/sql_drivers_test.go"],
             "issue": "3214",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -21657,6 +21813,10 @@
             "notes": "bun.BaseModel embed + bun:\"table:...\" tag; field-level bun:\"col\" tags; TestBunModelsAndFields asserts exact table_name + column_name properties",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/golang/bun.go","internal/custom/golang/bun_test.go"],
@@ -21733,6 +21893,10 @@
             "cites": ["internal/engine/rules/go/orms/ent.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/golang/ent.go","internal/custom/golang/ent_test.go"],
@@ -21808,6 +21972,10 @@
             "cites": ["internal/custom/golang/gen.go"],
             "verified_at": "2026-05-29"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "field detail on wrapped GORM structs (gorm.go)"
@@ -21870,6 +22038,12 @@
             "status": "full",
             "cites": ["internal/engine/orm_field_edges.go","internal/engine/rules/go/frameworks/gorm.yaml","internal/engine/rules/go/orms/gorm.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/golang/gorm.go","internal/custom/golang/gorm_lifecycle_test.go","internal/lifecycle/lifecycle.go","internal/lifecycle/lifecycle_test.go"],
+            "notes": "soft_delete + soft_delete_column (gorm.Model embed-\u003edeleted_at, or explicit gorm.DeletedAt field-\u003eits column), timestamps (gorm.Model embed or CreatedAt+UpdatedAt), audit_columns (created_by/updated_by/...). Honesty: a plain 'deleted' bool with no DeletedAt type / deleted_at convention is NOT soft_delete.",
+            "verified_at": "2026-06-02"
           },
           "schema_extraction": {
             "status": "full",
@@ -21940,6 +22114,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "golang-migrate is a SQL migration runner — no Go ORM model/relationship layer (schema in raw .up/.down.sql; migration_parsing covers it)"
@@ -22002,6 +22180,10 @@
             "issue": "3214",
             "notes": "structs carrying db:\"col\" field tags are treated as schemas (heuristic — db: tag does not prove the struct is a DB table); fixture-tested (TestSqlxModelsAndQueries / TestPgxModelsAndQueries)",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -22067,6 +22249,10 @@
             "cites": ["internal/custom/golang/sqlc.go","internal/custom/golang/sqlc_test.go"],
             "notes": "generated structs in sqlc-stamped files (// Code generated by sqlc header) treated as table models; fields extracted with snake_case column name inference; TestSqlcModels asserts header gate and field extraction",
             "verified_at": "2026-05-29"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -22136,6 +22322,10 @@
             "issue": "3214",
             "notes": "structs carrying db:\"col\" field tags are treated as schemas (heuristic — db: tag does not prove the struct is a DB table); fixture-tested (TestSqlxModelsAndQueries / TestPgxModelsAndQueries)",
             "verified_at": "2026-05-30"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -22207,6 +22397,10 @@
             "cites": ["internal/custom/golang/xo.go"],
             "verified_at": "2026-05-29"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/golang/xo.go"],
@@ -22274,6 +22468,10 @@
           "model_extraction": {
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema/ORM model in user code"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -28593,6 +28791,10 @@
             "notes": "custom_java_dynamodb extractor emits SCOPE.Schema/model for @DynamoDbBean classes; YAML rule gates on Enhanced Client imports.",
             "verified_at": "2026-05-29"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/java/dynamodb_java.go"],
@@ -28662,6 +28864,10 @@
             "cites": ["internal/custom/java/ebean.go","internal/custom/java/orm_extractors_test.go"],
             "notes": "No Ebean extractor; Ebean uses non-JPA @Entity from io.ebean package.",
             "verified_at": "2026-05-29"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -28738,6 +28944,10 @@
             "cites": ["internal/custom/java/eclipselink.go","internal/custom/java/orm_extractors_test.go"],
             "verified_at": "2026-05-29"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/java/eclipselink.go","internal/custom/java/jpa_fk_lazy.go","internal/custom/java/jpa_fk_lazy_test.go"],
@@ -28812,6 +29022,10 @@
             "status": "full",
             "cites": ["internal/engine/orm_field_edges.go","internal/engine/rules/java/orms/hibernate_core.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -28888,6 +29102,10 @@
             "cites": ["internal/engine/rules/java/orms/jooq.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/java/jooq.go"],
@@ -28961,6 +29179,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/java/orms/jpa_jakarta_persistence_api.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -29044,6 +29266,10 @@
             "notes": "Annotation @Results + XML \u003cresultMap\u003e become result_map schema entities (SCOPE.Schema); column DDL not parsed; model class references extracted from resultMap type attribute only",
             "verified_at": "2026-05-29"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/java/mybatis.go","internal/custom/java/orm_extractors_test.go"],
@@ -29121,6 +29347,10 @@
             "cites": ["internal/engine/rules/java/orms/neo4j.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/java/neo4j.go"],
@@ -29195,6 +29425,10 @@
             "cites": ["internal/extractors/java/panache.go","internal/extractors/java/panache_test.go"],
             "notes": "Panache entity records synthesized from PanacheEntity/PanacheEntityBase subclasses; field schema parsed via Hibernate extractor (hibernate.go) for JPA annotations; panache.go does not independently extract column-level schema",
             "verified_at": "2026-05-29"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -29276,6 +29510,10 @@
             "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
             "verified_at": "2026-06-02"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "missing",
             "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_ecosystem.go"],
@@ -29346,6 +29584,10 @@
             "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
             "verified_at": "2026-06-02"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "missing",
             "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_ecosystem.go"],
@@ -29414,6 +29656,10 @@
             "status": "full",
             "cites": ["internal/engine/orm_field_edges.go","internal/engine/rules/java/orms/spring_data_jpa.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -29491,6 +29737,10 @@
             "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
             "verified_at": "2026-06-02"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "missing",
             "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/spring_ecosystem.go"],
@@ -29560,6 +29810,10 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/3643",
             "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
             "verified_at": "2026-06-02"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "missing",
@@ -29704,6 +29958,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "issue": "3069",
@@ -29766,6 +30024,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -29830,6 +30092,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "issue": "3069",
@@ -29892,6 +30158,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -29956,6 +30226,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "issue": "3069",
@@ -30018,6 +30292,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -30086,6 +30364,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "issue": "3069",
@@ -30148,6 +30430,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -30212,6 +30498,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "issue": "3069",
@@ -30274,6 +30564,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -38744,6 +39038,10 @@
             "cites": ["internal/engine/rules/javascript_typescript/orms/drizzle.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/javascript/drizzle.go","internal/custom/javascript/orm_build_3067_test.go"],
@@ -38813,6 +39111,10 @@
           "model_extraction": {
             "status": "not_applicable",
             "notes": "Knex is a SQL query builder, not an ORM — it has no model/entity layer to extract. Persistent model_extraction belongs to Objection.js, which layers Active-Record models on top of Knex (see lang.jsts.orm.objection)."
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -38894,6 +39196,10 @@
             "cites": ["internal/custom/javascript/extractors_coverage_test.go","internal/custom/javascript/mikroorm.go","internal/engine/rules/javascript_typescript/orms/mikro_orm.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/javascript/mikroorm.go","internal/custom/javascript/orm_build_3067_test.go"],
@@ -38966,6 +39272,10 @@
             "cites": ["internal/engine/rules/javascript_typescript/orms/mongoose.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/javascript/extractors_test.go","internal/custom/javascript/mongoose.go"],
@@ -39032,6 +39342,10 @@
             "status": "full",
             "cites": ["internal/custom/javascript/extractors_coverage_test.go","internal/custom/javascript/objection.go","internal/engine/rules/javascript_typescript/orms/objection.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -39110,6 +39424,10 @@
             "cites": ["internal/engine/rules/javascript_typescript/orms/prisma.yaml","internal/engine/rules/javascript_typescript/orms/prisma_client_js.yaml","internal/engine/rules/prisma/_manifest.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/javascript/orm_build_3067_test.go","internal/custom/javascript/prisma.go"],
@@ -39181,6 +39499,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/javascript_typescript/orms/sequelize.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -39257,6 +39579,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/javascript_typescript/orms/typeorm.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -43626,6 +43952,10 @@
             "cites": ["internal/engine/rules/kotlin/orms/exposed.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/kotlin/orm_schema.go","internal/custom/kotlin/orm_schema_test.go"],
@@ -43692,6 +44022,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/orms/hibernate_kotlin.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "missing",
@@ -43768,6 +44102,10 @@
             "cites": ["internal/engine/rules/kotlin/orms/ktorm.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/kotlin/orm_schema.go","internal/custom/kotlin/orm_schema_test.go"],
@@ -43837,6 +44175,10 @@
             "notes": "@Document collection models extracted with concrete collection name (mongodb:@Document:\u003ccollection\u003e); value-asserted in TestOrmQuery_MongoDocumentAndRepo",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "MongoDB is a schemaless document database. There is no DDL schema to extract — documents have arbitrary fields and there is no enforced schema at the database level. Spring Data MongoDB @Document annotations define class-level hints, not a database schema. N/A is honest."
@@ -43896,6 +44238,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/orms/room_android.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -43962,6 +44308,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/orms/spring_data_kotlin.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "missing",
@@ -44037,6 +44387,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/orms/sqldelight.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -45111,6 +45465,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
@@ -45170,6 +45528,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -45231,6 +45593,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
@@ -45290,6 +45656,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -45351,6 +45721,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/php/driver_sql.go"],
@@ -45411,6 +45785,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -45476,6 +45854,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/php/driver_sql.go"],
@@ -45537,6 +45919,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "Schema-less or server-side schema only; raw PHP driver has no PHP-level schema model to extract."
@@ -45596,6 +45982,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -49667,6 +50057,10 @@
             "cites": ["internal/custom/php/orm_data.go"],
             "notes": "CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync."
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/php/orm_data.go"],
@@ -49738,6 +50132,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/php/orms/doctrine_orm.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -49812,6 +50210,10 @@
             "cites": ["internal/engine/rules/php/orms/eloquent_laravel_orm.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/php/orm_data.go"],
@@ -49878,6 +50280,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/php/orms/propel.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -49951,6 +50357,10 @@
             "cites": ["internal/engine/rules/php/orms/redbeanphp.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/php/orm_data.go"],
@@ -50016,6 +50426,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema model"
@@ -50076,6 +50490,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema model"
@@ -50135,6 +50553,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -50197,6 +50619,10 @@
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema/ORM model in user code"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema/ORM model in user code"
@@ -50256,6 +50682,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -50318,6 +50748,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -50386,6 +50820,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/python/driver_schema.go"],
@@ -50448,6 +50886,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema model"
@@ -50507,6 +50949,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -56827,6 +57273,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/python/alembic_schema.go","internal/custom/python/alembic_schema_test.go","internal/custom/python/testdata/alembic_schema.py"],
@@ -56891,6 +57341,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/python/orms/beanie.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -56961,6 +57415,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/python/orms/django_orm.yaml","internal/extractors/python/django_relational.go"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -57040,6 +57498,10 @@
             "cites": ["internal/engine/rules/python/orms/mongoengine.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/python/orm_schema.go"],
@@ -57110,6 +57572,10 @@
             "cites": ["internal/engine/rules/python/orms/peewee.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/python/orm_schema.go"],
@@ -57178,6 +57644,10 @@
             "cites": ["internal/engine/rules/python/orms/pony_orm.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/python/orm_schema.go"],
@@ -57245,6 +57715,10 @@
             "status": "full",
             "cites": ["internal/engine/orm_field_edges.go","internal/engine/rules/python/orms/sqlalchemy.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -57324,6 +57798,10 @@
             "cites": ["internal/engine/rules/python/orms/sqlmodel.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/python/extractors_test.go","internal/custom/python/sqlalchemy.go"],
@@ -57398,6 +57876,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/python/orms/tortoise_orm.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -57634,6 +58116,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no ORM model/schema in user code"
@@ -57694,6 +58180,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no ORM model/schema in user code"
@@ -57753,6 +58243,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -57816,6 +58310,10 @@
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema/ORM model in user code"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "NoSQL driver — no relational schema/ORM model in user code"
@@ -57876,6 +58374,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no ORM model/schema in user code"
@@ -57934,6 +58436,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -58002,6 +58508,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no ORM model/schema in user code"
@@ -58060,6 +58570,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -58120,6 +58634,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -60565,6 +61083,13 @@
             "cites": ["internal/engine/rules/ruby/orms/activerecord.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "partial",
+            "cites": ["internal/custom/ruby/activerecord_deep.go","internal/custom/ruby/activerecord_lifecycle_test.go","internal/lifecycle/lifecycle.go","internal/lifecycle/lifecycle_test.go"],
+            "issue": "3628",
+            "notes": "soft_delete + soft_delete_column from model body (acts_as_paranoid / paranoia, or default_scope { where(deleted_at: nil) } -\u003e deleted_at), and audit_columns (created_by/updated_by) referenced in the model. Honesty: a plain 'deleted' bool or unrelated default_scope (e.g. ordering) is NOT soft_delete. timestamps stay honest-partial: Rails timestamps live in the schema/migration, not the model body, so they are not asserted here.",
+            "verified_at": "2026-06-02"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/ruby/activerecord.go","internal/custom/ruby/activerecord_deep.go","internal/custom/ruby/activerecord_deep_test.go"],
@@ -60639,6 +61164,10 @@
             "cites": ["internal/engine/rules/ruby/orms/datamapper_hanami_model_legacy.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/ruby/activerecord.go"],
@@ -60707,6 +61236,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/ruby/orms/mongoid.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -60777,6 +61310,10 @@
             "cites": ["internal/engine/rules/ruby/frameworks/rom_rb_ruby_object_mapper.yaml","internal/engine/rules/ruby/orms/rom_rb_as_orm.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/ruby/routes.go"],
@@ -60846,6 +61383,10 @@
             "cites": ["internal/engine/rules/ruby/orms/sequel.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/ruby/routes.go"],
@@ -60913,6 +61454,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no schema/model definitions in user code"
@@ -60973,6 +61518,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no schema/model definitions in user code"
@@ -61032,6 +61581,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no schema/model definitions in user code"
@@ -61090,6 +61643,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -61151,6 +61708,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no schema/model definitions in user code"
@@ -61209,6 +61770,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "partial",
@@ -61274,6 +61839,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "raw client driver; no schema/model definitions in user code"
@@ -61332,6 +61901,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -61392,6 +61965,10 @@
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "not_applicable",
@@ -63647,6 +64224,10 @@
             "notes": "#[derive(Iden)] enum declarations emitted as SCOPE.Component(orm_model) recording the Iden enum as the logical table identity. Partial: the physical table name from an #[iden=\"...\"] / impl Iden rename is not resolved (enum name used as table identity).",
             "verified_at": "2026-05-31"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/rust/sea_query.go","internal/custom/rust/sea_query_test.go"],
@@ -65100,6 +65681,10 @@
             "cites": ["internal/engine/rules/rust/orms/diesel.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/rust/diesel.go","internal/custom/rust/orm_props_test.go","internal/custom/rust/testdata/diesel_schema.rs"],
@@ -65174,6 +65759,10 @@
             "notes": "Detects #[crud_table(table_name=...)] struct declarations as ORM models",
             "verified_at": "2026-05-30"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "partial",
             "cites": ["internal/custom/rust/sqlx_rbatis.go","internal/custom/rust/sqlx_rbatis_test.go"],
@@ -65239,6 +65828,10 @@
           "model_extraction": {
             "status": "not_applicable"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "not_applicable",
             "notes": "low-level SQLite binding; users write raw SQL, no schema model"
@@ -65298,6 +65891,10 @@
             "status": "full",
             "cites": ["internal/engine/rules/rust/orms/seaorm.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -65372,6 +65969,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/rust/orms/sqlx.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -69439,6 +70040,10 @@
             "cites": ["internal/engine/rules/scala/orms/doobie.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/scala/orm_extractors.go"],
@@ -69506,6 +70111,10 @@
             "cites": ["internal/engine/rules/scala/orms/elastic4s.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/scala/orm_extractors.go"],
@@ -69570,6 +70179,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/orms/quill.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",
@@ -69639,6 +70252,10 @@
             "cites": ["internal/engine/rules/scala/orms/scalikejdbc.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/scala/orm_extractors.go"],
@@ -69706,6 +70323,10 @@
             "cites": ["internal/engine/rules/scala/orms/scanamo.yaml"],
             "verified_at": "2026-05-28"
           },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "schema_extraction": {
             "status": "full",
             "cites": ["internal/custom/scala/orm_extractors.go"],
@@ -69770,6 +70391,10 @@
             "status": "partial",
             "cites": ["internal/engine/rules/scala/orms/slick.yaml"],
             "verified_at": "2026-05-28"
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
           },
           "schema_extraction": {
             "status": "full",

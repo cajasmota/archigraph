@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | — `not_applicable` | — | — | — | Knex is a SQL query builder, not an ORM — it has no model/entity layer to extract. Persistent model_extraction belongs to Objection.js, which layers Active-Record models on top of Knex (see lang.jsts.orm.objection). |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | ✅ `full` | `2026-05-30` | 3187 | `internal/custom/javascript/knex_migrations.go`<br>`internal/custom/javascript/knex_migrations_test.go` | Knex migration schema-builder DSL: knex.schema.createTable() emits SCOPE.Schema/model table entities and t.string()/t.integer()/... column builders emit SCOPE.Component/column entities. Proven by TestKnexMigrationSchemaExtraction / TestKnexMigrationColumnExtraction. |
 
 ### Relationships

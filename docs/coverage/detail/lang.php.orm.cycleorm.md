@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [php](../by-language/php.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | — | — | `internal/custom/php/orm_data.go` | CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync. |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/custom/php/orm_data.go` | CycleORM #[Entity]/#[Column] attributes; HasMany/BelongsTo/ManyToMany relations; lazy Promise proxy; findByPK/findOne/select queries; MigrationInterface class and schema sync. |
 
 ### Relationships

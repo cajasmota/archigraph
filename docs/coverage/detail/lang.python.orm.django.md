@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [python](../by-language/python.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/python/orms/django_orm.yaml`<br>`internal/extractors/python/django_relational.go` | — |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | ✅ `full` | `2026-05-29` | 3060 | `internal/extractors/python/django_relational.go` | field_type and all keyword arguments (max_length, null, blank, on_delete, related_name, etc.) are stamped on each SCOPE.Schema/field entity by stampDjangoFieldProperties(); structured JSON Schema or OpenAPI emission not yet implemented |
 
 ### Relationships

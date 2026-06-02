@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [rust](../by-language/rust.md)
 - **Category:** [orm](../by-category/orm.md)
 - **Subcategory:** ORM / Data Mapper
-- **Capability cells:** 10
+- **Capability cells:** 11
 
 ## Capabilities
 
@@ -16,6 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-30` | — | `internal/custom/rust/sqlx_rbatis.go`<br>`internal/custom/rust/sqlx_rbatis_test.go`<br>`internal/custom/rust/testdata/rbatis_models.rs` | Detects #[crud_table(table_name=...)] struct declarations as ORM models |
+| Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/rust/sqlx_rbatis.go`<br>`internal/custom/rust/sqlx_rbatis_test.go` | Extracts table_name from #[crud_table(table_name=...)] attribute as schema table mapping |
 
 ### Relationships
