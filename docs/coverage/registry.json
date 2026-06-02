@@ -397,7 +397,9 @@
       "label": "Makefile",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
           "status": "partial",
@@ -431,10 +433,14 @@
       "label": "Mill",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -621,7 +627,9 @@
       "label": "Rake",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
           "status": "partial",
@@ -886,10 +894,14 @@
       "label": "Drone CI",
       "capabilities": {
         "env_resolution": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No file/env parsing yet for this CI system; tracked in #3828."
         },
         "file_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No file/env parsing yet for this CI system; tracked in #3828."
         }
       }
     },
@@ -936,7 +948,9 @@
       "label": "Jenkins (Jenkinsfile)",
       "capabilities": {
         "env_resolution": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No file/env parsing yet for this CI system; tracked in #3828."
         },
         "file_parsing": {
           "status": "missing",
@@ -1065,7 +1079,9 @@
       "label": "Jenkinsfile / Jenkins Pipeline DSL",
       "capabilities": {
         "file_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No file/env parsing yet for this CI system; tracked in #3828."
         }
       }
     },
@@ -1149,10 +1165,14 @@
       "label": "Apache Cassandra (schema)",
       "capabilities": {
         "dependency_attribution": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         },
         "resource_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         }
       }
     },
@@ -1163,10 +1183,14 @@
       "label": "ClickHouse",
       "capabilities": {
         "dependency_attribution": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         },
         "resource_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         }
       }
     },
@@ -1249,10 +1273,14 @@
       "label": "Neo4j",
       "capabilities": {
         "dependency_attribution": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         },
         "resource_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         }
       }
     },
@@ -1299,10 +1327,14 @@
       "label": "Snowflake",
       "capabilities": {
         "dependency_attribution": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         },
         "resource_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap)."
         }
       }
     },
@@ -1648,10 +1680,14 @@
       "label": "Datadog",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "trace_extraction": {
           "status": "partial",
@@ -1669,13 +1705,19 @@
       "label": "Elastic APM",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "trace_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         }
       }
     },
@@ -1686,7 +1728,9 @@
       "label": "Grafana Loki",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
           "status": "not_applicable"
@@ -1703,13 +1747,19 @@
       "label": "Honeycomb",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "trace_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         }
       }
     },
@@ -1733,10 +1783,14 @@
       "label": "New Relic",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "trace_extraction": {
           "status": "partial",
@@ -1754,7 +1808,9 @@
       "label": "OpenTelemetry (OTEL)",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
           "status": "partial",
@@ -1798,10 +1854,14 @@
       "label": "Sentry",
       "capabilities": {
         "log_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "metric_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No log/metric/trace extraction yet for this vendor; tracked in #3828."
         },
         "trace_extraction": {
           "status": "partial",
@@ -7367,10 +7427,14 @@
       "label": "Buck2",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -7381,10 +7445,14 @@
       "label": "build2",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         },
         "manifest_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         }
       }
     },
@@ -7434,10 +7502,14 @@
       "label": "Hunter",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         },
         "manifest_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         }
       }
     },
@@ -7448,10 +7520,14 @@
       "label": "GNU Make",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -7462,10 +7538,14 @@
       "label": "Meson",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -7476,10 +7556,14 @@
       "label": "Ninja",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -7510,10 +7594,14 @@
       "label": "xmake",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -16328,7 +16416,9 @@
           "verified_at": "2026-05-31"
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -73292,10 +73382,14 @@
       "label": "Kafka Streams / Faust",
       "capabilities": {
         "consumer_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No producer/consumer extraction yet for this broker variant; tracked in #3828."
         },
         "producer_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No producer/consumer extraction yet for this broker variant; tracked in #3828."
         }
       }
     },
@@ -73600,7 +73694,9 @@
       "label": "Cargo.toml",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         },
         "manifest_parsing": {
           "status": "full",
@@ -73656,7 +73752,9 @@
       "label": "Gemfile",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         },
         "manifest_parsing": {
           "status": "full",
@@ -73690,7 +73788,9 @@
       "label": "build.gradle / build.gradle.kts",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         },
         "manifest_parsing": {
           "status": "partial",
@@ -73707,7 +73807,9 @@
       "label": "mix.exs",
       "capabilities": {
         "manifest_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         }
       }
     },
@@ -73770,7 +73872,9 @@
       "label": "pubspec.yaml",
       "capabilities": {
         "lockfile_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         },
         "manifest_parsing": {
           "status": "full",
@@ -73818,7 +73922,9 @@
       "label": "build.sbt",
       "capabilities": {
         "manifest_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         }
       }
     },
@@ -73829,7 +73935,9 @@
       "label": "Package.swift / Podfile",
       "capabilities": {
         "manifest_parsing": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No lockfile/manifest parsing yet for this package manager; tracked in #3828."
         }
       }
     },
@@ -74020,7 +74128,9 @@
           "verified_at": "2026-06-02"
         },
         "service_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No service/schema extraction yet for this protocol; tracked in #3828."
         }
       }
     },
@@ -74148,7 +74258,9 @@
           "verified_at": "2026-05-28"
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -74167,7 +74279,9 @@
           "verified_at": "2026-05-28"
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -74186,7 +74300,9 @@
           "verified_at": "2026-05-28"
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -74205,7 +74321,9 @@
           "verified_at": "2026-05-28"
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -74219,10 +74337,14 @@
       "label": "SAML",
       "capabilities": {
         "auth_policy": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -74241,7 +74363,9 @@
           "verified_at": "2026-05-28"
         },
         "secret_detection": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off)."
         },
         "sql_injection": {
           "status": "not_applicable"
@@ -74307,10 +74431,14 @@
       "label": "AssertJ",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74357,10 +74485,14 @@
       "label": "Boost.Test",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74389,10 +74521,14 @@
       "label": "Catch2",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74421,10 +74557,14 @@
       "label": "CppUnit",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74435,10 +74575,14 @@
       "label": "CppUTest",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74467,10 +74611,14 @@
       "label": "Cucumber",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74525,10 +74673,14 @@
       "label": "doctest (C++)",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74557,10 +74709,14 @@
       "label": "FluentAssertions",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74631,10 +74787,14 @@
       "label": "GoogleTest (gtest)",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74788,7 +74948,9 @@
       "label": "Mockito",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
           "status": "partial",
@@ -74958,10 +75120,14 @@
       "label": "REST-assured",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -74990,10 +75156,14 @@
       "label": "Spock",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         }
       }
     },
@@ -75062,7 +75232,9 @@
       "label": "TestNG",
       "capabilities": {
         "dependency_graph": {
-          "status": "missing"
+          "status": "missing",
+          "issue": "3828",
+          "notes": "No build-graph/target extraction yet for this tool/test-runner; tracked in #3828."
         },
         "target_extraction": {
           "status": "partial",

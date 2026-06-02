@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Manifest parsing | 🔴 `missing` | — | — | — | — |
+| Manifest parsing | 🔴 `missing` | — | 3828 | — | No lockfile/manifest parsing yet for this package manager; tracked in #3828. |
 
 ## Provenance
 

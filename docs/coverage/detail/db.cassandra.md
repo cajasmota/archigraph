@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency attribution | 🔴 `missing` | — | — | — | — |
-| Resource extraction | 🔴 `missing` | — | — | — | — |
+| Dependency attribution | 🔴 `missing` | — | 3828 | — | No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap). |
+| Resource extraction | 🔴 `missing` | — | 3828 | — | No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap). |
 
 ## Provenance
 

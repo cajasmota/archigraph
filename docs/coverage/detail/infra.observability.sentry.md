@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | 🔴 `missing` | — | — | — | — |
-| Metric extraction | 🔴 `missing` | — | — | — | — |
+| Log extraction | 🔴 `missing` | — | 3828 | — | No log/metric/trace extraction yet for this vendor; tracked in #3828. |
+| Metric extraction | 🔴 `missing` | — | 3828 | — | No log/metric/trace extraction yet for this vendor; tracked in #3828. |
 | Trace extraction | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3768) | `internal/extractors/golang/observability.go`<br>`internal/extractors/javascript/observability.go`<br>`internal/extractors/python/observability.go` | #3628 area #11: Sentry performance-tracing sites emit INSTRUMENTS edges (enclosing op -> span:<name> stub) in Python, Go and JS/TS. Python (#3762): @sentry_sdk.trace, start_transaction/start_span. Go: sentry.StartSpan(ctx, "op") takes the first string-literal arg as the span name. JS/TS: Sentry.startSpan({name:'op'}, cb) / Sentry.startTransaction({name:'op'}) / startInactiveSpan take the `name` property of the first object-literal arg. Honest-partial: dynamic names emit traced=true+dynamic=true keyed on the enclosing fn without fabrication; .StartSpan on a non-sentry receiver is not emitted. |
 
 ## Provenance

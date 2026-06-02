@@ -12,7 +12,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Auth policy | 🟢 `partial` | `2026-05-28` | — | `internal/engine/java_auth_policy.go` | — |
-| Secret detection | 🔴 `missing` | — | — | — | — |
+| Secret detection | 🔴 `missing` | — | 3828 | — | No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off). |
 | SQL injection | — `not_applicable` | — | — | — | — |
 
 ## Provenance

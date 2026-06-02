@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth policy | 🔴 `missing` | — | — | — | — |
-| Secret detection | 🔴 `missing` | — | — | — | — |
+| Auth policy | 🔴 `missing` | — | 3828 | — | No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off). |
+| Secret detection | 🔴 `missing` | — | 3828 | — | No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off). |
 | SQL injection | — `not_applicable` | — | — | — | — |
 
 ## Provenance

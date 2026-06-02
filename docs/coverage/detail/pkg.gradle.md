@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Lockfile parsing | 🔴 `missing` | — | — | — | — |
+| Lockfile parsing | 🔴 `missing` | — | 3828 | — | No lockfile/manifest parsing yet for this package manager; tracked in #3828. |
 | Manifest parsing | 🟢 `partial` | `2026-06-02` | 3628 | `internal/extractors/cross/manifest/extractor.go`<br>`internal/extractors/cross/manifest/extractor_test.go` | — |
 
 ## Provenance

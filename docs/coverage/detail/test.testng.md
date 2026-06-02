@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | 🔴 `missing` | — | — | — | — |
+| Dependency graph | 🔴 `missing` | — | 3828 | — | No build-graph/target extraction yet for this tool/test-runner; tracked in #3828. |
 | Target extraction | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3753) | `internal/engine/rules/java/test_patterns.yaml`<br>`internal/extractors/cross/testmap/extractor.go`<br>`internal/extractors/cross/testmap/frameworks.go`<br>`internal/extractors/cross/testmap/resolver.go` | TestNG @Test methods in *Test.java files route through testmap detectJUnit (filename hint); org.testng import-hint not yet registered, so import-only TestNG files are a known partial miss. |
 
 ## Provenance

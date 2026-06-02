@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Consumer extraction | 🔴 `missing` | — | — | — | — |
-| Producer extraction | 🔴 `missing` | — | — | — | — |
+| Consumer extraction | 🔴 `missing` | — | 3828 | — | No producer/consumer extraction yet for this broker variant; tracked in #3828. |
+| Producer extraction | 🔴 `missing` | — | 3828 | — | No producer/consumer extraction yet for this broker variant; tracked in #3828. |
 
 ## Provenance
 
