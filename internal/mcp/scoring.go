@@ -55,6 +55,15 @@ type BM25Index struct {
 	df        map[string]int
 	avgLen    float64
 	totalDocs int
+
+	// postings is an inverted index: term -> sorted list of doc indices that
+	// contain that term (#3923). Search consults it to visit ONLY the documents
+	// that contain at least one query term instead of scanning all totalDocs
+	// documents. For the common case where a query term occurs in a small
+	// fraction of the corpus this turns Search from O(totalDocs · |terms|) into
+	// O(Σ df(term)) — sublinear in corpus size. Built for free during
+	// BuildBM25 (the df pass already visits every term of every document).
+	postings map[string][]int32
 }
 
 // BuildBM25 builds a BM25 index for a single graph document.
@@ -63,6 +72,7 @@ func BuildBM25(doc *graph.Document) *BM25Index {
 		docs:     make([]docTerms, len(doc.Entities)),
 		entities: make([]*graph.Entity, len(doc.Entities)),
 		df:       make(map[string]int),
+		postings: make(map[string][]int32),
 	}
 	totalLen := 0.0
 	for i := range doc.Entities {
@@ -71,13 +81,15 @@ func BuildBM25(doc *graph.Document) *BM25Index {
 		d := buildDocTerms(e)
 		idx.docs[i] = d
 		totalLen += d.length
-		seen := make(map[string]bool, len(d.tf))
+		// d.tf is a map, so its keys are already unique per document — the
+		// document frequency can be incremented directly without a second
+		// `seen` map (#3923: that per-doc map was pure allocation overhead).
+		// We also append this doc index to each term's postings list; because
+		// i increases monotonically the postings lists stay sorted by
+		// construction.
 		for term := range d.tf {
-			if seen[term] {
-				continue
-			}
-			seen[term] = true
 			idx.df[term]++
+			idx.postings[term] = append(idx.postings[term], int32(i))
 		}
 	}
 	idx.totalDocs = len(idx.entities)
@@ -346,30 +358,61 @@ func (b *BM25Index) Search(query string, limit int) []Hit {
 	if len(terms) == 0 {
 		return nil
 	}
-	hits := make([]Hit, 0, b.totalDocs)
-	for i, d := range b.docs {
-		score := 0.0
-		for _, t := range terms {
-			tf, ok := d.tf[t]
-			if !ok {
-				continue
-			}
-			df := b.df[t]
-			if df == 0 {
-				continue
-			}
-			idf := math.Log(1.0 + (float64(b.totalDocs)-float64(df)+0.5)/(float64(df)+0.5))
+	// #3923: accumulate scores per candidate document by walking the postings
+	// list of each query term, instead of scanning all totalDocs documents.
+	// A document contributes to the result iff it appears in at least one query
+	// term's postings list — identical to the old `if score > 0` predicate,
+	// since only matching terms ever added to the score. Query terms are NOT
+	// deduplicated: a repeated query term contributes twice, exactly as the old
+	// per-document term loop summed it twice, preserving scores bit-for-bit.
+	//
+	// scoreByDoc maps a doc index to its running BM25 score.
+	scoreByDoc := make(map[int32]float64)
+	for _, t := range terms {
+		plist := b.postings[t]
+		if len(plist) == 0 {
+			continue
+		}
+		df := b.df[t]
+		if df == 0 {
+			continue
+		}
+		idf := math.Log(1.0 + (float64(b.totalDocs)-float64(df)+0.5)/(float64(df)+0.5))
+		for _, di := range plist {
+			d := b.docs[di]
+			tf := d.tf[t]
 			lenNorm := 1.0
 			if b.avgLen > 0 {
 				lenNorm = 1 - bm25B + bm25B*(d.length/b.avgLen)
 			}
-			score += idf * (tf * (bm25K1 + 1)) / (tf + bm25K1*lenNorm)
-		}
-		if score > 0 {
-			hits = append(hits, Hit{Entity: b.entities[i], Score: score})
+			scoreByDoc[di] += idf * (tf * (bm25K1 + 1)) / (tf + bm25K1*lenNorm)
 		}
 	}
-	sort.Slice(hits, func(i, j int) bool { return hits[i].Score > hits[j].Score })
+	type scoredDoc struct {
+		di    int32
+		score float64
+	}
+	scored := make([]scoredDoc, 0, len(scoreByDoc))
+	for di, score := range scoreByDoc {
+		if score > 0 {
+			scored = append(scored, scoredDoc{di: di, score: score})
+		}
+	}
+	// Sort by score desc, breaking ties by ascending doc index. The old
+	// implementation appended hits in ascending doc order and called
+	// sort.Slice (unstable) keyed only on score; an explicit ascending-index
+	// tie-break makes the ranking deterministic regardless of map iteration
+	// order while preserving the score ordering callers depend on.
+	sort.Slice(scored, func(i, j int) bool {
+		if scored[i].score != scored[j].score {
+			return scored[i].score > scored[j].score
+		}
+		return scored[i].di < scored[j].di
+	})
+	hits := make([]Hit, len(scored))
+	for i, sd := range scored {
+		hits[i] = Hit{Entity: b.entities[sd.di], Score: sd.score}
+	}
 	if limit > 0 && len(hits) > limit {
 		hits = hits[:limit]
 	}
