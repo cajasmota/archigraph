@@ -997,6 +997,142 @@ func TestSubgraph_InvalidFormat(t *testing.T) {
 	}
 }
 
+// TestSubgraph_FormatRaw_SmallGraphNotTruncated verifies the common case is
+// returned complete: a small subgraph carries truncated=false and emits no
+// truncation_note. (#3924)
+func TestSubgraph_FormatRaw_SmallGraphNotTruncated(t *testing.T) {
+	entities := []graph.Entity{
+		{ID: "root", Name: "Root", Kind: "Function"},
+		{ID: "child", Name: "Child", Kind: "Function"},
+		{ID: "grandchild", Name: "GrandChild", Kind: "Function"},
+	}
+	rels := []graph.Relationship{
+		{ID: "r1", FromID: "root", ToID: "child", Kind: "CALLS"},
+		{ID: "r2", FromID: "child", ToID: "grandchild", Kind: "CALLS"},
+	}
+	srv := newTestServer(t, minDoc(entities, rels))
+
+	out := callFlowTool(t, srv.handleSubgraph, map[string]any{
+		"group":     "test",
+		"entity_id": "root",
+		"depth":     float64(2),
+		"format":    "raw",
+	})
+	if out == nil {
+		t.Fatal("expected JSON output for format=raw")
+	}
+	if trunc, _ := out["truncated"].(bool); trunc {
+		t.Errorf("small subgraph should not be truncated: %v", out)
+	}
+	if _, ok := out["truncation_note"]; ok {
+		t.Errorf("small subgraph should carry no truncation_note: %v", out["truncation_note"])
+	}
+	if nc := int(out["node_count"].(float64)); nc != 3 {
+		t.Errorf("expected node_count=3, got %d", nc)
+	}
+	if ec := int(out["edge_count"].(float64)); ec != 2 {
+		t.Errorf("expected edge_count=2, got %d", ec)
+	}
+}
+
+// TestSubgraph_FormatRaw_HighDegreeBounded builds a hub with many neighbours
+// reached at depth 2 and verifies the response is bounded by max_nodes AND
+// honestly marked truncated (not silently dropped). (#3924)
+func TestSubgraph_FormatRaw_HighDegreeBounded(t *testing.T) {
+	// root -> hub, hub -> leaf_i for many i. With depth=2 from root, the leaves
+	// are reached at hop 2 and would explode the node set unbounded.
+	const fanout = 500
+	entities := []graph.Entity{
+		{ID: "root", Name: "Root", Kind: "Function"},
+		{ID: "hub", Name: "Hub", Kind: "Function"},
+	}
+	rels := []graph.Relationship{
+		{ID: "r-root-hub", FromID: "root", ToID: "hub", Kind: "CALLS"},
+	}
+	for i := 0; i < fanout; i++ {
+		id := fmt.Sprintf("leaf%d", i)
+		entities = append(entities, graph.Entity{ID: id, Name: id, Kind: "Function"})
+		rels = append(rels, graph.Relationship{
+			ID: "r-hub-" + id, FromID: "hub", ToID: id, Kind: "CALLS",
+		})
+	}
+	srv := newTestServer(t, minDoc(entities, rels))
+
+	const cap = 50
+	out := callFlowTool(t, srv.handleSubgraph, map[string]any{
+		"group":     "test",
+		"entity_id": "root",
+		"depth":     float64(2),
+		"format":    "raw",
+		"max_nodes": float64(cap),
+	})
+	if out == nil {
+		t.Fatal("expected JSON output for format=raw")
+	}
+	trunc, _ := out["truncated"].(bool)
+	if !trunc {
+		t.Fatalf("high-degree subgraph should be truncated=true, got: %v", out["truncated"])
+	}
+	if _, ok := out["truncation_note"]; !ok {
+		t.Error("truncated response must carry an explicit truncation_note (honest, not silent)")
+	}
+	nc := int(out["node_count"].(float64))
+	if nc > cap {
+		t.Errorf("node_count %d must not exceed max_nodes cap %d", nc, cap)
+	}
+	if nc < 2 {
+		t.Errorf("expected at least root+hub in bounded result, got node_count=%d", nc)
+	}
+}
+
+// TestSubgraph_FormatRaw_EdgeTuplesPreserved verifies the from/to/kind edge
+// tuples the rewrite agent's format=raw consumer relies on are emitted with
+// correct direction after switching edge collection to the adjacency index. (#3924)
+func TestSubgraph_FormatRaw_EdgeTuplesPreserved(t *testing.T) {
+	entities := []graph.Entity{
+		{ID: "a", Name: "A", Kind: "Function"},
+		{ID: "b", Name: "B", Kind: "Function"},
+		{ID: "c", Name: "C", Kind: "Class"},
+	}
+	rels := []graph.Relationship{
+		{ID: "r1", FromID: "a", ToID: "b", Kind: "CALLS"},
+		{ID: "r2", FromID: "a", ToID: "c", Kind: "REFERENCES"},
+	}
+	srv := newTestServer(t, minDoc(entities, rels))
+
+	out := callFlowTool(t, srv.handleSubgraph, map[string]any{
+		"group":     "test",
+		"entity_id": "a",
+		"depth":     float64(1),
+		"format":    "raw",
+	})
+	if out == nil {
+		t.Fatal("expected JSON output for format=raw")
+	}
+	rawEdges, ok := out["edges"].([]any)
+	if !ok {
+		t.Fatalf("edges missing or wrong type: %v", out["edges"])
+	}
+	got := map[string]string{} // "from>to" -> kind
+	for _, re := range rawEdges {
+		em := re.(map[string]any)
+		from := em["from_id"].(string)
+		to := em["to_id"].(string)
+		kind := em["kind"].(string)
+		got[from+">"+to] = kind
+	}
+	// Direction preserved: a->b CALLS, a->c REFERENCES (prefixed with repo1::).
+	if got["repo1::a>repo1::b"] != "CALLS" {
+		t.Errorf("expected a->b CALLS edge tuple, got map: %v", got)
+	}
+	if got["repo1::a>repo1::c"] != "REFERENCES" {
+		t.Errorf("expected a->c REFERENCES edge tuple, got map: %v", got)
+	}
+	if ec := int(out["edge_count"].(float64)); ec != 2 {
+		t.Errorf("expected edge_count=2, got %d", ec)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestFindDeadCode
 // ---------------------------------------------------------------------------

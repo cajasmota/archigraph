@@ -160,30 +160,62 @@ func sortStrings(s []string) {
 // bfs walks `depth` hops outward from `start` along the given adjacency,
 // returning the visited set as a map id->depth.
 func bfs(adj *adjacency, start string, depth int, contextFilter map[string]bool) map[string]int {
+	visited, _ := bfsBounded(adj, start, depth, contextFilter, 0)
+	return visited
+}
+
+// bfsBounded is bfs with an optional node-count cap. When maxNodes > 0 and the
+// visited set reaches that many nodes, expansion stops early and truncated is
+// returned true. The cap bounds the pathological high-degree tail (a hub at
+// depth>1 fanning out to thousands of nodes) for both BFS work and downstream
+// serialization, while leaving the common small-subgraph case complete
+// (maxNodes<=0 disables the cap). Truncation is honest: callers surface a
+// marker rather than silently dropping nodes. (#3924)
+func bfsBounded(adj *adjacency, start string, depth int, contextFilter map[string]bool, maxNodes int) (map[string]int, bool) {
 	visited := map[string]int{start: 0}
 	frontier := []string{start}
-	for d := 0; d < depth; d++ {
+	truncated := false
+	add := func(target string, d int) bool {
+		if _, seen := visited[target]; seen {
+			return true
+		}
+		if maxNodes > 0 && len(visited) >= maxNodes {
+			truncated = true
+			return false
+		}
+		visited[target] = d + 1
+		return true
+	}
+	for d := 0; d < depth && !truncated; d++ {
 		next := []string{}
 		for _, n := range frontier {
 			for _, e := range adj.out[n] {
 				if contextFilter != nil && !contextFilter[e.kind] {
 					continue
 				}
-				if _, seen := visited[e.target]; seen {
-					continue
+				if _, seen := visited[e.target]; !seen {
+					if !add(e.target, d) {
+						break
+					}
+					next = append(next, e.target)
 				}
-				visited[e.target] = d + 1
-				next = append(next, e.target)
+			}
+			if truncated {
+				break
 			}
 			for _, e := range adj.in[n] {
 				if contextFilter != nil && !contextFilter[e.kind] {
 					continue
 				}
-				if _, seen := visited[e.target]; seen {
-					continue
+				if _, seen := visited[e.target]; !seen {
+					if !add(e.target, d) {
+						break
+					}
+					next = append(next, e.target)
 				}
-				visited[e.target] = d + 1
-				next = append(next, e.target)
+			}
+			if truncated {
+				break
 			}
 		}
 		frontier = next
@@ -191,7 +223,7 @@ func bfs(adj *adjacency, start string, depth int, contextFilter map[string]bool)
 			break
 		}
 	}
-	return visited
+	return visited, truncated
 }
 
 // pqItem is one entry in the dijkstra priority queue.

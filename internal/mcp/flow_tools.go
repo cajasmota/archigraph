@@ -863,6 +863,14 @@ func buildRiskReason(e *graph.Entity, namedCallers, moduleNodes, total int) stri
 // archigraph_subgraph (unified, #1754)
 // ---------------------------------------------------------------------------
 
+// subgraphRawMaxNodes bounds the format=raw node expansion (#3924). A
+// high-degree hub reached at depth>1 can fan out to thousands of nodes,
+// exploding both the BFS and the raw-JSON serialization past token limits.
+// The cap is generous so ordinary subgraphs are returned complete; only the
+// pathological tail is bounded, and the bound is reported honestly via the
+// "truncated" flag + "truncation_note". Callers may raise it via max_nodes.
+const subgraphRawMaxNodes = 1500
+
 // handleSubgraph is the unified handler for archigraph_subgraph.
 // format="raw"      → JSON graph (nodes + edges), identical output to old get_subgraph.
 // format="markdown" → LLM-friendly Markdown summary, identical output to old summarize_subgraph.
@@ -897,6 +905,16 @@ func (s *Server) subgraphRaw(entityID string, req mcpapi.CallToolRequest) (*mcpa
 	if depth > 5 {
 		depth = 5
 	}
+	// maxNodes bounds the pathological high-degree tail (#3924): a hub reached
+	// at depth>1 can fan out to thousands of nodes, blowing up both the BFS and
+	// the raw-JSON serialization (the rewrite agent's "depth 2 can exceed token
+	// limits"). The cap is generous so the common case is never touched; only
+	// the explosive tail is bounded, and truncation is reported honestly. A
+	// caller may raise it via max_nodes for an explicit deeper pull.
+	maxNodes := argInt(req, "max_nodes", subgraphRawMaxNodes)
+	if maxNodes < 1 {
+		maxNodes = subgraphRawMaxNodes
+	}
 	repos := reposToConsider(lg, nil)
 	repoHint, local := splitPrefixed(entityID)
 	if repoHint != "" {
@@ -918,7 +936,7 @@ func (s *Server) subgraphRaw(entityID string, req mcpapi.CallToolRequest) (*mcpa
 			continue
 		}
 		adj := r.getAdjacency()
-		visited := bfs(adj, target, depth, nil)
+		visited, nodesTruncated := bfsBounded(adj, target, depth, nil, maxNodes)
 		byID2 := r.getByID()
 		type nodeOut struct {
 			EntityID   string `json:"entity_id"`
@@ -954,25 +972,42 @@ func (s *Server) subgraphRaw(entityID string, req mcpapi.CallToolRequest) (*mcpa
 			}
 			return nodes[i].Name < nodes[j].Name
 		})
+		// Collect edges via the adjacency index rather than scanning the full
+		// r.Doc.Relationships table. The old scan was O(total repo
+		// relationships) on every call — a fixed cost that dominated the p95
+		// tail. Walking adj.out of the (bounded) visited set is
+		// O(edges incident to the subgraph). adj.out preserves direction
+		// (from→to), so the from/to/kind tuples the rewrite agent's
+		// format=raw consumer relies on are emitted unchanged. (#3924)
 		var edges []edgeOut
 		seen := map[string]bool{}
-		for i := range r.Doc.Relationships {
-			rel := &r.Doc.Relationships[i]
-			if !nodeSet[rel.FromID] || !nodeSet[rel.ToID] {
-				continue
+		for from := range nodeSet {
+			for _, e := range adj.Outgoing(from) {
+				if !nodeSet[e.target] {
+					continue
+				}
+				key := from + ">" + e.target + ":" + e.kind
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+				edges = append(edges, edgeOut{
+					FromID: prefixedID(r.Repo, from),
+					ToID:   prefixedID(r.Repo, e.target),
+					Kind:   e.kind,
+				})
 			}
-			key := rel.FromID + ">" + rel.ToID + ":" + rel.Kind
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-			edges = append(edges, edgeOut{
-				FromID: prefixedID(r.Repo, rel.FromID),
-				ToID:   prefixedID(r.Repo, rel.ToID),
-				Kind:   rel.Kind,
-			})
 		}
-		return jsonResult(map[string]any{
+		sort.Slice(edges, func(i, j int) bool {
+			if edges[i].FromID != edges[j].FromID {
+				return edges[i].FromID < edges[j].FromID
+			}
+			if edges[i].ToID != edges[j].ToID {
+				return edges[i].ToID < edges[j].ToID
+			}
+			return edges[i].Kind < edges[j].Kind
+		})
+		out := map[string]any{
 			"root":       prefixedID(r.Repo, target),
 			"repo":       r.Repo,
 			"depth":      depth,
@@ -980,7 +1015,16 @@ func (s *Server) subgraphRaw(entityID string, req mcpapi.CallToolRequest) (*mcpa
 			"edges":      edges,
 			"node_count": len(nodes),
 			"edge_count": len(edges),
-		}), nil
+			"truncated":  nodesTruncated,
+		}
+		if nodesTruncated {
+			out["truncation_note"] = fmt.Sprintf(
+				"node expansion capped at max_nodes=%d to bound a high-degree subgraph; "+
+					"some nodes beyond the cap (and their edges) are omitted — narrow with a smaller "+
+					"depth, or pass a larger max_nodes for an explicit deeper pull",
+				maxNodes)
+		}
+		return jsonResult(out), nil
 	}
 	return mcpapi.NewToolResultError("entity not found: " + entityID), nil
 }

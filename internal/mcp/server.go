@@ -749,6 +749,9 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("entity_id", mcpapi.Required()),
 		mcpapi.WithNumber("depth", mcpapi.DefaultNumber(2)),
 		mcpapi.WithString("format", mcpapi.DefaultString("raw")),
+		// #3924: max_nodes caps format=raw node expansion to bound a
+		// high-degree subgraph; truncation is reported via "truncated".
+		mcpapi.WithNumber("max_nodes", mcpapi.DefaultNumber(subgraphRawMaxNodes)),
 		mcpapi.WithAny("group"),
 		mcpapi.WithAny("cwd"),
 		// #2769 Phase 1C: min_confidence accepted via #1639 token-ceiling pattern.
