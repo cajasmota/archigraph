@@ -15,6 +15,12 @@ Auto-generated. Back to [summary](../summary.md).
 | Producer extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/graphql_subscriptions.go` | — |
 | Topic attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/graphql_subscriptions.go` | — |
 
+## Related extraction records
+
+This record provides code-level coverage for the
+[`protocol.graphql`](./protocol.graphql.md) hub record (GraphQL),
+which tracks the same technology at a higher level.
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

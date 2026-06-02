@@ -56,11 +56,11 @@ Auto-generated. Back to [summary](../summary.md).
 | Aggregation join extraction | ✅ `full` | — | 3844 | `internal/engine/orm_queries_jsts_mongo_agg.go`<br>`internal/engine/orm_queries_jsts_mongo_agg_test.go` | scanJSMongoAggregation parses Model.aggregate([...]) pipelines (inline array, same-scope variable binding, and fluent .build() builder forms), emitting one SCOPE.DataAccess stage node per stage and a JOINS_COLLECTION edge (Class:Model -> Class:from) for every $lookup / $graphLookup with a static from; matches the Python pymongo/motor contract and feeds shared_db_coupling.go (Pass 8.8). Dynamic from is honestly skipped |
 | Populate reference join extraction | ✅ `full` | — | 3844 | `internal/engine/orm_queries_jsts_mongoose_populate.go`<br>`internal/engine/orm_queries_jsts_mongoose_populate_test.go` | scanJSMongoosePopulateJoins emits a JOINS_COLLECTION edge for Mongoose ref:/@Prop(ref) fields that are traversed by a static .populate('field') — the dominant NestJS-target join idiom — bringing ref/populate to parity with the $lookup join contract |
 
-## Datastore
+## Related extraction records
 
-This driver/ORM record provides code-level coverage for the
-[`db.mongodb`](./db.mongodb.md) infra record (MongoDB (collections)),
-which tracks datastore-level extraction for the same technology.
+This record provides code-level coverage for the
+[`db.mongodb`](./db.mongodb.md) hub record (MongoDB (collections)),
+which tracks the same technology at a higher level.
 
 ## Provenance
 

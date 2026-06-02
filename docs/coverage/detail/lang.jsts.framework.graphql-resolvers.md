@@ -69,6 +69,12 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Dataloader extraction | 🟢 `partial` | `2026-06-02` | 3624 | `internal/extractors/javascript/graphql_dataloader.go`<br>`internal/extractors/javascript/issue3624_dataloader_test.go`<br>`internal/types/kinds.go` | new DataLoader(batchFn) (the 'dataloader' npm pkg) -> SCOPE.DataLoader entity named by the assigned const/field + BATCHES edge to the wrapped batch fn (bare ident or single-call delegating arrow); loader.load(id)/loadMany(ids) in a resolver body -> USES edge resolver->loader, via=graphql_dataloader. Value-asserted: userLoader BATCHES batchUsers + resolveAuthor USES userLoader. PARTIAL (honest): only statically-named loaders; dynamic/factory-built loaders and lambda batch fns get no BATCHES edge. |
 
+## Related extraction records
+
+This record provides code-level coverage for the
+[`protocol.graphql`](./protocol.graphql.md) hub record (GraphQL),
+which tracks the same technology at a higher level.
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

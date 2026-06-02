@@ -15,6 +15,17 @@ Auto-generated. Back to [summary](../summary.md).
 | Metric extraction | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3768) | `internal/engine/rules/_engine/comment_marker_extractor.yaml`<br>`internal/extractors/golang/observability.go`<br>`internal/extractors/javascript/observability.go`<br>`internal/extractors/python/observability.go` | #3628 area #11: prometheus client metrics emit INSTRUMENTS edges (enclosing op -> metric:<name> stub) in Python, Go and JS/TS. Python (#3762): module-level X = Counter|Gauge|Summary|Histogram("name") + @X.time()/X.inc()/observe(). Go: a metric var bound to prometheus.New{Counter,Gauge,Summary,Histogram}[Vec](prometheus.*Opts{Name:"x"}) (package- or fn-scope) resolves .Inc()/Dec()/Add()/Sub()/Observe()/Set() body calls to metric:x. JS/TS prom-client: a var bound to new client.{Counter,Gauge,Histogram,Summary}({name:'x'}) resolves .inc()/.dec()/.set()/.observe()/.startTimer() body calls to metric:x. Honest-partial: a non-literal metric name yields traced=true+dynamic=true; a metric method on a variable that is NOT a known metric declaration is NOT emitted (precision). |
 | Trace extraction | — `not_applicable` | — | — | — | — |
 
+## Related extraction records
+
+This hub record tracks the technology at a high level. The deep, code-level
+coverage for this technology lives in the per-language records below — each
+one is a separate detail page.
+
+| Record | Language | Kind | Status |
+|--------|----------|------|--------|
+| [`infra.observability.dropwizard-metrics`](./infra.observability.dropwizard-metrics.md) | multi | observability | 1 partial, 2 n/a |
+| [`infra.observability.micrometer`](./infra.observability.micrometer.md) | multi | observability | 1 partial, 2 n/a |
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

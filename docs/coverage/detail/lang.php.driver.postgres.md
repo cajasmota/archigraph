@@ -47,11 +47,11 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Transaction function stamping | 🔴 `missing` | — | 3628-transaction-function-stamping | — | — |
 
-## Datastore
+## Related extraction records
 
-This driver/ORM record provides code-level coverage for the
-[`db.postgres`](./db.postgres.md) infra record (PostgreSQL (schema)),
-which tracks datastore-level extraction for the same technology.
+This record provides code-level coverage for the
+[`db.postgres`](./db.postgres.md) hub record (PostgreSQL (schema)),
+which tracks the same technology at a higher level.
 
 ## Provenance
 

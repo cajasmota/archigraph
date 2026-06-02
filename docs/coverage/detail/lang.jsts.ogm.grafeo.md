@@ -47,6 +47,12 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Transaction function stamping | 🔴 `missing` | — | 3628-transaction-function-stamping | — | grafeo executes via the neo4j-driver session/transaction API under the hood; explicit transaction-function stamping is not yet modelled (shared with the sibling OGMs). |
 
+## Related extraction records
+
+This record provides code-level coverage for the
+[`db.neo4j`](./db.neo4j.md) hub record (Neo4j),
+which tracks the same technology at a higher level.
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

@@ -36,11 +36,11 @@ Auto-generated. Back to [summary](../summary.md).
 | {{humanizeCapKey .Key}} | {{glyph .Cap.Status}} `{{.Cap.Status}}` | {{if .Cap.VerifiedAt}}`{{.Cap.VerifiedAt}}`{{else}}—{{end}} | {{renderIssue .Cap.Issue}} | {{if .Cap.Cites}}{{range $i, $p := .Cap.Cites}}{{if $i}}<br>{{end}}`{{$p}}`{{end}}{{else}}—{{end}} | {{if .Cap.Notes}}{{.Cap.Notes}}{{else}}—{{end}} |
 {{- end}}
 {{end}}
-{{end}}{{if .RelatedRecords}}## Code-level coverage
+{{end}}{{if .RelatedRecords}}## Related extraction records
 
-This infra record tracks datastore-level extraction (resources, dependency
-attribution). The deep, code-level coverage for this technology lives in the
-per-language driver/ORM records below — each one is a separate detail page.
+This hub record tracks the technology at a high level. The deep, code-level
+coverage for this technology lives in the per-language records below — each
+one is a separate detail page.
 
 | Record | Language | Kind | Status |
 |--------|----------|------|--------|
@@ -48,11 +48,11 @@ per-language driver/ORM records below — each one is a separate detail page.
 | [`{{.ID}}`](./{{.ID}}.md) | {{langDsp .Language}} | {{.Kind}} | {{.Digest}} |
 {{- end}}
 
-{{end}}{{if .InfraRecord}}## Datastore
+{{end}}{{if .HubRecord}}## Related extraction records
 
-This driver/ORM record provides code-level coverage for the
-[`{{.InfraRecord.ID}}`](./{{.InfraRecord.ID}}.md) infra record ({{.InfraRecord.Label}}),
-which tracks datastore-level extraction for the same technology.
+This record provides code-level coverage for the
+[`{{.HubRecord.ID}}`](./{{.HubRecord.ID}}.md) hub record ({{.HubRecord.Label}}),
+which tracks the same technology at a higher level.
 
 {{end}}## Provenance
 

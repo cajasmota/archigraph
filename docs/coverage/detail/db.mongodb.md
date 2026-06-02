@@ -14,11 +14,11 @@ Auto-generated. Back to [summary](../summary.md).
 | Dependency attribution | 🟢 `partial` | `2026-05-28` | — | `internal/engine/orm_queries_other.go` | — |
 | Resource extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/orm_queries_other.go` | — |
 
-## Code-level coverage
+## Related extraction records
 
-This infra record tracks datastore-level extraction (resources, dependency
-attribution). The deep, code-level coverage for this technology lives in the
-per-language driver/ORM records below — each one is a separate detail page.
+This hub record tracks the technology at a high level. The deep, code-level
+coverage for this technology lives in the per-language records below — each
+one is a separate detail page.
 
 | Record | Language | Kind | Status |
 |--------|----------|------|--------|

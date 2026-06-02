@@ -61,6 +61,12 @@ Auto-generated. Back to [summary](../summary.md).
 | Template pattern catalog | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/template_pattern_pass.go`<br>`internal/substrate/template_pattern_csharp.go` | — |
 | Vulnerability finding | 🟢 `partial` | `2026-05-28` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_csharp.go` | — |
 
+## Related extraction records
+
+This record provides code-level coverage for the
+[`protocol.grpc`](./protocol.grpc.md) hub record (gRPC),
+which tracks the same technology at a higher level.
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

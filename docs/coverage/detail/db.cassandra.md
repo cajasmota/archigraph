@@ -14,11 +14,11 @@ Auto-generated. Back to [summary](../summary.md).
 | Dependency attribution | 🟢 `partial` | `2026-06-02` | 3828 | `internal/engine/orm_queries_drivers_other.go` | No resource/dependency extraction yet for this datastore; tracked in #3828 (sibling datastores done — genuine build-gap). |
 | Resource extraction | 🟢 `partial` | `2026-06-02` | 3828 | `internal/engine/orm_queries_drivers_other.go` | Cassandra/Scylla CQL session.execute("... FROM table") across C#/PHP/Rust/Python/Java/Ruby/JS parses the FROM/INTO/UPDATE table into a Class:<Table> resource node + QUERIES dependency edge from the connecting function (emitCQLTargets). Runtime-built CQL honest-skipped. |
 
-## Code-level coverage
+## Related extraction records
 
-This infra record tracks datastore-level extraction (resources, dependency
-attribution). The deep, code-level coverage for this technology lives in the
-per-language driver/ORM records below — each one is a separate detail page.
+This hub record tracks the technology at a high level. The deep, code-level
+coverage for this technology lives in the per-language records below — each
+one is a separate detail page.
 
 | Record | Language | Kind | Status |
 |--------|----------|------|--------|

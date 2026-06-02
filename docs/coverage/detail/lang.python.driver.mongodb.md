@@ -47,11 +47,11 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Transaction function stamping | 🔴 `missing` | — | 3628-transaction-function-stamping | — | — |
 
-## Datastore
+## Related extraction records
 
-This driver/ORM record provides code-level coverage for the
-[`db.mongodb`](./db.mongodb.md) infra record (MongoDB (collections)),
-which tracks datastore-level extraction for the same technology.
+This record provides code-level coverage for the
+[`db.mongodb`](./db.mongodb.md) hub record (MongoDB (collections)),
+which tracks the same technology at a higher level.
 
 ## Provenance
 

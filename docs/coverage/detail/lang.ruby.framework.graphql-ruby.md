@@ -120,6 +120,12 @@ Auto-generated. Back to [summary](../summary.md).
 | Template pattern catalog | 🔴 `missing` | — | 3621 | — | — |
 | Vulnerability finding | 🔴 `missing` | — | 3621 | — | — |
 
+## Related extraction records
+
+This record provides code-level coverage for the
+[`protocol.graphql`](./protocol.graphql.md) hub record (GraphQL),
+which tracks the same technology at a higher level.
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

@@ -14,6 +14,12 @@ Auto-generated. Back to [summary](../summary.md).
 | Consumer extraction | 🔴 `missing` | — | 3828 | — | No producer/consumer extraction yet for this broker variant; tracked in #3828. |
 | Producer extraction | 🔴 `missing` | — | 3828 | — | No producer/consumer extraction yet for this broker variant; tracked in #3828. |
 
+## Related extraction records
+
+This record provides code-level coverage for the
+[`msg.broker.kafka`](./msg.broker.kafka.md) hub record (Apache Kafka),
+which tracks the same technology at a higher level.
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON

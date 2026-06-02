@@ -282,15 +282,17 @@ type detailPageData struct {
 	Grouped           bool
 	FrameworkSpecific []frameworkSpecificView
 	TotalCells        int
-	// RelatedRecords is populated for `databases`-category infra records
-	// (db.<tech>): the per-language driver/ORM records that target the
-	// SAME datastore, each with a compact status digest. Empty (section
-	// omitted) for records with no related driver/ORM coverage.
+	// RelatedRecords is populated for cross-cutting HUB records (db.<tech>,
+	// protocol.grpc, msg.broker.kafka, observability vendors, ...): the
+	// per-technology spoke records that target the SAME tech/concept, each
+	// with a compact status digest. Empty (section omitted) for records
+	// that resolve to no spokes. (#3873, generalizing #3853.)
 	RelatedRecords []relatedRecordDigest
-	// InfraRecord is populated for driver/ORM records: the
-	// `databases`-category infra record they target, rendered as a
-	// back-link. nil when the record targets no recognised datastore.
-	InfraRecord *relatedRecordDigest
+	// HubRecord is populated for SPOKE records (a driver/ORM/framework/
+	// client record): the cross-cutting hub record they provide coverage
+	// for, rendered as a back-link. nil when the record targets no
+	// recognised hub.
+	HubRecord *relatedRecordDigest
 }
 
 // frameworkSpecificView is one free-form capability group rendered on a
@@ -863,8 +865,8 @@ func generate(reg *Registry, outRoot string) error {
 				Grouped:           view.Grouped,
 				FrameworkSpecific: fsViews,
 				TotalCells:        totalCells,
-				RelatedRecords:    relatedDriverORMRecords(rec, sortedRecs),
-				InfraRecord:       infraRecordFor(rec, sortedRecs),
+				RelatedRecords:    relatedSpokeRecords(rec, sortedRecs),
+				HubRecord:         hubRecordFor(rec, sortedRecs),
 			}); err != nil {
 			return err
 		}

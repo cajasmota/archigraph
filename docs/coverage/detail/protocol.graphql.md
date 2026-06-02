@@ -15,6 +15,28 @@ Auto-generated. Back to [summary](../summary.md).
 | Method attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/graphql_subscriptions.go` | — |
 | Service extraction | ✅ `full` | `2026-05-28` | — | `internal/engine/graphql_subscriptions.go`<br>`internal/engine/rules/graphql/frameworks/graphql_schema.yaml` | — |
 
+## Related extraction records
+
+This hub record tracks the technology at a high level. The deep, code-level
+coverage for this technology lives in the per-language records below — each
+one is a separate detail page.
+
+| Record | Language | Kind | Status |
+|--------|----------|------|--------|
+| [`lang.csharp.framework.hotchocolate`](./lang.csharp.framework.hotchocolate.md) | C# | framework | 3 full, 1 partial, 45 missing |
+| [`lang.elixir.framework.absinthe`](./lang.elixir.framework.absinthe.md) | elixir | framework | 6 full, 30 partial, 13 missing |
+| [`lang.go.framework.gqlgen`](./lang.go.framework.gqlgen.md) | go | framework | 4 full, 1 partial, 44 missing |
+| [`lang.java.framework.spring-graphql`](./lang.java.framework.spring-graphql.md) | java | framework | 4 full, 1 partial, 49 missing |
+| [`lang.jsts.framework.graphql-resolvers`](./lang.jsts.framework.graphql-resolvers.md) | JS/TS | framework | 10 full, 19 partial, 1 missing, 1 n/a |
+| [`lang.jsts.framework.type-graphql`](./lang.jsts.framework.type-graphql.md) | JS/TS | framework | 4 full, 1 partial, 44 missing |
+| [`lang.kotlin.framework.graphql-kotlin`](./lang.kotlin.framework.graphql-kotlin.md) | kotlin | framework | 4 full, 50 missing |
+| [`msg.graphql-subscriptions`](./msg.graphql-subscriptions.md) | multi |  | 3 full |
+| [`lang.php.framework.graphql-php`](./lang.php.framework.graphql-php.md) | php | framework | 5 full, 44 missing |
+| [`lang.python.framework.graphene`](./lang.python.framework.graphene.md) | python | framework | 4 full, 1 partial, 44 missing |
+| [`lang.python.framework.strawberry-graphql`](./lang.python.framework.strawberry-graphql.md) | python | framework | 16 full, 23 partial, 10 missing |
+| [`lang.ruby.framework.graphql-ruby`](./lang.ruby.framework.graphql-ruby.md) | ruby | framework | 3 full, 1 partial, 45 missing |
+| [`lang.rust.framework.async-graphql`](./lang.rust.framework.async-graphql.md) | rust | framework | 6 full, 2 partial, 41 missing |
+
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON
