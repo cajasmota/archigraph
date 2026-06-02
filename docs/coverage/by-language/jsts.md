@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # JS/TS
 
-**Frameworks**: 32 · **Tools**: 21 · **ORMs**: 18 · **Other**: 4
+**Frameworks**: 32 · **Tools**: 21 · **ORMs**: 19 · **Other**: 4
 
 Back to [summary](../summary.md).
 
@@ -142,6 +142,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [TypeORM](../detail/lang.jsts.orm.typeorm.md) | 🟢 11/11 | |
 | [better-sqlite3 / sqlite3](../detail/lang.jsts.driver.sqlite.md) | 🟡 1/4 | |
 | [cassandra-driver (JS)](../detail/lang.jsts.driver.cassandra.md) | 🟡 1/4 | |
+| [grafeo-ogm (Neo4j TS OGM, GraphQL-SDL-driven)](../detail/lang.jsts.ogm.grafeo.md) | 🟡 3/5 | |
 | [ioredis / node-redis](../detail/lang.jsts.driver.redis.md) | 🟡 1/4 | |
 | [mysql / mysql2](../detail/lang.jsts.driver.mysql.md) | 🟡 1/4 | |
 | [neo4j-driver (JS) / neogma OGM](../detail/lang.jsts.driver.neo4j.md) | 🟡 4/7 | |

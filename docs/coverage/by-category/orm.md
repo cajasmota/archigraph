@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 155 records · **C/C++**: 7 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 18 · **kotlin**: 7 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 6
+**Total**: 156 records · **C/C++**: 7 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 19 · **kotlin**: 7 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 6
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
@@ -87,6 +87,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [JS/TS](../by-language/jsts.md) | [TypeORM](../detail/lang.jsts.orm.typeorm.md) | 🟢 11/11 | |
 | [JS/TS](../by-language/jsts.md) | [better-sqlite3 / sqlite3](../detail/lang.jsts.driver.sqlite.md) | 🟡 1/4 | |
 | [JS/TS](../by-language/jsts.md) | [cassandra-driver (JS)](../detail/lang.jsts.driver.cassandra.md) | 🟡 1/4 | |
+| [JS/TS](../by-language/jsts.md) | [grafeo-ogm (Neo4j TS OGM, GraphQL-SDL-driven)](../detail/lang.jsts.ogm.grafeo.md) | 🟡 3/5 | |
 | [JS/TS](../by-language/jsts.md) | [ioredis / node-redis](../detail/lang.jsts.driver.redis.md) | 🟡 1/4 | |
 | [JS/TS](../by-language/jsts.md) | [mysql / mysql2](../detail/lang.jsts.driver.mysql.md) | 🟡 1/4 | |
 | [JS/TS](../by-language/jsts.md) | [neo4j-driver (JS) / neogma OGM](../detail/lang.jsts.driver.neo4j.md) | 🟡 4/7 | |

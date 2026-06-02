@@ -39794,6 +39794,78 @@
       }
     },
     {
+      "id": "lang.jsts.ogm.grafeo",
+      "category": "orm",
+      "subcategory": "orm_mapper",
+      "language": "jsts",
+      "label": "grafeo-ogm (Neo4j TS OGM, GraphQL-SDL-driven)",
+      "capabilities": {
+        "Models": {
+          "model_extraction": {
+            "status": "not_applicable",
+            "notes": "graph DB OGM — no relational table/model concept; the SCOPE.Schema/node is the unit (see schema_extraction)."
+          },
+          "model_lifecycle_extraction": {
+            "status": "missing",
+            "issue": "3628"
+          },
+          "schema_extraction": {
+            "status": "partial",
+            "cites": ["internal/custom/javascript/grafeo.go","internal/custom/javascript/grafeo_test.go"],
+            "issue": "3628-grafeo",
+            "notes": "grafeo-ogm declares its graph model in GraphQL SDL (standalone .graphql file or inline `new OGM({ typeDefs })`). Each `type|interface X @node` is extracted as a SCOPE.Schema/node keyed on its Neo4j label (the type name, or the first entry of @node(labels:[...])). `@relationshipProperties` edge-property types are correctly EXCLUDED (negative case, value-asserted). Regex over the balanced type body; partial (scalar field types not individually emitted as property entities).",
+            "verified_at": "2026-06-02"
+          }
+        },
+        "Relationships": {
+          "association_extraction": {
+            "status": "partial",
+            "cites": ["internal/custom/javascript/grafeo.go"],
+            "issue": "3628-grafeo",
+            "notes": "grafeo @relationship fields are extracted as SCOPE.Component/relationship entities carrying relation_type, direction, field_name, owner_node, target_type, relationship_properties (the @relationshipProperties edge type) and target_node (when resolved)."
+          },
+          "foreign_key_extraction": {
+            "status": "not_applicable",
+            "notes": "graph DB — no foreign-key concept"
+          },
+          "lazy_loading_recognition": {
+            "status": "not_applicable",
+            "notes": "graph DB — no lazy-loading concept"
+          },
+          "relationship_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/javascript/grafeo.go","internal/custom/javascript/grafeo_test.go"],
+            "issue": "3628-grafeo",
+            "notes": "grafeo-ogm @relationship fields (`field: T @relationship(type:\"REL\", direction: OUT|IN, properties:\"Props\")`) are extracted AND emitted as traversable GRAPH_RELATES graph-schema edges owner-node -\u003e target-node (mirrors the neomodel #3609 / neogma #3610 sibling OGMs and the Java SDN template #3663); the domain graph topology is a navigable subgraph rather than opaque string props. Full when the @relationship field's target GraphQL type resolves to a same-document @node type (value-asserting tests TestGrafeoGraphRelatesOutgoing: Book -GRAPH_RELATES(WRITTEN_BY,OUTGOING)-\u003e Author; direction IN -\u003e INCOMING; @node(labels:[...]) primary-label owner; self-edge). Cross-document / non-@node targets are honest-partial (kept as the target_type prop only, no edge). Works on both standalone .graphql schema files and inline `new OGM({ typeDefs })` TS template literals.",
+            "verified_at": "2026-06-02"
+          }
+        },
+        "Queries": {
+          "query_attribution": {
+            "status": "not_applicable",
+            "notes": "grafeo issues no hand-written Cypher/driver calls in user code — queries are compiled internally by the OGM from typed find/create/update/delete + select trees, so there is no user-authored query string to attribute. The graph node-label query attribution for the raw neo4j-driver is tracked on lang.jsts.driver.neo4j."
+          }
+        },
+        "Migrations": {
+          "migration_parsing": {
+            "status": "not_applicable",
+            "notes": "grafeo has no migration system — the GraphQL SDL schema IS the source of truth; there are no versioned migration files to parse."
+          },
+          "migration_schema_ops": {
+            "status": "not_applicable",
+            "notes": "no migration files — schema changes are made directly in the .graphql SDL."
+          }
+        },
+        "Transactions": {
+          "transaction_function_stamping": {
+            "status": "missing",
+            "issue": "3628-transaction-function-stamping",
+            "notes": "grafeo executes via the neo4j-driver session/transaction API under the hood; explicit transaction-function stamping is not yet modelled (shared with the sibling OGMs)."
+          }
+        }
+      }
+    },
+    {
       "id": "lang.jsts.orm.drizzle",
       "category": "orm",
       "subcategory": "orm_mapper",
