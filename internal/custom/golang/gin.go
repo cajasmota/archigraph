@@ -84,6 +84,11 @@ func (e *ginExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 	// (logging/cors/recovery/rate-limit/auth/…) per scope so each route op can
 	// be stamped with middleware_chain — "what runs before this route, in order".
 	mwIdx := buildGoRouteMiddlewareIndex(src)
+	// #3628 rate-limit child — resolve route/group/engine rate-limit middleware
+	// (tollbooth / ulule-limiter / golang.org/x/time/rate) once so each route op
+	// can be stamped with rate_limited / rate_limit / rate_limit_scope /
+	// rate_limit_source, matching the JS/TS + Python passes.
+	rlIdx := buildGoRouteRateLimitIndex(src)
 
 	// 1. gin.Default()/gin.New() engine -> SCOPE.Service
 	for _, m := range reGinEngine.FindAllStringSubmatchIndex(src, -1) {
@@ -124,6 +129,8 @@ func (e *ginExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		authIdx.resolve(routerVar, method, ownPath).stamp(ent.Properties)
 		// bind the ordered middleware chain (outermost-first) to this route op.
 		stampGoMiddlewareChain(ent.Properties, mwIdx.resolve(routerVar, method, ownPath))
+		// #3628 — stamp endpoint rate-limit posture (inline > group > engine).
+		rlIdx.resolve(routerVar, method, ownPath).stamp(ent.Properties)
 		add(ent)
 	}
 

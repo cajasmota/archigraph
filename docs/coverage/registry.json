@@ -16706,9 +16706,11 @@
             "verified_at": "2026-06-02"
           },
           "rate_limit_stamping": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/gin.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
-            "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as route/group/engine middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter/SetMax(N) literal resolves rate=\"N/s\". Imported/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied to a route is not stamped.",
+            "verified_at": "2026-06-02"
           }
         },
         "Type System": {
@@ -17821,9 +17823,11 @@
             "verified_at": "2026-06-02"
           },
           "rate_limit_stamping": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/gin.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
-            "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as route/group/engine middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter/SetMax(N) literal resolves rate=\"N/s\". Imported/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied to a route is not stamped.",
+            "verified_at": "2026-06-02"
           }
         },
         "Type System": {
@@ -21468,6 +21472,10 @@
             "status": "missing",
             "cites": ["internal/custom/java/akka_http_routes.go","testdata/fixtures/sources/java/akka_http/RouteDefinition.java"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -22206,6 +22214,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -22451,6 +22463,10 @@
             "status": "missing",
             "cites": ["internal/custom/java/dropwizard.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -22746,6 +22762,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "3699"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -23215,6 +23235,10 @@
             "cites": ["internal/custom/java/extractors_test.go","internal/custom/java/helidon_filters.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
             "verified_at": "2026-05-29"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -23527,6 +23551,10 @@
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/links/module_cycle_pass.go","internal/substrate/def_use_java.go","internal/substrate/effect_sinks_java.go","internal/substrate/entry_points_java.go","internal/substrate/taint_sites_java.go","internal/substrate/template_pattern_java.go"],
             "issue": "3154"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -23841,6 +23869,10 @@
             "status": "missing",
             "cites": ["internal/custom/java/javalin_routes.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -24146,6 +24178,10 @@
             "status": "full",
             "cites": ["internal/custom/java/jaxrs_filters.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "verified_at": "2026-06-01"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -24511,6 +24547,10 @@
             "status": "full",
             "cites": ["internal/custom/java/micronaut_aop.go","internal/extractors/custom_java_patterns_smoke_test.go"],
             "verified_at": "2026-06-01"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -24831,6 +24871,10 @@
             "cites": ["internal/custom/java/jaxrs_filters.go","internal/custom/java/jaxrs_filters_test.go","testdata/fixtures/sources/java/microprofile/MicroProfileFiltersFixture.java"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
             "verified_at": "2026-05-29"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -25400,6 +25444,10 @@
             "status": "partial",
             "cites": ["internal/links/effect_propagation.go","internal/links/module_cycle_pass.go","internal/substrate/def_use_java.go","internal/substrate/effect_sinks_java.go","internal/substrate/entry_points_java.go","internal/substrate/taint_sites_java.go","internal/substrate/template_pattern_java.go"],
             "issue": "3154"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -25720,6 +25768,12 @@
             "status": "partial",
             "cites": ["internal/engine/http_endpoint_java_middleware.go","internal/engine/java_annotation_params.go"],
             "notes": "@Bean SecurityFilterChain + OncePerRequestFilter/HandlerInterceptor/WebMvcConfigurer.addInterceptors/WebFilter captured by name. #3628: applyJavaMiddlewareCoverage now BINDS an ordered middleware_chain to Spring ENDPOINTS — Servlet FilterRegistrationBean urlPatterns (outermost, filter scope) + HandlerInterceptor addPathPatterns/excludePathPatterns (interceptor scope) statically matched against each route path and stamped per the cross-stack {name,expr,scope,order,auth_kind?} contract (auth filters/interceptors tagged auth_kind). Honest-partial: only path patterns that statically resolve to a known same-file route bind; broad /** includes and filters without resolvable urlPatterns are skipped (no fabricated order). Tests: TestMiddleware_SpringInterceptorPathMatch, TestMiddleware_SpringFilterAndInterceptorOrder, TestMiddleware_SpringExcludePathPatterns, TestMiddleware_SpringFilterNoUrlPatternsSkipped.",
+            "verified_at": "2026-06-02"
+          },
+          "rate_limit_stamping": {
+            "status": "partial",
+            "cites": ["internal/engine/http_endpoint_java_ratelimit.go","internal/engine/http_endpoint_java_ratelimit_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Resilience4j @RateLimiter(name=...) / bucket4j @RateLimiting(capacity=N) method annotations (matched by mapping path) and Spring Cloud Gateway RequestRateLimiter filters (matched by Path= predicate, replenishRate→rate) stamp rate_limited/rate_limit/rate_limit_scope(route|gateway)/rate_limit_source on the endpoint op. Bare Resilience4j @RateLimiter rate lives in config → honest-partial (rate omitted). Negative: a non-throttle annotation does not stamp.",
             "verified_at": "2026-06-02"
           }
         },
@@ -26049,6 +26103,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -26298,6 +26356,12 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
             "notes": "WebFilter implementations detected via 'implements WebFilter' class declaration; Middleware entities emitted with middleware_type=web_filter and filter_class. Multiple WebFilter classes in one file each produce a distinct entity.",
             "verified_at": "2026-05-29"
+          },
+          "rate_limit_stamping": {
+            "status": "partial",
+            "cites": ["internal/engine/http_endpoint_java_ratelimit.go","internal/engine/http_endpoint_java_ratelimit_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "notes": "Resilience4j @RateLimiter(name=...) / bucket4j @RateLimiting(capacity=N) method annotations (matched by mapping path) and Spring Cloud Gateway RequestRateLimiter filters (matched by Path= predicate, replenishRate→rate) stamp rate_limited/rate_limit/rate_limit_scope(route|gateway)/rate_limit_source on the endpoint op. Bare Resilience4j @RateLimiter rate lives in config → honest-partial (rate omitted). Negative: a non-throttle annotation does not stamp.",
+            "verified_at": "2026-06-02"
           }
         },
         "Testing": {
@@ -26628,6 +26692,10 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
             "notes": "Detects Interceptor/AbstractInterceptor implementors and intercept(ActionInvocation) overrides; the Struts interceptor stack is the primary middleware mechanism",
             "verified_at": "2026-05-29"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -27140,6 +27208,10 @@
             "cites": ["internal/custom/java/vertx_routes.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
             "verified_at": "2026-05-29"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -37841,6 +37913,10 @@
           "middleware_coverage": {
             "status": "not_applicable",
             "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -38495,6 +38571,10 @@
           "middleware_coverage": {
             "status": "not_applicable",
             "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -38763,6 +38843,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -39007,6 +39091,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -39247,6 +39335,10 @@
             "status": "full",
             "cites": ["internal/custom/kotlin/http4k_auth_middleware.go"],
             "notes": "ServerFilters.Cors/RequestTracing/GZip + Filter{next-\u003e} lambdas + .then() composition order — value-asserted names+chain order, file-local"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -39530,6 +39622,10 @@
             "cites": ["internal/custom/java/javalin_routes.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
             "notes": "app.before() and app.after() global/path-scoped middleware — Kotlin Javalin trailing lambda matches same regex"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -40011,6 +40107,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -40246,6 +40346,10 @@
         },
         "Middleware": {
           "middleware_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           }
@@ -40488,6 +40592,10 @@
             "status": "full",
             "cites": ["internal/custom/kotlin/ktor_auth_middleware.go"],
             "notes": "ordered install(Plugin) pipeline (CORS/CallLogging/ContentNegotiation/...) + custom intercept(ApplicationCallPipeline.Phase) interceptors — value-asserted names+order, file-local"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -40775,6 +40883,10 @@
             "status": "full",
             "cites": ["internal/custom/kotlin/micronaut_quarkus.go"],
             "notes": "@Filter/@ServerFilter HttpServerFilter classes captured by name — value-asserted, file-local"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -41076,6 +41188,10 @@
             "status": "partial",
             "cites": ["internal/custom/kotlin/micronaut_quarkus.go"],
             "notes": "@Provider ContainerRequestFilter / ContainerResponseFilter implementation detection — file-local"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -41372,6 +41488,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -41616,6 +41736,10 @@
             "status": "full",
             "cites": ["internal/custom/kotlin/spring_middleware.go"],
             "notes": "@Bean SecurityFilterChain + OncePerRequestFilter/HandlerInterceptor/WebMvcConfigurer.addInterceptors/WebFilter captured by name — value-asserted, file-local; cross-file filter chain order is honest gap"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -62715,6 +62839,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks deep extractor: akka-http handleRejections/handleExceptions with named handler, cors(), and transform directives (mapRequest/mapResponse/encodeResponse/decodeRequest/logRequestResult/...) stamped by middleware_name. Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -63003,6 +63131,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -63264,6 +63396,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks extractor: framework-specific middleware (Akka-HTTP mapRequest/cors, http4s Middleware/Logger, Scalatra before/after, Cask Decorator, ZIO HttpMiddleware, Finatra SimpleFilter, Lagom CircuitBreaker). File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -63545,6 +63681,10 @@
           "middleware_coverage": {
             "status": "not_applicable",
             "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -63838,6 +63978,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks extractor: framework-specific middleware (Akka-HTTP mapRequest/cors, http4s Middleware/Logger, Scalatra before/after, Cask Decorator, ZIO HttpMiddleware, Finatra SimpleFilter, Lagom CircuitBreaker). File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -64136,6 +64280,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks deep extractor: http4s named middleware CORS/GZip/Logger/Timeout/AutoSlash/CSRF/HSTS + composition order mw1(mw2(routes)) recorded as outer\u003einner(target). Value-asserting tests. File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -64429,6 +64577,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks extractor: framework-specific middleware (Akka-HTTP mapRequest/cors, http4s Middleware/Logger, Scalatra before/after, Cask Decorator, ZIO HttpMiddleware, Finatra SimpleFilter, Lagom CircuitBreaker). File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -64731,6 +64883,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks deep extractor: pekko-http shares the akka-http middleware branch — handleRejections/handleExceptions(+named handler), cors(), transform directives (mapRequest/mapResponse/encodeResponse/...). pekko-http-cors recognised. File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -65371,6 +65527,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks extractor: framework-specific middleware (Akka-HTTP mapRequest/cors, http4s Middleware/Logger, Scalatra before/after, Cask Decorator, ZIO HttpMiddleware, Finatra SimpleFilter, Lagom CircuitBreaker). File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -65655,6 +65815,10 @@
           "middleware_coverage": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {
@@ -65899,6 +66063,10 @@
         },
         "Middleware": {
           "middleware_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           }
@@ -66160,6 +66328,10 @@
             "cites": ["internal/custom/scala/frameworks.go"],
             "notes": "custom_scala_frameworks extractor: framework-specific middleware (Akka-HTTP mapRequest/cors, http4s Middleware/Logger, Scalatra before/after, Cask Decorator, ZIO HttpMiddleware, Finatra SimpleFilter, Lagom CircuitBreaker). File-local.",
             "verified_at": "2026-05-30"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
           }
         },
         "Testing": {

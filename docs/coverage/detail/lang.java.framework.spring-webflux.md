@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [java](../by-language/java.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** JVM Backend
-- **Capability cells:** 50
+- **Capability cells:** 51
 
 ## Capabilities
 
@@ -38,6 +38,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | 🔴 `missing` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/spring_webflux_routes.go`<br>`testdata/fixtures/sources/java/spring_webflux/RouterConfig.java` | WebFilter implementations detected via 'implements WebFilter' class declaration; Middleware entities emitted with middleware_type=web_filter and filter_class. Multiple WebFilter classes in one file each produce a distinct entity. |
+| Rate limit stamping | 🟢 `partial` | `2026-06-02` | — | `internal/engine/http_endpoint_java_ratelimit.go`<br>`internal/engine/http_endpoint_java_ratelimit_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | Resilience4j @RateLimiter(name=...) / bucket4j @RateLimiting(capacity=N) method annotations (matched by mapping path) and Spring Cloud Gateway RequestRateLimiter filters (matched by Path= predicate, replenishRate→rate) stamp rate_limited/rate_limit/rate_limit_scope(route|gateway)/rate_limit_source on the endpoint op. Bare Resilience4j @RateLimiter rate lives in config → honest-partial (rate omitted). Negative: a non-throttle annotation does not stamp. |
 
 ### Testing
 
