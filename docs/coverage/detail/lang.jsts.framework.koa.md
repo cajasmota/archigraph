@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 47
+- **Capability cells:** 48
 
 ## Capabilities
 
@@ -46,6 +46,12 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | ✅ `full` | — | — | `internal/engine/http_endpoint_jsts_middleware.go`<br>`internal/engine/http_endpoint_jsts_middleware_test.go`<br>`testdata/fixtures/typescript/koa_middleware.ts` | — |
 | Rate limit stamping | ✅ `full` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3778) | `internal/engine/http_endpoint_jsts_ratelimit.go`<br>`internal/engine/http_endpoint_jsts_ratelimit_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | express-rate-limit / express-slow-down: resolves windowMs+max to a human rate and stamps rate_limited/rate_limit/rate_limit_scope (route|app)/rate_limit_source on the endpoint op. Imported/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter defined but never applied to a route is not stamped. |
+
+### Schema
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Type graph extraction | — `not_applicable` | — | — | — | GraphQL schema type→type graph (object-typed field -> referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph. |
 
 ### Type System
 

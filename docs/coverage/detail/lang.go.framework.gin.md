@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [go](../by-language/go.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 47
+- **Capability cells:** 48
 
 ## Capabilities
 
@@ -46,6 +46,12 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | ✅ `full` | `2026-06-02` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/route_middleware.go`<br>`internal/custom/golang/route_middleware_test.go` | balanced .Use(...) chain parser with paren-depth tracking emits one SCOPE.Pattern per middleware in registration order (mw_order 0,1,2,...). #3628 child: route_middleware.go ALSO binds the ORDERED chain to each route op (SCOPE.Operation/endpoint) via middleware_chain (JSON [{name,expr,scope,order,auth_kind?}], outermost-first: engine .Use -> group .Group args/.Use -> inline route mw), plus middleware_count/middleware_names (chain order)/middleware_scope (engine|group|route, +-joined). Answers 'what middleware runs before this route, in order' at endpoint granularity, at parity with the JS/TS http_endpoint_jsts_middleware pass (#2853). Auth middleware appears IN the chain (auth_kind set) not double-modeled; it remains separately stamped by route_auth.go (#3734). Value-asserting tests assert middleware identity AND relative order index (Logger<CORS<RateLimit; group AuthRequired<Logger; echo trailing handler dropped; chi engine Logger<Recoverer). Honest-partial: dynamically/spread-built chains and chi closure-subrouter group .Use are skipped (no fabricated order). |
 | Rate limit stamping | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3778) | `internal/custom/golang/echo.go`<br>`internal/custom/golang/gin.go`<br>`internal/custom/golang/rate_limit_route.go`<br>`internal/custom/golang/rate_limit_route_test.go` | tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as route/group/engine middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter/SetMax(N) literal resolves rate="N/s". Imported/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied to a route is not stamped. |
+
+### Schema
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Type graph extraction | — `not_applicable` | — | — | — | GraphQL schema type→type graph (object-typed field -> referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph. |
 
 ### Type System
 

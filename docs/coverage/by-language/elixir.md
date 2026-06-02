@@ -26,7 +26,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 3/5 | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
+| [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 3/5 | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/12 | |
 | [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟡 3/5 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
 | [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟡 1/3 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 3/8 | |
 | [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟡 3/5 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 4/9 | |

@@ -46,6 +46,12 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/2940"
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804"
+          }
+        },
         "Substrate": {
           "import_resolution_quality": {
             "status": "full",

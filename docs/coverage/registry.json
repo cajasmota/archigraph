@@ -2461,6 +2461,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -2723,6 +2729,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -2983,6 +2995,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -3256,6 +3274,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -3527,6 +3551,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -3796,6 +3826,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -4217,6 +4253,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -4477,6 +4519,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -4765,6 +4813,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -5114,6 +5168,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -5385,6 +5445,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -5654,6 +5720,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -6284,6 +6356,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -6553,6 +6631,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -8095,6 +8179,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -8365,6 +8455,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -9255,6 +9351,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -9527,6 +9629,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -9968,6 +10076,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -10207,6 +10322,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -10695,6 +10816,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -12529,6 +12656,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "partial",
@@ -12804,6 +12938,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "partial",
@@ -13070,6 +13210,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -13370,6 +13516,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "partial",
@@ -13637,6 +13789,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -14027,6 +14185,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -14246,6 +14410,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -14509,6 +14679,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -14786,6 +14962,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -15284,6 +15466,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "partial",
@@ -15553,6 +15741,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -15784,6 +15978,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -16725,6 +16925,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -16994,6 +17200,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -17269,6 +17481,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -17551,6 +17769,12 @@
             "verified_at": "2026-06-02"
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -17820,6 +18044,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -18107,6 +18337,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -18369,6 +18605,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -18720,6 +18962,12 @@
             "verified_at": "2026-06-02"
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "partial",
@@ -18992,6 +19240,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -19490,6 +19744,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -19764,6 +20024,14 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "full",
+            "cites": ["internal/extractors/graphql/graphql.go","internal/extractors/graphql/type_graph.go"],
+            "notes": "gqlgen is SDL-driven: the schema (object types + object-typed fields) is declared in *.graphql files, so the SDL type→type graph pass (internal/extractors/graphql/type_graph.go, #3805) already emits the GRAPH_RELATES object-type→type edges with list/nullable cardinality between the SCOPE.Schema type nodes. gqlgen's generated Go resolvers carry no additional type refs (operation glue only), so no code-first Go extractor is required; the SDL pass is the source of truth for the gqlgen schema relationship graph.",
+            "verified_at": "2026-06-02"
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -20000,6 +20268,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -20274,6 +20548,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -20543,6 +20823,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -20815,6 +21101,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -21084,6 +21376,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -21371,6 +21669,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -21630,6 +21934,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -30697,6 +31007,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -31928,6 +32244,12 @@
             "verified_at": "2026-06-02"
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -32236,6 +32558,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -32540,6 +32868,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -33292,6 +33626,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -33591,6 +33931,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -34128,6 +34474,12 @@
             "verified_at": "2026-06-02"
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -34471,6 +34823,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -34995,6 +35353,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -35837,6 +36201,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -36121,6 +36491,14 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/javascript/graphql_codefirst_typegraph.go","internal/custom/javascript/graphql_codefirst_typegraph_test.go"],
+            "notes": "Code-first GraphQL object-type→type graph: an object-typed field emits a GRAPH_RELATES edge between the SCOPE.Schema type nodes (addressed via BuildOperationStructuralRef(\"graphql\",...) — same identity contract as the SDL pass #3805, node reuse/no duplicate), carrying {list, nullable, item_nullable, cardinality:to_one|to_many, field_name, self_ref, graphql_field, framework}. TypeGraphQL @Field(() =\u003e [Order]) thunk + Nexus t.list.field({type}) + Pothos t.field({type:[...]}) resolved. Scalar/unresolved targets make NO edge. Value-asserting tests assert exact FromID+ToID+cardinality + node convergence.",
+            "verified_at": "2026-06-02"
           }
         },
         "Type System": {
@@ -37227,6 +37605,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -37516,6 +37900,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -38556,6 +38946,14 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/javascript/graphql_codefirst_typegraph.go","internal/custom/javascript/graphql_codefirst_typegraph_test.go"],
+            "notes": "Code-first GraphQL object-type→type graph: an object-typed field emits a GRAPH_RELATES edge between the SCOPE.Schema type nodes (addressed via BuildOperationStructuralRef(\"graphql\",...) — same identity contract as the SDL pass #3805, node reuse/no duplicate), carrying {list, nullable, item_nullable, cardinality:to_one|to_many, field_name, self_ref, graphql_field, framework}. TypeGraphQL @Field(() =\u003e [Order]) thunk + Nexus t.list.field({type}) + Pothos t.field({type:[...]}) resolved. Scalar/unresolved targets make NO edge. Value-asserting tests assert exact FromID+ToID+cardinality + node convergence.",
+            "verified_at": "2026-06-02"
           }
         },
         "Type System": {
@@ -44529,6 +44927,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -44761,6 +45165,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -44990,6 +45400,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -45262,6 +45678,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -46114,6 +46536,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -46348,6 +46776,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -46625,6 +47059,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -46900,6 +47340,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -47169,6 +47615,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -47403,6 +47856,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -47679,6 +48138,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -47958,6 +48423,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -48192,6 +48664,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -48469,6 +48947,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -48742,6 +49226,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -49019,6 +49509,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -49294,6 +49790,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -49577,6 +50079,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -49850,6 +50358,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -51092,6 +51606,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -51381,6 +51901,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -51630,6 +52157,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -52153,6 +52686,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -52447,6 +52986,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -52750,6 +53295,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -53300,6 +53851,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -53595,6 +54152,12 @@
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "slowapi @limiter.limit(\"5/minute\") stamps rate_limited/rate_limit/rate_limit_source on the route op. DRF @throttle_classes resolver (rate from a co-located custom throttle's rate attr; settings-driven built-ins → honest-partial) shared via resolvePyEndpointRateLimit.",
             "verified_at": "2026-06-02"
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -53906,6 +54469,12 @@
             "verified_at": "2026-06-02"
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -54211,6 +54780,14 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/python/graphql_codefirst_typegraph.go","internal/custom/python/graphql_codefirst_typegraph_test.go"],
+            "notes": "Code-first GraphQL object-type→type graph: an object-typed field emits a GRAPH_RELATES edge between the SCOPE.Schema type nodes (addressed via BuildOperationStructuralRef(\"graphql\",...) — same identity contract as the SDL pass #3805, node reuse/no duplicate), carrying {list, nullable, item_nullable, cardinality:to_one|to_many, field_name, self_ref, graphql_field, framework}. Strawberry orders: list[\"Order\"] / graphene List(lambda: Order) + Field(Account) resolved; graphene Query/Mutation roots excluded as owners. Scalar/unresolved targets make NO edge. Value-asserting tests assert exact FromID+ToID+cardinality + node convergence.",
+            "verified_at": "2026-06-02"
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -54452,6 +55029,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -54785,6 +55368,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -55077,6 +55666,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -55375,6 +55970,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -55666,6 +56267,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -56174,6 +56781,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -56465,6 +57078,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -56763,6 +57382,14 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/python/graphql_codefirst_typegraph.go","internal/custom/python/graphql_codefirst_typegraph_test.go"],
+            "notes": "Code-first GraphQL object-type→type graph: an object-typed field emits a GRAPH_RELATES edge between the SCOPE.Schema type nodes (addressed via BuildOperationStructuralRef(\"graphql\",...) — same identity contract as the SDL pass #3805, node reuse/no duplicate), carrying {list, nullable, item_nullable, cardinality:to_one|to_many, field_name, self_ref, graphql_field, framework}. Strawberry orders: list[\"Order\"] / graphene List(lambda: Order) + Field(Account) resolved; graphene Query/Mutation roots excluded as owners. Scalar/unresolved targets make NO edge. Value-asserting tests assert exact FromID+ToID+cardinality + node convergence.",
+            "verified_at": "2026-06-02"
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -57054,6 +57681,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -58776,6 +59409,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -59033,6 +59672,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -59299,6 +59944,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -59563,6 +60214,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -59797,6 +60455,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -60062,6 +60726,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -60330,6 +61000,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -60616,6 +61292,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "not_applicable",
@@ -60882,6 +61564,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -62111,6 +62799,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -62376,6 +63070,13 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804",
+            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -62619,6 +63320,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -62892,6 +63599,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -63162,6 +63875,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -63464,6 +64183,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -63762,6 +64487,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -64031,6 +64762,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -64469,6 +65206,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "full",
@@ -64734,6 +65477,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -64982,6 +65731,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -65249,6 +66004,12 @@
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
           }
         },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
+          }
+        },
         "Type System": {
           "enum_extraction": {
             "status": "missing",
@@ -65490,6 +66251,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "not_applicable",
+            "notes": "GraphQL schema type→type graph (object-typed field -\u003e referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph."
           }
         },
         "Type System": {
@@ -71071,6 +71838,12 @@
             "status": "missing",
             "issue": "https://github.com/cajasmota/archigraph/issues/3778",
             "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "3804"
           }
         },
         "Type System": {

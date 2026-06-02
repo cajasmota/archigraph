@@ -26,7 +26,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|
-| [NestJS](../detail/lang.jsts.framework.nestjs.md) | ✅ 2/2 | 🟢 1/1 | ✅ 1/1 | 🟡 1/3 | |
+| [NestJS](../detail/lang.jsts.framework.nestjs.md) | ✅ 2/2 | 🟢 1/1 | ✅ 1/1 | 🟡 1/4 | |
 
 
 ### Other

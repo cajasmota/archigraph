@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [python](../by-language/python.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 47
+- **Capability cells:** 48
 
 ## Capabilities
 
@@ -46,6 +46,12 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | 🟢 `partial` | `2026-06-02` | — | `internal/custom/python/django.go`<br>`internal/engine/http_endpoint_python_middleware.go` | django.go extracts *Middleware class definitions + process_* hooks. #3628: applyPythonMiddlewareCoverage now BINDS the ordered settings.MIDDLEWARE list (static list literal, declaration order) as the global-scope middleware_chain on every same-file Django route op, matching the Go (#3777) / JS-TS (#2853) endpoint contract {name,expr,scope,order,auth_kind?} (auth middleware tagged auth_kind, not double-modeled). Still partial: cross-file settings.py MIDDLEWARE (routes in urls.py, list in settings.py) is not joined; dynamically-assembled MIDDLEWARE lists are skipped (honest-partial). Tests: TestMiddleware_DjangoGlobal, TestMiddleware_DjangoDynamicSkipped. |
 | Rate limit stamping | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3778) | — | endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work. |
+
+### Schema
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Type graph extraction | — `not_applicable` | — | — | — | GraphQL schema type→type graph (object-typed field -> referenced object type with list/nullable cardinality) is a GraphQL-only concept; this framework is not a GraphQL server, so it has no GraphQL object-type relationship graph. |
 
 ### Type System
 

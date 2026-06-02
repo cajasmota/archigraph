@@ -143,6 +143,7 @@ subcategories:
       - validate_on_submit_detection
       - tests_edges_via_delay_apply
       - view_rendering
+      - type_graph_extraction
     groups:
       - name: Routing
         keys: [endpoint_synthesis, handler_attribution, route_extraction, endpoint_deprecation_versioning, endpoint_pagination_posture]
@@ -154,6 +155,8 @@ subcategories:
         keys: [request_validation, dto_extraction]
       - name: Middleware
         keys: [middleware_coverage, rate_limit_stamping]
+      - name: Schema
+        keys: [type_graph_extraction]
       - name: Type System
         keys: [interface_extraction, type_alias_extraction, enum_extraction, type_extraction]
       - name: DI
