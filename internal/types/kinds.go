@@ -782,6 +782,21 @@ const (
 	// lexicographically smaller module ID is FromID) so it is deterministic and
 	// not double-counted.
 	RelationshipKindSharesData RelationshipKind = "SHARES_DATA"
+
+	// #3623 (epic #3607): Apollo Federation cross-subgraph entity edge.
+	//   FEDERATES : the extending subgraph's `extend type Foo @key(fields:"id")`
+	//               SCOPE.Component stub → the owning entity type `Foo`. The edge
+	//               records that this subgraph contributes fields to an entity
+	//               whose canonical definition (the @key-bearing `type Foo`) lives
+	//               in another subgraph. Properties on the edge:
+	//                 federation=apollo, key_fields (the @key selection set),
+	//                 external_fields / requires_fields / provides_fields
+	//                 (comma-joined field names carrying @external / @requires /
+	//                 @provides), and import_kind=federation_extend. Emitted by
+	//                 internal/extractors/graphql/graphql.go. It is the
+	//                 cross-subgraph entity-ownership signal Federation gateways
+	//                 use to plan query fan-out.
+	RelationshipKindFederates RelationshipKind = "FEDERATES"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -907,6 +922,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindTransitionsTo,
 		// #3628 area #13 shared-database cross-service coupling edge:
 		RelationshipKindSharesData,
+		// #3623 (epic #3607) Apollo Federation cross-subgraph entity edge:
+		RelationshipKindFederates,
 	}
 }
 

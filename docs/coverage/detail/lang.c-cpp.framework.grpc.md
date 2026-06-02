@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [C/C++](../by-language/c-cpp.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** RPC Framework
-- **Capability cells:** 27
+- **Capability cells:** 28
 
 ## Capabilities
 
@@ -15,6 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
+| Federation extraction | — `not_applicable` | — | 3623 | — | Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable. |
 | Procedure extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/cpp/grpc.go`<br>`internal/custom/cpp/grpc_protobuf_test.go` | each overridden Status RPC method -> SCOPE.Operation endpoint |
 | Schema extraction | 🟢 `partial` | `2026-05-30` | backfill:dictionary-completeness | `internal/custom/cpp/grpc.go`<br>`internal/custom/cpp/grpc_protobuf_test.go` | req/resp messages emitted as SCOPE.Schema DTO refs (names only) |
 

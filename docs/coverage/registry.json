@@ -3609,6 +3609,11 @@
       "label": "gRPC C++ (grpc++)",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "not_applicable",
+            "issue": "3623",
+            "notes": "Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable."
+          },
           "procedure_extraction": {
             "status": "partial",
             "cites": ["internal/custom/cpp/grpc.go","internal/custom/cpp/grpc_protobuf_test.go"],
@@ -5189,6 +5194,11 @@
       "label": "Protocol Buffers (C++)",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "not_applicable",
+            "issue": "3623",
+            "notes": "Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable."
+          },
           "procedure_extraction": {
             "status": "partial",
             "cites": ["internal/custom/cpp/grpc_protobuf_test.go","internal/custom/cpp/protobuf.go"],
@@ -8582,6 +8592,11 @@
       "label": "grpc-dotnet",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "not_applicable",
+            "issue": "3623",
+            "notes": "Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable."
+          },
           "procedure_extraction": {
             "status": "partial",
             "cites": ["internal/custom/csharp/grpc_net.go","internal/custom/csharp/grpc_net_test.go"],
@@ -12058,6 +12073,11 @@
       "label": "elixir-grpc",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "not_applicable",
+            "issue": "3623",
+            "notes": "Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable."
+          },
           "procedure_extraction": {
             "status": "partial",
             "cites": ["internal/custom/elixir/grpc.go","internal/custom/elixir/grpc_test.go"],
@@ -28196,6 +28216,13 @@
       "label": "GraphQL Resolvers (Apollo Server / GraphQL Yoga / etc.)",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "partial",
+            "cites": ["internal/extractors/graphql/federation_test.go","internal/extractors/graphql/graphql.go","internal/types/kinds.go"],
+            "issue": "3623",
+            "notes": "Apollo Federation SDL: type Foo @key(fields:\"id\") -\u003e entity Properties {federated:true, federation:apollo, key_fields:id} (+shareable:true on @shareable); extend type Foo @key(...) { f @external/@requires/@provides } -\u003e FEDERATES edge to owning entity Foo carrying key_fields + external_fields/requires_fields/provides_fields buckets (legacy IMPORTS edge preserved). Value-asserting tests assert exact key_fields and FEDERATES ToID=owning type. PARTIAL: regex SDL only — no @link/@composeDirective import resolution, no interfaceObject, no cross-file/cross-repo subgraph entity merge (gateway-level concern for the downstream linker).",
+            "verified_at": "2026-06-02"
+          },
           "procedure_extraction": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/graphql/frameworks/apollo_server.yaml","internal/engine/rules/graphql/frameworks/graphql_yoga.yaml","internal/extractors/graphql/graphql.go"],
@@ -32964,6 +32991,11 @@
       "label": "tRPC",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "not_applicable",
+            "issue": "3623",
+            "notes": "Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable."
+          },
           "procedure_extraction": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_trpc.go","internal/engine/rules/javascript_typescript/frameworks/trpc.yaml"],
@@ -58591,6 +58623,11 @@
       "label": "ScalaPB / zio-grpc / fs2-grpc",
       "capabilities": {
         "Schema": {
+          "federation_extraction": {
+            "status": "not_applicable",
+            "issue": "3623",
+            "notes": "Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable."
+          },
           "procedure_extraction": {
             "status": "full",
             "cites": ["internal/custom/scala/grpc.go","internal/custom/scala/grpc_test.go"],

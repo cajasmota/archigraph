@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** RPC Framework
-- **Capability cells:** 27
+- **Capability cells:** 28
 
 ## Capabilities
 
@@ -15,6 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
+| Federation extraction | 🟢 `partial` | `2026-06-02` | 3623 | `internal/extractors/graphql/federation_test.go`<br>`internal/extractors/graphql/graphql.go`<br>`internal/types/kinds.go` | Apollo Federation SDL: type Foo @key(fields:"id") -> entity Properties {federated:true, federation:apollo, key_fields:id} (+shareable:true on @shareable); extend type Foo @key(...) { f @external/@requires/@provides } -> FEDERATES edge to owning entity Foo carrying key_fields + external_fields/requires_fields/provides_fields buckets (legacy IMPORTS edge preserved). Value-asserting tests assert exact key_fields and FEDERATES ToID=owning type. PARTIAL: regex SDL only — no @link/@composeDirective import resolution, no interfaceObject, no cross-file/cross-repo subgraph entity merge (gateway-level concern for the downstream linker). |
 | Procedure extraction | ✅ `full` | `2026-05-28` | 2932 | `internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/rules/graphql/frameworks/apollo_server.yaml`<br>`internal/engine/rules/graphql/frameworks/graphql_yoga.yaml`<br>`internal/extractors/graphql/graphql.go` | — |
 | Schema extraction | ✅ `full` | `2026-05-28` | 2932 | `internal/engine/rules/graphql/frameworks/graphql_schema.yaml`<br>`internal/extractors/graphql/graphql.go` | — |
 

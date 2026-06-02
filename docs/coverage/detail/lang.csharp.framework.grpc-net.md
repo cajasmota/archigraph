@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [C#](../by-language/csharp.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** RPC Framework
-- **Capability cells:** 27
+- **Capability cells:** 28
 
 ## Capabilities
 
@@ -15,6 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
+| Federation extraction | — `not_applicable` | — | 3623 | — | Apollo GraphQL Federation directives (@key/@external/@requires/@provides/extend type) do not exist in this RPC framework; not applicable. |
 | Procedure extraction | 🟢 `partial` | — | — | `internal/custom/csharp/grpc_net.go`<br>`internal/custom/csharp/grpc_net_test.go` | [ProtoContract] annotated C# classes, [ProtoMember] field annotations, and proto file service/rpc declarations emitted as SCOPE.Schema/procedure_extraction. |
 | Schema extraction | 🟢 `partial` | — | — | `internal/custom/csharp/grpc_net.go`<br>`internal/custom/csharp/grpc_net_test.go` | Proto message declarations, [DataContract] C# classes, and XxxService:XxxServiceBase generated implementation classes emitted as SCOPE.Schema/schema_extraction. |
 
