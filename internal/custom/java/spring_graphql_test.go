@@ -266,6 +266,150 @@ func TestSpringGraphQL_GatesOffWrongFramework(t *testing.T) {
 	}
 }
 
+// Auth — nested-paren @PreAuthorize regression (#3873) -----------------------
+//
+// Before the annArgsRe fix, a SpEL @PreAuthorize interleaved between the
+// mapping annotation and the resolver method (the COMMON Spring auth form)
+// dropped the WHOLE endpoint, because the interleaved-annotation tolerance used
+// `\([^)]*\)` and stopped at the first inner `)` of hasRole('ADMIN').
+
+func TestSpringGraphQLAuth_PreAuthorizeNestedParen_Issue3873(t *testing.T) {
+	src := `package com.example;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+@Controller
+public class UserController {
+    @QueryMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public User user(@Argument Long id) { return repo.get(id); }
+
+    @PreAuthorize("hasRole('MANAGER') and hasAuthority('SCOPE_write')")
+    @MutationMapping
+    public User createUser(@Argument NewUser input) { return repo.save(input); }
+}`
+	r := ExtractSpringGraphQL(PatternContext{Source: src, Language: "java", Framework: "spring_graphql", FilePath: "UserController.java"})
+
+	// Endpoint survives the SpEL @PreAuthorize and is stamped with role ADMIN.
+	e := findGQLEndpoint(r, "GRAPHQL /graphql/Query/user")
+	if e == nil {
+		t.Fatal("endpoint dropped by interleaved @PreAuthorize (nested-paren regression)")
+	}
+	if got := propStr(e, "auth_required"); got != "true" {
+		t.Errorf("user auth_required = %q, want \"true\"", got)
+	}
+	if got := propStr(e, "auth_roles"); got != "ADMIN" {
+		t.Errorf("user auth_roles = %q, want \"ADMIN\"", got)
+	}
+
+	// @PreAuthorize BEFORE the mapping with role+authority also survives.
+	c := findGQLEndpoint(r, "GRAPHQL /graphql/Mutation/createUser")
+	if c == nil {
+		t.Fatal("createUser endpoint dropped")
+	}
+	if got := propStr(c, "auth_roles"); got != "MANAGER" {
+		t.Errorf("createUser auth_roles = %q, want \"MANAGER\"", got)
+	}
+	if got := propStr(c, "auth_scopes"); got != "write" {
+		t.Errorf("createUser auth_scopes = %q, want \"write\"", got)
+	}
+}
+
+// Request/response shapes (#3873) ---------------------------------------------
+//
+// A resolver's DTO-typed @Argument/@InputArgument params are the request shape
+// (ACCEPTS_INPUT) and the unwrapped return type is the response shape
+// (RETURNS), mirroring the Spring MVC @RequestBody / return-type contract.
+
+// gqlShapeRel reports whether result carries a rel of type relType from the
+// endpoint named endpointName to a spring_dto schema for dtoName.
+func gqlShapeRel(r PatternResult, endpointName, relType, dtoName string) bool {
+	ep := findGQLEndpoint(r, endpointName)
+	if ep == nil {
+		return false
+	}
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == relType && rel.SourceRef == ep.Ref &&
+			rel.Properties["dto_type"] == dtoName {
+			return true
+		}
+	}
+	return false
+}
+
+func TestSpringGraphQLShapes_RequestAndResponse_Issue3873(t *testing.T) {
+	src := `package com.example;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.stereotype.Controller;
+@Controller
+public class UserController {
+    @QueryMapping
+    public User user(@Argument Long id) { return repo.get(id); }
+
+    @MutationMapping
+    public User createUser(@Argument NewUser input) { return repo.save(input); }
+
+    @QueryMapping
+    public List<User> users() { return repo.all(); }
+}`
+	r := ExtractSpringGraphQL(PatternContext{Source: src, Language: "java", Framework: "spring_graphql", FilePath: "UserController.java"})
+
+	// Mutation request shape: @Argument NewUser input → ACCEPTS_INPUT NewUser.
+	if !gqlShapeRel(r, "GRAPHQL /graphql/Mutation/createUser", "ACCEPTS_INPUT", "NewUser") {
+		t.Error("expected ACCEPTS_INPUT createUser -> NewUser")
+	}
+	// Mutation response shape: returns User → RETURNS User.
+	if !gqlShapeRel(r, "GRAPHQL /graphql/Mutation/createUser", "RETURNS", "User") {
+		t.Error("expected RETURNS createUser -> User")
+	}
+	// Query response shape through List<User> → RETURNS User (unwrapped).
+	if !gqlShapeRel(r, "GRAPHQL /graphql/Query/users", "RETURNS", "User") {
+		t.Error("expected RETURNS users -> User (List<User> unwrapped)")
+	}
+	// NEGATIVE: a scalar @Argument Long id is NOT a request DTO.
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == "ACCEPTS_INPUT" &&
+			(rel.Properties["dto_type"] == "Long" || rel.Properties["dto_type"] == "id") {
+			t.Errorf("scalar @Argument should not produce ACCEPTS_INPUT, got %v", rel.Properties)
+		}
+	}
+	// user(...) takes only a scalar arg → no ACCEPTS_INPUT on its endpoint.
+	uep := findGQLEndpoint(r, "GRAPHQL /graphql/Query/user")
+	for _, rel := range r.Relationships {
+		if rel.RelationshipType == "ACCEPTS_INPUT" && uep != nil && rel.SourceRef == uep.Ref {
+			t.Errorf("scalar-only resolver user should have no ACCEPTS_INPUT, got %v", rel.Properties)
+		}
+	}
+}
+
+func TestDGSShapes_InputArgumentAndReturn_Issue3873(t *testing.T) {
+	src := `package com.example;
+import com.netflix.graphql.dgs.DgsComponent;
+import com.netflix.graphql.dgs.DgsQuery;
+import com.netflix.graphql.dgs.DgsMutation;
+@DgsComponent
+public class UserFetcher {
+    @DgsMutation
+    public User addUser(@InputArgument NewUser in) { return svc.add(in); }
+
+    @DgsQuery
+    public List<User> users() { return svc.all(); }
+}`
+	r := ExtractSpringGraphQL(PatternContext{Source: src, Language: "java", Framework: "dgs", FilePath: "UserFetcher.java"})
+
+	if !gqlShapeRel(r, "GRAPHQL /graphql/Mutation/addUser", "ACCEPTS_INPUT", "NewUser") {
+		t.Error("expected ACCEPTS_INPUT addUser -> NewUser (@InputArgument)")
+	}
+	if !gqlShapeRel(r, "GRAPHQL /graphql/Mutation/addUser", "RETURNS", "User") {
+		t.Error("expected RETURNS addUser -> User")
+	}
+	if !gqlShapeRel(r, "GRAPHQL /graphql/Query/users", "RETURNS", "User") {
+		t.Error("expected RETURNS users -> User")
+	}
+}
+
 // Endpoint-shape parity: the emitted id/name MUST match the gqlgen / JS / Kotlin
 // canonical "GRAPHQL /graphql/<RootType>/<field>" exactly.
 func TestSpringGraphQL_CanonicalShapeParity(t *testing.T) {

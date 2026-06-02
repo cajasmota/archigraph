@@ -83,6 +83,16 @@ var springGraphQLFrameworks = map[string]bool{
 	"spring_boot": true,
 }
 
+// annArgsRe matches an annotation argument list `(...)` that may contain ONE
+// level of nested parens — e.g. `@PreAuthorize("hasRole('ADMIN')")` or
+// `@PreAuthorize("hasRole('A') and hasAuthority('B')")`. The previous
+// `\([^)]*\)` form stopped at the first inner `)` and so silently dropped the
+// WHOLE resolver endpoint whenever a SpEL `@PreAuthorize` was interleaved
+// between the mapping annotation and the method (#3862 only tested @Secured /
+// pre-method @PreAuthorize, which avoided the nested-paren case). Used by every
+// Spring/DGS mapping regex below so endpoint synthesis survives a SpEL guard.
+const annArgsRe = `\((?:[^()]|\([^()]*\))*\)`
+
 var (
 	// Spring for GraphQL mapping annotations whose operation is fixed by the
 	// annotation name. Capture group 1 = annotation simple name, group 2 = the
@@ -94,8 +104,8 @@ var (
 	//   @MutationMapping(name = "createUser") User create(@Argument In in) {
 	//   @SubscriptionMapping Flux<Event> events() {
 	reSpringGQLMapping = regexp.MustCompile(
-		`(?s)@(QueryMapping|MutationMapping|SubscriptionMapping)\b\s*(\([^)]*\))?\s*` +
-			`(?:@\w+(?:\([^)]*\))?\s*)*` +
+		`(?s)@(QueryMapping|MutationMapping|SubscriptionMapping)\b\s*(` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
 			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
 			`(?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?\s+(\w+)\s*\(`,
 	)
@@ -103,8 +113,8 @@ var (
 	// operation comes from typeName and field from field. Group 1 = arg list,
 	// group 2 = method name (used as the field fallback when field= absent).
 	reSpringSchemaMapping = regexp.MustCompile(
-		`(?s)@SchemaMapping\b\s*(\([^)]*\))?\s*` +
-			`(?:@\w+(?:\([^)]*\))?\s*)*` +
+		`(?s)@SchemaMapping\b\s*(` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
 			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
 			`(?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?\s+(\w+)\s*\(`,
 	)
@@ -113,15 +123,15 @@ var (
 	// (@Secured / @PreAuthorize / @RolesAllowed) interleaved between the DGS
 	// mapping annotation and the resolver method (#3862).
 	reDgsShorthand = regexp.MustCompile(
-		`(?s)@(DgsQuery|DgsMutation|DgsSubscription)\b\s*(\([^)]*\))?\s*` +
-			`(?:@\w+(?:\([^)]*\))?\s*)*` +
+		`(?s)@(DgsQuery|DgsMutation|DgsSubscription)\b\s*(` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
 			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
 			`(?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?\s+(\w+)\s*\(`,
 	)
 	// Netflix DGS general @DgsData(parentType="Query", field="x").
 	reDgsData = regexp.MustCompile(
-		`(?s)@DgsData\b\s*(\([^)]*\))?\s*` +
-			`(?:@\w+(?:\([^)]*\))?\s*)*` +
+		`(?s)@DgsData\b\s*(` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
 			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
 			`(?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?\s+(\w+)\s*\(`,
 	)
@@ -132,6 +142,77 @@ var (
 	reGQLArgTypeName   = regexp.MustCompile(`\btypeName\s*=\s*"([^"]*)"`)
 	reGQLArgParentType = regexp.MustCompile(`\bparentType\s*=\s*"([^"]*)"`)
 )
+
+// Request/response shape extraction (#3873). A GraphQL resolver's typed input
+// args and return type are its request/response shapes — the GraphQL analogue
+// of Spring MVC's @RequestBody / return type that spring_request_response.go
+// already credits. We emit:
+//
+//   - ACCEPTS_INPUT  endpoint → DTO schema, for each @Argument / @InputArgument
+//     parameter whose type is a non-scalar input object (an input DTO). Scalar
+//     args (Long id, String q) are NOT shape DTOs — they are skipped, matching
+//     the Spring MVC sniffer's srrSkipTypes filter.
+//   - RETURNS         endpoint → DTO schema, for the unwrapped resolver return
+//     type (List<User>/Mono<User>/Flux<Event> → User/Event), reusing the exact
+//     unwrapReturnType helper Spring MVC uses.
+//
+// HONEST LIMIT (partial): shapes resolve from the resolver method SIGNATURE
+// (DTO-typed @Argument params + return type). Inline field-selection sets are
+// not recovered, and a DTO declared in another file contributes only its type
+// name (no member fields) — identical to the Spring MVC single-file limit.
+var (
+	// gqlMethodSigRe captures a resolver method's return type (group 1), name
+	// (group 2) and parameter block (group 3) starting at the mapping
+	// annotation. The leading annotation run (mapping + any interleaved
+	// security annotation) is skipped via annArgsRe-aware tolerance.
+	gqlMethodSigRe = regexp.MustCompile(
+		`(?s)@(?:Query|Mutation|Subscription)Mapping\b\s*(?:` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
+			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
+			`((?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?)\s+(\w+)\s*\(([^)]*)\)`)
+	gqlDgsMethodSigRe = regexp.MustCompile(
+		`(?s)@Dgs(?:Query|Mutation|Subscription|Data)\b\s*(?:` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
+			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
+			`((?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?)\s+(\w+)\s*\(([^)]*)\)`)
+	gqlSchemaMethodSigRe = regexp.MustCompile(
+		`(?s)@SchemaMapping\b\s*(?:` + annArgsRe + `)?\s*` +
+			`(?:@\w+(?:` + annArgsRe + `)?\s*)*` +
+			`(?:(?:public|protected|private)\s+)?(?:static\s+)?(?:final\s+)?` +
+			`((?:<[^>]*>\s*)?[\w.$<>\[\], ?]+?)\s+(\w+)\s*\(([^)]*)\)`)
+	// gqlArgParamRe matches a single `@Argument [Type] name` or
+	// `@InputArgument [Type] name` resolver parameter. Group 1 = the type name
+	// (base, possibly generic). Inner annotations (@Valid, @Argument(name=...))
+	// are tolerated before the type.
+	gqlArgParamRe = regexp.MustCompile(
+		`@(?:Argument|InputArgument)\b(?:\s*\([^)]*\))?\s*(?:@\w+(?:\([^)]*\))?\s*)*` +
+			`([A-Za-z_$][\w$.]*(?:\s*<[^>]*>)?)\s+[A-Za-z_$][\w$]*`)
+)
+
+// gqlShapeBaseType strips a generic wrapper (List<X>, Optional<X>, Mono<X>,
+// Flux<X>, Set<X>) down to its element base type, returning the base type name
+// (or "" if the type bottoms out at a scalar/skip type). Reuses srrSkipTypes
+// (the Spring MVC scalar/container skip set) for parity.
+func gqlShapeBaseType(raw string) string {
+	raw = strings.TrimSpace(raw)
+	// Peel one or two generic layers (List<Mono<User>> is pathological but
+	// unwrapReturnType handles return types; for args one peel suffices).
+	for range 2 {
+		if m := srrBaseGenericRE.FindStringSubmatch(raw); m != nil {
+			base, inner := m[1], m[2]
+			if srrSkipTypes[base] && inner != "" {
+				raw = strings.TrimSpace(inner)
+				continue
+			}
+			if srrSkipTypes[base] {
+				return ""
+			}
+			return base
+		}
+		break
+	}
+	return ""
+}
 
 // springGQLOperationForMapping maps a Spring/DGS shorthand annotation name to
 // its GraphQL root operation. Returns "" for an unrecognised name.
@@ -374,7 +455,21 @@ func ExtractSpringGraphQL(ctx PatternContext) PatternResult {
 	// emit records one resolver method as a canonical GRAPHQL endpoint plus a
 	// resolver-method entity and a HANDLES edge between them. `framework` is the
 	// record-citing framework label ("spring-graphql" or "dgs").
-	emit := func(operation, field, methodName, framework, provenance string, offset int) {
+	// ensureGQLDTO registers a request/response DTO schema entity (one per type
+	// per file) so ACCEPTS_INPUT/RETURNS edges have a stable target, mirroring
+	// the Spring MVC ensureDTO contract (scope:schema:spring_dto:...).
+	ensureGQLDTO := func(dtoName string, lineNo int) string {
+		ref := "scope:schema:spring_dto:" + fp + ":" + dtoName
+		addEntity(&result, seenEnt, SecondaryEntity{
+			Name: dtoName, Kind: "SCOPE.Schema", SourceFile: fp,
+			LineStart: lineNo, LineEnd: lineNo,
+			Provenance: "INFERRED_FROM_SPRING_GRAPHQL_SHAPE", Ref: ref,
+			Properties: map[string]any{"kind": "dto", "framework": "graphql"},
+		})
+		return ref
+	}
+
+	emit := func(operation, field, methodName, framework, provenance string, offset int, returnType, paramsBlock string) {
 		if operation == "" || field == "" {
 			return
 		}
@@ -448,6 +543,55 @@ func ExtractSpringGraphQL(ctx PatternContext) PatternResult {
 				"match_source":  "graphql_resolver_annotation",
 			},
 		})
+
+		// Request shape (#3873): each DTO-typed @Argument/@InputArgument param
+		// is an ACCEPTS_INPUT to its input DTO. Scalar args (Long/String/int)
+		// are not shapes and are skipped via gqlShapeBaseType/srrSkipTypes.
+		for _, pm := range gqlArgParamRe.FindAllStringSubmatch(paramsBlock, -1) {
+			dto := gqlShapeBaseType(pm[1])
+			if dto == "" {
+				continue
+			}
+			dtoRef := ensureGQLDTO(dto, lineNo)
+			addRel(&result, seenRel, Relationship{
+				SourceRef:        endpointRef,
+				TargetRef:        dtoRef,
+				RelationshipType: "ACCEPTS_INPUT",
+				Properties: map[string]string{
+					"framework":    framework,
+					"dto_type":     dto,
+					"match_source": "graphql_argument",
+				},
+			})
+		}
+
+		// Response shape (#3873): the unwrapped resolver return type
+		// (List<User>/Mono<User>/Flux<Event> → User/Event) is a RETURNS to its
+		// output DTO. Reuses the exact Spring MVC unwrapReturnType helper.
+		if dto := unwrapReturnType(strings.TrimSpace(returnType)); dto != "" {
+			dtoRef := ensureGQLDTO(dto, lineNo)
+			addRel(&result, seenRel, Relationship{
+				SourceRef:        endpointRef,
+				TargetRef:        dtoRef,
+				RelationshipType: "RETURNS",
+				Properties: map[string]string{
+					"framework":       framework,
+					"dto_type":        dto,
+					"return_type_raw": strings.TrimSpace(returnType),
+					"match_source":    "graphql_return_type",
+				},
+			})
+		}
+	}
+
+	// sigAt extracts (returnType, paramsBlock) for the resolver whose mapping
+	// annotation begins at off, applying sigRe to a window from off. Returns
+	// ("","") when the signature does not re-match (shapes are then skipped).
+	sigAt := func(sigRe *regexp.Regexp, off int) (string, string) {
+		if sm := sigRe.FindStringSubmatch(src[off:]); sm != nil {
+			return sm[1], sm[3]
+		}
+		return "", ""
 	}
 
 	// 1. Spring for GraphQL shorthand mappings (@QueryMapping etc.).
@@ -463,8 +607,9 @@ func ExtractSpringGraphQL(ctx PatternContext) PatternResult {
 		if n := firstArg(reGQLArgName, args); n != "" {
 			field = n
 		}
+		rt, pb := sigAt(gqlMethodSigRe, m[0])
 		emit(operation, field, methodName, "spring-graphql",
-			"INFERRED_FROM_SPRING_GRAPHQL_MAPPING", m[0])
+			"INFERRED_FROM_SPRING_GRAPHQL_MAPPING", m[0], rt, pb)
 	}
 
 	// 2. Spring for GraphQL @SchemaMapping(typeName=..., field=...).
@@ -484,8 +629,9 @@ func ExtractSpringGraphQL(ctx PatternContext) PatternResult {
 		if f := firstArg(reGQLArgField, args); f != "" {
 			field = f
 		}
+		rt, pb := sigAt(gqlSchemaMethodSigRe, m[0])
 		emit(operation, field, methodName, "spring-graphql",
-			"INFERRED_FROM_SPRING_GRAPHQL_SCHEMA_MAPPING", m[0])
+			"INFERRED_FROM_SPRING_GRAPHQL_SCHEMA_MAPPING", m[0], rt, pb)
 	}
 
 	// 3. Netflix DGS shorthand (@DgsQuery / @DgsMutation / @DgsSubscription).
@@ -501,8 +647,9 @@ func ExtractSpringGraphQL(ctx PatternContext) PatternResult {
 		if f := firstArg(reGQLArgField, args); f != "" {
 			field = f
 		}
+		rt, pb := sigAt(gqlDgsMethodSigRe, m[0])
 		emit(operation, field, methodName, "dgs",
-			"INFERRED_FROM_DGS_MAPPING", m[0])
+			"INFERRED_FROM_DGS_MAPPING", m[0], rt, pb)
 	}
 
 	// 4. Netflix DGS general @DgsData(parentType=..., field=...).
@@ -520,8 +667,9 @@ func ExtractSpringGraphQL(ctx PatternContext) PatternResult {
 		if f := firstArg(reGQLArgField, args); f != "" {
 			field = f
 		}
+		rt, pb := sigAt(gqlDgsMethodSigRe, m[0])
 		emit(operation, field, methodName, "dgs",
-			"INFERRED_FROM_DGS_DATA", m[0])
+			"INFERRED_FROM_DGS_DATA", m[0], rt, pb)
 	}
 
 	return result

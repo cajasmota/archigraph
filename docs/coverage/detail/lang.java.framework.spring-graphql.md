@@ -32,13 +32,13 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Auth coverage | 🟢 `partial` | `2026-06-03` | [link](https://github.com/cajasmota/archigraph/issues/3995) | `internal/custom/java/framework_auth.go`<br>`internal/custom/java/framework_auth_test.go`<br>`internal/custom/java/spring_graphql.go` | #3862/#3995: spring_graphql.go stamps the flat Spring-compatible auth contract on each synthesized GRAPHQL resolver endpoint. @Secured/@PreAuthorize/@RolesAllowed/@PermitAll on a @QueryMapping/@MutationMapping/@SchemaMapping resolver → auth_required + auth_roles/auth_scopes/auth_permissions (ROLE_/SCOPE_ split like Spring MVC). #3995 BUGFIX: the interleaved-annotation tolerance now uses annArgsRe (one-level nested-paren tolerant) so a SpEL @PreAuthorize("hasRole('ADMIN')") interleaved between the mapping annotation and the method no longer drops the whole endpoint (old \([^)]*\) stopped at the first inner ')'). PARTIAL: same matcher set as Spring MVC; custom GraphQL interceptors / instrumentation-based auth not read. Value-asserting test TestSpringGraphQLAuth_PreAuthorizeNestedParen_Issue3873: @QueryMapping @PreAuthorize(hasRole(ADMIN)) → auth_required=true auth_roles=ADMIN; @PreAuthorize(hasRole(MANAGER) and hasAuthority(SCOPE_write)) → auth_roles=MANAGER auth_scopes=write; unannotated resolver → no auth_required. |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| DTO extraction | 🟢 `partial` | `2026-06-03` | [link](https://github.com/cajasmota/archigraph/issues/3995) | `internal/custom/java/spring_graphql.go`<br>`internal/custom/java/spring_graphql_test.go` | #3995: DTO-typed @InputArgument/@Argument resolver params and unwrapped return types register scope:schema:spring_dto SCOPE.Schema entities (kind=dto, framework=graphql). PARTIAL: type-name-only; DTO class member fields recovered only when in-file (cross-file is Phase 4, same limit as the Spring MVC sniffer). Asserted in spring_graphql_test.go. |
 | Request validation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Middleware
@@ -121,9 +121,9 @@ Auto-generated. Back to [summary](../summary.md).
 | Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Request shape extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Request shape extraction | 🟢 `partial` | `2026-06-03` | [link](https://github.com/cajasmota/archigraph/issues/3995) | `internal/custom/java/spring_graphql.go`<br>`internal/custom/java/spring_graphql_test.go` | #3995: each DTO-typed @InputArgument/@Argument resolver param emits ACCEPTS_INPUT endpoint→DTO (scope:schema:spring_dto), the GraphQL analogue of Spring MVC @RequestBody. Scalar args (Long/String/int) skipped via gqlShapeBaseType+srrSkipTypes. PARTIAL: signature-DTO-typed args only; inline field-selection sets and cross-file DTO member fields not recovered. Asserted in spring_graphql_test.go (ACCEPTS_INPUT createUser→NewUser / addUser→NewUser; scalar id is NOT an input). |
 | Request sink dataflow | 🔴 `missing` | — | 3958 | — | No dataflow sniffer covers this framework's request-binding forms yet. The Java sniffer (internal/substrate/dataflow_java.go, #3958) targets Spring MVC/WebFlux @RequestBody/@RequestParam/@PathVariable; Kotlin/Scala have no sniffer at all (no "kotlin"/"scala" slug registered). request_sink_dataflow remains a follow-up for these JVM frameworks. |
-| Response shape extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Response shape extraction | 🟢 `partial` | `2026-06-03` | [link](https://github.com/cajasmota/archigraph/issues/3995) | `internal/custom/java/spring_graphql.go`<br>`internal/custom/java/spring_graphql_test.go` | #3995: the unwrapped resolver return type (List<User>/Mono<User>/Flux<Event> → User/Event, via the shared Spring MVC unwrapReturnType) emits RETURNS endpoint→DTO (scope:schema:spring_dto). PARTIAL: type-name-only response DTO; in-file member fields only. Asserted in spring_graphql_test.go (RETURNS createUser→User, users→User unwrapped). |
 | Sanitizer recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Schema drift detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Taint sink detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
