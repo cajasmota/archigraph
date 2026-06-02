@@ -144,6 +144,81 @@ object Schemas {
 	}
 }
 
+// TestCalibanAuthDirective is the VERIFY-FIRST probe (#3992): a resolver field
+// carrying @GQLDirective(Authenticated) is auth-gated, and @GQLDirective(
+// HasRole("admin")) carries a role. Directive-free fields and non-auth
+// directives (@GQLDeprecated / @GQLDirective(deprecated)) carry NO auth.
+func TestCalibanAuthDirective(t *testing.T) {
+	src := `
+import caliban._
+import caliban.schema.Annotations._
+
+case class Queries(
+  @GQLDirective(Authenticated) me: () => URIO[Auth, User],
+  @GQLDirective(HasRole("admin")) adminStats: () => URIO[Auth, Stats],
+  @GQLDeprecated("use me") legacy: () => UIO[User],
+  health: () => UIO[String],
+)
+
+object Api {
+  val api = graphQL(RootResolver(Queries(resolveMe, resolveAdmin, resolveLegacy, resolveHealth)))
+}
+`
+	ents := extract(t, "custom_scala_caliban", fi("Api.scala", "scala", src))
+
+	// @GQLDirective(Authenticated) → auth_required=true, method=directive,
+	// the directive name is recorded, and auth_guard makes it count as covered.
+	me := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Queries/me")
+	if me == nil {
+		t.Fatalf("expected endpoint for me")
+	}
+	if me.Props["auth_required"] != "true" {
+		t.Errorf("me: auth_required = %q, want true", me.Props["auth_required"])
+	}
+	if me.Props["auth_method"] != "directive" {
+		t.Errorf("me: auth_method = %q, want directive", me.Props["auth_method"])
+	}
+	if me.Props["auth_directive"] != "Authenticated" {
+		t.Errorf("me: auth_directive = %q, want Authenticated", me.Props["auth_directive"])
+	}
+	if me.Props["auth_guard"] != "Authenticated" {
+		t.Errorf("me: auth_guard = %q, want Authenticated", me.Props["auth_guard"])
+	}
+
+	// @GQLDirective(HasRole("admin")) → auth_roles=admin + auth_required=true.
+	admin := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Queries/adminStats")
+	if admin == nil {
+		t.Fatalf("expected endpoint for adminStats")
+	}
+	if admin.Props["auth_required"] != "true" {
+		t.Errorf("adminStats: auth_required = %q, want true", admin.Props["auth_required"])
+	}
+	if admin.Props["auth_roles"] != "admin" {
+		t.Errorf("adminStats: auth_roles = %q, want admin", admin.Props["auth_roles"])
+	}
+	if admin.Props["auth_directive"] != "HasRole" {
+		t.Errorf("adminStats: auth_directive = %q, want HasRole", admin.Props["auth_directive"])
+	}
+
+	// NEGATIVE: @GQLDeprecated is a non-auth directive → no auth_required.
+	legacy := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Queries/legacy")
+	if legacy == nil {
+		t.Fatalf("expected endpoint for legacy")
+	}
+	if _, ok := legacy.Props["auth_required"]; ok {
+		t.Errorf("legacy: auth_required should be absent, got %q", legacy.Props["auth_required"])
+	}
+
+	// NEGATIVE: a directive-free field carries no auth.
+	health := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Queries/health")
+	if health == nil {
+		t.Fatalf("expected endpoint for health")
+	}
+	if _, ok := health.Props["auth_required"]; ok {
+		t.Errorf("health: auth_required should be absent, got %q", health.Props["auth_required"])
+	}
+}
+
 func TestCalibanNoFalsePositive(t *testing.T) {
 	// A plain http4s/tapir Scala file with no Caliban markers must yield nothing.
 	src := `
