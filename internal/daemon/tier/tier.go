@@ -472,6 +472,34 @@ func (m *Manager) Touch(key SlotKey) error {
 	return nil
 }
 
+// Forget removes every slot for repoPath (all refs) from the Manager, dropping
+// them from the in-memory accounting WITHOUT firing eviction/disk callbacks.
+// It is the tier-side half of the vanished-repo reaper (issue #3680): once a
+// repo's directory no longer exists on disk, its slots must be untracked so the
+// Manager stops counting them toward pressure and stops attempting cold-wakes
+// against a path that is gone. The on-disk store is removed separately by the
+// reaper. Returns the number of slots forgotten.
+func (m *Manager) Forget(repoPath string) int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	n := 0
+	for k := range m.slots {
+		if k.RepoPath == repoPath {
+			delete(m.slots, k)
+			n++
+		}
+	}
+	return n
+}
+
+// Len returns the number of slots currently tracked. Used by the reaper's
+// memory-accounting assertions and diagnostics.
+func (m *Manager) Len() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.slots)
+}
+
 // Get returns the current Tier for key. Returns TierCold for unknown slots.
 func (m *Manager) Get(key SlotKey) Tier {
 	m.mu.Lock()

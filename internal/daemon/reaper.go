@@ -1,0 +1,211 @@
+// reaper.go — vanished-repo store GC (issue #3680).
+//
+// # Problem
+//
+// archigraph dogfoods itself, so the daemon's watcher catches every
+// `git worktree add` and (pre-#3680) cold-indexes the worktree as a SEPARATE
+// repo with its OWN ~100MB full graph store under hash(worktreePath). When the
+// rewrite agent later deletes those worktrees, the directories vanish from disk
+// but the daemon keeps tracking them: the tier Manager still holds their slots
+// (counting toward memory pressure and attempting cold-wakes) and the on-disk
+// store dir is never deleted. The live daemon's `~/.archigraph/store/` grew to
+// 7.2GB dominated by ~25 such orphaned worktree stores, with the tier Manager
+// logging `stat repo: ... no such file or directory`.
+//
+// # Fix
+//
+// The Reaper periodically reconciles the tracked repo set against the
+// filesystem. For every tracked repo path whose directory no longer exists it:
+//
+//  1. deletes the on-disk store directory (repoBaseDir), reclaiming its bytes,
+//  2. forgets the repo's tier slots (decrementing the in-memory accounting),
+//  3. lets the caller drop any other registry/worktree-store tracking via the
+//     Untrack callback.
+//
+// An EXISTING repo is never reaped. The reaper is conservative: a path that
+// cannot be stat'd for any reason OTHER than "does not exist" (e.g. a transient
+// permission error) is left untouched so a flaky filesystem can never cause the
+// daemon to nuke a live repo's graph.
+package daemon
+
+import (
+	"errors"
+	"log/slog"
+	"os"
+	"time"
+)
+
+// TierForgetter is the narrow slice of tier.Manager the reaper needs: drop all
+// slots for a repo path and report how many were dropped. Implemented by
+// *tier.Manager.Forget.
+type TierForgetter interface {
+	Forget(repoPath string) int
+}
+
+// ReaperConfig wires the vanished-repo reaper. All hooks are optional except
+// TrackedRepos; a nil hook is simply skipped.
+type ReaperConfig struct {
+	// TrackedRepos returns the current set of absolute repo paths the daemon
+	// tracks (registered repos + active worktree children). Called on every
+	// sweep so newly-tracked repos are covered without restarting the reaper.
+	// Required; a nil value makes Sweep a no-op.
+	TrackedRepos func() []string
+
+	// StoreDirForRepo returns the absolute on-disk store directory for a repo
+	// path (the top-level slot, e.g. repoBaseDir). The reaper RemoveAll's this
+	// directory when the repo has vanished. When nil, store deletion is skipped
+	// (slots are still forgotten).
+	StoreDirForRepo func(repoPath string) string
+
+	// Tier, when non-nil, has Forget(repoPath) called for every vanished repo
+	// so its slots leave the in-memory accounting.
+	Tier TierForgetter
+
+	// Untrack, when non-nil, is called once per vanished repo so the caller can
+	// drop the path from any other tracking surface (worktree store, head
+	// poller, fsnotify subscription). Invoked after the store is removed.
+	Untrack func(repoPath string)
+
+	// Interval between sweeps. Default (zero value): 5 minutes.
+	Interval time.Duration
+
+	// Logger for sweep diagnostics. nil → a default stderr logger.
+	Logger *slog.Logger
+}
+
+// ReapResult summarises one Sweep.
+type ReapResult struct {
+	// Vanished is the number of tracked repos found missing on disk.
+	Vanished int
+	// StoresRemoved is the number of on-disk store directories deleted.
+	StoresRemoved int
+	// SlotsForgotten is the total tier slots dropped from accounting.
+	SlotsForgotten int
+	// FreedBytes is the total bytes reclaimed from deleted store dirs.
+	FreedBytes int64
+}
+
+// Reaper periodically GCs stores for repos that no longer exist on disk.
+type Reaper struct {
+	cfg    ReaperConfig
+	logger *slog.Logger
+}
+
+// NewReaper constructs a Reaper. Call Start to run it in the background, or
+// call Sweep directly (tests / one-shot).
+func NewReaper(cfg ReaperConfig) *Reaper {
+	logger := cfg.Logger
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil)).With("pkg", "reaper")
+	}
+	if cfg.Interval <= 0 {
+		cfg.Interval = 5 * time.Minute
+	}
+	return &Reaper{cfg: cfg, logger: logger}
+}
+
+// Start runs the reaper loop until stopCh is closed. It performs one immediate
+// sweep after a short startup delay, then sweeps on the configured interval.
+func (r *Reaper) Start(stopCh <-chan struct{}) {
+	go func() {
+		// Brief startup delay so boot-time indexing settles first.
+		select {
+		case <-stopCh:
+			return
+		case <-time.After(30 * time.Second):
+		}
+		r.Sweep()
+		t := time.NewTicker(r.cfg.Interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-stopCh:
+				return
+			case <-t.C:
+				r.Sweep()
+			}
+		}
+	}()
+}
+
+// Sweep runs one reconciliation pass synchronously and returns what it reaped.
+// Safe to call directly from tests.
+func (r *Reaper) Sweep() ReapResult {
+	var res ReapResult
+	if r.cfg.TrackedRepos == nil {
+		return res
+	}
+	for _, repo := range r.cfg.TrackedRepos() {
+		if repo == "" {
+			continue
+		}
+		if repoExists(repo) {
+			continue // live repo — never reaped.
+		}
+		res.Vanished++
+		r.logger.Info("reaper: tracked repo vanished from disk — GCing store", "repo", repo)
+
+		// 1. Delete the on-disk store.
+		if r.cfg.StoreDirForRepo != nil {
+			storeDir := r.cfg.StoreDirForRepo(repo)
+			if storeDir != "" {
+				if sz, err := r.removeStore(storeDir); err != nil {
+					r.logger.Warn("reaper: store removal failed (non-fatal)", "repo", repo, "store", storeDir, "err", err)
+				} else if sz >= 0 {
+					res.StoresRemoved++
+					res.FreedBytes += sz
+					r.logger.Info("reaper: store removed", "repo", repo, "store", storeDir, "freed_bytes", sz)
+				}
+			}
+		}
+
+		// 2. Forget tier slots (decrement in-memory accounting).
+		if r.cfg.Tier != nil {
+			res.SlotsForgotten += r.cfg.Tier.Forget(repo)
+		}
+
+		// 3. Drop any other tracking.
+		if r.cfg.Untrack != nil {
+			r.cfg.Untrack(repo)
+		}
+	}
+	if res.Vanished > 0 {
+		r.logger.Info("reaper: sweep complete",
+			"vanished", res.Vanished,
+			"stores_removed", res.StoresRemoved,
+			"slots_forgotten", res.SlotsForgotten,
+			"freed_bytes", res.FreedBytes)
+	}
+	return res
+}
+
+// removeStore deletes storeDir and returns the bytes it freed. A non-existent
+// store dir is not an error (returns 0 freed). Returns -1 freed when the dir
+// did not exist so the caller can distinguish "nothing to remove" from "removed
+// 0-byte dir".
+func (r *Reaper) removeStore(storeDir string) (int64, error) {
+	sz, err := dirSizeHygiene(storeDir)
+	if err != nil {
+		// Most likely the store dir never existed — nothing to free.
+		if errors.Is(err, os.ErrNotExist) {
+			return -1, nil
+		}
+		// Other walk errors: still attempt removal but report 0 freed.
+		sz = 0
+	}
+	if rmErr := os.RemoveAll(storeDir); rmErr != nil {
+		return 0, rmErr
+	}
+	return sz, nil
+}
+
+// repoExists reports whether repoPath is an existing directory on disk. It
+// returns true on any stat error OTHER than "not exist" so a transient
+// permission/IO error never causes a live repo to be reaped (fail-safe).
+func repoExists(repoPath string) bool {
+	fi, err := os.Stat(repoPath)
+	if err != nil {
+		return !errors.Is(err, os.ErrNotExist)
+	}
+	return fi.IsDir()
+}

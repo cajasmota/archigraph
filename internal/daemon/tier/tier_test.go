@@ -419,3 +419,36 @@ func TestPinnedMainNeverDiskEvicted(t *testing.T) {
 		t.Fatalf("disk evict must not fire for pinned main, got %d calls", diskEvictCalled.Load())
 	}
 }
+
+// TestManager_Forget removes all refs for a vanished repo and decrements the
+// in-memory accounting, without touching other repos' slots (issue #3680).
+func TestManager_Forget(t *testing.T) {
+	clock, _ := makeClock()
+	m := tier.NewManagerForTest(tier.DefaultTTLConfig(), clock, noopEvict, noopReload)
+
+	gone := "/repos/gone-worktree"
+	live := "/repos/live"
+	m.Register(tier.SlotKey{RepoPath: gone, Ref: "main"}, false, tier.SlotKindWorktree)
+	m.Register(tier.SlotKey{RepoPath: gone, Ref: "feat/x"}, false, tier.SlotKindWorktree)
+	m.Register(tier.SlotKey{RepoPath: live, Ref: "main"}, true, tier.SlotKindBranchMain)
+
+	if got := m.Len(); got != 3 {
+		t.Fatalf("Len before = %d, want 3", got)
+	}
+
+	n := m.Forget(gone)
+	if n != 2 {
+		t.Fatalf("Forget returned %d, want 2 (both refs of the vanished repo)", n)
+	}
+	if got := m.Len(); got != 1 {
+		t.Fatalf("Len after = %d, want 1 (only the live repo remains)", got)
+	}
+	// Negative: the live repo's slot survives untouched.
+	if m.Get(tier.SlotKey{RepoPath: live, Ref: "main"}) != tier.TierHot {
+		t.Fatalf("live repo slot was wrongly evicted by Forget")
+	}
+	// Idempotent: forgetting again is a no-op.
+	if n := m.Forget(gone); n != 0 {
+		t.Fatalf("second Forget returned %d, want 0", n)
+	}
+}

@@ -464,3 +464,63 @@ func TestRunLinksUsesShutdownCtx(t *testing.T) {
 		t.Error("Stop() did not return after Links callback exited")
 	}
 }
+
+// TestSkipEnqueue_dropsLinkedWorktree asserts the #3680 guard: when
+// Config.SkipEnqueue returns true for a path, that enqueue is dropped before
+// it can become a root index job — so the indexer never runs for it. A
+// non-matching path is still indexed normally (negative case).
+func TestSkipEnqueue_dropsLinkedWorktree(t *testing.T) {
+	const worktreePath = "/repos/primary/.worktrees/agent-7"
+	const realRepo = "/repos/primary"
+
+	var indexed sync.Map // repoPath -> struct{}
+	done := make(chan string, 4)
+	s := New(Config{
+		Workers: 1,
+		// Gate: treat the worktree path as a linked worktree of an indexed
+		// primary; everything else is a normal root repo.
+		SkipEnqueue: func(repoPath string) bool {
+			return repoPath == worktreePath
+		},
+		Index: func(_ context.Context, repoPath string, _ string) error {
+			indexed.Store(repoPath, struct{}{})
+			done <- repoPath
+			return nil
+		},
+	})
+	s.Start()
+	defer s.Stop()
+
+	// Gated: must NOT be indexed.
+	s.Enqueue(worktreePath)
+	// Ungated: must be indexed (proves the gate is selective, not a kill-switch).
+	s.Enqueue(realRepo)
+
+	select {
+	case got := <-done:
+		if got != realRepo {
+			t.Fatalf("indexed unexpected repo %q; the gated worktree must not be indexed", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("real repo was never indexed — gate must not block non-worktree paths")
+	}
+
+	// Give any (erroneously) admitted worktree job time to run, then assert
+	// it never did.
+	time.Sleep(150 * time.Millisecond)
+	if _, ok := indexed.Load(worktreePath); ok {
+		t.Fatalf("linked-worktree path %q was cold-indexed despite the #3680 gate", worktreePath)
+	}
+
+	// The skip must be recorded in the recent-log telemetry for observability.
+	snap := s.Snapshot()
+	var sawSkip bool
+	for _, e := range snap.RecentLog {
+		if e.Kind == "enqueue_skipped" && e.Repo == worktreePath {
+			sawSkip = true
+		}
+	}
+	if !sawSkip {
+		t.Errorf("expected an enqueue_skipped log entry for the gated worktree")
+	}
+}

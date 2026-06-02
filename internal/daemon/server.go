@@ -302,6 +302,13 @@ func Run(ctx context.Context, cfg Config) error {
 			RefCapture: func(repoPath string) string {
 				return gitmeta.Capture(repoPath).Ref
 			},
+			// #3680: drop enqueues for linked git worktrees of an
+			// already-indexed primary repo so they never become independent
+			// root index jobs (each spawning its own ~100MB full graph store
+			// and pressuring the RSS admission budget). The worktree subsystem
+			// still tracks such paths as ephemeral children with aggressive
+			// TTLs. The indexed-primary set is the boot-time ReposToWatch list.
+			SkipEnqueue: makeWorktreeEnqueueGate(cfg.ReposToWatch),
 			// S3 incremental file-level reindex (issue #2153). When nil
 			// the scheduler falls through to full reindex on every tick.
 			Incremental: cfg.SchedulerIncremental,
@@ -397,9 +404,10 @@ func Run(ctx context.Context, cfg Config) error {
 			// Gated on the fsnotify watcher being up (we reuse it to watch each
 			// worktree's working tree) and on a caller-supplied parents provider
 			// (non-nil only when some group opts into worktree tracking).
+			var wtStore *worktree.Store
 			if cfg.WorktreeParents != nil {
 				wtStorePath := filepath.Join(cfg.Layout.Root, "worktrees.json")
-				wtStore := worktree.NewStore(wtStorePath)
+				wtStore = worktree.NewStore(wtStorePath)
 				if err := wtStore.Load(); err != nil {
 					logger.Warn("worktree: failed to load store; starting empty", "path", wtStorePath, "err", err)
 				}
@@ -431,6 +439,24 @@ func Run(ctx context.Context, cfg Config) error {
 				logger.Info("worktree: discovery started",
 					"store", wtStorePath, "reconcile_env", "ARCHIGRAPH_WORKTREE_POLL_SECONDS")
 			}
+
+			// #3680: vanished-repo store reaper. Tracked repos (registered +
+			// active worktree children) whose directory no longer exists on
+			// disk have their store dir deleted and their fsnotify
+			// subscription dropped, reclaiming the orphaned ~100MB worktree
+			// stores that accumulated under ~/.archigraph/store/.
+			reaper := NewReaper(ReaperConfig{
+				TrackedRepos:    makeReaperTrackedRepos(cfg.ReposToWatch, wtStore),
+				StoreDirForRepo: repoBaseDir,
+				Untrack: func(repoPath string) {
+					watcher.RemoveRepo(repoPath)
+				},
+				Logger: logger,
+			})
+			reaperStop := make(chan struct{})
+			reaper.Start(reaperStop)
+			defer close(reaperStop)
+			logger.Info("reaper: vanished-repo store GC started", "interval", "5m")
 		}
 	}
 

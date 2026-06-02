@@ -84,6 +84,18 @@ type GroupsForRepoFn func(repoPath string) []string
 // job is admitted regardless of budget).
 type PredictFn func(repoPath string) int64
 
+// SkipEnqueueFn reports whether an enqueue for repoPath should be DROPPED
+// before it ever reaches the admission queue. It is the root-cause guard for
+// issue #3680: a path that is a linked git worktree of an already-indexed
+// primary repo must NOT be cold-indexed as a brand-new root repo (which would
+// spawn its own ~100MB full graph store and blow the RSS budget). The worktree
+// subsystem still tracks such a path as an ephemeral child with aggressive
+// TTLs; it simply must not become an independent root index job.
+//
+// Returning true silently skips the enqueue. nil disables the guard (every
+// enqueue is accepted — legacy behaviour).
+type SkipEnqueueFn func(repoPath string) bool
+
 // IncrementalResult carries the outcome of a S3 incremental reindex attempt.
 // Mirrors extractors.Result without importing that package here to avoid a
 // circular dependency (extractors imports daemon for StateDirForRepo).
@@ -125,6 +137,13 @@ type Config struct {
 	// assumed to cost 1MB (admission control still serialises but is
 	// effectively disabled unless many workers are configured).
 	Predict PredictFn
+
+	// SkipEnqueue, when non-nil, is consulted at the top of EnqueueRef. When
+	// it returns true the enqueue is dropped before entering the pending
+	// queue. This is the worktree-churn guard for issue #3680: linked
+	// worktrees of already-indexed primaries are not cold-indexed as new
+	// root repos. nil = accept every enqueue (legacy behaviour).
+	SkipEnqueue SkipEnqueueFn
 
 	// History, when non-nil, overrides Predict for repos that have a
 	// recorded peak. The scheduler also writes each completed job's
@@ -387,6 +406,13 @@ func (s *Scheduler) Enqueue(repoPath string) {
 // events) where the new ref has already been observed — no extra git call
 // needed. Safe to call from arbitrary goroutines.
 func (s *Scheduler) EnqueueRef(repoPath, ref string) {
+	// Issue #3680: drop enqueues for linked worktrees of already-indexed
+	// primaries so they never become independent root index jobs (each of
+	// which would spawn its own ~100MB store and pressure the RSS budget).
+	if s.cfg.SkipEnqueue != nil && s.cfg.SkipEnqueue(repoPath) {
+		s.logEvent("enqueue_skipped", repoPath, "linked worktree of indexed primary — not cold-indexed as a new root (#3680)")
+		return
+	}
 	select {
 	case s.enq <- enqueueRequest{repoPath: repoPath, ref: ref}:
 	case <-s.stop:
