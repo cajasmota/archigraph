@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # ruby
 
-**Frameworks**: 9 · **Tools**: 6 · **ORMs**: 14 · **Other**: 6
+**Frameworks**: 9 · **Tools**: 6 · **ORMs**: 14 · **Other**: 7
 
 Back to [summary](../summary.md).
 
@@ -76,6 +76,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Category | Status | Notes |
 |---|---|---|---|
 | [ORM model lifecycle-hook → handler TRIGGERS (ActiveRecord callbacks)](../detail/msg.orm-lifecycle-hooks-ruby.md) | [message_broker](../by-category/message_broker.md) | ✅ | |
+| [Rails ActionCable](../detail/msg.actioncable.md) | [message_broker](../by-category/message_broker.md) | ✅ | |
 | [Resque (Ruby task queue)](../detail/msg.resque.md) | [message_broker](../by-category/message_broker.md) | 🟢 | |
 | [Ruby AASM (FSM topology)](../detail/infra.state-machine.aasm.md) | [platform](../by-category/platform.md) | 🟢 | |
 | [Sidekiq (Ruby task queue)](../detail/msg.sidekiq.md) | [message_broker](../by-category/message_broker.md) | 🟢 | |

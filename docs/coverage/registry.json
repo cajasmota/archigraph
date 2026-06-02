@@ -67558,6 +67558,21 @@
       }
     },
     {
+      "id": "msg.actioncable",
+      "category": "message_broker",
+      "language": "ruby",
+      "label": "Rails ActionCable",
+      "capabilities": {
+        "room_channel_grouping": {
+          "status": "full",
+          "cites": ["internal/engine/ws_channel_grouping.go","internal/engine/ws_channel_grouping_test.go"],
+          "issue": "3628",
+          "notes": "[realtime] ActionCable room grouping (#3628 child): applyWSChannelGrouping (ruby) emits JOINS_CHANNEL(method -\u003e SCOPE.Channel:\u003cname\u003e) for stream_from 'chat_1' and BROADCASTS_TO(method -\u003e SCOPE.Channel:\u003cname\u003e) for ActionCable.server.broadcast('chat_1', ...) with LITERAL channel names; a stream_from + server.broadcast on the same channel converge on one node. Enclosing def attributes the caller. Honest-partial: stream_for \u003cvar\u003e / broadcast_to(\u003cvar\u003e) dynamic targets skipped.",
+          "verified_at": "2026-06-02"
+        }
+      }
+    },
+    {
       "id": "msg.apscheduler",
       "category": "message_broker",
       "language": "python",
@@ -67966,6 +67981,21 @@
       }
     },
     {
+      "id": "msg.django-channels",
+      "category": "message_broker",
+      "language": "python",
+      "label": "Django Channels",
+      "capabilities": {
+        "room_channel_grouping": {
+          "status": "full",
+          "cites": ["internal/engine/ws_channel_grouping.go","internal/engine/ws_channel_grouping_test.go"],
+          "issue": "3628",
+          "notes": "[realtime] Django Channels group grouping (#3628 child): applyWSChannelGrouping (python) emits JOINS_CHANNEL(method -\u003e SCOPE.Channel:\u003cgroup\u003e) for channel_layer.group_add('chat', ...) (and group_discard) and BROADCASTS_TO(method -\u003e SCOPE.Channel:\u003cgroup\u003e) for group_send('chat', ...) with LITERAL group names; group_add + group_send on the same group converge on one node. Anchored on the group_ call so it is independent of how the channel layer is reached. Honest-partial: dynamic group names skipped.",
+          "verified_at": "2026-06-02"
+        }
+      }
+    },
+    {
       "id": "msg.django-signals",
       "category": "message_broker",
       "language": "python",
@@ -68160,6 +68190,13 @@
           "notes": "#3682 (epic #3628 area #7): Phoenix 'channel \"topic:*\", XChannel' declarations in a Phoenix.Socket module emit endpoint-shaped http_endpoint_definition entities http:WS:\u003ctopic\u003e (transport=channels) with a HANDLES edge Class:XChannel -\u003e endpoint. Honest-partial: topic wildcards (room:*) are kept verbatim as the route_path; per-message handle_in event extraction is deferred.",
           "verified_at": "2026-06-02"
         },
+        "room_channel_grouping": {
+          "status": "full",
+          "cites": ["internal/engine/ws_channel_grouping.go","internal/engine/ws_channel_grouping_test.go"],
+          "issue": "3628",
+          "notes": "[realtime] Phoenix channel-topic grouping (#3628 child): applyWSChannelGrouping (elixir) emits BROADCASTS_TO(fn -\u003e SCOPE.Channel:\u003ctopic\u003e) for MyApp.Endpoint.broadcast(\"room:1\", ...) / broadcast_from with a LITERAL topic (e.g. room:42); enclosing def/defp attributes the caller. Honest-partial: broadcast(socket, ...) on an implicit dynamic socket topic and interpolated topics are skipped.",
+          "verified_at": "2026-06-02"
+        },
         "topic_attribution": {
           "status": "partial",
           "cites": ["internal/engine/realtime_endpoint_synthesis.go"],
@@ -68311,6 +68348,13 @@
           "status": "full",
           "cites": ["internal/engine/realtime_endpoint_synthesis.go","internal/engine/websocket_edges.go"],
           "notes": "#3682 (epic #3628 area #7): in addition to ChannelEvent + WS_SUBSCRIBES_TO/WS_EMITS edges, the producer side now ALSO emits endpoint-shaped http_endpoint_definition entities (verb=WS, route_path, realtime=true, transport=websocket) with a HANDLES edge to the handler, so the endpoints/find tools surface WS endpoints alongside REST and they cross-link on the shared http:WS:\u003cpath\u003e synthetic ID. Frameworks: NestJS @WebSocketGateway+@SubscribeMessage, socket.io socket.on, bare ws WebSocketServer, FastAPI @app.websocket. Honest-partial where the channel/path is fully dynamic.",
+          "verified_at": "2026-06-02"
+        },
+        "room_channel_grouping": {
+          "status": "full",
+          "cites": ["internal/engine/ws_channel_grouping.go","internal/engine/ws_channel_grouping_test.go"],
+          "issue": "3628",
+          "notes": "[realtime] room/channel grouping layer ABOVE per-event WS endpoints (#3739): applyWSChannelGrouping emits a SCOPE.Channel:\u003croom\u003e convergence node + JOINS_CHANNEL(fn-\u003echannel) / BROADCASTS_TO(fn-\u003echannel) edges so a join and a broadcast on the SAME literal room converge on one node, answering 'who joins/broadcasts to room X?'. Socket.IO (js/ts): socket.join('lobby') -\u003e JOINS_CHANNEL; io.to('lobby').emit() / socket.broadcast.to() / io.in() -\u003e BROADCASTS_TO. Honest-partial: dynamic/template-literal rooms and array .join skipped (socket-context + receiver gates).",
           "verified_at": "2026-06-02"
         },
         "topic_attribution": {

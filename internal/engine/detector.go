@@ -752,6 +752,16 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	// `endpoints` / `find` tools surface realtime endpoints alongside REST
 	// routes. Additive on top of the ChannelEvent/Stream passes above.
 	applyPass(applyRealtimeEndpointSynthesis)
+	// [realtime] WS room/channel grouping (child of #3628). Emits the grouping
+	// layer ABOVE the per-event WS endpoints: a SCOPE.Channel node per
+	// real-time room/channel/group/topic + JOINS_CHANNEL / BROADCASTS_TO edges
+	// from the enclosing function. A join and a broadcast on the same literal
+	// room converge on one node, so the graph answers "who joins / broadcasts
+	// to room X?" for Socket.IO rooms (JS/TS), Rails ActionCable (ruby), Django
+	// Channels groups (python), and Phoenix channel topics (elixir). Dynamic
+	// room names are skipped (honest-partial). Append-only — cannot regress
+	// surrounding passes.
+	applyPass(applyWSChannelGrouping)
 	// #728: Scheduled-job entry-point detection. Emits SCOPE.ScheduledJob
 	// entities + TRIGGERS edges for every major scheduler framework across
 	// Python, Node, Java/Kotlin, Go; plus Kubernetes CronJob YAML and
