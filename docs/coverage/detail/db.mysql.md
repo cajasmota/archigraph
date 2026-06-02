@@ -29,7 +29,7 @@ one is a separate detail page.
 | [`lang.jsts.driver.mysql`](./lang.jsts.driver.mysql.md) | JS/TS | driver | 1 full, 3 missing, 7 n/a |
 | [`lang.php.driver.mysql`](./lang.php.driver.mysql.md) | php | driver | 1 partial, 4 missing, 6 n/a |
 | [`lang.python.driver.mysql`](./lang.python.driver.mysql.md) | python | driver | 1 full, 1 partial, 3 missing, 6 n/a |
-| [`lang.ruby.driver.mysql`](./lang.ruby.driver.mysql.md) | ruby | driver | 4 missing, 7 n/a |
+| [`lang.ruby.driver.mysql`](./lang.ruby.driver.mysql.md) | ruby | driver | 1 full, 3 missing, 7 n/a |
 | [`lang.rust.driver.mysql`](./lang.rust.driver.mysql.md) | rust | driver | 4 missing, 7 n/a |
 
 ## Provenance

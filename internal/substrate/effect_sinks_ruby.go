@@ -7,15 +7,19 @@
 //     URI.open / URI.parse(...).open
 //   - db_read   : ActiveRecord `.where / .find / .find_by / .find_each /
 //     .all / .first / .last / .pluck / .count / .exists?`,
-//     raw `connection.execute("SELECT ...")`, `ActiveRecord::
-//     Base.connection.exec_query`
+//     and raw-driver SELECT/WITH queries — pg `conn.exec` /
+//     `conn.exec_params`, mysql2 `client.query`, sqlite3 /
+//     ActiveRecord `db.execute` — with the FROM table named in
+//     the sink (e.g. rawsql.read(orders)) (#3949)
 //   - db_write  : ActiveRecord `.create / .create! / .update / .update! /
 //     .update_all / .destroy / .destroy_all / .delete /
 //     .delete_all / .save / .save! / .insert / .insert_all /
-//     .upsert / .upsert_all`, raw `connection.execute(
-//     "INSERT|UPDATE|DELETE ...")`, and Sequel dataset writes
-//     `DB[:table]…insert/update/delete/multi_insert/import/
-//     truncate` (table named in the sink, e.g. sequel.write(users))
+//     .upsert / .upsert_all`, raw-driver INSERT/UPDATE/DELETE/…
+//     queries via pg/mysql2/sqlite3 `exec|exec_params|query|
+//     execute` with the target table named in the sink
+//     (e.g. rawsql.write(users)) (#3949), and Sequel dataset
+//     writes `DB[:table]…insert/update/delete/multi_insert/
+//     import/truncate` (e.g. sequel.write(users))
 //   - fs_read   : File.read / .open (default "r"), File.readlines, IO.read,
 //     Dir.entries / .glob / .[], Pathname#read
 //   - fs_write  : File.write / .open with "w"/"a"/"x"/binary modes,
@@ -30,7 +34,10 @@
 // the substrate's needs.
 package substrate
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 func init() { RegisterEffectSniffer("ruby", sniffEffectsRuby) }
 
@@ -58,20 +65,10 @@ var rubyDBReadRe = regexp.MustCompile(
 		`|\bconnection\s*\.\s*(?:execute|exec_query|select_all|select_one|select_value|select_values|select_rows)\s*\(`,
 )
 
-// rubyCursorSelectRe pairs raw `execute("SELECT ...")` calls as reads.
-var rubyCursorSelectRe = regexp.MustCompile(
-	`\.\s*execute\s*\(\s*['"](?i:\s*(?:SELECT|WITH)\b)`,
-)
-
 // rubyDBWriteRe matches ActiveRecord and raw write primitives.
 var rubyDBWriteRe = regexp.MustCompile(
 	`\.\s*(?:create|create!|update|update!|update_all|update_column|update_columns|destroy|destroy!|destroy_all|delete|delete_all|save|save!|insert|insert_all|insert_all!|upsert|upsert_all|increment!|decrement!|touch|toggle!)\s*[\(.!]?` +
 		`|\.\s*save\s*$`,
-)
-
-// rubyCursorWriteRe matches raw INSERT/UPDATE/DELETE executes.
-var rubyCursorWriteRe = regexp.MustCompile(
-	`\.\s*execute\s*\(\s*['"](?i:\s*(?:INSERT|UPDATE|DELETE|REPLACE|MERGE|TRUNCATE)\b)`,
 )
 
 // rubySequelDatasetWriteRe matches Sequel dataset writes anchored on the
@@ -92,6 +89,36 @@ var rubySequelDatasetWriteRe = regexp.MustCompile(
 	`\bDB\s*\[\s*:?["']?(\w+)["']?\s*\]` + // DB[:users] / DB['users']
 		`[^\n;]*?` + // optional read-only refinement chain
 		`\.\s*(?:insert|multi_insert|import|update|update_all|delete|truncate|insert_ignore)\b`,
+)
+
+// rubyRawDriverCallRe matches a raw-driver query call carrying a SQL string
+// literal as its first argument (#3949). It anchors on the Rails-adjacent raw
+// drivers' call shapes:
+//
+//	pg      : conn.exec("SELECT ...")        / conn.exec_params("INSERT ...", [])
+//	mysql2  : client.query("SELECT ...")
+//	sqlite3 : db.execute("UPDATE ...")       (also covers ActiveRecord
+//	          connection.execute, kept for the table-naming upgrade)
+//
+// The verb set is restricted to {exec, exec_params, query, execute} so this
+// does NOT fire on arbitrary `.foo("SELECT...")` strings. Capture group 1 is
+// the SQL string body (single- or double-quoted, no escape unescaping needed
+// for table extraction). Interpolated table names (`#{...}`) remain in the
+// captured body and are deliberately NOT matched by the table regexes below,
+// so a dynamic table yields an honest no-table effect (no fabrication).
+var rubyRawDriverCallRe = regexp.MustCompile(
+	`\.\s*(?:exec|exec_params|query|execute)\s*\(\s*["']([^"']*)["']`,
+)
+
+// Raw-SQL table extractors mirror internal/patterns/raw_sql_extractor.go so the
+// table name surfaced here is consistent with the raw-SQL entity extractor.
+// Each capture group 1 is the (leaf) table name; an optional `schema.` prefix
+// is tolerated and stripped by the regex's non-capturing `(?:\w+\.)?`.
+var (
+	rubySQLSelectTableRe = regexp.MustCompile(`(?i)\bSELECT\b[\s\S]*?\bFROM\s+(?:\w+\.)?(\w+)`)
+	rubySQLInsertTableRe = regexp.MustCompile(`(?i)\bINSERT\s+(?:IGNORE\s+)?INTO\s+(?:\w+\.)?(\w+)`)
+	rubySQLUpdateTableRe = regexp.MustCompile(`(?i)\bUPDATE\s+(?:\w+\.)?(\w+)\s+SET\b`)
+	rubySQLDeleteTableRe = regexp.MustCompile(`(?i)\bDELETE\s+FROM\s+(?:\w+\.)?(\w+)`)
 )
 
 // rubyFSReadRe matches read-only filesystem primitives.
@@ -134,9 +161,8 @@ func sniffEffectsRuby(content string) []EffectMatch {
 	var out []EffectMatch
 	out = appendRubyMatches(out, content, headers, rubyHTTPRe, EffectHTTPOut, "Net::HTTP/HTTParty/Faraday", 1.0)
 	out = appendRubyMatches(out, content, headers, rubyDBReadRe, EffectDBRead, "activerecord.read", 0.85)
-	out = appendRubyMatches(out, content, headers, rubyCursorSelectRe, EffectDBRead, "connection.execute(SELECT)", 1.0)
 	out = appendRubyMatches(out, content, headers, rubyDBWriteRe, EffectDBWrite, "activerecord.write", 0.85)
-	out = appendRubyMatches(out, content, headers, rubyCursorWriteRe, EffectDBWrite, "connection.execute(WRITE)", 1.0)
+	out = appendRubyRawDriverSQL(out, content, headers)
 	out = appendRubySequelDatasetWrites(out, content, headers)
 	out = appendRubyMatches(out, content, headers, rubyFSReadRe, EffectFSRead, "File.read/IO.read", 1.0)
 	out = appendRubyMatches(out, content, headers, rubyFSWriteRe, EffectFSWrite, "File.write/FileUtils", 1.0)
@@ -169,6 +195,98 @@ func appendRubyMatches(out []EffectMatch, content string, headers []funcHeader, 
 		})
 	}
 	return out
+}
+
+// appendRubyRawDriverSQL stamps a read/write EffectMatch for each raw-driver
+// SQL call (#3949) — pg `conn.exec`/`exec_params`, mysql2 `client.query`,
+// sqlite3 `db.execute` (and ActiveRecord `connection.execute`). The SQL string
+// literal is parsed to (a) classify the statement as a read (SELECT/WITH) or a
+// write (INSERT/UPDATE/DELETE/…) and (b) name the target table in the sink tag,
+// e.g. `pg.exec(users)` / `mysql2.query(orders)` / `sqlite3.execute(accounts)`.
+//
+// Effect classification:
+//   - SELECT / WITH …                 → db_read
+//   - INSERT / UPDATE / DELETE /
+//     REPLACE / MERGE / TRUNCATE      → db_write
+//
+// Table naming reuses the same shapes as the raw-SQL entity extractor
+// (internal/patterns/raw_sql_extractor.go). When the statement is a recognised
+// DML verb but no table can be extracted — e.g. a dynamic / interpolated table
+// (`"SELECT * FROM #{t}"`) or a non-DML statement — the effect is still stamped
+// (the call genuinely touches the DB) but WITHOUT a fabricated table name; the
+// sink tag falls back to the bare verb (`pg.exec(?)`). A non-SQL string arg
+// (no DML verb at all) is NOT a DB effect and is skipped entirely.
+//
+// Full confidence: the restricted verb set + explicit SQL DML token make the
+// effect unambiguous (unlike the generic ActiveRecord `.where`/`.save`
+// heuristics which fire on unknown receivers at 0.85).
+func appendRubyRawDriverSQL(out []EffectMatch, content string, headers []funcHeader) []EffectMatch {
+	for _, m := range rubyRawDriverCallRe.FindAllStringSubmatchIndex(content, -1) {
+		if len(m) < 4 {
+			continue
+		}
+		sql := content[m[2]:m[3]]
+		eff, table, ok := classifyRubyRawSQL(sql)
+		if !ok {
+			continue // non-SQL string arg: not a DB effect.
+		}
+		line := lineOfOffset(content, m[0])
+		fn := nearestHeader(headers, line)
+		out = append(out, EffectMatch{
+			Function:   fn,
+			Line:       line,
+			Effect:     eff,
+			Sink:       rubyRawSQLSink(eff, table),
+			Confidence: 1.0,
+		})
+	}
+	return out
+}
+
+// classifyRubyRawSQL inspects a raw SQL string body and returns the effect
+// (db_read / db_write), the target table (empty when not statically
+// recoverable), and ok=false when the body carries no recognised SQL DML verb
+// (so the caller can skip non-SQL string args without fabricating an effect).
+func classifyRubyRawSQL(sql string) (Effect, string, bool) {
+	if m := rubySQLInsertTableRe.FindStringSubmatch(sql); m != nil {
+		return EffectDBWrite, m[1], true
+	}
+	if m := rubySQLUpdateTableRe.FindStringSubmatch(sql); m != nil {
+		return EffectDBWrite, m[1], true
+	}
+	if m := rubySQLDeleteTableRe.FindStringSubmatch(sql); m != nil {
+		return EffectDBWrite, m[1], true
+	}
+	if m := rubySQLSelectTableRe.FindStringSubmatch(sql); m != nil {
+		return EffectDBRead, m[1], true
+	}
+	// Verb present but table not statically recoverable (e.g. interpolated
+	// table, bare INSERT without a parseable INTO, or a write keyword without
+	// a SET). Classify the effect honestly with no fabricated table.
+	upper := strings.ToUpper(sql)
+	switch {
+	case strings.Contains(upper, "INSERT ") || strings.Contains(upper, "UPDATE ") ||
+		strings.Contains(upper, "DELETE ") || strings.Contains(upper, "REPLACE ") ||
+		strings.Contains(upper, "MERGE ") || strings.Contains(upper, "TRUNCATE "):
+		return EffectDBWrite, "", true
+	case strings.HasPrefix(strings.TrimSpace(upper), "SELECT") ||
+		strings.HasPrefix(strings.TrimSpace(upper), "WITH"):
+		return EffectDBRead, "", true
+	}
+	return "", "", false
+}
+
+// rubyRawSQLSink builds the sink tag for a raw-driver SQL effect, naming the
+// table when known and falling back to `(?)` when it is not.
+func rubyRawSQLSink(eff Effect, table string) string {
+	verb := "rawsql.read"
+	if eff == EffectDBWrite {
+		verb = "rawsql.write"
+	}
+	if table == "" {
+		return verb + "(?)"
+	}
+	return verb + "(" + table + ")"
 }
 
 // appendRubySequelDatasetWrites stamps a db_write EffectMatch for each Sequel
