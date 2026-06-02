@@ -214,6 +214,16 @@ func applyORMQueries(args DetectorPassArgs) DetectorPassResult {
 	case "php":
 		scanPHPDrivers(src, funcs, emit)
 		scanInfra()
+		// Sibling pass: Doctrine MongoDB ODM aggregation `$lookup` (fluent
+		// createAggregationBuilder) + mapping-reference annotations
+		// (@ReferenceMany/@EmbedMany targetDocument), and Laravel-MongoDB
+		// (jenssegers) raw `$lookup` PHP-array pipelines → per-$lookup
+		// SCOPE.DataAccess stage entities + JOINS_COLLECTION edges. Completes
+		// the cross-language Mongo epic (#3849, epic #3837).
+		scanPHPMongoAggregation(src, funcs, path, lang,
+			func(ent types.EntityRecord) { entities = append(entities, ent) },
+			func(rel types.RelationshipRecord) { relationships = append(relationships, rel) },
+		)
 	case "rust":
 		scanRustDrivers(src, funcs, emit)
 		scanInfra()
