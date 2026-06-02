@@ -30080,6 +30080,186 @@
       }
     },
     {
+      "id": "lang.jsts.framework.pothos",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "jsts",
+      "label": "Pothos (GraphQL)",
+      "capabilities": {
+        "Routing": {
+          "endpoint_synthesis": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_graphql_jsts_codefirst.go","internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/pothos_jsts.yaml"],
+            "issue": "3619",
+            "verified_at": "2026-06-02"
+          },
+          "handler_attribution": {
+            "status": "not_applicable",
+            "cites": ["internal/engine/http_endpoint_graphql_jsts_codefirst.go","internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/pothos_jsts.yaml"],
+            "notes": "Pothos root fields are inline-arrow resolvers (builder.queryField('users', t =\u003e ...)) with no addressable handler symbol; the operation endpoint is emitted with NO source_handler (NoHandlerProp keep-path), matching the Apollo resolver-map convention. There is no method symbol to bind a HANDLES edge to."
+          },
+          "route_extraction": {
+            "status": "partial",
+            "cites": ["internal/engine/http_endpoint_graphql_jsts_codefirst.go","internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/pothos_jsts.yaml"],
+            "issue": "3619",
+            "notes": "builder.queryField/mutationField/subscriptionField + the builder.queryType/mutationType/subscriptionType fields:(t)=\u003e({...}) maps -\u003e http:GRAPHQL:/graphql/\u003cRoot\u003e/\u003cfield\u003e (EXACT canonical shape as gqlgen/Apollo/Strawberry so client links #3667 join). Honest-partial: a non-literal (variable/computed) field name is not recovered."
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "config_consumption": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "constant_propagation": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        }
+      }
+    },
+    {
       "id": "lang.jsts.framework.react",
       "category": "http_framework",
       "subcategory": "ui_frontend",
@@ -32100,6 +32280,187 @@
             "issue": "3057",
             "notes": "ctx.req.body/params shapes are detected by jstsSourceReqRe; the typed input parameter (primary user-input channel in tRPC, post-zod validation) is a known gap — not matched by current sniffer",
             "verified_at": "2026-05-29"
+          }
+        }
+      }
+    },
+    {
+      "id": "lang.jsts.framework.type-graphql",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "jsts",
+      "label": "TypeGraphQL (GraphQL)",
+      "capabilities": {
+        "Routing": {
+          "endpoint_synthesis": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_graphql_jsts_codefirst.go","internal/engine/http_endpoint_resolve.go","internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/type_graphql_jsts.yaml"],
+            "issue": "3619",
+            "verified_at": "2026-06-02"
+          },
+          "handler_attribution": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_graphql_jsts_codefirst.go","internal/engine/http_endpoint_resolve.go","internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/type_graphql_jsts.yaml"],
+            "issue": "3619",
+            "notes": "@Query/@Mutation/@Subscription method in an @Resolver class -\u003e http:GRAPHQL:/graphql/\u003cRoot\u003e/\u003cfield\u003e; source_handler=SCOPE.Operation:\u003cmethod\u003e rebinds to a HANDLES (IMPLEMENTS) edge against the extracted method symbol (proven end-to-end in TestResolve_TypeGraphQL_HandlesEdge)."
+          },
+          "route_extraction": {
+            "status": "partial",
+            "cites": ["internal/engine/http_endpoint_graphql_jsts_codefirst.go","internal/engine/http_endpoint_resolve.go","internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/type_graphql_jsts.yaml"],
+            "issue": "3619",
+            "notes": "Root @Query/@Mutation/@Subscription methods only; @FieldResolver (non-root) methods are skipped, matching gqlgen/spring-graphql. Field name = method name or the { name: '...' } decorator option. Honest-partial: a dynamic/computed name option is not recovered."
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "3619"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "config_consumption": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "constant_propagation": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "3619"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "3619"
           }
         }
       }

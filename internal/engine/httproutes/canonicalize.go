@@ -161,6 +161,21 @@ const (
 	// carries no framework-specific parameter syntax, so canonicalisation is
 	// identity + slash normalisation (default case).
 	FrameworkGqlgen = "gqlgen"
+	// FrameworkPothos (#3619) — Pothos is a code-first GraphQL schema builder
+	// for JS/TS. Root fields registered via builder.queryField / mutationField /
+	// subscriptionField (and queryType/mutationType/subscriptionType field maps)
+	// are synthesised as the canonical `/graphql/<RootType>/<field>` path shared
+	// with gqlgen (Go), Apollo (JS), and Strawberry (Python). The path carries
+	// no framework-specific parameter syntax, so canonicalisation is identity +
+	// slash normalisation (default case).
+	FrameworkPothos = "pothos"
+	// FrameworkTypeGraphQL (#3619) — TypeGraphQL is a code-first GraphQL library
+	// for TS that defines root operations via @Query / @Mutation / @Subscription
+	// decorated methods inside @Resolver classes. Root fields are synthesised as
+	// the canonical `/graphql/<RootType>/<field>` path shared with the other
+	// GraphQL servers. The path carries no framework-specific parameter syntax,
+	// so canonicalisation is identity + slash normalisation (default case).
+	FrameworkTypeGraphQL = "type-graphql"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical

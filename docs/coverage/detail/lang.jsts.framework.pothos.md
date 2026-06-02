@@ -1,0 +1,104 @@
+<!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
+# `lang.jsts.framework.pothos` — Pothos (GraphQL)
+
+Auto-generated. Back to [summary](../summary.md).
+
+- **Language:** [JS/TS](../by-language/jsts.md)
+- **Category:** [http_framework](../by-category/http_framework.md)
+- **Subcategory:** Backend HTTP
+- **Capability cells:** 37
+
+## Capabilities
+
+
+### Routing
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Endpoint synthesis | ✅ `full` | `2026-06-02` | 3619 | `internal/engine/http_endpoint_graphql_jsts_codefirst.go`<br>`internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go`<br>`internal/engine/httproutes/canonicalize.go`<br>`internal/engine/rules/graphql/frameworks/pothos_jsts.yaml` | — |
+| Handler attribution | — `not_applicable` | — | — | `internal/engine/http_endpoint_graphql_jsts_codefirst.go`<br>`internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go`<br>`internal/engine/httproutes/canonicalize.go`<br>`internal/engine/rules/graphql/frameworks/pothos_jsts.yaml` | Pothos root fields are inline-arrow resolvers (builder.queryField('users', t => ...)) with no addressable handler symbol; the operation endpoint is emitted with NO source_handler (NoHandlerProp keep-path), matching the Apollo resolver-map convention. There is no method symbol to bind a HANDLES edge to. |
+| Route extraction | 🟢 `partial` | — | 3619 | `internal/engine/http_endpoint_graphql_jsts_codefirst.go`<br>`internal/engine/http_endpoint_synthesis.go`<br>`internal/engine/http_endpoint_synthesis_graphql_jsts_codefirst_3619_test.go`<br>`internal/engine/httproutes/canonicalize.go`<br>`internal/engine/rules/graphql/frameworks/pothos_jsts.yaml` | builder.queryField/mutationField/subscriptionField + the builder.queryType/mutationType/subscriptionType fields:(t)=>({...}) maps -> http:GRAPHQL:/graphql/<Root>/<field> (EXACT canonical shape as gqlgen/Apollo/Strawberry so client links #3667 join). Honest-partial: a non-literal (variable/computed) field name is not recovered. |
+
+### Auth
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Auth coverage | 🔴 `missing` | — | 3619 | — | — |
+
+### Validation
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DTO extraction | 🔴 `missing` | — | 3619 | — | — |
+| Request validation | 🔴 `missing` | — | 3619 | — | — |
+
+### Middleware
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Middleware coverage | 🔴 `missing` | — | 3619 | — | — |
+
+### Type System
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Enum extraction | 🔴 `missing` | — | 3619 | — | — |
+| Interface extraction | 🔴 `missing` | — | 3619 | — | — |
+| Type alias extraction | 🔴 `missing` | — | 3619 | — | — |
+| Type extraction | 🔴 `missing` | — | 3619 | — | — |
+
+### Testing
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Tests linkage | 🔴 `missing` | — | 3619 | — | — |
+
+### Observability
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Log extraction | 🔴 `missing` | — | 3619 | — | — |
+| Metric extraction | 🔴 `missing` | — | 3619 | — | — |
+| Trace extraction | 🔴 `missing` | — | 3619 | — | — |
+
+### Data
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DB effect | 🔴 `missing` | — | 3619 | — | — |
+
+### Substrate
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Confidence overlay | 🔴 `missing` | — | 3619 | — | — |
+| Config consumption | 🔴 `missing` | — | 3619 | — | — |
+| Constant propagation | 🔴 `missing` | — | 3619 | — | — |
+| Dead code detection | 🔴 `missing` | — | 3619 | — | — |
+| Def use chain extraction | 🔴 `missing` | — | 3619 | — | — |
+| Env fallback recognition | 🔴 `missing` | — | 3619 | — | — |
+| Fs effect | 🔴 `missing` | — | 3619 | — | — |
+| HTTP effect | 🔴 `missing` | — | 3619 | — | — |
+| Import resolution quality | 🔴 `missing` | — | 3619 | — | — |
+| Module cycle detection | 🔴 `missing` | — | 3619 | — | — |
+| Mutation effect | 🔴 `missing` | — | 3619 | — | — |
+| Pure function tagging | 🔴 `missing` | — | 3619 | — | — |
+| Reachability analysis | 🔴 `missing` | — | 3619 | — | — |
+| Request shape extraction | 🔴 `missing` | — | 3619 | — | — |
+| Response shape extraction | 🔴 `missing` | — | 3619 | — | — |
+| Sanitizer recognition | 🔴 `missing` | — | 3619 | — | — |
+| Schema drift detection | 🔴 `missing` | — | 3619 | — | — |
+| Taint sink detection | 🔴 `missing` | — | 3619 | — | — |
+| Taint source detection | 🔴 `missing` | — | 3619 | — | — |
+| Template pattern catalog | 🔴 `missing` | — | 3619 | — | — |
+| Vulnerability finding | 🔴 `missing` | — | 3619 | — | — |
+
+## Provenance
+
+This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON
+(or use `go run ./tools/coverage update lang.jsts.framework.pothos ...`) then regenerate:
+
+```
+go run ./tools/coverage validate
+go run ./tools/coverage gen
+```
