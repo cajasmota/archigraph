@@ -62,8 +62,8 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [java](../by-language/java.md) | [AWS SDK DynamoDB (Java)](../detail/lang.java.orm.dynamodb.md) | 🟢 3/3 | |
 | [java](../by-language/java.md) | [Ebean ORM](../detail/lang.java.orm.ebean.md) | 🟢 7/7 | |
 | [java](../by-language/java.md) | [EclipseLink](../detail/lang.java.orm.eclipselink.md) | 🟢 7/7 | |
-| [java](../by-language/java.md) | [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟡 5/7 | |
-| [java](../by-language/java.md) | [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟡 5/7 | |
+| [java](../by-language/java.md) | [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟢 7/7 | |
+| [java](../by-language/java.md) | [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟢 7/7 | |
 | [java](../by-language/java.md) | [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟢 7/7 | |
 | [java](../by-language/java.md) | [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟢 5/5 | |
 | [java](../by-language/java.md) | [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟢 7/7 | |

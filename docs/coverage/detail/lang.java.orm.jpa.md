@@ -22,10 +22,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Association extraction | 🔴 `missing` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/hibernate.go` | — |
+| Association extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/java/hibernate.go`<br>`internal/custom/java/patterns_dispatch.go`<br>`internal/extractors/custom_java_patterns_smoke_test.go` | Re-wired live via custom_java_patterns dispatch (#3586): jakarta.persistence @OneToMany/@ManyToOne/@OneToOne/@ManyToMany associations emit DEPENDS_ON edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsJpaEntityLive asserts the Order->LineItem @OneToMany DEPENDS_ON edge emits live |
 | Foreign key extraction | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3097) | `internal/custom/java/jpa_fk_lazy.go` | @JoinColumn(name=) and @ForeignKey(name=) parsed via hibernate.go shared helper; emits SCOPE.Component/foreign_key entities |
 | Lazy loading recognition | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3097) | `internal/custom/java/jpa_fk_lazy.go` | FetchType.LAZY and FetchType.EAGER parsed; emits SCOPE.Component/fetch_config entities |
-| Relationship extraction | 🔴 `missing` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/hibernate.go` | — |
+| Relationship extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/java/hibernate.go`<br>`internal/custom/java/patterns_dispatch.go`<br>`internal/extractors/custom_java_patterns_smoke_test.go` | Re-wired live via custom_java_patterns dispatch (#3586): JPA association annotations emit directed DEPENDS_ON relationship edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsJpaEntityLive asserts the Order->LineItem DEPENDS_ON edge emits live |
 
 ### Queries
 

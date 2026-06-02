@@ -36,7 +36,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Javalin](../detail/lang.java.framework.javalin.md) | 🟡 2/3 | 🔴 0/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 1/7 | |
 | [Micronaut](../detail/lang.java.framework.micronaut.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 3/16 | |
 | [Quarkus](../detail/lang.java.framework.quarkus.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 4/16 | |
-| [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | 🟢 3/3 | ✅ 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/18 | |
+| [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | 🟢 3/3 | ✅ 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 7/18 | |
 | [Spring WebFlux (reactive)](../detail/lang.java.framework.spring-webflux.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 2/16 | |
 | [Vert.x](../detail/lang.java.framework.vertx.md) | 🟢 3/3 | 🔴 0/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 1/7 | |
 
@@ -61,7 +61,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|
 | [Android Jetpack (Compose / ViewModel / Room / Navigation / Hilt)](../detail/lang.java.framework.android-jetpack.md) | 🟢 2/2 | 🔴 0/1 | 🟢 18/18 | 🔴 0/8 | |
-| [Android SDK (Activity/Fragment routing)](../detail/lang.java.framework.android-sdk.md) | 🟢 2/2 | 🔴 0/1 | 🟢 18/18 | 🔴 0/8 | |
+| [Android SDK (Activity/Fragment routing)](../detail/lang.java.framework.android-sdk.md) | 🟢 2/2 | 🔴 0/1 | 🟢 18/18 | 🟡 2/8 | |
 
 
 ### AI Integration
@@ -96,8 +96,8 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [AWS SDK DynamoDB (Java)](../detail/lang.java.orm.dynamodb.md) | 🟢 3/3 | |
 | [Ebean ORM](../detail/lang.java.orm.ebean.md) | 🟢 7/7 | |
 | [EclipseLink](../detail/lang.java.orm.eclipselink.md) | 🟢 7/7 | |
-| [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟡 5/7 | |
-| [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟡 5/7 | |
+| [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟢 7/7 | |
+| [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟢 7/7 | |
 | [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟢 7/7 | |
 | [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟢 5/5 | |
 | [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟢 7/7 | |

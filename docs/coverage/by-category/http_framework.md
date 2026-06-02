@@ -144,7 +144,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [java](../by-language/java.md) | [Javalin](../detail/lang.java.framework.javalin.md) | 🟡 2/3 | 🔴 0/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 1/7 | |
 | [java](../by-language/java.md) | [Micronaut](../detail/lang.java.framework.micronaut.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 3/16 | |
 | [java](../by-language/java.md) | [Quarkus](../detail/lang.java.framework.quarkus.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 4/16 | |
-| [java](../by-language/java.md) | [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | 🟢 3/3 | ✅ 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 5/18 | |
+| [java](../by-language/java.md) | [Spring Boot / Spring MVC](../detail/lang.java.framework.spring-boot.md) | 🟢 3/3 | ✅ 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 7/18 | |
 | [java](../by-language/java.md) | [Spring WebFlux (reactive)](../detail/lang.java.framework.spring-webflux.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 2/16 | |
 | [java](../by-language/java.md) | [Vert.x](../detail/lang.java.framework.vertx.md) | 🟢 3/3 | 🔴 0/1 | ✅ 3/3 | 🔴 0/1 | 🟢 20/20 | 🟡 1/7 | |
 | [kotlin](../by-language/kotlin.md) | [Arrow (functional Kotlin)](../detail/lang.kotlin.framework.arrow.md) | 🟢 1/1 | — | ✅ 4/4 | ✅ 1/1 | 🟢 21/21 | 🟢 3/3 | |
@@ -214,7 +214,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C#](../by-language/csharp.md) | [Xamarin](../detail/lang.csharp.framework.xamarin.md) | 🟢 2/2 | 🟢 1/1 | 🟢 21/21 | 🟢 9/9 | |
 | [go](../by-language/go.md) | [gomobile (mobile bindings)](../detail/lang.go.framework.gomobile.md) | 🟢 2/2 | 🟢 1/1 | 🟢 18/18 | 🟢 4/4 | |
 | [java](../by-language/java.md) | [Android Jetpack (Compose / ViewModel / Room / Navigation / Hilt)](../detail/lang.java.framework.android-jetpack.md) | 🟢 2/2 | 🔴 0/1 | 🟢 18/18 | 🔴 0/8 | |
-| [java](../by-language/java.md) | [Android SDK (Activity/Fragment routing)](../detail/lang.java.framework.android-sdk.md) | 🟢 2/2 | 🔴 0/1 | 🟢 18/18 | 🔴 0/8 | |
+| [java](../by-language/java.md) | [Android SDK (Activity/Fragment routing)](../detail/lang.java.framework.android-sdk.md) | 🟢 2/2 | 🔴 0/1 | 🟢 18/18 | 🟡 2/8 | |
 | [JS/TS](../by-language/jsts.md) | [Expo](../detail/lang.jsts.framework.expo.md) | ✅ 3/3 | ✅ 1/1 | 🟢 20/20 | ✅ 13/13 | |
 | [JS/TS](../by-language/jsts.md) | [Ionic](../detail/lang.jsts.framework.ionic.md) | ✅ 3/3 | ✅ 1/1 | 🟢 20/20 | ✅ 10/10 | |
 | [JS/TS](../by-language/jsts.md) | [NativeScript](../detail/lang.jsts.framework.nativescript.md) | ✅ 3/3 | ✅ 1/1 | 🟢 20/20 | ✅ 10/10 | |

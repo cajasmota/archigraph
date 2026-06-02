@@ -57,8 +57,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DI binding extraction | 🔴 `missing` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/spring_boot.go` | — |
-| DI injection point | 🔴 `missing` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/spring_boot.go` | — |
+| DI binding extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/java/patterns_dispatch.go`<br>`internal/custom/java/spring_boot.go`<br>`internal/extractors/custom_java_patterns_smoke_test.go` | Re-wired live via custom_java_patterns dispatch (#3586): @Service/@Repository/@Component/@Configuration stereotype beans emit as SCOPE.Component through RunCustomExtractors; value-asserting smoke test TestJavaPatternsSpringControllerLive asserts the UserService SCOPE.Component stereotype entity emits live |
+| DI injection point | ✅ `full` | `2026-06-02` | — | `internal/custom/java/patterns_dispatch.go`<br>`internal/custom/java/spring_boot.go`<br>`internal/extractors/custom_java_patterns_smoke_test.go` | Re-wired live via custom_java_patterns dispatch (#3586): @Autowired field/setter/constructor injection emits DEPENDS_ON edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsSpringControllerLive asserts the UserService->UserRepository DEPENDS_ON edge emits live |
 | DI scope resolution | 🔴 `missing` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/spring_boot.go` | — |
 
 ### Transactions

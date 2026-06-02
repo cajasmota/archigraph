@@ -22,8 +22,8 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Deep link extraction | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/android.go` | extractAndroidDeepLinks() detects <intent-filter> blocks in AndroidManifest.xml with <data android:scheme> as SCOPE.Reference deep_link entities with scheme/host/path URI templates (#3256) |
-| Navigation extraction | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/android.go` | adIntentExplicitRE+adFragmentTransactionRE emit navigation edges (#3179) |
-| Screen detection | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/android.go` | adActivityClassRE+adFragmentClassRE detect Activity/Fragment screens (#3179) |
+| Navigation extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/java/android.go`<br>`internal/custom/java/patterns_dispatch.go`<br>`internal/extractors/custom_java_patterns_smoke_test.go` | Re-wired live via custom_java_patterns dispatch (#3586): adIntentExplicitRE+adFragmentTransactionRE emit navigation edges through RunCustomExtractors; value-asserting smoke test TestJavaPatternsAndroidActivityLive asserts the MainActivity->DetailActivity explicit-Intent navigation operation emits live |
+| Screen detection | ✅ `full` | `2026-06-02` | — | `internal/custom/java/android.go`<br>`internal/custom/java/patterns_dispatch.go`<br>`internal/extractors/custom_java_patterns_smoke_test.go` | Re-wired live via custom_java_patterns dispatch (#3586): adActivityClassRE+adFragmentClassRE detect Activity/Fragment screens through RunCustomExtractors; value-asserting smoke test TestJavaPatternsAndroidActivityLive asserts the MainActivity SCOPE.UIComponent activity entity emits live |
 
 ### Platform
 
