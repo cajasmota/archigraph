@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | ✅ `full` | `2026-05-29` | 3060 | `internal/engine/rules/python/orms/alembic.yaml`<br>`internal/enrichers/migration_sequence_enricher.go` | YAML rule detects alembic.ini and versions/*.py files; migration_sequence_enricher.go parses Alembic filename convention ([A-Za-z0-9]{12}_<name>.py). upgrade()/downgrade() operation content is not yet parsed (full would require a dedicated alembic migration extractor analogous to django_migration.go). |
+| Migration parsing | 🟢 `partial` | `2026-06-02` | 3639 | `internal/custom/python/alembic_schema.go`<br>`internal/engine/migration_sequence.go`<br>`internal/engine/rules/python/orms/alembic.yaml`<br>`internal/enrichers/migration_sequence_enricher.go` | Previously FALSE-full (#3630): the cited migration_sequence_enricher.go was orphaned (imported by zero production code) so no sequence/ordering metadata was ever emitted. #3639 wires it as live Pass 8.9 (engine.ApplyMigrationSequence, cmd/archigraph/index.go): each Alembic versions/*.py entity is stamped sequence_number/migration_name/migration_pattern from the filename, and the pass reads the file body (enrichers.ParseAlembicRevisions) to emit a PRECEDES edge along the down_revision to revision DAG, making the migration chain traversable. Separately alembic_schema.go parses upgrade() op content. Partial: op.alter_column type changes, dropped columns, and server_default/constraint metadata are still not modeled. |
 
 ## Provenance
 

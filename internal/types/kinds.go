@@ -282,6 +282,14 @@ const (
 	// tag entities.
 	RelationshipKindTaggedAs RelationshipKind = "TAGGED_AS"
 
+	// #3639 (epic #3625): DB-migration apply-order edge. Emitted by the
+	// migration-sequence engine pass (Pass 8.9) from a parent migration entity
+	// to the child that must run AFTER it. Currently derived from Alembic's
+	// down_revision → revision DAG (read from the migration file body); the
+	// FromID migration PRECEDES the ToID migration. Lets expand/traces walk the
+	// migration chain in apply order rather than re-deriving it from filenames.
+	RelationshipKindPrecedes RelationshipKind = "PRECEDES"
+
 	// ADR-0018: Agent-learned pattern edge kinds (append-only additions).
 	// Outgoing from Pattern entities:
 	RelationshipKindExemplar      RelationshipKind = "EXEMPLAR"        // Pattern -> Entity: real code example of this pattern in use
@@ -907,6 +915,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindTransitionsTo,
 		// #3628 area #13 shared-database cross-service coupling edge:
 		RelationshipKindSharesData,
+		// #3639 (epic #3625) DB-migration apply-order edge (Alembic chain):
+		RelationshipKindPrecedes,
 	}
 }
 

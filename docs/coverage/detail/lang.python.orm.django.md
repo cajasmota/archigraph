@@ -37,7 +37,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | ✅ `full` | `2026-05-28` | — | `internal/extractors/python/django_migration.go` | — |
+| Migration parsing | ✅ `full` | `2026-06-02` | 3639 | `internal/engine/migration_sequence.go`<br>`internal/extractors/python/django_migration.go` | django_migration.go parses NNNN_name.py into op_count/operations/dependencies. #3639 additionally stamps sequence_number (the NNNN ordinal) + migration_name + migration_pattern=django on each migration entity via live Pass 8.9 (engine.ApplyMigrationSequence). |
 
 ## Provenance
 

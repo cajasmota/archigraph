@@ -557,6 +557,34 @@ func TestAnnotateMigrationSequences_EmptySourceFile(t *testing.T) {
 	}
 }
 
+func TestParseAlembicRevisions_WithParent(t *testing.T) {
+	src := "revision = 'abc123def456'\ndown_revision = 'parent000000'\n"
+	rev, down := ParseAlembicRevisions(src)
+	if rev != "abc123def456" || down != "parent000000" {
+		t.Fatalf("got rev=%q down=%q", rev, down)
+	}
+}
+
+func TestParseAlembicRevisions_BaseNone(t *testing.T) {
+	src := "revision = \"root00000000\"\ndown_revision = None\n"
+	rev, down := ParseAlembicRevisions(src)
+	if rev != "root00000000" {
+		t.Fatalf("expected rev=root00000000, got %q", rev)
+	}
+	if down != "" {
+		t.Fatalf("expected empty down_revision for base, got %q", down)
+	}
+}
+
+func TestParseAlembicRevisions_TypedAnnotation(t *testing.T) {
+	// Newer Alembic templates annotate the module vars: `revision: str = "..."`.
+	src := "revision: str = 'x12345678901'\ndown_revision: Union[str, None] = 'y98765432109'\n"
+	rev, down := ParseAlembicRevisions(src)
+	if rev != "x12345678901" || down != "y98765432109" {
+		t.Fatalf("got rev=%q down=%q", rev, down)
+	}
+}
+
 // pagination
 
 func TestEnrichPagination_ParametersList(t *testing.T) {

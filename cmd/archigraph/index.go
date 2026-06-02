@@ -62,13 +62,14 @@ const (
 	PassCoupling      = "coupling"       // Pass 8.6: structural Ca/Ce/instability per Module (#3634)
 	PassDepHygiene    = "dep-hygiene"    // Pass 8.7: persist deplinker used/unused status onto deps (#3640)
 	PassSharedDB      = "shared-db"      // Pass 8.8: shared-database cross-service coupling (#3628 area #13)
+	PassMigrationSeq  = "migration-seq"  // Pass 8.9: DB-migration ordering metadata + Alembic PRECEDES (#3639)
 	PassEmbed         = "embed"          // Pass 9: semantic embeddings sidecar (#461 / ADR-0019)
 	PassTestsWalkUp   = "tests-walkup"   // Pass 3.5: derive TESTS edges via helper walk-up
 )
 
 // allPassNames is used to validate --skip-pass entries.
 var allPassNames = []string{
-	PassExtract, PassFramework, PassCrossLang, PassTestsWalkUp, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow, PassEventFlow, PassModuleAgg, PassCommitCouple, PassCoupling, PassDepHygiene, PassEmbed,
+	PassExtract, PassFramework, PassCrossLang, PassTestsWalkUp, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow, PassEventFlow, PassModuleAgg, PassCommitCouple, PassCoupling, PassDepHygiene, PassSharedDB, PassMigrationSeq, PassEmbed,
 }
 
 // fileTask carries one repo-relative path and its absolute counterpart
@@ -1596,6 +1597,26 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 				"archigraph: shared-db tables=%d shared=%d data_access_annotated=%d coupling_edges=%d\n",
 				sdStats.TablesConsidered, sdStats.SharedTables,
 				sdStats.DataAccessAnnotated, sdStats.CouplingEdges)
+		}
+	}
+
+	// Pass 8.9 — DB-migration ordering metadata (#3639, epic #3625). Restores
+	// the previously-orphaned migration_sequence enricher as a live pass. Runs
+	// AFTER the document is assembled so every migration-anchored entity the
+	// language extractors emitted (Rails db/migrate/*.rb, Django/Alembic *.py,
+	// Flyway/golang-migrate *.sql) is present. Parses each migration FILENAME to
+	// stamp sequence_number + migration_name + migration_pattern, and — for
+	// Alembic, whose apply-order DAG lives in the file body — emits a PRECEDES
+	// edge along each down_revision → revision link so the migration chain is a
+	// traversable subgraph. No new entities; annotation-only. Honest: only
+	// recognised filename conventions are touched. Skippable via
+	// --skip-pass=migration-seq.
+	if !i.skipPasses[PassMigrationSeq] {
+		msStats := engine.ApplyMigrationSequence(doc, engine.DiskMigrationSourceReader(absRepo))
+		if verbose() || msStats.EntitiesAnnotated > 0 {
+			fmt.Fprintf(os.Stderr,
+				"archigraph: migration-seq files=%d entities_annotated=%d precedes_edges=%d\n",
+				msStats.FilesMatched, msStats.EntitiesAnnotated, msStats.PrecedesEdges)
 		}
 	}
 

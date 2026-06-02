@@ -49048,11 +49048,11 @@
         },
         "Migrations": {
           "migration_parsing": {
-            "status": "full",
-            "cites": ["internal/engine/rules/python/orms/alembic.yaml","internal/enrichers/migration_sequence_enricher.go"],
-            "issue": "3060",
-            "notes": "YAML rule detects alembic.ini and versions/*.py files; migration_sequence_enricher.go parses Alembic filename convention ([A-Za-z0-9]{12}_\u003cname\u003e.py). upgrade()/downgrade() operation content is not yet parsed (full would require a dedicated alembic migration extractor analogous to django_migration.go).",
-            "verified_at": "2026-05-29"
+            "status": "partial",
+            "cites": ["internal/custom/python/alembic_schema.go","internal/engine/migration_sequence.go","internal/engine/rules/python/orms/alembic.yaml","internal/enrichers/migration_sequence_enricher.go"],
+            "issue": "3639",
+            "notes": "Previously FALSE-full (#3630): the cited migration_sequence_enricher.go was orphaned (imported by zero production code) so no sequence/ordering metadata was ever emitted. #3639 wires it as live Pass 8.9 (engine.ApplyMigrationSequence, cmd/archigraph/index.go): each Alembic versions/*.py entity is stamped sequence_number/migration_name/migration_pattern from the filename, and the pass reads the file body (enrichers.ParseAlembicRevisions) to emit a PRECEDES edge along the down_revision to revision DAG, making the migration chain traversable. Separately alembic_schema.go parses upgrade() op content. Partial: op.alter_column type changes, dropped columns, and server_default/constraint metadata are still not modeled.",
+            "verified_at": "2026-06-02"
           }
         }
       }
@@ -49172,8 +49172,10 @@
         "Migrations": {
           "migration_parsing": {
             "status": "full",
-            "cites": ["internal/extractors/python/django_migration.go"],
-            "verified_at": "2026-05-28"
+            "cites": ["internal/engine/migration_sequence.go","internal/extractors/python/django_migration.go"],
+            "issue": "3639",
+            "notes": "django_migration.go parses NNNN_name.py into op_count/operations/dependencies. #3639 additionally stamps sequence_number (the NNNN ordinal) + migration_name + migration_pattern=django on each migration entity via live Pass 8.9 (engine.ApplyMigrationSequence).",
+            "verified_at": "2026-06-02"
           }
         }
       }
@@ -52098,8 +52100,9 @@
         "Migrations": {
           "migration_parsing": {
             "status": "full",
-            "cites": ["internal/custom/ruby/activerecord.go","internal/custom/ruby/activerecord_deep.go","internal/custom/ruby/activerecord_deep_test.go"],
-            "notes": "db/migrate/*.rb parsed into normalized SCOPE.Evolution ops (create_table/add_column/drop_column/alter_column/create_index/add_reference/add_foreign_key/drop_table), plus typed columns inside create_table blocks and FK entities. Test: TestDeepMigration_CreateTableColumnsAndOps asserts exact op subtypes+columns+FKs."
+            "cites": ["internal/custom/ruby/activerecord.go","internal/custom/ruby/activerecord_deep.go","internal/custom/ruby/activerecord_deep_test.go","internal/engine/migration_sequence.go"],
+            "issue": "3639",
+            "notes": "db/migrate/*.rb parsed into normalized SCOPE.Evolution ops (create_table/add_column/drop_column/alter_column/create_index/add_reference/add_foreign_key/drop_table), plus typed columns inside create_table blocks and FK entities. Test: TestDeepMigration_CreateTableColumnsAndOps asserts exact op subtypes+columns+FKs. #3639 additionally stamps sequence_number (the YYYYMMDDHHMMSS timestamp) + migration_name + migration_pattern=rails on each db/migrate entity via live Pass 8.9 (engine.ApplyMigrationSequence)."
           }
         }
       }
