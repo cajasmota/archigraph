@@ -74,8 +74,13 @@ func (e *FlaskExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 			methods = parseHTTPMethods(mm[1])
 		}
 		line := lineOf(source, idx[0])
-		out = append(out, entity(funcName, "SCOPE.Operation", "endpoint", file.Path, line,
-			map[string]string{"framework": "flask", "pattern_type": "route", "path": path, "http_methods": methods, "blueprint": appVar}))
+		props := map[string]string{"framework": "flask", "pattern_type": "route", "path": path, "http_methods": methods, "blueprint": appVar}
+		// #3628 area #6 — endpoint protection. The full match spans the route
+		// decorator through the stacked decorators to `def`; scan it for a
+		// Flask-Login / Flask-Security auth decorator (the route decorator itself
+		// is never an auth decorator, so it can't false-positive).
+		resolveFlaskDecoratorAuth(source[idx[0]:idx[1]]).stamp(props)
+		out = append(out, entity(funcName, "SCOPE.Operation", "endpoint", file.Path, line, props))
 	}
 
 	// 2. HTTP method shorthand (@app.get, @app.post, etc.)
@@ -85,8 +90,9 @@ func (e *FlaskExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		path := source[idx[6]:idx[7]]
 		funcName := source[idx[10]:idx[11]]
 		line := lineOf(source, idx[0])
-		out = append(out, entity(funcName, "SCOPE.Operation", "endpoint", file.Path, line,
-			map[string]string{"framework": "flask", "pattern_type": "route", "path": path, "http_methods": httpMethod, "blueprint": appVar}))
+		props := map[string]string{"framework": "flask", "pattern_type": "route", "path": path, "http_methods": httpMethod, "blueprint": appVar}
+		resolveFlaskDecoratorAuth(source[idx[0]:idx[1]]).stamp(props)
+		out = append(out, entity(funcName, "SCOPE.Operation", "endpoint", file.Path, line, props))
 	}
 
 	// 3. Blueprints

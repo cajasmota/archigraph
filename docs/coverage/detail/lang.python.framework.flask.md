@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ✅ `full` | `2026-05-29` | 3052 | `internal/custom/python/flask.go`<br>`internal/mcp/auth_coverage.go` | @login_required (Flask-Login) explicitly extracted by flask.go flLoginRequiredRe; jwt_required/fresh_jwt_required/roles_required/roles_accepted in authAnnotationNames; comprehensive Flask auth decorator coverage |
+| Auth coverage | ✅ `full` | `2026-06-02` | 3052 | `internal/custom/python/auth_endpoint.go`<br>`internal/custom/python/auth_endpoint_test.go`<br>`internal/custom/python/flask.go`<br>`internal/mcp/auth_coverage.go` | #3628 area #6 (endpoint protection): flask.go now scans the stacked-decorator block of each @app.route / @app.get route for a Flask-Login / Flask-Security / Flask-Principal auth decorator (login_required/roles_required/permission_required/jwt_required/...), stamping auth_required=true/auth_method=decorator/auth_confidence/auth_guard ON THE ENDPOINT entity, with roles captured from @roles_required('admin','superuser') (resolveFlaskDecoratorAuth in auth_endpoint.go). Value-asserting tests: TestFlaskAuth_LoginRequired (/dashboard -> auth_required=true, auth_guard=login_required, auth_method=decorator), TestFlaskAuth_RolesRequired (auth_roles=admin,superuser), negative TestFlaskAuth_NoDecoratorUnprotected (/public -> no auth_required). |
 
 ### Validation
 

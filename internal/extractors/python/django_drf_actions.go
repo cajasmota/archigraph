@@ -148,6 +148,11 @@ func scanClassBodyForActions(body *sitter.Node, parentClass string, file extract
 			for k, v := range props {
 				op.Properties[k] = v
 			}
+			// #3628 area #6 — endpoint protection. Normalise the @action's
+			// permission_classes into the cross-framework auth contract so the
+			// parity oracle / archigraph_auth_coverage reads DRF action guards the
+			// same way as Spring/FastAPI/Express.
+			stampDRFActionAuth(op.Properties)
 		}
 
 		// Also stamp on the parent class as a `decorator_<method>` property so

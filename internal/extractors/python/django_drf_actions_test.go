@@ -58,11 +58,61 @@ class ContractViewSet:
 		"serializer_class":   "AssignContactsSerializer",
 		"url_path":           "assign",
 		"permission_classes": "IsAdmin",
+		// #3628 area #6 — endpoint protection normalised onto the action.
+		"auth_required":   "true",
+		"auth_guard":      "IsAdmin",
+		"auth_method":     "permission_classes",
+		"auth_confidence": "high",
 	}
 	for k, want := range checks {
 		if got := op.Properties[k]; got != want {
 			t.Errorf("Properties[%q] = %q, want %q", k, got, want)
 		}
+	}
+}
+
+// TestDRFAction_AllowAnyIsPublic verifies a per-action permission_classes of
+// only [AllowAny] marks the endpoint explicitly public (auth_required=false),
+// not protected. #3628 area #6.
+func TestDRFAction_AllowAnyIsPublic(t *testing.T) {
+	src := `from rest_framework.decorators import action
+
+class PublicViewSet:
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def ping(self, request):
+        return None
+`
+	out := extractPy(t, src, "api/views.py")
+	op := findDRFOp(out, "api/views.py", "PublicViewSet.ping")
+	if op == nil {
+		t.Fatalf("expected PublicViewSet.ping operation entity")
+	}
+	if got := op.Properties["auth_required"]; got != "false" {
+		t.Errorf("auth_required = %q, want \"false\"", got)
+	}
+	if got := op.Properties["auth_guard"]; got != "" {
+		t.Errorf("auth_guard = %q, want empty (public)", got)
+	}
+}
+
+// TestDRFAction_NoPermissionInherits verifies an action WITHOUT a per-action
+// permission_classes does not get an auth_required stamp here — it inherits the
+// class-level posture (django_drf_permissions.go). #3628 area #6.
+func TestDRFAction_NoPermissionInherits(t *testing.T) {
+	src := `from rest_framework.decorators import action
+
+class InheritViewSet:
+    @action(detail=True, methods=["post"])
+    def archive(self, request):
+        return None
+`
+	out := extractPy(t, src, "api/views.py")
+	op := findDRFOp(out, "api/views.py", "InheritViewSet.archive")
+	if op == nil {
+		t.Fatalf("expected InheritViewSet.archive operation entity")
+	}
+	if _, ok := op.Properties["auth_required"]; ok {
+		t.Errorf("auth_required should be unset (inherits class posture), got %q", op.Properties["auth_required"])
 	}
 }
 

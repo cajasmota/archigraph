@@ -43497,9 +43497,10 @@
         "Auth": {
           "auth_coverage": {
             "status": "full",
-            "cites": ["internal/extractors/python/config_module.go","internal/extractors/python/django_drf_permissions.go","internal/mcp/auth_coverage.go"],
+            "cites": ["internal/extractors/python/config_module.go","internal/extractors/python/django_drf_actions.go","internal/extractors/python/django_drf_actions_test.go","internal/extractors/python/django_drf_permissions.go","internal/mcp/auth_coverage.go"],
             "issue": "2816",
-            "verified_at": "2026-05-28"
+            "notes": "#3628 area #6 (endpoint protection): class-level permission_classes / get_permissions() stamped on the ViewSet CLASS by django_drf_permissions.go (#2816); per-action protection now ALSO normalised onto the action Operation entity — django_drf_actions.go calls stampDRFActionAuth (django_drf_permissions.go) to turn the @action(permission_classes=[IsAdmin]) kwarg into auth_required/auth_method=permission_classes/auth_confidence/auth_guard, with [AllowAny] -\u003e auth_required=false (explicit public). Value-asserting tests: TestDRFAction_BasicKwargs (auth_required=true, auth_guard=IsAdmin), TestDRFAction_AllowAnyIsPublic (auth_required=false), TestDRFAction_NoPermissionInherits (no stamp -\u003e inherits class posture).",
+            "verified_at": "2026-06-02"
           }
         },
         "Validation": {
@@ -44218,10 +44219,10 @@
         "Auth": {
           "auth_coverage": {
             "status": "full",
-            "cites": ["internal/custom/python/fastapi.go","internal/mcp/auth_coverage.go","internal/patterns/auth_endpoint_linker.go"],
+            "cites": ["internal/custom/python/auth_endpoint.go","internal/custom/python/auth_endpoint_test.go","internal/custom/python/fastapi.go","internal/mcp/auth_coverage.go"],
             "issue": "3052",
-            "notes": "Depends(get_current_user/get_current_active_user/oauth2_scheme/verify_token/authenticate/require_auth) detected by auth_endpoint_linker authFastAPIDependsRE; additional injection via fastapi.go decorator pass; comprehensive OAuth2/JWT coverage",
-            "verified_at": "2026-05-29"
+            "notes": "#3628 area #6 (endpoint protection): fastapi.go now scans each route handler's def signature for Depends(get_current_user) / Security(get_user, scopes=[...]) auth dependencies and the route-decorator dependencies=[Depends(verify_token)] kwarg, stamping auth_required/auth_method=dependency/auth_confidence/auth_guard/auth_scopes ON THE ENDPOINT entity (resolveFastAPIRouteAuth in auth_endpoint.go). Auth dependencies are distinguished from plain DI (get_db) by name idiom; Security(...) is always auth and carries scopes. Value-asserting tests: TestFastAPIAuth_DependsCurrentUser (/me -\u003e auth_required=true, auth_guard=get_current_user), TestFastAPIAuth_SecurityScopes (auth_scopes=items:list,items:read), TestFastAPIAuth_DependenciesKwarg, plus negatives TestFastAPIAuth_PlainDependencyNotProtected / NoDependencyUnprotected. Honest-partial: dynamic/cross-file dependency resolution out of scope. Prior auth_endpoint_linker file-proximity heuristic superseded by per-endpoint signature extraction.",
+            "verified_at": "2026-06-02"
           }
         },
         "Validation": {
@@ -44465,10 +44466,10 @@
         "Auth": {
           "auth_coverage": {
             "status": "full",
-            "cites": ["internal/custom/python/flask.go","internal/mcp/auth_coverage.go"],
+            "cites": ["internal/custom/python/auth_endpoint.go","internal/custom/python/auth_endpoint_test.go","internal/custom/python/flask.go","internal/mcp/auth_coverage.go"],
             "issue": "3052",
-            "notes": "@login_required (Flask-Login) explicitly extracted by flask.go flLoginRequiredRe; jwt_required/fresh_jwt_required/roles_required/roles_accepted in authAnnotationNames; comprehensive Flask auth decorator coverage",
-            "verified_at": "2026-05-29"
+            "notes": "#3628 area #6 (endpoint protection): flask.go now scans the stacked-decorator block of each @app.route / @app.get route for a Flask-Login / Flask-Security / Flask-Principal auth decorator (login_required/roles_required/permission_required/jwt_required/...), stamping auth_required=true/auth_method=decorator/auth_confidence/auth_guard ON THE ENDPOINT entity, with roles captured from @roles_required('admin','superuser') (resolveFlaskDecoratorAuth in auth_endpoint.go). Value-asserting tests: TestFlaskAuth_LoginRequired (/dashboard -\u003e auth_required=true, auth_guard=login_required, auth_method=decorator), TestFlaskAuth_RolesRequired (auth_roles=admin,superuser), negative TestFlaskAuth_NoDecoratorUnprotected (/public -\u003e no auth_required).",
+            "verified_at": "2026-06-02"
           }
         },
         "Validation": {

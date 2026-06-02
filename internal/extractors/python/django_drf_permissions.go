@@ -121,6 +121,48 @@ func applyDRFPermissionProperties(parent *types.EntityRecord, classBody *sitter.
 	}
 }
 
+// drfPublicPermissionClasses are DRF permission classes that grant anonymous
+// access; an endpoint whose only permission class is one of these is open.
+var drfPublicPermissionClasses = map[string]bool{
+	"AllowAny": true,
+}
+
+// stampDRFActionAuth normalises a per-action `permission_classes` property
+// (set by the @action kwarg parser) into the cross-framework auth contract
+// (auth_required / auth_method / auth_confidence / auth_guard), mirroring the
+// Spring (java_auth_policy.go), FastAPI and Express resolvers. It is a no-op
+// when no permission_classes property is present (the action inherits the
+// class-level posture stamped by applyDRFPermissionProperties). An explicit
+// `[AllowAny]` marks the endpoint public.
+func stampDRFActionAuth(props map[string]string) {
+	if props == nil {
+		return
+	}
+	raw, ok := props["permission_classes"]
+	if !ok || strings.TrimSpace(raw) == "" {
+		return
+	}
+	var nonPublic []string
+	for _, p := range strings.Split(raw, ",") {
+		leaf := permissionLeafName(p)
+		if leaf == "" {
+			continue
+		}
+		if !drfPublicPermissionClasses[leaf] {
+			nonPublic = append(nonPublic, leaf)
+		}
+	}
+	props["auth_method"] = "permission_classes"
+	props["auth_confidence"] = "high"
+	if len(nonPublic) == 0 {
+		// Only AllowAny → explicitly public.
+		props["auth_required"] = "false"
+		return
+	}
+	props["auth_required"] = "true"
+	props["auth_guard"] = nonPublic[0]
+}
+
 // isGetPermissionsDef reports whether fnDef is `def get_permissions(self):`.
 func isGetPermissionsDef(fnDef *sitter.Node, src []byte) bool {
 	if fnDef == nil {

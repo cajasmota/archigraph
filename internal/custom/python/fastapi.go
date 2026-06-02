@@ -37,7 +37,7 @@ func (e *FastAPIExtractor) Language() string { return "python_fastapi" }
 var (
 	faRouteDecoratorRe = regexp.MustCompile(
 		`(?m)@(\w+)\.(get|post|put|delete|patch|head|options|trace)\s*` +
-			`\(\s*(?:r)?["']([^"']*)["'][^)]*\)\s*\n` +
+			`\(\s*(?:r)?["']([^"']*)["']((?:[^()]|\([^()]*\))*)\)\s*\n` +
 			`(?:\s*(?:#[^\n]*)?\n)*` +
 			`\s*(?:async\s+)?def\s+(\w+)\s*\(`)
 	faDependsParamRe = regexp.MustCompile(`=\s*Depends\s*\(\s*(\w+)\s*\)`)
@@ -80,10 +80,17 @@ func (e *FastAPIExtractor) Extract(ctx context.Context, file extractor.FileInput
 		appName := source[idx[2]:idx[3]]
 		httpMethod := strings.ToUpper(source[idx[4]:idx[5]])
 		path := source[idx[6]:idx[7]]
-		handlerName := source[idx[8]:idx[9]]
+		decoratorArgs := source[idx[8]:idx[9]]
+		handlerName := source[idx[10]:idx[11]]
 		line := lineOf(source, idx[0])
-		out = append(out, entity(handlerName, "SCOPE.Operation", "endpoint", file.Path, line,
-			map[string]string{"framework": "fastapi", "pattern_type": "route", "http_method": httpMethod, "path": path, "app_name": appName}))
+		props := map[string]string{"framework": "fastapi", "pattern_type": "route", "http_method": httpMethod, "path": path, "app_name": appName}
+		// #3628 area #6 — endpoint protection. The handler's def signature is the
+		// open-paren the route regex anchored on (idx[1] is just past `def name(`);
+		// scan from there to the matching close-paren for Depends()/Security() auth
+		// dependencies, and the decorator args for a `dependencies=[...]` kwarg.
+		sig := pyCallArgRegion(source, idx[1])
+		resolveFastAPIRouteAuth(sig, decoratorArgs).stamp(props)
+		out = append(out, entity(handlerName, "SCOPE.Operation", "endpoint", file.Path, line, props))
 	}
 
 	// 2. Depends() injection

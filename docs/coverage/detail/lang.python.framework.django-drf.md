@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ✅ `full` | `2026-05-28` | 2816 | `internal/extractors/python/config_module.go`<br>`internal/extractors/python/django_drf_permissions.go`<br>`internal/mcp/auth_coverage.go` | — |
+| Auth coverage | ✅ `full` | `2026-06-02` | 2816 | `internal/extractors/python/config_module.go`<br>`internal/extractors/python/django_drf_actions.go`<br>`internal/extractors/python/django_drf_actions_test.go`<br>`internal/extractors/python/django_drf_permissions.go`<br>`internal/mcp/auth_coverage.go` | #3628 area #6 (endpoint protection): class-level permission_classes / get_permissions() stamped on the ViewSet CLASS by django_drf_permissions.go (#2816); per-action protection now ALSO normalised onto the action Operation entity — django_drf_actions.go calls stampDRFActionAuth (django_drf_permissions.go) to turn the @action(permission_classes=[IsAdmin]) kwarg into auth_required/auth_method=permission_classes/auth_confidence/auth_guard, with [AllowAny] -> auth_required=false (explicit public). Value-asserting tests: TestDRFAction_BasicKwargs (auth_required=true, auth_guard=IsAdmin), TestDRFAction_AllowAnyIsPublic (auth_required=false), TestDRFAction_NoPermissionInherits (no stamp -> inherits class posture). |
 
 ### Validation
 
