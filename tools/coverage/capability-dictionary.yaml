@@ -108,6 +108,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -158,7 +159,7 @@ subcategories:
       - name: Data
         keys: [db_effect]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, request_sink_dataflow, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, request_sink_dataflow, template_pattern_catalog]
 
   jvm_backend:
     display: "JVM Backend"
@@ -188,6 +189,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -235,7 +237,7 @@ subcategories:
       - name: Data
         keys: [db_effect]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
 
   ui_frontend:
     display: "UI Frontend"
@@ -256,6 +258,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -290,7 +293,7 @@ subcategories:
       - name: Testing
         keys: [tests_linkage]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
 
   meta_framework:
     display: "Meta Framework"
@@ -312,6 +315,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -350,7 +354,7 @@ subcategories:
       - name: Testing
         keys: [tests_linkage]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
 
   mobile:
     display: "Mobile"
@@ -372,6 +376,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -410,7 +415,7 @@ subcategories:
       - name: Testing
         keys: [tests_linkage]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
 
   desktop:
     display: "Desktop"
@@ -422,6 +427,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -439,7 +445,7 @@ subcategories:
       - name: Updates
         keys: []
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect]
 
   rpc_framework:
     display: "RPC Framework"
@@ -453,6 +459,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -481,7 +488,7 @@ subcategories:
       - name: Transport
         keys: [transport_binding]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
 
   static_site:
     display: "Static Site"
@@ -524,6 +531,7 @@ subcategories:
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
+      - error_flow
       - feature_flag_gating
       - import_resolution_quality
       - confidence_overlay
@@ -556,7 +564,7 @@ subcategories:
       - name: Testing
         keys: [tests_linkage]
       - name: Substrate
-        keys: [constant_propagation, env_fallback_recognition, config_consumption, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
+        keys: [constant_propagation, env_fallback_recognition, config_consumption, error_flow, feature_flag_gating, import_resolution_quality, confidence_overlay, reachability_analysis, dead_code_detection, db_effect, http_effect, fs_effect, mutation_effect, request_shape_extraction, response_shape_extraction, schema_drift_detection, taint_source_detection, taint_sink_detection, sanitizer_recognition, vulnerability_finding, pure_function_tagging, module_cycle_detection, def_use_chain_extraction, template_pattern_catalog]
 
   orm_mapper:
     display: "ORM / Data Mapper"

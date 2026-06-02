@@ -324,6 +324,16 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		emitConfigConsumerEdges(root, file, &entities)
 	}()
 
+	// Epic #3628 — error-flow pass. Emits THROWS / CATCHES edges from
+	// functions/methods to a shared SCOPE.ExceptionType node for typed
+	// `raise X` / `except X` shapes (dynamic raises and bare `except:` are
+	// dropped). Runs after primary entity emission so the enclosing
+	// function/method entities exist to attach edges to.
+	func() {
+		defer func() { _ = recover() }()
+		emitExceptionFlowEdges(root, file, &entities)
+	}()
+
 	// Issue #1884 — supplemental package-module pass (Wave 1).
 	// Emits one Module entity per Python package boundary (__init__.py or
 	// plain .py module) so docgen can seed per-package pages and flow

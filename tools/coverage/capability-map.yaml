@@ -2673,6 +2673,18 @@ records:
               functions: [TestJavaConfigConsumer_ValueAnnotation, TestJavaConfigConsumer_ConfigurationProperties, TestJavaConfigConsumer_EnvGetProperty, TestJavaConfigConsumer_ConfigProperty, TestJavaConfigConsumer_DynamicKeyIgnored]
           issues_implemented: ["3641"]
           verified_at: "2026-06-02"
+        error_flow:
+          status: full
+          symbols:
+            - file: internal/extractors/java/exception_flow.go
+              functions: [emitExceptionFlowEdges, javaThrowType, javaThrowsClauseTypes, javaCatchTypes]
+            - file: internal/extractor/exception_flow.go
+              functions: [EmitExceptionEdges, ExceptionTypeEntity, ExceptionTypeTargetID, NormalizeExceptionType]
+          tests:
+            - file: internal/extractors/java/exception_flow_test.go
+              functions: [TestJavaExceptionFlow_ThrowsAndCatchConverge, TestJavaExceptionFlow_MultiThrows, TestJavaExceptionFlow_MultiCatch, TestJavaExceptionFlow_ThrowNew, TestJavaExceptionFlow_RethrowVarDropped]
+          issues_implemented: ["3628"]
+          verified_at: "2026-06-02"
         constant_propagation:
           status: full
           symbols:

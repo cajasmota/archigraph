@@ -331,6 +331,15 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		x.emitConfigConsumerEdges(root)
 	}()
 
+	// Error-flow topology (epic #3628) — THROWS / CATCHES edges from
+	// functions/methods to a shared SCOPE.ExceptionType node for
+	// `throw new X()` and `e instanceof X` catch shapes (untyped throws /
+	// catches are dropped). Runs after walk so enclosing entities exist.
+	func() {
+		defer func() { _ = recover() }()
+		x.emitExceptionFlowEdges(root)
+	}()
+
 	// Third pass (#713): platform-variant and test-file relationship emission.
 	// Detects React Native platform-specific file naming (.ios.tsx,
 	// .android.tsx, .tablet.tsx, …) and emits PLATFORM_VARIANT_OF edges.

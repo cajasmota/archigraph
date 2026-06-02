@@ -164,6 +164,18 @@ const (
 	// User is saved?"); the handler is joined via a TRIGGERS edge
 	// (ModelEvent → handler fn). The name segment is "<Model>.<event>".
 	EntityKindModelEvent EntityKind = "SCOPE.ModelEvent"
+	// EntityKindExceptionType is a synthetic, file-agnostic node representing a
+	// single exception / error type by its (normalized, unqualified) name —
+	// e.g. "ValidationError", "NotFound", "IOException", "ErrNotFound". It is
+	// the convergence point for the error-flow capability (epic #3628): a type
+	// raised in one function and caught in another resolve to the SAME node, so
+	// the graph answers "what can this function raise?" (outbound THROWS) and
+	// "where is X handled?" (inbound CATCHES). Like SCOPE.Config/config_key it
+	// carries a constant synthetic SourceFile (ExceptionTypeSourceFile) so
+	// EntityRecord.ComputeID(SourceFile+Kind+Name) collapses identical type
+	// names across files/languages into one node. See
+	// internal/extractor/exception_flow.go.
+	EntityKindExceptionType EntityKind = "SCOPE.ExceptionType"
 )
 
 // AllEntityKinds returns every EntityKind that archigraph extractors are
@@ -231,6 +243,8 @@ func AllEntityKinds() []EntityKind {
 		EntityKindDataLoader,
 		// ORM model lifecycle-hook / signal events (#3628 area):
 		EntityKindModelEvent,
+		// #3628 error-flow: synthetic exception-type convergence node.
+		EntityKindExceptionType,
 	}
 }
 
@@ -899,6 +913,33 @@ const (
 	//                 cross-subgraph entity-ownership signal Federation gateways
 	//                 use to plan query fan-out.
 	RelationshipKindFederates RelationshipKind = "FEDERATES"
+
+	// #3628 error-flow: exception / error-contract edges. Both point a
+	// callable (function / method) at a synthetic SCOPE.ExceptionType node
+	// (Name "exception:<Type>") so a type raised in one place and caught in
+	// another converge on a single node — the join that makes the graph
+	// answer "what can this function raise?" and "where is X handled?".
+	//
+	//   THROWS  : function/method → SCOPE.ExceptionType it can raise.
+	//             Emitted only for an IDENTIFIABLE type:
+	//               JS/TS   `throw new ValidationError(...)` / bare `throw new Error()`
+	//               Python  `raise NotFound(...)`
+	//               Java    `throw new IllegalArgumentException()` + method `throws IOException`
+	//               Go      `return ErrNotFound` (named error var/type only)
+	//   CATCHES : handler function/method → SCOPE.ExceptionType it catches.
+	//             Emitted only when the caught type is identifiable:
+	//               JS/TS   typed `catch` via `e instanceof AuthError`
+	//               Python  `except (ValueError, KeyError):`
+	//               Java    `catch (IOException e)`
+	//               Go      `errors.Is(err, ErrNotFound)`
+	//
+	// Precision-first / honest-partial: dynamic-or-computed raise types, bare
+	// `except:` / untyped `catch(e){}`, and anonymous inline errors
+	// (`errors.New("...")`, bare `fmt.Errorf("...")`) emit NO edge — a wrong
+	// THROWS/CATCHES edge would mislead error-contract analysis. See
+	// internal/extractor/exception_flow.go.
+	RelationshipKindThrows  RelationshipKind = "THROWS"
+	RelationshipKindCatches RelationshipKind = "CATCHES"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -1034,6 +1075,9 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindFederates,
 		// #3639 (epic #3625) DB-migration apply-order edge (Alembic chain):
 		RelationshipKindPrecedes,
+		// #3628 error-flow: THROWS / CATCHES exception-type edges:
+		RelationshipKindThrows,
+		RelationshipKindCatches,
 	}
 }
 

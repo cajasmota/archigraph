@@ -126,6 +126,15 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		emitConfigConsumerEdges(root, file, &entities)
 	}()
 
+	// Error-flow topology (epic #3628) — THROWS / CATCHES edges from
+	// methods/constructors to a shared SCOPE.ExceptionType node for
+	// `throw new X()`, the `throws` clause, and typed/multi `catch (X | Y e)`
+	// shapes. Java's checked-exception model makes these highly reliable.
+	func() {
+		defer func() { _ = recover() }()
+		emitExceptionFlowEdges(root, file, &entities)
+	}()
+
 	// Track B (analog of #642/#650 for Java) — IMPORTS ToID rewrite.
 	// Rewrites IMPORTS edges whose source_module's longest dotted
 	// prefix matches a known external JVM package to an

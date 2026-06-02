@@ -2448,6 +2448,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -2684,6 +2688,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -2919,6 +2927,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -3165,6 +3177,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -3409,6 +3425,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -3655,6 +3675,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -3818,6 +3842,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4038,6 +4066,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4274,6 +4306,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4536,6 +4572,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4858,6 +4898,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -5102,6 +5146,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5348,6 +5396,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -5507,6 +5559,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5698,6 +5754,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5936,6 +5996,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -6182,6 +6246,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/c_cpp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -6325,6 +6393,10 @@
             "status": "full",
             "cites": ["internal/substrate/c_cpp.go"]
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -6410,6 +6482,10 @@
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/substrate/c_cpp.go"]
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -7522,6 +7598,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -7761,6 +7841,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -7966,6 +8050,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -8167,6 +8255,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -8367,6 +8459,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -8611,6 +8707,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -8860,6 +8960,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -9025,6 +9129,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9248,6 +9356,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9479,6 +9591,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -9692,6 +9808,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9937,6 +10057,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -10085,6 +10209,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-29"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -10177,6 +10305,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-29"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -10268,6 +10400,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -10426,6 +10562,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/csharp.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -10921,6 +11061,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -11546,6 +11690,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -11795,6 +11943,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -12036,6 +12188,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -12309,6 +12465,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -12533,6 +12693,10 @@
             "notes": "@base_url System.get_env(VAR, default) fallback literal resolved for Finch URLs (#1496/#3511)",
             "verified_at": "2026-05-30"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -12677,6 +12841,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -12881,6 +13049,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -13093,6 +13265,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -13336,6 +13512,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -13588,6 +13768,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -13806,6 +13990,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -14054,6 +14242,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/elixir.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -14277,6 +14469,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -14482,6 +14678,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -15274,6 +15474,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -15515,6 +15722,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -15765,6 +15979,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -16014,6 +16235,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -16252,6 +16480,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -16512,6 +16747,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -16731,6 +16973,13 @@
             "status": "missing",
             "issue": "3628"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "3628"
@@ -16858,6 +17107,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -17054,6 +17310,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "full",
@@ -17299,6 +17562,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -17506,6 +17776,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -17764,6 +18041,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -17983,6 +18267,13 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "3613"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -18212,6 +18503,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -18456,6 +18754,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -18698,6 +19003,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -18938,6 +19250,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -19185,6 +19504,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -19437,6 +19763,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/golang.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -19655,6 +19988,13 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "3628"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/golang/exception_flow.go","internal/extractors/golang/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "return ErrX / fmt.Errorf %w -\u003e THROWS; errors.Is/As -\u003e CATCHES; named sentinels only (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -20495,6 +20835,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -20716,6 +21063,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -20933,6 +21287,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -21173,6 +21534,13 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -21437,6 +21805,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -21690,6 +22065,13 @@
             "status": "missing",
             "issue": "3699"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -21879,6 +22261,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -22170,6 +22559,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -22471,6 +22867,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -22757,6 +23160,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -23062,6 +23472,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -23408,6 +23825,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -23712,6 +24136,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -23939,6 +24370,13 @@
             "issue": "backfill:dictionary-completeness",
             "notes": "Framework-blind Java substrate env-fallback sniffer fires for all Java sources (#3178).",
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -24256,6 +24694,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -24558,6 +25003,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "full",
             "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
@@ -24825,6 +25277,13 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -25111,6 +25570,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -25414,6 +25880,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -25616,6 +26089,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -25896,6 +26376,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/java.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/java/exception_flow.go","internal/extractors/java/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X + throws clause -\u003e THROWS; catch (A|B e) -\u003e CATCHES; checked-exception model (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -27662,6 +28149,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -27901,6 +28395,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -28211,6 +28712,13 @@
             "issue": "3057",
             "verified_at": "2026-05-29"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -28381,6 +28889,13 @@
             "cites": ["internal/substrate/jsts.go"],
             "issue": "3059"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -28542,6 +29057,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -28828,6 +29350,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
@@ -29107,6 +29636,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -29382,6 +29918,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -29615,6 +30158,13 @@
             "issue": "3057",
             "verified_at": "2026-05-29"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -29808,6 +30358,13 @@
             "cites": ["internal/substrate/jsts.go","internal/substrate/uimm_substrate_test.go","testdata/fixtures/typescript/substrate_graphql/resolver.ts"],
             "issue": "3076",
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -30084,6 +30641,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -30356,6 +30920,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -30594,6 +31165,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -30849,6 +31427,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -31164,6 +31749,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -31392,6 +31984,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -31663,6 +32262,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -31905,6 +32511,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "issue": "3055",
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "full",
@@ -32167,6 +32780,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "issue": "3055",
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -32449,6 +33069,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -32677,6 +33304,13 @@
             "status": "missing",
             "issue": "3619"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -32871,6 +33505,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -33188,6 +33829,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -33485,6 +34133,13 @@
             "issue": "3055",
             "verified_at": "2026-05-29"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -33760,6 +34415,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -34022,6 +34684,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -34265,6 +34934,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -34552,6 +35228,13 @@
             "issue": "3055",
             "verified_at": "2026-05-29"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -34744,6 +35427,13 @@
             "cites": ["internal/substrate/jsts.go","internal/substrate/uimm_substrate_test.go","testdata/fixtures/typescript/substrate_trpc/router.ts"],
             "issue": "3057",
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -34978,6 +35668,13 @@
             "status": "missing",
             "issue": "3619"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -35177,6 +35874,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/jsts.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/javascript/exception_flow.go","internal/extractors/javascript/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; e instanceof X catch-filter -\u003e CATCHES; untyped throw/catch dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -36016,6 +36720,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -36227,6 +36935,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -36358,6 +37070,10 @@
             "status": "full",
             "cites": ["internal/substrate/kotlin.go"]
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -36441,6 +37157,10 @@
           "env_fallback_recognition": {
             "status": "full",
             "cites": ["internal/substrate/kotlin.go"]
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -36645,6 +37365,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -36888,6 +37612,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -37116,6 +37844,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -37361,6 +38093,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -37632,6 +38368,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -37841,6 +38581,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -38084,6 +38828,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -38305,6 +39053,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -38562,6 +39314,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -38852,6 +39608,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -39141,6 +39901,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -39384,6 +40148,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -39659,6 +40427,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/kotlin.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -40290,6 +41062,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -40495,6 +41271,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -40716,6 +41496,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go"],
             "notes": "Lua constant-binding sniffer (luaLiteralRe, luaEnvOrRe, luaRequireRe) registered in substrate/lua.go. Feeds the language-agnostic constant propagation pass."
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -40962,6 +41746,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/lua.go"],
             "notes": "Lua constant-binding sniffer (luaLiteralRe, luaEnvOrRe, luaRequireRe) registered in substrate/lua.go. Feeds the language-agnostic constant propagation pass."
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -41648,6 +42436,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -41875,6 +42667,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -42125,6 +42921,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -42374,6 +43174,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -42598,6 +43402,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -42826,6 +43634,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -43082,6 +43894,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -43306,6 +44122,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -43534,6 +44354,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -43784,6 +44608,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -44033,6 +44861,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -44281,6 +45113,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -44539,6 +45375,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -44788,6 +45628,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -45036,6 +45880,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -46061,6 +46909,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -46293,6 +47148,13 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "3620"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -46543,6 +47405,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -46746,6 +47615,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -47028,6 +47904,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -47297,6 +48180,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -47568,6 +48458,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "full",
             "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
@@ -47809,6 +48706,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -48076,6 +48980,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -48351,6 +49262,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -48621,6 +49539,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -48864,6 +49789,13 @@
             "status": "missing",
             "issue": "3620"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -49104,6 +50036,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -49407,6 +50346,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -49671,6 +50617,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -49939,6 +50892,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -50203,6 +51163,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -50404,6 +51371,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go"],
             "issue": "backfill:dictionary-completeness",
             "verified_at": "2026-05-29"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -50673,6 +51647,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -50936,6 +51917,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -51204,6 +52192,13 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
           },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -51467,6 +52462,13 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-28"
+          },
+          "error_flow": {
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/python/exception_flow.go","internal/extractors/python/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "raise X / raise mod.X -\u003e THROWS; except (A,B) -\u003e CATCHES; bare except + dynamic raise dropped (#3628)",
+            "verified_at": "2026-06-02"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -52880,6 +53882,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -53114,6 +54120,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -53351,6 +54361,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -53578,6 +54592,10 @@
             "status": "missing",
             "issue": "3621"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -53798,6 +54816,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -54037,6 +55059,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -54280,6 +55306,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "full",
@@ -54533,6 +55563,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -54776,6 +55810,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/ruby.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -55775,6 +56813,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -56001,6 +57043,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -56232,6 +57278,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -56478,6 +57528,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -56723,6 +57777,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -56998,6 +58056,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -57270,6 +58332,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -57515,6 +58581,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -57719,6 +58789,10 @@
             "status": "full",
             "cites": ["internal/substrate/rust.go"]
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -57906,6 +58980,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -58134,6 +59212,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -58370,6 +59452,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -58594,6 +59680,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -58825,6 +59915,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/rust.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -59441,6 +60535,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -59697,6 +60795,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -59966,6 +61068,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -60234,6 +61340,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -60522,6 +61632,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -60801,6 +61915,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -61089,6 +62207,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -61360,6 +62482,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -61551,6 +62677,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -61729,6 +62859,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -61993,6 +63127,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -62242,6 +63380,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -62485,6 +63627,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -62751,6 +63897,10 @@
             "status": "full",
             "cites": ["internal/links/constant_propagation.go","internal/substrate/scala.go","internal/substrate/substrate.go"],
             "verified_at": "2026-05-27"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -63288,6 +64438,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -63459,6 +64613,10 @@
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
+          },
           "feature_flag_gating": {
             "status": "missing",
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
@@ -63629,6 +64787,10 @@
           "env_fallback_recognition": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -63861,6 +65023,10 @@
             "cites": ["internal/links/constant_propagation.go","internal/substrate/swift.go"],
             "notes": "swift.go (substrate) explicitly recognises ProcessInfo.processInfo.environment[KEY] ?? default as ProvenanceEnvFallback with confidence 0.85; constant_propagation.go promotes these bindings into the graph; this is the canonical Swift env-fallback idiom.",
             "verified_at": "2026-05-30"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3628"
           },
           "feature_flag_gating": {
             "status": "missing",

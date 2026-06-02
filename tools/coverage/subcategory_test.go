@@ -113,6 +113,8 @@ func TestSubcategoryRenderKeysExcludesCategoryUnion(t *testing.T) {
 		"def_use_chain_extraction",
 		"enum_extraction",
 		"env_fallback_recognition",
+		// #3628 error-flow: THROWS/CATCHES exception-type topology.
+		"error_flow",
 		// #3628 area #17 feature-flag gating topology.
 		"feature_flag_gating",
 		"fs_effect",
@@ -177,6 +179,8 @@ func TestSubcategoryCapabilityKeysSorted(t *testing.T) {
 		"endpoint_synthesis",
 		"enum_extraction",
 		"env_fallback_recognition",
+		// #3628 error-flow: THROWS/CATCHES exception-type topology.
+		"error_flow",
 		// #3628 area #17 feature-flag gating topology.
 		"feature_flag_gating",
 		"fs_effect",

@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** RPC Framework
-- **Capability cells:** 29
+- **Capability cells:** 30
 
 ## Capabilities
 
@@ -42,6 +42,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Dead code detection | 🟢 `partial` | `2026-05-29` | 3076 | `internal/links/reachability.go`<br>`internal/patterns/dead_module_detector.go` | — |
 | Def use chain extraction | 🟢 `partial` | `2026-05-29` | 3076 | `internal/substrate/def_use_jsts.go`<br>`testdata/fixtures/typescript/substrate_graphql/resolver.ts` | — |
 | Env fallback recognition | ✅ `full` | `2026-05-29` | 3076 | `internal/substrate/jsts.go`<br>`internal/substrate/uimm_substrate_test.go`<br>`testdata/fixtures/typescript/substrate_graphql/resolver.ts` | — |
+| Error flow | ✅ `full` | `2026-06-02` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/javascript/exception_flow.go`<br>`internal/extractors/javascript/exception_flow_test.go` | throw new X -> THROWS; e instanceof X catch-filter -> CATCHES; untyped throw/catch dropped (#3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🟢 `partial` | `2026-05-29` | 3076 | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_jsts.go`<br>`testdata/fixtures/typescript/substrate_graphql/resolver.ts` | — |
 | HTTP effect | 🟢 `partial` | `2026-05-29` | 3076 | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_jsts.go`<br>`testdata/fixtures/typescript/substrate_graphql/resolver.ts` | — |

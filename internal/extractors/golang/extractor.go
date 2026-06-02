@@ -197,6 +197,18 @@ func (g *GoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]
 	}()
 
 	// ----------------------------------------------------------------
+	// 5b. Error-flow topology (epic #3628) — THROWS / CATCHES edges from
+	//     functions/methods to a shared SCOPE.ExceptionType node for NAMED
+	//     sentinel errors: `return ErrX` / wrapped `%w` (THROWS) and
+	//     errors.Is/As(err, ErrX) (CATCHES). Anonymous errors.New / bare
+	//     fmt.Errorf are dropped — precision over recall.
+	// ----------------------------------------------------------------
+	func() {
+		defer func() { _ = recover() }()
+		emitExceptionFlowEdges(root, file.Content, &records)
+	}()
+
+	// ----------------------------------------------------------------
 	// 6. OTel span attribute relationship_count
 	// and error_pattern_count.
 	// ----------------------------------------------------------------

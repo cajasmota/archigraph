@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [elixir](../by-language/elixir.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 42
+- **Capability cells:** 43
 
 ## Capabilities
 
@@ -85,6 +85,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Dead code detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Def use chain extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Env fallback recognition | ✅ `full` | `2026-05-30` | — | `internal/engine/http_endpoint_jsts_client_1483.go`<br>`internal/engine/http_endpoint_jsts_client_1483_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | @base_url System.get_env(VAR, default) fallback literal resolved for Finch URLs (#1496/#3511) |
+| Error flow | 🔴 `missing` | — | 3628 | — | — |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | HTTP effect | ✅ `full` | `2026-05-30` | — | `internal/engine/http_endpoint_jsts_client_1483.go`<br>`internal/engine/http_endpoint_jsts_client_1483_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | Finch.build modeled as outbound HTTP effect (#1483/#3511) |

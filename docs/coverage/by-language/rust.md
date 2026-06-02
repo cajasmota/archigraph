@@ -26,26 +26,26 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [Actix Web](../detail/lang.rust.framework.actix.md) | ✅ 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Axum](../detail/lang.rust.framework.axum.md) | ✅ 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Gotham](../detail/lang.rust.framework.gotham.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Poem](../detail/lang.rust.framework.poem.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Rocket](../detail/lang.rust.framework.rocket.md) | ✅ 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Salvo](../detail/lang.rust.framework.salvo.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Tide](../detail/lang.rust.framework.tide.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Tonic](../detail/lang.rust.framework.tonic.md) | ✅ 3/3 | 🔴 0/1 | 🟡 2/4 | 🔴 0/1 | 🟡 2/23 | 🟡 1/10 | |
-| [Tower (service abstraction)](../detail/lang.rust.framework.tower.md) | 🟢 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Warp](../detail/lang.rust.framework.warp.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [async-graphql](../detail/lang.rust.framework.async-graphql.md) | ✅ 3/3 | 🔴 0/1 | 🟡 2/4 | 🔴 0/1 | 🟡 2/23 | 🟡 1/10 | |
-| [hyper](../detail/lang.rust.framework.hyper.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [utoipa](../detail/lang.rust.framework.utoipa.md) | ✅ 3/3 | 🔴 0/1 | 🟡 1/4 | 🔴 0/1 | 🟡 2/23 | 🟡 1/10 | |
+| [Actix Web](../detail/lang.rust.framework.actix.md) | ✅ 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Axum](../detail/lang.rust.framework.axum.md) | ✅ 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Gotham](../detail/lang.rust.framework.gotham.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Poem](../detail/lang.rust.framework.poem.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Rocket](../detail/lang.rust.framework.rocket.md) | ✅ 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Salvo](../detail/lang.rust.framework.salvo.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Tide](../detail/lang.rust.framework.tide.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Tonic](../detail/lang.rust.framework.tonic.md) | ✅ 3/3 | 🔴 0/1 | 🟡 2/4 | 🔴 0/1 | 🟡 2/24 | 🟡 1/10 | |
+| [Tower (service abstraction)](../detail/lang.rust.framework.tower.md) | 🟢 3/3 | ✅ 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [Warp](../detail/lang.rust.framework.warp.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [async-graphql](../detail/lang.rust.framework.async-graphql.md) | ✅ 3/3 | 🔴 0/1 | 🟡 2/4 | 🔴 0/1 | 🟡 2/24 | 🟡 1/10 | |
+| [hyper](../detail/lang.rust.framework.hyper.md) | 🟢 3/3 | 🟢 1/1 | ✅ 4/4 | 🟢 1/1 | 🟡 21/25 | 🟡 6/9 | |
+| [utoipa](../detail/lang.rust.framework.utoipa.md) | ✅ 3/3 | 🔴 0/1 | 🟡 1/4 | 🔴 0/1 | 🟡 2/24 | 🟡 1/10 | |
 
 
 ### Desktop
 
 | Name | Substrate | Other capabilities | Notes |
 |---|---|---|---|
-| [Tauri (desktop)](../detail/lang.rust.framework.tauri.md) | 🟡 10/12 | 🟢 3/3 | |
+| [Tauri (desktop)](../detail/lang.rust.framework.tauri.md) | 🟡 10/13 | 🟢 3/3 | |
 
 
 ## Tools
