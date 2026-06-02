@@ -551,6 +551,13 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// the Go (#3777) and JS/TS (#2853) passes. Auth filters/interceptors are
 		// annotated IN the chain (auth_kind), never double-modeled.
 		applyJavaMiddlewareCoverage(string(content), path, entities, javaMWBefore)
+		// #3628 rate-limit child — stamp the flat rate-limit contract
+		// (rate_limited/rate_limit/rate_limit_scope/rate_limit_source) on the
+		// Java endpoints emitted above: Resilience4j @RateLimiter / bucket4j
+		// method annotations (matched by mapping path) and Spring Cloud Gateway
+		// RequestRateLimiter filters (matched by Path= predicate). Mirrors the
+		// JS/TS + Python passes; config-driven limits are honest-partial.
+		applyJavaRateLimit(string(content), path, entities, javaMWBefore)
 	case "python":
 		// Capture the producer-side entity count before the Python backend
 		// synthesizers run so the middleware pass (#3628) can resolve the

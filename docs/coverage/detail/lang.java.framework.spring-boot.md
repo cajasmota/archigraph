@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [java](../by-language/java.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** JVM Backend
-- **Capability cells:** 53
+- **Capability cells:** 54
 
 ## Capabilities
 
@@ -38,6 +38,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | 🟢 `partial` | `2026-06-02` | — | `internal/engine/http_endpoint_java_middleware.go`<br>`internal/engine/java_annotation_params.go` | @Bean SecurityFilterChain + OncePerRequestFilter/HandlerInterceptor/WebMvcConfigurer.addInterceptors/WebFilter captured by name. #3628: applyJavaMiddlewareCoverage now BINDS an ordered middleware_chain to Spring ENDPOINTS — Servlet FilterRegistrationBean urlPatterns (outermost, filter scope) + HandlerInterceptor addPathPatterns/excludePathPatterns (interceptor scope) statically matched against each route path and stamped per the cross-stack {name,expr,scope,order,auth_kind?} contract (auth filters/interceptors tagged auth_kind). Honest-partial: only path patterns that statically resolve to a known same-file route bind; broad /** includes and filters without resolvable urlPatterns are skipped (no fabricated order). Tests: TestMiddleware_SpringInterceptorPathMatch, TestMiddleware_SpringFilterAndInterceptorOrder, TestMiddleware_SpringExcludePathPatterns, TestMiddleware_SpringFilterNoUrlPatternsSkipped. |
+| Rate limit stamping | 🟢 `partial` | `2026-06-02` | — | `internal/engine/http_endpoint_java_ratelimit.go`<br>`internal/engine/http_endpoint_java_ratelimit_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | Resilience4j @RateLimiter(name=...) / bucket4j @RateLimiting(capacity=N) method annotations (matched by mapping path) and Spring Cloud Gateway RequestRateLimiter filters (matched by Path= predicate, replenishRate→rate) stamp rate_limited/rate_limit/rate_limit_scope(route|gateway)/rate_limit_source on the endpoint op. Bare Resilience4j @RateLimiter rate lives in config → honest-partial (rate omitted). Negative: a non-throttle annotation does not stamp. |
 
 ### Testing
 

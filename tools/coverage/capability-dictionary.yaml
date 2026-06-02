@@ -172,6 +172,7 @@ subcategories:
       - endpoint_deprecation_versioning
       - auth_coverage
       - middleware_coverage
+      - rate_limit_stamping
       - route_extraction
       - request_validation
       - tests_linkage
@@ -225,7 +226,7 @@ subcategories:
       - name: Validation
         keys: [request_validation, dto_extraction]
       - name: Middleware
-        keys: [middleware_coverage]
+        keys: [middleware_coverage, rate_limit_stamping]
       - name: Testing
         keys: [tests_linkage]
       - name: Type System
