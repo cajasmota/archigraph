@@ -278,11 +278,19 @@ func (e *javaPatternsExtractor) Extract(ctx context.Context, file extreg.FileInp
 // custom extractors emit edges (ToID = target structural ref, FromID implicit
 // from the carrying entity; the resolver pass binds the ref later).
 //
-// Relationships whose SourceRef does not correspond to an emitted entity are
-// dropped (the same silent-drop policy the django extractor uses for unresolved
-// edges) — there is no carrier entity to hang them on.
+// Relationships whose SourceRef does not correspond to an emitted entity used to
+// be dropped (the django silent-drop policy), but several real Java edges encode
+// their carrier purely in the SourceRef and never emit a standalone entity for it
+// — the jaxrs/CDI di_injection_point edge (`scope:dependency:jakarta:…`, owner =
+// the injecting class) and the bean-validation nested-@Valid VALIDATES edge
+// (`scope:class:bean_validation:…`, owner = the DTO class). For those, #3605
+// SYNTHESISES a minimal carrier entity from the structured SourceRef so the edge
+// materialises and stays traversable, mirroring how the spring DI edges already
+// hang off a materialised injection-point entity. The synthesis is idempotent and
+// only fires when no real entity claims the SourceRef, so it never duplicates an
+// emitted carrier nor fabricates phantoms for refs a relationship does not use.
 func patternResultToRecords(res *PatternResult, filePath string) []types.EntityRecord {
-	if res == nil || len(res.Entities) == 0 {
+	if res == nil || (len(res.Entities) == 0 && len(res.Relationships) == 0) {
 		return nil
 	}
 
@@ -311,11 +319,19 @@ func patternResultToRecords(res *PatternResult, filePath string) []types.EntityR
 		records = append(records, rec)
 	}
 
-	// Attach relationships to their carrier (source) entity.
+	// Attach relationships to their carrier (source) entity. When no emitted
+	// entity claims the SourceRef, synthesise a minimal carrier from the
+	// structured ref so the edge materialises instead of being dropped (#3605).
 	for _, r := range res.Relationships {
 		idx, ok := byRef[r.SourceRef]
 		if !ok {
-			continue // no carrier entity for this edge — drop, like django.
+			synth, made := synthesizeCarrier(r.SourceRef, filePath)
+			if !made {
+				continue // ref not structurally parseable — cannot carry the edge.
+			}
+			idx = len(records)
+			byRef[r.SourceRef] = idx
+			records = append(records, synth)
 		}
 		rr := types.RelationshipRecord{
 			ToID:       r.TargetRef,
@@ -330,6 +346,60 @@ func patternResultToRecords(res *PatternResult, filePath string) []types.EntityR
 	}
 
 	return records
+}
+
+// synthesizeCarrier builds a minimal carrier EntityRecord for an edge whose
+// SourceRef encodes its owner structurally but never emitted a standalone entity
+// (the di_injection_point and nested-@Valid edges). Pattern refs follow the shape
+// `scope:<kind>:<namespace>:<filePath>:<name>` — the second field names the SCOPE
+// kind and the trailing field names the owner symbol. We materialise an entity at
+// that ref so the resolver can bind the edge's FromID. Returns (record, true) when
+// the ref is a parseable `scope:`-prefixed ref; (zero, false) otherwise — an
+// unparseable ref cannot carry an edge and is left dropped.
+//
+// Only refs that an actual Relationship.SourceRef references reach this function,
+// so it never fabricates phantom carriers for unrelated refs.
+func synthesizeCarrier(sourceRef, filePath string) (types.EntityRecord, bool) {
+	const prefix = "scope:"
+	if !strings.HasPrefix(sourceRef, prefix) {
+		return types.EntityRecord{}, false
+	}
+	rest := sourceRef[len(prefix):]
+	// rest == "<kind>:<namespace>:<filePath>:<name>" — kind is the first field,
+	// name is the last field (filePath may itself be empty but contains no ':' on
+	// the platforms we index, so the last ':' segment is the owner symbol).
+	firstColon := strings.IndexByte(rest, ':')
+	if firstColon <= 0 {
+		return types.EntityRecord{}, false
+	}
+	kindSeg := rest[:firstColon]
+	lastColon := strings.LastIndexByte(rest, ':')
+	if lastColon < firstColon {
+		return types.EntityRecord{}, false
+	}
+	name := rest[lastColon+1:]
+	if name == "" {
+		return types.EntityRecord{}, false
+	}
+	rec := makeEntity(name, carrierKindFor(kindSeg), "", filePath, "java", 0)
+	rec.Properties["ref"] = sourceRef
+	rec.Properties["provenance"] = "INFERRED_FROM_EDGE_CARRIER"
+	rec.Properties["synthesized_carrier"] = "true"
+	return rec, true
+}
+
+// carrierKindFor maps the structural ref's kind segment onto a valid SCOPE.* kind
+// for a synthesised carrier. The injection-point owner refs use the `dependency`
+// segment and the nested-@Valid owner refs use the `class` segment; both denote a
+// concrete owning class, so they map to SCOPE.Class. Any other parseable segment
+// falls back to SCOPE.Component (a generic structural node) rather than guessing.
+func carrierKindFor(kindSeg string) string {
+	switch kindSeg {
+	case "dependency", "class":
+		return "SCOPE.Class"
+	default:
+		return "SCOPE.Component"
+	}
 }
 
 // fileOr returns primary if non-empty, else fallback.

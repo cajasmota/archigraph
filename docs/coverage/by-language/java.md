@@ -31,7 +31,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Dropwizard](../detail/lang.java.framework.dropwizard.md) | 🟢 3/3 | 🔴 0/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 1/13 | |
 | [Eclipse MicroProfile](../detail/lang.java.framework.microprofile.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 2/16 | |
 | [Helidon](../detail/lang.java.framework.helidon.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 1/13 | |
-| [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 12/16 | |
+| [JAX-RS / Jakarta REST](../detail/lang.java.framework.jaxrs.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 13/16 | |
 | [Jakarta EE (Servlet / EE Platform)](../detail/lang.java.framework.jakarta-ee.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 3/16 | |
 | [Javalin](../detail/lang.java.framework.javalin.md) | 🟢 3/3 | 🔴 0/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 3/7 | |
 | [Micronaut](../detail/lang.java.framework.micronaut.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🔴 0/1 | 🟢 21/21 | 🟡 13/16 | |
@@ -122,4 +122,4 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Testing | Other capabilities | Notes |
 |---|---|---|---|
-| [Bean Validation (Jakarta/javax)](../detail/lang.java.validation.bean-validation.md) | 🔴 0/1 | 🟢 4/4 | |
+| [Bean Validation (Jakarta/javax)](../detail/lang.java.validation.bean-validation.md) | 🔴 0/1 | ✅ 4/4 | |

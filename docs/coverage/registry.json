@@ -20720,25 +20720,22 @@
         },
         "DI": {
           "di_binding_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/java/jakarta_ee.go","internal/extractors/custom_java_patterns_smoke_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
-            "notes": "CDI/EJB bean entities (SCOPE.Service/Component) emit live for jaxrs files carrying jakarta_ee markers; the @EJB/@Inject DEPENDS_ON injection edge is dropped by the no-carrier policy in patternResultToRecords.",
-            "verified_at": "2026-06-01"
+            "status": "full",
+            "cites": ["internal/custom/java/jakarta_ee.go","internal/custom/java/patterns_dispatch.go","internal/extractors/java_edge_carrier_reverify_test.go"],
+            "notes": "#3605 (epic #3584): CDI/EJB bean entities emit live AND the @EJB/@Inject DEPENDS_ON injection edge now materialises — patternResultToRecords synthesises the injecting-class carrier (SCOPE.Class) for the previously carrier-less SourceRef. TestReverifyJaxrsInjectionPointCarrier asserts the DEPENDS_ON UserResource-\u003eUserService (kind=ejb_inject) edge live.",
+            "verified_at": "2026-06-02"
           },
           "di_injection_point": {
-            "status": "missing",
-            "cites": ["internal/custom/java/jakarta_ee.go","internal/extractors/custom_java_patterns_smoke_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
-            "notes": "@Inject/@EJB injection DEPENDS_ON edges are constructed but DROPPED live: their SourceRef (scope:dependency:jakarta:...) has no carrier entity in patternResultToRecords, so the edge never reaches the graph. Genuinely not produced.",
-            "verified_at": "2026-06-01"
+            "status": "full",
+            "cites": ["internal/custom/java/jakarta_ee.go","internal/custom/java/patterns_dispatch.go","internal/extractors/java_edge_carrier_reverify_test.go"],
+            "notes": "#3605 (epic #3584): the @Inject/@EJB injection DEPENDS_ON edge now reaches the graph — patternResultToRecords synthesises a SCOPE.Class carrier for its SourceRef (scope:dependency:jakarta:...) instead of dropping it, and surfaces edge-only PatternResults. TestReverifyJaxrsInjectionPointCarrier asserts the materialised carrier + DEPENDS_ON edge live.",
+            "verified_at": "2026-06-02"
           },
           "di_scope_resolution": {
-            "status": "partial",
-            "cites": ["internal/custom/java/jakarta_ee.go","internal/custom/java/java_di_scope_deepen.go","internal/extractors/custom_java_patterns_smoke_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
-            "notes": "CDI scope components (@RequestScoped/@ConversationScoped) emit live with cdi_scope/scope props; no DEPENDS_ON injection wiring (that edge is dropped).",
-            "verified_at": "2026-06-01"
+            "status": "full",
+            "cites": ["internal/custom/java/jakarta_ee.go","internal/custom/java/java_di_scope_deepen.go","internal/custom/java/patterns_dispatch.go","internal/extractors/java_edge_carrier_reverify_test.go"],
+            "notes": "#3605 (epic #3584): CDI scope components emit live AND the DEPENDS_ON injection wiring into them now materialises via the synthesised injecting-class carrier (no longer dropped). TestReverifyJaxrsInjectionPointCarrier proves the injection edge reaches the graph.",
+            "verified_at": "2026-06-02"
           }
         },
         "Transactions": {
@@ -24633,11 +24630,10 @@
       "capabilities": {
         "Schema": {
           "nested_model_extraction": {
-            "status": "partial",
-            "cites": ["internal/custom/java/bean_validation.go","internal/extractors/custom_java_patterns_smoke_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3589",
-            "notes": "Nested @Valid field schema entities emit live; the VALIDATES edge (owner class -\u003e nested type) is dropped by the no-carrier policy because its SourceRef (scope:class:bean_validation:...) has no carrier entity.",
-            "verified_at": "2026-06-01"
+            "status": "full",
+            "cites": ["internal/custom/java/bean_validation.go","internal/custom/java/patterns_dispatch.go","internal/extractors/java_edge_carrier_reverify_test.go"],
+            "notes": "#3605 (epic #3584): nested @Valid field schema entities emit live AND the VALIDATES edge (owner DTO -\u003e nested type) now materialises — patternResultToRecords synthesises the owning-DTO carrier (SCOPE.Class) for its SourceRef (scope:class:bean_validation:...) instead of dropping it. TestReverifyBeanValidationNestedValidCarrier asserts the VALIDATES OrderRequest-\u003eAddress (field=shippingAddress, via=valid_annotation) edge live.",
+            "verified_at": "2026-06-02"
           },
           "schema_extraction": {
             "status": "full",
