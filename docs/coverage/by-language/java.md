@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # java
 
-**Frameworks**: 22 · **Tools**: 10 · **ORMs**: 14 · **Other**: 4
+**Frameworks**: 22 · **Tools**: 10 · **ORMs**: 15 · **Other**: 4
 
 Back to [summary](../summary.md).
 
@@ -101,6 +101,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [EclipseLink](../detail/lang.java.orm.eclipselink.md) | 🟢 7/7 | |
 | [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟢 7/7 | |
 | [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟢 7/7 | |
+| [MongoDB Java Driver](../detail/lang.java.driver.mongodb.md) | ✅ 1/1 | |
 | [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟢 7/7 | |
 | [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟡 4/5 | |
 | [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟢 7/7 | |

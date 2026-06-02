@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [JS/TS](../by-language/jsts.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 38
+- **Capability cells:** 42
 
 ## Capabilities
 
@@ -47,6 +47,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Type alias extraction | 🔴 `missing` | — | 3619 | — | — |
 | Type extraction | 🔴 `missing` | — | 3619 | — | — |
 
+### DI
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DI binding extraction | 🔴 `missing` | — | 3628 | — | — |
+| DI injection point | 🔴 `missing` | — | 3628 | — | — |
+| DI scope resolution | 🔴 `missing` | — | 3628 | — | — |
+
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
@@ -86,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Pure function tagging | 🔴 `missing` | — | 3619 | — | — |
 | Reachability analysis | 🔴 `missing` | — | 3619 | — | — |
 | Request shape extraction | 🔴 `missing` | — | 3619 | — | — |
+| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | 🔴 `missing` | — | 3619 | — | — |
 | Sanitizer recognition | 🔴 `missing` | — | 3619 | — | — |
 | Schema drift detection | 🔴 `missing` | — | 3619 | — | — |

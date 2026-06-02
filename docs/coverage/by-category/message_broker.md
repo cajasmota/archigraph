@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # message_broker
 
-**Total**: 33 records · **C/C++**: 3 · **elixir**: 2 · **JS/TS**: 1 · **multi**: 21 · **python**: 3 · **ruby**: 1 · **rust**: 2
+**Total**: 34 records · **C/C++**: 3 · **elixir**: 2 · **JS/TS**: 1 · **multi**: 21 · **python**: 3 · **ruby**: 2 · **rust**: 2
 
 Back to [summary](../summary.md). Bucket: **Other**.
 
@@ -20,7 +20,7 @@ Back to [summary](../summary.md). Bucket: **Other**.
 | [multi](../by-language/multi.md) | [Apache Kafka](../detail/msg.broker.kafka.md) | ✅ | ✅ | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [Apache Pulsar](../detail/msg.broker.pulsar.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
 | [multi](../by-language/multi.md) | [Azure Event Grid](../detail/msg.broker.eventgrid.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
-| [multi](../by-language/multi.md) | [Azure Service Bus](../detail/msg.broker.azure-service-bus.md) | 🔴 | 🔴 | 🔴 | 🔴 | |
+| [multi](../by-language/multi.md) | [Azure Service Bus / Event Hubs](../detail/msg.broker.azure-service-bus.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
 | [multi](../by-language/multi.md) | [CloudEvents](../detail/msg.broker.cloudevents.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
 | [multi](../by-language/multi.md) | [Debezium (CDC)](../detail/msg.broker.debezium.md) | ✅ | ✅ | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [GCP Pub/Sub](../detail/msg.broker.gcp-pubsub.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
@@ -37,6 +37,7 @@ Back to [summary](../summary.md). Bucket: **Other**.
 | [python](../by-language/python.md) | [Celery (Python task queue)](../detail/msg.celery.md) | ✅ | ✅ | ✅ | ✅ | |
 | [python](../by-language/python.md) | [Django signals (intra-repo pub/sub)](../detail/msg.django-signals.md) | ✅ | ✅ | ✅ | ✅ | |
 | [python](../by-language/python.md) | [Dramatiq (Python task queue)](../detail/msg.dramatiq.md) | ✅ | ✅ | — | ✅ | |
+| [ruby](../by-language/ruby.md) | [Resque (Ruby task queue)](../detail/msg.resque.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
 | [ruby](../by-language/ruby.md) | [Sidekiq (Ruby task queue)](../detail/msg.sidekiq.md) | 🟢 | 🟢 | — | 🟢 | |
 | [rust](../by-language/rust.md) | [lapin (AMQP/RabbitMQ)](../detail/lang.rust.framework.lapin.md) | 🟢 | 🟢 | 🟢 | 🟢 | |
 | [rust](../by-language/rust.md) | [rdkafka (Kafka)](../detail/lang.rust.framework.rdkafka.md) | 🟢 | 🟢 | 🟢 | 🟢 | |

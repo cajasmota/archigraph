@@ -25,7 +25,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Association extraction | ✅ `full` | `2026-05-29` | 3067 | `internal/custom/javascript/orm_build_3067_test.go`<br>`internal/custom/javascript/prisma.go` | — |
 | Foreign key extraction | ✅ `full` | `2026-05-29` | 3067 | `internal/custom/javascript/orm_build_3067_test.go`<br>`internal/custom/javascript/prisma.go` | — |
 | Lazy loading recognition | — `not_applicable` | — | — | — | Prisma uses explicit include/select — eager-only per Prisma docs; no transparent lazy loading (#3184) |
-| Relationship extraction | ✅ `full` | `2026-05-29` | 3067 | `internal/custom/javascript/orm_build_3067_test.go`<br>`internal/custom/javascript/prisma.go` | — |
+| Relationship extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/javascript/orm_relationship_edges_test.go`<br>`internal/custom/javascript/prisma.go` | Model↔model GRAPH_RELATES edges with cardinality from schema.prisma relation fields: Order[]→one_to_many, Type @relation(fields:...)→many_to_one, Type?→one_to_one; scalar/enum/cross-file types emit no edge. Test: TestPrismaGraphRelatesEdges/TestPrismaScalarFieldNoEdge. |
 
 ### Queries
 

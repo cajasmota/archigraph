@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [go](../by-language/go.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 38
+- **Capability cells:** 42
 
 ## Capabilities
 
@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/middleware_auth_test.go` | heuristic substring catalog (jwt/oauth/basic/session/rbac/api_key/auth) against .Use() chain expressions; auth_kind + dedicated auth:NAME pattern emitted; fixture tests prove jwt/basic/oauth classification per-framework |
+| Auth coverage | ✅ `full` | `2026-06-02` | — | `internal/custom/golang/helpers.go`<br>`internal/custom/golang/middleware_auth_test.go`<br>`internal/custom/golang/route_auth.go`<br>`internal/custom/golang/route_auth_test.go` | Two layers. (1) #3734 endpoint-protection stamping (route_auth.go): binds auth middleware to the route SCOPE.Operation op and stamps the #3696 flat contract (auth_required/auth_method=middleware/auth_guard/auth_kind/auth_confidence). Echo passes trailing middleware after the handler (e.GET('/admin', h, jwtMiddleware) -> /admin auth_required, kind=jwt, HIGH), group-level (g := e.Group('/admin', jwtMiddleware) -> routes on g auth_required, HIGH), engine-wide .Use() -> MEDIUM. Value-asserting tests TestEchoTrailingMiddlewareAuth/TestEchoGroupAuth + negatives (/public,/login not stamped). (2) #3213 .Use() chain pattern catalog (jwt/oauth/basic/session/rbac/api_key/auth). Honest-partial: dynamic/conditional middleware and roles/scopes from opaque guards not modelled. |
 
 ### Validation
 
@@ -46,6 +46,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Interface extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/golang/extractor.go`<br>`internal/extractors/golang/extractor_test.go` | — |
 | Type alias extraction | 🟢 `partial` | `2026-05-29` | — | `internal/extractors/golang/extractor.go` | type X = Y alias declarations via tree-sitter base extractor; framework-specific type aliases (e.g. gin.HandlerFunc, echo.HandlerFunc) captured but not distinguished from user-defined aliases; no value-asserting framework-specific tests |
 | Type extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/golang/extractor.go`<br>`internal/extractors/golang/extractor_test.go` | — |
+
+### DI
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DI binding extraction | 🔴 `missing` | — | 3628 | — | — |
+| DI injection point | 🔴 `missing` | — | 3628 | — | — |
+| DI scope resolution | 🔴 `missing` | — | 3628 | — | — |
 
 ### Testing
 
@@ -86,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Pure function tagging | 🟢 `partial` | `2026-05-29` | — | `internal/links/effect_propagation.go`<br>`internal/links/pure_function_pass.go` | — |
 | Reachability analysis | 🟢 `partial` | `2026-05-29` | — | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_golang.go` | — |
 | Request shape extraction | ✅ `full` | `2026-05-27` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_golang.go` | — |
+| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | ✅ `full` | `2026-05-27` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_golang.go` | — |
 | Sanitizer recognition | 🟢 `partial` | `2026-05-29` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_golang.go` | — |
 | Schema drift detection | ✅ `full` | `2026-05-27` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_golang.go` | — |

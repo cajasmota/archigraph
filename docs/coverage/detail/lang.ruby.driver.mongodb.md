@@ -1,0 +1,50 @@
+<!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
+# `lang.ruby.driver.mongodb` — mongo Ruby Driver
+
+Auto-generated. Back to [summary](../summary.md).
+
+- **Language:** [ruby](../by-language/ruby.md)
+- **Category:** [orm](../by-category/orm.md)
+- **Subcategory:** ORM / Data Mapper
+- **Capability cells:** 8
+
+## Capabilities
+
+
+### Models
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Model extraction | — `not_applicable` | — | — | — | NoSQL driver — no relational schema/ORM model in user code |
+| Schema extraction | — `not_applicable` | — | — | — | NoSQL driver — no relational schema/ORM model in user code |
+
+### Relationships
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Association extraction | — `not_applicable` | — | — | — | raw driver — no ORM relationship/lazy-load layer |
+| Foreign key extraction | — `not_applicable` | — | — | — | raw driver — no ORM relationship/lazy-load layer |
+| Lazy loading recognition | — `not_applicable` | — | — | — | raw driver — no ORM relationship/lazy-load layer |
+| Relationship extraction | — `not_applicable` | — | — | — | raw driver — no ORM relationship/lazy-load layer |
+
+### Queries
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Query attribution | ✅ `full` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Driver topology: client[:x] symbol / client['x'] string collection accessor captured via scanRubyDrivers (rubyMongoCollRe/rubyMongoCollStrRe); QUERIES edge to Class:<Collection>; dynamic names honest-skipped. |
+
+### Migrations
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| Migration parsing | — `not_applicable` | — | — | — | — |
+
+## Provenance
+
+This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON
+(or use `go run ./tools/coverage update lang.ruby.driver.mongodb ...`) then regenerate:
+
+```
+go run ./tools/coverage validate
+go run ./tools/coverage gen
+```

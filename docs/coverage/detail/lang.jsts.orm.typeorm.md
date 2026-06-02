@@ -25,7 +25,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Association extraction | ✅ `full` | — | 3064 | `internal/custom/javascript/extractors_test.go`<br>`internal/custom/javascript/typeorm.go` | — |
 | Foreign key extraction | ✅ `full` | — | 3064 | `internal/custom/javascript/extractors_coverage_test.go`<br>`internal/custom/javascript/typeorm.go` | — |
 | Lazy loading recognition | 🟢 `partial` | — | 3071 | `internal/custom/javascript/issue3071_lazy_loading_test.go`<br>`internal/custom/javascript/typeorm.go` | Detects @OneToMany/@ManyToOne/@OneToOne/@ManyToMany relation decorators carrying { lazy: true }; emits SCOPE.Pattern/lazy_relation with lazy_loading=true. Promise<T> return-type inference not yet implemented. |
-| Relationship extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/javascript/typeorm.go` | — |
+| Relationship extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/javascript/orm_relationship_edges_test.go`<br>`internal/custom/javascript/typeorm.go` | Model↔model GRAPH_RELATES edges with cardinality from @OneToMany/@ManyToOne/@OneToOne/@ManyToMany; target taken from the arrow-returned class (() => Order), hung off the owning @Entity node; cross-file targets honest-partial (target_entity prop only, no edge). Test: TestTypeORMGraphRelatesEdges/TestTypeORMUnresolvedTargetNoEdge. |
 
 ### Queries
 

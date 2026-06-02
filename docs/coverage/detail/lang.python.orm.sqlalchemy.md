@@ -25,7 +25,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Association extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/python/sqlalchemy.go` | — |
 | Foreign key extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/python/sqlalchemy.go` | — |
 | Lazy loading recognition | ✅ `full` | `2026-05-29` | 3060 | `internal/custom/python/sqlalchemy.go` | lazy= kwarg in relationship() calls is detected and recorded as lazy_strategy on the SCOPE.Schema entity; lazy_select_in, write_only, and dynamic_write_only strategies not yet distinguished |
-| Relationship extraction | ✅ `full` | `2026-05-29` | — | `internal/custom/python/sqlalchemy.go` | — |
+| Relationship extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/python/sqlalchemy.go`<br>`internal/custom/python/sqlalchemy_graph_relates_test.go` | Model↔model GRAPH_RELATES edges with cardinality from relationship("Target"): default collection→one_to_many, uselist=False→one_to_one; Class:<parent>→Class:<target>. Test: TestSQLAlchemyGraphRelatesEdges/TestSQLAlchemyNoRelationshipNoEdge. |
 
 ### Queries
 

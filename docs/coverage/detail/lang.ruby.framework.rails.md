@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [ruby](../by-language/ruby.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 39
+- **Capability cells:** 43
 
 ## Capabilities
 
@@ -23,7 +23,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/ruby/auth.go`<br>`internal/custom/ruby/auth_deep_test.go` | Deep Rails auth (Devise/Pundit/CanCanCan) extraction to TS/JS bar. Devise: devise_for route registration, authenticate_<model>! before_action with mechanism+auth_required, devise modules with authenticatable flag, <model>_signed_in? helpers, require_login. Pundit: class FooPolicy name extraction, per-action (update?/create?/show?) entity with action+policy_class properties, authorize calls with mechanism=pundit+auth_required=true, include Pundit::Authorization. CanCanCan: Ability class sentinel, per-rule can/cannot :action Resource with action+resource+permission+in_ability_class properties, authorize! and load_and_authorize_resource with mechanism=cancancan. General: before_action :require_auth/:check_authentication/:verify_auth. Value-asserting tests in auth_deep_test.go assert SPECIFIC properties (mechanism, action, resource, auth_required, authenticatable, policy_class) across 13 test cases covering all four frameworks plus combined scenarios. Honest remainder: cross-file dataflow (e.g. inferring which controller actions are protected by a controller-level before_action) and roles/scopes extraction not modelled. |
+| Auth coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/ruby/auth.go`<br>`internal/custom/ruby/auth_deep_test.go`<br>`internal/custom/ruby/controller_auth.go`<br>`internal/custom/ruby/controller_auth_test.go` | #3734 endpoint-protection: controller_auth.go (custom_ruby_controller_auth) resolves a controller-level before_action :authenticate_user! (Devise) / :require_login / CanCanCan load_and_authorize_resource and stamps the #3696 flat contract (auth_required/auth_method/auth_guard/auth_confidence) on one SCOPE.Operation/endpoint per controller ACTION (controller#action handler); only:/except: + skip_before_action honoured; per-action Pundit authorize -> MEDIUM. Closes the prior honest remainder (which actions a controller-level before_action protects). Tests TestControllerAuth* incl negative _Unprotected. Plus deep Rails auth (Devise/Pundit/CanCanCan) extraction to TS/JS bar. Devise: devise_for route registration, authenticate_<model>! before_action with mechanism+auth_required, devise modules with authenticatable flag, <model>_signed_in? helpers, require_login. Pundit: class FooPolicy name extraction, per-action (update?/create?/show?) entity with action+policy_class properties, authorize calls with mechanism=pundit+auth_required=true, include Pundit::Authorization. CanCanCan: Ability class sentinel, per-rule can/cannot :action Resource with action+resource+permission+in_ability_class properties, authorize! and load_and_authorize_resource with mechanism=cancancan. General: before_action :require_auth/:check_authentication/:verify_auth. Value-asserting tests in auth_deep_test.go assert SPECIFIC properties (mechanism, action, resource, auth_required, authenticatable, policy_class) across 13 test cases covering all four frameworks plus combined scenarios. Honest remainder: cross-file dataflow (e.g. inferring which controller actions are protected by a controller-level before_action) and roles/scopes extraction not modelled. |
 
 ### Validation
 
@@ -46,6 +46,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Interface extraction | — `not_applicable` | — | — | — | Ruby is dynamically typed — no interface keyword (duck typing idiom) |
 | Type alias extraction | — `not_applicable` | — | — | — | Ruby is dynamically typed — no type keyword (duck typing idiom) |
 | Type extraction | — `not_applicable` | — | — | — | Ruby dynamically typed; framework exposes no static type DSL |
+
+### DI
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DI binding extraction | 🔴 `missing` | — | 3628 | — | — |
+| DI injection point | 🔴 `missing` | — | 3628 | — | — |
+| DI scope resolution | 🔴 `missing` | — | 3628 | — | — |
 
 ### Testing
 
@@ -86,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Pure function tagging | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/pure_function_pass.go` | — |
 | Reachability analysis | 🟢 `partial` | `2026-05-28` | — | `internal/links/reachability.go`<br>`internal/substrate/entry_points_ruby.go` | — |
 | Request shape extraction | ✅ `full` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_ruby.go` | — |
+| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | ✅ `full` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_ruby.go` | — |
 | Sanitizer recognition | 🟢 `partial` | `2026-05-28` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_ruby.go` | — |
 | Schema drift detection | ✅ `full` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_ruby.go` | — |

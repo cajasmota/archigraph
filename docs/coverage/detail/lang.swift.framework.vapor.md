@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [swift](../by-language/swift.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 38
+- **Capability cells:** 42
 
 ## Capabilities
 
@@ -47,6 +47,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Type alias extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/swift/vapor_extended.go` | vapor_extended.go (custom extractor) handles Swift typealias declarations via regex, emitting SCOPE.Component/subtype=typealias with alias_target property; proven by TestVaporExtendedTypeAlias covering public/internal/bare typealias forms. |
 | Type extraction | ✅ `full` | `2026-05-30` | — | `internal/extractors/swift/swift.go` | swift.go (tree-sitter extractor) handles class_declaration nodes for class and struct subtypes, emitting SCOPE.Component/subtype=class|struct; Fluent @Model classes additionally handled by vapor.go custom extractor; proven by existing test corpus. |
 
+### DI
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DI binding extraction | 🔴 `missing` | — | 3628 | — | — |
+| DI injection point | 🔴 `missing` | — | 3628 | — | — |
+| DI scope resolution | 🔴 `missing` | — | 3628 | — | — |
+
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
@@ -86,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Pure function tagging | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/pure_function_pass.go` | pure_function_pass.go is language-agnostic and tags functions with no observed effect-sinks as pure; Swift effect_sinks_swift.go feeds the effect graph; partial because Swift async/await patterns can obscure purity. |
 | Reachability analysis | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_swift.go` | reachability.go BFS seeds from entry-points and walks CALLS edges; entry_points_swift.go provides @main, Vapor boot/configure lifecycle hooks, XCTest entry points, and public/open exported functions; partial because full Swift module-boundary traversal requires package manifest integration. |
 | Request shape extraction | ✅ `full` | `2026-05-30` | — | `internal/links/payload_drift.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_t3.go` | payload_shapes_t3.go provides full Swift/Vapor sniffer: req.content.decode(T.self) + Codable/Content-conforming struct field extraction; payload_drift.go cross-references producer/consumer shapes. |
+| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | ✅ `full` | `2026-05-30` | — | `internal/links/payload_drift.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_t3.go` | payload_shapes_t3.go sniffer captures struct-literal return shapes (return T(field:v)) from Encodable/Content-conforming types; payload_drift.go cross-references producer/consumer shapes. |
 | Sanitizer recognition | 🟢 `partial` | `2026-05-28` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_swift.go` | — |
 | Schema drift detection | ✅ `full` | `2026-05-30` | — | `internal/links/payload_drift.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_t3.go` | payload_drift.go consumes the Swift payload shape records emitted by payload_shapes_t3.go and cross-references producer request fields against consumer field sets; schema drift findings are emitted as SchemaDrift entities. |

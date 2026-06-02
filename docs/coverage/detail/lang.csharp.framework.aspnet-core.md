@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [C#](../by-language/csharp.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 41
+- **Capability cells:** 42
 
 ## Capabilities
 
@@ -47,6 +47,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Type alias extraction | — `not_applicable` | — | — | — | C# has only file-scoped using-aliases, not first-class type aliases |
 | Type extraction | ✅ `full` | — | — | `internal/extractors/csharp/csharp.go` | tree-sitter CST class/struct/record_declaration → SCOPE.Component; record_declaration added this PR |
 
+### DI
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DI binding extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/csharp/dotnet_di.go`<br>`internal/custom/csharp/dotnet_di_test.go` | #3699: ExtractDotnetDI (custom_csharp_dotnet_di) emits the DI binding GRAPH for Microsoft.Extensions.DependencyInjection: services.AddSingleton/AddScoped/AddTransient<IFoo,Foo>() (and Try/Keyed + typeof(IFoo),typeof(Foo) forms) emit IFoo BINDS Foo with lifetime=Singleton|Scoped|Transient; single-type-arg AddScoped<Foo>() emits a self-BINDS (binding_kind=self). Value-asserted in dotnet_di_test.go (IRepo BINDS Repo lifetime=Scoped; IClock/IMailer Singleton/Transient; typeof form; self-registration). |
+| DI injection point | 🟢 `partial` | `2026-06-02` | — | `internal/custom/csharp/dotnet_di.go`<br>`internal/custom/csharp/dotnet_di_test.go` | #3699: constructor params of a class emit INJECTED_INTO (service type -> consumer class, via=dotnet_constructor); IConfiguration/IServiceProvider/IOptions<>/ILogger<> infrastructure types + primitives rejected. Value-asserted in dotnet_di_test.go (IOrderService INJECTED_INTO OrderController; negative: ILogger<> + string yield no edge). PARTIAL: the registered-as-DI gate is structural (any class ctor), and the impl/provider class resolves cross-file only via the resolver pass; factory-lambda registrations not linked. |
+| DI scope resolution | ✅ `full` | `2026-06-02` | — | `internal/custom/csharp/dotnet_di.go`<br>`internal/custom/csharp/dotnet_di_test.go` | #3699: BINDS edges carry the service lifetime (Singleton/Scoped/Transient) parsed from the AddXxx registration verb. Value-asserted in dotnet_di_test.go. |
+
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
@@ -86,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Pure function tagging | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/effect_propagation.go`<br>`internal/links/pure_function_pass.go` | — |
 | Reachability analysis | 🟢 `partial` | `2026-05-28` | — | `internal/links/reachability.go`<br>`internal/substrate/entry_points_csharp.go` | — |
 | Request shape extraction | ✅ `full` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_csharp.go` | — |
+| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | ✅ `full` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_csharp.go` | — |
 | Sanitizer recognition | 🟢 `partial` | `2026-05-28` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_csharp.go` | — |
 | Schema drift detection | ✅ `full` | `2026-05-28` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_csharp.go` | — |
@@ -93,16 +102,6 @@ Auto-generated. Back to [summary](../summary.md).
 | Taint source detection | 🟢 `partial` | `2026-05-28` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_csharp.go` | — |
 | Template pattern catalog | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/template_pattern_pass.go`<br>`internal/substrate/template_pattern.go`<br>`internal/substrate/template_pattern_csharp.go` | — |
 | Vulnerability finding | 🟢 `partial` | `2026-05-28` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_csharp.go` | — |
-
-## Framework-specific
-
-### Dependency Injection
-
-| Capability | Status | Verified at | Issue | Cites | Notes |
-|------------|--------|-------------|-------|-------|-------|
-| DI binding extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/csharp/dotnet_di.go`<br>`internal/custom/csharp/dotnet_di_test.go` | #3699: ExtractDotnetDI (custom_csharp_dotnet_di) emits the DI binding GRAPH for Microsoft.Extensions.DependencyInjection: services.AddSingleton/AddScoped/AddTransient<IFoo,Foo>() (and Try/Keyed + typeof(IFoo),typeof(Foo) forms) emit IFoo BINDS Foo with lifetime=Singleton|Scoped|Transient; single-type-arg AddScoped<Foo>() emits a self-BINDS (binding_kind=self). Value-asserted in dotnet_di_test.go (IRepo BINDS Repo lifetime=Scoped; IClock/IMailer Singleton/Transient; typeof form; self-registration). |
-| DI injection point | 🟢 `partial` | `2026-06-02` | — | `internal/custom/csharp/dotnet_di.go`<br>`internal/custom/csharp/dotnet_di_test.go` | #3699: constructor params of a class emit INJECTED_INTO (service type -> consumer class, via=dotnet_constructor); IConfiguration/IServiceProvider/IOptions<>/ILogger<> infrastructure types + primitives rejected. Value-asserted in dotnet_di_test.go (IOrderService INJECTED_INTO OrderController; negative: ILogger<> + string yield no edge). PARTIAL: the registered-as-DI gate is structural (any class ctor), and the impl/provider class resolves cross-file only via the resolver pass; factory-lambda registrations not linked. |
-| DI scope resolution | ✅ `full` | `2026-06-02` | — | `internal/custom/csharp/dotnet_di.go`<br>`internal/custom/csharp/dotnet_di_test.go` | #3699: BINDS edges carry the service lifetime (Singleton/Scoped/Transient) parsed from the AddXxx registration verb. Value-asserted in dotnet_di_test.go. |
 
 ## Provenance
 

@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 152 records · **C/C++**: 7 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 14 · **JS/TS**: 18 · **kotlin**: 7 · **php**: 14 · **python**: 17 · **ruby**: 13 · **rust**: 15 · **scala**: 6
+**Total**: 155 records · **C/C++**: 7 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 18 · **kotlin**: 7 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 6
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
@@ -64,6 +64,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [java](../by-language/java.md) | [EclipseLink](../detail/lang.java.orm.eclipselink.md) | 🟢 7/7 | |
 | [java](../by-language/java.md) | [Hibernate ORM](../detail/lang.java.orm.hibernate.md) | 🟢 7/7 | |
 | [java](../by-language/java.md) | [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟢 7/7 | |
+| [java](../by-language/java.md) | [MongoDB Java Driver](../detail/lang.java.driver.mongodb.md) | ✅ 1/1 | |
 | [java](../by-language/java.md) | [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟢 7/7 | |
 | [java](../by-language/java.md) | [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟡 4/5 | |
 | [java](../by-language/java.md) | [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟢 7/7 | |
@@ -127,6 +128,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [python](../by-language/python.md) | [elasticsearch-py](../detail/lang.python.driver.elastic.md) | ✅ 1/1 | |
 | [python](../by-language/python.md) | [neo4j (Python driver) / neomodel OGM](../detail/lang.python.driver.neo4j.md) | 🟡 3/4 | |
 | [python](../by-language/python.md) | [psycopg / asyncpg (PostgreSQL drivers)](../detail/lang.python.driver.postgres.md) | 🟢 2/2 | |
+| [python](../by-language/python.md) | [pymongo / motor](../detail/lang.python.driver.mongodb.md) | ✅ 1/1 | |
 | [python](../by-language/python.md) | [redis-py](../detail/lang.python.driver.redis.md) | ✅ 1/1 | |
 | [python](../by-language/python.md) | [sqlite3 (stdlib)](../detail/lang.python.driver.sqlite.md) | 🟢 2/2 | |
 | [ruby](../by-language/ruby.md) | [AWS SDK DynamoDB (Ruby)](../detail/lang.ruby.driver.dynamodb.md) | ✅ 1/1 | |
@@ -137,6 +139,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [ruby](../by-language/ruby.md) | [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟢 8/8 | |
 | [ruby](../by-language/ruby.md) | [cassandra-driver (Ruby)](../detail/lang.ruby.driver.cassandra.md) | ✅ 1/1 | |
 | [ruby](../by-language/ruby.md) | [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 1/2 | |
+| [ruby](../by-language/ruby.md) | [mongo Ruby Driver](../detail/lang.ruby.driver.mongodb.md) | ✅ 1/1 | |
 | [ruby](../by-language/ruby.md) | [mysql2 (Ruby driver)](../detail/lang.ruby.driver.mysql.md) | 🔴 0/1 | |
 | [ruby](../by-language/ruby.md) | [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 3/4 | |
 | [ruby](../by-language/ruby.md) | [pg (Ruby driver)](../detail/lang.ruby.driver.postgres.md) | 🔴 0/1 | |

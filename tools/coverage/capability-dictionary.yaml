@@ -102,6 +102,9 @@ subcategories:
       - type_alias_extraction
       - enum_extraction
       - type_extraction
+      - di_binding_extraction
+      - di_injection_point
+      - di_scope_resolution
       - constant_propagation
       - env_fallback_recognition
       - config_consumption
@@ -146,6 +149,8 @@ subcategories:
         keys: [middleware_coverage]
       - name: Type System
         keys: [interface_extraction, type_alias_extraction, enum_extraction, type_extraction]
+      - name: DI
+        keys: [di_binding_extraction, di_injection_point, di_scope_resolution]
       - name: Testing
         keys: [tests_linkage]
       - name: Observability

@@ -16,7 +16,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Task extraction | 🟢 `partial` | `2026-05-28` | — | `internal/custom/python/rq.go` | — |
-| Task routing | 🟢 `partial` | `2026-05-28` | — | `internal/custom/python/rq.go` | — |
+| Task routing | 🟢 `partial` | `2026-06-02` | 3628 | `internal/custom/python/rq.go`<br>`internal/engine/scheduled_jobs_edges.go`<br>`internal/engine/scheduled_jobs_edges_test.go` | epic #3628 jobs cross-link: queue.enqueue(my_func) / enqueue_call(func="mod.my_func") dispatch sites now emit an ENQUEUES edge from the enclosing function to Function:<my_func> (the consumer), joining producer to handler. Honest-partial: dynamic callables (e.g. enqueue(getattr(...))) are skipped; cross-queue routing by name not modelled. |
 
 ### Schedule
 

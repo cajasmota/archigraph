@@ -25,7 +25,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Association extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/python/django_relational.go` | — |
 | Foreign key extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/python/django_relational.go` | — |
 | Lazy loading recognition | ✅ `full` | `2026-05-29` | 3060 | `internal/engine/orm_queries_python.go` | select_related() and prefetch_related() detected as is_join=true by pythonIsJoinDjango(); full recognition of all lazy strategies not yet implemented |
-| Relationship extraction | ✅ `full` | `2026-05-29` | — | `internal/extractors/python/django_relational.go` | — |
+| Relationship extraction | ✅ `full` | `2026-06-02` | — | `internal/extractors/python/django_graph_relates_test.go`<br>`internal/extractors/python/django_relational.go` | Model↔model GRAPH_RELATES edges with cardinality alongside the field-level REFERENCES edge: ForeignKey→many_to_one, OneToOneField→one_to_one, ManyToManyField→many_to_many; hung off the owning model class node; scalar fields emit no edge. Test: TestDjangoGraphRelatesForeignKey/TestDjangoGraphRelatesScalarFieldNoEdge. |
 
 ### Queries
 

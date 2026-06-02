@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
-# `msg.broker.azure-service-bus` — Azure Service Bus
+# `msg.broker.azure-service-bus` — Azure Service Bus / Event Hubs
 
 Auto-generated. Back to [summary](../summary.md).
 
@@ -11,9 +11,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Consumer extraction | 🔴 `missing` | — | — | — | — |
-| Producer extraction | 🔴 `missing` | — | — | — | — |
-| Topic attribution | 🔴 `missing` | — | — | — | — |
+| Consumer extraction | 🟢 `partial` | `2026-06-02` | — | `internal/engine/azure_messaging_edges.go` | — |
+| Producer extraction | 🟢 `partial` | `2026-06-02` | — | `internal/engine/azure_messaging_edges.go` | — |
+| Topic attribution | 🟢 `partial` | `2026-06-02` | — | `internal/engine/azure_messaging_edges.go` | — |
 
 ## Provenance
 

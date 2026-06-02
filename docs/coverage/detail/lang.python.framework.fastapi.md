@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [python](../by-language/python.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 38
+- **Capability cells:** 42
 
 ## Capabilities
 
@@ -47,6 +47,14 @@ Auto-generated. Back to [summary](../summary.md).
 | Type alias extraction | ✅ `full` | `2026-05-29` | 3049 | `internal/extractors/python/types.go` | — |
 | Type extraction | ✅ `full` | `2026-05-29` | 3049 | `internal/extractors/python/types.go` | — |
 
+### DI
+
+| Capability | Status | Verified at | Issue | Cites | Notes |
+|------------|--------|-------------|-------|-------|-------|
+| DI binding extraction | 🟢 `partial` | `2026-06-02` | — | `internal/custom/python/di_graph.go`<br>`internal/custom/python/di_graph_test.go` | dependency-injector DeclarativeContainer providers (providers.Factory/Singleton(Impl)) emit BINDS(token->impl), token=container attribute name. Value-asserted TestPyDI_ContainerProviderBinds (service->Service, repo->Repository); negative TestPyDI_ConfigurationProviderNoBinds. PARTIAL: cross-file token resolution + dynamic providers skipped; FastAPI itself has no token-binding container. |
+| DI injection point | 🟢 `partial` | `2026-06-02` | — | `internal/custom/python/di_graph.go`<br>`internal/custom/python/di_graph_test.go` | FastAPI Depends() and dependency-injector @inject/Provide[...] emit INJECTED_INTO(provider->consumer). Value-asserted: TestPyDI_FastAPIDependsCallable (get_service->handler), TestPyDI_FastAPIDependsClass (SvcClass->handler), TestPyDI_FastAPIDependsBareType (type annotation), TestPyDI_InjectProvideInjectedInto (service->main). Negatives: TestPyDI_FastAPIDynamicNoEdge (Depends(getattr(...))), TestPyDI_ProvideWithoutInjectNoEdge. PARTIAL: dynamic/unresolved deps skipped (honest-partial); cross-file provider binding via resolver. |
+| DI scope resolution | — `not_applicable` | `2026-06-02` | — | — | FastAPI Depends has no container-managed lifetime/scope annotations to resolve (use_cache aside); dependency-injector scope is encoded in the provider kind (Factory vs Singleton), already captured as provider_kind on the BINDS edge in di_binding_extraction. No separate scope-resolution pass. |
+
 ### Testing
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
@@ -86,6 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Pure function tagging | 🟢 `partial` | `2026-05-29` | 3045 | `internal/links/effect_propagation.go`<br>`internal/links/pure_function_pass.go` | — |
 | Reachability analysis | 🟢 `partial` | `2026-05-29` | 3045 | `internal/links/reachability.go`<br>`internal/substrate/entry_points_python.go` | — |
 | Request shape extraction | ✅ `full` | `2026-05-27` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_python.go` | — |
+| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | ✅ `full` | `2026-05-27` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_python.go` | — |
 | Sanitizer recognition | 🟢 `partial` | `2026-05-29` | 3045 | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_python.go` | — |
 | Schema drift detection | ✅ `full` | `2026-05-27` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_python.go` | — |
