@@ -2399,6 +2399,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable",
             "notes": "ace is a low-level async I/O library; no HTTP route-registration DSL exists — routing is app-level, not framework-provided"
@@ -2660,6 +2664,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "not_applicable",
@@ -2923,6 +2931,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable",
             "notes": "boost-asio is a low-level async I/O library; no HTTP route-registration DSL exists — routing is app-level, not framework-provided"
@@ -3184,6 +3196,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -3456,6 +3472,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/cpp/crow_routes.go"],
@@ -3726,6 +3746,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -4155,6 +4179,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable",
             "notes": "libev is a low-level async I/O library; no HTTP route-registration DSL exists — routing is app-level, not framework-provided"
@@ -4416,6 +4444,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "not_applicable",
@@ -4704,6 +4736,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "not_applicable",
@@ -5044,6 +5080,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/cpp/oatpp_routes.go"],
@@ -5313,6 +5353,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -5584,6 +5628,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -6213,6 +6261,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/cpp/restbed_routes.go"],
@@ -6483,6 +6535,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -7977,6 +8033,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/aspnet_core_routes.go","internal/engine/rules/csharp/frameworks/asp_net_core.yaml"],
@@ -8249,6 +8309,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -9130,6 +9194,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/custom/csharp/minor_routes.go"],
@@ -9403,6 +9471,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -9849,6 +9921,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_hotchocolate.go","internal/engine/http_endpoint_hotchocolate_test.go"],
@@ -10083,6 +10159,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -10571,6 +10651,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -12357,6 +12441,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/elixir/frameworks/absinthe.yaml","internal/engine/rules/graphql/frameworks/absinthe_elixir.yaml"],
@@ -12634,6 +12722,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/elixir/frameworks/ash_framework.yaml"],
@@ -12908,6 +13000,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "not_applicable",
@@ -13203,6 +13299,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/substrate/entry_points_elixir.go"],
@@ -13474,6 +13574,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -13863,6 +13967,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -14087,6 +14195,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "not_applicable"
@@ -14346,6 +14458,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "not_applicable"
@@ -14615,6 +14731,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -15112,6 +15232,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/custom/elixir/plug.go"],
@@ -15389,6 +15513,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_elixir_tesla.go","internal/engine/http_endpoint_elixir_tesla_test.go","internal/engine/http_endpoint_synthesis.go"],
@@ -15618,6 +15746,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -16513,6 +16645,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/beego.go","internal/engine/rules/go/frameworks/beego.yaml"],
@@ -16784,6 +16920,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/buffalo.go","internal/engine/rules/go/frameworks/buffalo.yaml"],
@@ -17054,6 +17194,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -17332,6 +17476,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -17613,6 +17761,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/fasthttp.go","internal/engine/rules/go/frameworks/fasthttp.yaml"],
@@ -17891,6 +18043,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/go_routes.go","internal/engine/rules/go/frameworks/fiber.yaml"],
@@ -18168,6 +18324,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "missing",
@@ -18502,6 +18662,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/go_routes.go","internal/engine/rules/go/frameworks/gin.yaml"],
@@ -18781,6 +18945,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -19273,6 +19441,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/gorilla_mux.go","internal/engine/go_routes.go","internal/engine/rules/go/frameworks/gorilla_mux.yaml"],
@@ -19553,6 +19725,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_gqlgen_3613_test.go","internal/engine/httproutes/canonicalize.go","internal/engine/rules/graphql/frameworks/gqlgen_go.yaml"],
@@ -19786,6 +19962,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -20060,6 +20240,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/hertz_huma_test.go","internal/custom/golang/huma.go","internal/custom/golang/testdata/huma_routes.go","internal/engine/http_endpoint_go_trio.go"],
@@ -20332,6 +20516,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/iris.go","internal/engine/rules/go/frameworks/iris.yaml"],
@@ -20603,6 +20791,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/go/frameworks/kratos.yaml"],
@@ -20872,6 +21064,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -21159,6 +21355,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/golang/revel.go","internal/engine/rules/go/frameworks/revel.yaml"],
@@ -21428,6 +21628,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "missing",
@@ -22343,6 +22547,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/http_endpoint_synthesis.go"],
@@ -23098,6 +23306,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/java/patterns_dispatch.go","internal/custom/java/spring_graphql.go"],
@@ -23357,6 +23569,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -23678,6 +23894,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "missing",
@@ -24150,6 +24370,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/java_annotation_routes.go","internal/engine/rules/java/frameworks/microprofile.yaml"],
@@ -24483,6 +24707,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -24818,6 +25046,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/http_endpoint_synthesis.go"],
@@ -25136,6 +25368,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -25519,6 +25755,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go","internal/engine/rules/java/frameworks/micronaut.yaml"],
@@ -25854,6 +26094,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -26442,6 +26686,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/java_annotation_routes.go","internal/engine/rules/java/frameworks/quarkus.yaml"],
@@ -26775,6 +27023,13 @@
             "cites": ["internal/engine/http_endpoint_pagination.go","internal/engine/http_endpoint_pagination_patterns.go","internal/engine/http_endpoint_pagination_test.go","internal/engine/http_endpoint_synthesis.go"],
             "issue": "3628",
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
+            "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_response_codes.go","internal/engine/http_endpoint_response_codes_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3818",
+            "notes": "#3818: response_codes + success_code + response_codes_source via applyEndpointResponseCodes. Spring signals: @ResponseStatus(HttpStatus.X|NNN), ResponseEntity.status(HttpStatus.X|NNN), ResponseEntity factory helpers (ok-\u003e200/created-\u003e201/accepted-\u003e202/noContent-\u003e204/notFound-\u003e404/badRequest-\u003e400/unprocessableEntity-\u003e422/internalServerError-\u003e500), and ResponseStatusException(HttpStatus.X). Honest-partial: dynamic status skipped.",
             "verified_at": "2026-06-02"
           },
           "endpoint_synthesis": {
@@ -27133,6 +27388,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/java/patterns_dispatch.go","internal/custom/java/spring_graphql.go"],
@@ -27392,6 +27651,10 @@
             "issue": "3628",
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -27740,6 +28003,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -28273,6 +28540,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -30346,6 +30617,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/http_endpoint_jsts_backend_test.go","internal/engine/rules/javascript_typescript/frameworks/adonisjs.yaml","testdata/fixtures/typescript/adonisjs_group_prefix.ts","testdata/fixtures/typescript/adonisjs_routes.ts"],
@@ -31570,6 +31845,13 @@
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_response_codes.go","internal/engine/http_endpoint_response_codes_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3818",
+            "notes": "#3818: response_codes + success_code + response_codes_source via applyEndpointResponseCodes. Express signals: res.status(NNN), res.sendStatus(NNN), res.statusCode = NNN body literals. Honest-partial: res.status(dynamicVar) skipped; no literal -\u003e absent.",
+            "verified_at": "2026-06-02"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_test.go","internal/engine/rules/javascript_typescript/frameworks/express.yaml","internal/extractors/javascript/framework_dsl.go"],
@@ -31886,6 +32168,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_extra.go","internal/engine/http_endpoint_synthesis_test.go","internal/engine/rules/javascript_typescript/frameworks/fastify.yaml"],
@@ -32190,6 +32476,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -32941,6 +33231,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/hapi.yaml","testdata/fixtures/typescript/hapi_routes.ts"],
@@ -33243,6 +33537,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -33774,6 +34072,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/extractors/javascript/framework_dsl.go"],
@@ -34121,6 +34423,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -34641,6 +34947,13 @@
             "cites": ["internal/engine/http_endpoint_pagination.go","internal/engine/http_endpoint_pagination_patterns.go","internal/engine/http_endpoint_pagination_test.go","internal/engine/http_endpoint_synthesis.go"],
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
+            "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_response_codes.go","internal/engine/http_endpoint_response_codes_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3818",
+            "notes": "#3818: response_codes + success_code + response_codes_source via applyEndpointResponseCodes. Nest signals: @HttpCode(NNN), HttpStatus.X enum, and built-in HttpException subclasses mapped to codes (NotFoundException-\u003e404, ForbiddenException-\u003e403, ConflictException-\u003e409, ...). Honest-partial: dynamic status skipped.",
             "verified_at": "2026-06-02"
           },
           "endpoint_synthesis": {
@@ -35486,6 +35799,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/polka.yaml","testdata/fixtures/typescript/polka_routes.ts"],
@@ -35775,6 +36092,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -36876,6 +37197,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_jsts_backend.go","internal/engine/rules/javascript_typescript/frameworks/restify.yaml","testdata/fixtures/typescript/restify_routes.ts"],
@@ -37165,6 +37490,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -38209,6 +38538,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -39338,6 +39671,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable",
             "notes": "Arrow is a functional-programming library, not a web backend — no routing/DI/transaction/AOP container."
@@ -40009,6 +40346,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable",
             "notes": "kotlinx.coroutines is a concurrency runtime, not a web backend — no routing/DI/transaction/AOP container."
@@ -40295,6 +40636,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -40547,6 +40892,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -40805,6 +41154,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -41097,6 +41450,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "missing",
@@ -41611,6 +41968,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -41864,6 +42225,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -42114,6 +42479,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -42418,6 +42787,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -42737,6 +43110,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/kotlin/frameworks/quarkus_kotlin.yaml"],
@@ -43055,6 +43432,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_kotlin_client.go","internal/engine/http_endpoint_kotlin_client_test.go","internal/engine/http_endpoint_synthesis.go"],
@@ -43310,6 +43691,10 @@
             "issue": "3628",
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -44111,6 +44496,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -44344,6 +44733,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
@@ -44575,6 +44968,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -44846,6 +45243,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -45666,6 +46067,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/php/apiplatform.go","internal/custom/php/apiplatform_test.go"],
@@ -45895,6 +46300,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -46171,6 +46580,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/php/frameworks/codeigniter.yaml"],
@@ -46445,6 +46858,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -46721,6 +47138,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/php/graphql.go","internal/custom/php/graphql_test.go"],
@@ -46950,6 +47371,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -47225,6 +47650,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -47510,6 +47939,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/php/lighthouse.go","internal/custom/php/lighthouse_test.go"],
@@ -47739,6 +48172,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -48015,6 +48452,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/php/frameworks/magento.yaml"],
@@ -48289,6 +48730,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -48565,6 +49010,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/rules/php/frameworks/slim.yaml"],
@@ -48839,6 +49288,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -49123,6 +49576,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/php/frameworks/wordpress.yaml"],
@@ -49397,6 +49854,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -50578,6 +51039,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/aiohttp.yaml"],
@@ -50872,6 +51337,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphene_ariadne_3620_test.go","internal/engine/httproutes/canonicalize.go"],
@@ -51117,6 +51586,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -51636,6 +52109,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_py_routing_3065_test.go","internal/engine/rules/python/frameworks/cherrypy.yaml"],
@@ -51932,6 +52409,10 @@
             "issue": "3628",
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -52237,6 +52718,13 @@
             "cites": ["internal/engine/http_endpoint_pagination.go","internal/engine/http_endpoint_pagination_patterns.go","internal/engine/http_endpoint_pagination_test.go","internal/engine/http_endpoint_synthesis.go"],
             "issue": "3628",
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
+            "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_response_codes.go","internal/engine/http_endpoint_response_codes_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3818",
+            "notes": "#3818: response_codes + success_code + response_codes_source via applyEndpointResponseCodes. DRF/Django signals: Response(status=status.HTTP_*), HttpResponse(status=NNN), and raised DRF exceptions mapped to codes (NotFound-\u003e404, PermissionDenied-\u003e403, NotAuthenticated/AuthenticationFailed-\u003e401, ValidationError/ParseError-\u003e400, MethodNotAllowed-\u003e405, NotAcceptable-\u003e406, Throttled-\u003e429, UnsupportedMediaType-\u003e415). Honest-partial: dynamic status skipped.",
             "verified_at": "2026-06-02"
           },
           "endpoint_synthesis": {
@@ -52783,6 +53271,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_py_routing_3065_test.go","internal/engine/rules/python/frameworks/falcon.yaml"],
@@ -53081,6 +53573,13 @@
             "cites": ["internal/engine/http_endpoint_pagination.go","internal/engine/http_endpoint_pagination_patterns.go","internal/engine/http_endpoint_pagination_test.go","internal/engine/http_endpoint_synthesis.go"],
             "issue": "3628",
             "notes": "#3628: paginated/pagination_style(offset|page|cursor)/pagination_params/pagination_source on http_endpoint_definition via applyEndpointPagination. Direct signals: DRF pagination_class + DEFAULT_PAGINATION_CLASS, Django Paginator, FastAPI/fastapi-pagination, Spring Pageable/Page\u003c\u003e, Express req.query, Sequelize/Prisma take/skip/.cursor(). Honest-partial: lone limit not stamped.",
+            "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_response_codes.go","internal/engine/http_endpoint_response_codes_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3818",
+            "notes": "#3818: response_codes (sorted unique) + success_code (lone 2xx) + response_codes_source on http_endpoint_definition via applyEndpointResponseCodes. FastAPI signals: decorator status_code=NNN, HTTPException(status_code=)/JSONResponse(status_code=)/Response(status_code=) body literals. Honest-partial: dynamic status var skipped; no literal -\u003e absent.",
             "verified_at": "2026-06-02"
           },
           "endpoint_synthesis": {
@@ -53387,6 +53886,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -53702,6 +54205,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/http_endpoint_synthesis_graphene_ariadne_3620_test.go","internal/engine/httproutes/canonicalize.go"],
@@ -53936,6 +54443,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -54271,6 +54782,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/litestar.yaml"],
@@ -54565,6 +55080,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/pyramid.yaml"],
@@ -54857,6 +55376,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -55153,6 +55676,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -55660,6 +56187,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/sanic.yaml"],
@@ -55953,6 +56484,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_synthesis.go","internal/engine/rules/python/frameworks/starlette.yaml"],
@@ -56245,6 +56780,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -56541,6 +57080,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -58188,6 +58731,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/custom/ruby/cuba_routing.go"],
@@ -58453,6 +59000,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable"
           },
@@ -58713,6 +59264,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -58976,6 +59531,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_graphql_ruby.go","internal/engine/http_endpoint_graphql_ruby_test.go","internal/engine/http_endpoint_synthesis.go","internal/engine/httproutes/canonicalize.go"],
@@ -59210,6 +59769,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -59476,6 +60039,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/ruby/frameworks/padrino.yaml"],
@@ -59740,6 +60307,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -60026,6 +60597,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/ruby/frameworks/roda.yaml"],
@@ -60290,6 +60865,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -61460,6 +62039,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/rules/rust/frameworks/actix_web.yaml"],
@@ -61729,6 +62312,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/rust/async_graphql.go","internal/custom/rust/graphql_grpc_test.go","internal/custom/rust/helpers.go"],
@@ -61969,6 +62556,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -62238,6 +62829,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -62509,6 +63104,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -62811,6 +63410,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/custom/rust/minor_fw_routing.go"],
@@ -63111,6 +63714,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/rocket_routes.go","internal/engine/rules/rust/frameworks/rocket.yaml"],
@@ -63379,6 +63986,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -63812,6 +64423,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/custom/rust/minor_fw_routing.go"],
@@ -64083,6 +64698,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/rust/graphql_grpc_test.go","internal/custom/rust/helpers.go","internal/custom/rust/tonic.go"],
@@ -64324,6 +64943,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -64598,6 +65221,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/rust/helpers.go","internal/custom/rust/utoipa.go","internal/custom/rust/utoipa_test.go"],
@@ -64834,6 +65461,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -65493,6 +66124,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/akka_http_pekko_http.yaml"],
@@ -65802,6 +66437,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/custom/scala/caliban.go","internal/custom/scala/caliban_test.go"],
@@ -66072,6 +66711,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -66385,6 +67028,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "not_applicable",
             "notes": "Cats Effect is an effect-system runtime, not a web backend — no routing/DI/transaction/AOP container."
@@ -66682,6 +67329,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -66999,6 +67650,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/http4s.yaml"],
@@ -67307,6 +67962,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -67623,6 +68282,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -68289,6 +68952,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "partial",
             "cites": ["internal/engine/rules/scala/frameworks/scalatra.yaml"],
@@ -68599,6 +69266,10 @@
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
           },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
+          },
           "endpoint_synthesis": {
             "status": "full",
             "cites": ["internal/engine/http_endpoint_scala_client.go","internal/engine/http_endpoint_scala_client_test.go","internal/engine/http_endpoint_synthesis.go"],
@@ -68854,6 +69525,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",
@@ -69129,6 +69804,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "partial",
@@ -70371,6 +71050,10 @@
             "issue": "3628",
             "notes": "#3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework.",
             "verified_at": "2026-06-02"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "3818"
           },
           "endpoint_synthesis": {
             "status": "full",

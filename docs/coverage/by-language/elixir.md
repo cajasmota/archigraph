@@ -26,18 +26,18 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 3/5 | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
-| [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟡 3/5 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
-| [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟡 1/3 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 3/8 | |
-| [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟡 3/5 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 4/9 | |
-| [Finch](../detail/lang.elixir.framework.finch.md) | 🟡 1/5 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 3/24 | 🔴 0/12 | |
-| [Guardian](../detail/lang.elixir.framework.guardian.md) | 🔴 0/5 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/24 | 🔴 0/12 | |
-| [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | 🟡 1/3 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 1/6 | |
-| [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | 🟡 1/3 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
-| [Phoenix](../detail/lang.elixir.framework.phoenix.md) | 🟡 3/5 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
-| [Plug](../detail/lang.elixir.framework.plug.md) | 🟡 3/5 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
-| [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/5 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/24 | 🔴 0/12 | |
-| [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/5 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/24 | 🟡 1/12 | |
+| [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 3/6 | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
+| [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟡 3/6 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
+| [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 3/8 | |
+| [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟡 3/6 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 4/9 | |
+| [Finch](../detail/lang.elixir.framework.finch.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 3/24 | 🔴 0/12 | |
+| [Guardian](../detail/lang.elixir.framework.guardian.md) | 🔴 0/6 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/24 | 🔴 0/12 | |
+| [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 1/6 | |
+| [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
+| [Phoenix](../detail/lang.elixir.framework.phoenix.md) | 🟡 3/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
+| [Plug](../detail/lang.elixir.framework.plug.md) | 🟡 3/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
+| [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/24 | 🔴 0/12 | |
+| [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 2/24 | 🟡 1/12 | |
 
 
 ### Meta Framework
