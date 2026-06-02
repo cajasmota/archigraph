@@ -185,6 +185,11 @@ func resolveEndpointResponseCodes(lang, content string, e *types.EntityRecord) r
 		// (#3857). Spring + JAX-RS shapes are mutually exclusive in practice, so a
 		// merge cannot double-count.
 		v.merge(jaxrsResponseCodes(region+"\n"+sig, body))
+		// Lightweight / reactive JVM family (Javalin / Vert.x / Akka-HTTP / Struts /
+		// Spring WebFlux) use yet a DIFFERENT response API (ctx.status / setStatusCode /
+		// complete(StatusCodes) / @Result names / ServerResponse builders). Resolve
+		// those and merge (#3858); again mutually exclusive in practice per file.
+		v.merge(reactiveResponseCodes(region+"\n"+sig, body))
 	case "javascript":
 		v.merge(jsResponseCodes(region, body))
 	}

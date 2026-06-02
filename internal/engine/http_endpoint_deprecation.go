@@ -195,6 +195,11 @@ func resolveEndpointDeprecation(lang, content string, e *types.EntityRecord) dep
 		if v, ok := javaDeprecationVerdict(region); ok {
 			return v
 		}
+		// Javalin documents deprecation via the @OpenApi(deprecated = true) flag
+		// rather than the standard @Deprecated annotation (#3858).
+		if v, ok := reactiveDeprecationVerdict(region); ok {
+			return v
+		}
 	case "python":
 		if v, ok := pythonDeprecationVerdict(region, content, handlerStart); ok {
 			return v
