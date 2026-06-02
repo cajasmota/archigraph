@@ -98,6 +98,12 @@ var (
 	// A schema operation root: `'query' => $queryType`. Group 1 is the
 	// operation (query/mutation/subscription), group 2 the root variable.
 	reGQLPSchemaRoot = regexp.MustCompile(`['"](query|mutation|subscription)['"]\s*=>\s*\$([A-Za-z_]\w*)`)
+	// `'args' => [ ... ]` — start of a webonyx field's argument map. The byte
+	// offset of the opening bracket lets the caller balance the args block.
+	reGQLPArgs = regexp.MustCompile(`['"]args['"]\s*=>\s*(\[|array\s*\()`)
+	// Top-level arg keys inside an args map (`'id' => ...`, `'filter' => [...]`)
+	// are recovered with gqlpTopLevelFieldKeys (shared with the fields map), so
+	// no dedicated arg-key regex is needed here.
 )
 
 // gqlpBalanced returns the byte range [open+1, close) of the bracket group
@@ -291,6 +297,59 @@ func gqlpOperationForType(name string) string {
 	}
 }
 
+// gqlpRequestShape renders a webonyx field's `'args' => [ ... ]` map into a
+// compact request-shape string: "name:Type,other:Type" in source order, using
+// the same type-unwrapping as gqlpTypeRef (Type::nonNull($x)→x,
+// Type::id()→id). Each arg value may be a bare type expr (`'id' =>
+// Type::id()`) or a config array (`'id' => ['type' => Type::id()]`); both yield
+// the inner type. Returns "" when the field declares no args map.
+func gqlpRequestShape(fieldCfg string) string {
+	loc := reGQLPArgs.FindStringIndex(fieldCfg)
+	if loc == nil {
+		return ""
+	}
+	as, ae := gqlpBalanced(fieldCfg, loc[1]-1)
+	if as < 0 {
+		return ""
+	}
+	argsBody := fieldCfg[as:ae]
+	var parts []string
+	seen := map[string]bool{}
+	for _, ak := range gqlpTopLevelFieldKeys(argsBody) {
+		if seen[ak.name] {
+			continue
+		}
+		seen[ak.name] = true
+		// Bound this arg's value (key → next top-level comma) and resolve a type.
+		valStart := ak.offset
+		if idx := strings.Index(argsBody[ak.offset:], "=>"); idx >= 0 {
+			valStart = ak.offset + idx + 2
+		}
+		end := gqlpFieldConfigEnd(argsBody, valStart)
+		argVal := argsBody[valStart:end]
+		typ := gqlpArgType(argVal)
+		if typ == "" {
+			parts = append(parts, ak.name)
+		} else {
+			parts = append(parts, ak.name+":"+typ)
+		}
+	}
+	return strings.Join(parts, ",")
+}
+
+// gqlpArgType resolves an arg value expression to its inner type name. It
+// handles both the bare form (`Type::nonNull(Type::id())`) and the config-array
+// form (`['type' => Type::id()]`) by delegating to gqlpTypeRef, which already
+// unwraps nonNull/listOf and recognises scalars / custom-type vars. For the bare
+// form it synthesises a minimal `'type' =>` wrapper so gqlpTypeRef applies.
+func gqlpArgType(argVal string) string {
+	argVal = strings.TrimSpace(argVal)
+	if strings.Contains(argVal, "'type'") || strings.Contains(argVal, "\"type\"") {
+		return gqlpTypeRef(argVal)
+	}
+	return gqlpTypeRef("'type' => " + argVal)
+}
+
 func (e *graphqlPHPExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("archigraph/custom/php")
 	_, span := tracer.Start(ctx, "indexer.graphql_php_extractor.extract",
@@ -409,6 +468,17 @@ func (e *graphqlPHPExtractor) Extract(ctx context.Context, file extractor.FileIn
 			}
 			if ref := gqlpTypeRef(fieldCfg); ref != "" {
 				setProps(&ent, "graphql_field_type", ref)
+				// Response shape (#3872): the field's resolved return type is the
+				// canonical response shape for this resolver endpoint.
+				setProps(&ent, "response_shape", ref,
+					"response_shape_source", "graphql_php_field_type")
+			}
+			// Request shape (#3872): the field's typed `args` map is the request
+			// shape. Honest-partial: resolves the declared arg types, not the
+			// runtime resolver's $args usage.
+			if rs := gqlpRequestShape(fieldCfg); rs != "" {
+				setProps(&ent, "request_shape", rs,
+					"request_shape_source", "graphql_php_args")
 			}
 			add(ent)
 		}

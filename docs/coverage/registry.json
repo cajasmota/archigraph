@@ -47833,6 +47833,242 @@
       }
     },
     {
+      "id": "lang.php.framework.api-platform-graphql",
+      "category": "http_framework",
+      "subcategory": "http_backend",
+      "language": "php",
+      "label": "API Platform GraphQL",
+      "capabilities": {
+        "Routing": {
+          "endpoint_deprecation_versioning": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "endpoint_pagination_posture": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "endpoint_response_codes": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "endpoint_synthesis": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          },
+          "handler_attribution": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          },
+          "route_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          }
+        },
+        "View": {
+          "view_rendering": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Auth": {
+          "auth_coverage": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          }
+        },
+        "Validation": {
+          "dto_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          },
+          "request_validation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Middleware": {
+          "middleware_coverage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "rate_limit_stamping": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Schema": {
+          "type_graph_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "type_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "DI": {
+          "di_binding_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_injection_point": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "di_scope_resolution": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Observability": {
+          "log_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "metric_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "trace_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Data": {
+          "db_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "config_consumption": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "constant_propagation": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "feature_flag_gating": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "http_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "request_shape_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          },
+          "request_sink_dataflow": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "response_shape_extraction": {
+            "status": "full",
+            "cites": ["internal/custom/php/apiplatform_graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "backfill:dictionary-completeness"
+          }
+        }
+      }
+    },
+    {
       "id": "lang.php.framework.cakephp",
       "category": "http_framework",
       "subcategory": "http_backend",
@@ -48890,16 +49126,18 @@
             "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/php/graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
           },
           "request_sink_dataflow": {
             "status": "missing",
             "issue": "3740"
           },
           "response_shape_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/php/graphql.go","internal/custom/php/graphql_parity_test.go"],
+            "verified_at": "2026-06-02"
           },
           "sanitizer_recognition": {
             "status": "missing",
@@ -49557,8 +49795,9 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/php/graphql_parity_test.go","internal/custom/php/lighthouse.go"],
+            "verified_at": "2026-06-02"
           }
         },
         "Validation": {
@@ -49713,16 +49952,18 @@
             "issue": "backfill:dictionary-completeness"
           },
           "request_shape_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/php/graphql_parity_test.go","internal/custom/php/lighthouse.go"],
+            "verified_at": "2026-06-02"
           },
           "request_sink_dataflow": {
             "status": "missing",
             "issue": "3740"
           },
           "response_shape_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/custom/php/graphql_parity_test.go","internal/custom/php/lighthouse.go"],
+            "verified_at": "2026-06-02"
           },
           "sanitizer_recognition": {
             "status": "missing",

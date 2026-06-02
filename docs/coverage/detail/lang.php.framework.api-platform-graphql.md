@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
-# `lang.php.framework.graphql-php` — graphql-php
+# `lang.php.framework.api-platform-graphql` — API Platform GraphQL
 
 Auto-generated. Back to [summary](../summary.md).
 
@@ -15,30 +15,30 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Endpoint deprecation versioning | 🔴 `missing` | — | 3628 | — | — |
-| Endpoint pagination posture | 🔴 `missing` | `2026-06-02` | 3628 | `internal/engine/http_endpoint_pagination.go`<br>`internal/engine/http_endpoint_pagination_patterns.go`<br>`internal/engine/http_endpoint_pagination_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | #3628: applyEndpointPagination stamps paginated/pagination_style/pagination_params via the cross-language parameters/parameter_schema fallback (limit+offset/page/cursor shape). No framework-specific pagination-class/ORM signal yet for this framework. |
-| Endpoint response codes | 🔴 `missing` | — | 3818 | — | — |
-| Endpoint synthesis | ✅ `full` | `2026-05-30` | — | `internal/custom/php/graphql.go`<br>`internal/custom/php/graphql_test.go` | — |
-| Handler attribution | ✅ `full` | `2026-05-30` | — | `internal/custom/php/graphql.go`<br>`internal/custom/php/graphql_test.go` | — |
-| Route extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/php/graphql.go`<br>`internal/custom/php/graphql_test.go` | — |
+| Endpoint deprecation versioning | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Endpoint pagination posture | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Endpoint response codes | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Endpoint synthesis | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
+| Handler attribution | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
+| Route extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
 
 ### View
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| View rendering | 🔴 `missing` | — | view_rendering:#3628-not-yet-extracted | — | — |
+| View rendering | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Auth
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Auth coverage | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
 
 ### Validation
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/php/graphql.go`<br>`internal/custom/php/graphql_test.go` | — |
+| DTO extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
 | Request validation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Middleware
@@ -46,13 +46,13 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Rate limit stamping | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3778) | — | endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work. |
+| Rate limit stamping | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Schema
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Type graph extraction | 🔴 `missing` | — | 3804 | — | GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks. |
+| Type graph extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Type System
 
@@ -67,9 +67,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DI binding extraction | 🔴 `missing` | — | 3628 | — | — |
-| DI injection point | 🔴 `missing` | — | 3628 | — | — |
-| DI scope resolution | 🔴 `missing` | — | 3628 | — | — |
+| DI binding extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| DI injection point | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| DI scope resolution | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 
 ### Testing
 
@@ -96,13 +96,13 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Config consumption | ✅ `full` | `2026-06-02` | 3641 | `internal/extractor/config_key.go`<br>`internal/extractors/php/config_consumer.go`<br>`internal/extractors/php/config_consumer_test.go` | getenv/$_ENV + Laravel env()/config() -> config:<key> DEPENDS_ON_CONFIG edges (issue #3641) |
+| Config consumption | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Constant propagation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Dead code detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Def use chain extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Env fallback recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Error flow | 🔴 `missing` | — | 3628 | — | — |
-| Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
+| Error flow | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Feature flag gating | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | HTTP effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Import resolution quality | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
@@ -110,9 +110,9 @@ Auto-generated. Back to [summary](../summary.md).
 | Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Request shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
-| Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
-| Response shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
+| Request shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
+| Request sink dataflow | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Response shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
 | Sanitizer recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Schema drift detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Taint sink detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
@@ -129,7 +129,7 @@ which tracks the same technology at a higher level.
 ## Provenance
 
 This record is sourced from `docs/coverage/registry.json`. To update it, edit the JSON
-(or use `go run ./tools/coverage update lang.php.framework.graphql-php ...`) then regenerate:
+(or use `go run ./tools/coverage update lang.php.framework.api-platform-graphql ...`) then regenerate:
 
 ```
 go run ./tools/coverage validate

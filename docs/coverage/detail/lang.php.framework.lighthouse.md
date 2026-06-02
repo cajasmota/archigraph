@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Auth coverage | ✅ `full` | `2026-06-02` | — | `internal/custom/php/graphql_parity_test.go`<br>`internal/custom/php/lighthouse.go` | — |
 
 ### Validation
 
@@ -110,9 +110,9 @@ Auto-generated. Back to [summary](../summary.md).
 | Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Request shape extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Request shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/graphql_parity_test.go`<br>`internal/custom/php/lighthouse.go` | — |
 | Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
-| Response shape extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Response shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/graphql_parity_test.go`<br>`internal/custom/php/lighthouse.go` | — |
 | Sanitizer recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Schema drift detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Taint sink detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
