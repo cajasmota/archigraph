@@ -543,11 +543,25 @@ func mongoAggPyResolvePipeline(src string, openParen, dotPos int) string {
 		switch src[j] {
 		case ')':
 			// Form 2: bare identifier argument (`pipeline`).
-			// (a) nearest preceding `pipeline = [ ... ]` literal binding.
+			// (a) Shape C (#3928): pipeline built IMPERATIVELY in the same function
+			// via `pipeline = []; pipeline.append({...}); pipeline.extend([...])`,
+			// then `coll.aggregate(pipeline)`. Reconstruct it from the init +
+			// append/extend additions preceding the call. Tried FIRST because it
+			// subsumes a list-literal init (an `append`/`extend` after a non-empty
+			// literal would otherwise be lost by the plain-binding follow, and an
+			// EMPTY `pipeline = []` init followed only by appends has no useful
+			// literal at all). Fires only when an append/extend anchor contributes a
+			// stage; otherwise "" and we fall back to the plain literal binding.
+			if body := src[funcStart:dotPos]; mongoAggPyHasMutation(body, ident, len(body)) {
+				if lit := mongoAggPyImperativePipeline(body, ident, len(body)); lit != "" {
+					return lit
+				}
+			}
+			// (b) nearest preceding `pipeline = [ ... ]` literal binding.
 			if lit := mongoAggPyFollowBinding(src, ident, dotPos, funcStart); lit != "" {
 				return lit
 			}
-			// (b) builder indirection: `pipeline = build_fn()` → resolve the
+			// (c) builder indirection: `pipeline = build_fn()` → resolve the
 			// builder's definition and scan its body for the returned pipeline.
 			if fn := mongoAggPyFollowCallBinding(src, ident, dotPos, funcStart); fn != "" {
 				return mongoAggPyResolveBuilderBody(src, fn)
@@ -777,8 +791,20 @@ func mongoAggPyResolveBuilderBody(src, fnName string) string {
 	}
 
 	// Shape B: `return <ident>` where `<ident> = [ ... ]` earlier in the body.
-	if m := mongoAggPyReturnIdentRe.FindStringSubmatch(body); m != nil {
-		retIdent := m[1]
+	if m := mongoAggPyReturnIdentRe.FindStringSubmatchIndex(body); m != nil {
+		retIdent := body[m[2]:m[3]]
+		retPos := m[0] // offset of the `return <ident>` within the body
+		// Shape C (#3928): the pipeline var is built IMPERATIVELY via
+		// append/extend (with or without a list-literal init), then returned.
+		// Reconstruct it from init + append/extend additions preceding the return,
+		// but ONLY when a mutation is present — a plain `pipeline = [ ... ]; return
+		// pipeline` keeps using the literal-binding follow below (no behavior
+		// change vs #3866).
+		if mongoAggPyHasMutation(body, retIdent, retPos) {
+			if lit := mongoAggPyImperativePipeline(body, retIdent, retPos); lit != "" {
+				return lit
+			}
+		}
 		// usePos = end of body (the binding precedes the return); funcStart = 0
 		// because `body` is already sliced to this one function.
 		if lit := mongoAggPyFollowBinding(body, retIdent, len(body), 0); lit != "" {
@@ -786,6 +812,208 @@ func mongoAggPyResolveBuilderBody(src, fnName string) string {
 		}
 	}
 	return ""
+}
+
+// mongoAggPyAppendCallReCache caches per-ident `pipeline.append(` matchers.
+var mongoAggPyAppendCallReCache = map[string]*regexp.Regexp{}
+
+// mongoAggPyAppendCallRe matches a `<ident>.append(` call (a single-stage push
+// onto an imperatively-built pipeline), capturing nothing — the `(` index is
+// recovered from the match end so the dict-literal argument can be balanced.
+func mongoAggPyAppendCallRe(ident string) *regexp.Regexp {
+	if re, ok := mongoAggPyAppendCallReCache[ident]; ok {
+		return re
+	}
+	re := regexp.MustCompile(`(?m)` + regexp.QuoteMeta(ident) + `\.append\s*\(`)
+	mongoAggPyAppendCallReCache[ident] = re
+	return re
+}
+
+// mongoAggPyExtendCallReCache caches per-ident `pipeline.extend(` matchers.
+var mongoAggPyExtendCallReCache = map[string]*regexp.Regexp{}
+
+// mongoAggPyExtendCallRe matches a `<ident>.extend(` call (a multi-stage splice
+// onto an imperatively-built pipeline).
+func mongoAggPyExtendCallRe(ident string) *regexp.Regexp {
+	if re, ok := mongoAggPyExtendCallReCache[ident]; ok {
+		return re
+	}
+	re := regexp.MustCompile(`(?m)` + regexp.QuoteMeta(ident) + `\.extend\s*\(`)
+	mongoAggPyExtendCallReCache[ident] = re
+	return re
+}
+
+// mongoAggPyBraceBody returns the full balanced `{...}` object literal (braces
+// included) whose opening `{` is at `open`, string- and depth-aware. Returns ""
+// if unbalanced. Used to capture a single `pipeline.append({...})` stage dict.
+func mongoAggPyBraceBody(src string, open int) string {
+	if open >= len(src) || src[open] != '{' {
+		return ""
+	}
+	depth := 0
+	inStr := byte(0)
+	for i := open; i < len(src); i++ {
+		c := src[i]
+		if inStr != 0 {
+			if c == '\\' {
+				i++
+				continue
+			}
+			if c == inStr {
+				inStr = 0
+			}
+			continue
+		}
+		switch c {
+		case '\'', '"':
+			inStr = c
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return src[open : i+1]
+			}
+		}
+	}
+	return ""
+}
+
+// mongoAggPyHasMutation reports whether `ident` is mutated by at least one
+// `.append(`/`.extend(` call before `usePos` in `body`. Used to decide whether
+// the imperative reconstruction should take priority over a plain list-literal
+// binding follow: when there is NO mutation, the existing literal path handles
+// the pipeline unchanged (preserving all #3866 behavior); only the presence of
+// an append/extend warrants the new reconstruction.
+func mongoAggPyHasMutation(body, ident string, usePos int) bool {
+	if loc := mongoAggPyAppendCallRe(ident).FindStringIndex(body); loc != nil && loc[0] < usePos {
+		return true
+	}
+	if loc := mongoAggPyExtendCallRe(ident).FindStringIndex(body); loc != nil && loc[0] < usePos {
+		return true
+	}
+	return false
+}
+
+// mongoAggPyImperativePipeline reconstructs an imperatively-built pipeline.
+//
+// Given a function `body` (already sliced to ONE function), a pipeline variable
+// `ident`, and `usePos` (the offset within `body` of the consuming `return
+// pipeline` / `aggregate(pipeline)` — additions after this point are ignored),
+// it accumulates stages, in source order, from:
+//
+//	pipeline = []                          — empty init (zero stages), and
+//	pipeline = [ {stage}, ... ]            — list-literal init (its stages), then
+//	pipeline.append({ stage })             — one dict-literal stage appended, and
+//	pipeline.extend([ {stage}, ... ])      — list-literal stages spliced in.
+//
+// It returns a SYNTHETIC pipeline list literal `[ stage, stage, ... ]` built
+// from the accumulated stage substrings, suitable for mongoAggSplitStages, so
+// the rest of the pass (lookup parse, join edges, stage nodes) is unchanged.
+//
+// Honest-partial — an addition is contributed ONLY when its argument is a
+// literal of the right shape: append of a `{...}` dict literal, extend of a
+// `[...]` list literal. `pipeline.append(stage_var)` (a non-literal var),
+// `pipeline.extend(other_pipe)`, dynamic stage construction, or a non-`[]`
+// init (e.g. `pipeline = build_base()`) contribute NOTHING from that statement;
+// if NO recognised init AND no recognised additions exist, "" is returned and
+// the caller stays unresolved. We never fabricate a stage we cannot see.
+func mongoAggPyImperativePipeline(body, ident string, usePos int) string {
+	type acc struct {
+		pos   int
+		stage string
+	}
+	var stages []acc
+	hasAnchor := false // saw a `pipeline = []`/`[...]` init or any append/extend
+
+	// 1. Init binding: nearest `ident = [ ... ]` (possibly empty) before usePos.
+	//    We reuse the assignment matcher, then balance the bracket ourselves so an
+	//    empty `[]` is handled (zero stages but a valid anchor).
+	initRe := mongoAggPyAssignRe(ident)
+	initBracket := -1
+	for _, m := range initRe.FindAllStringIndex(body, -1) {
+		if m[0] >= usePos {
+			break
+		}
+		initBracket = m[1] - 1 // index of '['
+	}
+	if initBracket >= 0 {
+		hasAnchor = true
+		if lit := mongoAggPyBracketBody(body, initBracket); lit != "" {
+			for _, st := range mongoAggSplitStages(lit, 0) {
+				stages = append(stages, acc{pos: initBracket, stage: st})
+			}
+		}
+	}
+
+	// 2. `pipeline.append({...})` — each dict-literal arg is one stage.
+	for _, loc := range mongoAggPyAppendCallRe(ident).FindAllStringIndex(body, -1) {
+		callPos := loc[0]
+		if callPos >= usePos {
+			break
+		}
+		hasAnchor = true
+		open := loc[1] - 1 // index of '('
+		j := open + 1
+		for j < len(body) && (body[j] == ' ' || body[j] == '\t' || body[j] == '\n' || body[j] == '\r') {
+			j++
+		}
+		if j >= len(body) || body[j] != '{' {
+			continue // append of a non-dict-literal (var, call) — honest skip.
+		}
+		if obj := mongoAggPyBraceBody(body, j); obj != "" {
+			stages = append(stages, acc{pos: callPos, stage: obj})
+		}
+	}
+
+	// 3. `pipeline.extend([...])` — each list-literal element is one stage.
+	for _, loc := range mongoAggPyExtendCallRe(ident).FindAllStringIndex(body, -1) {
+		callPos := loc[0]
+		if callPos >= usePos {
+			break
+		}
+		hasAnchor = true
+		open := loc[1] - 1 // index of '('
+		j := open + 1
+		for j < len(body) && (body[j] == ' ' || body[j] == '\t' || body[j] == '\n' || body[j] == '\r') {
+			j++
+		}
+		if j >= len(body) || body[j] != '[' {
+			continue // extend of a non-list-literal (var, call) — honest skip.
+		}
+		if lit := mongoAggPyBracketBody(body, j); lit != "" {
+			for _, st := range mongoAggSplitStages(lit, 0) {
+				stages = append(stages, acc{pos: callPos, stage: st})
+			}
+		}
+	}
+
+	if !hasAnchor || len(stages) == 0 {
+		return ""
+	}
+
+	// Order stages by their source position so init → append → extend interleave
+	// exactly as written. sort.SliceStable preserves intra-statement order (the
+	// list-literal element order from a single init/extend).
+	sortStableByPos := func() {
+		for i := 1; i < len(stages); i++ {
+			for j := i; j > 0 && stages[j-1].pos > stages[j].pos; j-- {
+				stages[j-1], stages[j] = stages[j], stages[j-1]
+			}
+		}
+	}
+	sortStableByPos()
+
+	var b strings.Builder
+	b.WriteByte('[')
+	for i, s := range stages {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(s.stage)
+	}
+	b.WriteByte(']')
+	return b.String()
 }
 
 // mongoAggPyReturnListRe matches a `return [` (the start of a returned list

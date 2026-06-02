@@ -581,6 +581,238 @@ def run(db):
 	}
 }
 
+// IMPERATIVE BUILDER (#3928, deploy-7 P0-B) — THE rewrite-blocking real shape.
+// A builder `def get_pipe()` starts `pipeline = []`, then `.append({$lookup})`
+// for one stage and `.extend([{$lookup}])` for more, then `return pipeline`; the
+// executor does `coll.aggregate(get_pipe())`. Both `from` collections
+// (inspection_groups via append, m_devices via extend) must resolve to their
+// NAMED collection nodes Class:Inspection_group AND Class:M_device, attributed
+// to the aggregating collection Class:Inspection. Mirrors
+// get_inspection_devices_pipeline in core/services/building/queries.py.
+func TestMongoAggPy_Imperative_AppendExtend_BuilderReturn(t *testing.T) {
+	src := `
+import pymongo
+from pymongo import MongoClient
+
+def get_pipe():
+    pipeline = []
+    pipeline.append({"$lookup": {"from": "inspection_groups", "localField": "group_id", "foreignField": "_id", "as": "g"}})
+    pipeline.extend([{"$lookup": {"from": "m_devices", "localField": "device_id", "foreignField": "_id", "as": "d"}}])
+    return pipeline
+
+def run(db):
+    return db.inspections.aggregate(get_pipe())
+`
+	ents, rels := runMongoAggPy(t, src)
+
+	if len(rels) != 2 {
+		t.Fatalf("expected exactly 2 join edges from append+extend, got %d: %+v", len(rels), rels)
+	}
+	// Named collection nodes (not raw strings dropped on the floor).
+	jg := pyFindJoinTo(rels, capitalisedSingular("inspection_groups"))
+	if jg == nil {
+		t.Fatalf("expected JOINS_COLLECTION to Class:Inspection_group (append stage); rels=%+v", rels)
+	}
+	if jg.ToID != "Class:"+capitalisedSingular("inspection_groups") {
+		t.Errorf("append join ToID = %q, want Class:Inspection_group", jg.ToID)
+	}
+	if jg.FromID != "Class:"+capitalisedSingular("inspections") {
+		t.Errorf("append join FromID = %q, want Class:Inspection (aggregating coll)", jg.FromID)
+	}
+	if jg.Properties["as"] != "g" || jg.Properties["local_field"] != "group_id" {
+		t.Errorf("append join props = %+v, want as=g local_field=group_id", jg.Properties)
+	}
+	jd := pyFindJoinTo(rels, capitalisedSingular("m_devices"))
+	if jd == nil {
+		t.Fatalf("expected JOINS_COLLECTION to Class:M_device (extend stage); rels=%+v", rels)
+	}
+	if jd.ToID != "Class:"+capitalisedSingular("m_devices") {
+		t.Errorf("extend join ToID = %q, want Class:M_device", jd.ToID)
+	}
+	if jd.FromID != "Class:"+capitalisedSingular("inspections") {
+		t.Errorf("extend join FromID = %q, want Class:Inspection", jd.FromID)
+	}
+	// Two stage nodes, append before extend (source order preserved).
+	got := pyStageSubtypesInOrder(ents)
+	want := []string{"$lookup", "$lookup"}
+	if len(got) != len(want) {
+		t.Fatalf("stage subtypes = %v, want %v", got, want)
+	}
+	if ents[0].Properties["from"] != "inspection_groups" {
+		t.Errorf("stage[0] from = %q, want inspection_groups (append first)", ents[0].Properties["from"])
+	}
+	if ents[1].Properties["from"] != "m_devices" {
+		t.Errorf("stage[1] from = %q, want m_devices (extend second)", ents[1].Properties["from"])
+	}
+	for i, e := range ents {
+		if e.Properties["collection"] != "inspections" {
+			t.Errorf("stage[%d] collection = %q, want inspections", i, e.Properties["collection"])
+		}
+		if e.Kind != string(types.EntityKindDataAccess) {
+			t.Errorf("stage[%d] kind = %q, want SCOPE.DataAccess", i, e.Kind)
+		}
+	}
+}
+
+// IMPERATIVE DIRECT EXECUTOR (#3928) — single inline append then aggregate,
+// no builder fn: `pipeline = []; pipeline.append({$lookup}); coll.aggregate(
+// pipeline)`. The bare-var follow finds no complete list literal, the imperative
+// reconstruction collects the appended stage → one join to the NAMED collection.
+func TestMongoAggPy_Imperative_DirectExecutor_SingleAppend(t *testing.T) {
+	src := `
+import pymongo
+
+def run(db):
+    pipeline = []
+    pipeline.append({"$lookup": {"from": "m_devices", "localField": "device_id", "foreignField": "_id", "as": "d"}})
+    return db.inspections.aggregate(pipeline)
+`
+	ents, rels := runMongoAggPy(t, src)
+	if len(rels) != 1 {
+		t.Fatalf("expected exactly 1 join edge, got %d: %+v", len(rels), rels)
+	}
+	if rels[0].ToID != "Class:"+capitalisedSingular("m_devices") {
+		t.Errorf("join ToID = %q, want Class:M_device", rels[0].ToID)
+	}
+	if rels[0].FromID != "Class:"+capitalisedSingular("inspections") {
+		t.Errorf("join FromID = %q, want Class:Inspection", rels[0].FromID)
+	}
+	if len(ents) != 1 || ents[0].Subtype != "$lookup" {
+		t.Fatalf("expected 1 $lookup stage, got %+v", ents)
+	}
+}
+
+// IMPERATIVE with NON-EMPTY list-literal init + appends interleaved (#3928):
+// `pipeline = [{$match}]; pipeline.append({$lookup A}); pipeline.append(
+// {$lookup B})`. Init stage + both appends accumulate in source order; both
+// $lookup `from` collections resolve.
+func TestMongoAggPy_Imperative_LiteralInitPlusAppends(t *testing.T) {
+	src := `
+import pymongo
+
+def get_pipe():
+    pipeline = [{"$match": {"status": "active"}}]
+    pipeline.append({"$lookup": {"from": "inspection_groups", "localField": "g", "foreignField": "_id", "as": "grp"}})
+    pipeline.append({"$lookup": {"from": "m_buildings", "localField": "b", "foreignField": "_id", "as": "bld"}})
+    return pipeline
+
+def run(db):
+    return db.inspections.aggregate(get_pipe())
+`
+	ents, rels := runMongoAggPy(t, src)
+	if len(rels) != 2 {
+		t.Fatalf("expected 2 join edges, got %d: %+v", len(rels), rels)
+	}
+	if pyFindJoinTo(rels, capitalisedSingular("inspection_groups")) == nil {
+		t.Errorf("expected join to Class:Inspection_group; rels=%+v", rels)
+	}
+	if pyFindJoinTo(rels, capitalisedSingular("m_buildings")) == nil {
+		t.Errorf("expected join to Class:M_building; rels=%+v", rels)
+	}
+	got := pyStageSubtypesInOrder(ents)
+	want := []string{"$match", "$lookup", "$lookup"}
+	if len(got) != len(want) {
+		t.Fatalf("stage subtypes = %v, want %v (init match then 2 appends)", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("stage[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+// IMPERATIVE $graphLookup via extend (#3928): a $graphLookup added through
+// `.extend([...])` produces a graphLookup join to the named target.
+func TestMongoAggPy_Imperative_GraphLookupViaExtend(t *testing.T) {
+	src := `
+import pymongo
+
+def get_pipe():
+    pipeline = []
+    pipeline.extend([{"$graphLookup": {"from": "categories", "startWith": "$cat", "connectFromField": "parent", "connectToField": "_id", "as": "tree"}}])
+    return pipeline
+
+def run(db):
+    return db["orders"].aggregate(get_pipe())
+`
+	ents, rels := runMongoAggPy(t, src)
+	if len(rels) != 1 {
+		t.Fatalf("expected 1 join edge, got %d: %+v", len(rels), rels)
+	}
+	if rels[0].ToID != "Class:"+capitalisedSingular("categories") {
+		t.Errorf("join ToID = %q, want Class:Category", rels[0].ToID)
+	}
+	if rels[0].Properties["stage"] != "graphLookup" {
+		t.Errorf("join stage = %q, want graphLookup", rels[0].Properties["stage"])
+	}
+	if len(ents) != 1 || ents[0].Subtype != "$graphLookup" {
+		t.Fatalf("expected 1 $graphLookup stage, got %+v", ents)
+	}
+}
+
+// NEGATIVE (#3928): `pipeline.append(stage_var)` where the argument is a
+// NON-literal variable must NOT fabricate a join/stage from that append. Only the
+// literal-dict appends contribute; a var append is an honest skip.
+func TestMongoAggPy_Imperative_NonLiteralAppend_Skipped(t *testing.T) {
+	src := `
+import pymongo
+
+def get_pipe(stage_var):
+    pipeline = []
+    pipeline.append(stage_var)
+    return pipeline
+
+def run(db, sv):
+    return db.inspections.aggregate(get_pipe(sv))
+`
+	ents, rels := runMongoAggPy(t, src)
+	if len(rels) != 0 || len(ents) != 0 {
+		t.Fatalf("non-literal append must emit nothing, got rels=%d ents=%d", len(rels), len(ents))
+	}
+}
+
+// NEGATIVE (#3928): a $lookup whose `from` is a DYNAMIC value (a variable, not a
+// string literal) in an appended dict yields NO join edge — the stage node may
+// exist but mongoAggParseLookup finds no static `from`. Honest-partial.
+func TestMongoAggPy_Imperative_DynamicFrom_NoJoin(t *testing.T) {
+	src := `
+import pymongo
+
+def get_pipe(coll_name):
+    pipeline = []
+    pipeline.append({"$lookup": {"from": coll_name, "localField": "x", "foreignField": "_id", "as": "y"}})
+    return pipeline
+
+def run(db, cn):
+    return db.inspections.aggregate(get_pipe(cn))
+`
+	_, rels := runMongoAggPy(t, src)
+	if len(rels) != 0 {
+		t.Fatalf("dynamic $lookup from must emit NO join edge, got %d: %+v", len(rels), rels)
+	}
+}
+
+// NEGATIVE (#3928): `pipeline.extend(other_pipe)` where the arg is a non-literal
+// variable contributes nothing. With no literal init and no literal additions,
+// the whole pipeline stays unresolved — no fabrication.
+func TestMongoAggPy_Imperative_NonLiteralExtend_Unresolved(t *testing.T) {
+	src := `
+import pymongo
+
+def get_pipe(other_pipe):
+    pipeline = []
+    pipeline.extend(other_pipe)
+    return pipeline
+
+def run(db, op):
+    return db.inspections.aggregate(get_pipe(op))
+`
+	ents, rels := runMongoAggPy(t, src)
+	if len(rels) != 0 || len(ents) != 0 {
+		t.Fatalf("non-literal extend must emit nothing, got rels=%d ents=%d", len(rels), len(ents))
+	}
+}
+
 // Inline list-literal pipeline with $lookup + $graphLookup + $group + $facet,
 // receiver via db["collname"] subscript. Asserts both join kinds, the $group
 // _id/accumulators, and the $facet keys.
