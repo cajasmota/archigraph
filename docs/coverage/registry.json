@@ -46949,16 +46949,18 @@
             "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
           },
           "relationship_extraction": {
-            "status": "not_applicable",
-            "notes": "Raw PHP driver — no ORM relation layer; association/relationship/lazy-loading do not apply to raw connection clients."
+            "status": "partial",
+            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_php_mongo_agg.go","internal/engine/orm_queries_php_mongo_agg_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/3849",
+            "notes": "Doctrine MongoDB ODM mapping-reference annotations/attributes now extracted (scanPHPMongoAggregation, #3849): @ReferenceMany/@ReferenceOne/@EmbedMany/@EmbedOne (or #[ODM\\ReferenceMany(targetDocument: Author::class)]) on a property of a @Document/#[Document] class emit a JOINS_COLLECTION edge owning-Document -\u003e targetDocument (Class:Book -\u003e Class:Author, via=reference), mirroring the Mongoose-ref / Mongoid-association convention. Honest-partial: dynamic targetDocument -\u003e no edge; embedded-doc shape topology + cardinality not modelled."
           }
         },
         "Queries": {
           "query_attribution": {
             "status": "full",
-            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_drivers_other.go","internal/engine/orm_queries_drivers_other_test.go"],
+            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_drivers_other.go","internal/engine/orm_queries_drivers_other_test.go","internal/engine/orm_queries_php_mongo_agg.go","internal/engine/orm_queries_php_mongo_agg_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3645",
-            "notes": "Driver topology: $mongo-\u003eselectCollection('db','coll') / -\u003ecollection('x') captured via scanPHPDrivers; QUERIES edge to Class:\u003cCollection\u003e; dynamic names honest-skipped.",
+            "notes": "Driver topology: $mongo-\u003eselectCollection('db','coll') / -\u003ecollection('x') captured via scanPHPDrivers; QUERIES edge to Class:\u003cCollection\u003e; dynamic names honest-skipped. Aggregation $lookup joins now extracted too (scanPHPMongoAggregation, #3849): each $lookup emits a JOINS_COLLECTION edge aggregating-collection -\u003e from collection (Class:Book -\u003e Class:Author) plus a SCOPE.DataAccess stage entity, matching the Python/Java/Go/Mongoose contract and completing the cross-language Mongo epic #3837. Two idioms: Doctrine ODM fluent createAggregationBuilder(Book::class)-\u003elookup('authors')-\u003elocalField(..)-\u003eforeignField(..)-\u003ealias(..); and Laravel-MongoDB (jenssegers) raw Book::raw(fn($c)=\u003e$c-\u003eaggregate([['$lookup'=\u003e['from'=\u003e'authors',..]]])) PHP-array pipelines. Honest-partial: dynamic from/dynamic collection -\u003e no edge.",
             "verified_at": "2026-06-02"
           }
         },

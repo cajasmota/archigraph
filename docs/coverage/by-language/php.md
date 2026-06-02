@@ -72,6 +72,6 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [RedBeanPHP](../detail/lang.php.orm.redbeanphp.md) | 🟡 5/8 | |
 | [datastax/php-driver (Cassandra)](../detail/lang.php.driver.cassandra.md) | 🟡 1/4 | |
 | [elasticsearch-php](../detail/lang.php.driver.elastic.md) | 🟡 1/4 | |
-| [mongodb (PHP driver)](../detail/lang.php.driver.mongodb.md) | 🟡 1/4 | |
+| [mongodb (PHP driver)](../detail/lang.php.driver.mongodb.md) | 🟡 2/5 | |
 | [neo4j-php-client](../detail/lang.php.driver.neo4j.md) | 🟡 3/6 | |
 | [phpredis / Predis](../detail/lang.php.driver.redis.md) | 🟡 1/4 | |
