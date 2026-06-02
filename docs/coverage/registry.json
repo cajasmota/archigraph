@@ -48087,33 +48087,41 @@
       "category": "orm",
       "subcategory": "orm_mapper",
       "language": "ruby",
-      "label": "neo4j-ruby-driver",
+      "label": "neo4j-ruby-driver / activegraph OGM",
       "capabilities": {
         "Models": {
           "model_extraction": {
             "status": "not_applicable"
           },
           "schema_extraction": {
-            "status": "not_applicable",
-            "notes": "raw client driver; no ORM model/schema in user code"
+            "status": "partial",
+            "cites": ["internal/custom/ruby/neo4j_activegraph.go","internal/custom/ruby/neo4j_activegraph_test.go"],
+            "issue": "3614",
+            "notes": "activegraph / neo4j.rb OGM (not just the raw driver): each class that includes ActiveGraph::Node (or legacy Neo4j::ActiveNode) is extracted as a SCOPE.Schema/node (the graph node label) and each `property :name` declaration as a SCOPE.Schema/property. Regex over class bodies; partial (no inheritance/mixin node resolution).",
+            "verified_at": "2026-06-02"
           }
         },
         "Relationships": {
           "association_extraction": {
-            "status": "not_applicable",
-            "notes": "raw client driver; no association DSL"
+            "status": "partial",
+            "cites": ["internal/custom/ruby/neo4j_activegraph.go"],
+            "issue": "3614",
+            "notes": "activegraph has_many / has_one :out|:in associations are extracted as SCOPE.Component/relationship entities carrying relation_type, direction, and target_node (model_class)."
           },
           "foreign_key_extraction": {
             "status": "not_applicable",
-            "notes": "raw driver — no ORM relationship/lazy-load layer"
+            "notes": "graph DB — no foreign-key concept"
           },
           "lazy_loading_recognition": {
             "status": "not_applicable",
-            "notes": "raw driver — no ORM relationship/lazy-load layer"
+            "notes": "graph DB — no lazy-loading concept"
           },
           "relationship_extraction": {
-            "status": "not_applicable",
-            "notes": "raw client driver; no relationship DSL"
+            "status": "full",
+            "cites": ["internal/custom/ruby/neo4j_activegraph.go","internal/custom/ruby/neo4j_activegraph_test.go"],
+            "issue": "3614",
+            "notes": "activegraph has_many/has_one(:out|:in, type:, model_class:) associations are extracted AND emitted as traversable GRAPH_RELATES graph-schema edges owner-node -\u003e target-node (mirrors the Python neomodel template #3670 / Java SDN #3663 / JOINS_COLLECTION for graph DBs); the domain graph topology is a navigable subgraph rather than opaque string props. Full for same-file ActiveGraph::Node targets (value-asserting test TestActiveGraphGraphRelatesEdge: Person -GRAPH_RELATES(ACTED_IN,OUTGOING)-\u003e Movie; has_one :in -\u003e INCOMING). Cross-file / dynamic model_class targets are honest-partial (kept as target_node props only). Reverses the #3635 datastore-pass downgrade for this OGM.",
+            "verified_at": "2026-06-02"
           }
         },
         "Queries": {
