@@ -52796,24 +52796,32 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3620",
+            "notes": "Strawberry-GraphQL auth context not yet specifically extracted; generic decorator sniffer detects @authorized/@authenticated on resolver functions [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/http_reqresp_generic.go"],
+            "issue": "3620",
+            "notes": "Pydantic BaseModel type-hinted params in route/handler functions; marshmallow schema.load() in handler bodies. Generic extractor covering all non-FastAPI/Flask Python web frameworks. [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/http_reqresp_generic.go"],
+            "issue": "3620",
+            "notes": "Pydantic model_validate/parse_obj calls in handler bodies; marshmallow schema.load() validation evidence. Generic extractor for all non-FastAPI/Flask Python web frameworks. [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/http_middleware.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "rate_limit_stamping": {
             "status": "missing",
@@ -52825,25 +52833,33 @@
           "type_graph_extraction": {
             "status": "missing",
             "issue": "3804",
-            "notes": "GraphQL object-type→type graph applies (this is a GraphQL server) but is not yet implemented for this framework/language; SDL servers are covered by internal/extractors/graphql/type_graph.go (#3805) and the TS/Python code-first set (TypeGraphQL/Nexus/Pothos/Strawberry/graphene) by the code-first type-graph extractors. This lane is the remaining backfill for other-language GraphQL frameworks."
+            "notes": "Ariadne is SCHEMA-FIRST (SDL strings, not Python code-first type classes); the code-first type-graph extractor (internal/custom/python/graphql_codefirst_typegraph.go) does not apply. SDL type-graph for ariadne is the remaining backfill (tracked with the other-language GraphQL SDL lane)."
           }
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "interface_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "type_alias_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "DI": {
@@ -52862,54 +52878,76 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/engine/tests_edges.go"],
+            "issue": "3620",
+            "notes": "Multi-hop TESTS pass (#2987) links test-client calls (client/session/test_client.\u003cverb\u003e('/path')) through ROUTES_TO to handlers; framework fixture tests in tests_edges_test.go [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Observability": {
           "log_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/observability.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "metric_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/observability.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "trace_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/observability.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Data": {
           "db_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "config_consumption": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/config_consumer.go","internal/extractors/python/config_consumer_test.go"],
+            "issue": "3620",
+            "notes": "settings.X / os.environ.get(k) -\u003e DEPENDS_ON_CONFIG (live pre-#3641; config-blast-radius) [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "dead_code_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "def_use_chain_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/def_use_python.go","internal/substrate/def_use_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "error_flow": {
             "status": "full",
@@ -52923,68 +52961,98 @@
             "issue": "backfill:dictionary-completeness"
           },
           "fs_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "http_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "module_cycle_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/module_cycle_pass.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "mutation_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "pure_function_tagging": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/links/pure_function_pass.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "reachability_analysis": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "request_shape_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "request_sink_dataflow": {
             "status": "missing",
             "issue": "3740"
           },
           "response_shape_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "sanitizer_recognition": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "taint_sink_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/taint_sites_python.go","internal/substrate/taint_sites_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "taint_source_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/taint_sites_python.go","internal/substrate/taint_sites_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "template_pattern_catalog": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/template_pattern_python.go","internal/substrate/template_pattern_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "vulnerability_finding": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         }
       },
@@ -55713,24 +55781,32 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/mcp/auth_coverage.go","internal/patterns/decorator_extractor.go"],
+            "issue": "3620",
+            "notes": "Strawberry-GraphQL auth context not yet specifically extracted; generic decorator sniffer detects @authorized/@authenticated on resolver functions [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Validation": {
           "dto_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/http_reqresp_generic.go"],
+            "issue": "3620",
+            "notes": "Pydantic BaseModel type-hinted params in route/handler functions; marshmallow schema.load() in handler bodies. Generic extractor covering all non-FastAPI/Flask Python web frameworks. [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "request_validation": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/http_reqresp_generic.go"],
+            "issue": "3620",
+            "notes": "Pydantic model_validate/parse_obj calls in handler bodies; marshmallow schema.load() validation evidence. Generic extractor for all non-FastAPI/Flask Python web frameworks. [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Middleware": {
           "middleware_coverage": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/http_middleware.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "rate_limit_stamping": {
             "status": "missing",
@@ -55748,20 +55824,28 @@
         },
         "Type System": {
           "enum_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "interface_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "type_alias_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "type_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/types.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "DI": {
@@ -55780,54 +55864,76 @@
         },
         "Testing": {
           "tests_linkage": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/engine/tests_edges.go"],
+            "issue": "3620",
+            "notes": "Multi-hop TESTS pass (#2987) links test-client calls (client/session/test_client.\u003cverb\u003e('/path')) through ROUTES_TO to handlers; framework fixture tests in tests_edges_test.go [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Observability": {
           "log_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/observability.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "metric_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/observability.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "trace_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/custom/python/observability.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Data": {
           "db_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go","internal/types/confidence.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "config_consumption": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/extractors/python/config_consumer.go","internal/extractors/python/config_consumer_test.go"],
+            "issue": "3620",
+            "notes": "settings.X / os.environ.get(k) -\u003e DEPENDS_ON_CONFIG (live pre-#3641; config-blast-radius) [#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "dead_code_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "def_use_chain_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/def_use_python.go","internal/substrate/def_use_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "error_flow": {
             "status": "full",
@@ -55841,68 +55947,98 @@
             "issue": "backfill:dictionary-completeness"
           },
           "fs_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "http_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/python.go","internal/substrate/substrate.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "module_cycle_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/module_cycle_pass.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "mutation_effect": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "pure_function_tagging": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/links/pure_function_pass.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "reachability_analysis": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "request_shape_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "request_sink_dataflow": {
             "status": "missing",
             "issue": "3740"
           },
           "response_shape_extraction": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "sanitizer_recognition": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "full",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "taint_sink_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/taint_sites_python.go","internal/substrate/taint_sites_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "taint_source_detection": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/taint_sites_python.go","internal/substrate/taint_sites_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "template_pattern_catalog": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/substrate/template_pattern_python.go","internal/substrate/template_pattern_test.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           },
           "vulnerability_finding": {
-            "status": "missing",
-            "issue": "3620"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_python.go"],
+            "issue": "3620",
+            "notes": "[#3911: language-dispatched python extractor — fires for graphene/ariadne identically (probe-verified)]"
           }
         }
       }
