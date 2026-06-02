@@ -108,7 +108,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Spring Data Cassandra](../detail/lang.java.orm.spring-data-cassandra.md) | 🔴 0/6 | |
 | [Spring Data Elasticsearch](../detail/lang.java.orm.spring-data-elastic.md) | 🔴 0/6 | |
 | [Spring Data JPA](../detail/lang.java.orm.spring-data-jpa.md) | 🟡 5/10 | |
-| [Spring Data MongoDB](../detail/lang.java.orm.spring-data-mongo.md) | 🔴 0/6 | |
+| [Spring Data MongoDB](../detail/lang.java.orm.spring-data-mongo.md) | 🟡 1/6 | |
 | [Spring Data Redis](../detail/lang.java.orm.spring-data-redis.md) | 🔴 0/6 | |
 | [jOOQ](../detail/lang.java.orm.jooq.md) | 🟡 6/9 | |
 

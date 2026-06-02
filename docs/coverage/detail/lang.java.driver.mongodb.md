@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | ✅ `full` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Driver topology: database.getCollection('x') literal captured via scanJavaDrivers (javaGetCollectionRe); QUERIES edge to Class:<Collection>; dynamic names honest-skipped. |
+| Query attribution | ✅ `full` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go`<br>`internal/engine/orm_queries_java_mongo_agg.go`<br>`internal/engine/orm_queries_java_mongo_agg_test.go` | Driver topology: database.getCollection('x') literal captured via scanJavaDrivers (javaGetCollectionRe); QUERIES edge to Class:<Collection>; dynamic names honest-skipped. Aggregation $lookup joins (scanJavaSpringMongoAggregation, #3845): each Spring Data MongoDB $lookup (fluent LookupOperation, positional Aggregation.lookup, or @Aggregation(pipeline={..}) string pipeline) emits a JOINS_COLLECTION edge aggregating-collection -> from collection plus a SCOPE.DataAccess stage entity, matching the Python/Mongoose contract; dynamic from/collection honest-skipped. |
 
 ### Migrations
 

@@ -23279,9 +23279,9 @@
         "Queries": {
           "query_attribution": {
             "status": "full",
-            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_drivers_other.go","internal/engine/orm_queries_drivers_other_test.go"],
+            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_drivers_other.go","internal/engine/orm_queries_drivers_other_test.go","internal/engine/orm_queries_java_mongo_agg.go","internal/engine/orm_queries_java_mongo_agg_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3645",
-            "notes": "Driver topology: database.getCollection('x') literal captured via scanJavaDrivers (javaGetCollectionRe); QUERIES edge to Class:\u003cCollection\u003e; dynamic names honest-skipped.",
+            "notes": "Driver topology: database.getCollection('x') literal captured via scanJavaDrivers (javaGetCollectionRe); QUERIES edge to Class:\u003cCollection\u003e; dynamic names honest-skipped. Aggregation $lookup joins (scanJavaSpringMongoAggregation, #3845): each Spring Data MongoDB $lookup (fluent LookupOperation, positional Aggregation.lookup, or @Aggregation(pipeline={..}) string pipeline) emits a JOINS_COLLECTION edge aggregating-collection -\u003e from collection plus a SCOPE.DataAccess stage entity, matching the Python/Mongoose contract; dynamic from/collection honest-skipped.",
             "verified_at": "2026-06-02"
           }
         },
@@ -30624,9 +30624,10 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing",
+            "status": "partial",
+            "cites": ["internal/engine/orm_queries.go","internal/engine/orm_queries_java_mongo_agg.go","internal/engine/orm_queries_java_mongo_agg_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3645",
-            "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
+            "notes": "Spring Data MongoDB aggregation $lookup joins now extracted (scanJavaSpringMongoAggregation, #3845): each $lookup emits a JOINS_COLLECTION edge aggregating-collection -\u003e from collection (Class:Book -\u003e Class:Author) plus a SCOPE.DataAccess stage entity, matching the Python/Mongoose contract. Three idioms: fluent LookupOperation.newLookup().from(..).localField(..).foreignField(..).as(..); positional Aggregation.lookup(from,lf,ff,as); and @Aggregation(pipeline={\"{ $lookup: { from: 'authors' } }\"}) string pipelines (fed to the shared JSON stage splitter). Aggregating collection resolved from mongoTemplate.aggregate(agg, \"books\"|Book.class, ..), same-file @Document(..), or the MongoRepository\u003cEntity,..\u003e generic. Honest-partial: dynamic .from(var)/dynamic collection -\u003e no edge; general query attribution + model topology still missing.",
             "verified_at": "2026-06-02"
           }
         },

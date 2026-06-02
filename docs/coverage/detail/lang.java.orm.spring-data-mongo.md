@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_java_mongo_agg.go`<br>`internal/engine/orm_queries_java_mongo_agg_test.go` | Spring Data MongoDB aggregation $lookup joins now extracted (scanJavaSpringMongoAggregation, #3845): each $lookup emits a JOINS_COLLECTION edge aggregating-collection -> from collection (Class:Book -> Class:Author) plus a SCOPE.DataAccess stage entity, matching the Python/Mongoose contract. Three idioms: fluent LookupOperation.newLookup().from(..).localField(..).foreignField(..).as(..); positional Aggregation.lookup(from,lf,ff,as); and @Aggregation(pipeline={"{ $lookup: { from: 'authors' } }"}) string pipelines (fed to the shared JSON stage splitter). Aggregating collection resolved from mongoTemplate.aggregate(agg, "books"|Book.class, ..), same-file @Document(..), or the MongoRepository<Entity,..> generic. Honest-partial: dynamic .from(var)/dynamic collection -> no edge; general query attribution + model topology still missing. |
 
 ### Migrations
 
