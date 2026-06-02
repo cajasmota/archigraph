@@ -20,6 +20,27 @@
 
 records:
 
+  analysis.dependency-hygiene:
+    capabilities:
+      dependency_usage_status:
+        # Pass 8.7 (engine.ApplyDependencyHygiene) reuses deplinker.Analyze
+        # over the assembled graph.Document and persists usage_status=
+        # used|unused onto each external_dependency entity + its DEPENDS_ON
+        # edge. Promotes the previously dashboard-only deplinker signal into
+        # the graph (issue #3640, epic #3625). Invoked from cmd/archigraph/
+        # index.go gated on --skip-pass=dep-hygiene.
+        status: full
+        symbols:
+          - file: internal/engine/dependency_hygiene.go
+            functions: [ApplyDependencyHygiene, depKey, depNameFromExternalRef, cutPrefix]
+          - file: internal/extractors/cross/deplinker/extractor.go
+            functions: [Analyze, analyzeEntities]
+        tests:
+          - file: internal/engine/dependency_hygiene_test.go
+            functions: [TestApplyDependencyHygiene_UsedUnusedPhantom, TestApplyDependencyHygiene_GoModulePrefix, TestApplyDependencyHygiene_NoManifest, TestDepNameFromExternalRef]
+        issues_implemented: ["3640"]
+        verified_at: "2026-06-02"
+
   lang.cobol.runtime.ibm-enterprise:
     capabilities:
       core_extraction:

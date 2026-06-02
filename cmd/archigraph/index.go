@@ -59,13 +59,14 @@ const (
 	PassEventFlow     = "event-flow"     // Pass 7.5: event-flow pub/sub walk (#1944 Phase 1)
 	PassModuleAgg     = "module-agg"     // Pass 8: module-level aggregation (#1383)
 	PassCommitCouple  = "commit-couple"  // Pass 8.5: VCS-derived COMMIT_COUPLED soft edges (#21)
+	PassDepHygiene    = "dep-hygiene"    // Pass 8.7: persist deplinker used/unused status onto deps (#3640)
 	PassEmbed         = "embed"          // Pass 9: semantic embeddings sidecar (#461 / ADR-0019)
 	PassTestsWalkUp   = "tests-walkup"   // Pass 3.5: derive TESTS edges via helper walk-up
 )
 
 // allPassNames is used to validate --skip-pass entries.
 var allPassNames = []string{
-	PassExtract, PassFramework, PassCrossLang, PassTestsWalkUp, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow, PassEventFlow, PassModuleAgg, PassCommitCouple, PassEmbed,
+	PassExtract, PassFramework, PassCrossLang, PassTestsWalkUp, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow, PassEventFlow, PassModuleAgg, PassCommitCouple, PassDepHygiene, PassEmbed,
 }
 
 // fileTask carries one repo-relative path and its absolute counterpart
@@ -1528,6 +1529,26 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 				"archigraph: commit-couple commits=%d candidate_pairs=%d files=%d edges=%d oversize_skipped=%d\n",
 				ccStats.TotalCommits, ccStats.CandidatePairs, ccStats.FileEntities,
 				ccStats.CoupledEdges, ccStats.SkippedOversizeCommits)
+		}
+	}
+
+	// Pass 8.7 — dependency-hygiene annotation (#3640, epic #3625). Runs
+	// AFTER the document is assembled (manifest external_dependency entities +
+	// import DEPENDS_ON edges are all present) so the deplinker analysis sees
+	// the same graph the dashboard would. Persists usage_status=used|unused
+	// onto each declared dependency entity (and its DEPENDS_ON edge), promoting
+	// the previously dashboard-only deplinker signal into the graph so
+	// find/neighbors/agents can read dependency hygiene. The dashboard keeps
+	// calling AnalyzeGroup independently; this pass annotates entities in place
+	// (no new entities, no double-emit). Skippable via --skip-pass=dep-hygiene.
+	if !i.skipPasses[PassDepHygiene] {
+		dhStats := engine.ApplyDependencyHygiene(doc)
+		if verbose() || dhStats.EntitiesAnnotated > 0 {
+			fmt.Fprintf(os.Stderr,
+				"archigraph: dep-hygiene declared=%d used=%d unused=%d phantom=%d "+
+					"entities_annotated=%d edges_annotated=%d\n",
+				dhStats.Declared, dhStats.Used, dhStats.Unused, dhStats.Phantom,
+				dhStats.EntitiesAnnotated, dhStats.EdgesAnnotated)
 		}
 	}
 

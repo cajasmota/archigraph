@@ -67,24 +67,24 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [Boost.Test](../detail/test.boost-test.md) | 🔴 | — | — | 🔴 | |
-| [Buck2](../detail/lang.c-cpp.tool.buck2.md) | 🔴 | — | — | 🔴 | |
-| [CMake](../detail/lang.c-cpp.tool.cmake.md) | 🟢 | — | — | 🟢 | |
-| [Catch2](../detail/test.catch2.md) | 🔴 | — | — | 🔴 | |
-| [Conan](../detail/lang.c-cpp.tool.conan.md) | — | — | 🟢 | — | |
-| [CppUTest](../detail/test.cpputest.md) | 🔴 | — | — | 🔴 | |
-| [CppUnit](../detail/test.cppunit.md) | 🔴 | — | — | 🔴 | |
-| [GNU Make](../detail/lang.c-cpp.tool.make.md) | 🔴 | — | — | 🔴 | |
-| [GoogleTest (gtest)](../detail/test.gtest.md) | 🔴 | — | — | 🔴 | |
-| [Hunter](../detail/lang.c-cpp.tool.hunter.md) | — | 🔴 | 🔴 | — | |
-| [Meson](../detail/lang.c-cpp.tool.meson.md) | 🔴 | — | — | 🔴 | |
-| [Ninja](../detail/lang.c-cpp.tool.ninja.md) | 🔴 | — | — | 🔴 | |
-| [build2](../detail/lang.c-cpp.tool.build2.md) | — | 🔴 | 🔴 | — | |
-| [doctest (C++)](../detail/test.doctest-cpp.md) | 🔴 | — | — | 🔴 | |
-| [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | 🟢 | 🟢 | — | |
-| [xmake](../detail/lang.c-cpp.tool.xmake.md) | 🔴 | — | — | 🔴 | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Boost.Test](../detail/test.boost-test.md) | 🔴 | — | — | — | 🔴 | |
+| [Buck2](../detail/lang.c-cpp.tool.buck2.md) | 🔴 | — | — | — | 🔴 | |
+| [CMake](../detail/lang.c-cpp.tool.cmake.md) | 🟢 | — | — | — | 🟢 | |
+| [Catch2](../detail/test.catch2.md) | 🔴 | — | — | — | 🔴 | |
+| [Conan](../detail/lang.c-cpp.tool.conan.md) | — | — | — | 🟢 | — | |
+| [CppUTest](../detail/test.cpputest.md) | 🔴 | — | — | — | 🔴 | |
+| [CppUnit](../detail/test.cppunit.md) | 🔴 | — | — | — | 🔴 | |
+| [GNU Make](../detail/lang.c-cpp.tool.make.md) | 🔴 | — | — | — | 🔴 | |
+| [GoogleTest (gtest)](../detail/test.gtest.md) | 🔴 | — | — | — | 🔴 | |
+| [Hunter](../detail/lang.c-cpp.tool.hunter.md) | — | — | 🔴 | 🔴 | — | |
+| [Meson](../detail/lang.c-cpp.tool.meson.md) | 🔴 | — | — | — | 🔴 | |
+| [Ninja](../detail/lang.c-cpp.tool.ninja.md) | 🔴 | — | — | — | 🔴 | |
+| [build2](../detail/lang.c-cpp.tool.build2.md) | — | — | 🔴 | 🔴 | — | |
+| [doctest (C++)](../detail/test.doctest-cpp.md) | 🔴 | — | — | — | 🔴 | |
+| [vcpkg](../detail/lang.c-cpp.tool.vcpkg.md) | — | — | 🟢 | 🟢 | — | |
+| [xmake](../detail/lang.c-cpp.tool.xmake.md) | 🔴 | — | — | — | 🔴 | |
 
 ## ORMs
 

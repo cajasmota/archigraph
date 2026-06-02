@@ -38,14 +38,14 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [Bundler (Gemfile)](../detail/build.bundler.md) | ✅ | — | — | ✅ | |
-| [Cucumber](../detail/test.cucumber.md) | 🔴 | — | — | 🔴 | |
-| [Gemfile](../detail/pkg.gemfile.md) | — | 🔴 | ✅ | — | |
-| [Minitest](../detail/test.minitest.md) | 🟢 | — | — | 🟢 | |
-| [RSpec](../detail/test.rspec.md) | ✅ | — | — | ✅ | |
-| [Rake](../detail/build.rake.md) | 🔴 | — | — | 🟢 | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Bundler (Gemfile)](../detail/build.bundler.md) | ✅ | — | — | — | ✅ | |
+| [Cucumber](../detail/test.cucumber.md) | 🔴 | — | — | — | 🔴 | |
+| [Gemfile](../detail/pkg.gemfile.md) | — | — | 🔴 | ✅ | — | |
+| [Minitest](../detail/test.minitest.md) | 🟢 | — | — | — | 🟢 | |
+| [RSpec](../detail/test.rspec.md) | ✅ | — | — | — | ✅ | |
+| [Rake](../detail/build.rake.md) | 🔴 | — | — | — | 🟢 | |
 
 ## ORMs
 

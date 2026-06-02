@@ -61,7 +61,7 @@ categories:
   build_system:
     capabilities: [target_extraction, dependency_graph]
   package_manager:
-    capabilities: [manifest_parsing, lockfile_parsing]
+    capabilities: [manifest_parsing, lockfile_parsing, dependency_usage_status]
   databases:
     capabilities: [resource_extraction, dependency_attribution]
   platform:

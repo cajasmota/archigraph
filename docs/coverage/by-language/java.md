@@ -73,18 +73,18 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [AssertJ](../detail/test.assertj.md) | 🔴 | — | — | 🔴 | |
-| [Gradle (Groovy + Kotlin DSL)](../detail/build.gradle.md) | ✅ | — | — | ✅ | |
-| [JUnit 4](../detail/test.junit4.md) | 🟢 | — | — | 🟢 | |
-| [JUnit 5](../detail/test.junit5.md) | ✅ | — | — | ✅ | |
-| [Maven (pom.xml)](../detail/build.maven.md) | ✅ | — | — | ✅ | |
-| [Mockito](../detail/test.mockito.md) | 🔴 | — | — | 🔴 | |
-| [REST-assured](../detail/test.restassured.md) | 🔴 | — | — | 🔴 | |
-| [TestNG](../detail/test.testng.md) | 🔴 | — | — | 🟢 | |
-| [build.gradle / build.gradle.kts](../detail/pkg.gradle.md) | — | 🔴 | 🔴 | — | |
-| [pom.xml](../detail/pkg.pom.md) | — | — | ✅ | — | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [AssertJ](../detail/test.assertj.md) | 🔴 | — | — | — | 🔴 | |
+| [Gradle (Groovy + Kotlin DSL)](../detail/build.gradle.md) | ✅ | — | — | — | ✅ | |
+| [JUnit 4](../detail/test.junit4.md) | 🟢 | — | — | — | 🟢 | |
+| [JUnit 5](../detail/test.junit5.md) | ✅ | — | — | — | ✅ | |
+| [Maven (pom.xml)](../detail/build.maven.md) | ✅ | — | — | — | ✅ | |
+| [Mockito](../detail/test.mockito.md) | 🔴 | — | — | — | 🔴 | |
+| [REST-assured](../detail/test.restassured.md) | 🔴 | — | — | — | 🔴 | |
+| [TestNG](../detail/test.testng.md) | 🔴 | — | — | — | 🟢 | |
+| [build.gradle / build.gradle.kts](../detail/pkg.gradle.md) | — | — | 🔴 | 🔴 | — | |
+| [pom.xml](../detail/pkg.pom.md) | — | — | — | ✅ | — | |
 
 ## ORMs
 

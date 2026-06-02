@@ -63,23 +63,23 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [Flit](../detail/build.flit.md) | 🟢 | — | — | 🟢 | |
-| [Hatch](../detail/build.hatch.md) | 🟢 | — | — | 🟢 | |
-| [Hypothesis (property tests)](../detail/test.hypothesis.md) | — | — | — | 🔴 | |
-| [Pipenv](../detail/build.pipenv.md) | 🟢 | — | — | 🟢 | |
-| [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | 🟢 | 🟢 | — | |
-| [Poetry](../detail/build.poetry.md) | ✅ | — | — | ✅ | |
-| [doctest (stdlib)](../detail/test.doctest.md) | — | — | — | 🔴 | |
-| [nose2](../detail/test.nose2.md) | — | — | — | 🔴 | |
-| [pip (requirements.txt)](../detail/build.pip.md) | ✅ | — | — | ✅ | |
-| [pyproject.toml](../detail/pkg.pyproject.md) | — | 🟢 | ✅ | — | |
-| [pytest](../detail/test.pytest.md) | ✅ | — | — | ✅ | |
-| [requirements.txt](../detail/pkg.requirements.md) | — | — | ✅ | — | |
-| [setuptools / setup.py](../detail/build.setuptools.md) | 🟢 | — | — | 🟢 | |
-| [unittest (stdlib)](../detail/test.unittest.md) | ✅ | — | — | ✅ | |
-| [uv (Astral)](../detail/build.uv.md) | ✅ | — | — | ✅ | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Flit](../detail/build.flit.md) | 🟢 | — | — | — | 🟢 | |
+| [Hatch](../detail/build.hatch.md) | 🟢 | — | — | — | 🟢 | |
+| [Hypothesis (property tests)](../detail/test.hypothesis.md) | — | — | — | — | 🔴 | |
+| [Pipenv](../detail/build.pipenv.md) | 🟢 | — | — | — | 🟢 | |
+| [Pipfile / Pipfile.lock](../detail/pkg.pipfile.md) | — | — | 🟢 | 🟢 | — | |
+| [Poetry](../detail/build.poetry.md) | ✅ | — | — | — | ✅ | |
+| [doctest (stdlib)](../detail/test.doctest.md) | — | — | — | — | 🔴 | |
+| [nose2](../detail/test.nose2.md) | — | — | — | — | 🔴 | |
+| [pip (requirements.txt)](../detail/build.pip.md) | ✅ | — | — | — | ✅ | |
+| [pyproject.toml](../detail/pkg.pyproject.md) | — | — | 🟢 | ✅ | — | |
+| [pytest](../detail/test.pytest.md) | ✅ | — | — | — | ✅ | |
+| [requirements.txt](../detail/pkg.requirements.md) | — | — | — | ✅ | — | |
+| [setuptools / setup.py](../detail/build.setuptools.md) | 🟢 | — | — | — | 🟢 | |
+| [unittest (stdlib)](../detail/test.unittest.md) | ✅ | — | — | — | ✅ | |
+| [uv (Astral)](../detail/build.uv.md) | ✅ | — | — | — | ✅ | |
 
 ## ORMs
 

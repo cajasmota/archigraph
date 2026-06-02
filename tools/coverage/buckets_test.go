@@ -49,7 +49,7 @@ func TestBucketCapabilityKeys(t *testing.T) {
 
 	// Tools: union of build_system + package_manager.
 	got = bucketCapabilityKeys(BucketTools)
-	want = []string{"dependency_graph", "lockfile_parsing", "manifest_parsing", "target_extraction"}
+	want = []string{"dependency_graph", "dependency_usage_status", "lockfile_parsing", "manifest_parsing", "target_extraction"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Tools keys = %v, want %v", got, want)
 	}

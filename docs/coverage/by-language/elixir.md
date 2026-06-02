@@ -56,13 +56,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [ExUnit](../detail/test.exunit.md) | ✅ | — | — | ✅ | |
-| [Hex](../detail/build.hex.md) | 🟢 | — | — | 🟢 | |
-| [Mix (mix.exs)](../detail/build.mix.md) | ✅ | — | — | ✅ | |
-| [StreamData (property tests)](../detail/test.streamdata.md) | ✅ | — | — | ✅ | |
-| [mix.exs](../detail/pkg.mix.md) | — | — | 🔴 | — | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [ExUnit](../detail/test.exunit.md) | ✅ | — | — | — | ✅ | |
+| [Hex](../detail/build.hex.md) | 🟢 | — | — | — | 🟢 | |
+| [Mix (mix.exs)](../detail/build.mix.md) | ✅ | — | — | — | ✅ | |
+| [StreamData (property tests)](../detail/test.streamdata.md) | ✅ | — | — | — | ✅ | |
+| [mix.exs](../detail/pkg.mix.md) | — | — | — | 🔴 | — | |
 
 ## ORMs
 

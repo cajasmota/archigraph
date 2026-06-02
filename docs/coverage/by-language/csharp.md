@@ -69,15 +69,15 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [.csproj / packages.config](../detail/pkg.csproj.md) | — | ✅ | ✅ | — | |
-| [FluentAssertions](../detail/test.fluentassertions.md) | 🔴 | — | — | 🔴 | |
-| [MSTest](../detail/test.mstest.md) | 🟢 | — | — | 🟢 | |
-| [NUnit](../detail/test.nunit.md) | 🟢 | — | — | 🟢 | |
-| [NuGet](../detail/build.nuget.md) | 🟢 | — | — | 🟢 | |
-| [dotnet CLI / MSBuild](../detail/build.dotnet.md) | ✅ | — | — | ✅ | |
-| [xUnit](../detail/test.xunit.md) | 🟢 | — | — | 🟢 | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [.csproj / packages.config](../detail/pkg.csproj.md) | — | — | ✅ | ✅ | — | |
+| [FluentAssertions](../detail/test.fluentassertions.md) | 🔴 | — | — | — | 🔴 | |
+| [MSTest](../detail/test.mstest.md) | 🟢 | — | — | — | 🟢 | |
+| [NUnit](../detail/test.nunit.md) | 🟢 | — | — | — | 🟢 | |
+| [NuGet](../detail/build.nuget.md) | 🟢 | — | — | — | 🟢 | |
+| [dotnet CLI / MSBuild](../detail/build.dotnet.md) | ✅ | — | — | — | ✅ | |
+| [xUnit](../detail/test.xunit.md) | 🟢 | — | — | — | 🟢 | |
 
 ## ORMs
 

@@ -2,6 +2,20 @@
   "$schema_version": 1,
   "records": [
     {
+      "id": "analysis.dependency-hygiene",
+      "category": "package_manager",
+      "language": "multi",
+      "label": "Dependency hygiene (used / unused / phantom)",
+      "capabilities": {
+        "dependency_usage_status": {
+          "status": "full",
+          "cites": ["cmd/archigraph/index.go","internal/engine/dependency_hygiene.go","internal/engine/dependency_hygiene_test.go","internal/extractors/cross/deplinker/extractor.go"],
+          "notes": "deplinker used/unused/phantom classification is now PERSISTED into the graph (issue #3640, epic #3625). The Pass 8.7 engine pass engine.ApplyDependencyHygiene reuses deplinker.Analyze over the assembled graph.Document and writes usage_status=used|unused onto each external_dependency entity (manifest extractor) and its DEPENDS_ON(kind=external_dependency) edge, so find/neighbors/agents read dependency hygiene directly. Phantom imports (imported, not declared) are reported as a stat but not synthesised as entities to avoid double-counting the manifest inventory; phantom listing remains the dashboard's job. The dashboard handler keeps calling AnalyzeGroup independently (no double-emit). Honest-partial: classification fidelity tracks deplinker's manifest+import inputs.",
+          "verified_at": "2026-06-02"
+        }
+      }
+    },
+    {
       "id": "build.bazel",
       "category": "build_system",
       "language": "multi",

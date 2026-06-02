@@ -46,6 +46,6 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [Package.swift / Podfile](../detail/pkg.swift-package.md) | — | — | 🔴 | — | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Package.swift / Podfile](../detail/pkg.swift-package.md) | — | — | — | 🔴 | — | |

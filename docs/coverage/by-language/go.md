@@ -59,16 +59,16 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [Ginkgo](../detail/test.ginkgo.md) | 🟢 | — | — | ✅ | |
-| [Gomega](../detail/test.gomega.md) | 🟢 | — | — | ✅ | |
-| [Mage](../detail/build.mage.md) | ✅ | — | — | ✅ | |
-| [Task (taskfile.dev)](../detail/build.task.md) | ✅ | — | — | ✅ | |
-| [go modules (go.mod / go.sum)](../detail/build.go-modules.md) | ✅ | — | — | ✅ | |
-| [go testing (stdlib)](../detail/test.go-testing.md) | ✅ | — | — | ✅ | |
-| [go.mod](../detail/pkg.go-mod.md) | — | ✅ | ✅ | — | |
-| [testify](../detail/test.testify.md) | ✅ | — | — | ✅ | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Ginkgo](../detail/test.ginkgo.md) | 🟢 | — | — | — | ✅ | |
+| [Gomega](../detail/test.gomega.md) | 🟢 | — | — | — | ✅ | |
+| [Mage](../detail/build.mage.md) | ✅ | — | — | — | ✅ | |
+| [Task (taskfile.dev)](../detail/build.task.md) | ✅ | — | — | — | ✅ | |
+| [go modules (go.mod / go.sum)](../detail/build.go-modules.md) | ✅ | — | — | — | ✅ | |
+| [go testing (stdlib)](../detail/test.go-testing.md) | ✅ | — | — | — | ✅ | |
+| [go.mod](../detail/pkg.go-mod.md) | — | — | ✅ | ✅ | — | |
+| [testify](../detail/test.testify.md) | ✅ | — | — | — | ✅ | |
 
 ## ORMs
 

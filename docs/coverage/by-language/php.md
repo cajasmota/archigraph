@@ -45,14 +45,14 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 ## Tools
 
-| Name | Dependency graph | Lockfile parsing | Manifest parsing | Target extraction | Notes |
-|---|---|---|---|---|---|
-| [Behat](../detail/test.behat.md) | 🟢 | — | — | 🟢 | |
-| [Codeception](../detail/test.codeception.md) | 🟢 | — | — | 🟢 | |
-| [Composer](../detail/build.composer.md) | ✅ | — | — | ✅ | |
-| [PHPUnit](../detail/test.phpunit.md) | ✅ | — | — | ✅ | |
-| [Pest](../detail/test.pest.md) | 🟢 | — | — | 🟢 | |
-| [composer.json](../detail/pkg.composer.md) | — | ✅ | ✅ | — | |
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Behat](../detail/test.behat.md) | 🟢 | — | — | — | 🟢 | |
+| [Codeception](../detail/test.codeception.md) | 🟢 | — | — | — | 🟢 | |
+| [Composer](../detail/build.composer.md) | ✅ | — | — | — | ✅ | |
+| [PHPUnit](../detail/test.phpunit.md) | ✅ | — | — | — | ✅ | |
+| [Pest](../detail/test.pest.md) | 🟢 | — | — | — | 🟢 | |
+| [composer.json](../detail/pkg.composer.md) | — | — | ✅ | ✅ | — | |
 
 ## ORMs
 
