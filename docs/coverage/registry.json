@@ -69044,8 +69044,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/custom/scala/caliban.go","internal/custom/scala/caliban_test.go"],
+            "issue": "3992",
+            "notes": "#3992: a resolver-field @GQLDirective(Authenticated) (or Authorized/Secured/RequiresAuth) gates the synthesised GRAPHQL endpoint — stamps the flat shared auth contract auth_required=true / auth_method=directive / auth_confidence=high / auth_directive=\u003cname\u003e / auth_guard=\u003cname\u003e. A custom role directive @GQLDirective(HasRole(\"admin\")) / RequireRole/HasPermission/HasScope parses quoted role tokens into auth_roles (sorted). Non-auth directives (@GQLDeprecated, @GQLDirective(deprecated)) and directive-free fields stay unauthenticated. TestCalibanAuthDirective. PARTIAL honest limit: only field-level @GQLDirective auth is recovered (positional + intra-file, same binding limit as endpoint synthesis); Caliban Wrapper-based auth middleware and ZIO auth-environment requirements are NOT statically chased, and custom role directives with non-literal (computed/enum) role args stamp auth_required+auth_directive but leave auth_roles absent.",
+            "verified_at": "2026-06-03"
           }
         },
         "Validation": {

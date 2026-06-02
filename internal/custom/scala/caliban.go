@@ -3,6 +3,7 @@ package scala
 import (
 	"context"
 	"regexp"
+	"sort"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -78,9 +79,25 @@ var (
 	//   user: UserArgs => URIO[Any, User]
 	//   users: () => List[User]
 	//   name: String
-	// Capture group 1 is the field name, group 2 is its (trimmed) type text up
-	// to the next top-level comma.
-	reCalibanField = regexp.MustCompile(`(?m)^\s*([A-Za-z_]\w*)\s*:\s*`)
+	//   @GQLDirective(Authenticated) me: () => URIO[Auth, User]
+	// Group 1 is the field name. A leading annotation block (@GQLDirective(...)
+	// / @GQLDeprecated / ...) is skipped so an annotated field's NAME is still
+	// captured; the annotation text itself is parsed separately by
+	// reCalibanGQLDirective for auth.
+	reCalibanField = regexp.MustCompile(`(?:@[A-Za-z_]\w*(?:\([^)]*\))?\s*)*([A-Za-z_]\w*)\s*:\s*`)
+
+	// `@GQLDirective(<expr>)` field/type annotation. Group 1 is the directive
+	// expression, e.g. `Authenticated`, `HasRole("admin")`, a custom directive.
+	// Caliban auth idiom: a built-in/library `Authenticated` directive, or a
+	// custom `HasRole("admin")` / `HasPermission("...")` directive constructor.
+	reCalibanGQLDirective = regexp.MustCompile(`@GQLDirective\s*\(\s*([A-Za-z_][\w.]*(?:\s*\([^)]*\))?)`)
+
+	// Role/permission argument inside a directive constructor, e.g.
+	// `HasRole("admin")` / `RequireRole("ADMIN", "OPS")`. Group 1 = the quoted
+	// argument list region; individual quoted tokens are pulled out separately.
+	reCalibanDirectiveRole = regexp.MustCompile(`^(?:Has|Require|With)?(?:Role|Roles|Permission|Permissions|Scope|Scopes)\s*\(([^)]*)\)`)
+
+	reCalibanQuotedArg = regexp.MustCompile(`"([^"]*)"`)
 
 	// Caliban schema annotations that mark a case class / enum as a GraphQL
 	// schema type. Capture group 2 is the annotated type name.
@@ -146,18 +163,86 @@ func calibanSplitTopLevel(s string) []string {
 	return parts
 }
 
-// calibanResolverFields parses the field NAMES declared in a case-class
-// parameter list. Each top-level `name: Type` segment contributes its name.
-func calibanResolverFields(params string) []string {
-	var fields []string
+// calibanField is one resolver case-class field: its GraphQL name plus the
+// auth posture derived from any @GQLDirective(...) annotation on it.
+type calibanField struct {
+	name string
+	auth calibanFieldAuth
+}
+
+// calibanFieldAuth is the resolved auth posture of a single resolver field,
+// derived from a @GQLDirective(...) auth directive. zero value = no auth.
+type calibanFieldAuth struct {
+	required  bool
+	directive string   // directive name, e.g. "Authenticated", "HasRole"
+	roles     []string // role/permission names parsed from the directive args
+}
+
+// calibanResolverFields parses the field NAMES + auth posture declared in a
+// case-class parameter list. Each top-level `name: Type` segment (optionally
+// preceded by @GQLDirective(...) / @GQL* annotations) contributes one field.
+func calibanResolverFields(params string) []calibanField {
+	var fields []calibanField
 	for _, seg := range calibanSplitTopLevel(params) {
 		m := reCalibanField.FindStringSubmatch(seg)
 		if m == nil {
 			continue
 		}
-		fields = append(fields, m[1])
+		fields = append(fields, calibanField{
+			name: m[1],
+			auth: calibanFieldAuthFromSegment(seg),
+		})
 	}
 	return fields
+}
+
+// calibanFieldAuthFromSegment inspects a field segment for a @GQLDirective(...)
+// auth directive and returns the resolved auth posture. Only directives whose
+// name denotes authentication/authorization (Authenticated, or a Has/Require
+// Role/Permission/Scope constructor) gate the field; non-auth directives
+// (@GQLDeprecated, @GQLDirective(deprecated), @GQLDirective(specifiedBy(...)))
+// are ignored, leaving the field unauthenticated.
+func calibanFieldAuthFromSegment(seg string) calibanFieldAuth {
+	for _, dm := range reCalibanGQLDirective.FindAllStringSubmatch(seg, -1) {
+		expr := strings.TrimSpace(dm[1])
+		name := calibanLeadingType(expr)
+		if name == "" {
+			continue
+		}
+		if calibanIsAuthDirective(name) {
+			auth := calibanFieldAuth{required: true, directive: name}
+			if rm := reCalibanDirectiveRole.FindStringSubmatch(expr); rm != nil {
+				for _, qm := range reCalibanQuotedArg.FindAllStringSubmatch(rm[1], -1) {
+					if r := strings.TrimSpace(qm[1]); r != "" {
+						auth.roles = append(auth.roles, r)
+					}
+				}
+			}
+			return auth
+		}
+	}
+	return calibanFieldAuth{}
+}
+
+// calibanIsAuthDirective reports whether a @GQLDirective directive name denotes
+// auth. `Authenticated` is the canonical Caliban auth directive; the role/
+// permission/scope constructors are the common custom-directive idiom. The
+// match is conservative: a directive named for deprecation / description /
+// federation is NOT auth.
+func calibanIsAuthDirective(name string) bool {
+	switch name {
+	case "Authenticated", "Authorized", "RequiresAuth", "Auth", "Secured", "Private":
+		return true
+	}
+	switch {
+	case strings.HasPrefix(name, "HasRole"), strings.HasPrefix(name, "HasRoles"),
+		strings.HasPrefix(name, "HasPermission"), strings.HasPrefix(name, "HasScope"),
+		strings.HasPrefix(name, "RequireRole"), strings.HasPrefix(name, "RequireRoles"),
+		strings.HasPrefix(name, "RequirePermission"), strings.HasPrefix(name, "RequireScope"),
+		strings.HasPrefix(name, "WithRole"), strings.HasPrefix(name, "WithPermission"):
+		return true
+	}
+	return false
 }
 
 // calibanOperationForIndex maps a RootResolver positional argument index to its
@@ -229,7 +314,7 @@ func (e *calibanExtractor) Extract(ctx context.Context, file extractor.FileInput
 	// Index every case class by name -> its parameter-list field names, so a
 	// RootResolver argument can be resolved to the fields it contributes.
 	type ccInfo struct {
-		fields []string
+		fields []calibanField
 		off    int
 	}
 	caseClasses := make(map[string]ccInfo)
@@ -277,15 +362,21 @@ func (e *calibanExtractor) Extract(ctx context.Context, file extractor.FileInput
 			}
 			rootNames = append(rootNames, root)
 			for _, field := range cc.fields {
-				path := "/graphql/" + root + "/" + field
+				path := "/graphql/" + root + "/" + field.name
 				name := "GRAPHQL " + path
 				ent := makeEntity(name, "SCOPE.Operation", "endpoint", file.Path, file.Language, lineOf(src, cc.off))
 				setProps(&ent, "framework", "caliban",
 					"provenance", "INFERRED_FROM_CALIBAN_RESOLVER",
 					"http_method", "GRAPHQL", "verb", "GRAPHQL",
 					"route_path", path, "graphql_operation", operation,
-					"graphql_root", root, "graphql_field", field,
-					"handler_name", root+"."+field)
+					"graphql_root", root, "graphql_field", field.name,
+					"handler_name", root+"."+field.name)
+				// Auth (#3992): a @GQLDirective(Authenticated) / custom
+				// HasRole(...) directive on the resolver field gates the
+				// synthesised GraphQL endpoint. Stamp the flat shared auth
+				// contract (auth_required/auth_method/auth_guard/auth_roles)
+				// so archigraph_auth_coverage counts the field as covered.
+				calibanStampFieldAuth(&ent, field.auth)
 				add(ent)
 			}
 		}
@@ -340,6 +431,55 @@ func (e *calibanExtractor) Extract(ctx context.Context, file extractor.FileInput
 
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
 	return entities, nil
+}
+
+// calibanStampFieldAuth writes the flat, framework-agnostic auth contract onto
+// a synthesised GraphQL endpoint when the resolver field carries an auth
+// @GQLDirective. It mirrors the shared contract used by the other GraphQL
+// stampers (Lighthouse / spring-graphql / HotChocolate):
+//
+//	auth_required   "true"
+//	auth_method     "directive"
+//	auth_confidence "high"      (statically-visible @GQLDirective on the field)
+//	auth_directive  directive name (Authenticated / HasRole / ...)
+//	auth_guard      directive name — the key archigraph_auth_coverage counts
+//	auth_roles      comma-joined, sorted role/permission names (when present)
+//
+// HONEST PARTIAL: for a custom role directive whose role tokens are NOT quoted
+// string literals (computed/enum role args), only the directive NAME is
+// recoverable — auth_required + auth_directive are stamped, auth_roles is left
+// absent. No-op when the field carries no auth directive.
+func calibanStampFieldAuth(ent *types.EntityRecord, auth calibanFieldAuth) {
+	if !auth.required {
+		return
+	}
+	setProps(ent,
+		"auth_required", "true",
+		"auth_method", "directive",
+		"auth_confidence", "high",
+		"auth_directive", auth.directive,
+		"auth_guard", auth.directive)
+	if len(auth.roles) > 0 {
+		setProps(ent, "auth_roles", strings.Join(calibanDedupSortedRoles(auth.roles), ","))
+	}
+}
+
+// calibanDedupSortedRoles returns a sorted, de-duplicated copy (drops empties)
+// so the comma-joined auth_roles field is deterministic across runs — matching
+// the dedupSorted contract the JVM/PHP GraphQL stampers apply.
+func calibanDedupSortedRoles(in []string) []string {
+	seen := make(map[string]bool, len(in))
+	out := make([]string, 0, len(in))
+	for _, v := range in {
+		v = strings.TrimSpace(v)
+		if v == "" || seen[v] {
+			continue
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // calibanDTORole classifies a schema DTO by its declaration keyword.

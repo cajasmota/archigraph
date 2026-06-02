@@ -28,7 +28,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|---|---|---|---|---|
 | [Akka HTTP / Pekko HTTP](../detail/lang.scala.framework.akka-http.md) | 🟡 3/6 | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 6/9 | |
 | [Apache Pekko HTTP](../detail/lang.scala.framework.pekko-http.md) | 🟡 3/6 | ✅ 1/1 | 🔴 0/4 | 🟢 1/1 | 🟡 1/24 | 🟡 6/19 | |
-| [Caliban](../detail/lang.scala.framework.caliban.md) | 🟡 3/6 | 🔴 0/1 | 🟡 2/4 | 🔴 0/1 | 🟡 3/24 | 🟡 1/19 | |
+| [Caliban](../detail/lang.scala.framework.caliban.md) | 🟡 3/6 | 🟢 1/1 | 🟡 2/4 | 🔴 0/1 | 🟡 3/24 | 🟡 1/19 | |
 | [Cask](../detail/lang.scala.framework.cask.md) | 🟡 3/6 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 6/9 | |
 | [Cats Effect (concurrency runtime)](../detail/lang.scala.framework.cats-effect.md) | 🟡 1/4 | — | ✅ 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 3/6 | |
 | [Finatra (Twitter Finagle)](../detail/lang.scala.framework.finatra.md) | 🟡 3/6 | 🟢 1/1 | ✅ 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 9/12 | |
