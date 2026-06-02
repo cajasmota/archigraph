@@ -333,6 +333,101 @@ class HealthView:
 	}
 }
 
+// TestEffectPropagation_ScheduledJobInheritsTaskBodyEffects is the #3869
+// regression. A Celery SCOPE.ScheduledJob node is keyed on the synthetic job
+// ID `celery:<path>:<fn>` (in e.Name) while its backing task function name
+// lives in the `handler` property. The substrate sniffer attributes the task
+// body's db_write sink to the bare function name, so before the fix the
+// ScheduledJob node's (file, name) bind failed and it reported `pure` despite
+// its body doing IO. After the fix the node inherits the task body's effects.
+func TestEffectPropagation_ScheduledJobInheritsTaskBodyEffects(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, "tasks.py", `
+from celery import shared_task
+
+@shared_task
+def send_me_notifications():
+    Notification.objects.create(user_id=1, body="hi")
+`)
+	graphs := []repoGraph{{
+		Repo:     "upvate-core",
+		FileRoot: root,
+		Entities: []entityNode{
+			// The Operation body, named with the bare function name.
+			{ID: "op", Name: "send_me_notifications", Kind: "SCOPE.Operation", SourceFile: "tasks.py"},
+			// The synthetic ScheduledJob node, as scheduled_jobs_edges.go emits
+			// it: Name is the celery job ID, the bare task name is in `handler`.
+			{ID: "job", Name: "celery:tasks.py:send_me_notifications", Kind: "SCOPE.ScheduledJob",
+				SourceFile: "tasks.py", Properties: map[string]string{
+					"handler":   "send_me_notifications",
+					"framework": "celery",
+				}},
+		},
+	}}
+	if _, err := runEffectPropagationPass(graphs, Paths{}, nil); err != nil {
+		t.Fatal(err)
+	}
+	// Locate the ScheduledJob node specifically and assert db_write on it.
+	var job *entityNode
+	for i := range graphs[0].Entities {
+		if graphs[0].Entities[i].Kind == "SCOPE.ScheduledJob" {
+			job = &graphs[0].Entities[i]
+		}
+	}
+	if job == nil {
+		t.Fatal("ScheduledJob entity missing from graph")
+	}
+	if job.Properties == nil {
+		t.Fatal("ScheduledJob node left unstamped — #3869 binding regression")
+	}
+	effs := job.Properties[EffectPropertyKeyList]
+	if !strings.Contains(effs, "db_write") {
+		t.Fatalf("ScheduledJob (celery:...:send_me_notifications) effects=%q; "+
+			"want db_write inherited from the task body (#3869)", effs)
+	}
+}
+
+// TestEffectPropagation_ScheduledJobPureBodyStaysPure is the #3869 negative:
+// a ScheduledJob whose task body genuinely does no IO must NOT acquire a
+// fabricated effect. The binder only adds a name key — it never invents a sink.
+func TestEffectPropagation_ScheduledJobPureBodyStaysPure(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, "tasks.py", `
+from celery import shared_task
+
+@shared_task
+def add_numbers():
+    return 1 + 2
+`)
+	graphs := []repoGraph{{
+		Repo:     "upvate-core",
+		FileRoot: root,
+		Entities: []entityNode{
+			{ID: "op", Name: "add_numbers", Kind: "SCOPE.Operation", SourceFile: "tasks.py"},
+			{ID: "job", Name: "celery:tasks.py:add_numbers", Kind: "SCOPE.ScheduledJob",
+				SourceFile: "tasks.py", Properties: map[string]string{
+					"handler":   "add_numbers",
+					"framework": "celery",
+				}},
+		},
+	}}
+	if _, err := runEffectPropagationPass(graphs, Paths{}, nil); err != nil {
+		t.Fatal(err)
+	}
+	var job *entityNode
+	for i := range graphs[0].Entities {
+		if graphs[0].Entities[i].Kind == "SCOPE.ScheduledJob" {
+			job = &graphs[0].Entities[i]
+		}
+	}
+	if job == nil {
+		t.Fatal("ScheduledJob entity missing from graph")
+	}
+	if v, ok := job.Properties[EffectPropertyKeyList]; ok {
+		t.Errorf("pure-bodied ScheduledJob carries fabricated effects=%q; want unstamped", v)
+	}
+}
+
 func confFromProps(props map[string]string, effect string) float64 {
 	if props == nil {
 		return 0

@@ -407,6 +407,23 @@ func newEffectBinder(graphs []repoGraph) *effectBinder {
 			// Accumulate (never overwrite) so a decorator-wrapper node and
 			// its Operation body — same (file, name) — both bind.
 			fileIdx[e.Name] = append(fileIdx[e.Name], e.ID)
+			// #3869: a synthetic SCOPE.ScheduledJob node (e.g. Celery's
+			// `celery:<path>:<fn>`) carries its task-body function name in the
+			// `handler` property, NOT in e.Name — e.Name is the synthetic job
+			// ID. The substrate sniffer attributes a sink to the bare function
+			// name (`<fn>`), so unless we ALSO index the ScheduledJob node under
+			// its handler name, the binder's (file, name) match fails and the
+			// wrapper stays `pure` even though its body does IO. Index by the
+			// handler name too (when it differs from e.Name) so the existing
+			// #2804 stamp-every-matching-entity machinery reaches the
+			// ScheduledJob node. Honest: this only adds a binding key; if no
+			// task-body def with that name exists in the file, the sniffer
+			// produces no match and nothing is fabricated.
+			if isScheduledJobKind(e.Kind) {
+				if h := e.Properties["handler"]; h != "" && h != e.Name {
+					fileIdx[h] = append(fileIdx[h], e.ID)
+				}
+			}
 		}
 	}
 	return b
@@ -472,6 +489,20 @@ func isFunctionLikeKind(kind string) bool {
 	case "function", "method", "operation":
 		return true
 	case "Task", "ScheduledJob", "Process":
+		return true
+	}
+	return false
+}
+
+// isScheduledJobKind reports whether kind names a synthetic scheduled-job
+// wrapper entity whose backing function name lives in the `handler` property
+// rather than in e.Name (#3869). The scheduled-job synthesis pass keys these
+// nodes on a framework-namespaced job ID (e.g. `celery:<path>:<fn>`), so the
+// binder needs the `handler` value to match the sniffer's bare-name sink
+// attribution.
+func isScheduledJobKind(kind string) bool {
+	switch kind {
+	case "SCOPE.ScheduledJob", "ScheduledJob", "SCOPE.Task", "Task":
 		return true
 	}
 	return false
