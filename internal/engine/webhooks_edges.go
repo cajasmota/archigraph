@@ -2,9 +2,23 @@
 //
 // This pass identifies HTTP endpoints that are registered with an external
 // service to receive event callbacks ("inbound webhooks"). It tags matching
-// http_endpoint entities with `is_webhook=true` and `webhook_provider=<vendor>`.
-// It also emits a SUBSCRIBES_TO edge from the endpoint entity to a synthetic
-// SCOPE.External entity representing the external service.
+// http_endpoint entities with `is_webhook=true` / `webhook=true` and
+// `webhook_provider=<vendor>`. It also emits a SUBSCRIBES_TO edge from the
+// endpoint entity to a synthetic SCOPE.External entity representing the
+// external service.
+//
+// SECURITY POSTURE (#3628 child — webhook-receiver detection):
+// every webhook endpoint also carries `webhook_signature_verified=true|false`.
+// A receiver that does NOT verify the provider signature (e.g. a `/webhook`
+// route that just parses the body) is a security finding — an attacker can
+// forge events. The graph can therefore answer "which endpoints are webhook
+// receivers, and do they verify signatures?" and flag the unverified ones.
+// Verification is asserted ONLY when a concrete signal is present: a provider
+// SDK verify call (Stripe constructEvent, Twilio RequestValidator, Slack /
+// Shopify / GitHub HMAC over a `*-Signature`/`*-Hmac` header, Svix verify), or
+// a generic hmac compare over a signature header. Absent any such signal the
+// endpoint is stamped `webhook_signature_verified=false` (honest: no
+// verification was observed in the handler — the security-relevant case).
 //
 // A CONFIDENCE property is attached to every webhook entity based on how many
 // independent heuristics matched. High confidence (≥3): decorator name contains
@@ -16,6 +30,7 @@
 //   - GitHub       — X-Hub-Signature-256 + HMAC verification
 //   - Twilio       — twilio.request_validator / X-Twilio-Signature
 //   - Slack        — slack_sdk.signature / X-Slack-Signature
+//   - Shopify      — X-Shopify-Hmac-Sha256 + HMAC verification
 //   - SendGrid     — sendgrid + X-Twilio-Email-Event-Webhook-Signature
 //   - Mailgun      — mailgun + webhook + X-Mailgun-Signature
 //   - Svix (generic) — svix.Webhook / webhook.verify
@@ -58,6 +73,12 @@ func applyWebhookEdges(args DetectorPassArgs) DetectorPassResult {
 	}
 	src := string(content)
 
+	// Signature-verification posture is a per-file determination: did the
+	// handler verify the inbound webhook signature at all? An unverified
+	// receiver is the security-relevant finding.
+	verified := webhookSignatureVerified(src)
+	verifiedLabel := boolLabel(verified)
+
 	seenExternal := map[string]bool{}
 
 	emitWebhook := func(endpointID, provider, route string, confidence int) {
@@ -91,11 +112,13 @@ func applyWebhookEdges(args DetectorPassArgs) DetectorPassResult {
 			SourceFile: path,
 			Language:   lang,
 			Properties: map[string]string{
-				"is_webhook":       "true",
-				"webhook_provider": provider,
-				"route":            route,
-				"confidence":       confLabel,
-				"pattern_type":     "webhook_synthesis",
+				"is_webhook":                 "true",
+				"webhook":                    "true",
+				"webhook_provider":           provider,
+				"webhook_signature_verified": verifiedLabel,
+				"route":                      route,
+				"confidence":                 confLabel,
+				"pattern_type":               "webhook_synthesis",
 			},
 			EnrichmentRequired: false,
 			EnrichmentStatus:   types.StatusPending,
@@ -108,9 +131,10 @@ func applyWebhookEdges(args DetectorPassArgs) DetectorPassResult {
 			ToID:   fmt.Sprintf("%s:%s", webhookExternalKind, extID),
 			Kind:   subscribesToEdgeKind, // "SUBSCRIBES_TO" from kafka_edges.go
 			Properties: map[string]string{
-				"webhook_provider": provider,
-				"confidence":       confLabel,
-				"pattern_type":     "webhook_synthesis",
+				"webhook_provider":           provider,
+				"webhook_signature_verified": verifiedLabel,
+				"confidence":                 confLabel,
+				"pattern_type":               "webhook_synthesis",
 			},
 		})
 	}
@@ -359,6 +383,9 @@ func detectWebhookProvider(src, langHint string) (provider string, confidence in
 	case pySlackVerifierRe.MatchString(src) || nodeSlackVerifyRe.MatchString(src):
 		provider = "slack"
 		confidence += 2
+	case shopifyHmacHeaderRe.MatchString(src):
+		provider = "shopify"
+		confidence += 2
 	case pyMailgunSignatureRe.MatchString(src):
 		provider = "mailgun"
 		confidence += 2
@@ -406,8 +433,73 @@ func importConfirmation(src, provider, langHint string) bool {
 		return strings.Contains(src, "mailgun") || strings.Contains(src, "Mailgun")
 	case "svix":
 		return strings.Contains(src, "svix")
+	case "shopify":
+		return strings.Contains(src, "shopify") || strings.Contains(src, "Shopify") ||
+			strings.Contains(src, "@shopify/")
 	}
 	return false
+}
+
+// ---------------------------------------------------------------------------
+// Signature-verification posture (security finding when absent)
+// ---------------------------------------------------------------------------
+
+// shopifyHmacHeaderRe detects the Shopify webhook HMAC header (case-insensitive
+// because frameworks normalise header casing differently).
+var shopifyHmacHeaderRe = regexp.MustCompile(`(?i)X-Shopify-Hmac-Sha256`)
+
+// sigVerifyProviderSDKRe matches a concrete provider-SDK verification call that
+// performs signature validation as a side effect. Presence ⇒ the receiver
+// verifies the signature.
+var sigVerifyProviderSDKRe = regexp.MustCompile(
+	`stripe\.Webhook\.construct_event\s*\(` + // Stripe (python/ruby snake)
+		`|stripe\.webhooks\.constructEvent\s*\(` + // Stripe (node)
+		`|Stripe::Webhook\.construct_event` + // Stripe (ruby)
+		`|stripe\.ConstructEvent\s*\(` + // Stripe (go)
+		`|Event\.constructFrom\b|com\.stripe\.net\.Webhook` + // Stripe (java)
+		`|RequestValidator\b|twilio\.request_validator|validateRequest\s*\(|validateExpressRequest` + // Twilio
+		`|SignatureVerifier\b|verifyRequestSignature\s*\(` + // Slack
+		`|github\.ValidatePayload\s*\(` + // GitHub (go-github)
+		`|wh\.verify\s*\(|svix\.Webhook`, // Svix
+)
+
+// sigHeaderRe matches a read of a `*-Signature` or `*-Hmac*` request header —
+// the canonical inbound-webhook signature header for Stripe/GitHub/Slack/
+// Shopify/Twilio and generic HMAC schemes.
+var sigHeaderRe = regexp.MustCompile(`(?i)\b[\w-]*(?:-Signature(?:-256)?|-Hmac(?:-Sha256)?)\b`)
+
+// hmacComputeRe matches a generic HMAC computation/compare that, paired with a
+// signature header read, constitutes an in-handler signature verification.
+var hmacComputeRe = regexp.MustCompile(
+	`hmac\.(?:new|compare_digest|HMAC)` + // python
+		`|crypto\.createHmac\s*\(|timingSafeEqual\s*\(` + // node
+		`|Mac\.getInstance\s*\(|HmacUtils\b|MessageDigest\.isEqual\s*\(` + // java
+		`|hmac\.New\s*\(|hmac\.Equal\s*\(` + // go
+		`|OpenSSL::HMAC|ActiveSupport::SecurityUtils\.secure_compare` + // ruby
+		`|verify_signature\s*\(|verifySignature\s*\(`, // generic verify helper
+)
+
+// webhookSignatureVerified reports whether the file's webhook handler verifies
+// the inbound signature. True when EITHER a provider-SDK verify call is present,
+// OR a signature/HMAC header is read AND a generic HMAC compute/compare runs in
+// the same file. Honest: a `/webhook` route that merely parses the body matches
+// neither branch ⇒ false (the unverified-receiver security finding).
+func webhookSignatureVerified(src string) bool {
+	if sigVerifyProviderSDKRe.MatchString(src) {
+		return true
+	}
+	if sigHeaderRe.MatchString(src) && hmacComputeRe.MatchString(src) {
+		return true
+	}
+	return false
+}
+
+// boolLabel renders a Go bool as the canonical lowercase string property value.
+func boolLabel(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }
 
 // inferProviderFromPath attempts to derive the provider from path tokens like
@@ -427,6 +519,8 @@ func inferProviderFromPath(path string) string {
 		return "mailgun"
 	case strings.Contains(lower, "sendgrid"):
 		return "sendgrid"
+	case strings.Contains(lower, "shopify"):
+		return "shopify"
 	}
 	return "generic"
 }
