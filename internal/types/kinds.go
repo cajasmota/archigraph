@@ -176,6 +176,22 @@ const (
 	// names across files/languages into one node. See
 	// internal/extractor/exception_flow.go.
 	EntityKindExceptionType EntityKind = "SCOPE.ExceptionType"
+
+	// EntityKindExternalService is a synthetic, file-agnostic node representing a
+	// single well-known third-party service a codebase integrates with via its
+	// official SDK — e.g. "stripe", "twilio", "sendgrid", "aws-s3", "aws-ses",
+	// "openai", "slack", "sentry", "firebase", "algolia". It is the convergence
+	// point for the third-party-integration capability (epic #3628): every
+	// function that calls a recognised SDK entry-point gets a DEPENDS_ON_SERVICE
+	// edge to the SAME service node, so the graph answers "what third-party
+	// services does this codebase integrate with, and where?" (a service's
+	// inbound DEPENDS_ON_SERVICE edges are its call sites). Distinct from raw
+	// HTTP-client CONSUMES_API (path-level): this is SDK-level, NAMED services.
+	// Like SCOPE.ExceptionType/SCOPE.Config it carries a constant synthetic
+	// SourceFile (ExternalServiceSourceFile) so EntityRecord.ComputeID
+	// (SourceFile+Kind+Name) collapses the same service across files/languages
+	// into one node. See internal/extractor/external_service.go.
+	EntityKindExternalService EntityKind = "SCOPE.ExternalService"
 )
 
 // AllEntityKinds returns every EntityKind that archigraph extractors are
@@ -245,6 +261,7 @@ func AllEntityKinds() []EntityKind {
 		EntityKindModelEvent,
 		// #3628 error-flow: synthetic exception-type convergence node.
 		EntityKindExceptionType,
+		EntityKindExternalService,
 	}
 }
 
@@ -940,6 +957,28 @@ const (
 	// internal/extractor/exception_flow.go.
 	RelationshipKindThrows  RelationshipKind = "THROWS"
 	RelationshipKindCatches RelationshipKind = "CATCHES"
+
+	// #3628 third-party integration: a function/method calls a recognised
+	// external-service SDK entry-point.
+	//
+	//   DEPENDS_ON_SERVICE : function/method → SCOPE.ExternalService node
+	//                        (Name "service:<name>") it integrates with. The
+	//                        target service is identified from the SDK
+	//                        import/symbol context, NOT a bare method name:
+	//                          Python  `stripe.Charge.create(...)`         → stripe
+	//                                  `boto3.client("s3").put_object(...)` → aws-s3
+	//                          JS/TS   `new Stripe(key); stripe.charges.create()` → stripe
+	//                                  `sgMail.send(...)`                    → sendgrid
+	//                                  `new S3Client(...).send(cmd)`         → aws-s3
+	//                        Optional edge property `operation` carries the SDK
+	//                        call (e.g. "charges.create", "put_object").
+	//
+	// Precision-first / honest-partial: a dynamic boto3 service string
+	// (`boto3.client(svc_var)`) resolves to aws-generic; an unrecognised SDK or
+	// a bare `.create()`/`.send()` on a non-SDK object emits NO edge — a wrong
+	// integration edge would mislead "what services do we depend on?". See
+	// internal/extractor/external_service.go.
+	RelationshipKindDependsOnService RelationshipKind = "DEPENDS_ON_SERVICE"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -1078,6 +1117,7 @@ func AllRelationshipKinds() []RelationshipKind {
 		// #3628 error-flow: THROWS / CATCHES exception-type edges:
 		RelationshipKindThrows,
 		RelationshipKindCatches,
+		RelationshipKindDependsOnService,
 	}
 }
 

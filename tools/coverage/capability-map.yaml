@@ -41,6 +41,37 @@ records:
         issues_implemented: ["3640"]
         verified_at: "2026-06-02"
 
+  analysis.integration.third-party-sdk:
+    capabilities:
+      external_service_dependency:
+        # #3628 area: SDK-LEVEL named third-party integration detection,
+        # distinct from raw HTTP-client CONSUMES_API (path-level). Each
+        # language extractor emits a DEPENDS_ON_SERVICE edge from the calling
+        # function/method to a synthetic SCOPE.ExternalService node
+        # (Name "service:<name>") so every call site of a service converges on
+        # ONE node — answering "what third-party services does this codebase
+        # integrate with, and where?". Shared dictionary + node/edge builders
+        # in internal/extractor/external_service.go. PARTIAL: python +
+        # javascript/typescript lanes only; precision-first import-gated
+        # detection (dynamic boto3 -> aws-generic; non-SDK receiver -> no edge).
+        status: partial
+        symbols:
+          - file: internal/extractor/external_service.go
+            functions: [ServiceForImportSource, AWSServiceFromArg, ExternalServiceEntity, ExternalServiceTargetID, ExternalServiceName, EmitServiceDependencyEdges, IsAWSImportSentinel]
+          - file: internal/extractors/python/external_service.go
+            functions: [emitServiceDependencyEdges, pyServiceCall, pyAttributeRootAndTail, pyAWSServiceFromCall]
+          - file: internal/extractors/javascript/external_service.go
+            functions: [emitServiceDependencyEdges, jsNewExpressionService, jsCallService, jsMemberRootAndTail, awsServiceFromCtorName]
+        tests:
+          - file: internal/extractor/external_service_test.go
+            functions: [TestServiceForImportSource, TestAWSServiceFromArg, TestEmitServiceDependencyEdges_Converge, TestEmitServiceDependencyEdges_DropsSentinelAndEmpty]
+          - file: internal/extractors/python/external_service_test.go
+            functions: [TestPyService_Stripe, TestPyService_AWSS3FromLiteral, TestPyService_AWSDynamoResource, TestPyService_Convergence, TestPyService_TwilioConstructor, TestPyService_DynamicAWSArg_Generic, TestPyService_NonSDKReceiver_NoEdge, TestPyService_NoImport_NoEdge]
+          - file: internal/extractors/javascript/external_service_test.go
+            functions: [TestJSService_StripeConstructThenCall, TestJSService_SendGrid, TestJSService_AWSS3Client, TestJSService_SentryNamespaceInit, TestJSService_Convergence, TestJSService_NonSDKReceiver_NoEdge, TestTSService_Stripe]
+        issues_implemented: ["3628"]
+        verified_at: "2026-06-02"
+
   lang.cobol.runtime.ibm-enterprise:
     capabilities:
       core_extraction:

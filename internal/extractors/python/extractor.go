@@ -334,6 +334,17 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		emitExceptionFlowEdges(root, file, &entities)
 	}()
 
+	// Epic #3628 — third-party integration pass. Emits DEPENDS_ON_SERVICE
+	// edges from functions/methods to a shared SCOPE.ExternalService node for
+	// recognised SDK call shapes (stripe.Charge.create, boto3.client("s3")…).
+	// Import-gated and precision-first: dynamic / non-SDK receivers emit no
+	// edge. Runs after primary entity emission so enclosing function/method
+	// entities exist to attach edges to.
+	func() {
+		defer func() { _ = recover() }()
+		emitServiceDependencyEdges(root, file, &entities)
+	}()
+
 	// Issue #1884 — supplemental package-module pass (Wave 1).
 	// Emits one Module entity per Python package boundary (__init__.py or
 	// plain .py module) so docgen can seed per-package pages and flow

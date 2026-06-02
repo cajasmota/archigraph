@@ -341,6 +341,17 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		x.emitExceptionFlowEdges(root)
 	}()
 
+	// Third-party integration topology (epic #3628) — DEPENDS_ON_SERVICE edges
+	// from functions/methods to a shared SCOPE.ExternalService node for
+	// recognised SDK construction / call shapes (new Stripe(); stripe.charges.
+	// create(); sgMail.send(); new S3Client().send()). Import-gated and
+	// precision-first: non-SDK receivers emit no edge. Runs after walk so
+	// enclosing entities exist.
+	func() {
+		defer func() { _ = recover() }()
+		x.emitServiceDependencyEdges(root)
+	}()
+
 	// Third pass (#713): platform-variant and test-file relationship emission.
 	// Detects React Native platform-specific file naming (.ios.tsx,
 	// .android.tsx, .tablet.tsx, …) and emits PLATFORM_VARIANT_OF edges.
