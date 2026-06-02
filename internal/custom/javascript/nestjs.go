@@ -35,6 +35,18 @@ var (
 	reNestHTTPMethod = regexp.MustCompile(
 		`@(Get|Post|Put|Delete|Patch|Options|Head|All)\s*\(([^)]*)\)\s*(?:async\s+)?(\w+)\s*\(`,
 	)
+	// reNestBodyParam captures a @Body()-decorated handler parameter and its DTO
+	// type: `@Body() dto: CreateUserDto`. Plain @Body() with no type yields no
+	// edge (honest-partial). #3629/#3607 endpoint→DTO ACCEPTS_INPUT.
+	reNestBodyParam = regexp.MustCompile(
+		`@Body\s*\([^)]*\)\s*\w+\s*:\s*([A-Za-z_][A-Za-z0-9_]*)`,
+	)
+	// reNestReturnType captures the method return-type annotation that follows the
+	// closing paren of the handler signature: `): Promise<UserDto> {` or
+	// `): UserDto {`. Generic wrappers (Promise/Observable/Array) are unwrapped.
+	reNestReturnType = regexp.MustCompile(
+		`^\s*:\s*([A-Za-z_][\w<>\[\], |]*?)\s*[{;]`,
+	)
 	reNestGuard = regexp.MustCompile(
 		`(?:export\s+)?class\s+([A-Z][A-Za-z0-9_]*)\s+(?:extends\s+\w+\s+)?implements\s+[^{]*\bCanActivate\b`,
 	)
@@ -91,6 +103,82 @@ var (
 var nestHTTPVerbMap = map[string]string{
 	"Get": "GET", "Post": "POST", "Put": "PUT", "Delete": "DELETE",
 	"Patch": "PATCH", "Options": "OPTIONS", "Head": "HEAD", "All": "ALL",
+}
+
+// nestSkipDTOTypes are TS built-in / framework types that are never request or
+// response DTOs and must not produce ACCEPTS_INPUT/RETURNS edges.
+var nestSkipDTOTypes = map[string]bool{
+	"string": true, "number": true, "boolean": true, "any": true, "void": true,
+	"unknown": true, "object": true, "Object": true, "Date": true, "Buffer": true,
+	"Promise": true, "Observable": true, "Array": true, "Record": true,
+	"Map": true, "Set": true, "Partial": true, "Request": true, "Response": true,
+	"null": true, "undefined": true, "never": true, "this": true,
+}
+
+// nestParamsBlock returns the handler parameter list starting at openParenEnd
+// (the byte just past the method's opening `(`), via balanced-paren scanning,
+// and the offset of the matching close paren.
+func nestParamsBlock(src string, openParenEnd int) (string, int) {
+	depth := 1
+	i := openParenEnd
+	for i < len(src) && depth > 0 {
+		switch src[i] {
+		case '(', '<', '[', '{':
+			depth++
+		case ')', '>', ']', '}':
+			depth--
+		}
+		i++
+	}
+	if depth != 0 {
+		return "", openParenEnd
+	}
+	return src[openParenEnd : i-1], i - 1
+}
+
+// nestUnwrapType strips generic wrappers (Promise<T>, Observable<T>, Array<T>,
+// T[]) to the innermost user type, returning "" for built-ins/primitives.
+func nestUnwrapType(raw string) string {
+	raw = strings.TrimSpace(raw)
+	raw = strings.TrimSuffix(raw, "[]")
+	for {
+		open := strings.IndexByte(raw, '<')
+		if open < 0 {
+			break
+		}
+		base := strings.TrimSpace(raw[:open])
+		if !nestSkipDTOTypes[base] {
+			// A user generic like UserDto<T> — keep the base type.
+			raw = base
+			break
+		}
+		// Wrapper generic: descend into the first type argument.
+		close := strings.LastIndexByte(raw, '>')
+		if close <= open {
+			break
+		}
+		inner := raw[open+1 : close]
+		if comma := strings.IndexByte(inner, ','); comma >= 0 {
+			inner = inner[:comma]
+		}
+		raw = strings.TrimSpace(inner)
+		raw = strings.TrimSuffix(raw, "[]")
+	}
+	// Union `T | null` → first member.
+	if pipe := strings.IndexByte(raw, '|'); pipe >= 0 {
+		raw = strings.TrimSpace(raw[:pipe])
+	}
+	base := strings.TrimSpace(raw)
+	if base == "" || nestSkipDTOTypes[base] {
+		return ""
+	}
+	// Must be a bare identifier (no leftover punctuation).
+	for _, r := range base {
+		if !(r == '_' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9') {
+			return ""
+		}
+	}
+	return base
 }
 
 func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]types.EntityRecord, error) {
@@ -182,6 +270,35 @@ func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 		setProps(&ent, "framework", "nestjs", "http_method", httpMethod,
 			"route_path", routePath, "method_name", methodName,
 			"provenance", "INFERRED_FROM_NESTJS_ROUTE")
+
+		// endpoint→DTO edges (#3629/#3607): the regex match ends just past the
+		// handler's opening `(`. Read the balanced param list for @Body() DTOs
+		// (ACCEPTS_INPUT) and the trailing return-type annotation (RETURNS).
+		paramsBlock, closeOff := nestParamsBlock(src, m[1])
+		for _, bm := range reNestBodyParam.FindAllStringSubmatch(paramsBlock, -1) {
+			dto := nestUnwrapType(bm[1])
+			if dto == "" {
+				continue
+			}
+			ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+				ToID: "Class:" + dto,
+				Kind: string(types.RelationshipKindAcceptsInput),
+				Properties: map[string]string{
+					"framework": "nestjs", "match_source": "body_param_annotation", "dto_type": dto,
+				},
+			})
+		}
+		if rm := reNestReturnType.FindStringSubmatch(src[closeOff+1 : min(closeOff+200, len(src))]); rm != nil {
+			if dto := nestUnwrapType(rm[1]); dto != "" {
+				ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+					ToID: "Class:" + dto,
+					Kind: string(types.RelationshipKindReturns),
+					Properties: map[string]string{
+						"framework": "nestjs", "match_source": "return_type_annotation", "dto_type": dto,
+					},
+				})
+			}
+		}
 		addEntity(ent)
 	}
 

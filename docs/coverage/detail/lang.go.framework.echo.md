@@ -29,7 +29,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ✅ `full` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3255) | `internal/custom/golang/dto.go`<br>`internal/custom/golang/dto_test.go` | — |
+| DTO extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/golang/dto.go`<br>`internal/custom/golang/dto_edges_test.go` | dto.go now emits traversable endpoint→DTO edges (#3629/#3607): resolved c.Bind(&x) request binds emit ACCEPTS_INPUT → Class:<Struct> and resolved c.JSON(x) response serialises emit RETURNS → Class:<Struct>. Unresolved targets emit the DTO entity but no edge (honest-partial). Test: TestGoDTOEdge_EchoAcceptsInput (c.Bind(&CreateReq) → ACCEPTS_INPUT Class:CreateReq); shared gin/echo coverage via the framework-agnostic dto.go scanner. |
 | Request validation | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3213) | `internal/custom/golang/helpers.go` | binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:"required" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths |
 
 ### Middleware

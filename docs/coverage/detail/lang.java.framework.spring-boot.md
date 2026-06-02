@@ -29,7 +29,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ✅ `full` | `2026-06-01` | — | `internal/custom/java/spring_request_response.go` | SCOPE.Schema(kind=dto) entities emitted for @RequestBody parameter types and ResponseEntity<T>/Mono<T>/Flux<T> return types; generic collections (List/Map/Set) skipped via srrSkipTypes |
+| DTO extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/spring_request_response.go` | spring_request_response.go emits traversable endpoint→DTO edges: a @GetMapping/@PostMapping/... controller method carries ACCEPTS_INPUT → @RequestBody parameter type and RETURNS → method return type (ResponseEntity<T>/Mono<T>/Flux<T>/Optional<T> unwrapped via unwrapReturnType), SourceRef = the controller-method endpoint, TargetRef = the DTO schema. Generic collections (List/Map/Set) and framework types skipped via srrSkipTypes. This was the #3589 template the FastAPI/Spring parity work builds on — already present, re-verified during the #3607 multi-stack DTO-edge restoration (NestJS/Express/Go). Value-asserting tests: @PostMapping ResponseEntity<OrderDTO> create(@RequestBody OrderDTO dto) → ACCEPTS_INPUT + RETURNS assertions in extractors_test.go. |
 | Request validation | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/engine/java_annotation_params.go` | Bean Validation annotations (@NotNull, @NotBlank, @NotEmpty, @Valid, @Min, @Max, @Size, @Pattern, @Email) captured per handler parameter; required flag set; no field-level constraint recursion |
 
 ### Middleware

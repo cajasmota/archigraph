@@ -29,7 +29,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ✅ `full` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3255) | `internal/custom/golang/dto.go`<br>`internal/custom/golang/dto_test.go` | — |
+| DTO extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/golang/dto.go`<br>`internal/custom/golang/dto_edges_test.go` | dto.go now emits traversable endpoint→DTO edges (#3629/#3607): each resolved request-bind site (c.ShouldBindJSON/Bind/BindJSON(&x)) emits ACCEPTS_INPUT → Class:<Struct> and each resolved response serialise (c.JSON(code, x)) emits RETURNS → Class:<Struct>, where the bound var resolves to a file-local struct. Unresolved bind targets still emit a DTO entity but NO edge (honest-partial — never point at an unknown type). Previously gin/echo emitted DTO struct entities but no endpoint→DTO edges; now expand/traces/payload_drift can follow them. Tests: TestGoDTOEdge_GinAcceptsInput (ShouldBindJSON(&LoginReq) → ACCEPTS_INPUT Class:LoginReq), TestGoDTOEdge_GinReturns (c.JSON(200,resp) → RETURNS Class:UserResp), TestGoDTOEdge_EchoAcceptsInput, negatives TestGoDTOEdge_UnresolvedNoEdge / TestGoDTOEdge_NoFrameworkNoEdge. |
 | Request validation | 🟢 `partial` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3213) | `internal/custom/golang/helpers.go` | binding call sites captured (c.ShouldBindJSON/BindJSON/Bind etc); struct-tag validation chain (go-playground/validator binding:"required" tags) not analyzed; no data-flow tracing of validated vs unvalidated paths |
 
 ### Middleware

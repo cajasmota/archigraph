@@ -29,7 +29,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DTO extraction | ✅ `full` | — | 2904 | `internal/extractors/javascript/issue2904_validation_linkage_test.go`<br>`internal/extractors/javascript/validation_linkage.go`<br>`testdata/fixtures/typescript/nestjs_validation.ts` | — |
+| DTO extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/javascript/nestjs.go`<br>`internal/custom/javascript/reqresp_dto_test.go` | nestjs.go now emits traversable endpoint→DTO graph edges (#3629/#3607): each route SCOPE.Operation carries ACCEPTS_INPUT → request DTO (the @Body() dto: CreateUserDto param type) and RETURNS → response DTO (handler return-type annotation, Promise<T>/Observable<T>/T[] unwrapped), ToID=Class:<Name> structural ref the resolver binds by name. Previously NestJS emitted route/controller entities but no endpoint→DTO edges; now expand/traces/payload_drift can follow endpoint→DTO (parity with FastAPI/Spring). Primitive/built-in types skipped via nestSkipDTOTypes (honest-partial). Tests: TestNestReqResp_AcceptsInputEdge (@Body() dto: CreateUserDto → ACCEPTS_INPUT Class:CreateUserDto), TestNestReqResp_ReturnsEdgePromise (Promise<UserDto> → RETURNS Class:UserDto), TestNestReqResp_ReturnsEdgeBare, negative TestNestReqResp_PrimitiveBodyNoEdge. |
 | Request validation | 🟢 `partial` | `2026-05-29` | 3062 | `internal/extractors/javascript/issue2904_validation_linkage_test.go`<br>`internal/extractors/javascript/validation_linkage.go` | — |
 
 ### Middleware

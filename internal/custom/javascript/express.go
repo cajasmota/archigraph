@@ -64,7 +64,25 @@ var (
 	reExpressParam = regexp.MustCompile(
 		"(?:\\w+)\\s*\\.\\s*param\\s*\\(\\s*['\"`]([^'\"` ]+)['\"`]",
 	)
+	// reExpressTypedReq matches a TypeScript `Request<P, ResBody, ReqBody>`
+	// handler-parameter annotation. Express types the request-body DTO as the
+	// THIRD generic argument and the response-body DTO as the SECOND. Untyped
+	// `req.body` handlers carry no Request<...> annotation → no edge
+	// (honest-partial). #3629/#3607 endpoint→DTO.
+	reExpressTypedReq = regexp.MustCompile(
+		`:\s*Request\s*<\s*([^,<>]*)\s*,\s*([^,<>]*)\s*,\s*([A-Za-z_][A-Za-z0-9_]*)`,
+	)
+	reExpressResGeneric = regexp.MustCompile(
+		`:\s*Response\s*<\s*([A-Za-z_][A-Za-z0-9_]*)`,
+	)
 )
+
+// expressSkipDTOTypes are built-ins that never represent a request/response DTO.
+var expressSkipDTOTypes = map[string]bool{
+	"any": true, "unknown": true, "object": true, "Object": true,
+	"string": true, "number": true, "boolean": true, "void": true,
+	"null": true, "undefined": true, "never": true,
+}
 
 func (e *expressExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("archigraph/custom/javascript")
@@ -131,6 +149,48 @@ func (e *expressExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 		ent := makeEntity(name, "SCOPE.Operation", "endpoint", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "express", "http_method", method, "route_path", path,
 			"provenance", "INFERRED_FROM_EXPRESS_ROUTE")
+
+		// endpoint→DTO edges (#3629/#3607), TypeScript only. The handler arrow
+		// function follows the path on the same call; scan the window up to the
+		// arrow `=>` for a `Request<P, ResBody, ReqBody>` annotation. Untyped
+		// `req.body` handlers produce no annotation → no edge (honest-partial).
+		if lang == "typescript" {
+			window := src[m[5]:min(m[5]+240, len(src))]
+			if arrow := strings.Index(window, "=>"); arrow >= 0 {
+				window = window[:arrow]
+			}
+			if rm := reExpressTypedReq.FindStringSubmatch(window); rm != nil {
+				if dto := strings.TrimSpace(rm[3]); dto != "" && !expressSkipDTOTypes[dto] {
+					ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+						ToID: "Class:" + dto,
+						Kind: string(types.RelationshipKindAcceptsInput),
+						Properties: map[string]string{
+							"framework": "express", "match_source": "request_generic", "dto_type": dto,
+						},
+					})
+				}
+				if resBody := strings.TrimSpace(rm[2]); resBody != "" && !expressSkipDTOTypes[resBody] {
+					ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+						ToID: "Class:" + resBody,
+						Kind: string(types.RelationshipKindReturns),
+						Properties: map[string]string{
+							"framework": "express", "match_source": "request_generic_resbody", "dto_type": resBody,
+						},
+					})
+				}
+			}
+			if rm := reExpressResGeneric.FindStringSubmatch(window); rm != nil {
+				if dto := strings.TrimSpace(rm[1]); dto != "" && !expressSkipDTOTypes[dto] {
+					ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+						ToID: "Class:" + dto,
+						Kind: string(types.RelationshipKindReturns),
+						Properties: map[string]string{
+							"framework": "express", "match_source": "response_generic", "dto_type": dto,
+						},
+					})
+				}
+			}
+		}
 		addEntity(ent)
 	}
 

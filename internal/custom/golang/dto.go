@@ -358,6 +358,26 @@ func (e *dtoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 					"resolved", "true",
 					"field_count", strconv.Itoa(len(st.Fields)),
 					"fields", joinDtoFields(st.Fields))
+				// endpoint→DTO edge (#3629/#3607): a resolved request bind emits
+				// ACCEPTS_INPUT, a resolved response serialise emits RETURNS, to the
+				// `Class:<Struct>` structural ref the cross-file resolver binds by
+				// name. Unresolved sites (resolved=false) carry no edge — we will
+				// not point an edge at an unknown type (honest-partial).
+				edgeKind := string(types.RelationshipKindAcceptsInput)
+				if sig.direction == "response" {
+					edgeKind = string(types.RelationshipKindReturns)
+				}
+				ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+					ToID: "Class:" + structName,
+					Kind: edgeKind,
+					Properties: map[string]string{
+						"framework":       framework,
+						"match_source":    sig.subtype,
+						"dto_type":        structName,
+						"dto_direction":   sig.direction,
+						"binding_subtype": sig.subtype,
+					},
+				})
 			} else {
 				setProps(&ent, "resolved", "false")
 			}
