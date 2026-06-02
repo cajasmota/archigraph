@@ -672,6 +672,35 @@ const (
 	//                 than a string literal (omitted otherwise)
 	// Append-only — never modifies existing entities or edges.
 	RelationshipKindInstruments RelationshipKind = "INSTRUMENTS"
+
+	// #3692 (epic #3628, area #18): caching-topology edges. Emitted by the
+	// per-framework caching passes (Spring @Cacheable/@CachePut/@CacheEvict,
+	// Python @lru_cache/Flask-Caching/cachetools, NestJS @CacheKey/cache-manager,
+	// Rails Rails.cache.fetch/delete) from the enclosing function/method
+	// operation entity → a synthetic cache-region/key target entity
+	// ("cache:<framework>:<region-or-key>", Kind SCOPE.Datastore, subtype
+	// "cache_region"). Two directions:
+	//   CACHES      : read-through / write cache population
+	//                 (@Cacheable, @CachePut, lru_cache, cache.fetch{}, cache.wrap).
+	//                 The function's result is stored/served under the region/key.
+	//   INVALIDATES : cache eviction (@CacheEvict, Rails.cache.delete,
+	//                 cacheManager.del). The function clears the region/key.
+	// Multiple call-sites that touch the same region converge on one target node,
+	// so CACHES and INVALIDATES edges for the same region are traversable together
+	// (a producer ↔ invalidator subgraph). Properties on the edge:
+	//   "framework" : spring | flask_caching | cachetools | lru_cache | nestjs |
+	//                 cache_manager | rails
+	//   "region"    : the cache region/name (Spring value=, Flask key_prefix,
+	//                 NestJS CacheKey) when statically resolvable
+	//   "key"       : the static cache key when resolvable (Rails fetch literal,
+	//                 cache.wrap literal)
+	//   "mode"      : read_through | write | evict | in_process
+	//   "dynamic"   : "true" when the region/key is a runtime expression
+	//                 (honest-partial: edge + mode recorded, target labelled
+	//                 "<dynamic>")
+	// Append-only — never modifies existing entities or edges.
+	RelationshipKindCaches      RelationshipKind = "CACHES"
+	RelationshipKindInvalidates RelationshipKind = "INVALIDATES"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -788,6 +817,9 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindConsumesAPI,
 		// #3689 OpenTelemetry tracing-span instrumentation edge:
 		RelationshipKindInstruments,
+		// #3692 (epic #3628, area #18) caching-topology edges:
+		RelationshipKindCaches,
+		RelationshipKindInvalidates,
 	}
 }
 
