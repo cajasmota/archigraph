@@ -60752,9 +60752,9 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/3644",
-            "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
+            "status": "full",
+            "cites": ["internal/substrate/effects_test.go"],
+            "notes": "Native effect-substrate raw-driver SQL attribution (#3949): pg conn.exec/exec_params, mysql2 client.query, sqlite3 db.execute carrying a SQL string literal are parsed to a db_read (SELECT/WITH) or db_write (INSERT/UPDATE/DELETE/REPLACE/MERGE/TRUNCATE) effect naming the target table in the sink tag (rawsql.read(orders) / rawsql.write(users)) at full confidence. Table extraction mirrors internal/patterns/raw_sql_extractor.go. Non-SQL string args yield no DB effect; dynamic/interpolated tables stamp the effect with an honest no-table sink (rawsql.read(?)) -- no fabrication. Value-asserting test TestSniffEffectsRuby_RawDriverSQL covers all 3 drivers + negatives.",
             "verified_at": "2026-06-02"
           }
         },
@@ -60886,9 +60886,9 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/3644",
-            "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
+            "status": "full",
+            "cites": ["internal/substrate/effects_test.go"],
+            "notes": "Native effect-substrate raw-driver SQL attribution (#3949): pg conn.exec/exec_params, mysql2 client.query, sqlite3 db.execute carrying a SQL string literal are parsed to a db_read (SELECT/WITH) or db_write (INSERT/UPDATE/DELETE/REPLACE/MERGE/TRUNCATE) effect naming the target table in the sink tag (rawsql.read(orders) / rawsql.write(users)) at full confidence. Table extraction mirrors internal/patterns/raw_sql_extractor.go. Non-SQL string args yield no DB effect; dynamic/interpolated tables stamp the effect with an honest no-table sink (rawsql.read(?)) -- no fabrication. Value-asserting test TestSniffEffectsRuby_RawDriverSQL covers all 3 drivers + negatives.",
             "verified_at": "2026-06-02"
           }
         },
@@ -61013,9 +61013,9 @@
         },
         "Queries": {
           "query_attribution": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/3644",
-            "notes": "YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor.",
+            "status": "full",
+            "cites": ["internal/substrate/effects_test.go"],
+            "notes": "Native effect-substrate raw-driver SQL attribution (#3949): pg conn.exec/exec_params, mysql2 client.query, sqlite3 db.execute carrying a SQL string literal are parsed to a db_read (SELECT/WITH) or db_write (INSERT/UPDATE/DELETE/REPLACE/MERGE/TRUNCATE) effect naming the target table in the sink tag (rawsql.read(orders) / rawsql.write(users)) at full confidence. Table extraction mirrors internal/patterns/raw_sql_extractor.go. Non-SQL string args yield no DB effect; dynamic/interpolated tables stamp the effect with an honest no-table sink (rawsql.read(?)) -- no fabrication. Value-asserting test TestSniffEffectsRuby_RawDriverSQL covers all 3 drivers + negatives.",
             "verified_at": "2026-06-02"
           }
         },

@@ -496,6 +496,122 @@ end
 	}
 }
 
+// TestSniffEffectsRuby_RawDriverSQL asserts the pg / mysql2 / sqlite3 raw
+// drivers surface the specific read/write effect AND name the specific table
+// extracted from the SQL string (#3949), and that the negatives hold:
+//   - a non-SQL string arg yields no DB effect,
+//   - a SELECT is a read (not a write),
+//   - a dynamic/interpolated table is an honest no-table effect (no fabrication).
+func TestSniffEffectsRuby_RawDriverSQL(t *testing.T) {
+	const src = `
+class Repo
+  # pg: write naming users
+  def add_user(name)
+    conn.exec("INSERT INTO users (name) VALUES ($1)", [name])
+  end
+
+  # pg exec_params: read naming products
+  def list_products
+    conn.exec_params("SELECT id, name FROM products", [])
+  end
+
+  # mysql2: read naming orders
+  def get_order(id)
+    client.query("SELECT * FROM orders WHERE id = ?")
+  end
+
+  # sqlite3: write naming accounts
+  def zero_account
+    db.execute("UPDATE accounts SET balance = 0")
+  end
+
+  # pg: write naming sessions
+  def purge
+    conn.exec("DELETE FROM sessions WHERE stale = true")
+  end
+
+  # negative: non-SQL string is not a DB effect
+  def ping
+    client.query("ping pong")
+  end
+
+  # negative: dynamic table -> honest no-table read, not fabricated
+  def from_dynamic(t)
+    conn.exec("SELECT * FROM #{t}")
+  end
+end
+`
+	got := sniffEffectsRuby(src)
+
+	type want struct {
+		eff  Effect
+		sink string
+	}
+	cases := map[string]want{
+		"add_user":      {EffectDBWrite, "rawsql.write(users)"},    // pg .exec INSERT
+		"list_products": {EffectDBRead, "rawsql.read(products)"},   // pg .exec_params SELECT
+		"get_order":     {EffectDBRead, "rawsql.read(orders)"},     // mysql2 .query SELECT
+		"zero_account":  {EffectDBWrite, "rawsql.write(accounts)"}, // sqlite3 .execute UPDATE
+		"purge":         {EffectDBWrite, "rawsql.write(sessions)"}, // pg .exec DELETE
+	}
+	for fn, w := range cases {
+		found := false
+		for _, m := range got {
+			if m.Function == fn && m.Effect == w.eff && m.Sink == w.sink {
+				found = true
+				if m.Confidence != 1.0 {
+					t.Errorf("%s: raw-driver SQL effect should be full confidence, got %.2f", fn, m.Confidence)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("%s: expected %s sink %q; got %+v", fn, w.eff, w.sink, rawSinks(got, fn))
+		}
+	}
+
+	// SELECT must be a read, never a write.
+	if effectPresent(got, "get_order", EffectDBWrite) {
+		t.Errorf("get_order: SELECT must not be db_write")
+	}
+
+	// Non-SQL string must yield no DB effect at all.
+	if effectPresent(got, "ping", EffectDBRead) || effectPresent(got, "ping", EffectDBWrite) {
+		t.Errorf("ping: non-SQL string must not be a DB effect; got %+v", rawSinks(got, "ping"))
+	}
+
+	// Dynamic/interpolated table: a read effect is present but NO table is
+	// fabricated — the sink must be the honest no-table form.
+	if !effectPresent(got, "from_dynamic", EffectDBRead) {
+		t.Errorf("from_dynamic: interpolated SELECT should still register a db_read")
+	}
+	for _, m := range got {
+		if m.Function == "from_dynamic" && (m.Effect == EffectDBRead || m.Effect == EffectDBWrite) {
+			if m.Sink != "rawsql.read(?)" {
+				t.Errorf("from_dynamic: dynamic table must not fabricate a name; got sink %q", m.Sink)
+			}
+		}
+	}
+}
+
+func effectPresent(ms []EffectMatch, fn string, eff Effect) bool {
+	for _, m := range ms {
+		if m.Function == fn && m.Effect == eff {
+			return true
+		}
+	}
+	return false
+}
+
+func rawSinks(ms []EffectMatch, fn string) []string {
+	var out []string
+	for _, m := range ms {
+		if m.Function == fn && (m.Effect == EffectDBRead || m.Effect == EffectDBWrite) {
+			out = append(out, string(m.Effect)+":"+m.Sink)
+		}
+	}
+	return out
+}
+
 func sequelSinks(ms []EffectMatch, fn string) []string {
 	var out []string
 	for _, m := range ms {
