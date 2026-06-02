@@ -290,7 +290,7 @@ func TestParseDRFActionPermissions(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := parseDRFActionPermissions(tc.body)
+			got, _ := parseDRFActionPermissions(tc.body)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("parseDRFActionPermissions() = %#v, want %#v", got, tc.want)
 			}
@@ -321,4 +321,160 @@ func TestPostureForAction(t *testing.T) {
 	if got := postureForAction(bare, "create").permissionClasses; !reflect.DeepEqual(got, []string{"IsAuthenticated"}) {
 		t.Errorf("bare passthrough = %v, want [IsAuthenticated]", got)
 	}
+}
+
+// TestPostureForAction_PermissionPages verifies the #3972 per-action page-key
+// identity layers onto the posture with the same explicit→default("")
+// precedence as the permission-class list.
+func TestPostureForAction_PermissionPages(t *testing.T) {
+	vc := drfViewSetClass{
+		posture: drfPosture{permissionClasses: []string{"IsAuthenticated"}},
+		actionPermissions: map[string][]string{
+			"get_jurisdictions_by_group": {"IsAuthenticated", "CustomPagePermissionCheck"},
+			"":                           {"IsAuthenticated", "CustomActionPermissionCheck"},
+		},
+		actionPermissionPages: map[string][]string{
+			"get_jurisdictions_by_group": {"JURISDICTIONS"},
+		},
+	}
+	if got := postureForAction(vc, "get_jurisdictions_by_group").permissionPages; !reflect.DeepEqual(got, []string{"JURISDICTIONS"}) {
+		t.Errorf("jurisdictions page-keys = %v, want [JURISDICTIONS]", got)
+	}
+	// An action with no explicit page-key entry and no default ("") page-key →
+	// no page-key stamped (honest-partial).
+	if got := postureForAction(vc, "some_other_action").permissionPages; len(got) != 0 {
+		t.Errorf("default action page-keys = %v, want empty", got)
+	}
+}
+
+// TestParseDRFActionPermissions_AssignThenReturnComprehension is the #3972
+// value-asserting direct-parser test on the REAL upvate GroupViewSet shape:
+// each branch ASSIGNS `permission_classes = [...]` (not `return [...]`) and the
+// method ends with `return [p() for p in permission_classes]` — the assigned
+// list must bind per branch, the PERMISSION_PAGES["<KEY>"] argument must surface
+// as the per-action page-key, and a branch without a page-key (CustomActionPermissionCheck
+// default) must NOT fabricate one.
+func TestParseDRFActionPermissions_AssignThenReturnComprehension(t *testing.T) {
+	body := `
+    def get_permissions(self):
+        if self.action in ["groups_list", "get_group_type"]:
+            permission_classes = [IsAuthenticated]
+        elif self.action in ["update_group_jurisdiction_config", "get_jurisdictions_by_group"]:
+            permission_classes = [IsAuthenticated, CustomPagePermissionCheck(PERMISSION_PAGES["JURISDICTIONS"])]
+        elif self.action in ["filter"]:
+            permission_classes = [IsAuthenticated, CustomPagePermissionCheck(PERMISSION_PAGES["CONTRACT_PROPOSALS"])]
+        else:
+            permission_classes = [IsAuthenticated, CustomActionPermissionCheck]
+        return [permission() for permission in permission_classes]
+`
+	perms, pages := parseDRFActionPermissions(body)
+
+	// Permission-class lists bind per branch (assignment, not return literal).
+	wantPerms := map[string][]string{
+		"groups_list":                      {"IsAuthenticated"},
+		"get_group_type":                   {"IsAuthenticated"},
+		"update_group_jurisdiction_config": {"IsAuthenticated", "CustomPagePermissionCheck"},
+		"get_jurisdictions_by_group":       {"IsAuthenticated", "CustomPagePermissionCheck"},
+		"filter":                           {"IsAuthenticated", "CustomPagePermissionCheck"},
+		"":                                 {"IsAuthenticated", "CustomActionPermissionCheck"},
+	}
+	if !reflect.DeepEqual(perms, wantPerms) {
+		t.Errorf("perms = %#v\nwant %#v", perms, wantPerms)
+	}
+
+	// Page-keys: the JURISDICTIONS branch surfaces JURISDICTIONS on BOTH its
+	// actions; the filter branch surfaces CONTRACT_PROPOSALS — DISTINCT per
+	// action. The plain-IsAuthenticated and CustomActionPermissionCheck branches
+	// have no page-key (honest-partial — absent, not fabricated).
+	wantPages := map[string][]string{
+		"update_group_jurisdiction_config": {"JURISDICTIONS"},
+		"get_jurisdictions_by_group":       {"JURISDICTIONS"},
+		"filter":                           {"CONTRACT_PROPOSALS"},
+	}
+	if !reflect.DeepEqual(pages, wantPages) {
+		t.Errorf("pages = %#v\nwant %#v", pages, wantPages)
+	}
+}
+
+// TestParseDRFActionPermissions_DynamicPageKeyHonestPartial is the #3972
+// negative test: a PERMISSION_PAGES subscript whose key is a VARIABLE (not a
+// string literal) is not statically resolvable, so no page-key is captured
+// (honest-partial) — but the permission-class list still binds.
+func TestParseDRFActionPermissions_DynamicPageKeyHonestPartial(t *testing.T) {
+	body := `
+    def get_permissions(self):
+        if self.action in ["dynamic"]:
+            permission_classes = [IsAuthenticated, CustomPagePermissionCheck(PERMISSION_PAGES[self.page_key])]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+`
+	perms, pages := parseDRFActionPermissions(body)
+	if got := perms["dynamic"]; !reflect.DeepEqual(got, []string{"IsAuthenticated", "CustomPagePermissionCheck"}) {
+		t.Errorf("dynamic perms = %v, want [IsAuthenticated CustomPagePermissionCheck]", got)
+	}
+	// Dynamic (variable) subscript → no page-key resolved anywhere.
+	if len(pages) != 0 {
+		t.Errorf("pages = %#v, want empty (dynamic key honest-partial)", pages)
+	}
+}
+
+// TestApplyDjangoDRFRoutes_PageKeyPerActionRoute is the #3972 end-to-end
+// value-asserting test on the real GroupViewSet idiom: @action routes whose
+// get_permissions branch assigns CustomPagePermissionCheck(PERMISSION_PAGES["<KEY>"])
+// surface the page-key as `auth_permissions` on THAT action's route — distinct
+// per action — while a branch with no page-key does not.
+func TestApplyDjangoDRFRoutes_PageKeyPerActionRoute(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import GroupViewSet
+
+router = routers.DefaultRouter()
+router.register(r"groups", GroupViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from core.helper.permissions import CustomPagePermissionCheck, CustomActionPermissionCheck
+from upvate_core.settings import PERMISSION_PAGES
+
+class GroupViewSet(ModelViewSet):
+    @action(detail=False, methods=["get"], url_path="jurisdictions")
+    def get_jurisdictions_by_group(self, request):
+        pass
+
+    @action(detail=False, methods=["get"], url_path="proposals")
+    def filter(self, request):
+        pass
+
+    @action(detail=False, methods=["get"], url_path="types")
+    def get_group_type(self, request):
+        pass
+
+    def get_permissions(self):
+        if self.action in ["get_group_type"]:
+            permission_classes = [IsAuthenticated]
+        elif self.action in ["get_jurisdictions_by_group"]:
+            permission_classes = [IsAuthenticated, CustomPagePermissionCheck(PERMISSION_PAGES["JURISDICTIONS"])]
+        elif self.action in ["filter"]:
+            permission_classes = [IsAuthenticated, CustomPagePermissionCheck(PERMISSION_PAGES["CONTRACT_PROPOSALS"])]
+        else:
+            permission_classes = [IsAuthenticated, CustomActionPermissionCheck]
+        return [permission() for permission in permission_classes]
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+
+	// get_jurisdictions_by_group → JURISDICTIONS page-key on its route.
+	assertEndpointProp(t, got, "http:GET:/groups/jurisdictions", "auth_permissions", "JURISDICTIONS")
+	assertEndpointProp(t, got, "http:GET:/groups/jurisdictions", "auth_required", "true")
+
+	// filter → CONTRACT_PROPOSALS — DISTINCT from the jurisdictions route.
+	assertEndpointProp(t, got, "http:GET:/groups/proposals", "auth_permissions", "CONTRACT_PROPOSALS")
+	assertEndpointProp(t, got, "http:GET:/groups/proposals", "auth_required", "true")
+
+	// get_group_type → plain IsAuthenticated branch → NO page-key surfaced.
+	assertNoProp(t, got, "http:GET:/groups/types", "auth_permissions")
 }

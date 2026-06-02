@@ -241,6 +241,14 @@ type drfViewSetClass struct {
 	// resolvable per-action override exists — the route falls back to the flat
 	// union posture (honest-partial).
 	actionPermissions map[string][]string
+	// actionPermissionPages maps a DRF action name (same keying as
+	// actionPermissions, with "" as the default branch) to the fine-grained
+	// page-key identities resolved for that action — the constant keys of a
+	// `PERMISSION_PAGES["<KEY>"]` argument passed to a custom page/action guard
+	// in the `get_permissions(self)` branch for that action (#3972). When
+	// present, the route surfaces these as `auth_permissions`. nil / a missing
+	// action means no resolvable page-key (honest-partial).
+	actionPermissionPages map[string][]string
 	// resolved reports whether the ViewSet class was actually located and
 	// parsed on disk (parseViewSetClass found the `class <name>(...)`
 	// declaration). When false, the caller fell back to modelViewSetMethods()
@@ -365,6 +373,16 @@ type drfPosture struct {
 	permissionClasses     []string
 	authenticationClasses []string
 	throttleClasses       []string
+	// permissionPages carries the fine-grained page-key identities that a
+	// per-action permission resolution surfaced — the constant keys of a
+	// `PERMISSION_PAGES["<KEY>"]` argument passed to a custom permission guard
+	// (e.g. `CustomPagePermissionCheck(PERMISSION_PAGES["JURISDICTIONS"])`),
+	// captured as ["JURISDICTIONS"] (#3972). These are the real per-action
+	// authorisation identity for custom page/action guards; the DRF expansion
+	// pass stamps them as the route's `auth_permissions` so archigraph_auth_coverage
+	// can answer "what page-permission does this route require?". Empty when no
+	// page-key argument was resolvable (honest-partial — never fabricated).
+	permissionPages []string
 }
 
 // empty reports whether the posture declares nothing at all.
@@ -1514,6 +1532,18 @@ func stampDRFEndpointPosture(props map[string]string, posture drfPosture) {
 		props["auth_required"] = "true"
 	}
 
+	// #3972 — fine-grained per-action page-key identity. When a per-action
+	// permission resolution captured a `PERMISSION_PAGES["<KEY>"]` argument to a
+	// custom page/action guard (e.g. CustomPagePermissionCheck(PERMISSION_PAGES["JURISDICTIONS"])),
+	// surface those constant keys as `auth_permissions` — the established
+	// cross-language fine-grained-permission property (http_endpoint_jsts_auth.go)
+	// so archigraph_auth_coverage answers "what page-permission does this route
+	// require?". A custom guard with a page-key always requires auth.
+	if len(posture.permissionPages) > 0 {
+		props["auth_permissions"] = strings.Join(uniqueSorted(posture.permissionPages), ",")
+		props["auth_required"] = "true"
+	}
+
 	// Throttle classes ⇒ the route is rate-limited.
 	if len(posture.throttleClasses) > 0 {
 		props["rate_limited"] = "true"
@@ -1918,7 +1948,7 @@ func parseViewSetClass(src, viewSetName string) drfViewSetClass {
 	// permission to the right route (e.g. POST /x → IsAdminUser, GET /x → AllowAny)
 	// instead of the flat union parseDRFPosture stamps. Dynamic / non-literal
 	// conditions are left unresolved (honest-partial → flat-union fallback).
-	out.actionPermissions = parseDRFActionPermissions(classBody)
+	out.actionPermissions, out.actionPermissionPages = parseDRFActionPermissions(classBody)
 	// classBody starts at classBodyStart in src; pass that offset so
 	// extractActions can compute absolute (src-relative) line numbers for
 	// each @action's `def NAME(` line (#2677).
