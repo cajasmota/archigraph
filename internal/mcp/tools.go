@@ -1610,6 +1610,10 @@ func (s *Server) handleGetNeighbors(ctx context.Context, req mcpapi.CallToolRequ
 				"depth":      1,
 				"cross_repo": true,
 				"kind":       l.Kind,
+				// #3628 — extraction-confidence honesty marker so a consumer can
+				// tell a fully-resolved cross-repo edge from a heuristic /
+				// inferred one. Absent on-disk ⇒ "resolved" (see EdgeConfidence).
+				"confidence": l.EdgeConfidence(),
 			})
 		}
 	}

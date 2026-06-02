@@ -369,6 +369,10 @@ func runSameAsPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pa
 					Identifier:   &ident,
 					DiscoveredAt: now,
 				}
+				// #3628 — SAME_AS pairs two cross-language models by name +
+				// Jaccard field-overlap. Even heavily gated, it is a fuzzy
+				// identity guess, not a structural binding. heuristic.
+				link.WithEdgeConfidence(ConfidenceHeuristic)
 				if overlap >= sameAsMinFieldOverlap {
 					freshLinks = append(freshLinks, link)
 				} else {

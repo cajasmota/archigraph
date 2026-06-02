@@ -148,3 +148,63 @@ func ScoreString(cat extractionCategory) float64 {
 	}
 	return stringBandLow
 }
+
+// ---------------------------------------------------------------------------
+// Extraction-confidence honesty marker (#3628 roadmap area #23)
+// ---------------------------------------------------------------------------
+//
+// The numeric `confidence` float above is a per-pass *quality score* used for
+// threshold gating and shortest-path weighting. It is orthogonal to the
+// question a graph consumer most often asks: "is this edge grounded in a real
+// tree-sitter-AST match on BOTH sides, or was it synthesised heuristically?"
+//
+// EdgeConfidenceKey carries that categorical honesty marker as a Link property
+// so a consumer can distinguish a fully-matched cross-repo edge from a
+// fuzzy/string/runtime-derived one WITHOUT having to reverse-engineer the
+// numeric band. It is stored under a property (not a top-level field) so it
+// rides through the existing Link.Properties → MCP surface plumbing and never
+// collides with the float `confidence` JSON field.
+//
+// Value vocabulary (exactly three values):
+//
+//   - "resolved"  — both the client/producer and server/consumer endpoints
+//     matched on their canonical id (path-normalised HTTP pairs,
+//     topic pub↔sub on the same channel, gRPC method↔stub,
+//     OpenAPI operationId). Structurally grounded on both sides.
+//   - "heuristic" — only one side is AST-grounded and the match is fuzzy:
+//     TF-IDF label match, string-literal catalog match,
+//     cross-language SAME_AS field-overlap. The edge is a
+//     best-effort guess, not a proven contract.
+//   - "inferred"  — derived from a runtime-dynamic / interpolated value: a
+//     `${apiUrl}`-prefixed call whose static suffix uniquely
+//     matched a backend (dynamic_suffix_match), or a concrete
+//     caller segment filling a producer param slot
+//     (literal_param_fill). One side is real, the other is
+//     reconstructed from a runtime expression.
+//
+// ABSENCE ⇒ resolved: AST-grounded structural edges (CALLS / IMPORTS /
+// DEFINES emitted directly by tree-sitter, and the import_pass) deliberately
+// do NOT stamp this property — stamping every edge would bloat the graph.
+// A consumer MUST treat a missing marker as "resolved".
+const EdgeConfidenceKey = "confidence"
+
+const (
+	// ConfidenceResolved marks an edge whose two endpoints both matched on a
+	// canonical id (the highest-honesty cross-repo class).
+	ConfidenceResolved = "resolved"
+	// ConfidenceHeuristic marks a fuzzy / single-side-grounded synthesised edge.
+	ConfidenceHeuristic = "heuristic"
+	// ConfidenceInferred marks an edge derived from a runtime-dynamic /
+	// interpolated value.
+	ConfidenceInferred = "inferred"
+)
+
+// WithEdgeConfidence stamps the honesty marker on a Link, allocating the
+// Properties map on demand. It is the single mutation point so the property
+// name stays consistent across every pass.
+func (l *Link) WithEdgeConfidence(level string) {
+	if l.Properties == nil {
+		l.Properties = map[string]string{}
+	}
+	l.Properties[EdgeConfidenceKey] = level
+}

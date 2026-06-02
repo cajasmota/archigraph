@@ -396,6 +396,10 @@ func runOpenAPISpecPass(graphs []repoGraph, paths Paths, rejects map[string]bool
 						},
 						MatchQuality: openAPISpecMatchQuality,
 					}
+					// #3628 — consumer call and producer operation both matched
+					// through the shared OpenAPI spec operationId; both sides
+					// AST-grounded against a declared contract. resolved.
+					link.WithEdgeConfidence(ConfidenceResolved)
 					fresh = append(fresh, link)
 				}
 			}
