@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | 🔴 `missing` | — | — | — | — |
+| Log extraction | 🔴 `missing` | — | 3828 | — | No log/metric/trace extraction yet for this vendor; tracked in #3828. |
 | Metric extraction | — `not_applicable` | — | — | — | — |
 | Trace extraction | — `not_applicable` | — | — | — | — |
 

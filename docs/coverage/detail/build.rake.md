@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Dependency graph | 🔴 `missing` | — | — | — | — |
+| Dependency graph | 🔴 `missing` | — | 3828 | — | No build-graph/target extraction yet for this tool/test-runner; tracked in #3828. |
 | Target extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/ruby/build_tools.yaml` | — |
 
 ## Provenance

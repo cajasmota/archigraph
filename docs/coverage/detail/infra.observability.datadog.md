@@ -11,8 +11,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | 🔴 `missing` | — | — | — | — |
-| Metric extraction | 🔴 `missing` | — | — | — | — |
+| Log extraction | 🔴 `missing` | — | 3828 | — | No log/metric/trace extraction yet for this vendor; tracked in #3828. |
+| Metric extraction | 🔴 `missing` | — | 3828 | — | No log/metric/trace extraction yet for this vendor; tracked in #3828. |
 | Trace extraction | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3768) | `internal/extractors/golang/observability.go`<br>`internal/extractors/javascript/observability.go`<br>`internal/extractors/python/observability.go` | #3628 area #11: ddtrace span-creation sites now emit INSTRUMENTS edges (enclosing op -> span:<name> stub) in Python, Go and JS/TS. Python (#3762): @tracer.wrap()/tracer.trace("op"). Go: tracer.StartSpan("web.request") and tracer.StartSpanFromContext(ctx, "op") take the first string-literal arg as the span name. JS/TS dd-trace: tracer.trace('op', cb) / tracer.wrap('op', fn) take the first string-literal arg. Honest-partial: dynamic span names emit traced=true+dynamic=true keyed on the enclosing fn without a fabricated name; .StartSpan/.trace on a non-tracer receiver is not emitted (precision). |
 
 ## Provenance

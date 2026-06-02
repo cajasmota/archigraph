@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Env resolution | 🔴 `missing` | — | — | — | — |
+| Env resolution | 🔴 `missing` | — | 3828 | — | No file/env parsing yet for this CI system; tracked in #3828. |
 | File parsing | 🔴 `missing` | `2026-05-31` | [link](https://github.com/cajasmota/archigraph/issues/3593) | — | — |
 
 ## Provenance
