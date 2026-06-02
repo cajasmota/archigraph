@@ -149,11 +149,21 @@ func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 		addEntity(ent)
 	}
 
-	// @Injectable
+	// @Injectable — provider. Capture the DI scope when declared via
+	// @Injectable({ scope: Scope.REQUEST }) so the oracle knows the provider's
+	// lifecycle (#3628 area #5).
+	scopeByClass := map[string]string{}
+	for _, m := range reNestInjectableScope.FindAllStringSubmatch(src, -1) {
+		scopeByClass[m[2]] = m[1]
+	}
 	for _, m := range reNestInjectable.FindAllStringSubmatchIndex(src, -1) {
 		name := src[m[2]:m[3]]
 		ent := makeEntity(name, "SCOPE.Component", "service", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "nestjs", "provenance", "INFERRED_FROM_NESTJS_INJECTABLE")
+		setProps(&ent, "framework", "nestjs", "provenance", "INFERRED_FROM_NESTJS_INJECTABLE",
+			"di_provider", "true")
+		if s := scopeByClass[name]; s != "" {
+			setProps(&ent, "di_scope", s)
+		}
 		addEntity(ent)
 	}
 
@@ -312,6 +322,31 @@ func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 		ent := makeEntity(name, "SCOPE.Pattern", "param_decorator", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "nestjs", "provenance", "INFERRED_FROM_NESTJS_PARAM_DECORATOR")
 		addEntity(ent)
+	}
+
+	// Dependency-injection graph (#3628 area #5): merge INJECTED_INTO / BINDS /
+	// USES edges onto their file-local owning entity. The owner key is the bare
+	// entity Name (consumer class, controller, route operation, or module).
+	diEdges := extractNestDIEdges(src)
+	if len(diEdges) > 0 {
+		byName := make(map[string]int, len(entities))
+		for i := range entities {
+			// First entity wins per name (controllers/services are unique by
+			// class name within a file; route ops are unique by "<VERB> <m>").
+			if _, ok := byName[entities[i].Name]; !ok {
+				byName[entities[i].Name] = i
+			}
+		}
+		edgeCount := 0
+		for owner, rels := range diEdges {
+			idx, ok := byName[owner]
+			if !ok {
+				continue
+			}
+			entities[idx].Relationships = append(entities[idx].Relationships, rels...)
+			edgeCount += len(rels)
+		}
+		span.SetAttributes(attribute.Int("di_edge_count", edgeCount))
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
