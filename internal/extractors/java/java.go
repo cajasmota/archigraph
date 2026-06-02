@@ -653,6 +653,11 @@ func walk(
 			// annotations and spanBuilder(...).startSpan() chains.
 			rec.Relationships = append(rec.Relationships,
 				javaTracingSpanEdges(node, selfName, file.Content)...)
+			// Issue #3856 — non-OTel-tracing observability: Micrometer /
+			// Dropwizard metrics, Spring Sleuth / Brave spans, SLF4J fluent
+			// structured logging. Same INSTRUMENTS edge contract.
+			rec.Relationships = append(rec.Relationships,
+				javaObsEdges(node, selfName, file.Content)...)
 			// #3628 — transaction-boundary stamping. Mark the method
 			// transactional when it carries @Transactional (Spring or JTA),
 			// capturing propagation / isolation / readOnly. Class-level
@@ -675,6 +680,10 @@ func walk(
 					node.ChildByFieldName("body"),
 					file.Content, selfName, cc, paramTypes, imports,
 				)...)
+			// Issue #3856 — observability instrumentation registered in a
+			// constructor (common for Micrometer Counter/Timer fields).
+			rec.Relationships = append(rec.Relationships,
+				javaObsEdges(node, selfName, file.Content)...)
 			*out = append(*out, rec)
 		}
 		return

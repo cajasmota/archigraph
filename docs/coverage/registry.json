@@ -1663,6 +1663,27 @@
       }
     },
     {
+      "id": "infra.observability.dropwizard-metrics",
+      "category": "observability",
+      "language": "multi",
+      "label": "Dropwizard Metrics",
+      "capabilities": {
+        "log_extraction": {
+          "status": "not_applicable"
+        },
+        "metric_extraction": {
+          "status": "partial",
+          "cites": ["internal/extractors/java/observability.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3856",
+          "notes": "#3854 area #11: Dropwizard Metrics emit INSTRUMENTS edges (enclosing method -\u003e metric:\u003cname\u003e stub) in Java: \u003cregistry\u003e.meter/timer/counter/histogram(\"name\") on a registry-like receiver. Honest-partial: a non-literal metric name yields traced=true+dynamic=true keyed on the method; calls on a receiver that does not look like a MetricRegistry are NOT emitted.",
+          "verified_at": "2026-06-02"
+        },
+        "trace_extraction": {
+          "status": "not_applicable"
+        }
+      }
+    },
+    {
       "id": "infra.observability.elastic-apm",
       "category": "observability",
       "language": "multi",
@@ -1723,6 +1744,27 @@
           "status": "full",
           "cites": ["internal/engine/rules/_engine/logging_config_extractor.yaml"],
           "verified_at": "2026-05-28"
+        }
+      }
+    },
+    {
+      "id": "infra.observability.micrometer",
+      "category": "observability",
+      "language": "multi",
+      "label": "Micrometer (JVM metrics facade)",
+      "capabilities": {
+        "log_extraction": {
+          "status": "not_applicable"
+        },
+        "metric_extraction": {
+          "status": "partial",
+          "cites": ["internal/extractors/java/observability.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3856",
+          "notes": "#3854 area #11: Micrometer metrics emit INSTRUMENTS edges (enclosing method -\u003e metric:\u003cname\u003e stub) in Java. Registry-method form on a registry-like receiver: \u003creg\u003e.counter/timer/gauge/summary/longTaskTimer/distributionSummary(\"name\") -\u003e metric:name. Builder form: Counter|Timer|Gauge|DistributionSummary|LongTaskTimer.builder(\"name\") -\u003e metric:name. Annotation form: @Timed(\"name\") / @Counted(\"name\") on a method -\u003e metric:name. Honest-partial: a non-literal name (or a bare @Timed with no name) yields traced=true+dynamic=true keyed on the method without fabrication; a metric method on a receiver that does not look like a meter registry is NOT emitted (precision).",
+          "verified_at": "2026-06-02"
+        },
+        "trace_extraction": {
+          "status": "not_applicable"
         }
       }
     },
@@ -1808,6 +1850,48 @@
           "cites": ["internal/extractors/golang/observability.go","internal/extractors/javascript/observability.go","internal/extractors/python/observability.go"],
           "issue": "https://github.com/cajasmota/archigraph/issues/3768",
           "notes": "#3628 area #11: Sentry performance-tracing sites emit INSTRUMENTS edges (enclosing op -\u003e span:\u003cname\u003e stub) in Python, Go and JS/TS. Python (#3762): @sentry_sdk.trace, start_transaction/start_span. Go: sentry.StartSpan(ctx, \"op\") takes the first string-literal arg as the span name. JS/TS: Sentry.startSpan({name:'op'}, cb) / Sentry.startTransaction({name:'op'}) / startInactiveSpan take the `name` property of the first object-literal arg. Honest-partial: dynamic names emit traced=true+dynamic=true keyed on the enclosing fn without fabrication; .StartSpan on a non-sentry receiver is not emitted.",
+          "verified_at": "2026-06-02"
+        }
+      }
+    },
+    {
+      "id": "infra.observability.slf4j",
+      "category": "observability",
+      "language": "multi",
+      "label": "SLF4J / Logback (structured logging)",
+      "capabilities": {
+        "log_extraction": {
+          "status": "partial",
+          "cites": ["internal/extractors/java/observability.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3856",
+          "notes": "#3854 area #11: SLF4J 2.x fluent structured logging emits INSTRUMENTS edges (enclosing method -\u003e log:\u003cevent\u003e stub) in Java. Anchored on the terminal .log(\"event\") of a fluent chain that includes a level entry (atInfo/atDebug/atWarn/atError/atTrace/atLevel) AND at least one structured key (addKeyValue/addMarker/addArgument), so only keyed/structured events count. The log_name is the literal message passed to .log(...); honest-partial: a non-literal message on a recognised structured chain yields traced=true+dynamic=true. Plain free-text logging (logger.info(\"text\")) is intentionally NOT emitted (no structured key).",
+          "verified_at": "2026-06-02"
+        },
+        "metric_extraction": {
+          "status": "not_applicable"
+        },
+        "trace_extraction": {
+          "status": "not_applicable"
+        }
+      }
+    },
+    {
+      "id": "infra.observability.spring-sleuth-brave",
+      "category": "observability",
+      "language": "multi",
+      "label": "Spring Cloud Sleuth / Brave",
+      "capabilities": {
+        "log_extraction": {
+          "status": "not_applicable"
+        },
+        "metric_extraction": {
+          "status": "not_applicable"
+        },
+        "trace_extraction": {
+          "status": "partial",
+          "cites": ["internal/extractors/java/observability.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3856",
+          "notes": "#3854 area #11: Spring Sleuth / Brave manual spans emit INSTRUMENTS edges (enclosing method -\u003e span:\u003cname\u003e stub) in Java via the fluent form tracer.nextSpan().name(\"op\").start(), anchored on the .name(\"op\") call whose receiver chain includes nextSpan(). Honest-partial: a non-literal span name yields traced=true+dynamic=true keyed on the method without fabrication.",
           "verified_at": "2026-06-02"
         }
       }
