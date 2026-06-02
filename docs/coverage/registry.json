@@ -17880,61 +17880,62 @@
       "capabilities": {
         "Structure": {
           "context_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "extractAndroidContexts() detects getContext()/requireContext()/getApplicationContext()/getBaseContext()/requireActivity() call sites and Context parameter names as SCOPE.Reference context_site entities (#3256)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): extractAndroidContexts() emits getContext()/requireContext()/getActivity() call sites as SCOPE.Reference context_site through RunCustomExtractors; value-asserting test TestJavaPatternsAndroidContextExtractionLive asserts ProfileFragment.requireContext context_method/context_kind/provenance live",
+            "verified_at": "2026-06-01"
           }
         },
         "Navigation": {
           "deep_link_extraction": {
             "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
+            "cites": ["internal/custom/java/android.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "extractAndroidDeepLinks() detects \u003cintent-filter\u003e blocks in AndroidManifest.xml with \u003cdata android:scheme\u003e as SCOPE.Reference deep_link entities with scheme/host/path URI templates (#3256)"
+            "notes": "LEFT missing after live re-verification (#3590/#3575): deep links are emitted ONLY from AndroidManifest.xml (\u003cintent-filter\u003e \u003cdata android:scheme\u003e), which is NOT live-reachable through the custom_java_patterns dispatcher — the manifest carries no framework marker so ExtractAndroid never runs on it (proven negatively by TestJavaPatternsAndroidManifestNotLiveReachable). extractAndroidDeepLinks() works when called directly; the gap is the dispatcher's source-marker gating. Issue tracks manifest wiring.",
+            "verified_at": "2026-06-01"
           },
           "navigation_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adIntentExplicitRE+adFragmentTransactionRE emit navigation edges (#3179)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): adIntentExplicitRE + adFragmentTransactionRE emit navigation operations through RunCustomExtractors; TestJavaPatternsAndroidActivityLive asserts MainActivity-\u003eDetailActivity explicit-Intent navigation and TestJavaPatternsAndroidFragmentNavigationLive asserts HomeActivity::SettingsFragment fragment-transaction navigation live",
+            "verified_at": "2026-06-01"
           },
           "screen_detection": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adActivityClassRE+adFragmentClassRE detect Activity/Fragment screens (#3179)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): adActivityClassRE + adFragmentClassRE detect Activity/Fragment screens through RunCustomExtractors; TestJavaPatternsAndroidActivityLive asserts MainActivity SCOPE.UIComponent activity and TestJavaPatternsAndroidFragmentNavigationLive asserts HomeActivity Activity screen live",
+            "verified_at": "2026-06-01"
           }
         },
         "Platform": {
           "platform_branching": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adSdkIntBranchRE detects Build.VERSION.SDK_INT API-level comparisons as platform-branch operations owned by the enclosing class (#3188)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): adSdkIntBranchRE emits Build.VERSION.SDK_INT comparisons as SCOPE.Operation branch ops through RunCustomExtractors; TestJavaPatternsAndroidPlatformBranchingLive asserts 'Build.VERSION.SDK_INT \u003e= Build.VERSION_CODES.O' with branch_kind/operator/api_level/enclosing_class live",
+            "verified_at": "2026-06-01"
           }
         },
         "Native Bridge": {
           "native_module_imports": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
+            "status": "partial",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adUsesPermissionRE+adUsesFeatureRE (manifest android.hardware.*) and adHardwareImportRE (import android.hardware.*) emit native-module references (#3188)"
+            "notes": "Re-verified PARTIAL live via custom_java_patterns dispatch (#3590/#3575): the Java-source half (import android.hardware.*) IS live-reachable — TestJavaPatternsAndroidNativeModuleJavaImportLive asserts android.hardware.camera2.CameraManager declaration_kind=import live. The MANIFEST half (\u003cuses-permission\u003e/\u003cuses-feature\u003e android.hardware.*) is NOT live-reachable: AndroidManifest.xml carries no custom_java_patterns framework marker so the dispatcher never runs ExtractAndroid on it (proven negatively by TestJavaPatternsAndroidManifestNotLiveReachable). Issue tracks wiring the manifest path.",
+            "verified_at": "2026-06-01"
           }
         },
         "Data Flow": {
           "branch_conditions": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adSdkIntBranchRE detects Build.VERSION.SDK_INT comparisons as platform-branch control-flow sites; same extractor delivers Platform.platform_branching partial (#3188); the branch control-flow site entity mirrors the Data Flow.branch_conditions surface for Android",
-            "verified_at": "2026-05-30"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): the same adSdkIntBranchRE platform-branch SCOPE.Operation entity that backs Platform.platform_branching is the Data Flow.branch_conditions control-flow site; proven live by TestJavaPatternsAndroidPlatformBranchingLive",
+            "verified_at": "2026-06-01"
           },
           "state_management": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adViewModelClassRE+adViewModelProviderRE detect ViewModel/LiveData state (#3179)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): adViewModelClassRE emits ViewModel subclasses as SCOPE.Component viewmodel through RunCustomExtractors; TestJavaPatternsAndroidStateManagementLive asserts UserViewModel component_kind=viewmodel + provenance live",
+            "verified_at": "2026-06-01"
           }
         },
         "Type System": {
@@ -18086,18 +18087,19 @@
       "capabilities": {
         "Structure": {
           "context_extraction": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "extractAndroidContexts() detects getContext()/requireContext()/getApplicationContext()/getBaseContext()/requireActivity() call sites and Context parameter names as SCOPE.Reference context_site entities (#3256)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): extractAndroidContexts() emits getContext()/requireContext()/getActivity() call sites as SCOPE.Reference context_site through RunCustomExtractors; value-asserting test TestJavaPatternsAndroidContextExtractionLive asserts ProfileFragment.requireContext context_method/context_kind/provenance live",
+            "verified_at": "2026-06-01"
           }
         },
         "Navigation": {
           "deep_link_extraction": {
             "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
+            "cites": ["internal/custom/java/android.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "extractAndroidDeepLinks() detects \u003cintent-filter\u003e blocks in AndroidManifest.xml with \u003cdata android:scheme\u003e as SCOPE.Reference deep_link entities with scheme/host/path URI templates (#3256)"
+            "notes": "LEFT missing after live re-verification (#3590/#3575): deep links are emitted ONLY from AndroidManifest.xml (\u003cintent-filter\u003e \u003cdata android:scheme\u003e), which is NOT live-reachable through the custom_java_patterns dispatcher — the manifest carries no framework marker so ExtractAndroid never runs on it (proven negatively by TestJavaPatternsAndroidManifestNotLiveReachable). extractAndroidDeepLinks() works when called directly; the gap is the dispatcher's source-marker gating. Issue tracks manifest wiring.",
+            "verified_at": "2026-06-01"
           },
           "navigation_extraction": {
             "status": "full",
@@ -18114,33 +18116,33 @@
         },
         "Platform": {
           "platform_branching": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adSdkIntBranchRE detects Build.VERSION.SDK_INT API-level comparisons as platform-branch operations owned by the enclosing class (#3188)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): adSdkIntBranchRE emits Build.VERSION.SDK_INT comparisons as SCOPE.Operation branch ops through RunCustomExtractors; TestJavaPatternsAndroidPlatformBranchingLive asserts 'Build.VERSION.SDK_INT \u003e= Build.VERSION_CODES.O' with branch_kind/operator/api_level/enclosing_class live",
+            "verified_at": "2026-06-01"
           }
         },
         "Native Bridge": {
           "native_module_imports": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
+            "status": "partial",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
             "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adUsesPermissionRE+adUsesFeatureRE (manifest android.hardware.*) and adHardwareImportRE (import android.hardware.*) emit native-module references (#3188)"
+            "notes": "Re-verified PARTIAL live via custom_java_patterns dispatch (#3590/#3575): the Java-source half (import android.hardware.*) IS live-reachable — TestJavaPatternsAndroidNativeModuleJavaImportLive asserts android.hardware.camera2.CameraManager declaration_kind=import live. The MANIFEST half (\u003cuses-permission\u003e/\u003cuses-feature\u003e android.hardware.*) is NOT live-reachable: AndroidManifest.xml carries no custom_java_patterns framework marker so the dispatcher never runs ExtractAndroid on it (proven negatively by TestJavaPatternsAndroidManifestNotLiveReachable). Issue tracks wiring the manifest path.",
+            "verified_at": "2026-06-01"
           }
         },
         "Data Flow": {
           "branch_conditions": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adSdkIntBranchRE detects Build.VERSION.SDK_INT comparisons as platform-branch control-flow sites; same extractor delivers Platform.platform_branching partial (#3188); the branch control-flow site entity mirrors the Data Flow.branch_conditions surface for Android",
-            "verified_at": "2026-05-30"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): the same adSdkIntBranchRE platform-branch SCOPE.Operation entity that backs Platform.platform_branching is the Data Flow.branch_conditions control-flow site; proven live by TestJavaPatternsAndroidPlatformBranchingLive",
+            "verified_at": "2026-06-01"
           },
           "state_management": {
-            "status": "missing",
-            "cites": ["internal/custom/java/android.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3586",
-            "notes": "adViewModelClassRE+adViewModelProviderRE detect ViewModel/LiveData state (#3179)"
+            "status": "full",
+            "cites": ["internal/custom/java/android.go","internal/custom/java/patterns_dispatch.go","internal/extractors/custom_java_patterns_androidcells_test.go"],
+            "notes": "Re-verified live via custom_java_patterns dispatch (#3590/#3575): adViewModelClassRE emits ViewModel subclasses as SCOPE.Component viewmodel through RunCustomExtractors; TestJavaPatternsAndroidStateManagementLive asserts UserViewModel component_kind=viewmodel + provenance live",
+            "verified_at": "2026-06-01"
           }
         },
         "Type System": {
