@@ -718,6 +718,9 @@ func walkNode(
 			*funcCount++
 			// Issue #2654 — stamp discriminator comparisons found in the body.
 			stampPythonDiscriminators(node.ChildByFieldName("body"), file.Content, out, funcIdx)
+			// Issue #3689 — stamp OpenTelemetry span-creation sites (no decorator
+			// parent for a bare function_definition).
+			stampPythonTracingSpans(node, nil, selfName, file.Content, out, funcIdx)
 		}
 		return // do not recurse into function body for nested definitions
 
@@ -744,6 +747,10 @@ func walkNode(
 				*funcCount++
 				// Issue #2654 — stamp discriminator comparisons found in the body.
 				stampPythonDiscriminators(inner.ChildByFieldName("body"), file.Content, out, decoratedFuncIdx)
+				// Issue #3689 — stamp OpenTelemetry span-creation sites, scanning
+				// both the body and the decorator list (node is the
+				// decorated_definition wrapping inner).
+				stampPythonTracingSpans(inner, node, selfName, file.Content, out, decoratedFuncIdx)
 			}
 		case "class_definition":
 			rec := buildClass(inner, file)

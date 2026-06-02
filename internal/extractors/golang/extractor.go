@@ -1053,6 +1053,12 @@ func extractFunctions(root *sitter.Node, src []byte, filePath string, structFiel
 			})
 		}
 
+		// Issue #3689 — OpenTelemetry span-creation sites: emit INSTRUMENTS
+		// edges from this operation → synthetic span stubs. nameText is the
+		// bare function/method name used to key dynamic-name stubs.
+		relationships = append(relationships,
+			goTracingSpanEdges(bodyNode, nameText, fromID, src)...)
+
 		rec := types.EntityRecord{
 			Name:               name,
 			QualifiedName:      "",

@@ -651,6 +651,27 @@ const (
 	// layer; this extractor never crosses a file boundary, so its org guard is
 	// trivially satisfied. Append-only — never modifies existing entities/edges.
 	RelationshipKindConsumesAPI RelationshipKind = "CONSUMES_API"
+
+	// #3689 (epic #3628, area #11): OpenTelemetry tracing-span instrumentation
+	// edge. Emitted by the per-language tracing-span passes (Python, Go, JS/TS,
+	// Java) from the enclosing function/method operation entity → a synthetic
+	// span stub ("span:<name>" for a string-literal span name, "span:<fn>" for
+	// a dynamic/variable span name). The edge records WHERE a distributed-tracing
+	// span is created and WHICH operation it instruments. Mirrors the
+	// DISCRIMINATES_ON / BRANCHES_ON / NAVIGATES_TO precedent (enclosing op →
+	// synthetic stub) so no new entity Kind is introduced. Properties:
+	//   "span_name" : the static span name (omitted when dynamic)
+	//   "library"   : "opentelemetry"
+	//   "api"       : the idiom observed (e.g. "start_as_current_span",
+	//                 "tracer.Start", "startActiveSpan", "spanBuilder",
+	//                 "WithSpan")
+	//   "line"      : 1-indexed source line of the span-creation site
+	//   "traced"    : "true" (always; lets honest-partial dynamic-name spans
+	//                 carry the flag without a fabricated name)
+	//   "dynamic"   : "true" when the span name is a variable/expression rather
+	//                 than a string literal (omitted otherwise)
+	// Append-only — never modifies existing entities or edges.
+	RelationshipKindInstruments RelationshipKind = "INSTRUMENTS"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -765,6 +786,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindOverrides,
 		// #3632 API-consumption edge (same-file client→endpoint):
 		RelationshipKindConsumesAPI,
+		// #3689 OpenTelemetry tracing-span instrumentation edge:
+		RelationshipKindInstruments,
 	}
 }
 

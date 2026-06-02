@@ -797,6 +797,8 @@ func (x *extractor) handleFunctionDeclaration(n *sitter.Node, parentClass string
 	// Issue #2885 — stamp general branch conditions (member comparisons,
 	// relational operators, ternary/switch) the discriminator pass misses.
 	x.stampBranchConditions(body)
+	// Issue #3689 — stamp OpenTelemetry span-creation sites (INSTRUMENTS edges).
+	x.stampTracingSpans(body)
 
 	// Recurse into the body for nested declarations.
 	// Increment funcDepth so handleVariableDeclarator suppresses non-addressable
@@ -917,6 +919,8 @@ func (x *extractor) handleMethodDefinition(n *sitter.Node, _ string, cb *classBi
 	// Issue #2885 — stamp general branch conditions (member comparisons,
 	// relational operators, ternary/switch) the discriminator pass misses.
 	x.stampBranchConditions(body)
+	// Issue #3689 — stamp OpenTelemetry span-creation sites (INSTRUMENTS edges).
+	x.stampTracingSpans(body)
 }
 
 // isNativeScriptStateSetter recognises the NativeScript Observable
@@ -1081,6 +1085,8 @@ func (x *extractor) handlePublicFieldDefinition(n *sitter.Node, parentClass stri
 	// Issue #2885 — stamp general branch conditions (member comparisons,
 	// relational operators, ternary/switch) the discriminator pass misses.
 	x.stampBranchConditions(body)
+	// Issue #3689 — stamp OpenTelemetry span-creation sites (INSTRUMENTS edges).
+	x.stampTracingSpans(body)
 
 	// Recurse into the body for nested declarations.
 	// Increment funcDepth so nested const declarations inside this arrow
@@ -1431,6 +1437,8 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 		// Issue #2885 — stamp general branch conditions the discriminator
 		// pass misses (member comparisons, relational ops, ternary/switch).
 		x.stampBranchConditions(body)
+		// Issue #3689 — stamp OpenTelemetry span-creation sites (INSTRUMENTS).
+		x.stampTracingSpans(body)
 		if body != nil {
 			// Increment funcDepth so nested const declarations inside this
 			// arrow body are not emitted as addressable entities (#1748).
@@ -1470,6 +1478,8 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 		// Issue #2885 — stamp general branch conditions the discriminator
 		// pass misses (member comparisons, relational ops, ternary/switch).
 		x.stampBranchConditions(body)
+		// Issue #3689 — stamp OpenTelemetry span-creation sites (INSTRUMENTS).
+		x.stampTracingSpans(body)
 		if body != nil {
 			// Increment funcDepth so nested const declarations inside this
 			// function-expression body are not emitted as addressable entities (#1748).

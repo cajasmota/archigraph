@@ -528,6 +528,10 @@ func walk(
 					node.ChildByFieldName("body"),
 					file.Content, selfName, cc, paramTypes, imports,
 				)...)
+			// Issue #3689 — OpenTelemetry span instrumentation: @WithSpan
+			// annotations and spanBuilder(...).startSpan() chains.
+			rec.Relationships = append(rec.Relationships,
+				javaTracingSpanEdges(node, selfName, file.Content)...)
 			*out = append(*out, rec)
 		}
 		return

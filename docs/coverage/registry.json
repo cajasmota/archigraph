@@ -1605,9 +1605,11 @@
           "verified_at": "2026-05-28"
         },
         "trace_extraction": {
-          "status": "full",
-          "cites": ["internal/engine/event_flow.go","internal/engine/process_flow.go"],
-          "verified_at": "2026-05-28"
+          "status": "partial",
+          "cites": ["internal/extractors/golang/tracing.go","internal/extractors/java/tracing.go","internal/extractors/javascript/tracing.go","internal/extractors/python/tracing.go"],
+          "issue": "https://github.com/cajasmota/archigraph/issues/3689",
+          "notes": "OpenTelemetry span-creation sites: emits INSTRUMENTS edges (enclosing op -\u003e span:\u003cname\u003e stub) for the dominant span-start idioms in Python (start_as_current_span/start_span + decorator), Go (tracer.Start), JS/TS (startSpan/startActiveSpan), Java (@WithSpan + spanBuilder().startSpan()). Honest-partial: dynamic/variable span names emit traced=true without a fabricated name; non-OTel vendors and other langs not yet covered.",
+          "verified_at": "2026-06-02"
         }
       }
     },
