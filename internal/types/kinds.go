@@ -222,6 +222,17 @@ const (
 	// Rails render, Spring MVC view names, Laravel view()) into one node. See
 	// internal/extractor/template_render.go.
 	EntityKindTemplate EntityKind = "SCOPE.Template"
+	// [realtime] WS room/channel grouping (child of #3628). A SCOPE.Channel
+	// node represents a real-time room / channel / group that participants
+	// JOIN and that messages are BROADCAST to — the grouping layer above the
+	// per-event WS endpoints (#3739). Named "channel:<name>" so a join and a
+	// broadcast on the same room (e.g. socket.io `socket.join('lobby')` and
+	// `io.to('lobby').emit(...)`, ActionCable `stream_from 'chat_1'` and
+	// `broadcast('chat_1', ...)`, Django Channels `group_add('chat')` and
+	// `group_send('chat', ...)`, Phoenix `broadcast(socket, "ev", ...)` on a
+	// topic) converge on a single node. Answers "who joins / broadcasts to
+	// room X?". Emitted by internal/engine/ws_channel_grouping.go.
+	EntityKindChannel EntityKind = "SCOPE.Channel"
 )
 
 // AllEntityKinds returns every EntityKind that archigraph extractors are
@@ -298,6 +309,8 @@ func AllEntityKinds() []EntityKind {
 		EntityKindExternalService,
 		// #3628 view-layer: synthetic template convergence node.
 		EntityKindTemplate,
+		// [realtime] WS room/channel grouping convergence node (child of #3628).
+		EntityKindChannel,
 	}
 }
 
@@ -1036,6 +1049,33 @@ const (
 	// integration edge would mislead "what services do we depend on?". See
 	// internal/extractor/external_service.go.
 	RelationshipKindDependsOnService RelationshipKind = "DEPENDS_ON_SERVICE"
+	// [realtime] WS room/channel grouping (child of #3628). Both edges point a
+	// callable (function / method) at a synthetic SCOPE.Channel node
+	// (Name "channel:<room>") so a join and a broadcast on the SAME room
+	// converge on one node — the join that makes the graph answer
+	// "who joins / broadcasts to room X?".
+	//
+	//   JOINS_CHANNEL : function/method → SCOPE.Channel it subscribes a
+	//                   participant to. Emitted for an IDENTIFIABLE literal room:
+	//                     socket.io  `socket.join('room1')`
+	//                     ActionCable `stream_from 'chat_1'` / `stream_for @x`(skip dynamic)
+	//                     Django Channels `self.channel_layer.group_add('chat', ...)`
+	//   BROADCASTS_TO : function/method → SCOPE.Channel it publishes a message to.
+	//                     socket.io  `io.to('room1').emit('ev')` /
+	//                                `socket.broadcast.to('room1').emit()` /
+	//                                `io.in('room1').emit()`
+	//                     ActionCable `ActionCable.server.broadcast('chat_1', ...)` /
+	//                                 `ChatChannel.broadcast_to(room, ...)`(skip dynamic)
+	//                     Django Channels `self.channel_layer.group_send('chat', ...)`
+	//                     Phoenix     `broadcast(socket, "ev", payload)` (topic) /
+	//                                 `MyApp.Endpoint.broadcast("room:1", ...)`
+	//
+	// Precision-first / honest-partial: dynamic room names (a bare variable, a
+	// template literal) emit NO edge, and a non-socket `.join` (array join) is
+	// rejected by requiring a socket/cable/channels context. See
+	// internal/engine/ws_channel_grouping.go.
+	RelationshipKindJoinsChannel RelationshipKind = "JOINS_CHANNEL"
+	RelationshipKindBroadcastsTo RelationshipKind = "BROADCASTS_TO"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -1179,6 +1219,9 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindThrows,
 		RelationshipKindCatches,
 		RelationshipKindDependsOnService,
+		// [realtime] WS room/channel grouping: JOINS_CHANNEL / BROADCASTS_TO.
+		RelationshipKindJoinsChannel,
+		RelationshipKindBroadcastsTo,
 	}
 }
 

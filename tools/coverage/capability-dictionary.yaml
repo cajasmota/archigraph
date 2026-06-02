@@ -55,7 +55,7 @@ categories:
     capabilities: [model_extraction, query_attribution, migration_parsing, migration_schema_ops]
     subcategory_order: [orm_mapper]
   message_broker:
-    capabilities: [producer_extraction, consumer_extraction, topic_attribution]
+    capabilities: [producer_extraction, consumer_extraction, topic_attribution, room_channel_grouping]
   observability:
     capabilities: [trace_extraction, metric_extraction, log_extraction]
   build_system:
