@@ -1301,6 +1301,17 @@ func isOperationKind(e *graph.Entity) bool {
 //     helper that other repos may call) — we deliberately do NOT flag the
 //     latter to keep precision high.
 //
+//  3. test_only_referenced (#3657) — a production operation whose ONLY inbound
+//     reference edges originate in test files (or are TESTS edges). It is
+//     reachable in the full graph (so the classic caller-count check thinks it
+//     is live) yet UNREACHABLE in a production-only pass that drops test-source
+//     callers. This is the recurring "unwired code" class — orphaned enrichers,
+//     test-only extractors, framework patterns wired only from *_test.go — that
+//     a plain reachability BFS misses because it counts test callers as
+//     references. The same honest exclusions as class 2 apply (route handlers,
+//     framework lifecycle hooks, constructors, cross-repo imports) so we do not
+//     false-positive on reflectively-invoked or externally-consumed symbols.
+//
 // Supports optional filters: kind_filter, repo_filter, limit.
 func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
@@ -1334,12 +1345,20 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 			continue
 		}
 
-		// Build set of entities that are project (non-stdlib) code.
+		// Build set of entities that are project (non-stdlib) code, plus the
+		// per-entity test-file predicate (#3657). testEntity[id] is true when
+		// the entity's source file matches a recognised test-file convention —
+		// used to drop test-file callers from the production-only reachability
+		// pass.
 		projectEntities := map[string]bool{}
+		testEntity := map[string]bool{}
 		for i := range r.Doc.Entities {
 			e := &r.Doc.Entities[i]
 			if !isStdlibEntity(e) {
 				projectEntities[e.ID] = true
+			}
+			if isTestFileMCP(e.SourceFile) {
+				testEntity[e.ID] = true
 			}
 		}
 
@@ -1348,7 +1367,16 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 		// live. CONTAINS is excluded (every entity is contained by its module,
 		// so it carries no usage signal). Cross-repo references are handled
 		// separately via the imported-name set.
+		//
+		// #3657: we keep TWO counts. inRef is the full count (any caller,
+		// including tests) — an entity with inRef>0 is NOT classic dead code.
+		// inRefProd drops edges whose source is a test entity (FromID in a test
+		// file) AND drops the TESTS edge kind itself (a test→target relation is
+		// by definition a test caller). An operation that is reachable in the
+		// full graph (inRef>0) but UNREACHABLE production-only (inRefProd==0) is
+		// production-dead-but-test-covered: the `test_only_referenced` class.
 		inRef := map[string]int{}
+		inRefProd := map[string]int{}
 		for i := range r.Doc.Relationships {
 			rel := &r.Doc.Relationships[i]
 			if !projectEntities[rel.FromID] || !projectEntities[rel.ToID] {
@@ -1359,6 +1387,12 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 			}
 			if inboundRefKinds[rel.Kind] {
 				inRef[rel.ToID]++
+				// Production-only edge: source is not a test entity, and the
+				// edge is not a TESTS relation. These are the edges that keep a
+				// symbol alive in production.
+				if rel.Kind != "TESTS" && !testEntity[rel.FromID] {
+					inRefProd[rel.ToID]++
+				}
 			}
 		}
 
@@ -1384,20 +1418,23 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 			if !isOperationKind(e) {
 				continue
 			}
-			// An operation that is called/referenced/tested/routed/etc. is
-			// live.
-			if inRef[e.ID] > 0 {
-				continue
-			}
 			// Exclude non-code "operation" entities (Dockerfile CMD, SQL DDL).
 			if nonCodeLanguages[strings.ToLower(e.Language)] {
 				continue
 			}
-			if strings.Contains(strings.ToLower(e.SourceFile), "test") {
+			// The TARGET being a test entity is never dead production code — a
+			// test helper called only by other tests is wired-as-intended. We
+			// only flag PRODUCTION symbols. Both the legacy class and the new
+			// test_only_referenced class require the target to live in
+			// production code.
+			if testEntity[e.ID] || strings.Contains(strings.ToLower(e.SourceFile), "test") {
 				continue
 			}
 			// Route handlers, framework lifecycle hooks, event listeners, and
-			// constructors are reachable without an explicit call edge.
+			// constructors are reachable without an explicit call edge. These
+			// are honest exclusions shared by BOTH classes — a symbol invoked
+			// reflectively / by the framework / as an entry point is not dead
+			// even with zero in-graph production callers.
 			if isFrameworkOrHandler(e) {
 				continue
 			}
@@ -1410,29 +1447,54 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 			if j := strings.LastIndexByte(leaf, '.'); j >= 0 {
 				leaf = leaf[j+1:]
 			}
-			// An unreferenced operation is flagged as dead code only when it
-			// carries a conventional dead-code marker (legacy/deprecated/
-			// obsolete/dead/unused/old) in its name. The marker is the
-			// precision gate that separates genuine dead code from a
-			// legitimate-but-currently-unused public API export or a symbol
-			// reachable only via reflection/config. Without it, a merely
-			// zero-caller operation (extremely common on real per-repo graphs,
-			// where cross-repo usage lives in the group links file rather than
-			// in per-repo edges) is NOT flagged, keeping false positives near
-			// zero.
-			if !deadMarkerRe.MatchString(leaf) {
-				continue
+
+			switch {
+			case inRef[e.ID] > 0:
+				// Has callers in the full graph. Classic dead-code detection
+				// treats this as live. BUT #3657: if EVERY caller is a test
+				// (inRefProd == 0), the symbol is production-unreachable while
+				// test-covered — the recurring "unwired code" class (orphaned
+				// enrichers, test-only extractors, Java patterns wired only from
+				// *_test.go). Flag it as test_only_referenced. Otherwise it has
+				// at least one real production caller and is genuinely live.
+				if inRefProd[e.ID] == 0 {
+					out = append(out, item{
+						EntityID:   prefixedID(r.Repo, e.ID),
+						Name:       e.Name,
+						Kind:       stripScopePrefix(e.Kind),
+						Repo:       r.Repo,
+						SourceFile: e.SourceFile,
+						StartLine:  e.StartLine,
+						Reason:     "test_only_referenced: reachable only from test files (0 production callers, not imported, not a route/handler/entrypoint) — production-dead but test-covered",
+						Confidence: 0.8,
+					})
+				}
+				// else: real production caller → live, not flagged.
+			default:
+				// Zero callers of any kind. Flagged as dead code only when it
+				// carries a conventional dead-code marker (legacy/deprecated/
+				// obsolete/dead/unused/old) in its name. The marker is the
+				// precision gate that separates genuine dead code from a
+				// legitimate-but-currently-unused public API export or a symbol
+				// reachable only via reflection/config. Without it, a merely
+				// zero-caller operation (extremely common on real per-repo
+				// graphs, where cross-repo usage lives in the group links file
+				// rather than in per-repo edges) is NOT flagged, keeping false
+				// positives near zero.
+				if !deadMarkerRe.MatchString(leaf) {
+					continue
+				}
+				out = append(out, item{
+					EntityID:   prefixedID(r.Repo, e.ID),
+					Name:       e.Name,
+					Kind:       stripScopePrefix(e.Kind),
+					Repo:       r.Repo,
+					SourceFile: e.SourceFile,
+					StartLine:  e.StartLine,
+					Reason:     "unreferenced operation with dead-code marker (0 callers, not imported, not a route/handler/entrypoint)",
+					Confidence: 0.85,
+				})
 			}
-			out = append(out, item{
-				EntityID:   prefixedID(r.Repo, e.ID),
-				Name:       e.Name,
-				Kind:       stripScopePrefix(e.Kind),
-				Repo:       r.Repo,
-				SourceFile: e.SourceFile,
-				StartLine:  e.StartLine,
-				Reason:     "unreferenced operation with dead-code marker (0 callers, not imported, not a route/handler/entrypoint)",
-				Confidence: 0.85,
-			})
 		}
 	}
 
@@ -1452,7 +1514,7 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 		"count":     len(out),
 		"total":     total,
 		"truncated": total > len(out),
-		"note":      "Dead code candidates. Class 1 (confidence 0.6): isolated entities with no edges — may be an extraction gap. Class 2 (confidence 0.85): unreferenced public operations carrying a dead-code marker. Verify before deletion — some entry points are invoked via reflection or config.",
+		"note":      "Dead code candidates. Class 1 (confidence 0.6): isolated entities with no edges — may be an extraction gap. Class 2 (confidence 0.85): unreferenced public operations carrying a dead-code marker (reason='unreferenced operation…'). Class 3 (confidence 0.8): test_only_referenced — operations reachable ONLY from test files (0 production callers; reason='test_only_referenced…'). These are production-dead but test-covered: the recurring unwired-code class (orphaned helpers, test-only extractors/enrichers) the classic caller-count BFS misses because it counts test callers as references. Verify before deletion — some entry points are invoked via reflection or config.",
 	}), nil
 }
 

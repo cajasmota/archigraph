@@ -827,7 +827,7 @@ func (s *Server) registerTools() {
 	), s.wrap("archigraph_impact_radius", s.handleImpactRadius))
 
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_find_dead_code",
-		mcpapi.WithDescription("Entities with no project edges — dead code or extraction gap candidates."),
+		mcpapi.WithDescription("Dead/unwired code: isolated, marked-unused, or test_only_referenced symbols."),
 		mcpapi.WithArray("repo_filter"),
 		mcpapi.WithAny("kind_filter"),
 		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),

@@ -377,6 +377,68 @@ func isLiveCodeKind(kind string) bool {
 	return true
 }
 
+// isTestFileMCP reports whether a source-file path matches a recognised
+// test-file convention. It is a local copy of internal/graph/coverage.go's
+// (unexported) isTestFile, kept in this package to avoid widening the graph
+// package's exported surface and to keep the mcp → graph layering one-way and
+// data-only — the same convention the rest of this file follows for the
+// link-pass edge-kind / framework-seed sets.
+//
+// Recognised conventions (mirror coverage.go exactly):
+//   - any /test/, /tests/, /__tests__/, /spec/ path segment
+//   - Go:        *_test.go
+//   - Python:    test_*.py, *_test.py            (plus conftest.py below)
+//   - JS/TS:     *.test.{js,ts,jsx,tsx}, *.spec.*
+//   - Ruby:      *_spec.rb
+//   - Java/Kt/C#: *Test, *Tests, *Spec stems
+//
+// conftest.py is added on top of coverage.go's set because pytest fixtures
+// defined there are test-only callers for dead-code purposes.
+func isTestFileMCP(path string) bool {
+	if path == "" {
+		return false
+	}
+	lowerPath := strings.ToLower(strings.ReplaceAll(path, "\\", "/"))
+	slashed := "/" + lowerPath
+	for _, seg := range []string{"/test/", "/tests/", "/__tests__/", "/spec/"} {
+		if strings.Contains(slashed, seg) {
+			return true
+		}
+	}
+
+	base := lowerPath
+	if i := strings.LastIndexByte(base, '/'); i >= 0 {
+		base = base[i+1:]
+	}
+	if base == "conftest.py" {
+		return true
+	}
+	ext := ""
+	if i := strings.LastIndexByte(base, '.'); i >= 0 {
+		ext = base[i:]
+	}
+	stem := strings.TrimSuffix(base, ext)
+
+	switch ext {
+	case ".go":
+		return strings.HasSuffix(stem, "_test")
+	case ".py":
+		return strings.HasPrefix(stem, "test_") || strings.HasSuffix(stem, "_test")
+	case ".ts", ".tsx", ".js", ".jsx":
+		return strings.HasSuffix(stem, ".test") ||
+			strings.HasSuffix(stem, ".spec") ||
+			strings.Contains(base, ".test.") ||
+			strings.Contains(base, ".spec.")
+	case ".rb":
+		return strings.HasSuffix(stem, "_spec")
+	case ".java", ".kt", ".cs":
+		return strings.HasSuffix(stem, "test") ||
+			strings.HasSuffix(stem, "tests") ||
+			strings.HasSuffix(stem, "spec")
+	}
+	return false
+}
+
 // matchesBareKind reports whether entity kind matches a user-supplied
 // bare-kind filter ("function", "class", …). Empty filter passes.
 func matchesBareKind(kind, filter string) bool {
