@@ -83,6 +83,21 @@ var customPrefixForLanguage = map[string]string{
 	"protobuf": "custom_cpp_",
 }
 
+// extraCustomPrefixesForLanguage lists ADDITIONAL custom-extractor prefixes a
+// language's files should be dispatched to, beyond its primary prefix in
+// customPrefixForLanguage. This covers files whose content is owned by more
+// than one language family.
+//
+// graphql: standalone `.graphql` SDL schema files are the model surface for the
+// grafeo-ogm Neo4j TS OGM (custom_js_grafeo), which declares its entire graph
+// model in GraphQL SDL — either inline in a TS template literal (handled by the
+// typescript/javascript primary prefix) or in a standalone `.graphql` file
+// (handled here). The grafeo extractor gates on a @node + @relationship signal,
+// so it no-ops on Lighthouse (custom_php_) GraphQL schemas and vice-versa.
+var extraCustomPrefixesForLanguage = map[string][]string{
+	"graphql": {"custom_js_"},
+}
+
 // CustomExtractorsFor returns all registered custom/framework extractors
 // whose registry key matches the custom-extractor prefix for the given
 // base language. The result is sorted by language key for deterministic
@@ -92,15 +107,26 @@ var customPrefixForLanguage = map[string]string{
 // or if no custom extractors are currently registered for that prefix.
 // Never returns nil.
 func CustomExtractorsFor(language string) []Extractor {
-	prefix, ok := customPrefixForLanguage[language]
-	if !ok {
+	prefixes := make([]string, 0, 2)
+	if prefix, ok := customPrefixForLanguage[language]; ok {
+		prefixes = append(prefixes, prefix)
+	}
+	prefixes = append(prefixes, extraCustomPrefixesForLanguage[language]...)
+	if len(prefixes) == 0 {
 		return []Extractor{}
 	}
 
+	keySet := make(map[string]bool)
 	var keys []string
 	for _, k := range extractor.List() {
-		if strings.HasPrefix(k, prefix) && len(k) > len(prefix) {
-			keys = append(keys, k)
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(k, prefix) && len(k) > len(prefix) {
+				if !keySet[k] {
+					keySet[k] = true
+					keys = append(keys, k)
+				}
+				break
+			}
 		}
 	}
 	sort.Strings(keys)
