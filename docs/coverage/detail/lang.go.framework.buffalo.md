@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [go](../by-language/go.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** Backend HTTP
-- **Capability cells:** 42
+- **Capability cells:** 43
 
 ## Capabilities
 
@@ -15,6 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
+| Endpoint deprecation versioning | 🔴 `missing` | — | 3628 | — | — |
 | Endpoint synthesis | ✅ `full` | `2026-05-29` | — | `internal/custom/golang/buffalo.go`<br>`internal/engine/rules/go/frameworks/buffalo.yaml` | — |
 | Handler attribution | ✅ `full` | `2026-05-29` | — | `internal/custom/golang/buffalo.go`<br>`internal/engine/rules/go/frameworks/buffalo.yaml` | — |
 | Route extraction | 🟢 `partial` | `2026-05-29` | backfill:dictionary-completeness | `internal/custom/golang/buffalo.go`<br>`internal/engine/rules/go/frameworks/buffalo.yaml` | — |

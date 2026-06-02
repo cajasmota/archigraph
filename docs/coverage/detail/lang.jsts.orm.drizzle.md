@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/orm_queries_jsts.go` | — |
+| Query attribution | 🟢 `partial` | `2026-06-02` | — | `internal/engine/orm_queries_jsts.go`<br>`internal/extractors/cross/dbmap/query_builders.go`<br>`internal/extractors/cross/dbmap/query_builders_test.go` | #3628 area #3: Drizzle db.select().from(users)/db.insert(users) resolve the pgTable/mysqlTable/sqliteTable OBJECT to its declared name literal → ACCESSES_TABLE edges. Partial: cross-file table objects unresolved (skipped, no fabricated edge). Proven by TestDrizzle* in query_builders_test.go. |
 
 ### Migrations
 

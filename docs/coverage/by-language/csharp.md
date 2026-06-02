@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # C#
 
-**Frameworks**: 16 · **Tools**: 7 · **ORMs**: 14 · **Other**: 0
+**Frameworks**: 16 · **Tools**: 7 · **ORMs**: 14 · **Other**: 1
 
 Back to [summary](../summary.md).
 
@@ -26,46 +26,46 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | ✅ 3/3 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟡 21/24 | 🟢 9/9 | |
-| [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | ✅ 3/3 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [Carter](../detail/lang.csharp.framework.carter.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [HotChocolate (GraphQL)](../detail/lang.csharp.framework.hotchocolate.md) | 🟢 3/3 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/23 | 🔴 0/10 | |
-| [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
-| [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🟢 3/3 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 21/24 | 🟡 6/9 | |
+| [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | 🟡 3/4 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟡 22/24 | 🟢 9/9 | |
+| [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | 🟡 3/4 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟡 22/24 | 🟡 6/9 | |
+| [Carter](../detail/lang.csharp.framework.carter.md) | 🟡 3/4 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 22/24 | 🟡 6/9 | |
+| [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟡 3/4 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 22/24 | 🟡 6/9 | |
+| [HotChocolate (GraphQL)](../detail/lang.csharp.framework.hotchocolate.md) | 🟡 3/4 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 1/23 | 🔴 0/10 | |
+| [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟡 3/4 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 22/24 | 🟡 6/9 | |
+| [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🟡 3/4 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 22/24 | 🟡 6/9 | |
 
 
 ### UI Frontend
 
 | Name | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|
-| [Blazor Server](../detail/lang.csharp.framework.blazor-server.md) | ✅ 2/2 | 🟢 1/1 | 🟡 21/23 | 🟢 8/8 | |
-| [Blazor Server / WebAssembly](../detail/lang.csharp.framework.blazor.md) | ✅ 2/2 | 🟢 1/1 | 🟡 21/23 | 🟢 8/8 | |
-| [Blazor WebAssembly](../detail/lang.csharp.framework.blazor-wasm.md) | ✅ 2/2 | 🟢 1/1 | 🟡 21/23 | 🟢 8/8 | |
+| [Blazor Server](../detail/lang.csharp.framework.blazor-server.md) | ✅ 2/2 | 🟢 1/1 | 🟡 22/23 | 🟢 8/8 | |
+| [Blazor Server / WebAssembly](../detail/lang.csharp.framework.blazor.md) | ✅ 2/2 | 🟢 1/1 | 🟡 22/23 | 🟢 8/8 | |
+| [Blazor WebAssembly](../detail/lang.csharp.framework.blazor-wasm.md) | ✅ 2/2 | 🟢 1/1 | 🟡 22/23 | 🟢 8/8 | |
 
 
 ### Mobile
 
 | Name | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|
-| [.NET MAUI](../detail/lang.csharp.framework.net-maui.md) | 🟢 2/2 | 🟢 1/1 | 🟡 21/23 | 🟢 9/9 | |
-| [Xamarin](../detail/lang.csharp.framework.xamarin.md) | 🟢 2/2 | 🟢 1/1 | 🟡 21/23 | 🟢 9/9 | |
+| [.NET MAUI](../detail/lang.csharp.framework.net-maui.md) | 🟢 2/2 | 🟢 1/1 | 🟡 22/23 | 🟢 9/9 | |
+| [Xamarin](../detail/lang.csharp.framework.xamarin.md) | 🟢 2/2 | 🟢 1/1 | 🟡 22/23 | 🟢 9/9 | |
 
 
 ### Desktop
 
 | Name | Substrate | Other capabilities | Notes |
 |---|---|---|---|
-| [Uno Platform](../detail/lang.csharp.framework.uno.md) | 🟡 10/12 | 🟢 3/3 | |
-| [WPF](../detail/lang.csharp.framework.wpf.md) | 🟡 10/12 | 🟢 3/3 | |
-| [Windows Forms](../detail/lang.csharp.framework.winforms.md) | 🟡 10/12 | 🟢 3/3 | |
+| [Uno Platform](../detail/lang.csharp.framework.uno.md) | 🟡 11/12 | 🟢 3/3 | |
+| [WPF](../detail/lang.csharp.framework.wpf.md) | 🟡 11/12 | 🟢 3/3 | |
+| [Windows Forms](../detail/lang.csharp.framework.winforms.md) | 🟡 11/12 | 🟢 3/3 | |
 
 
 ### RPC Framework
 
 | Name | Substrate | Other capabilities | Notes |
 |---|---|---|---|
-| [grpc-dotnet](../detail/lang.csharp.framework.grpc-net.md) | 🟡 21/23 | 🟢 4/4 | |
+| [grpc-dotnet](../detail/lang.csharp.framework.grpc-net.md) | 🟡 22/23 | 🟢 4/4 | |
 
 
 ## Tools
@@ -101,3 +101,10 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Neo4j.Driver (C#)](../detail/lang.csharp.driver.neo4j.md) | 🔴 0/1 | |
 | [Npgsql (PostgreSQL)](../detail/lang.csharp.driver.npgsql.md) | 🔴 0/1 | |
 | [StackExchange.Redis](../detail/lang.csharp.driver.redis.md) | ✅ 1/1 | |
+
+
+## Other
+
+| Name | Category | Status | Notes |
+|---|---|---|---|
+| [Hangfire RecurringJob (.NET scheduled jobs)](../detail/msg.hangfire-recurring.md) | [message_broker](../by-category/message_broker.md) | 🟢 | |

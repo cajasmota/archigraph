@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/java/orms/jooq.yaml` | — |
+| Query attribution | ✅ `full` | `2026-06-02` | — | `internal/engine/rules/java/orms/jooq.yaml`<br>`internal/extractors/cross/dbmap/orms.go`<br>`internal/extractors/cross/dbmap/query_builders.go`<br>`internal/extractors/cross/dbmap/query_builders_test.go` | #3628 area #3: jOOQ builder calls dsl.selectFrom(USERS)/insertInto/update/deleteFrom resolve the generated table constant (lower-cased) into SCOPE.DataAccess + ACCESSES_TABLE edges with the right op kind. Proven by TestJOOQSelectFrom/InsertInto/DeleteFrom. |
 
 ### Migrations
 

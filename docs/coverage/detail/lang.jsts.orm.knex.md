@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/orm_queries_jsts_drivers.go`<br>`internal/engine/orm_queries_jsts_drivers_test.go` | — |
+| Query attribution | ✅ `full` | `2026-06-02` | — | `internal/engine/orm_queries_jsts_drivers.go`<br>`internal/engine/orm_queries_jsts_drivers_test.go`<br>`internal/extractors/cross/dbmap/orms.go`<br>`internal/extractors/cross/dbmap/query_builders.go`<br>`internal/extractors/cross/dbmap/query_builders_test.go` | Driver query attribution via orm_queries_jsts_drivers. #3628 area #3 ADDS table-level access: knex('t')/.from('t')/.into('t') resolve the string-literal table → ACCESSES_TABLE (op from .insert/.update/.del/.truncate); dynamic knex(tableVar) skipped. Proven by TestKnex* in query_builders_test.go. |
 
 ### Migrations
 

@@ -76,7 +76,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [java](../by-language/java.md) | [jOOQ](../detail/lang.java.orm.jooq.md) | 🟢 6/6 | |
 | [JS/TS](../by-language/jsts.md) | [@elastic/elasticsearch](../detail/lang.jsts.driver.elastic.md) | ✅ 1/1 | |
 | [JS/TS](../by-language/jsts.md) | [AWS SDK DynamoDB (JS)](../detail/lang.jsts.driver.dynamodb.md) | ✅ 1/1 | |
-| [JS/TS](../by-language/jsts.md) | [Drizzle](../detail/lang.jsts.orm.drizzle.md) | ✅ 7/7 | |
+| [JS/TS](../by-language/jsts.md) | [Drizzle](../detail/lang.jsts.orm.drizzle.md) | 🟢 7/7 | |
 | [JS/TS](../by-language/jsts.md) | [Knex (query builder)](../detail/lang.jsts.orm.knex.md) | ✅ 6/6 | |
 | [JS/TS](../by-language/jsts.md) | [MikroORM](../detail/lang.jsts.orm.mikro-orm.md) | 🟢 8/8 | |
 | [JS/TS](../by-language/jsts.md) | [MongoDB Node.js driver](../detail/lang.jsts.driver.mongodb.md) | ✅ 1/1 | |

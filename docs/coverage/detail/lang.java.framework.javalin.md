@@ -6,7 +6,7 @@ Auto-generated. Back to [summary](../summary.md).
 - **Language:** [java](../by-language/java.md)
 - **Category:** [http_framework](../by-category/http_framework.md)
 - **Subcategory:** JVM Backend
-- **Capability cells:** 47
+- **Capability cells:** 48
 
 ## Capabilities
 
@@ -15,6 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
+| Endpoint deprecation versioning | 🔴 `missing` | — | 3628 | — | — |
 | Endpoint synthesis | 🟢 `partial` | — | 3085 | `internal/engine/http_endpoint_synthesis.go` | — |
 | Handler attribution | ✅ `full` | `2026-06-01` | — | `internal/custom/java/javalin_routes.go` | — |
 | Route extraction | 🟢 `partial` | — | 3085 | `internal/engine/http_endpoint_synthesis.go` | — |

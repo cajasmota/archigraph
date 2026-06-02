@@ -31,7 +31,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | ✅ `full` | `2026-05-28` | — | `internal/engine/orm_queries.go` | — |
+| Query attribution | ✅ `full` | `2026-06-02` | — | `internal/engine/orm_queries.go`<br>`internal/extractors/cross/dbmap/orms.go`<br>`internal/extractors/cross/dbmap/query_builders_test.go` | ActiveRecord Model.find/where attribution via orm_queries. #3628 area #3 ADDS association table-access: .joins(:assoc)/.includes/.preload/.eager_load pull the association table into a second ACCESSES_TABLE edge (symbol args only; string/var skipped). Proven by TestActiveRecordJoinsAssociation. |
 
 ### Migrations
 
