@@ -484,6 +484,24 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 				"framework":    propOr(r, "framework", ""),
 			},
 		})
+		// deploy-9 item-3 — propagate the synthetic endpoint's resolved
+		// fine-grained authorisation identity onto the handler Operation so a
+		// symbol-keyed query (archigraph_inspect / get_source on the @action
+		// method, e.g. `JurisdictionViewSet.get_inspection_types`) surfaces the
+		// SAME `auth_permissions` page-key the endpoint carries. The DRF
+		// get_permissions per-action page-key pass (#3978) stamps
+		// `auth_permissions` (e.g. JURISDICTIONS) on the synthesized
+		// http_endpoint, but auth_coverage / endpoint_posture consumers that
+		// start from the handler method saw nothing because the property never
+		// reached the handler entity. We copy it here — at the one resolution
+		// site that knows BOTH the endpoint (page-key source) and its handler —
+		// rather than re-deriving it. Honest-partial: when the endpoint carries
+		// no `auth_permissions` (dynamic / unresolvable page key, or a guard
+		// with no PERMISSION_PAGES subscript) nothing is stamped. First write
+		// wins so a handler shared by several verb-routes (the email PATCH/PUT
+		// pair) is not churned, and an explicit value already on the handler is
+		// never overwritten.
+		propagateHandlerAuthPermissions(handler, r)
 		// #2678 — rebind the synthetic's source_file / start_line / end_line
 		// to the resolved handler so the endpoint points at the method body,
 		// not the routing/registration site. Mirrors the DRF fix (#2677): for
@@ -836,6 +854,45 @@ func itoaSmall(n int) string {
 		n /= 10
 	}
 	return string(b[p:])
+}
+
+// propagateHandlerAuthPermissions copies the resolved fine-grained
+// authorisation identity from a synthesized http_endpoint onto its handler
+// entity (deploy-9 item-3). The DRF get_permissions per-action page-key pass
+// (#3978) stamps `auth_permissions` (e.g. the PERMISSION_PAGES["JURISDICTIONS"]
+// constant key) on the endpoint, but symbol-keyed consumers — archigraph_inspect
+// / get_source on the @action method, archigraph_auth_coverage starting from the
+// handler — read the property off the handler Operation, which never carried it.
+// We copy it (plus `auth_required`, which a page-key guard always implies) at the
+// resolution site that already pairs an endpoint with its handler.
+//
+// First-write-wins: an existing value on the handler is preserved (an explicit
+// handler annotation, or the first of several verb-routes that share one handler
+// — the email PATCH/PUT pair). Honest-partial: an endpoint with no resolved
+// `auth_permissions` (dynamic / unresolvable page key) propagates nothing, so the
+// handler is not falsely marked as carrying a fine-grained grant.
+func propagateHandlerAuthPermissions(handler, endpoint *types.EntityRecord) {
+	if handler == nil || endpoint == nil {
+		return
+	}
+	perms := propOr(endpoint, "auth_permissions", "")
+	if perms == "" {
+		return
+	}
+	if handler.Properties == nil {
+		handler.Properties = map[string]string{}
+	}
+	if _, exists := handler.Properties["auth_permissions"]; !exists {
+		handler.Properties["auth_permissions"] = perms
+	}
+	// A fine-grained page-key guard always requires authentication; mirror the
+	// endpoint's auth_required so handler-keyed posture queries agree with the
+	// endpoint. Only set when absent (do not downgrade an existing value).
+	if _, exists := handler.Properties["auth_required"]; !exists {
+		if ar := propOr(endpoint, "auth_required", ""); ar != "" {
+			handler.Properties["auth_required"] = ar
+		}
+	}
 }
 
 // propOr returns r.Properties[k] or fallback if missing/nil.
