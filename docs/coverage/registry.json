@@ -63675,8 +63675,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -63949,8 +63952,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -64225,8 +64231,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -64504,8 +64513,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -64785,8 +64797,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -65066,8 +65081,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -65362,8 +65380,8 @@
             "status": "full",
             "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
             "issue": "3706",
-            "notes": "flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY edge (LaunchDarkly/Unleash/Unleash-React/OpenFeature/Flipper/Flagsmith/Split.io/generic)",
-            "verified_at": "2026-06-02"
+            "notes": "flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY edge (LaunchDarkly/Unleash/Unleash-React/OpenFeature/Flipper/Flagsmith/Split.io/generic); Ruby idioms: Flipper symbol/subscript/feature(), Unleash is_enabled? predicate, Rollout active?, LaunchDarkly variation",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -65653,8 +65671,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
@@ -65938,8 +65959,11 @@
             "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
-            "status": "missing",
-            "issue": "feature_flag_gating:#3706-not-yet-extracted"
+            "status": "full",
+            "cites": ["internal/engine/feature_flag_edges.go","internal/engine/feature_flag_edges_test.go","internal/engine/orm_queries.go"],
+            "issue": "4140",
+            "notes": "Ruby flag-check call sites -\u003e feature:\u003ckey\u003e + GATED_BY (Flipper symbol/subscript/feature() + Unleash is_enabled? + Rollout active? + LaunchDarkly variation); framework-agnostic engine pass, value-asserted Ruby unit tests",
+            "verified_at": "2026-06-03"
           },
           "fs_effect": {
             "status": "partial",
