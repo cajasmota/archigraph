@@ -15171,6 +15171,61 @@ records:
               functions: [TestTransactional_JTARollbackOn_3863, TestTransactional_Dropwizard_3863]
           issues_implemented: ["3863"]
           verified_at: "2026-06-03"
+  lang.java.framework.grpc:
+    capabilities:
+      Auth:
+        auth_coverage:
+          # gRPC-Java server auth (#4041, epic #3872). Two idioms:
+          # (1) io.grpc.ServerInterceptor whose interceptCall reads the call
+          # Metadata AND closes with Status.UNAUTHENTICATED/PERMISSION_DENIED,
+          # bound via ServerInterceptors.intercept(service,...) / a global
+          # ServerBuilder.intercept(...) -> auth_method=grpc_interceptor +
+          # auth_middleware (HIGH; conventional cross-file ...AuthInterceptor
+          # credited MEDIUM). (2) grpc-spring-boot-starter @GrpcService class
+          # with Spring/Jakarta-Security @PreAuthorize/@Secured/@RolesAllowed/
+          # @DenyAll/@Authenticated on the method (or class) -> auth_method=
+          # annotation + auth_roles/permissions/scopes (matchAnnotationPolicy).
+          # Stamps the SCOPE.GrpcService + its same-file SCOPE.GrpcMethod handlers.
+          status: full
+          symbols:
+            - file: internal/engine/grpc_java_auth.go
+              functions: [resolveJavaGRPCAuth, javaInterceptorAuthBinding, javaAuthEnforcingInterceptorNames, javaBoundInterceptorIdents, resolveJavaGRPCClassAuth, resolveJavaGRPCMethodAuth, grpcJavaInterceptorProps, grpcJavaPolicyProps]
+            - file: internal/engine/grpc_edges.go
+              functions: [synthesizeJavaGRPC]
+          tests:
+            - file: internal/engine/grpc_java_auth_test.go
+          issues_implemented: ["4041"]
+          verified_at: "2026-06-03"
+      Schema:
+        procedure_extraction:
+          status: partial
+          symbols:
+            - file: internal/engine/grpc_edges.go
+              functions: [synthesizeJavaGRPC]
+          tests:
+            - file: internal/engine/grpc_edges_test.go
+          issues_implemented: ["725"]
+          verified_at: "2026-06-03"
+      Transport:
+        transport_binding:
+          status: partial
+          symbols:
+            - file: internal/engine/grpc_edges.go
+              functions: [synthesizeJavaGRPC]
+          tests:
+            - file: internal/engine/grpc_edges_test.go
+          issues_implemented: ["725"]
+          verified_at: "2026-06-03"
+      Codegen:
+        client_codegen:
+          status: partial
+          symbols:
+            - file: internal/engine/grpc_edges.go
+              functions: [synthesizeJavaGRPC]
+          tests:
+            - file: internal/engine/grpc_edges_test.go
+          issues_implemented: ["725"]
+          verified_at: "2026-06-03"
   lang.java.framework.helidon:
     capabilities:
       Routing:
