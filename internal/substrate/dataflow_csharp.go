@@ -92,6 +92,30 @@ var dfCSharpAnyFromAttrRe = regexp.MustCompile(
 	`\[\s*From(?:Body|Query|Form|Header|Route)\b`,
 )
 
+// dfCSharpFastEndpointSignalRe is a file-level presence check for a FastEndpoints
+// endpoint: a `: Endpoint<` base-class declaration or a `using FastEndpoints`
+// import. Mirrors engine/http_endpoint_csharp_minor.go fastEndpointsHasSignal so
+// the dataflow seed only fires on genuine FastEndpoints files. Required because a
+// FastEndpoints handler carries no per-parameter [From*] attribute — the whole
+// typed request DTO is request-derived.
+var dfCSharpFastEndpointSignalRe = regexp.MustCompile(
+	`using\s+FastEndpoints\b|:\s*Endpoint\s*<`,
+)
+
+// dfCSharpFEHandlerRe matches a FastEndpoints handler method header —
+// `HandleAsync(` or `ExecuteAsync(` (FastEndpoints' fixed handler-method names).
+// Group 1 = the method name. The enclosing class's typed request DTO is bound to
+// the FIRST parameter of this method, so that parameter is the request-derived
+// root (a CancellationToken second parameter is never seeded).
+var dfCSharpFEHandlerRe = regexp.MustCompile(
+	`\b(HandleAsync|ExecuteAsync)\s*\(`,
+)
+
+// dfCSharpCancellationTokenRe recognises a CancellationToken parameter so the
+// FastEndpoints seed never taints it even when it is the first parameter (a
+// parameterless-request `EndpointWithoutRequest` handler takes only `(CancellationToken ct)`).
+var dfCSharpCancellationTokenRe = regexp.MustCompile(`\bCancellationToken\b`)
+
 // dfCSharpRequestAccessRe matches an in-body request accessor whose key literal
 // is the source field: `Request.Query["x"]`, `Request.Form["x"]`,
 // `Request.RouteValues["id"]`, `Request.Headers["x"]`, `Request.Cookies["x"]`.
@@ -169,6 +193,9 @@ func sniffDataFlowCSharpEx(content string) DataFlowResult {
 	}
 	lines := strings.Split(content, "\n")
 	bodies := csharpFuncBodies(content, lines)
+	// A FastEndpoints file binds the whole typed request DTO to the first
+	// parameter of HandleAsync/ExecuteAsync; compute the file-level signal once.
+	feFile := dfCSharpFastEndpointSignalRe.MatchString(content)
 
 	var res DataFlowResult
 	for _, b := range bodies {
@@ -180,7 +207,16 @@ func sniffDataFlowCSharpEx(content string) DataFlowResult {
 		}
 		// Seed [From*] action params as request-derived roots so a
 		// [FromBody] dto / [FromQuery] string q parameter is tainted on entry.
+		// In a FastEndpoints file, also seed the HandleAsync/ExecuteAsync
+		// request DTO (first parameter) as a whole-object request root.
 		seed := csharpRequestParamTaints(lines, b)
+		if feFile {
+			for k, v := range csharpFastEndpointReqTaint(lines, b) {
+				if _, ok := seed[k]; !ok {
+					seed[k] = v
+				}
+			}
+		}
 		r := walkCSharpBody(ctx, b, seed)
 		res.Flows = append(res.Flows, r.Flows...)
 		res.Boundaries = append(res.Boundaries, r.Boundaries...)
@@ -735,6 +771,50 @@ func csharpRequestParamTaints(lines []string, b csharpFuncBody) map[string]taint
 		}
 		out[name] = taintInfo{field: field, line: b.Start}
 	}
+	return out
+}
+
+// csharpFastEndpointReqTaint returns the taint seed for a FastEndpoints handler.
+// FastEndpoints binds the endpoint's typed request DTO to the FIRST parameter of
+// the fixed handler method (`HandleAsync(MyRequest req, CancellationToken ct)` /
+// `ExecuteAsync(MyRequest req, ...)`), so that parameter is request-derived as a
+// whole object (field "" — recovered later from a `req.Property` access, exactly
+// like an ASP.NET [FromBody] whole-object root). A CancellationToken parameter is
+// never seeded, so a parameterless `EndpointWithoutRequest` handler whose only
+// parameter is `CancellationToken ct` yields no root. Returns an empty map for a
+// non-handler method so injected services and helper methods are unaffected.
+//
+// The caller restricts this to files carrying a FastEndpoints signal
+// (dfCSharpFastEndpointSignalRe), so a stray `HandleAsync` in an unrelated file
+// is not treated as a request source.
+func csharpFastEndpointReqTaint(lines []string, b csharpFuncBody) map[string]taintInfo {
+	out := map[string]taintInfo{}
+	if b.Start < 1 || b.Start > len(lines) {
+		return out
+	}
+	if !dfCSharpFEHandlerRe.MatchString(lines[b.Start-1]) {
+		return out
+	}
+	open := strings.IndexByte(lines[b.Start-1], '(')
+	if open < 0 {
+		return out
+	}
+	sig := jstsCallArgs(lines, b.Start, open)
+	params := jstsSplitArgs(sig)
+	if len(params) == 0 {
+		return out
+	}
+	first := params[0]
+	// Never seed a CancellationToken (the only param of a request-less handler).
+	if dfCSharpCancellationTokenRe.MatchString(first) {
+		return out
+	}
+	name := csharpParamIdent(first)
+	if name == "" {
+		return out
+	}
+	// Whole-object request root: field "" until a property access lifts a field.
+	out[name] = taintInfo{field: "", line: b.Start}
 	return out
 }
 

@@ -191,6 +191,106 @@ func TestDataFlowCSharp_ReturnBareTainted_Response(t *testing.T) {
 	}
 }
 
+// ---- FastEndpoints (typed request DTO bound to the handler's first param) ----
+
+// FastEndpoints binds the request DTO to HandleAsync's first parameter; a
+// `req.Email` property access lifts the field and the EF write is the sink.
+func TestDataFlowCSharp_FastEndpoints_HandleAsync_PropertyField_DBWrite(t *testing.T) {
+	src := "" +
+		"public class CreateUser : Endpoint<CreateUserReq> {\n" +
+		"    public override async Task HandleAsync(CreateUserReq req, CancellationToken ct) {\n" +
+		"        _context.Users.Add(new User { Email = req.Email });\n" +
+		"        await _context.SaveChangesAsync();\n" +
+		"    }\n" +
+		"}\n"
+	flows := sniffDataFlowCSharp(src)
+	got := findFlow(flows, func(f DataFlow) bool {
+		return f.Function == "HandleAsync" && f.SinkKind == DataFlowSinkDBWrite && f.SinkName == "_context.Users.Add"
+	})
+	if got == nil {
+		t.Fatalf("expected FastEndpoints EF db_write flow, got %+v", flows)
+	}
+	if got.SourceField != "Email" {
+		t.Errorf("source field = %q, want Email (from req.Email)", got.SourceField)
+	}
+	if got.HopVia != "" {
+		t.Errorf("expected intra-fn, got hop=%q", got.HopVia)
+	}
+}
+
+// The ExecuteAsync handler variant is equally seeded; a bare `return req;` is a
+// whole-object response sink with empty field.
+func TestDataFlowCSharp_FastEndpoints_ExecuteAsync_WholeObject_Response(t *testing.T) {
+	src := "" +
+		"public class Echo : Endpoint<EchoReq, EchoReq> {\n" +
+		"    public override async Task ExecuteAsync(EchoReq req, CancellationToken ct) {\n" +
+		"        return req;\n" +
+		"    }\n" +
+		"}\n"
+	flows := sniffDataFlowCSharp(src)
+	got := findFlow(flows, func(f DataFlow) bool {
+		return f.Function == "ExecuteAsync" && f.SinkKind == DataFlowSinkResponse && f.SinkName == "return"
+	})
+	if got == nil {
+		t.Fatalf("expected FastEndpoints response flow, got %+v", flows)
+	}
+	if got.SourceField != "" {
+		t.Errorf("source field = %q, want empty (whole-object req)", got.SourceField)
+	}
+}
+
+// The `using FastEndpoints;` import alone is a sufficient file signal even when
+// the base-class generic is written without a space (`:Endpoint<`).
+func TestDataFlowCSharp_FastEndpoints_UsingImport_Signal(t *testing.T) {
+	src := "" +
+		"using FastEndpoints;\n" +
+		"public class Save : Endpoint<SaveReq> {\n" +
+		"    public override async Task HandleAsync(SaveReq req, CancellationToken ct) {\n" +
+		"        await connection.ExecuteAsync(\"insert ...\", new { req.Name });\n" +
+		"    }\n" +
+		"}\n"
+	flows := sniffDataFlowCSharp(src)
+	got := findFlow(flows, func(f DataFlow) bool {
+		return f.Function == "HandleAsync" && f.SinkKind == DataFlowSinkDBWrite && f.SinkName == "connection.ExecuteAsync"
+	})
+	if got == nil {
+		t.Fatalf("expected FastEndpoints Dapper db_write flow, got %+v", flows)
+	}
+	if got.SourceField != "Name" {
+		t.Errorf("source field = %q, want Name (from req.Name)", got.SourceField)
+	}
+}
+
+// Negative: a CancellationToken-only handler (EndpointWithoutRequest) has no
+// request DTO, so its sole parameter is NOT seeded — no flow is fabricated.
+func TestDataFlowCSharp_FastEndpoints_Negative_NoRequestCancellationToken(t *testing.T) {
+	src := "" +
+		"public class Ping : EndpointWithoutRequest : Endpoint<object> {\n" +
+		"    public override async Task HandleAsync(CancellationToken ct) {\n" +
+		"        _context.Audits.Add(new Audit(ct));\n" +
+		"    }\n" +
+		"}\n"
+	flows := sniffDataFlowCSharp(src)
+	if len(flows) != 0 {
+		t.Fatalf("expected no flows for a CancellationToken-only handler, got %+v", flows)
+	}
+}
+
+// Negative: a HandleAsync method in a file with NO FastEndpoints signal is not
+// treated as a request handler (the first param is not seeded).
+func TestDataFlowCSharp_FastEndpoints_Negative_NoFileSignal(t *testing.T) {
+	src := "" +
+		"public class Worker {\n" +
+		"    public async Task HandleAsync(JobMessage req, CancellationToken ct) {\n" +
+		"        _context.Jobs.Add(new Job { Name = req.Name });\n" +
+		"    }\n" +
+		"}\n"
+	flows := sniffDataFlowCSharp(src)
+	if len(flows) != 0 {
+		t.Fatalf("expected no flows without a FastEndpoints signal, got %+v", flows)
+	}
+}
+
 // ---- multi-hop (one local-method hop) ----
 
 func TestDataFlowCSharp_OneHop_LocalMethod(t *testing.T) {
