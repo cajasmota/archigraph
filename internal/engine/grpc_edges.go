@@ -300,9 +300,13 @@ var javaGrpcCallSiteRe = regexp.MustCompile(
 	`\b(\w+)\s*\.\s*([a-z]\w*)\s*\(`)
 
 // javaGrpcOverrideRe matches `@Override public ... methodName(StreamObserver<Req> req, ...)`.
-// Group 1: method name.
+// Group 1: method name. Tolerates authorization annotations
+// (@PreAuthorize/@Secured/@RolesAllowed/@Authenticated/@DenyAll) interleaved
+// between @Override and the signature — grpc-spring-boot-starter places the
+// Spring-Security annotation there, and without this the handler would not be
+// emitted (and so could not be stamped with auth).
 var javaGrpcOverrideRe = regexp.MustCompile(
-	`@Override\s+(?:public\s+)?(?:void|[\w<>]+)\s+(\w+)\s*\(`)
+	`@Override\s+(?:@[\w.]+(?:\s*\((?:[^()]|\([^()]*\))*\))?\s+)*(?:public\s+)?(?:void|[\w<>]+)\s+(\w+)\s*\(`)
 
 // javaStreamObserverParam detects bidi/client-streaming by presence of two
 // StreamObserver params or request StreamObserver.
@@ -346,6 +350,14 @@ func synthesizeJavaGRPC(
 		if m := javaGrpcImplBaseSimpleRe.FindStringSubmatch(src); len(m) >= 2 {
 			serviceName = m[1]
 		}
+
+		// gRPC-Java server auth (#4041, epic #3872). An auth-enforcing
+		// ServerInterceptor bound to the service, or a class-level
+		// Spring/Jakarta-Security annotation, applies to every method; a
+		// method-level annotation applies to just that method. Same-file,
+		// signal-based; see grpc_java_auth.go for the resolution + limits.
+		auth := resolveJavaGRPCAuth(src, path)
+
 		props := map[string]string{}
 		if hasReflection {
 			props["reflection"] = "true"
@@ -353,33 +365,56 @@ func synthesizeJavaGRPC(
 		if hasGateway {
 			props["has_gateway"] = "true"
 		}
+		// Service-level auth: interceptor binding and/or a class-level
+		// authorization annotation. The interceptor (transport-level) is the
+		// strongest service-wide signal; a class annotation is the
+		// Spring-Security equivalent.
+		if auth.serviceEnforced {
+			for k, v := range grpcJavaInterceptorProps(auth.serviceSymbol, auth.serviceConfidence) {
+				props[k] = v
+			}
+		} else if auth.classPolicy != nil {
+			for k, v := range grpcJavaPolicyProps(*auth.classPolicy) {
+				props[k] = v
+			}
+		}
 		emitService(serviceName, "grpc_java_server", props)
 
 		// Scan for @Override methods — each is a handler.
-		for _, m := range javaGrpcOverrideRe.FindAllStringSubmatch(src, -1) {
-			if len(m) < 2 {
+		for _, m := range javaGrpcOverrideRe.FindAllStringSubmatchIndex(src, -1) {
+			if len(m) < 4 {
 				continue
 			}
-			methodName := m[1]
-			// Determine streaming variant.
+			methodName := src[m[2]:m[3]]
+			// Determine streaming variant from THIS match's body window.
 			streaming := "unary"
-			// Find the method body window (~500 chars after the match).
-			idx := javaGrpcOverrideRe.FindStringIndex(src)
-			if idx != nil {
-				windowEnd := idx[1] + 600
-				if windowEnd > len(src) {
-					windowEnd = len(src)
+			windowEnd := m[1] + 600
+			if windowEnd > len(src) {
+				windowEnd = len(src)
+			}
+			window := src[m[1]:windowEnd]
+			if javaStreamObserverBidiRe.MatchString(window) {
+				streaming = "bidi_streaming"
+			} else if strings.Contains(window, "stream.Send") || strings.Contains(window, "responseObserver.onNext") {
+				streaming = "server_streaming"
+			}
+			methodProps := map[string]string{"streaming": streaming}
+			// Per-method auth: a method-level annotation wins; else the
+			// service-wide interceptor / class annotation flows down.
+			if mp, ok := auth.methodPolicies[methodName]; ok {
+				for k, v := range grpcJavaPolicyProps(mp) {
+					methodProps[k] = v
 				}
-				window := src[idx[1]:windowEnd]
-				if javaStreamObserverBidiRe.MatchString(window) {
-					streaming = "bidi_streaming"
-				} else if strings.Contains(window, "stream.Send") || strings.Contains(window, "responseObserver.onNext") {
-					streaming = "server_streaming"
+			} else if auth.serviceEnforced {
+				for k, v := range grpcJavaInterceptorProps(auth.serviceSymbol, auth.serviceConfidence) {
+					methodProps[k] = v
+				}
+			} else if auth.classPolicy != nil {
+				for k, v := range grpcJavaPolicyProps(*auth.classPolicy) {
+					methodProps[k] = v
 				}
 			}
-			emitMethod(serviceName, methodName, "grpc_java_server", map[string]string{
-				"streaming": streaming,
-			})
+			emitMethod(serviceName, methodName, "grpc_java_server", methodProps)
 			handlerQualified := className + "." + methodName
 			emitImplementsEdge(handlerQualified, serviceName, methodName, streaming, "grpc_java_server")
 		}

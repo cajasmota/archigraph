@@ -7,10 +7,17 @@
 
 | Language | Frameworks | Tools | ORMs | Other |
 |---|---:|---:|---:|---:|
+<<<<<<< HEAD
 | [JS/TS](by-language/jsts.md) | 33 | 21 | 19 | 4 |
 | [python](by-language/python.md) | 23 | 15 | 18 | 10 |
 | [java](by-language/java.md) | 22 | 10 | 15 | 4 |
 | [go](by-language/go.md) | 21 | 8 | 17 | 0 |
+=======
+| [JS/TS](by-language/jsts.md) | 32 | 21 | 19 | 4 |
+| [java](by-language/java.md) | 23 | 10 | 15 | 4 |
+| [python](by-language/python.md) | 23 | 15 | 18 | 10 |
+| [go](by-language/go.md) | 20 | 8 | 17 | 0 |
+>>>>>>> pr/grpc-java-auth
 | [C/C++](by-language/c-cpp.md) | 19 | 16 | 7 | 4 |
 | [kotlin](by-language/kotlin.md) | 17 | 0 | 7 | 0 |
 | [C#](by-language/csharp.md) | 16 | 7 | 14 | 1 |

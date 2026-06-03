@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # java
 
-**Frameworks**: 22 · **Tools**: 10 · **ORMs**: 15 · **Other**: 4
+**Frameworks**: 23 · **Tools**: 10 · **ORMs**: 15 · **Other**: 4
 
 Back to [summary](../summary.md).
 
@@ -65,6 +65,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|---|---|---|
 | [Android Jetpack (Compose / ViewModel / Room / Navigation / Hilt)](../detail/lang.java.framework.android-jetpack.md) | 🟢 2/2 | 🔴 0/1 | 🟡 20/21 | 🟡 7/8 | |
 | [Android SDK (Activity/Fragment routing)](../detail/lang.java.framework.android-sdk.md) | 🟢 2/2 | 🔴 0/1 | 🟡 20/21 | 🟡 7/8 | |
+
+
+### RPC Framework
+
+| Name | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
+|---|---|---|---|---|---|---|
+| [gRPC-Java (grpc-java / grpc-spring-boot-starter)](../detail/lang.java.framework.grpc.md) | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/25 | 🟡 3/10 | |
 
 
 ### AI Integration
