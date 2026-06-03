@@ -578,3 +578,304 @@ async def cap(request):
 		t.Fatalf("paginated=%q want absent (lone limit is ambiguous)", got)
 	}
 }
+
+// ===========================================================================
+// Wave2 endpoint_pagination_posture — sibling-framework flips (epic #3872).
+//
+// Each test drives the full synthesis pipeline (deprecProps → applyEndpointPagination)
+// on a REAL endpoint of the named framework that carries a `?limit=&offset=`
+// pagination shape, and asserts the EXACT stamped posture (never len>0). Every
+// test has a paired negative (no-param and/or lone-limit) proving the pass is
+// non-vacuous: the posture is stamped ONLY when a clear pagination shape is
+// present. Frameworks whose endpoints surface NO param signal (hono, bottle,
+// falcon, tornado, aiohttp, ktor/javalin/micronaut on JVM, …) are left missing
+// and documented in the registry — they are not tested here.
+// ===========================================================================
+
+// --- JS/TS: req.query limit+offset reads (jsPaginationVerdict) -------------
+
+func TestPagination_Koa_LimitOffset(t *testing.T) {
+	src := `
+const Router = require('@koa/router');
+const router = new Router();
+router.get('/items', (ctx) => {
+  const limit = ctx.query.limit;
+  const offset = ctx.query.offset;
+  ctx.body = [];
+});
+`
+	eps := deprecProps(t, "javascript", "src/koa_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+func TestPagination_Koa_LoneLimitNotPaginated(t *testing.T) {
+	src := `
+const Router = require('@koa/router');
+const router = new Router();
+router.get('/items', (ctx) => {
+  const limit = ctx.query.limit;
+  ctx.body = [];
+});
+`
+	eps := deprecProps(t, "javascript", "src/koa_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if got := e.Properties["paginated"]; got != "" {
+		t.Fatalf("paginated=%q want absent (lone limit is ambiguous)", got)
+	}
+}
+
+func TestPagination_Fastify_LimitOffset(t *testing.T) {
+	src := `
+const fastify = require('fastify')();
+fastify.get('/items', (req, reply) => {
+  const limit = req.query.limit;
+  const offset = req.query.offset;
+  reply.send([]);
+});
+`
+	eps := deprecProps(t, "javascript", "src/fastify_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+func TestPagination_Fastify_NoParamNotPaginated(t *testing.T) {
+	src := `
+const fastify = require('fastify')();
+fastify.get('/health', (req, reply) => {
+  reply.send('ok');
+});
+`
+	eps := deprecProps(t, "javascript", "src/fastify_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /health")
+	if got := e.Properties["paginated"]; got != "" {
+		t.Fatalf("paginated=%q want absent (no pagination param)", got)
+	}
+}
+
+func TestPagination_Hapi_LimitOffset(t *testing.T) {
+	src := `
+const Hapi = require('@hapi/hapi');
+const server = Hapi.server({});
+server.route({
+  method: 'GET',
+  path: '/items',
+  handler: (request, h) => {
+    const limit = request.query.limit;
+    const offset = request.query.offset;
+    return [];
+  }
+});
+`
+	eps := deprecProps(t, "javascript", "src/hapi_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+func TestPagination_Hapi_NoParamNotPaginated(t *testing.T) {
+	src := `
+const Hapi = require('@hapi/hapi');
+const server = Hapi.server({});
+server.route({ method: 'GET', path: '/health', handler: (request, h) => 'ok' });
+`
+	eps := deprecProps(t, "javascript", "src/hapi_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /health")
+	if got := e.Properties["paginated"]; got != "" {
+		t.Fatalf("paginated=%q want absent (no pagination param)", got)
+	}
+}
+
+func TestPagination_Restify_LimitOffset(t *testing.T) {
+	src := `
+const restify = require('restify');
+const server = restify.createServer();
+server.get('/items', function (req, res, next) {
+  const limit = req.query.limit;
+  const offset = req.query.offset;
+  res.send([]);
+  next();
+});
+`
+	eps := deprecProps(t, "javascript", "src/restify_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+func TestPagination_Restify_NoParamNotPaginated(t *testing.T) {
+	src := `
+const restify = require('restify');
+const server = restify.createServer();
+server.get('/health', function (req, res, next) { res.send('ok'); next(); });
+`
+	eps := deprecProps(t, "javascript", "src/restify_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /health")
+	if got := e.Properties["paginated"]; got != "" {
+		t.Fatalf("paginated=%q want absent (no pagination param)", got)
+	}
+}
+
+func TestPagination_Feathers_LimitOffset(t *testing.T) {
+	src := `
+const feathers = require('@feathersjs/feathers');
+const express = require('@feathersjs/express');
+const app = express(feathers());
+app.get('/items', (req, res) => {
+  const limit = req.query.limit;
+  const offset = req.query.offset;
+  res.json([]);
+});
+`
+	eps := deprecProps(t, "javascript", "src/feathers_routes.js", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+// --- JS/TS: typed handler-signature params (limit:/offset: shape) ----------
+// NestJS @Query() and type-graphql @Arg() declare typed params
+// `limit: number, offset: number`; the limit:/offset: signature shape is the
+// pagination signal.
+
+func TestPagination_NestJS_QueryLimitOffset(t *testing.T) {
+	src := `
+import { Controller, Get, Query } from '@nestjs/common';
+@Controller('items')
+export class ItemsController {
+  @Get()
+  findAll(@Query('limit') limit: number, @Query('offset') offset: number) {
+    return [];
+  }
+}
+`
+	eps := deprecProps(t, "typescript", "src/items.controller.ts", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+func TestPagination_NestJS_NoParamNotPaginated(t *testing.T) {
+	src := `
+import { Controller, Get } from '@nestjs/common';
+@Controller('health')
+export class HealthController {
+  @Get()
+  check() { return 'ok'; }
+}
+`
+	eps := deprecProps(t, "typescript", "src/health.controller.ts", src)
+	e := mustEndpoint(t, eps, "GET /health")
+	if got := e.Properties["paginated"]; got != "" {
+		t.Fatalf("paginated=%q want absent (no pagination param)", got)
+	}
+}
+
+func TestPagination_TypeGraphQL_ArgLimitOffset(t *testing.T) {
+	src := `
+import { Resolver, Query, Arg } from 'type-graphql';
+@Resolver()
+export class ItemResolver {
+  @Query(() => [Item])
+  items(@Arg('limit') limit: number, @Arg('offset') offset: number) { return []; }
+}
+`
+	eps := deprecProps(t, "typescript", "src/item.resolver.ts", src)
+	e := mustEndpoint(t, eps, "GRAPHQL /graphql/Query/items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+// --- Python: Flask request.args.get reads (pythonRequestQueryParams) -------
+
+func TestPagination_Flask_ArgsGetLimitOffset(t *testing.T) {
+	src := `
+from flask import Flask, request
+app = Flask(__name__)
+
+@app.route("/items")
+def items():
+    limit = request.args.get("limit")
+    offset = request.args.get("offset")
+    return []
+`
+	eps := deprecProps(t, "python", "app/flask_app.py", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if e.Properties["paginated"] != "true" {
+		t.Fatalf("paginated=%q want true (props: %v)", e.Properties["paginated"], e.Properties)
+	}
+	if e.Properties["pagination_style"] != "offset" {
+		t.Fatalf("pagination_style=%q want offset", e.Properties["pagination_style"])
+	}
+	if got := e.Properties["pagination_params"]; got != "limit,offset" {
+		t.Fatalf("pagination_params=%q want limit,offset", got)
+	}
+}
+
+func TestPagination_Flask_LoneLimitNotPaginated(t *testing.T) {
+	src := `
+from flask import Flask, request
+app = Flask(__name__)
+
+@app.route("/items")
+def items():
+    limit = request.args.get("limit")
+    return []
+`
+	eps := deprecProps(t, "python", "app/flask_app.py", src)
+	e := mustEndpoint(t, eps, "GET /items")
+	if got := e.Properties["paginated"]; got != "" {
+		t.Fatalf("paginated=%q want absent (lone limit is ambiguous)", got)
+	}
+}
