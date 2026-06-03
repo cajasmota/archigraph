@@ -42,6 +42,13 @@
 //
 //   - urql: useQuery({ query: GET_USERS }).
 //
+//   - Relay (react-relay): useLazyLoadQuery(graphql`query …`, vars),
+//     usePreloadedQuery(QUERY, ref), useClientQuery(QUERY) — the operation
+//     document is the FIRST positional argument (inline graphql`` template or a
+//     const reference), resolved the same way as Apollo's bare-arg form. Relay
+//     FRAGMENT hooks (useFragment / usePaginationFragment) take a fragment
+//     document with no operation root field and emit nothing.
+//
 //   - Inline gql docs passed directly to a hook / client call.
 //
 // FETCHES edge: the enclosing function at the call site is recorded as
@@ -287,14 +294,27 @@ var gqlRawTemplateRe = regexp.MustCompile(
 // or `request(endpoint, \`{ users { id } }\`)`. Capture group 1 = doc body.
 var gqlInlineDocRe = regexp.MustCompile("(?s)(?:gql|graphql)\\s*`([^`]*)`")
 
-// gqlHookCallRe matches Apollo/urql hook + client method call sites that take a
-// gql document (by const reference or inline). Capture group 1 = the hook /
-// method keyword, the remainder of the call is scanned for the doc reference.
+// gqlHookCallRe matches Apollo/urql/Relay hook + client method call sites that
+// take a gql document (by const reference or inline). Capture group 1 = the
+// hook / method keyword, the remainder of the call is scanned for the doc
+// reference.
 //
-//	useQuery( / useMutation( / useSubscription( / useLazyQuery( / useSuspenseQuery(
-//	client.query( / client.mutate( / client.subscribe( / .request(
+//	Apollo / urql:
+//	  useQuery( / useMutation( / useSubscription( / useLazyQuery( /
+//	  useSuspenseQuery( / client.query( / client.mutate( / client.subscribe( /
+//	  .request(
+//	Relay (react-relay / relay-runtime): the query DOCUMENT is the FIRST
+//	positional argument — `useLazyLoadQuery(graphql\`…\`, vars)` inline, or
+//	`const Q = graphql\`…\`; usePreloadedQuery(Q, ref)` by const reference —
+//	so it is resolved identically to Apollo's bare-arg `useQuery(GET_USERS)`
+//	form via gqlConstRefRe. Only the OPERATION-bearing Relay hooks are listed;
+//	the FRAGMENT hooks (useFragment / usePaginationFragment /
+//	useRefetchableFragment) take a fragment document (no operation root field)
+//	and are deliberately EXCLUDED so they emit nothing (matching the
+//	fragment-only negative).
+//	  useLazyLoadQuery( / usePreloadedQuery( / useClientQuery(
 var gqlHookCallRe = regexp.MustCompile(
-	`\b(useQuery|useMutation|useSubscription|useLazyQuery|useSuspenseQuery|useSubscriptionQuery|query|mutate|subscribe|request)\s*\(`,
+	`\b(useQuery|useMutation|useSubscription|useLazyQuery|useSuspenseQuery|useSubscriptionQuery|useLazyLoadQuery|usePreloadedQuery|useClientQuery|query|mutate|subscribe|request)\s*\(`,
 )
 
 // gqlConstRefRe extracts the first plausible const identifier referenced inside

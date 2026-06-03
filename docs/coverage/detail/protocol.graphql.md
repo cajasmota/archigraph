@@ -28,6 +28,7 @@ one is a separate detail page.
 | [`lang.elixir.framework.absinthe`](./lang.elixir.framework.absinthe.md) | elixir | framework | 6 full, 31 partial, 12 missing |
 | [`lang.go.framework.gqlgen`](./lang.go.framework.gqlgen.md) | go | framework | 4 full, 8 partial, 37 missing |
 | [`lang.java.framework.spring-graphql`](./lang.java.framework.spring-graphql.md) | java | framework | 8 full, 5 partial, 42 missing |
+| [`lang.jsts.framework.graphql-client`](./lang.jsts.framework.graphql-client.md) | JS/TS | framework | 2 full, 34 missing |
 | [`lang.jsts.framework.graphql-resolvers`](./lang.jsts.framework.graphql-resolvers.md) | JS/TS | framework | 10 full, 19 partial, 25 missing, 1 n/a |
 | [`lang.jsts.framework.type-graphql`](./lang.jsts.framework.type-graphql.md) | JS/TS | framework | 4 full, 5 partial, 40 missing |
 | [`lang.kotlin.framework.graphql-kotlin`](./lang.kotlin.framework.graphql-kotlin.md) | kotlin | framework | 4 full, 51 missing |

@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # http_framework
 
-**Total**: 227 records · **C/C++**: 19 · **C#**: 16 · **dart**: 2 · **elixir**: 14 · **go**: 20 · **java**: 22 · **JS/TS**: 32 · **kotlin**: 17 · **lua**: 4 · **php**: 16 · **python**: 23 · **ruby**: 9 · **rust**: 14 · **scala**: 14 · **swift**: 5
+**Total**: 228 records · **C/C++**: 19 · **C#**: 16 · **dart**: 2 · **elixir**: 14 · **go**: 20 · **java**: 22 · **JS/TS**: 33 · **kotlin**: 17 · **lua**: 4 · **php**: 16 · **python**: 23 · **ruby**: 9 · **rust**: 14 · **scala**: 14 · **swift**: 5
 
 Back to [summary](../summary.md). Bucket: **Frameworks**.
 
@@ -199,6 +199,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [java](../by-language/java.md) | [Google Web Toolkit (GWT)](../detail/lang.java.framework.gwt.md) | 🟢 2/2 | 🔴 0/1 | 🟡 21/22 | 🔴 0/3 | |
 | [java](../by-language/java.md) | [Vaadin (UI-as-server)](../detail/lang.java.framework.vaadin.md) | 🟢 2/2 | 🔴 0/1 | 🟡 21/22 | 🔴 0/3 | |
 | [JS/TS](../by-language/jsts.md) | [Angular](../detail/lang.jsts.framework.angular.md) | ✅ 3/3 | ✅ 1/1 | 🟡 23/24 | ✅ 17/17 | |
+| [JS/TS](../by-language/jsts.md) | [GraphQL Client (Apollo Client / urql / Relay / graphql-request)](../detail/lang.jsts.framework.graphql-client.md) | 🔴 0/3 | 🔴 0/1 | 🟡 1/24 | 🟡 1/8 | |
 | [JS/TS](../by-language/jsts.md) | [React](../detail/lang.jsts.framework.react.md) | ✅ 3/3 | ✅ 1/1 | 🟡 23/24 | ✅ 21/21 | |
 | [JS/TS](../by-language/jsts.md) | [Svelte](../detail/lang.jsts.framework.svelte.md) | ✅ 3/3 | ✅ 1/1 | 🟡 23/24 | 🟢 17/17 | |
 | [JS/TS](../by-language/jsts.md) | [Vue](../detail/lang.jsts.framework.vue.md) | ✅ 3/3 | ✅ 1/1 | 🟡 23/24 | 🟢 19/19 | |

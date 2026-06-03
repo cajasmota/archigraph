@@ -214,3 +214,95 @@ function search(query) {
 		"http:GRAPHQL:/graphql/Query/search",
 	}, "graphql-client-no-false-positive")
 }
+
+// TestSynth_GraphQLClient_RelayInline asserts Relay's primary hook idiom — an
+// inline `graphql\`…\“ operation passed as the FIRST positional argument to
+// useLazyLoadQuery — emits the per-root-field client-call keyed to the server
+// endpoint shape, plus the FETCHES source_caller. (graphql-tagged inline docs
+// were already recognised; this pins the Relay hook + caller attribution.)
+func TestSynth_GraphQLClient_RelayInline(t *testing.T) {
+	src := `
+import { graphql, useLazyLoadQuery } from 'react-relay';
+
+function UserScreen() {
+  const data = useLazyLoadQuery(graphql` + "`" + `
+    query UserScreenQuery {
+      user { id name }
+    }
+  ` + "`" + `, {});
+  return data;
+}
+`
+	_, res := runDetect(t, "typescript", "UserScreen.tsx", src)
+	const wantID = "http:GRAPHQL:/graphql/Query/user"
+	e := findGQLClientEntity(res, wantID)
+	if e == nil {
+		t.Fatalf("missing Relay client-call %q", wantID)
+	}
+	if e.verb != "GRAPHQL" {
+		t.Errorf("verb = %q, want GRAPHQL", e.verb)
+	}
+	if e.sourceCaller != "Function:UserScreen" {
+		t.Errorf("source_caller = %q, want Function:UserScreen (drives FETCHES)", e.sourceCaller)
+	}
+}
+
+// TestSynth_GraphQLClient_RelayConstRef is the regression that motivated this
+// change: a Relay query bound to a `graphql\`…\“ const and consumed by a
+// FIRST-positional-arg hook (usePreloadedQuery(Q, ref)) previously emitted
+// NOTHING because usePreloadedQuery was not a recognised hook keyword — the
+// const→server-field link was lost. It must now resolve to the per-root-field
+// endpoint via the gql-const symbol table.
+func TestSynth_GraphQLClient_RelayConstRef(t *testing.T) {
+	src := `
+import { graphql, usePreloadedQuery } from 'react-relay';
+
+const AppQuery = graphql` + "`" + `
+  query AppQuery {
+    viewer { id }
+    notifications { count }
+  }
+` + "`" + `;
+
+function App(props) {
+  const data = usePreloadedQuery(AppQuery, props.queryRef);
+  return data;
+}
+`
+	got, res := runDetect(t, "typescript", "App.tsx", src)
+	want := []string{
+		"http:GRAPHQL:/graphql/Query/viewer",
+		"http:GRAPHQL:/graphql/Query/notifications",
+	}
+	requireContains(t, got, want, "graphql-client-relay-const-ref")
+	// FETCHES caller must be the consuming component, not the top-level const def.
+	if e := findGQLClientEntity(res, "http:GRAPHQL:/graphql/Query/viewer"); e != nil &&
+		e.sourceCaller != "Function:App" {
+		t.Errorf("source_caller = %q, want Function:App", e.sourceCaller)
+	}
+}
+
+// TestSynth_GraphQLClient_RelayFragmentNoOp asserts a Relay FRAGMENT hook
+// (useFragment) over a `graphql\`fragment …\“ document emits NOTHING: a
+// fragment has no operation root field, so there is no server endpoint to link
+// to. This guards against the Relay-hook widening fabricating a phantom field.
+func TestSynth_GraphQLClient_RelayFragmentNoOp(t *testing.T) {
+	src := `
+import { graphql, useFragment } from 'react-relay';
+
+const UserFrag = graphql` + "`" + `
+  fragment UserCard_user on User { id name }
+` + "`" + `;
+
+function UserCard(props) {
+  const user = useFragment(UserFrag, props.user);
+  return user;
+}
+`
+	got, _ := runDetect(t, "typescript", "UserCard.tsx", src)
+	requireNotContains(t, got, []string{
+		"http:GRAPHQL:/graphql/Query/UserCard_user",
+		"http:GRAPHQL:/graphql/Query/id",
+		"http:GRAPHQL:/graphql/Query/name",
+	}, "graphql-client-relay-fragment-no-op")
+}

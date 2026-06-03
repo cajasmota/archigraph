@@ -35128,6 +35128,179 @@
       }
     },
     {
+      "id": "lang.jsts.framework.graphql-client",
+      "category": "http_framework",
+      "subcategory": "ui_frontend",
+      "language": "jsts",
+      "label": "GraphQL Client (Apollo Client / urql / Relay / graphql-request)",
+      "capabilities": {
+        "Structure": {
+          "component_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "context_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        },
+        "Data Flow": {
+          "branch_conditions": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "data_fetching": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_client_synthesis.go","internal/engine/http_endpoint_graphql_client.go","internal/engine/http_endpoint_graphql_client_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3642",
+            "notes": "Apollo Client / urql / Relay (react-relay) / graphql-request client GraphQL operations -\u003e one http_endpoint_call (consumer) per (operation, root field) keyed to the server endpoint shape http:GRAPHQL:/graphql/\u003cRootType\u003e/\u003cfield\u003e + FETCHES from the enclosing component (synthesizeGraphQLClientCalls). Root type Query/Mutation/Subscription + root fields parsed from the gql/graphql tagged or raw template document (shared gqlRootFieldsFromDoc with the Dart pass). Idioms: gql-const + useQuery/useMutation/useSubscription/useLazyQuery (Apollo), useQuery({query}) (urql), useLazyLoadQuery/usePreloadedQuery/useClientQuery first-positional-arg doc (Relay), request(endpoint, raw-template) + client.query({query}) (graphql-request). Identical entity shape to the GraphQL server producer so the cross-repo linker pairs the client component with the backend resolver on reindex. Value-asserted: useQuery(GET_USERS) -\u003e http:GRAPHQL:/graphql/Query/users + FETCHES Function:UserList; useMutation -\u003e Mutation/createUser; multi-root urql; Relay usePreloadedQuery(const) -\u003e Query/viewer+notifications; negatives (REST fetch, Relay useFragment fragment-only) emit nothing. Honest-partial: a gql const imported cross-file emits an op-name-keyed graphql_client_unresolved call (field not statically resolvable).",
+            "verified_at": "2026-06-03"
+          },
+          "prop_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "state_management": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        },
+        "Navigation": {
+          "router_pattern": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        },
+        "Type System": {
+          "enum_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "interface_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "type_alias_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        },
+        "Lifecycle": {
+          "state_setter_emission": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        },
+        "Testing": {
+          "tests_linkage": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        },
+        "Substrate": {
+          "confidence_overlay": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "config_consumption": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "constant_propagation": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "db_effect": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "dead_code_detection": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "def_use_chain_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "env_fallback_recognition": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "error_flow": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "feature_flag_gating": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "fs_effect": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "http_effect": {
+            "status": "full",
+            "cites": ["internal/engine/http_endpoint_graphql_client.go","internal/engine/http_endpoint_graphql_client_test.go","internal/engine/http_endpoint_synthesis.go"],
+            "issue": "3642",
+            "notes": "Client GraphQL operations surface as http_endpoint_call (consumer) entities with the synthetic GRAPHQL verb on canonical path /graphql/\u003cRootType\u003e/\u003cfield\u003e, matching the server producer so the cross-repo HTTP linker forms client-\u003eserver links + FETCHES from the enclosing component. See data_fetching for the per-idiom detail.",
+            "verified_at": "2026-06-03"
+          },
+          "import_resolution_quality": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "module_cycle_detection": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "mutation_effect": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "pure_function_tagging": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "reachability_analysis": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "request_shape_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "response_shape_extraction": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "sanitizer_recognition": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "schema_drift_detection": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "taint_sink_detection": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "taint_source_detection": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "template_pattern_catalog": {
+            "status": "missing",
+            "issue": "3642"
+          },
+          "vulnerability_finding": {
+            "status": "missing",
+            "issue": "3642"
+          }
+        }
+      }
+    },
+    {
       "id": "lang.jsts.framework.graphql-resolvers",
       "category": "http_framework",
       "subcategory": "rpc_framework",
