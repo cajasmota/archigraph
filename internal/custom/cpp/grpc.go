@@ -121,6 +121,11 @@ func (e *cppGrpcExtractor) Extract(ctx context.Context, file extractor.FileInput
 		return nil, nil
 	}
 
+	// Per-file gRPC auth verdict: does this file wire an auth-enforcing server
+	// interceptor or AuthMetadataProcessor that guards the registered services?
+	// Same-file, signal-based, append-property-only (mirrors the gRPC-Go slice).
+	auth := resolveCppGrpcAuth(src)
+
 	var entities []types.EntityRecord
 	seen := make(map[string]bool)
 	add := func(ent types.EntityRecord) {
@@ -170,6 +175,21 @@ func (e *cppGrpcExtractor) Extract(ctx context.Context, file extractor.FileInput
 			}
 			if streamKind != "" {
 				setProps(&ent, "streaming", streamKind)
+			}
+			// Auth: when the file wires an auth-enforcing interceptor /
+			// metadata-processor, the registered service methods are guarded.
+			// Stamp auth_middleware (the MCP archigraph_auth_coverage signal-1
+			// key) + auth_required/auth_method/auth_confidence on the method.
+			if auth.enforced {
+				setProps(&ent,
+					"auth_required", "true",
+					"auth_method", cppGrpcAuthMethod,
+					"auth_confidence", "high",
+					"auth_middleware", auth.symbol,
+				)
+				if auth.kind != "" {
+					setProps(&ent, "auth_enforcer_kind", auth.kind)
+				}
 			}
 			add(ent)
 
@@ -394,4 +414,151 @@ func cppBraceBody(src string, headerEnd int) (int, int) {
 		}
 	}
 	return -1, -1
+}
+
+// ---------------------------------------------------------------------------
+// gRPC C++ interceptor / metadata-processor auth detection (#4041, epic #3872).
+//
+// The c-cpp auth_coverage sniffer (auth_middleware.go) is HTTP-route/middleware-
+// keyed (Drogon filters, oatpp handlers, Crow middleware structs); it emits 0
+// auth entities on a gRPC service impl, where auth lives in a transport-level
+// SERVER INTERCEPTOR or an AuthMetadataProcessor — not on any HTTP route. The
+// two canonical grpc++ idioms:
+//
+//	// (a) experimental server interceptor that rejects on a bad credential
+//	class JwtAuth : public grpc::experimental::Interceptor {
+//	  void Intercept(grpc::experimental::InterceptorBatchMethods* m) override {
+//	    auto* md = m->GetRecvInitialMetadata();
+//	    if (!validToken(md)) {
+//	      m->ModifySendStatus(grpc::Status(grpc::StatusCode::UNAUTHENTICATED, ""));
+//	    }
+//	    m->Proceed();
+//	  }
+//	};
+//	builder.experimental().SetInterceptorCreators(std::move(creators)); // wired
+//	builder.RegisterService(&service);                                  // guarded
+//
+//	// (b) AuthMetadataProcessor — returning non-OK = auth by the gRPC contract
+//	class TokenProcessor : public grpc::AuthMetadataProcessor {
+//	  grpc::Status Process(const InputMetadata& auth_metadata, ...) override {
+//	    if (!ok) return grpc::Status(grpc::StatusCode::UNAUTHENTICATED, "");
+//	    return grpc::Status::OK;
+//	  }
+//	};
+//	creds->SetAuthMetadataProcessor(std::make_shared<TokenProcessor>());
+//
+// resolveCppGrpcAuth re-scans the SAME file and, when an auth enforcer is both
+// PRESENT and WIRED, returns enforced=true plus the enforcer class symbol. The
+// Extract loop then stamps auth_required/auth_method/auth_middleware/
+// auth_confidence on each RPC-method endpoint registered in the file. Append-
+// property-only — it never adds or removes entities.
+//
+// HONEST LIMITS:
+//   - Same-file boundary. The enforcer class, its SetInterceptorCreators /
+//     SetAuthMetadataProcessor wiring, and the RegisterService call must live in
+//     this file (the same boundary the rest of the gRPC-C++ synthesis lives
+//     within). An interceptor declared in a separate header is not credited.
+//   - A logging/tracing interceptor (no UNAUTHENTICATED/PERMISSION_DENIED
+//     reject) is NOT auth-enforcing; a server with no interceptor wiring and no
+//     metadata processor leaves the methods UNSTAMPED.
+
+// cppGrpcAuthMethod is the auth_method value stamped on a gRPC-C++ service
+// method guarded by an auth interceptor / metadata processor. Distinct from the
+// HTTP-middleware auth methods so the dashboard can tell gRPC-interceptor auth
+// apart.
+const cppGrpcAuthMethod = "grpc_interceptor"
+
+var (
+	// A class deriving the experimental gRPC server interceptor base:
+	// `class JwtAuth : public grpc::experimental::Interceptor`. Group 1 = the
+	// interceptor class name; the brace body is inspected for an auth reject.
+	reCppGrpcInterceptorClass = regexp.MustCompile(
+		`(?m)\bclass\s+([A-Za-z_]\w*)\b[^{;]*?:\s*(?:public\s+)?(?:::)?grpc::experimental::Interceptor\b`)
+
+	// A class deriving grpc::AuthMetadataProcessor:
+	// `class TokenProcessor : public grpc::AuthMetadataProcessor`. Group 1 =
+	// the processor class name; its Process() body is inspected for a reject.
+	reCppGrpcMetadataProcessorClass = regexp.MustCompile(
+		`(?m)\bclass\s+([A-Za-z_]\w*)\b[^{;]*?:\s*(?:public\s+)?(?:::)?grpc::AuthMetadataProcessor\b`)
+
+	// The decisive reject: a gRPC auth/authorization status code. An interceptor
+	// or processor that fails with UNAUTHENTICATED / PERMISSION_DENIED gates
+	// access; one that does not is observational (logging/tracing), not auth.
+	reCppGrpcAuthReject = regexp.MustCompile(
+		`\b(?:grpc::)?StatusCode::(UNAUTHENTICATED|PERMISSION_DENIED)\b`)
+
+	// An incoming-metadata read inside an interceptor body — the canonical way
+	// a gRPC interceptor obtains the caller's credential. Required (in addition
+	// to a reject) so a server-side interceptor that merely sets a trailer with
+	// UNAUTHENTICATED for an unrelated reason is not mis-credited.
+	reCppGrpcMetadataRead = regexp.MustCompile(
+		`\bGetRecvInitialMetadata\s*\(|\bGetSendInitialMetadata\s*\(|client_metadata|recv_initial_metadata|\bauthorization\b`)
+
+	// Interceptor wiring: builder.experimental().SetInterceptorCreators(...).
+	reCppGrpcSetInterceptorCreators = regexp.MustCompile(
+		`\bSetInterceptorCreators\s*\(`)
+
+	// Metadata-processor wiring: creds->SetAuthMetadataProcessor(...).
+	reCppGrpcSetAuthMetadataProcessor = regexp.MustCompile(
+		`\bSetAuthMetadataProcessor\s*\(`)
+)
+
+// cppGrpcAuthResult carries the per-file gRPC-C++ auth verdict.
+type cppGrpcAuthResult struct {
+	// enforced is true when an auth-enforcing interceptor / metadata processor
+	// is both PRESENT in the file and WIRED into the server.
+	enforced bool
+	// symbol is the enforcer class name credited as the auth enforcer (the
+	// auth_middleware MCP signal-1 value).
+	symbol string
+	// kind is the enforcer mechanism ("interceptor" | "metadata_processor"),
+	// stamped as auth_enforcer_kind for the dashboard.
+	kind string
+}
+
+// resolveCppGrpcAuth inspects a gRPC C++ source file and reports whether the
+// services registered in it are guarded by an auth-enforcing interceptor or
+// AuthMetadataProcessor, plus the enforcer class symbol. Same-file, signal-based.
+func resolveCppGrpcAuth(src string) cppGrpcAuthResult {
+	// (a) experimental server interceptor — must be PRESENT (auth-enforcing) and
+	// WIRED via SetInterceptorCreators.
+	if reCppGrpcSetInterceptorCreators.MatchString(src) {
+		if name := cppGrpcAuthEnforcingClass(src, reCppGrpcInterceptorClass, true); name != "" {
+			return cppGrpcAuthResult{enforced: true, symbol: name, kind: "interceptor"}
+		}
+	}
+	// (b) AuthMetadataProcessor — returning non-OK on a bad token is auth by the
+	// gRPC contract; require it WIRED via SetAuthMetadataProcessor.
+	if reCppGrpcSetAuthMetadataProcessor.MatchString(src) {
+		if name := cppGrpcAuthEnforcingClass(src, reCppGrpcMetadataProcessorClass, false); name != "" {
+			return cppGrpcAuthResult{enforced: true, symbol: name, kind: "metadata_processor"}
+		}
+	}
+	return cppGrpcAuthResult{}
+}
+
+// cppGrpcAuthEnforcingClass returns the name of the first class matched by
+// classRe whose brace body proves auth enforcement: it rejects with a gRPC
+// auth status code (UNAUTHENTICATED / PERMISSION_DENIED). When needMetadataRead
+// is true (server interceptors), the body must ALSO read incoming metadata —
+// distinguishing a credential-checking interceptor from one that merely sets an
+// UNAUTHENTICATED trailer for an unrelated reason. Returns "" when no class in
+// the file is auth-enforcing (e.g. a logging interceptor).
+func cppGrpcAuthEnforcingClass(src string, classRe *regexp.Regexp, needMetadataRead bool) string {
+	for _, m := range classRe.FindAllStringSubmatchIndex(src, -1) {
+		name := src[m[2]:m[3]]
+		bodyStart, bodyEnd := cppBraceBody(src, m[1])
+		if bodyStart < 0 {
+			continue
+		}
+		body := src[bodyStart:bodyEnd]
+		if !reCppGrpcAuthReject.MatchString(body) {
+			continue
+		}
+		if needMetadataRead && !reCppGrpcMetadataRead.MatchString(body) {
+			continue
+		}
+		return name
+	}
+	return ""
 }

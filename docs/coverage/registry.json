@@ -4384,9 +4384,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "missing",
-            "issue": "4038:auth-rpc-gap",
-            "notes": "The c-cpp auth_coverage sniffer is HTTP-route/endpoint-keyed (it scans synthesized HTTP endpoints / router pipelines / framework guards), not framework-agnostic like csharp's [Authorize] attribute. VERIFIED: it emits 0 auth entities on a gRPC service idiom (grpc::ServerContext / protobuf messages / grpc::StatusCode / RegisterService). gRPC auth (call-credentials / metadata interceptors) is a real, untriaged gap — honest missing, not n/a."
+            "status": "full",
+            "cites": ["internal/custom/cpp/grpc.go","internal/custom/cpp/grpc_auth_test.go"],
+            "issue": "4041",
+            "notes": "gRPC-C++ interceptor / AuthMetadataProcessor auth detection (#4041). resolveCppGrpcAuth re-scans the gRPC service file and, when an auth enforcer is PRESENT and WIRED, stamps auth_required/auth_method=grpc_interceptor/auth_middleware/auth_confidence on each RPC-method SCOPE.Operation endpoint. Enforcers: (a) a class deriving grpc::experimental::Interceptor whose Intercept() reads incoming client metadata AND fails with grpc::StatusCode::UNAUTHENTICATED/PERMISSION_DENIED, wired via builder.experimental().SetInterceptorCreators(...); (b) a grpc::AuthMetadataProcessor whose Process() returns UNAUTHENTICATED/PERMISSION_DENIED, wired via creds-\u003eSetAuthMetadataProcessor(...). auth_middleware carries the concrete enforcer class (the archigraph_auth_coverage signal-1 key). VALUE-ASSERTED: a JwtAuth interceptor + SetInterceptorCreators -\u003e SayHello/SayBye auth_required=true, auth_middleware=JwtAuth; a TokenProcessor -\u003e GetFeature auth_middleware=TokenProcessor. NEGATIVES proven: a logging interceptor (no UNAUTHENTICATED reject), a no-interceptor server, and a present-but-unwired interceptor all leave methods UNSTAMPED. HONEST same-file boundary: enforcer class + wiring + RegisterService must co-locate (matches the rest of the gRPC-C++ synthesis). DEPLOY-DEFERRED.",
+            "verified_at": "2026-06-03"
           }
         },
         "Validation": {
