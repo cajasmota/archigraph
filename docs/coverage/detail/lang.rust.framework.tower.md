@@ -46,7 +46,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/rust/auth.go`<br>`internal/custom/rust/auth_policy.go`<br>`internal/custom/rust/auth_policy_test.go` | ServiceBuilder::new().layer(..).layer(..) chains enumerated in source order: per-layer layer_order plus a layer_chain entity with layer_count + layer_order_list |
-| Rate limit stamping | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3778) | — | endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work. |
+| Rate limit stamping | 🟢 `partial` | `2026-06-03` | — | `internal/custom/rust/rate_limit.go`<br>`internal/custom/rust/rate_limit_test.go` | #4124 greenfield: custom_rust_rate_limit stamps the flat contract (rate_limited/rate_limit/rate_limit_scope/rate_limit_source/limit/period) for the tower::limit RateLimitLayer::new(num, Duration::from_secs/from_millis(n)) — resolving limit/period + human rate when literal (scope=engine, source=tower_ratelimit). Partial when args are non-literal. Negatives: a non-rate tower layer (CorsLayer/TraceLayer) does not stamp. |
 
 ### Schema
 

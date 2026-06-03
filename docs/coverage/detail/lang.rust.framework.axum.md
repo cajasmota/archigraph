@@ -46,7 +46,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/rust/auth.go`<br>`internal/custom/rust/auth_policy.go`<br>`internal/custom/rust/auth_policy_test.go`<br>`internal/custom/rust/axum.go` | .layer/.route_layer + tower ServiceBuilder ordered layer chains enumerated in source order (layer_order + layer_order_list) |
-| Rate limit stamping | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3778) | — | endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work. |
+| Rate limit stamping | 🟢 `partial` | `2026-06-03` | — | `internal/custom/rust/rate_limit.go`<br>`internal/custom/rust/rate_limit_test.go` | #4124 greenfield: custom_rust_rate_limit stamps the flat contract (rate_limited/rate_limit/rate_limit_scope/rate_limit_source/limit/period/rate_limit_burst) for tower-governor on axum — a .layer(GovernorLayer{ config }) guarding the Router, resolving GovernorConfigBuilder::default().per_second(N).burst_size(M) when literal (scope=router, source=tower_governor). Partial: rate omitted when per_second/burst_size is non-literal or the builder is chained cross-statement. Negatives: a plain route and a non-rate layer (CorsLayer/TraceLayer) do not stamp. |
 
 ### Schema
 
