@@ -242,6 +242,44 @@ spec:
 	}
 }
 
+// TestKubernetesEdges_DependencyAttribution_Cell is the cell anchor for the
+// platform/app_topology `dependency_attribution` capability on
+// infra.resource.kubernetes (issue #4202). It drives the REAL edge pass
+// (applyKubernetesEdges) on an HPA→Deployment manifest and asserts the EXACT
+// DEPENDS_ON edge together with its attribution properties — k8s_edge=hpa_target
+// and synthesis=kubernetes_edges — proving the attribution metadata the cell is
+// credited for, not merely that an edge exists.
+func TestKubernetesEdges_DependencyAttribution_Cell(t *testing.T) {
+	const path = "k8s/attrib.yaml"
+	src := `
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 1
+  maxReplicas: 5
+`
+	rels := k8sRun(path, src)
+	prefix := "k8s/" + path + "#"
+	from := prefix + "resource/HorizontalPodAutoscaler/api-hpa"
+	to := prefix + "resource/Deployment/api"
+	e := k8sFindEdge(rels, from, to, "DEPENDS_ON")
+	if e == nil {
+		t.Fatalf("missing HPA→Deployment DEPENDS_ON edge (%s → %s); rels=%+v", from, to, rels)
+	}
+	if e.Properties["k8s_edge"] != "hpa_target" {
+		t.Errorf("attribution k8s_edge = %q, want hpa_target", e.Properties["k8s_edge"])
+	}
+	if e.Properties["synthesis"] != "kubernetes_edges" {
+		t.Errorf("attribution synthesis = %q, want kubernetes_edges", e.Properties["synthesis"])
+	}
+}
+
 func TestKubernetesEdges_OwnerReference(t *testing.T) {
 	const path = "k8s/owner.yaml"
 	src := `

@@ -221,6 +221,53 @@ export class AppStack extends cdk.Stack {
 	}
 }
 
+// TestCDK_DependencyAttribution_Cell is the cell anchor for the
+// platform/app_topology `dependency_attribution` capability on
+// infra.resource.aws-cdk (issue #4202). It drives the REAL edge-emitter
+// (applyCDKEdges) and asserts the EXACT grant DEPENDS_ON edge together with its
+// attribution properties — iac_tool=aws-cdk, reason=grant, and the grant method
+// recorded under the `grant` key — proving the attribution metadata the cell is
+// credited for, not merely that an edge exists.
+func TestCDK_DependencyAttribution_Cell(t *testing.T) {
+	src := `import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+
+export class AttribStack extends cdk.Stack {
+  constructor(scope: cdk.App, id: string) {
+    super(scope, id);
+    const dataBucket = new s3.Bucket(this, 'DataBucket', {});
+    const reader = new lambda.Function(this, 'Reader', { runtime: 'x', handler: 'h', code: 'c' });
+    dataBucket.grantReadWrite(reader);
+  }
+}
+`
+	_, rels := runCDKDetect(t, "typescript", "lib/attrib-stack.ts", src)
+	deps := relsByKind(rels, "DEPENDS_ON")
+	var found *relResult
+	for i := range deps {
+		if deps[i].from == "SCOPE.InfraResource:Reader" && deps[i].to == "SCOPE.InfraResource:DataBucket" {
+			found = &deps[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected DEPENDS_ON Reader→DataBucket, got %+v", deps)
+	}
+	if found.kind != "DEPENDS_ON" {
+		t.Errorf("edge kind = %q, want DEPENDS_ON", found.kind)
+	}
+	if found.props["iac_tool"] != "aws-cdk" {
+		t.Errorf("attribution iac_tool = %q, want aws-cdk", found.props["iac_tool"])
+	}
+	if found.props["reason"] != "grant" {
+		t.Errorf("attribution reason = %q, want grant", found.props["reason"])
+	}
+	if found.props["grant"] != "grantReadWrite" {
+		t.Errorf("attribution grant = %q, want grantReadWrite", found.props["grant"])
+	}
+}
+
 // TestCDK_NonCDKFileEmitsNothing asserts the pre-filter gate: a plain TS file
 // with a `new X(this,'id',…)` idiom but no CDK import emits nothing.
 func TestCDK_NonCDKFileEmitsNothing(t *testing.T) {

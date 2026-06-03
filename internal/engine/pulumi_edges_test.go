@@ -93,6 +93,44 @@ const fn = new aws.lambda.Function("fn", {
 	}
 }
 
+// TestPulumiTS_DependencyAttribution_Cell is the cell anchor for the
+// platform/app_topology `dependency_attribution` capability on
+// infra.resource.pulumi (issue #4202). It drives the REAL edge-emitter
+// (applyPulumiEdges) and asserts the EXACT explicit-`dependsOn` DEPENDS_ON edge
+// together with its attribution properties — iac_tool=pulumi and reason=
+// depends_on — proving the attribution metadata the cell is credited for.
+func TestPulumiTS_DependencyAttribution_Cell(t *testing.T) {
+	src := `import * as pulumi from "@pulumi/pulumi";
+import * as aws from "@pulumi/aws";
+
+const queue = new aws.sqs.Queue("queue", {});
+
+const worker = new aws.lambda.Function("worker", {
+    runtime: "nodejs20.x",
+    handler: "h",
+}, { dependsOn: [queue] });
+`
+	_, rels := runPulumiDetect(t, "typescript", "index.ts", src)
+	deps := relsByKind(rels, "DEPENDS_ON")
+	var found *relResult
+	for i := range deps {
+		if deps[i].from == "SCOPE.InfraResource:worker" && deps[i].to == "SCOPE.InfraResource:queue" &&
+			deps[i].props["reason"] == "depends_on" {
+			found = &deps[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected DEPENDS_ON worker→queue (depends_on), got %+v", deps)
+	}
+	if found.kind != "DEPENDS_ON" {
+		t.Errorf("edge kind = %q, want DEPENDS_ON", found.kind)
+	}
+	if found.props["iac_tool"] != "pulumi" {
+		t.Errorf("attribution iac_tool = %q, want pulumi", found.props["iac_tool"])
+	}
+}
+
 // TestPulumiTS_DependsOnAndStackRef asserts an explicit `dependsOn: [queue]`
 // list produces a DEPENDS_ON edge, and a StackReference yields a cross-stack
 // node + edge.
