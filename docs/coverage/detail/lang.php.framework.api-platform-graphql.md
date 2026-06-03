@@ -89,36 +89,36 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DB effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| DB effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_php.go` | — |
 
 ### Substrate
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Confidence overlay | ✅ `full` | `2026-06-03` | — | `internal/graph/graph.go`<br>`internal/mcp/tools.go`<br>`internal/types/confidence.go` | — |
 | Config consumption | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Constant propagation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Dead code detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Def use chain extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Env fallback recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Constant propagation | ✅ `full` | `2026-06-03` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/php.go`<br>`internal/substrate/substrate.go` | — |
+| Dead code detection | 🟢 `partial` | `2026-06-03` | — | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_php.go` | Framework-agnostic reachability pass via php open-tag and public-function entry points; lifecycle hooks matched by name heuristic only — unified status across all PHP frameworks |
+| Def use chain extraction | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_php.go` | PHP def-use sniffer registered in substrate; flows through language-agnostic def_use_pass |
+| Env fallback recognition | ✅ `full` | `2026-06-03` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/php.go`<br>`internal/substrate/substrate.go` | — |
 | Error flow | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Feature flag gating | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| HTTP effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Import resolution quality | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Module cycle detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Fs effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_php.go` | — |
+| HTTP effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_php.go` | — |
+| Import resolution quality | 🟢 `partial` | `2026-06-03` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/php.go`<br>`internal/substrate/substrate.go` | — |
+| Module cycle detection | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/extractors/php/php.go`<br>`internal/links/module_cycle_pass.go` | Language-agnostic Tarjan SCC over IMPORTS edges; PHP namespace_use_declaration edges emitted by tree-sitter extractor |
+| Mutation effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_php.go` | — |
+| Pure function tagging | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/pure_function_pass.go`<br>`internal/substrate/effect_sinks_php.go` | Language-agnostic pure-function tagging pass reads effect stamps from PHP effect_sinks substrate |
+| Reachability analysis | 🟢 `partial` | `2026-06-03` | — | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_php.go` | — |
 | Request shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
 | Request sink dataflow | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Response shape extraction | ✅ `full` | `2026-06-02` | — | `internal/custom/php/apiplatform_graphql.go`<br>`internal/custom/php/graphql_parity_test.go` | — |
-| Sanitizer recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Schema drift detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Taint sink detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Taint source detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Template pattern catalog | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Vulnerability finding | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Sanitizer recognition | 🟢 `partial` | `2026-06-03` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_php.go` | — |
+| Schema drift detection | 🟢 `partial` | `2026-06-03` | [link](https://github.com/cajasmota/archigraph/issues/2771) | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_php.go` | — |
+| Taint sink detection | 🟢 `partial` | `2026-06-03` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_php.go` | — |
+| Taint source detection | 🟢 `partial` | `2026-06-03` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_php.go` | — |
+| Template pattern catalog | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/constant_propagation.go`<br>`internal/substrate/template_pattern_php.go` | PHP template-pattern sniffer registered; covers i18n trans(), log literals, SQL strings |
+| Vulnerability finding | 🟢 `partial` | `2026-06-03` | — | `internal/links/taint_flow.go`<br>`internal/substrate/taint_sites_php.go` | — |
 
 ## Related extraction records
 

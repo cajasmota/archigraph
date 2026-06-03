@@ -48724,14 +48724,16 @@
         },
         "Data": {
           "db_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           }
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/graph/graph.go","internal/mcp/tools.go","internal/types/confidence.go"],
+            "verified_at": "2026-06-03"
           },
           "config_consumption": {
             "status": "full",
@@ -48741,20 +48743,27 @@
             "verified_at": "2026-06-02"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "dead_code_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "notes": "Framework-agnostic reachability pass via php open-tag and public-function entry points; lifecycle hooks matched by name heuristic only — unified status across all PHP frameworks",
+            "verified_at": "2026-06-03"
           },
           "def_use_chain_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/def_use_pass.go","internal/substrate/def_use_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP def-use sniffer registered in substrate; flows through language-agnostic def_use_pass",
+            "verified_at": "2026-06-03"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "error_flow": {
             "status": "missing",
@@ -48765,68 +48774,92 @@
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
           },
           "fs_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "http_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "module_cycle_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/extractors/php/php.go","internal/links/module_cycle_pass.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic Tarjan SCC over IMPORTS edges; PHP namespace_use_declaration edges emitted by tree-sitter extractor",
+            "verified_at": "2026-06-03"
           },
           "mutation_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "pure_function_tagging": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/pure_function_pass.go","internal/substrate/effect_sinks_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic pure-function tagging pass reads effect stamps from PHP effect_sinks substrate",
+            "verified_at": "2026-06-03"
           },
           "reachability_analysis": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "verified_at": "2026-06-03"
           },
           "request_shape_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-06-03"
           },
           "request_sink_dataflow": {
             "status": "missing",
             "issue": "3740"
           },
           "response_shape_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-06-03"
           },
           "sanitizer_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-06-03"
           },
           "taint_sink_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "taint_source_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "template_pattern_catalog": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/template_pattern_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP template-pattern sniffer registered; covers i18n trans(), log literals, SQL strings",
+            "verified_at": "2026-06-03"
           },
           "vulnerability_finding": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           }
         }
       }
@@ -48961,34 +48994,43 @@
         },
         "Data": {
           "db_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           }
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/graph/graph.go","internal/mcp/tools.go","internal/types/confidence.go"],
+            "verified_at": "2026-06-03"
           },
           "config_consumption": {
             "status": "missing",
             "issue": "backfill:dictionary-completeness"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "dead_code_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "notes": "Framework-agnostic reachability pass via php open-tag and public-function entry points; lifecycle hooks matched by name heuristic only — unified status across all PHP frameworks",
+            "verified_at": "2026-06-03"
           },
           "def_use_chain_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/def_use_pass.go","internal/substrate/def_use_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP def-use sniffer registered in substrate; flows through language-agnostic def_use_pass",
+            "verified_at": "2026-06-03"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "error_flow": {
             "status": "missing",
@@ -48999,32 +49041,43 @@
             "issue": "backfill:dictionary-completeness"
           },
           "fs_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "http_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "module_cycle_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/extractors/php/php.go","internal/links/module_cycle_pass.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic Tarjan SCC over IMPORTS edges; PHP namespace_use_declaration edges emitted by tree-sitter extractor",
+            "verified_at": "2026-06-03"
           },
           "mutation_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "pure_function_tagging": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/pure_function_pass.go","internal/substrate/effect_sinks_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic pure-function tagging pass reads effect stamps from PHP effect_sinks substrate",
+            "verified_at": "2026-06-03"
           },
           "reachability_analysis": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "verified_at": "2026-06-03"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -49041,28 +49094,37 @@
             "verified_at": "2026-06-02"
           },
           "sanitizer_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-06-03"
           },
           "taint_sink_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "taint_source_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "template_pattern_catalog": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/template_pattern_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP template-pattern sniffer registered; covers i18n trans(), log literals, SQL strings",
+            "verified_at": "2026-06-03"
           },
           "vulnerability_finding": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           }
         }
       }
@@ -50056,14 +50118,16 @@
         },
         "Data": {
           "db_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           }
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/graph/graph.go","internal/mcp/tools.go","internal/types/confidence.go"],
+            "verified_at": "2026-06-03"
           },
           "config_consumption": {
             "status": "full",
@@ -50073,20 +50137,27 @@
             "verified_at": "2026-06-02"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "dead_code_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "notes": "Framework-agnostic reachability pass via php open-tag and public-function entry points; lifecycle hooks matched by name heuristic only — unified status across all PHP frameworks",
+            "verified_at": "2026-06-03"
           },
           "def_use_chain_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/def_use_pass.go","internal/substrate/def_use_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP def-use sniffer registered in substrate; flows through language-agnostic def_use_pass",
+            "verified_at": "2026-06-03"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "error_flow": {
             "status": "missing",
@@ -50097,32 +50168,43 @@
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
           },
           "fs_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "http_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "module_cycle_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/extractors/php/php.go","internal/links/module_cycle_pass.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic Tarjan SCC over IMPORTS edges; PHP namespace_use_declaration edges emitted by tree-sitter extractor",
+            "verified_at": "2026-06-03"
           },
           "mutation_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "pure_function_tagging": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/pure_function_pass.go","internal/substrate/effect_sinks_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic pure-function tagging pass reads effect stamps from PHP effect_sinks substrate",
+            "verified_at": "2026-06-03"
           },
           "reachability_analysis": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "verified_at": "2026-06-03"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -50139,28 +50221,37 @@
             "verified_at": "2026-06-02"
           },
           "sanitizer_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-06-03"
           },
           "taint_sink_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "taint_source_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "template_pattern_catalog": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/template_pattern_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP template-pattern sniffer registered; covers i18n trans(), log literals, SQL strings",
+            "verified_at": "2026-06-03"
           },
           "vulnerability_finding": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           }
         }
       }
@@ -50885,14 +50976,16 @@
         },
         "Data": {
           "db_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           }
         },
         "Substrate": {
           "confidence_overlay": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/graph/graph.go","internal/mcp/tools.go","internal/types/confidence.go"],
+            "verified_at": "2026-06-03"
           },
           "config_consumption": {
             "status": "full",
@@ -50902,20 +50995,27 @@
             "verified_at": "2026-06-02"
           },
           "constant_propagation": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "dead_code_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/mcp/dead_code.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "notes": "Framework-agnostic reachability pass via php open-tag and public-function entry points; lifecycle hooks matched by name heuristic only — unified status across all PHP frameworks",
+            "verified_at": "2026-06-03"
           },
           "def_use_chain_extraction": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/def_use_pass.go","internal/substrate/def_use_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP def-use sniffer registered in substrate; flows through language-agnostic def_use_pass",
+            "verified_at": "2026-06-03"
           },
           "env_fallback_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "full",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "error_flow": {
             "status": "missing",
@@ -50926,32 +51026,43 @@
             "issue": "feature_flag_gating:#3706-not-yet-extracted"
           },
           "fs_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "http_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "import_resolution_quality": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/php.go","internal/substrate/substrate.go"],
+            "verified_at": "2026-06-03"
           },
           "module_cycle_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/extractors/php/php.go","internal/links/module_cycle_pass.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic Tarjan SCC over IMPORTS edges; PHP namespace_use_declaration edges emitted by tree-sitter extractor",
+            "verified_at": "2026-06-03"
           },
           "mutation_effect": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/effect_propagation.go","internal/substrate/effect_sinks_php.go"],
+            "verified_at": "2026-06-03"
           },
           "pure_function_tagging": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/pure_function_pass.go","internal/substrate/effect_sinks_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "Language-agnostic pure-function tagging pass reads effect stamps from PHP effect_sinks substrate",
+            "verified_at": "2026-06-03"
           },
           "reachability_analysis": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/reachability.go","internal/substrate/entry_points.go","internal/substrate/entry_points_php.go"],
+            "verified_at": "2026-06-03"
           },
           "request_shape_extraction": {
             "status": "full",
@@ -50968,28 +51079,37 @@
             "verified_at": "2026-06-02"
           },
           "sanitizer_recognition": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "schema_drift_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/payload_drift.go","internal/mcp/payload_drift_tool.go","internal/substrate/payload_shapes.go","internal/substrate/payload_shapes_php.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/2771",
+            "verified_at": "2026-06-03"
           },
           "taint_sink_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "taint_source_detection": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           },
           "template_pattern_catalog": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/constant_propagation.go","internal/substrate/template_pattern_php.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "PHP template-pattern sniffer registered; covers i18n trans(), log literals, SQL strings",
+            "verified_at": "2026-06-03"
           },
           "vulnerability_finding": {
-            "status": "missing",
-            "issue": "backfill:dictionary-completeness"
+            "status": "partial",
+            "cites": ["internal/links/taint_flow.go","internal/substrate/taint_sites_php.go"],
+            "verified_at": "2026-06-03"
           }
         }
       }
