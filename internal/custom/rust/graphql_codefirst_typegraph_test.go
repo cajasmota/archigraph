@@ -21,9 +21,9 @@ import (
 
 func runGqlTG(t *testing.T, path, src string) []types.EntityRecord {
 	t.Helper()
-	e, ok := extractor.Get("rust_graphql_codefirst_typegraph")
+	e, ok := extractor.Get("custom_rust_graphql_codefirst_typegraph")
 	if !ok {
-		t.Fatal("rust_graphql_codefirst_typegraph not registered")
+		t.Fatal("custom_rust_graphql_codefirst_typegraph not registered")
 	}
 	ents, err := e.Extract(context.Background(),
 		extractor.FileInput{Path: path, Language: "rust", Content: []byte(src)})

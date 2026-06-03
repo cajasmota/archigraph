@@ -67,7 +67,7 @@ import (
 )
 
 func init() {
-	extractor.Register("rust_graphql_codefirst_typegraph", &rustGraphQLTypeGraphExtractor{})
+	extractor.Register("custom_rust_graphql_codefirst_typegraph", &rustGraphQLTypeGraphExtractor{})
 }
 
 // rustGraphQLTypeGraphExtractor builds the object-type→type relationship graph
@@ -75,7 +75,7 @@ func init() {
 type rustGraphQLTypeGraphExtractor struct{}
 
 func (e *rustGraphQLTypeGraphExtractor) Language() string {
-	return "rust_graphql_codefirst_typegraph"
+	return "custom_rust_graphql_codefirst_typegraph"
 }
 
 // rustGqlScalars never make a type→type edge: the GraphQL built-ins plus the
