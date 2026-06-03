@@ -61,6 +61,8 @@ func run(argv []string, stdout, stderr io.Writer) error {
 		return cmdMapStatus(rest, stdout)
 	case "delta":
 		return cmdDelta(rest, stdout)
+	case "parity":
+		return cmdParity(rest, stdout)
 	case "help", "-h", "--help":
 		printUsage(stdout)
 		return nil
@@ -94,7 +96,11 @@ subcommands:
               map-status <record-id>/<group>/<capability>     (grouped)
             (--repo-root, --json)
   delta     diff registry.json before→after two git refs, emit markdown coverage-delta report
-            (--base origin/main, --head HEAD, --lang <slug>, --post <PR#>, --file)`)
+            (--base origin/main, --head HEAD, --lang <slug>, --post <PR#>, --file)
+  parity    READ-ONLY probe for flagship→sibling coverage asymmetry: a capability credited
+            (full/partial) on one framework but missing on same-language siblings in the same
+            (language, category, subcategory) group. Uniform-scaffold (all-missing) cells are
+            suppressed. (--language, --min-group, --include-partial, --json, --strict, --file)`)
 }
 
 // registryFlag adds a shared --file flag for overriding the registry
