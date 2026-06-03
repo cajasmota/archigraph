@@ -560,3 +560,68 @@ public class PhoneValidator implements ConstraintValidator<ValidPhone, String> {
 		t.Errorf("custom validator validated_type = %q, want String", got)
 	}
 }
+
+// TestJavaPatternsSpringDataJpaAssociationLive proves that Spring Data JPA
+// entities — not just plain JPA/Hibernate ones — reach the graph through the
+// live dispatch path with their @OneToMany/@ManyToOne associations intact.
+//
+// Spring Data JPA entities are ordinary jakarta.persistence @Entity classes, so
+// the same hibernate.go extractor handles them. The framework gate
+// hibernateFrameworks already admits the "spring_data_jpa" token, and
+// frameworkMarkers maps "org.springframework.data.jpa" -> "spring_data_jpa", so
+// a file importing the Spring Data JPA package is dispatched into ExtractHibernate.
+// This test asserts the association emerges as a directed DEPENDS_ON edge with
+// association_kind=OneToMany, which is exactly what association_extraction and
+// relationship_extraction credit for the sibling jpa/hibernate ORM records.
+func TestJavaPatternsSpringDataJpaAssociationLive(t *testing.T) {
+	src := `
+package com.example.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+@Entity
+@Table(name = "orders")
+public class Order {
+
+    @OneToMany
+    private List<LineItem> items;
+}
+`
+	path := "src/main/java/com/example/model/Order.java"
+	recs := runJavaPatterns(t, path, src)
+
+	order := findRecord(recs, "SCOPE.Schema", "Order")
+	if order == nil {
+		t.Fatalf("expected SCOPE.Schema Order entity to emit live for spring_data_jpa; got %v", names(recs))
+	}
+	if got := order.Properties["table_name"]; got != "orders" {
+		t.Errorf("Order table_name = %q, want orders", got)
+	}
+
+	// relationship_extraction: the @OneToMany association Order -> LineItem must
+	// emit as a directed DEPENDS_ON edge, identical to the plain-JPA path.
+	wantTarget := "scope:schema:hibernate_entity:" + path + ":LineItem"
+	if !hasRel(order, "DEPENDS_ON", wantTarget) {
+		t.Errorf("expected DEPENDS_ON association edge Order -> LineItem (%s) for spring_data_jpa; got rels %v",
+			wantTarget, order.Relationships)
+	}
+
+	// association_extraction: the edge must carry association_kind=OneToMany so
+	// the association classifier (not merely "some dependency") is satisfied.
+	foundKind := false
+	for _, r := range order.Relationships {
+		if r.Kind == "DEPENDS_ON" && r.ToID == wantTarget {
+			if r.Properties["association_kind"] != "OneToMany" {
+				t.Errorf("association_kind = %q, want OneToMany", r.Properties["association_kind"])
+			}
+			foundKind = true
+		}
+	}
+	if !foundKind {
+		t.Errorf("expected the Order -> LineItem DEPENDS_ON edge to carry association_kind=OneToMany; got rels %v",
+			order.Relationships)
+	}
+}
