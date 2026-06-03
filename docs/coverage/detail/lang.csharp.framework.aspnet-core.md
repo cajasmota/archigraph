@@ -101,7 +101,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Dead code detection | 🟢 `partial` | `2026-05-28` | — | `internal/links/reachability.go`<br>`internal/substrate/entry_points_csharp.go` | — |
 | Def use chain extraction | 🟢 `partial` | `2026-06-02` | backfill:dictionary-completeness | `internal/links/def_use_pass.go`<br>`internal/substrate/dataflow_csharp.go`<br>`internal/substrate/def_use.go`<br>`internal/substrate/def_use_csharp.go` | The C# def-use chain (def_use_csharp.go) is now consumed by the connected request→sink dataflow pass (internal/substrate/dataflow_csharp.go, #3960) to propagate taint across assignments and bounded local-call hops. Remains partial (dictionary-completeness backfill still open). |
 | Env fallback recognition | ✅ `full` | `2026-05-27` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/csharp.go`<br>`internal/substrate/substrate.go` | — |
-| Error flow | 🔴 `missing` | — | 3628 | — | — |
+| Error flow | ✅ `full` | `2026-06-03` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/csharp/exception_flow.go`<br>`internal/extractors/csharp/exception_flow_test.go` | x |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_csharp.go` | — |
 | HTTP effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_csharp.go` | — |

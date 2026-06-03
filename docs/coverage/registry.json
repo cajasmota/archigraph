@@ -8917,8 +8917,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "x",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9205,8 +9208,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9419,8 +9425,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9624,8 +9633,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -9829,8 +9841,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -10117,8 +10132,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -10412,8 +10430,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -10720,8 +10741,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -10987,8 +11011,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -11259,8 +11286,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -11477,8 +11507,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -11757,8 +11790,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -11909,8 +11945,11 @@
             "verified_at": "2026-05-29"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -12005,8 +12044,11 @@
             "verified_at": "2026-05-29"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -12101,8 +12143,11 @@
             "verified_at": "2026-05-29"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -12263,8 +12308,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/csharp/exception_flow.go","internal/extractors/csharp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X / throw new pkg.X -\u003e THROWS; catch (X ex) / catch (pkg.X) -\u003e CATCHES; bare catch + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",

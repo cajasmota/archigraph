@@ -76,6 +76,10 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	// (Configuration["X"] / GetValue / GetConnectionString /
 	// Environment.GetEnvironmentVariable) → shared SCOPE.Config config_key nodes.
 	emitConfigConsumerEdges(root, file.Content, &entities)
+	// Epic #3628 — error-flow topology: typed `throw new` / `catch` shapes →
+	// THROWS / CATCHES edges to a shared SCOPE.ExceptionType node, matching the
+	// Java / Python / Go / JS flagship error_flow model.
+	emitExceptionFlowEdges(root, file.Content, &entities)
 	// Issue #90 — language tag for resolver dynamic-pattern dispatch.
 	extractor.TagRelationshipsLanguage(entities, "csharp")
 	extractor.TagEntitiesLanguage(entities, "csharp")
