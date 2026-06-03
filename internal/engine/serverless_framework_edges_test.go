@@ -275,6 +275,47 @@ functions:
 	}
 }
 
+// TestServerlessFramework_ResourcePropertyExtraction_Cell is the value-asserting
+// test for the iac_resource_property_extraction capability (#4199). It drives the
+// real serverless-framework engine pass and asserts that the TYPED function-config
+// property VALUES are stamped onto the function entity — the exact handler,
+// runtime, region and service strings — never len>0.
+func TestServerlessFramework_ResourcePropertyExtraction_Cell(t *testing.T) {
+	src := `service: billing-svc
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-southeast-2
+functions:
+  invoice:
+    handler: src/invoice.process
+    events:
+      - http: POST /invoice
+`
+	ents, _ := runSLSFrameworkDetect(t, "serverless.yml", src)
+
+	fn := slsEntityByKindName(ents, serverlessFunctionKind, lambdaFunctionID("invoice"))
+	if fn == nil {
+		t.Fatalf("expected serverless function entity for 'invoice'; ents=%v", ents)
+	}
+	// Typed property #1: the exact handler value off the function body.
+	if got := fn.Properties["handler"]; got != "src/invoice.process" {
+		t.Errorf("handler property = %q, want src/invoice.process", got)
+	}
+	// Typed property #2: the exact runtime value off the provider block.
+	if got := fn.Properties["runtime"]; got != "nodejs20.x" {
+		t.Errorf("runtime property = %q, want nodejs20.x", got)
+	}
+	// Typed property #3: the exact region value off the provider block.
+	if got := fn.Properties["region"]; got != "ap-southeast-2" {
+		t.Errorf("region property = %q, want ap-southeast-2", got)
+	}
+	// Typed property #4: the exact service name off the manifest root.
+	if got := fn.Properties["service"]; got != "billing-svc" {
+		t.Errorf("service property = %q, want billing-svc", got)
+	}
+}
+
 // TestServerlessFramework_ResolveYMLName verifies the resolveServerlessYMLName
 // stub is wired: after a manifest is parsed, the handler symbol resolves to the
 // logical function name.

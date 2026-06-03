@@ -17992,6 +17992,15 @@ records:
           - file: internal/extractors/bicep/extractor_test.go
         issues_implemented: ["4200"]
         verified_at: "2026-06-04"
+      iac_resource_property_extraction:
+        status: partial
+        symbols:
+          - file: internal/extractors/bicep/extractor.go
+            functions: [extractResources]
+        tests:
+          - file: internal/extractors/bicep/extractor_test.go
+        issues_implemented: ["4199"]
+        verified_at: "2026-06-04"
 
   infra.iac.cdk:
     capabilities:
@@ -18087,6 +18096,17 @@ records:
         tests:
           - file: internal/engine/serverless_framework_edges_test.go
         issues_implemented: ["4201"]
+        verified_at: "2026-06-04"
+      iac_resource_property_extraction:
+        status: partial
+        symbols:
+          - file: internal/engine/serverless_framework_edges.go
+            functions: [applyServerlessFrameworkEdges]
+          - file: internal/engine/serverless_framework_parse.go
+            functions: [parseProviderBlock, parseFunctionBody]
+        tests:
+          - file: internal/engine/serverless_framework_edges_test.go
+        issues_implemented: ["4199"]
         verified_at: "2026-06-04"
       resource_extraction:
         status: full

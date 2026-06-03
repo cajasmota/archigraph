@@ -179,6 +179,41 @@ module appModule './modules/app.bicep' = {
 	}
 }
 
+// TestBicep_ResourcePropertyExtraction is the value-asserting test for the
+// iac_resource_property_extraction capability (#4199). It drives the real bicep
+// extractor and asserts that the TYPED resource property-bag values are stamped
+// onto the resource entity Metadata — the exact deployed `name:` value and the
+// `@<apiVersion>` segment of the type — never len>0.
+func TestBicep_ResourcePropertyExtraction(t *testing.T) {
+	const src = `
+resource appPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: 'plan-prod'
+  location: 'westus2'
+  sku: {
+    name: 'P1v3'
+  }
+}
+`
+	recs := extractBicep(t, src, "infra/app.bicep")
+
+	plan := findByName(recs, "appPlan")
+	if plan == nil {
+		t.Fatalf("expected resource entity 'appPlan', got %+v", recs)
+	}
+	// Typed property #1: the deployed `name:` property value stamped verbatim.
+	if got := plan.Metadata["deployed_name"]; got != "plan-prod" {
+		t.Errorf("deployed_name property = %v, want plan-prod", got)
+	}
+	// Typed property #2: the api_version read off the typed `@<version>` segment.
+	if got := plan.Metadata["api_version"]; got != "2023-12-01" {
+		t.Errorf("api_version property = %v, want 2023-12-01", got)
+	}
+	// And the resource-type identity component, to anchor the entity.
+	if got := plan.Metadata["azure_rp_type"]; got != "Microsoft.Web/serverfarms" {
+		t.Errorf("azure_rp_type = %v, want Microsoft.Web/serverfarms", got)
+	}
+}
+
 // TestBicep_ExplicitDependsOn covers the dependsOn: [x] array form.
 func TestBicep_ExplicitDependsOn(t *testing.T) {
 	const src = `

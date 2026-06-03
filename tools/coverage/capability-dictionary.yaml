@@ -66,7 +66,7 @@ categories:
   databases:
     capabilities: [resource_extraction, dependency_attribution]
   platform:
-    capabilities: [resource_extraction, dependency_attribution, file_parsing, env_resolution, shared_data_coupling, external_service_dependency, translation_key_usage, iac_output_export_extraction, iac_cross_stack_reference, iac_iam_grant_attribution, iac_event_source_wiring, iac_environment_region_account, iac_stack_app_topology]
+    capabilities: [resource_extraction, dependency_attribution, file_parsing, env_resolution, shared_data_coupling, external_service_dependency, translation_key_usage, iac_output_export_extraction, iac_cross_stack_reference, iac_iam_grant_attribution, iac_event_source_wiring, iac_environment_region_account, iac_stack_app_topology, iac_resource_property_extraction]
     subcategory_order: [iac_provisioning, container_orchestration, config_files, workflow_dag, app_topology, integration_external, localization, frontend_routing]
   security:
     capabilities: [auth_policy, secret_detection, sql_injection, cors_policy]
@@ -803,6 +803,52 @@ subcategories:
       # hierarchy (a single `service` deployment unit / generic task entities with
       # no containment topology) — honest N/A.
       - iac_stack_app_topology
+      # iac_resource_property_extraction (#4199): extraction of the TYPED
+      # per-resource CONFIGURATION properties — the individual settings/arguments
+      # of a provisioned resource (e.g. a Lambda's runtime / memory / timeout, an
+      # EC2 instance_type, an env-var bag, the typed args/props/kwargs of a
+      # construct or resource) STAMPED as scalar key→value pairs on the emitted
+      # resource entity. This is distinct from identity (resource type / logical
+      # id), from dependency (iac_*_reference / DEPENDS_ON edges) and from
+      # topology (iac_stack_app_topology): it is the per-resource SETTINGS bag.
+      # The bar for credit is that the extractor PROVABLY writes individual typed
+      # configuration property values onto the resource entity's Properties /
+      # Metadata map — NOT merely that it parses a props/args body to harvest
+      # cross-resource references. Backed (only) by:
+      #   - Bicep (partial): each `resource <name> '<type>@<api>' = {…}` is emitted
+      #     with the typed property-bag fields it can read off the body stamped
+      #     onto Metadata — the deployed `name:` property (reNameAttr →
+      #     deployed_name) and the `@<apiVersion>` of the type (api_version), plus
+      #     resource_category (extractResources, bicep/extractor.go:170-205). Two
+      #     genuine typed property-bag values are stamped, but the broader bag
+      #     (sku / location / kind / properties{…}) is not, so partial.
+      #   - Serverless Framework (partial): each function is emitted with its typed
+      #     function-config properties stamped — handler, runtime, region, service
+      #     (parseProviderBlock + parseFunctionBody → fnProps, serverless_framework_
+      #     edges.go:144-161) — genuine per-function settings on the entity, but
+      #     memory / timeout / environment are not parsed/stamped, so partial.
+      # NOT credited — these extractors emit the resource ENTITY (with its type /
+      # logical-id / category) but do NOT stamp its individual typed config
+      # property VALUES; their props/args/Properties bodies are scanned ONLY to
+      # mine cross-resource references for DEPENDS_ON edges, discarding the scalar
+      # settings — honest-missing, not partial:
+      #   - AWS CDK: emitResource stamps only construct_type / logical_id /
+      #     resource_category; the props/kwargs body (cdkConstructPropsRe Pass 5)
+      #     yields only props_ref DEPENDS_ON edges, never a scalar prop value
+      #     (cdk_edges.go:281-294, 391-409).
+      #   - Terraform / OpenTofu: extractResourceBlock stamps resource_type / label
+      #     / resource_category + iteration meta-args (count / for_each) only; the
+      #     scalar block attributes (instance_type = "…", ami, …) are not stamped
+      #     (hcl/extractor.go:206-249, terraform_deep.go:74-97).
+      #   - CloudFormation: the resource entity carries resource_type / logical_id /
+      #     resource_category; Resources[].Properties is mined only for Ref / GetAtt
+      #     dependency edges, never stamped as typed props (iac_cloudformation_
+      #     edges.go:507-520).
+      #   - Pulumi: emitResource stamps construct_type / resource_category /
+      #     logical_id; the args body is scanned only for output-ref DEPENDS_ON
+      #     edges (pulumi_edges.go:242-254, 373-411).
+      #   - Ansible: generic task entities with no typed resource property bag.
+      - iac_resource_property_extraction
     groups: []
 
   container_orchestration:
