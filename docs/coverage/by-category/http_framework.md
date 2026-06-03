@@ -32,18 +32,18 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C#](../by-language/csharp.md) | [HotChocolate (GraphQL)](../detail/lang.csharp.framework.hotchocolate.md) | 🟡 3/6 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🟡 3/24 | 🔴 0/13 | |
 | [C#](../by-language/csharp.md) | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 22/25 | 🟡 6/11 | |
 | [C#](../by-language/csharp.md) | [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 22/25 | 🟡 6/11 | |
-| [elixir](../by-language/elixir.md) | [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 3/6 | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 7/12 | |
-| [elixir](../by-language/elixir.md) | [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟡 3/6 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
-| [elixir](../by-language/elixir.md) | [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 3/8 | |
-| [elixir](../by-language/elixir.md) | [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟡 3/6 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 4/9 | |
-| [elixir](../by-language/elixir.md) | [Finch](../detail/lang.elixir.framework.finch.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 10/24 | 🟡 3/12 | |
-| [elixir](../by-language/elixir.md) | [Guardian](../detail/lang.elixir.framework.guardian.md) | 🔴 0/6 | ✅ 1/1 | 🔴 0/4 | ✅ 1/1 | 🟡 11/25 | 🟡 3/11 | |
-| [elixir](../by-language/elixir.md) | [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 1/6 | |
-| [elixir](../by-language/elixir.md) | [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 5/10 | |
-| [elixir](../by-language/elixir.md) | [Phoenix](../detail/lang.elixir.framework.phoenix.md) | 🟡 3/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
-| [elixir](../by-language/elixir.md) | [Plug](../detail/lang.elixir.framework.plug.md) | 🟡 3/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 21/25 | 🟡 6/11 | |
-| [elixir](../by-language/elixir.md) | [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 9/24 | 🟡 3/12 | |
-| [elixir](../by-language/elixir.md) | [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 10/24 | 🟡 4/12 | |
+| [elixir](../by-language/elixir.md) | [Absinthe (GraphQL)](../detail/lang.elixir.framework.absinthe.md) | 🟡 3/6 | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 7/12 | |
+| [elixir](../by-language/elixir.md) | [Ash Framework](../detail/lang.elixir.framework.ash.md) | 🟡 3/6 | — | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 5/10 | |
+| [elixir](../by-language/elixir.md) | [Bandit](../detail/lang.elixir.framework.bandit.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 3/8 | |
+| [elixir](../by-language/elixir.md) | [Cowboy](../detail/lang.elixir.framework.cowboy.md) | 🟡 3/6 | — | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 4/9 | |
+| [elixir](../by-language/elixir.md) | [Finch](../detail/lang.elixir.framework.finch.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 11/24 | 🟡 3/12 | |
+| [elixir](../by-language/elixir.md) | [Guardian](../detail/lang.elixir.framework.guardian.md) | 🔴 0/6 | ✅ 1/1 | 🔴 0/4 | ✅ 1/1 | 🟡 12/25 | 🟡 3/11 | |
+| [elixir](../by-language/elixir.md) | [Nerves (embedded)](../detail/lang.elixir.framework.nerves.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 1/6 | |
+| [elixir](../by-language/elixir.md) | [Oban (job queue)](../detail/lang.elixir.framework.oban.md) | 🟡 1/4 | — | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 5/10 | |
+| [elixir](../by-language/elixir.md) | [Phoenix](../detail/lang.elixir.framework.phoenix.md) | 🟡 3/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 6/11 | |
+| [elixir](../by-language/elixir.md) | [Plug](../detail/lang.elixir.framework.plug.md) | 🟡 3/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 22/25 | 🟡 6/11 | |
+| [elixir](../by-language/elixir.md) | [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 10/24 | 🟡 3/12 | |
+| [elixir](../by-language/elixir.md) | [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 11/24 | 🟡 4/12 | |
 | [go](../by-language/go.md) | [Beego](../detail/lang.go.framework.beego.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Buffalo](../detail/lang.go.framework.buffalo.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Echo](../detail/lang.go.framework.echo.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 8/12 | |
@@ -210,7 +210,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 
 | Language | Name | Routing | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [elixir](../by-language/elixir.md) | [Phoenix LiveView](../detail/lang.elixir.framework.phoenix-liveview.md) | 🟢 2/2 | 🟢 3/3 | ✅ 1/1 | 🟡 21/24 | 🟢 5/5 | |
+| [elixir](../by-language/elixir.md) | [Phoenix LiveView](../detail/lang.elixir.framework.phoenix-liveview.md) | 🟢 2/2 | 🟢 3/3 | ✅ 1/1 | 🟡 22/24 | 🟢 5/5 | |
 | [java](../by-language/java.md) | [Play Framework](../detail/lang.java.framework.play.md) | 🟡 1/2 | 🟢 2/2 | 🔴 0/1 | 🟡 21/24 | 🟡 2/4 | |
 | [JS/TS](../by-language/jsts.md) | [Astro](../detail/lang.jsts.framework.astro.md) | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | 🟡 23/24 | ✅ 7/7 | |
 | [JS/TS](../by-language/jsts.md) | [Gatsby](../detail/lang.jsts.framework.gatsby.md) | ✅ 2/2 | ✅ 3/3 | ✅ 1/1 | 🟡 23/24 | ✅ 8/8 | |
@@ -265,7 +265,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C/C++](../by-language/c-cpp.md) | [Protocol Buffers (C++)](../detail/lang.c-cpp.framework.protobuf.md) | 🔴 0/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 7/25 | 🟡 3/15 | |
 | [C/C++](../by-language/c-cpp.md) | [gRPC C++ (grpc++)](../detail/lang.c-cpp.framework.grpc.md) | — | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟡 7/24 | 🟡 7/10 | |
 | [C#](../by-language/csharp.md) | [grpc-dotnet](../detail/lang.csharp.framework.grpc-net.md) | — | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟡 22/24 | 🟢 10/10 | |
-| [elixir](../by-language/elixir.md) | [elixir-grpc](../detail/lang.elixir.framework.grpc.md) | — | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 11/24 | 🟡 6/10 | |
+| [elixir](../by-language/elixir.md) | [elixir-grpc](../detail/lang.elixir.framework.grpc.md) | — | 🟢 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 12/24 | 🟡 6/10 | |
 | [go](../by-language/go.md) | [gRPC-Go (google.golang.org/grpc)](../detail/lang.go.framework.grpc.md) | — | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/25 | 🟡 3/10 | |
 | [java](../by-language/java.md) | [gRPC-Java (grpc-java / grpc-spring-boot-starter)](../detail/lang.java.framework.grpc.md) | — | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/25 | 🟡 3/10 | |
 | [JS/TS](../by-language/jsts.md) | [GraphQL Resolvers (Apollo Server / GraphQL Yoga / etc.)](../detail/lang.jsts.framework.graphql-resolvers.md) | 🔴 0/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 23/25 | 🟡 6/17 | |

@@ -66,6 +66,10 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	// JS/TS fix from #570/#575.
 	entities = append(entities, extractor.FileEntity(file))
 	walkNode(file.Tree.RootNode(), file, &entities)
+	// Epic #3628 — error_flow: emit THROWS / CATCHES edges from def/defp
+	// bodies to the shared SCOPE.ExceptionType convergence node for typed
+	// `raise Type` / `rescue e in [Type]` shapes.
+	emitExceptionFlowEdges(file.Tree.RootNode(), file, &entities)
 	// Issue #90 — language tag for resolver dynamic-pattern dispatch.
 	extractor.TagRelationshipsLanguage(entities, "elixir")
 	extractor.TagEntitiesLanguage(entities, "elixir")

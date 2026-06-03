@@ -101,7 +101,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Dead code detection | 🟢 `partial` | `2026-06-03` | — | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_elixir.go` | — |
 | Def use chain extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use.go`<br>`internal/substrate/def_use_elixir.go` | Elixir def-use sniffer registered; intra-procedural def-use chains over .ex/.exs |
 | Env fallback recognition | ✅ `full` | `2026-05-30` | — | `internal/engine/http_endpoint_jsts_client_1483.go`<br>`internal/engine/http_endpoint_jsts_client_1483_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | @base_url System.get_env(VAR, default) fallback literal resolved for Finch URLs (#1496/#3511) |
-| Error flow | 🔴 `missing` | — | 3628 | — | — |
+| Error flow | ✅ `full` | `2026-06-03` | — | `internal/extractor/exception_flow.go`<br>`internal/extractors/elixir/exception_flow.go`<br>`internal/extractors/elixir/exception_flow_test.go` | raise X / raise mod.X -> THROWS; rescue e in [A,B] / unbound typed rescue -> CATCHES; bare rescue + string raise + reraise + catch :throw + {:error,_} tuple dropped (#3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | HTTP effect | ✅ `full` | `2026-05-30` | — | `internal/engine/http_endpoint_jsts_client_1483.go`<br>`internal/engine/http_endpoint_jsts_client_1483_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | Finch.build modeled as outbound HTTP effect (#1483/#3511) |

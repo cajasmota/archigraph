@@ -13657,6 +13657,18 @@ records:
               functions: [runConstantPropagationPass, buildResolver, applyResolverToConsumerHTTP]
           issues_implemented: ["2762"]
           verified_at: "2026-05-28"
+        error_flow:
+          status: full
+          symbols:
+            - file: internal/extractors/elixir/exception_flow.go
+              functions: [emitExceptionFlowEdges, elixirRaiseType, elixirRescueTypes, aliasTokens]
+            - file: internal/extractor/exception_flow.go
+              functions: [EmitExceptionEdges, ExceptionTypeEntity, ExceptionTypeTargetID, NormalizeExceptionType]
+          tests:
+            - file: internal/extractors/elixir/exception_flow_test.go
+              functions: [TestExExceptionFlow_RaiseRescueConverge, TestExExceptionFlow_MultiRescue, TestExExceptionFlow_RescueNoBinding, TestExExceptionFlow_QualifiedRaise, TestExExceptionFlow_NegBareRescue]
+          issues_implemented: ["3628"]
+          verified_at: "2026-06-03"
         env_fallback_recognition:
           status: full
           symbols:
