@@ -133,6 +133,15 @@ func resolveEndpointPagination(lang, content string, e *types.EntityRecord) (pag
 		if v, ok := pythonPaginationVerdict(region, body); ok {
 			return v, true
 		}
+		// Out-of-line registration (aiohttp `app.router.add_get("/x", handler)`,
+		// starlette `Route("/x", handler)`): the StartLine-anchored body window
+		// above is the REGISTRATION line, not the separately-defined handler, so
+		// it never reaches the `async def handler` body. Locate the handler body
+		// by its source_handler reference and scan its real body for request
+		// query-param reads (mirrors goPaginationVerdict). Refs #3872.
+		if v, ok := pythonSourceHandlerPaginationVerdict(content, e); ok {
+			return v, true
+		}
 	case "java":
 		// For Spring the route annotation (@GetMapping) is the anchor and the
 		// `Pageable` param / `Page<…>` return live on the handler SIGNATURE line
@@ -473,6 +482,96 @@ func pythonRequestQueryParams(body string) map[string]bool {
 		addPaginationParam(present, m[1])
 	}
 	return present
+}
+
+// pythonSourceHandlerName extracts the bare handler function name from an
+// endpoint's `source_handler` property. The synthesizers stamp it as
+// `<refKind>:<name>` (e.g. `Controller:list_items` for aiohttp,
+// `SCOPE.Operation:list_users` for starlette); the cross-file resolver may
+// later rebind it to a dotted `Mod.handler` — we keep only the final segment,
+// which is the name the `def <handler>` locator anchors on.
+func pythonSourceHandlerName(e *types.EntityRecord) string {
+	h := e.Properties["source_handler"]
+	if i := strings.IndexByte(h, ':'); i >= 0 {
+		h = h[i+1:]
+	}
+	if i := strings.LastIndexByte(h, '.'); i >= 0 {
+		h = h[i+1:]
+	}
+	return strings.TrimSpace(h)
+}
+
+// pythonSourceHandlerPaginationVerdict resolves param-based pagination by
+// locating the handler body via the endpoint's source_handler reference and
+// running the same request-query sniffer used for in-line ASGI/WSGI handlers.
+// This reaches OUT-OF-LINE registrations (aiohttp / starlette) whose StartLine
+// is the registration line, so the StartLine-anchored body window never covers
+// the separately-defined handler. Mirrors goPaginationVerdict. Refs #3872.
+func pythonSourceHandlerPaginationVerdict(content string, e *types.EntityRecord) (paginationVerdict, bool) {
+	handler := pythonSourceHandlerName(e)
+	if handler == "" {
+		return paginationVerdict{}, false
+	}
+	body := findPyHandlerBody(content, handler)
+	if body == "" {
+		return paginationVerdict{}, false
+	}
+	// Django Paginator / fastapi-pagination shapes can also appear in an
+	// out-of-line handler body — reuse the full body classifier so they are
+	// not missed, then fall through to the request-query sniffer.
+	if djangoPaginatorRe.MatchString(body) {
+		return paginationVerdict{paginated: true, style: "page", params: []string{"page"}, source: "Django Paginator"}, true
+	}
+	if fastapiPaginateRe.MatchString(body) {
+		return paginationVerdict{paginated: true, style: "page", params: []string{"page", "size"}, source: "fastapi-pagination paginate()"}, true
+	}
+	present := pythonRequestQueryParams(body)
+	return classifyParamShape(present, "request.query")
+}
+
+// findPyHandlerBody returns the indented body of a Python function located by
+// name, mirroring findGoHandlerBody for the brace-free language. It anchors on
+// `def <handler>(` / `async def <handler>(`, then captures every subsequent
+// line that is either blank or indented deeper than the `def` keyword, stopping
+// at the first line dedented to (or below) the def's own indentation. This
+// bounds the scan to exactly the function's own block, so a sibling function or
+// a later same-name read cannot leak pagination params into the verdict.
+func findPyHandlerBody(content, handler string) string {
+	if handler == "" {
+		return ""
+	}
+	re := regexp.MustCompile(`(?m)^([ \t]*)(?:async\s+)?def\s+` + regexp.QuoteMeta(handler) + `\s*\(`)
+	loc := re.FindStringSubmatchIndex(content)
+	if loc == nil {
+		return ""
+	}
+	defIndentWidth := pyIndentWidth(content[loc[2]:loc[3]])
+
+	// Start at the line AFTER the (possibly multi-line) signature. Advance to
+	// the end of the line that closes the signature `)` then `:`; a simple
+	// next-line start is sufficient because the sniffer tolerates the signature
+	// line itself being excluded (FastAPI typed params are handled elsewhere).
+	rest := content[loc[1]:]
+	nl := strings.IndexByte(rest, '\n')
+	if nl < 0 {
+		return ""
+	}
+	bodyStart := loc[1] + nl + 1
+	lines := strings.Split(content[bodyStart:], "\n")
+	var b strings.Builder
+	for _, ln := range lines {
+		if strings.TrimSpace(ln) == "" {
+			b.WriteString(ln)
+			b.WriteByte('\n')
+			continue
+		}
+		if pyIndentWidth(ln) <= defIndentWidth {
+			break // dedent to def level or below ends the function block
+		}
+		b.WriteString(ln)
+		b.WriteByte('\n')
+	}
+	return b.String()
 }
 
 // addPaginationParam lower-cases a candidate param name and records it iff it
