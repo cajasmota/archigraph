@@ -39,7 +39,7 @@ Auto-generated. Back to [summary](../summary.md).
 | DB effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_c_cpp.go` | — |
 | Dead code detection | 🟢 `partial` | `2026-05-28` | — | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_c_cpp.go` | — |
 | Env fallback recognition | ✅ `full` | — | — | `internal/substrate/c_cpp.go` | — |
-| Error flow | 🔴 `missing` | — | 3628 | — | — |
+| Error flow | ✅ `full` | `2026-06-03` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/cpp/exception_flow.go`<br>`internal/extractors/cpp/exception_flow_test.go` | throw X(...) / ns::X{} / std::X(...) / new X() -> THROWS (qualified -> bare last segment); catch (const X&) / (X*) / (X) -> CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_c_cpp.go` | — |
 | HTTP effect | 🟢 `partial` | `2026-05-28` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_c_cpp.go` | — |

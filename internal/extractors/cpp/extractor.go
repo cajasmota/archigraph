@@ -131,6 +131,11 @@ func (e *CppExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 	// may have been declared above or below the definition.
 	attachOutOfLineContains(&records, file.Path, lang)
 
+	// Issue #3628 — error-flow: scan throw / typed-catch sites and emit
+	// THROWS / CATCHES edges to a shared SCOPE.ExceptionType convergence node
+	// (records[0] is the file entity required by EmitExceptionEdges).
+	emitExceptionFlowEdges(root, file.Content, &records)
+
 	span.SetAttributes(
 		attribute.String("language", lang),
 		attribute.Int("file_line_count", lineCount),

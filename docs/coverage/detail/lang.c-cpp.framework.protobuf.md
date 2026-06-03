@@ -111,7 +111,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Dead code detection | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_c_cpp.go` | c-cpp entry-point sniffer roots reachability/dead-code on the generated service-method library_export; #4047 |
 | Def use chain extraction | 🟢 `partial` | — | backfill:dictionary-completeness | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_c_cpp.go` | c-cpp def-use sniffer fires on .cc handler bodies (named def->use, e.g. SayHello name/greeting); #4047 |
 | Env fallback recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Error flow | 🔴 `missing` | — | 3628 | — | — |
+| Error flow | ✅ `full` | `2026-06-03` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/cpp/exception_flow.go`<br>`internal/extractors/cpp/exception_flow_test.go` | throw X(...) / ns::X{} / std::X(...) / new X() -> THROWS (qualified -> bare last segment); catch (const X&) / (X*) / (X) -> CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | HTTP effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |

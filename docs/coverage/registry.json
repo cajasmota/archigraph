@@ -2811,8 +2811,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -3083,8 +3086,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -3355,8 +3361,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -3636,8 +3645,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -3920,8 +3932,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4204,8 +4219,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4511,8 +4529,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -4778,8 +4799,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5050,8 +5074,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5348,8 +5375,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5705,8 +5735,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -5989,8 +6022,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -6273,8 +6309,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -6560,8 +6599,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -6766,8 +6808,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -7040,8 +7085,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -7324,8 +7372,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -7471,8 +7522,11 @@
             "cites": ["internal/substrate/c_cpp.go"]
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -7561,8 +7615,11 @@
             "cites": ["internal/substrate/c_cpp.go"]
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/cpp/exception_flow.go","internal/extractors/cpp/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw X(...) / ns::X{} / std::X(...) / new X() -\u003e THROWS (qualified -\u003e bare last segment); catch (const X\u0026) / (X*) / (X) -\u003e CATCHES; catch(...) + throw;/throw e re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
