@@ -242,7 +242,13 @@ type jsAuthContext struct {
 	// default). Endpoints inherit it unless they opt out with `auth: false`.
 	hapiServerDefaultAuth bool
 	hapiServerDefaultLine int
-	file                  string
+	// classMetaAuth is the controller class-level metadata-decorator posture
+	// (@RequirePage / @Authenticated / @Public ... on the @Controller class).
+	// It applies to every method without its own override (deploy-9). nestMetaNone
+	// when no controller in the file carries a class-level metadata decorator.
+	classMetaAuth     nestMetaAuthResult
+	classMetaAuthLine int
+	file              string
 }
 
 // resolveJSTSFileAuth scans a file once and returns its app/router-level and
@@ -291,6 +297,14 @@ func resolveJSTSFileAuth(content, file string) jsAuthContext {
 			File: file,
 			Line: lineAtOffset(content, m[0]),
 		})
+	}
+
+	// Nest class-level metadata-decorator posture (deploy-9): @RequirePage /
+	// @Authenticated / @Public ... on the @Controller class. Applies to every
+	// method that lacks its own metadata override.
+	if cls := resolveNestClassMetadataAuth(content); cls.kind != nestMetaNone {
+		ctx.classMetaAuth = cls
+		ctx.classMetaAuthLine = nestFirstControllerLine(content)
 	}
 
 	// Hapi server-wide default auth strategy.
@@ -345,6 +359,9 @@ func applyJSTSAuthPolicy(content, path string, entities []types.EntityRecord, be
 	// Index Nest method-level guards by handler symbol (the decorator sits
 	// immediately above the @Get/@Post method; we attribute by nearest method).
 	methodGuards := indexNestMethodGuards(content, path)
+	// Index Nest method-level metadata-decorator auth (@RequirePage / @Public /
+	// @Authenticated ...) by handler method symbol (deploy-9).
+	methodMetaAuth := indexNestMethodMetadataAuth(content)
 	// Index Hapi per-route auth from the route object bodies.
 	hapiRouteAuth := indexHapiRouteAuth(content, path)
 	// Index Adonis route-chain middleware by canonical path.
@@ -375,7 +392,7 @@ func applyJSTSAuthPolicy(content, path string, entities []types.EntityRecord, be
 
 		policy := resolveEndpointAuth(
 			framework, key, e.Properties["source_handler"],
-			ctx, routeAuth, methodGuards, hapiRouteAuth, adonisRouteAuth, marbleRouteAuth,
+			ctx, routeAuth, methodGuards, methodMetaAuth, hapiRouteAuth, adonisRouteAuth, marbleRouteAuth,
 		)
 		stampAuthPolicy(e.Properties, policy)
 	}
@@ -395,6 +412,7 @@ func resolveEndpointAuth(
 	ctx jsAuthContext,
 	routeAuth map[string][]AuthSignal,
 	methodGuards map[string][]AuthSignal,
+	methodMetaAuth map[string]nestMetaAuthResult,
 	hapiRouteAuth map[string]hapiAuth,
 	adonisRouteAuth map[string][]AuthSignal,
 	marbleRouteAuth map[string][]AuthSignal,
@@ -418,6 +436,13 @@ func resolveEndpointAuth(
 				Scopes:      scopesFromSignals(sigs),
 				SourceChain: sigs,
 			}
+		}
+		// 1b'. Nest method-level metadata decorator (@RequirePage / @Public /
+		// @Authenticated ...). A method-level verdict — protective OR explicitly
+		// public — overrides the class-level default, mirroring NestJS
+		// `Reflector.getAllAndOverride([handler, class])` precedence (deploy-9).
+		if res, ok := methodMetaAuth[handler]; ok && res.kind != nestMetaNone {
+			return nestMetaPolicy(res, "high", ctx.file, 0)
 		}
 	}
 	// 1c. Hapi per-route auth.
@@ -465,6 +490,13 @@ func resolveEndpointAuth(
 			Scopes:      scopesFromSignals(ctx.classGuards),
 			SourceChain: ctx.classGuards,
 		}
+	}
+	// 3'. Nest class-level metadata decorator (@RequirePage / @Public /
+	// @Authenticated ... on the @Controller class). Applies to every method
+	// without its own override — MEDIUM confidence (class scope). A class-level
+	// @Public is an explicit public verdict for the whole controller (deploy-9).
+	if framework == "nestjs" && ctx.classMetaAuth.kind != nestMetaNone {
+		return nestMetaPolicy(ctx.classMetaAuth, "medium", ctx.file, ctx.classMetaAuthLine)
 	}
 	if ctx.hapiServerDefaultAuth && framework == "hapi" {
 		return AuthPolicy{
@@ -577,6 +609,14 @@ func stampAuthPolicy(props map[string]string, policy AuthPolicy) {
 		case "middleware", "config", "framework_default":
 			props["auth_middleware"] = authEvidenceSymbol(head.Text)
 		}
+	}
+	// #deploy-9 — surface the NestJS metadata-decorator permission page(s) under
+	// a dedicated key so archigraph_auth_coverage answers "what page does this
+	// route require?" without re-deriving it from auth_permissions.
+	if policy.Required && len(policy.Permissions) > 0 {
+		pages := append([]string(nil), policy.Permissions...)
+		sort.Strings(pages)
+		props["auth_page"] = strings.Join(pages, ",")
 	}
 }
 
