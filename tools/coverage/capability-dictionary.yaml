@@ -66,7 +66,7 @@ categories:
   databases:
     capabilities: [resource_extraction, dependency_attribution]
   platform:
-    capabilities: [resource_extraction, dependency_attribution, file_parsing, env_resolution, shared_data_coupling, external_service_dependency, translation_key_usage, iac_output_export_extraction, iac_cross_stack_reference, iac_iam_grant_attribution]
+    capabilities: [resource_extraction, dependency_attribution, file_parsing, env_resolution, shared_data_coupling, external_service_dependency, translation_key_usage, iac_output_export_extraction, iac_cross_stack_reference, iac_iam_grant_attribution, iac_event_source_wiring]
     subcategory_order: [iac_provisioning, container_orchestration, config_files, workflow_dag, app_topology, integration_external, localization, frontend_routing]
   security:
     capabilities: [auth_policy, secret_detection, sql_injection, cors_policy]
@@ -730,6 +730,24 @@ subcategories:
       # CloudFormation, Pulumi, Bicep) extract IAM resources but emit only generic
       # dependency/resource edges with no grant-method attribution — honest N/A.
       - iac_iam_grant_attribution
+      # iac_event_source_wiring (#4198): wiring of event sources / triggers to
+      # compute resources — which event source (queue / stream / schedule /
+      # topic / bucket-notification) invokes which function/consumer — modelled
+      # as a typed edge linking the event source to the function it triggers.
+      # Backed by AWS CDK in cdk_edges.go (Pass 4): TS `fn.addEventSource(new
+      # SqsEventSource(queue))` (cdkAddEventSourceRe → emitDependsOn(fn,res,
+      # "event_source",""), cdk_edges.go:381-388) and Python `fn.add_event_source(
+      # SqsEventSource(queue))` (cdkPyAddEventSourceRe, cdk_edges.go:472-479), each
+      # emitting a DEPENDS_ON edge fn→source carrying reason=event_source; and by
+      # the Serverless Framework, whose parser reads each function's `events:` list
+      # (parseEventsBlock) and emits a TRIGGERS edge source→function per
+      # sqs/sns/stream/kinesis/schedule trigger carrying event_type=<kind>
+      # (serverless_framework_edges.go:244-327). Other IaC tools (Terraform/
+      # OpenTofu, CloudFormation, Pulumi, Bicep, Ansible) declare event sources as
+      # generic resources (e.g. aws_lambda_event_source_mapping) with only ordinary
+      # dependency/resource edges and no dedicated event-source-wiring edge or
+      # trigger-type attribution — honest N/A.
+      - iac_event_source_wiring
     groups: []
 
   container_orchestration:

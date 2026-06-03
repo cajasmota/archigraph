@@ -512,3 +512,74 @@ export class GrantStack extends cdk.Stack {
 		t.Errorf("grant attribution iac_tool = %q, want aws-cdk", grant.props["iac_tool"])
 	}
 }
+
+// TestCDK_EventSourceWiring_Cell pins the iac_event_source_wiring capability
+// (#4198). It drives the REAL event-source pass (applyCDKEdges Pass 4) on a
+// CDK-TS snippet with `worker.addEventSource(new SqsEventSource(jobs))` and
+// asserts the EXACT event-source wiring edge: a DEPENDS_ON whose From is the
+// triggered function (Worker), whose To is the event source (Jobs), carrying
+// reason=event_source and iac_tool=aws-cdk. This is the "which event source
+// invokes which function" datum the cell claims — pinned exactly, never len>0.
+func TestCDK_EventSourceWiring_Cell(t *testing.T) {
+	src := `import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+
+export class WireStack extends cdk.Stack {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+    const jobs   = new sqs.Queue(this, 'Jobs', {});
+    const worker = new lambda.Function(this, 'Worker', {});
+    worker.addEventSource(new SqsEventSource(jobs));
+  }
+}
+`
+	_, rels := runCDKDetect(t, "typescript", "lib/wire-stack.ts", src)
+
+	deps := relsByKind(rels, "DEPENDS_ON")
+	var wire *relResult
+	for i := range deps {
+		if deps[i].from == "SCOPE.InfraResource:Worker" && deps[i].to == "SCOPE.InfraResource:Jobs" {
+			wire = &deps[i]
+			break
+		}
+	}
+	if wire == nil {
+		t.Fatalf("expected event-source DEPENDS_ON edge fn Worker→source Jobs, got %+v", deps)
+	}
+	if wire.props["reason"] != "event_source" {
+		t.Errorf("event-source wiring reason = %q, want event_source", wire.props["reason"])
+	}
+	if wire.props["iac_tool"] != "aws-cdk" {
+		t.Errorf("event-source wiring iac_tool = %q, want aws-cdk", wire.props["iac_tool"])
+	}
+}
+
+// TestCDKPython_EventSourceWiring_Cell mirrors the cell assertion on CDK-Python
+// (applyCDKEdgesPython Pass 4): `worker.add_event_source(SqsEventSource(jobs))`
+// emits the DEPENDS_ON Worker→Jobs edge with reason=event_source.
+func TestCDKPython_EventSourceWiring_Cell(t *testing.T) {
+	src := `from aws_cdk import aws_sqs as sqs, aws_lambda as lambda_
+from aws_cdk.aws_lambda_event_sources import SqsEventSource
+
+class WireStack(Stack):
+    def __init__(self, scope, id):
+        super().__init__(scope, id)
+        jobs = sqs.Queue(self, "Jobs")
+        worker = lambda_.Function(self, "Worker")
+        worker.add_event_source(SqsEventSource(jobs))
+`
+	_, rels := runCDKDetect(t, "python", "stacks/wire_stack.py", src)
+
+	deps := relsByKind(rels, "DEPENDS_ON")
+	var ok bool
+	for _, d := range deps {
+		if d.from == "SCOPE.InfraResource:Worker" && d.to == "SCOPE.InfraResource:Jobs" &&
+			d.props["reason"] == "event_source" {
+			ok = true
+		}
+	}
+	if !ok {
+		t.Errorf("expected event-source DEPENDS_ON Worker→Jobs (reason=event_source), got %+v", deps)
+	}
+}

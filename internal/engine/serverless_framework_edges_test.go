@@ -173,6 +173,69 @@ functions:
 	}
 }
 
+// slsEdge returns the first relationship of the given kind/from/to, or nil.
+func slsEdge(rels []types.RelationshipRecord, kind, fromID, toID string) *types.RelationshipRecord {
+	for i := range rels {
+		if rels[i].Kind == kind && rels[i].FromID == fromID && rels[i].ToID == toID {
+			return &rels[i]
+		}
+	}
+	return nil
+}
+
+// TestServerlessFramework_EventSourceWiring_Cell pins the iac_event_source_wiring
+// capability (#4198). It drives the REAL Serverless Framework extractor on a
+// manifest whose function carries both an sqs and a schedule trigger, and
+// asserts the EXACT event-source wiring edges: a TRIGGERS edge from the sqs
+// queue entity to the function carrying event_type=sqs, and a TRIGGERS edge from
+// the ScheduledJob to the function carrying event_type=schedule. This is the
+// "which event source invokes which function, and of what trigger type" datum
+// the cell claims — the exact edges + event_type property are pinned, never
+// len>0.
+func TestServerlessFramework_EventSourceWiring_Cell(t *testing.T) {
+	src := `service: workers
+provider:
+  name: aws
+  runtime: nodejs18.x
+functions:
+  worker:
+    handler: src/worker.handler
+    events:
+      - sqs:
+          arn: arn:aws:sqs:us-east-1:123456789012:jobs
+      - schedule: rate(1 hour)
+`
+	ents, rels := runSLSFrameworkDetect(t, "serverless.yml", src)
+
+	fnRef := serverlessFunctionKind + ":" + lambdaFunctionID("worker")
+
+	// sqs queue entity TRIGGERS the function, tagged event_type=sqs.
+	qID := sqsQueueID("arn:aws:sqs:us-east-1:123456789012:jobs")
+	if slsEntityByKindName(ents, queueEntityKind, qID) == nil {
+		t.Fatalf("expected sqs queue entity %q; ents=%v", qID, ents)
+	}
+	sqsEdge := slsEdge(rels, slsTriggersEdgeKind, queueEntityKind+":"+qID, fnRef)
+	if sqsEdge == nil {
+		t.Fatalf("expected sqs TRIGGERS edge %s -> %s; rels=%v", qID, fnRef, rels)
+	}
+	if sqsEdge.Properties["event_type"] != "sqs" {
+		t.Errorf("sqs trigger event_type = %q, want sqs", sqsEdge.Properties["event_type"])
+	}
+
+	// scheduled job TRIGGERS the function, tagged event_type=schedule.
+	jobID := "serverless-framework:worker:schedule"
+	if slsEntityByKindName(ents, scheduledJobKind, jobID) == nil {
+		t.Fatalf("expected ScheduledJob %q; ents=%v", jobID, ents)
+	}
+	schedEdge := slsEdge(rels, slsTriggersEdgeKind, scheduledJobKind+":"+jobID, fnRef)
+	if schedEdge == nil {
+		t.Fatalf("expected schedule TRIGGERS edge %s -> %s; rels=%v", jobID, fnRef, rels)
+	}
+	if schedEdge.Properties["event_type"] != "schedule" {
+		t.Errorf("schedule trigger event_type = %q, want schedule", schedEdge.Properties["event_type"])
+	}
+}
+
 // TestServerlessFramework_ResolveYMLName verifies the resolveServerlessYMLName
 // stub is wired: after a manifest is parsed, the handler symbol resolves to the
 // logical function name.
