@@ -42,6 +42,43 @@ func runSmoke(t *testing.T, language, path, content string) []entityNameKind {
 	return out
 }
 
+// TestSmokeHttp4kHandlerAttributionFiresViaDispatch proves (#4018) that the
+// http4k Kotlin route extractor fires through the REAL kotlin dispatch path on a
+// live .kt file AND that the deepened handler_attribution (the `handler`
+// property) survives the full RunCustomExtractors pass — not just the unit test.
+func TestSmokeHttp4kHandlerAttributionFiresViaDispatch(t *testing.T) {
+	src := `
+val app = routes(
+    "/api" bind routes(
+        "/users" bind GET to ::listUsers,
+        "/x" bind POST to { req -> Response(OK) },
+    ),
+)
+`
+	ents, errs := RunCustomExtractors(context.Background(), FileInput{
+		Path:     "App.kt",
+		Language: "kotlin",
+		Content:  []byte(src),
+	})
+	for _, err := range errs {
+		t.Fatalf("custom dispatch returned error: %v", err)
+	}
+	handlerFor := func(name string) (string, bool) {
+		for _, e := range ents {
+			if e.Kind == "SCOPE.Operation" && e.Name == name {
+				return e.Properties["handler"], true
+			}
+		}
+		return "", false
+	}
+	if h, ok := handlerFor("GET /api/users"); !ok || h != "::listUsers" {
+		t.Errorf("http4k via dispatch: GET /api/users handler = %q (ok=%v); want ::listUsers", h, ok)
+	}
+	if h, ok := handlerFor("POST /api/x"); !ok || h != "lambda" {
+		t.Errorf("http4k via dispatch: POST /api/x handler = %q (ok=%v); want lambda", h, ok)
+	}
+}
+
 // TestSmokeRubyOrphansFireViaDispatch proves that the previously-orphaned Ruby
 // framework extractors are now selected by language dispatch AND actually emit
 // their expected entities when run through RunCustomExtractors("ruby", …).

@@ -44701,14 +44701,16 @@
             "issue": "3818"
           },
           "endpoint_synthesis": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/frameworks/http4k.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/kotlin/routing.go","internal/custom/kotlin/routing_test.go","internal/extractors/custom_dispatch_smoke_test.go"],
+            "notes": "#4018 (epic #3872): the native custom_kotlin_http4k_routes extractor (routing.go) synthesizes a SCOPE.Operation `endpoint` named '\u003cVERB\u003e \u003cpath\u003e' (http_method/path/framework/provenance=INFERRED_FROM_HTTP4K_BIND) for every leaf `\"path\" bind VERB to handler` of the http4k routing DSL. Nested `\"prefix\" bind routes( … )` blocks compose their prefix onto inner leaf paths via a paren-balanced prefix stack (http4kComposedBinds), including multi-level nesting. Value-asserted GET /ping, POST/DELETE /users/{id} flat; composed GET /api/v1/users + DELETE /api/v1/users/{id} two-level nested (TestHttp4kRoutes_FlatBind/_NestedBind/_NestedTwoLevels). Negative: a ServerFilters.Cors(...).then(routes(...)) filter chain emits ONLY the wrapped GET /ping route, never the filter token (TestHttp4kRoutes_FilterNotARoute); wrong-language/empty no-op (TestHttp4kRoutes_WrongLanguage/_EmptyContent). Fires live on .kt through RunCustomExtractors (TestSmokeHttp4kHandlerAttributionFiresViaDispatch).",
+            "verified_at": "2026-06-03"
           },
           "handler_attribution": {
-            "status": "partial",
-            "cites": ["internal/engine/rules/kotlin/frameworks/http4k.yaml"],
-            "verified_at": "2026-05-28"
+            "status": "full",
+            "cites": ["internal/custom/kotlin/routing.go","internal/custom/kotlin/routing_test.go","internal/extractors/custom_dispatch_smoke_test.go"],
+            "notes": "#4018 (epic #3872): the handler bound by `to \u003chandler\u003e` is now stamped on the endpoint entity's `handler` property (http4kHandlerAfter, anchored on the `to` keyword after the verb). Method references (`to ::listUsers` -\u003e ::listUsers, `to UserController::getOne` -\u003e UserController::getOne) and bare named-val handlers (`to listHandler` -\u003e listHandler) are attributed verbatim; inline lambdas (`to { req -\u003e … }`) are attributed as 'lambda'. Attribution survives nested prefix composition (the composed leaf keeps its handler) and the full live dispatch pass. Value-asserted in TestHttp4kRoutes_HandlerMethodRef/_HandlerQualifiedRef/_HandlerNamedVal/_HandlerLambda/_HandlerNestedComposed and end-to-end in TestSmokeHttp4kHandlerAttributionFiresViaDispatch. Honest model: the custom-extractor Extract() interface returns entities only (no RelationshipRecord), so attribution is an edge-less `handler` property — the same model the sibling javalin/spring/micronaut Kotlin route extractors use — and a lambda body is not resolved to an enclosing fun.",
+            "verified_at": "2026-06-03"
           },
           "route_extraction": {
             "status": "full",

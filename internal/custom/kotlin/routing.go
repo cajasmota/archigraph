@@ -420,6 +420,19 @@ var (
 	// Captures: (prefix)
 	reHttp4kNestedBind = regexp.MustCompile(
 		`"([^"]+)"\s+bind\s+routes\s*\(`)
+
+	// reHttp4kHandlerRef matches the handler token that follows `to ` on a leaf
+	// bind, in order of specificity:
+	//   - a qualified or bare method reference:  Controller::method  /  ::method
+	//   - a bare identifier (a val holding an HttpHandler):  listHandler
+	// The leading anchor `^\s*to\s+` ties the match to the `to` keyword that
+	// immediately follows the verb, so unrelated identifiers further down the
+	// statement are never mistaken for the handler.
+	reHttp4kHandlerRef = regexp.MustCompile(
+		`^\s*to\s+((?:[A-Za-z_][A-Za-z0-9_.]*)?::[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_.]*)`)
+
+	// reHttp4kHandlerLambda matches an inline-lambda handler:  to { req -> ... }
+	reHttp4kHandlerLambda = regexp.MustCompile(`^\s*to\s*\{`)
 )
 
 func (e *kotlinHttp4kRoutesExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
@@ -470,6 +483,9 @@ func (e *kotlinHttp4kRoutesExtractor) Extract(ctx context.Context, file extracto
 			"path", fullPath,
 			"provenance", "INFERRED_FROM_HTTP4K_BIND",
 		)
+		if b.handler != "" {
+			setProps(&ent, "handler", b.handler)
+		}
 		add(ent)
 	}
 
@@ -499,9 +515,10 @@ func (e *kotlinHttp4kRoutesExtractor) Extract(ctx context.Context, file extracto
 // http4kBind is a resolved http4k leaf route with its enclosing prefix already
 // composed into path.
 type http4kBind struct {
-	verb   string
-	path   string
-	offset int
+	verb    string
+	path    string
+	handler string // ::ref / Class::method / identifier / "lambda" / "" (unknown)
+	offset  int
 }
 
 // http4kComposedBinds scans http4k routing DSL and returns leaf bindings with
@@ -558,14 +575,44 @@ func http4kComposedBinds(src string) []http4kBind {
 				composed = joinKtRoutePaths(stack[i].prefix, composed)
 			}
 			out = append(out, http4kBind{
-				verb:   src[leaf[li][4]:leaf[li][5]],
-				path:   composed,
-				offset: leaf[li][0],
+				verb:    src[leaf[li][4]:leaf[li][5]],
+				path:    composed,
+				handler: http4kHandlerAfter(src, leaf[li][5]),
+				offset:  leaf[li][0],
 			})
 			li++
 		}
 	}
 	return out
+}
+
+// http4kHandlerAfter inspects the source immediately following a leaf bind's
+// verb token (offset `after` = just past the VERB keyword) and returns the
+// handler descriptor for the `to <handler>` that http4k requires on every leaf
+// route:
+//   - a method reference (`::h`, `Ctrl::m`) → returned verbatim;
+//   - a bare identifier (a val holding an HttpHandler, e.g. `to listHandler`) →
+//     returned verbatim;
+//   - an inline lambda (`to { req -> … }`) → "lambda" (the body is not a named
+//     entity, so this is the honest descriptor);
+//   - anything not discernible as a handler → "" (honest-partial).
+//
+// The scan is bounded to the handler token itself via anchored regexes, so it
+// never wanders into the next route or an unrelated identifier on the line.
+func http4kHandlerAfter(src string, after int) string {
+	if after < 0 || after > len(src) {
+		return ""
+	}
+	rest := src[after:]
+	// Inline lambda must be checked first: `to {` would otherwise be missed by
+	// the reference regex (which requires an identifier after `to`).
+	if reHttp4kHandlerLambda.MatchString(rest) {
+		return "lambda"
+	}
+	if m := reHttp4kHandlerRef.FindStringSubmatch(rest); m != nil {
+		return m[1]
+	}
+	return ""
 }
 
 // matchCloseParen returns the offset of the ')' that matches the '(' at

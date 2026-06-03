@@ -284,6 +284,112 @@ val app = routes(
 	}
 }
 
+// #4018 handler_attribution: a method-reference handler `to ::listUsers` must be
+// stamped verbatim on the endpoint entity.
+func TestHttp4kRoutes_HandlerMethodRef(t *testing.T) {
+	src := `
+val app = routes(
+    "/users" bind GET to ::listUsers,
+    "/users" bind POST to ::createUser,
+)
+`
+	ents := extract(t, "custom_kotlin_http4k_routes", fi("App.kt", "kotlin", src))
+	if h, ok := handlerOf(ents, "GET /users"); !ok || h != "::listUsers" {
+		t.Errorf("http4k: GET /users handler = %q (ok=%v); want ::listUsers", h, ok)
+	}
+	if h, ok := handlerOf(ents, "POST /users"); !ok || h != "::createUser" {
+		t.Errorf("http4k: POST /users handler = %q (ok=%v); want ::createUser", h, ok)
+	}
+}
+
+// #4018 handler_attribution: a qualified method reference `to Controller::method`.
+func TestHttp4kRoutes_HandlerQualifiedRef(t *testing.T) {
+	src := `
+val app = routes(
+    "/users/{id}" bind GET to UserController::getOne,
+)
+`
+	ents := extract(t, "custom_kotlin_http4k_routes", fi("App.kt", "kotlin", src))
+	if h, ok := handlerOf(ents, "GET /users/{id}"); !ok || h != "UserController::getOne" {
+		t.Errorf("http4k: GET /users/{id} handler = %q (ok=%v); want UserController::getOne", h, ok)
+	}
+}
+
+// #4018 handler_attribution: a named val handler `to listHandler`.
+func TestHttp4kRoutes_HandlerNamedVal(t *testing.T) {
+	src := `
+val listHandler: HttpHandler = { req -> Response(OK) }
+val app = routes(
+    "/users" bind GET to listHandler,
+)
+`
+	ents := extract(t, "custom_kotlin_http4k_routes", fi("App.kt", "kotlin", src))
+	if h, ok := handlerOf(ents, "GET /users"); !ok || h != "listHandler" {
+		t.Errorf("http4k: GET /users handler = %q (ok=%v); want listHandler", h, ok)
+	}
+}
+
+// #4018 handler_attribution: an inline lambda handler `to { req -> ... }` is
+// attributed as "lambda" (the body is not a named entity — honest descriptor).
+func TestHttp4kRoutes_HandlerLambda(t *testing.T) {
+	src := `
+val app = routes(
+    "/x" bind POST to { req -> Response(OK).body("ok") },
+)
+`
+	ents := extract(t, "custom_kotlin_http4k_routes", fi("App.kt", "kotlin", src))
+	if h, ok := handlerOf(ents, "POST /x"); !ok || h != "lambda" {
+		t.Errorf("http4k: POST /x handler = %q (ok=%v); want lambda", h, ok)
+	}
+}
+
+// #4018 handler_attribution: nested prefix composition must keep the handler
+// attribution on the composed leaf route.
+func TestHttp4kRoutes_HandlerNestedComposed(t *testing.T) {
+	src := `
+val app = routes(
+    "/api" bind routes(
+        "/v1" bind routes(
+            "/users" bind GET to ::list,
+            "/users/{id}" bind DELETE to ::remove,
+        ),
+    ),
+)
+`
+	ents := extract(t, "custom_kotlin_http4k_routes", fi("Nested.kt", "kotlin", src))
+	if h, ok := handlerOf(ents, "GET /api/v1/users"); !ok || h != "::list" {
+		t.Errorf("http4k: GET /api/v1/users handler = %q (ok=%v); want ::list", h, ok)
+	}
+	if h, ok := handlerOf(ents, "DELETE /api/v1/users/{id}"); !ok || h != "::remove" {
+		t.Errorf("http4k: DELETE /api/v1/users/{id} handler = %q (ok=%v); want ::remove", h, ok)
+	}
+}
+
+// #4018 negative: a Filter / SingleRouteBlock in the chain is NOT emitted as a
+// route, and `.then(...)` composition is not mistaken for a handler binding.
+func TestHttp4kRoutes_FilterNotARoute(t *testing.T) {
+	src := `
+val app = ServerFilters.Cors(corsPolicy)
+    .then(routes(
+        "/ping" bind GET to ::ping,
+    ))
+`
+	ents := extract(t, "custom_kotlin_http4k_routes", fi("App.kt", "kotlin", src))
+	names := routeNames(ents)
+	if !names["GET /ping"] {
+		t.Errorf("http4k: expected GET /ping through filter chain; got %v", names)
+	}
+	// The Cors filter must not be synthesized as a route.
+	for n := range names {
+		if n == "GET " || n == "Cors" || n == "then" {
+			t.Errorf("http4k: filter token %q wrongly emitted as a route", n)
+		}
+	}
+	if len(names) != 1 {
+		t.Errorf("http4k: expected exactly 1 route (GET /ping); got %v", names)
+	}
+}
+
 func TestHttp4kRoutes_NoRoutes(t *testing.T) {
 	src := `data class User(val name: String)`
 	ents := extract(t, "custom_kotlin_http4k_routes", fi("User.kt", "kotlin", src))
