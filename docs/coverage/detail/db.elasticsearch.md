@@ -29,7 +29,7 @@ one is a separate detail page.
 | [`lang.jsts.driver.elastic`](./lang.jsts.driver.elastic.md) | JS/TS | driver | 1 full, 3 missing, 7 n/a |
 | [`lang.php.driver.elastic`](./lang.php.driver.elastic.md) | php | driver | 1 full, 3 missing, 7 n/a |
 | [`lang.python.driver.elastic`](./lang.python.driver.elastic.md) | python | driver | 1 full, 3 missing, 7 n/a |
-| [`lang.ruby.driver.elastic`](./lang.ruby.driver.elastic.md) | ruby | driver | 1 partial, 4 missing, 6 n/a |
+| [`lang.ruby.driver.elastic`](./lang.ruby.driver.elastic.md) | ruby | driver | 1 full, 1 partial, 3 missing, 6 n/a |
 | [`lang.rust.driver.elastic`](./lang.rust.driver.elastic.md) | rust | driver | 4 missing, 7 n/a |
 | [`lang.scala.orm.elastic4s`](./lang.scala.orm.elastic4s.md) | scala | orm | 1 full, 2 partial, 3 missing, 5 n/a |
 

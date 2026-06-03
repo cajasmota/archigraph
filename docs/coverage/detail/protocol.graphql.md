@@ -23,22 +23,22 @@ one is a separate detail page.
 
 | Record | Language | Kind | Status |
 |--------|----------|------|--------|
-| [`lang.csharp.framework.hotchocolate`](./lang.csharp.framework.hotchocolate.md) | C# | framework | 5 full, 5 partial, 39 missing |
+| [`lang.csharp.framework.hotchocolate`](./lang.csharp.framework.hotchocolate.md) | C# | framework | 8 full, 19 partial, 22 missing |
 | [`lang.dart.framework.graphql-flutter`](./lang.dart.framework.graphql-flutter.md) | dart | framework | 1 full, 36 missing |
 | [`lang.elixir.framework.absinthe`](./lang.elixir.framework.absinthe.md) | elixir | framework | 7 full, 32 partial, 10 missing |
-| [`lang.go.framework.gqlgen`](./lang.go.framework.gqlgen.md) | go | framework | 4 full, 8 partial, 37 missing |
-| [`lang.java.framework.spring-graphql`](./lang.java.framework.spring-graphql.md) | java | framework | 8 full, 6 partial, 41 missing |
-| [`lang.jsts.framework.graphql-client`](./lang.jsts.framework.graphql-client.md) | JS/TS | framework | 2 full, 1 partial, 33 missing |
-| [`lang.jsts.framework.graphql-resolvers`](./lang.jsts.framework.graphql-resolvers.md) | JS/TS | framework | 10 full, 20 partial, 24 missing, 1 n/a |
-| [`lang.jsts.framework.type-graphql`](./lang.jsts.framework.type-graphql.md) | JS/TS | framework | 4 full, 6 partial, 39 missing |
-| [`lang.kotlin.framework.graphql-kotlin`](./lang.kotlin.framework.graphql-kotlin.md) | kotlin | framework | 5 full, 50 missing |
+| [`lang.go.framework.gqlgen`](./lang.go.framework.gqlgen.md) | go | framework | 8 full, 19 partial, 22 missing |
+| [`lang.java.framework.spring-graphql`](./lang.java.framework.spring-graphql.md) | java | framework | 8 full, 15 partial, 31 missing, 1 n/a |
+| [`lang.jsts.framework.graphql-client`](./lang.jsts.framework.graphql-client.md) | JS/TS | framework | 3 full, 6 partial, 27 missing |
+| [`lang.jsts.framework.graphql-resolvers`](./lang.jsts.framework.graphql-resolvers.md) | JS/TS | framework | 11 full, 20 partial, 23 missing, 1 n/a |
+| [`lang.jsts.framework.type-graphql`](./lang.jsts.framework.type-graphql.md) | JS/TS | framework | 8 full, 16 partial, 25 missing |
+| [`lang.kotlin.framework.graphql-kotlin`](./lang.kotlin.framework.graphql-kotlin.md) | kotlin | framework | 8 full, 11 partial, 36 missing |
 | [`msg.graphql-subscriptions`](./msg.graphql-subscriptions.md) | multi |  | 3 full |
-| [`lang.php.framework.api-platform-graphql`](./lang.php.framework.api-platform-graphql.md) | php | framework | 11 full, 16 partial, 22 missing |
-| [`lang.php.framework.graphql-php`](./lang.php.framework.graphql-php.md) | php | framework | 11 full, 16 partial, 22 missing |
+| [`lang.php.framework.api-platform-graphql`](./lang.php.framework.api-platform-graphql.md) | php | framework | 12 full, 17 partial, 20 missing |
+| [`lang.php.framework.graphql-php`](./lang.php.framework.graphql-php.md) | php | framework | 11 full, 17 partial, 21 missing |
 | [`lang.python.framework.graphene`](./lang.python.framework.graphene.md) | python | framework | 15 full, 25 partial, 9 missing |
 | [`lang.python.framework.strawberry-graphql`](./lang.python.framework.strawberry-graphql.md) | python | framework | 16 full, 24 partial, 9 missing |
-| [`lang.ruby.framework.graphql-ruby`](./lang.ruby.framework.graphql-ruby.md) | ruby | framework | 5 full, 11 partial, 33 missing |
-| [`lang.rust.framework.async-graphql`](./lang.rust.framework.async-graphql.md) | rust | framework | 12 full, 3 partial, 34 missing |
+| [`lang.ruby.framework.graphql-ruby`](./lang.ruby.framework.graphql-ruby.md) | ruby | framework | 8 full, 18 partial, 23 missing |
+| [`lang.rust.framework.async-graphql`](./lang.rust.framework.async-graphql.md) | rust | framework | 12 full, 10 partial, 27 missing |
 
 ## Provenance
 

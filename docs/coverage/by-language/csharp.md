@@ -29,8 +29,8 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [ASP.NET Core](../detail/lang.csharp.framework.aspnet-core.md) | 🟡 3/6 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟢 25/25 | 🟡 10/11 | |
 | [ASP.NET MVC (legacy)](../detail/lang.csharp.framework.aspnet-mvc.md) | 🟡 3/6 | ✅ 1/1 | ✅ 3/3 | ✅ 1/1 | 🟢 25/25 | 🟡 10/11 | |
 | [Carter](../detail/lang.csharp.framework.carter.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 25/25 | 🟡 10/11 | |
-| [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 24/25 | 🟡 10/11 | |
-| [HotChocolate (GraphQL)](../detail/lang.csharp.framework.hotchocolate.md) | 🟡 3/6 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🟡 5/24 | 🟡 1/13 | |
+| [FastEndpoints](../detail/lang.csharp.framework.fastendpoints.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟢 25/25 | 🟡 10/11 | |
+| [HotChocolate (GraphQL)](../detail/lang.csharp.framework.hotchocolate.md) | 🟡 3/6 | ✅ 1/1 | 🔴 0/4 | 🔴 0/1 | 🟡 21/24 | 🟡 2/13 | |
 | [NancyFX](../detail/lang.csharp.framework.nancyfx.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 24/25 | 🟡 6/11 | |
 | [ServiceStack](../detail/lang.csharp.framework.servicestack.md) | 🟡 3/6 | 🟢 1/1 | ✅ 3/3 | 🟢 1/1 | 🟡 24/25 | 🟡 6/11 | |
 

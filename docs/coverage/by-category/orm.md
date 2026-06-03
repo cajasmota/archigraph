@@ -70,7 +70,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [java](../by-language/java.md) | [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟡 7/10 | |
 | [java](../by-language/java.md) | [Spring Data Cassandra](../detail/lang.java.orm.spring-data-cassandra.md) | 🔴 0/6 | |
 | [java](../by-language/java.md) | [Spring Data Elasticsearch](../detail/lang.java.orm.spring-data-elastic.md) | 🔴 0/6 | |
-| [java](../by-language/java.md) | [Spring Data JPA](../detail/lang.java.orm.spring-data-jpa.md) | 🟡 5/10 | |
+| [java](../by-language/java.md) | [Spring Data JPA](../detail/lang.java.orm.spring-data-jpa.md) | 🟡 7/10 | |
 | [java](../by-language/java.md) | [Spring Data MongoDB](../detail/lang.java.orm.spring-data-mongo.md) | 🟡 1/6 | |
 | [java](../by-language/java.md) | [Spring Data Redis](../detail/lang.java.orm.spring-data-redis.md) | 🔴 0/6 | |
 | [java](../by-language/java.md) | [jOOQ](../detail/lang.java.orm.jooq.md) | 🟡 6/9 | |
@@ -94,12 +94,12 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [JS/TS](../by-language/jsts.md) | [node-postgres / pg](../detail/lang.jsts.driver.postgres.md) | 🟡 1/4 | |
 | [JS/TS](../by-language/jsts.md) | [supabase-js](../detail/lang.jsts.driver.supabase.md) | 🟡 1/4 | |
 | [kotlin](../by-language/kotlin.md) | [Exposed (JetBrains)](../detail/lang.kotlin.orm.exposed.md) | 🟡 7/10 | |
-| [kotlin](../by-language/kotlin.md) | [Hibernate (Kotlin)](../detail/lang.kotlin.orm.hibernate.md) | 🟡 7/11 | |
+| [kotlin](../by-language/kotlin.md) | [Hibernate (Kotlin)](../detail/lang.kotlin.orm.hibernate.md) | 🟡 8/11 | |
 | [kotlin](../by-language/kotlin.md) | [Ktorm](../detail/lang.kotlin.orm.ktorm.md) | 🟡 7/10 | |
 | [kotlin](../by-language/kotlin.md) | [MongoDB (Kotlin driver)](../detail/lang.kotlin.orm.mongodb.md) | 🟡 2/5 | |
 | [kotlin](../by-language/kotlin.md) | [Room (Android)](../detail/lang.kotlin.orm.room.md) | 🟡 7/10 | |
 | [kotlin](../by-language/kotlin.md) | [SQLDelight](../detail/lang.kotlin.orm.sqldelight.md) | 🟡 7/10 | |
-| [kotlin](../by-language/kotlin.md) | [Spring Data (Kotlin)](../detail/lang.kotlin.orm.spring-data.md) | 🟡 7/11 | |
+| [kotlin](../by-language/kotlin.md) | [Spring Data (Kotlin)](../detail/lang.kotlin.orm.spring-data.md) | 🟡 8/11 | |
 | [php](../by-language/php.md) | [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟡 1/4 | |
 | [php](../by-language/php.md) | [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🟡 8/11 | |
 | [php](../by-language/php.md) | [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 8/11 | |
@@ -115,9 +115,9 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [php](../by-language/php.md) | [neo4j-php-client](../detail/lang.php.driver.neo4j.md) | 🟡 3/6 | |
 | [php](../by-language/php.md) | [phpredis / Predis](../detail/lang.php.driver.redis.md) | 🟡 1/4 | |
 | [python](../by-language/python.md) | [Alembic (migration tool)](../detail/lang.python.orm.alembic.md) | 🟡 2/5 | |
-| [python](../by-language/python.md) | [Beanie (async MongoDB ODM)](../detail/lang.python.orm.beanie.md) | 🟡 5/9 | |
+| [python](../by-language/python.md) | [Beanie (async MongoDB ODM)](../detail/lang.python.orm.beanie.md) | 🟡 6/9 | |
 | [python](../by-language/python.md) | [Django ORM](../detail/lang.python.orm.django.md) | ✅ 11/11 | |
-| [python](../by-language/python.md) | [MongoEngine](../detail/lang.python.orm.mongoengine.md) | 🟡 5/9 | |
+| [python](../by-language/python.md) | [MongoEngine](../detail/lang.python.orm.mongoengine.md) | 🟡 6/9 | |
 | [python](../by-language/python.md) | [MySQL (PyMySQL / mysqlclient)](../detail/lang.python.driver.mysql.md) | 🟡 2/5 | |
 | [python](../by-language/python.md) | [Peewee](../detail/lang.python.orm.peewee.md) | 🟡 6/9 | |
 | [python](../by-language/python.md) | [Pony ORM](../detail/lang.python.orm.pony.md) | 🟡 6/9 | |
@@ -139,10 +139,10 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [ruby](../by-language/ruby.md) | [ROM (Ruby Object Mapper)](../detail/lang.ruby.orm.rom-rb.md) | 🟡 8/11 | |
 | [ruby](../by-language/ruby.md) | [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟡 9/11 | |
 | [ruby](../by-language/ruby.md) | [cassandra-driver (Ruby)](../detail/lang.ruby.driver.cassandra.md) | 🟡 1/4 | |
-| [ruby](../by-language/ruby.md) | [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 1/5 | |
+| [ruby](../by-language/ruby.md) | [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 2/5 | |
 | [ruby](../by-language/ruby.md) | [mongo Ruby Driver](../detail/lang.ruby.driver.mongodb.md) | 🟡 1/4 | |
 | [ruby](../by-language/ruby.md) | [mysql2 (Ruby driver)](../detail/lang.ruby.driver.mysql.md) | 🟡 1/4 | |
-| [ruby](../by-language/ruby.md) | [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 3/7 | |
+| [ruby](../by-language/ruby.md) | [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 4/7 | |
 | [ruby](../by-language/ruby.md) | [pg (Ruby driver)](../detail/lang.ruby.driver.postgres.md) | 🟡 1/4 | |
 | [ruby](../by-language/ruby.md) | [redis-rb](../detail/lang.ruby.driver.redis.md) | 🟡 1/4 | |
 | [ruby](../by-language/ruby.md) | [sqlite3 (Ruby driver)](../detail/lang.ruby.driver.sqlite.md) | 🟡 1/4 | |

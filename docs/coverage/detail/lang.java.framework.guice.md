@@ -60,7 +60,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Enum extraction | 🔴 `missing` | — | 3699 | — | — |
 | Interface extraction | 🔴 `missing` | — | 3699 | — | — |
-| Type alias extraction | 🔴 `missing` | — | 3699 | — | — |
+| Type alias extraction | — `not_applicable` | `2026-06-04` | — | — | Java has no type alias syntax (no `type X = Y`); the language only has classes/interfaces/enums/records and generics, so there is nothing for the Go-style `type X = Y` alias extractor to lift. Not applicable by language design — mirrors spring-boot/micronaut/jaxrs. |
 | Type extraction | 🔴 `missing` | — | 3699 | — | — |
 
 ### DI
@@ -106,29 +106,29 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Confidence overlay | 🔴 `missing` | — | 3699 | — | — |
+| Confidence overlay | ✅ `full` | `2026-06-04` | — | `internal/graph/graph.go`<br>`internal/mcp/tools.go`<br>`internal/types/confidence.go` | #3872: the per-LANGUAGE sniffJava sniffer (Register("java")) gates only on file content with zero per-framework branching, so the graph-wide confidence overlay (#2769) consumes the SAME per-Binding Confidence for guice files as flagship siblings. Value-asserting test drives the Guice AbstractModule (.java) idiom and asserts the EXACT Confidence (literal 1.0 / env-fallback 0.85 / cross-file import 0.6). |
 | Config consumption | 🔴 `missing` | — | 3699 | — | — |
-| Constant propagation | 🔴 `missing` | — | 3699 | — | — |
-| Dead code detection | 🔴 `missing` | — | 3699 | — | — |
-| Def use chain extraction | 🔴 `missing` | — | 3699 | — | — |
-| Env fallback recognition | 🔴 `missing` | — | 3699 | — | — |
+| Constant propagation | ✅ `full` | `2026-06-04` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/java.go`<br>`internal/substrate/substrate.go`<br>`internal/substrate/substrate_cap_gjj_sweep_test.go` | #3872: the framework-blind java sniffJava sniffer extracts top-level string literals regardless of framework; guice dispatches it identically. Test asserts the EXACT literal value (GUICE_BINDING_NAME="primaryDataSource" literal) + ProvenanceLiteral + Confidence 1.0 on the Guice AbstractModule (.java) idiom. |
+| Dead code detection | 🟢 `partial` | `2026-06-04` | 3699 | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_java.go` | #3872: dead-code identification is the whole-GRAPH Phase-1B reachability pass (reachability.go) with zero per-language code; a Guice AbstractModule / bound class method is an ordinary Java entity, so one never reached from an entry-point is flagged a dead-code candidate exactly as for spring-boot. PARTIAL (mirrors all Java siblings): a method reached only via Guice's runtime bind()/@Provides reflection (not a direct CALLS edge the seeder follows) can be a false dead-code positive. |
+| Def use chain extraction | 🟢 `partial` | `2026-06-04` | 3699 | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use.go`<br>`internal/substrate/def_use_java.go`<br>`internal/substrate/substrate_structural_gojava_wave1_test.go` | #3872 (verify-first): def_use_java.go registers per-LANGUAGE via RegisterDefUseSniffer("java", …), .java→java file dispatch, zero framework refs. sniffDefUseJava extracts intra-procedural defs/uses and attributes them to the enclosing guice method via scanJavaFuncHeaders. Proven by TestStructural_Java_Guice_DefUseAttributes (def+use of local `url` in configure()). PARTIAL: standard typed-local-binding chains; inter-procedural reaching-defs not modelled. |
+| Env fallback recognition | ✅ `full` | `2026-06-04` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/java.go`<br>`internal/substrate/substrate.go`<br>`internal/substrate/substrate_cap_gjj_sweep_test.go` | #3872: the framework-blind java substrate sniffer recognises the env-fallback idiom regardless of framework; guice dispatches it identically. Test asserts the EXACT env-var name + default literal (GUICE_JDBC_URL+default "jdbc:postgresql://localhost/guice") + ProvenanceEnvFallback + Confidence 0.85 on the Guice AbstractModule (.java) idiom. |
 | Error flow | ✅ `full` | `2026-06-02` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/java/exception_flow.go`<br>`internal/extractors/java/exception_flow_test.go` | throw new X + throws clause -> THROWS; catch (A|B e) -> CATCHES; checked-exception model (#3628) |
 | Feature flag gating | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Fs effect | 🔴 `missing` | — | 3699 | — | — |
 | HTTP effect | 🔴 `missing` | — | 3699 | — | — |
-| Import resolution quality | 🔴 `missing` | — | 3699 | — | — |
-| Module cycle detection | 🔴 `missing` | — | 3699 | — | — |
+| Import resolution quality | 🟢 `partial` | `2026-06-04` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/java.go`<br>`internal/substrate/substrate.go`<br>`internal/substrate/substrate_cap_gjj_sweep_test.go` | #3872: the java cross-file import sniffer is framework-blind; guice dispatches it identically. PARTIAL (mirrors all siblings): single-segment binding, no transitive/re-export graph. Test asserts the EXACT ImportSource (com.google.inject) + ProvenanceCrossFile + Confidence 0.6 on the Guice AbstractModule (.java) idiom. |
+| Module cycle detection | 🟢 `partial` | `2026-06-04` | 3699 | `internal/links/module_cycle_pass.go` | #3872: module-cycle detection is the whole-GRAPH module_cycle_pass over the Java IMPORTS edge graph; a guice app spans ≥2 ordinary Java packages with import edges, so import cycles among them are detected exactly as for spring-boot. PARTIAL (mirrors all Java siblings): package/type-level import cycles only; guice annotation/DI wiring is not an import cycle. |
 | Mutation effect | 🔴 `missing` | — | 3699 | — | — |
-| Pure function tagging | 🔴 `missing` | — | 3699 | — | — |
-| Reachability analysis | 🔴 `missing` | — | 3699 | — | — |
+| Pure function tagging | 🟢 `partial` | `2026-06-04` | 3699 | `internal/links/effect_propagation.go`<br>`internal/links/pure_function_pass.go` | #3872: pure-function tagging is the whole-GRAPH Phase-3A pass (pure_function_pass.go) with zero per-language code — it tags any function-like entity the effect pass left effect-free. A guice method with no stamped effect is tagged a pure candidate exactly as for spring-boot methods. PARTIAL (mirrors all Java siblings): tagging is absence-of-detected-effect, confidence floor 0.30, not a proof of purity. |
+| Reachability analysis | 🟢 `partial` | `2026-06-04` | 3699 | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_java.go` | #3872: reachability is the whole-GRAPH Phase-1B BFS from the Java entry-point set across CALLS/IMPORTS/etc; a Guice AbstractModule / bound class method reached transitively from the Java main is marked reachable exactly as for spring-boot. PARTIAL (mirrors all Java siblings): a method reached only via Guice's runtime bind()/@Provides reflection the static seeder does not model can be under-reached. |
 | Request shape extraction | 🔴 `missing` | — | 3699 | — | — |
 | Request sink dataflow | 🔴 `missing` | — | 3958 | — | No dataflow sniffer covers this framework's request-binding forms yet. The Java sniffer (internal/substrate/dataflow_java.go, #3958) targets Spring MVC/WebFlux @RequestBody/@RequestParam/@PathVariable; Kotlin/Scala have no sniffer at all (no "kotlin"/"scala" slug registered). request_sink_dataflow remains a follow-up for these JVM frameworks. |
 | Response shape extraction | 🔴 `missing` | — | 3699 | — | — |
 | Sanitizer recognition | 🔴 `missing` | — | 3699 | — | — |
-| Schema drift detection | 🔴 `missing` | — | 3699 | — | — |
+| Schema drift detection | 🟢 `partial` | `2026-06-04` | — | `internal/links/payload_drift.go`<br>`internal/mcp/payload_drift_tool.go`<br>`internal/substrate/payload_shapes.go`<br>`internal/substrate/payload_shapes_java.go` | #3872: the framework-agnostic payload-drift pass dispatches sniffPayloadShapesJava by LANGUAGE slug (LanguageForPath->PayloadShapeSnifferFor), so guice producer/consumer shapes feed the same drift join as siblings. PARTIAL (mirrors siblings): no guice-specific drift fixture asserted end-to-end yet. |
 | Taint sink detection | 🔴 `missing` | — | 3699 | — | — |
 | Taint source detection | 🔴 `missing` | — | 3699 | — | — |
-| Template pattern catalog | 🔴 `missing` | — | 3699 | — | — |
+| Template pattern catalog | 🟢 `partial` | — | — | `internal/links/template_pattern_pass.go`<br>`internal/substrate/template_pattern_java.go` | #3872: sniffTemplatePatternsJava is registered on the java language slug and gates only on file content (no per-framework branch), so guice dispatches it identically. PARTIAL: mirrors all siblings. |
 | Vulnerability finding | 🔴 `missing` | — | 3699 | — | — |
 
 ## Provenance

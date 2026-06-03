@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Auth coverage | ✅ `full` | `2026-06-04` | 3872 | `internal/custom/php/apiplatform.go`<br>`internal/custom/php/apiplatform_test.go` | REST `security:` Symfony expression on #[ApiResource]/operation -> auth_required + auth_roles (is_granted ROLE_*) + auth_expression; resource-wide guard inherited, per-op overrides (parity with api-platform-graphql; TestAPIPlatform_PerOperationSecurity, TestAPIPlatform_ResourceWideSecurity) |
 
 ### Validation
 
@@ -102,7 +102,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Def use chain extraction | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_php.go` | PHP def-use sniffer registered in substrate; flows through language-agnostic def_use_pass |
 | Env fallback recognition | ✅ `full` | `2026-06-03` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/php.go`<br>`internal/substrate/substrate.go` | — |
 | Error flow | ✅ `full` | `2026-06-03` | — | `internal/extractor/exception_flow.go`<br>`internal/extractors/php/exception_flow.go`<br>`internal/extractors/php/exception_flow_test.go` | throw new X / throw new \Ns\X -> THROWS; catch (X $e) incl PHP8 union A|B -> CATCHES; broad \Throwable/\Exception recorded (typed); re-throw $e / dynamic dropped (#3628) |
-| Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
+| Feature flag gating | 🟢 `partial` | `2026-06-03` | 4154 | `internal/engine/feature_flag_edges.go`<br>`internal/engine/feature_flag_edges_test.go` | PHP flag-check call sites -> feature:<key> + GATED_BY edge (framework-agnostic engine pass, fires regardless of framework). Generic cross-language SDKs verified to fire on PHP: OpenFeature getBooleanValue('key',default), Unleash isEnabled('key'), LaunchDarkly variation('key',...). No first-party flag facade for this framework (Laravel Pennant / Symfony Flagception idioms are credited on their owning frameworks). Honest-partial: dynamic keys emit nothing. |
 | Fs effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_php.go` | — |
 | HTTP effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_php.go` | — |
 | Import resolution quality | 🟢 `partial` | `2026-06-03` | — | `internal/links/constant_propagation.go`<br>`internal/substrate/php.go`<br>`internal/substrate/substrate.go` | — |

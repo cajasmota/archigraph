@@ -75,7 +75,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Enum extraction | 🔴 `missing` | — | 3963 | — | — |
 | Interface extraction | 🔴 `missing` | — | 3963 | — | — |
-| Type alias extraction | 🔴 `missing` | — | 3963 | — | — |
+| Type alias extraction | ✅ `full` | `2026-06-03` | 3963 | `internal/extractors/javascript/extractor.go`<br>`internal/patterns/type_alias_extractor.go` | #3963 wave1-structural: TS type_alias extractor (language typescript/javascript, no framework gate) emits alias_name/alias_of for GraphQL resolver context/parent/args type aliases. Covered by the same jsts type-alias idiom proven in TestW1jr_TypeAlias_TypeGraphqlContextAlias (resolver context alias). |
 | Type extraction | 🔴 `missing` | — | 3963 | — | — |
 
 ### DI

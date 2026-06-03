@@ -81,9 +81,9 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Log extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Metric extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Trace extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Log extraction | 🟢 `partial` | `2026-06-04` | backfill:dictionary-completeness | `internal/custom/rust/observability.go`<br>`internal/custom/rust/observability_auth_test.go` | tracing info!/warn!/error!/debug!/trace! (qualified + bare), log::*, event!(Level,..), slog::*, #[instrument]; level+library captured, static message head captured when leading string literal. utoipa-only handler/doc modules (#[utoipa::path]) attributed via the utoipa import marker (parity-grind-rust), proven by value-asserting TestRustObs_FrameworkAttribution_Utoipa (asserts framework="utoipa"). Stays PARTIAL: messages are often format strings with interpolated/structured fields, and logger->subscriber/appender binding is cross-file (same limitation as PHP/Java/Ruby per-framework log cells) |
+| Metric extraction | ✅ `full` | `2026-06-04` | — | `internal/custom/rust/observability.go`<br>`internal/custom/rust/observability_auth_test.go` | metrics crate counter!/gauge!/histogram!("name"), prometheus register_*!/IntCounter::new/Opts::new("name"), opentelemetry meter.u64_counter("name"); metric NAME captured as observability_name + observability_kind/library props. utoipa-only handler modules attributed via the utoipa import marker (parity-grind-rust); value-asserting TestRustObs_FrameworkAttribution_Utoipa asserts the exact metric entity obs:metrics:metrics_macro:counter:utoipa_requests_total with observability_name="utoipa_requests_total" + framework="utoipa". Per-call-site literal name needs no cross-file resolution; binding meter->exporter stays out of scope |
+| Trace extraction | ✅ `full` | `2026-06-04` | — | `internal/custom/rust/observability.go`<br>`internal/custom/rust/observability_auth_test.go` | tracing span!(Level,"name")/info_span!("name"), opentelemetry global::tracer("svc")/tracer.start("name")/span_builder("name"); span NAME captured as observability_name. utoipa-only handler modules attributed via the utoipa import marker (parity-grind-rust); value-asserting TestRustObs_FrameworkAttribution_Utoipa asserts the exact span entity obs:tracing:tracing_level_span:info:utoipa_get_user with observability_name="utoipa_get_user" + framework="utoipa". Literal span name needs no cross-file resolution; #[instrument]-derived names and tracer->exporter binding stay out of scope |
 
 ### Data
 
@@ -98,18 +98,18 @@ Auto-generated. Back to [summary](../summary.md).
 | Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Config consumption | 🔴 `missing` | — | 3641 | — | — |
 | Constant propagation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Dead code detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Def use chain extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Dead code detection | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_rust.go` | #3980 wave1-structural: reachability/dead-code BFS flags unreferenced utoipa #[utoipa::path] OpenAPI-annotated axum handlers (async fn get_item); rust entry points seeded by entry_points_rust.go. |
+| Def use chain extraction | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_rust.go` | #3980 wave1-structural: language-level rust def-use sniffer (def_use_rust.go, registers on "rust" slug, framework-agnostic) fires on utoipa #[utoipa::path] OpenAPI-annotated axum handlers (async fn get_item). Probe TestW1jr_DefUseRust_UtoipaHandler asserts exact (fn,var) def/use pairs. |
 | Env fallback recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Error flow | ✅ `full` | `2026-06-03` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/rust/exception_flow.go`<br>`internal/extractors/rust/exception_flow_test.go` | Err(Type::ctor())/Err(Type::Variant)/Err(Type(..)) + bail!/ensure!(Type::X) + .ok_or(Type::X)/.ok_or_else(||Type::X) -> THROWS (enum variant normalized to leading-segment ENUM type); match Err(Type)/if let Err(Type)/.map_err(|e: Type|) -> CATCHES; bare ? propagation, Box<dyn Error>, string panic!, Err(var)/Err(make()) re-raise dropped (honest-partial, #3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | HTTP effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Import resolution quality | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Module cycle detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Module cycle detection | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/module_cycle_pass.go` | #3980 wave1-structural: Tarjan SCC over IMPORTS detects cycles among utoipa modules; rust mod/use IMPORTS emitted by the rust extractor. |
 | Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Pure function tagging | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/pure_function_pass.go` | #3980 wave1-structural: language-agnostic pure-function pass tags utoipa #[utoipa::path] OpenAPI-annotated axum handlers (async fn get_item) left un-stamped by the effect pass; same rust idiom proven in TestW1jr_DefUseRust_UtoipaHandler. |
+| Reachability analysis | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_rust.go` | #3980 wave1-structural: reachability BFS reaches utoipa #[utoipa::path] OpenAPI-annotated axum handlers (async fn get_item) through CALLS/IMPORTS edges from the rust extractor; entry points via entry_points_rust.go. |
 | Request shape extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/rust/helpers.go`<br>`internal/custom/rust/utoipa.go`<br>`internal/custom/rust/utoipa_test.go` | request_body = <DTO> (incl inline()/content=) -> request_dto tied to verb+path |
 | Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | ✅ `full` | `2026-05-30` | — | `internal/custom/rust/helpers.go`<br>`internal/custom/rust/utoipa.go`<br>`internal/custom/rust/utoipa_test.go` | responses((status=N, body=<DTO>)) -> response_dto per status, tied to verb+path |

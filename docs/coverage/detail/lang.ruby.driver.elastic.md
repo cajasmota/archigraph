@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-04` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Driver topology: scanRubyDrivers gates on the elasticsearch-ruby / opensearch-ruby client (Elasticsearch::Client) and attributes `client.search(index: 'logs', ...)` via the shared esIndexKeyRe + emitElasticTargets — the SAME canonical QUERIES edge to Class:<Index> as the C#/PHP/Python elastic passes. Value-asserting test TestDriver_RubyElasticIndex asserts Function:search -find-> Class:Log (orm=elastic); dynamic index names honest-skipped (TestDriver_RubyElasticDynamicIndexSkipped). |
 
 ### Migrations
 

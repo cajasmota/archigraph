@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-04` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_python.go`<br>`internal/engine/orm_queries_test.go` | MongoEngine QuerySet-manager queries resolve target topology: scanPythonORM (import-gated on mongoengine) matches BOTH the direct-call form `<Model>.objects(field=...)` (the idiom Django's `.objects.<verb>` matcher never covered) and chained verbs `<Model>.objects.filter/get/all/first/count/delete/update/...`; emits a QUERIES edge from the enclosing function to Class:<Model> with canonical operation + parsed filter_keys (orm=mongoengine), promoting terminal CRUD verbs (`.filter(...).delete()` → delete). Mongoengine-only files suppress the Django matcher so the call site is credited once as orm=mongoengine (no double-emit). Value-asserting tests TestORM_MongoEngineDirectAndChained + import-gated negative TestORM_MongoEngineNotImportedNoEdge. |
 
 ### Migrations
 

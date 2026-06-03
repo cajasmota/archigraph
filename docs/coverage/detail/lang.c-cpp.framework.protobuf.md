@@ -73,10 +73,10 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Enum extraction | 🔴 `missing` | — | 3963 | — | — |
-| Interface extraction | 🔴 `missing` | — | 3963 | — | — |
-| Type alias extraction | 🔴 `missing` | — | 3963 | — | — |
-| Type extraction | 🔴 `missing` | — | 3963 | — | — |
+| Enum extraction | ✅ `full` | `2026-06-04` | 3963 | `internal/custom/cpp/grpc_protobuf_test.go`<br>`internal/custom/cpp/protobuf.go` | The .proto IDL extractor recovers every `enum` declaration as a SCOPE.Schema/enum entity carrying enum_name + provenance=INFERRED_FROM_PROTO_ENUM. VALUE-ASSERTED: TestProtobufEnumExtractionCap drives custom_cpp_protobuf on `enum Corpus {...}` and asserts SCOPE.Schema/enum proto_enum:Corpus with enum_name=Corpus. DEPLOY-DEFERRED. |
+| Interface extraction | ✅ `full` | `2026-06-04` | 3963 | `internal/custom/cpp/grpc_protobuf_test.go`<br>`internal/custom/cpp/protobuf.go` | A .proto `service` declaration is the RPC interface; the extractor emits a SCOPE.Service/grpc_service entity carrying grpc_service + rpc_protocol=grpc. VALUE-ASSERTED: TestProtobufInterfaceExtractionCap asserts SCOPE.Service/grpc_service grpc_service:RouteGuide with grpc_service=RouteGuide, rpc_protocol=grpc. DEPLOY-DEFERRED. |
+| Type alias extraction | — `not_applicable` | — | 3963 | — | proto3 IDL has no type-alias construct (no typedef/using=); message/enum/service are the only type surfaces. The framework-agnostic C++ type-system extractor emits no dedicated alias entity either. Honest-N/A for protobuf. |
+| Type extraction | ✅ `full` | `2026-06-04` | 3963 | `internal/custom/cpp/grpc_protobuf_test.go`<br>`internal/custom/cpp/protobuf.go` | A .proto `message` becomes a SCOPE.Schema/dto type (dto_name, message_kind=proto_message) and each field becomes a SCOPE.Schema/field carrying the declared field_type + parent_message. VALUE-ASSERTED: TestProtobufTypeExtractionCap asserts proto_message:Point dto plus Point.latitude field_type=int32. DEPLOY-DEFERRED. |
 
 ### DI
 

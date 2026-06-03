@@ -33,8 +33,8 @@ one is a separate detail page.
 | [`lang.kotlin.orm.mongodb`](./lang.kotlin.orm.mongodb.md) | kotlin | orm | 2 full, 3 missing, 6 n/a |
 | [`lang.php.driver.mongodb`](./lang.php.driver.mongodb.md) | php | driver | 1 full, 1 partial, 3 missing, 6 n/a |
 | [`lang.python.driver.mongodb`](./lang.python.driver.mongodb.md) | python | driver | 1 full, 3 missing, 7 n/a |
-| [`lang.python.orm.beanie`](./lang.python.orm.beanie.md) | python | orm | 5 partial, 4 missing, 2 n/a |
-| [`lang.python.orm.mongoengine`](./lang.python.orm.mongoengine.md) | python | orm | 5 partial, 4 missing, 2 n/a |
+| [`lang.python.orm.beanie`](./lang.python.orm.beanie.md) | python | orm | 1 full, 5 partial, 3 missing, 2 n/a |
+| [`lang.python.orm.mongoengine`](./lang.python.orm.mongoengine.md) | python | orm | 1 full, 5 partial, 3 missing, 2 n/a |
 | [`lang.ruby.driver.mongodb`](./lang.ruby.driver.mongodb.md) | ruby | driver | 1 full, 3 missing, 7 n/a |
 | [`lang.ruby.orm.mongoid`](./lang.ruby.orm.mongoid.md) | ruby | orm | 6 partial, 3 missing, 2 n/a |
 | [`lang.rust.driver.mongodb`](./lang.rust.driver.mongodb.md) | rust | driver | 1 full, 3 missing, 7 n/a |

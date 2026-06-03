@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-04` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_python.go`<br>`internal/engine/orm_queries_test.go` | Beanie document-class queries resolve target topology: scanPythonORM (import-gated on beanie) matches `<Model>.find/find_one/find_all/get/aggregate/insert_many/insert/count/delete(...)` and emits a QUERIES edge from the enclosing function to Class:<Model> with canonical operation (find/create/aggregate/update/delete) and parsed filter_keys (orm=beanie). Value-asserting tests TestORM_BeanieDocumentQueries + import-gated negative TestORM_BeanieNotImportedNoEdge (no fabricated edge without a beanie import). |
 
 ### Migrations
 

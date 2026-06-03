@@ -95,7 +95,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Confidence overlay | ✅ `full` | `2026-06-04` | — | `internal/graph/graph.go`<br>`internal/mcp/tools.go`<br>`internal/substrate/elixir_confidence_overlay_test.go`<br>`internal/types/confidence.go` | universal confidence overlay (internal/types/confidence.go: not framework-gated); per-language data feed sniffEffectsElixir emits Confidence>0 on this framework idiom (elixir_confidence_overlay_test.go). epic #3872 parity-grind-elixir |
 | Config consumption | 🔴 `missing` | — | 3641 | — | — |
 | Constant propagation | ✅ `full` | `2026-05-30` | — | `internal/engine/http_endpoint_elixir_tesla.go`<br>`internal/engine/http_endpoint_elixir_tesla_test.go`<br>`internal/engine/http_endpoint_jsts_client_1483.go`<br>`internal/engine/http_endpoint_synthesis.go` | Tesla.Middleware.BaseUrl literal + @module-attr resolution into canonical path (#3511) |
 | Dead code detection | 🟢 `partial` | `2026-06-03` | — | `internal/links/reachability.go`<br>`internal/mcp/dead_code.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_elixir.go` | — |

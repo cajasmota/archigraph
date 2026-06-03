@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-04` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries_datastore_infra.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Driver topology: the language-agnostic datastore-infra pass (scanDatastoreInfraDrivers → emitCypherTargets), already run for Ruby in applyORMQueries, attributes neo4j-ruby-driver `session.run("MATCH (u:User) ...")` Cypher to the node label — the SAME canonical QUERIES edge to Class:<Label> as the JS Neo4j pass. Verified by value-asserting test TestDriver_RubyNeo4jCypher: Function:find_users -find-> Class:User (orm=neo4j). Dynamic/parameterised labels honest-skipped. Credits the already-firing cross-language Cypher emitter for the Ruby driver. |
 
 ### Migrations
 

@@ -89,7 +89,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| DB effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| DB effect | 🟢 `partial` | `2026-06-03` | 4218 | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_rust.go`<br>`internal/substrate/graphql_client_effects_4218_test.go` | #4218 (verify-first): per-LANGUAGE effect_sinks_rust.go db detectors fire on async-graphql resolver bodies and attribute to the exact resolver method. db_read via rustSqlxSelectRe (sqlx::query_as!(SELECT)) on account; db_write via rustSqlxWriteRe (sqlx::query!(INSERT)) on create_order. Proven by TestSubstrate_Rust_AsyncGraphql_EffectsAttribute. partial: call-shape/SQL-literal detection, no dataloader model. |
 
 ### Substrate
 
@@ -98,18 +98,18 @@ Auto-generated. Back to [summary](../summary.md).
 | Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Config consumption | 🔴 `missing` | — | 3641 | — | — |
 | Constant propagation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Dead code detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Def use chain extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Dead code detection | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_rust.go` | #3980 wave1-structural: reachability/dead-code BFS flags unreferenced async-graphql #[Object] resolver methods (async fn users); rust entry points seeded by entry_points_rust.go. |
+| Def use chain extraction | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_rust.go` | #3980 wave1-structural: language-level rust def-use sniffer (def_use_rust.go, registers on "rust" slug, framework-agnostic) fires on async-graphql #[Object] resolver methods (async fn users). Probe TestW1jr_DefUseRust_AsyncGraphqlResolver asserts exact (fn,var) def/use pairs. |
 | Env fallback recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Error flow | ✅ `full` | `2026-06-03` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/rust/exception_flow.go`<br>`internal/extractors/rust/exception_flow_test.go` | Err(Type::ctor())/Err(Type::Variant)/Err(Type(..)) + bail!/ensure!(Type::X) + .ok_or(Type::X)/.ok_or_else(||Type::X) -> THROWS (enum variant normalized to leading-segment ENUM type); match Err(Type)/if let Err(Type)/.map_err(|e: Type|) -> CATCHES; bare ? propagation, Box<dyn Error>, string panic!, Err(var)/Err(make()) re-raise dropped (honest-partial, #3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| HTTP effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| HTTP effect | 🟢 `partial` | `2026-06-03` | 4218 | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_rust.go`<br>`internal/substrate/graphql_client_effects_4218_test.go` | #4218 (verify-first): per-LANGUAGE effect_sinks_rust.go http_out detector (rustHTTPRe reqwest::Client::new()...send().await) fires on an async-graphql resolver driving an outbound call, attributed to create_order. Proven by TestSubstrate_Rust_AsyncGraphql_EffectsAttribute. partial: standard reqwest/hyper/surf call forms; no datasource/federation client model. |
 | Import resolution quality | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Module cycle detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Module cycle detection | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/module_cycle_pass.go` | #3980 wave1-structural: Tarjan SCC over IMPORTS detects cycles among async-graphql modules; rust mod/use IMPORTS emitted by the rust extractor. |
 | Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Pure function tagging | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/pure_function_pass.go` | #3980 wave1-structural: language-agnostic pure-function pass tags async-graphql #[Object] resolver methods (async fn users) left un-stamped by the effect pass; same rust idiom proven in TestW1jr_DefUseRust_AsyncGraphqlResolver. |
+| Reachability analysis | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_rust.go` | #3980 wave1-structural: reachability BFS reaches async-graphql #[Object] resolver methods (async fn users) through CALLS/IMPORTS edges from the rust extractor; entry points via entry_points_rust.go. |
 | Request shape extraction | 🟢 `partial` | `2026-05-30` | 3508 | `internal/custom/rust/async_graphql.go`<br>`internal/custom/rust/graphql_grpc_test.go` | InputObject DTO type names recovered; per-field shape of the input struct not statically chased |
 | Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | 🟢 `partial` | `2026-05-30` | 3508 | `internal/custom/rust/async_graphql.go`<br>`internal/custom/rust/graphql_grpc_test.go` | Resolver return DTO type names recovered via SimpleObject derive; field-level shape not chased |

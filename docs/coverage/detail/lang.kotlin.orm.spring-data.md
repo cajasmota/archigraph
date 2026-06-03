@@ -17,7 +17,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Model extraction | 🟢 `partial` | `2026-05-28` | — | `internal/engine/rules/kotlin/orms/spring_data_kotlin.yaml` | — |
 | Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
-| Schema extraction | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/hibernate.go` | Recording win: hibernate.go accepts kotlin language with spring_data_jpa framework. Spring Data JPA entities use the same @Entity/@Table annotations as Hibernate — regex patterns match Kotlin data class declarations. spring_ecosystem.go is Java-only but the JPA schema layer is shared. |
+| Schema extraction | 🟢 `partial` | `2026-06-04` | — | `internal/custom/java/hibernate.go`<br>`internal/custom/java/kotlin_port_test.go` | Parity-flip (epic #3872): ExtractHibernate gate (hibernate.go:61) accepts ctx.Language=="kotlin" for the spring_data_jpa framework — Spring Data JPA entities use the same @Entity/@Table annotations as Hibernate, emitting SCOPE.Schema entities with the table_name property. Live-verified by TestKotlinHibernate_SchemaTableName_Parity3872, which drives the real dispatch with Framework="spring_data_jpa" on a Kotlin data class and asserts table_name=="orders". Mirrors java.orm.spring-data-jpa schema_extraction=partial; partial because Kotlin-specific JPA idioms are not all captured and spring_ecosystem.go remains Java-only. |
 
 ### Relationships
 

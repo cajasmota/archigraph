@@ -94,7 +94,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Confidence overlay | ✅ `full` | `2026-06-04` | — | `internal/graph/graph.go`<br>`internal/mcp/tools.go`<br>`internal/substrate/elixir_confidence_overlay_test.go`<br>`internal/types/confidence.go` | universal confidence overlay (internal/types/confidence.go: not framework-gated); per-language data feed sniffEffectsElixir emits Confidence>0 on this framework idiom (elixir_confidence_overlay_test.go). epic #3872 parity-grind-elixir |
 | Config consumption | 🔴 `missing` | — | 3641 | — | — |
 | Constant propagation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | DB effect | 🟢 `partial` | `2026-06-03` | — | `internal/links/effect_propagation.go`<br>`internal/substrate/effect_sinks_elixir.go` | — |

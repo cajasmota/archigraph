@@ -98,18 +98,18 @@ Auto-generated. Back to [summary](../summary.md).
 | Confidence overlay | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Config consumption | 🔴 `missing` | — | 3641 | — | — |
 | Constant propagation | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Dead code detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Def use chain extraction | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Dead code detection | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_rust.go` | #3980 wave1-structural: reachability/dead-code BFS flags unreferenced tonic gRPC service impl methods (#[tonic::async_trait] impl ... async fn say_hello); rust entry points seeded by entry_points_rust.go. |
+| Def use chain extraction | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_rust.go` | #3980 wave1-structural: language-level rust def-use sniffer (def_use_rust.go, registers on "rust" slug, framework-agnostic) fires on tonic gRPC service impl methods (#[tonic::async_trait] impl ... async fn say_hello). Probe TestW1jr_DefUseRust_TonicServiceMethod asserts exact (fn,var) def/use pairs. |
 | Env fallback recognition | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Error flow | ✅ `full` | `2026-06-03` | 3628 | `internal/extractor/exception_flow.go`<br>`internal/extractors/rust/exception_flow.go`<br>`internal/extractors/rust/exception_flow_test.go` | Err(Type::ctor())/Err(Type::Variant)/Err(Type(..)) + bail!/ensure!(Type::X) + .ok_or(Type::X)/.ok_or_else(||Type::X) -> THROWS (enum variant normalized to leading-segment ENUM type); match Err(Type)/if let Err(Type)/.map_err(|e: Type|) -> CATCHES; bare ? propagation, Box<dyn Error>, string panic!, Err(var)/Err(make()) re-raise dropped (honest-partial, #3628) |
 | Feature flag gating | 🔴 `missing` | — | feature_flag_gating:#3706-not-yet-extracted | — | — |
 | Fs effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | HTTP effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
 | Import resolution quality | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Module cycle detection | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Module cycle detection | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/module_cycle_pass.go` | #3980 wave1-structural: Tarjan SCC over IMPORTS detects cycles among tonic gRPC modules; rust mod/use IMPORTS emitted by the rust extractor. |
 | Mutation effect | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Pure function tagging | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
-| Reachability analysis | 🔴 `missing` | — | backfill:dictionary-completeness | — | — |
+| Pure function tagging | 🟢 `partial` | `2026-06-03` | 3980 | `internal/links/pure_function_pass.go` | #3980 wave1-structural: language-agnostic pure-function pass tags tonic gRPC service impl methods (#[tonic::async_trait] impl ... async fn say_hello) left un-stamped by the effect pass; same rust idiom proven in TestW1jr_DefUseRust_TonicServiceMethod. |
+| Reachability analysis | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/links/reachability.go`<br>`internal/substrate/entry_points.go`<br>`internal/substrate/entry_points_rust.go` | #3980 wave1-structural: reachability BFS reaches tonic gRPC service impl methods (#[tonic::async_trait] impl ... async fn say_hello) through CALLS/IMPORTS edges from the rust extractor; entry points via entry_points_rust.go. |
 | Request shape extraction | 🟢 `partial` | `2026-05-30` | 3508 | `internal/custom/rust/graphql_grpc_test.go`<br>`internal/custom/rust/tonic.go` | Request<T> message type NAME recovered; field shapes live in tonic-build-generated structs (build.rs OUT_DIR), not statically present in source |
 | Request sink dataflow | 🔴 `missing` | — | 3740 | — | — |
 | Response shape extraction | 🟢 `partial` | `2026-05-30` | 3508 | `internal/custom/rust/graphql_grpc_test.go`<br>`internal/custom/rust/tonic.go` | Response<T> message type NAME recovered; generated message field shapes not statically resolvable |

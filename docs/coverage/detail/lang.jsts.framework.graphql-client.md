@@ -39,7 +39,7 @@ Auto-generated. Back to [summary](../summary.md).
 |------------|--------|-------------|-------|-------|-------|
 | Enum extraction | 🔴 `missing` | — | 3642 | — | — |
 | Interface extraction | 🔴 `missing` | — | 3642 | — | — |
-| Type alias extraction | 🔴 `missing` | — | 3642 | — | — |
+| Type alias extraction | ✅ `full` | `2026-06-03` | 3963 | `internal/extractors/javascript/extractor.go`<br>`internal/patterns/type_alias_extractor.go` | #3963 wave1-structural: TS type_alias extractor (type_alias_extractor.go, switches on language typescript/javascript, no framework gate) emits alias_name/alias_of for graphql-client operation variable/result shapes. Probe TestW1jr_TypeAlias_GraphqlClientOperationShape asserts UserVars alias_of={ id: string } and UserResult. |
 
 ### Lifecycle
 
@@ -61,18 +61,18 @@ Auto-generated. Back to [summary](../summary.md).
 | Config consumption | 🔴 `missing` | — | 3642 | — | — |
 | Constant propagation | 🔴 `missing` | — | 3642 | — | — |
 | DB effect | 🔴 `missing` | — | 3642 | — | — |
-| Dead code detection | 🔴 `missing` | — | 3642 | — | — |
-| Def use chain extraction | 🔴 `missing` | — | 3642 | — | — |
+| Dead code detection | 🟢 `partial` | `2026-06-03` | 3076 | `internal/links/reachability.go`<br>`internal/substrate/entry_points_jsts.go` | #3076 wave1-structural: language-agnostic reachability/dead-code pass (reachability.go BFS over CALLS/IMPORTS) flags unreachable graphql-client request wrappers. jsts entry-points seeded via entry_points_jsts.go. |
+| Def use chain extraction | 🟢 `partial` | `2026-06-03` | 3076 | `internal/links/def_use_pass.go`<br>`internal/substrate/def_use_jsts.go` | #3076 wave1-structural: language-level jsts def-use sniffer (def_use_jsts.go, registers on "jsts" slug, framework-agnostic) fires on graphql-client operation builders. Probe TestW1jr_DefUseJSTS_GraphqlClientOperation asserts def of variables+merged and use of variables inside fn fetchUser. |
 | Env fallback recognition | 🔴 `missing` | — | 3642 | — | — |
 | Error flow | 🔴 `missing` | — | 3642 | — | — |
 | Feature flag gating | 🟢 `partial` | `2026-06-03` | 3706 | `internal/engine/feature_flag_edges.go`<br>`internal/engine/feature_flag_edges_test.go`<br>`internal/engine/orm_queries.go` | flag-check call sites -> feature:<key> + GATED_BY (framework-agnostic JS/TS engine pass, fires regardless of framework). Verified to attribute to the enclosing function: LaunchDarkly ldClient.variation/boolVariation/stringVariation, Unleash unleash.isEnabled, OpenFeature client.getBooleanValue, Unleash-React useFlag, Split.io getTreatment, Flagsmith hasFeature, plus GrowthBook gb.isOn/isOff/getFeatureValue and ConfigCat configCatClient.getValue/getValueAsync (receiver-gated). Honest-partial: dynamic keys + non-flag receivers (button.isOn, formData.getValue) emit nothing. |
 | Fs effect | 🔴 `missing` | — | 3642 | — | — |
 | HTTP effect | ✅ `full` | `2026-06-03` | 3642 | `internal/engine/http_endpoint_graphql_client.go`<br>`internal/engine/http_endpoint_graphql_client_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | Client GraphQL operations surface as http_endpoint_call (consumer) entities with the synthetic GRAPHQL verb on canonical path /graphql/<RootType>/<field>, matching the server producer so the cross-repo HTTP linker forms client->server links + FETCHES from the enclosing component. See data_fetching for the per-idiom detail. |
 | Import resolution quality | 🔴 `missing` | — | 3642 | — | — |
-| Module cycle detection | 🔴 `missing` | — | 3642 | — | — |
+| Module cycle detection | 🟢 `partial` | `2026-06-03` | 3076 | `internal/links/module_cycle_pass.go` | #3076 wave1-structural: Tarjan SCC over IMPORTS edges (module_cycle_pass.go, language-agnostic) detects import cycles among graphql-client modules; IMPORTS emitted unconditionally by the jsts extractor. |
 | Mutation effect | 🔴 `missing` | — | 3642 | — | — |
-| Pure function tagging | 🔴 `missing` | — | 3642 | — | — |
-| Reachability analysis | 🔴 `missing` | — | 3642 | — | — |
+| Pure function tagging | 🟢 `partial` | `2026-06-03` | 3076 | `internal/links/pure_function_pass.go` | #3076 wave1-structural: language-agnostic pure-function pass (pure_function_pass.go, zero per-language code) tags graphql-client operation functions like fetchUser that the effect pass left un-stamped. Driven by the same jsts def-use idiom proven in TestW1jr_DefUseJSTS_GraphqlClientOperation. |
+| Reachability analysis | 🟢 `partial` | `2026-06-03` | 3076 | `internal/links/reachability.go`<br>`internal/substrate/entry_points_jsts.go` | #3076 wave1-structural: reachability BFS (reachability.go) reaches graphql-client operation functions through CALLS/IMPORTS edges emitted by the jsts extractor; entry points lifted by entry_points_jsts.go. |
 | Request shape extraction | 🔴 `missing` | — | 3642 | — | — |
 | Response shape extraction | 🔴 `missing` | — | 3642 | — | — |
 | Sanitizer recognition | 🔴 `missing` | — | 3642 | — | — |

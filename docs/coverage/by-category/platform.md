@@ -9,16 +9,16 @@ Back to [summary](../summary.md). Bucket: **Other**.
 
 ## IaC / Provisioning
 
-| Language | Name | Dependency attribution | Iac cross stack reference | Iac iam grant attribution | Iac output export extraction | Resource extraction | Status | Notes |
-|---|---|---|---|---|---|---|---|---|
-| [multi](../by-language/multi.md) | [AWS CDK](../detail/infra.iac.cdk.md) | 🟢 | — | ✅ | 🟢 | 🟢 | 🟢 | |
-| [multi](../by-language/multi.md) | [AWS CloudFormation](../detail/infra.iac.cloudformation.md) | ✅ | ✅ | — | ✅ | ✅ | ✅ | |
-| [multi](../by-language/multi.md) | [Ansible (playbooks)](../detail/infra.iac.ansible.md) | 🟢 | — | — | — | 🟢 | 🟢 | |
-| [multi](../by-language/multi.md) | [Azure Bicep](../detail/infra.iac.bicep.md) | ✅ | — | — | ✅ | ✅ | ✅ | |
-| [multi](../by-language/multi.md) | [OpenTofu (HCL)](../detail/infra.iac.opentofu.md) | ✅ | ✅ | — | ✅ | ✅ | ✅ | |
-| [multi](../by-language/multi.md) | [Pulumi](../detail/infra.iac.pulumi.md) | 🟢 | 🟢 | — | — | 🟢 | 🟢 | |
-| [multi](../by-language/multi.md) | [Serverless Framework](../detail/infra.iac.serverless-framework.md) | ✅ | — | — | — | ✅ | ✅ | |
-| [multi](../by-language/multi.md) | [Terraform (HCL)](../detail/infra.iac.terraform.md) | ✅ | ✅ | — | ✅ | ✅ | ✅ | |
+| Language | Name | Dependency attribution | Iac cross stack reference | Iac environment region account | Iac event source wiring | Iac iam grant attribution | Iac output export extraction | Iac resource property extraction | Iac stack app topology | Resource extraction | Status | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| [multi](../by-language/multi.md) | [AWS CDK](../detail/infra.iac.cdk.md) | 🟢 | — | — | ✅ | ✅ | 🟢 | — | ✅ | 🟢 | 🟢 | |
+| [multi](../by-language/multi.md) | [AWS CloudFormation](../detail/infra.iac.cloudformation.md) | ✅ | ✅ | — | — | — | ✅ | — | 🟢 | ✅ | 🟢 | |
+| [multi](../by-language/multi.md) | [Ansible (playbooks)](../detail/infra.iac.ansible.md) | 🟢 | — | — | — | — | — | — | — | 🟢 | 🟢 | |
+| [multi](../by-language/multi.md) | [Azure Bicep](../detail/infra.iac.bicep.md) | ✅ | — | — | — | — | ✅ | 🟢 | ✅ | ✅ | 🟢 | |
+| [multi](../by-language/multi.md) | [OpenTofu (HCL)](../detail/infra.iac.opentofu.md) | ✅ | ✅ | — | — | — | ✅ | — | ✅ | ✅ | ✅ | |
+| [multi](../by-language/multi.md) | [Pulumi](../detail/infra.iac.pulumi.md) | 🟢 | 🟢 | — | — | — | — | — | 🟢 | 🟢 | 🟢 | |
+| [multi](../by-language/multi.md) | [Serverless Framework](../detail/infra.iac.serverless-framework.md) | ✅ | — | ✅ | ✅ | — | — | 🟢 | — | ✅ | 🟢 | |
+| [multi](../by-language/multi.md) | [Terraform (HCL)](../detail/infra.iac.terraform.md) | ✅ | ✅ | — | — | — | ✅ | — | ✅ | ✅ | ✅ | |
 
 ## Containers & Orchestration
 
@@ -59,11 +59,11 @@ Back to [summary](../summary.md). Bucket: **Other**.
 | Language | Name | Dependency attribution | Resource extraction | Shared data coupling | Status | Notes |
 |---|---|---|---|---|---|---|
 | [multi](../by-language/multi.md) | [API-gateway route topology (application frameworks)](../detail/infra.gateway.api-routing.md) | ✅ | 🟢 | — | 🟢 | |
-| [multi](../by-language/multi.md) | [AWS CDK](../detail/infra.resource.aws-cdk.md) | — | 🟢 | — | 🟢 | |
+| [multi](../by-language/multi.md) | [AWS CDK](../detail/infra.resource.aws-cdk.md) | 🟢 | 🟢 | — | 🟢 | |
 | [multi](../by-language/multi.md) | [AWS CloudFormation](../detail/infra.resource.cloudformation.md) | ✅ | ✅ | — | ✅ | |
 | [multi](../by-language/multi.md) | [Helm charts](../detail/infra.resource.helm.md) | — | ✅ | — | ✅ | |
-| [multi](../by-language/multi.md) | [Kubernetes manifests](../detail/infra.resource.kubernetes.md) | — | ✅ | — | ✅ | |
-| [multi](../by-language/multi.md) | [Pulumi](../detail/infra.resource.pulumi.md) | — | 🟢 | — | 🟢 | |
+| [multi](../by-language/multi.md) | [Kubernetes manifests](../detail/infra.resource.kubernetes.md) | 🟢 | ✅ | — | 🟢 | |
+| [multi](../by-language/multi.md) | [Pulumi](../detail/infra.resource.pulumi.md) | 🟢 | 🟢 | — | 🟢 | |
 | [multi](../by-language/multi.md) | [Reverse-proxy / gateway request topology](../detail/infra.deployment.request-topology.md) | ✅ | 🟢 | — | 🟢 | |
 | [multi](../by-language/multi.md) | [Shared-database cross-service coupling (SHARES_DATA)](../detail/analysis.architecture.shared-db-coupling.md) | — | — | ✅ | ✅ | |
 | [multi](../by-language/multi.md) | [Structural coupling metrics (Ca/Ce/instability)](../detail/analysis.architecture.structural-coupling.md) | ✅ | — | — | ✅ | |

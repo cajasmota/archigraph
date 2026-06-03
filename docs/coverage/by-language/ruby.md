@@ -34,7 +34,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [Ruby on Rails](../detail/lang.ruby.framework.rails.md) | 🟡 5/6 | ✅ 1/1 | 🟢 1/1 | ✅ 1/1 | 🟢 25/25 | 🟡 9/12 | |
 | [Sinatra](../detail/lang.ruby.framework.sinatra.md) | 🟡 4/6 | 🟢 1/1 | — | 🟢 1/1 | 🟢 25/25 | 🟡 8/12 | |
 | [dry-rb (ecosystem)](../detail/lang.ruby.framework.dry-rb.md) | 🟡 2/5 | — | 🟢 1/1 | 🟢 1/1 | 🟡 24/25 | 🟡 6/10 | |
-| [graphql-ruby (GraphQL)](../detail/lang.ruby.framework.graphql-ruby.md) | 🟡 3/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 11/24 | 🟡 2/13 | |
+| [graphql-ruby (GraphQL)](../detail/lang.ruby.framework.graphql-ruby.md) | 🟡 3/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 21/24 | 🟡 2/13 | |
 
 
 ## Tools
@@ -62,10 +62,10 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [ROM (Ruby Object Mapper)](../detail/lang.ruby.orm.rom-rb.md) | 🟡 8/11 | |
 | [Sequel](../detail/lang.ruby.orm.sequel.md) | 🟡 9/11 | |
 | [cassandra-driver (Ruby)](../detail/lang.ruby.driver.cassandra.md) | 🟡 1/4 | |
-| [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 1/5 | |
+| [elasticsearch-ruby](../detail/lang.ruby.driver.elastic.md) | 🟡 2/5 | |
 | [mongo Ruby Driver](../detail/lang.ruby.driver.mongodb.md) | 🟡 1/4 | |
 | [mysql2 (Ruby driver)](../detail/lang.ruby.driver.mysql.md) | 🟡 1/4 | |
-| [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 3/7 | |
+| [neo4j-ruby-driver / activegraph OGM](../detail/lang.ruby.driver.neo4j.md) | 🟡 4/7 | |
 | [pg (Ruby driver)](../detail/lang.ruby.driver.postgres.md) | 🟡 1/4 | |
 | [redis-rb](../detail/lang.ruby.driver.redis.md) | 🟡 1/4 | |
 | [sqlite3 (Ruby driver)](../detail/lang.ruby.driver.sqlite.md) | 🟡 1/4 | |
