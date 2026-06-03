@@ -122,6 +122,16 @@ var (
 	reSymServiceClass = regexp.MustCompile(
 		`(?m)class\s+(\w+)\b`,
 	)
+
+	// PHP8 RateLimiter attribute (symfony/rate-limiter bundle / custom limiter
+	// attribute): #[RateLimiter('anonymous_api')] / #[RateLimiter(limiter: 'login')].
+	// Group 1 = the limiter name. The numeric limit/window live in
+	// config/packages/rate_limiter.yaml (or framework.rate_limiter.*), so the
+	// posture is honest-partial: rate_limited + the named limiter source resolve,
+	// the rate is never fabricated here.
+	reSymRateLimiterAttr = regexp.MustCompile(
+		`#\[RateLimiter\s*\(\s*(?:limiter\s*:\s*)?['"]([^'"]+)['"]`,
+	)
 )
 
 // ---------------------------------------------------------------------------
@@ -238,6 +248,111 @@ func symParseRouteName(body string) string {
 		return m[1]
 	}
 	return ""
+}
+
+// symRateLimiterNear returns the limiter name of a #[RateLimiter('name')]
+// attribute co-located with a #[Route(...)] attribute at byte offset routeStart,
+// or "" when none is present. PHP8 attributes that decorate the same controller
+// action sit in one contiguous block above the `function` declaration — e.g.
+//
+//	#[Route('/login', methods: ['POST'])]
+//	#[RateLimiter('login')]
+//	public function login() { … }
+//
+// The limiter may appear before OR after the route attribute, so we scan a
+// bounded window on both sides bounded by the nearest `function`/`}`/`;` so a
+// RateLimiter on a *different* action is never mis-paired.
+func symRateLimiterNear(src string, routeStart int) string {
+	// Window: from the start of the attribute block (walk back over preceding
+	// `#[` attribute lines) to the action's `function` keyword (walk forward).
+	lo := routeStart
+	// Walk back to the beginning of the current line, then keep including
+	// immediately-preceding lines that are attribute (`#[`) lines so a
+	// RateLimiter attribute ABOVE the Route attribute is captured.
+	for {
+		ls := lineStartOffset(src, lo)
+		line := strings.TrimSpace(src[ls:lineEndOffset(src, lo)])
+		if lo != routeStart && !strings.HasPrefix(line, "#[") {
+			lo = ls
+			break
+		}
+		if ls == 0 {
+			lo = 0
+			break
+		}
+		lo = ls - 1 // step into the previous line
+	}
+	// Forward bound: the action body / next statement. Stop at the first
+	// `function`, `{`, or `;` after the route so a limiter on a sibling action
+	// is excluded.
+	hi := routeStart
+	for hi < len(src) {
+		switch src[hi] {
+		case '{', ';':
+			goto done
+		}
+		if strings.HasPrefix(src[hi:], "function") {
+			// Include up to and past the function signature head.
+			if nl := strings.IndexByte(src[hi:], '{'); nl >= 0 {
+				hi = hi + nl
+			} else {
+				hi = len(src)
+			}
+			goto done
+		}
+		hi++
+	}
+done:
+	if lo < 0 {
+		lo = 0
+	}
+	if hi > len(src) {
+		hi = len(src)
+	}
+	if m := reSymRateLimiterAttr.FindStringSubmatch(src[lo:hi]); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
+// lineStartOffset returns the offset of the first byte of the line containing
+// off.
+func lineStartOffset(src string, off int) int {
+	if off > len(src) {
+		off = len(src)
+	}
+	i := strings.LastIndexByte(src[:off], '\n')
+	if i < 0 {
+		return 0
+	}
+	return i + 1
+}
+
+// lineEndOffset returns the offset of the newline (or EOF) ending the line
+// containing off.
+func lineEndOffset(src string, off int) int {
+	if off > len(src) {
+		return len(src)
+	}
+	i := strings.IndexByte(src[off:], '\n')
+	if i < 0 {
+		return len(src)
+	}
+	return off + i
+}
+
+// symStampRateLimit writes the flat rate-limit contract onto a Symfony route
+// endpoint entity for a co-located #[RateLimiter('name')] attribute. The rate is
+// honest-partial (omitted): the limit/window are defined in the named limiter's
+// config, not on the attribute. Mirrors the shared
+// rate_limited/rate_limit_scope/rate_limit_source property contract.
+func symStampRateLimit(ent *types.EntityRecord, limiter string) {
+	if limiter == "" {
+		return
+	}
+	setProps(ent, "rate_limited", "true",
+		"rate_limit_scope", "route",
+		"rate_limit_source", "#[RateLimiter:"+limiter+"]")
 }
 
 // symSplitMethodList splits a raw comma-separated list of HTTP methods (which
@@ -364,6 +479,12 @@ func (e *symfonyExtractor) Extract(ctx context.Context, file extractor.FileInput
 		body := src[m[4]:m[5]]
 		methods := symParseRouteMethods(body)
 		routeName := symParseRouteName(body)
+		// #4073 — a #[RateLimiter('name')] attribute co-located on the same
+		// controller action stamps the flat rate-limit contract on this route's
+		// endpoint(s). Honest-partial: the named limiter's limit/window live in
+		// config/packages/rate_limiter.yaml, so only rate_limited + source +
+		// scope are stamped (the numeric rate is never fabricated here).
+		limiter := symRateLimiterNear(src, m[0])
 
 		if len(methods) == 0 {
 			// Emit one endpoint without method prefix (matches existing tests)
@@ -373,6 +494,7 @@ func (e *symfonyExtractor) Extract(ctx context.Context, file extractor.FileInput
 			if routeName != "" {
 				setProps(&ent, "route_name", routeName)
 			}
+			symStampRateLimit(&ent, limiter)
 			add(ent)
 		} else {
 			for _, method := range methods {
@@ -383,6 +505,7 @@ func (e *symfonyExtractor) Extract(ctx context.Context, file extractor.FileInput
 				if routeName != "" {
 					setProps(&ent, "route_name", routeName)
 				}
+				symStampRateLimit(&ent, limiter)
 				add(ent)
 			}
 			// Also emit a bare path entity for backward-compat deduplication
@@ -392,6 +515,7 @@ func (e *symfonyExtractor) Extract(ctx context.Context, file extractor.FileInput
 			if routeName != "" {
 				setProps(&bareEnt, "route_name", routeName)
 			}
+			symStampRateLimit(&bareEnt, limiter)
 			add(bareEnt)
 		}
 	}

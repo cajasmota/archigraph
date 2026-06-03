@@ -46,7 +46,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | ✅ `full` | — | — | `internal/custom/php/laravel_authval.go` | Full Kernel.php coverage ($middleware/$middlewareGroups/$routeMiddleware/$middlewareAliases arrays with per-entry class+alias extraction); custom middleware class via handle(Closure $next) with terminate() detection; route ->middleware() attachment and ->withoutMiddleware() exclusion |
-| Rate limit stamping | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3778) | — | endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work. |
+| Rate limit stamping | ✅ `full` | `2026-06-03` | 4073 | `internal/engine/http_endpoint_php_ratelimit.go`<br>`internal/engine/http_endpoint_php_ratelimit_test.go`<br>`internal/engine/http_endpoint_synthesis.go` | #4073: applyLaravelRateLimit stamps the flat rate_limited/rate_limit/rate_limit_scope/rate_limit_source contract on Laravel http_endpoint_definition synthetics. Per-route ->middleware('throttle:60,1') resolves rate=60/1min at route scope; Route::group(['middleware'=>['throttle:30,1']]) propagates at group scope; a NAMED limiter throttle:api is honest-partial (limit/window live in a RateLimiter::for() registration, rate omitted). Non-throttle middleware (auth/cache.headers) and plain routes are negatives. |
 
 ### Schema
 

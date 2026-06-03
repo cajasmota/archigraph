@@ -942,8 +942,23 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// Consumer side (#721 wave 2c): reqwest, hyper, ureq, surf.
 		synthesizeRustClientWithRuntime(string(content), emitClientRuntime)
 	case "php":
+		// Capture the producer-side entity count before the PHP backend
+		// synthesizers run so the rate-limit pass (#4073) stamps over exactly
+		// the http_endpoint_definition entities this file emits.
+		phpRLBefore := len(entities)
 		// Producer side (#1419): Laravel Route::verb/resource/apiResource.
 		synthesizeLaravel(string(content), emit, emitResource)
+		// #3628 → #4073 rate-limit child — stamp the flat rate-limit contract
+		// (rate_limited/rate_limit/rate_limit_scope/rate_limit_source) on the
+		// Laravel endpoints emitted above: per-route
+		// `->middleware('throttle:60,1')` and group-level
+		// `Route::group(['middleware'=>['throttle:30,1']])` throttle middleware.
+		// `throttle:<max>,<min>` resolves the rate; a NAMED limiter
+		// (`throttle:api`) is honest-partial (limit/window live in a
+		// RateLimiter::for() registration). Symfony's `#[RateLimiter(...)]`
+		// attribute is stamped on its own SCOPE.Operation endpoints in
+		// internal/custom/php/symfony.go.
+		applyLaravelRateLimit(string(content), path, entities, phpRLBefore)
 		// Consumer side (#721 wave 2c): Guzzle, Symfony HttpClient, cURL, file_get_contents,
 		// WordPress HTTP API, Laravel Http facade.
 		synthesizePHPClientWithRuntime(string(content), emitClientRuntime)

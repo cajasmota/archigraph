@@ -46,7 +46,7 @@ Auto-generated. Back to [summary](../summary.md).
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
 | Middleware coverage | ✅ `full` | `2026-05-30` | — | `internal/custom/php/symfony.go` | EventSubscriberInterface implementors with getSubscribedEvents() event name extraction; addListener/addSubscriber kernel event registration; kernel event names emitted as SCOPE.Pattern |
-| Rate limit stamping | 🔴 `missing` | — | [link](https://github.com/cajasmota/archigraph/issues/3778) | — | endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work. |
+| Rate limit stamping | ✅ `full` | `2026-06-03` | 4073 | `internal/custom/php/symfony.go`<br>`internal/custom/php/symfony_ratelimit_test.go` | #4073: the custom_php_symfony extractor stamps the flat rate_limited/rate_limit_scope/rate_limit_source contract on Symfony route SCOPE.Operation endpoints when a #[RateLimiter('name')] attribute is co-located with the #[Route(...)] action (attribute order within the block is free). Honest-partial: the named limiter's limit/window live in config/packages/rate_limiter.yaml, so the numeric rate is omitted. A sibling action without the attribute is a negative; the limiter never mis-pairs across actions. |
 
 ### Schema
 
