@@ -71049,8 +71049,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -71366,8 +71369,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -71692,8 +71698,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -72000,8 +72009,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -72325,8 +72337,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -72644,8 +72659,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -72970,8 +72988,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -73293,8 +73314,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -73518,8 +73542,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -73837,8 +73864,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -74157,8 +74187,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -74467,8 +74500,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -74785,8 +74821,11 @@
             "issue": "backfill:dictionary-completeness"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",
@@ -75110,8 +75149,11 @@
             "verified_at": "2026-05-27"
           },
           "error_flow": {
-            "status": "missing",
-            "issue": "3628"
+            "status": "full",
+            "cites": ["internal/extractor/exception_flow.go","internal/extractors/scala/exception_flow.go","internal/extractors/scala/exception_flow_test.go"],
+            "issue": "3628",
+            "notes": "throw new X -\u003e THROWS; pattern-match catch { case e: X } + .recover/.recoverWith { case e: X } -\u003e CATCHES; qualified normalized to bare; catch-all/NonFatal/re-throw dropped (#3628)",
+            "verified_at": "2026-06-03"
           },
           "feature_flag_gating": {
             "status": "missing",

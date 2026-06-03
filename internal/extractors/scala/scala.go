@@ -75,6 +75,10 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 		entities = append(entities, extractor.FileEntity(file))
 	}
 	walkNode(file.Tree.RootNode(), file, nil, &entities)
+	// Epic #3628 — error-flow topology: THROWS / CATCHES edges from functions
+	// to shared SCOPE.ExceptionType convergence nodes. Runs after the main
+	// walk so the SCOPE.Operation host entities exist for FromName attachment.
+	emitExceptionFlowEdges(file.Tree.RootNode(), file, &entities)
 	// Issue #90 — language tag for resolver dynamic-pattern dispatch.
 	extractor.TagRelationshipsLanguage(entities, "scala")
 	extractor.TagEntitiesLanguage(entities, "scala")

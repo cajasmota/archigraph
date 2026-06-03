@@ -29,7 +29,7 @@ one is a separate detail page.
 | [`lang.go.framework.grpc`](./lang.go.framework.grpc.md) | go | framework | 1 full, 3 partial, 37 missing, 13 n/a |
 | [`lang.java.framework.grpc`](./lang.java.framework.grpc.md) | java | framework | 1 full, 3 partial, 37 missing, 13 n/a |
 | [`lang.rust.framework.tonic`](./lang.rust.framework.tonic.md) | rust | framework | 9 full, 4 partial, 35 missing, 1 n/a |
-| [`lang.scala.framework.scalapb-grpc`](./lang.scala.framework.scalapb-grpc.md) | scala | framework | 9 full, 19 partial, 9 missing, 17 n/a |
+| [`lang.scala.framework.scalapb-grpc`](./lang.scala.framework.scalapb-grpc.md) | scala | framework | 10 full, 19 partial, 8 missing, 17 n/a |
 
 ## Provenance
 
