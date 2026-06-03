@@ -7177,8 +7177,11 @@
         },
         "Auth": {
           "auth_coverage": {
-            "status": "not_applicable",
-            "notes": "restinio is a minimal HTTP server lib; no built-in authentication subsystem"
+            "status": "partial",
+            "cites": ["internal/custom/cpp/restinio_middleware.go"],
+            "issue": "backfill:dictionary-completeness",
+            "notes": "restinio has no built-in auth subsystem, but the middleware extractor classifies auth from make_chain\u003c...\u003e handler-chain link names: an auth-named link (e.g. JwtAuthHandler) cross-emits a restinio:auth:\u003chandler\u003e entity with auth_method/auth_subtype + middleware_order (TestRestinioMakeChain asserts restinio:auth:JwtAuthHandler auth_method=jwt order=1). partial: name-inferred from the chain link only — no header/realm/scheme parsing and no cross-file handler-type resolution.",
+            "verified_at": "2026-06-03"
           }
         },
         "Validation": {

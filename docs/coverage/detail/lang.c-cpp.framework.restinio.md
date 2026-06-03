@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth coverage | — `not_applicable` | — | — | — | restinio is a minimal HTTP server lib; no built-in authentication subsystem |
+| Auth coverage | 🟢 `partial` | `2026-06-03` | backfill:dictionary-completeness | `internal/custom/cpp/restinio_middleware.go` | restinio has no built-in auth subsystem, but the middleware extractor classifies auth from make_chain<...> handler-chain link names: an auth-named link (e.g. JwtAuthHandler) cross-emits a restinio:auth:<handler> entity with auth_method/auth_subtype + middleware_order (TestRestinioMakeChain asserts restinio:auth:JwtAuthHandler auth_method=jwt order=1). partial: name-inferred from the chain link only — no header/realm/scheme parsing and no cross-file handler-type resolution. |
 
 ### Validation
 
