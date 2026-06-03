@@ -10,8 +10,9 @@ The `coverage` command maintains the archigraph capabilities registry at `docs/c
 
 ## Files
 
-- `main.go` — CLI dispatcher; subcommands: `list`, `get`, `add`, `update`, `gaps`, `stats`, `validate`, `gen`, `discover`, `map-status`
+- `main.go` — CLI dispatcher; subcommands: `list`, `get`, `add`, `update`, `gaps`, `stats`, `validate`, `gen`, `discover`, `map-status`, `parity`
 - `schema.go` — registry + record shape
+- `parity.go` — READ-ONLY coverage parity probe (#3876): flags flagship→sibling asymmetry (a capability credited on one framework but missing on same-language siblings in the same `(language, category, subcategory)` group). Uniform-scaffold (all-missing) cells are suppressed by design. `--strict` is a CI gate.
 - `store.go` — load / save / canonical ordering of `registry.json`
 - `validate.go` — schema invariants (referential integrity, status enum, dictionary key conformance)
 - `capability_map.go` + `capability-map.yaml` — capability → file/function mapping for traceability
