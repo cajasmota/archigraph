@@ -54,31 +54,68 @@ var pyTortoisePeeweeRe = regexp.MustCompile(
 	`\b([A-Z][A-Za-z0-9_]*)\.(select|get|filter|all|create|update|delete|insert|save|count|exists|first|annotate|prefetch_related|where|join)\s*\(`,
 )
 
+// Beanie (async MongoDB ODM): document-class queries `<Model>.<verb>(...)`.
+// Beanie's surface is method calls on the Document subclass itself —
+// `User.find(User.age > 18)`, `User.find_one(...)`, `User.get(id)`,
+// `User.find_all()`, `User.aggregate([...])`, `User.insert_many([...])`,
+// `User.count()`. The verb list is Beanie-specific (find_all / find_one /
+// insert_many are not Tortoise/Peewee verbs) so canonicalOp() flattens it
+// to find/create/aggregate/etc.
+var pyBeanieRe = regexp.MustCompile(
+	`\b([A-Z][A-Za-z0-9_]*)\.(find_one|find_all|find_many|find|get|aggregate|insert_many|insert|count|delete_all|delete)\s*\(`,
+)
+
+// MongoEngine (sync MongoDB ODM): the `objects` QuerySet manager is invoked
+// either DIRECTLY as a call — `User.objects(name="x")` — or chained with a
+// verb — `User.objects.filter(...)` / `.get(...)` / `.first()` / `.count()`
+// / `.delete()` / `.update(...)`. The direct-call form is the idiom the
+// Django matcher (which requires `.objects.<verb>`) does not cover, so this
+// matcher anchors on `<Model>.objects` and inspects what follows.
+var pyMongoEngineRe = regexp.MustCompile(
+	`\b([A-Z][A-Za-z0-9_]*)\.objects\b`,
+)
+
+// pyMongoEngineVerbRe recovers the chained verb after `<Model>.objects.`
+// when present (anchored at the char immediately after `.objects`).
+var pyMongoEngineVerbRe = regexp.MustCompile(
+	`^\.(get|filter|all|first|count|exists|delete|update|order_by|only|exclude|aggregate|create|insert|save)\b`,
+)
+
 // scanPythonORM walks `src` and emits QUERIES edges for every detected
 // ORM call site.
 func scanPythonORM(src string, funcs []funcSpan, emit emitORMQueryFn) {
+	// MongoEngine reuses Django's `<Model>.objects.<verb>` chain shape but is
+	// a MongoDB ODM, not Django. When a file imports mongoengine and NOT
+	// django, route `<Model>.objects.*` exclusively through the MongoEngine
+	// block below so the QUERIES edge is credited orm=mongoengine instead of
+	// a fabricated orm=django (and never double-emitted).
+	mongoEngineOnly := (strings.Contains(src, "from mongoengine") || strings.Contains(src, "import mongoengine")) &&
+		!(strings.Contains(src, "from django") || strings.Contains(src, "import django"))
+
 	// Django ORM
-	for _, m := range pyDjangoOrmRe.FindAllStringSubmatchIndex(src, -1) {
-		if len(m) < 6 {
-			continue
+	if !mongoEngineOnly {
+		for _, m := range pyDjangoOrmRe.FindAllStringSubmatchIndex(src, -1) {
+			if len(m) < 6 {
+				continue
+			}
+			model := src[m[2]:m[3]]
+			verb := src[m[4]:m[5]]
+			caller := enclosingFuncAt(funcs, m[0])
+			argsBlob := extractCallArgs(src, m[5])
+			filterKeys := parseFilterKeys(argsBlob)
+			isJoin := pythonIsJoinDjango(verb, argsBlob)
+			// Promote terminal chain verbs to the emitted operation. Django
+			// idioms like `User.objects.filter(id=1).delete()` express the
+			// intent on the trailing call, not the queryset builder. We scan
+			// the tail of the statement for a recognised terminal verb and
+			// override the canonical op when one is present.
+			tail := lookAheadChain(src, m[5], 256)
+			op := canonicalOp(verb)
+			if t := promoteTerminalDjangoOp(tail); t != "" {
+				op = t
+			}
+			emit(caller, model, op, filterKeys, "django", isJoin)
 		}
-		model := src[m[2]:m[3]]
-		verb := src[m[4]:m[5]]
-		caller := enclosingFuncAt(funcs, m[0])
-		argsBlob := extractCallArgs(src, m[5])
-		filterKeys := parseFilterKeys(argsBlob)
-		isJoin := pythonIsJoinDjango(verb, argsBlob)
-		// Promote terminal chain verbs to the emitted operation. Django
-		// idioms like `User.objects.filter(id=1).delete()` express the
-		// intent on the trailing call, not the queryset builder. We scan
-		// the tail of the statement for a recognised terminal verb and
-		// override the canonical op when one is present.
-		tail := lookAheadChain(src, m[5], 256)
-		op := canonicalOp(verb)
-		if t := promoteTerminalDjangoOp(tail); t != "" {
-			op = t
-		}
-		emit(caller, model, op, filterKeys, "django", isJoin)
 	}
 
 	// SQLAlchemy classic
@@ -117,6 +154,69 @@ func scanPythonORM(src string, funcs []funcSpan, emit emitORMQueryFn) {
 			op = "aggregate"
 		}
 		emit(caller, model, op, filterKeys, "sqlalchemy", isJoin)
+	}
+
+	// Beanie (async MongoDB ODM). Gate on import-presence — the matcher is
+	// broad (`<Capitalised>.<verb>(`) and would otherwise over-fire on
+	// ordinary static-method calls. Beanie document queries target the
+	// Document subclass directly, so the model name is the regex capture.
+	if strings.Contains(src, "from beanie") || strings.Contains(src, "import beanie") {
+		for _, m := range pyBeanieRe.FindAllStringSubmatchIndex(src, -1) {
+			if len(m) < 6 {
+				continue
+			}
+			model := src[m[2]:m[3]]
+			verb := src[m[4]:m[5]]
+			caller := enclosingFuncAt(funcs, m[0])
+			argsBlob := extractCallArgs(src, m[5])
+			filterKeys := parseFilterKeys(argsBlob)
+			emit(caller, model, canonicalOp(verb), filterKeys, "beanie", false)
+		}
+	}
+
+	// MongoEngine (sync MongoDB ODM). Gate on import-presence. The Django
+	// matcher already covers `<Model>.objects.<verb>(...)` for a fixed verb
+	// list but credits it as orm=django; MongoEngine needs its OWN provider
+	// label plus the direct-call form `<Model>.objects(...)` that Django's
+	// `.objects.<verb>` shape never matches. We anchor on `<Model>.objects`
+	// and classify what follows.
+	if strings.Contains(src, "from mongoengine") || strings.Contains(src, "import mongoengine") {
+		for _, m := range pyMongoEngineRe.FindAllStringSubmatchIndex(src, -1) {
+			if len(m) < 4 {
+				continue
+			}
+			model := src[m[2]:m[3]]
+			caller := enclosingFuncAt(funcs, m[0])
+			rest := src[m[1]:] // text immediately after `<Model>.objects`
+			switch {
+			case strings.HasPrefix(rest, "("):
+				// Direct manager call: `User.objects(name="x")` — a find with
+				// the kwargs as filter keys.
+				argsBlob := extractCallArgs(src, m[1])
+				filterKeys := parseFilterKeys(argsBlob)
+				emit(caller, model, "find", filterKeys, "mongoengine", false)
+			default:
+				// Chained verb: `User.objects.filter(...)` etc.
+				vm := pyMongoEngineVerbRe.FindStringSubmatchIndex(rest)
+				if vm == nil {
+					continue
+				}
+				verb := rest[vm[2]:vm[3]]
+				// Locate the verb's call args: the verb sits at rest[vm[2]:vm[3]]
+				// which maps to src offset m[1]+vm[3]; args start there.
+				argsBlob := extractCallArgs(src, m[1]+vm[3])
+				filterKeys := parseFilterKeys(argsBlob)
+				op := canonicalOp(verb)
+				// Promote a terminal CRUD verb on the chain, mirroring Django:
+				// `Article.objects.filter(...).delete()` expresses delete intent
+				// on the trailing call, not the queryset builder.
+				tail := lookAheadChain(src, m[1]+vm[3], 256)
+				if t := promoteTerminalDjangoOp(tail); t != "" {
+					op = t
+				}
+				emit(caller, model, op, filterKeys, "mongoengine", false)
+			}
+		}
 	}
 
 	// Tortoise / Peewee. Gate on import-presence: the matcher is broad

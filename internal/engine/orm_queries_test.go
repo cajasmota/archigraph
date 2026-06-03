@@ -156,6 +156,143 @@ async def get_post_with_author(session, post_id):
 }
 
 // ---------------------------------------------------------------------------
+// Python: Beanie (async MongoDB ODM) — #3645 sibling parity
+// ---------------------------------------------------------------------------
+
+func TestORM_BeanieDocumentQueries(t *testing.T) {
+	src := `from beanie import Document
+
+class User(Document):
+    name: str
+    age: int
+
+async def get_user(user_id):
+    return await User.get(user_id)
+
+async def list_adults():
+    return await User.find(User.age >= 18).to_list()
+
+async def find_one_user(name):
+    return await User.find_one(User.name == name)
+
+async def add_users(users):
+    return await User.insert_many(users)
+
+async def remove_user(user_id):
+    await User.find_one(User.id == user_id).delete()
+
+async def report():
+    return await User.aggregate([{"$group": {"_id": "$age"}}]).to_list()
+`
+	edges := detectORM(t, "python", "app/repo.py", src)
+
+	// find: get_user resolves to op=find, orm=beanie (the .get verb).
+	e := assertEdgeExists(t, edges, "Function:get_user", "Class:User", "find")
+	if e.ORM != "beanie" {
+		t.Errorf("expected orm=beanie, got %q", e.ORM)
+	}
+
+	// find: list_adults via User.find(...).
+	assertEdgeExists(t, edges, "Function:list_adults", "Class:User", "find")
+	// find: find_one_user via User.find_one(...).
+	assertEdgeExists(t, edges, "Function:find_one_user", "Class:User", "find")
+	// create: insert_many flattens to create.
+	ec := assertEdgeExists(t, edges, "Function:add_users", "Class:User", "create")
+	if ec.ORM != "beanie" {
+		t.Errorf("expected orm=beanie for insert_many, got %q", ec.ORM)
+	}
+	// aggregate: pipeline call flattens to aggregate.
+	assertEdgeExists(t, edges, "Function:report", "Class:User", "aggregate")
+}
+
+// Negative: a Beanie-shaped call in a file that does NOT import beanie must
+// not fabricate a QUERIES edge — the matcher is import-gated.
+func TestORM_BeanieNotImportedNoEdge(t *testing.T) {
+	src := `class Helper:
+    pass
+
+def run():
+    # Looks Beanie-ish but no beanie import: must stay silent.
+    return Helper.find(x=1)
+`
+	edges := detectORM(t, "python", "app/util.py", src)
+	for _, e := range edges {
+		if e.ORM == "beanie" {
+			t.Errorf("did not expect a beanie edge without import, got %+v", e)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Python: MongoEngine (sync MongoDB ODM) — #3645 sibling parity
+// ---------------------------------------------------------------------------
+
+func TestORM_MongoEngineDirectAndChained(t *testing.T) {
+	src := `from mongoengine import Document, StringField
+
+class Article(Document):
+    title = StringField()
+
+def find_by_title(title):
+    # Direct manager-call form Django's matcher never covers.
+    return Article.objects(title=title)
+
+def filter_published():
+    return Article.objects.filter(published=True).order_by("-created")
+
+def get_one(article_id):
+    return Article.objects.get(id=article_id)
+
+def purge():
+    Article.objects.filter(stale=True).delete()
+`
+	edges := detectORM(t, "python", "app/articles.py", src)
+
+	// Direct-call form: Article.objects(title=...) → find, orm=mongoengine,
+	// with the kwarg captured as a filter key.
+	e := assertEdgeExists(t, edges, "Function:find_by_title", "Class:Article", "find")
+	if e.ORM != "mongoengine" {
+		t.Errorf("expected orm=mongoengine, got %q", e.ORM)
+	}
+	if !strings.Contains(e.FilterKeys, "title") {
+		t.Errorf("expected filter_keys to contain title, got %q", e.FilterKeys)
+	}
+
+	// Chained verb forms.
+	ef := assertEdgeExists(t, edges, "Function:filter_published", "Class:Article", "find")
+	if ef.ORM != "mongoengine" {
+		t.Errorf("expected orm=mongoengine for .objects.filter, got %q", ef.ORM)
+	}
+	assertEdgeExists(t, edges, "Function:get_one", "Class:Article", "find")
+	assertEdgeExists(t, edges, "Function:purge", "Class:Article", "delete")
+
+	// Exclusivity: a mongoengine-only file must NOT also emit an orm=django
+	// edge for the same `.objects.<verb>` call site (no double-emit /
+	// mis-attribution).
+	for _, ed := range edges {
+		if ed.ORM == "django" {
+			t.Errorf("mongoengine-only file should not emit a django edge, got %+v", ed)
+		}
+	}
+}
+
+// Negative: a MongoEngine-shaped call in a file that does NOT import
+// mongoengine must not fabricate a mongoengine edge. (It may still match the
+// Django matcher if `.objects.<verb>` is present, which is correct Django
+// behaviour — we only assert no mongoengine edge here.)
+func TestORM_MongoEngineNotImportedNoEdge(t *testing.T) {
+	src := `def run():
+    return Article.objects(title="x")
+`
+	edges := detectORM(t, "python", "app/util.py", src)
+	for _, e := range edges {
+		if e.ORM == "mongoengine" {
+			t.Errorf("did not expect a mongoengine edge without import, got %+v", e)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // JS/TS: Prisma
 // ---------------------------------------------------------------------------
 
