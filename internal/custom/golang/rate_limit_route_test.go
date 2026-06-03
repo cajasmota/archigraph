@@ -1,6 +1,24 @@
 package golang
 
-import "testing"
+import (
+	"context"
+	"testing"
+
+	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/archigraph/internal/types"
+)
+
+// runFiber runs the fiber extractor over src for the rate-limit tests.
+func runFiber(t *testing.T, src string) []types.EntityRecord {
+	t.Helper()
+	ents, err := (&fiberExtractor{}).Extract(context.Background(), extractor.FileInput{
+		Path: "main.go", Language: "go", Content: []byte(src),
+	})
+	if err != nil {
+		t.Fatalf("fiber extract: %v", err)
+	}
+	return ents
+}
 
 // TestGinGroupRateLimitXTimeRate — the canonical spec case:
 // a `rate.NewLimiter(rate.Limit(5), 1)` binding applied as group middleware →
@@ -223,5 +241,209 @@ func main() {
 	}
 	if me.Properties["rate_limit"] != "" {
 		t.Errorf("GET /me: rate_limit=%q, want omitted (honest-partial)", me.Properties["rate_limit"])
+	}
+}
+
+// --- chi (#3628 deepen) ----------------------------------------------------
+
+// TestChiEngineRateLimitTollbooth — chi's dominant idiom: a tollbooth limiter
+// applied via the engine-wide `r.Use(tollbooth.LimitHandler(lim))` stack throttles
+// every route; the resolved max (NewLimiter first-arg) attaches as the rate.
+func TestChiEngineRateLimitTollbooth(t *testing.T) {
+	src := `package main
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/didip/tollbooth/v7"
+)
+func main() {
+	r := chi.NewRouter()
+	lim := tollbooth.NewLimiter(50, nil)
+	r.Use(tollbooth.LimitHandler(lim))
+	r.Get("/me", getMe)
+}
+`
+	ents := runChi(t, src)
+	me := findEndpoint(t, ents, "GET /me")
+	if me.Properties["rate_limited"] != "true" {
+		t.Errorf("GET /me: rate_limited=%q, want true (props: %v)", me.Properties["rate_limited"], me.Properties)
+	}
+	if me.Properties["rate_limit"] != "50/s" {
+		t.Errorf("GET /me: rate_limit=%q, want 50/s", me.Properties["rate_limit"])
+	}
+	if me.Properties["rate_limit_scope"] != "engine" {
+		t.Errorf("GET /me: rate_limit_scope=%q, want engine", me.Properties["rate_limit_scope"])
+	}
+	if me.Properties["rate_limit_source"] != "tollbooth.LimitHandler" {
+		t.Errorf("GET /me: rate_limit_source=%q, want tollbooth.LimitHandler", me.Properties["rate_limit_source"])
+	}
+}
+
+// TestChiEngineRateLimitUlule — ulule/limiter via `mgin.NewMiddleware(instance)`
+// applied engine-wide → every route throttled; rate lives in the (separately
+// constructed) limiter.Rate so it is honest-partial (omitted), not fabricated.
+func TestChiEngineRateLimitUlule(t *testing.T) {
+	src := `package main
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/ulule/limiter/v3"
+	mgin "github.com/ulule/limiter/v3/drivers/middleware/stdlib"
+)
+func main() {
+	r := chi.NewRouter()
+	rate, _ := limiter.NewRateFromFormatted("100-H")
+	instance := limiter.New(newStore(), rate)
+	r.Use(mgin.NewMiddleware(instance).Handler)
+	r.Get("/me", getMe)
+}
+`
+	ents := runChi(t, src)
+	me := findEndpoint(t, ents, "GET /me")
+	if me.Properties["rate_limited"] != "true" {
+		t.Errorf("GET /me: rate_limited=%q, want true (props: %v)", me.Properties["rate_limited"], me.Properties)
+	}
+	if me.Properties["rate_limit_source"] != "mgin.NewMiddleware" {
+		t.Errorf("GET /me: rate_limit_source=%q, want mgin.NewMiddleware", me.Properties["rate_limit_source"])
+	}
+	if me.Properties["rate_limit"] != "" {
+		t.Errorf("GET /me: rate_limit=%q, want omitted (honest-partial; rate in limiter.Rate)", me.Properties["rate_limit"])
+	}
+}
+
+// TestChiRateLimitNegativeNonLimiterUse — a non-limiter `r.Use(middleware.Logger)`
+// must NOT stamp a chi route as throttled.
+func TestChiRateLimitNegativeNonLimiterUse(t *testing.T) {
+	src := `package main
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+)
+func main() {
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Get("/me", getMe)
+}
+`
+	ents := runChi(t, src)
+	me := findEndpoint(t, ents, "GET /me")
+	if me.Properties["rate_limited"] == "true" {
+		t.Errorf("GET /me: rate_limited=true, want unthrottled (logger is not a limiter; props: %v)", me.Properties)
+	}
+}
+
+// --- fiber (#3628 deepen) --------------------------------------------------
+
+// TestFiberGroupRateLimitXTimeRate — fiber group-scope limiter:
+// `api := app.Group("/api", limiterMw)` with `limiterMw := rate.NewLimiter(
+// rate.Limit(7), 1)` → routes under the group are rate_limited rate="7/s";
+// an ungrouped route is NOT stamped (negative).
+func TestFiberGroupRateLimitXTimeRate(t *testing.T) {
+	src := `package main
+import (
+	"github.com/gofiber/fiber/v2"
+	"golang.org/x/time/rate"
+)
+func main() {
+	app := fiber.New()
+	limiterMw := rate.NewLimiter(rate.Limit(7), 1)
+	api := app.Group("/api", limiterMw)
+	api.Get("/me", getMe)
+	app.Get("/public", getPublic)
+}
+`
+	ents := runFiber(t, src)
+	me := findEndpoint(t, ents, "GET /api/me")
+	if me.Properties["rate_limited"] != "true" {
+		t.Errorf("GET /api/me: rate_limited=%q, want true (props: %v)", me.Properties["rate_limited"], me.Properties)
+	}
+	if me.Properties["rate_limit"] != "7/s" {
+		t.Errorf("GET /api/me: rate_limit=%q, want 7/s", me.Properties["rate_limit"])
+	}
+	if me.Properties["rate_limit_scope"] != "group" {
+		t.Errorf("GET /api/me: rate_limit_scope=%q, want group", me.Properties["rate_limit_scope"])
+	}
+	if me.Properties["rate_limit_source"] != "rate.NewLimiter" {
+		t.Errorf("GET /api/me: rate_limit_source=%q, want rate.NewLimiter", me.Properties["rate_limit_source"])
+	}
+
+	pub := findEndpoint(t, ents, "GET /public")
+	if pub.Properties["rate_limited"] == "true" {
+		t.Errorf("GET /public: rate_limited=true, want unthrottled (props: %v)", pub.Properties)
+	}
+}
+
+// TestFiberInlineRateLimit — fiber Title-case inline limiter middleware
+// `app.Get("/me", RateLimit(), getMe)` binds the throttle to that route only.
+func TestFiberInlineRateLimit(t *testing.T) {
+	src := `package main
+import "github.com/gofiber/fiber/v2"
+func main() {
+	app := fiber.New()
+	app.Get("/me", RateLimit(), getMe)
+	app.Get("/public", getPublic)
+}
+`
+	ents := runFiber(t, src)
+	me := findEndpoint(t, ents, "GET /me")
+	if me.Properties["rate_limited"] != "true" {
+		t.Errorf("GET /me: rate_limited=%q, want true (props: %v)", me.Properties["rate_limited"], me.Properties)
+	}
+	if me.Properties["rate_limit_scope"] != "route" {
+		t.Errorf("GET /me: rate_limit_scope=%q, want route", me.Properties["rate_limit_scope"])
+	}
+	if me.Properties["rate_limit_source"] != "RateLimit" {
+		t.Errorf("GET /me: rate_limit_source=%q, want RateLimit", me.Properties["rate_limit_source"])
+	}
+	pub := findEndpoint(t, ents, "GET /public")
+	if pub.Properties["rate_limited"] == "true" {
+		t.Errorf("GET /public: rate_limited=true, want unthrottled")
+	}
+}
+
+// TestFiberEngineRateLimitTollboothNewLimiterLiteral — fiber engine-wide
+// `app.Use(tollbooth.LimitHandler(lim))` with a literal-rate tollbooth limiter.
+func TestFiberEngineRateLimitTollboothNewLimiterLiteral(t *testing.T) {
+	src := `package main
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/didip/tollbooth/v7"
+)
+func main() {
+	app := fiber.New()
+	lim := tollbooth.NewLimiter(200, nil)
+	app.Use(tollbooth.LimitHandler(lim))
+	app.Get("/me", getMe)
+}
+`
+	ents := runFiber(t, src)
+	me := findEndpoint(t, ents, "GET /me")
+	if me.Properties["rate_limited"] != "true" {
+		t.Errorf("GET /me: rate_limited=%q, want true (props: %v)", me.Properties["rate_limited"], me.Properties)
+	}
+	if me.Properties["rate_limit"] != "200/s" {
+		t.Errorf("GET /me: rate_limit=%q, want 200/s", me.Properties["rate_limit"])
+	}
+	if me.Properties["rate_limit_scope"] != "engine" {
+		t.Errorf("GET /me: rate_limit_scope=%q, want engine", me.Properties["rate_limit_scope"])
+	}
+}
+
+// TestFiberRateLimitNegativeNonLimiter — a non-limiter middleware (logger) on a
+// fiber engine must NOT stamp the route as throttled.
+func TestFiberRateLimitNegativeNonLimiter(t *testing.T) {
+	src := `package main
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+)
+func main() {
+	app := fiber.New()
+	app.Use(logger.New())
+	app.Get("/me", getMe)
+}
+`
+	ents := runFiber(t, src)
+	me := findEndpoint(t, ents, "GET /me")
+	if me.Properties["rate_limited"] == "true" {
+		t.Errorf("GET /me: rate_limited=true, want unthrottled (logger is not a limiter; props: %v)", me.Properties)
 	}
 }

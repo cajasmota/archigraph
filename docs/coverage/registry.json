@@ -18899,9 +18899,11 @@
             "verified_at": "2026-06-02"
           },
           "rate_limit_stamping": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/3778",
-            "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+            "status": "partial",
+            "cites": ["internal/custom/golang/chi.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/4086",
+            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: an engine-wide r.Use(limiterMw) throttle stamps rate_limited/rate_limit_scope=engine/rate_limit_source on every route op; a tollbooth NewLimiter(N)/SetMax(N) or rate.NewLimiter(rate.Limit(N),burst) literal resolves rate=\"N/s\", an imported/ulule limiter is honest-partial (rate omitted). Partial: chi's closure-scoped r.Route(\"/x\", func(r){...}) sub-router groups and r.With(mw) inline limiters are not var-scoped and are not yet resolved.",
+            "verified_at": "2026-06-03"
           }
         },
         "Schema": {
@@ -19194,11 +19196,11 @@
             "verified_at": "2026-06-02"
           },
           "rate_limit_stamping": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/gin.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3778",
-            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as route/group/engine middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter/SetMax(N) literal resolves rate=\"N/s\". Imported/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied to a route is not stamped.",
-            "verified_at": "2026-06-02"
+            "status": "full",
+            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/4086",
+            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as inline-route / group / engine-wide middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter(N)/SetMax(N) literal resolves rate=\"N/s\". Imported/ulule/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied, and a non-limiter middleware (logger), are not stamped. Out of scope: the in-handler `if !limiter.Allow()` guard (not middleware-applied) and redis_rate per-period rates.",
+            "verified_at": "2026-06-03"
           }
         },
         "Schema": {
@@ -19782,9 +19784,11 @@
             "verified_at": "2026-05-30"
           },
           "rate_limit_stamping": {
-            "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/3778",
-            "notes": "endpoint rate-limit / throttle stamping not yet implemented for this framework; the #3628 child shipped express-rate-limit (JS/TS) + slowapi/django-ratelimit/flask-limiter/DRF (Python). express-slow-down-compatible / framework-native limiters for this framework are future work."
+            "status": "full",
+            "cites": ["internal/custom/golang/fiber.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/4086",
+            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as inline-route / group / engine-wide middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter(N)/SetMax(N) literal resolves rate=\"N/s\". Imported/ulule/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied, and a non-limiter middleware (logger), are not stamped. Out of scope: the in-handler `if !limiter.Allow()` guard (not middleware-applied) and redis_rate per-period rates.",
+            "verified_at": "2026-06-03"
           }
         },
         "Schema": {
@@ -20417,11 +20421,11 @@
             "verified_at": "2026-06-02"
           },
           "rate_limit_stamping": {
-            "status": "partial",
-            "cites": ["internal/custom/golang/echo.go","internal/custom/golang/gin.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
-            "issue": "https://github.com/cajasmota/archigraph/issues/3778",
-            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as route/group/engine middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter/SetMax(N) literal resolves rate=\"N/s\". Imported/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied to a route is not stamped.",
-            "verified_at": "2026-06-02"
+            "status": "full",
+            "cites": ["internal/custom/golang/gin.go","internal/custom/golang/rate_limit_route.go","internal/custom/golang/rate_limit_route_test.go"],
+            "issue": "https://github.com/cajasmota/archigraph/issues/4086",
+            "notes": "tollbooth / ulule-limiter / golang.org/x/time/rate: a limiter applied as inline-route / group / engine-wide middleware stamps rate_limited/rate_limit_scope(route|group|engine)/rate_limit_source on the route op; a rate.NewLimiter(rate.Limit(N),burst) or tollbooth NewLimiter(N)/SetMax(N) literal resolves rate=\"N/s\". Imported/ulule/config-driven limiters → rate_limited=true with rate omitted (honest-partial). Negative: a limiter constructed but never applied, and a non-limiter middleware (logger), are not stamped. Out of scope: the in-handler `if !limiter.Allow()` guard (not middleware-applied) and redis_rate per-period rates.",
+            "verified_at": "2026-06-03"
           }
         },
         "Schema": {

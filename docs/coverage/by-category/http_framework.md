@@ -47,7 +47,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [go](../by-language/go.md) | [Beego](../detail/lang.go.framework.beego.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Buffalo](../detail/lang.go.framework.buffalo.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Echo](../detail/lang.go.framework.echo.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 8/12 | |
-| [go](../by-language/go.md) | [Fiber](../detail/lang.go.framework.fiber.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
+| [go](../by-language/go.md) | [Fiber](../detail/lang.go.framework.fiber.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 8/12 | |
 | [go](../by-language/go.md) | [Gin](../detail/lang.go.framework.gin.md) | 🟡 5/6 | ✅ 1/1 | 🟢 4/4 | 🟢 1/1 | 🟢 25/25 | 🟡 7/11 | |
 | [go](../by-language/go.md) | [Gorilla Mux](../detail/lang.go.framework.gorilla-mux.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Hertz (CloudWeGo)](../detail/lang.go.framework.hertz.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
@@ -55,7 +55,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [go](../by-language/go.md) | [Iris](../detail/lang.go.framework.iris.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Kratos (Bilibili)](../detail/lang.go.framework.kratos.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Revel](../detail/lang.go.framework.revel.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 6/11 | |
-| [go](../by-language/go.md) | [chi](../detail/lang.go.framework.chi.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 7/12 | |
+| [go](../by-language/go.md) | [chi](../detail/lang.go.framework.chi.md) | 🟡 5/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 8/12 | |
 | [go](../by-language/go.md) | [fasthttp](../detail/lang.go.framework.fasthttp.md) | 🟡 3/6 | — | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 6/11 | |
 | [go](../by-language/go.md) | [go-zero](../detail/lang.go.framework.go-zero.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟡 23/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [google/wire (DI)](../detail/lang.go.framework.wire.md) | 🔴 0/6 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🟡 1/24 | 🟡 2/11 | |

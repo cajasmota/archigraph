@@ -81,6 +81,13 @@ func (e *chiExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 	// Closure-based subrouter groups (`r.Route("/x", func(r){...})`) are the
 	// honest-partial boundary — their per-group .Use is not var-scoped.
 	mwIdx := buildGoRouteMiddlewareIndex(src)
+	// #3628 rate-limit child — resolve route/group/engine rate-limit middleware
+	// once so each route op carries the flat rate_limited / rate_limit /
+	// rate_limit_scope / rate_limit_source contract. chi's dominant throttle idiom
+	// is the engine-wide `r.Use(tollbooth.LimitHandler(...))` stack; closure-scoped
+	// subrouter throttles and `r.With(mw)` inline limiters are the honest-partial
+	// boundary (not var-scoped here).
+	rlIdx := buildGoRouteRateLimitIndex(src)
 
 	// 1. chi.NewRouter() -> SCOPE.Service
 	for _, m := range reChiRouter.FindAllStringSubmatchIndex(src, -1) {
@@ -114,6 +121,8 @@ func (e *chiExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		setProps(&ent, "framework", "chi", "provenance", "INFERRED_FROM_CHI_ROUTE",
 			"http_method", method, "route_path", path, "router_var", routerVar)
 		stampGoMiddlewareChain(ent.Properties, mwIdx.resolve(routerVar, method, path))
+		// #3628 — stamp endpoint rate-limit posture (inline > group > engine).
+		rlIdx.resolve(routerVar, method, path).stamp(ent.Properties)
 		add(ent)
 	}
 

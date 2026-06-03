@@ -258,13 +258,18 @@ func buildGoRouteRateLimitIndex(src string) goRouteRateLimitIndex {
 	}
 
 	// 3. Inline route middleware: `r.GET("/me", limiterMw, h)` → that route.
-	for _, m := range reGoRouteAuthScan.FindAllStringSubmatchIndex(src, -1) {
-		verb := strings.ToUpper(src[m[4]:m[5]])
-		path := src[m[6]:m[7]]
-		args := src[m[8]:m[9]]
-		if rl, ok := idx.rateLimitFromArgChain(args); ok {
-			rl.Scope = goMWScopeRoute
-			idx.inline[verb+" "+path] = rl
+	// gin/echo register with upper-case verbs (reGoRouteAuthScan); chi/fiber use
+	// Title-case verbs (reGoRouteTitleVerbScan). Both key the inline index by an
+	// upper-cased "<VERB> <ownPath>" so the resolve() lookup is framework-shared.
+	for _, scan := range []*regexp.Regexp{reGoRouteAuthScan, reGoRouteTitleVerbScan} {
+		for _, m := range scan.FindAllStringSubmatchIndex(src, -1) {
+			verb := strings.ToUpper(src[m[4]:m[5]])
+			path := src[m[6]:m[7]]
+			args := src[m[8]:m[9]]
+			if rl, ok := idx.rateLimitFromArgChain(args); ok {
+				rl.Scope = goMWScopeRoute
+				idx.inline[verb+" "+path] = rl
+			}
 		}
 	}
 
@@ -335,6 +340,15 @@ func (idx goRouteRateLimitIndex) recognizeLimiterArg(arg string) (goRouteRateLim
 // reGoIdent matches bare Go identifiers, used to find a limiter binding name
 // referenced inside a middleware wrapper call.
 var reGoIdent = regexp.MustCompile(`[A-Za-z_]\w*`)
+
+// reGoRouteTitleVerbScan matches a route registration whose verb is Title-cased
+// (chi / fiber idiom: `app.Get("/x", limiterMw, h)`) and captures the trailing
+// args so an inline limiter middleware can be resolved. gin/echo verbs are
+// upper-cased and matched by reGoRouteAuthScan; this is the complementary scan
+// for Title-case frameworks. Group 1 = router var, 2 = verb, 3 = path, 4 = the
+// trailing args (everything after the path up to the close paren, line-bounded).
+var reGoRouteTitleVerbScan = regexp.MustCompile(
+	`(?m)(\w+)\.(Get|Post|Put|Delete|Patch|Head|Options|Connect|Trace|All)\s*\(\s*"([^"]*)"\s*((?:,[^\n\r]*)?)\)`)
 
 // resolve returns the rate-limit posture for one route op, applying the same
 // precedence as route_auth.go: inline route middleware (HIGH) > the route's

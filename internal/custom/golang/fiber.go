@@ -73,6 +73,13 @@ func (e *fiberExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		entities = append(entities, ent)
 	}
 
+	// #3628 rate-limit child — resolve route/group/engine rate-limit middleware
+	// once so each route op carries the flat rate_limited / rate_limit /
+	// rate_limit_scope / rate_limit_source contract. fiber supports all three
+	// scopes: inline `app.Get("/x", limiterMw, h)` (route), `api := app.Group(
+	// "/x", limiterMw)` (group), and `app.Use(limiterMw)` (engine).
+	rlIdx := buildGoRouteRateLimitIndex(src)
+
 	// 1. fiber.New() engine -> SCOPE.Service
 	for _, m := range reFiberEngine.FindAllStringSubmatchIndex(src, -1) {
 		varName := src[m[2]:m[3]]
@@ -97,7 +104,8 @@ func (e *fiberExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 	for _, m := range reFiberRoute.FindAllStringSubmatchIndex(src, -1) {
 		routerVar := src[m[2]:m[3]]
 		method := strings.ToUpper(src[m[4]:m[5]])
-		path := src[m[6]:m[7]]
+		ownPath := src[m[6]:m[7]]
+		path := ownPath
 		if gp, ok := groupPaths[routerVar]; ok {
 			path = gp + path
 		}
@@ -105,6 +113,9 @@ func (e *fiberExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		ent := makeEntity(name, "SCOPE.Operation", "endpoint", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "fiber", "provenance", "INFERRED_FROM_FIBER_ROUTE",
 			"http_method", method, "route_path", path)
+		// #3628 — stamp endpoint rate-limit posture (inline > group > engine). The
+		// inline index is keyed by the route's own (un-prefixed) path.
+		rlIdx.resolve(routerVar, method, ownPath).stamp(ent.Properties)
 		add(ent)
 	}
 
