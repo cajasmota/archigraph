@@ -28,7 +28,8 @@
 //     IsEnabled("key") / the [FeatureGate("key")] attribute on an MVC
 //     controller/action (Microsoft.FeatureManagement)
 //   - Unleash      : unleash.isEnabled("key") / isFeatureEnabled("key") /
-//     (Ruby) unleash.is_enabled?("key") — the `?`-suffixed predicate form
+//     (Ruby) unleash.is_enabled?("key") — the `?`-suffixed predicate form /
+//     (Elixir) Unleash.enabled?("key") — the bare `enabled?` predicate
 //   - OpenFeature  : client.getBooleanValue("key", false) /
 //     getStringValue / getNumberValue / getObjectValue
 //   - Flipper      : (Ruby) Flipper.enabled?(:key) / Flipper[:key].enabled? /
@@ -47,6 +48,11 @@
 //     gb/growthbook)
 //   - ConfigCat     : configCatClient.getValue("key", default) /
 //     getValueAsync / getValueDetails (receiver-gated on configCat*)
+//   - FunWithFlags  : (Elixir) FunWithFlags.enabled?(:key) /
+//     FunWithFlags.enabled?(:key, for: actor) / FunWithFlags.enabled?("key")
+//     — receiver-gated on the `FunWithFlags` module; atom key normalized
+//   - Flippant      : (Elixir) Flippant.enabled?("key", actor) — receiver-gated
+//     on the `Flippant` module; string or (normalized) atom key
 //   - Generic/custom : getFlag("key") / feature_enabled("key") /
 //     featureEnabled("key") / isFeatureEnabled("key") — FF-specific custom
 //     wrappers, distinct enough from arbitrary code to attribute
@@ -86,7 +92,7 @@ const featureFlagPatternType = "feature_flag_gating"
 // flagHit is one detected flag-check call site.
 type flagHit struct {
 	key    string // literal flag key (symbol leading ':' already stripped)
-	sdk    string // detecting SDK: launchdarkly | featuremanagement | unleash | unleash-react | openfeature | flipper | rollout | flagsmith | ff4j | split | growthbook | configcat | custom
+	sdk    string // detecting SDK: launchdarkly | featuremanagement | unleash | unleash-react | openfeature | flipper | rollout | flagsmith | ff4j | split | growthbook | configcat | funwithflags | flippant | custom
 	method string // the SDK call/method observed
 	caller string // enclosing-function name ("" → file scope)
 	line   int    // 1-indexed source line
@@ -334,6 +340,55 @@ var flagSDKMatchers = []flagSDKMatcher{
 		),
 		sdk:    "configcat",
 		method: "configCat.getValue",
+	},
+
+	// FunWithFlags (Elixir). FunWithFlags.enabled?(:flag) /
+	// FunWithFlags.enabled?(:flag, for: actor) / FunWithFlags.enabled?("flag").
+	// The bare `.enabled?` predicate is far too common in Elixir (any struct can
+	// expose an `enabled?/1` predicate) to attribute on its own, so the
+	// FunWithFlags module receiver is required — the same receiver-gated
+	// discipline used for Flipper / FF4j / Rollout. Elixir flag keys are
+	// idiomatically atoms (`:flag`); the leading `:` is stripped by the symbol
+	// sub-pattern so an atom key normalizes to the same node a string key
+	// (`"flag"`) of the same name would (mirroring Ruby's symbol normalization).
+	// The case-sensitive `FunWithFlags` receiver matches the canonical Elixir
+	// module name.
+	{
+		re: regexp.MustCompile(
+			`\bFunWithFlags\s*\.\s*enabled\?\s*\(\s*` +
+				`(?::([A-Za-z_]\w*[?!]?)|"([^"\\]+)"|'([^'\\]+)')`,
+		),
+		sdk:    "funwithflags",
+		method: "FunWithFlags.enabled?",
+	},
+
+	// Flippant (Elixir). Flippant.enabled?("flag", actor) — string-key feature
+	// gate. As with FunWithFlags, the bare `.enabled?` predicate is receiver-
+	// gated on the `Flippant` module name to keep it from false-positiving on
+	// arbitrary `.enabled?` predicates. Flippant keys are conventionally
+	// strings; an atom key is accepted too (normalized) for symmetry.
+	{
+		re: regexp.MustCompile(
+			`\bFlippant\s*\.\s*enabled\?\s*\(\s*` +
+				`(?::([A-Za-z_]\w*[?!]?)|"([^"\\]+)"|'([^'\\]+)')`,
+		),
+		sdk:    "flippant",
+		method: "Flippant.enabled?",
+	},
+
+	// Unleash (Elixir). Unleash.enabled?("flag"). The Elixir Unleash client
+	// exposes the check as a bare `enabled?` predicate rather than the
+	// `is_enabled?` form the Ruby SDK uses (handled by the Unleash matcher
+	// above), so this dedicated, receiver-gated matcher claims the Elixir idiom.
+	// The `Unleash` module receiver keeps the generic `.enabled?` predicate from
+	// false-positiving; atom or string key (atom normalized).
+	{
+		re: regexp.MustCompile(
+			`\bUnleash\s*\.\s*enabled\?\s*\(\s*` +
+				`(?::([A-Za-z_]\w*[?!]?)|"([^"\\]+)"|'([^'\\]+)')`,
+		),
+		sdk:    "unleash",
+		method: "Unleash.enabled?",
 	},
 
 	// Generic / custom feature-flag wrappers. getFlag("key") /

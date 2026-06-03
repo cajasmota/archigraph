@@ -1340,3 +1340,165 @@ function pick(user) {
 		t.Errorf("expected exactly one flag/edge, got flags=%v edges=%v", flags, edges)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Elixir (#3628 area #17) — FunWithFlags / Flippant / Unleash bare `enabled?`.
+//
+// Elixir flag keys are idiomatically atoms (`:flag`); the leading `:` is
+// stripped so an atom key converges on the same `feature:<key>` node a string
+// key of the same name produces (mirroring Ruby symbol normalization). Elixir
+// has no enclosing-function index in indexEnclosingFunctions (orm_queries.go),
+// so the GATED_BY edge is file-scope-anchored (`File:<path>`) — the same
+// fallback used in any language where the enclosing def can't be resolved. The
+// FunWithFlags / Flippant / Unleash module receivers are required so the bare
+// `.enabled?` predicate (ubiquitous in Elixir) is only attributed when it is
+// the flag SDK API.
+// ---------------------------------------------------------------------------
+
+// ELIXIR — FunWithFlags.enabled?(:new_checkout, for: user): atom key normalized
+// (leading `:` stripped) → feature:new_checkout, SDK subtype "funwithflags".
+func TestFeatureFlag_Elixir_FunWithFlags_atom_for_actor(t *testing.T) {
+	src := `
+defmodule Checkout do
+  def run(cart, user) do
+    if FunWithFlags.enabled?(:new_checkout, for: user) do
+      new_flow(cart)
+    else
+      legacy(cart)
+    end
+  end
+end
+`
+	flags, edges := runFlagPass("elixir", "checkout.ex", src)
+
+	flag, ok := findFlag(flags, "new_checkout")
+	if !ok {
+		t.Fatalf("expected feature:new_checkout entity (atom normalized), got flags=%v", flags)
+	}
+	if flag.ID != "feature:new_checkout" {
+		t.Errorf("flag ID = %q, want feature:new_checkout", flag.ID)
+	}
+	if flag.Subtype != "funwithflags" {
+		t.Errorf("flag SDK subtype = %q, want funwithflags", flag.Subtype)
+	}
+
+	g, ok := findGate(edges, "new_checkout")
+	if !ok {
+		t.Fatalf("expected GATED_BY for new_checkout, got %v", edges)
+	}
+	if g.From != "File:checkout.ex" {
+		t.Errorf("GATED_BY FromID = %q, want File:checkout.ex (no Elixir enclosing-func index)", g.From)
+	}
+	if g.To != "feature:new_checkout" {
+		t.Errorf("GATED_BY ToID = %q, want feature:new_checkout", g.To)
+	}
+	if g.SDK != "funwithflags" {
+		t.Errorf("GATED_BY sdk = %q, want funwithflags", g.SDK)
+	}
+}
+
+// ELIXIR — FunWithFlags.enabled?("beta"): string-key form also fires.
+func TestFeatureFlag_Elixir_FunWithFlags_string_key(t *testing.T) {
+	src := `
+defmodule Page do
+  def render do
+    FunWithFlags.enabled?("beta")
+  end
+end
+`
+	flags, edges := runFlagPass("elixir", "page.ex", src)
+	flag, ok := findFlag(flags, "beta")
+	if !ok || flag.Subtype != "funwithflags" {
+		t.Fatalf("expected feature:beta funwithflags entity, got %v", flags)
+	}
+	if _, ok := findGate(edges, "beta"); !ok {
+		t.Fatalf("expected GATED_BY for beta, got %v", edges)
+	}
+}
+
+// ELIXIR — Flippant.enabled?("flag", actor): string key, receiver-gated.
+func TestFeatureFlag_Elixir_Flippant_enabled(t *testing.T) {
+	src := `
+defmodule Gate do
+  def call(actor) do
+    Flippant.enabled?("search_v2", actor)
+  end
+end
+`
+	flags, edges := runFlagPass("elixir", "gate.ex", src)
+	flag, ok := findFlag(flags, "search_v2")
+	if !ok {
+		t.Fatalf("expected feature:search_v2 entity, got %v", flags)
+	}
+	if flag.Subtype != "flippant" {
+		t.Errorf("flag SDK = %q, want flippant", flag.Subtype)
+	}
+	g, ok := findGate(edges, "search_v2")
+	if !ok {
+		t.Fatalf("expected GATED_BY for search_v2, got %v", edges)
+	}
+	if g.SDK != "flippant" {
+		t.Errorf("GATED_BY sdk = %q, want flippant", g.SDK)
+	}
+}
+
+// ELIXIR — Unleash.enabled?("beta"): the bare `enabled?` predicate (vs the Ruby
+// SDK's `is_enabled?`), receiver-gated on the Unleash module → SDK "unleash".
+func TestFeatureFlag_Elixir_Unleash_bare_enabled(t *testing.T) {
+	src := `
+defmodule Feed do
+  def show do
+    if Unleash.enabled?("beta") do
+      :new
+    else
+      :stable
+    end
+  end
+end
+`
+	flags, edges := runFlagPass("elixir", "feed.ex", src)
+	flag, ok := findFlag(flags, "beta")
+	if !ok {
+		t.Fatalf("expected feature:beta entity, got %v", flags)
+	}
+	if flag.Subtype != "unleash" {
+		t.Errorf("flag SDK = %q, want unleash", flag.Subtype)
+	}
+	if g, ok := findGate(edges, "beta"); !ok || g.SDK != "unleash" {
+		t.Errorf("expected GATED_BY beta sdk=unleash, got %+v ok=%v", g, ok)
+	}
+}
+
+// ELIXIR NEGATIVE — a bare `.enabled?` on a NON-FF receiver must NOT be
+// attributed: the FunWithFlags / Flippant / Unleash matchers each require their
+// module receiver, so `record.enabled?(:foo)` on an arbitrary struct emits
+// nothing (the ubiquitous Elixir predicate stays unattributed).
+func TestFeatureFlag_Elixir_NonFlagReceiver_NoFabrication(t *testing.T) {
+	src := `
+defmodule View do
+  def visible?(record) do
+    SomeMod.enabled?(:foo) and record.enabled?
+  end
+end
+`
+	flags, edges := runFlagPass("elixir", "view.ex", src)
+	if len(flags) != 0 || len(edges) != 0 {
+		t.Errorf("non-FF .enabled? receiver should yield no output, got flags=%v edges=%v", flags, edges)
+	}
+}
+
+// ELIXIR NEGATIVE — a dynamic (non-literal) flag key must NOT fabricate a flag
+// entity or edge (honest-partial, mirrors the other languages).
+func TestFeatureFlag_Elixir_DynamicKey_NoFabrication(t *testing.T) {
+	src := `
+defmodule Gate do
+  def check(flag, user) do
+    FunWithFlags.enabled?(flag, for: user)
+  end
+end
+`
+	flags, edges := runFlagPass("elixir", "dyn.ex", src)
+	if len(flags) != 0 || len(edges) != 0 {
+		t.Errorf("dynamic FunWithFlags key should yield no output, got flags=%v edges=%v", flags, edges)
+	}
+}
