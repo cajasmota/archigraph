@@ -17955,6 +17955,15 @@ records:
 
   infra.iac.cdk:
     capabilities:
+      iac_iam_grant_attribution:
+        status: full
+        symbols:
+          - file: internal/engine/cdk_edges.go
+            functions: [applyCDKEdges, applyCDKEdgesPython]
+        tests:
+          - file: internal/engine/cdk_edges_test.go
+        issues_implemented: ["4197"]
+        verified_at: "2026-06-04"
       iac_output_export_extraction:
         status: partial
         symbols:

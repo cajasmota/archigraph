@@ -66,7 +66,7 @@ categories:
   databases:
     capabilities: [resource_extraction, dependency_attribution]
   platform:
-    capabilities: [resource_extraction, dependency_attribution, file_parsing, env_resolution, shared_data_coupling, external_service_dependency, translation_key_usage, iac_output_export_extraction, iac_cross_stack_reference]
+    capabilities: [resource_extraction, dependency_attribution, file_parsing, env_resolution, shared_data_coupling, external_service_dependency, translation_key_usage, iac_output_export_extraction, iac_cross_stack_reference, iac_iam_grant_attribution]
     subcategory_order: [iac_provisioning, container_orchestration, config_files, workflow_dag, app_topology, integration_external, localization, frontend_routing]
   security:
     capabilities: [auth_policy, secret_detection, sql_injection, cors_policy]
@@ -719,6 +719,17 @@ subcategories:
       # CloudFormation `!ImportValue` / `Fn::ImportValue` (collapsing onto the
       # shared cfn-export:* node), and Pulumi `StackReference` (pulumi-stack:*).
       - iac_cross_stack_reference
+      # iac_iam_grant_attribution (#4197): attribution of IAM permission grants
+      # between IaC resources — which principal/grantee resource is granted which
+      # action on which target — modelled as a DEPENDS_ON edge grantee→target
+      # carrying `reason=grant` and a `grant=<method>` property naming the exact
+      # grant call. Backed by AWS CDK grant calls in cdk_edges.go (Pass 3): TS
+      # `bucket.grantRead(fn)` (cdkGrantRe → emitDependsOn(grantee,res,"grant",
+      # grantMethod), cdk_edges.go:367-377) and Python `data.grant_read(fn)`
+      # (cdkPyGrantRe, cdk_edges.go:460-468). Other IaC tools (Terraform/OpenTofu,
+      # CloudFormation, Pulumi, Bicep) extract IAM resources but emit only generic
+      # dependency/resource edges with no grant-method attribution — honest N/A.
+      - iac_iam_grant_attribution
     groups: []
 
   container_orchestration:

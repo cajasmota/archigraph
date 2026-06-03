@@ -466,3 +466,49 @@ func TestCDKPython_NonCDKFileEmitsNothing(t *testing.T) {
 		t.Errorf("non-CDK Python file should emit nothing, got %d entities %d rels", len(ents), len(rels))
 	}
 }
+
+// TestCDK_IAMGrantAttribution_Cell is the value-asserting test backing the
+// platform/iac_provisioning `iac_iam_grant_attribution` capability cell
+// (#4197). It drives the REAL grant pass (applyCDKEdges Pass 3) on a CDK-TS
+// snippet with `bucket.grantRead(fn)` and asserts the EXACT IAM-grant
+// attribution edge: a DEPENDS_ON whose From is the grantee (Handler), whose
+// To is the granted target resource (DataBucket), carrying reason=grant and
+// the precise grant method under the `grant` key (grantRead). This is the
+// "which principal/grantee is granted which action on which target" datum the
+// cell claims — pinned exactly, never len>0.
+func TestCDK_IAMGrantAttribution_Cell(t *testing.T) {
+	src := `import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+
+export class GrantStack extends cdk.Stack {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+    const dataBucket = new s3.Bucket(this, 'DataBucket', {});
+    const handler    = new lambda.Function(this, 'Handler', {});
+    dataBucket.grantRead(handler);
+  }
+}
+`
+	_, rels := runCDKDetect(t, "typescript", "lib/grant-stack.ts", src)
+
+	deps := relsByKind(rels, "DEPENDS_ON")
+	var grant *relResult
+	for i := range deps {
+		if deps[i].from == "SCOPE.InfraResource:Handler" && deps[i].to == "SCOPE.InfraResource:DataBucket" {
+			grant = &deps[i]
+			break
+		}
+	}
+	if grant == nil {
+		t.Fatalf("expected IAM-grant DEPENDS_ON edge grantee Handler→target DataBucket, got %+v", deps)
+	}
+	if grant.props["reason"] != "grant" {
+		t.Errorf("grant attribution reason = %q, want grant", grant.props["reason"])
+	}
+	if grant.props["grant"] != "grantRead" {
+		t.Errorf("grant attribution method = %q, want grantRead", grant.props["grant"])
+	}
+	if grant.props["iac_tool"] != "aws-cdk" {
+		t.Errorf("grant attribution iac_tool = %q, want aws-cdk", grant.props["iac_tool"])
+	}
+}
