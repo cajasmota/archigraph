@@ -289,6 +289,104 @@ int main() { return 0; }`
 }
 
 // ---------------------------------------------------------------------------
+// Protobuf — parity-grind-cpp: rpc_framework Type System caps (#3963).
+//
+// These tests credit protobuf (the IDL half of gRPC) on the rpc_framework
+// "Type System" caps that the .proto extractor genuinely satisfies, mirroring
+// the gRPC sibling cells:
+//
+//   - enum_extraction       .proto `enum` -> SCOPE.Schema/enum (enum_name)
+//   - interface_extraction  .proto `service` -> SCOPE.Service/grpc_service
+//   - type_extraction       .proto `message` -> SCOPE.Schema/dto + typed fields
+//
+// Each test value-asserts the exact entity identity AND a distinguishing
+// property — never len>0. type_alias_extraction is intentionally NOT credited:
+// proto3 IDL has no type-alias construct and the framework-agnostic C++
+// type-system extractor emits no alias entity, so it is honest-N/A.
+// ---------------------------------------------------------------------------
+
+// enum_extraction: a .proto enum yields a SCOPE.Schema/enum entity whose
+// enum_name property is the declared enum name and whose provenance marks it
+// as inferred from a proto enum.
+func TestProtobufEnumExtractionCap(t *testing.T) {
+	src := `
+syntax = "proto3";
+enum Corpus {
+  UNIVERSAL = 0;
+  WEB = 1;
+  IMAGES = 2;
+}
+`
+	ents := extract(t, "custom_cpp_protobuf", fi("corpus.proto", "protobuf", src))
+	e := ormFindEntity(ents, "SCOPE.Schema", "enum", "proto_enum:Corpus")
+	if e == nil {
+		t.Fatalf("expected SCOPE.Schema/enum proto_enum:Corpus, got %+v", ents)
+	}
+	if got := e.Props["enum_name"]; got != "Corpus" {
+		t.Errorf("enum_name = %q, want Corpus", got)
+	}
+	if got := e.Props["provenance"]; got != "INFERRED_FROM_PROTO_ENUM" {
+		t.Errorf("provenance = %q, want INFERRED_FROM_PROTO_ENUM", got)
+	}
+}
+
+// interface_extraction: a .proto service declaration yields a SCOPE.Service
+// entity (the RPC interface) carrying the service name and rpc_protocol=grpc.
+func TestProtobufInterfaceExtractionCap(t *testing.T) {
+	src := `
+service RouteGuide {
+  rpc GetFeature (Point) returns (Feature);
+}
+`
+	ents := extract(t, "custom_cpp_protobuf", fi("route.proto", "protobuf", src))
+	e := ormFindEntity(ents, "SCOPE.Service", "grpc_service", "grpc_service:RouteGuide")
+	if e == nil {
+		t.Fatalf("expected SCOPE.Service/grpc_service grpc_service:RouteGuide, got %+v", ents)
+	}
+	if got := e.Props["grpc_service"]; got != "RouteGuide" {
+		t.Errorf("grpc_service = %q, want RouteGuide", got)
+	}
+	if got := e.Props["rpc_protocol"]; got != "grpc" {
+		t.Errorf("rpc_protocol = %q, want grpc", got)
+	}
+}
+
+// type_extraction: a .proto message yields a SCOPE.Schema/dto type whose
+// dto_name matches, and per-field SCOPE.Schema/field entities carrying the
+// declared field_type — the message type shape recovered from the IDL.
+func TestProtobufTypeExtractionCap(t *testing.T) {
+	src := `
+syntax = "proto3";
+message Point {
+  int32 latitude = 1;
+  int32 longitude = 2;
+}
+`
+	ents := extract(t, "custom_cpp_protobuf", fi("point.proto", "protobuf", src))
+	dto := ormFindEntity(ents, "SCOPE.Schema", "dto", "proto_message:Point")
+	if dto == nil {
+		t.Fatalf("expected SCOPE.Schema/dto proto_message:Point, got %+v", ents)
+	}
+	if got := dto.Props["dto_name"]; got != "Point" {
+		t.Errorf("dto_name = %q, want Point", got)
+	}
+	if got := dto.Props["message_kind"]; got != "proto_message" {
+		t.Errorf("message_kind = %q, want proto_message", got)
+	}
+	// Typed field recovered from the message body.
+	fld := ormFindEntity(ents, "SCOPE.Schema", "field", "Point.latitude")
+	if fld == nil {
+		t.Fatalf("expected SCOPE.Schema/field Point.latitude, got %+v", ents)
+	}
+	if got := fld.Props["field_type"]; got != "int32" {
+		t.Errorf("latitude field_type = %q, want int32", got)
+	}
+	if got := fld.Props["parent_message"]; got != "Point" {
+		t.Errorf("latitude parent_message = %q, want Point", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // nlohmann/json — DTO model + fields + free-function serialization binding
 // ---------------------------------------------------------------------------
 
