@@ -201,6 +201,16 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 		SourceFile string `json:"file,omitempty"`
 		StartLine  int    `json:"line,omitempty"`
 		HopCount   int    `json:"hop_count"`
+		// EdgeKind is the on-graph relationship kind of the inbound edge via
+		// which this caller was discovered (CALLS, INJECTED_INTO, THROWS,
+		// CATCHES, REFERENCES, IMPORTS, …). #4242: pre-fix, find_callers only
+		// walked inboundRefKinds (CALLS/REFERENCES/IMPORTS/TESTS/…), silently
+		// dropping every non-CALLS semantic predecessor (INJECTED_INTO, THROWS,
+		// CATCHES, JOINS_COLLECTION, …) that the callees/out side already
+		// surfaces — so the rewrite oracle falsely concluded those edges were
+		// unmodeled. The walk now includes all semantic kinds AND labels the
+		// kind per neighbor so a consumer can tell INJECTED_INTO from CALLS.
+		EdgeKind string `json:"edge_kind,omitempty"`
 		// ViaInherits marks a caller reached by a reverse-INHERITS hop (#3834):
 		// an inheriting subclass stub that exposes this (base) member's
 		// behaviour, not a direct CALLS-site of it.
@@ -248,7 +258,13 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 			next := []string{}
 			for _, n := range frontier {
 				for _, e := range adj.in[n] {
-					if !inboundRefKinds[e.kind] {
+					// #4242: accept every semantic predecessor edge, not just the
+					// inboundRefKinds allow-list. The out/callees side already
+					// surfaces all kinds; mirroring it here is what makes the
+					// reverse direction symmetric. Pure-structural edges
+					// (CONTAINS — every entity is contained by its module) carry
+					// no caller signal and stay excluded (see #1915).
+					if !isInboundNeighborKind(e.kind) {
 						continue
 					}
 					if _, seen := visited[e.target]; seen {
@@ -312,6 +328,7 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 					EntityID: prefixedID(r.Repo, id),
 					Name:     name,
 					HopCount: d,
+					EdgeKind: dk, // #4242: label the discovering edge kind.
 					isTest:   isTestFileMCP(id),
 				})
 				continue
@@ -347,6 +364,7 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 				SourceFile: e.SourceFile,
 				StartLine:  e.StartLine,
 				HopCount:   d,
+				EdgeKind:   dk, // #4242: label the discovering edge kind.
 				isTest:     isTestFileMCP(e.SourceFile),
 			}
 			if isInheritsEdge {
@@ -525,6 +543,11 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 		SourceFile string `json:"file,omitempty"`
 		StartLine  int    `json:"line,omitempty"`
 		HopCount   int    `json:"hop_count"`
+		// EdgeKind is the on-graph relationship kind of the outbound edge via
+		// which this callee was discovered (CALLS, INJECTED_INTO, THROWS, …).
+		// #4242: symmetric with the callers side so a consumer can tell an
+		// INJECTED_INTO callee from a CALLS one.
+		EdgeKind string `json:"edge_kind,omitempty"`
 		// ViaInherits marks a callee reached by hopping through an inherited
 		// member's INHERITS edge (#3834) — i.e. the node is a defining base/
 		// mixin member, not a direct CALLS target of the queried entity.
@@ -559,6 +582,10 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 		visited := map[string]int{target: 0}
 		mroExternal := map[string]*graph.Entity{}
 		mroVia := map[string]bool{}
+		// discoveredVia[id] = on-graph edge kind via which `id` was first reached
+		// on the outbound BFS — used to label each callee with its edge_kind so
+		// the out side is symmetric with the callers side (#4242).
+		discoveredVia := map[string]string{}
 		frontier := []string{target}
 		for d := 0; d < depth; d++ {
 			next := []string{}
@@ -568,6 +595,7 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 						continue
 					}
 					visited[e.target] = d + 1
+					discoveredVia[e.target] = e.kind
 					next = append(next, e.target)
 				}
 				for _, me := range mroOutboundEdges(r, n) {
@@ -576,6 +604,7 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 					}
 					visited[me.Target] = d + 1
 					mroVia[me.Target] = true
+					discoveredVia[me.Target] = inheritsEdgeKind // #4242
 					if me.External && me.Contract != nil {
 						mroExternal[me.Target] = me.Contract
 					}
@@ -610,6 +639,7 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 				SourceFile: e.SourceFile,
 				StartLine:  e.StartLine,
 				HopCount:   d,
+				EdgeKind:   discoveredVia[id], // #4242: label the discovering edge kind.
 				isTest:     isTestFileMCP(e.SourceFile),
 			}
 			if mroVia[id] {
@@ -1506,6 +1536,49 @@ var inboundRefKinds = map[string]bool{
 	"STEP_IN_PROCESS": true,
 	"PRODUCES":        true,
 	"CONSUMES":        true,
+}
+
+// inboundNeighborStructuralKinds are edge kinds that carry NO predecessor /
+// caller signal and must stay excluded from find_callers regardless of the
+// broadened semantic-edge acceptance (#4242). CONTAINS is the canonical case:
+// every entity is contained by its module/file, so a CONTAINS predecessor is
+// the structural parent, not a caller (preserves #1915 / the
+// TestFindCallers_ExcludesContainsEdges contract). DECLARES/DEFINES are the
+// same structural-ownership shape.
+var inboundNeighborStructuralKinds = map[string]bool{
+	"CONTAINS": true,
+	"DECLARES": true,
+	"DEFINES":  true,
+}
+
+// isInboundNeighborKind reports whether an inbound edge of the given kind
+// represents a real predecessor (caller / in-neighbor) of an entity for the
+// archigraph_neighbors(direction=in) / find_callers walk.
+//
+// #4242: the pre-fix walk used the inboundRefKinds allow-list only, which
+// covered CALLS/REFERENCES/IMPORTS/TESTS/… but DROPPED every non-CALLS semantic
+// predecessor — INJECTED_INTO, THROWS, CATCHES, JOINS_COLLECTION, DEPENDS_ON,
+// EXTENDS, INHERITS, … — even though the forward (callees/out) side already
+// surfaced all of them. That asymmetry made the rewrite oracle conclude those
+// edges were "unmodeled" when they exist on the graph. We now accept any edge
+// kind that is a known reference kind OR a projected semantic kind OR a
+// type/dependency relation, excluding only the pure-structural ownership edges
+// (CONTAINS/DECLARES/DEFINES). Mirrors the all-kinds out side.
+func isInboundNeighborKind(kind string) bool {
+	if inboundNeighborStructuralKinds[strings.ToUpper(kind)] {
+		return false
+	}
+	if inboundRefKinds[kind] {
+		return true
+	}
+	if isSemanticEdgeKind(kind) {
+		return true
+	}
+	switch strings.ToUpper(kind) {
+	case "EXTENDS", "INHERITS", "DEPENDS_ON", "IMPLEMENTS":
+		return true
+	}
+	return false
 }
 
 // deadMarkerRe matches conventional dead-code / deprecation name markers. A
