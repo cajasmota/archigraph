@@ -44,7 +44,11 @@ import (
 // BlockVersion is the version embedded in the start marker. Bumping the
 // version causes doctor to flag any file whose block uses an older
 // version as OUTDATED so the next `archigraph install` rewrites it.
-const BlockVersion = 1
+//
+// v2 (#3648): added the imperative STANDING DIRECTIVE near the top of the
+// block so agents keep reaching for archigraph on structural questions for
+// the whole session instead of drifting back to grep after a few calls.
+const BlockVersion = 2
 
 // StartMarker / EndMarker bound the managed region inside every rules
 // file. Keep this stable across releases — bumping the marker syntax
@@ -211,6 +215,12 @@ func RenderBlock(groupName string) string {
 		"architecture knowledge graph available via MCP. When you (an AI coding "+
 		"agent) need to understand how this codebase fits together, prefer the "+
 		"archigraph MCP tools over `grep` + reading files.\n", groupName)
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, "### STANDING DIRECTIVE — query the graph, don't grep your way around it")
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, "- **Default to archigraph for STRUCTURAL questions**: where is `X` defined, who calls/uses `Y`, how does a request flow end-to-end, what is the blast radius of a change, what are the modules. Reach for `archigraph_find` / `archigraph_inspect` / `archigraph_neighbors` / `archigraph_traces` / `archigraph_impact_radius` for these — **not** `grep` + reading files.")
+	fmt.Fprintln(&b, "- **This holds for the WHOLE session, not just your first few calls.** If you notice you have been grepping or opening files to answer a structural question, stop and query the graph instead — it is faster and more accurate, and it stays that way on call 50 as much as on call 1.")
+	fmt.Fprintln(&b, "- **`grep` is still right for**: raw string / substring / TODO / FIXME sweeps, and content that is not in the graph (comments, config values, log strings).")
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "### When to use archigraph instead of grep")
 	fmt.Fprintln(&b)

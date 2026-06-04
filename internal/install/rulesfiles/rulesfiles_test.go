@@ -41,6 +41,25 @@ func TestWriteAll_FreshRepo(t *testing.T) {
 		if !bytes.Contains(data, []byte("**demo**")) {
 			t.Errorf("%s: group name not embedded", target)
 		}
+		// The imperative STANDING DIRECTIVE (#3648) must be present in
+		// every target so agents keep using archigraph for the whole
+		// session instead of drifting back to grep. Assert the key phrases
+		// so this guard can't silently rot if the block is reworded.
+		if !bytes.Contains(data, []byte("STANDING DIRECTIVE")) {
+			t.Errorf("%s: standing directive heading missing", target)
+		}
+		if !bytes.Contains(data, []byte("STRUCTURAL questions")) {
+			t.Errorf("%s: directive does not mention STRUCTURAL questions", target)
+		}
+		if !bytes.Contains(data, []byte("not** `grep`")) {
+			t.Errorf("%s: directive does not push back against grep", target)
+		}
+		if !bytes.Contains(data, []byte("archigraph_find")) {
+			t.Errorf("%s: directive does not name archigraph_find", target)
+		}
+		if !bytes.Contains(data, []byte("WHOLE session")) {
+			t.Errorf("%s: directive does not assert whole-session scope", target)
+		}
 	}
 }
 
@@ -83,8 +102,13 @@ func TestWriteAll_ReplacesOlderVersionBlock(t *testing.T) {
 	if bytes.Contains(data, []byte("v=0")) {
 		t.Errorf("old version marker still present: %s", data)
 	}
-	if !bytes.Contains(data, []byte("v=1")) {
-		t.Errorf("new version marker missing: %s", data)
+	if !bytes.Contains(data, []byte(StartMarker)) {
+		t.Errorf("current version marker missing: %s", data)
+	}
+	// The replaced block must carry the new directive, not just a bumped
+	// version number.
+	if !bytes.Contains(data, []byte("STANDING DIRECTIVE")) {
+		t.Errorf("replaced block missing standing directive: %s", data)
 	}
 }
 
