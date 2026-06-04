@@ -92,29 +92,55 @@ func viewSetNameForRoute(e *graph.Entity) string {
 //
 //  1. The arg matches a router-expanded route entity → derive its ViewSet.
 //  2. The arg matches a class/component entity → use its leaf name.
-//  3. The arg matches no entity → treat the raw string's leaf as the ViewSet
+//  3. The arg matches ANY other entity (e.g. a DRF ViewSet the Python
+//     extractor emits as Kind="View" with an empty subtype, so isClassEntity is
+//     false for it) → use that entity's leaf name. A resolved entity_id is an
+//     explicit user target, so its own name is the ViewSet to group by — this
+//     is the #4243 fix: previously a ViewSet entity_id fell through to case 4
+//     and grouped by the raw (often hex / repo-prefixed) id, matching nothing.
+//  4. The arg matches no entity → treat the raw string's leaf as the ViewSet
 //     name (lets callers pass a bare class name that isn't itself indexed as a
 //     standalone entity, e.g. when only the routes carry it).
 //
+// The arg is matched both as given and with any "<repo>::" prefix stripped, so
+// a fully-prefixed entity_id (the form archigraph_effective_contract is
+// normally called with) resolves to its local entity — the LabelIndex is keyed
+// by LOCAL id (#4243).
+//
 // Returns the lower-cased ViewSet leaf to match routes against, plus the
-// resolved entity (may be nil for case 3).
+// resolved entity (may be nil for case 4).
 func resolveEffectiveContractTarget(lg *LoadedGroup, arg string) (string, *graph.Entity) {
+	// Candidate lookup keys: the raw arg, plus its local id if it carries a
+	// "<repo>::" prefix (LabelIndex.ByID is keyed by local id, not prefixed).
+	keys := []string{arg}
+	if _, local := splitPrefixed(arg); local != arg {
+		keys = append(keys, local)
+	}
 	for _, r := range reposToConsider(lg, nil) {
 		if r.LabelIndex == nil {
 			continue
 		}
-		for _, e := range r.LabelIndex.LookupAll(arg) {
-			if isRouterExpandedRoute(e) {
-				if vs := viewSetNameForRoute(e); vs != "" {
-					return strings.ToLower(vs), e
+		for _, key := range keys {
+			for _, e := range r.LabelIndex.LookupAll(key) {
+				if isRouterExpandedRoute(e) {
+					if vs := viewSetNameForRoute(e); vs != "" {
+						return strings.ToLower(vs), e
+					}
 				}
-			}
-			if isClassEntity(e) {
-				return strings.ToLower(leafAfterDot(e.Name)), e
+				if isClassEntity(e) {
+					return strings.ToLower(leafAfterDot(e.Name)), e
+				}
+				// Case 3: any other resolved entity (the Kind="View" DRF ViewSet
+				// case) — group by its own leaf name. An entity_id the caller
+				// passed IS the ViewSet; its name is the grouping key. Router
+				// entities are handled above, so this never hijacks a route.
+				if e.Name != "" {
+					return strings.ToLower(leafAfterDot(e.Name)), e
+				}
 			}
 		}
 	}
-	// Case 3: no entity matched — fall back to the raw leaf.
+	// Case 4: no entity matched — fall back to the raw leaf.
 	return strings.ToLower(leafAfterDot(arg)), nil
 }
 
@@ -230,11 +256,13 @@ func (s *Server) handleEffectiveContract(_ context.Context, req mcpapi.CallToolR
 	}
 
 	if len(out.Groups) == 0 {
-		out.Note = "no effective contract resolvable for this ViewSet: neither " +
-			"router-expanded routes nor a ViewSet class entity with EXTENDS edges to " +
-			"a known framework base (e.g. ModelViewSet) were found in the index. " +
-			"Confirm the target is a DRF ViewSet and that its class is indexed; if the " +
-			"index predates the DRF expansion pass (#3964) a reindex may help."
+		out.Note = "no effective contract resolvable for \"" + target + "\": no " +
+			"router-expanded routes are attributed to this ViewSet, and its class " +
+			"entity carries no EXTENDS edge to a framework base the baseknowledge " +
+			"pack recognises (ModelViewSet / GenericViewSet / ReadOnlyModelViewSet / " +
+			"APIView / ViewSet). Verify the target resolves to the ViewSet itself " +
+			"(pass its entity_id or exact class name, not a method or module), that " +
+			"it is a DRF ViewSet, and that its base class is one the pack knows."
 	}
 	return jsonResult(out), nil
 }
