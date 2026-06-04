@@ -1758,24 +1758,32 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 	// Format B: tail contains stubMemberDelim → (scope_name, member_name).
 	if hash := strings.IndexByte(tail, stubMemberDelim); hash >= 0 {
 		scopeName, memberName := tail[:hash], tail[hash+1:]
-		if scopeName == "" || memberName == "" {
-			return "", statusUnmatched, true
-		}
-		fileBucket := idx.byMember[filePath]
-		if fileBucket == nil {
-			return "", statusUnmatched, true
-		}
-		scopeBucket := fileBucket[scopeName]
-		if scopeBucket == nil {
-			return "", statusUnmatched, true
-		}
-		if id, ok := scopeBucket[memberName]; ok {
-			if id == "" {
-				return "", statusAmbiguous, true
+		// #4244 — an entity Name may legitimately CONTAIN '#' as a literal
+		// character rather than a scope/member separator. The Mongo
+		// aggregation pass names each pipeline-stage SCOPE.DataAccess node
+		// "<coll>.aggregate#<idx> <op>" (e.g. "inspections.aggregate#0
+		// $lookup"); a structural-ref to that node carries the '#' in its
+		// tail. Such a stub is Format A (the whole tail is the entity Name),
+		// not Format B. Only treat it as Format B when both halves are
+		// non-empty AND the byMember index actually has a matching member —
+		// otherwise fall through to the Format-A byLocation lookup below,
+		// which keys on the FULL tail (the real entity Name, '#' included).
+		// This is strictly additive: every previously-resolving Format-B stub
+		// still hits the byMember branch and returns first.
+		if scopeName != "" && memberName != "" {
+			if fileBucket := idx.byMember[filePath]; fileBucket != nil {
+				if scopeBucket := fileBucket[scopeName]; scopeBucket != nil {
+					if id, ok := scopeBucket[memberName]; ok {
+						if id == "" {
+							return "", statusAmbiguous, true
+						}
+						return id, statusRewritten, true
+					}
+				}
 			}
-			return id, statusRewritten, true
 		}
-		return "", statusUnmatched, true
+		// byMember miss (or empty half) — fall through to Format A so a
+		// '#'-bearing entity Name resolves via byLocation[file][fullTail].
 	}
 
 	// Format A: tail is the entity name. Try the kind-aware location

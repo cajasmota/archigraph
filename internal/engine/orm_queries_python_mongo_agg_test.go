@@ -31,7 +31,19 @@ func runMongoAggPyXFile(
 	}
 	scanPythonMongoAggregation(src, funcs, "svc/agg.py", "python", resolver,
 		func(e types.EntityRecord) { ents = append(ents, e) },
-		func(r types.RelationshipRecord) { rels = append(rels, r) },
+		func(r types.RelationshipRecord) {
+			// #4244 — the scan now emits a NODE-ANCHORED JOINS_COLLECTION twin
+			// (FromID = the $lookup stage node, marked anchor=stage_node)
+			// alongside the historical collection-anchored edge. The existing
+			// assertions in this file count/inspect the collection-anchored
+			// edges only; strip the twin here so they remain meaningful. The
+			// twin itself is asserted by TestMongoAggPy_LookupNode_*_4244,
+			// which collects the unfiltered edge set directly.
+			if r.Properties["anchor"] == "stage_node" {
+				return
+			}
+			rels = append(rels, r)
+		},
 	)
 	return ents, rels
 }
@@ -1203,7 +1215,14 @@ def run(db):
 	var rels []types.RelationshipRecord
 	scanPythonMongoAggregation(serviceSrc, funcs, servicePath, "python", resolver,
 		func(e types.EntityRecord) { ents = append(ents, e) },
-		func(r types.RelationshipRecord) { rels = append(rels, r) },
+		func(r types.RelationshipRecord) {
+			// #4244 — drop the node-anchored JOINS_COLLECTION twin so the
+			// count assertion sees the collection-anchored edge set.
+			if r.Properties["anchor"] == "stage_node" {
+				return
+			}
+			rels = append(rels, r)
+		},
 	)
 	if len(rels) != 1 {
 		t.Fatalf("expected 1 on-disk cross-file join edge, got %d: %+v", len(rels), rels)

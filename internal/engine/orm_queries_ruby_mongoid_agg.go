@@ -176,6 +176,10 @@ func scanRubyMongoidAggCalls(
 				props["caller"] = caller
 			}
 
+			// Stage entity Name — computed up front so the node-anchored
+			// JOINS_COLLECTION twin (#4244) can reference THIS stage entity.
+			name := fmt.Sprintf("%s.aggregate#%d %s", coll, idx, op)
+
 			switch op {
 			case "$lookup":
 				lk := mongoidParseLookup(st)
@@ -191,6 +195,8 @@ func scanRubyMongoidAggCalls(
 						props["as"] = lk.as
 					}
 					emitJoin(mongoAggJoinEdge(coll, lk, "lookup"))
+					// #4244 — node-anchored twin.
+					emitJoin(mongoAggStageJoinEdge(name, path, lang, lk, "lookup"))
 				}
 			case "$graphLookup":
 				lk := mongoidParseLookup(st)
@@ -200,10 +206,11 @@ func scanRubyMongoidAggCalls(
 						props["as"] = lk.as
 					}
 					emitJoin(mongoAggJoinEdge(coll, lk, "graphLookup"))
+					// #4244 — node-anchored twin (graphLookup stage node).
+					emitJoin(mongoAggStageJoinEdge(name, path, lang, lk, "graphLookup"))
 				}
 			}
 
-			name := fmt.Sprintf("%s.aggregate#%d %s", coll, idx, op)
 			emitStage(types.EntityRecord{
 				Name:       name,
 				Kind:       mongoAggStageEntityKind,

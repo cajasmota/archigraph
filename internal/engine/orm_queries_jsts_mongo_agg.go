@@ -66,6 +66,7 @@ package engine
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -252,6 +253,10 @@ func mongoAggEmitStages(
 			props["caller"] = caller
 		}
 
+		// Stage entity Name — computed up front so the node-anchored
+		// JOINS_COLLECTION twin (#4244) can reference THIS stage entity.
+		name := fmt.Sprintf("%s.aggregate#%d %s", coll, idx, op)
+
 		switch op {
 		case "$lookup":
 			lk := mongoAggParseLookup(st)
@@ -267,6 +272,9 @@ func mongoAggEmitStages(
 					props["as"] = lk.as
 				}
 				emitJoin(mongoAggJoinEdge(coll, lk, "lookup"))
+				// #4244 — node-anchored twin so the join is reachable from
+				// the $lookup DataAccess node.
+				emitJoin(mongoAggStageJoinEdge(name, path, lang, lk, "lookup"))
 			}
 		case "$graphLookup":
 			lk := mongoAggParseLookup(st)
@@ -276,6 +284,8 @@ func mongoAggEmitStages(
 					props["as"] = lk.as
 				}
 				emitJoin(mongoAggJoinEdge(coll, lk, "graphLookup"))
+				// #4244 — node-anchored twin (graphLookup stage node).
+				emitJoin(mongoAggStageJoinEdge(name, path, lang, lk, "graphLookup"))
 			}
 		case "$group":
 			id, accs := mongoAggParseGroup(st)
@@ -291,7 +301,6 @@ func mongoAggEmitStages(
 			}
 		}
 
-		name := fmt.Sprintf("%s.aggregate#%d %s", coll, idx, op)
 		emitStage(types.EntityRecord{
 			Name:       name,
 			Kind:       mongoAggStageEntityKind,
@@ -554,6 +563,56 @@ func mongoAggJoinEdge(fromColl string, lk mongoAggLookup, stageName string) type
 	}
 	return types.RelationshipRecord{
 		FromID:     fmt.Sprintf("Class:%s", capitalisedSingular(fromColl)),
+		ToID:       fmt.Sprintf("Class:%s", capitalisedSingular(lk.from)),
+		Kind:       mongoAggJoinEdgeKind,
+		Properties: props,
+	}
+}
+
+// mongoAggStageJoinEdge builds the NODE-ANCHORED twin of mongoAggJoinEdge: a
+// JOINS_COLLECTION edge whose FromID is the `$lookup` / `$graphLookup`
+// SCOPE.DataAccess STAGE entity itself (referenced by a Format-A structural-ref
+// stub keyed on the stage's source file + Name), and whose ToID is the same
+// `from`-collection Class the collection-anchored edge points at.
+//
+// WHY THIS EXISTS (#4244): the collection-anchored edge mongoAggJoinEdge emits
+// connects the aggregating Class → the looked-up Class. The per-stage
+// SCOPE.DataAccess node a consumer naturally `find`s ("inspections.aggregate#2
+// $lookup") was previously connected to NOTHING — fully isolated in both
+// directions — so the join target was not traversable from the node. This edge
+// makes `node → JOINS_COLLECTION → Class:<from>` a single direct hop. It does
+// NOT replace the collection-anchored edge (both fire); it adds the missing
+// node-side link so neighbors(stageNode) is non-empty.
+//
+// The FromID stub format is the resolver's Format A —
+//
+//	scope:<kind>:<subtype>:<lang>:<file_path>:<entity_name>
+//
+// — which the resolver rewrites to the stage entity's graph ID via its
+// byLocation[file][name] index (kind/subtype segments are advisory; the
+// file+name pair is the actual key, and the `#<idx>` suffix in the stage Name
+// keeps it unique per call site). Caller MUST pass the EXACT stage Name it
+// emitted for the entity, the stage's source-file path, and language.
+func mongoAggStageJoinEdge(stageName, stageFile, lang string, lk mongoAggLookup, stageOp string) types.RelationshipRecord {
+	props := map[string]string{
+		"pattern_type": mongoAggPatternType,
+		"stage":        stageOp,
+		// Flag the node-anchored twin so a reader (and any future de-dup
+		// pass) can tell it apart from the collection-anchored edge.
+		"anchor": "stage_node",
+	}
+	if lk.localField != "" {
+		props["local_field"] = lk.localField
+	}
+	if lk.foreignField != "" {
+		props["foreign_field"] = lk.foreignField
+	}
+	if lk.as != "" {
+		props["as"] = lk.as
+	}
+	return types.RelationshipRecord{
+		FromID: fmt.Sprintf("scope:dataaccess:%s:%s:%s:%s",
+			stageOp, strings.ToLower(lang), filepath.ToSlash(stageFile), stageName),
 		ToID:       fmt.Sprintf("Class:%s", capitalisedSingular(lk.from)),
 		Kind:       mongoAggJoinEdgeKind,
 		Properties: props,

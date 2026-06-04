@@ -248,6 +248,11 @@ func scanPythonMongoAggregation(
 				props["caller"] = caller
 			}
 
+			// Stage entity Name — computed up front so the node-anchored
+			// JOINS_COLLECTION twin (#4244) can reference THIS stage entity by
+			// its exact file+name in a Format-A structural-ref stub.
+			name := fmt.Sprintf("%s.aggregate#%d %s", coll, idx, op)
+
 			switch op {
 			case "$lookup":
 				lk := mongoAggParseLookup(st)
@@ -263,6 +268,10 @@ func scanPythonMongoAggregation(
 						props["as"] = lk.as
 					}
 					emitJoin(mongoAggJoinEdge(coll, lk, "lookup"))
+					// #4244 — also link the join FROM the $lookup DataAccess
+					// node so it is traversable (node → JOINS_COLLECTION →
+					// Class:<from>). Only when `from` is statically present.
+					emitJoin(mongoAggStageJoinEdge(name, path, lang, lk, "lookup"))
 				}
 				// Correlated sub-pipeline join: a `$lookup` may carry a
 				// `pipeline: [ ... ]` whose own `$lookup` stages are NESTED joins
@@ -274,6 +283,9 @@ func scanPythonMongoAggregation(
 				// it). Bounded recursion over the static stage text — honest.
 				for _, nlk := range mongoAggCollectNestedLookups(st) {
 					emitJoin(mongoAggJoinEdge(coll, nlk, "lookup"))
+					// #4244 — node-anchored twin for each nested `from`, so the
+					// correlated joins are also reachable from the $lookup node.
+					emitJoin(mongoAggStageJoinEdge(name, path, lang, nlk, "lookup"))
 				}
 			case "$graphLookup":
 				lk := mongoAggParseLookup(st)
@@ -283,6 +295,8 @@ func scanPythonMongoAggregation(
 						props["as"] = lk.as
 					}
 					emitJoin(mongoAggJoinEdge(coll, lk, "graphLookup"))
+					// #4244 — node-anchored twin (graphLookup stage node).
+					emitJoin(mongoAggStageJoinEdge(name, path, lang, lk, "graphLookup"))
 				}
 			case "$group":
 				id, accs := mongoAggParseGroup(st)
@@ -298,7 +312,6 @@ func scanPythonMongoAggregation(
 				}
 			}
 
-			name := fmt.Sprintf("%s.aggregate#%d %s", coll, idx, op)
 			emitStage(types.EntityRecord{
 				Name:       name,
 				Kind:       mongoAggStageEntityKind,

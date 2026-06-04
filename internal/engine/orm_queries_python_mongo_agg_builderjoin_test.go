@@ -107,7 +107,15 @@ def get_inspection_devices(params):
 	var rels []types.RelationshipRecord
 	scanPythonMongoAggregation(serviceSrc, funcs, servicePath, "python", resolver,
 		func(e types.EntityRecord) {},
-		func(r types.RelationshipRecord) { rels = append(rels, r) },
+		func(r types.RelationshipRecord) {
+			// #4244 — drop the node-anchored JOINS_COLLECTION twin so the
+			// count/identity assertions below see the collection-anchored
+			// edge set they were written against.
+			if r.Properties["anchor"] == "stage_node" {
+				return
+			}
+			rels = append(rels, r)
+		},
 	)
 	return rels
 }

@@ -157,6 +157,10 @@ func scanJavaSpringMongoAggregation(
 			return // dynamic from or unresolved collection — honest skip.
 		}
 		emitJoin(mongoAggJoinEdge(coll, lk, "lookup"))
+		// #4244 — node-anchored twin so the join is reachable from the
+		// $lookup DataAccess node. entityName MUST match the emitStage Name.
+		entityName := fmt.Sprintf("%s.aggregate#%d $lookup", coll, stageIdx)
+		emitJoin(mongoAggStageJoinEdge(entityName, path, lang, lk, "lookup"))
 
 		props := map[string]string{
 			"pattern_type": mongoAggPatternType,
@@ -178,7 +182,7 @@ func scanJavaSpringMongoAggregation(
 			props["caller"] = caller
 		}
 		emitStage(types.EntityRecord{
-			Name:               fmt.Sprintf("%s.aggregate#%d $lookup", coll, stageIdx),
+			Name:               entityName,
 			Kind:               mongoAggStageEntityKind,
 			Subtype:            "$lookup",
 			SourceFile:         path,

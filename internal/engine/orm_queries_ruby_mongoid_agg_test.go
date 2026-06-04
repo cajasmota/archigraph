@@ -15,7 +15,15 @@ func runMongoidAgg(t *testing.T, src string) ([]types.EntityRecord, []types.Rela
 	var rels []types.RelationshipRecord
 	scanRubyMongoidAggregation(src, funcs, "app/models/book.rb", "ruby",
 		func(e types.EntityRecord) { ents = append(ents, e) },
-		func(r types.RelationshipRecord) { rels = append(rels, r) },
+		func(r types.RelationshipRecord) {
+			// #4244 — drop the node-anchored JOINS_COLLECTION twin so the
+			// count/identity assertions below see the collection-anchored
+			// edge set they were written against.
+			if r.Properties["anchor"] == "stage_node" {
+				return
+			}
+			rels = append(rels, r)
+		},
 	)
 	return ents, rels
 }
