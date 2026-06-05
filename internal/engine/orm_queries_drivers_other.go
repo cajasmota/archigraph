@@ -151,6 +151,52 @@ var phpCqlRe = regexp.MustCompile(
 	`\$\w+->execute\s*\(`,
 )
 
+// phpSqlRe matches a raw-SQL PDO / mysqli driver query call whose first
+// argument is a SQL string literal, covering the dominant PHP surfaces:
+//
+//	$pdo->query("SELECT ... FROM t")
+//	$stmt = $pdo->prepare("SELECT ... FROM t")
+//	$db->exec("DELETE FROM t")
+//	$mysqli->query("...")               // mysqli OO
+//	mysqli_query($conn, "...")          // mysqli procedural (SQL is 2nd arg,
+//	                                    //   first string literal is the SQL)
+//	pg_query($conn, "...")              // pgsql procedural
+//	pg_query_params($conn, "...", [..]) // pgsql procedural with params
+//
+// The method form leaves the receiver open (the SQL string — not the receiver
+// name — carries the table); the procedural form names the function. The
+// backend gate (mentionsPHP{MySQL,Postgres,SQLite} below) selects the orm tag
+// so the per-engine query_attribution cell is attributed accurately, and
+// emitSQLDatastoreTargets only emits when extractSQLTable resolves a literal
+// table (interpolated / concatenated SQL yields no literal → honest-skipped).
+var phpSqlRe = regexp.MustCompile(
+	`(?:->(?:query|prepare|exec)|\b(?:mysqli_query|pg_query|pg_query_params|pg_send_query|sqlite_query))\s*\(`,
+)
+
+// mentionsPHPMySQL reports whether the file uses a MySQL PHP driver: a PDO
+// MySQL DSN (`mysql:host=...`), the mysqli extension (OO or procedural), or a
+// `pdo_mysql` / `PDO::MYSQL` reference.
+func mentionsPHPMySQL(src string) bool {
+	return strings.Contains(src, "mysql:") || strings.Contains(src, "mysqli") ||
+		strings.Contains(src, "pdo_mysql") || strings.Contains(src, "PDO::MYSQL")
+}
+
+// mentionsPHPPostgres reports whether the file uses a Postgres PHP driver: a
+// PDO PostgreSQL DSN (`pgsql:host=...`), the pgsql extension (`pg_connect` /
+// `pg_query`), or a `pdo_pgsql` / `PDO::PGSQL` reference.
+func mentionsPHPPostgres(src string) bool {
+	return strings.Contains(src, "pgsql:") || strings.Contains(src, "pg_connect") ||
+		strings.Contains(src, "pg_query") || strings.Contains(src, "pdo_pgsql") ||
+		strings.Contains(src, "PDO::PGSQL")
+}
+
+// mentionsPHPSQLite reports whether the file uses a SQLite PHP driver: a PDO
+// SQLite DSN (`sqlite:...`), the SQLite3 class, or a `pdo_sqlite` reference.
+func mentionsPHPSQLite(src string) bool {
+	return strings.Contains(src, "sqlite:") || strings.Contains(src, "SQLite3") ||
+		strings.Contains(src, "pdo_sqlite") || strings.Contains(src, "PDO::SQLITE")
+}
+
 func mentionsPHPMongo(src string) bool {
 	return strings.Contains(src, "MongoDB\\") || strings.Contains(src, "MongoDB\\Client") ||
 		strings.Contains(src, "selectCollection") || strings.Contains(src, "mongodb")
@@ -193,6 +239,20 @@ func scanPHPDrivers(src string, funcs []funcSpan, emit emitORMQueryFn) {
 			caller := enclosingFuncAt(funcs, m[0])
 			emit(caller, capitalisedSingular(coll), "find", "", "mongodb", false)
 		}
+	}
+	// Raw SQL (PDO / mysqli / pgsql). The SQL string literal carries the table;
+	// the backend driver import / DSN selects the orm tag (mysql / postgres /
+	// sqlite) so the per-driver query_attribution cell is attributed accurately.
+	// Files that mention several backends emit under each matched backend — rare,
+	// and the edge target (the table) is identical. Interpolated / concatenated
+	// SQL yields no literal table → honest-skipped by emitSQLDatastoreTargets.
+	switch {
+	case mentionsPHPMySQL(src):
+		emitSQLDatastoreTargets(src, funcs, emit, phpSqlRe, "mysql")
+	case mentionsPHPPostgres(src):
+		emitSQLDatastoreTargets(src, funcs, emit, phpSqlRe, "postgres")
+	case mentionsPHPSQLite(src):
+		emitSQLDatastoreTargets(src, funcs, emit, phpSqlRe, "sqlite")
 	}
 	if mentionsPHPDynamo(src) {
 		emitDynamoTargets(src, funcs, emit)

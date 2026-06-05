@@ -163,6 +163,137 @@ class Search {
 	}
 }
 
+// Raw-SQL: PDO MySQL. `$pdo->query("SELECT ... FROM users")` with a `mysql:`
+// DSN gate → QUERIES edge to Class:User with orm=mysql. Covers
+// lang.php.driver.mysql.
+func TestDriver_PHPPdoMySQLRawSQL(t *testing.T) {
+	src := `<?php
+class UserRepo {
+    public function load() {
+        $pdo = new PDO("mysql:host=localhost;dbname=app", $u, $p);
+        $stmt = $pdo->query("SELECT id, name FROM users WHERE active = 1");
+        return $stmt->fetchAll();
+    }
+}
+`
+	edges := detectORM(t, "php", "UserRepo.php", src)
+	e := assertEdgeExists(t, edges, "Function:load", "Class:User", "find")
+	if e.ORM != "mysql" {
+		t.Errorf("expected orm=mysql, got %q", e.ORM)
+	}
+}
+
+// Raw-SQL: mysqli procedural. `mysqli_query($conn, "INSERT INTO ...")` — the
+// SQL is the SECOND arg, so firstStringLiteral picks it ($conn is unquoted).
+// INSERT → create op, orm=mysql. Covers lang.php.driver.mysql (mysqli).
+func TestDriver_PHPMysqliProceduralRawSQL(t *testing.T) {
+	src := `<?php
+function add_product($conn) {
+    $conn = mysqli_connect("localhost", "u", "p", "shop");
+    mysqli_query($conn, "INSERT INTO products (name) VALUES ('x')");
+}
+`
+	edges := detectORM(t, "php", "products.php", src)
+	e := assertEdgeExists(t, edges, "Function:add_product", "Class:Product", "create")
+	if e.ORM != "mysql" {
+		t.Errorf("expected orm=mysql, got %q", e.ORM)
+	}
+}
+
+// Raw-SQL: PDO PostgreSQL. `$db->exec("DELETE FROM sessions")` with a `pgsql:`
+// DSN gate → delete op, orm=postgres. Covers lang.php.driver.postgres.
+func TestDriver_PHPPdoPostgresRawSQL(t *testing.T) {
+	src := `<?php
+class SessionRepo {
+    public function purge() {
+        $db = new PDO("pgsql:host=localhost;dbname=app");
+        $db->exec("DELETE FROM sessions WHERE expired = true");
+    }
+}
+`
+	edges := detectORM(t, "php", "SessionRepo.php", src)
+	e := assertEdgeExists(t, edges, "Function:purge", "Class:Session", "delete")
+	if e.ORM != "postgres" {
+		t.Errorf("expected orm=postgres, got %q", e.ORM)
+	}
+}
+
+// Raw-SQL: pgsql procedural. `pg_query($conn, "UPDATE orders ...")` — SQL is
+// the second arg; UPDATE → update op, orm=postgres. Covers
+// lang.php.driver.postgres (pgsql extension).
+func TestDriver_PHPPgQueryRawSQL(t *testing.T) {
+	src := `<?php
+function ship($conn) {
+    $conn = pg_connect("host=localhost dbname=app");
+    pg_query($conn, "UPDATE orders SET shipped = true WHERE id = 1");
+}
+`
+	edges := detectORM(t, "php", "orders.php", src)
+	e := assertEdgeExists(t, edges, "Function:ship", "Class:Order", "update")
+	if e.ORM != "postgres" {
+		t.Errorf("expected orm=postgres, got %q", e.ORM)
+	}
+}
+
+// Raw-SQL: PDO SQLite. `$pdo->prepare("SELECT ... FROM logs")` with a `sqlite:`
+// DSN gate → find op, orm=sqlite. Covers lang.php.driver.sqlite.
+func TestDriver_PHPPdoSQLiteRawSQL(t *testing.T) {
+	src := `<?php
+class LogRepo {
+    public function tail() {
+        $pdo = new PDO("sqlite:/var/data/app.db");
+        $stmt = $pdo->prepare("SELECT * FROM logs ORDER BY ts DESC");
+        $stmt->execute();
+    }
+}
+`
+	edges := detectORM(t, "php", "LogRepo.php", src)
+	e := assertEdgeExists(t, edges, "Function:tail", "Class:Log", "find")
+	if e.ORM != "sqlite" {
+		t.Errorf("expected orm=sqlite, got %q", e.ORM)
+	}
+}
+
+// Non-vacuous proof: a `->query("...")` call WITHOUT any backend DSN / driver
+// import must NOT emit a SQL QUERIES edge — the backend gate is load-bearing
+// (otherwise an arbitrary `->query(` would hallucinate a datastore edge).
+func TestDriver_PHPRawSQLNoBackendGateSkipped(t *testing.T) {
+	src := `<?php
+class Builder {
+    public function load($qb) {
+        return $qb->query("SELECT id FROM users")->getResult();
+    }
+}
+`
+	edges := detectORM(t, "php", "Builder.php", src)
+	for _, e := range edges {
+		if e.ORM == "mysql" || e.ORM == "postgres" || e.ORM == "sqlite" {
+			t.Errorf("expected no SQL-driver edge without a backend gate, got %+v", e)
+		}
+	}
+}
+
+// Raw-SQL dynamic: an interpolated SQL string ("... FROM {$table}") has no
+// static literal table for extractSQLTable → honest-skipped (no hallucinated
+// edge), even though the mysql backend gate fires.
+func TestDriver_PHPRawSQLDynamicSkipped(t *testing.T) {
+	src := `<?php
+class Repo {
+    public function load($table) {
+        $pdo = new PDO("mysql:host=localhost;dbname=app");
+        $stmt = $pdo->query("SELECT * FROM {$table} WHERE id = 1");
+        return $stmt->fetchAll();
+    }
+}
+`
+	edges := detectORM(t, "php", "dyn.php", src)
+	for _, e := range edges {
+		if e.ORM == "mysql" {
+			t.Errorf("expected no mysql edge for interpolated SQL, got %+v", e)
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Rust
 // ---------------------------------------------------------------------------
