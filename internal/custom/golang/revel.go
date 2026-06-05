@@ -2,6 +2,7 @@ package golang
 
 import (
 	"context"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -52,12 +53,15 @@ var (
 // Revel's routes live at conf/routes (no extension); the indexer may also tag
 // such files with a routes-style basename.
 func isRevelRoutesFile(filePath string) bool {
-	if strings.Contains(filePath, "conf/routes") {
+	// Normalize to forward slashes so the path comparisons below are
+	// separator-agnostic (Windows paths use "\", e.g. "conf\routes").
+	p := filepath.ToSlash(filePath)
+	if strings.Contains(p, "conf/routes") {
 		return true
 	}
-	base := filePath
-	if i := strings.LastIndex(filePath, "/"); i >= 0 {
-		base = filePath[i+1:]
+	base := p
+	if i := strings.LastIndex(p, "/"); i >= 0 {
+		base = p[i+1:]
 	}
 	return base == "routes"
 }
