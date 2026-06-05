@@ -31,6 +31,9 @@
 //     Ruby   : client.search(index: 'products')
 //   - Cassandra (CQL FROM/INTO/UPDATE table — reuses extractSQLTable)
 //     any lang: session.execute("SELECT ... FROM events")
+//   - Redis (KEY-VALUE — attribute to the KEYSPACE prefix, not a table) (#4271)
+//     Java   : redisTemplate.opsForValue().get("user:42") / @RedisHash("people")
+//     Elixir : Redix.command(conn, ["HGET", "user:1", "name"])
 //
 // Resource names are singularised + capitalised via capitalisedSingular so
 // the edge target matches the same Class:<Model> shape the resolver keys on.
@@ -545,6 +548,62 @@ func mentionsJavaCassandra(src string) bool {
 	return strings.Contains(src, "com.datastax") || strings.Contains(src, "CqlSession")
 }
 
+// mentionsJavaRedis gates the Spring Data Redis key-value pass: the file must
+// reference the Spring Data Redis API (RedisTemplate / StringRedisTemplate /
+// the opsFor* accessors / the @RedisHash entity annotation / the package).
+func mentionsJavaRedis(src string) bool {
+	return strings.Contains(src, "org.springframework.data.redis") ||
+		strings.Contains(src, "RedisTemplate") ||
+		strings.Contains(src, "StringRedisTemplate") ||
+		strings.Contains(src, "@RedisHash") ||
+		strings.Contains(src, "opsForValue") ||
+		strings.Contains(src, "opsForHash") ||
+		strings.Contains(src, "opsForList") ||
+		strings.Contains(src, "opsForSet") ||
+		strings.Contains(src, "opsForZSet")
+}
+
+// javaRedisOpsKeyRe matches the Spring Data Redis RedisTemplate accessor calls
+// where the KEY is the first quoted string-literal argument:
+//
+//	redisTemplate.opsForValue().get("user:42")
+//	redisTemplate.opsForValue().set("user:42", value)
+//	redisTemplate.opsForHash().get("user:1", "name")     // key = "user:1"
+//	redisTemplate.opsForHash().put("session:abc", f, v)
+//	redisTemplate.opsForList().leftPush("queue:jobs", v)
+//	redisTemplate.delete("user:42")
+//
+// Group 1 = the accessor / command method (get/set/put/leftPush/delete/...),
+// group 2 = the key literal. The accessor method name is mapped to a Redis
+// command verb by javaRedisMethodToCommand before redisCommandOp runs.
+var javaRedisOpsKeyRe = regexp.MustCompile(
+	`\.(get|set|increment|decrement|getAndSet|getAndDelete|put|putIfAbsent|entries|delete|leftPush|rightPush|leftPop|rightPop|add|members|score|size|hasKey|expire|append)\s*\(\s*"((?:[^"\\]|\\.)*)"`,
+)
+
+// javaRedisHashAnnoRe matches the Spring Data Redis `@RedisHash("people")`
+// aggregate-root annotation. The quoted literal is the Redis keyspace the
+// entity maps to (its key prefix). Group 1 = keyspace literal.
+var javaRedisHashAnnoRe = regexp.MustCompile(
+	`@RedisHash\s*\(\s*(?:(?:value|timeToLive)\s*=\s*)?"([A-Za-z_][\w$.:-]*)"`,
+)
+
+// javaRedisMethodToCommand maps a Spring Data Redis ops-accessor METHOD name to
+// a Redis COMMAND verb so redisCommandOp can canonicalise the operation.
+func javaRedisMethodToCommand(method string) string {
+	switch method {
+	case "get", "getAndSet", "entries", "members", "score", "size", "hasKey":
+		return "GET"
+	case "set", "put", "putIfAbsent", "add", "leftPush", "rightPush", "append":
+		return "SET"
+	case "increment", "decrement", "expire":
+		return "INCR"
+	case "delete", "getAndDelete", "leftPop", "rightPop":
+		return "DEL"
+	default:
+		return ""
+	}
+}
+
 func scanJavaDrivers(src string, funcs []funcSpan, emit emitORMQueryFn) {
 	if mentionsJavaMongo(src) {
 		for _, m := range javaGetCollectionRe.FindAllStringSubmatchIndex(src, -1) {
@@ -579,6 +638,53 @@ func scanJavaDrivers(src string, funcs []funcSpan, emit emitORMQueryFn) {
 	scanJavaSpringDataCassandra(src, funcs, emit)
 	scanJavaSpringDataElastic(src, funcs, emit)
 	scanJavaSpringDataMongo(src, funcs, emit)
+	scanJavaSpringDataRedis(src, funcs, emit)
+}
+
+// scanJavaSpringDataRedis attributes Spring Data Redis key-value access sites to
+// the KEYSPACE they touch (Redis has no table/collection — see the keyspace
+// rule on emitRedisTargets):
+//
+//   - `redisTemplate.opsForValue().get("user:42")` / `.set(...)` / `opsForHash()
+//     .get("user:1", field)` / `redisTemplate.delete("user:42")` → Class:User
+//     (op from the command: get→find, set→create, delete→delete).
+//   - `@RedisHash("people")` aggregate-root entity → Class:People (the entity's
+//     keyspace prefix), attributed to the entity class.
+//
+// Dynamic keys — a bare variable, concatenation, or an interpolated literal —
+// are honest-skipped (only quoted static literals are captured AND
+// redisKeyspaceFromLiteral rejects interpolation markers). The op-accessor
+// method name is mapped to a Redis command verb so the operation is accurate.
+func scanJavaSpringDataRedis(src string, funcs []funcSpan, emit emitORMQueryFn) {
+	if !mentionsJavaRedis(src) {
+		return
+	}
+	// RedisTemplate opsFor* / delete key-literal access sites.
+	for _, m := range javaRedisOpsKeyRe.FindAllStringSubmatchIndex(src, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		method := src[m[2]:m[3]]
+		key := src[m[4]:m[5]]
+		keyspace := redisKeyspaceFromLiteral(key)
+		if keyspace == "" {
+			continue // dynamic / non-identifier prefix → honest-skip.
+		}
+		caller := enclosingFuncAt(funcs, m[0])
+		emit(caller, keyspace, redisCommandOp(javaRedisMethodToCommand(method)), "", "redis", false)
+	}
+	// @RedisHash("people") aggregate-root entity → its keyspace.
+	for _, m := range javaRedisHashAnnoRe.FindAllStringSubmatchIndex(src, -1) {
+		if len(m) < 4 {
+			continue
+		}
+		keyspace := redisKeyspaceFromLiteral(src[m[2]:m[3]])
+		if keyspace == "" {
+			continue
+		}
+		caller := resolveJavaSpringTypeCaller(src, funcs, m[0], m[1])
+		emit(caller, keyspace, "find", "", "redis", false)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1002,6 +1108,30 @@ func mentionsElixirBolt(src string) bool {
 	return strings.Contains(src, "Bolt.Sips") || strings.Contains(src, "Boltx")
 }
 
+// mentionsElixirRedix gates the Redix key-value data-access pass. "redix" does
+// NOT contain "redis", so the substring is checked explicitly (#1489 lesson).
+func mentionsElixirRedix(src string) bool {
+	return strings.Contains(src, "Redix")
+}
+
+// elixirRedixCmdKeyRe matches a Redix data-access command list where the COMMAND
+// verb is the first list element and the KEY is the second:
+//
+//	Redix.command(conn, ["HGET", "user:1", "name"])
+//	Redix.command!(conn, ["GET", "session:abc"])
+//	Redix.command(conn, ["SET", "flag", "1"])
+//	Redix.noreply_command(conn, ["DEL", "user:42"])
+//
+// Group 1 = command verb, group 2 = key literal. PUBLISH/SUBSCRIBE commands are
+// pub/sub (handled by synthesizeElixirRedisPubSub), NOT data-access, so they are
+// excluded from the command alternation. Interpolated keys (`"user:#{id}"`) are
+// captured as a literal but rejected by redisKeyspaceFromLiteral's marker check,
+// and a bare-variable key (`[command, key]`) is not a quoted literal → both are
+// honest-skipped.
+var elixirRedixCmdKeyRe = regexp.MustCompile(
+	`Redix\.[a-z_]*command[a-z_!]*\s*\(\s*[^,\[]+,\s*\[\s*"((?i:GET|MGET|SET|SETEX|SETNX|MSET|GETSET|APPEND|INCR|INCRBY|DECR|DECRBY|HGET|HSET|HMGET|HMSET|HGETALL|HDEL|HINCRBY|HKEYS|HVALS|LPUSH|RPUSH|LPOP|RPOP|LRANGE|LLEN|LREM|SADD|SREM|SMEMBERS|SCARD|SISMEMBER|SPOP|ZADD|ZREM|ZRANGE|ZSCORE|EXPIRE|EXPIREAT|PERSIST|TTL|TYPE|EXISTS|DEL|UNLINK|GETDEL|RENAME))"\s*,\s*"((?:[^"\\]|\\.)*)"`,
+)
+
 func scanElixirDrivers(src string, funcs []funcSpan, emit emitORMQueryFn) {
 	// Cassandra (Xandra): CQL FROM/INTO/UPDATE table.
 	if mentionsElixirXandra(src) {
@@ -1064,6 +1194,13 @@ func scanElixirDrivers(src string, funcs []funcSpan, emit emitORMQueryFn) {
 			emit(caller, lm[1], op, "", "neo4j", false)
 		}
 	}
+	// Redis key-value (Redix): `Redix.command(conn, ["HGET", "user:1", ...])`
+	// data-access command → Class:<keyspace> (keyspace = key prefix before ':').
+	// PUBLISH/SUBSCRIBE are pub/sub (synthesizeElixirRedisPubSub), excluded here.
+	// Interpolated / variable keys are honest-skipped. orm=redis.
+	if mentionsElixirRedix(src) {
+		emitRedisTargets(src, funcs, emit, elixirRedixCmdKeyRe)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1081,6 +1218,127 @@ func emitDynamoTargets(src string, funcs []funcSpan, emit emitORMQueryFn) {
 		}
 		caller := enclosingFuncAt(funcs, m[0])
 		emit(caller, capitalisedSingular(src[m[2]:m[3]]), "find", "", "dynamodb", false)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Redis key-value data-access attribution (KEYSPACE-PREFIX model) — #4271
+// ---------------------------------------------------------------------------
+//
+// Redis is a KEY-VALUE store: there is no table / collection / index, so the
+// QUERIES edge cannot attribute to one. Instead we attribute to the KEYSPACE
+// the command touches, derived from the command's KEY literal (the first
+// argument of HGET/HSET/GET/SET/HGETALL/LPUSH/SADD/ZADD/EXPIRE/DEL/...):
+//
+//	redisTemplate.opsForValue().get("user:42")  → key "user:42" → keyspace "user"
+//	Redix.command(conn, ["HGET", "session:abc"]) → key "session:abc" → "session"
+//	GET "flag"                                    → key "flag"     → keyspace "flag"
+//
+// Keyspace rule: take the substring BEFORE the first ':' if the key contains
+// one (the conventional Redis keyspace prefix, e.g. `user:42` → `user`); else
+// use the whole literal (`flag` → `flag`). The result is run through
+// capitalisedSingular so the edge target is the SAME `Class:<Model>` shape the
+// resolver keys on (`user` → Class:User, `people` → Class:People). The orm tag
+// is "redis".
+//
+// Conservative by construction (precision over recall): ONLY clear STATIC
+// string-literal keys are attributed. Fully-dynamic keys — string
+// interpolation (`#{var}` Elixir, `${var}`/template literals), concatenation
+// (`"user:" + id`), or a bare variable — are honest-skipped because the
+// matchers capture only quoted literals AND redisKeyspaceFromLiteral rejects a
+// literal that still contains an interpolation marker. There is no
+// FROM/INTO/UPDATE verb to parse, so the operation is mapped from the Redis
+// COMMAND verb (GET/HGET/... → find, SET/HSET/LPUSH/... → create/update,
+// DEL → delete) where the command is recoverable; opsFor* accessors that do
+// not name a command default to "find".
+
+// redisDynamicKeyMarkers are interpolation / concatenation markers that, when
+// present inside a captured "literal", mean the key is NOT fully static — we
+// honest-skip it rather than attribute a bogus keyspace.
+var redisDynamicKeyMarkers = []string{"#{", "${", "<%", "%>", "{{"}
+
+// redisKeyspaceFromLiteral derives the keyspace Class name from a Redis key
+// literal: the prefix before the first ':' if present, else the whole literal.
+// Returns "" for an empty key, a key that still contains an interpolation
+// marker (dynamic → honest-skip), or a key whose prefix is empty / non-alnum.
+func redisKeyspaceFromLiteral(key string) string {
+	if key == "" {
+		return ""
+	}
+	for _, mark := range redisDynamicKeyMarkers {
+		if strings.Contains(key, mark) {
+			return "" // dynamic / interpolated → honest-skip.
+		}
+	}
+	prefix := key
+	if i := strings.IndexByte(key, ':'); i >= 0 {
+		prefix = key[:i]
+	}
+	prefix = strings.TrimSpace(prefix)
+	if prefix == "" {
+		return ""
+	}
+	// Belt-and-suspenders: the prefix must look like an identifier-ish keyspace
+	// (letters/digits/_/-/.) so an odd literal does not produce a junk target.
+	for _, r := range prefix {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9',
+			r == '_', r == '-', r == '.':
+		default:
+			return ""
+		}
+	}
+	return capitalisedSingular(prefix)
+}
+
+// redisCommandOp maps a Redis data-access COMMAND verb to the canonical
+// operation. Read commands → find; mutating set/push/add commands → create;
+// in-place field/counter updates → update; deletes/expiry → delete. An
+// unrecognised / absent command defaults to "find" (the conservative read
+// assumption for an opsFor* accessor without a named command).
+func redisCommandOp(cmd string) string {
+	switch strings.ToUpper(cmd) {
+	case "GET", "MGET", "HGET", "HGETALL", "HMGET", "LRANGE", "SMEMBERS",
+		"ZRANGE", "ZRANGEBYSCORE", "EXISTS", "TYPE", "TTL", "GETRANGE",
+		"SCARD", "LLEN", "HKEYS", "HVALS", "SISMEMBER", "ZSCORE":
+		return "find"
+	case "SET", "SETEX", "SETNX", "MSET", "HSET", "HMSET", "HSETNX",
+		"LPUSH", "RPUSH", "SADD", "ZADD", "APPEND", "GETSET":
+		return "create"
+	case "INCR", "INCRBY", "DECR", "DECRBY", "HINCRBY", "EXPIRE", "EXPIREAT",
+		"PEXPIRE", "PERSIST", "RENAME":
+		return "update"
+	case "DEL", "UNLINK", "HDEL", "LREM", "SREM", "ZREM", "LPOP", "RPOP",
+		"SPOP", "GETDEL":
+		return "delete"
+	default:
+		return "find"
+	}
+}
+
+// emitRedisTargets is the shared, language-agnostic Redis key-value emitter.
+// For every (command, key-literal) pair matched by `cmdKeyRe` (which MUST set
+// submatch group 1 = command verb — may be empty — and group 2 = the quoted
+// key literal), it derives the keyspace Class via redisKeyspaceFromLiteral and
+// emits a `caller -> Class:<keyspace>` QUERIES edge with orm="redis" and the
+// command-derived operation. Dynamic keys (no quoted literal captured, or a
+// literal that still carries an interpolation marker) yield no edge.
+func emitRedisTargets(src string, funcs []funcSpan, emit emitORMQueryFn, cmdKeyRe *regexp.Regexp) {
+	for _, m := range cmdKeyRe.FindAllStringSubmatchIndex(src, -1) {
+		if len(m) < 6 {
+			continue
+		}
+		cmd := ""
+		if m[2] >= 0 && m[3] >= 0 {
+			cmd = src[m[2]:m[3]]
+		}
+		key := src[m[4]:m[5]]
+		keyspace := redisKeyspaceFromLiteral(key)
+		if keyspace == "" {
+			continue // empty / dynamic / non-identifier prefix → honest-skip.
+		}
+		caller := enclosingFuncAt(funcs, m[0])
+		emit(caller, keyspace, redisCommandOp(cmd), "", "redis", false)
 	}
 }
 

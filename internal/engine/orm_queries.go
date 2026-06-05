@@ -248,7 +248,8 @@ func applyORMQueries(args DetectorPassArgs) DetectorPassResult {
 		scanInfra()
 	case "elixir":
 		// Driver-topology: Xandra CQL, ExAws DynamoDB TableName, Elasticsearch
-		// index, MongoDB collection (2nd-arg literal), and Bolt.Sips Cypher
+		// index, MongoDB collection (2nd-arg literal), Redix Redis key-value
+		// (keyspace-prefix attribution), and Bolt.Sips Cypher
 		// node-label attribution (#4271). The native Bolt.Sips schema/relationship
 		// extractor (internal/custom/elixir/neo4j.go) is unchanged; this pass adds
 		// the cross-language QUERIES topology edge.

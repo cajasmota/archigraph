@@ -1034,3 +1034,217 @@ end
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Redis — Java Spring Data Redis (key-value) + Elixir Redix (#4271)
+// ---------------------------------------------------------------------------
+//
+// Redis is a key-value store: the QUERIES edge attributes to the KEYSPACE the
+// command touches (the key prefix before the first ':', else the whole key),
+// run through capitalisedSingular → Class:<Keyspace>. orm="redis", op derived
+// from the Redis command verb. Dynamic / interpolated keys are honest-skipped.
+
+func TestDriver_JavaRedisOpsForValueGet(t *testing.T) {
+	src := `import org.springframework.data.redis.core.RedisTemplate;
+public class UserCache {
+    private RedisTemplate<String, Object> redisTemplate;
+    public Object load(String id) {
+        return redisTemplate.opsForValue().get("user:42");
+    }
+}
+`
+	edges := detectORM(t, "java", "UserCache.java", src)
+	e := assertEdgeExists(t, edges, "Function:load", "Class:User", "find")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_JavaRedisOpsForValueSet(t *testing.T) {
+	src := `import org.springframework.data.redis.core.RedisTemplate;
+public class SessionStore {
+    private RedisTemplate<String, Object> redisTemplate;
+    public void save(String tok) {
+        redisTemplate.opsForValue().set("session:abc", tok);
+    }
+}
+`
+	edges := detectORM(t, "java", "SessionStore.java", src)
+	e := assertEdgeExists(t, edges, "Function:save", "Class:Session", "create")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_JavaRedisOpsForHashGet(t *testing.T) {
+	src := `import org.springframework.data.redis.core.RedisTemplate;
+public class ProfileCache {
+    private RedisTemplate<String, Object> redisTemplate;
+    public Object field(String id) {
+        return redisTemplate.opsForHash().get("user:1", "name");
+    }
+}
+`
+	edges := detectORM(t, "java", "ProfileCache.java", src)
+	e := assertEdgeExists(t, edges, "Function:field", "Class:User", "find")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_JavaRedisTemplateDelete(t *testing.T) {
+	src := `import org.springframework.data.redis.core.RedisTemplate;
+public class CacheEvictor {
+    private RedisTemplate<String, Object> redisTemplate;
+    public void evict(String id) {
+        redisTemplate.delete("user:42");
+    }
+}
+`
+	edges := detectORM(t, "java", "CacheEvictor.java", src)
+	e := assertEdgeExists(t, edges, "Function:evict", "Class:User", "delete")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_JavaRedisHashEntity(t *testing.T) {
+	src := `import org.springframework.data.redis.core.RedisHash;
+@RedisHash("people")
+public class Person {
+    @Id private String id;
+}
+`
+	edges := detectORM(t, "java", "Person.java", src)
+	e := assertEdgeExists(t, edges, "Function:Person", "Class:People", "find")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+// Non-vacuous negative: a dynamic key (a variable, not a quoted literal) is
+// honest-skipped — no redis QUERIES edge.
+func TestDriver_JavaRedisDynamicKeySkipped(t *testing.T) {
+	src := `import org.springframework.data.redis.core.RedisTemplate;
+public class UserCache {
+    private RedisTemplate<String, Object> redisTemplate;
+    public Object load(String key) {
+        return redisTemplate.opsForValue().get(key);
+    }
+}
+`
+	edges := detectORM(t, "java", "UserCache.java", src)
+	for _, e := range edges {
+		if e.ORM == "redis" {
+			t.Errorf("expected no redis edge for dynamic key, got %+v", e)
+		}
+	}
+}
+
+func TestDriver_ElixirRedixHGet(t *testing.T) {
+	src := `defmodule UserCache do
+  def load(conn, id) do
+    Redix.command(conn, ["HGET", "user:1", "name"])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/user_cache.ex", src)
+	e := assertEdgeExists(t, edges, "Function:load", "Class:User", "find")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_ElixirRedixSet(t *testing.T) {
+	src := `defmodule SessionStore do
+  def save(conn, tok) do
+    Redix.command!(conn, ["SET", "session:abc", tok])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/session_store.ex", src)
+	e := assertEdgeExists(t, edges, "Function:save", "Class:Session", "create")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_ElixirRedixDel(t *testing.T) {
+	src := `defmodule CacheEvictor do
+  def evict(conn, id) do
+    Redix.noreply_command(conn, ["DEL", "user:42"])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/cache_evictor.ex", src)
+	e := assertEdgeExists(t, edges, "Function:evict", "Class:User", "delete")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+func TestDriver_ElixirRedixBareKey(t *testing.T) {
+	src := `defmodule FlagStore do
+  def get_flag(conn) do
+    Redix.command(conn, ["GET", "flag"])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/flag_store.ex", src)
+	e := assertEdgeExists(t, edges, "Function:get_flag", "Class:Flag", "find")
+	if e.ORM != "redis" {
+		t.Errorf("expected orm=redis, got %q", e.ORM)
+	}
+}
+
+// Non-vacuous negative: an interpolated key (`"user:#{id}"`) is captured as a
+// literal but rejected by redisKeyspaceFromLiteral's interpolation-marker
+// check — honest-skipped (no redis edge).
+func TestDriver_ElixirRedixInterpolatedKeySkipped(t *testing.T) {
+	src := `defmodule UserCache do
+  def load(conn, id) do
+    Redix.command(conn, ["HGET", "user:#{id}", "name"])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/user_cache.ex", src)
+	for _, e := range edges {
+		if e.ORM == "redis" {
+			t.Errorf("expected no redis edge for interpolated key, got %+v", e)
+		}
+	}
+}
+
+// Non-vacuous negative: a bare-variable key (not a quoted literal) yields no
+// redis edge.
+func TestDriver_ElixirRedixVariableKeySkipped(t *testing.T) {
+	src := `defmodule UserCache do
+  def load(conn, key) do
+    Redix.command(conn, ["GET", key])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/user_cache.ex", src)
+	for _, e := range edges {
+		if e.ORM == "redis" {
+			t.Errorf("expected no redis edge for variable key, got %+v", e)
+		}
+	}
+}
+
+// Guard: a Redix PUBLISH is pub/sub, NOT a data-access command — it must NOT
+// produce a redis QUERIES edge (the channel is handled by the pub/sub pass).
+func TestDriver_ElixirRedixPublishNotAttributed(t *testing.T) {
+	src := `defmodule Notifier do
+  def push(conn, msg) do
+    Redix.command(conn, ["PUBLISH", "events:user", msg])
+  end
+end
+`
+	edges := detectORM(t, "elixir", "lib/notifier.ex", src)
+	for _, e := range edges {
+		if e.ORM == "redis" {
+			t.Errorf("expected no redis QUERIES edge for PUBLISH, got %+v", e)
+		}
+	}
+}
