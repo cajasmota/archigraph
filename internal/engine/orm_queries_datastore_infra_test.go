@@ -64,6 +64,25 @@ public class GraphRepo {
 	}
 }
 
+func TestInfra_Neo4jCSharpSessionRun(t *testing.T) {
+	// C# Neo4j.Driver: `session.Run("MATCH (n:Label) ...")`. The
+	// language-agnostic cypher emitter (run for csharp via scanInfra in
+	// applyORMQueries) attributes the first node label to a QUERIES edge.
+	src := `using Neo4j.Driver;
+public class GraphRepo {
+    private ISession session;
+    public void Load() {
+        session.Run("MATCH (a:Account)-[:OWNS]->(d:Device) RETURN d");
+    }
+}
+`
+	edges := detectORM(t, "csharp", "GraphRepo.cs", src)
+	e := assertEdgeExists(t, edges, "Function:Load", "Class:Account", "find")
+	if e.ORM != "neo4j" {
+		t.Errorf("expected orm=neo4j, got %q", e.ORM)
+	}
+}
+
 func TestInfra_Neo4jNoDriverNoEmit(t *testing.T) {
 	// A `session.run(...)` with NO neo4j/bolt import must NOT fire — the
 	// import gate keeps the broad `.run(` surface from over-firing.
