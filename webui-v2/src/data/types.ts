@@ -2221,3 +2221,56 @@ export interface DataflowReport {
   taint_method?: string;
   flow_method?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Dependency-Injection surface (#4266, epic #4249)
+//
+// Wire shape for GET /api/di/{group} (handlers_di.go → handleDI). RAW JSON
+// (not the v2 envelope). Mirrors the Go structs in internal/dashboard/
+// handlers_di.go, which walks the graph for INJECTED_INTO edges (provider
+// INJECTED_INTO consumer) and groups providers by DI framework.
+// ---------------------------------------------------------------------------
+
+/** One consumer a provider is INJECTED_INTO (the ToID side of the edge). */
+export interface DIConsumer {
+  entity_id: string;
+  name: string;
+  /** Consumer entity Kind when resolved (SCOPE.Controller / SCOPE.Service / …). */
+  kind?: string;
+  repo?: string;
+  source_file?: string;
+  start_line?: number;
+  /** Injection mechanism when recorded (constructor / field / param). */
+  via?: string;
+  /** DI qualifier / token disambiguator when present. */
+  qualifier?: string;
+}
+
+/** One injectable provider with every consumer it injects into. */
+export interface DIProvider {
+  entity_id: string;
+  name: string;
+  kind?: string;
+  repo?: string;
+  source_file?: string;
+  start_line?: number;
+  framework?: string;
+  consumers: DIConsumer[];
+}
+
+/** Providers observed under one DI framework. */
+export interface DIFrameworkGroup {
+  framework: string;
+  count: number;
+  providers: DIProvider[];
+}
+
+/** GET /api/di/{group} — DI providers grouped by framework. */
+export interface DIReport {
+  group: string;
+  total_providers: number;
+  total_consumers: number;
+  total_injections: number;
+  frameworks: string[];
+  groups: DIFrameworkGroup[];
+}

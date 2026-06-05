@@ -559,6 +559,11 @@ func (s *Server) routes() http.Handler {
 	// flows (DATA_FLOWS_TO) + ranked security findings (source→sink paths).
 	mux.HandleFunc("GET /api/dataflow/{group}", s.handleDataflow)
 
+	// #4266 (epic #4249): Dependency-Injection surface — providers grouped by
+	// framework, each listing the consumers it is INJECTED_INTO (NestJS/Spring/
+	// Angular/… DI).
+	mux.HandleFunc("GET /api/di/{group}", s.handleDI)
+
 	// Supporting endpoints
 	mux.HandleFunc("GET /api/groups/{group}/communities", s.handleGroupCommunities)
 	mux.HandleFunc("GET /api/groups/{group}/god-nodes", s.handleGroupGodNodes)

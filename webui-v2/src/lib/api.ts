@@ -70,6 +70,7 @@ import type {
   GraphQLReport,
   IaCReport,
   DataflowReport,
+  DIReport,
 } from "@/data/types";
 
 const BASE = import.meta.env.VITE_AG_API_BASE ?? "/api";
@@ -827,6 +828,17 @@ export const api = {
   getDataflow: (groupId: string) =>
     request<DataflowReport>(
       `/dataflow/${encodeURIComponent(groupId)}`,
+    ),
+
+  // --- Dependency-Injection (#4266) ---
+  // Raw JSON (no v2 envelope) → `request`. Handler: handlers_di.go handleDI,
+  // which returns a DIReport (providers grouped by framework, each listing the
+  // consumers it is INJECTED_INTO).
+
+  /** GET /api/di/{group} — DI providers → consumers, grouped by framework. */
+  getDI: (groupId: string) =>
+    request<DIReport>(
+      `/di/${encodeURIComponent(groupId)}`,
     ),
 };
 

@@ -22,6 +22,7 @@ import {
   Boxes,
   Server,
   Waypoints,
+  Syringe,
   Wrench,
   Inbox,
   Settings,
@@ -47,6 +48,7 @@ export const SCREENS: ScreenDef[] = [
   { to: "docs", label: "Docs", Icon: FileText, shortcut: "D" },
   { to: "security", label: "Security", Icon: ShieldCheck, shortcut: "S" },
   { to: "taint", label: "Taint", Icon: Waypoints, shortcut: "X" },
+  { to: "di", label: "Dependency Injection", Icon: Syringe, shortcut: "J" },
   { to: "quality", label: "Quality", Icon: GaugeCircle, shortcut: "Q" },
   { to: "operations", label: "Operations", Icon: Wrench, shortcut: "O" },
 ];
