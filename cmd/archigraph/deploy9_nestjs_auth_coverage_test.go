@@ -184,6 +184,11 @@ func TestDeploy9_NestJSMetadataAuth_FullPipelineAndMCP(t *testing.T) {
 		if err != nil {
 			t.Fatalf("mcp.NewServer: %v", err)
 		}
+		// Release the mmap'd graph.fb Reader before any TempDir cleanup runs.
+		// On Windows the mapping locks graph.fb (which lives under the outer
+		// test's stateDir/ARCHIGRAPH_DAEMON_ROOT), so leaking it makes that
+		// dir's RemoveAll fail with "Access is denied" (#4285).
+		t.Cleanup(srv.Close)
 		st := srv.MCP.GetTool("archigraph_auth_coverage")
 		if st == nil {
 			t.Fatal("archigraph_auth_coverage not registered")

@@ -195,6 +195,24 @@ func (s *Server) Stop() {
 	}
 }
 
+// Close releases the server's underlying graph state, including any mmap'd
+// fbreader.Reader handles held open for the process lifetime (S8, #2159).
+//
+// On POSIX an open mmap'd file can still be unlinked, so leaking the Reader is
+// harmless to teardown. On Windows the mapping locks graph.fb, so a test that
+// builds a Server over a t.TempDir and never closes it makes os.RemoveAll (and
+// therefore t.TempDir cleanup) fail with "Access is denied" (#4285). Tests that
+// construct a Server should defer s.Close() (or t.Cleanup) so the mmap is
+// released before the temp dir is removed.
+//
+// Idempotent and nil-safe: safe to call on a nil server or one with no State.
+func (s *Server) Close() {
+	if s == nil || s.State == nil {
+		return
+	}
+	s.State.Close()
+}
+
 // reloadBeforeCall is the shared mtime-based lazy refresh hook.
 //
 // #1772: when the registry signature (group→repo set) mutated since the

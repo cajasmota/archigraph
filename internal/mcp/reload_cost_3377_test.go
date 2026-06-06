@@ -182,6 +182,11 @@ func seedRepoOnDisk(t *testing.T, doc *graph.Document) (*State, *LoadedRepo, str
 	st.mu.Lock()
 	st.groups["test"] = &LoadedGroup{Name: "test", Repos: map[string]*LoadedRepo{"r": lr}}
 	st.mu.Unlock()
+	// A reparse on this State opens an mmap'd graph.fb Reader under repoDir's
+	// temp state dir. Release it before TempDir cleanup so Windows RemoveAll
+	// can unlink graph.fb (mmap locks the file on Windows; #4285). No-op when
+	// no reparse happened (Reader stays nil).
+	t.Cleanup(st.Close)
 	return st, lr, fbPath
 }
 

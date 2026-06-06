@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-06` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | scanElixirDrivers attributes the elixir mongodb_driver Mongo.find/find_one/insert_*/update_*/delete_*/aggregate calls to the collection (the 2nd positional quoted literal) via elixirMongoFindRe. QUERIES edge caller->Class:<collection>, orm=mongodb. Dynamic/variable collection names honest-skipped (regex captures only quoted literals). Value-asserting test TestDriver_ElixirMongoFind (all->Class:User). |
 
 ### Migrations
 

@@ -110,13 +110,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [JPA / Jakarta Persistence API](../detail/lang.java.orm.jpa.md) | 🟡 8/10 | |
 | [MongoDB Java Driver](../detail/lang.java.driver.mongodb.md) | 🟡 1/4 | |
 | [MyBatis](../detail/lang.java.orm.mybatis.md) | 🟡 7/10 | |
-| [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟡 4/8 | |
+| [Neo4j (Java driver)](../detail/lang.java.orm.neo4j.md) | 🟡 5/8 | |
 | [Quarkus Panache (SQL + Reactive + MongoDB)](../detail/lang.java.orm.panache.md) | 🟡 7/10 | |
-| [Spring Data Cassandra](../detail/lang.java.orm.spring-data-cassandra.md) | 🔴 0/6 | |
-| [Spring Data Elasticsearch](../detail/lang.java.orm.spring-data-elastic.md) | 🔴 0/6 | |
+| [Spring Data Cassandra](../detail/lang.java.orm.spring-data-cassandra.md) | 🟡 1/6 | |
+| [Spring Data Elasticsearch](../detail/lang.java.orm.spring-data-elastic.md) | 🟡 1/6 | |
 | [Spring Data JPA](../detail/lang.java.orm.spring-data-jpa.md) | 🟡 7/10 | |
 | [Spring Data MongoDB](../detail/lang.java.orm.spring-data-mongo.md) | 🟡 1/6 | |
-| [Spring Data Redis](../detail/lang.java.orm.spring-data-redis.md) | 🔴 0/6 | |
+| [Spring Data Redis](../detail/lang.java.orm.spring-data-redis.md) | 🟡 1/6 | |
 | [jOOQ](../detail/lang.java.orm.jooq.md) | 🟡 6/9 | |
 
 

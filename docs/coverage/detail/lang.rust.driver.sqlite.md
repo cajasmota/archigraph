@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3644) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-05` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_datastore_infra.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Driver topology: raw-SQL query call sites (rusqlite conn.execute("...")/prepare, sqlx::query("...")) parsed via scanRustDrivers -> emitSQLDatastoreTargets(rustSqlRe,"sqlite"); table via shared extractSQLTable; QUERIES edge to Class:<Table>. SQLite backend selected by the import gate (rusqlite/SqlitePool/sqlx::Sqlite/sqlite:). Interpolated format!() SQL honest-skipped. |
 
 ### Migrations
 

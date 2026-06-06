@@ -227,6 +227,10 @@ func ensureCandidate(m map[string]*Candidate, id, category, language, label stri
 
 // addEvidence appends evidence to a candidate idempotently.
 func addEvidence(c *Candidate, kind, path, symbol string) {
+	// Evidence.Path is a stored / serialized / compared path: normalize to
+	// forward slashes so it is identical on every OS (Windows walks yield
+	// "internal\engine\rules\...", which must serialize as "internal/...").
+	path = filepath.ToSlash(path)
 	for _, e := range c.Evidence {
 		if e.Kind == kind && e.Path == path && e.Symbol == symbol {
 			return

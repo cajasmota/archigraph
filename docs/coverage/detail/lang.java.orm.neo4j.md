@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | 🟢 `partial` | `2026-06-05` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_datastore_infra.go`<br>`internal/engine/orm_queries_datastore_infra_test.go` | Driver topology: the Java GraphDatabase/neo4j-java-driver `session.run("MATCH (n:Label) ...")` Cypher string (cypherRunRe, import-gated on mentionsNeo4jDriver) is captured via scanInfra->emitCypherTargets; the FIRST node label + CRUD verb parsed into a QUERIES edge to Class:<Label>. Partial: only the first label of a multi-label pattern is attributed and dynamic/parameterised labels are honest-skipped (#3645). |
 
 ### Migrations
 

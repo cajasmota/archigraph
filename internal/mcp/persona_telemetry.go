@@ -22,9 +22,19 @@ var personaEventTypes = map[string]bool{
 // Files rotate by calendar date: ~/.archigraph/events/persona-events-YYYY-MM-DD.jsonl
 // The directory is created on first write; callers must handle the mkdirall.
 func personaEventsDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("persona_telemetry: resolve home dir: %w", err)
+	// Prefer $HOME so tests (t.Setenv("HOME", tmp)) and the sidecar/patterns
+	// paths in this package agree on a single home root. On Windows
+	// os.UserHomeDir() reads %USERPROFILE% and ignores HOME, which would make
+	// writes and reads diverge ("system cannot find the path specified"). This
+	// mirrors the HOME-first pattern used by sidecarPath/effectsSidecarPath/
+	// defaultPatternsDir (#4285).
+	home := os.Getenv("HOME")
+	if home == "" {
+		var err error
+		home, err = os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("persona_telemetry: resolve home dir: %w", err)
+		}
 	}
 	return filepath.Join(home, ".archigraph", "events"), nil
 }

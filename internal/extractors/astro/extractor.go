@@ -121,7 +121,14 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 
 	_ = ctx // used only for span
 
-	src := string(file.Content)
+	// Normalize CRLF → LF so the line-anchored frontmatter/import/template
+	// regexes match identically on every OS. On Windows, git's default
+	// autocrlf converts these checked-in fixtures to CRLF; the opening "---"
+	// then reads as "---\r\n", which the `---\n`-anchored frontmatterRE would
+	// miss, silently dropping every frontmatter-derived marker (server
+	// component, data loaders, static generation). Stripping \r makes the
+	// scan separator/line-ending agnostic.
+	src := strings.ReplaceAll(string(file.Content), "\r\n", "\n")
 	if len(src) == 0 {
 		span.SetAttributes(
 			attribute.Int("file_line_count", 0),

@@ -63,9 +63,16 @@ type effectsSidecarDoc struct {
 // <group>-links-effects.json sidecar written by
 // internal/links/effect_propagation.go. Mirrors reachabilitySidecarPath.
 func effectsSidecarPath(group string) string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
+	// Prefer $HOME so tests using t.Setenv("HOME", tmpDir) resolve the same
+	// sidecar location on every OS — on Windows os.UserHomeDir() reads
+	// USERPROFILE and ignores HOME.
+	home := os.Getenv("HOME")
+	if home == "" {
+		var err error
+		home, err = os.UserHomeDir()
+		if err != nil {
+			return ""
+		}
 	}
 	return filepath.Join(home, ".archigraph", "groups", group+"-links-effects.json")
 }

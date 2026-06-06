@@ -72,15 +72,15 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Other capabilities | Notes |
 |---|---|---|
 | [Ecto](../detail/lang.elixir.orm.ecto.md) | 🟡 7/10 | |
-| [ExAws DynamoDB](../detail/lang.elixir.driver.dynamodb.md) | 🔴 0/4 | |
+| [ExAws DynamoDB](../detail/lang.elixir.driver.dynamodb.md) | 🟡 1/4 | |
 | [MyXQL](../detail/lang.elixir.driver.myxql.md) | 🔴 0/4 | |
 | [Postgrex](../detail/lang.elixir.driver.postgrex.md) | 🔴 0/4 | |
-| [Redix](../detail/lang.elixir.driver.redix.md) | 🔴 0/4 | |
-| [Xandra (Cassandra)](../detail/lang.elixir.driver.xandra.md) | 🔴 0/4 | |
+| [Redix](../detail/lang.elixir.driver.redix.md) | 🟡 1/4 | |
+| [Xandra (Cassandra)](../detail/lang.elixir.driver.xandra.md) | 🟡 1/4 | |
 | [bolt_sips (Neo4j)](../detail/lang.elixir.driver.neo4j.md) | 🟡 3/6 | |
 | [ecto_sqlite3](../detail/lang.elixir.orm.ecto-sqlite3.md) | 🟡 7/10 | |
-| [elasticsearch-elixir](../detail/lang.elixir.driver.elastic.md) | 🔴 0/4 | |
-| [mongodb (Elixir driver)](../detail/lang.elixir.driver.mongodb.md) | 🔴 0/4 | |
+| [elasticsearch-elixir](../detail/lang.elixir.driver.elastic.md) | 🟡 1/4 | |
+| [mongodb (Elixir driver)](../detail/lang.elixir.driver.mongodb.md) | 🟡 1/4 | |
 
 
 ## Other

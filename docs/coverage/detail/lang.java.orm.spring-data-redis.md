@@ -15,7 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3643) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Model extraction | 🔴 `missing` | `2026-06-06` | [link](https://github.com/cajasmota/archigraph/issues/3643) | — | @RedisHash("people") is recognised by scanJavaSpringDataRedis but emitted only as a QUERIES keyspace edge (Class:People), NOT as a schema/model entity, so model_extraction is honestly left missing (same follow-up shape as the java elastic model_extraction gap). Promoting requires emitting the @RedisHash aggregate root + its @Id/@Indexed fields as a model/schema entity. |
 | Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🔴 `missing` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/spring_ecosystem.go` | — |
 
@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3643) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-06` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | scanJavaSpringDataRedis attributes RedisTemplate/StringRedisTemplate key-value access to the KEYSPACE the command touches (Redis is key-value: no table/collection). javaRedisOpsKeyRe matches opsForValue()/opsForHash()/opsForList()/...get|set|put|delete|leftPush|... ("user:42") and redisTemplate.delete("user:42"); @RedisHash("people") aggregate roots map to their keyspace. The keyspace = the key prefix before the first ':' (else the whole key) via redisKeyspaceFromLiteral + capitalisedSingular. QUERIES edge caller->Class:<keyspace>, orm=redis, op from the accessor method mapped to a command verb (get->find, set/put/push->create, increment/expire->update, delete->delete). Dynamic / variable / interpolated keys honest-skipped (only quoted literals captured). Value-asserting tests TestDriver_JavaRedisOpsForValueGet (load->Class:User find), TestDriver_JavaRedisOpsForValueSet (save->Class:Session create), TestDriver_JavaRedisOpsForHashGet (field->Class:User find), TestDriver_JavaRedisTemplateDelete (evict->Class:User delete), TestDriver_JavaRedisHashEntity (Person->Class:People); negative TestDriver_JavaRedisDynamicKeySkipped. |
 
 ### Migrations
 

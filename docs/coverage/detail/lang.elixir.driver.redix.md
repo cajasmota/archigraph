@@ -15,7 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | — `not_applicable` | — | — | — | — |
+| Model extraction | — `not_applicable` | — | — | — | Raw Redis key-value driver; commands carry only keys, not a schema/model definition. No model entity to extract. |
 | Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | — `not_applicable` | — | — | — | Raw Elixir DB driver; no schema/model definition. Schema belongs to Ecto ORM layer, not the driver. |
 
@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3643) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-06` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | scanElixirDrivers attributes Redix data-access commands to the KEYSPACE they touch (Redis is key-value: no table/collection). emitRedisTargets + elixirRedixCmdKeyRe match Redix.command/command!/noreply_command(conn, [CMD, key, ...]) where CMD is the first list element and the key is the second; the keyspace = the key prefix before the first ':' (else the whole key), via redisKeyspaceFromLiteral + capitalisedSingular. QUERIES edge caller->Class:<keyspace>, orm=redis, op from the command verb (GET/HGET->find, SET/HSET->create, INCR/EXPIRE->update, DEL->delete). PUBLISH/SUBSCRIBE are pub/sub (synthesizeElixirRedisPubSub) and excluded. Interpolated (#{}) and bare-variable keys honest-skipped. Value-asserting tests TestDriver_ElixirRedixHGet (load->Class:User find), TestDriver_ElixirRedixSet (save->Class:Session create), TestDriver_ElixirRedixDel (evict->Class:User delete), TestDriver_ElixirRedixBareKey (Class:Flag); negatives TestDriver_ElixirRedixInterpolatedKeySkipped, TestDriver_ElixirRedixVariableKeySkipped, TestDriver_ElixirRedixPublishNotAttributed. |
 
 ### Migrations
 

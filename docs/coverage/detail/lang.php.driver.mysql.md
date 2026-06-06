@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3644) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3644) | — | Driver topology: PDO MySQL ($pdo->query/prepare/exec) and mysqli (OO $mysqli->query + procedural mysqli_query($conn,"...")) raw-SQL literals are table-parsed via scanPHPDrivers/emitSQLDatastoreTargets (phpSqlRe + mysql:/mysqli backend gate) into QUERIES->Class:<table> with orm=mysql. Interpolated/concatenated SQL is honest-skipped (no static literal table). #4271 |
 
 ### Migrations
 

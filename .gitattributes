@@ -1,0 +1,23 @@
+# Enforce LF on all text files so Windows checkout (git autocrlf) never
+# CRLF-rewrites checked-in files. This keeps golden fixtures and other text
+# byte-identical across platforms, so os.ReadFile() returns LF bytes on every
+# OS and byte-for-byte golden comparisons stay stable on the Windows CI runner
+# (#4285).
+* text=auto eol=lf
+
+# Binary files must never be eol-normalized.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.gz binary
+*.zip binary
+*.wasm binary
+
+# Windows scripts must keep CRLF to run correctly under cmd/PowerShell.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

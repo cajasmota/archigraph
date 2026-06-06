@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-05` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Native Go query-topology pass (scanJavaSpringDataCassandra, #4271): @Query("SELECT/INSERT/UPDATE/DELETE ... FROM t") on a CassandraRepository method emits a QUERIES edge method -> Class:<table> via the shared CQL extractor (extractSQLTable/sqlOp), and @Table("t")/@Table(value="t") entity emits class -> Class:<table>. The native DataStax cqlSession.execute("CQL") form is covered separately by scanJavaDrivers/emitCQLTargets. Gated on org.springframework.data.cassandra / CassandraRepository / CassandraTemplate. Honest limit: dynamic/runtime-built CQL (no string literal) -> no edge (extractSQLTable returns empty). |
 
 ### Migrations
 

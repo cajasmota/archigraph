@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🟢 `partial` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | `internal/custom/elixir/neo4j.go`<br>`internal/custom/elixir/neo4j_test.go` | Bolt.Sips.query!(conn,'CYPHER') call sites captured as SCOPE.Operation/query with a coarse verb sniffed from the leading Cypher clause. Dynamically-built query strings not fully recoverable, so partial. |
+| Query attribution | ✅ `full` | `2026-06-06` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/custom/elixir/neo4j.go`<br>`internal/custom/elixir/neo4j_test.go`<br>`internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Deepened from partial (#4271): in addition to the native extractor's SCOPE.Operation/query call-site capture, scanElixirDrivers now emits a cross-language QUERIES topology edge caller->Class:<node_label> for Bolt.Sips/Boltx Cypher (elixirBoltCypherRe + the shared cypherLabelRe/cypherVerbRe), with the verb canonicalised (MATCH->find, CREATE/MERGE->create, SET->update, DELETE/REMOVE->delete), orm=neo4j. The existing GRAPH_RELATES/schema extraction in internal/custom/elixir/neo4j.go is unchanged. Interpolated/label-less Cypher honest-skipped. Value-asserting tests TestDriver_ElixirBoltSipsCypher (find_users->Class:User find) + TestDriver_ElixirBoltSipsCreate (add->Class:Person create); negative TestDriver_ElixirBoltSipsDynamicLabelSkipped (label-less MATCH yields no edge). |
 
 ### Migrations
 

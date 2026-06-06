@@ -66,9 +66,9 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🟡 8/11 | |
 | [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 8/11 | |
 | [Eloquent (Laravel)](../detail/lang.php.orm.eloquent.md) | 🟡 8/11 | |
-| [PDO MySQL / mysqli](../detail/lang.php.driver.mysql.md) | 🟡 1/5 | |
-| [PDO PostgreSQL](../detail/lang.php.driver.postgres.md) | 🟡 1/5 | |
-| [PDO SQLite](../detail/lang.php.driver.sqlite.md) | 🟡 1/5 | |
+| [PDO MySQL / mysqli](../detail/lang.php.driver.mysql.md) | 🟡 2/5 | |
+| [PDO PostgreSQL](../detail/lang.php.driver.postgres.md) | 🟡 2/5 | |
+| [PDO SQLite](../detail/lang.php.driver.sqlite.md) | 🟡 2/5 | |
 | [Propel](../detail/lang.php.orm.propel.md) | 🟡 8/11 | |
 | [RedBeanPHP](../detail/lang.php.orm.redbeanphp.md) | 🟡 5/8 | |
 | [datastax/php-driver (Cassandra)](../detail/lang.php.driver.cassandra.md) | 🟡 1/4 | |

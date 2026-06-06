@@ -188,6 +188,16 @@ func pathContains(ancestor, child string) bool {
 	// On case-sensitive filesystems (Linux, etc.), use exact equality.
 	caseInsensitive := runtime.GOOS == "darwin" || runtime.GOOS == "windows"
 
+	// Normalize separators to '/' for the prefix/boundary comparison. The norm
+	// strings may still contain '/' even on Windows: EvalSymlinks fails for
+	// synthetic non-existent POSIX paths and we fall back to the original
+	// '/'-strings. Using string(os.PathSeparator) ('\' on Windows) as the
+	// boundary separator against '/'-containing paths makes the prefix check
+	// never match. filepath.ToSlash makes the comparison separator-agnostic so
+	// it works for both '/' and '\' inputs on every OS (#4285).
+	ancestorNorm = filepath.ToSlash(ancestorNorm)
+	childNorm = filepath.ToSlash(childNorm)
+
 	// Check exact equality.
 	if caseInsensitive {
 		if strings.EqualFold(ancestorNorm, childNorm) {
@@ -200,7 +210,7 @@ func pathContains(ancestor, child string) bool {
 	}
 
 	// Check prefix: ancestor + separator is a prefix of child + separator.
-	sep := string(os.PathSeparator)
+	const sep = "/"
 	if !strings.HasSuffix(ancestorNorm, sep) {
 		ancestorNorm += sep
 	}

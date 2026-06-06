@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -68,7 +69,10 @@ func TestInstall_Fresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("nudge script not written: %v", err)
 	}
-	if fi.Mode().Perm()&0o100 == 0 {
+	// Windows has no unix exec bit: os.Chmod's 0o100 is a no-op there and the
+	// nudge hook is invoked via its interpreter (executability is by extension,
+	// not file mode). Only assert the x-bit on non-Windows platforms.
+	if runtime.GOOS != "windows" && fi.Mode().Perm()&0o100 == 0 {
 		t.Fatalf("nudge script not executable: %v", fi.Mode())
 	}
 	// Matcher targets the structural tool surface.

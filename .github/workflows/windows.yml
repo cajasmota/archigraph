@@ -1,0 +1,103 @@
+name: Windows CI
+
+# Dedicated Windows build + test workflow (#95).
+#
+# GOAL: surface genuine cross-platform breakage routinely, not just behind an
+# opt-in label. The full 3-OS matrix in test.yml is gated on the `ci:full`
+# label and runs the entire suite (including slow daemon named-pipe integration
+# tests). This workflow is the lightweight, always-on Windows tripwire: it
+# builds EVERYTHING (the real compile-break detector) and runs a SCOPED test
+# set on every PR / push.
+#
+# MINUTE BUDGET: Windows Actions minutes bill at 2x. To stay cheap we run a
+# SINGLE windows-latest job (no matrix), lean on actions/setup-go's module +
+# build cache, and scope the test set (see "Test (scoped)" below) so a typical
+# run lands in a few minutes rather than the full suite's 8-10.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # One run per ref; a new push cancels the previous in-flight Windows run so we
+  # never burn 2x minutes on superseded commits.
+  group: windows-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # MinGW gcc is required for CGO (the tree-sitter parser bindings in
+      # internal/extractors, internal/custom, internal/engine, internal/mcp).
+      # windows-latest ships an MSYS2 base; we install the gcc + make toolchain.
+      - name: Setup MSYS2 + MinGW
+        uses: msys2/setup-msys2@v2.31.1
+        with:
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+          update: false
+
+      - name: Enable CGO
+        shell: bash
+        run: |
+          echo "CGO_ENABLED=1" >> $GITHUB_ENV
+          echo "CC=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
+
+      - uses: actions/setup-go@v5
+        with:
+          # Pinned to the repo's go.mod toolchain (go 1.26.0). setup-go's
+          # built-in cache (module cache + ~/.cache/go-build) is enabled so
+          # repeat runs skip recompiling deps — the main minute-saver.
+          go-version: '1.26'
+          cache: true
+
+      - run: go mod download
+
+      - name: go vet
+        run: go vet ./...
+
+      # PRIMARY SIGNAL: compile every package on Windows with CGO. This is the
+      # cheapest, highest-value cross-platform check — it catches unix-only
+      # imports, missing _windows.go fallbacks, and path-separator breakage at
+      # build time. The repo already carries paired _unix.go / _windows.go files
+      # (daemon transport uses Microsoft/go-winio named pipes; the rss reader
+      # delegates to process.RSSBytes which has a !linux && !darwin fallback) so
+      # this is expected to pass — if it ever breaks, that's the signal we want.
+      - name: go build (all packages)
+        run: go build ./...
+
+      # Flush both the test-result cache AND the compiled-object cache so a
+      # stale test binary cached by setup-go can't mask the current commit
+      # (same rationale as test.yml, refs #2253).
+      - run: go clean -cache -testcache
+
+      # SCOPED TEST SET (minute budget):
+      #   - We exclude ./internal/daemon/... — its integration tests boot the
+      #     daemon over a named pipe, spawn child processes, and walk the
+      #     filesystem; they are slow on Windows runners and already covered by
+      #     the opt-in 3-OS matrix in test.yml (ci:full). The daemon packages
+      #     are still BUILD-verified by "go build ./..." above.
+      #   - Everything else runs: tools/coverage, internal/engine,
+      #     internal/custom/*, internal/mcp, internal/links, internal/substrate,
+      #     internal/extractors, etc. Genuinely unix-only tests self-exclude via
+      #     their existing `//go:build darwin || linux` tags — we do NOT weaken
+      #     any cross-platform test here.
+      - name: Test (scoped, excludes daemon integration)
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkgs=$(go list ./... | grep -v '/internal/daemon')
+          echo "Testing $(echo "$pkgs" | wc -l) packages (daemon integration excluded):"
+          echo "$pkgs"
+          go test -count=1 -timeout 15m $pkgs

@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-06` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | scanElixirDrivers attributes ExAws.Dynamo helper calls to the table: first-arg literal (ExAws.Dynamo.get_item("Products", ..)) via elixirDynamoFirstArgRe, and the low-level `"TableName" => "X"` map form via the shared emitDynamoTargets. QUERIES edge caller->Class:<table>, orm=dynamodb. Dynamic/variable table names honest-skipped (both capture only quoted literals). Value-asserting tests TestDriver_ElixirExAwsDynamoFirstArg (get->Class:Product) + TestDriver_ElixirExAwsDynamoTableNameMap (scan->Class:Order); negative TestDriver_ElixirExAwsDynamoDynamicTableSkipped. |
 
 ### Migrations
 

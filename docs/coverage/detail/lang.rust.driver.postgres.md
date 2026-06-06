@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3644) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-05` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries.go`<br>`internal/engine/orm_queries_datastore_infra.go`<br>`internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Driver topology: raw-SQL query call sites (sqlx::query/query_as::<_,T>("..."), tokio-postgres client.query("...")/query_one, conn.execute("...")) parsed via scanRustDrivers -> emitSQLDatastoreTargets(rustSqlRe,"postgres"); FROM/INTO/UPDATE table extracted by the shared extractSQLTable; QUERIES edge to Class:<Table> with the SQL verb -> op. Postgres backend selected by the import gate (PgPool/sqlx::Postgres/tokio_postgres/postgres://). Interpolated format!() SQL has no literal -> honest-skipped. |
 
 ### Migrations
 

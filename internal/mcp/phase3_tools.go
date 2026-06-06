@@ -32,9 +32,18 @@ import (
 // of the given suffix (e.g. "pure-functions"). Mirrors
 // reachabilitySidecarPath in dead_code.go.
 func sidecarPath(group, suffix string) string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
+	// Prefer $HOME so tests using t.Setenv("HOME", tmpDir) resolve the same
+	// sidecar location on every OS — on Windows os.UserHomeDir() reads
+	// USERPROFILE and ignores HOME, so a HOME-only test would write to a dir
+	// the tool never reads, making the sidecar look "missing" (which then
+	// cascades into the nil interface-conversion panic downstream).
+	home := os.Getenv("HOME")
+	if home == "" {
+		var err error
+		home, err = os.UserHomeDir()
+		if err != nil {
+			return ""
+		}
 	}
 	return filepath.Join(home, ".archigraph", "groups", group+"-links-"+suffix+".json")
 }

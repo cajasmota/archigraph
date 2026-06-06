@@ -15,7 +15,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Model extraction | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Model extraction | 🔴 `missing` | `2026-06-05` | [link](https://github.com/cajasmota/archigraph/issues/4271) | — | HONESTLY LEFT MISSING this round (#4271 was query_attribution-scoped). @Document(indexName=..) is now consumed by scanJavaSpringDataElastic for query topology (index attribution), but it is NOT yet emitted as a standalone schema/model entity: no Go pass extracts the @Document/@Field/@Id property schema into a SCOPE.Schema/model record (the only such code, internal/custom/java/spring_ecosystem.go, is the dead custom_extractor that never runs in Go). Model extraction needs a separate native extractor pass. |
 | Model lifecycle extraction | 🔴 `missing` | — | 3628 | — | — |
 | Schema extraction | 🔴 `missing` | `2026-05-29` | [link](https://github.com/cajasmota/archigraph/issues/3586) | `internal/custom/java/extractors_test.go`<br>`internal/custom/java/spring_ecosystem.go` | — |
 
@@ -32,7 +32,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Query attribution | 🔴 `missing` | `2026-06-02` | [link](https://github.com/cajasmota/archigraph/issues/3645) | — | YAML detection-only; dead custom_extractor never ran in Go; no native query-topology extractor. |
+| Query attribution | ✅ `full` | `2026-06-05` | [link](https://github.com/cajasmota/archigraph/issues/4271) | `internal/engine/orm_queries_drivers_other.go`<br>`internal/engine/orm_queries_drivers_other_test.go` | Native Go query-topology pass (scanJavaSpringDataElastic, #4271): @Document(indexName="products") entity emits a QUERIES edge class -> Class:<index> (the @Document indexName IS the index attribution), and @Query("{...}") on an ElasticsearchRepository method emits method -> Class:<index> where the index is resolved from the file's @Document entity (the extended-JSON @Query body is a query, not an index name). The shared index:"x"/.Index("x") literal forms (emitElasticTargets) cover ElasticsearchOperations search-request builders. Gated on org.springframework.data.elasticsearch / ElasticsearchRepository / ElasticsearchOperations. Honest limit: dynamic index names (IndexCoordinates.of(var)) -> no edge. |
 
 ### Migrations
 
