@@ -338,6 +338,138 @@ export function ModuleOverview({
   // Click-on-background clears selection.
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  /* ───────────────────────────────────────────────────────────────
+     Zoom / pan. The main entity graph (graph-canvas.tsx) pans + wheel-
+     zooms; this hand-rolled SVG had neither. We manage a {k, tx, ty}
+     viewport transform and apply it to a single wrapping <g>, so node
+     hit-testing stays correct at any zoom (the browser maps pointer
+     events through the same transform automatically).
+
+     Click-vs-drag separation: a pointerdown on empty canvas starts a
+     potential pan; we only treat it as a pan once the pointer moves past
+     DRAG_THRESHOLD px. If it never crosses the threshold, the trailing
+     `click` fires normally (select / clear). A node's own click handler
+     calls stopPropagation, so node interactions are unaffected by pan.
+     ─────────────────────────────────────────────────────────────── */
+  const MIN_K = 0.2;
+  const MAX_K = 8;
+  const DRAG_THRESHOLD = 4; // px in screen space before a press becomes a pan
+
+  const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
+  // Reset the viewport when the rendered repo changes (fresh layout).
+  useEffect(() => {
+    setView({ k: 1, tx: 0, ty: 0 });
+  }, [repo?.repo]);
+
+  // Pan gesture state (refs — never needs to trigger a re-render itself).
+  const panState = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startTx: number;
+    startTy: number;
+    moved: boolean;
+  } | null>(null);
+  // True only while an actual pan is in progress — used to suppress the
+  // trailing background `click` that would otherwise clear the selection.
+  const didPanRef = useRef(false);
+
+  /** Convert a clientX/clientY into viewBox (pre-transform) coordinates. */
+  const clientToViewBox = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const rect = svg.getBoundingClientRect();
+    // The SVG uses preserveAspectRatio="xMidYMid meet", so the viewBox is
+    // letterboxed inside the element. Recover the actual rendered scale +
+    // offset of the VIEWBOX×VIEWBOX square within the element rect.
+    const scale = Math.min(rect.width / VIEWBOX, rect.height / VIEWBOX);
+    const drawnW = VIEWBOX * scale;
+    const drawnH = VIEWBOX * scale;
+    const offX = (rect.width - drawnW) / 2;
+    const offY = (rect.height - drawnH) / 2;
+    const px = (clientX - rect.left - offX) / scale;
+    const py = (clientY - rect.top - offY) / scale;
+    return { x: px, y: py };
+  }, []);
+
+  const onWheel = useCallback(
+    (e: React.WheelEvent<SVGSVGElement>) => {
+      e.preventDefault();
+      const { x: vx, y: vy } = clientToViewBox(e.clientX, e.clientY);
+      setView((v) => {
+        const factor = Math.exp(-e.deltaY * 0.0015);
+        const nk = Math.min(MAX_K, Math.max(MIN_K, v.k * factor));
+        if (nk === v.k) return v;
+        // Keep the point under the cursor stationary: solve for tx,ty such
+        // that (vx,vy) maps to the same screen position before/after.
+        const tx = vx - ((vx - v.tx) / v.k) * nk;
+        const ty = vy - ((vy - v.ty) / v.k) * nk;
+        return { k: nk, tx, ty };
+      });
+    },
+    [clientToViewBox],
+  );
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      // Only start a pan from a press on the empty canvas (the bare <svg> or
+      // the viewport <g>), never from a node — nodes stopPropagation anyway,
+      // but guard on the primary button + non-node target for safety.
+      if (e.button !== 0) return;
+      didPanRef.current = false;
+      panState.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startTx: view.tx,
+        startTy: view.ty,
+        moved: false,
+      };
+    },
+    [view.tx, view.ty],
+  );
+
+  const onPointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    const ps = panState.current;
+    if (!ps || ps.pointerId !== e.pointerId) return;
+    const dxScreen = e.clientX - ps.startX;
+    const dyScreen = e.clientY - ps.startY;
+    if (
+      !ps.moved &&
+      Math.hypot(dxScreen, dyScreen) < DRAG_THRESHOLD
+    ) {
+      return; // below threshold — still a potential click, not a pan
+    }
+    if (!ps.moved) {
+      ps.moved = true;
+      didPanRef.current = true;
+      svgRef.current?.setPointerCapture(e.pointerId);
+    }
+    // Convert the screen delta into viewBox units (account for letterboxing).
+    const svg = svgRef.current;
+    const rect = svg?.getBoundingClientRect();
+    const scale = rect
+      ? Math.min(rect.width / VIEWBOX, rect.height / VIEWBOX)
+      : 1;
+    setView((v) => ({
+      ...v,
+      tx: ps.startTx + dxScreen / scale,
+      ty: ps.startTy + dyScreen / scale,
+    }));
+  }, []);
+
+  const endPan = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    const ps = panState.current;
+    if (ps && ps.pointerId === e.pointerId) {
+      if (svgRef.current?.hasPointerCapture?.(e.pointerId)) {
+        svgRef.current.releasePointerCapture(e.pointerId);
+      }
+      panState.current = null;
+    }
+  }, []);
+
+  const resetView = useCallback(() => setView({ k: 1, tx: 0, ty: 0 }), []);
+
   if (!repo) {
     return (
       <div className="grid h-full place-items-center bg-bg">
@@ -419,10 +551,21 @@ export function ModuleOverview({
         ref={svgRef}
         viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
         preserveAspectRatio="xMidYMid meet"
-        className="h-full w-full"
+        className="h-full w-full touch-none"
+        style={{ cursor: panState.current?.moved ? "grabbing" : "grab" }}
         onClick={(e) => {
+          // A pan that crossed the threshold should not clear the selection.
+          if (didPanRef.current) {
+            didPanRef.current = false;
+            return;
+          }
           if (e.target === svgRef.current) setSelected(null);
         }}
+        onWheel={onWheel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPan}
+        onPointerCancel={endPan}
         role="img"
         aria-label={`Module overview for ${repo.repo}: ${repo.num_modules} modules, ${repo.num_module_edges} edges, ${repo.num_sccs} cycles`}
         data-testid="module-overview-svg"
@@ -456,6 +599,10 @@ export function ModuleOverview({
           </marker>
         </defs>
 
+        {/* Viewport — the single <g> that the zoom/pan transform applies to.
+            Wrapping ALL content here keeps node hit-testing correct at any
+            zoom: the browser maps pointer events through this transform. */}
+        <g transform={`translate(${view.tx}, ${view.ty}) scale(${view.k})`}>
         {/* Edges. */}
         <g>
           {sortedEdges.map((e) => {
@@ -549,6 +696,7 @@ export function ModuleOverview({
             );
           })}
         </g>
+        </g>
       </svg>
 
       {/* Side panel — module metrics + expand action. */}
@@ -594,7 +742,19 @@ export function ModuleOverview({
             </>
           ) : null}
           <span className="h-3 w-px bg-border" />
-          <span className="text-text-4">click → expand a module</span>
+          <span className="text-text-4">scroll → zoom · drag → pan</span>
+          {view.k !== 1 || view.tx !== 0 || view.ty !== 0 ? (
+            <>
+              <span className="h-3 w-px bg-border" />
+              <button
+                onClick={resetView}
+                className="pointer-events-auto rounded px-1.5 py-0.5 text-text-2 hover:bg-surface-2"
+                data-testid="module-overview-reset-view"
+              >
+                reset view
+              </button>
+            </>
+          ) : null}
         </div>
       </div>
     </div>

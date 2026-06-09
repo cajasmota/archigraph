@@ -363,7 +363,7 @@ function EntityChip({
       {crossRepo && ref.repo && (
         <span className="text-[10px] opacity-70 shrink-0">{ref.repo}/</span>
       )}
-      <span className="font-mono truncate max-w-[110px]">{ref.name}</span>
+      <span className="font-mono truncate max-w-[180px]">{ref.name}</span>
       {fileRef && (
         <span className="text-[9px] text-text-4 font-mono shrink-0">{fileRef}</span>
       )}
@@ -556,8 +556,8 @@ function BrokerDiagram({
   const ROW_H = 30;
   const NODE_H = 24;
   const PAD_Y = 16;
-  const COL_W = 168; // side-column node width
-  const CH_W = 150; // channel node width
+  const COL_W = 220; // side-column node width (widened so longer pub/sub names fit; full name on hover via <title>)
+  const CH_W = 200; // channel node width (widened so e.g. "celery:core/tasks/…" reads without hard truncation)
   const GAP = 96; // horizontal gap between columns
   const leftX = 8;
   const chX = leftX + COL_W + GAP;
@@ -715,7 +715,7 @@ function BrokerDiagram({
                     fill={nodeColor(ref)}
                     style={{ pointerEvents: "none" }}
                   >
-                    {ref.name.length > 22 ? ref.name.slice(0, 21) + "…" : ref.name}
+                    {ref.name.length > 30 ? ref.name.slice(0, 29) + "…" : ref.name}
                     <title>
                       {ref.name}
                       {ref.sourceFile ? `\n${ref.sourceFile}:${ref.startLine ?? ""}` : ""}
@@ -763,7 +763,7 @@ function BrokerDiagram({
                     fill="var(--text)"
                     style={{ pointerEvents: "none" }}
                   >
-                    {ch.label.length > 20 ? ch.label.slice(0, 19) + "…" : ch.label}
+                    {ch.label.length > 28 ? ch.label.slice(0, 27) + "…" : ch.label}
                     <title>{ch.label}</title>
                   </text>
                 </g>
@@ -806,7 +806,7 @@ function BrokerDiagram({
                     fill={nodeColor(ref)}
                     style={{ pointerEvents: "none" }}
                   >
-                    {ref.name.length > 22 ? ref.name.slice(0, 21) + "…" : ref.name}
+                    {ref.name.length > 30 ? ref.name.slice(0, 29) + "…" : ref.name}
                     <title>
                       {ref.name}
                       {ref.sourceFile ? `\n${ref.sourceFile}:${ref.startLine ?? ""}` : ""}
