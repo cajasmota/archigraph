@@ -31,7 +31,7 @@
    ============================================================ */
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Activity, Pause, Play, RefreshCw, Square, Volume2, VolumeX, X } from "lucide-react";
+import { Activity, Pause, Play, RefreshCw, Square, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import type { MCPActivityEvent } from "@/hooks/use-mcp-activity";
 import type { FlowAnimController, FlowAnimSnapshot } from "@/lib/flow-animation";
 import { GRAPH_SPEEDS } from "@/hooks/use-graph-jarvis-replay";
@@ -124,6 +124,8 @@ export interface MCPActivityOverlayProps {
   eventLog: MCPActivityEvent[];
   onToggle: (enabled: boolean) => void;
   onReplay: (event: MCPActivityEvent) => void;
+  /** Empty the activity log + reset count/replay position to 0. */
+  onClear: () => void;
 
   // ── #1932 replay-all wiring ───────────────────────────────────────────────
   /** The shared step-engine controller (null when there's < 2 steps). */
@@ -148,6 +150,7 @@ export const MCPActivityOverlay = memo(function MCPActivityOverlay({
   eventLog,
   onToggle,
   onReplay,
+  onClear,
   replayController,
   replaySnapshot,
   replaySteps,
@@ -209,6 +212,17 @@ export const MCPActivityOverlay = memo(function MCPActivityOverlay({
     if (replaySnapshot.paused) replayController.resume();
     else if (replaySnapshot.running) replayController.pause();
   }, [replayController, replaySnapshot.paused, replaySnapshot.running]);
+
+  // Clear: stop + rewind any in-flight replay (resets the scrubber playhead to
+  // 0) and empty the activity log + count via the hook. The empty-state message
+  // takes over the list once the log is cleared.
+  const handleClear = useCallback(() => {
+    if (replayController) {
+      replayController.stop();
+      replayController.reset();
+    }
+    onClear();
+  }, [replayController, onClear]);
 
   // ── badge state ──────────────────────────────────────────────────────────
   const dotClass = !enabled
@@ -299,6 +313,17 @@ export const MCPActivityOverlay = memo(function MCPActivityOverlay({
                 </button>
               ))}
             </div>
+            {/* Clear — empties the log + resets the count/replay position. */}
+            <button
+              onClick={handleClear}
+              disabled={eventLog.length === 0 && totalCount === 0}
+              aria-label="Clear MCP activity log"
+              title="Clear log"
+              data-testid="mcp-activity-clear"
+              className="inline-flex items-center gap-1 rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-3 hover:bg-surface-2 hover:text-text-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Trash2 size={11} />
+            </button>
           </div>
 
           {/* ── Activity list ───────────────────────────────────────────── */}

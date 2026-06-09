@@ -68,6 +68,8 @@ export interface GraphHighlightControls {
   setEnabled: (enabled: boolean) => void;
   /** Re-trigger the glow from a historical log entry. */
   replay: (event: MCPActivityEvent) => void;
+  /** Empty the MCP activity log + reset the count/replay position to 0. */
+  clearActivityLog: () => void;
 }
 
 export type UseGraphHighlightReturn = GraphHighlightState & GraphHighlightControls;
@@ -167,5 +169,12 @@ export function useGraphHighlight(): UseGraphHighlightReturn {
     totalCount: activity.totalCount,
     setEnabled,
     replay,
+    // Clear empties the activity log + resets count to 0 (hook state reset),
+    // and also drops any in-flight glow so the canvas doesn't keep pulsing a
+    // now-cleared event.
+    clearActivityLog: () => {
+      clear();
+      activity.clear();
+    },
   };
 }

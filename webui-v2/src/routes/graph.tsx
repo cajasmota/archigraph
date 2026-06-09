@@ -546,6 +546,7 @@ export default function GraphScreen() {
               eventLog={jarvis.eventLog}
               onToggle={jarvis.setEnabled}
               onReplay={jarvis.replay}
+              onClear={jarvis.clearActivityLog}
               replayController={replay.controller}
               replaySnapshot={replay.snapshot}
               replaySteps={replay.steps}

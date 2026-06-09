@@ -576,9 +576,12 @@ function GraphCanvasInner(
       let tier: 0 | 1 | 2;
       let c: RGBA;
       if (st === 2) {
-        // cross-repo — always the brightest bridge color; emphasized tier.
-        tier = 2;
-        c = pal.crossRepo;
+        // Cross-repo edges now blend in as ordinary links (user ask): drop the
+        // distinct bright-sky bridge COLOR and the emphasized opacity tier so a
+        // cross-repo link is visually identical to a normal cross-module link.
+        // (Width already unifies st2 with st1 — see #2108 in packLinkWidths.)
+        tier = isMultiRepo ? 1 : 2;
+        c = pal.crossModule;
       } else if (st === 1) {
         // cross-module — emphasized in a single-repo monorepo, subtle when
         // cross-repo links exist (so they don't compete with the bridges).

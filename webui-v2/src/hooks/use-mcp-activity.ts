@@ -12,8 +12,11 @@
        /api/mcp-activity/history and seeds the activity list (these are
        marked `isHistory: true` so the UI can render them muted). (#1930)
      • Opens an EventSource when `enabled` is true (default).
-     • Reconnects automatically on transient errors (browser-native ES).
-     • Closes + cleans up on unmount or when toggled off.
+     • Reconnects on errors/close with a bounded, capped backoff (1s→2s→5s),
+       re-seeding from /history (de-duped) so a daemon RESTART self-heals
+       instead of freezing the panel. (Browser-native ES auto-reconnect does
+       NOT recover once the connection lands in CLOSED.)
+     • Closes + cleans up on unmount or when toggled off (no EventSource leaks).
      • Exposes the last event, a rolling log (last MAX_LOG), and a count.
 
    The graph canvas uses `latestEvent` to drive the Jarvis glow/pulse.
@@ -79,6 +82,25 @@ const INITIAL_STATE: MCPActivityState = {
  * @param enabled - When false, no EventSource is opened (toggle support).
  *                  Defaults to true so the canvas subscribes when mounted.
  */
+// Reconnect backoff schedule (ms). The EventSource is re-opened with this
+// bounded, capped progression so a daemon restart (or any transient SSE drop)
+// self-heals without hammering the endpoint. Index is clamped to the last
+// element, so it caps at 5s and keeps retrying forever.
+const RECONNECT_BACKOFF_MS = [1000, 2000, 5000];
+
+/**
+ * Stable de-dupe key for an MCP activity event. The backend SSE/history
+ * payloads carry no stable id (see internal/dashboard/handlers_mcp_activity.go),
+ * so we synthesize one from timestamp + tool + the returned-node fingerprint.
+ * Used so a reconnect re-seed from /history doesn't duplicate rows that are
+ * already in the live log.
+ */
+function eventKey(e: MCPActivityEvent): string {
+  const nodes = e.returned_node_ids?.length ?? 0;
+  const edges = e.returned_edge_ids?.length ?? 0;
+  return `${e.timestamp}|${e.tool_name}|${e.agent_id ?? ""}|${nodes}|${edges}`;
+}
+
 export function useMCPActivity(enabled = true): UseMCPActivityReturn {
   const [state, setState] = useState<MCPActivityState>(INITIAL_STATE);
   const esRef = useRef<EventSource | null>(null);
@@ -88,87 +110,156 @@ export function useMCPActivity(enabled = true): UseMCPActivityReturn {
 
   const clear = useCallback(() => setState(INITIAL_STATE), []);
 
-  // #1930 — Seed the activity list from /api/mcp-activity/history on mount,
-  // BEFORE the SSE stream connects. History items are flagged `isHistory: true`
-  // so the UI can render them slightly muted (they don't trigger glow).
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    subscribeAtRef.current = Date.now();
-    fetch(`${HISTORY_URL}?limit=${HISTORY_LIMIT}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body: { events?: MCPActivityEvent[] } | null) => {
-        if (cancelled || !body?.events?.length) return;
-        const historyEvents: MCPActivityEvent[] = body.events.map((e) => ({
-          ...e,
-          isHistory: true,
-        }));
-        setState((prev) => {
-          // Don't overwrite live events that may have already arrived.
-          if (prev.eventLog.length > 0) return prev;
-          const log = historyEvents.slice(-MAX_LOG);
-          return {
-            ...prev,
-            eventLog: log,
-          };
-        });
-      })
-      .catch(() => {
-        // History fetch failing is non-fatal — SSE stream still works.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled]);
-
+  // ── Single effect owns the whole connection lifecycle ──────────────────────
+  // History seed (#1930) + SSE subscription + ROBUST RECONNECT. Previously the
+  // browser-native EventSource auto-reconnect was relied on, but when the daemon
+  // RESTARTS the connection moves to CLOSED and is never re-opened — the panel
+  // freezes (e.g. stuck at "9/9") and silently drops every new event. We now
+  // manage reconnection explicitly with a bounded, capped backoff so any
+  // transient drop (or daemon restart) self-heals. On every (re)connect we
+  // re-seed from /history and de-dupe against the existing log so no rows are
+  // missed and none are duplicated. The 100-event cap (MAX_LOG) is enforced on
+  // BOTH the seed and the live-append paths.
   useEffect(() => {
     if (!enabled) {
-      esRef.current?.close();
-      esRef.current = null;
       setState((prev) => ({ ...prev, connected: false }));
       return;
     }
 
-    const es = new EventSource(SSE_URL);
-    esRef.current = es;
+    let cancelled = false;
+    let es: EventSource | null = null;
+    let reconnectAttempt = 0;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let isFirstConnect = true;
 
-    es.addEventListener("connected", () => {
-      setState((prev) => ({ ...prev, connected: true }));
-    });
-
-    // The Go backend emits this event as "mcp_activity"
-    // (internal/dashboard/handlers_mcp_activity.go). Listening for the wrong
-    // name silently drops every event → "No MCP queries yet" / no glow.
-    es.addEventListener("mcp_activity", (ev: MessageEvent) => {
-      try {
-        const event: MCPActivityEvent = JSON.parse(ev.data as string);
-        setState((prev) => {
-          const log = [...prev.eventLog, event];
-          if (log.length > MAX_LOG) log.splice(0, log.length - MAX_LOG);
-          return {
-            connected: true,
-            latestEvent: event,
-            eventLog: log,
-            totalCount: prev.totalCount + 1,
-          };
-        });
-      } catch {
-        // Malformed JSON — ignore.
-      }
-    });
-
-    es.addEventListener("heartbeat", () => {
-      setState((prev) => (prev.connected ? prev : { ...prev, connected: true }));
-    });
-
-    es.onerror = () => {
-      if (es.readyState === EventSource.CLOSED) {
-        setState((prev) => ({ ...prev, connected: false }));
+    const clearReconnectTimer = () => {
+      if (reconnectTimer !== null) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
       }
     };
 
+    const closeES = () => {
+      if (es) {
+        // Drop handlers before closing so a late error can't schedule a
+        // reconnect against a connection we're tearing down (no ES leaks).
+        es.onerror = null;
+        es.close();
+        es = null;
+      }
+    };
+
+    const scheduleReconnect = () => {
+      if (cancelled || reconnectTimer !== null) return;
+      const idx = Math.min(reconnectAttempt, RECONNECT_BACKOFF_MS.length - 1);
+      const delay = RECONNECT_BACKOFF_MS[idx];
+      reconnectAttempt += 1;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connect();
+      }, delay);
+    };
+
+    // Re-seed the log from /history, de-duping against whatever is already
+    // present (live events received before the seed resolved are preserved).
+    // History entries keep `isHistory: true` for the muted "before this session"
+    // rendering; live entries already in the log keep their identity.
+    const seedFromHistory = () => {
+      fetch(`${HISTORY_URL}?limit=${HISTORY_LIMIT}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((body: { events?: MCPActivityEvent[] } | null) => {
+          if (cancelled || !body?.events?.length) return;
+          const historyEvents: MCPActivityEvent[] = body.events.map((e) => ({
+            ...e,
+            isHistory: true,
+          }));
+          setState((prev) => {
+            const seen = new Set(prev.eventLog.map(eventKey));
+            const fresh = historyEvents.filter((e) => !seen.has(eventKey(e)));
+            if (fresh.length === 0) return prev;
+            // History is older than anything live, so it goes BEFORE the
+            // existing log; newest kept if we exceed the cap.
+            const log = [...fresh, ...prev.eventLog].slice(-MAX_LOG);
+            return { ...prev, eventLog: log };
+          });
+        })
+        .catch(() => {
+          // History fetch failing is non-fatal — the SSE stream still works.
+        });
+    };
+
+    const connect = () => {
+      if (cancelled) return;
+      closeES();
+      subscribeAtRef.current = Date.now();
+      // Re-seed on first connect AND on every reconnect, so a daemon restart
+      // backfills anything emitted while we were disconnected.
+      seedFromHistory();
+
+      const conn = new EventSource(SSE_URL);
+      es = conn;
+      esRef.current = conn;
+
+      conn.addEventListener("connected", () => {
+        // A successful (re)connect resets the backoff progression.
+        reconnectAttempt = 0;
+        isFirstConnect = false;
+        setState((prev) => ({ ...prev, connected: true }));
+      });
+
+      // The Go backend emits this event as "mcp_activity"
+      // (internal/dashboard/handlers_mcp_activity.go). Listening for the wrong
+      // name silently drops every event → "No MCP queries yet" / no glow.
+      conn.addEventListener("mcp_activity", (ev: MessageEvent) => {
+        try {
+          const event: MCPActivityEvent = JSON.parse(ev.data as string);
+          setState((prev) => {
+            // De-dupe: a re-seed racing a live event must not double-count.
+            const key = eventKey(event);
+            if (prev.eventLog.some((e) => eventKey(e) === key)) {
+              return { ...prev, connected: true, latestEvent: event };
+            }
+            const log = [...prev.eventLog, event];
+            if (log.length > MAX_LOG) log.splice(0, log.length - MAX_LOG);
+            return {
+              connected: true,
+              latestEvent: event,
+              eventLog: log,
+              totalCount: prev.totalCount + 1,
+            };
+          });
+        } catch {
+          // Malformed JSON — ignore.
+        }
+      });
+
+      conn.addEventListener("heartbeat", () => {
+        setState((prev) => (prev.connected ? prev : { ...prev, connected: true }));
+      });
+
+      conn.onerror = () => {
+        // CONNECTING means the browser is already retrying internally — let it.
+        // CLOSED (or any drop after a daemon restart) is what the native ES
+        // never recovers from, so we drive the reconnect ourselves.
+        if (conn.readyState === EventSource.CLOSED) {
+          setState((prev) => ({ ...prev, connected: false }));
+          closeES();
+          scheduleReconnect();
+        } else if (!isFirstConnect) {
+          // Transient drop on an established connection — mark disconnected so
+          // the badge reflects reality; the browser-native retry may still
+          // recover, but if it lands in CLOSED we'll take over above.
+          setState((prev) => ({ ...prev, connected: false }));
+        }
+      };
+    };
+
+    connect();
+
     return () => {
-      es.close();
+      cancelled = true;
+      clearReconnectTimer();
+      closeES();
       esRef.current = null;
     };
   }, [enabled]);
