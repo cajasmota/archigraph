@@ -16,7 +16,7 @@ import (
 
 // #4319 LIVE REPRO + LONG-TERM-FIX gate.
 //
-// The endpoint `POST /inspections/me-manage/merge` (upvate-v3 BuildingController)
+// The endpoint `POST /v1/buildings/inspections/me-manage/merge` (upvate-v3 BuildingController)
 // was a graph ISLAND on the live graph after a full reindex, despite TWO prior
 // detect-and-repair fixes (#4326 bare↔qualified name match, #4330 file:line
 // co-location). Both reproduced in HAND-BUILT fixtures (handler StartLine set
@@ -103,7 +103,7 @@ func findMergeEndpoint(ents []types.EntityRecord) *types.EntityRecord {
 	for i := range ents {
 		if ents[i].Kind == httpEndpointDefinitionKind && ents[i].Properties != nil &&
 			ents[i].Properties["verb"] == "POST" &&
-			ents[i].Properties["path"] == "/inspections/me-manage/merge" {
+			ents[i].Properties["path"] == "/v1/buildings/inspections/me-manage/merge" {
 			return &ents[i]
 		}
 	}
@@ -178,7 +178,7 @@ func TestIslandRepro4319_SynthesisTimeBridgeEmitted(t *testing.T) {
 	if found == nil {
 		t.Fatal("no synthesis-time IMPLEMENTS bridge emitted for the NestJS merge route")
 	}
-	if found.ToID != httpEndpointDefinitionKind+":http:POST:/inspections/me-manage/merge" {
+	if found.ToID != httpEndpointDefinitionKind+":http:POST:/v1/buildings/inspections/me-manage/merge" {
 		t.Errorf("bridge ToID = %q, want endpoint stub", found.ToID)
 	}
 }
@@ -215,7 +215,7 @@ func TestIslandRepro4319_BridgeSurvivesLegacyFailure(t *testing.T) {
 	// The http-endpoint resolve pass alone CANNOT bridge this shape (no name, no
 	// line) — negative control proving the legacy paths are dead here.
 	mergedNoBridge, stats := ResolveHTTPEndpointHandlers(cloneEnts(ents))
-	if legacyBridged(mergedNoBridge, "http:POST:/inspections/me-manage/merge") {
+	if legacyBridged(mergedNoBridge, "http:POST:/v1/buildings/inspections/me-manage/merge") {
 		t.Fatalf("expected legacy resolve pass to FAIL on the no-handler/no-line shape (the live island), but it bridged (resolved=%d)", stats.HandlerResolved)
 	}
 

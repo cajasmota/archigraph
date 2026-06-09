@@ -4383,12 +4383,147 @@ func isInlineExpressHandler(fullMatch, raw string) bool {
 // PRECEDING @Controller (by source position), so two controllers in one file
 // keep their own prefixes instead of collapsing onto the first.
 
-// nestControllerRe captures the class-level @Controller('prefix') value.
-// The prefix is optional (`@Controller()` → root prefix ""). Accepts single,
-// double, or backtick quotes.
-var nestControllerRe = regexp.MustCompile(
-	"@Controller\\s*\\(\\s*(?:['\"`]([^'\"`\\n\\r]*)['\"`])?\\s*\\)",
-)
+// nestControllerOpenRe locates the start of a class-level @Controller decorator
+// — `@Controller(` — without consuming its argument. The argument is then read
+// as a balanced span (nestjsBalancedArg) and parsed by nestjsParseControllerArg
+// so EVERY decorator form is supported, not just the bare-string one:
+//
+//	@Controller()                                       → prefix ""        (root)
+//	@Controller('users')                                → prefix "users"
+//	@Controller(['users', 'people'])                    → prefix "users"   (first host)
+//	@Controller({ path: 'users' })                      → prefix "users"
+//	@Controller({ path: 'users', version: '1' })        → prefix "v1/users"
+//	@Controller({ path: ['users','people'], version })  → prefix "v1/users"
+//
+// #4340: the previous regex matched ONLY the bare-string / empty forms; the
+// object form `@Controller({ path, version })` (the canonical NestJS style with
+// URI versioning) failed to match entirely, so the base path was DROPPED and
+// every controller's routes collapsed onto the verb+method-path alone.
+var nestControllerOpenRe = regexp.MustCompile(`@Controller\s*\(`)
+
+// nestjsFirstQuotedRe captures the FIRST quoted string in a span (single,
+// double, or backtick). Used to read the bare-string form and the first host
+// of an array form.
+var nestjsFirstQuotedRe = regexp.MustCompile("['\"`]([^'\"`\\r\\n]*)['\"`]")
+
+// nestjsPathPropRe captures the `path:` value of an object-form @Controller
+// argument when it is a single quoted string: `path: 'users'`.
+var nestjsPathPropRe = regexp.MustCompile(`\bpath\s*:\s*['"` + "`" + `]([^'"` + "`" + `\r\n]*)['"` + "`" + `]`)
+
+// nestjsPathArrayPropRe captures the `path:` value when it is an array literal,
+// so the first host can be read: `path: ['users', 'people']`.
+var nestjsPathArrayPropRe = regexp.MustCompile(`\bpath\s*:\s*\[([^\]]*)\]`)
+
+// nestjsVersionPropRe captures the `version:` value of an object-form
+// @Controller argument when it is a quoted string or bare number:
+// `version: '1'`, `version: "2"`, `version: 1`. NestJS also supports
+// VERSION_NEUTRAL and arrays of versions; those are treated as "no single URI
+// prefix" (handled by the caller leaving the version empty).
+var nestjsVersionPropRe = regexp.MustCompile(`\bversion\s*:\s*(?:['"` + "`" + `]([^'"` + "`" + `\r\n]*)['"` + "`" + `]|(\d+))`)
+
+// nestjsBalancedArg reads the balanced `( ... )` argument span that begins at
+// `openParen` (the index of the '(' in src). It returns the inner text (without
+// the surrounding parens) and the index just past the closing paren. Brackets
+// inside strings are ignored (reuses the same string-aware lexer as
+// nestjsBracketDelta). Returns ("", openParen+1) if unbalanced.
+func nestjsBalancedArg(src string, openParen int) (string, int) {
+	depth := 0
+	var quote byte
+	for i := openParen; i < len(src); i++ {
+		c := src[i]
+		if quote != 0 {
+			if c == '\\' {
+				i++
+				continue
+			}
+			if c == quote {
+				quote = 0
+			}
+			continue
+		}
+		switch c {
+		case '\'', '"', '`':
+			quote = c
+		case '(', '{', '[':
+			depth++
+		case ')', '}', ']':
+			depth--
+			if depth == 0 {
+				return src[openParen+1 : i], i + 1
+			}
+		}
+	}
+	return "", openParen + 1
+}
+
+// nestjsParseControllerArg parses the inner text of a @Controller(...) argument
+// (everything between the outer parens) into a route prefix, handling all
+// NestJS decorator forms. The returned prefix is NOT slash-normalised — the
+// caller joins it via joinPathFragments. Empty string means the root.
+//
+// Forms:
+//   - ""                              → ""            (@Controller())
+//   - "'users'"                       → "users"
+//   - "['users','people']"            → "users"       (first host wins)
+//   - "{ path: 'users' }"             → "users"
+//   - "{ path: 'users', version:'1'}" → "v1/users"    (URI versioning)
+//   - "{ version: '1' }"              → "v1"          (versioned root controller)
+//   - "{ path: ['a','b'], version }"  → "v1/a"
+func nestjsParseControllerArg(arg string) string {
+	arg = strings.TrimSpace(arg)
+	if arg == "" {
+		return ""
+	}
+	// Object form: `{ ... }`.
+	if strings.HasPrefix(arg, "{") {
+		path := ""
+		if m := nestjsPathPropRe.FindStringSubmatch(arg); m != nil {
+			path = m[1]
+		} else if m := nestjsPathArrayPropRe.FindStringSubmatch(arg); m != nil {
+			// path is an array literal — take the first quoted host.
+			if q := nestjsFirstQuotedRe.FindStringSubmatch(m[1]); q != nil {
+				path = q[1]
+			}
+		}
+		version := ""
+		if m := nestjsVersionPropRe.FindStringSubmatch(arg); m != nil {
+			if m[1] != "" {
+				version = m[1]
+			} else {
+				version = m[2]
+			}
+		}
+		return nestjsComposePrefix(version, path)
+	}
+	// Array form: `['users', 'people']` — first host wins.
+	if strings.HasPrefix(arg, "[") {
+		if q := nestjsFirstQuotedRe.FindStringSubmatch(arg); q != nil {
+			return q[1]
+		}
+		return ""
+	}
+	// Bare-string form: `'users'`.
+	if q := nestjsFirstQuotedRe.FindStringSubmatch(arg); q != nil {
+		return q[1]
+	}
+	return ""
+}
+
+// nestjsComposePrefix combines a NestJS URI version and a path into a single
+// route prefix. NestJS URI versioning mounts the version as a leading path
+// segment with the default `v` prefix (`/v1/...`). An empty version yields just
+// the path; an empty path with a version yields the bare version segment.
+func nestjsComposePrefix(version, path string) string {
+	path = strings.Trim(path, "/")
+	if version == "" {
+		return path
+	}
+	verSeg := "v" + strings.TrimPrefix(version, "v")
+	if path == "" {
+		return verSeg
+	}
+	return verSeg + "/" + path
+}
 
 // nestjsVerbPathRe captures a NestJS HTTP-verb method decorator and its
 // OPTIONAL first quoted path argument. It deliberately matches ONLY the verb
@@ -4543,15 +4678,19 @@ func synthesizeNestJS(content string, emit emitFn, emitDef emitDefFn) {
 	// index is used (rather than a byte offset) because the verb loop below is
 	// line-oriented; an @Controller decorator and its prefix sit on the same
 	// line in every practical NestJS source.
+	//
+	// Collection scans the WHOLE content (not line-by-line) so a multi-line
+	// object-form argument is read as one balanced span; the 0-based line index
+	// is derived from the byte offset of the decorator. nestjsParseControllerArg
+	// handles every form (#4340): bare-string, array, and
+	// object `{ path, version }` with NestJS URI versioning.
 	var controllers []nestController
-	for lineIdx, line := range lines {
-		for _, m := range nestControllerRe.FindAllStringSubmatch(line, -1) {
-			prefix := ""
-			if len(m) >= 2 {
-				prefix = m[1]
-			}
-			controllers = append(controllers, nestController{lineIdx: lineIdx, prefix: prefix})
-		}
+	for _, loc := range nestControllerOpenRe.FindAllStringIndex(content, -1) {
+		openParen := loc[1] - 1 // index of '(' (the regex ends just past it)
+		arg, _ := nestjsBalancedArg(content, openParen)
+		prefix := nestjsParseControllerArg(arg)
+		lineIdx := strings.Count(content[:loc[0]], "\n")
+		controllers = append(controllers, nestController{lineIdx: lineIdx, prefix: prefix})
 	}
 	// Map each byte offset's line to an index for the forward scan. We re-find
 	// the verb decorators on a per-line basis so the handler scan starts from
