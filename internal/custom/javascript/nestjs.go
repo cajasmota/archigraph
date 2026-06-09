@@ -32,8 +32,17 @@ var (
 	reNestInjectable = regexp.MustCompile(
 		`@Injectable\s*\([^)]*\)\s*(?:export\s+)?class\s+([A-Z][A-Za-z0-9_]*)`,
 	)
+	// reNestHTTPMethod matches a verb decorator and the handler method name.
+	// Real NestJS handlers stack additional decorators between the verb
+	// decorator and the method signature — `@HttpCode(HttpStatus.OK)`,
+	// `@UseGuards(...)`, `@Header(...)`, `@RequirePage(...)` — so we skip a run
+	// of intervening decorators (each optionally taking a single-level
+	// argument list) plus visibility/async modifiers before the method name.
+	// Before #4325 the regex required the verb decorator to be immediately
+	// adjacent to the method, so EVERY @Post/@Patch that set @HttpCode (the
+	// dominant POST idiom) was silently dropped from the endpoint inventory.
 	reNestHTTPMethod = regexp.MustCompile(
-		`@(Get|Post|Put|Delete|Patch|Options|Head|All)\s*\(([^)]*)\)\s*(?:async\s+)?(\w+)\s*\(`,
+		`@(Get|Post|Put|Delete|Patch|Options|Head|All)\s*\(([^)]*)\)\s*(?:@[A-Za-z_]\w*(?:\s*\([^()]*\))?\s*)*(?:public\s+|private\s+|protected\s+|async\s+)*(\w+)\s*\(`,
 	)
 	// reNestBodyParam captures a @Body()-decorated handler parameter and its DTO
 	// type: `@Body() dto: CreateUserDto`. Plain @Body() with no type yields no
@@ -288,6 +297,24 @@ func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 				},
 			})
 		}
+
+		// #4325 — surface the handler's @Param/@Query/@Body decorators in the
+		// `parameters` property (the Paths panel reads this, NOT the edges) so
+		// the Parameters table lists path/query/body params. The @Body DTO row
+		// agrees with the ACCEPTS_INPUT edge above.
+		if params := extractNestHandlerParams(paramsBlock); len(params) > 0 {
+			if pj := encodeNestParams(params); pj != "" {
+				setProps(&ent, "parameters", pj)
+			}
+			// Surface request-body type/name for the dashboard's body fields.
+			for _, p := range params {
+				if p.In == "body" {
+					setProps(&ent, "request_body_type", p.Type, "request_body_param_name", p.Name)
+					break
+				}
+			}
+		}
+
 		if rm := reNestReturnType.FindStringSubmatch(src[closeOff+1 : min(closeOff+200, len(src))]); rm != nil {
 			if dto := nestUnwrapType(rm[1]); dto != "" {
 				ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
@@ -297,6 +324,11 @@ func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 						"framework": "nestjs", "match_source": "return_type_annotation", "dto_type": dto,
 					},
 				})
+				// #4325 — the RETURNS edge alone made the Paths panel count a
+				// response but render "(none)" because the Response row reads
+				// the `response_type` PROPERTY, which was never set. Set it so
+				// the actual DTO name renders.
+				setProps(&ent, "response_type", dto)
 			}
 		}
 		addEntity(ent)
