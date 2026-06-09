@@ -197,8 +197,28 @@ func RunProcessFlowWithCompanions(doc *graph.Document, companions []*graph.Docum
 	if len(candidates) == 0 {
 		return stats
 	}
+	// #4344 — the MaxEntryPoints cap applies only to NON-endpoint candidates.
+	// Every http_endpoint_definition root is retained so the flow count can
+	// approach the endpoint count: an endpoint root must never be starved by
+	// brokers / UI components competing for the 200 slots. Candidates are in
+	// descending-score order, and all endpoint roots carry the dominating
+	// httpEndpointEntryScore, so they already cluster at the front — but we
+	// cap explicitly on the non-endpoint suffix to keep the guarantee
+	// independent of the exact score constants.
 	if len(candidates) > cfg.MaxEntryPoints {
-		candidates = candidates[:cfg.MaxEntryPoints]
+		capped := make([]entryCandidate, 0, len(candidates))
+		nonEndpoint := 0
+		for _, c := range candidates {
+			if isHTTPEndpointDefinition(byID[c.id]) {
+				capped = append(capped, c)
+				continue
+			}
+			if nonEndpoint < cfg.MaxEntryPoints {
+				capped = append(capped, c)
+				nonEndpoint++
+			}
+		}
+		candidates = capped
 	}
 	// Drop entries that are reachable from a higher-ranked entry — those
 	// are mid-chain functions, not true entry points. This collapses the
@@ -258,6 +278,17 @@ func RunProcessFlowWithCompanions(doc *graph.Document, companions []*graph.Docum
 		// is load-bearing so we keep them.
 		minSteps := cfg.MinSteps
 		if chainHasFetchesEdge(chain, adj) || chainCrossesRepo(chain, adj) {
+			minSteps = 2
+		}
+		// #4344 — endpoint-rooted flows are exempt from the MinSteps cutoff.
+		// Every HTTP endpoint with a handler should yield a flow labeled by
+		// route, even a short one (endpoint → handler → service is only 3
+		// steps; endpoint → handler is 2). Dropping these for being short is
+		// exactly the bug that starved the flow count below the endpoint
+		// count. The root resolving to an http_endpoint_definition is the
+		// authoritative signal; 2 is the floor so a bare endpoint with no
+		// reachable handler step still can't emit a 1-node flow.
+		if isHTTPEndpointDefinition(byID[chain[0]]) {
 			minSteps = 2
 		}
 		if len(chain) < minSteps {
@@ -936,6 +967,17 @@ func isConsumerHTTPEndpoint(e *graph.Entity) bool {
 	// Fallback: the consumer side stamps `source_caller` on every entity.
 	_, hasCaller := e.Properties["source_caller"]
 	return hasCaller
+}
+
+// isHTTPEndpointDefinition reports whether an entity is a producer-side
+// http_endpoint_definition — the route node that #4344 roots process-flows
+// at. Used to exempt endpoint-rooted flows from the MinSteps cutoff and to
+// derive the route label for the Process.
+func isHTTPEndpointDefinition(e *graph.Entity) bool {
+	if e == nil {
+		return false
+	}
+	return strings.EqualFold(e.Kind, "http_endpoint_definition")
 }
 
 // chainCrossesExternalLib captures the OLD `chainCrossesStack ||

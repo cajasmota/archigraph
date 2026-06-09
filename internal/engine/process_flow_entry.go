@@ -44,9 +44,29 @@ type entryCandidate struct {
 	entryKind string // e.g. "http", "kafka_consumer", "scheduled", "websocket", "webhook", ""
 }
 
+// httpEndpointEntryScore is the score assigned to an http_endpoint_definition
+// that roots a process-flow (#4344). It sits ABOVE the additive ceiling any
+// handler/broker/UI candidate can reach (fan-out is unbounded in principle,
+// but in practice the +6 HTTP boost + a few name/export points caps real
+// handlers well below this) so endpoint roots are never starved by the
+// MaxEntryPoints cap when they compete with brokers / UI components. The
+// large constant also keeps the deterministic sort stable: all endpoint roots
+// cluster at the top, ordered among themselves by canonical ID (the #481
+// ID-tiebreak contract).
+const httpEndpointEntryScore = 1000.0
+
 // rankEntryPoints scores every Function/Method/Operation/Component entity
 // and returns the candidates in descending score order. Candidates with
 // score ≤ 0 (heavy utility penalty, no fan-out) are dropped.
+//
+// #4344 — http_endpoint_definition entities are ALSO scored as entry
+// candidates when they have a reversed-IMPLEMENTS continuation edge to a
+// backend handler (recorded in adj.handlerCont). Rooting the flow at the
+// endpoint makes the route (e.g. "GET /…/latest") step 1 and labels the
+// flow by route rather than by the handler function name. The handler is
+// then pruned as a separate entry by pruneReachableEntries (it is reachable
+// from the endpoint via the continuation edge), so the route is not
+// double-counted.
 func rankEntryPoints(doc *graph.Document, byID map[string]*graph.Entity, adj *callsAdjacency, cfg ProcessFlowConfig) []entryCandidate {
 	// HTTP-boundary signal: any entity on either side of an IMPLEMENTS /
 	// ROUTES_TO / SERVES edge is almost certainly an entry point (or the
@@ -141,6 +161,33 @@ func rankEntryPoints(doc *graph.Document, byID map[string]*graph.Entity, adj *ca
 			continue
 		}
 		out = append(out, entryCandidate{id: e.ID, name: e.Name, kind: e.Kind, score: score, entryKind: entryKind})
+	}
+
+	// #4344 — root flows at the HTTP endpoint. Any http_endpoint_definition
+	// that has a reversed-IMPLEMENTS continuation edge to a backend handler
+	// (adj.handlerCont[endpoint → handler]) is promoted to an entry candidate
+	// with a dominating score so it is never starved by MaxEntryPoints. The
+	// endpoint becomes step 1; its handler (and the handler's CALLS chain)
+	// follow via the continuation edge. The handler is dropped as a separate
+	// entry by pruneReachableEntries, so the route is not double-counted.
+	for i := range doc.Entities {
+		e := &doc.Entities[i]
+		if !strings.EqualFold(e.Kind, "http_endpoint_definition") {
+			continue
+		}
+		// Only endpoints that actually continue into a handler can root a
+		// real (non-fabricated) flow. handlerCont edges originate at the
+		// endpoint, so a non-empty out-list here means a continuation exists.
+		if len(adj.out[e.ID]) == 0 {
+			continue
+		}
+		out = append(out, entryCandidate{
+			id:        e.ID,
+			name:      e.Name,
+			kind:      e.Kind,
+			score:     httpEndpointEntryScore,
+			entryKind: "http",
+		})
 	}
 
 	sort.Slice(out, func(i, j int) bool {
