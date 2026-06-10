@@ -4039,6 +4039,17 @@ func (i *Indexer) buildDocument(pass1, pass2 []types.EntityRecord, pass2Rels []t
 	if djangoFKRewrites > 0 {
 		fmt.Fprintf(os.Stderr, "resolver: django-string-fk rewrote=%d FK REFERENCES stubs\n", djangoFKRewrites)
 	}
+	// #4379 — Django settings global cross-cutting wiring late-binding. Rewrite
+	// the dotted-path USES edges emitted from the synthetic django_settings
+	// entity (MIDDLEWARE / AUTHENTICATION_BACKENDS / REST_FRAMEWORK
+	// DEFAULT_*_CLASSES) to the real in-repo middleware/auth/permission/renderer
+	// class IDs, by QualifiedName and unique leaf-name fallback (recovers the
+	// merge-dropped-QualifiedName case). Same ordering as the FK pass: after
+	// BuildIndex, before ReferencesEmbeddedWithAllowlist.
+	djangoWiringRewrites := idx.ResolveDjangoGlobalWiringRefs(merged)
+	if djangoWiringRewrites > 0 {
+		fmt.Fprintf(os.Stderr, "resolver: django-global-wiring rewrote=%d settings USES edges\n", djangoWiringRewrites)
+	}
 	// #4332 — Go cross-package CALLS resolution. Binds `pkg.Func()` edges
 	// stamped with go_call_pkg_dir + call_leaf to byPackageOperation[pkgDir][leaf].
 	// Runs after BuildIndex (needs the package-operation index) and before
