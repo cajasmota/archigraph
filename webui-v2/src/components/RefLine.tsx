@@ -37,6 +37,12 @@ export interface RefLineProps {
   className?: string;
   /** Called when the file path link is clicked. Receives "file:line" string. */
   onFileClick?: (fileRef: string) => void;
+  /**
+   * Render the right-anchored repo chip (default true). Set false when the
+   * caller already shows the repo elsewhere in the row to avoid a duplicate
+   * badge (e.g. single-repo lists in the Security view, #4500).
+   */
+  showRepoChip?: boolean;
 }
 
 // repoColorIndex is kept for backwards compat with any callsite that still
@@ -93,6 +99,7 @@ export function RefLine({
   title,
   className,
   onFileClick,
+  showRepoChip = true,
 }: RefLineProps) {
   const repoColors = getRepoColor(repo);
   const fileLabel = file ? `${file}:${line}` : line > 0 ? `:${line}` : "";
@@ -147,8 +154,9 @@ export function RefLine({
       </span>
 
       {/* Repo chip — right-anchored via ml-auto, never squished.
-          Uses repo-color.ts resolver for theme-aware stable color (#1946). */}
-      {repo && (
+          Uses repo-color.ts resolver for theme-aware stable color (#1946).
+          Suppressible via showRepoChip when the caller renders repo elsewhere. */}
+      {repo && showRepoChip && (
         <span
           className={cn(
             "shrink-0 inline-flex items-center h-[18px] px-1.5 rounded ml-auto",

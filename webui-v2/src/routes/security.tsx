@@ -252,24 +252,34 @@ function SeverityFilter({
 // § Auth-coverage tab
 // ---------------------------------------------------------------------------
 
-function AuthFindingRow({ f }: { f: AuthEndpointFinding }) {
+function AuthFindingRow({
+  f,
+  multiRepo,
+}: {
+  f: AuthEndpointFinding;
+  multiRepo: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border border-border bg-surface hover:bg-surface-2 transition-colors">
-      <div className="flex items-center gap-2 min-w-0">
+      {/* Primary line: fixed-width columns so rows align like a table.
+          [lock] [VERB] [path …] [sensitive/IDOR/severity badges] */}
+      <div className="grid grid-cols-[14px_3rem_minmax(0,1fr)_auto] items-center gap-2 min-w-0">
         {f.has_auth ? (
           <Lock size={13} className="text-success shrink-0" />
         ) : (
           <Unlock size={13} className="text-danger shrink-0" />
         )}
-        {f.method && (
-          <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-surface-2 text-text-3 border border-border shrink-0">
+        {f.method ? (
+          <span className="text-[10px] font-mono uppercase text-center px-1.5 py-0.5 rounded bg-surface-2 text-text-3 border border-border">
             {f.method}
           </span>
+        ) : (
+          <span aria-hidden />
         )}
         <span className="font-mono text-sm text-text truncate" title={f.path || f.name}>
           {f.path || f.name}
         </span>
-        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 justify-end">
           {f.sensitive_op && (
             <Badge tone="danger" className="shrink-0">
               sensitive
@@ -283,14 +293,21 @@ function AuthFindingRow({ f }: { f: AuthEndpointFinding }) {
           <SeverityBadge severity={f.severity} />
         </div>
       </div>
-      <div className="flex items-center gap-2 min-w-0 -mx-1">
-        <RepoChip slug={f.repo} className="text-[10px] shrink-0" />
+      {/* Secondary line: [repo (multi-repo only)] [source-file ref] aligned
+          on a fixed leading column so the refs line up across rows (#4500). */}
+      <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-2 min-w-0 -mx-1 pl-1">
+        {multiRepo ? (
+          <RepoChip slug={f.repo} className="text-[10px] shrink-0" />
+        ) : (
+          <span aria-hidden />
+        )}
         {f.source_file ? (
           <RefLine
             repo={f.repo}
             file={f.source_file}
             line={f.start_line ?? 0}
             name={f.name}
+            showRepoChip={false}
             className="text-[11px] py-0.5 px-1 min-w-0"
           />
         ) : (
@@ -331,6 +348,10 @@ function AuthCoverageTab({ groupId }: { groupId: string }) {
       ? data.findings
       : data.findings.filter((f) => f.severity === severity);
 
+  // Repo badge is redundant for a single-repo group — gate on >1 repo,
+  // matching the convention used elsewhere in the dashboard (#4500).
+  const multiRepo = new Set(data.findings.map((f) => f.repo)).size > 1;
+
   return (
     <div className="space-y-4">
       <CoverageGauge
@@ -363,7 +384,7 @@ function AuthCoverageTab({ groupId }: { groupId: string }) {
       ) : (
         <div className="space-y-2">
           {findings.map((f) => (
-            <AuthFindingRow key={f.entity_id} f={f} />
+            <AuthFindingRow key={f.entity_id} f={f} multiRepo={multiRepo} />
           ))}
         </div>
       )}
@@ -375,15 +396,22 @@ function AuthCoverageTab({ groupId }: { groupId: string }) {
 // § Secrets tab
 // ---------------------------------------------------------------------------
 
-function SecretFindingRow({ f }: { f: SecuritySecretFinding }) {
+function SecretFindingRow({
+  f,
+  multiRepo,
+}: {
+  f: SecuritySecretFinding;
+  multiRepo: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border border-border bg-surface hover:bg-surface-2 transition-colors">
-      <div className="flex items-center gap-2 min-w-0">
+      {/* Primary line: fixed-width columns to align rows like a table. */}
+      <div className="grid grid-cols-[14px_minmax(0,1fr)_auto] items-center gap-2 min-w-0">
         <KeyRound size={13} className="text-warning shrink-0" />
         <span className="font-mono text-sm text-text truncate" title={f.name}>
           {f.name}
         </span>
-        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 justify-end">
           <Badge tone="neutral" className="shrink-0">
             {f.category.replace(/_/g, " ")}
           </Badge>
@@ -395,14 +423,20 @@ function SecretFindingRow({ f }: { f: SecuritySecretFinding }) {
           <SeverityBadge severity={f.severity} />
         </div>
       </div>
-      <div className="flex items-center gap-2 min-w-0 -mx-1">
-        <RepoChip slug={f.repo} className="text-[10px] shrink-0" />
+      {/* Secondary line: [repo (multi-repo only)] [source-file ref] (#4500). */}
+      <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-2 min-w-0 -mx-1 pl-1">
+        {multiRepo ? (
+          <RepoChip slug={f.repo} className="text-[10px] shrink-0" />
+        ) : (
+          <span aria-hidden />
+        )}
         {f.source_file ? (
           <RefLine
             repo={f.repo}
             file={f.source_file}
             line={f.start_line ?? 0}
             name={f.language ?? ""}
+            showRepoChip={false}
             className="text-[11px] py-0.5 px-1 min-w-0"
           />
         ) : (
@@ -438,6 +472,8 @@ function SecretsTab({ groupId }: { groupId: string }) {
     severity === "all"
       ? data.findings
       : data.findings.filter((f) => f.severity === severity);
+
+  const multiRepo = new Set(data.findings.map((f) => f.repo)).size > 1;
 
   return (
     <div className="space-y-4">
@@ -477,7 +513,7 @@ function SecretsTab({ groupId }: { groupId: string }) {
       ) : (
         <div className="space-y-2">
           {findings.map((f) => (
-            <SecretFindingRow key={f.entity_id} f={f} />
+            <SecretFindingRow key={f.entity_id} f={f} multiRepo={multiRepo} />
           ))}
         </div>
       )}
