@@ -845,6 +845,12 @@ function GraphCanvasInner(
   // our own rAF loop and re-project the (capped) label set from the cosmos.gl
   // camera every frame, so labels track the nodes smoothly with no lag.
   const interactingRef = useRef(false);
+  // #4654: STICKY "the user has manually touched the graph" flag. Unlike
+  // interactingRef (which flips back to false on interaction end), this latches
+  // true on the first pan / zoom / drag / select and never resets. The auto-settle
+  // verify-then-retry controller checks it so it only ever auto-corrects the
+  // INITIAL collapsed render — once the user takes control we never re-fire.
+  const userInteractedRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const motionLoop = useCallback(() => {
     if (!interactingRef.current) {
@@ -864,6 +870,8 @@ function GraphCanvasInner(
   }, []);
   const startInteraction = useCallback(() => {
     interactingRef.current = true;
+    // #4654: latch — the user is now driving the camera; stop any auto-correct.
+    userInteractedRef.current = true;
     if (rafRef.current === null) rafRef.current = requestAnimationFrame(motionLoop);
   }, [motionLoop]);
   const endInteraction = useCallback(() => {
@@ -1219,6 +1227,7 @@ function GraphCanvasInner(
       },
       onSimulationTick: scheduleLabelsLive,
       onClick: (index?: number) => {
+        userInteractedRef.current = true; // #4654: user took control → no auto-correct
         if (index === undefined) {
           onNodeClickRef.current(null);
           return;
@@ -1416,28 +1425,132 @@ function GraphCanvasInner(
   //    is idempotent (autoSettledRef), respects the crash-guard (renderable),
   //    and never double-fires against the mount/group/relayout settles (which all
   //    set didAutoStartRef / hasSettledRef that we check before kicking). ──────
-  const autoSettledRef = useRef(false);
+  //
+  // #4654: the #4641/#4645 one-shot `autoSettledRef` kick fired on the FIRST
+  // effect tick — before the cosmos engine had a seeded, renderable frame and
+  // before the data/positions were actually present — so it settled a half-loaded
+  // state and the graph still arrived as a tight ball needing a manual Reset. The
+  // fix is a VERIFY-THEN-RETRY controller, not a one-shot:
+  //
+  //   1. READY GATE. We only kick once the graph is genuinely ready: renderable
+  //      (crash-guard), the engine exists, AND the LIVE point buffer is non-empty
+  //      (g.getPointPositions() has data → first cosmos frame seeded). This is what
+  //      the prior fix was missing — it raced the data/position load.
+  //   2. KICK. We run the EXACT routine the Reset button runs (kickFreshSettle:
+  //      reseed → start → mid-settle re-heat → cap → doSettle + fit + cache).
+  //   3. VERIFY + RETRY. A beat after each settle we read the LIVE positions and
+  //      ask isDegenerateLayout() — the same collapsed/over-contracted-ball check
+  //      the cache-trust path uses. If the layout still looks collapsed we re-run
+  //      the kick. Bounded to AUTO_RESET_MAX_RETRIES (2) spaced over a few seconds,
+  //      then we stop for good. This is the user's "simulate pressing Reset after a
+  //      few seconds", implemented as a self-checking, self-terminating loop.
+  //
+  // It will NOT loop forever (hard retry + total-time bound), will NOT fight the
+  // empty/deep-link crash-guard (gated on `renderable`/live positions, never seeds
+  // an empty graph), and will NOT re-fire after the user pans/zooms/selects
+  // (userInteractedRef latch). Once the graph is genuinely spread, or the budget is
+  // spent, or the user takes control, the controller is permanently disarmed.
+  const autoCorrectDoneRef = useRef(false);
+  const AUTO_RESET_MAX_RETRIES = 2;
+  const AUTO_RESET_VERIFY_DELAY_MS = 1500;
   useEffect(() => {
-    if (autoSettledRef.current) return;
+    if (autoCorrectDoneRef.current) return;
     if (!renderable) return; // crash-guard: never seed/start an empty graph
     const g = graphRef.current;
     if (!g) return;
-    // If another settle path already claimed the first layout (mount no-cache
-    // kick, group-change, relayout) or the graph is already settled (healthy
-    // cache pinned), don't fire a competing fresh settle.
-    if (didAutoStartRef.current || hasSettledRef.current) {
-      autoSettledRef.current = true;
-      return;
-    }
-    // A healthy cache is owned by the mount/group handlers (pin + fit). Only the
-    // no-valid-cache case needs an explicit kick here.
+
+    // A healthy cache is owned by the mount/group handlers (pin + fit) — the saved
+    // spread is restored instantly, no fresh settle needed. Disarm.
     const saved = loadLayout(group, nodeIds);
     if (saved && isLayoutHealthy(saved.positions, nodeIds.length * 2)) {
-      autoSettledRef.current = true;
+      autoCorrectDoneRef.current = true;
       return;
     }
-    autoSettledRef.current = true;
-    kickFreshSettleRef.current();
+
+    let retries = 0;
+    let cancelled = false;
+    let verifyTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // READY GATE: the engine must have a seeded, non-empty live point buffer before
+    // we kick, otherwise we'd settle a half-loaded state (the #4654 race). Poll a
+    // few animation frames until the first cosmos frame has positions, then start.
+    const liveReady = (): boolean => {
+      const gg = graphRef.current;
+      if (!gg || !renderableRef.current) return false;
+      try {
+        const live = gg.getPointPositions();
+        return !!live && live.length >= packedRef.current.positions.length && live.length > 0;
+      } catch {
+        return false;
+      }
+    };
+
+    // Has another settle path already produced a GOOD spread? Read live positions
+    // and reuse the same collapsed/over-contracted check the cache path trusts.
+    const looksCollapsed = (): boolean => {
+      const gg = graphRef.current;
+      if (!gg) return false;
+      try {
+        const live = gg.getPointPositions();
+        if (!live || live.length === 0) return false;
+        return isDegenerateLayout(new Float32Array(live));
+      } catch {
+        return false;
+      }
+    };
+
+    const disarm = () => {
+      autoCorrectDoneRef.current = true;
+      cancelled = true;
+      if (verifyTimer) clearTimeout(verifyTimer);
+    };
+
+    // Verify the result a beat after a kick; re-fire if still collapsed, up to the
+    // retry bound. Self-terminating: stops on spread, on budget, or on user input.
+    const scheduleVerify = () => {
+      verifyTimer = setTimeout(() => {
+        if (cancelled) return;
+        if (userInteractedRef.current) return disarm(); // user took over
+        if (!renderableRef.current) return disarm();
+        if (!looksCollapsed()) return disarm(); // genuinely spread → done
+        if (retries >= AUTO_RESET_MAX_RETRIES) return disarm(); // budget spent
+        retries += 1;
+        kickFreshSettleRef.current();
+        scheduleVerify();
+      }, AUTO_RESET_VERIFY_DELAY_MS);
+    };
+
+    // Wait (up to ~1.5s of frames) for the live buffer to be ready, then kick once
+    // and start the verify-retry loop. If the buffer never arrives we never kick —
+    // the crash-guard / data-push paths own that case.
+    let waited = 0;
+    const WAIT_MAX_MS = 1500;
+    const FRAME_MS = 80;
+    const waitForReady = () => {
+      if (cancelled || autoCorrectDoneRef.current) return;
+      if (userInteractedRef.current) return disarm();
+      // If another path (mount no-cache kick) already settled a GOOD spread, leave
+      // it alone; only adopt the loop if there's no settle in flight or it collapsed.
+      if (hasSettledRef.current && !looksCollapsed()) return disarm();
+      if (!liveReady()) {
+        waited += FRAME_MS;
+        if (waited >= WAIT_MAX_MS) return; // give up waiting; other paths own it
+        verifyTimer = setTimeout(waitForReady, FRAME_MS);
+        return;
+      }
+      // Ready. If a settle is already mid-flight (didAutoStartRef) we don't kick a
+      // competing one — we just verify its result and retry only if it collapses.
+      if (!didAutoStartRef.current && !hasSettledRef.current) {
+        kickFreshSettleRef.current();
+      }
+      scheduleVerify();
+    };
+    waitForReady();
+
+    return () => {
+      cancelled = true;
+      if (verifyTimer) clearTimeout(verifyTimer);
+    };
   }, [renderable, group, nodeIds]);
 
   // ── re-layout when the node SET changes (Fix #1548-3 ego enter/exit) ─────────
