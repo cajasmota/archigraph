@@ -38,6 +38,67 @@ func allMatchesIndex(re *regexp.Regexp, source string) [][]int {
 	return re.FindAllStringSubmatchIndex(source, -1)
 }
 
+// pyClassRef returns the structural reference ID used as the FromID/ToID for
+// edges targeting a Python class entity (Django/SQLAlchemy/Pydantic model,
+// DRF serializer, ...). The "Class:<Name>" form resolves through the resolver's
+// byName fallback to the SCOPE.Schema/SCOPE.Component class node the various
+// Python extractors emit — the same convention already used by the SQLAlchemy
+// GRAPH_RELATES and Django HANDLES_SIGNAL/REGISTERS edges.
+func pyClassRef(className string) string { return "Class:" + className }
+
+// containsFieldEdge builds the structural CONTAINS membership edge from an
+// owning model/serializer/schema class to one of its field/column/attribute
+// entities. Issue #4366 (Python generalization of #4328): Django model fields,
+// SQLAlchemy columns/relationships, Pydantic fields and DRF serializer fields
+// were emitted as standalone `<Class>.<field>` nodes with no owning-class
+// membership, leaving them as orphans on the graph.
+//
+// FromID names the owner class (`Class:<owner>`) so the resolver binds it to
+// the real class entity; ToID is the field entity's qualified Name
+// (`<owner>.<field>`), which resolves merge-stably through the byName index
+// regardless of when entity IDs are backfilled. The edge is hung off the owner
+// model node by the caller (mirroring the JS/TS fix).
+func containsFieldEdge(ownerClass, memberName, fieldName, framework string) types.RelationshipRecord {
+	return types.RelationshipRecord{
+		FromID: pyClassRef(ownerClass),
+		ToID:   memberName,
+		Kind:   string(types.RelationshipKindContains),
+		Properties: map[string]string{
+			"framework":  framework,
+			"language":   "python",
+			"member":     "field",
+			"field_name": fieldName,
+			"provenance": "INFERRED_FROM_MODEL_FIELD_MEMBERSHIP",
+		},
+	}
+}
+
+// referencesClassEdge builds a REFERENCES edge from a field/column entity to the
+// class it points at — a Django ForeignKey/OneToOne/ManyToMany target, a
+// SQLAlchemy relationship('Other') target, a DRF nested-serializer target, or a
+// Pydantic field whose annotated type is another model. Issue #4366: that target
+// type is the field's only outbound semantic edge; without it the related model /
+// nested serializer rings.
+//
+// FromID is the field entity's qualified Name (`<owner>.<field>`); ToID is the
+// `Class:<target>` stub the resolver binds to the real class entity (same-file
+// or symbol-table wide). The edge is hung off the field entity by the caller.
+func referencesClassEdge(memberName, targetClass, framework, fieldName string) types.RelationshipRecord {
+	return types.RelationshipRecord{
+		FromID: memberName,
+		ToID:   pyClassRef(targetClass),
+		Kind:   string(types.RelationshipKindReferences),
+		Properties: map[string]string{
+			"framework":   framework,
+			"language":    "python",
+			"ref_kind":    "field_target_type",
+			"field_name":  fieldName,
+			"target_type": targetClass,
+			"provenance":  "INFERRED_FROM_MODEL_FIELD_TARGET",
+		},
+	}
+}
+
 // decoratorWindow returns the contiguous block of stacked decorator lines that
 // immediately precede the byte offset `at` (the start of a route decorator
 // match), plus everything from there up to `end`. It walks backwards over

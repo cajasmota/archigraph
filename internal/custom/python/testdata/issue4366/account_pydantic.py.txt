@@ -1,0 +1,21 @@
+"""Representative Pydantic models (byte-fixture for issue #4366).
+
+Shapes exercised:
+  - scalar annotated fields (name: str)
+  - a field whose annotated type is another BaseModel (addr: Address)
+  - Field(...) constraints
+"""
+
+from pydantic import BaseModel, Field
+
+
+class Address(BaseModel):
+    street: str
+    city: str
+    zip_code: str = Field(..., max_length=10)
+
+
+class Account(BaseModel):
+    id: int
+    name: str = Field(..., max_length=255)
+    addr: Address

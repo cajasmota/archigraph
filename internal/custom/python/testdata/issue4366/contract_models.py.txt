@@ -1,0 +1,297 @@
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
+from django.utils.text import slugify
+
+from .building import Building
+from .client import Client
+from .device import Device
+from .group import Group
+
+
+def upload_contract_to(instance, filename):
+    group_name = slugify(instance.contract.group.name)
+    contract_id = instance.contract.id
+    return f"{group_name}/contracts/{contract_id}/{filename}"
+
+
+def upload_to(instance, filename):
+    return f"contracts/notes/{filename}"
+
+
+class ContractGroup(models.Model):
+
+    class Meta:
+        db_table = "contract_groups"
+
+    def __str__(self):
+        return f"{self.id}"
+
+
+class Contract(models.Model):
+    STATUS_CHOICES = (
+        ("proposal", "Proposal"),
+        ("active", "Active"),
+        ("rejected", "Rejected"),
+        ("expired", "Expired"),
+        ("inactive", "Inactive"),
+        ("cancelled", "Cancelled"),
+    )
+
+    PROPOSAL_CHOICES = (
+        ("renew", "Renew"),
+        ("sent", "Sent"),
+        ("approved", "Approved"),
+        ("merged", "Merged"),
+        ("removed", "Removed"),
+        ("rejected", "Rejected"),
+    )
+
+    ADDRESS_TYPE_CHOICES = (
+        ("PREMISES", "Premises Address"),
+        ("ALTERNATE", "Alternate Address"),
+    )
+
+    group = models.ForeignKey(Group, on_delete=models.PROTECT, db_index=True)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, db_index=True)
+    building = models.ForeignKey(
+        Building, on_delete=models.PROTECT, db_index=True, blank=True, null=True
+    )
+    sales_agent = models.ForeignKey(
+        "User",
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="sales_agent_contracts",
+        blank=True,
+    )
+    contract_number = models.CharField(max_length=255, blank=True, null=True)
+    contract_year = models.CharField(max_length=4, default=timezone.now().year)
+    contract_type = models.CharField(max_length=255, blank=True, null=True, default="")
+    testing_covered_in_contract = models.BooleanField(default=False)
+    filing_covered_in_contract = models.BooleanField(default=False)
+    covered_in_maintenance_contract = models.BooleanField(default=False)
+    fine_obligation = models.BooleanField(default=False)
+    start_date = models.DateTimeField(blank=True, null=True)
+    cancel_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default="active")
+    inspector_hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    proposal_status = models.CharField(
+        max_length=255, choices=PROPOSAL_CHOICES, default="renew"
+    )
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=False, default=timezone.now)
+
+    # proposal_info
+    contract_length = models.CharField(
+        max_length=255, default=None, null=True, blank=True
+    )
+    recipients = models.ManyToManyField("User", related_name="recipients", blank=True)
+    proposal_email = models.CharField(max_length=255, default="", blank=True)
+    cat1_prices = models.JSONField(max_length=255, default=dict, blank=True)
+    cat1_devices = models.ManyToManyField(
+        Device, related_name="cat1_devices", blank=True
+    )
+    cat5_prices = models.JSONField(max_length=255, default=dict, blank=True)
+    cat5_devices = models.ManyToManyField(
+        Device, related_name="cat5_devices", blank=True
+    )
+    maintenance_prices = models.JSONField(max_length=255, default=dict, blank=True)
+    maintenance_devices = models.ManyToManyField(
+        Device, related_name="maintenance_devices", blank=True
+    )
+    periodic_prices = models.JSONField(max_length=255, default=dict, blank=True)
+    periodic_devices = models.ManyToManyField(
+        Device, related_name="periodic_devices", blank=True
+    )
+    contract_total = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0.00, blank=True
+    )
+    date_approved = models.DateTimeField(
+        auto_now_add=False, blank=True, null=True, default=None
+    )
+    date_rejected = models.DateTimeField(
+        auto_now_add=False, blank=True, null=True, default=None
+    )
+    contract_group = models.ForeignKey(
+        ContractGroup,
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="contracts",
+    )
+    selected_address_type = models.CharField(
+        max_length=10,
+        choices=ADDRESS_TYPE_CHOICES,
+        default="PREMISES",
+        help_text="Indicates if the selected address is the building's physical, premises, or an alternate address.",
+    )
+    selected_address = models.ForeignKey(
+        "BuildingAlternateAddress",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Reference to an alternate address, used only if selected_address_type is 'ALTERNATE'.",
+    )
+    elv3_signee = models.ForeignKey(
+        "User",
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="elv3_signee_contracts",
+        help_text="The selected contact who will sign ELV3 for this contract.",
+        blank=True,
+    )
+    contractor = models.ForeignKey(
+        "Group",
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="contractor_contracts",
+        help_text="The selected contractor for this contract.",
+        blank=True,
+    )
+
+    # subscriptions
+    # workflow_id
+    # routes
+
+    def __str__(self):
+        return self.contract_number
+
+    class Meta:
+        db_table = "contracts"
+        indexes = [
+            models.Index(
+                fields=["group", "proposal_status", "start_date"],
+                name="contract_composite_1_idx",
+            )
+        ]
+
+class ContractNote(models.Model):
+
+    STATUS_CHOICES = (
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+    )
+
+    TYPE_CHOICES = (
+        ("1", "No type specified"),
+        ("2", "proposals"),
+        ("3", "inspections"),
+        ("4", "Proposal Rejection"),
+    )
+
+    SYSTEM_TYPE_CHOICES = (
+        ("1", "system"),
+        ("2", "user"),
+    )
+
+    note = models.TextField(max_length=1200, default="", blank=True)
+    status = models.CharField(choices=STATUS_CHOICES, default="active")
+    type = models.CharField(choices=TYPE_CHOICES, default="1")
+    system_type = models.CharField(choices=SYSTEM_TYPE_CHOICES, default="1")
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
+    file = models.FileField(null=True, blank=True, upload_to=upload_to, default=None)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="contract_user_notes"
+    )
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=False, default=timezone.now)
+
+    def __str__(self):
+        return f"{self.id}"
+
+    class Meta:
+        db_table = "contract_note"
+
+
+class ContractDevice(models.Model):
+    STATUS_CHOICES = (("active", "Active"), ("inactive", "Inactive"))
+
+    contract = models.ForeignKey(
+        Contract, on_delete=models.CASCADE, related_name="contract_devices"
+    )
+    group = models.ForeignKey('Group', on_delete=models.SET_NULL, null=True, blank=True, related_name='contract_devices')
+    device = models.ForeignKey(
+        Device, on_delete=models.CASCADE, related_name="device_contracts"
+    )
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default="active", db_index=True)
+    cancel_date = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = "contract_devices"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device", "group"],
+                condition=Q(status="active"),
+                name="unique_active_contract_device_per_device_group",
+            ),
+        ]
+
+    def __str__(self):
+        return self.device.name + " from " + self.contract.contract_number
+
+
+class ContractDeviceWorkflow(models.Model):
+    contract_device = models.ForeignKey(
+        ContractDevice,
+        on_delete=models.CASCADE,
+        related_name="contract_devices_workflow",
+    )
+    workflow_id = models.CharField(max_length=255, default="")
+
+    class Meta:
+        db_table = "contract_device_workflow"
+
+
+class ContractFile(models.Model):
+    contract = models.ForeignKey(
+        Contract, on_delete=models.CASCADE, related_name="contract_file"
+    )
+    doc_type = models.CharField(max_length=255, default="")
+    path = models.CharField(max_length=255, default="")
+    storage = models.CharField(max_length=255, default="")
+    file_name = models.CharField(max_length=255, default="")
+    orig_name = models.CharField(max_length=255, default="")
+    md5 = models.CharField(max_length=255, default="")
+    mime_type = models.CharField(max_length=255, default="")
+    file = models.FileField(
+        max_length=255,
+        null=True,
+        blank=True,
+        upload_to=upload_contract_to,
+        default=None,
+    )
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=False, default=timezone.now)
+
+    class Meta:
+        db_table = "contract_files"
+
+    def __str__(self):
+        return self.contract.contract_number + " | " + self.file_name
+
+
+class UserContract(models.Model):
+    STATUS_CHOICES = (("active", "Active"), ("inactive", "Inactive"))
+
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="users_contracts"
+    )
+    contract = models.ForeignKey(
+        "Contract", on_delete=models.CASCADE, related_name="contracts_users"
+    )
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default="active", db_index=True)
+
+    class Meta:
+        db_table = "user_contracts"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "contract"],
+                condition=Q(status="active"),
+                name="unique_active_user_contract_per_user_contract",
+            ),
+        ]
+
+    def __str__(self):
+        return self.user.email + " | " + self.contract.contract_number

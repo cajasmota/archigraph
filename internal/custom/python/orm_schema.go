@@ -91,8 +91,8 @@ func (e *PeeweeSchemaExtractor) Extract(ctx context.Context, file extractor.File
 		body := extractClassBody(source, idx[0])
 
 		// Emit the model entity
-		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, classLine,
-			map[string]string{"framework": "peewee", "pattern_type": "model", "class_name": className}))
+		modelEnt := entity(className, "SCOPE.Schema", "", file.Path, classLine,
+			map[string]string{"framework": "peewee", "pattern_type": "model", "class_name": className})
 
 		// Emit each field entity
 		for _, fIdx := range allMatchesIndex(peeweeFieldRe, body) {
@@ -106,7 +106,11 @@ func (e *PeeweeSchemaExtractor) Extract(ctx context.Context, file extractor.File
 					"field_type":   fieldType,
 					"parent_class": className,
 				}))
+			// Issue #4366 — column membership.
+			modelEnt.Relationships = append(modelEnt.Relationships,
+				containsFieldEdge(className, className+"."+attrName, attrName, "peewee"))
 		}
+		out = append(out, modelEnt)
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(out)))
@@ -167,8 +171,8 @@ func (e *PonySchemaExtractor) Extract(ctx context.Context, file extractor.FileIn
 		body := extractClassBody(source, idx[0])
 
 		// Emit the entity model
-		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, classLine,
-			map[string]string{"framework": "pony", "pattern_type": "entity", "class_name": className}))
+		modelEnt := entity(className, "SCOPE.Schema", "", file.Path, classLine,
+			map[string]string{"framework": "pony", "pattern_type": "entity", "class_name": className})
 
 		// Emit each attribute entity
 		for _, aIdx := range allMatchesIndex(ponyAttrRe, body) {
@@ -182,7 +186,11 @@ func (e *PonySchemaExtractor) Extract(ctx context.Context, file extractor.FileIn
 					"descriptor":   descriptor,
 					"parent_class": className,
 				}))
+			// Issue #4366 — attribute membership.
+			modelEnt.Relationships = append(modelEnt.Relationships,
+				containsFieldEdge(className, className+"."+attrName, attrName, "pony"))
 		}
+		out = append(out, modelEnt)
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(out)))
@@ -243,8 +251,8 @@ func (e *BeanieSchemaExtractor) Extract(ctx context.Context, file extractor.File
 		body := extractClassBody(source, idx[0])
 
 		// Emit the document model entity
-		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, classLine,
-			map[string]string{"framework": "beanie", "pattern_type": "document", "class_name": className}))
+		modelEnt := entity(className, "SCOPE.Schema", "", file.Path, classLine,
+			map[string]string{"framework": "beanie", "pattern_type": "document", "class_name": className})
 
 		// Emit each field entity (annotated attributes, skip dunder / class vars)
 		for _, fIdx := range allMatchesIndex(beanieFieldRe, body) {
@@ -262,7 +270,11 @@ func (e *BeanieSchemaExtractor) Extract(ctx context.Context, file extractor.File
 					"type_annotation": typeAnnotation,
 					"parent_class":    className,
 				}))
+			// Issue #4366 — field membership.
+			modelEnt.Relationships = append(modelEnt.Relationships,
+				containsFieldEdge(className, className+"."+attrName, attrName, "beanie"))
 		}
+		out = append(out, modelEnt)
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(out)))
@@ -322,8 +334,8 @@ func (e *MongoEngineSchemaExtractor) Extract(ctx context.Context, file extractor
 		body := extractClassBody(source, idx[0])
 
 		// Emit the document entity
-		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, classLine,
-			map[string]string{"framework": "mongoengine", "pattern_type": "document", "class_name": className}))
+		modelEnt := entity(className, "SCOPE.Schema", "", file.Path, classLine,
+			map[string]string{"framework": "mongoengine", "pattern_type": "document", "class_name": className})
 
 		// Emit each field entity
 		for _, fIdx := range allMatchesIndex(mongoengineFieldRe, body) {
@@ -337,7 +349,11 @@ func (e *MongoEngineSchemaExtractor) Extract(ctx context.Context, file extractor
 					"field_type":   fieldType,
 					"parent_class": className,
 				}))
+			// Issue #4366 — field membership.
+			modelEnt.Relationships = append(modelEnt.Relationships,
+				containsFieldEdge(className, className+"."+attrName, attrName, "mongoengine"))
 		}
+		out = append(out, modelEnt)
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(out)))
@@ -398,8 +414,8 @@ func (e *TortoiseSchemaExtractor) Extract(ctx context.Context, file extractor.Fi
 		body := extractClassBody(source, idx[0])
 
 		// Emit the model entity
-		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, classLine,
-			map[string]string{"framework": "tortoise", "pattern_type": "model", "class_name": className}))
+		modelEnt := entity(className, "SCOPE.Schema", "", file.Path, classLine,
+			map[string]string{"framework": "tortoise", "pattern_type": "model", "class_name": className})
 
 		// Emit each column entity
 		for _, fIdx := range allMatchesIndex(tortoiseFieldRe, body) {
@@ -413,7 +429,11 @@ func (e *TortoiseSchemaExtractor) Extract(ctx context.Context, file extractor.Fi
 					"field_type":   fieldType,
 					"parent_class": className,
 				}))
+			// Issue #4366 — column membership.
+			modelEnt.Relationships = append(modelEnt.Relationships,
+				containsFieldEdge(className, className+"."+attrName, attrName, "tortoise"))
 		}
+		out = append(out, modelEnt)
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(out)))
