@@ -320,8 +320,6 @@ function VerbRouteRow({
   onClick: () => void;
 }) {
   const { route, verb } = row;
-  const auth = useAuthFor();
-  const finding = auth.lookup(verb, route.path);
   return (
     <button
       type="button"
@@ -347,14 +345,9 @@ function VerbRouteRow({
       </span>
       {/* Path */}
       <PathString path={route.path} className="flex-1 text-xs text-text-2 leading-tight min-w-0 truncate" />
-      {/* Right meta */}
+      {/* Right meta — repo tag only (#4490: auth badge removed from list rows,
+          auth posture still shown in the detail pane). */}
       <div className="flex items-center gap-1 shrink-0">
-        <AuthSeverityBadge finding={finding} variant="row" />
-        {route.auth && (
-          <span title="Authenticated">
-            <Lock size={10} className="text-success" />
-          </span>
-        )}
         {(route.repos?.length ?? 0) > 1 ? (
           <span className="text-[10px] text-text-4 font-mono">+{route.repos?.length}</span>
         ) : route.repos?.[0] ? (
