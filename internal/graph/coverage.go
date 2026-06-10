@@ -391,6 +391,115 @@ func pct(covered, total int) float64 {
 const kindTests = "TESTS"
 const kindCalls = "CALLS"
 
+// handlerEndpointEdgeKinds are the producer-side edge kinds that link a backend
+// handler (controller method / view function / Operation) to its
+// http_endpoint_definition. The link is recorded in BOTH directions across
+// frameworks:
+//
+//	handler --IMPLEMENTS/SERVES--> definition   (NestJS, DRF/Django, …: FromID = handler)
+//	definition --ROUTES_TO/SERVES--> handler    (Spring, Express routers, …: ToID = handler)
+//
+// Used by creditEndpointsViaHandlers so that an endpoint is credited as covered
+// when its backing handler is reached by a test, even though the test (a
+// controller spec, MockMvc test, APITestCase, …) targets the handler method —
+// not the synthetic endpoint-definition node. See #4553.
+var handlerEndpointEdgeKinds = map[string]bool{
+	"IMPLEMENTS": true,
+	"ROUTES_TO":  true,
+	"SERVES":     true,
+}
+
+// isEndpointKind reports whether kind denotes an HTTP endpoint definition,
+// tolerant of a leading "SCOPE." prefix some extractors emit.
+func isEndpointKind(kind string) bool {
+	k := kind
+	if i := strings.LastIndex(k, "."); i >= 0 {
+		k = k[i+1:]
+	}
+	return strings.EqualFold(k, "http_endpoint_definition") ||
+		strings.EqualFold(k, "http_endpoint")
+}
+
+// creditEndpointsViaHandlers propagates test coverage from a covered handler to
+// the http_endpoint_definition it backs (#4553).
+//
+// Background: a controller spec / MockMvc test / APITestCase exercises the
+// handler METHOD (which gets credited by the TESTS/CALLS/name-affinity phases),
+// but the synthetic http_endpoint_definition node it IMPLEMENTS is a separate
+// entity that no test points at directly. Without this hop every endpoint reads
+// uncovered and dominates the denominator, suppressing the coverage %.
+//
+// The hop is one level along the handler↔definition edge (IMPLEMENTS/ROUTES_TO/
+// SERVES, either direction) and is framework-agnostic — it relies only on the
+// edge kinds the endpoint resolver already emits, never on a framework name.
+// It mutates covered in place and returns the number of endpoints newly
+// credited.
+func creditEndpointsViaHandlers(
+	entByID map[string]*Entity,
+	rels []Relationship,
+	prodIDs map[string]bool,
+	covered map[string]int,
+) int {
+	credited := 0
+	for i := range rels {
+		r := &rels[i]
+		if !handlerEndpointEdgeKinds[strings.ToUpper(r.Kind)] {
+			continue
+		}
+		from := entByID[r.FromID]
+		to := entByID[r.ToID]
+		if from == nil || to == nil {
+			continue
+		}
+		// Determine which endpoint is the endpoint-definition and which is the
+		// handler, regardless of edge direction.
+		var defID, handlerID string
+		switch {
+		case isEndpointKind(to.Kind) && !isEndpointKind(from.Kind):
+			defID, handlerID = to.ID, from.ID // handler --IMPLEMENTS--> def
+		case isEndpointKind(from.Kind) && !isEndpointKind(to.Kind):
+			defID, handlerID = from.ID, to.ID // def --ROUTES_TO--> handler
+		default:
+			continue
+		}
+		// Only credit endpoints that are in the production denominator and not
+		// already covered, and only when their handler is itself covered.
+		if !prodIDs[defID] || covered[defID] > 0 {
+			continue
+		}
+		if covered[handlerID] > 0 {
+			covered[defID]++
+			credited++
+		}
+	}
+	return credited
+}
+
+// endpointHandlerIDs returns the handler entity IDs that back the
+// http_endpoint_definition defID, resolving the handler↔definition edge in
+// both directions (IMPLEMENTS/ROUTES_TO/SERVES). Framework-agnostic; used by the
+// single-entity coverage path (#4553).
+func endpointHandlerIDs(entByID map[string]*Entity, rels []Relationship, defID string) []string {
+	var out []string
+	for i := range rels {
+		r := &rels[i]
+		if !handlerEndpointEdgeKinds[strings.ToUpper(r.Kind)] {
+			continue
+		}
+		switch {
+		case r.ToID == defID:
+			if from := entByID[r.FromID]; from != nil && !isEndpointKind(from.Kind) {
+				out = append(out, r.FromID) // handler --IMPLEMENTS--> def
+			}
+		case r.FromID == defID:
+			if to := entByID[r.ToID]; to != nil && !isEndpointKind(to.Kind) {
+				out = append(out, r.ToID) // def --ROUTES_TO--> handler
+			}
+		}
+	}
+	return out
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-entity coverage lookup (#1774)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -481,6 +590,34 @@ func ComputeEntityCoverage(doc *Document, entityID string) (*EntityCoverageResul
 	if len(coveringSet) == 0 {
 		for testID := range testCallsToTarget {
 			coveringSet[testID] = true
+		}
+	}
+
+	// ── phase 3: endpoint crediting via handler (#4553) ───────────────────────
+	// When the target is an http_endpoint_definition that no test points at
+	// directly, credit it as covered if its backing handler (one hop along
+	// IMPLEMENTS/ROUTES_TO/SERVES) is itself reached by a test. Mirrors the
+	// graph-wide creditEndpointsViaHandlers phase so single-entity and aggregate
+	// queries agree.
+	if len(coveringSet) == 0 && isEndpointKind(target.Kind) {
+		entByID := make(map[string]*Entity, len(doc.Entities))
+		for i := range doc.Entities {
+			entByID[doc.Entities[i].ID] = &doc.Entities[i]
+		}
+		for _, hID := range endpointHandlerIDs(entByID, doc.Relationships, entityID) {
+			for i := range doc.Relationships {
+				rel := &doc.Relationships[i]
+				switch strings.ToUpper(rel.Kind) {
+				case kindTests:
+					if rel.ToID == hID && testIDs[rel.FromID] {
+						coveringSet[rel.FromID] = true
+					}
+				case kindCalls:
+					if rel.ToID == hID && testIDs[rel.FromID] {
+						coveringSet[rel.FromID] = true
+					}
+				}
+			}
 		}
 	}
 
@@ -697,6 +834,18 @@ func ComputeCoverage(doc *Document) *CoverageReport {
 	// redo linkage extraction — so it is a cheap, conservative boost.
 	if affinity := attributeByNameAffinity(entByID, testIDs, prodIDs, covered); affinity > 0 {
 		report.TotalTestsEdges += affinity
+	}
+
+	// ── phase 4: endpoint-definition crediting via handler (#4553) ────────────
+	// An http_endpoint_definition is a synthetic node that no test points at
+	// directly; tests target the backing handler method (controller spec,
+	// MockMvc, APITestCase, …). Once handlers are credited by phases 1-3,
+	// propagate one hop along IMPLEMENTS/ROUTES_TO/SERVES so a covered handler
+	// credits the endpoint it implements. Framework-agnostic. Without this,
+	// every endpoint reads uncovered and suppresses the coverage % (the upvate-v3
+	// symptom: 100% of the uncovered list is http_endpoint_definition).
+	if ep := creditEndpointsViaHandlers(entByID, doc.Relationships, prodIDs, covered); ep > 0 {
+		report.TotalTestsEdges += ep
 	}
 
 	// ── compute totals ────────────────────────────────────────────────────────

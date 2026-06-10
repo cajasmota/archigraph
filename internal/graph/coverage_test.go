@@ -583,3 +583,102 @@ func TestComputeCoverage_4510_DenominatorAndAffinity(t *testing.T) {
 		}
 	}
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// #4553: endpoint crediting via handler (read-layer shape)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TestComputeCoverage_EndpointCreditedViaHandler models the upvate-v3 symptom
+// (#4553): a NestJS controller spec exercises the handler method, but the
+// http_endpoint_definition the handler IMPLEMENTS is a separate synthetic node
+// that no test points at directly. Before the phase-4 hop the endpoint reads
+// uncovered (RED); after, the covered handler credits the endpoint (GREEN).
+//
+// The graph shape mirrors the live read layer:
+//
+//	getHello (SCOPE.Operation, app.controller.ts)
+//	    --IMPLEMENTS--> GET / (http_endpoint_definition, app.controller.ts)
+//	TestGetHello (app.controller.spec.ts) --TESTS--> getHello
+func TestComputeCoverage_EndpointCreditedViaHandler(t *testing.T) {
+	t.Parallel()
+	entities := []Entity{
+		{ID: "handler", Name: "getHello", Kind: "SCOPE.Operation",
+			SourceFile: "src/app.controller.ts", StartLine: 9},
+		{ID: "ep", Name: "GET /", Kind: "http_endpoint_definition",
+			SourceFile: "src/app.controller.ts", StartLine: 9},
+		{ID: "spec", Name: "AppController", Kind: "SCOPE.Operation",
+			SourceFile: "src/app.controller.spec.ts"},
+	}
+	rels := []Relationship{
+		// handler IMPLEMENTS endpoint-definition (#1639/#4316 shape).
+		{ID: "i1", FromID: "handler", ToID: "ep", Kind: "IMPLEMENTS"},
+		// The controller spec tests the handler method.
+		{ID: "t1", FromID: "spec", ToID: "handler", Kind: "TESTS"},
+	}
+	report := ComputeCoverage(makeDoc(entities, rels))
+
+	if report.TotalProduction != 2 {
+		t.Fatalf("TotalProduction want 2 (handler+endpoint), got %d", report.TotalProduction)
+	}
+	// Both the handler (direct TESTS) and the endpoint (handler hop) covered.
+	if report.CoveredProduction != 2 {
+		t.Errorf("CoveredProduction want 2 (handler + endpoint via IMPLEMENTS hop), got %d", report.CoveredProduction)
+	}
+	for _, u := range report.UncoveredEntities {
+		if u.EntityID == "ep" {
+			t.Errorf("endpoint should be credited covered via its tested handler but is uncovered (#4553 RED)")
+		}
+	}
+
+	// Single-entity path must agree.
+	res, ok := ComputeEntityCoverage(makeDoc(entities, rels), "ep")
+	if !ok {
+		t.Fatalf("ComputeEntityCoverage(ep) not found")
+	}
+	if !res.Tested {
+		t.Errorf("ComputeEntityCoverage(ep).Tested want true (handler hop), got false")
+	}
+}
+
+// TestComputeCoverage_EndpointNotCreditedWhenHandlerUntested is the negative
+// control: an endpoint whose handler is NOT tested stays uncovered, so the hop
+// does not fabricate coverage.
+func TestComputeCoverage_EndpointNotCreditedWhenHandlerUntested(t *testing.T) {
+	t.Parallel()
+	entities := []Entity{
+		{ID: "handler", Name: "getHello", Kind: "SCOPE.Operation",
+			SourceFile: "src/app.controller.ts"},
+		{ID: "ep", Name: "GET /", Kind: "http_endpoint_definition",
+			SourceFile: "src/app.controller.ts"},
+	}
+	rels := []Relationship{
+		{ID: "i1", FromID: "handler", ToID: "ep", Kind: "IMPLEMENTS"},
+	}
+	report := ComputeCoverage(makeDoc(entities, rels))
+	if report.CoveredProduction != 0 {
+		t.Errorf("CoveredProduction want 0 (handler untested), got %d", report.CoveredProduction)
+	}
+}
+
+// TestComputeCoverage_EndpointCreditedViaRoutesTo verifies the reverse edge
+// direction (Spring/Express shape: definition --ROUTES_TO--> handler) is also
+// honoured, proving the hop is framework-agnostic.
+func TestComputeCoverage_EndpointCreditedViaRoutesTo(t *testing.T) {
+	t.Parallel()
+	entities := []Entity{
+		{ID: "ep", Name: "GET /users", Kind: "http_endpoint_definition",
+			SourceFile: "UserController.java"},
+		{ID: "handler", Name: "listUsers", Kind: "SCOPE.Operation",
+			SourceFile: "UserController.java"},
+		{ID: "spec", Name: "UserControllerTest", Kind: "SCOPE.Operation",
+			SourceFile: "UserControllerTest.java"},
+	}
+	rels := []Relationship{
+		{ID: "r1", FromID: "ep", ToID: "handler", Kind: "ROUTES_TO"},
+		{ID: "t1", FromID: "spec", ToID: "handler", Kind: "TESTS"},
+	}
+	report := ComputeCoverage(makeDoc(entities, rels))
+	if report.CoveredProduction != 2 {
+		t.Errorf("CoveredProduction want 2 (handler + endpoint via ROUTES_TO), got %d", report.CoveredProduction)
+	}
+}
