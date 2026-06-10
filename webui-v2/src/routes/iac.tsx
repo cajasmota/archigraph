@@ -41,9 +41,19 @@ import {
   AlertTriangle,
   List,
   Network,
+  ChevronDown,
+  ChevronRight,
+  Link2,
 } from "lucide-react";
 
-import { Badge, Card, CardBody, Pill } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  CardBody,
+  Pill,
+  ScreenDescription,
+  AgentUsage,
+} from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefLine } from "@/components/RefLine";
 import { RepoChip } from "@/lib/repo-color";
@@ -114,7 +124,132 @@ function isRawId(s: string): boolean {
   return /^[0-9a-f]{12,}$/i.test(s);
 }
 
-function RelationBadge({ relation }: { relation: IaCRelation }) {
+/**
+ * #4588: Terraform (and other HCL-ish tools) emit interpolation references —
+ * `local.*`, `var.*`, `data.*`, `module.*`, `each.*`, `count.*`, and synthetic
+ * `calls` targets — as plain DEPENDS_ON edges. These are NOT real
+ * resource-to-resource dependencies; they are expression-level references that
+ * flat-dumped into the card as noisy duplicate `depends on → local.*` badges.
+ * We bucket them out as "references" and de-emphasize them.
+ */
+const INTERP_PREFIXES = [
+  "local.",
+  "var.",
+  "data.",
+  "module.",
+  "each.",
+  "count.",
+  "path.",
+  "terraform.",
+  "self.",
+];
+
+function isInterpolationRef(rel: IaCRelation): boolean {
+  const t = (rel.target || "").toLowerCase();
+  if (t === "calls" || t === "local" || t === "var" || t === "data") return true;
+  return INTERP_PREFIXES.some((p) => t.startsWith(p));
+}
+
+/**
+ * A stable identity for de-duplication. Repeated edges to the same endpoint
+ * with the same facet collapse into one badge (#4588 — the card was rendering
+ * a dozen identical `depends on → calls` chips).
+ */
+function relationKey(rel: IaCRelation): string {
+  const target = (rel.target_entity_id || rel.target_id || rel.target || "")
+    .toLowerCase();
+  return `${rel.facet}|${rel.direction}|${target}|${(rel.detail || "").toLowerCase()}`;
+}
+
+/** Dedupe a relation list, preserving first-seen order. */
+function dedupeRelations(rels: IaCRelation[]): IaCRelation[] {
+  const seen = new Set<string>();
+  const out: IaCRelation[] = [];
+  for (const r of rels) {
+    const k = relationKey(r);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(r);
+  }
+  return out;
+}
+
+interface RelationGroup {
+  facet: string;
+  label: string;
+  tone: ReturnType<typeof relationMeta>["tone"];
+  Icon: ReturnType<typeof relationMeta>["Icon"];
+  relations: IaCRelation[];
+}
+
+/**
+ * Split a resource's relations into (a) real, grouped resource dependencies
+ * keyed by facet, and (b) a de-emphasized bucket of interpolation references.
+ * Both halves are de-duplicated.
+ */
+function classifyRelations(rels: IaCRelation[]): {
+  groups: RelationGroup[];
+  references: IaCRelation[];
+} {
+  const deduped = dedupeRelations(rels ?? []);
+  const real: IaCRelation[] = [];
+  const references: IaCRelation[] = [];
+  for (const r of deduped) {
+    (isInterpolationRef(r) ? references : real).push(r);
+  }
+
+  const byFacet = new Map<string, IaCRelation[]>();
+  for (const r of real) {
+    const f = (r.facet || "dependency").toLowerCase();
+    const arr = byFacet.get(f);
+    if (arr) arr.push(r);
+    else byFacet.set(f, [r]);
+  }
+
+  // Stable, meaningful ordering: grants → event sources → topology → rest.
+  const order = ["grant", "event_source", "trigger", "topology", "output"];
+  const facets = Array.from(byFacet.keys()).sort((a, b) => {
+    const ia = order.indexOf(a);
+    const ib = order.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
+  });
+
+  const groups: RelationGroup[] = facets.map((f) => {
+    const meta = relationMeta(f);
+    return {
+      facet: f,
+      label: meta.label,
+      tone: meta.tone,
+      Icon: meta.Icon,
+      relations: byFacet.get(f)!,
+    };
+  });
+
+  return { groups, references };
+}
+
+/** Resolved display text for a relation target, with unresolved fallback. */
+function relationDisplay(relation: IaCRelation): {
+  display: string;
+  unresolved: boolean;
+} {
+  const unresolved =
+    relation.target_resolved === false || isRawId(relation.target);
+  return {
+    unresolved,
+    display: unresolved
+      ? relation.kind.toLowerCase().replace(/_/g, " ")
+      : relation.target,
+  };
+}
+
+function RelationBadge({
+  relation,
+  muted = false,
+}: {
+  relation: IaCRelation;
+  muted?: boolean;
+}) {
   const { label, tone, Icon } = relationMeta(relation.facet);
   const arrow = relation.direction === "in" ? "←" : "→";
   const detail = relation.detail ? `.${relation.detail}` : "";
@@ -123,17 +258,16 @@ function RelationBadge({ relation }: { relation: IaCRelation }) {
   // (target_resolved === false), the target is a meaningless raw entity-id
   // hash. Render a friendlier fallback — the relation kind as the label, with
   // the raw id available on hover — instead of dumping the hash inline.
-  const unresolved =
-    relation.target_resolved === false || isRawId(relation.target);
-  const display = unresolved
-    ? relation.kind.toLowerCase().replace(/_/g, " ")
-    : relation.target;
+  const { display, unresolved } = relationDisplay(relation);
   const rawId = relation.target_id || relation.target;
 
   return (
     <Badge
-      tone={tone}
-      className="inline-flex items-center gap-1 max-w-full min-w-0"
+      tone={muted ? "neutral" : tone}
+      className={cn(
+        "inline-flex items-center gap-1 max-w-[18rem] min-w-0",
+        muted && "opacity-60",
+      )}
       title={
         unresolved
           ? `${label}${detail} ${arrow} <unresolved ${relation.kind} target> (id ${rawId})`
@@ -142,9 +276,12 @@ function RelationBadge({ relation }: { relation: IaCRelation }) {
     >
       <Icon size={11} className="shrink-0" />
       <span className="lowercase shrink-0">{label}</span>
+      {/* #4576: long targets truncate inside the badge instead of pushing the
+          chip past the card edge; the min-w-0 + truncate keeps the arrow glued
+          to the (elided) target. */}
       <span
         className={cn(
-          "font-mono opacity-70 truncate",
+          "font-mono opacity-70 truncate min-w-0",
           unresolved && "italic",
         )}
       >
@@ -202,56 +339,135 @@ function ErrorState() {
 // § One resource row
 // ---------------------------------------------------------------------------
 
-function ResourceRow({ resource }: { resource: IaCResource }) {
+/** A summary pill: a relation-group label + count + the top-N target names. */
+function RelationSummaryPill({ group }: { group: RelationGroup }) {
+  const { Icon, label, tone, relations } = group;
+  const TOP = 3;
+  const names = relations.map((r) => relationDisplay(r).display);
+  const shown = names.slice(0, TOP);
+  const extra = names.length - shown.length;
   return (
-    <div className="flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border border-border bg-surface hover:bg-surface-2 transition-colors">
-      <div className="flex items-center gap-2 min-w-0 flex-wrap">
-        {resource.category && (
-          <Badge tone={categoryTone(resource.category)} className="uppercase shrink-0">
-            {resource.category}
-          </Badge>
-        )}
-        <span className="font-mono text-sm text-text truncate" title={resource.name}>
-          {resource.name}
-        </span>
-        {resource.resource_type && (
-          <span
-            className="font-mono text-[11px] text-text-4 truncate"
-            title={resource.resource_type}
-          >
-            {resource.resource_type}
-          </span>
-        )}
-      </div>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] min-w-0 max-w-full",
+        toneClasses(tone),
+      )}
+      title={`${relations.length} ${label}${relations.length === 1 ? "" : "s"}: ${names.join(", ")}`}
+    >
+      <Icon size={11} className="shrink-0" />
+      <span className="font-medium capitalize shrink-0">
+        {pluralFacet(label, relations.length)}
+      </span>
+      <span className="tabular-nums opacity-70 shrink-0">{relations.length}</span>
+      <span className="font-mono opacity-60 truncate min-w-0">
+        {shown.join(", ")}
+        {extra > 0 ? ` +${extra} more` : ""}
+      </span>
+    </span>
+  );
+}
 
-      {/* Relation facets (grants / event-sources / dependencies / topology).
-          #4495: own full-width wrapping row so chips never overflow the card
-          edge — they wrap to multiple lines and each chip truncates long
-          targets internally. */}
-      {(resource.relations?.length ?? 0) > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-          {resource.relations.map((rel, i) => (
-            <RelationBadge
-              key={`${rel.facet}:${rel.target_id || rel.target}:${i}`}
-              relation={rel}
-            />
-          ))}
+/** Soft tonal border/bg/text classes for the summary pills. */
+function toneClasses(
+  tone: "accent" | "info" | "warning" | "success" | "danger" | "neutral",
+): string {
+  switch (tone) {
+    case "accent":
+      return "border-accent/40 bg-accent/10 text-accent";
+    case "info":
+      return "border-info/40 bg-info/10 text-info";
+    case "warning":
+      return "border-warning/40 bg-warning/10 text-warning";
+    case "success":
+      return "border-success/40 bg-success/10 text-success";
+    case "danger":
+      return "border-danger/40 bg-danger/10 text-danger";
+    default:
+      return "border-border bg-surface-2 text-text-3";
+  }
+}
+
+function pluralFacet(label: string, n: number): string {
+  if (n === 1) return label;
+  if (label === "topology") return "topology";
+  return `${label}s`;
+}
+
+/** The full grouped relation list shown in the expanded detail panel. */
+function RelationDetail({
+  groups,
+  references,
+  resource,
+}: {
+  groups: RelationGroup[];
+  references: IaCRelation[];
+  resource: IaCResource;
+}) {
+  return (
+    <div className="space-y-3">
+      {/* Typed config properties */}
+      {(resource.properties?.length ?? 0) > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-text-4">
+            Config
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {resource.properties.map((p) => (
+              <span
+                key={p.key}
+                className="inline-flex items-center gap-1 rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-mono text-text-3"
+                title={`${p.key} = ${p.value}`}
+              >
+                <span className="text-text-4">{p.key}</span>
+                <span className="text-text">{p.value}</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Typed config properties */}
-      {(resource.properties?.length ?? 0) > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {resource.properties.map((p) => (
-            <span
-              key={p.key}
-              className="inline-flex items-center gap-1 rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-mono text-text-3"
-              title={`${p.key} = ${p.value}`}
-            >
-              <span className="text-text-4">{p.key}</span>
-              <span className="text-text">{p.value}</span>
+      {/* Real, grouped resource dependencies — each fully resolvable. */}
+      {groups.map((g) => (
+        <div key={g.facet} className="space-y-1">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-text-4">
+            {pluralFacet(g.label, g.relations.length)}
+            <span className="ml-1 tabular-nums opacity-70">
+              {g.relations.length}
             </span>
-          ))}
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            {g.relations.map((rel, i) => (
+              <RelationBadge
+                key={`${rel.facet}:${rel.target_id || rel.target}:${i}`}
+                relation={rel}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* De-emphasized Terraform interpolation references — NOT real resource
+          deps. Visually bucketed + muted so they don't read as dependencies. */}
+      {references.length > 0 && (
+        <div className="space-y-1">
+          <p className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-text-4">
+            <Link2 size={10} className="shrink-0" /> references
+            <span className="ml-0.5 tabular-nums opacity-70">
+              {references.length}
+            </span>
+            <span className="ml-1 font-normal normal-case opacity-70">
+              (interpolation, not resource deps)
+            </span>
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            {references.map((rel, i) => (
+              <RelationBadge
+                key={`ref:${rel.target_id || rel.target}:${i}`}
+                relation={rel}
+                muted
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -263,6 +479,142 @@ function ResourceRow({ resource }: { resource: IaCResource }) {
           name={resource.name}
           className="text-[11px]"
         />
+      )}
+    </div>
+  );
+}
+
+function ResourceCard({
+  resource,
+  groupId,
+  showRepo,
+}: {
+  resource: IaCResource;
+  groupId: string;
+  showRepo: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const { groups, references } = useMemo(
+    () => classifyRelations(resource.relations ?? []),
+    [resource.relations],
+  );
+
+  const hasDetail =
+    groups.length > 0 ||
+    references.length > 0 ||
+    (resource.properties?.length ?? 0) > 0 ||
+    !!resource.source_file;
+
+  const moduleLeaf = resource.module
+    ? resource.module.split("/").slice(-1)[0]
+    : null;
+
+  return (
+    <div className="flex flex-col rounded-lg border border-border bg-surface transition-colors hover:bg-surface-2">
+      {/* Clean header: category · name · type · file:line · repo */}
+      <button
+        type="button"
+        onClick={() => hasDetail && setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        className={cn(
+          "flex flex-col gap-1.5 px-3 py-2.5 text-left rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]",
+          !hasDetail && "cursor-default",
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          {resource.category && (
+            <Badge
+              tone={categoryTone(resource.category)}
+              className="uppercase shrink-0"
+            >
+              {resource.category}
+            </Badge>
+          )}
+          <span
+            className="font-mono text-sm text-text truncate min-w-0"
+            title={resource.name}
+          >
+            {resource.name}
+          </span>
+          {resource.resource_type && (
+            <span
+              className="font-mono text-[11px] text-text-4 truncate shrink-0 max-w-[40%]"
+              title={resource.resource_type}
+            >
+              {resource.resource_type}
+            </span>
+          )}
+          {hasDetail && (
+            <span className="ml-auto shrink-0 text-text-4">
+              {expanded ? (
+                <ChevronDown size={14} />
+              ) : (
+                <ChevronRight size={14} />
+              )}
+            </span>
+          )}
+        </div>
+
+        {/* Sub-header: module + file:line + repo, low-chrome. */}
+        <div className="flex items-center gap-2 min-w-0 text-[11px] text-text-4">
+          {moduleLeaf && (
+            <span
+              className="inline-flex items-center gap-1 shrink-0"
+              title={`Module: ${resource.module}`}
+            >
+              <Layers size={10} className="shrink-0" />
+              <span className="truncate max-w-[12rem]">{moduleLeaf}</span>
+            </span>
+          )}
+          {resource.source_file && (
+            <span
+              className="font-mono truncate min-w-0"
+              title={`${resource.source_file}:${resource.start_line ?? 0}`}
+            >
+              {resource.source_file}
+              {resource.start_line ? `:${resource.start_line}` : ""}
+            </span>
+          )}
+          {showRepo && resource.repo && (
+            <RepoChip
+              slug={resource.repo}
+              groupId={groupId}
+              maxLength={16}
+            />
+          )}
+        </div>
+
+        {/* Summarized relationship counts — grouped, deduped, top-N + "+N more".
+            #4588: replaces the flat dump of a dozen duplicate badges. */}
+        {(groups.length > 0 || references.length > 0) && !expanded && (
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            {groups.map((g) => (
+              <RelationSummaryPill key={g.facet} group={g} />
+            ))}
+            {references.length > 0 && (
+              <span
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-0.5 text-[11px] text-text-4 opacity-70"
+                title={`${references.length} interpolation reference(s) — not real resource dependencies`}
+              >
+                <Link2 size={11} className="shrink-0" />
+                references
+                <span className="tabular-nums">{references.length}</span>
+              </span>
+            )}
+          </div>
+        )}
+      </button>
+
+      {/* Click-to-expand detail panel: full grouped relationship list. */}
+      {expanded && hasDetail && (
+        <div className="border-t border-border px-3 py-2.5">
+          <RelationDetail
+            groups={groups}
+            references={references}
+            resource={resource}
+          />
+        </div>
       )}
     </div>
   );
@@ -303,7 +655,12 @@ function ToolSection({
         </div>
         <div className="space-y-2">
           {resources.map((r) => (
-            <ResourceRow key={r.entity_id} resource={r} />
+            <ResourceCard
+              key={r.entity_id}
+              resource={r}
+              groupId={groupId}
+              showRepo={repos.length > 1}
+            />
           ))}
         </div>
       </CardBody>
@@ -360,6 +717,39 @@ function CategorySection({ counts }: { counts: Record<string, number> | null | u
 
 type IaCView = "list" | "diagram";
 
+/** Shared plain-language description for both List and Diagram views (#4576). */
+function IaCDescription() {
+  return (
+    <ScreenDescription
+      terms={[
+        {
+          term: "resource category",
+          def: "A cross-tool join key (function, datastore, queue, secret, network…) that normalizes each tool's native resource type into one shared vocabulary.",
+        },
+        {
+          term: "interpolation reference",
+          def: "A Terraform expression reference (local.*, var.*, module.*, data.*) — a value lookup, not a real resource-to-resource dependency.",
+        },
+      ]}
+    >
+      Your infrastructure-as-code defined across Terraform/OpenTofu, AWS CDK,
+      Pulumi, CloudFormation/SAM, Serverless Framework, and Bicep — every
+      resource, its config, and how resources wire to each other (IAM grants,
+      event sources, dependencies, and stack/module topology).
+    </ScreenDescription>
+  );
+}
+
+/** Shared agent-usage banner for both views. */
+function IaCAgentUsage() {
+  return (
+    <AgentUsage
+      tool="archigraph_topology"
+      example="An agent checks which infra a service depends on before changing a Terraform module."
+    />
+  );
+}
+
 /** List | Diagram view toggle. */
 function ViewToggle({ view, onChange }: { view: IaCView; onChange: (v: IaCView) => void }) {
   return (
@@ -410,11 +800,16 @@ export default function IaCScreen() {
   if (!isLoading && !isError && hasResources && view === "diagram") {
     return (
       <div className="flex h-full flex-col bg-bg">
-        <div className="flex items-center gap-2 border-b border-border bg-surface px-4 py-2">
-          <ViewToggle view={view} onChange={setView} />
-          <span className="text-xs text-text-4">
-            Resource graph — resources by category, relations, grouped by module.
-          </span>
+        <div className="space-y-2 border-b border-border bg-surface px-4 py-3">
+          <div className="flex items-center gap-2">
+            <ViewToggle view={view} onChange={setView} />
+            <span className="text-xs text-text-4">
+              Resource graph — resources by category, relations, grouped by
+              module.
+            </span>
+          </div>
+          <IaCDescription />
+          <IaCAgentUsage />
         </div>
         <div className="min-h-0 flex-1">
           <IaCDiagram report={data!} />
@@ -441,6 +836,11 @@ export default function IaCScreen() {
             <div className="flex items-center gap-2">
               <ViewToggle view={view} onChange={setView} />
             </div>
+
+            {/* #4576: List view now carries the same description + agent banner
+                the Diagram view does. */}
+            <IaCDescription />
+            <IaCAgentUsage />
 
             {/* Summary */}
             <div className="flex flex-wrap gap-3">
