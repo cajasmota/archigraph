@@ -26,8 +26,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/input";
-import { Pill } from "@/components/ui/pill";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TabCount, ScreenDescription, AgentUsage } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { RefLine } from "@/components/RefLine";
 import { RepoChip } from "@/lib/repo-color";
@@ -1876,46 +1876,72 @@ export default function TopologyScreen() {
         <div className="border-b border-border shrink-0 px-4">
           <TabsList className="border-0">
             <TabsTrigger value="all">
-              All
+              All channels
               {isLoading ? (
                 <span className="ml-1.5 text-text-4">…</span>
               ) : (
-                <Pill className="ml-1.5">{counts.total}</Pill>
+                <TabCount
+                  value={counts.total}
+                  tone="neutral"
+                  active={tab === "all"}
+                  label="async channels (queues/topics) indexed"
+                />
               )}
             </TabsTrigger>
             <TabsTrigger value="orphan-publishers">
-              Orphan pub
+              Orphan publishers
               {isLoading ? (
                 <span className="ml-1.5 text-text-4">…</span>
-              ) : counts.orphanPub > 0 ? (
-                <Pill className="ml-1.5 bg-amber-950 text-amber-300 border-amber-700">
-                  {counts.orphanPub}
-                </Pill>
               ) : (
-                <Pill className="ml-1.5">0</Pill>
+                <TabCount
+                  value={counts.orphanPub}
+                  tone={counts.orphanPub > 0 ? "warning" : "neutral"}
+                  active={tab === "orphan-publishers"}
+                  label="channels published to but never subscribed"
+                />
               )}
             </TabsTrigger>
             <TabsTrigger value="orphan-subscribers">
-              Orphan sub
+              Orphan subscribers
               {isLoading ? (
                 <span className="ml-1.5 text-text-4">…</span>
-              ) : counts.orphanSub > 0 ? (
-                <Pill className="ml-1.5 bg-orange-950 text-orange-300 border-orange-700">
-                  {counts.orphanSub}
-                </Pill>
               ) : (
-                <Pill className="ml-1.5">0</Pill>
+                <TabCount
+                  value={counts.orphanSub}
+                  tone={counts.orphanSub > 0 ? "warning" : "neutral"}
+                  active={tab === "orphan-subscribers"}
+                  label="channels subscribed to but never published"
+                />
               )}
             </TabsTrigger>
             <TabsTrigger value="scheduled">
-              Scheduled
+              Scheduled jobs
               {isLoading ? (
                 <span className="ml-1.5 text-text-4">…</span>
               ) : (
-                <Pill className="ml-1.5">{counts.scheduled}</Pill>
+                <TabCount
+                  value={counts.scheduled}
+                  tone="neutral"
+                  active={tab === "scheduled"}
+                  label="scheduled / cron-triggered producers"
+                />
               )}
             </TabsTrigger>
           </TabsList>
+        </div>
+
+        {/* Plain-language intro + agent-usage banner */}
+        <div className="px-4 pt-3 pb-1 border-b border-border shrink-0 space-y-2">
+          <ScreenDescription>
+            This is your <strong className="text-text-2">messaging topology</strong> — a map of who
+            publishes and who subscribes across your message queues and topics. Use it to see which
+            services send messages to a channel, which ones receive them, and where a channel has a
+            publisher but no subscriber (or vice-versa) so messages may be dropped.
+          </ScreenDescription>
+          <AgentUsage
+            tool="archigraph_topology"
+            example="An agent maps who publishes/subscribes to a queue before changing a message schema."
+          />
         </div>
 
         {/* All tab */}
