@@ -19,8 +19,9 @@
 // to a function body and inspects each block's immediate statements to decide
 // the outcome. Python is the flagship (the oracle stack); the BranchFacet
 // schema and the outcome lattice are language-neutral so other languages can
-// register their own classifier (see BranchAnalyzerFor; JS/TS + Java + Go
-// classifiers are tracked in follow-up #4434, ref epic #4419).
+// register their own classifier (see BranchAnalyzerFor; the JS/TS + Java + Go
+// classifiers live in branches_jsts_java_go.go, added in #4434, ref epic
+// #4419).
 package substrate
 
 import (
