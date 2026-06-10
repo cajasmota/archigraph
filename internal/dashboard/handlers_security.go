@@ -137,7 +137,31 @@ func isEndpointKind(kind string) bool {
 }
 
 func hasAuthProperty(e *graph.Entity) (bool, string) {
-	for _, k := range []string{"auth_decorator", "auth_middleware", "auth_annotation"} {
+	// Authoritative reconciled posture first. The engine auth resolvers
+	// (Nest @UseGuards / @RequirePage / @RequireAction / @Authenticated, Spring
+	// Security, Quarkus, gRPC/tRPC interceptors, …) collapse every method-,
+	// controller- and global-level signal — including @Public exemptions — into a
+	// single `auth_required` verdict + an `auth_method`/`auth_guard` evidence
+	// stamp. When that verdict says the route IS authenticated, it MUST win:
+	// otherwise an endpoint gated only by an INHERITED controller/global guard
+	// (no own @UseGuards/decorator, so none of the raw signal keys below are set)
+	// is mislabelled NO-AUTH while the posture surface simultaneously shows it as
+	// authenticated — the contradictory dual badge (#auth-posture-conflict).
+	//
+	// auth_required=="false" is a DECISIVE public verdict (an explicit @Public /
+	// AllowAny / permitAll) — genuinely unauthenticated, so it deliberately does
+	// NOT count as covered here and falls through to the raw-signal checks (which
+	// will also find nothing) so the route is reported uncovered-by-design.
+	if e.Properties["auth_required"] == "true" {
+		if g := e.Properties["auth_guard"]; g != "" {
+			return true, "auth_guard=" + g
+		}
+		if m := e.Properties["auth_method"]; m != "" && m != "unknown" {
+			return true, "auth_method=" + m
+		}
+		return true, "auth_required=true"
+	}
+	for _, k := range []string{"auth_decorator", "auth_middleware", "auth_guard", "auth_annotation"} {
 		if v := e.Properties[k]; v != "" && v != "false" {
 			return true, k + "=" + v
 		}

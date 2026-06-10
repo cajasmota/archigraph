@@ -690,6 +690,30 @@ func determineAuthCoverage(
 	drfDefaultProtected bool,
 	drfDefaultEvidence string,
 ) (bool, string) {
+	// Signal 0: the authoritative reconciled posture. The engine auth resolvers
+	// (Nest @UseGuards / @RequirePage / @RequireAction / @Authenticated, Spring
+	// Security, Quarkus, gRPC/tRPC interceptors, …) collapse every method-,
+	// controller- and global-level signal — including @Public exemptions — into a
+	// single `auth_required` verdict plus an `auth_method`/`auth_guard` evidence
+	// stamp. When that verdict says the route IS authenticated it MUST win, so an
+	// endpoint gated only by an INHERITED controller/global guard (no own
+	// decorator, so none of the raw signal-1 keys below are set) is never
+	// mislabelled NO-AUTH while the endpoint_posture surface simultaneously shows
+	// it authenticated — the contradictory dual badge (#auth-posture-conflict).
+	//
+	// auth_required=="false" is a DECISIVE public verdict (explicit @Public /
+	// AllowAny / permitAll): genuinely unauthenticated by design, so it does NOT
+	// count as covered and falls through (no raw signal will rescue it).
+	if e.Properties["auth_required"] == "true" {
+		if g := e.Properties["auth_guard"]; g != "" {
+			return true, "auth_guard=" + g
+		}
+		if m := e.Properties["auth_method"]; m != "" && m != "unknown" {
+			return true, "auth_method=" + m
+		}
+		return true, "auth_required=true"
+	}
+
 	// Signal 1: entity property directly on the endpoint.
 	for _, k := range authPropertyKeys {
 		if v := e.Properties[k]; v != "" {
