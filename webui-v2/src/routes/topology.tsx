@@ -27,7 +27,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TabCount, InsightBanner } from "@/components/ui";
+import { TabCount, useSetInsight } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { RefLine } from "@/components/RefLine";
 import { RepoChip } from "@/lib/repo-color";
@@ -1694,7 +1695,30 @@ function ScheduledTab({
 // § TopologyScreen — main export
 // ---------------------------------------------------------------------------
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const TOPOLOGY_INSIGHT: InsightValue = {
+  storageKey: "topology",
+  human: (
+    <>
+      This is your{" "}
+      <strong className="text-text-2">messaging topology</strong> — a
+      map of who publishes and who subscribes across your message
+      queues and topics. Use it to see which services send messages to
+      a channel, which ones receive them, and where a channel has a
+      publisher but no subscriber (or vice-versa) so messages may be
+      dropped.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_topology",
+    example:
+      "Before changing the schema of the `order.created` event, an agent calls archigraph_topology to enumerate every subscriber, so it updates all consumers in lockstep — and flags the orphaned topic that has a publisher but no subscriber as a likely dropped-message bug.",
+  },
+};
+
 export default function TopologyScreen() {
+  useSetInsight(TOPOLOGY_INSIGHT);
   const { groupId = "" } = useParams<{ groupId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1932,25 +1956,7 @@ export default function TopologyScreen() {
 
         {/* Plain-language intro + agent-usage banner */}
         <div className="px-4 pt-3 pb-1 border-b border-border shrink-0 space-y-2">
-          <InsightBanner
-            storageKey="topology"
-            human={
-              <>
-                This is your{" "}
-                <strong className="text-text-2">messaging topology</strong> — a
-                map of who publishes and who subscribes across your message
-                queues and topics. Use it to see which services send messages to
-                a channel, which ones receive them, and where a channel has a
-                publisher but no subscriber (or vice-versa) so messages may be
-                dropped.
-              </>
-            }
-            agent={{
-              tool: "archigraph_topology",
-              example:
-                "Before changing the schema of the `order.created` event, an agent calls archigraph_topology to enumerate every subscriber, so it updates all consumers in lockstep — and flags the orphaned topic that has a publisher but no subscriber as a likely dropped-message bug.",
-            }}
-          />
+          
         </div>
 
         {/* All tab */}

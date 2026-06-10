@@ -23,8 +23,9 @@ import {
   TabsList,
   TabsTrigger,
   Skeleton,
-  InsightBanner,
+  useSetInsight,
 } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -588,7 +589,27 @@ function PendingSkeleton() {
 // Main screen
 // ---------------------------------------------------------------------------
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const PENDING_INSIGHT: InsightValue = {
+  storageKey: "pending",
+  human: (
+    <>
+      Pending candidates — edits archigraph has queued but not yet
+      applied to the graph: repairs (resolving an unresolved reference)
+      and enrichments (adding inferred metadata). Review each, then
+      accept or dismiss it.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_enrichments",
+    example:
+      "After an index run, an agent calls archigraph_enrichments to see the queued metadata and repair candidates, auto-accepts the unambiguous ones (a single obvious URL→endpoint match), and leaves the ambiguous dynamic-dispatch repairs flagged for a human to confirm.",
+  },
+};
+
 export default function PendingScreen() {
+  useSetInsight(PENDING_INSIGHT);
   const { groupId = "demo" } = useParams();
   const { data, isLoading, isError } = useCandidates(groupId);
   const saveHintMutation = useSaveHint(groupId);
@@ -722,22 +743,7 @@ export default function PendingScreen() {
 
       {/* Intro */}
       <div className="shrink-0 px-4 pt-3 space-y-2 border-b border-border-soft bg-bg">
-        <InsightBanner
-          storageKey="pending"
-          human={
-            <>
-              Pending candidates — edits archigraph has queued but not yet
-              applied to the graph: repairs (resolving an unresolved reference)
-              and enrichments (adding inferred metadata). Review each, then
-              accept or dismiss it.
-            </>
-          }
-          agent={{
-            tool: "archigraph_enrichments",
-            example:
-              "After an index run, an agent calls archigraph_enrichments to see the queued metadata and repair candidates, auto-accepts the unambiguous ones (a single obvious URL→endpoint match), and leaves the ambiguous dynamic-dispatch repairs flagged for a human to confirm.",
-          }}
-        />
+        
       </div>
 
       {/* Tab bar */}

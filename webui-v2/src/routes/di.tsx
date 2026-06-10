@@ -54,8 +54,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
   TooltipContent,
-  InsightBanner,
+  useSetInsight,
 } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefLine } from "@/components/RefLine";
 import { cn } from "@/lib/utils";
@@ -451,23 +452,6 @@ function DIBody({ data }: { data: DIReport }) {
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto ag-scroll px-4 py-4 space-y-4">
-      <InsightBanner
-        storageKey="di"
-        human={
-          <>
-            Dependency injection — which providers (services, tokens) get
-            injected into which consumers (controllers, services, handlers).
-            Each row is a real INJECTED_INTO edge, so you can see what wires into
-            what across frameworks.
-          </>
-        }
-        agent={{
-          tool: "archigraph_neighbors",
-          example:
-            "About to change a method signature on PaymentService, an agent calls archigraph_neighbors to list every controller and service it's injected into, then updates all call sites in one pass instead of discovering broken consumers at runtime.",
-        }}
-      />
-
       {/* Summary */}
       <div className="flex flex-wrap gap-3">
         <SummaryStat label="Providers" value={data.total_providers} />
@@ -555,9 +539,30 @@ function DIBody({ data }: { data: DIReport }) {
   );
 }
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const DI_INSIGHT: InsightValue = {
+  storageKey: "di",
+  human: (
+    <>
+      Dependency injection — which providers (services, tokens) get
+      injected into which consumers (controllers, services, handlers).
+      Each row is a real INJECTED_INTO edge, so you can see what wires into
+      what across frameworks.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_neighbors",
+    example:
+      "About to change a method signature on PaymentService, an agent calls archigraph_neighbors to list every controller and service it's injected into, then updates all call sites in one pass instead of discovering broken consumers at runtime.",
+  },
+};
+
 export default function DIScreen() {
   const { groupId = "" } = useParams<{ groupId: string }>();
   const { data, isLoading, isError } = useDI(groupId);
+
+  useSetInsight(DI_INSIGHT);
 
   const hasAny = (data?.total_injections ?? 0) > 0;
 

@@ -19,7 +19,8 @@ import { useCallback, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { GitCompare, Loader2, AlertTriangle } from "lucide-react";
 
-import { InsightBanner } from "@/components/ui";
+import { useSetInsight } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { useDiff } from "@/hooks/use-diff";
 import { useRefs } from "@/hooks/use-refs";
 import { DiffSummaryBanner } from "@/components/Compare/diff-summary-banner";
@@ -192,7 +193,28 @@ function ErrorBanner({ message }: { message: string }) {
 // Main compare screen
 // ---------------------------------------------------------------------------
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const COMPARE_INSIGHT: InsightValue = {
+  storageKey: "compare",
+  human: (
+    <>
+      Compare — a structural diff of the knowledge graph between two refs
+      (branches, tags or commits) of a repo. It shows which entities were
+      added, removed or modified and which relationships changed, so you
+      can review the architectural impact of a branch instead of reading a
+      raw line-by-line text diff.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_diff_refs",
+    example:
+      "Reviewing a feature branch, an agent calls archigraph_diff_refs(refA=main, refB=feature) to get the added/removed/modified entities and changed edges, then focuses its review on the modified callables and their new dependencies instead of skimming the whole patch.",
+  },
+};
+
 export default function CompareScreen() {
+  useSetInsight(COMPARE_INSIGHT);
   const { groupId = "" } = useParams();
   const { refA, refB, repo, filter, kind, setRefA, setRefB, setRepo, setFilter, setKind } =
     useCompareParams();
@@ -249,23 +271,6 @@ export default function CompareScreen() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <InsightBanner
-        storageKey="compare"
-        human={
-          <>
-            Compare — a structural diff of the knowledge graph between two refs
-            (branches, tags or commits) of a repo. It shows which entities were
-            added, removed or modified and which relationships changed, so you
-            can review the architectural impact of a branch instead of reading a
-            raw line-by-line text diff.
-          </>
-        }
-        agent={{
-          tool: "archigraph_diff_refs",
-          example:
-            "Reviewing a feature branch, an agent calls archigraph_diff_refs(refA=main, refB=feature) to get the added/removed/modified entities and changed edges, then focuses its review on the modified callables and their new dependencies instead of skimming the whole patch.",
-        }}
-      />
 
       {/* Selector row */}
       <SelectorRow

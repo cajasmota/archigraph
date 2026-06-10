@@ -42,11 +42,12 @@ import {
   Card,
   CardBody,
   Pill,
-  InsightBanner,
+  useSetInsight,
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RepoChip } from "@/lib/repo-color";
 import { cn } from "@/lib/utils";
@@ -396,7 +397,31 @@ function RepoPairSection({
 // § Screen
 // ---------------------------------------------------------------------------
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const LINKS_INSIGHT: InsightValue = {
+  storageKey: "links",
+  human: (
+    <>
+      This view maps the resolved calls between entities — a frontend
+      fetch landing on a backend endpoint, a publisher reaching a topic,
+      a gRPC client reaching a service. Each row is one directed link:
+      where a request originates (source) and what it reaches (target),
+      with the link kind and how confident the resolver is in the match.
+      When the group spans more than one repository these are cross-repo
+      links; when it's a single repo they're intra-repo data flows.
+      Click a row to open the target entity in the graph.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_cross_links",
+    example:
+      "Debugging a frontend call that hits a 404, an agent calls archigraph_cross_links to confirm which backend endpoint the fetch actually resolves to across repos — and spots that the client points at /v1/users while the server only serves /v2/users.",
+  },
+};
+
 export default function LinksScreen() {
+  useSetInsight(LINKS_INSIGHT);
   const { groupId = "" } = useParams<{ groupId: string }>();
   const { data, isLoading, isError } = useGroupLinks(groupId);
   const [kindFilter, setKindFilter] = useState<string>("all");
@@ -474,26 +499,7 @@ export default function LinksScreen() {
   return (
     <div className="flex flex-col h-full bg-bg">
       <div className="flex-1 min-h-0 overflow-y-auto ag-scroll px-4 py-4 space-y-4">
-        <InsightBanner
-          storageKey="links"
-          human={
-            <>
-              This view maps the resolved calls between entities — a frontend
-              fetch landing on a backend endpoint, a publisher reaching a topic,
-              a gRPC client reaching a service. Each row is one directed link:
-              where a request originates (source) and what it reaches (target),
-              with the link kind and how confident the resolver is in the match.
-              When the group spans more than one repository these are cross-repo
-              links; when it's a single repo they're intra-repo data flows.
-              Click a row to open the target entity in the graph.
-            </>
-          }
-          agent={{
-            tool: "archigraph_cross_links",
-            example:
-              "Debugging a frontend call that hits a 404, an agent calls archigraph_cross_links to confirm which backend endpoint the fetch actually resolves to across repos — and spots that the client points at /v1/users while the server only serves /v2/users.",
-          }}
-        />
+        
         {isLoading ? (
           <SkeletonRows />
         ) : isError ? (

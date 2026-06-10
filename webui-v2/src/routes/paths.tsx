@@ -30,7 +30,8 @@ import { Badge, Tabs, TabsList, TabsTrigger, TabsContent, Skeleton } from "@/com
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription,
 } from "@/components/ui";
-import { TabCount, InsightBanner } from "@/components/ui";
+import { TabCount, useSetInsight } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { FlowDag } from "@/components/flow-dag";
 import { RefLine } from "@/components/RefLine";
 import { getRepoColor } from "@/lib/repo-color";
@@ -1732,9 +1733,30 @@ function Breadcrumb({
    Main screen
    ============================================================ */
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const PATHS_INSIGHT: InsightValue = {
+  storageKey: "paths",
+  human: (
+    <>
+      Every API endpoint in this group — its HTTP verb and path, the
+      handler that serves it, how it's authenticated, the inputs it
+      accepts (path, query and request body), and the downstream
+      services, databases and side effects it triggers.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_endpoints",
+    example:
+      "Asked to add a field to the POST /orders payload, an agent calls archigraph_endpoints to find the exact handler, confirm it's auth-protected, see the current request-body shape and which database writes it triggers, then edits the right function without grepping for the route.",
+  },
+};
+
 export default function PathsScreen() {
   const { groupId = "" } = useParams<{ groupId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  useSetInsight(PATHS_INSIGHT);
 
   // URL state — backend drives the drill-down level.
   const activeTab = (searchParams.get("tab") ?? "endpoints") as "endpoints" | "orphans";
@@ -1988,26 +2010,6 @@ export default function PathsScreen() {
             )}
           </TabsTrigger>
         </TabsList>
-
-        {/* Page-level plain-language description + agent banner (#4574). */}
-        <div className="px-4 pt-3 pb-2 shrink-0 bg-surface border-b border-border space-y-2">
-          <InsightBanner
-            storageKey="paths"
-            human={
-              <>
-                Every API endpoint in this group — its HTTP verb and path, the
-                handler that serves it, how it's authenticated, the inputs it
-                accepts (path, query and request body), and the downstream
-                services, databases and side effects it triggers.
-              </>
-            }
-            agent={{
-              tool: "archigraph_endpoints",
-              example:
-                "Asked to add a field to the POST /orders payload, an agent calls archigraph_endpoints to find the exact handler, confirm it's auth-protected, see the current request-body shape and which database writes it triggers, then edits the right function without grepping for the route.",
-            }}
-          />
-        </div>
 
         {/* Endpoints tab */}
         <TabsContent value="endpoints" className="flex-1 min-h-0 flex flex-col mt-0">

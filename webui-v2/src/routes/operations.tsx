@@ -60,8 +60,9 @@ import {
   TabsTrigger,
   TooltipProvider,
   InfoLabel,
-  InsightBanner,
+  useSetInsight,
 } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import {
   useSystemStatus,
   useRestartDaemon,
@@ -1812,7 +1813,27 @@ function UpdatesTab() {
 // Screen root
 // ---------------------------------------------------------------------------
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const OPERATIONS_INSIGHT: InsightValue = {
+  storageKey: "operations",
+  human: (
+    <>
+      Operations — run and inspect the daemon behind this group:
+      system health and indexing, the learned-pattern store,
+      graph-quality measurement (unresolved references, orphan audit,
+      recall), and version updates.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_repairs",
+    example:
+      "Before trusting the graph to answer 'who calls this?', an agent calls archigraph_repairs to review unresolved references and pending fixes — if a key dynamic-dispatch edge is still unresolved it pauses and asks for a re-index rather than reporting an incomplete caller list as complete.",
+  },
+};
+
 export default function OperationsScreen() {
+  useSetInsight(OPERATIONS_INSIGHT);
   const { groupId = "" } = useParams<{ groupId: string }>();
 
   return (
@@ -1829,22 +1850,7 @@ export default function OperationsScreen() {
         </header>
 
         <div className="mb-6 space-y-3">
-          <InsightBanner
-            storageKey="operations"
-            human={
-              <>
-                Operations — run and inspect the daemon behind this group:
-                system health and indexing, the learned-pattern store,
-                graph-quality measurement (unresolved references, orphan audit,
-                recall), and version updates.
-              </>
-            }
-            agent={{
-              tool: "archigraph_repairs",
-              example:
-                "Before trusting the graph to answer 'who calls this?', an agent calls archigraph_repairs to review unresolved references and pending fixes — if a key dynamic-dispatch edge is still unresolved it pauses and asks for a re-index rather than reporting an incomplete caller list as complete.",
-            }}
-          />
+          
         </div>
 
         <Tabs defaultValue="system">

@@ -15,7 +15,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { X, RotateCcw, SlidersHorizontal, Boxes } from "lucide-react";
-import { SearchInput, Pill, Kbd, InsightBanner } from "@/components/ui";
+import { SearchInput, Pill, Kbd, useSetInsight } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { useGraph } from "@/hooks/use-graph";
 import { useModuleAnalysis } from "@/hooks/use-module-analysis";
 import {
@@ -91,7 +92,32 @@ const COLOR_MODES: { id: ColorMode; label: string }[] = [
  */
 const HUB_DEGREE_CAP = 2000;
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Module-level constant for stable identity across renders.
+const GRAPH_INSIGHT: InsightValue = {
+  storageKey: "graph",
+  human: (
+    <>
+      The dependency graph — every indexed entity (files, classes,
+      functions) and the edges between them (imports, calls,
+      references). Search to jump to a symbol, color by
+      repo/kind/community, or collapse to a module overview. Node color
+      encodes the active mode; faint peripheral nodes are low-degree
+      leaves, not orphans. Unconnected (zero-edge) nodes — typically
+      constants, types, and config with no graph edges — are hidden by
+      default so the connected structure reads clearly; bring them back
+      anytime with the &ldquo;isolated · show&rdquo; chip.
+    </>
+  ),
+  agent: {
+    tool: "archigraph_find",
+    example:
+      "Asked to fix a bug in `placeOrder`, an agent calls archigraph_find to jump straight to its definition and one-hop neighbors — the callers, the services it invokes, the file it lives in — instead of grepping the repo for a name that appears in dozens of comments and strings.",
+  },
+};
+
 export default function GraphScreen() {
+  useSetInsight(GRAPH_INSIGHT);
   const { groupId = "demo" } = useParams();
   const theme = useAppStore((st) => st.theme);
   const isDark = theme === "dark";
@@ -596,27 +622,7 @@ export default function GraphScreen() {
       {/* Intro / legend header — the landing screen otherwise has no lead-in.
           Kept compact so the canvas stays the hero. */}
       <div className="shrink-0 border-b border-border bg-bg px-4 py-2 space-y-2">
-        <InsightBanner
-          storageKey="graph"
-          human={
-            <>
-              The dependency graph — every indexed entity (files, classes,
-              functions) and the edges between them (imports, calls,
-              references). Search to jump to a symbol, color by
-              repo/kind/community, or collapse to a module overview. Node color
-              encodes the active mode; faint peripheral nodes are low-degree
-              leaves, not orphans. Unconnected (zero-edge) nodes — typically
-              constants, types, and config with no graph edges — are hidden by
-              default so the connected structure reads clearly; bring them back
-              anytime with the &ldquo;isolated · show&rdquo; chip.
-            </>
-          }
-          agent={{
-            tool: "archigraph_find",
-            example:
-              "Asked to fix a bug in `placeOrder`, an agent calls archigraph_find to jump straight to its definition and one-hop neighbors — the callers, the services it invokes, the file it lives in — instead of grepping the repo for a name that appears in dozens of comments and strings.",
-          }}
-        />
+        
       </div>
 
       {/* Canvas + overlays */}

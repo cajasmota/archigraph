@@ -60,8 +60,9 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-  InsightBanner,
+  useSetInsight,
 } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefLine } from "@/components/RefLine";
 import { RepoChip } from "@/lib/repo-color";
@@ -726,10 +727,25 @@ function FlowsTab({ data, groupId }: { data: DataflowReport; groupId: string }) 
 // § Screen
 // ---------------------------------------------------------------------------
 
+// Screen insight (#4655) — registered with the breadcrumb Insights button via
+// useSetInsight. Findings and Flows share the same taint/data-flow framing, so
+// a single module-level constant (stable identity) covers both tabs.
+const DATAFLOW_INSIGHT: InsightValue = {
+  storageKey: "dataflow",
+  human: <TaintHuman />,
+  agent: {
+    tool: "archigraph_data_flows",
+    example:
+      "Reviewing a PR that builds a SQL string from a request param, an agent calls archigraph_data_flows to confirm the param reaches the query sink with no sanitizer in between, then blocks the merge and points at the exact source→sink hop as a SQL-injection finding.",
+  },
+};
+
 export default function DataflowScreen() {
   const { groupId = "" } = useParams<{ groupId: string }>();
   const { data, isLoading, isError } = useDataflow(groupId);
   const [tab, setTab] = useState<"findings" | "flows">("findings");
+
+  useSetInsight(DATAFLOW_INSIGHT);
 
   const hasAny =
     (data?.total_findings ?? 0) > 0 || (data?.total_flows ?? 0) > 0;
@@ -773,16 +789,6 @@ export default function DataflowScreen() {
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto ag-scroll px-4 py-4 space-y-4">
-            <InsightBanner
-              storageKey="dataflow"
-              human={<TaintHuman />}
-              agent={{
-                tool: "archigraph_data_flows",
-                example:
-                  "Reviewing a PR that builds a SQL string from a request param, an agent calls archigraph_data_flows to confirm the param reaches the query sink with no sanitizer in between, then blocks the merge and points at the exact source→sink hop as a SQL-injection finding.",
-              }}
-            />
-
             {/* Summary */}
             <div className="flex flex-wrap gap-3">
               <SummaryStat label="Findings" value={data!.total_findings} />

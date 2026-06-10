@@ -43,9 +43,10 @@ import {
   TabsTrigger,
   TabsContent,
   TabCount,
-  InsightBanner,
+  useSetInsight,
   DefTerm,
 } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefLine } from "@/components/RefLine";
 import { RepoChip } from "@/lib/repo-color";
@@ -441,31 +442,6 @@ function AuthCoverageTab({ groupId }: { groupId: string }) {
 
   return (
     <div className="space-y-4">
-      <InsightBanner
-        storageKey="security.auth"
-        human={
-          <>
-            Which HTTP endpoints are protected by an{" "}
-            <DefTerm
-              term="auth guard"
-              def="A decorator, middleware, interceptor, or framework security rule that requires the caller to be authenticated before the handler runs."
-            />{" "}
-            and which are exposed without one. Routes that are{" "}
-            <DefTerm
-              term="public by design"
-              def="An endpoint with no auth guard that is intentionally open — e.g. login, register, password-reset, health checks, or an explicit @Public/AllowAny exemption."
-            />{" "}
-            are flagged as informational rather than High so genuine gaps stand
-            out.
-          </>
-        }
-        agent={{
-          tool: "archigraph_auth_coverage",
-          example:
-            "Reviewing a PR that adds GET /admin/users, an agent calls archigraph_auth_coverage to verify the new route picked up an auth guard — and blocks the merge when it finds the endpoint exposed without one and not on the public-by-design allowlist.",
-        }}
-      />
-
       <CoverageGauge
         covered={data.covered_count}
         uncovered={data.uncovered_count}
@@ -593,31 +569,6 @@ function SecretsTab({ groupId }: { groupId: string }) {
 
   return (
     <div className="space-y-4">
-      <InsightBanner
-        storageKey="security.secrets"
-        human={
-          <>
-            Credentials found in the codebase: both{" "}
-            <DefTerm
-              term="hardcoded"
-              def="A password, API key, token, or private key written directly into source code instead of being injected from a secrets store at runtime."
-            />{" "}
-            secrets that should be removed and detected{" "}
-            <DefTerm
-              term="secrets-management"
-              def="An integration with a dedicated secrets store (Vault, AWS Secrets Manager, …) — the recommended way to supply credentials."
-            />{" "}
-            integrations that are doing the right thing. Each row links to the
-            exact source location.
-          </>
-        }
-        agent={{
-          tool: "archigraph_secrets",
-          example:
-            "Scanning a PR diff, an agent calls archigraph_secrets and finds a newly-added AWS key string literal in a config file; it blocks the merge, points at the exact line, and suggests moving it into the existing Vault integration instead.",
-        }}
-      />
-
       <div className="flex flex-wrap gap-3">
         <CountStat label="High severity" value={data.error_count} tone="danger" />
         <CountStat label="Medium severity" value={data.warn_count} tone="warning" />
@@ -774,31 +725,6 @@ function CyclesTab({ groupId }: { groupId: string }) {
 
   return (
     <div className="space-y-4">
-      <InsightBanner
-        storageKey="security.cycles"
-        human={
-          <>
-            Circular{" "}
-            <DefTerm
-              term="import"
-              def="A group of modules that depend on each other in a loop (A imports B imports C imports A), so none can be built, tested, or reasoned about in isolation."
-            />{" "}
-            dependencies between modules. Cycles make code harder to test and
-            refactor; each finding lists the modules in the loop and a suggested{" "}
-            <DefTerm
-              term="extraction point"
-              def="The weakest edge in the cycle — the dependency most cheaply broken (e.g. by moving a shared type to its own module) to untangle the loop."
-            />{" "}
-            to break it. Severity scales with the number of modules involved.
-          </>
-        }
-        agent={{
-          tool: "archigraph_import_cycles",
-          example:
-            "After a refactor introduces a new A→B→A loop, an agent calls archigraph_import_cycles to locate the suggested extraction point and proposes moving the shared type into its own module — breaking the cycle with the smallest possible diff.",
-        }}
-      />
-
       <div className="flex flex-wrap gap-3">
         <CountStat label="High (>5)" value={data.error_count} tone="danger" />
         <CountStat label="Medium (3-5)" value={data.warn_count} tone="warning" />
@@ -834,9 +760,97 @@ function CyclesTab({ groupId }: { groupId: string }) {
 // § Screen shell
 // ---------------------------------------------------------------------------
 
+type SecurityTab = "auth" | "secrets" | "cycles";
+
+/**
+ * Per-tab insights (#4655). Registered with the breadcrumb Insights button via
+ * useSetInsight based on the ACTIVE tab — switching tabs re-registers a new
+ * object identity so the button re-glows and the popover updates. Module-level
+ * constants for stable identity; replaces the inline per-tab <InsightBanner>.
+ */
+const SECURITY_INSIGHTS: Record<SecurityTab, InsightValue> = {
+  auth: {
+    storageKey: "security.auth",
+    human: (
+      <>
+        Which HTTP endpoints are protected by an{" "}
+        <DefTerm
+          term="auth guard"
+          def="A decorator, middleware, interceptor, or framework security rule that requires the caller to be authenticated before the handler runs."
+        />{" "}
+        and which are exposed without one. Routes that are{" "}
+        <DefTerm
+          term="public by design"
+          def="An endpoint with no auth guard that is intentionally open — e.g. login, register, password-reset, health checks, or an explicit @Public/AllowAny exemption."
+        />{" "}
+        are flagged as informational rather than High so genuine gaps stand
+        out.
+      </>
+    ),
+    agent: {
+      tool: "archigraph_auth_coverage",
+      example:
+        "Reviewing a PR that adds GET /admin/users, an agent calls archigraph_auth_coverage to verify the new route picked up an auth guard — and blocks the merge when it finds the endpoint exposed without one and not on the public-by-design allowlist.",
+    },
+  },
+  secrets: {
+    storageKey: "security.secrets",
+    human: (
+      <>
+        Credentials found in the codebase: both{" "}
+        <DefTerm
+          term="hardcoded"
+          def="A password, API key, token, or private key written directly into source code instead of being injected from a secrets store at runtime."
+        />{" "}
+        secrets that should be removed and detected{" "}
+        <DefTerm
+          term="secrets-management"
+          def="An integration with a dedicated secrets store (Vault, AWS Secrets Manager, …) — the recommended way to supply credentials."
+        />{" "}
+        integrations that are doing the right thing. Each row links to the
+        exact source location.
+      </>
+    ),
+    agent: {
+      tool: "archigraph_secrets",
+      example:
+        "Scanning a PR diff, an agent calls archigraph_secrets and finds a newly-added AWS key string literal in a config file; it blocks the merge, points at the exact line, and suggests moving it into the existing Vault integration instead.",
+    },
+  },
+  cycles: {
+    storageKey: "security.cycles",
+    human: (
+      <>
+        Circular{" "}
+        <DefTerm
+          term="import"
+          def="A group of modules that depend on each other in a loop (A imports B imports C imports A), so none can be built, tested, or reasoned about in isolation."
+        />{" "}
+        dependencies between modules. Cycles make code harder to test and
+        refactor; each finding lists the modules in the loop and a suggested{" "}
+        <DefTerm
+          term="extraction point"
+          def="The weakest edge in the cycle — the dependency most cheaply broken (e.g. by moving a shared type to its own module) to untangle the loop."
+        />{" "}
+        to break it. Severity scales with the number of modules involved.
+      </>
+    ),
+    agent: {
+      tool: "archigraph_import_cycles",
+      example:
+        "After a refactor introduces a new A→B→A loop, an agent calls archigraph_import_cycles to locate the suggested extraction point and proposes moving the shared type into its own module — breaking the cycle with the smallest possible diff.",
+    },
+  },
+};
+
 export default function SecurityScreen() {
   const { groupId = "" } = useParams<{ groupId: string }>();
-  const [tab, setTab] = useState<"auth" | "secrets" | "cycles">("auth");
+  const [tab, setTab] = useState<SecurityTab>("auth");
+
+  // #4655: register the ACTIVE tab's insight with the breadcrumb Insights
+  // button. Switching tabs swaps the object identity → the button re-glows and
+  // the popover updates. Clears on unmount (navigating away).
+  useSetInsight(SECURITY_INSIGHTS[tab]);
 
   // Lightweight count pills on the tab strip (re-uses the same cached queries).
   const auth = useAuthCoverage(groupId);

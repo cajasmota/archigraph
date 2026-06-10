@@ -46,7 +46,8 @@ import {
   Bug,
 } from "lucide-react";
 
-import { Badge, Card, CardBody, Pill, InsightBanner } from "@/components/ui";
+import { Badge, Card, CardBody, Pill, useSetInsight } from "@/components/ui";
+import type { InsightValue } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefLine } from "@/components/RefLine";
 import { RepoChip } from "@/lib/repo-color";
@@ -377,33 +378,45 @@ function ErrorFlowBody({
 
   const caughtCount = data.total_exceptions - data.total_uncaught;
 
+  // #4655: register this screen's insight with the breadcrumb Insights button.
+  // The human copy embeds live counts, so the value is memoized on those counts
+  // to keep a stable identity (re-glows only when the counts actually change).
+  const insight = useMemo<InsightValue>(
+    () => ({
+      storageKey: "errorflow",
+      human: (
+        <>
+          Error flow — every exception type in the codebase, inverted around
+          the type: for each one, who can <strong>throw</strong> it and who{" "}
+          <strong>catches</strong> it. A type flagged{" "}
+          <em>“no catcher in graph”</em> is thrown but has no typed catcher
+          indexed anywhere — a cautious uncaught warning, not a proven leak.
+          Counts: {data.total_exceptions} exception type
+          {data.total_exceptions === 1 ? "" : "s"}, {data.total_uncaught} with
+          no catcher, {data.total_throws} throw
+          {data.total_throws === 1 ? "" : "s"} and {data.total_catches} catch
+          {data.total_catches === 1 ? "" : "es"} across the graph. Only TYPED
+          throws/catches are recorded — bare <code>except:</code> / untyped{" "}
+          <code>catch(e)</code> emit no edge.
+        </>
+      ),
+      agent: {
+        tool: "archigraph_find",
+        example:
+          "Before adding a try/catch, an agent calls archigraph_find for SCOPE.ExceptionType nodes (the synthetic exception:<Type> entities) to see which exceptions are thrown but reach the top with no catcher in the graph, then wraps the one that actually escapes uncaught instead of guessing.",
+      },
+    }),
+    [
+      data.total_exceptions,
+      data.total_uncaught,
+      data.total_throws,
+      data.total_catches,
+    ],
+  );
+  useSetInsight(insight);
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto ag-scroll px-4 py-4 space-y-4">
-      <InsightBanner
-        storageKey="errorflow"
-        human={
-          <>
-            Error flow — every exception type in the codebase, inverted around
-            the type: for each one, who can <strong>throw</strong> it and who{" "}
-            <strong>catches</strong> it. A type flagged{" "}
-            <em>“no catcher in graph”</em> is thrown but has no typed catcher
-            indexed anywhere — a cautious uncaught warning, not a proven leak.
-            Counts: {data.total_exceptions} exception type
-            {data.total_exceptions === 1 ? "" : "s"}, {data.total_uncaught} with
-            no catcher, {data.total_throws} throw
-            {data.total_throws === 1 ? "" : "s"} and {data.total_catches} catch
-            {data.total_catches === 1 ? "" : "es"} across the graph. Only TYPED
-            throws/catches are recorded — bare <code>except:</code> / untyped{" "}
-            <code>catch(e)</code> emit no edge.
-          </>
-        }
-        agent={{
-          tool: "archigraph_find",
-          example:
-            "Before adding a try/catch, an agent calls archigraph_find for SCOPE.ExceptionType nodes (the synthetic exception:<Type> entities) to see which exceptions are thrown but reach the top with no catcher in the graph, then wraps the one that actually escapes uncaught instead of guessing.",
-        }}
-      />
-
       {/* Summary */}
       <div className="flex flex-wrap gap-3">
         <SummaryStat label="Exception types" value={data.total_exceptions} />
