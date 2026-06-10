@@ -163,6 +163,25 @@ func synthesisSupportsLanguage(lang string) bool {
 //   - dotted qualified names (`Class.method`) — the synthesis-time bridge is for
 //     the bare-method, same-file case; qualified cross-file shapes are handled by
 //     the resolve pass. (A dotted name would also not match byLocation[file][name].)
+// inlineHandlerRefKind is the sentinel refKind a producer synthesizer passes to
+// emit() when it has detected an HTTP route whose handler is an ANONYMOUS /
+// INLINE function (arrow or function-expression) rather than a named handler
+// symbol. refName is empty in this case. makeEmit recognises it and synthesizes
+// a stable inline-handler entity + endpoint→handler bridge (#4324) so the
+// endpoint is never left a handler-less graph island.
+const inlineHandlerRefKind = "InlineHandler"
+
+// inlineHandlerName returns the deterministic, merge-stable Name for the
+// synthetic Operation entity that stands in for an inline HTTP route handler
+// (#4324). It is derived purely from the HTTP verb and the canonical route
+// path — never a line number or a captured parameter — so the same route always
+// yields the same handler node and the structural-ref that bridges the endpoint
+// to it (BuildOperationStructuralRef over this Name) is stable across
+// entity-merge. Shape: `<inline GET /health>`.
+func inlineHandlerName(verb, canonicalPath string) string {
+	return "<inline " + verb + " " + canonicalPath + ">"
+}
+
 func synthesisHandlerStructuralRef(lang, file, refKind, refName string) string {
 	if refName == "" || file == "" || lang == "" {
 		return ""
@@ -504,6 +523,58 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 						Kind:   implementsEdgeKind,
 						Properties: map[string]string{
 							"pattern_type": "http_endpoint_synthesis_time_bridge",
+							"framework":    framework,
+							"verb":         strings.ToUpper(method),
+							"path":         canonicalPath,
+						},
+					})
+				} else if refKind == inlineHandlerRefKind {
+					// #4324 — the route handler is an ANONYMOUS / INLINE function
+					// (arrow or function-expression), e.g.
+					//   app.get('/health', (req, res) => res.send('ok'))
+					// There is no addressable handler SYMBOL the structural-ref
+					// could bind to, so the synthesizer signals refKind=
+					// "InlineHandler" (refName is empty). Without this branch the
+					// endpoint is emitted but left a graph ISLAND with no handler
+					// linkage — invisible to flow / IMPLEMENTS traversal.
+					//
+					// LONG-TERM ROOT FIX (handler-shape-agnostic): synthesize a
+					// stable inline-handler Operation entity and bridge to it. The
+					// entity's Name — and the structural-ref that targets it — are
+					// derived purely from (verb, canonicalPath), NOT from a line
+					// number or a captured parameter token, so both are:
+					//   * deterministic   — same route ⇒ same handler node, and
+					//   * merge-stable    — survives entity-merge/dedup the same way
+					//                       the #4319 decorated-handler bridge does
+					//                       (it travels as a Format-A stub bound by
+					//                       (file, Name) after all merging, never a
+					//                       hex ID or a line-sensitive co-location).
+					// File-scoped ⇒ it can never mis-bridge to another file.
+					handlerName := inlineHandlerName(strings.ToUpper(method), canonicalPath)
+					entities = append(entities, types.EntityRecord{
+						Name:             handlerName,
+						QualifiedName:    handlerName,
+						Kind:             "SCOPE.Operation",
+						Subtype:          "inline_handler",
+						SourceFile:       path,
+						Language:         lang,
+						EnrichmentStatus: types.StatusPending,
+						QualityScore:     0.7,
+						Properties: map[string]string{
+							"framework":    framework,
+							"handler_kind": "inline",
+							"verb":         strings.ToUpper(method),
+							"route_path":   canonicalPath,
+							"provenance":   "SYNTHESIZED_INLINE_HTTP_HANDLER",
+						},
+					})
+					relationships = append(relationships, types.RelationshipRecord{
+						FromID: extractor.BuildOperationStructuralRef(lang, path, handlerName),
+						ToID:   kind + ":" + id,
+						Kind:   implementsEdgeKind,
+						Properties: map[string]string{
+							"pattern_type": "http_endpoint_synthesis_time_bridge",
+							"handler_kind": "inline",
 							"framework":    framework,
 							"verb":         strings.ToUpper(method),
 							"path":         canonicalPath,
@@ -4305,8 +4376,14 @@ func synthesizeExpress(content string, emit emitFn) {
 		// source_handler (NoHandlerProp keep-path) and survives resolve. The
 		// path-only second pass would otherwise dedup it away with a handler
 		// it can't use, so we MUST claim the (verb,path) here.
+		refKind := "Controller"
 		if isInlineExpressHandler(m[0], raw) {
+			// #4324 — anonymous/inline arrow or function-expression handler:
+			// no addressable symbol. Signal InlineHandler so makeEmit
+			// synthesizes a stable handler node + bridge instead of leaving
+			// the endpoint a handler-less island.
 			handler = ""
+			refKind = inlineHandlerRefKind
 		}
 		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, composeExpressMount(mountPrefixes, receiver, raw))
 		// Express `.all(...)` registers every verb on the path; emit as ANY.
@@ -4315,7 +4392,7 @@ func synthesizeExpress(content string, emit emitFn) {
 		}
 		key := verb + ":" + canonical
 		withHandler[key] = true
-		emit(verb, canonical, "express", "Controller", handler)
+		emit(verb, canonical, "express", refKind, handler)
 	}
 	// Second pass: path-only form (groups: receiver, verb, path), skipping any
 	// (verb, path) already claimed by the handler-named scan.
@@ -4341,7 +4418,12 @@ func synthesizeExpress(content string, emit emitFn) {
 		if withHandler[key] {
 			continue
 		}
-		emit(verb, canonical, "express", "Controller", "")
+		// #4324 — the handler-named pass did not claim this (verb,path), which
+		// means the handler is an inline arrow / function-expression whose body
+		// the handler-named regex couldn't span (e.g. a multi-line block). A
+		// route ALWAYS has a handler argument, so model it as an inline handler
+		// rather than emitting a handler-less island.
+		emit(verb, canonical, "express", inlineHandlerRefKind, "")
 	}
 }
 

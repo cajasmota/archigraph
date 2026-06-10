@@ -183,8 +183,11 @@ func synthesizeFastify(content string, emit emitFn) {
 		}
 		verb := strings.ToUpper(content[m[4]:m[5]])
 		handler := content[m[8]:m[9]]
+		refKind := "Controller"
 		if isInlineExpressHandler(content[m[0]:m[1]], raw) {
+			// #4324 — inline arrow/function-expression handler; no symbol.
 			handler = ""
+			refKind = inlineHandlerRefKind
 		}
 		full := joinPathFragments(fastifyComposedPrefix(pluginSpans, m[0]), raw)
 		canonical := httproutes.Canonicalize(httproutes.FrameworkExpress, full)
@@ -193,7 +196,7 @@ func synthesizeFastify(content string, emit emitFn) {
 		}
 		key := verb + ":" + canonical
 		withHandler[key] = true
-		emit(verb, canonical, "fastify", "Controller", handler)
+		emit(verb, canonical, "fastify", refKind, handler)
 	}
 	for _, m := range fastifyVerbPathOnlyRe.FindAllStringSubmatchIndex(content, -1) {
 		if len(m) < 8 {
@@ -217,7 +220,8 @@ func synthesizeFastify(content string, emit emitFn) {
 		if withHandler[key] {
 			continue
 		}
-		emit(verb, canonical, "fastify", "Controller", "")
+		// #4324 — handler-named pass missed this (verb,path) ⇒ inline handler.
+		emit(verb, canonical, "fastify", inlineHandlerRefKind, "")
 	}
 	// Structured form: fastify.route({ method, url, handler }).
 	for _, m := range fastifyRouteRe.FindAllStringSubmatchIndex(content, -1) {
