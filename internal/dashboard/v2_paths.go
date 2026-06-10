@@ -233,7 +233,15 @@ type v2PathDetail struct {
 	InboundFetches     []v2PathEntity        `json:"inbound_fetches"`
 	Outbound           v2OutboundQueries     `json:"outbound"`
 	SideEffects        []v2PathEntity        `json:"side_effects"`
-	Tests              []v2PathEntity        `json:"tests"`
+	// EffectiveEffects is the union of effect KINDS (db_read/db_write/http_out/
+	// fs/…) the endpoint reaches DIRECTLY or transitively through its handler's
+	// downstream CALLS (#4489). Each is tagged source=direct|downstream so a thin
+	// controller that delegates the DB write to a service.create still shows
+	// db_write (source=downstream) instead of an empty "Side effects (0)".
+	// Computed query-time from the same canonical effects sidecar the `effects`
+	// MCP tool reads — no reindex required.
+	EffectiveEffects []v2EffectiveEffect `json:"effective_effects,omitempty"`
+	Tests            []v2PathEntity      `json:"tests"`
 }
 
 // v2AuthSignal is one evidence row in the resolved auth_policy source chain.
@@ -788,6 +796,9 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 		// Both are used to match inbound cross-repo links (#1891).
 		HandlerEntityIDs []string
 		DefEntityID      string
+		// HandlerLocalIDs are the un-prefixed handler entity IDs in this hit's
+		// repo, used to root the transitive effective-effects CALLS walk (#4489).
+		HandlerLocalIDs []string
 		// Issue #1909 — JAX-RS / Spring request body type inferred from method
 		// parameter annotations (populated for POST/PUT/PATCH endpoints).
 		RequestBodyType      string
@@ -948,6 +959,7 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 				TestIDs:          classified.tests,
 				HandlerEntityIDs: prefixedHandlerIDs,
 				DefEntityID:      dashPrefixedID(repo.Slug, e.ID),
+				HandlerLocalIDs:  handlerIDs,
 				// Issue #1909 — request body type from entity properties.
 				RequestBodyType:      e.Properties["request_body_type"],
 				RequestBodyParamName: e.Properties["request_body_param_name"],
@@ -1228,6 +1240,24 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 	sideEffectEntities := resolveEntitySlice(grp, sideEffectIDs, "SIDE_EFFECT")
 	testEntities := resolveEntitySlice(grp, testIDs, "TESTS")
 
+	// #4489 — EFFECTIVE side-effects: the union of effect kinds reachable from
+	// the handler DIRECTLY or transitively through its downstream CALLS. A thin
+	// controller that delegates the DB write to service.create has no direct
+	// side-effect edge (so SideEffects above reads (0)); aggregating the effect
+	// kinds off the canonical links-effects sidecar surfaces db_write as
+	// source=downstream. Query-time (no reindex). Per-repo (handler chain lives
+	// in the endpoint's own repo).
+	effEffects := loadDAGEffectsSidecar(grp.Name)
+	// Group handler local IDs by repo (a path can be served from several repos /
+	// verbs; each handler's downstream chain is walked in its own repo index).
+	handlersByRepo := map[string][]string{}
+	for _, h := range hits {
+		if len(h.HandlerLocalIDs) > 0 {
+			handlersByRepo[h.Repo] = mergeUniqueStrings(handlersByRepo[h.Repo], h.HandlerLocalIDs)
+		}
+	}
+	effectiveEffects := mergeEffectiveEffects(handlersByRepo, repoIdx, effEffects)
+
 	// Split downstream callees by kind for the structured Outbound section.
 	outbound := v2OutboundQueries{
 		DB:       []v2PathEntity{},
@@ -1346,6 +1376,7 @@ func (s *Server) handleV2PathDetail(w http.ResponseWriter, r *http.Request) {
 		InboundFetches:     inboundFetches,
 		Outbound:           outbound,
 		SideEffects:        sideEffectEntities,
+		EffectiveEffects:   effectiveEffects,
 		Tests:              testEntities,
 	}))
 }
