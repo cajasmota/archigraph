@@ -33,6 +33,11 @@ type AuthEndpointFinding struct {
 	EntityID     string `json:"entity_id"`
 	Name         string `json:"name"`
 	Repo         string `json:"repo"`
+	// ModulePath is the monorepo module sub-path owning this finding's source
+	// file (#4698), derived from the repo's configured module roots. Empty for
+	// single-repo groups or files under no module root. Lets the scope selector
+	// filter at module precision instead of falling back to repo-level.
+	ModulePath   string `json:"module_path,omitempty"`
 	SourceFile   string `json:"source_file,omitempty"`
 	StartLine    int    `json:"start_line,omitempty"`
 	Method       string `json:"method,omitempty"`
@@ -79,6 +84,9 @@ type SecuritySecretFinding struct {
 	EntityID   string `json:"entity_id"`
 	Name       string `json:"name"`
 	Repo       string `json:"repo"`
+	// ModulePath is the monorepo module sub-path owning this finding's source
+	// file (#4698). See AuthEndpointFinding.ModulePath.
+	ModulePath string `json:"module_path,omitempty"`
 	SourceFile string `json:"source_file,omitempty"`
 	StartLine  int    `json:"start_line,omitempty"`
 	Language   string `json:"language,omitempty"`
@@ -368,6 +376,9 @@ func (s *Server) handleSecurityAuthCoverage(w http.ResponseWriter, r *http.Reque
 
 	result := GroupAuthCoverageReport{Group: groupName}
 
+	// #4698 — module roots per repo so each finding can carry its module_path.
+	moduleRoots := moduleRootsByRepo(repoPaths)
+
 	// S8 (#2159): prefer the pre-loaded cached group so we don't call
 	// LoadGraphFromDir per-request. Fall back to a direct load when the
 	// cache is cold (first request after daemon start).
@@ -491,6 +502,7 @@ func (s *Server) handleSecurityAuthCoverage(w http.ResponseWriter, r *http.Reque
 				EntityID:     rp.Slug + "/" + id,
 				Name:         name,
 				Repo:         rp.Slug,
+				ModulePath:   modulePathFor(rp.Slug, sourceFile, moduleRoots),
 				SourceFile:   sourceFile,
 				StartLine:    startLine,
 				Method:       method,
@@ -559,6 +571,9 @@ func (s *Server) handleSecuritySecrets(w http.ResponseWriter, r *http.Request) {
 		Group:      groupName,
 		ByCategory: make(map[string]int),
 	}
+
+	// #4698 — module roots per repo so each finding can carry its module_path.
+	moduleRoots := moduleRootsByRepo(repoPaths)
 
 	sevOrder := map[string]int{"error": 0, "warn": 1, "info": 2}
 
@@ -643,6 +658,7 @@ func (s *Server) handleSecuritySecrets(w http.ResponseWriter, r *http.Request) {
 				EntityID:    rp.Slug + "/" + id,
 				Name:        name,
 				Repo:        rp.Slug,
+				ModulePath:  modulePathFor(rp.Slug, sourceFile, moduleRoots),
 				SourceFile:  sourceFile,
 				StartLine:   startLine,
 				Language:    language,

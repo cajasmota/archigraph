@@ -196,6 +196,14 @@ type CrossRepoLink struct {
 	TargetQualifiedName string `json:"target_qualified_name,omitempty"`
 	TargetFile          string `json:"target_file,omitempty"`
 	TargetLine          int    `json:"target_line,omitempty"`
+
+	// Module sub-paths owning each endpoint within its repo (#4698), derived
+	// from the source/target file and the repo's configured monorepo module
+	// roots. Empty for single-repo groups or files under no module root. Let the
+	// scope selector keep a link at module precision when either endpoint lives
+	// in the scoped module.
+	SourceModulePath string `json:"source_module_path,omitempty"`
+	TargetModulePath string `json:"target_module_path,omitempty"`
 }
 
 // UnmarshalJSON handles the "relation" field used by the link pass as a
@@ -576,23 +584,34 @@ func normalizeLinkEndpoints(links []CrossRepoLink, repos map[string]*DashRepo) [
 // entity (e.g. a synthetic scope.operation node #4554 or a bare-external
 // target #4558 that has no source-derived name) simply leaves its enrichment
 // fields empty, and the frontend falls back to the graph deep-link.
-func enrichLinkEndpoints(grp *DashGroup, links []CrossRepoLink) []CrossRepoLink {
+// enrichLinkEndpoints resolves each link's source/target entity for readable
+// rendering and source-peek (#4596) and stamps each endpoint's monorepo
+// module_path (#4698) using moduleRoots (parent-repo slug → configured module
+// roots). moduleRoots may be nil for single-repo / non-monorepo groups, in
+// which case module paths stay empty.
+func enrichLinkEndpoints(grp *DashGroup, links []CrossRepoLink, moduleRoots map[string][]string) []CrossRepoLink {
 	if grp == nil || len(links) == 0 {
 		return links
 	}
 	out := make([]CrossRepoLink, len(links))
 	for i, l := range links {
-		if _, e := findEntity(grp, l.Source); e != nil {
+		if rp, e := findEntity(grp, l.Source); e != nil {
 			l.SourceName = e.Name
 			l.SourceQualifiedName = e.QualifiedName
 			l.SourceFile = e.SourceFile
 			l.SourceLine = e.StartLine
+			if rp != nil {
+				l.SourceModulePath = modulePathFor(rp.Slug, e.SourceFile, moduleRoots)
+			}
 		}
-		if _, e := findEntity(grp, l.Target); e != nil {
+		if rp, e := findEntity(grp, l.Target); e != nil {
 			l.TargetName = e.Name
 			l.TargetQualifiedName = e.QualifiedName
 			l.TargetFile = e.SourceFile
 			l.TargetLine = e.StartLine
+			if rp != nil {
+				l.TargetModulePath = modulePathFor(rp.Slug, e.SourceFile, moduleRoots)
+			}
 		}
 		out[i] = l
 	}

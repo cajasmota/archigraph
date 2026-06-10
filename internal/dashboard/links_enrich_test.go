@@ -47,7 +47,7 @@ func TestEnrichLinkEndpoints_PopulatesNameAndFile(t *testing.T) {
 		}},
 	}
 
-	out := enrichLinkEndpoints(grp, grp.Links)
+	out := enrichLinkEndpoints(grp, grp.Links, nil)
 	if len(out) != 1 {
 		t.Fatalf("links len = %d; want 1", len(out))
 	}
@@ -113,7 +113,7 @@ func TestEnrichLinkEndpoints_UnresolvedSourceLeftEmpty(t *testing.T) {
 		}},
 	}
 
-	out := enrichLinkEndpoints(grp, grp.Links)
+	out := enrichLinkEndpoints(grp, grp.Links, nil)
 	l := out[0]
 
 	if l.SourceName != "" || l.SourceFile != "" || l.SourceLine != 0 {

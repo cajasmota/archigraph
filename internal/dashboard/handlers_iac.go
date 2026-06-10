@@ -118,6 +118,11 @@ type IaCRelation struct {
 type IaCResource struct {
 	EntityID string `json:"entity_id"`
 	Repo     string `json:"repo"`
+	// ModulePath is the monorepo module sub-path owning this resource's source
+	// file (#4698), derived from the repo's configured module roots. Distinct
+	// from Module below (a source-dir grouping heuristic): ModulePath is the
+	// scope-selector key. Empty for single-repo groups / files under no root.
+	ModulePath string `json:"module_path,omitempty"`
 	// Name is the logical id / resource name.
 	Name string `json:"name"`
 	// Tool is the normalized iac_tool (aws-cdk/pulumi/bicep/cloudformation/sam/
@@ -460,6 +465,9 @@ func (s *Server) handleIaC(w http.ResponseWriter, r *http.Request) {
 		CountsByCategory: map[string]int{},
 	}
 
+	// #4698 — module roots per repo so each resource can carry its module_path.
+	moduleRoots := moduleRootsByRepo(repoPaths)
+
 	// resources keyed by entity ID so relationship attachment is O(1).
 	byID := map[string]*IaCResource{}
 	// resource display name by entity ID, for resolving relation targets.
@@ -575,6 +583,7 @@ func (s *Server) handleIaC(w http.ResponseWriter, r *http.Request) {
 			res := &IaCResource{
 				EntityID:      rp.Slug + "/" + id,
 				Repo:          rp.Slug,
+				ModulePath:    modulePathFor(rp.Slug, sourceFile, moduleRoots),
 				Name:          name,
 				Tool:          tool,
 				ResourceType:  rtype,

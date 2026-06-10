@@ -571,10 +571,13 @@ func (s *Server) handleQualityRecall(w http.ResponseWriter, r *http.Request) {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-// repoRef is a (slug, path) pair.
+// repoRef is a (slug, path) pair, plus the repo's configured monorepo module
+// roots (#4698) so handlers can stamp per-record module_path without re-loading
+// the group config.
 type repoRef struct {
-	Slug string
-	Path string
+	Slug    string
+	Path    string
+	Modules []string
 }
 
 // repoPathsForGroup resolves every repo path for the named group by loading
@@ -594,7 +597,7 @@ func repoPathsForGroup(groupName string) ([]repoRef, error) {
 		}
 		out := make([]repoRef, 0, len(cfg.Repos))
 		for _, r := range cfg.Repos {
-			out = append(out, repoRef{Slug: r.Slug, Path: r.Path})
+			out = append(out, repoRef{Slug: r.Slug, Path: r.Path, Modules: r.Modules})
 		}
 		return out, nil
 	}
