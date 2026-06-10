@@ -76,6 +76,13 @@ var (
 		`(?m)^MIDDLEWARE\s*(?:\+?=)\s*\[`)
 	djangoMiddlewareItemRe = regexp.MustCompile(`["']([A-Za-z][\w.]+)["']`)
 
+	// Anchor for the global-wiring pass (issue #4379): fires when the file is a
+	// settings module declaring any of the supported cross-cutting lists. The
+	// matched offset positions the synthetic django_settings entity on the
+	// first such assignment.
+	djangoSettingsAnchorRe = regexp.MustCompile(
+		`(?m)^(?:MIDDLEWARE|AUTHENTICATION_BACKENDS|REST_FRAMEWORK)\s*(?:\+?=)\s*[\[({]`)
+
 	// DRF SerializerMethodField return-type inference (issue #3346).
 	// class FooSerializer → field = SerializerMethodField() → def get_field(self) -> ReturnType
 	djangoDRFSMFRe = regexp.MustCompile(
@@ -710,6 +717,19 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 						"classes":      strings.Join(classes, ","),
 					}))
 			}
+		}
+	}
+
+	// 16. Global cross-cutting wiring (issue #4379).
+	// MIDDLEWARE / AUTHENTICATION_BACKENDS / REST_FRAMEWORK DEFAULT_*_CLASSES
+	// register middleware/auth/permission/renderer/backend classes app-wide by
+	// dotted string path. Emit a synthetic `django_settings` entity that owns
+	// one global USES edge per bound class so the otherwise-orphan classes are
+	// connected and the global scope is queryable (mirrors NestJS #4329).
+	if loc := djangoSettingsAnchorRe.FindStringIndex(source); loc != nil {
+		settingsLine := lineOf(source, loc[0])
+		if ent := extractDjangoGlobalWiring(source, file.Path, settingsLine); ent != nil {
+			out = append(out, *ent)
 		}
 	}
 
