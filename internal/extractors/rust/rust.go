@@ -63,6 +63,12 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	// host SCOPE.Operation entities (including impl-qualified method names)
 	// already exist for FromName attachment.
 	emitExceptionFlowEdges(file.Tree.RootNode(), file.Content, &entities)
+	// Ticket #4431 — index const/static constant collections (const slice maps,
+	// phf_map!/lazy_static! maps, module constant groups) and data-enums as
+	// queryable SCOPE.Enum value-sets, reusing the shared cross-language builder
+	// (extends #4420/#4429). Append-only supplemental pass: it never replaces the
+	// struct/enum Component entities the walk already emitted.
+	emitRustConstValueSets(file.Tree.RootNode(), file.Content, file.Path, &entities)
 	// Issue #90 — language tag for resolver dynamic-pattern dispatch.
 	extractor.TagRelationshipsLanguage(entities, "rust")
 	extractor.TagEntitiesLanguage(entities, "rust")
