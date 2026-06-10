@@ -222,6 +222,17 @@ func (e *sequelizeExtractor) Extract(ctx context.Context, file extreg.FileInput)
 		addEntity(ent)
 	}
 
+	// Model attribute-block spans: map each model's attributes object byte range to
+	// the model node so column definitions inside it become CONTAINS members of the
+	// right model (issue #4365). modelIdx tracks the entities-slice index.
+	type attrSpan struct {
+		model      string
+		start, end int
+		idx        int
+	}
+	var attrSpans []attrSpan
+	modelIdx := make(map[string]int)
+
 	// sequelize.define models. The model node carries data-lifecycle traits
 	// (#3628 child) resolved from the attributes + options objects that follow
 	// the define( opener: paranoid → soft-delete, timestamps default-on, audit
@@ -232,6 +243,16 @@ func (e *sequelizeExtractor) Extract(ctx context.Context, file extreg.FileInput)
 		setProps(&ent, "framework", "sequelize", "provenance", "INFERRED_FROM_SEQUELIZE_DEFINE")
 		sequelizeModelLifecycle(src, m[1]).
 			Stamp(func(kv ...string) { setProps(&ent, kv...) })
+		if !seen[fmt.Sprintf("%s:%s:%s", ent.Kind, ent.Name, ent.Subtype)] {
+			modelIdx[name] = len(entities)
+			// Attributes object is the brace span starting at/after the define( opener.
+			if _, after := sequelizeBracedSpan(src, m[1]); after > m[1] {
+				open := strings.IndexByte(src[m[1]:], '{')
+				if open >= 0 {
+					attrSpans = append(attrSpans, attrSpan{model: name, start: m[1] + open, end: after, idx: len(entities)})
+				}
+			}
+		}
 		addEntity(ent)
 	}
 
@@ -263,6 +284,11 @@ func (e *sequelizeExtractor) Extract(ctx context.Context, file extreg.FileInput)
 			// so back up one byte to let sequelizeBracedSpan see it.
 			sequelizeModelLifecycle(src, m[1]-1).
 				Stamp(func(kv ...string) { setProps(&entities[idx], kv...) })
+			// Attributes object spans from the consumed '{' (at m[1]-1) to its match.
+			if _, after := sequelizeBracedSpan(src, m[1]-1); after > m[1]-1 {
+				modelIdx[name] = idx
+				attrSpans = append(attrSpans, attrSpan{model: name, start: m[1] - 1, end: after, idx: idx})
+			}
 		}
 		ent := makeEntity(name+".init", "SCOPE.Operation", "model_init", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "sequelize", "model_name", name,
@@ -281,9 +307,21 @@ func (e *sequelizeExtractor) Extract(ctx context.Context, file extreg.FileInput)
 		addEntity(ent)
 	}
 
+	// ownerModelAt returns the model whose attributes object encloses the offset.
+	ownerModelAt := func(off int) (attrSpan, bool) {
+		for _, s := range attrSpans {
+			if off >= s.start && off < s.end {
+				return s, true
+			}
+		}
+		return attrSpan{idx: -1}, false
+	}
+
 	// Column definitions: emit SCOPE.Component "column" entities for schema_extraction.
 	// We require that the file contains at least one DataTypes reference to confirm
 	// this is a schema file, then emit each column-def block entry as a field entity.
+	// Each column is a CONTAINS member of the model whose attributes object encloses
+	// it (issue #4365) so it is not an orphan.
 	if reSequelizeDataType.MatchString(src) {
 		for _, m := range reSequelizeColumnDef.FindAllStringSubmatchIndex(src, -1) {
 			fieldName := src[m[2]:m[3]]
@@ -296,16 +334,30 @@ func (e *sequelizeExtractor) Extract(ctx context.Context, file extreg.FileInput)
 			}
 			ent := makeEntity(fieldName, "SCOPE.Component", "column", file.Path, file.Language, lineOf(src, m[0]))
 			setProps(&ent, "framework", "sequelize", "provenance", "INFERRED_FROM_SEQUELIZE_COLUMN_DEF")
+			if owner, ok := ownerModelAt(m[0]); ok && owner.idx >= 0 {
+				setProps(&ent, "owner_model", owner.model)
+				entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+					containsFieldEdge(owner.model, ent.ID, fieldName, "sequelize"))
+			}
 			addEntity(ent)
 		}
 	}
 
-	// Foreign-key columns: references: { model: 'X' } inside a column def.
+	// Foreign-key columns: references: { model: 'X' } inside a column def. The FK
+	// entity is a CONTAINS member of its owning model and carries a REFERENCES edge
+	// to the referenced model class (issue #4365).
 	for _, m := range reSequelizeColumnRef.FindAllStringSubmatchIndex(src, -1) {
 		refModel := src[m[2]:m[3]]
 		ent := makeEntity("fk:"+refModel, "SCOPE.Component", "foreign_key", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "sequelize", "referenced_model", refModel,
 			"provenance", "INFERRED_FROM_SEQUELIZE_COLUMN_REFERENCE")
+		ent.Relationships = append(ent.Relationships,
+			referencesClassEdge(ent.ID, refModel, "sequelize", "fk:"+refModel))
+		if owner, ok := ownerModelAt(m[0]); ok && owner.idx >= 0 {
+			setProps(&ent, "owner_model", owner.model)
+			entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+				containsFieldEdge(owner.model, ent.ID, "fk:"+refModel, "sequelize"))
+		}
 		addEntity(ent)
 	}
 

@@ -203,14 +203,59 @@ func (e *prismaExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 	}
 
 	// Prisma model field definitions — emit SCOPE.Component "field" entities for
-	// schema_extraction. Only inside .prisma files.
+	// schema_extraction. Only inside .prisma files. Each field is a CONTAINS member
+	// of its owning model (issue #4365); a field whose type names another model
+	// also carries a REFERENCES edge to that model (the relation target type).
 	if isPrismaSchema {
+		// Map each model field-line global offset to its owning model name by
+		// walking the model blocks. modelFieldOwner returns the owner for an offset.
+		type blockSpan struct {
+			name       string
+			start, end int
+		}
+		var spans []blockSpan
+		for _, m := range rePrismaModel.FindAllStringSubmatchIndex(src, -1) {
+			name := src[m[2]:m[3]]
+			start := m[1]
+			end := len(src)
+			if i := strings.Index(src[start:], "\n}"); i >= 0 {
+				end = start + i + 2
+			}
+			spans = append(spans, blockSpan{name: name, start: start, end: end})
+		}
+		ownerOf := func(off int) (string, bool) {
+			for _, s := range spans {
+				if off >= s.start && off < s.end {
+					return s.name, true
+				}
+			}
+			return "", false
+		}
 		for _, m := range rePrismaModelField.FindAllStringSubmatchIndex(src, -1) {
+			owner, hasOwner := ownerOf(m[0])
+			// Only emit fields that live inside a model block. Lines inside the
+			// datasource/generator blocks (`generator client {`, `model = "..."`)
+			// otherwise leak in as standalone orphan "field" entities (#4365).
+			if !hasOwner {
+				continue
+			}
 			fieldName := src[m[2]:m[3]]
 			fieldType := src[m[4]:m[5]]
 			ent := makeEntity(fieldName, "SCOPE.Component", "field", file.Path, file.Language, lineOf(src, m[0]))
 			setProps(&ent, "framework", "prisma", "field_type", fieldType,
 				"provenance", "INFERRED_FROM_PRISMA_FIELD")
+			setProps(&ent, "owner_model", owner)
+			// Relation field: base type names another model (incl. self-relations).
+			// Capture the target as a REFERENCES edge so the field is not a semantic
+			// orphan.
+			baseType := strings.TrimSuffix(strings.TrimSuffix(fieldType, "[]"), "?")
+			if knownModels[baseType] {
+				setProps(&ent, "target_model", baseType)
+				ent.Relationships = append(ent.Relationships,
+					referencesClassEdge(ent.ID, baseType, "prisma", fieldName))
+			}
+			entities[modelIdx[owner]].Relationships = append(entities[modelIdx[owner]].Relationships,
+				containsFieldEdge(owner, ent.ID, fieldName, "prisma"))
 			addEntity(ent)
 		}
 

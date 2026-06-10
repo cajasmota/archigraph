@@ -92,6 +92,19 @@ func (e *drizzleExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 		entities = append(entities, ent)
 	}
 
+	// tableOwner maps a table's JS const binding to its model node so column /
+	// reference fields below can hang a CONTAINS membership edge off it (issue
+	// #4365) and so .references(() => other.col) resolves the target table binding
+	// to its model name. Populated while scanning table definitions.
+	type ownerInfo struct {
+		modelName string // SQL table name (the model node name)
+		binding   string // JS const binding
+		off       int    // byte offset of the `const x = pgTable(` opener
+		idx       int    // index into entities
+	}
+	var tableOwners []ownerInfo
+	bindingToModel := make(map[string]string)
+
 	if lang == "typescript" || lang == "javascript" {
 		// Table model definitions.
 		for _, m := range reDrizzleTable.FindAllStringSubmatchIndex(src, -1) {
@@ -101,7 +114,25 @@ func (e *drizzleExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 			ent := makeEntity(table, "SCOPE.Schema", "model", file.Path, file.Language, lineOf(src, m[0]))
 			setProps(&ent, "framework", "drizzle", "binding", binding, "builder", builder,
 				"table", table, "provenance", "INFERRED_FROM_DRIZZLE_TABLE")
+			if !seen[fmt.Sprintf("%s:%s:%s", ent.Kind, ent.Name, ent.Subtype)] {
+				tableOwners = append(tableOwners, ownerInfo{modelName: table, binding: binding, off: m[0], idx: len(entities)})
+				bindingToModel[binding] = table
+			}
 			addEntity(ent)
+		}
+
+		// owningTable returns the table whose pgTable( opener most closely precedes
+		// a body offset (the table body is the object literal that follows).
+		owningTable := func(offset int) (ownerInfo, bool) {
+			best := ownerInfo{idx: -1}
+			found := false
+			for _, o := range tableOwners {
+				if o.off <= offset {
+					best = o
+					found = true
+				}
+			}
+			return best, found
 		}
 
 		// Enum definitions.
@@ -121,17 +152,28 @@ func (e *drizzleExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 			addEntity(ent)
 		}
 
-		// Column definitions: emit SCOPE.Component "column" entities for schema_extraction.
+		// Column definitions: emit SCOPE.Component "column" entities for
+		// schema_extraction. Each column is a CONTAINS member of its owning table
+		// model node (issue #4365) so it is not an orphan. The `colName` here is the
+		// JS binding for membership/field-name purposes.
 		for _, m := range reDrizzleColumnDef.FindAllStringSubmatchIndex(src, -1) {
 			binding := src[m[2]:m[3]]
 			sqlName := src[m[4]:m[5]]
 			ent := makeEntity(sqlName, "SCOPE.Component", "column", file.Path, file.Language, lineOf(src, m[0]))
 			setProps(&ent, "framework", "drizzle", "binding", binding,
 				"provenance", "INFERRED_FROM_DRIZZLE_COLUMN_DEF")
+			if owner, ok := owningTable(m[0]); ok && owner.idx >= 0 {
+				setProps(&ent, "owner_table", owner.modelName)
+				entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+					containsFieldEdge(owner.modelName, ent.ID, binding, "drizzle"))
+			}
 			addEntity(ent)
 		}
 
-		// .references(() => table.col) — emit foreign_key entities.
+		// .references(() => table.col) — emit foreign_key entities. The FK column is
+		// a CONTAINS member of its owning table, and the referenced table is captured
+		// as a REFERENCES edge to that table's model node (issue #4365). The target
+		// JS binding is resolved to the SQL table (model) name via bindingToModel.
 		for _, m := range reDrizzleReferences.FindAllStringSubmatchIndex(src, -1) {
 			refTable := src[m[2]:m[3]]
 			refCol := src[m[4]:m[5]]
@@ -139,6 +181,20 @@ func (e *drizzleExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 			ent := makeEntity(name, "SCOPE.Component", "foreign_key", file.Path, file.Language, lineOf(src, m[0]))
 			setProps(&ent, "framework", "drizzle", "ref_table", refTable, "ref_column", refCol,
 				"provenance", "INFERRED_FROM_DRIZZLE_REFERENCES")
+			// Resolve the referenced binding to its SQL table (model) name so the
+			// REFERENCES target stub matches the table model node by name.
+			targetModel := refTable
+			if mn, ok := bindingToModel[refTable]; ok {
+				targetModel = mn
+			}
+			setProps(&ent, "target_table", targetModel)
+			ent.Relationships = append(ent.Relationships,
+				referencesClassEdge(ent.ID, targetModel, "drizzle", refCol))
+			if owner, ok := owningTable(m[0]); ok && owner.idx >= 0 {
+				setProps(&ent, "owner_table", owner.modelName)
+				entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+					containsFieldEdge(owner.modelName, ent.ID, name, "drizzle"))
+			}
 			addEntity(ent)
 		}
 

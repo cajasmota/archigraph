@@ -39,6 +39,11 @@ var (
 	reMikroRelation = regexp.MustCompile(
 		`@(ManyToOne|OneToMany|OneToOne|ManyToMany)\s*\([^@]*?\)\s+(\w+)`,
 	)
+	// The `() => Target` / `entity: () => Target` thunk inside a MikroORM relation
+	// decorator names the related entity class (group 1). Issue #4365.
+	reMikroRelationTarget = regexp.MustCompile(
+		`=>\s*([A-Z][A-Za-z0-9_]*)`,
+	)
 	// Relation decorators with lazy: true OR LoadStrategy.LAZY/EXTRA_LAZY in options.
 	// Issue #3071 — lazy_loading_recognition for MikroORM.
 	reMikroLazyRelation = regexp.MustCompile(
@@ -87,11 +92,26 @@ func (e *mikroORMExtractor) Extract(ctx context.Context, file extreg.FileInput) 
 		entities = append(entities, ent)
 	}
 
+	// @Entity / @Embeddable classes. Track each class's byte offset and its index
+	// in the entities slice so @Property / relation fields below can hang a
+	// CONTAINS membership edge off the owning class node (issue #4365) — the same
+	// fix #4328 applied to TypeORM/mongoose, generalised to MikroORM's decorator
+	// form.
+	type ownerInfo struct {
+		name string
+		off  int
+		idx  int
+	}
+	var owners []ownerInfo
+
 	// @Entity classes.
 	for _, m := range reMikroEntity.FindAllStringSubmatchIndex(src, -1) {
 		name := src[m[2]:m[3]]
 		ent := makeEntity(name, "SCOPE.Schema", "entity", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "mikro-orm", "provenance", "INFERRED_FROM_MIKROORM_ENTITY")
+		if !seen[fmt.Sprintf("%s:%s:%s", ent.Kind, ent.Name, ent.Subtype)] {
+			owners = append(owners, ownerInfo{name: name, off: m[0], idx: len(entities)})
+		}
 		addEntity(ent)
 	}
 
@@ -100,26 +120,67 @@ func (e *mikroORMExtractor) Extract(ctx context.Context, file extreg.FileInput) 
 		name := src[m[2]:m[3]]
 		ent := makeEntity(name, "SCOPE.Schema", "embeddable", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "mikro-orm", "provenance", "INFERRED_FROM_MIKROORM_EMBEDDABLE")
+		if !seen[fmt.Sprintf("%s:%s:%s", ent.Kind, ent.Name, ent.Subtype)] {
+			owners = append(owners, ownerInfo{name: name, off: m[0], idx: len(entities)})
+		}
 		addEntity(ent)
 	}
 
-	// @Property / @PrimaryKey / @Enum fields.
+	// owningEntity returns the @Entity/@Embeddable class whose declaration most
+	// closely precedes a body offset, and whether one was found.
+	owningEntity := func(offset int) (ownerInfo, bool) {
+		best := ownerInfo{idx: -1}
+		found := false
+		for _, o := range owners {
+			if o.off <= offset {
+				best = o
+				found = true
+			}
+		}
+		return best, found
+	}
+
+	// @Property / @PrimaryKey / @Enum fields. Each field becomes a CONTAINS member
+	// of its owning @Entity (issue #4365) so it is not an orphan.
 	for _, m := range reMikroProperty.FindAllStringSubmatchIndex(src, -1) {
 		decorator := src[m[2]:m[3]]
 		fieldName := src[m[4]:m[5]]
 		ent := makeEntity(fieldName, "SCOPE.Component", "field", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "mikro-orm", "decorator", decorator, "field_name", fieldName,
 			"provenance", "INFERRED_FROM_MIKROORM_PROPERTY")
+		if owner, ok := owningEntity(m[0]); ok && owner.idx >= 0 {
+			setProps(&ent, "owner_class", owner.name)
+			entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+				containsFieldEdge(owner.name, ent.ID, fieldName, "mikro-orm"))
+		}
 		addEntity(ent)
 	}
 
-	// Relations.
+	// Relations. The relation field is a CONTAINS member of its owning entity, and
+	// the `() => Target` thunk class is captured as a REFERENCES edge (issue #4365).
 	for _, m := range reMikroRelation.FindAllStringSubmatchIndex(src, -1) {
 		relType := src[m[2]:m[3]]
 		fieldName := src[m[4]:m[5]]
+		// Decorator args blob spans the matched decorator up to the field name; the
+		// `() => Target` arrow inside names the related entity class.
+		argsBlob := src[m[0]:m[5]]
+		target := ""
+		if tm := reMikroRelationTarget.FindStringSubmatch(argsBlob); tm != nil {
+			target = tm[1]
+		}
 		ent := makeEntity(relType+":"+fieldName, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "mikro-orm", "relation_type", relType, "field_name", fieldName,
 			"provenance", "INFERRED_FROM_MIKROORM_RELATION")
+		if target != "" {
+			setProps(&ent, "target_entity", target)
+			ent.Relationships = append(ent.Relationships,
+				referencesClassEdge(ent.ID, target, "mikro-orm", fieldName))
+		}
+		if owner, ok := owningEntity(m[0]); ok && owner.idx >= 0 {
+			setProps(&ent, "owner_class", owner.name)
+			entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+				containsFieldEdge(owner.name, ent.ID, fieldName, "mikro-orm"))
+		}
 		addEntity(ent)
 	}
 

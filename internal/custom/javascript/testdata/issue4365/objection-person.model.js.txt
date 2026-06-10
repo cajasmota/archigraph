@@ -1,0 +1,41 @@
+const { Model } = require('objection');
+
+class Person extends Model {
+  static get tableName() {
+    return 'persons';
+  }
+
+  static get jsonSchema() {
+    return {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+      },
+    };
+  }
+
+  static get relationMappings() {
+    return {
+      pets: {
+        relation: Model.HasManyRelation,
+        modelClass: Animal,
+        join: {
+          from: 'persons.id',
+          to: 'animals.ownerId',
+        },
+      },
+      parent: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Person,
+        join: {
+          from: 'persons.parentId',
+          to: 'persons.id',
+        },
+      },
+    };
+  }
+}
+
+module.exports = Person;

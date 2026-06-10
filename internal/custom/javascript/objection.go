@@ -43,6 +43,11 @@ var (
 	reObjectionRelation = regexp.MustCompile(
 		`([A-Za-z_][A-Za-z0-9_]*)\s*:\s*\{[^}]*relation\s*:\s*Model\s*\.\s*(BelongsToOneRelation|HasManyRelation|HasOneRelation|ManyToManyRelation|HasOneThroughRelation)`,
 	)
+	// The `modelClass: Target` (or `modelClass: () => Target`) entry inside a
+	// relationMapping names the related model class. Issue #4365.
+	reObjectionModelClass = regexp.MustCompile(
+		`modelClass\s*:\s*(?:\(\s*\)\s*=>\s*)?([A-Z][A-Za-z0-9_]*)`,
+	)
 )
 
 func (e *objectionExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]types.EntityRecord, error) {
@@ -76,11 +81,19 @@ func (e *objectionExtractor) Extract(ctx context.Context, file extreg.FileInput)
 		entities = append(entities, ent)
 	}
 
-	// Model classes (extends Model). Capture an optional bound table name.
+	// Model classes (extends Model). Capture an optional bound table name and track
+	// each class's byte offset + entities-slice index so relationMapping entries
+	// can hang a CONTAINS membership edge off the owning model node (issue #4365).
 	tableName := ""
 	if tm := reObjectionTableName.FindStringSubmatch(src); tm != nil {
 		tableName = tm[1]
 	}
+	type ownerInfo struct {
+		name string
+		off  int
+		idx  int
+	}
+	var owners []ownerInfo
 	for _, m := range reObjectionModel.FindAllStringSubmatchIndex(src, -1) {
 		name := src[m[2]:m[3]]
 		ent := makeEntity(name, "SCOPE.Schema", "model", file.Path, file.Language, lineOf(src, m[0]))
@@ -88,7 +101,24 @@ func (e *objectionExtractor) Extract(ctx context.Context, file extreg.FileInput)
 		if tableName != "" {
 			setProps(&ent, "table", tableName)
 		}
+		if !seen[fmt.Sprintf("%s:%s:%s", ent.Kind, ent.Name, ent.Subtype)] {
+			owners = append(owners, ownerInfo{name: name, off: m[0], idx: len(entities)})
+		}
 		addEntity(ent)
+	}
+
+	// owningModel returns the model class whose declaration most closely precedes
+	// a body offset.
+	owningModel := func(offset int) (ownerInfo, bool) {
+		best := ownerInfo{idx: -1}
+		found := false
+		for _, o := range owners {
+			if o.off <= offset {
+				best = o
+				found = true
+			}
+		}
+		return best, found
 	}
 
 	// jsonSchema field-set marker.
@@ -105,13 +135,29 @@ func (e *objectionExtractor) Extract(ctx context.Context, file extreg.FileInput)
 		addEntity(ent)
 	}
 
-	// Individual relations.
+	// Individual relations. Each relation is a CONTAINS member of its owning model
+	// (issue #4365), and the relation's `modelClass: Target` is captured as a
+	// REFERENCES edge to the target model class.
 	for _, m := range reObjectionRelation.FindAllStringSubmatchIndex(src, -1) {
 		field := src[m[2]:m[3]]
 		relType := src[m[4]:m[5]]
 		ent := makeEntity(relType+":"+field, "SCOPE.Component", "relation", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "objection", "relation_type", relType, "field_name", field,
 			"provenance", "INFERRED_FROM_OBJECTION_RELATION")
+		// modelClass: Target inside this relation's object block. Search a bounded
+		// window after the match start up to the next relation entry / block end.
+		window := src[m[0]:min(len(src), m[1]+400)]
+		if tm := reObjectionModelClass.FindStringSubmatch(window); tm != nil {
+			target := tm[1]
+			setProps(&ent, "target_model", target)
+			ent.Relationships = append(ent.Relationships,
+				referencesClassEdge(ent.ID, target, "objection", field))
+		}
+		if owner, ok := owningModel(m[0]); ok && owner.idx >= 0 {
+			setProps(&ent, "owner_class", owner.name)
+			entities[owner.idx].Relationships = append(entities[owner.idx].Relationships,
+				containsFieldEdge(owner.name, ent.ID, field, "objection"))
+		}
 		addEntity(ent)
 	}
 

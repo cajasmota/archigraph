@@ -1,0 +1,20 @@
+import { Entity, PrimaryKey, Property, ManyToOne, OneToMany, Collection } from '@mikro-orm/core';
+import { Book } from './book.entity';
+
+@Entity()
+export class Author {
+  @PrimaryKey()
+  id!: number;
+
+  @Property()
+  name!: string;
+
+  @Property({ unique: true })
+  email!: string;
+
+  @ManyToOne(() => Publisher)
+  publisher!: Publisher;
+
+  @OneToMany(() => Book, (book) => book.author)
+  books = new Collection<Book>(this);
+}
