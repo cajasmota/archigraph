@@ -1547,6 +1547,13 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 		return
 	}
 
+	// #4420: a module/class-level const-object constant collection
+	// (`const PermissionPage = {...} as const`) is emitted as a value-carrying
+	// SCOPE.Enum value-set so it is searchable by name and a downstream
+	// cross-graph parity-audit can diff its members. Append-only: it never
+	// replaces the entity the default branch emits for the binding below.
+	x.emitTSConstObjectValueSet(name, valueNode)
+
 	switch valueNode.Type() {
 	case "arrow_function":
 		subtype := "function"

@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -42,6 +43,22 @@ import (
 type EnumMember struct {
 	Name  string
 	Value string // statically-known literal ("" when unknown / auto)
+	// Line is the 1-indexed source line of the member declaration. Optional:
+	// 0 when the caller does not resolve a per-member line (it is then omitted
+	// from the structured members_json so a diff tool never reads a fake 0).
+	// #4420: constant-collection members carry their line so a downstream
+	// cross-graph parity-audit can locate each key→value pair.
+	Line int
+}
+
+// constMember is the JSON shape of one structured member in the members_json
+// property emitted by EnumEntity (#4420). A downstream diff tool reads the
+// literal {key,value} set without re-parsing source. Line is omitted when the
+// caller did not resolve it (0).
+type constMember struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	Line  int    `json:"line,omitempty"`
 }
 
 // EnumQualifiedName returns the structural-ref / QualifiedName for an enum
@@ -74,15 +91,18 @@ func EnumEntity(
 
 	memberNames := make([]string, 0, len(members))
 	valuePairs := make([]string, 0, len(members))
+	structured := make([]constMember, 0, len(members))
 	for _, m := range members {
 		mn := strings.TrimSpace(m.Name)
 		if mn == "" {
 			continue
 		}
 		memberNames = append(memberNames, mn)
-		if v := strings.TrimSpace(m.Value); v != "" {
+		v := strings.TrimSpace(m.Value)
+		if v != "" {
 			valuePairs = append(valuePairs, mn+"="+v)
 		}
+		structured = append(structured, constMember{Key: mn, Value: v, Line: m.Line})
 	}
 	if len(memberNames) == 0 {
 		return types.EntityRecord{}, false
@@ -103,6 +123,13 @@ func EnumEntity(
 	}
 	if len(valuePairs) > 0 {
 		props["values"] = strings.Join(valuePairs, ", ")
+	}
+	// #4420: structured, enumerable member set so a downstream cross-graph
+	// parity-audit can diff the literal {key,value} pairs without re-parsing
+	// source. Includes ALL members (value-less members carry value=""), unlike
+	// the comma-joined `values` prop which omits value-less members.
+	if b, err := json.Marshal(structured); err == nil {
+		props["members_json"] = string(b)
 	}
 
 	sig := "enum " + name + " { " + strings.Join(memberNames, ", ") + " }"

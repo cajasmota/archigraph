@@ -44,6 +44,12 @@ import (
 // identifier so both bare (`Enum`) and dotted (`enum.Enum`) forms qualify.
 var enumBaseNames = map[string]struct{}{
 	"Enum": {}, "IntEnum": {}, "StrEnum": {}, "Flag": {}, "IntFlag": {}, "ReprEnum": {},
+	// #4420: Django enumeration types are class-level constant collections with
+	// the same value-set parity semantics as stdlib Enum. TextChoices/
+	// IntegerChoices members are `NAME = db_value, label` tuples; the stored
+	// db_value is the parity-relevant literal (already resolved by
+	// pythonEnumLiteralValue's tuple case).
+	"TextChoices": {}, "IntegerChoices": {}, "Choices": {},
 }
 
 // dataclassDecoratorNames are the decorator leaf names that mark a class as a
@@ -87,7 +93,157 @@ func applyTypeSystemAnnotations(root *sitter.Node, file extractor.FileInput, out
 		if ent, ok := buildAssignmentTypeAlias(asn, file); ok {
 			*out = append(*out, ent)
 		}
+		// #4420: module-level constant COLLECTIONS — a dict-literal map
+		// (PERMISSION_PAGES = {...}) or a `Literal[...]` value-set alias — are
+		// emitted as value-carrying SCOPE.Enum nodes so they are searchable by
+		// name and a downstream parity-audit can diff their members.
+		if ent, ok := buildConstantSetFromAssignment(asn, file); ok {
+			*out = append(*out, ent)
+		}
 	}
+}
+
+// buildConstantSetFromAssignment recognises a module-level constant collection
+// and emits a value-carrying SCOPE.Enum node (kind_hint="python_const_map" for
+// a dict literal, "python_literal" for a `Literal[...]` value-set). Honest-
+// partial: the dict form requires an UPPER_SNAKE / PascalCase name AND at least
+// one statically-literal value; a dict whose values are all non-literal
+// expressions (callables, calls) yields no node.
+func buildConstantSetFromAssignment(asn *sitter.Node, file extractor.FileInput) (types.EntityRecord, bool) {
+	left := asn.ChildByFieldName("left")
+	if left == nil || left.Type() != "identifier" {
+		return types.EntityRecord{}, false
+	}
+	name := nodeText(left, file.Content)
+	if name == "" {
+		return types.EntityRecord{}, false
+	}
+	right := asn.ChildByFieldName("right")
+	if right == nil {
+		return types.EntityRecord{}, false
+	}
+
+	start := int(asn.StartPoint().Row) + 1
+	end := int(asn.EndPoint().Row) + 1
+
+	switch right.Type() {
+	case "dictionary":
+		members := pythonDictMembers(right, file.Content)
+		if !hasLiteralValue(members) {
+			return types.EntityRecord{}, false
+		}
+		return extractor.EnumEntity(
+			name, "python", "python_const_map", file.Path, start, end, members,
+		)
+	case "subscript":
+		// `Mode = Literal["fast", "slow"]` — a closed literal value-set.
+		if members, ok := pythonLiteralAliasMembers(right, file.Content); ok {
+			return extractor.EnumEntity(
+				name, "python", "python_literal", file.Path, start, end, members,
+			)
+		}
+	}
+	return types.EntityRecord{}, false
+}
+
+// pythonDictMembers extracts {key: value} pairs from a dict-literal node. Keys
+// must be string literals (the constant-map key); values capture the
+// statically-known literal (number/string/bool/None) or "" for non-literal
+// value expressions (recorded so the key is still enumerable). Each member
+// carries the pair's source line.
+func pythonDictMembers(dict *sitter.Node, src []byte) []extractor.EnumMember {
+	var out []extractor.EnumMember
+	for i := 0; i < int(dict.NamedChildCount()); i++ {
+		pair := dict.NamedChild(i)
+		if pair == nil || pair.Type() != "pair" {
+			continue
+		}
+		keyNode := pair.ChildByFieldName("key")
+		valNode := pair.ChildByFieldName("value")
+		if keyNode == nil {
+			continue
+		}
+		// Only string-literal keys are constant-map keys. A computed/spread key
+		// (** unpack, expression) is skipped.
+		if keyNode.Type() != "string" {
+			continue
+		}
+		key := extractor.StripLiteralQuotes(nodeText(keyNode, src))
+		if key == "" {
+			continue
+		}
+		out = append(out, extractor.EnumMember{
+			Name:  key,
+			Value: pythonEnumLiteralValue(valNode, src),
+			Line:  int(pair.StartPoint().Row) + 1,
+		})
+	}
+	return out
+}
+
+// pythonLiteralAliasMembers returns the literal arms of a `Literal[...]`
+// subscript as value-set members (each arm name==value), or ok=false when the
+// subscripted head is not `Literal` or any arm is non-literal.
+func pythonLiteralAliasMembers(sub *sitter.Node, src []byte) ([]extractor.EnumMember, bool) {
+	v := sub.ChildByFieldName("value")
+	if v == nil || baseLeafName(v, src) != "Literal" {
+		return nil, false
+	}
+	sl := sub.ChildByFieldName("subscript")
+	var args []*sitter.Node
+	if sl != nil {
+		args = append(args, sl)
+	} else {
+		// Grammar may expose multiple subscript args as unnamed children after
+		// the value node; collect every literal-bearing named child.
+		for i := 0; i < int(sub.NamedChildCount()); i++ {
+			c := sub.NamedChild(i)
+			if c != nil && c != v {
+				args = append(args, c)
+			}
+		}
+	}
+	var out []extractor.EnumMember
+	line := int(sub.StartPoint().Row) + 1
+	for _, a := range args {
+		// A subscript argument may itself be a tuple of arms (Literal["a","b"]).
+		collectLiteralArms(a, src, line, &out)
+	}
+	if len(out) == 0 {
+		return nil, false
+	}
+	return out, true
+}
+
+// collectLiteralArms appends one value-set member per string/number literal arm
+// found under n. Any non-literal arm makes the whole alias not a closed value-
+// set, so it is skipped (the caller drops it if nothing literal remains).
+func collectLiteralArms(n *sitter.Node, src []byte, line int, out *[]extractor.EnumMember) {
+	if n == nil {
+		return
+	}
+	switch n.Type() {
+	case "string", "integer", "float":
+		lit := extractor.StripLiteralQuotes(nodeText(n, src))
+		if lit != "" {
+			*out = append(*out, extractor.EnumMember{Name: lit, Value: lit, Line: line})
+		}
+	case "tuple", "subscript":
+		for i := 0; i < int(n.NamedChildCount()); i++ {
+			collectLiteralArms(n.NamedChild(i), src, line, out)
+		}
+	}
+}
+
+// hasLiteralValue reports whether at least one member carries a statically-known
+// literal value — the honest-partial gate for emitting a const-map value-set.
+func hasLiteralValue(members []extractor.EnumMember) bool {
+	for _, m := range members {
+		if strings.TrimSpace(m.Value) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // annotateTypeClass inspects one class_definition node, classifies it against
@@ -372,6 +528,7 @@ func classEnumMembers(cls *sitter.Node, src []byte) []extractor.EnumMember {
 			out = append(out, extractor.EnumMember{
 				Name:  name,
 				Value: pythonEnumLiteralValue(asn.ChildByFieldName("right"), src),
+				Line:  int(asn.StartPoint().Row) + 1,
 			})
 		}
 	}
@@ -392,9 +549,10 @@ func pythonEnumLiteralValue(rhs *sitter.Node, src []byte) string {
 		return extractor.StripLiteralQuotes(nodeText(rhs, src))
 	case "true", "false", "none":
 		return nodeText(rhs, src)
-	case "tuple":
+	case "tuple", "expression_list":
 		// Django (Integer|Text)Choices: `ACTIVE = "active", "Active"` → first
-		// element is the stored value.
+		// element is the stored value. The grammar exposes the bare comma form
+		// as an expression_list and the parenthesised form as a tuple.
 		for k := 0; k < int(rhs.NamedChildCount()); k++ {
 			if el := rhs.NamedChild(k); el != nil {
 				return pythonEnumLiteralValue(el, src)
