@@ -90,6 +90,36 @@ var (
 	djangoDRFAuthClassesRe     = regexp.MustCompile(`["']DEFAULT_AUTHENTICATION_CLASSES["']\s*:\s*\[([^\]]*)\]`)
 	djangoDRFThrottleClassesRe = regexp.MustCompile(`["']DEFAULT_THROTTLE_CLASSES["']\s*:\s*\[([^\]]*)\]`)
 	djangoDRFClassItemRe       = regexp.MustCompile(`["']([A-Za-z][\w.]+)["']`)
+
+	// Issue #4366 — model field-membership. A 4+-space-indented body
+	// assignment `<attr> = models.SomethingField(...)` (or a bare
+	// `SomethingField(...)` / a relational `ForeignKey(...)`). Group 1 is the
+	// attribute name. We deliberately match only field-constructor RHS shapes
+	// (CharField / ForeignKey / ...Field / ...) so class-level constants like
+	// `STATUS_CHOICES = [...]` and method defs are NOT treated as fields.
+	djangoModelFieldRe = regexp.MustCompile(
+		`(?m)^\s{4,}(\w+)\s*=\s*([\w.]*(?:Field|ForeignKey|OneToOneField|ManyToManyField|GenericForeignKey|GenericRelation))\s*\(`)
+	// Any class-body attribute assignment `<attr> = ...` at the immediate
+	// (4-space) body indent — used to restore full CONTAINS membership parity
+	// with the base class node this custom model node replaces (issue #4366).
+	// Captures class constants (STATUS_CHOICES = [...]) and Manager attachments
+	// (objects = Manager()) in addition to model fields. Excludes dunder /
+	// type-annotated-only declarations and `==` comparisons.
+	djangoModelAttrRe = regexp.MustCompile(
+		`(?m)^\s{4}(\w+)\s*(?::[^=\n]+)?=\s*[^=]`)
+	// Relational field RHS whose first positional/`to=` argument names the
+	// target model — string form ('app.Model' / 'self') or symbol form (Model).
+	// Group 1 = relation kind, group 2 = quoted target (if string form),
+	// group 3 = identifier target (if symbol form).
+	djangoModelRelTargetRe = regexp.MustCompile(
+		`(?:ForeignKey|OneToOneField|ManyToManyField)\s*\(\s*(?:to\s*=\s*)?(?:["']([^"']+)["']|([A-Z][A-Za-z0-9_]*))`)
+
+	// Issue #4366 — DRF serializer field declaration. A 4+-space-indented body
+	// assignment whose RHS is either a `serializers.XField(...)` / `XField(...)`
+	// call OR a nested serializer constructor `SomeSerializer(...)`. Group 1 is
+	// the attribute name, group 2 the RHS callee (dotted path allowed).
+	djangoSerializerFieldRe = regexp.MustCompile(
+		`(?m)^\s{4,}(\w+)\s*=\s*([\w.]*(?:Field|Serializer))\s*\(`)
 )
 
 func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
@@ -314,8 +344,42 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 	for _, idx := range allMatchesIndex(djangoDRFSerializerRe, source) {
 		className := source[idx[2]:idx[3]]
 		line := lineOf(source, idx[0])
-		out = append(out, entity(className, "SCOPE.Component", "", file.Path, line,
-			map[string]string{"framework": "drf", "pattern_type": "serializer", "component_kind": "serializer"}))
+		serEnt := entity(className, "SCOPE.Component", "", file.Path, line,
+			map[string]string{"framework": "drf", "pattern_type": "serializer", "component_kind": "serializer"})
+
+		// Issue #4366 — serializer field membership. This serializer node
+		// replaces the base tree-sitter class node (which carried the #526
+		// class→field CONTAINS edges), so re-emit membership for each declared
+		// serializer field. Nested-serializer fields (`items = ItemSerializer(
+		// many=True)`) additionally REFERENCES the target serializer class.
+		body := extractClassBody(source, idx[0])
+		seenSerMember := map[string]bool{}
+		// (a) CONTAINS for every serializer class-body attribute (declared
+		// fields + constants) — restores parity with the replaced base node.
+		for _, aIdx := range allMatchesIndex(djangoModelAttrRe, body) {
+			attr := body[aIdx[2]:aIdx[3]]
+			if attr == "" || seenSerMember[attr] || strings.HasPrefix(attr, "__") {
+				continue
+			}
+			seenSerMember[attr] = true
+			serEnt.Relationships = append(serEnt.Relationships,
+				containsFieldEdge(className, className+"."+attr, attr, "drf"))
+		}
+		// (b) REFERENCES for nested-serializer fields (`items = ItemSerializer(
+		// many=True)`) → the target serializer/model class.
+		for _, fIdx := range allMatchesIndex(djangoSerializerFieldRe, body) {
+			attr := body[fIdx[2]:fIdx[3]]
+			callee := body[fIdx[4]:fIdx[5]]
+			if attr == "" {
+				continue
+			}
+			if strings.HasSuffix(callee, "Serializer") && !strings.Contains(callee, ".") &&
+				callee != "Serializer" && callee != "ModelSerializer" {
+				serEnt.Relationships = append(serEnt.Relationships,
+					referencesClassEdge(className+"."+attr, callee, "drf", attr))
+			}
+		}
+		out = append(out, serEnt)
 	}
 
 	// 5b. DRF viewsets
@@ -433,7 +497,47 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 				props[kv[i]] = kv[i+1]
 			}
 		})
-		out = append(out, entity(className, "SCOPE.Schema", "model", file.Path, classLine, props))
+		modelEnt := entity(className, "SCOPE.Schema", "model", file.Path, classLine, props)
+
+		// Issue #4366 — field membership. MergeWithCustom replaces the base
+		// tree-sitter class node (which carried the #526 class→field CONTAINS
+		// edges) with this custom model node, so without re-emitting membership
+		// here every model field is left an orphan. Walk the class body and hang
+		// a CONTAINS edge off the model node for each `<attr> = ...Field(...)`
+		// declaration, plus a REFERENCES edge to the target model for relational
+		// fields (ForeignKey / OneToOneField / ManyToManyField, string- or
+		// symbol-target, including 'self'). The field entity itself is emitted by
+		// the base Python extractor as `<Class>.<attr>` (SCOPE.Schema/field); the
+		// CONTAINS ToID names it by qualified Name so the resolver binds it.
+		seenMember := map[string]bool{}
+		// (a) CONTAINS membership for every class-body attribute (fields,
+		// choices constants, manager attachments) — restores parity with the
+		// base class node that MergeWithCustom replaces.
+		for _, aIdx := range allMatchesIndex(djangoModelAttrRe, body) {
+			attr := body[aIdx[2]:aIdx[3]]
+			if attr == "" || seenMember[attr] || strings.HasPrefix(attr, "__") {
+				continue
+			}
+			seenMember[attr] = true
+			modelEnt.Relationships = append(modelEnt.Relationships,
+				containsFieldEdge(className, className+"."+attr, attr, "django"))
+		}
+		// (b) REFERENCES to the target model for relational fields
+		// (ForeignKey / OneToOneField / ManyToManyField), string- or
+		// symbol-target including 'self'.
+		for _, fIdx := range allMatchesIndex(djangoModelFieldRe, body) {
+			attr := body[fIdx[2]:fIdx[3]]
+			rhs := body[fIdx[4]:fIdx[5]]
+			if attr == "" || !isDjangoRelationalField(rhs) {
+				continue
+			}
+			fullRHS := body[fIdx[0]:min(fIdx[0]+400, len(body))]
+			if target := djangoRelTarget(fullRHS, className); target != "" {
+				modelEnt.Relationships = append(modelEnt.Relationships,
+					referencesClassEdge(className+"."+attr, target, "django", attr))
+			}
+		}
+		out = append(out, modelEnt)
 	}
 
 	// 11. View decorators
@@ -469,6 +573,7 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 		classLine := lineOf(source, idx[0])
 		body := extractClassBody(source, idx[0])
 		var fieldNames, fieldTypes []string
+		var memberEdges []types.RelationshipRecord
 		for _, fIdx := range allMatchesIndex(djangoFormFieldRe, body) {
 			fieldName := body[fIdx[2]:fIdx[3]]
 			fieldType := body[fIdx[4]:fIdx[5]]
@@ -487,15 +592,22 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 					"field_name":   fieldName,
 					"field_type":   fieldType,
 				}))
+			// Issue #4366 — form-field membership. The form_class node below
+			// replaces the base class node; carry CONTAINS so the field is not
+			// orphaned.
+			memberEdges = append(memberEdges,
+				containsFieldEdge(className, className+"."+fieldName, fieldName, "django"))
 		}
 		if len(fieldNames) > 0 {
-			out = append(out, entity(className, "SCOPE.Schema", "form_class", file.Path, classLine,
+			formEnt := entity(className, "SCOPE.Schema", "form_class", file.Path, classLine,
 				map[string]string{
 					"framework":    "django",
 					"pattern_type": "form_class",
 					"field_names":  strings.Join(fieldNames, ","),
 					"field_types":  strings.Join(fieldTypes, ","),
-				}))
+				})
+			formEnt.Relationships = append(formEnt.Relationships, memberEdges...)
+			out = append(out, formEnt)
 		}
 	}
 
@@ -603,6 +715,38 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 
 	span.SetAttributes(attribute.Int("entity_count", len(out)))
 	return out, nil
+}
+
+// isDjangoRelationalField reports whether a field constructor RHS (the matched
+// `models.XField` head) is a relational field carrying a target-model argument.
+func isDjangoRelationalField(rhs string) bool {
+	return strings.HasSuffix(rhs, "ForeignKey") ||
+		strings.HasSuffix(rhs, "OneToOneField") ||
+		strings.HasSuffix(rhs, "ManyToManyField")
+}
+
+// djangoRelTarget extracts the bare target-model class name from a relational
+// field declaration's argument blob. Handles the string form
+// (`ForeignKey('app.Model', ...)` / `ForeignKey('self', ...)`) and the symbol
+// form (`ForeignKey(Model, ...)` / `ForeignKey(to=Model, ...)`). For 'self' it
+// returns the enclosing model class so the edge self-references the owner.
+// Returns "" when no recognizable target is present (e.g. lazy callables).
+func djangoRelTarget(rhs, ownerClass string) string {
+	m := djangoModelRelTargetRe.FindStringSubmatch(rhs)
+	if m == nil {
+		return ""
+	}
+	if m[1] != "" { // string form
+		raw := m[1]
+		if raw == "self" {
+			return ownerClass
+		}
+		if dot := strings.LastIndexByte(raw, '.'); dot >= 0 {
+			return raw[dot+1:] // strip app_label
+		}
+		return raw
+	}
+	return m[2] // symbol form
 }
 
 // extractBalancedBrackets returns the content of a [...] list starting at openPos.

@@ -18,6 +18,16 @@ import (
 	"github.com/cajasmota/archigraph/internal/types"
 )
 
+// ormRelTargetLeaf strips an app-label / module prefix from an ORM relation
+// target so the REFERENCES edge binds to the bare model class name (issue
+// #4366). `"app.Model"` → `"Model"`, `"Model"` → `"Model"`.
+func ormRelTargetLeaf(target string) string {
+	if dot := strings.LastIndexByte(target, '.'); dot >= 0 {
+		return target[dot+1:]
+	}
+	return target
+}
+
 func init() {
 	extractor.Register("python_peewee_rel", &PeeweeRelExtractor{})
 	extractor.Register("python_pony_rel", &PonyRelExtractor{})
@@ -100,7 +110,11 @@ func (e *PeeweeRelExtractor) Extract(ctx context.Context, file extractor.FileInp
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			// Issue #4366 — relation field → target model REFERENCES.
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, target, "peewee", attr))
+			out = append(out, relEnt)
 		}
 
 		// ManyToManyField → association / relationship
@@ -114,7 +128,11 @@ func (e *PeeweeRelExtractor) Extract(ctx context.Context, file extractor.FileInp
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			// Issue #4366 — relation field → target model REFERENCES.
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, target, "peewee", attr))
+			out = append(out, relEnt)
 		}
 	}
 
@@ -211,7 +229,10 @@ func (e *PonyRelExtractor) Extract(ctx context.Context, file extractor.FileInput
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, target, "pony", attr))
+			out = append(out, relEnt)
 		}
 	}
 
@@ -302,7 +323,10 @@ func (e *BeanieRelExtractor) Extract(ctx context.Context, file extractor.FileInp
 			if hasFetchLinks {
 				props["lazy_loading"] = "fetch_links"
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, target, "beanie", attr))
+			out = append(out, relEnt)
 		}
 
 		// BackLink[Model] fields
@@ -316,7 +340,10 @@ func (e *BeanieRelExtractor) Extract(ctx context.Context, file extractor.FileInp
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, target, "beanie", attr))
+			out = append(out, relEnt)
 		}
 	}
 
@@ -426,7 +453,10 @@ func (e *MongoEngineRelExtractor) Extract(ctx context.Context, file extractor.Fi
 				if fp.isLazy {
 					props["lazy_loading"] = "lazy_reference"
 				}
-				out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+				relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+				relEnt.Relationships = append(relEnt.Relationships,
+					referencesClassEdge(className+"."+attr, ormRelTargetLeaf(target), "mongoengine", attr))
+				out = append(out, relEnt)
 			}
 		}
 	}
@@ -526,7 +556,10 @@ func (e *TortoiseRelExtractor) Extract(ctx context.Context, file extractor.FileI
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, ormRelTargetLeaf(target), "tortoise", attr))
+			out = append(out, relEnt)
 		}
 
 		// ManyToManyField / ManyToManyRelation
@@ -545,7 +578,10 @@ func (e *TortoiseRelExtractor) Extract(ctx context.Context, file extractor.FileI
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, ormRelTargetLeaf(target), "tortoise", attr))
+			out = append(out, relEnt)
 		}
 
 		// OneToOneField
@@ -559,7 +595,10 @@ func (e *TortoiseRelExtractor) Extract(ctx context.Context, file extractor.FileI
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, ormRelTargetLeaf(target), "tortoise", attr))
+			out = append(out, relEnt)
 		}
 
 		// ReverseRelation (back-references)
@@ -573,7 +612,10 @@ func (e *TortoiseRelExtractor) Extract(ctx context.Context, file extractor.FileI
 				"target_model": target,
 				"parent_class": className,
 			}
-			out = append(out, entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props))
+			relEnt := entity(className+"."+attr, "SCOPE.Schema", "", file.Path, relLine, props)
+			relEnt.Relationships = append(relEnt.Relationships,
+				referencesClassEdge(className+"."+attr, ormRelTargetLeaf(target), "tortoise", attr))
+			out = append(out, relEnt)
 		}
 	}
 

@@ -39,13 +39,21 @@ var (
 	// uselist=False the relationship is scalar (one_to_one / many_to_one);
 	// otherwise it is a collection (one_to_many). Used for GRAPH_RELATES
 	// cardinality.
-	saUselistRe         = regexp.MustCompile(`\buselist\s*=\s*(True|False)\b`)
-	saForeignKeyRe      = regexp.MustCompile(`ForeignKey\s*\(\s*["']([^"']+)["']`)
-	saAssocTableRe      = regexp.MustCompile(`(?m)^(\w+)\s*=\s*Table\s*\(\s*["']([^"']+)["']`)
-	saCreateEngineRe    = regexp.MustCompile(`(?m)(\w+)\s*=\s*create_(?:async_)?engine\s*\(\s*["']([^"']*)["']`)
-	saSessionQueryRe    = regexp.MustCompile(`(\w+)\.query\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
-	saSessionExecuteRe  = regexp.MustCompile(`(\w+)\.execute\s*\(\s*select\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
-	saSelectCallRe      = regexp.MustCompile(`(?:^|[^\w])select\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
+	saUselistRe        = regexp.MustCompile(`\buselist\s*=\s*(True|False)\b`)
+	saForeignKeyRe     = regexp.MustCompile(`ForeignKey\s*\(\s*["']([^"']+)["']`)
+	saAssocTableRe     = regexp.MustCompile(`(?m)^(\w+)\s*=\s*Table\s*\(\s*["']([^"']+)["']`)
+	saCreateEngineRe   = regexp.MustCompile(`(?m)(\w+)\s*=\s*create_(?:async_)?engine\s*\(\s*["']([^"']*)["']`)
+	saSessionQueryRe   = regexp.MustCompile(`(\w+)\.query\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
+	saSessionExecuteRe = regexp.MustCompile(`(\w+)\.execute\s*\(\s*select\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
+	saSelectCallRe     = regexp.MustCompile(`(?:^|[^\w])select\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
+	// saColumnAttrRe matches a column/attribute declaration in a declarative
+	// model body: `name = Column(...)`, `id: Mapped[int] = mapped_column(...)`,
+	// `addr = relationship(...)`. Group 1 is the attribute name. Used for issue
+	// #4366 field-membership CONTAINS emission. The custom SQLAlchemy model node
+	// replaces the base tree-sitter class node (and its #526 CONTAINS edges), so
+	// every column/relationship/mapped_column must re-acquire membership here.
+	saColumnAttrRe = regexp.MustCompile(
+		`(?m)^\s+(\w+)\s*(?::\s*[\w.\[\], |]+)?\s*=\s*(?:Column|mapped_column|relationship|Mapped|deferred|composite|column_property|association_proxy|synonym)\s*\(`)
 	saHybridPropertyRe  = regexp.MustCompile(`(?m)@hybrid_property\s*\n\s*def\s+(\w+)\s*\(`)
 	saEventListenRe     = regexp.MustCompile(`(?m)event\.listen\s*\(\s*(\w+)\s*,\s*["'](\w+)["']`)
 	saEventListensForRe = regexp.MustCompile(`(?m)@event\.listens_for\s*\(\s*(\w+)\s*,\s*["'](\w+)["']\s*\)\s*\n\s*(?:async\s+)?def\s+(\w+)\s*\(`)
@@ -156,6 +164,10 @@ func (e *SQLAlchemyExtractor) Extract(ctx context.Context, file extractor.FileIn
 		out = append(out, entity(className, "SCOPE.Schema", "", file.Path, line, props))
 		modelIdx := len(out) - 1 // index of this model node, for GRAPH_RELATES edges
 
+		// Issue #4366 — track attribute names that already received a CONTAINS
+		// membership edge so the plain-column scan at the end doesn't double-emit.
+		seenAttr := map[string]bool{}
+
 		// Relationships within the class body
 		for _, rIdx := range allMatchesIndex(saRelationshipRe, body) {
 			relAttr := body[rIdx[2]:rIdx[3]]
@@ -180,6 +192,13 @@ func (e *SQLAlchemyExtractor) Extract(ctx context.Context, file extractor.FileIn
 				}
 			}
 			out = append(out, entity(className+"."+relAttr, "SCOPE.Schema", "", file.Path, relLine, relProps))
+
+			// Issue #4366 — relationship field membership + target reference.
+			seenAttr[relAttr] = true
+			out[modelIdx].Relationships = append(out[modelIdx].Relationships,
+				containsFieldEdge(className, className+"."+relAttr, relAttr, "sqlalchemy"))
+			out[modelIdx].Relationships = append(out[modelIdx].Relationships,
+				referencesClassEdge(className+"."+relAttr, targetModel, "sqlalchemy", relAttr))
 
 			// GRAPH_RELATES model↔model edge with cardinality. SQLAlchemy
 			// relationship() default is a collection (one_to_many); uselist=False
@@ -209,8 +228,12 @@ func (e *SQLAlchemyExtractor) Extract(ctx context.Context, file extractor.FileIn
 			fkTarget := body[fkIdx[2]:fkIdx[3]]
 			fkLine := line + strings.Count(body[:fkIdx[0]], "\n")
 			tableName := strings.Split(fkTarget, ".")[0]
-			out = append(out, entity(className+".fk:"+fkTarget, "SCOPE.Schema", "", file.Path, fkLine,
-				map[string]string{"framework": "sqlalchemy", "pattern_type": "foreign_key", "fk_target": fkTarget, "target_table": tableName, "parent_class": className}))
+			fkEnt := entity(className+".fk:"+fkTarget, "SCOPE.Schema", "", file.Path, fkLine,
+				map[string]string{"framework": "sqlalchemy", "pattern_type": "foreign_key", "fk_target": fkTarget, "target_table": tableName, "parent_class": className})
+			out = append(out, fkEnt)
+			// Issue #4366 — FK pseudo-field membership.
+			out[modelIdx].Relationships = append(out[modelIdx].Relationships,
+				containsFieldEdge(className, className+".fk:"+fkTarget, "fk:"+fkTarget, "sqlalchemy"))
 		}
 
 		// Hybrid properties
@@ -219,6 +242,27 @@ func (e *SQLAlchemyExtractor) Extract(ctx context.Context, file extractor.FileIn
 			propLine := line + strings.Count(body[:hIdx[0]], "\n")
 			out = append(out, entity(className+"."+propName, "SCOPE.Operation", "function", file.Path, propLine,
 				map[string]string{"framework": "sqlalchemy", "pattern_type": "hybrid_property", "parent_class": className}))
+			// Issue #4366 — hybrid-property membership.
+			seenAttr[propName] = true
+			out[modelIdx].Relationships = append(out[modelIdx].Relationships,
+				containsFieldEdge(className, className+"."+propName, propName, "sqlalchemy"))
+		}
+
+		// Issue #4366 — plain Column / mapped_column / Mapped[] attribute
+		// membership. These attribute entities are emitted by the BASE Python
+		// extractor as `<Class>.<attr>` SCOPE.Schema/field nodes (#526), but the
+		// custom SQLAlchemy model node REPLACES the base class node that carried
+		// their CONTAINS edges — so re-emit membership here for every declared
+		// column attribute. Relationship/hybrid attrs already got an edge above;
+		// dedup by attribute name via the shared seenAttr set.
+		for _, cIdx := range allMatchesIndex(saColumnAttrRe, body) {
+			attr := body[cIdx[2]:cIdx[3]]
+			if attr == "" || seenAttr[attr] {
+				continue
+			}
+			seenAttr[attr] = true
+			out[modelIdx].Relationships = append(out[modelIdx].Relationships,
+				containsFieldEdge(className, className+"."+attr, attr, "sqlalchemy"))
 		}
 	}
 
