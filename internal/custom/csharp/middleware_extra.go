@@ -65,6 +65,12 @@ type middlewareExtraExtractor struct{}
 
 func (e *middlewareExtraExtractor) Language() string { return "custom_csharp_middleware_extra" }
 
+// dotnetAppEntityName is the synthetic owner name for app-level global
+// middleware wiring emitted from an ASP.NET Core app's app.UseMiddleware<T>()
+// calls (#4380). The app → T USES edges hang off this entity so the registered
+// middleware class is connected and resolves through the symbol table.
+const dotnetAppEntityName = "app"
+
 // ---------------------------------------------------------------------------
 // Regex catalog
 // ---------------------------------------------------------------------------
@@ -271,6 +277,15 @@ func (e *middlewareExtraExtractor) Extract(ctx context.Context, file extractor.F
 	// Generic ASP.NET middleware
 	// -------------------------------------------------------------------------
 
+	// app.UseMiddleware<T>() registers T into the request pipeline app-wide
+	// (#4380, the .NET analog of NestJS app.useGlobal*() #4329). PRE-FIX the
+	// standalone "middleware:T" entity carried NO edge to the middleware class T,
+	// so T looked orphan / dead and the app-wide registration was invisible.
+	// POST-FIX a synthetic `app` entity owns an app → T USES edge (global=true,
+	// di_role=middleware, 0-based order); the bare class name resolves to the
+	// real middleware class through the cross-file symbol table.
+	var appMiddlewareEdges []types.RelationshipRecord
+	mwOrder := 0
 	for _, m := range reMWUseMiddleware.FindAllStringSubmatchIndex(src, -1) {
 		middlewareType := src[m[2]:m[3]]
 		ent := makeEntity("middleware:"+middlewareType, "SCOPE.Component", "middleware_coverage",
@@ -278,6 +293,29 @@ func (e *middlewareExtraExtractor) Extract(ctx context.Context, file extractor.F
 		setProps(&ent, "framework", "aspnet", "provenance", "INFERRED_FROM_USE_MIDDLEWARE",
 			"middleware_type", middlewareType)
 		add(ent)
+
+		appMiddlewareEdges = append(appMiddlewareEdges, types.RelationshipRecord{
+			FromID: dotnetAppEntityName,
+			ToID:   middlewareType,
+			Kind:   string(types.RelationshipKindUses),
+			Properties: map[string]string{
+				"framework": "aspnet-core",
+				"di_role":   "middleware",
+				"di_scope":  "global",
+				"global":    "true",
+				"order":     itoa(mwOrder),
+				"via":       "dotnet_use_middleware",
+			},
+		})
+		mwOrder++
+	}
+	if len(appMiddlewareEdges) > 0 {
+		appEnt := makeEntity(dotnetAppEntityName, "SCOPE.Pattern", "application",
+			file.Path, "csharp", 1)
+		setProps(&appEnt, "framework", "aspnet-core",
+			"provenance", "INFERRED_FROM_ASPNET_BOOTSTRAP")
+		appEnt.Relationships = append(appEnt.Relationships, appMiddlewareEdges...)
+		add(appEnt)
 	}
 
 	for _, m := range reMWUseLambda.FindAllStringIndex(src, -1) {

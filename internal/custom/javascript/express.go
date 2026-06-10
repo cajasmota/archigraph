@@ -231,9 +231,17 @@ func (e *expressExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 		if errorHandlerNames[baseName] || routerVars[baseName] {
 			continue
 		}
-		name := expr
+		// Prefix the standalone middleware entity name with "middleware:" so it
+		// does NOT collide in the symbol table with the real middleware
+		// function/factory symbol of the same bare name (#4380). Before this, a
+		// bare `app.use(authMiddleware)` emitted a SCOPE.Pattern entity literally
+		// named `authMiddleware`, which made the resolver see two `authMiddleware`
+		// entities and treat the name as ambiguous — so the app→middleware USES
+		// edge could never bind to the real function.
+		name := "middleware:" + expr
 		ent := makeEntity(name, "SCOPE.Pattern", "middleware", file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent, "framework", "express", "provenance", "INFERRED_FROM_EXPRESS_MIDDLEWARE")
+		setProps(&ent, "framework", "express", "provenance", "INFERRED_FROM_EXPRESS_MIDDLEWARE",
+			"middleware_expr", expr)
 		addEntity(ent)
 	}
 
@@ -308,6 +316,32 @@ func (e *expressExtractor) Extract(ctx context.Context, file extreg.FileInput) (
 		setProps(&ent, "framework", "express", "param", param,
 			"provenance", "INFERRED_FROM_EXPRESS_PARAM")
 		addEntity(ent)
+	}
+
+	// 11. Global middleware wiring (#4380): app.use(...) registers cross-cutting
+	// middleware/routers app-wide. Emit a synthetic `app` entity that owns an
+	// app → middleware USES edge for each registration (global=true, di_role,
+	// 0-based order). The edge targets resolve to the real middleware function /
+	// router entity through the cross-file symbol table. Generalizes #4329.
+	globalEdges := extractExpressGlobalMiddleware(src, routerVars)
+	if len(globalEdges) > 0 && expressHasGlobalMiddleware(src) {
+		appEnt := makeEntity(expressAppEntityName, "SCOPE.Pattern", "application",
+			file.Path, file.Language, 1)
+		setProps(&appEnt, "framework", "express",
+			"provenance", "INFERRED_FROM_EXPRESS_BOOTSTRAP")
+		addEntity(appEnt)
+
+		byName := make(map[string]int, len(entities))
+		for i := range entities {
+			if _, ok := byName[entities[i].Name]; !ok {
+				byName[entities[i].Name] = i
+			}
+		}
+		for owner, rels := range globalEdges {
+			if idx, ok := byName[owner]; ok {
+				entities[idx].Relationships = append(entities[idx].Relationships, rels...)
+			}
+		}
 	}
 
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
