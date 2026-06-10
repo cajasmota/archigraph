@@ -40,6 +40,25 @@ var (
 		`jest\s*\.\s*(mock|spyOn|fn|useFakeTimers|useRealTimers|resetAllMocks|clearAllMocks)\s*\(`,
 	)
 
+	// reLabelRouteMention captures a `VERB /route` pair embedded in a free-text
+	// describe()/it() label (issue #4487). Contract / oracle specs overwhelmingly
+	// name the endpoint they cover in their label rather than driving it through
+	// supertest, e.g.
+	//
+	//	describe('contract: clients list — GET /api/v1/clients', () => { … })
+	//	it('GET /elv3 returns 401 when unauthenticated', () => { … })
+	//
+	// The verb is a standalone HTTP method token (word-bounded so "POSTING" or a
+	// "get" property accessor never matches) immediately followed by a
+	// `/`-rooted path. The path runs to the first whitespace or label-closing
+	// quote/backtick; trailing punctuation is trimmed by the caller. Only the
+	// route ARGUMENT is interpreted here — endpoint resolution stays in the
+	// resolve pass (linkE2ERouteTestsToEndpoints), so the linkage reuses the same
+	// path normalization as supertest routes and is merge-stable.
+	reLabelRouteMention = regexp.MustCompile(
+		`\b(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(/[^\s'` + "`" + `"]*)`,
+	)
+
 	// ── TESTS-target resolution signals (issue #4343) ───────────────────────
 	// Named imports: `import { A, B as C } from './x'`. We record the local
 	// name (A, and the alias C) so a describe('A') / new A() inside the spec
@@ -152,6 +171,12 @@ func (e *jestExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]t
 
 	// ── collect supertest e2e route calls (issue #4351) ──────────────────────
 	routeCalls := extractSupertestRouteCalls(src)
+
+	// ── collect routes named in describe()/it() labels (issue #4487) ─────────
+	// Contract/oracle specs name the endpoint in the suite/case label rather
+	// than driving it via supertest; fold those `VERB /route` mentions into the
+	// same e2e_route_calls bucket so the resolve pass links them to endpoints.
+	routeCalls = mergeRouteCalls(routeCalls, extractLabelRouteCalls(src))
 
 	// Per-spec aggregate counts folded onto the suite(s).
 	caseCount := len(tests)
@@ -394,6 +419,82 @@ func extractSupertestRouteCalls(src string) []string {
 		out = append(out, key)
 	}
 	return out
+}
+
+// extractLabelRouteCalls returns the de-duplicated set of "VERB route" pairs
+// named in describe()/it() labels, e.g. a label
+// `'contract: clients list — GET /api/v1/clients'` yields
+// `"GET /api/v1/clients"` (issue #4487).
+//
+// Many contract/oracle/spec suites assert wire-shape or mapper behaviour in
+// pure logic and never issue a real HTTP call, but they DO encode the endpoint
+// under test in their label by convention. Surfacing those routes lets the
+// shared resolve pass (linkE2ERouteTestsToEndpoints) attach a TESTS edge from
+// the suite to the http_endpoint_definition, so the endpoint no longer looks
+// untested. The route string is emitted verbatim (after trimming trailing
+// punctuation) and normalized exactly like a supertest route at resolve time,
+// so template params (`:id`, `{id}`) and the `/api/vN` mount prefix are handled
+// uniformly. No edge is emitted here.
+func extractLabelRouteCalls(src string) []string {
+	seen := make(map[string]bool)
+	var out []string
+	collect := func(matches [][]int) {
+		for _, m := range matches {
+			// Group 1 is the quoted label (from reJestDescribe/reJestTest).
+			label := src[m[2]:m[3]]
+			for _, rm := range reLabelRouteMention.FindAllStringSubmatch(label, -1) {
+				verb := strings.ToUpper(rm[1])
+				route := trimLabelRoute(rm[2])
+				if route == "" {
+					continue
+				}
+				key := verb + " " + route
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+				out = append(out, key)
+			}
+		}
+	}
+	collect(reJestDescribe.FindAllStringSubmatchIndex(src, -1))
+	collect(reJestTest.FindAllStringSubmatchIndex(src, -1))
+	return out
+}
+
+// trimLabelRoute strips trailing prose punctuation a free-text label commonly
+// appends after the route (a comma, period, paren, colon, em-dash, or a
+// trailing slash) so `/api/v1/clients,` and `/api/v1/clients` fold together.
+// The path itself never legitimately ends in these characters.
+func trimLabelRoute(route string) string {
+	route = strings.TrimRight(route, ".,;:)]}—-")
+	// Drop a trailing slash (but keep the bare root "/").
+	if len(route) > 1 {
+		route = strings.TrimRight(route, "/")
+	}
+	if route == "" || route[0] != '/' {
+		return ""
+	}
+	return route
+}
+
+// mergeRouteCalls appends every "VERB route" entry from extra that is not
+// already present in base, preserving order and de-duplicating.
+func mergeRouteCalls(base, extra []string) []string {
+	if len(extra) == 0 {
+		return base
+	}
+	seen := make(map[string]bool, len(base))
+	for _, v := range base {
+		seen[v] = true
+	}
+	for _, v := range extra {
+		if !seen[v] {
+			seen[v] = true
+			base = append(base, v)
+		}
+	}
+	return base
 }
 
 // collectRouteConsts folds `const NAME = '/literal'` declarations into a
