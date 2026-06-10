@@ -1105,6 +1105,16 @@ func extractCallRelationships(
 	type seenKey struct{ target, alias string }
 	seen := make(map[seenKey]bool, len(calls))
 	rels := make([]types.RelationshipRecord, 0, len(calls))
+
+	// Issue #4681 — local-variable receiver typing. Scan the body once for
+	// `localName = ClassName(...)` constructor bindings so a subsequent
+	// `localName.method()` resolves to `ClassName.method` instead of an
+	// unresolvable bare leaf. This is the dominant unit-test shape
+	// (`v = ProposalViewSet(); v.get_counts(...)` / `view = XView()` /
+	// `obj = XSerializer(...)`) — without it ComputeCoverage undercounts
+	// controller/view coverage because the test→handler CALLS edge never
+	// forms. The map mirrors the TS/JS local-receiver typing in #4671.
+	localRecv := localReceiverTypes(body, src)
 	for _, call := range calls {
 		// Issue #2806 — subprocess / exec calls invoke an OS binary, not an
 		// indexed Python symbol. `subprocess.run(['libreoffice', ...])`,
@@ -1137,7 +1147,7 @@ func extractCallRelationships(
 			// (run/Popen/system/...) must NOT flow to the bare-name resolver.
 			continue
 		}
-		target, ambiguous := callTarget(call, src, parentClass)
+		target, ambiguous := callTarget(call, src, parentClass, localRecv)
 		if target == "" {
 			continue
 		}
@@ -1422,7 +1432,74 @@ func pyStringLiteralValue(n *sitter.Node, src []byte) string {
 //
 // parentClass is the dotted enclosing class path of the caller, or "" when
 // the caller is module-level. It is consulted only for `self.<x>` resolution.
-func callTarget(call *sitter.Node, src []byte, parentClass string) (string, bool) {
+// localReceiverTypes scans a function/method body for local-variable
+// constructor bindings and returns a `localName → ClassName` map so a
+// subsequent `localName.method()` call types through receiverClass to
+// `ClassName.method` (issue #4681). It mirrors the TS/JS local-receiver
+// typing landed in #4671 for the dominant unit-test shape:
+//
+//	v   = ProposalViewSet()       # DRF ViewSet unit spec
+//	view = ArticleView()          # Django CBV unit spec
+//	obj = ArticleSerializer(data) # DRF serializer unit spec
+//	v.get_counts('2025')          # → ProposalViewSet.get_counts
+//
+// Recognised binding shape: an `assignment` whose left side is a single
+// bare identifier and whose right side is a `call` expression whose
+// function is a bare PascalCase class identifier (the same conservative
+// class-name heuristic receiverClass already uses for `User.save(...)`).
+// Namespaced constructors (`pkg.Thing()`), keyword/typed assignments, and
+// non-construction RHS shapes are intentionally skipped — a guess there
+// risks binding edges to the wrong class.
+//
+// Precedence/conservatism mirrors #4671: first binding wins on a re-assign
+// collision (bias to miss rather than mis-bind to a later reassignment of a
+// different type), and a non-PascalCase RHS constructor (factory function,
+// lowercased helper) yields no entry. Returns nil for bodies with no
+// qualifying binding so the hot path allocates nothing.
+func localReceiverTypes(body *sitter.Node, src []byte) map[string]string {
+	if body == nil {
+		return nil
+	}
+	assigns := findAll(body, "assignment")
+	if len(assigns) == 0 {
+		return nil
+	}
+	var locals map[string]string
+	for _, a := range assigns {
+		lhs := a.ChildByFieldName("left")
+		if lhs == nil || lhs.Type() != "identifier" {
+			// Tuple/subscript/attribute targets don't name a single receiver.
+			continue
+		}
+		rhs := a.ChildByFieldName("right")
+		if rhs == nil || rhs.Type() != "call" {
+			continue
+		}
+		ctor := rhs.ChildByFieldName("function")
+		if ctor == nil || ctor.Type() != "identifier" {
+			// `pkg.Thing()` (attribute) and other non-bare constructors are
+			// left to the resolver; we only bind unambiguous local classes.
+			continue
+		}
+		clsName := nodeText(ctor, src)
+		if !isPascalCaseClassName(clsName) {
+			continue
+		}
+		name := nodeText(lhs, src)
+		if name == "" {
+			continue
+		}
+		if locals == nil {
+			locals = map[string]string{}
+		}
+		if _, seen := locals[name]; !seen {
+			locals[name] = clsName
+		}
+	}
+	return locals
+}
+
+func callTarget(call *sitter.Node, src []byte, parentClass string, localRecv map[string]string) (string, bool) {
 	fn := call.ChildByFieldName("function")
 	if fn == nil {
 		return "", false
@@ -1444,7 +1521,7 @@ func callTarget(call *sitter.Node, src []byte, parentClass string) (string, bool
 		if recv == nil {
 			return leaf, true
 		}
-		if cls := receiverClass(recv, src, parentClass); cls != "" {
+		if cls := receiverClass(recv, src, parentClass, localRecv); cls != "" {
 			return cls + "." + leaf, false
 		}
 		return leaf, true
@@ -1479,7 +1556,7 @@ func callTarget(call *sitter.Node, src []byte, parentClass string) (string, bool
 // deliberately left unresolved here: making a guess would risk binding edges
 // to the wrong class. The resolver's name-collision logic is a safer place
 // to disambiguate those cases.
-func receiverClass(recv *sitter.Node, src []byte, parentClass string) string {
+func receiverClass(recv *sitter.Node, src []byte, parentClass string, localRecv map[string]string) string {
 	if recv == nil {
 		return ""
 	}
@@ -1488,6 +1565,13 @@ func receiverClass(recv *sitter.Node, src []byte, parentClass string) string {
 		text := nodeText(recv, src)
 		if text == "self" || text == "cls" {
 			return parentClass
+		}
+		// Issue #4681 — local-variable receiver typing. A local bound from a
+		// constructor (`v = ProposalViewSet()`) is a lowercase identifier the
+		// PascalCase heuristic below never matches; consult the per-body local
+		// map first so `v.get_counts()` resolves to `ProposalViewSet.get_counts`.
+		if cls := localRecv[text]; cls != "" {
+			return cls
 		}
 		// Issue #557 — bare PascalCase/CamelCase identifier as receiver, e.g.
 		// `User.save(...)`, `Article.objects.create(...)`.  Python convention
@@ -1514,7 +1598,7 @@ func receiverClass(recv *sitter.Node, src []byte, parentClass string) string {
 		for i := 0; i < int(recv.ChildCount()); i++ {
 			ch := recv.Child(i)
 			if ch.IsNamed() {
-				return receiverClass(ch, src, parentClass)
+				return receiverClass(ch, src, parentClass, localRecv)
 			}
 		}
 	}
