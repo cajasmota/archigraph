@@ -2372,6 +2372,19 @@ export interface DownstreamDAGNode {
   role?: DownstreamDAGRole;
   /** A deliberate leaf the walk stops at (e.g. a joined collection sink). */
   terminal?: boolean;
+  // --- per-node enrichment (#4482/#4484 flow cards) ----------------------
+  // Read at query-time from the resolved graph entity; each is omitted when
+  // the underlying data is absent, so a card shows what it can and nothing more.
+  /** Function/method signature for Operation/Handler nodes (monospace, truncated). */
+  signature?: string;
+  /** Finer kind/subtype when the entity carries one more specific than `kind`. */
+  subtype?: string;
+  /** SHORT one-line summary (≤140 chars) from the entity's docstring/description. */
+  doc?: string;
+  /** Effect kinds (db_read/db_write/http_out/fs/…) — rendered as small badges. */
+  effects?: string[];
+  /** Collection/table name for a collection-terminal node (role=collection). */
+  collection?: string;
   /** Builder/predicate noise folded into this node in spine mode (empty in full). */
   collapsed_children?: DownstreamDAGCollapsedChild[];
 }

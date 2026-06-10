@@ -35,6 +35,12 @@ export type FlowDagDirection = "LR" | "TB";
 export interface FlowDagNodeData extends Record<string, unknown> {
   /** The original (deduped) payload node — what the detail panel reads. */
   node: DownstreamDAGNode;
+  /**
+   * The edge kind by which the parent reached this instance (the node's single
+   * incoming relationship in the unfolded tree) — calls/handler/joins/throws/
+   * validates. Undefined for the root (no in-edge). Surfaced on the card (#4481).
+   */
+  edgeKind?: DownstreamDAGEdgeKind;
   /** Whether this instance's collapsed_children are currently expanded inline. */
   expanded: boolean;
   /** Toggle handler for the inline collapsed-children expander (keyed by instance id). */
@@ -83,8 +89,12 @@ export interface UnfoldResult {
 // custom node renderer uses min-width/height matching these so edges dock
 // cleanly. Expanded nodes grow downward in the DOM but we keep the dagre box
 // fixed — the inline rows overlay rather than reflow the graph.
-const NODE_W = 220;
-const NODE_H = 64;
+// Widened for #4481: long names now wrap to ~2 lines and the card surfaces
+// signature / file:line / effect badges, so the box is roomier. Height is the
+// dagre rank box (edges dock to it); the card itself grows downward in the DOM
+// for the inline expander/extra rows without reflowing the graph.
+const NODE_W = 268;
+const NODE_H = 76;
 
 const NODE_TYPE = "flowDag";
 const EDGE_TYPE = "flowDag";
@@ -231,6 +241,7 @@ export function layoutTree(
       position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
       data: {
         node: inst.node,
+        edgeKind: inst.edgeKind,
         expanded: expanded.has(inst.id),
         onToggleExpand: onToggle,
       },
