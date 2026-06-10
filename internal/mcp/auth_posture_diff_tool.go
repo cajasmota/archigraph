@@ -156,12 +156,18 @@ type authEndpoint struct {
 }
 
 // collectAuthEndpoints scans a group for HTTP endpoint-definition entities and
-// builds an authEndpoint per endpoint, keyed by normalised <verb> <path>. When
-// two endpoints fold to the same key (e.g. ViewSet per-action expansion), the
-// one carrying the richest auth signal wins so the diff sees the most specific
-// posture.
-func collectAuthEndpoints(lg *LoadedGroup) map[string]authEndpoint {
-	out := map[string]authEndpoint{}
+// builds an authEndpoint per endpoint, keyed by the SHARED cross-group join key
+// (normalised <verb> <path>, /api[/vN] prefix stripped, path-params → {*} — the
+// same key stub_detector joins on, see endpoint_join.go). When two endpoints
+// fold to the same key (e.g. ViewSet per-action expansion), the one carrying the
+// richest auth signal wins so the diff sees the most specific posture.
+//
+// The join key deliberately does NOT include the DRF #action suffix: the oracle
+// (DRF) stamps an action while the v3 (NestJS) does not, so a #action key never
+// matched a v3 endpoint and the diff joined ZERO endpoints live (#4550). Folding
+// per-action ViewSet rows by richest-signal-wins keeps the most specific posture.
+func collectAuthEndpoints(lg *LoadedGroup) map[endpointJoinKey]authEndpoint {
+	out := map[endpointJoinKey]authEndpoint{}
 	for _, r := range lg.Repos {
 		if r == nil || r.Doc == nil {
 			continue
@@ -175,7 +181,7 @@ func collectAuthEndpoints(lg *LoadedGroup) map[string]authEndpoint {
 			if path == "" {
 				continue
 			}
-			key := authEndpointKey(verb, path, e)
+			key := newEndpointJoinKey(verb, path)
 			ae := authEndpoint{
 				display: strings.TrimSpace(strings.ToUpper(verb) + " " + path),
 				signal:  buildAuthSignal(e),
@@ -208,43 +214,6 @@ func endpointVerbPath(e *graph.Entity) (verb, path string) {
 		return "", ""
 	}
 	return e.Properties["verb"], e.Properties["path"]
-}
-
-// authEndpointKey is the normalised join key: VERB + normalised path. The path
-// is lowercased and its path-parameter NAMES are erased ({id} ~ {pk} ~ :id) so
-// the oracle and v3 align even when they name the same parameter differently.
-// The DRF action, when present, is folded in so per-action ViewSet postures
-// diff against their v3 per-action counterparts rather than colliding.
-func authEndpointKey(verb, path string, e *graph.Entity) string {
-	np := normalizeEndpointPath(path)
-	key := strings.ToUpper(strings.TrimSpace(verb)) + " " + np
-	if e.Properties != nil {
-		if a := strings.TrimSpace(e.Properties["effective_action"]); a != "" {
-			key += "#" + strings.ToLower(a)
-		} else if a := strings.TrimSpace(e.Properties["action"]); a != "" {
-			key += "#" + strings.ToLower(a)
-		}
-	}
-	return key
-}
-
-// normalizeEndpointPath lowercases a path and replaces every path-parameter
-// segment ({id}, :id, <int:pk>, {pk}) with a placeholder so parameter NAMING
-// differences between the oracle and v3 do not break the join.
-func normalizeEndpointPath(path string) string {
-	path = strings.ToLower(strings.TrimSpace(path))
-	segs := strings.Split(path, "/")
-	for i, s := range segs {
-		if s == "" {
-			continue
-		}
-		if strings.HasPrefix(s, ":") ||
-			(strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}")) ||
-			(strings.HasPrefix(s, "<") && strings.HasSuffix(s, ">")) {
-			segs[i] = "{param}"
-		}
-	}
-	return strings.Join(segs, "/")
 }
 
 // buildAuthSignal harvests the framework-neutral Signal from an endpoint entity:

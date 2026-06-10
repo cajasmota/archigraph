@@ -61,7 +61,6 @@ package mcp
 
 import (
 	"context"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -91,21 +90,9 @@ const (
 	stubEffectsMaxNodes = 1500
 )
 
-// stubPathParamRe / stubAPIPrefixRe mirror the links-pass canonicalisation
-// (internal/links/http_pass.go normalizePathForIndex + stripAPIPrefix) so the
-// oracle↔v3 join keys identically to how the cross-repo HTTP link pass buckets
-// route shapes. Kept local to avoid widening the links package API.
-var (
-	stubPathParamRe = regexp.MustCompile(`\{[^}]+\}|:[a-zA-Z][a-zA-Z0-9_]*|<[^>]+>`)
-	stubAPIPrefixRe = regexp.MustCompile(`^/(?:api(?:/v\d+)?|v\d+)(/|$)`)
-)
-
-// stubJoinKey is the normalized (method, path) identity used to match a v3
-// endpoint to its oracle counterpart.
-type stubJoinKey struct {
-	method string
-	path   string
-}
+// The oracle↔v3 endpoint join (normalized method+path, /api[/vN] prefix
+// stripped, path-params → {*}) lives in endpoint_join.go and is SHARED with
+// auth_posture_diff so the two tools join identically (#4550).
 
 // handleStubDetector implements archigraph_stub_detector.
 func (s *Server) handleStubDetector(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
@@ -125,7 +112,7 @@ func (s *Server) handleStubDetector(_ context.Context, req mcpapi.CallToolReques
 	}
 
 	// Optional single-endpoint filter — matched on the normalized join key.
-	var filter *stubJoinKey
+	var filter *endpointJoinKey
 	if raw := strings.TrimSpace(argString(req, "endpoint", "")); raw != "" {
 		k := parseEndpointFilter(raw)
 		filter = &k
@@ -167,7 +154,7 @@ func (s *Server) handleStubDetector(_ context.Context, req mcpapi.CallToolReques
 			}
 			method := strings.ToUpper(strings.TrimSpace(e.Properties["verb"]))
 			rawPath := e.Properties["path"]
-			key := stubJoinKey{method: method, path: normalizeStubPath(rawPath)}
+			key := newEndpointJoinKey(method, rawPath)
 			if filter != nil && (filter.method != key.method || filter.path != key.path) {
 				continue
 			}
@@ -408,8 +395,8 @@ func effectsForLocalEntity(
 // effects index for every endpoint definition in a group. Used to look up the
 // oracle counterpart of a v3 endpoint. When two oracle endpoints normalise to
 // the same key their effect kinds are unioned and Resolved OR-ed.
-func buildEndpointEffectsIndex(lg *LoadedGroup, sidecar map[string]effectsSidecarEntry, groupHasEffectData bool) map[stubJoinKey]stubdetector.Effects {
-	idx := map[stubJoinKey]stubdetector.Effects{}
+func buildEndpointEffectsIndex(lg *LoadedGroup, sidecar map[string]effectsSidecarEntry, groupHasEffectData bool) map[endpointJoinKey]stubdetector.Effects {
+	idx := map[endpointJoinKey]stubdetector.Effects{}
 	for _, r := range sortedRepos(lg) {
 		if r.Doc == nil {
 			continue
@@ -425,8 +412,7 @@ func buildEndpointEffectsIndex(lg *LoadedGroup, sidecar map[string]effectsSideca
 			if e.Properties["pattern_type"] == patternTypeHTTPEndpointClientSynthesis {
 				continue
 			}
-			method := strings.ToUpper(strings.TrimSpace(e.Properties["verb"]))
-			key := stubJoinKey{method: method, path: normalizeStubPath(e.Properties["path"])}
+			key := newEndpointJoinKey(e.Properties["verb"], e.Properties["path"])
 			eff := computeEndpointEffects(r.Repo, e, hres, callsAdj, byID, sidecar, groupHasEffectData)
 			if existing, ok := idx[key]; ok {
 				idx[key] = mergeStubEffects(existing, eff)
@@ -454,70 +440,6 @@ func mergeStubEffects(a, b stubdetector.Effects) stubdetector.Effects {
 	}
 	sort.Strings(kinds)
 	return stubdetector.Effects{Kinds: kinds, Resolved: a.Resolved || b.Resolved}
-}
-
-// normalizeStubPath canonicalises an endpoint path for cross-group joining:
-// path-params → {*}, lower-cased, trailing slash stripped, and a leading
-// /api[/vN] prefix removed. Mirrors links.normalizePathForIndex + stripAPIPrefix
-// so v3 and oracle route shapes bucket identically regardless of param names,
-// case, trailing-slash, or api-prefix convention.
-func normalizeStubPath(path string) string {
-	path = strings.TrimSpace(path)
-	if path == "" {
-		return ""
-	}
-	path = stubPathParamRe.ReplaceAllString(path, "{*}")
-	path = strings.ToLower(path)
-	if len(path) > 1 {
-		path = strings.TrimRight(path, "/")
-		if path == "" {
-			path = "/"
-		}
-	}
-	// Strip a leading /api[/vN] or /vN prefix so /api/v1/orders/{*} buckets with
-	// /orders/{*}.
-	if m := stubAPIPrefixRe.FindStringSubmatchIndex(path); m != nil {
-		stripped := path[m[2]:]
-		if stripped == "" {
-			stripped = "/"
-		}
-		if !strings.HasPrefix(stripped, "/") {
-			stripped = "/" + stripped
-		}
-		path = stripped
-	}
-	return path
-}
-
-// parseEndpointFilter parses a "GET /api/orders/{id}" filter into a normalized
-// join key. A bare path with no leading verb leaves method empty (matches any
-// method on that path).
-func parseEndpointFilter(raw string) stubJoinKey {
-	raw = strings.TrimSpace(raw)
-	method := ""
-	path := raw
-	if fields := strings.Fields(raw); len(fields) == 2 {
-		method = strings.ToUpper(fields[0])
-		path = fields[1]
-	}
-	return stubJoinKey{method: method, path: normalizeStubPath(path)}
-}
-
-// endpointLabel renders a human "VERB /path" label, falling back gracefully
-// when the verb or path is missing.
-func endpointLabel(method, path string) string {
-	method = strings.TrimSpace(method)
-	path = strings.TrimSpace(path)
-	switch {
-	case method != "" && path != "":
-		return method + " " + path
-	case path != "":
-		return path
-	case method != "":
-		return method
-	default:
-		return "(unknown endpoint)"
-	}
 }
 
 // sortedRepos returns a group's repos in deterministic slug order.

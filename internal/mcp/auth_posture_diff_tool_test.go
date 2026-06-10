@@ -168,6 +168,79 @@ func TestAuthPostureDiff_E2E_MissingArgs(t *testing.T) {
 	}
 }
 
+// Regression for #4550: the live upvate (DRF) ↔ upvate-v3 (NestJS) endpoint key
+// sets joined ZERO under the old auth_posture_diff key, while stub_detector
+// joined 420/446 on the SAME data. Two divergences made the old key never match:
+//
+//  1. api-prefix: DRF stamps /api/v1/... while NestJS stamps /v1/... — the old
+//     normalizeEndpointPath did NOT strip the /api[/vN] prefix.
+//  2. #action fold: the old key appended "#<action>" from the oracle's
+//     effective_action, but NestJS endpoints carry no action — so even when the
+//     paths lined up the suffix split the buckets.
+//
+// This fixture reproduces both: every oracle row is /api/v1/... + an
+// effective_action; every v3 row is /v1/... with NO action and a param-name
+// drift ({id} vs :id, dup handler names across resources). The shared join key
+// (endpoint_join.go) must produce a NON-TRIVIAL join. Under the old key this
+// asserted 0 (RED).
+func TestAuthPostureDiff_Regression4550_UpvateV3Join(t *testing.T) {
+	// DRF oracle: /api/v1 prefix, brace params, an effective_action per row.
+	oracle := []graph.Entity{
+		endpointEntity("o-list", "GET", "/api/v1/clients", map[string]string{
+			"auth_required": "true", "effective_action": "list",
+		}),
+		endpointEntity("o-retrieve", "GET", "/api/v1/clients/{id}", map[string]string{
+			"auth_required": "true", "effective_action": "retrieve",
+		}),
+		endpointEntity("o-approve", "POST", "/api/v1/clients/{id}/approve", map[string]string{
+			"auth_required": "true", "effective_action": "approve",
+		}),
+		// dup handler-name shape: a second resource with the same trailing verb.
+		endpointEntity("o-dev-list", "GET", "/api/v1/devices", map[string]string{
+			"auth_required": "true", "effective_action": "list",
+		}),
+		endpointEntity("o-dev-retrieve", "GET", "/api/v1/devices/{pk}", map[string]string{
+			"auth_required": "true", "effective_action": "retrieve",
+		}),
+	}
+	// NestJS v3: /v1 prefix (no /api), colon params, NO action stamped.
+	v3 := []graph.Entity{
+		endpointEntity("v-list", "GET", "/v1/clients", map[string]string{"auth_required": "true"}),
+		endpointEntity("v-retrieve", "GET", "/v1/clients/:id", map[string]string{"auth_required": "true"}),
+		endpointEntity("v-approve", "POST", "/v1/clients/:id/approve", map[string]string{"auth_required": "true"}),
+		endpointEntity("v-dev-list", "GET", "/v1/devices", map[string]string{"auth_required": "true"}),
+		endpointEntity("v-dev-retrieve", "GET", "/v1/devices/:id", map[string]string{"auth_required": "true"}),
+	}
+	s := twoGroupEndpointServer(t, oracle, v3)
+	out := callAuthPostureDiff(t, s, map[string]any{"group_oracle": "oracle", "group_v3": "v3"})
+
+	joined, _ := out["joined"].(float64)
+	if joined < 5 {
+		t.Fatalf("joined=%v, want all 5 oracle↔v3 pairs to join "+
+			"(api-prefix strip + no #action fold); RED=0 under the old key; out=%+v", joined, out)
+	}
+}
+
+// Regression for #4550: the shared endpoint join key must fold the DRF
+// /api/v1/... ↔ NestJS /v1/... prefix divergence and param-name drift to the
+// SAME bucket, and must NOT depend on an action suffix.
+func TestEndpointJoinKey_PrefixAndParamFold(t *testing.T) {
+	cases := []struct{ verb, oracle, v3 string }{
+		{"GET", "/api/v1/clients", "/v1/clients"},
+		{"GET", "/api/v1/clients/{id}", "/v1/clients/:id"},
+		{"POST", "/api/v1/clients/{id}/approve", "/v1/clients/:pk/approve"},
+		{"GET", "/api/v2/devices/<int:pk>", "/devices/{id}"},
+		{"GET", "/api/v1/clients/", "/v1/clients"}, // trailing slash fold
+	}
+	for _, c := range cases {
+		ok := newEndpointJoinKey(c.verb, c.oracle)
+		vk := newEndpointJoinKey(c.verb, c.v3)
+		if ok != vk {
+			t.Errorf("join keys differ: oracle %q→%+v vs v3 %q→%+v", c.oracle, ok, c.v3, vk)
+		}
+	}
+}
+
 // E2E: an unlinked oracle endpoint (no v3 counterpart) is simply omitted, not an
 // error — the join is inner.
 func TestAuthPostureDiff_E2E_UnlinkedOmitted(t *testing.T) {
