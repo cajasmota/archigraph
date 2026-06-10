@@ -1125,10 +1125,18 @@ func collectLocalVarTypes(body *sitter.Node, src []byte) map[string]string {
 	}
 	out := map[string]string{}
 	for _, decl := range findAllNodes(body, "local_variable_declaration") {
-		typ := leafTypeName(decl.ChildByFieldName("type"), src)
-		if typ == "" {
-			continue
-		}
+		declType := leafTypeName(decl.ChildByFieldName("type"), src)
+		// `var` (Java 10+) carries no declared leaf type. Mirror the TS/JS
+		// (#4680) and Python (#4716) local-receiver wins: when the
+		// initialiser is a direct `new ClassName(...)` we infer the local's
+		// type from the constructed class so a follow-up `localName.method()`
+		// in a `@Test` method resolves to the class method (the dominant
+		// modern-JUnit idiom `var controller = new XController(mock);`).
+		// Any other RHS — a factory/builder call (`MyFactory.create()`), a
+		// method chain, a cast, a literal — leaves the `var` local
+		// unresolved (declared-type-or-`new` conservatism; first-binding
+		// wins per declarator).
+		isVar := declType == "var" || declType == ""
 		for i := 0; i < int(decl.ChildCount()); i++ {
 			ch := decl.Child(i)
 			if ch == nil || ch.Type() != "variable_declarator" {
@@ -1136,6 +1144,16 @@ func collectLocalVarTypes(body *sitter.Node, src []byte) map[string]string {
 			}
 			name := childFieldText(ch, "name", src)
 			if name == "" {
+				continue
+			}
+			typ := declType
+			if isVar {
+				typ = newExprClassName(ch.ChildByFieldName("value"), src)
+				if typ == "" {
+					continue
+				}
+			}
+			if typ == "" || typ == "var" {
 				continue
 			}
 			out[name] = typ
@@ -1155,6 +1173,29 @@ func collectLocalVarTypes(body *sitter.Node, src []byte) map[string]string {
 		}
 	}
 	return out
+}
+
+// newExprClassName returns the constructed class name when value is a direct
+// `new ClassName(...)` object_creation_expression, or "" for any other
+// initialiser shape. Used to type `var` locals (#4682, mirroring TS/JS #4680
+// and Python #4716): only a bare construction is trusted; factory/builder
+// calls, casts, chains, ternaries and literals stay unresolved so a `var`
+// receiver never types to a non-constructed class. The rightmost
+// type_identifier is taken (so `new com.x.XController(...)` → "XController",
+// matching javaCallTarget's object-creation handling).
+func newExprClassName(value *sitter.Node, src []byte) string {
+	if value == nil || value.Type() != "object_creation_expression" {
+		return ""
+	}
+	typ := value.ChildByFieldName("type")
+	if typ == nil {
+		return ""
+	}
+	if ids := findAllNodes(typ, "type_identifier"); len(ids) > 0 {
+		n := ids[len(ids)-1]
+		return string(src[n.StartByte():n.EndByte()])
+	}
+	return strings.TrimSpace(string(src[typ.StartByte():typ.EndByte()]))
 }
 
 // leafTypeName returns the leaf type identifier of a Java type node,
