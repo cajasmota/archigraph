@@ -1910,6 +1910,51 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 	// fires for the "operation" scope-kind so other Format A scopes
 	// (component, schema) aren't affected.
 	if strings.EqualFold(scopeKind, "operation") {
+		// #4554 — same-file bare↔qualified method reconciliation. A producer
+		// synthesizer (NestJS / Express / Fastify / FastAPI / Flask / JAX-RS /
+		// Axum / Rocket / …) emits the endpoint→handler synthesis-time bridge as
+		// `scope:operation:method:<lang>:<file>:<bareMethodName>` (see
+		// http_endpoint_synthesis.go synthesisHandlerStructuralRef). The real
+		// handler method, however, is frequently indexed QUALIFIED
+		// (`Controller.method` — the same shape Django/Spring/ASP.NET handlers
+		// carry), so the Format-A byLocation lookup above (keyed on the FULL
+		// name) misses on the bare tail. Without this fallback the IMPLEMENTS
+		// bridge's FromID is left an unresolved stub, which surfaces in the graph
+		// as a phantom grey `scope.operation` handler node (no source file) that
+		// DUPLICATES the real method the Phase-2 ResolveHTTPEndpointHandlers pass
+		// already bound — the endpoint then shows TWO handlers (#4554).
+		//
+		// When the bare tail is NOT itself dotted and EXACTLY ONE same-file
+		// `<scope>.<tail>` method exists, bind to it. Same-file + exactly-one
+		// makes this unambiguous (a multi-method controller still maps each
+		// endpoint to its own handler by the bare method name); >1 candidate
+		// leaves the stub for the existing fallbacks rather than guessing. This
+		// mirrors the #4319 bare↔qualified step in ResolveHTTPEndpointHandlers,
+		// but at the central resolver so the synthesis-time bridge resolves to
+		// the real method (no phantom node) for EVERY framework.
+		if strings.IndexByte(tail, dottedNameSep) < 0 {
+			if fileBucket, ok := idx.byMember[filePath]; ok {
+				var match string
+				ambig := false
+				for _, scopeBucket := range fileBucket {
+					id, ok := scopeBucket[tail]
+					if !ok || id == "" {
+						continue
+					}
+					if match != "" && match != id {
+						ambig = true
+						break
+					}
+					match = id
+				}
+				if ambig {
+					return "", statusAmbiguous, true
+				}
+				if match != "" {
+					return match, statusRewritten, true
+				}
+			}
+		}
 		if pkgDir := pkgDirOf(filePath); pkgDir != "" {
 			if pkgBucket, ok := idx.byPackageOperation[pkgDir]; ok {
 				if id, ok := pkgBucket[tail]; ok {
