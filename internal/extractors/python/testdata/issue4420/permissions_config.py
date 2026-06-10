@@ -1,0 +1,36 @@
+
+DEFAULT_VIEWSET_ACTIONS = ("list", "create", "retrieve", "update", "destroy", "partial_update", "lite")
+
+PERMISSION_PAGES = {
+    "CONTRACT_PROPOSALS": "contract-proposal",
+    "SCHEDULING": "scheduling",
+    "INSPECTIONS": "inspection-results",
+    "ELV3": "elv3",
+    "AOCS": "aocs",
+    "BUILDINGS": "buildings",
+    "CLIENTS": "clients",
+    "CONTRACTING_COMPANIES": "contracting-companies",
+    "WITNESSING_COMPANIES": "witnessing-companies",
+    "INSPECTION_COMPANIES": "inspection-companies",
+    "AOC_HARVEST": "aoc-harvest",
+    "REPORTS": "reports",
+    "GROUP_PROFILE": "group-profile",
+    "CHECKLIST": "checklists",
+    "DOCUMENT_TEMPLATES": "document-templates",
+    "EMAIL_TEMPLATES": "email-templates",
+    "JURISDICTIONS": "jurisdictions",
+    "LINKED_GROUPS": "linked-groups",
+    "USERS": "users",
+    "CORE_ADMIN": "core-admin",
+    "DEVICES": "devices",
+    "GROUPS": "groups", 
+    "ROUTES": "routes",
+    "CONTACTS": "contacts",
+    "USER_PROFILE": "profile-config",
+    "DEFICIENCIES": "deficiencies",
+    "INSPECTIONS_OVERVIEW_REPORT": "inspections-overview", 
+    "CORRESPONDENCE_HISTORY_REPORT": "correspondence-history",
+    "BUILDING_DEVICE_STATUS_REPORT": "building-device-status-report",
+    "SYNC": "sync",
+    "MAINTENANCE_EVALUATION_CONTENT": "me-content"
+}
