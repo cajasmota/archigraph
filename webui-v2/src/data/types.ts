@@ -2445,6 +2445,19 @@ export interface DownstreamDAGNode {
   effects?: string[];
   /** Collection/table name for a collection-terminal node (role=collection). */
   collection?: string;
+  /**
+   * True when this node is defined OUTSIDE the indexed source — an external
+   * library / unresolved symbol (#4558/#4564). When set, the renderer shows a
+   * muted 'external' card and skips the (broken) source-peek. Optional: when
+   * absent the renderer falls back to file/kind/name heuristics.
+   */
+  external?: boolean;
+  /**
+   * Package / library name an external node belongs to, when the backend can
+   * recover it (e.g. "stripe", "django.db") — surfaced on the external card's
+   * peek copy (#4564). Optional.
+   */
+  package?: string;
   /** Builder/predicate noise folded into this node in spine mode (empty in full). */
   collapsed_children?: DownstreamDAGCollapsedChild[];
 }

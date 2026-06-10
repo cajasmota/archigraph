@@ -4,8 +4,14 @@
  * Run with: npx vitest run src/components/flow-dag/layout.test.ts
  */
 import { describe, it, expect } from "vitest";
-import { unfoldTree } from "./layout";
+import { unfoldTree, layoutTree } from "./layout";
 import { routeInstanceIds } from "./route";
+import {
+  nodeBucket,
+  isExternalNode,
+  nodeModule,
+  moduleBand,
+} from "./style";
 import type { DownstreamDAGEdge, DownstreamDAGNode } from "@/data/types";
 
 function n(id: string): DownstreamDAGNode {
@@ -90,5 +96,148 @@ describe("routeInstanceIds", () => {
   it("returns empty for an unknown focus", () => {
     const { instances } = unfoldTree("a", [n("a")], []);
     expect(routeInstanceIds(instances, "nope").size).toBe(0);
+  });
+});
+
+describe("nodeBucket taxonomy (#4566)", () => {
+  const base = (over: Partial<DownstreamDAGNode>): DownstreamDAGNode => ({
+    id: "x",
+    name: "x",
+    kind: "Operation",
+    repo: "api",
+    ...over,
+  });
+
+  it("classifies the strong backend role priors", () => {
+    expect(nodeBucket(base({ role: "endpoint" }))).toBe("endpoint");
+    expect(nodeBucket(base({ role: "handler" }))).toBe("handler");
+    expect(nodeBucket(base({ role: "collection" }))).toBe("collection");
+  });
+
+  it("routes data effects to repository", () => {
+    expect(nodeBucket(base({ effects: ["db_read"] }))).toBe("repository");
+    expect(nodeBucket(base({ kind: "Repository" }))).toBe("repository");
+  });
+
+  it("routes schema/dto kinds to schema", () => {
+    expect(nodeBucket(base({ kind: "Schema" }))).toBe("schema");
+    expect(nodeBucket(base({ kind: "Operation", subtype: "dto" }))).toBe("schema");
+  });
+
+  it("splits service methods from free functions", () => {
+    expect(nodeBucket(base({ kind: "Operation", subtype: "method" }))).toBe("service");
+    expect(nodeBucket(base({ kind: "Operation", subtype: "function" }))).toBe("function");
+  });
+
+  it("paints exceptions red (precedence over everything)", () => {
+    expect(nodeBucket(base({ kind: "ExceptionType" }))).toBe("exception");
+    expect(nodeBucket(base({ name: "x" }), "THROWS")).toBe("exception");
+  });
+
+  it("folds unknown kinds into the neutral node bucket", () => {
+    expect(nodeBucket(base({ kind: "WeirdThing", role: undefined }))).toBe("node");
+  });
+
+  it("only emits the terminal end-cap for a genuine leaf", () => {
+    // isLeaf=true on a plain node → terminal end-cap (#4561).
+    expect(nodeBucket(base({ role: "node", kind: "WeirdThing" }), undefined, true)).toBe("terminal");
+    // isLeaf=false → keeps its normal bucket (a depth-cut branch).
+    expect(nodeBucket(base({ role: "node", kind: "WeirdThing" }), undefined, false)).toBe("node");
+    // A service method that is a genuine leaf still becomes the end-cap.
+    expect(nodeBucket(base({ kind: "Operation", subtype: "method" }), undefined, true)).toBe("terminal");
+    // A collection sink keeps its own bucket even as a leaf.
+    expect(nodeBucket(base({ role: "collection" }), undefined, true)).toBe("collection");
+  });
+});
+
+describe("isExternalNode (#4558/#4564)", () => {
+  const base = (over: Partial<DownstreamDAGNode>): DownstreamDAGNode => ({
+    id: "x",
+    name: "x",
+    kind: "Operation",
+    repo: "api",
+    ...over,
+  });
+
+  it("honors the explicit external flag", () => {
+    expect(isExternalNode(base({ external: true }))).toBe(true);
+  });
+
+  it("detects synthetic/unresolved nodes with no real file", () => {
+    expect(isExternalNode(base({ file: "<external>", name: "scope.foo" }))).toBe(true);
+    expect(isExternalNode(base({ file: "", kind: "Unresolved" }))).toBe(true);
+  });
+
+  it("does NOT mark a resolved internal node external", () => {
+    expect(isExternalNode(base({ file: "src/foo.ts" }))).toBe(false);
+    // An empty file alone, with no corroborating signal, is not external.
+    expect(isExternalNode(base({ file: "" }))).toBe(false);
+  });
+});
+
+describe("nodeModule + moduleBand (#4557)", () => {
+  const nf = (file?: string): DownstreamDAGNode => ({
+    id: "x",
+    name: "x",
+    kind: "Operation",
+    repo: "api",
+    file,
+  });
+
+  it("prefers a modules/<name> anchor segment", () => {
+    expect(nodeModule(nf("src/modules/billing/svc.ts")).label).toBe("modules/billing");
+  });
+
+  it("falls back to the source directory", () => {
+    expect(nodeModule(nf("src/lib/util.ts")).label).toBe("src/lib");
+  });
+
+  it("buckets file-less nodes into a shared external module with no band", () => {
+    const mod = nodeModule(nf(undefined));
+    expect(mod.key).toBe("__external__");
+    expect(moduleBand(mod)).toBeNull();
+  });
+
+  it("gives same-module nodes the same band color", () => {
+    const a = moduleBand(nodeModule(nf("src/modules/billing/a.ts")));
+    const b = moduleBand(nodeModule(nf("src/modules/billing/b.ts")));
+    expect(a?.color).toBe(b?.color);
+  });
+});
+
+describe("layoutTree leaf vs truncated (#4561)", () => {
+  it("marks a real leaf isLeaf and a depth-cut branch truncatedHere", () => {
+    // DAG: a → b → c. Unfold with maxNodes=2 cuts c, so b is childless-but-cut.
+    const nodes = [n("a"), n("b"), n("c")];
+    const edges = [e("a", "b"), e("b", "c")];
+    const { instances, hasOutEdge } = unfoldTree("a", nodes, edges, 2);
+    const { nodes: rf } = layoutTree(
+      instances,
+      "LR",
+      new Set(),
+      () => {},
+      hasOutEdge,
+    );
+    const byId = new Map(rf.map((x) => [x.id, x.data]));
+    // b emitted no child (cut at cap) but source b has an out-edge → truncated.
+    expect(byId.get("a/b")?.truncatedHere).toBe(true);
+    expect(byId.get("a/b")?.isLeaf).toBe(false);
+  });
+
+  it("marks a node with no out-edges as a genuine leaf", () => {
+    const nodes = [n("a"), n("b")];
+    const edges = [e("a", "b")];
+    const { instances, hasOutEdge } = unfoldTree("a", nodes, edges);
+    const { nodes: rf } = layoutTree(
+      instances,
+      "LR",
+      new Set(),
+      () => {},
+      hasOutEdge,
+    );
+    const byId = new Map(rf.map((x) => [x.id, x.data]));
+    // b has no out-edge in the DAG → genuine leaf, not truncated.
+    expect(byId.get("a/b")?.isLeaf).toBe(true);
+    expect(byId.get("a/b")?.truncatedHere).toBe(false);
   });
 });

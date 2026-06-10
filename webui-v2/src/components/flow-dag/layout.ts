@@ -27,6 +27,7 @@ import type {
   DownstreamDAGEdgeKind,
   DownstreamDAGNode,
 } from "@/data/types";
+import { nodeModule, type NodeModule } from "./style";
 
 /** Orientation toggle → dagre rankdir. */
 export type FlowDagDirection = "LR" | "TB";
@@ -45,6 +46,21 @@ export interface FlowDagNodeData extends Record<string, unknown> {
   expanded: boolean;
   /** Toggle handler for the inline collapsed-children expander (keyed by instance id). */
   onToggleExpand: (instanceId: string) => void;
+  /**
+   * #4561: whether this rendered instance is a GENUINE terminal — a real leaf /
+   * return (the node had no out-edges in the source DAG, or the backend marked
+   * it terminal). Such instances get the 'Return / finish' end-cap.
+   */
+  isLeaf?: boolean;
+  /**
+   * #4561: whether this instance has rendered children CUT by the depth/node
+   * cap — i.e. the source node had out-edges but none were expanded here. These
+   * keep their normal bucket + a 'more downstream' affordance, and must NOT be
+   * confused with a genuine terminal.
+   */
+  truncatedHere?: boolean;
+  /** #4557: the node's module (file-path-derived) for the grouping band. */
+  module?: NodeModule;
   /** Whether this node is the caller's selected node (Flows inspector, #4354). */
   selected?: boolean;
   /**
@@ -83,6 +99,13 @@ export interface UnfoldResult {
   instances: TreeInstance[];
   /** True when expansion stopped because the max-node cap was hit. */
   capped: boolean;
+  /**
+   * Source-node ids that have at least one out-edge in the DAG (#4561). An
+   * instance that emitted NO children but whose source id is in this set was
+   * truncated (depth/cap/cycle-guard), not a genuine leaf. Used by layoutTree
+   * to distinguish a real terminal from a cut branch.
+   */
+  hasOutEdge: Set<string>;
 }
 
 // Node box sizing fed to dagre. Kept generous so labels + repo chip fit; the
@@ -137,8 +160,12 @@ export function unfoldTree(
     else out.set(e.from, [{ to: e.to, kind: e.kind }]);
   }
 
+  // Source ids that have ≥1 out-edge in the DAG. An instance of such a node
+  // that emits no children was truncated, not a genuine leaf (#4561).
+  const hasOutEdge = new Set<string>(out.keys());
+
   const root = nodeById.get(rootId) ?? nodes[0];
-  if (!root) return { instances: [], capped: false };
+  if (!root) return { instances: [], capped: false, hasOutEdge };
 
   const instances: TreeInstance[] = [];
   let capped = false;
@@ -192,7 +219,7 @@ export function unfoldTree(
     if (capped) break;
   }
 
-  return { instances, capped };
+  return { instances, capped, hasOutEdge };
 }
 
 /**
@@ -208,7 +235,14 @@ export function layoutTree(
   direction: FlowDagDirection,
   expanded: Set<string>,
   onToggle: (instanceId: string) => void,
+  hasOutEdge?: Set<string>,
 ): { nodes: FlowDagNode[]; edges: FlowDagEdge[] } {
+  // Which instances actually emitted children in this unfold — to tell a real
+  // leaf from a depth-truncated branch (#4561).
+  const renderedParents = new Set<string>();
+  for (const inst of instances) {
+    if (inst.parentId != null) renderedParents.add(inst.parentId);
+  }
   const g = new dagre.graphlib.Graph();
   g.setGraph({
     rankdir: direction,
@@ -234,6 +268,15 @@ export function layoutTree(
 
   const rfNodes: FlowDagNode[] = instances.map((inst) => {
     const pos = g.node(inst.id);
+    // #4561: this instance emitted no children here.
+    const childlessHere = !renderedParents.has(inst.id);
+    // The source node has downstream edges in the DAG.
+    const sourceHasChildren = hasOutEdge?.has(inst.node.id) ?? false;
+    // A genuine terminal: the backend marked it terminal, OR it's childless AND
+    // the source node truly has no out-edges (a real leaf / return).
+    const isLeaf = childlessHere && (inst.node.terminal === true || !sourceHasChildren);
+    // Cut by the depth/node cap: childless HERE but the source DID have children.
+    const truncatedHere = childlessHere && sourceHasChildren && inst.node.terminal !== true;
     return {
       id: inst.id,
       type: NODE_TYPE,
@@ -244,6 +287,9 @@ export function layoutTree(
         edgeKind: inst.edgeKind,
         expanded: expanded.has(inst.id),
         onToggleExpand: onToggle,
+        isLeaf,
+        truncatedHere,
+        module: nodeModule(inst.node),
       },
       sourcePosition: sourcePos,
       targetPosition: targetPos,

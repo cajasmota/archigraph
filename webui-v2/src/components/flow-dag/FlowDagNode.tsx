@@ -16,12 +16,19 @@
 import { memo } from "react";
 import { useParams } from "react-router-dom";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { ChevronRight, ChevronDown, CircleDot } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronDown,
+  CircleDot,
+  Flag,
+  MoreHorizontal,
+  PackageOpen,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RepoChip } from "@/lib/repo-color";
 import { effectBadge } from "@/lib/effect-badge";
 import { useSourcePeek } from "@/components/SourcePeek";
-import { nodeStyle, edgeStyle } from "./style";
+import { nodeStyle, isExternalNode, moduleBand, edgeStyle } from "./style";
 import type { FlowDagNodeData } from "./layout";
 
 /**
@@ -30,11 +37,35 @@ import type { FlowDagNodeData } from "./layout";
  * The collapsed-children count badge expands an inline list on click.
  */
 function FlowDagNodeImpl({ id, data, sourcePosition, targetPosition }: NodeProps) {
-  const { node, edgeKind, expanded, onToggleExpand, selected, onRoute } =
-    data as FlowDagNodeData;
-  // Exception/error nodes paint red (#4556); otherwise the role tint. The red
-  // hue matches the THROWS edge so a thrown error reads consistently node→edge.
-  const rs = nodeStyle(node, edgeKind);
+  const {
+    node,
+    edgeKind,
+    expanded,
+    onToggleExpand,
+    selected,
+    onRoute,
+    isLeaf,
+    truncatedHere,
+    module: mod,
+  } = data as FlowDagNodeData;
+  // Taxonomy bucket → tint (#4566): exception=red (#4556), external=muted
+  // (#4558/#4564), genuine leaf=Return/finish end-cap (#4561), else role/kind.
+  const rs = nodeStyle(node, edgeKind, isLeaf);
+  // #4558/#4564: an external / unresolved node — render muted, label clearly,
+  // and replace the (broken) source-peek with an 'external symbol' note.
+  const external = isExternalNode(node);
+  // #4561: a genuine terminal end-cap (NOT a branch merely cut by depth).
+  const terminalCap = !!isLeaf;
+  // #4557: per-module color band so same-module nodes read as a unit.
+  const band = moduleBand(mod);
+  // #4558(a): if the callee text is unnamed, fall back to a clear label rather
+  // than an empty card. A truly nameless external reads as 'external symbol'.
+  const displayName =
+    node.name && node.name.trim() !== "" && node.name !== "<...>"
+      ? node.name
+      : external
+        ? "external symbol"
+        : "(unnamed)";
   const { openSourcePeek } = useSourcePeek();
   const { groupId = "" } = useParams<{ groupId: string }>();
   const collapsed = node.collapsed_children ?? [];
@@ -71,16 +102,21 @@ function FlowDagNodeImpl({ id, data, sourcePosition, targetPosition }: NodeProps
         dimmed ? "opacity-25" : "opacity-100",
       )}
       style={{
-        // Role tint as a soft background wash; the ink as the border.
-        background: `color-mix(in srgb, ${rs.bg} 22%, var(--surface))`,
+        // Role/taxonomy tint as a soft background wash; the ink as the border.
+        // External nodes read fainter so they recede from the resolved spine.
+        background: `color-mix(in srgb, ${rs.bg} ${external ? 12 : 22}%, var(--surface))`,
         borderColor: selected || onRoute === true
           ? "var(--accent)"
-          : `color-mix(in srgb, ${rs.ink} 55%, transparent)`,
-        // Selected node, or a node lit on the highlighted route (#4479), gets an
-        // accent ring; otherwise terminal sinks get a heavier outline ring.
+          : external
+            ? "color-mix(in srgb, var(--text-4) 45%, transparent)"
+            : `color-mix(in srgb, ${rs.ink} 55%, transparent)`,
+        // #4557: a left module color-band groups same-module nodes visually.
+        borderLeft: band ? `3px solid ${band.color}` : undefined,
+        // Selected / route-lit (#4479) → accent ring; a genuine terminal
+        // end-cap (#4561) or a collection sink → a heavier outline ring.
         boxShadow: selected || onRoute === true
           ? "0 0 0 2px var(--accent)"
-          : node.terminal
+          : terminalCap || node.terminal
             ? `0 0 0 2px color-mix(in srgb, ${rs.ink} 45%, transparent)`
             : undefined,
       }}
@@ -109,18 +145,37 @@ function FlowDagNodeImpl({ id, data, sourcePosition, targetPosition }: NodeProps
               {edgeLabel}
             </span>
           )}
-          {node.terminal && (
+          {/* #4561: a genuine return/finish end-cap reads distinctly from a
+              collection sink and from a depth-truncated branch. */}
+          {terminalCap && (
+            <span
+              className="inline-flex items-center gap-0.5 h-[15px] px-1 rounded text-[9px] font-semibold uppercase tracking-wide leading-none shrink-0"
+              style={{
+                background: `color-mix(in srgb, ${rs.bg} 38%, transparent)`,
+                color: rs.ink,
+              }}
+              title="Return / finish — this branch terminates here"
+            >
+              <Flag size={9} /> end
+            </span>
+          )}
+          {!terminalCap && node.terminal && (
             <CircleDot size={11} className="shrink-0" style={{ color: rs.ink }} aria-label="terminal" />
           )}
           <RepoChip slug={node.repo} className="ml-auto" maxLength={14} />
         </div>
 
-        {/* Name — responsive size, wraps to 2 lines, full name on hover. */}
+        {/* Name — responsive size, wraps to 2 lines, full name on hover. An
+            external/unnamed callee gets a clear label instead of an empty card
+            (#4558a). */}
         <div
-          className="mt-1 text-[11px] leading-tight font-medium text-text break-words line-clamp-2"
-          title={node.name}
+          className={cn(
+            "mt-1 text-[11px] leading-tight font-medium break-words line-clamp-2",
+            external ? "text-text-3 italic" : "text-text",
+          )}
+          title={displayName}
         >
-          {node.name}
+          {displayName}
         </div>
 
         {/* doc — one-line muted subtitle when present. */}
@@ -154,31 +209,59 @@ function FlowDagNodeImpl({ id, data, sourcePosition, targetPosition }: NodeProps
           )}
         </div>
 
-        {/* file:line — click opens the shared source-peek modal (#4499). */}
-        {fileRef && (
-          <button
-            type="button"
-            onClick={(e) => {
-              // Don't let the node-select / canvas handlers swallow the click.
-              e.stopPropagation();
-              if (node.file && groupId) {
-                openSourcePeek({
-                  groupId,
-                  file: node.file,
-                  line: node.line ?? 0,
-                  repo: node.repo,
-                });
-              }
-            }}
-            className="mt-0.5 flex items-center font-mono text-[10px] text-text-4 tabular-nums min-w-0 w-full text-left cursor-pointer hover:text-accent"
-            title={`${fileRef} — open source`}
+        {/* #4558(b)/#4564: external/unresolved nodes can't be source-peeked.
+            Show an honest 'external symbol' note (with the package name when the
+            node carries one) instead of a broken peek button. */}
+        {external ? (
+          <div
+            className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-text-4 min-w-0"
+            title={`External symbol — defined outside indexed source${
+              node.package ? ` (${node.package})` : ""
+            }`}
           >
-            {/* head (dir prefix) truncates LTR; tail (filename:line) never shrinks. */}
-            <span className="overflow-hidden whitespace-nowrap text-ellipsis min-w-0 shrink">
-              {fileHead}
+            <PackageOpen size={10} className="shrink-0" />
+            <span className="truncate">
+              external symbol{node.package ? ` · ${node.package}` : ""}
             </span>
-            <span className="shrink-0 whitespace-nowrap">{fileTail}</span>
-          </button>
+          </div>
+        ) : (
+          fileRef && (
+            <button
+              type="button"
+              onClick={(e) => {
+                // Don't let the node-select / canvas handlers swallow the click.
+                e.stopPropagation();
+                if (node.file && groupId) {
+                  openSourcePeek({
+                    groupId,
+                    file: node.file,
+                    line: node.line ?? 0,
+                    repo: node.repo,
+                  });
+                }
+              }}
+              className="mt-0.5 flex items-center font-mono text-[10px] text-text-4 tabular-nums min-w-0 w-full text-left cursor-pointer hover:text-accent"
+              title={`${fileRef} — open source`}
+            >
+              {/* head (dir prefix) truncates LTR; tail (filename:line) never shrinks. */}
+              <span className="overflow-hidden whitespace-nowrap text-ellipsis min-w-0 shrink">
+                {fileHead}
+              </span>
+              <span className="shrink-0 whitespace-nowrap">{fileTail}</span>
+            </button>
+          )
+        )}
+
+        {/* #4561: a branch CUT by the depth control (not a real leaf) keeps a
+            'more downstream' affordance so it's clearly distinct from a terminal. */}
+        {truncatedHere && (
+          <div
+            className="mt-1 inline-flex items-center gap-1 text-[10px] text-text-4"
+            title="More downstream nodes exist below the depth limit — raise depth to expand."
+          >
+            <MoreHorizontal size={11} className="shrink-0" />
+            more downstream
+          </div>
         )}
 
         {/* effect badges — small, only what's present. */}

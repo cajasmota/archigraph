@@ -8,7 +8,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROLE_STYLE, EXCEPTION_STYLE, EDGE_STYLE } from "./style";
+import { NODE_BUCKET_STYLE, EDGE_STYLE, type NodeBucket } from "./style";
 import type { DownstreamDAGTruncation } from "@/data/types";
 
 interface FlowDagLegendProps {
@@ -26,13 +26,33 @@ function truncationLabels(t: DownstreamDAGTruncation): string[] {
   return out;
 }
 
+/**
+ * Display order of the node taxonomy buckets in the legend (#4566): the spine
+ * left→right, then the special-cased states (exception/external/terminal). The
+ * neutral 'node' fallback is shown last.
+ */
+const LEGEND_BUCKETS: NodeBucket[] = [
+  "endpoint",
+  "handler",
+  "service",
+  "repository",
+  "schema",
+  "function",
+  "collection",
+  "terminal",
+  "exception",
+  "external",
+  "node",
+];
+
 export function FlowDagLegend({ branchCount, nodeCount, truncation }: FlowDagLegendProps) {
   const trunc = truncationLabels(truncation);
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-[10px] text-text-3 border-t border-border bg-bg-soft">
-      {/* Roles + the exception/error node accent (#4556, red). */}
-      {[...Object.values(ROLE_STYLE), EXCEPTION_STYLE].map((rs) => (
+      {/* Node taxonomy buckets (#4566): endpoint→…→data, plus exception (#4556,
+          red), external (#4558/#4564, muted), terminal end-cap (#4561). */}
+      {LEGEND_BUCKETS.map((b) => NODE_BUCKET_STYLE[b]).map((rs) => (
         <span key={rs.label} className="inline-flex items-center gap-1">
           <span
             className="size-2.5 rounded-sm shrink-0"

@@ -142,7 +142,13 @@ function FlowDagInner({
 
   const { nodes, edges } = useMemo(() => {
     if (!unfold) return { nodes: [], edges: [] };
-    const laid = layoutTree(unfold.instances, direction, expanded, onToggleExpand);
+    const laid = layoutTree(
+      unfold.instances,
+      direction,
+      expanded,
+      onToggleExpand,
+      unfold.hasOutEdge,
+    );
     for (const n of laid.nodes) {
       // Selection is driven by the ORIGINAL node id so the caller's contract
       // (Flows step inspector, #4354) is unchanged across the tree unfold; all
