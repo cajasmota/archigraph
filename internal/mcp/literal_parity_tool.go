@@ -89,13 +89,23 @@ func (s *Server) handleLiteralParity(_ context.Context, req mcpapi.CallToolReque
 	oracleID := argString(req, "oracle_source", "")
 	v3ID := argString(req, "v3_source", "")
 
+	// If an explicit *_source is given it is a hard pin: a miss is a real error
+	// (the caller asked for a specific entity). Without it, auto-locate may fail
+	// to find a SEMANTIC counterpart on one side — e.g. DRF action codenames are
+	// implicit lowercased @action method names with no declared enum on the
+	// oracle. In that case we MUST NOT silently compare a mismatched set; we
+	// return verdict:"unresolved" with the missing side's *_source null and a
+	// note, so the consumer can supply an explicit oracle_source/v3_source.
 	oracleEnt, oErr := locateValueSet(lgOracle, set, oracleID)
-	if oErr != "" {
+	if oErr != "" && oracleID != "" {
 		return mcpapi.NewToolResultError("oracle: " + oErr), nil
 	}
 	v3Ent, vErr := locateValueSet(lgV3, set, v3ID)
-	if vErr != "" {
+	if vErr != "" && v3ID != "" {
 		return mcpapi.NewToolResultError("v3: " + vErr), nil
+	}
+	if oErr != "" || vErr != "" {
+		return unresolvedResult(set, oracleEnt, v3Ent, oErr, vErr), nil
 	}
 
 	oracleMembers, err := parseMembersJSON(oracleEnt)
@@ -121,6 +131,45 @@ func (s *Server) handleLiteralParity(_ context.Context, req mcpapi.CallToolReque
 		"intra_v3_inconsistencies": res.IntraV3Inconsistencies,
 		"verdict":                  res.Verdict,
 	}), nil
+}
+
+// unresolvedResult builds a verdict:"unresolved" payload when a real counterpart
+// value-set could not be auto-located on one (or both) sides. The located side's
+// source id is reported; the unresolved side's is null. A note explains what to
+// do (supply an explicit oracle_source/v3_source). This is deliberately a
+// NO-RESULT, not a fabricated comparison against the wrong set.
+func unresolvedResult(set string, oracleEnt, v3Ent *graph.Entity, oErr, vErr string) *mcpapi.CallToolResult {
+	out := map[string]any{
+		"set":                      set,
+		"verdict":                  literalparity.VerdictUnresolved,
+		"oracle_source":            nil,
+		"v3_source":                nil,
+		"oracle_set_name":          nil,
+		"v3_set_name":              nil,
+		"only_in_oracle":           []string{},
+		"only_in_v3":               []string{},
+		"value_mismatches":         []literalparity.ValueMismatch{},
+		"intra_v3_inconsistencies": []literalparity.IntraInconsistency{},
+	}
+	notes := []string{}
+	if oErr != "" {
+		notes = append(notes, "oracle: "+oErr)
+	} else if oracleEnt != nil {
+		out["oracle_source"] = oracleEnt.ID
+		out["oracle_set_name"] = oracleEnt.Name
+	}
+	if vErr != "" {
+		notes = append(notes, "v3: "+vErr)
+	} else if v3Ent != nil {
+		out["v3_source"] = v3Ent.ID
+		out["v3_set_name"] = v3Ent.Name
+	}
+	notes = append(notes, "no semantic counterpart auto-located on one side; "+
+		"this set may be IMPLICIT on that side (e.g. DRF action codenames = "+
+		"lowercased @action method names, no declared enum) — supply an explicit "+
+		"oracle_source/v3_source to compare. Refusing to compare a mismatched set.")
+	out["note"] = strings.Join(notes, " | ")
+	return jsonResult(out)
 }
 
 // locateValueSet resolves the SCOPE.Enum value-set entity for a `set` within a
@@ -180,21 +229,24 @@ func findEnumByID(lg *LoadedGroup, id string) *graph.Entity {
 }
 
 // matchEnumByNames scans a group's SCOPE.Enum value-sets and returns the best
-// match against the candidate names. Matching tiers (best first):
-//  1. exact normalised name match;
-//  2. one side is a normalised substring of the other.
-// Within a tier, candidate order wins; then deterministic by entity name.
+// SEMANTIC match against the candidate names. Matching requires an EXACT
+// canonical-name match (CanonicalKey folds case + separators + camelCase, and a
+// trailing plural 's', so PERMISSION_PAGES / PermissionPage / PageSlugs all
+// canonicalise comparably). Substring matching was REMOVED (#4532 Bug B): it let
+// `action_codenames` grab unrelated "Action" enums (SyncActionStatus,
+// OutboxAction) and silently compare the wrong sets. A no-result is safer than a
+// wrong-set comparison — the caller gets verdict:"unresolved" and can pin an
+// explicit source. Within the exact tier, candidate order wins; then by name.
 func matchEnumByNames(lg *LoadedGroup, candidates []string) *graph.Entity {
 	type hit struct {
 		ent  *graph.Entity
-		tier int // 0 exact, 1 substring
 		rank int // candidate preference rank
 	}
 	var hits []hit
 
 	normCands := make([]string, len(candidates))
 	for i, c := range candidates {
-		normCands[i] = literalparity.NormalizeKey(c)
+		normCands[i] = canonicalSetName(c)
 	}
 
 	for _, r := range lg.Repos {
@@ -206,13 +258,10 @@ func matchEnumByNames(lg *LoadedGroup, candidates []string) *graph.Entity {
 			if !isValueSet(e) {
 				continue
 			}
-			en := literalparity.NormalizeKey(enumDisplayName(e))
+			en := canonicalSetName(enumDisplayName(e))
 			for rank, nc := range normCands {
-				switch {
-				case en == nc:
-					hits = append(hits, hit{ent: e, tier: 0, rank: rank})
-				case strings.Contains(en, nc) || strings.Contains(nc, en):
-					hits = append(hits, hit{ent: e, tier: 1, rank: rank})
+				if en == nc {
+					hits = append(hits, hit{ent: e, rank: rank})
 				}
 			}
 		}
@@ -221,15 +270,26 @@ func matchEnumByNames(lg *LoadedGroup, candidates []string) *graph.Entity {
 		return nil
 	}
 	sort.SliceStable(hits, func(i, j int) bool {
-		if hits[i].tier != hits[j].tier {
-			return hits[i].tier < hits[j].tier
-		}
 		if hits[i].rank != hits[j].rank {
 			return hits[i].rank < hits[j].rank
 		}
 		return hits[i].ent.Name < hits[j].ent.Name
 	})
 	return hits[0].ent
+}
+
+// canonicalSetName folds a value-set name to its semantic-match form:
+// CanonicalKey (case + separator + camelCase fold) plus a trailing-plural fold
+// so the singular/plural naming the oracle and v3 tend to differ on still align
+// (PERMISSION_PAGES ↔ PermissionPage, PageSlug ↔ PageSlugs). Only the FINAL 's'
+// of the whole canonical form is dropped (status → statu would be wrong, so we
+// keep names ending in "ss" and very short stems intact).
+func canonicalSetName(s string) string {
+	c := literalparity.CanonicalKey(s)
+	if len(c) > 3 && strings.HasSuffix(c, "s") && !strings.HasSuffix(c, "ss") {
+		c = c[:len(c)-1]
+	}
+	return c
 }
 
 // enumDisplayName returns the enum's logical name: the enum_name property when

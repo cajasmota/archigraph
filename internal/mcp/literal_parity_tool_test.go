@@ -144,23 +144,72 @@ func TestLiteralParity_E2E_MissingArgs(t *testing.T) {
 	}
 }
 
-// End-to-end: auto-locate failure (no matching value-set) is a clean error,
-// not a panic.
-func TestLiteralParity_E2E_AutoLocateMiss(t *testing.T) {
+// BUG B (#4532): auto-locate failure on BOTH sides (no semantic counterpart) is
+// NOT a fabricated comparison — it returns verdict:"unresolved" with both
+// sources null and a note, not a tool error and not a wrong-set diff.
+func TestLiteralParity_E2E_UnresolvedBothSides(t *testing.T) {
 	s := twoGroupServer(t,
 		[]graph.Entity{enumEntity("o1", "Unrelated", `[{"key":"A","value":"a"}]`)},
 		[]graph.Entity{enumEntity("v1", "Unrelated", `[{"key":"A","value":"a"}]`)},
 	)
-	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_literal_parity"
-	req.Params.Arguments = map[string]any{
+	out := callLiteralParity(t, s, map[string]any{
 		"group_oracle": "oracle", "group_v3": "v3", "set": "status_strings",
+	})
+	if out["verdict"] != "unresolved" {
+		t.Fatalf("verdict = %v, want unresolved; out=%+v", out["verdict"], out)
 	}
-	res, err := s.handleLiteralParity(context.Background(), req)
-	if err != nil {
-		t.Fatalf("handler error: %v", err)
+	if out["oracle_source"] != nil || out["v3_source"] != nil {
+		t.Errorf("expected null sources, got %v / %v", out["oracle_source"], out["v3_source"])
 	}
-	if !res.IsError {
-		t.Fatalf("expected auto-locate miss error")
+	if _, ok := out["note"].(string); !ok || out["note"] == "" {
+		t.Errorf("expected a non-empty note, got %v", out["note"])
+	}
+	vm, _ := out["value_mismatches"].([]any)
+	if len(vm) != 0 {
+		t.Errorf("expected no fabricated comparison, got value_mismatches=%v", vm)
+	}
+}
+
+// BUG B (#4532): the OLD substring auto-locate compared unrelated "Action" enums
+// (SyncActionStatus ↔ OutboxAction). Now: no exact semantic counterpart for the
+// action_codenames alias exists on the oracle side (only SyncActionStatus, which
+// is NOT the codename set), so the result is unresolved on that side — not a
+// silent wrong-set comparison. The v3 side, which DOES have a real ActionCodename
+// set, is reported.
+func TestLiteralParity_E2E_NoSubstringWrongSet(t *testing.T) {
+	s := twoGroupServer(t,
+		[]graph.Entity{enumEntity("o1", "SyncActionStatus", `[{"key":"PENDING","value":"pending"}]`)},
+		[]graph.Entity{enumEntity("v1", "ActionCodename", `[{"key":"LITE","value":"lite"}]`)},
+	)
+	out := callLiteralParity(t, s, map[string]any{
+		"group_oracle": "oracle", "group_v3": "v3", "set": "action_codenames",
+	})
+	if out["verdict"] != "unresolved" {
+		t.Fatalf("verdict = %v, want unresolved (wrong-set must NOT be compared); out=%+v", out["verdict"], out)
+	}
+	if out["oracle_source"] != nil {
+		t.Errorf("oracle should be unresolved (SyncActionStatus is the wrong set), got %v", out["oracle_source"])
+	}
+	if out["v3_source"] != "v1" {
+		t.Errorf("v3 ActionCodename should resolve, got %v", out["v3_source"])
+	}
+}
+
+// BUG B (#4532): for an implicit-on-one-side set, an explicit oracle_source
+// override pins the value-set and yields a real comparison instead of unresolved.
+func TestLiteralParity_E2E_ExplicitOverrideResolvesImplicit(t *testing.T) {
+	s := twoGroupServer(t,
+		[]graph.Entity{enumEntity("oImplicit", "SyncActionStatus", `[{"key":"LITE","value":"lite"}]`)},
+		[]graph.Entity{enumEntity("v1", "ActionCodename", `[{"key":"LITE","value":"lite"}]`)},
+	)
+	out := callLiteralParity(t, s, map[string]any{
+		"group_oracle": "oracle", "group_v3": "v3", "set": "action_codenames",
+		"oracle_source": "oImplicit",
+	})
+	if out["verdict"] != "equivalent" {
+		t.Fatalf("verdict = %v, want equivalent with explicit oracle_source; out=%+v", out["verdict"], out)
+	}
+	if out["oracle_source"] != "oImplicit" || out["v3_source"] != "v1" {
+		t.Errorf("sources = %v / %v", out["oracle_source"], out["v3_source"])
 	}
 }

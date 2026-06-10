@@ -59,13 +59,18 @@ type IntraInconsistency struct {
 
 // Result is the full diff verdict between an oracle value-set and its v3
 // mirror.
+//
+// OnlyInOracle / OnlyInV3 are reported on the VALUE multiset (the contract for a
+// parity diff is the literal value, not the key spelling): they list the value
+// literals present on only one side. ValueMismatches reports aligned keys (after
+// canonical key-folding that also splits camelCase) whose literal value differs.
 type Result struct {
 	Set                    string               `json:"set"`
 	OnlyInOracle           []string             `json:"only_in_oracle"`
 	OnlyInV3               []string             `json:"only_in_v3"`
 	ValueMismatches        []ValueMismatch      `json:"value_mismatches"`
 	IntraV3Inconsistencies []IntraInconsistency `json:"intra_v3_inconsistencies"`
-	Verdict                string               `json:"verdict"` // "equivalent" | "drift"
+	Verdict                string               `json:"verdict"` // "equivalent" | "drift" | "unresolved"
 }
 
 const (
@@ -75,6 +80,9 @@ const (
 	// VerdictDrift means at least one membership, value, or intra-v3 difference
 	// was detected.
 	VerdictDrift = "drift"
+	// VerdictUnresolved means a real counterpart set could not be located on one
+	// side, so no comparison was performed (set by the resolver, never by Diff).
+	VerdictUnresolved = "unresolved"
 )
 
 // NormalizeKey folds a key to its alignment form: lowercase, with every run of
@@ -110,6 +118,62 @@ func toLowerRune(r rune) rune {
 	return r
 }
 
+// CanonicalKey folds a key to a stronger ALIGNMENT form than NormalizeKey: in
+// addition to case-folding and collapsing separator runs, it splits camelCase /
+// PascalCase word boundaries into the canonical '_' separator. This is what
+// makes a cross-framework parity diff align the oracle's SCREAMING_SNAKE key
+// (CORE_ADMIN → core_admin) with the v3 PascalCase key (CoreAdmin → core_admin),
+// which NormalizeKey alone could not do (CoreAdmin → coreadmin). It is used for
+// VALUE-mismatch alignment in Diff; NormalizeKey is kept for the looser
+// name-substring matching in the auto-locator.
+//
+// Boundaries split: lower→Upper (coreAdmin → core_admin), an acronym run
+// followed by a Word (HTTPServer → http_server), and letter↔digit
+// (page2Slug → page_2_slug). Existing separators ('_','-','.',' ','/') also
+// split. Runs of separators collapse to one; leading/trailing separators trim.
+func CanonicalKey(k string) string {
+	k = strings.TrimSpace(k)
+	runes := []rune(k)
+	var b strings.Builder
+	prevSep := false
+	emitSep := func() {
+		if !prevSep && b.Len() > 0 {
+			b.WriteByte('_')
+		}
+		prevSep = true
+	}
+	isUpper := func(r rune) bool { return r >= 'A' && r <= 'Z' }
+	isLower := func(r rune) bool { return r >= 'a' && r <= 'z' }
+	isDigit := func(r rune) bool { return r >= '0' && r <= '9' }
+	for i, r := range runes {
+		switch r {
+		case '_', '-', '.', ' ', '/':
+			emitSep()
+			continue
+		}
+		// Insert an implicit boundary before this rune when it starts a new word.
+		if i > 0 && !prevSep {
+			prev := runes[i-1]
+			switch {
+			// lower/digit → Upper  (coreAdmin, page2A)
+			case isUpper(r) && (isLower(prev) || isDigit(prev)):
+				emitSep()
+			// Upper → Upper followed by lower: acronym/word boundary
+			// (HTTPServer → HTTP|Server): split before the trailing Upper.
+			case isUpper(r) && isUpper(prev) && i+1 < len(runes) && isLower(runes[i+1]):
+				emitSep()
+			// letter↔digit boundary in either direction.
+			case (isDigit(r) && (isLower(prev) || isUpper(prev))) ||
+				((isLower(r) || isUpper(r)) && isDigit(prev)):
+				emitSep()
+			}
+		}
+		b.WriteRune(toLowerRune(r))
+		prevSep = false
+	}
+	return strings.TrimRight(strings.TrimLeft(b.String(), "_"), "_")
+}
+
 // separatorOf classifies the separator convention of a literal value:
 // "snake" (contains '_'), "kebab" (contains '-'), or "" (neither / single
 // token / mixed-other). Used to detect the intra-v3 convention split. When a
@@ -141,37 +205,34 @@ func Diff(setName string, oracle, v3 []Member) Result {
 		IntraV3Inconsistencies: []IntraInconsistency{},
 	}
 
-	// Index each side by normalised key. On a collision (two original keys
-	// folding to the same form) the first wins for value compare, but every
-	// original key is still tracked for membership so we never silently drop.
+	// Index each side by CANONICAL key (camelCase-aware: splits coreAdmin →
+	// core_admin so SCREAMING_SNAKE oracle keys align with PascalCase v3 keys).
+	// On a collision (two original keys folding to the same form) the first wins
+	// for value compare, but every original key is still tracked for the
+	// value-multiset membership below so we never silently drop.
 	type idx struct {
 		origKey string
 		value   string
 	}
 	oracleByNorm := map[string]idx{}
 	for _, m := range oracle {
-		nk := NormalizeKey(m.Key)
+		nk := CanonicalKey(m.Key)
 		if _, ok := oracleByNorm[nk]; !ok {
 			oracleByNorm[nk] = idx{origKey: m.Key, value: m.Value}
 		}
 	}
 	v3ByNorm := map[string]idx{}
 	for _, m := range v3 {
-		nk := NormalizeKey(m.Key)
+		nk := CanonicalKey(m.Key)
 		if _, ok := v3ByNorm[nk]; !ok {
 			v3ByNorm[nk] = idx{origKey: m.Key, value: m.Value}
 		}
 	}
 
-	// Membership + value-mismatch.
+	// Value-mismatch on aligned keys: same canonical key carrying a different
+	// literal value on each side (the headline "_ vs -" cross-framework drift).
 	for nk, o := range oracleByNorm {
-		v, ok := v3ByNorm[nk]
-		if !ok {
-			res.OnlyInOracle = append(res.OnlyInOracle, o.origKey)
-			continue
-		}
-		// Compare ORIGINAL literal values (not normalised).
-		if o.value != v.value {
+		if v, ok := v3ByNorm[nk]; ok && o.value != v.value {
 			res.ValueMismatches = append(res.ValueMismatches, ValueMismatch{
 				Key:    o.origKey,
 				Oracle: o.value,
@@ -179,11 +240,13 @@ func Diff(setName string, oracle, v3 []Member) Result {
 			})
 		}
 	}
-	for nk, v := range v3ByNorm {
-		if _, ok := oracleByNorm[nk]; !ok {
-			res.OnlyInV3 = append(res.OnlyInV3, v.origKey)
-		}
-	}
+
+	// Membership is reported on the VALUE MULTISET, because for a parity diff the
+	// VALUE is the contract, not the key spelling. only_in_oracle/only_in_v3 list
+	// the literal values present on only one side — so a drift like
+	// oracle:"core-admin" vs v3:"core_admin" surfaces DIRECTLY here even when keys
+	// fail to align (and is ALSO reported in value_mismatches when keys do align).
+	res.OnlyInOracle, res.OnlyInV3 = valueSetDiff(oracle, v3)
 
 	// Intra-v3 convention split: classify each v3 value literal's separator
 	// convention; if more than one non-empty convention appears, report the
@@ -205,6 +268,49 @@ func Diff(setName string, oracle, v3 []Member) Result {
 		res.Verdict = VerdictDrift
 	}
 	return res
+}
+
+// valueSetDiff computes the value-MULTISET difference between the two sides:
+// the literal values present on only the oracle side and only the v3 side. For
+// a parity diff the value is the contract, so this surfaces a differing literal
+// directly even when the keys carrying it cannot be aligned across frameworks.
+// A member with an empty value falls back to its key (so value-less enum members
+// still participate), mirroring detectIntraInconsistency. Each list is a SET of
+// distinct values, deterministically sorted.
+func valueSetDiff(oracle, v3 []Member) (onlyOracle, onlyV3 []string) {
+	// For members WITH a literal value the value is compared RAW (core_admin vs
+	// core-admin is a real drift). For value-LESS members we fall back to the
+	// CANONICAL key, so a pure key-casing/separator difference in a valueless enum
+	// (ACTIVE vs active) does NOT read as a value drift.
+	probe := func(m Member) string {
+		if strings.TrimSpace(m.Value) == "" {
+			return CanonicalKey(m.Key)
+		}
+		return m.Value
+	}
+	oset := map[string]bool{}
+	for _, m := range oracle {
+		oset[probe(m)] = true
+	}
+	vset := map[string]bool{}
+	for _, m := range v3 {
+		vset[probe(m)] = true
+	}
+	onlyOracle = []string{}
+	onlyV3 = []string{}
+	for val := range oset {
+		if !vset[val] {
+			onlyOracle = append(onlyOracle, val)
+		}
+	}
+	for val := range vset {
+		if !oset[val] {
+			onlyV3 = append(onlyV3, val)
+		}
+	}
+	sort.Strings(onlyOracle)
+	sort.Strings(onlyV3)
+	return onlyOracle, onlyV3
 }
 
 // detectIntraInconsistency finds a mixed separator/format convention within a
