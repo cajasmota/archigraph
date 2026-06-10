@@ -619,6 +619,18 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("set", mcpapi.Required()),
 	), s.wrap("archigraph_literal_parity", s.handleLiteralParity))
 
+	// #4422 (epic #4419 P0) — cross-group AUTH-POSTURE parity. Per linked HTTP
+	// endpoint, resolves the oracle's framework auth signal (Django §10
+	// get_permissions decode) and the v3's (NestJS guards/@Require*) into a
+	// shared {kind,literal} vocabulary via a pluggable resolver registry, then
+	// diffs to equivalent|stricter|looser|slug_mismatch|kind_mismatch. Required:
+	// group_oracle, group_v3. Optional (undeclared per #1639): endpoint, format.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_auth_posture_diff",
+		mcpapi.WithDescription("Cross-group auth-posture parity diff per linked endpoint (oracle vs v3)."),
+		mcpapi.WithString("group_oracle", mcpapi.Required()),
+		mcpapi.WithString("group_v3", mcpapi.Required()),
+	), s.wrap("archigraph_auth_posture_diff", s.handleAuthPostureDiff))
+
 	// #2772 — Phase 2B taint flow / security findings. Returns
 	// SecurityFinding records emitted by the taint-flow pass:
 	// source→...→sink paths through the CALLS graph that lack an

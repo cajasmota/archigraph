@@ -40,4 +40,15 @@ package mcp
 //     the handshake to ~6581; +500 restores headroom. After this bump the
 //     fold-into-a-bundle rule still stands for any further SINGLE-group
 //     additions.
-const TokenCeiling = 7000
+//   - 7000 → 7500: PR for #4422 (epic #4419 P0) — adds
+//     archigraph_auth_posture_diff, the cross-group AUTH-POSTURE parity differ
+//     (oracle Django get_permissions §10 decode vs v3 NestJS guard stack). Like
+//     literal_parity it is a distinct cross-GROUP capability with two required
+//     group params (group_oracle, group_v3) — it cannot fold into a single-group
+//     action-dispatch bundle without muddying that bundle's group contract. Its
+//     two required string args plus a ≤80-char description bring the measured
+//     handshake to ~6676 tokens; +500 keeps comfortable headroom under the next
+//     bump line (consistent with the literal_parity precedent). The
+//     fold-into-a-bundle rule continues to stand for any further SINGLE-group
+//     additions.
+const TokenCeiling = 7500

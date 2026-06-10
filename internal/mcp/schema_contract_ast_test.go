@@ -174,6 +174,13 @@ var intentionalGaps = []intentionalGap{
 	{"archigraph_literal_parity", "oracle_source", "#4421 token ceiling pattern — optional oracle value-set entity pin"},
 	{"archigraph_literal_parity", "v3_source", "#4421 token ceiling pattern — optional v3 value-set entity pin"},
 
+	// archigraph_auth_posture_diff: optional narrowing args undeclared for token
+	// budget (#4422 / #1639 pattern). The two required args (group_oracle,
+	// group_v3) ARE declared; endpoint narrows to one endpoint, format toggles
+	// terse|full per-side provenance.
+	{"archigraph_auth_posture_diff", "endpoint", "#4422 token ceiling pattern — optional endpoint substring filter"},
+	{"archigraph_auth_posture_diff", "format", "#4422 token ceiling pattern — optional terse|full output"},
+
 	// archigraph_endpoint_posture: scan-mode pagination undeclared for token
 	// budget (#1639 pattern). entity_id/facet/path_contains/method ARE declared.
 	{"archigraph_endpoint_posture", "limit", "#1639 token ceiling pattern — scan-mode result limit"},

@@ -605,6 +605,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_template_patterns",
 		// #4421 cross-group ConstantSet / SCOPE.Enum value-set parity.
 		"archigraph_literal_parity",
+		// #4422 cross-group auth-posture parity (oracle vs v3).
+		"archigraph_auth_posture_diff",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -700,8 +702,9 @@ func TestToolNameSurface(t *testing.T) {
 	// +1 archigraph_orient (#4290 graph-orientation analysis).
 	// +1 archigraph_pr_impact (#4292 PR-scoped impact + cross-change merge-risk).
 	// +1 archigraph_literal_parity (#4421 cross-group ConstantSet value-set parity).
-	if got := len(allRegisteredTools); got != 60 {
-		t.Errorf("expected 60 registered tools, got %d — update this count if tools are added/removed (added archigraph_literal_parity #4421 cross-group value-set parity)", got)
+	// +1 archigraph_auth_posture_diff (#4422 cross-group auth-posture parity).
+	if got := len(allRegisteredTools); got != 61 {
+		t.Errorf("expected 61 registered tools, got %d — update this count if tools are added/removed (added archigraph_auth_posture_diff #4422 cross-group auth-posture parity)", got)
 	}
 }
 
@@ -3226,6 +3229,11 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		// this fixture and the handler returns a graceful text error result,
 		// which still exercises the wrapper + elapsed_ms trailer.
 		"archigraph_literal_parity": {"group_oracle": "g", "group_v3": "g", "set": "page_slugs"},
+		// #4422 cross-group auth-posture parity. Both group params point at the
+		// single test group "g"; the join finds no linked endpoints in this bare
+		// fixture and the handler returns an empty-records result, still
+		// exercising the wrapper + elapsed_ms trailer.
+		"archigraph_auth_posture_diff": {"group_oracle": "g", "group_v3": "g"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3270,8 +3278,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 60 {
-		t.Errorf("expected 60 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_literal_parity #4421 cross-group value-set parity)", len(tools))
+	if len(tools) != 61 {
+		t.Errorf("expected 61 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_auth_posture_diff #4422 cross-group auth-posture parity)", len(tools))
 	}
 
 	for _, st := range tools {
