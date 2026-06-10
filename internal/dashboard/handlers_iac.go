@@ -138,6 +138,24 @@ type IaCResource struct {
 	// diagram renders as a grouped container. Empty when no source path is known.
 	Module string `json:"module,omitempty"`
 
+	// Env is the environment a resource belongs to (#4657): for a module
+	// INSTANCE it is derived from the instance file's path (envs/<env>/…); for a
+	// definition resource it is propagated from the instance(s) that instantiate
+	// the definition this resource lives in. Drives the env tabs. Empty for
+	// env-less resources (shared definitions not yet linked to any env).
+	Env string `json:"env,omitempty"`
+
+	// DefinitionDir, for a module INSTANCE only (#4657): the repo-relative
+	// directory of the module DEFINITION this instance instantiates
+	// (e.g. `modules/worker-service`). The diagram joins it to the definition's
+	// resources (those whose Module == DefinitionDir) to project them into the
+	// env and draw the INSTANTIATES edge between rendered nodes.
+	DefinitionDir string `json:"definition_dir,omitempty"`
+
+	// ModuleSource, for a module INSTANCE only (#4657): the raw `source` value
+	// (e.g. `../../modules/worker-service`, or a registry/git source).
+	ModuleSource string `json:"module_source,omitempty"`
+
 	// Properties — curated typed config props (empty when none stamped).
 	Properties []IaCProperty `json:"properties"`
 	// Relations — grants / event-sources / dependencies / topology / triggers /
@@ -166,6 +184,9 @@ type IaCReport struct {
 
 	// Tools observed.
 	Tools []string `json:"tools"`
+	// Envs observed across module instances (#4657), sorted; drives the env
+	// tabs in the architecture view. Empty when no env-scoped stacks exist.
+	Envs []string `json:"envs"`
 	// CountsByCategory — resource_category → count across all tools.
 	CountsByCategory map[string]int `json:"counts_by_category"`
 
@@ -196,6 +217,11 @@ var iacStructuralPropKeys = map[string]struct{}{
 	"deployment_role":   {},
 	"reason":            {},
 	"join":              {},
+	// #4657 module-instantiation bookkeeping — surfaced as dedicated
+	// IaCResource fields (Env / DefinitionDir / ModuleSource), not config props.
+	"env":            {},
+	"definition_dir": {},
+	"module_source":  {},
 }
 
 // iacResourceKinds are the entity Kinds an IaC resource can carry. CFN derives
@@ -298,6 +324,12 @@ func iacRelationFacet(kind string, props map[string]string) (facet, detail strin
 		}
 		return "dependency", strings.TrimSpace(props["module_output"])
 	}
+	// Issue #4657 — module instantiation: an env stack's module instance
+	// instantiates a module definition. Surfaced as its own facet so the
+	// diagram draws the env→definition link distinctly from plain dependencies.
+	if kind == "INSTANTIATES" {
+		return "instantiates", strings.TrimSpace(props["definition_dir"])
+	}
 	switch kind {
 	case "TRIGGERS", "SERVES", "ROUTES_TO", "SUBSCRIBES_TO":
 		// serverless / SAM wiring. Surface the most descriptive qualifier.
@@ -350,6 +382,42 @@ func iacModuleOf(slug, sourceFile string) string {
 		return slug
 	}
 	return "(root)"
+}
+
+// splitEnv splits a (possibly comma-joined) env field into its individual env
+// names, trimming blanks. A module definition instantiated by several envs
+// carries a comma-joined Env (e.g. "dev,prod"); a plain instance carries one.
+func splitEnv(env string) []string {
+	env = strings.TrimSpace(env)
+	if env == "" {
+		return nil
+	}
+	var out []string
+	for _, p := range strings.Split(env, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// mergeEnv adds one env to a comma-joined env list, keeping it sorted and
+// de-duplicated. Used when a shared module definition is instantiated by more
+// than one environment (#4657).
+func mergeEnv(existing, add string) string {
+	set := map[string]bool{}
+	for _, e := range splitEnv(existing) {
+		set[e] = true
+	}
+	for _, e := range splitEnv(add) {
+		set[e] = true
+	}
+	out := make([]string, 0, len(set))
+	for e := range set {
+		out = append(out, e)
+	}
+	sort.Strings(out)
+	return strings.Join(out, ",")
 }
 
 // idTail returns the last path segment of a graph entity ID (Kind:Name or
@@ -505,18 +573,21 @@ func (s *Server) handleIaC(w http.ResponseWriter, r *http.Request) {
 			sort.SliceStable(cfgProps, func(i, j int) bool { return cfgProps[i].Key < cfgProps[j].Key })
 
 			res := &IaCResource{
-				EntityID:     rp.Slug + "/" + id,
-				Repo:         rp.Slug,
-				Name:         name,
-				Tool:         tool,
-				ResourceType: rtype,
-				Category:     category,
-				LogicalID:    props["logical_id"],
-				SourceFile:   sourceFile,
-				StartLine:    startLine,
-				Module:       iacModuleOf(rp.Slug, sourceFile),
-				Properties:   cfgProps,
-				Relations:    []IaCRelation{},
+				EntityID:      rp.Slug + "/" + id,
+				Repo:          rp.Slug,
+				Name:          name,
+				Tool:          tool,
+				ResourceType:  rtype,
+				Category:      category,
+				LogicalID:     props["logical_id"],
+				SourceFile:    sourceFile,
+				StartLine:     startLine,
+				Module:        iacModuleOf(rp.Slug, sourceFile),
+				Env:           strings.TrimSpace(props["env"]),
+				DefinitionDir: strings.TrimSpace(props["definition_dir"]),
+				ModuleSource:  strings.TrimSpace(props["module_source"]),
+				Properties:    cfgProps,
+				Relations:     []IaCRelation{},
 			}
 			byID[id] = res
 			nameByID[id] = name
@@ -596,7 +667,84 @@ func (s *Server) handleIaC(w http.ResponseWriter, r *http.Request) {
 				report.TotalDependencies++
 			}
 		})
+
+		// Pass 3 (#4657) — resolve module instantiation by DIRECTORY. The
+		// INSTANTIATES edge from Pass 2 targets `tfmodule-def:<dir>`, which is
+		// not itself a rendered resource (a Terraform module definition is a
+		// directory of .tf files, not one entity). Here we join each module
+		// INSTANCE's DefinitionDir to the definition's resources — every
+		// resource whose Module (source-file directory) equals that dir — and:
+		//
+		//   1. draw an INSTANTIATES edge between the instance node and each of
+		//      the definition's resources (so dev/staging/prod connect to the
+		//      worker-service / sqs-queue definitions as rendered nodes), and
+		//   2. propagate the instance's env onto those definition resources, so
+		//      the env tabs can scope to "this env's instances + what they
+		//      instantiate" even though the shared definition files carry no env.
+		//
+		// This is the directory-join the resolver cannot do (no entity to bind
+		// a directory to) and is what clears the bulk of the unresolved relations.
+		defByDir := map[string][]*IaCResource{}
+		for _, r := range byID {
+			if r.Repo != rp.Slug || r.Module == "" {
+				continue
+			}
+			defByDir[r.Module] = append(defByDir[r.Module], r)
+		}
+		for _, inst := range byID {
+			if inst.Repo != rp.Slug || inst.DefinitionDir == "" {
+				continue
+			}
+			defs := defByDir[inst.DefinitionDir]
+			if len(defs) == 0 {
+				continue
+			}
+			for _, def := range defs {
+				if def == inst {
+					continue
+				}
+				// Propagate env onto the (env-less) shared definition resource so
+				// it surfaces under the instantiating env's tab. A definition
+				// instantiated by multiple envs accumulates a comma-joined list.
+				if inst.Env != "" {
+					def.Env = mergeEnv(def.Env, inst.Env)
+				}
+				inst.Relations = append(inst.Relations, IaCRelation{
+					Facet:          "instantiates",
+					Kind:           "INSTANTIATES",
+					Direction:      "out",
+					Target:         def.Name,
+					TargetResolved: true,
+					TargetID:       def.EntityID,
+					TargetEntityID: def.EntityID,
+					Detail:         inst.DefinitionDir,
+				})
+				def.Relations = append(def.Relations, IaCRelation{
+					Facet:          "instantiates",
+					Kind:           "INSTANTIATES",
+					Direction:      "in",
+					Target:         inst.Name,
+					TargetResolved: true,
+					TargetID:       inst.EntityID,
+					TargetEntityID: inst.EntityID,
+					Detail:         inst.DefinitionDir,
+				})
+			}
+		}
 	}
+
+	// Collect the env set across all module instances (post-projection so
+	// definition resources have inherited an env too).
+	envSet := map[string]bool{}
+	for _, r := range byID {
+		for _, e := range splitEnv(r.Env) {
+			envSet[e] = true
+		}
+	}
+	for e := range envSet {
+		report.Envs = append(report.Envs, e)
+	}
+	sort.Strings(report.Envs)
 
 	// Assemble groups by tool.
 	byTool := map[string]*IaCToolGroup{}

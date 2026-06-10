@@ -2189,6 +2189,23 @@ export interface IaCResource {
    * Empty when no source path is known.
    */
   module?: string;
+  /**
+   * Environment this resource belongs to (#4657). For a module INSTANCE it is
+   * derived from the instance file's path (envs/<env>/…); for a definition
+   * resource it is propagated from the instance(s) that instantiate the
+   * definition. A definition shared by several envs carries a comma-joined
+   * list. Drives the env tabs. Empty for env-less resources.
+   */
+  env?: string;
+  /**
+   * For a module INSTANCE only (#4657): the repo-relative directory of the
+   * module DEFINITION this instance instantiates (e.g. `modules/worker-service`).
+   * Equals the `module` of the definition's resources, so the diagram joins on
+   * it to project the definition's resources into the env.
+   */
+  definition_dir?: string;
+  /** For a module INSTANCE only (#4657): the raw `source` value. */
+  module_source?: string;
   /** Curated typed config props; [] when none stamped. */
   properties: IaCProperty[];
   /** Grants / event-sources / dependencies / topology / triggers; [] when none. */
@@ -2212,6 +2229,11 @@ export interface IaCReport {
   total_outputs: number;
   with_props_count: number;
   tools: string[];
+  /**
+   * Environments observed across module instances (#4657), sorted. Drives the
+   * env tabs in the architecture view; empty when no env-scoped stacks exist.
+   */
+  envs: string[];
   /** resource_category → count across all tools. */
   counts_by_category: Record<string, number>;
   groups: IaCToolGroup[];

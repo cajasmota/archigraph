@@ -111,6 +111,10 @@ func TestIaCRelationFacet(t *testing.T) {
 		{"cross-module generic falls back to dependency", "USES",
 			map[string]string{"dataflow": "cross_module", "semantic": "dependency", "module_output": "id"},
 			"dependency", "id"},
+		// #4657 — module instantiation edge surfaces as its own facet.
+		{"instantiates", "INSTANTIATES",
+			map[string]string{"definition_dir": "modules/worker-service"},
+			"instantiates", "modules/worker-service"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -131,6 +135,33 @@ func TestIaCIsOutputEntity(t *testing.T) {
 	}
 	if iacIsOutputEntity("SCOPE.InfraResource", "", map[string]string{"iac_tool": "aws-cdk"}) {
 		t.Fatal("a resource is not an output entity")
+	}
+}
+
+func TestMergeEnv(t *testing.T) {
+	cases := []struct {
+		existing, add, want string
+	}{
+		{"", "prod", "prod"},
+		{"prod", "prod", "prod"},
+		{"prod", "dev", "dev,prod"},
+		{"dev,prod", "staging", "dev,prod,staging"},
+		{"prod", "", "prod"},
+	}
+	for _, c := range cases {
+		if got := mergeEnv(c.existing, c.add); got != c.want {
+			t.Errorf("mergeEnv(%q,%q) = %q, want %q", c.existing, c.add, got, c.want)
+		}
+	}
+}
+
+func TestSplitEnv(t *testing.T) {
+	got := splitEnv(" dev , prod ,")
+	if len(got) != 2 || got[0] != "dev" || got[1] != "prod" {
+		t.Errorf("splitEnv = %v, want [dev prod]", got)
+	}
+	if splitEnv("") != nil {
+		t.Error("splitEnv(\"\") should be nil")
 	}
 }
 

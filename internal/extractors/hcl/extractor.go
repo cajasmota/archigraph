@@ -338,6 +338,13 @@ func extractModuleBlock(n *sitter.Node, src []byte, path, lang string, start, en
 		if src_ := attributeStringValue(body, "source", src); src_ != "" {
 			rec.QualifiedName = src_
 			rec.Metadata["source"] = src_
+			// Issue #4657 — resolve the module instantiation: stamp the
+			// definition directory + env onto the instance and emit an
+			// INSTANTIATES edge from the instance to its definition dir, so the
+			// env stacks connect to the shared module definitions and the IaC
+			// architecture view can project the definition's resources inline.
+			rec.Relationships = append(rec.Relationships,
+				resolveModuleInstantiation(&rec, src_, path, lang, selfRef)...)
 		}
 		deps := extractDependsOn(body, src, path, lang)
 		rec.Relationships = append(rec.Relationships, deps...)

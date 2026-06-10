@@ -274,6 +274,14 @@ var hclDynamicPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`^git::`),
 	regexp.MustCompile(`^github\.com/`),
 	regexp.MustCompile(`^bitbucket\.org/`),
+	// #4657 — module-instantiation INSTANTIATES edge target. The HCL extractor
+	// resolves a module instance's relative `source` to its repo-relative
+	// definition directory and emits it as the edge ToID under the unambiguous
+	// `tfmodule-def:` marker prefix (DefinitionDirMarkerPrefix). The definition
+	// is a directory, not a single graph entity, so there is nothing to bind to;
+	// the dashboard (#4657) joins it to the definition's resources by directory.
+	// Tagging it Dynamic keeps it out of the unresolved-extractor-bug count.
+	regexp.MustCompile(`^tfmodule-def:`),
 }
 
 func init() {

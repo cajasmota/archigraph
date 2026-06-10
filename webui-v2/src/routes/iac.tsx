@@ -28,7 +28,7 @@
    empty state.
    ============================================================ */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   Boxes,
@@ -62,9 +62,11 @@ import { useIaC } from "@/hooks/use-iac";
 import { IaCDiagram } from "@/components/iac-diagram";
 import type {
   IaCRelation,
+  IaCReport,
   IaCResource,
   IaCToolGroup,
 } from "@/data/types";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ---------------------------------------------------------------------------
 // § Category styling
@@ -110,6 +112,8 @@ function relationMeta(facet: string): {
       return { label: "event source", tone: "warning", Icon: Zap };
     case "topology":
       return { label: "topology", tone: "info", Icon: Layers };
+    case "instantiates":
+      return { label: "instantiates", tone: "accent", Icon: Boxes };
     case "trigger":
       return { label: "trigger", tone: "accent", Icon: Zap };
     case "output":
@@ -145,6 +149,9 @@ const INTERP_PREFIXES = [
 ];
 
 function isInterpolationRef(rel: IaCRelation): boolean {
+  // #4657: an INSTANTIATES edge is a real architecture relation even though its
+  // instance endpoint is named `module.<x>`; never bucket it as interpolation.
+  if (rel.facet === "instantiates") return false;
   const t = (rel.target || "").toLowerCase();
   if (t === "calls" || t === "local" || t === "var" || t === "data") return true;
   return INTERP_PREFIXES.some((p) => t.startsWith(p));
@@ -772,6 +779,98 @@ function IaCInsight() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// § Environment scoping (#4657)
+// ---------------------------------------------------------------------------
+
+/** The sentinel env-tab value meaning "no env filter". */
+const ALL_ENVS = "__all__";
+
+/** True when a resource belongs to the given env (its comma-joined env list). */
+function resourceInEnv(r: IaCResource, env: string): boolean {
+  if (!r.env) return false;
+  return r.env
+    .split(",")
+    .map((e) => e.trim())
+    .includes(env);
+}
+
+/**
+ * Scope an IaCReport to a single environment (#4657): keep only the resources
+ * that belong to `env` — that env's module instances PLUS the definition
+ * resources those instances instantiate (the backend propagates the env onto
+ * the shared definition's resources, so they carry it too). Totals and the
+ * per-tool grouping are recomputed over the surviving resources so the diagram
+ * and stat row read as that env's wired architecture. `ALL_ENVS` returns the
+ * report unchanged.
+ */
+function scopeReportToEnv(report: IaCReport, env: string): IaCReport {
+  if (env === ALL_ENVS) return report;
+
+  const groups: IaCToolGroup[] = [];
+  const countsByCategory: Record<string, number> = {};
+  let totalResources = 0;
+  let withProps = 0;
+  let grants = 0;
+  let eventSources = 0;
+  let dependencies = 0;
+
+  for (const g of report.groups) {
+    const kept = (g.resources ?? []).filter((r) => resourceInEnv(r, env));
+    if (kept.length === 0) continue;
+    groups.push({ tool: g.tool, count: kept.length, resources: kept });
+    for (const r of kept) {
+      totalResources++;
+      if ((r.properties?.length ?? 0) > 0) withProps++;
+      if (r.category) countsByCategory[r.category] = (countsByCategory[r.category] ?? 0) + 1;
+      for (const rel of r.relations ?? []) {
+        if (rel.direction !== "out") continue;
+        if (rel.facet === "grant") grants++;
+        else if (rel.facet === "event_source") eventSources++;
+        else if (rel.facet === "dependency") dependencies++;
+      }
+    }
+  }
+
+  return {
+    ...report,
+    groups,
+    counts_by_category: countsByCategory,
+    total_resources: totalResources,
+    with_props_count: withProps,
+    total_grants: grants,
+    total_event_sources: eventSources,
+    total_dependencies: dependencies,
+  };
+}
+
+/** Env tabs (#4657): All + one tab per detected environment. */
+function EnvTabs({
+  envs,
+  value,
+  onChange,
+}: {
+  envs: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (envs.length === 0) return null;
+  return (
+    <Tabs value={value} onValueChange={onChange}>
+      <TabsList className="border-b-0">
+        <TabsTrigger value={ALL_ENVS} className="h-7 px-2.5 text-xs">
+          All envs
+        </TabsTrigger>
+        {envs.map((e) => (
+          <TabsTrigger key={e} value={e} className="h-7 px-2.5 text-xs">
+            {e}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
+  );
+}
+
 /** List | Diagram view toggle. */
 function ViewToggle({ view, onChange }: { view: IaCView; onChange: (v: IaCView) => void }) {
   return (
@@ -807,13 +906,31 @@ export default function IaCScreen() {
   const { data, isLoading, isError } = useIaC(groupId);
   const [toolFilter, setToolFilter] = useState<string>("all");
   const [view, setView] = useState<IaCView>(readStoredView);
+  const [env, setEnv] = useState<string>(ALL_ENVS);
 
   const setAndPersistView = useCallback((v: IaCView) => {
     persistView(v);
     setView(v);
   }, []);
 
-  const groups = useMemo<IaCToolGroup[]>(() => data?.groups ?? [], [data]);
+  const envs = useMemo<string[]>(() => data?.envs ?? [], [data]);
+
+  // Once envs are known, default the selection to `prod` (the conventional
+  // top-of-promotion env) when present; otherwise leave it on All. Only fires
+  // while the selection is still the initial All sentinel, so an explicit user
+  // choice is never overridden (#4657).
+  useEffect(() => {
+    if (env === ALL_ENVS && envs.includes("prod")) setEnv("prod");
+  }, [envs, env]);
+
+  // The report scoped to the selected env (All ⇒ unchanged). Drives both the
+  // diagram and the list/stat surfaces so the whole screen reads as that env.
+  const scoped = useMemo<IaCReport | undefined>(
+    () => (data ? scopeReportToEnv(data, env) : undefined),
+    [data, env],
+  );
+
+  const groups = useMemo<IaCToolGroup[]>(() => scoped?.groups ?? [], [scoped]);
 
   const filtered = useMemo<IaCToolGroup[]>(() => {
     if (toolFilter === "all") return groups;
@@ -831,14 +948,27 @@ export default function IaCScreen() {
           <div className="flex items-center gap-2">
             <ViewToggle view={view} onChange={setAndPersistView} />
             <span className="text-xs text-text-4">
-              Resource graph — resources by category, relations, grouped by
-              module.
+              {env === ALL_ENVS
+                ? "Resource graph — resources by category, relations, grouped by module."
+                : `Architecture for the ${env} environment — its module instances and the definition resources they instantiate.`}
             </span>
+            {/* Env tabs (#4657): scope the diagram to one environment's
+                instances + what they instantiate. */}
+            <div className="ml-auto">
+              <EnvTabs envs={envs} value={env} onChange={setEnv} />
+            </div>
           </div>
           <IaCInsight />
         </div>
         <div className="min-h-0 flex-1">
-          <IaCDiagram report={data!} />
+          {scoped!.total_resources === 0 ? (
+            <EmptyState
+              title={`No resources in ${env}`}
+              hint="This environment has no resolved module instances or definition resources. Pick another environment or All envs."
+            />
+          ) : (
+            <IaCDiagram report={scoped!} />
+          )}
         </div>
       </div>
     );
@@ -858,23 +988,29 @@ export default function IaCScreen() {
           />
         ) : (
           <>
-            {/* View toggle (List | Diagram) */}
-            <div className="flex items-center gap-2">
+            {/* View toggle (List | Diagram) + env tabs (#4657) */}
+            <div className="flex flex-wrap items-center gap-2">
               <ViewToggle view={view} onChange={setAndPersistView} />
+              <div className="ml-auto">
+                <EnvTabs envs={envs} value={env} onChange={setEnv} />
+              </div>
             </div>
 
             {/* #4576: List view now carries the same insight banner
                 the Diagram view does. */}
             <IaCInsight />
 
-            {/* Summary */}
+            {/* Summary — recomputed for the selected env (#4657). */}
             <div className="flex flex-wrap gap-3">
-              <SummaryStat label="Resources" value={data!.total_resources} />
-              <SummaryStat label="With config" value={data!.with_props_count} />
-              <SummaryStat label="IAM grants" value={data!.total_grants} />
-              <SummaryStat label="Event sources" value={data!.total_event_sources} />
-              <SummaryStat label="Dependencies" value={data!.total_dependencies} />
-              <SummaryStat label="Outputs" value={data!.total_outputs} />
+              <SummaryStat label="Resources" value={scoped!.total_resources} />
+              <SummaryStat label="With config" value={scoped!.with_props_count} />
+              <SummaryStat label="IAM grants" value={scoped!.total_grants} />
+              <SummaryStat label="Event sources" value={scoped!.total_event_sources} />
+              <SummaryStat label="Dependencies" value={scoped!.total_dependencies} />
+              <SummaryStat
+                label="Outputs"
+                value={env === ALL_ENVS ? data!.total_outputs : 0}
+              />
             </div>
 
             {/* Tool filter */}
@@ -896,8 +1032,16 @@ export default function IaCScreen() {
             {/* Grouped resources */}
             {filtered.length === 0 ? (
               <EmptyState
-                title="Nothing matches this filter"
-                hint="No resources match the selected tool filter."
+                title={
+                  env === ALL_ENVS
+                    ? "Nothing matches this filter"
+                    : `No resources in ${env}`
+                }
+                hint={
+                  env === ALL_ENVS
+                    ? "No resources match the selected tool filter."
+                    : "This environment has no resolved module instances or definition resources for this tool filter."
+                }
               />
             ) : (
               <div className="space-y-3">
@@ -908,7 +1052,7 @@ export default function IaCScreen() {
             )}
 
             {/* Category roll-up (context) */}
-            <CategorySection counts={data!.counts_by_category} />
+            <CategorySection counts={scoped!.counts_by_category} />
           </>
         )}
       </div>

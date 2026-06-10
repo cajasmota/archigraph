@@ -1251,6 +1251,12 @@ const (
 	//              The document→section hierarchy uses the existing CONTAINS
 	//              edge (RelationshipKindContains); no new hierarchy kind.
 	RelationshipKindMentions RelationshipKind = "MENTIONS"
+
+	// #4657 IaC module instantiation: an environment stack's module instance
+	// (e.g. envs/prod/main.tf `module.worker`) → the module DEFINITION
+	// directory it instantiates (e.g. modules/worker-service). Connects the
+	// env stacks to the shared module definitions in the IaC architecture view.
+	RelationshipKindInstantiates RelationshipKind = "INSTANTIATES"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -1406,6 +1412,9 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindInherits,
 		// #4306 deterministic markdown doc ingestion (opt-in):
 		RelationshipKindMentions,
+		// #4657 IaC module instantiation: env stack's module instance →
+		// the module definition directory it instantiates.
+		RelationshipKindInstantiates,
 	}
 }
 

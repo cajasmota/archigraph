@@ -48,6 +48,11 @@ export function facetStyle(facet: string): FacetStyle {
       return { stroke: "var(--danger)", dash: "5 3", label: "grants" };
     case "reads":
       return { stroke: "var(--text-3)", label: "reads" };
+    // #4657 — module instantiation: an env's module instance → the resources
+    // of the module definition it instantiates. Solid accent so the env→
+    // definition projection reads as a first-class architecture link.
+    case "instantiates":
+      return { stroke: "var(--accent)", label: "instantiates" };
     default:
       return { stroke: "var(--text-4)", label: "depends" };
   }
