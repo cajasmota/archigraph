@@ -134,6 +134,109 @@ function flattenToVerbRows(routes: PathRoute[]): VerbRow[] {
 }
 
 /* ============================================================
+   Group-by mode (#4485)
+
+   The backend payload keys each ControllerGroupShape by the handler /
+   operation NAME (`destroy`, `retrieve`, `update`, …). Because CRUD method
+   names are reused across controllers, that lumps endpoints from many
+   unrelated modules under one action header. The default tree should instead
+   group by MODULE (the route's source-file module segment), nesting all verbs
+   of a module together. The "operation" mode preserves the original behavior.
+   ============================================================ */
+
+export type GroupBy = "module" | "operation";
+
+const GROUP_BY_KEY = "ag.paths.groupBy";
+
+/** Read the persisted group-by mode from sessionStorage; default = module. */
+function loadGroupBy(): GroupBy {
+  if (typeof sessionStorage === "undefined") return "module";
+  return sessionStorage.getItem(GROUP_BY_KEY) === "operation" ? "operation" : "module";
+}
+
+/** Persist the group-by mode to sessionStorage (best-effort). */
+function saveGroupBy(mode: GroupBy): void {
+  try {
+    sessionStorage.setItem(GROUP_BY_KEY, mode);
+  } catch {
+    /* storage unavailable — non-fatal */
+  }
+}
+
+/**
+ * Derive a module label + key from a route / its source group.
+ *
+ * Prefers a `src/modules/<name>` (or `…/modules/<name>`) segment, then a
+ * `<repo>/apps/<name>` or `…/packages/<name>` segment, then the directory of
+ * the source file, finally falling back to the route's `controller`. The key
+ * is the label lowercased so two files in the same module collapse together.
+ */
+function deriveModule(
+  sourceFile: string | undefined,
+  controller: string | undefined,
+): { key: string; label: string; file: string } {
+  const file = (sourceFile ?? "").replace(/\\/g, "/");
+  const segs = file.split("/").filter(Boolean);
+
+  // 1) A "modules/<name>" / "apps/<name>" / "packages/<name>" anchor segment.
+  const ANCHORS = ["modules", "apps", "packages", "services", "domains"];
+  for (let i = 0; i < segs.length - 1; i++) {
+    if (ANCHORS.includes(segs[i].toLowerCase())) {
+      const name = segs[i + 1];
+      const label = `${segs[i]}/${name}`;
+      return { key: label.toLowerCase(), label, file };
+    }
+  }
+
+  // 2) The directory of the source file (drop the filename).
+  if (segs.length > 1) {
+    const dir = segs.slice(0, -1).join("/");
+    return { key: dir.toLowerCase(), label: dir, file };
+  }
+
+  // 3) Fall back to the controller name, then a catch-all bucket.
+  const ctrl = (controller ?? "").trim();
+  if (ctrl) return { key: ctrl.toLowerCase(), label: ctrl, file };
+  return { key: "__ungrouped__", label: "(ungrouped)", file };
+}
+
+/**
+ * Re-bucket a backend's routes by module. Returns ControllerGroupShape-shaped
+ * groups (so the existing ControllerSection renders them unchanged), one per
+ * module, each holding every route of that module across all verbs. Groups are
+ * sorted by label; webhook-ness is OR-ed across the module's routes.
+ */
+function groupByModule(backend: PathBackend): ControllerGroupShape[] {
+  const buckets = new Map<string, ControllerGroupShape>();
+  for (const g of backend.groups ?? []) {
+    for (const r of g.routes ?? []) {
+      const m = deriveModule(g.file ?? r.controller, r.controller);
+      let bucket = buckets.get(m.key);
+      if (!bucket) {
+        bucket = {
+          id: `mod::${m.key}`,
+          label: m.label,
+          file: m.file,
+          is_webhook: false,
+          routes: [],
+        };
+        buckets.set(m.key, bucket);
+      }
+      bucket.routes.push(r);
+      if (r.is_webhook) bucket.is_webhook = true;
+    }
+  }
+  return Array.from(buckets.values()).sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
+}
+
+/** Resolve a backend's left-nav groups for the active group-by mode. */
+function groupsForMode(backend: PathBackend, mode: GroupBy): ControllerGroupShape[] {
+  return mode === "module" ? groupByModule(backend) : backend.groups ?? [];
+}
+
+/* ============================================================
    Helpers
    ============================================================ */
 
@@ -331,6 +434,7 @@ function ControllerSection({
 
 function BackendSection({
   backend,
+  groupMode,
   openMap,
   toggle,
   isRowSelected,
@@ -338,6 +442,7 @@ function BackendSection({
   search,
 }: {
   backend: PathBackend;
+  groupMode: GroupBy;
   openMap: Record<string, boolean>;
   toggle: (k: string) => void;
   selectedRowKey: string | null;
@@ -348,7 +453,10 @@ function BackendSection({
   const key = `be::${backend.id}`;
   const open = openMap[key] !== false;
 
-  const backendGroups = backend.groups ?? [];
+  const backendGroups = useMemo(
+    () => groupsForMode(backend, groupMode),
+    [backend, groupMode],
+  );
   const filteredGroups = search
     ? backendGroups.filter((g) =>
         (g.routes ?? []).some((r) => (r.path ?? "").toLowerCase().includes(search.toLowerCase())),
@@ -1549,6 +1657,14 @@ export default function PathsScreen() {
   // Local list state
   const [search, setSearch] = useState("");
   const [groupedView, setGroupedView] = useState(true);
+  // Group-by mode (#4485): "module" (default) buckets each backend's routes by
+  // their source-file module; "operation" preserves the backend's operation-name
+  // groups. Persisted to sessionStorage so the choice survives navigation.
+  const [groupMode, setGroupModeState] = useState<GroupBy>(loadGroupBy);
+  const setGroupMode = useCallback((mode: GroupBy) => {
+    setGroupModeState(mode);
+    saveGroupBy(mode);
+  }, []);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -1679,23 +1795,23 @@ export default function PathsScreen() {
     const next: Record<string, boolean> = {};
     for (const b of backends) {
       next[`be::${b.id}`] = true;
-      for (const g of b.groups ?? []) {
+      for (const g of groupsForMode(b, groupMode)) {
         next[`${b.id}::${g.id}`] = true;
       }
     }
     setOpenMap(next);
-  }, [backends]);
+  }, [backends, groupMode]);
 
   const collapseAll = useCallback(() => {
     const next: Record<string, boolean> = {};
     for (const b of backends) {
       next[`be::${b.id}`] = false;
-      for (const g of b.groups ?? []) {
+      for (const g of groupsForMode(b, groupMode)) {
         next[`${b.id}::${g.id}`] = false;
       }
     }
     setOpenMap(next);
-  }, [backends]);
+  }, [backends, groupMode]);
 
   // Routes within the scoped (selected) backend — drives the rail labels so the
   // count reflects the backend you drilled into, not the whole platform.
@@ -1909,6 +2025,44 @@ export default function PathsScreen() {
                   </button>
                 </div>
 
+                {/* Group-by: Module / Operation (#4485) */}
+                {groupedView && (
+                  <div
+                    className="flex items-center rounded-md border border-border overflow-hidden shrink-0"
+                    role="group"
+                    aria-label="Group by"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setGroupMode("module")}
+                      aria-pressed={groupMode === "module"}
+                      title="Group by module"
+                      className={cn(
+                        "h-7 px-2 flex items-center gap-1 text-[11px] font-medium transition-colors",
+                        groupMode === "module"
+                          ? "bg-accent-soft text-accent-strong"
+                          : "text-text-3 hover:bg-surface-2",
+                      )}
+                    >
+                      <Box size={12} /> Module
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGroupMode("operation")}
+                      aria-pressed={groupMode === "operation"}
+                      title="Group by operation / action"
+                      className={cn(
+                        "h-7 px-2 flex items-center gap-1 text-[11px] font-medium border-l border-border transition-colors",
+                        groupMode === "operation"
+                          ? "bg-accent-soft text-accent-strong"
+                          : "text-text-3 hover:bg-surface-2",
+                      )}
+                    >
+                      <Workflow size={12} /> Action
+                    </button>
+                  </div>
+                )}
+
                 {/* Expand / Collapse */}
                 {groupedView && (
                   <>
@@ -1965,6 +2119,7 @@ export default function PathsScreen() {
                     <BackendSection
                       key={b.id}
                       backend={b}
+                      groupMode={groupMode}
                       openMap={openMap}
                       toggle={toggleOpen}
                       selectedRowKey={selectedRowKey}
