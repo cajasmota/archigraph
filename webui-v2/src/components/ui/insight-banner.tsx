@@ -85,7 +85,7 @@ export function InsightBanner({ human, agent, storageKey }: InsightBannerProps) 
   }
 
   return (
-    <div className="relative mb-3 max-w-4xl overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="relative mb-3 w-full overflow-hidden rounded-lg border border-border bg-surface">
       <button
         type="button"
         onClick={() => setAndPersist(true)}
@@ -96,9 +96,9 @@ export function InsightBanner({ human, agent, storageKey }: InsightBannerProps) 
         <X size={14} />
       </button>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2">
         {/* LEFT — human */}
-        <div className="border-l-4 border-success bg-success/5 px-4 py-3">
+        <div className="min-w-0 border-l-4 border-success bg-success/5 px-4 py-3">
           <div className="mb-1 inline-flex items-center gap-1.5">
             <UserRound size={14} className="shrink-0 text-success" />
             <span className="text-xs font-semibold uppercase tracking-wide text-text-2">
@@ -109,7 +109,7 @@ export function InsightBanner({ human, agent, storageKey }: InsightBannerProps) 
         </div>
 
         {/* RIGHT — agent */}
-        <div className="border-l-4 border-warning bg-warning/5 px-4 py-3">
+        <div className="min-w-0 border-l-4 border-warning bg-warning/5 px-4 py-3">
           <div className="mb-1 inline-flex items-center gap-1.5">
             <Bot size={14} className="shrink-0 text-warning" />
             <span className="text-xs font-semibold uppercase tracking-wide text-text-2">
