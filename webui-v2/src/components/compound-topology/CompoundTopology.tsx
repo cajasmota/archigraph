@@ -16,7 +16,7 @@
    pass (layout.ts). Names/zones are auto-derived — zero config.
    ============================================================ */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -33,11 +33,14 @@ import type { CompoundGroupBy } from "@/data/types";
 import { useCompoundTopology } from "@/hooks/use-topology";
 import {
   layoutCompoundTopology,
+  layoutCompoundTopologyElk,
+  defaultLayoutEngine,
   CT_NODE_TYPE,
   CT_ZONE_TYPE,
   CT_EDGE_TYPE,
   MAX_NODES,
   TIER_ORDER,
+  type CTLayoutResult,
 } from "./layout";
 import { CTNode } from "./CTNode";
 import { CTZone } from "./CTZone";
@@ -97,10 +100,51 @@ function CompoundTopologyInner({ groupId, className }: CompoundTopologyProps) {
     setCollapsedByLens((prev) => ({ ...prev, [groupBy]: new Set() }));
   }, [groupBy]);
 
-  const { nodes, edges, capped, summaryEdgeCount } = useMemo(
-    () => layoutCompoundTopology(data, collapsed, onToggle),
-    [data, collapsed, onToggle],
+  // Layout engine: ELK (default, async) or the legacy dagre fallback (sync).
+  // Stable for the component lifetime — flip via VITE_CT_LAYOUT_ENGINE.
+  const engine = useMemo(() => defaultLayoutEngine(), []);
+
+  const EMPTY: CTLayoutResult = useMemo(
+    () => ({ nodes: [], edges: [], capped: false, summaryEdgeCount: 0 }),
+    [],
   );
+
+  // dagre path is synchronous — compute inline.
+  const dagreResult = useMemo(
+    () => (engine === "dagre" ? layoutCompoundTopology(data, collapsed, onToggle) : EMPTY),
+    [engine, data, collapsed, onToggle, EMPTY],
+  );
+
+  // ELK path is async — run in an effect, last-write-wins, with a layout flag.
+  const [elkResult, setElkResult] = useState<CTLayoutResult>(EMPTY);
+  const [elkLaidOut, setElkLaidOut] = useState(false);
+  const elkRunId = useRef(0);
+  useEffect(() => {
+    if (engine !== "elk") return;
+    const myRun = ++elkRunId.current;
+    let cancelled = false;
+    setElkLaidOut(false);
+    layoutCompoundTopologyElk(data, collapsed, onToggle)
+      .then((res) => {
+        if (cancelled || myRun !== elkRunId.current) return;
+        setElkResult(res);
+        setElkLaidOut(true);
+      })
+      .catch(() => {
+        if (cancelled || myRun !== elkRunId.current) return;
+        // Fall back to dagre on ELK failure so the canvas still renders.
+        setElkResult(layoutCompoundTopology(data, collapsed, onToggle));
+        setElkLaidOut(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [engine, data, collapsed, onToggle]);
+
+  const { nodes, edges, capped, summaryEdgeCount } =
+    engine === "dagre" ? dagreResult : elkResult;
+  // True while ELK is still computing its first layout for the current inputs.
+  const layingOut = engine === "elk" && !elkLaidOut;
 
   const zoneCount = useMemo(
     () => nodes.filter((n) => n.type === CT_ZONE_TYPE).length,
@@ -188,8 +232,10 @@ function CompoundTopologyInner({ groupId, className }: CompoundTopologyProps) {
 
       {/* Canvas */}
       <div className="relative min-h-0 flex-1">
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center text-sm text-text-4">Loading topology…</div>
+        {isLoading || layingOut ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-4">
+            {isLoading ? "Loading topology…" : "Laying out…"}
+          </div>
         ) : isError ? (
           <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
             <p className="text-md font-semibold text-text">Couldn&apos;t load topology</p>
