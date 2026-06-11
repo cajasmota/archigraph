@@ -73,6 +73,7 @@ var customPrefixForLanguage = map[string]string{
 	"swift":   "custom_swift_",
 	"dart":    "custom_dart_",
 	"elixir":  "custom_elixir_",
+	"clojure": "custom_clojure_",
 	"csharp":  "custom_csharp_",
 	"cpp":     "custom_cpp_",
 	// Protocol Buffers IDL files (.proto) are classified as their own

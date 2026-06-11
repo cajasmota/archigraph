@@ -190,6 +190,11 @@ const (
 	// synthesizer joins with `/` before canonicalisation. Canonicalisation
 	// reuses canonicalizeColonParams.
 	FrameworkVapor = "vapor"
+	// FrameworkClojure (#4749) — Clojure web routes (Compojure
+	// `(GET "/users/:id" [] handler)`, Reitit `["/users/:id" {:get handler}]`,
+	// Ring/Pedestal) use the Express-style `:name` colon-prefixed path-parameter
+	// convention. Canonicalisation reuses canonicalizeColonParams.
+	FrameworkClojure = "clojure"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical
@@ -239,7 +244,7 @@ func Canonicalize(framework, raw string) string {
 	case FrameworkExpress, FrameworkGin, FrameworkEcho, FrameworkChi, FrameworkPhoenix,
 		FrameworkAdonis, FrameworkMarble, FrameworkPolka, FrameworkRestify, FrameworkSails,
 		FrameworkRobyn, FrameworkPlug, FrameworkCowboy,
-		FrameworkLapis, FrameworkOpenResty, FrameworkVapor:
+		FrameworkLapis, FrameworkOpenResty, FrameworkVapor, FrameworkClojure:
 		out = canonicalizeColonParams(raw)
 	default:
 		// Unknown framework: pass through but still normalise slashes.

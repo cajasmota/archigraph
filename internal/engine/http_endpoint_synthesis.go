@@ -1246,6 +1246,15 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// Producer side (#3484): OpenResty nginx `location` stanzas (in
 		// lua-classified config-driver files) + lua-resty-router DSL routes.
 		synthesizeOpenResty(string(content), emit)
+	case "clojure":
+		// Producer side (#4749, epic #4615 tail): Compojure macro routes
+		// (`(GET "/users/:id" [] handler)`, `(defroutes app ...)`) and Reitit
+		// data routes (`["/users/:id" {:get get-user}]`) → canonical
+		// http_endpoint_definition, in the same shape axum/Vapor/Express emit, so
+		// the shared resolver and the e2e route-test linker (#4351) light up for
+		// Clojure. The clojure framework rule manifests stay for detection; this
+		// pass adds the canonical definitions the coverage substrate keys off.
+		synthesizeClojureRoutes(string(content), emit)
 	case "scala":
 		// Consumer side (#3554): sttp (basicRequest/quickRequest verb
 		// combinators with uri"..." literals) outbound HTTP client. The Scala
