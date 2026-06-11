@@ -115,6 +115,12 @@ func synthesisSupportsLanguage(lang string) bool {
 	// client synthesizers run. Files without client markers are no-ops.
 	case "dart", "swift":
 		return true
+	// #4749: Crystal web producer-side route synthesis — Kemal / Amber / Lucky
+	// `get "/path"` verb macros have no compiled YAML rules, so allow Crystal
+	// through for synthesizeKemalRoutes. Files without a Crystal web marker +
+	// verb-macro route are no-ops inside the synthesizer.
+	case "crystal":
+		return true
 	// #3484: Lua Lapis / OpenResty producer-side route synthesis.
 	case "lua":
 		return true
@@ -1273,6 +1279,16 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// (`AF.request("...", method: .post)`). Emits outbound
 		// http_endpoint_call entities + FETCHES edges.
 		synthesizeSwiftClientWithRuntime(string(content), emitClientRuntime)
+	case "crystal":
+		// Producer side (#4749): Crystal web route registrations — Kemal
+		// (`get "/users/:id" do ... end`), Amber (`get "/users", Ctrl, :action`
+		// inside a `routes` block) and Lucky (`get "/path"` Action-class macro)
+		// → canonical http_endpoint_definition, in the same shape
+		// axum/Rocket/Express/Vapor emit, so the shared resolver and the e2e
+		// route-test linker (#4351) light up for Crystal. The base crystal
+		// extractor stays structural-only; this pass adds the canonical
+		// definitions the coverage substrate keys off.
+		synthesizeKemalRoutes(string(content), emit)
 	case "yaml", "json":
 		// Producer side (#3628, area #16): OpenAPI 3.x / Swagger 2.0 spec
 		// files declare the HTTP API surface as ground-truth. Each
