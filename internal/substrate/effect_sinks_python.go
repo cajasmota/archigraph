@@ -150,6 +150,32 @@ var pyInherentQSReadRe = regexp.MustCompile(
 		`|self\s*\.\s*queryset\s*\.\s*(?:` + pyQSAmbiguousVerbs + `)\s*\(`,
 )
 
+// --- #4336 SQLAlchemy Core fluent-builder data-access ---
+//
+// SQLAlchemy Core executes a statement object built by select()/insert()/
+// update()/delete() against a Connection/Engine: `conn.execute(select(t))`
+// (db_read) vs `conn.execute(insert(t))` (db_write). The receiver is a plain
+// `conn`/`engine` handle (NOT the `session.` form pyDBReadRe already covers),
+// and the read/write nature is determined by the STATEMENT CONSTRUCTOR passed
+// to `.execute(...)`, not the verb. We disambiguate on that constructor so a
+// Core read isn't mis-credited as a write (or vice-versa), and so a non-SQL
+// `.execute(...)` (e.g. a subprocess) is left alone.
+//
+// pySQLAlchemyCoreReadRe matches `<conn>.execute(select(...))` and
+// `<conn>.execute(text("SELECT ..."))` — the read statement constructors.
+var pySQLAlchemyCoreReadRe = regexp.MustCompile(
+	`\.\s*execute\s*\(\s*(?:select\s*\(` +
+		`|text\s*\(\s*['"](?i:\s*(?:SELECT|WITH)\b))`,
+)
+
+// pySQLAlchemyCoreWriteRe matches `<conn>.execute(insert(...))` /
+// `update(...)` / `delete(...)` and `<conn>.execute(text("INSERT ..."))` — the
+// write statement constructors.
+var pySQLAlchemyCoreWriteRe = regexp.MustCompile(
+	`\.\s*execute\s*\(\s*(?:(?:insert|update|delete)\s*\(` +
+		`|text\s*\(\s*['"](?i:\s*(?:INSERT|UPDATE|DELETE|REPLACE|MERGE|TRUNCATE)\b))`,
+)
+
 // pyCursorSelectRe matches `cursor.execute("SELECT ...")` style raw reads.
 // Case-insensitive on the SQL keyword. Quote-agnostic.
 var pyCursorSelectRe = regexp.MustCompile(
@@ -256,6 +282,8 @@ func sniffEffectsPython(content string) []EffectMatch {
 	out = appendPyMatches(out, content, headers, pyInherentQSReadRe, EffectDBRead, "orm.read.queryset", 0.85)
 	out = append(out, querysetReadMatches(content, headers)...)
 	out = appendPyMatches(out, content, headers, pyCursorSelectRe, EffectDBRead, "cursor.execute(SELECT)", 1.0)
+	out = appendPyMatches(out, content, headers, pySQLAlchemyCoreReadRe, EffectDBRead, "sqlalchemy.core.read", 0.9)
+	out = appendPyMatches(out, content, headers, pySQLAlchemyCoreWriteRe, EffectDBWrite, "sqlalchemy.core.write", 0.9)
 	out = appendPyMatches(out, content, headers, pyDBConnectRe, EffectDBRead, "db.connect/cursor", 0.8)
 	out = appendPyMatches(out, content, headers, pyDBWriteRe, EffectDBWrite, "orm.write", 0.85)
 	out = appendPyMatches(out, content, headers, pyCursorWriteRe, EffectDBWrite, "cursor.execute(WRITE)", 1.0)

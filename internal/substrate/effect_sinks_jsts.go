@@ -61,8 +61,13 @@ var jstsHTTPRe = regexp.MustCompile(
 // Includes Mongoose / native MongoDB driver collection reads — `.findById`,
 // `.countDocuments`, `.estimatedDocumentCount`, `.distinct` (#3440 ask 4);
 // `.find`/`.findOne`/`.aggregate`/`.count` were already covered.
+//
+// #4336 adds the Mongoose aggregate-fluent join terminals `.populate(` and
+// `.lookup(` — both are distinctive Mongoose/aggregation read names (a
+// `Model.find().populate('author')` join or a `Model.aggregate().lookup({...})`
+// stage), safe to bare-match. `aggregate` was already covered.
 var jstsDBReadRe = regexp.MustCompile(
-	`\.\s*(findOne|findAll|findMany|findUnique|findFirst|findById|find|aggregate|countDocuments|estimatedDocumentCount|count|distinct|exists|query|select|raw|exec)\s*\(`,
+	`\.\s*(findOne|findAll|findMany|findUnique|findFirst|findById|find|aggregate|lookup|populate|countDocuments|estimatedDocumentCount|count|distinct|exists|query|select|raw|exec)\s*\(`,
 )
 
 // jstsDBWriteRe matches write-flavoured ORM / query-builder primitives.
@@ -87,6 +92,100 @@ var jstsFSWriteRe = regexp.MustCompile(
 	`\b(?:fs|fsp|fs\s*\.\s*promises)\s*\.\s*(writeFile|writeFileSync|appendFile|appendFileSync|mkdir|mkdirSync|rmdir|rmdirSync|unlink|unlinkSync|rm|rmSync|rename|renameSync|copyFile|copyFileSync|createWriteStream|chmod|chmodSync|chown|chownSync|truncate|truncateSync|symlink|symlinkSync)\s*\(`,
 )
 
+// --- #4335 / #4336 fluent query-builder receiver-typed data-access ---
+//
+// The receiver-typed read/write discipline established for Python (#4691),
+// C# (#4692), Rust (#4737) and Scala-Slick (#4736) extended to the JS/TS
+// fluent query builders whose TERMINAL verb determines read vs write but
+// whose terminal NAMES collide with plain array/Promise combinators
+// (`.getMany()` is fine, but `.first()`/`.execute()`/`.pluck()` would
+// false-positive on a non-builder receiver). These ambiguous terminals are
+// credited ONLY when chained off a query-builder-typed receiver:
+//
+//   - TypeORM    `repo.createQueryBuilder('x')` result (#4335)
+//   - Prisma     a `prisma.<model>` delegate (#4335)
+//   - Knex       a `knex('t')` / `knex.table('t')` builder (#4336)
+//
+// Distinctive read/write terminals with no collision (`getMany`, `getRawMany`,
+// `findMany`, `$queryRaw`, ...) are bare-matched by jstsDBReadRe/jstsDBWriteRe;
+// this layer adds the AMBIGUOUS terminals gated to a builder-typed receiver,
+// preserving the collection/Promise false-positive guard.
+
+// jstsBuilderRootRe seeds the set of query-builder-typed local/field names.
+// Group 1 captures the assigned name. RHS alternatives:
+//   - `const qb = repo.createQueryBuilder('u')`        (TypeORM QueryBuilder)
+//   - `const qb = this.repo.createQueryBuilder()`
+//   - `const qb = conn.createQueryBuilder()`
+//   - `const q = knex('users')` / `const q = knex.table('users')`           (Knex)
+//   - `const q = prisma.user`                          (Prisma delegate handle)
+//   - `const q = this.prisma.user`
+var jstsBuilderRootRe = regexp.MustCompile(
+	`(?m)(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:await\s+)?(?:` +
+		`[A-Za-z_$][\w$.]*\.createQueryBuilder\s*\(` + // TypeORM QueryBuilder
+		`|[A-Za-z_$][\w$.]*?knex\s*(?:\(|\.\s*table\s*\()` + // Knex builder
+		`|\bknex\s*(?:\(|\.\s*table\s*\()` +
+		`|(?:[A-Za-z_$][\w$]*\.)*prisma\s*\.\s*[A-Za-z_$][\w$]*\s*[;\n]` + // Prisma delegate (no call → handle)
+		`)`,
+)
+
+// jstsBuilderChainAssignRe propagates builder typing across reassignments:
+// `const qb2 = qb.where(...)` where qb is already builder-typed. Group 1 =
+// new name, group 2 = source receiver. The chain ops are the builder shaper
+// verbs (TypeORM/Knex) that RETURN the builder.
+var jstsBuilderChainAssignRe = regexp.MustCompile(
+	`(?m)(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:await\s+)?([A-Za-z_$][\w$]*)\s*\.\s*` +
+		`(?:where|andWhere|orWhere|leftJoin|leftJoinAndSelect|innerJoin|innerJoinAndSelect|` +
+		`join|select|addSelect|orderBy|addOrderBy|groupBy|having|limit|offset|skip|take|` +
+		`from|into|whereIn|whereNot|whereNull|distinct|with|returning)\s*\(`,
+)
+
+// jstsBuilderReadVerbs are the read TERMINALS that are ambiguous with plain
+// array/Promise combinators, credited db_read only on a builder-typed receiver.
+//   - TypeORM   getMany/getOne/getRawMany/getRawOne/getManyAndCount/getCount/getRawOne
+//   - Knex      first/pluck/select (select also shapes, but as a terminal it reads)
+const jstsBuilderReadVerbs = `getMany|getOne|getManyAndCount|getRawMany|getRawOne|getRawAndEntities|getCount|getExists|first|pluck|select`
+
+// jstsBuilderWriteVerbs are the write TERMINALS gated to a builder-typed
+// receiver — `.execute()` terminates a TypeORM Insert/Update/Delete builder
+// and is far too generic to bare-match; `.del()`/`.truncate()` are Knex.
+const jstsBuilderWriteVerbs = `execute|del|truncate`
+
+// jstsBuilderInlineReadRe credits an ambiguous read terminal chained DIRECTLY
+// off a builder root inline — `repo.createQueryBuilder('u').where(...).getMany()`,
+// `knex('t').where(...).first()`, `prisma.user.findFirst()` (findFirst already
+// distinctive, but the inline knex/QB forms need this). The root must be a
+// createQueryBuilder() call, a knex(...) builder, or a prisma.<model> delegate.
+var jstsBuilderInlineReadRe = regexp.MustCompile(
+	`(?:[A-Za-z_$][\w$.]*\.createQueryBuilder\s*\([^;]*?\)|` +
+		`\bknex\s*(?:\([^;)]*\)|\.\s*table\s*\([^;)]*\))|` +
+		`(?:[A-Za-z_$][\w$]*\.)*prisma\s*\.\s*[A-Za-z_$][\w$]*)` +
+		`(?:\s*\.\s*[A-Za-z_$][\w$]*\s*\([^;]*?\))*?` +
+		`\s*\.\s*(?:` + jstsBuilderReadVerbs + `)\s*\(`,
+)
+
+// jstsBuilderInlineWriteRe credits an ambiguous write terminal chained inline
+// off a builder root — `repo.createQueryBuilder().update(User).set(...).execute()`,
+// `knex('t').where(...).del()`.
+var jstsBuilderInlineWriteRe = regexp.MustCompile(
+	`(?:[A-Za-z_$][\w$.]*\.createQueryBuilder\s*\([^;]*?\)|` +
+		`\bknex\s*(?:\([^;)]*\)|\.\s*table\s*\([^;)]*\)))` +
+		`(?:\s*\.\s*[A-Za-z_$][\w$]*\s*\([^;]*?\))*?` +
+		`\s*\.\s*(?:` + jstsBuilderWriteVerbs + `)\s*\(`,
+)
+
+// jstsPrismaRawRe matches Prisma raw escape hatches — `$queryRaw`/`$queryRawUnsafe`
+// (db_read) handled here; `$executeRaw`/`$executeRawUnsafe` are db_write
+// (jstsPrismaRawWriteRe). These are distinctive, no-collision names safe to
+// bare-match on any receiver.
+var jstsPrismaRawRe = regexp.MustCompile(
+	`\.\s*\$queryRaw(?:Unsafe)?\s*[\(` + "`" + `]`,
+)
+
+// jstsPrismaRawWriteRe matches Prisma `$executeRaw`/`$executeRawUnsafe` writes.
+var jstsPrismaRawWriteRe = regexp.MustCompile(
+	`\.\s*\$executeRaw(?:Unsafe)?\s*[\(` + "`" + `]`,
+)
+
 // jstsMutationRe matches `this.<field> = ...` — assignment to a receiver
 // field. We require an assignment operator on the same line and reject
 // `this.<field> ==` (comparison) by anchoring on `=` followed by a
@@ -105,6 +204,9 @@ func sniffEffectsJSTS(content string) []EffectMatch {
 	out = appendJSTSMatches(out, content, headers, jstsHTTPRe, EffectHTTPOut, "fetch/axios", 1.0)
 	out = appendJSTSMatches(out, content, headers, jstsDBReadRe, EffectDBRead, "orm.read", 0.8)
 	out = appendJSTSMatches(out, content, headers, jstsDBWriteRe, EffectDBWrite, "orm.write", 0.8)
+	out = appendJSTSMatches(out, content, headers, jstsPrismaRawRe, EffectDBRead, "prisma.$queryRaw", 0.9)
+	out = appendJSTSMatches(out, content, headers, jstsPrismaRawWriteRe, EffectDBWrite, "prisma.$executeRaw", 0.9)
+	out = append(out, jstsBuilderDataAccessMatches(content, headers)...)
 	out = appendJSTSMatches(out, content, headers, jstsFSReadRe, EffectFSRead, "fs.read", 1.0)
 	out = appendJSTSMatches(out, content, headers, jstsFSWriteRe, EffectFSWrite, "fs.write", 1.0)
 	out = appendJSTSMatches(out, content, headers, jstsMutationRe, EffectMutation, "this.field=", 0.7)
@@ -168,6 +270,82 @@ func appendJSTSMatches(out []EffectMatch, content string, headers []funcHeader, 
 		})
 	}
 	return out
+}
+
+// jstsBuilderDataAccessMatches implements the #4335/#4336 receiver-typed
+// fluent query-builder data-access credit. It (1) collects the set of names
+// known to hold a TypeORM QueryBuilder / Knex builder / Prisma delegate
+// (seeded from jstsBuilderRootRe, propagated across builder-shaper
+// reassignments to a fixpoint), then (2) emits db_read for each ambiguous
+// READ terminal and db_write for each ambiguous WRITE terminal invoked on one
+// of those typed names, AND for ambiguous terminals chained directly off a
+// builder root inline. An ambiguous terminal on an UNTYPED receiver (a plain
+// array `.first()`/Promise `.execute()`) earns no credit — the collection /
+// Promise false-positive guard is preserved.
+func jstsBuilderDataAccessMatches(content string, headers []funcHeader) []EffectMatch {
+	typed := collectJSTSBuilderTypedNames(content)
+	var out []EffectMatch
+	emit := func(off int, eff Effect, sink string) {
+		line := lineOfOffset(content, off)
+		out = append(out, EffectMatch{
+			Function:   nearestHeader(headers, line),
+			Line:       line,
+			Effect:     eff,
+			Sink:       sink,
+			Confidence: 0.85,
+		})
+	}
+	// chainHop matches zero-or-more intermediate fluent shaper calls between
+	// the typed receiver and the terminal — `qb.where(...).leftJoin(...).getMany()`.
+	const chainHop = `(?:\s*\.\s*[A-Za-z_$][\w$]*\s*\([^;]*?\))*?`
+	for name := range typed {
+		q := regexp.QuoteMeta(name)
+		readRe := regexp.MustCompile(`\b` + q + chainHop + `\s*\.\s*(?:` + jstsBuilderReadVerbs + `)\s*\(`)
+		for _, m := range readRe.FindAllStringIndex(content, -1) {
+			emit(m[0], EffectDBRead, "builder.read")
+		}
+		writeRe := regexp.MustCompile(`\b` + q + chainHop + `\s*\.\s*(?:` + jstsBuilderWriteVerbs + `)\s*\(`)
+		for _, m := range writeRe.FindAllStringIndex(content, -1) {
+			emit(m[0], EffectDBWrite, "builder.write")
+		}
+	}
+	for _, m := range jstsBuilderInlineReadRe.FindAllStringIndex(content, -1) {
+		emit(m[0], EffectDBRead, "builder.read")
+	}
+	for _, m := range jstsBuilderInlineWriteRe.FindAllStringIndex(content, -1) {
+		emit(m[0], EffectDBWrite, "builder.write")
+	}
+	return out
+}
+
+// collectJSTSBuilderTypedNames returns the set of names that hold a TypeORM
+// QueryBuilder / Knex builder / Prisma delegate. Seeds from jstsBuilderRootRe,
+// then iterates jstsBuilderChainAssignRe to a fixpoint so a builder bound from
+// an already-typed receiver (`const qb2 = qb.where(...)`) is itself typed.
+func collectJSTSBuilderTypedNames(content string) map[string]bool {
+	typed := map[string]bool{}
+	for _, m := range jstsBuilderRootRe.FindAllStringSubmatch(content, -1) {
+		if len(m) >= 2 && m[1] != "" {
+			typed[m[1]] = true
+		}
+	}
+	chains := jstsBuilderChainAssignRe.FindAllStringSubmatch(content, -1)
+	for {
+		changed := false
+		for _, m := range chains {
+			if len(m) < 3 {
+				continue
+			}
+			if typed[m[2]] && !typed[m[1]] {
+				typed[m[1]] = true
+				changed = true
+			}
+		}
+		if !changed {
+			break
+		}
+	}
+	return typed
 }
 
 // nearestHeader returns the name of the function header whose Line is
