@@ -136,6 +136,13 @@ func synthesisSupportsLanguage(lang string) bool {
 	// are no-ops inside the synthesizer.
 	case "groovy":
 		return true
+	// #4749 (epic #4615 tail): Nim Jester / Prologue producer-side route
+	// synthesis — Jester `routes:`-block verb entries and Prologue
+	// `app.get("/path", h)` registrations have no compiled YAML rules, so allow
+	// Nim through for synthesizeJester / synthesizePrologue. Files without a Nim
+	// web marker + route are no-ops inside the synthesizers.
+	case "nim":
+		return true
 	// #3484: Lua Lapis / OpenResty producer-side route synthesis.
 	case "lua":
 		return true
@@ -1330,6 +1337,17 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// extractor stays structural-only; this pass adds the canonical
 		// definitions the coverage substrate keys off.
 		synthesizeKemalRoutes(string(content), emit)
+	case "nim":
+		// Producer side (#4749): Nim web route registrations — Jester
+		// (`routes:` block `get "/users/@id":`) and Prologue
+		// (`app.get("/users/{id}", handler)`, `addRoute("/x", h, HttpGet)`) →
+		// canonical http_endpoint_definition, in the same shape
+		// axum/Rocket/Express/Kemal/Vapor emit, so the shared resolver and the
+		// e2e route-test linker (#4351) light up for Nim. The base nim extractor
+		// stays structural-only; this pass adds the canonical definitions the
+		// coverage substrate keys off.
+		synthesizeJester(string(content), emit)
+		synthesizePrologue(string(content), emit)
 	case "fsharp":
 		// Producer side (#4749): F# web route registrations — Giraffe
 		// (`GET >=> route "/users" >=> handler`, `routef "/users/%i"`) and Saturn

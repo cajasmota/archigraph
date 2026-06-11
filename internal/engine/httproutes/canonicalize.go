@@ -227,6 +227,20 @@ const (
 	// declares paths WITHOUT a leading slash (the synthesizer adds it).
 	// Canonicalisation reuses canonicalizeColonParams.
 	FrameworkRatpack = "ratpack"
+	// FrameworkJester (#4749) — Nim's Jester web framework declares routes
+	// inside a `routes:` block with indented verb entries carrying a string
+	// path literal: `get "/users/@id":`, `post "/x":`. Jester path parameters
+	// use the `@name` AT-prefixed convention (`/users/@id` → `{id}`), and a
+	// trailing `@rest` greedy-match or a `re"…"` regex segment is left intact
+	// (the segment matcher wildcards it). Canonicalisation rewrites `@name`
+	// segments to the shared `{name}` form via canonicalizeJesterParams.
+	FrameworkJester = "jester"
+	// FrameworkPrologue (#4749) — Nim's Prologue web framework registers routes
+	// with `app.get("/users/{id}", handler)` / `app.addRoute("/x", handler,
+	// HttpGet)`. Prologue (and HappyX) path parameters use the curly-brace
+	// `{name}` convention identical to FastAPI/Spring, so canonicalisation
+	// reuses canonicalizeCurlyBraces.
+	FrameworkPrologue = "prologue"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical
@@ -265,8 +279,11 @@ func Canonicalize(framework, raw string) string {
 	case FrameworkFastAPI, FrameworkSpring, FrameworkJAXRS, FrameworkAxum,
 		FrameworkStarlette, FrameworkPyramid, FrameworkASPNetCore, FrameworkHapi,
 		FrameworkLitestar, FrameworkAiohttp, FrameworkFalcon, FrameworkHug,
-		FrameworkJavalin, FrameworkVertx, FrameworkGrails:
+		FrameworkJavalin, FrameworkVertx, FrameworkGrails, FrameworkPrologue:
 		out = canonicalizeCurlyBraces(raw)
+	case FrameworkJester:
+		// Nim Jester `@name` AT-prefixed path params → `{name}`.
+		out = canonicalizeJesterParams(raw)
 	case FrameworkTornado:
 		// Tornado paths arrive already pre-processed by the synthesizer
 		// (named-group → {name}, bare group → {}). Curly-brace pass
@@ -538,6 +555,42 @@ func canonicalizeColonParams(raw string) string {
 		if i < len(raw) && raw[i] == '?' {
 			i++
 		}
+	}
+	return b.String()
+}
+
+// canonicalizeJesterParams rewrites Nim Jester `@name` AT-prefixed path
+// parameters to the shared `{name}` form (`/users/@id` → `/users/{id}`). It is
+// the AT-prefixed analog of canonicalizeColonParams: a `@` followed by an
+// identifier (`[A-Za-z_][A-Za-z0-9_]*`) becomes `{name}`; a lone `@` or a `@`
+// not followed by an identifier byte is left verbatim. Jester also supports a
+// `re"…"` regex segment and a trailing greedy `@param` that the segment matcher
+// already wildcards, so no special handling is needed here beyond the
+// per-parameter rewrite.
+func canonicalizeJesterParams(raw string) string {
+	var b strings.Builder
+	b.Grow(len(raw))
+	i := 0
+	for i < len(raw) {
+		c := raw[i]
+		if c != '@' {
+			b.WriteByte(c)
+			i++
+			continue
+		}
+		j := i + 1
+		for j < len(raw) && isIdentChar(raw[j]) {
+			j++
+		}
+		if j == i+1 {
+			b.WriteByte(c)
+			i++
+			continue
+		}
+		b.WriteByte('{')
+		b.WriteString(raw[i+1 : j])
+		b.WriteByte('}')
+		i = j
 	}
 	return b.String()
 }

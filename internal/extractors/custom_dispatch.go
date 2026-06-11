@@ -84,6 +84,11 @@ var customPrefixForLanguage = map[string]string{
 	"cpp":     "custom_cpp_",
 	"crystal": "custom_crystal_",
 	"fsharp":  "custom_fsharp_",
+	// Nim framework extractors (#4749 Jester/Prologue test→endpoint route-hit
+	// linkage). The base "nim" extractor key is shorter than this prefix, so the
+	// `len(k) > len(prefix)` guard in CustomExtractorsFor excludes it and only
+	// the custom_nim_* framework extractors match.
+	"nim": "custom_nim_",
 	// Protocol Buffers IDL files (.proto) are classified as their own
 	// "protobuf" language but carry message/service definitions parsed by the
 	// C/C++ protobuf custom extractor (which path/language-gates internally and

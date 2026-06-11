@@ -2234,6 +2234,24 @@ var frameworkOrder = []frameworkEntry{
 		},
 		detect: detectLuaunit,
 	},
+	// Nim — std/unittest (suite "...": test "...": …). #4749. Detected by the
+	// `std/unittest` / `unittest` import token OR the nimble test conventions
+	// (`tFoo.nim`, `*_test.nim`, `test_*.nim`, files under /tests/). The
+	// `import std/unittest` form yields the `std/unittest` token (and the split
+	// `std`); the older `import unittest` form yields `unittest`.
+	{
+		name:        "nim-unittest",
+		importHints: []string{"std/unittest"},
+		filenameHints: []*regexp.Regexp{
+			regexp.MustCompile(`_test\.nim$`),
+			regexp.MustCompile(`^t[A-Z][\w]*\.nim$`),
+			regexp.MustCompile(`^test_.*\.nim$`),
+		},
+		pathHints: []*regexp.Regexp{
+			regexp.MustCompile(`/tests?/.*\.nim$`),
+		},
+		detect: detectNimUnittest,
+	},
 	// ---------------------------------------------------------------------
 	// C/C++ — gtest, catch2, doctest, boost.test, cppunit, cpputest (#3495).
 	//
@@ -2317,6 +2335,18 @@ func selectFramework(tokens map[string]bool, filePath string) *frameworkEntry {
 		pathMatch := len(fe.pathHints) > 0 && matchesAnyPath(filePath, fe.pathHints)
 
 		switch fe.name {
+		case "pytest":
+			// pytest's import hints include the bare `unittest` token, which
+			// also appears in Nim's `import unittest` / `import std/unittest`.
+			// pytest is ordered before the nim-unittest entry, so skip it for
+			// `.nim` files (the nim-unittest entry wins) — the same precedent as
+			// the junit/.kt skip below. (#4749)
+			if strings.HasSuffix(strings.ToLower(filePath), ".nim") {
+				continue
+			}
+			if importMatch || fileMatch || pathMatch {
+				return fe
+			}
 		case "junit":
 			// The Java JUnit entry shares import hints (org.junit / junit.jupiter)
 			// with Kotlin tests, and is listed before kotlin_test. A Kotlin test
