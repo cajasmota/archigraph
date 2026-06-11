@@ -1353,14 +1353,14 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 	// and the on-disk write. Fully deterministic: no LLM calls, no network.
 	// When the flag is off this block is skipped entirely (zero overhead).
 	if i.ingestDocs {
-		mdFiles := ingest.DiscoverMarkdown(allFiles)
-		ingRes := ingest.Ingest(absRepo, i.repoTag, mdFiles, doc.Entities)
+		docFiles := ingest.DiscoverDocs(allFiles)
+		ingRes := ingest.Ingest(absRepo, i.repoTag, docFiles, doc.Entities)
 		doc.Entities = append(doc.Entities, ingRes.Entities...)
 		doc.Relationships = append(doc.Relationships, ingRes.Relationships...)
 		if verbose() {
 			fmt.Fprintf(os.Stderr,
-				"ingest-docs: %d markdown files → %d documents, %d sections, %d mentions (deterministic, no LLM)\n",
-				ingRes.FilesRead, ingRes.Documents, ingRes.Sections, ingRes.Mentions)
+				"ingest-docs: %d doc files (md+pdf) → %d documents, %d sections, %d mentions, %d skipped (deterministic, no LLM)\n",
+				ingRes.FilesRead, ingRes.Documents, ingRes.Sections, ingRes.Mentions, ingRes.Skipped)
 		}
 
 		// #4308 (Layer 2 of epic #4294): emit per-Section semantic-extraction
@@ -1370,7 +1370,7 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 		// archigraph_apply_doc_semantics. Persisted under the per-repo state dir,
 		// mirroring the docgen run-dir/artifact convention. Best-effort: a write
 		// failure never fails the index.
-		bundles := ingest.EmitSemanticBundles(absRepo, i.repoTag, mdFiles, doc.Entities)
+		bundles := ingest.EmitSemanticBundles(absRepo, i.repoTag, docFiles, doc.Entities)
 		if len(bundles) > 0 {
 			runDir := filepath.Join(daemon.StateDirForRepo(absRepo), "doc-semantics")
 			written := 0

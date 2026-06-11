@@ -34,7 +34,7 @@ func runIndexInternal(argv []string) int {
 		repoTag    = fs.String("repo-tag", "", "slug written into every graph entity (defaults to dir basename)")
 		skipPasses = fs.String("skip-pass", "", "comma-separated list of pass names to skip")
 		exportJSON = fs.Bool("export-json", false, "also emit graph.json alongside graph.fb")
-		ingestDocs = fs.Bool("ingest-docs", false, "opt-in: deterministically ingest in-repo *.md files as Document/Section nodes + exact-mention links (no LLM, no network)")
+		ingestDocs = fs.Bool("ingest-docs", false, "opt-in: deterministically ingest in-repo *.md and *.pdf files as Document/Section nodes + exact-mention links (no LLM, no network)")
 	)
 
 	if err := fs.Parse(argv); err != nil {

@@ -209,12 +209,12 @@ func EmitSemanticBundles(repoRoot, repoTag string, mdRelPaths []string, codeEnti
 	for _, rel := range paths {
 		rel = filepath.ToSlash(rel)
 		abs := filepath.Join(repoRoot, filepath.FromSlash(rel))
-		content, err := readBoundedFile(abs, maxDocBytes)
+		content, err := readBoundedFile(abs, docByteLimit(rel))
 		if err != nil {
 			continue
 		}
-		doc, sections := ParseDocument(rel, content)
-		if len(sections) == 0 {
+		doc, sections, _, perr := parseDoc(rel, content)
+		if perr != nil || len(sections) == 0 {
 			continue
 		}
 

@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,6 +16,35 @@ import (
 // files are small; this caps pathological inputs without a config knob.
 const maxDocBytes = 1 << 20 // 1 MiB
 
+// maxPDFBytes bounds how much of a single PDF is read. PDFs carry binary object
+// streams and are larger than markdown, so they get a higher (but still
+// bounded) cap. The PDF reader needs the whole file (it has a cross-reference
+// trailer), so a too-small bound would fail to parse — this keeps real docs
+// parseable while still capping pathological inputs.
+const maxPDFBytes = 32 << 20 // 32 MiB
+
+// docByteLimit returns the read cap for a doc path by type.
+func docByteLimit(rel string) int {
+	if isPDFPath(rel) {
+		return maxPDFBytes
+	}
+	return maxDocBytes
+}
+
+// sectionProps builds the Section node's Properties. The "page" key is included
+// only for PDF-derived sections (Page > 0); markdown sections (Page == 0) keep
+// the original two-key shape.
+func sectionProps(s *Section) map[string]string {
+	p := map[string]string{
+		"depth":   fmt.Sprintf("%d", s.Depth),
+		"heading": s.HeadingText,
+	}
+	if s.Page > 0 {
+		p["page"] = fmt.Sprintf("%d", s.Page)
+	}
+	return p
+}
+
 // Result is the output of an ingestion run: the doc/section nodes and the
 // CONTAINS/MENTIONS edges to splice into the graph document.
 type Result struct {
@@ -25,12 +55,33 @@ type Result struct {
 	Sections  int
 	Mentions  int
 	FilesRead int
+	// Skipped counts doc files that could not be parsed at all (e.g. encrypted
+	// or corrupt PDFs); they contribute no nodes. A warning is logged per skip.
+	Skipped int
 }
 
-// Ingest runs the deterministic markdown pipeline over mdRelPaths (repo-relative
-// slash paths) and returns Document/Section nodes plus CONTAINS (Document→
-// Section→subsection) and MENTIONS (Section→code entity) edges, ready to append
-// to the graph document.
+// parseDoc dispatches one doc file to the right deterministic parser by
+// extension: *.pdf → ParsePDF (pdf.go), everything else (*.md/*.markdown) →
+// ParseDocument (markdown.go). It returns the parsed Document, its Sections,
+// the language tag stamped on the emitted nodes, and an error ONLY for inputs
+// that cannot be parsed at all (e.g. an encrypted or corrupt PDF) — callers
+// skip + log those. A markdown parse never errors. A PDF with no text layer is
+// NOT an error: it returns a Document with a Note and zero sections.
+func parseDoc(rel string, content []byte) (doc Document, sections []Section, language string, err error) {
+	if isPDFPath(rel) {
+		doc, sections, err = ParsePDF(rel, content)
+		return doc, sections, "pdf", err
+	}
+	doc, sections = ParseDocument(rel, content)
+	return doc, sections, "markdown", nil
+}
+
+// Ingest runs the deterministic doc pipeline over docRelPaths (repo-relative
+// slash paths — markdown AND PDF) and returns Document/Section nodes plus
+// CONTAINS (Document→Section→subsection) and MENTIONS (Section→code entity)
+// edges, ready to append to the graph document. Each path is dispatched to the
+// markdown or PDF parser by extension (see parseDoc); both produce the same
+// Document/Section shape so the MENTIONS linker is parser-agnostic.
 //
 // repoRoot is the absolute repo path used to read file bodies; repoTag is the
 // per-repo slug stamped into every entity ID (matching graph.EntityID usage
@@ -38,8 +89,11 @@ type Result struct {
 // to resolve exact name mentions.
 //
 // Fully deterministic: no LLM calls, no network. Output ordering is stable
-// (files sorted, sections in source order, edges ID-tiebroken).
-func Ingest(repoRoot, repoTag string, mdRelPaths []string, codeEntities []graph.Entity) Result {
+// (files sorted, sections in source order, edges ID-tiebroken). A PDF that
+// cannot be parsed (encrypted/corrupt) is skipped with a logged warning and a
+// bumped Skipped counter; a PDF with no text layer yields a doc node + zero
+// sections (honest empty, not an error).
+func Ingest(repoRoot, repoTag string, docRelPaths []string, codeEntities []graph.Entity) Result {
 	var res Result
 
 	// Build the exact-name target index once from the code entities. Doc/section
@@ -58,23 +112,35 @@ func Ingest(repoRoot, repoTag string, mdRelPaths []string, codeEntities []graph.
 	nameIdx := IndexNames(tuples)
 
 	// Sort the file list for deterministic output.
-	paths := append([]string(nil), mdRelPaths...)
+	paths := append([]string(nil), docRelPaths...)
 	sort.Strings(paths)
 
 	for _, rel := range paths {
 		rel = filepath.ToSlash(rel)
 		abs := filepath.Join(repoRoot, filepath.FromSlash(rel))
-		content, err := readBoundedFile(abs, maxDocBytes)
+		content, err := readBoundedFile(abs, docByteLimit(rel))
 		if err != nil {
 			// Best-effort: a doc we can't read contributes nothing.
 			continue
 		}
+
+		doc, sections, language, perr := parseDoc(rel, content)
+		if perr != nil {
+			// Encrypted / corrupt PDF (or other unparsable input): skip with a
+			// logged warning, contribute no nodes. Never fatal.
+			log.Printf("ingest-docs: skipping %s: %v", rel, perr)
+			res.Skipped++
+			continue
+		}
 		res.FilesRead++
 
-		doc, sections := ParseDocument(rel, content)
-
-		// Document node.
+		// Document node. The doc kind is shared across markdown + PDF; the
+		// Language property distinguishes them, plus an optional extraction note.
 		docID := graph.EntityID(repoTag, string(types.EntityKindMarkdownDocument), rel, rel)
+		docProps := map[string]string{"title": doc.Title}
+		if doc.Note != "" {
+			docProps["note"] = doc.Note
+		}
 		docEnt := graph.Entity{
 			ID:            docID,
 			Name:          path_base(rel),
@@ -83,8 +149,8 @@ func Ingest(repoRoot, repoTag string, mdRelPaths []string, codeEntities []graph.
 			SourceFile:    rel,
 			StartLine:     1,
 			EndLine:       max1(doc.LineCount),
-			Language:      "markdown",
-			Properties:    map[string]string{"title": doc.Title},
+			Language:      language,
+			Properties:    docProps,
 		}
 		res.Entities = append(res.Entities, docEnt)
 		res.Documents++
@@ -106,11 +172,8 @@ func Ingest(repoRoot, repoTag string, mdRelPaths []string, codeEntities []graph.
 				SourceFile:    rel,
 				StartLine:     s.StartLine,
 				EndLine:       s.EndLine,
-				Language:      "markdown",
-				Properties: map[string]string{
-					"depth":   fmt.Sprintf("%d", s.Depth),
-					"heading": s.HeadingText,
-				},
+				Language:      language,
+				Properties:    sectionProps(s),
 			})
 			res.Sections++
 

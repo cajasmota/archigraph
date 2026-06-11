@@ -23,10 +23,23 @@ var excludedDirSegments = map[string]bool{
 // ingestion: a ".md" or ".markdown" extension (case-insensitive) and no
 // excluded directory segment. The returned slice is sorted for determinism.
 func DiscoverMarkdown(relPaths []string) []string {
+	return discover(relPaths, isMarkdownPath)
+}
+
+// DiscoverDocs filters relPaths down to ALL ingestible documentation files:
+// markdown (*.md, *.markdown) AND PDF (*.pdf), case-insensitive, excluding
+// vendored/build directories. This is the entrypoint the indexer uses so PDFs
+// flow through the same Document/Section pipeline as markdown; Ingest dispatches
+// each path to the right parser by extension.
+func DiscoverDocs(relPaths []string) []string {
+	return discover(relPaths, isIngestiblePath)
+}
+
+func discover(relPaths []string, want func(string) bool) []string {
 	var out []string
 	for _, p := range relPaths {
 		rel := filepath.ToSlash(p)
-		if !isMarkdownPath(rel) {
+		if !want(rel) {
 			continue
 		}
 		if hasExcludedSegment(rel) {
@@ -40,6 +53,14 @@ func DiscoverMarkdown(relPaths []string) []string {
 func isMarkdownPath(rel string) bool {
 	ext := strings.ToLower(filepath.Ext(rel))
 	return ext == ".md" || ext == ".markdown"
+}
+
+func isPDFPath(rel string) bool {
+	return strings.ToLower(filepath.Ext(rel)) == ".pdf"
+}
+
+func isIngestiblePath(rel string) bool {
+	return isMarkdownPath(rel) || isPDFPath(rel)
 }
 
 func hasExcludedSegment(rel string) bool {

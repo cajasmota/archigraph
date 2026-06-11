@@ -38,21 +38,33 @@ type Section struct {
 	EndLine     int
 	Body        string
 	ParentIndex int
+	// Page is the 1-indexed source page a section's heading falls on. It is
+	// populated by the PDF parser (ParsePDF, pdf.go) and carried into section
+	// metadata as the "page" property; it is 0 for markdown sections, which have
+	// no pagination. Purely informational — never part of section identity.
+	Page int
 	// bodyEnd is the 1-indexed last line of this section's OWN direct content
 	// (the line before the next heading of ANY depth). Internal; slices Body.
 	bodyEnd int
 }
 
-// Document is the file-level node produced for one markdown file.
+// Document is the file-level node produced for one ingested doc file (markdown
+// via ParseDocument, or PDF via ParsePDF). The shape is shared so the MENTIONS
+// linker and the Layer-2 emit/apply path treat both identically.
 type Document struct {
-	// RelPath is the repo-relative, slash-separated path of the markdown file.
+	// RelPath is the repo-relative, slash-separated path of the doc file.
 	RelPath string
-	// Title is the text of the first level-1 heading, or "" when the file has
-	// none. Purely informational; never used for identity.
+	// Title is the document title: the first level-1 heading (markdown) or the
+	// first derived top-level heading (PDF), or "" when none. Purely
+	// informational; never used for identity.
 	Title string
-	// LineCount is the total number of lines in the file (1-indexed EndLine of
-	// the Document span).
+	// LineCount is the total number of lines in the document (1-indexed EndLine
+	// of the Document span). For PDFs this counts logical extracted text lines.
 	LineCount int
+	// Note is an optional human-readable caveat about extraction (e.g. a PDF
+	// with no text layer). Empty for normal documents. Surfaced as the document
+	// node's "note" property.
+	Note string
 }
 
 // ParseDocument parses one markdown file's content into a Document node plus a
