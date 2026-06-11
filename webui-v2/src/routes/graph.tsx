@@ -39,6 +39,7 @@ import { MCPActivityOverlay } from "@/components/graph/mcp-activity-overlay";
 import { GraphJarvisOverlay } from "@/components/graph/graph-jarvis-overlay";
 import { useGraphHighlight } from "@/hooks/use-graph-highlight";
 import { useGraphJarvisReplay } from "@/hooks/use-graph-jarvis-replay";
+import { buildUndirectedAdjacency, bfsEgo as bfsEgoOver } from "@/lib/ego-bfs";
 
 /**
  * #1386 — derive the entity-level "module key" from a node's source file.
@@ -367,39 +368,35 @@ export default function GraphScreen() {
     return nodes.filter((n) => n.label.toLowerCase().includes(q));
   }, [nodes, s.search]);
 
-  // Click-to-focus N-hop ego-graph (1 hop).
-  const adjacency = useMemo(() => {
-    const m = new Map<string, Set<string>>();
-    for (const e of edges) {
-      if (!m.has(e.source)) m.set(e.source, new Set());
-      if (!m.has(e.target)) m.set(e.target, new Set());
-      m.get(e.source)!.add(e.target);
-      m.get(e.target)!.add(e.source);
-    }
-    return m;
-  }, [edges]);
+  // Click-to-focus N-hop ego-graph.
+  //
+  // #4857 — the ego adjacency MUST be undirected AND built from the FULL edge
+  // set, restricted to the rendered node ids. Two bugs hid inbound neighbors:
+  //   1. Sinks: HTTP endpoint nodes are pure sinks (handler `IMPLEMENTS →
+  //      endpoint`, module `CONTAINS → endpoint`; the endpoint emits nothing).
+  //      The adjacency below links both directions so an ego BFS from a sink
+  //      reaches its inbound handler/module — see lib/ego-bfs.
+  //   2. Filtered connectors: the rendered `edges` set is kind-filtered /
+  //      hub-pruned / min-degree-pruned. Building adjacency from the FULL
+  //      `data.edges` (intersected with the rendered node ids) means a focus
+  //      neighbor that IS rendered stays reachable even when the edge that
+  //      connects it was dropped from the global view. We never reach a node
+  //      that is not rendered (the nodeIds allow-set guarantees that).
+  const renderedNodeIds = useMemo(() => new Set(nodes.map((n) => n.id)), [nodes]);
+  const adjacency = useMemo(
+    () => buildUndirectedAdjacency(data?.edges ?? [], renderedNodeIds),
+    [data?.edges, renderedNodeIds],
+  );
 
   // Fix #1548-3 / #1564-4: focus builds a NEW ego sub-graph = the node +
-  // neighbors up to N hops (BFS over the edge set). We render ONLY that
-  // sub-graph (see `egoNodes`/`egoEdges` below) and fit the camera to it. N is
-  // the store's egoHops, driven LIVE by the hops slider in the focus banner.
-  const bfsEgo = (id: string, hops: number): Set<string> => {
-    const set = new Set<string>([id]);
-    let frontier = [id];
-    for (let h = 0; h < hops; h++) {
-      const next: string[] = [];
-      for (const f of frontier) {
-        for (const nb of adjacency.get(f) ?? []) {
-          if (!set.has(nb)) {
-            set.add(nb);
-            next.push(nb);
-          }
-        }
-      }
-      frontier = next;
-    }
-    return set;
-  };
+  // neighbors up to N hops (undirected BFS over the edge set). We render ONLY
+  // that sub-graph (see `egoNodes`/`egoEdges` below) and fit the camera to it.
+  // N is the store's egoHops, driven LIVE by the hops slider in the focus
+  // banner.
+  const bfsEgo = useCallback(
+    (id: string, hops: number): Set<string> => bfsEgoOver(adjacency, id, hops),
+    [adjacency],
+  );
   const focusEgo = (id: string) => {
     // Snapshot the current camera so EXIT can restore it exactly (#1548-3).
     canvasRef.current?.snapshotCamera();
