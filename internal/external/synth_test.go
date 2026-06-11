@@ -543,6 +543,354 @@ func TestSynthesize_PyRelativeImportNotExternal(t *testing.T) {
 	}
 }
 
+// ----------------------------------------------------------------------------
+// #4700-#4704 — per-language external-package catch-all fixtures. For each
+// language: (A) a file importing well-known third-party deps → each
+// ext:<pkg>, none a fidelity bug; (B control) a genuinely-internal but
+// unresolved import → STILL a fidelity bug (the catch-all must never mask it).
+// ----------------------------------------------------------------------------
+
+// TestSynthesize_JavaExternalPackages_Fixture is Fixture A for #4700: a Java
+// file importing maven/gradle deps (org.springframework.*, com.fasterxml.*,
+// lombok) whose roots are NOT indexed packages of this repo must route to
+// canonical ext:<group> placeholders. The only indexed entity lives in the
+// "com.acme" package, so none of these are internal.
+func TestSynthesize_JavaExternalPackages_Fixture(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "OrderService", QualifiedName: "com.acme.order.OrderService",
+				Language: "java", SourceFile: "src/main/java/com/acme/order/OrderService.java"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "org.springframework.stereotype.Service", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "java", "import_path": "org.springframework.stereotype.Service"}},
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "com.fasterxml.jackson.databind.ObjectMapper", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "java", "import_path": "com.fasterxml.jackson.databind.ObjectMapper"}},
+			// Wildcard import — trailing ".*" stripped.
+			{ID: "rel-3", FromID: "aaaaaaaaaaaaaaaa", ToID: "org.junit.jupiter.api.*", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "java", "import_path": "org.junit.jupiter.api.*"}},
+		},
+	}
+	Synthesize(doc)
+
+	// rel-2 (com.fasterxml.jackson.*) matches the pre-existing static
+	// allowlist's longest-known-dotted-prefix (com.fasterxml.jackson) before
+	// the #4700 catch-all; rel-1/rel-3 are caught by the catch-all and
+	// canonicalised to the two-segment maven group.
+	want := map[string]string{
+		"rel-1": "ext:org.springframework",
+		"rel-2": "ext:com.fasterxml.jackson",
+		"rel-3": "ext:org.junit",
+	}
+	for _, r := range doc.Relationships {
+		if exp, ok := want[r.ID]; ok && r.ToID != exp {
+			t.Errorf("%s ToID=%q, want %q", r.ID, r.ToID, exp)
+		}
+		if isBugEdgeToID(r.ToID) {
+			t.Errorf("%s wrongly counts as a fidelity bug: ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_JavaInternalUnresolvedStillBug is Fixture B (control) for
+// #4700: an unresolved import whose root IS an indexed internal package
+// ("com" here, via com.acme.*) must STAY a fidelity bug.
+func TestSynthesize_JavaInternalUnresolvedStillBug(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "OrderService", QualifiedName: "com.acme.order.OrderService",
+				Language: "java", SourceFile: "src/main/java/com/acme/order/OrderService.java"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "com.acme.missing.Thing", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "java", "import_path": "com.acme.missing.Thing"}},
+		},
+	}
+	Synthesize(doc)
+	for _, r := range doc.Relationships {
+		if strings.HasPrefix(r.ToID, "ext:") {
+			t.Errorf("internal unresolved Java import wrongly externalised: ToID=%q", r.ToID)
+		}
+		if !isBugEdgeToID(r.ToID) {
+			t.Errorf("internal unresolved Java import should remain a fidelity bug, ToID=%q", r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_RubyExternalPackages_Fixture is Fixture A for #4701: a Ruby
+// file requiring gems (rails, rspec, sidekiq) whose roots are NOT internal
+// libs must route to ext:<gem>. The only indexed entity lives under "billing".
+func TestSynthesize_RubyExternalPackages_Fixture(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "Charge", Language: "ruby", SourceFile: "lib/billing/charge.rb"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "rails/all", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "ruby", "import_path": "rails/all"}},
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "rspec", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "ruby", "import_path": "rspec"}},
+			{ID: "rel-3", FromID: "aaaaaaaaaaaaaaaa", ToID: "sidekiq", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "ruby", "import_path": "sidekiq"}},
+		},
+	}
+	Synthesize(doc)
+
+	want := map[string]string{
+		"rel-1": "ext:rails",
+		"rel-2": "ext:rspec",
+		"rel-3": "ext:sidekiq",
+	}
+	for _, r := range doc.Relationships {
+		if exp, ok := want[r.ID]; ok && r.ToID != exp {
+			t.Errorf("%s ToID=%q, want %q", r.ID, r.ToID, exp)
+		}
+		if isBugEdgeToID(r.ToID) {
+			t.Errorf("%s wrongly counts as a fidelity bug: ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_RubyInternalAndRelativeStillBug is the control for #4701:
+// require_relative and a bare require whose root IS an internal lib must STAY
+// a fidelity bug.
+func TestSynthesize_RubyInternalAndRelativeStillBug(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "Charge", Language: "ruby", SourceFile: "lib/billing/charge.rb"},
+		},
+		Relationships: []graph.Relationship{
+			// require_relative — intra-project.
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "../helpers/money", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "ruby", "import_path": "../helpers/money", "require_kind": "require_relative"}},
+			// bare require whose root ("billing") is an indexed internal lib.
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "billing/missing", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "ruby", "import_path": "billing/missing"}},
+		},
+	}
+	Synthesize(doc)
+	for _, r := range doc.Relationships {
+		if strings.HasPrefix(r.ToID, "ext:") {
+			t.Errorf("%s wrongly externalised: ToID=%q", r.ID, r.ToID)
+		}
+		if !isBugEdgeToID(r.ToID) {
+			t.Errorf("%s should remain a fidelity bug, ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_GoExternalPackages_Fixture is Fixture A for #4702:
+// host-prefixed and stdlib Go imports must route to ext:<module> and none may
+// be a fidelity bug.
+func TestSynthesize_GoExternalPackages_Fixture(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "handler", Language: "go", SourceFile: "internal/api/handler.go"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "github.com/stretchr/testify/assert", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "go"}},
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "golang.org/x/sync/errgroup", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "go"}},
+			{ID: "rel-3", FromID: "aaaaaaaaaaaaaaaa", ToID: "net/http", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "go"}},
+		},
+	}
+	Synthesize(doc)
+	// rel-3 (stdlib net/http) canonicalises to the root package segment
+	// "net" via the pre-existing Go stdlib branch — still external, not a bug.
+	want := map[string]string{
+		"rel-1": "ext:github.com/stretchr/testify",
+		"rel-2": "ext:golang.org/x/sync",
+		"rel-3": "ext:net",
+	}
+	for _, r := range doc.Relationships {
+		if exp, ok := want[r.ID]; ok && r.ToID != exp {
+			t.Errorf("%s ToID=%q, want %q", r.ID, r.ToID, exp)
+		}
+		if isBugEdgeToID(r.ToID) {
+			t.Errorf("%s wrongly counts as a fidelity bug: ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_GoOwnModuleUnresolvedStillBug is the control for #4702: a
+// host-prefixed import whose canonical module root IS this repo's own module
+// (a self-import that failed to resolve) must STAY a fidelity bug, not be
+// masked as an external dependency. We seed an indexed entity whose path makes
+// "github.com/acme/svc" an internal Go root.
+func TestSynthesize_GoOwnModuleUnresolvedStillBug(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			// Path segments make github.com/acme/svc an internal root.
+			{ID: "aaaaaaaaaaaaaaaa", Name: "handler", Language: "go",
+				SourceFile: "github.com/acme/svc/internal/api/handler.go"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "github.com/acme/svc/internal/store", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "go"}},
+		},
+	}
+	Synthesize(doc)
+	for _, r := range doc.Relationships {
+		if strings.HasPrefix(r.ToID, "ext:") {
+			t.Errorf("own-module Go import wrongly externalised: ToID=%q", r.ToID)
+		}
+		if !isBugEdgeToID(r.ToID) {
+			t.Errorf("own-module Go import should remain a fidelity bug, ToID=%q", r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_RustExternalPackages_Fixture is Fixture A for #4703: `use
+// crate::…` for serde/tokio/anyhow (none internal) must route to ext:<crate>.
+func TestSynthesize_RustExternalPackages_Fixture(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "handler", Language: "rust", SourceFile: "src/api/handler.rs"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "serde::Deserialize", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "rust", "import_path": "serde::Deserialize"}},
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "tokio::net::TcpListener", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "rust", "import_path": "tokio::net::TcpListener"}},
+			{ID: "rel-3", FromID: "aaaaaaaaaaaaaaaa", ToID: "anyhow::Result", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "rust", "import_path": "anyhow::Result"}},
+		},
+	}
+	Synthesize(doc)
+	want := map[string]string{
+		"rel-1": "ext:serde",
+		"rel-2": "ext:tokio",
+		"rel-3": "ext:anyhow",
+	}
+	for _, r := range doc.Relationships {
+		if exp, ok := want[r.ID]; ok && r.ToID != exp {
+			t.Errorf("%s ToID=%q, want %q", r.ID, r.ToID, exp)
+		}
+		if isBugEdgeToID(r.ToID) {
+			t.Errorf("%s wrongly counts as a fidelity bug: ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_RustKeywordStillBug is the control for #4703: the intra-crate
+// keywords crate::/self::/super:: are internal references that, when
+// unresolved, must STAY a fidelity bug — never masked as a third-party crate
+// nor as a sibling-module placeholder. (Bare lowercase sibling modules like
+// `api::…` are governed by the pre-existing #101 sibling-module branch and are
+// intentionally NOT bugs; that behaviour is unchanged.)
+func TestSynthesize_RustKeywordStillBug(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "handler", Language: "rust", SourceFile: "src/api/handler.rs"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "crate::store::Store", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "rust", "import_path": "crate::store::Store"}},
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "super::config::Config", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "rust", "import_path": "super::config::Config"}},
+			{ID: "rel-3", FromID: "aaaaaaaaaaaaaaaa", ToID: "self::inner::Thing", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "rust", "import_path": "self::inner::Thing"}},
+		},
+	}
+	Synthesize(doc)
+	for _, r := range doc.Relationships {
+		if strings.HasPrefix(r.ToID, "ext:") {
+			t.Errorf("%s intra-crate keyword wrongly externalised: ToID=%q", r.ID, r.ToID)
+		}
+		if !isBugEdgeToID(r.ToID) {
+			t.Errorf("%s intra-crate keyword should remain a fidelity bug, ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_CsharpExternalPackages_Fixture is Fixture A for #4704: BCL /
+// nuget `using` directives (System.*, Microsoft.*, Newtonsoft.Json) must route
+// to ext:<root> and none may be a fidelity bug.
+func TestSynthesize_CsharpExternalPackages_Fixture(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "OrderController", QualifiedName: "Contoso.Orders.OrderController",
+				Language: "csharp", SourceFile: "src/Contoso.Orders/OrderController.cs"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "System.Collections.Generic", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "csharp", "import_path": "System.Collections.Generic"}},
+			{ID: "rel-2", FromID: "aaaaaaaaaaaaaaaa", ToID: "Microsoft.AspNetCore.Mvc", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "csharp", "import_path": "Microsoft.AspNetCore.Mvc"}},
+			{ID: "rel-3", FromID: "aaaaaaaaaaaaaaaa", ToID: "Newtonsoft.Json", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "csharp", "import_path": "Newtonsoft.Json"}},
+		},
+	}
+	Synthesize(doc)
+	// System / Microsoft are on the pre-existing static allowlist and are
+	// externalised verbatim (PascalCase) by the dotted-path branch before the
+	// #4704 catch-all. Newtonsoft is NOT on the static list — it is the real
+	// #4704 win, routed to a lowercased nuget placeholder by the catch-all.
+	// All three are external (not fidelity bugs), which is the issue's goal.
+	want := map[string]string{
+		"rel-1": "ext:System",
+		"rel-2": "ext:Microsoft",
+		"rel-3": "ext:newtonsoft",
+	}
+	for _, r := range doc.Relationships {
+		if exp, ok := want[r.ID]; ok && r.ToID != exp {
+			t.Errorf("%s ToID=%q, want %q", r.ID, r.ToID, exp)
+		}
+		if isBugEdgeToID(r.ToID) {
+			t.Errorf("%s wrongly counts as a fidelity bug: ToID=%q", r.ID, r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_CsharpInternalUnresolvedStillBug is the control for #4704: an
+// unresolved `using` whose root namespace IS the repo's own ("Contoso") must STAY
+// a fidelity bug — the under-flagging catch-all must never mask it.
+func TestSynthesize_CsharpInternalUnresolvedStillBug(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "OrderController", QualifiedName: "Contoso.Orders.OrderController",
+				Language: "csharp", SourceFile: "src/Contoso.Orders/OrderController.cs"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "Contoso.Missing.Service", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "csharp", "import_path": "Contoso.Missing.Service"}},
+		},
+	}
+	Synthesize(doc)
+	for _, r := range doc.Relationships {
+		if strings.HasPrefix(r.ToID, "ext:") {
+			t.Errorf("internal unresolved C# import wrongly externalised: ToID=%q", r.ToID)
+		}
+		if !isBugEdgeToID(r.ToID) {
+			t.Errorf("internal unresolved C# import should remain a fidelity bug, ToID=%q", r.ToID)
+		}
+	}
+}
+
+// TestSynthesize_CsharpAmbiguousUnderFlagged confirms #4704 under-flags: an
+// unknown, non-BCL, non-indexed root namespace is ambiguous and must keep its
+// bug disposition rather than be masked as external.
+func TestSynthesize_CsharpAmbiguousUnderFlagged(t *testing.T) {
+	doc := &graph.Document{
+		Entities: []graph.Entity{
+			{ID: "aaaaaaaaaaaaaaaa", Name: "X", QualifiedName: "Contoso.X",
+				Language: "csharp", SourceFile: "src/Contoso/X.cs"},
+		},
+		Relationships: []graph.Relationship{
+			{ID: "rel-1", FromID: "aaaaaaaaaaaaaaaa", ToID: "SomeVendor.Widgets", Kind: "IMPORTS",
+				Properties: map[string]string{"language": "csharp", "import_path": "SomeVendor.Widgets"}},
+		},
+	}
+	Synthesize(doc)
+	for _, r := range doc.Relationships {
+		if strings.HasPrefix(r.ToID, "ext:") {
+			t.Errorf("ambiguous C# root wrongly externalised (should under-flag): ToID=%q", r.ToID)
+		}
+	}
+}
+
 // TestSynthesize_KindNameForm covers the "Kind:Name" stub shape, e.g.
 // "Module:django" or "Function:Println" — the leading kind hint is
 // stripped and the bare Name is classified.

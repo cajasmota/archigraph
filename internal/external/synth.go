@@ -204,6 +204,63 @@ func Synthesize(doc *graph.Document) Stats {
 		}
 	}
 
+	// #4700-#4704 — per-language internal-root sets. The same false-positive
+	// class that #4695 (TS/JS) and #4699 (Python) closed exists for every
+	// ecosystem with a third-party dependency surface: an unresolved
+	// non-relative import whose root is NOT owned by this repo is, by
+	// construction, an external dependency (maven/gradle, gem, crate,
+	// go-module, nuget) — never a fidelity bug. To keep the catch-alls from
+	// MASKING a genuinely-internal same-repo import that merely failed to
+	// resolve, each language's catch-all rejects roots that ARE owned by the
+	// repo (derived here from the SourceFile of every indexed entity in that
+	// language). Mirrors internalPyRoots exactly.
+	//
+	//   internalJavaRoots — top-level package roots of indexed Java/Kotlin
+	//     entities, derived from the dotted package implied by the source
+	//     path (e.g. "src/main/java/com/acme/foo/Bar.java" → "com").
+	//   internalRubyRoots — top-level lib/dir roots of indexed Ruby entities
+	//     (e.g. "app/models/user.rb" → "user"; "lib/billing/charge.rb" →
+	//     "billing"). require_relative is handled structurally (it's relative)
+	//     so this set guards bare `require 'x'` whose x collides with a repo lib.
+	//   internalGoRoots — host-prefixed module roots ("<host>/<owner>/<repo>")
+	//     AND repo-relative leading dir segments of indexed Go entities, so a
+	//     self-module import that failed to resolve stays a bug instead of
+	//     being masked as external.
+	//   internalRustRoots — crate/module roots of indexed Rust entities
+	//     (leading dir under src/, file stem at crate root).
+	//   internalCsharpRoots — root namespace of indexed C# entities, derived
+	//     from the QualifiedName/Name (dotted) or the source path.
+	internalJavaRoots := make(map[string]bool)
+	internalRubyRoots := make(map[string]bool)
+	internalGoRoots := make(map[string]bool)
+	internalRustRoots := make(map[string]bool)
+	internalCsharpRoots := make(map[string]bool)
+	for k := range doc.Entities {
+		e := &doc.Entities[k]
+		switch e.Language {
+		case "java", "kotlin":
+			if root := javaPackageRoot(e); root != "" {
+				internalJavaRoots[root] = true
+			}
+		case "ruby":
+			if root := rubyFileRoot(e.SourceFile); root != "" {
+				internalRubyRoots[root] = true
+			}
+		case "go":
+			for _, root := range goInternalRoots(e.SourceFile) {
+				internalGoRoots[root] = true
+			}
+		case "rust":
+			if root := rustFileRoot(e.SourceFile); root != "" {
+				internalRustRoots[root] = true
+			}
+		case "csharp":
+			if root := csharpNamespaceRoot(e); root != "" {
+				internalCsharpRoots[root] = true
+			}
+		}
+	}
+
 	// First pass — collect every unique external name we want to
 	// synthesise. The placeholder carries a subtype hint
 	// ("package"/"function") but the language field is left empty:
@@ -263,7 +320,14 @@ func Synthesize(doc *graph.Document) Stats {
 			continue
 		}
 
-		canonical, subtype, ok := classifyExternal(rel.ToID, rel.Kind, lang, entityFile[rel.FromID], fileImports[entityFile[rel.FromID]], rel.Properties, internalPyRoots)
+		canonical, subtype, ok := classifyExternal(rel.ToID, rel.Kind, lang, entityFile[rel.FromID], fileImports[entityFile[rel.FromID]], rel.Properties, internalRoots{
+			python: internalPyRoots,
+			java:   internalJavaRoots,
+			ruby:   internalRubyRoots,
+			golang: internalGoRoots,
+			rust:   internalRustRoots,
+			csharp: internalCsharpRoots,
+		})
 		if !ok {
 			continue
 		}
@@ -520,7 +584,22 @@ func SynthesizeDBEntities(doc *graph.Document) Stats {
 // Returns ("", "", false) when the stub doesn't look external — those
 // are left untouched and continue to count as "unmatched" in the
 // resolver stats.
-func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[string]bool, relProps map[string]string, internalPyRoots map[string]bool) (canonical, subtype string, ok bool) {
+// internalRoots bundles the per-language sets of top-level roots owned by
+// this repo, derived in Synthesize from the SourceFile/package of every
+// indexed entity. The per-language external-package catch-alls (#4695,
+// #4699, #4700-#4704) consult the matching set to reject a genuinely-
+// internal same-repo import that merely failed to resolve — those STAY a
+// fidelity bug and are never masked as external dependencies.
+type internalRoots struct {
+	python map[string]bool
+	java   map[string]bool
+	ruby   map[string]bool
+	golang map[string]bool
+	rust   map[string]bool
+	csharp map[string]bool
+}
+
+func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[string]bool, relProps map[string]string, internal internalRoots) (canonical, subtype string, ok bool) {
 	if stub == "" {
 		return "", "", false
 	}
@@ -781,8 +860,20 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 		// (#94) preserved by the strict lowercase-Rust-ident shape
 		// + the lang=="rust" path-shape predicate already implied by
 		// the `::` separator.
-		if isRustCrateIdent(root) && isLowerRustIdent(root) {
-			return "rust_sibling_module", "package", true
+		// #4703 — the intra-crate keywords (crate/self/super) are NOT sibling
+		// modules; they are explicit in-crate references that simply failed to
+		// resolve. Excluding them here lets them fall through to the Rust
+		// external-package catch-all below, which rejects them so they keep
+		// their fidelity-bug disposition (an intra-crate ref that didn't bind
+		// is real under-linking, never an external crate or a sibling-module
+		// placeholder).
+		switch root {
+		case "crate", "self", "super":
+			// fall through — do not mask as a sibling module.
+		default:
+			if isRustCrateIdent(root) && isLowerRustIdent(root) {
+				return "rust_sibling_module", "package", true
+			}
 		}
 	}
 
@@ -818,6 +909,16 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 		if isGoImportHost(first) {
 			canonical := goHostCanonical(segs)
 			if canonical != "" {
+				// #4702 — own-module guard. A host-prefixed import whose
+				// canonical "<host>/<owner>/<repo>" module root IS this repo's
+				// own module (canonical ∈ internalGoRoots) is a self-import that
+				// failed to resolve in-tree — a genuine fidelity bug, NOT an
+				// external dependency. Never mask it. Other repos' modules
+				// (github.com/stretchr/testify, golang.org/x/sync, …) are
+				// external and route to a placeholder as before.
+				if internal.golang != nil && internal.golang[canonical] {
+					return "", "", false
+				}
 				return canonical, "package", true
 			}
 		}
@@ -1258,7 +1359,64 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 	// per-language siblings: #4700 (Java), #4701 (Ruby), #4702 (Go), #4703
 	// (Rust), #4704 (.NET).
 	if lang == "python" && relKind == string(types.RelationshipKindImports) {
-		if pkg, ok := pyExternalPackageRoot(stub, relProps, internalPyRoots); ok {
+		if pkg, ok := pyExternalPackageRoot(stub, relProps, internal.python); ok {
+			return pkg, "package", true
+		}
+	}
+
+	// #4700 — Java/Kotlin (maven/gradle) external-package catch-all. A
+	// non-relative dotted import whose top-level package root is NOT owned
+	// by this repo (root ∉ internalJavaRoots) is, by construction, a
+	// maven/gradle dependency (org.springframework.*, com.fasterxml.jackson.*,
+	// lombok, org.junit.*, …). Java/Kotlin imports are always fully-qualified
+	// dotted package paths; the in-tree resolver had its chance and the
+	// static allowlist (longestKnownDottedPrefix above) didn't fire. Route
+	// to a canonical group/artifact-ish root so the edge leaves bug-extractor.
+	// Genuinely-internal unresolved imports (root ∈ internalJavaRoots) STAY a
+	// bug. Mirrors jsExternalPackageRoot/pyExternalPackageRoot; gated to
+	// IMPORTS + lang∈{java,kotlin}.
+	if (lang == "java" || lang == "kotlin") && relKind == string(types.RelationshipKindImports) {
+		if pkg, ok := javaExternalPackageRoot(stub, relProps, internal.java); ok {
+			return pkg, "package", true
+		}
+	}
+
+	// #4701 — Ruby (gems) external-package catch-all. A `require 'gem'`
+	// (source_module form OR bare stub) whose root is NOT an internal repo
+	// lib (root ∉ internalRubyRoots) is a gem dependency (rails, rspec,
+	// sidekiq, activerecord, …). `require_relative` and path-shaped requires
+	// are relative/internal and rejected structurally. Genuinely-internal
+	// unresolved requires STAY a bug. Gated to IMPORTS + lang==ruby.
+	if lang == "ruby" && relKind == string(types.RelationshipKindImports) {
+		if pkg, ok := rubyExternalPackageRoot(stub, relProps, internal.ruby); ok {
+			return pkg, "package", true
+		}
+	}
+
+	// #4703 — Rust (crates) external-package catch-all. A `use cratename::…`
+	// whose leading segment is not crate/self/super, not a sibling module
+	// already handled by the #101 `::` branch above, and NOT an internal
+	// crate/module root (root ∉ internalRustRoots) is a Cargo dependency
+	// (serde, tokio, anyhow, …). crate::/self::/super:: are intra-crate and
+	// rejected structurally. Internal roots STAY a bug. Gated to IMPORTS +
+	// lang==rust.
+	if lang == "rust" && relKind == string(types.RelationshipKindImports) {
+		if pkg, ok := rustExternalPackageRoot(stub, relProps, internal.rust); ok {
+			return pkg, "package", true
+		}
+	}
+
+	// #4704 — .NET/C# (nuget/BCL) external-package catch-all. A `using
+	// Namespace;` whose root namespace is NOT owned by this repo (root ∉
+	// internalCsharpRoots) AND either matches a known BCL/common-nuget root
+	// (System, Microsoft, Newtonsoft, …) or is otherwise a non-internal
+	// dotted namespace is an external dependency. C# is the hardest case (no
+	// import-vs-namespace marker), so this DELIBERATELY under-flags: when a
+	// root is neither known-BCL nor provably external, it falls through and
+	// keeps its bug disposition rather than masking a possibly-internal
+	// namespace. Internal roots STAY a bug. Gated to IMPORTS + lang==csharp.
+	if lang == "csharp" && relKind == string(types.RelationshipKindImports) {
+		if pkg, ok := csharpExternalPackageRoot(stub, relProps, internal.csharp); ok {
 			return pkg, "package", true
 		}
 	}
@@ -2237,6 +2395,561 @@ func pyExternalPackageRoot(stub string, relProps map[string]string, internalPyRo
 // names but NOT in import names) are rejected — the import root is always a
 // valid Python identifier.
 func isPyImportSegment(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z':
+		case c >= 'A' && c <= 'Z':
+		case c == '_':
+		case c >= '0' && c <= '9':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// ----------------------------------------------------------------------------
+// #4700-#4704 — per-language internal-root derivation + external-package
+// catch-alls. Each mirrors the #4695 (jsExternalPackageRoot) / #4699
+// (pyExternalPackageRoot) pattern: derive the repo's own top-level roots from
+// indexed source, then in classifyExternal route an unresolved non-relative
+// import whose root is NOT internal to ext:<canonical>, while leaving a
+// genuinely-internal unresolved import as a fidelity bug.
+// ----------------------------------------------------------------------------
+
+// javaPackageRoot returns the top-level package root for an indexed Java or
+// Kotlin entity, used to build internalJavaRoots. It prefers the dotted
+// package implied by the entity's QualifiedName (e.g.
+// "com.acme.order.OrderService" → "com"), falling back to the source path's
+// first package segment after a well-known source root
+// ("src/main/java/com/acme/Foo.java" → "com"). Returns "" when neither yields
+// a clean root.
+func javaPackageRoot(e *graph.Entity) string {
+	// Prefer the qualified name: it carries the real dotted package and is
+	// immune to monorepo source-layout quirks.
+	qn := strings.TrimSpace(e.QualifiedName)
+	if qn != "" && !strings.ContainsAny(qn, "/\\ \t") {
+		root := qn
+		if dot := strings.IndexByte(root, '.'); dot > 0 {
+			root = root[:dot]
+		}
+		// A bare class name (no dot, PascalCase) is not a package root.
+		if root != qn && isJavaPackageSegment(root) {
+			return root
+		}
+		if root == qn && isLowerStart(root) && isJavaPackageSegment(root) {
+			return root
+		}
+	}
+	// Fall back to the source path: strip well-known build source roots and
+	// take the first directory segment as the package root.
+	p := strings.ReplaceAll(strings.TrimSpace(e.SourceFile), "\\", "/")
+	if p == "" {
+		return ""
+	}
+	for _, prefix := range []string{
+		"src/main/java/", "src/main/kotlin/", "src/test/java/", "src/test/kotlin/",
+		"src/", "app/src/main/java/", "app/src/main/kotlin/",
+	} {
+		if strings.HasPrefix(p, prefix) {
+			p = strings.TrimPrefix(p, prefix)
+			break
+		}
+	}
+	p = strings.TrimPrefix(p, "./")
+	p = strings.TrimPrefix(p, "/")
+	if p == "" {
+		return ""
+	}
+	root := p
+	if i := strings.IndexByte(root, '/'); i > 0 {
+		root = root[:i]
+	}
+	if isJavaPackageSegment(root) && isLowerStart(root) {
+		return root
+	}
+	return ""
+}
+
+// isJavaPackageSegment reports whether s is a legal Java/Kotlin package name
+// segment (ASCII letter/digit/underscore, not starting with a digit).
+func isJavaPackageSegment(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z':
+		case c >= 'A' && c <= 'Z':
+		case c == '_':
+		case c >= '0' && c <= '9':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// javaExternalPackageRoot derives the canonical maven/gradle dependency root
+// for a Java/Kotlin IMPORTS edge that survived in-tree resolution (#4700).
+// The raw dotted import is read from relProps["import_path"] /
+// relProps["source_module"] when present and falls back to the dotted stub.
+//
+// Resolution:
+//   - "" / path- or namespace-shaped / wildcard residue        → reject.
+//   - root segment ∈ internalJavaRoots                          → reject
+//     (genuinely-internal package that failed to resolve — STILL a bug).
+//   - dotted import with ≥2 segments → canonical group prefix (the first
+//     two segments for the common "org.springframework", "com.fasterxml"
+//     shape; a single leading segment for single-segment vendor roots like
+//     "lombok", "kotlinx"). Collapses to a stable per-dependency placeholder.
+func javaExternalPackageRoot(stub string, relProps map[string]string, internalJavaRoots map[string]bool) (string, bool) {
+	spec := stub
+	if relProps != nil {
+		for _, key := range []string{"import_path", "source_module"} {
+			if v := strings.TrimSpace(relProps[key]); v != "" {
+				spec = v
+				break
+			}
+		}
+	}
+	spec = strings.TrimSpace(spec)
+	// Strip a wildcard tail ("org.apache.commons.cli.*" → "org.apache.commons.cli").
+	spec = strings.TrimSuffix(spec, ".*")
+	if spec == "" {
+		return "", false
+	}
+	// Relative / path / structural-ref residue — not a clean dotted package.
+	if strings.HasPrefix(spec, ".") || strings.ContainsAny(spec, "/\\:; \t") {
+		return "", false
+	}
+	segs := strings.Split(spec, ".")
+	if len(segs) == 0 || segs[0] == "" {
+		return "", false
+	}
+	root := segs[0]
+	if !isJavaPackageSegment(root) {
+		return "", false
+	}
+	// Genuinely-internal package that failed to resolve — keep it a bug.
+	if internalJavaRoots != nil {
+		if internalJavaRoots[root] || internalJavaRoots[strings.ToLower(root)] {
+			return "", false
+		}
+	}
+	// Canonicalise to the group prefix. The conventional maven groupId is
+	// reverse-DNS ("org.springframework", "com.fasterxml.jackson"); collapse
+	// to the first two segments so all of org.springframework.* shares one
+	// placeholder. Single-segment vendor roots (lombok, kotlinx, scala) stay
+	// as-is. Every other segment must also be a legal package segment.
+	for _, s := range segs {
+		if !isJavaPackageSegment(s) {
+			return "", false
+		}
+	}
+	if len(segs) >= 2 {
+		return strings.ToLower(segs[0] + "." + segs[1]), true
+	}
+	return strings.ToLower(root), true
+}
+
+// rubyFileRoot returns the top-level lib root for an indexed Ruby source
+// file, used to build internalRubyRoots. Strips well-known Rails/gem source
+// roots (app/<kind>/, lib/) and takes the first remaining segment, falling
+// back to the file stem at the repo root.
+//
+//	"app/models/user.rb"        → "user"   (app/models/ stripped)
+//	"app/services/billing/x.rb" → "billing"
+//	"lib/billing/charge.rb"     → "billing"
+//	"foo.rb"                    → "foo"
+func rubyFileRoot(path string) string {
+	s := strings.ReplaceAll(strings.TrimSpace(path), "\\", "/")
+	if s == "" {
+		return ""
+	}
+	// Strip the Rails app/<kind>/ layer (models, controllers, services, …)
+	// so the first *meaningful* segment is the root, mirroring how a
+	// `require`/autoload root would name it.
+	if strings.HasPrefix(s, "app/") {
+		rest := strings.TrimPrefix(s, "app/")
+		if i := strings.IndexByte(rest, '/'); i > 0 {
+			s = rest[i+1:]
+		} else {
+			s = rest
+		}
+	} else {
+		for _, prefix := range []string{"lib/", "src/", "./"} {
+			if strings.HasPrefix(s, prefix) {
+				s = strings.TrimPrefix(s, prefix)
+				break
+			}
+		}
+	}
+	s = strings.TrimPrefix(s, "/")
+	if s == "" {
+		return ""
+	}
+	root := s
+	if i := strings.IndexByte(root, '/'); i > 0 {
+		root = root[:i]
+	}
+	root = strings.TrimSuffix(root, ".rb")
+	if !isRubyRequireSegment(root) {
+		return ""
+	}
+	return root
+}
+
+// rubyExternalPackageRoot derives the canonical gem root for a Ruby IMPORTS
+// edge (#4701). The raw require target is read from relProps["import_path"] /
+// relProps["source_module"] when present and falls back to the stub.
+//
+// Resolution:
+//   - "" / require_relative form / path-shaped require          → reject
+//     (relative requires are intra-project, never gems).
+//   - root segment ∈ internalRubyRoots                          → reject
+//     (genuinely-internal lib that failed to resolve — STILL a bug).
+//   - "rails/all", "active_support/core_ext" → first '/' segment ("rails",
+//     "active_support"); bare "sidekiq" → "sidekiq".
+func rubyExternalPackageRoot(stub string, relProps map[string]string, internalRubyRoots map[string]bool) (string, bool) {
+	spec := stub
+	relativeRequire := false
+	if relProps != nil {
+		// `require_relative` is intra-project; the extractor stamps the kind.
+		if k := strings.TrimSpace(relProps["require_kind"]); k == "require_relative" {
+			relativeRequire = true
+		}
+		if k := strings.TrimSpace(relProps["import_kind"]); k == "require_relative" {
+			relativeRequire = true
+		}
+		for _, key := range []string{"import_path", "source_module"} {
+			if v := strings.TrimSpace(relProps[key]); v != "" {
+				spec = v
+				break
+			}
+		}
+	}
+	if relativeRequire {
+		return "", false
+	}
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return "", false
+	}
+	// Relative / absolute path requires are intra-project file references,
+	// not gems.
+	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") ||
+		strings.HasPrefix(spec, "/") || spec == "." || spec == ".." {
+		return "", false
+	}
+	if strings.ContainsAny(spec, "\\:") {
+		return "", false
+	}
+	// "rails/all", "active_support/core_ext/…" → leading segment is the gem.
+	root := spec
+	if i := strings.IndexByte(root, '/'); i > 0 {
+		root = root[:i]
+	}
+	if !isRubyRequireSegment(root) {
+		return "", false
+	}
+	// Genuinely-internal lib that failed to resolve — keep it a bug.
+	if internalRubyRoots != nil {
+		if internalRubyRoots[root] || internalRubyRoots[strings.ToLower(root)] {
+			return "", false
+		}
+	}
+	return strings.ToLower(root), true
+}
+
+// isRubyRequireSegment reports whether s is a legal Ruby require path segment
+// (ASCII letter/digit/underscore/hyphen, not starting with a digit).
+func isRubyRequireSegment(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z':
+		case c >= 'A' && c <= 'Z':
+		case c == '_' || c == '-':
+		case c >= '0' && c <= '9':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// goInternalRoots returns the set of internal root identifiers implied by an
+// indexed Go entity's source path, used to build internalGoRoots so a
+// self-module import that failed to resolve is NOT masked as external
+// (#4702). Since the Document carries no go.mod module path, we record the
+// leading repo-relative directory segments (e.g. "internal/foo/bar.go" →
+// {"internal", "internal/foo"}). A host-prefixed import canonicalised to
+// "<host>/<owner>/<repo>" whose trailing path matches one of these is treated
+// as internal by the own-module guard in classifyExternal. In practice the
+// guard primarily fires when an extractor records a self-import already
+// canonicalised to the module root; the conservative path-segment set keeps
+// the guard from ever masking a genuine third-party dependency.
+func goInternalRoots(path string) []string {
+	s := strings.ReplaceAll(strings.TrimSpace(path), "\\", "/")
+	s = strings.TrimPrefix(s, "./")
+	s = strings.TrimPrefix(s, "/")
+	if s == "" {
+		return nil
+	}
+	// Drop the file component; keep directory segments only.
+	dir := s
+	if i := strings.LastIndexByte(dir, '/'); i >= 0 {
+		dir = dir[:i]
+	} else {
+		return nil // file at repo root — no internal package dir
+	}
+	if dir == "" {
+		return nil
+	}
+	segs := strings.Split(dir, "/")
+	roots := make([]string, 0, len(segs))
+	acc := ""
+	for _, seg := range segs {
+		if seg == "" {
+			continue
+		}
+		if acc == "" {
+			acc = seg
+		} else {
+			acc = acc + "/" + seg
+		}
+		roots = append(roots, acc)
+	}
+	return roots
+}
+
+// rustFileRoot returns the top-level crate/module root for an indexed Rust
+// source file, used to build internalRustRoots. Strips a leading "src/" and
+// takes the first remaining segment, falling back to the file stem.
+//
+//	"src/auth/mod.rs"   → "auth"
+//	"src/lib.rs"        → "lib"
+//	"src/main.rs"       → "main"
+func rustFileRoot(path string) string {
+	s := strings.ReplaceAll(strings.TrimSpace(path), "\\", "/")
+	if s == "" {
+		return ""
+	}
+	for _, prefix := range []string{"src/", "./"} {
+		if strings.HasPrefix(s, prefix) {
+			s = strings.TrimPrefix(s, prefix)
+			break
+		}
+	}
+	s = strings.TrimPrefix(s, "/")
+	if s == "" {
+		return ""
+	}
+	root := s
+	if i := strings.IndexByte(root, '/'); i > 0 {
+		root = root[:i]
+	}
+	root = strings.TrimSuffix(root, ".rs")
+	if !isRustCrateIdent(root) {
+		return ""
+	}
+	return root
+}
+
+// rustExternalPackageRoot derives the canonical crate root for a Rust IMPORTS
+// edge whose `use cratename::…` survived the intra-crate filter (#4703). The
+// raw use-path is read from relProps["import_path"] / relProps["source_module"]
+// when present and falls back to the `::`-separated stub.
+//
+// Resolution:
+//   - "" / crate::/self::/super:: / path residue                → reject
+//     (intra-crate paths are internal).
+//   - root segment ∈ internalRustRoots                          → reject
+//     (genuinely-internal sibling module — STILL a bug, not a crate).
+//   - "serde::Deserialize" → "serde"; "tokio::net::TcpListener" → "tokio".
+func rustExternalPackageRoot(stub string, relProps map[string]string, internalRustRoots map[string]bool) (string, bool) {
+	spec := stub
+	if relProps != nil {
+		for _, key := range []string{"import_path", "source_module"} {
+			if v := strings.TrimSpace(relProps[key]); v != "" {
+				spec = v
+				break
+			}
+		}
+	}
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return "", false
+	}
+	root := spec
+	if i := strings.Index(root, "::"); i > 0 {
+		root = root[:i]
+	}
+	root = strings.TrimSpace(root)
+	// Intra-crate keywords are internal.
+	switch root {
+	case "crate", "self", "super", "":
+		return "", false
+	}
+	// Brace-group / path / structural residue means this isn't a clean crate
+	// root. (`use foo::{A, B}` arrives with root "foo" before the `::`, so the
+	// brace only appears after the split — defend anyway.)
+	if strings.ContainsAny(root, "/\\:.{} \t") {
+		return "", false
+	}
+	if !isRustCrateIdent(root) {
+		return "", false
+	}
+	// Genuinely-internal sibling module that failed to resolve — keep a bug.
+	if internalRustRoots != nil {
+		if internalRustRoots[root] || internalRustRoots[strings.ToLower(root)] {
+			return "", false
+		}
+	}
+	return strings.ToLower(root), true
+}
+
+// csharpNamespaceRoot returns the root namespace for an indexed C# entity,
+// used to build internalCsharpRoots. Prefers the dotted QualifiedName's first
+// segment, falling back to the source path's first directory segment.
+func csharpNamespaceRoot(e *graph.Entity) string {
+	qn := strings.TrimSpace(e.QualifiedName)
+	if qn != "" && !strings.ContainsAny(qn, "/\\ \t") {
+		root := qn
+		if dot := strings.IndexByte(root, '.'); dot > 0 {
+			root = root[:dot]
+		}
+		if root != qn && isCsharpNamespaceSegment(root) {
+			return root
+		}
+	}
+	p := strings.ReplaceAll(strings.TrimSpace(e.SourceFile), "\\", "/")
+	p = strings.TrimPrefix(p, "./")
+	p = strings.TrimPrefix(p, "/")
+	for _, prefix := range []string{"src/"} {
+		if strings.HasPrefix(p, prefix) {
+			p = strings.TrimPrefix(p, prefix)
+			break
+		}
+	}
+	if p == "" {
+		return ""
+	}
+	root := p
+	if i := strings.IndexByte(root, '/'); i > 0 {
+		root = root[:i]
+	}
+	if isCsharpNamespaceSegment(root) {
+		return root
+	}
+	return ""
+}
+
+// csharpBclRoots is the conservative known-external root-namespace set for C#
+// — the .NET Base Class Library plus the most common NuGet vendor roots. C#
+// has no syntactic import-vs-internal marker, so the #4704 catch-all only
+// fires for a root that is EITHER on this set OR a clearly-non-internal dotted
+// namespace; everything ambiguous falls through and keeps its bug disposition
+// (under-flag rather than mask an internal bug — per the issue). Keys are
+// matched case-insensitively on the root segment.
+var csharpBclRoots = map[string]bool{
+	"system":           true, // System.*, the BCL core
+	"microsoft":        true, // Microsoft.* (ASP.NET Core, EF Core, Extensions, …)
+	"newtonsoft":       true, // Newtonsoft.Json
+	"automapper":       true,
+	"serilog":          true,
+	"xunit":            true,
+	"nunit":            true,
+	"moq":              true,
+	"polly":            true,
+	"dapper":           true,
+	"mediatr":          true,
+	"fluentvalidation": true,
+	"swashbuckle":      true,
+	"mongodb":          true, // MongoDB.Driver
+	"npgsql":           true,
+	"restsharp":        true,
+	"grpc":             true,
+}
+
+// csharpExternalPackageRoot derives the canonical nuget/BCL root for a C#
+// `using Namespace;` IMPORTS edge (#4704). The raw namespace is read from
+// relProps["import_path"] / relProps["source_module"] when present and falls
+// back to the dotted stub.
+//
+// Resolution (deliberately conservative — C# is the hardest, under-flag):
+//   - "" / relative / path residue                              → reject.
+//   - root segment ∈ internalCsharpRoots                        → reject
+//     (genuinely-internal namespace that failed to resolve — STILL a bug).
+//   - root ∈ csharpBclRoots                                     → external.
+//   - any other root                                            → reject
+//     (ambiguous; keep the bug rather than mask a possibly-internal namespace).
+func csharpExternalPackageRoot(stub string, relProps map[string]string, internalCsharpRoots map[string]bool) (string, bool) {
+	spec := stub
+	if relProps != nil {
+		for _, key := range []string{"import_path", "source_module"} {
+			if v := strings.TrimSpace(relProps[key]); v != "" {
+				spec = v
+				break
+			}
+		}
+	}
+	spec = strings.TrimSpace(spec)
+	// Strip a `static `/`global ` using-directive qualifier if present.
+	spec = strings.TrimPrefix(spec, "static ")
+	spec = strings.TrimPrefix(spec, "global ")
+	// Strip a `using X = Some.Namespace;` alias's LHS — keep the RHS.
+	if eq := strings.IndexByte(spec, '='); eq > 0 {
+		spec = strings.TrimSpace(spec[eq+1:])
+	}
+	spec = strings.TrimSuffix(spec, ";")
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return "", false
+	}
+	if strings.HasPrefix(spec, ".") || strings.ContainsAny(spec, "/\\: \t") {
+		return "", false
+	}
+	root := spec
+	if dot := strings.IndexByte(root, '.'); dot > 0 {
+		root = root[:dot]
+	}
+	if !isCsharpNamespaceSegment(root) {
+		return "", false
+	}
+	lower := strings.ToLower(root)
+	// Genuinely-internal namespace that failed to resolve — keep it a bug.
+	if internalCsharpRoots != nil {
+		if internalCsharpRoots[root] || internalCsharpRoots[lower] {
+			return "", false
+		}
+	}
+	// Only fire for a known BCL/nuget root. Everything else is ambiguous and
+	// deliberately left as a bug (under-flag, never mask).
+	if csharpBclRoots[lower] {
+		return lower, true
+	}
+	return "", false
+}
+
+// isCsharpNamespaceSegment reports whether s is a legal C# namespace segment
+// (ASCII letter/digit/underscore, not starting with a digit).
+func isCsharpNamespaceSegment(s string) bool {
 	if s == "" {
 		return false
 	}
