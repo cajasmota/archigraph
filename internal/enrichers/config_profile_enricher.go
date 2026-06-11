@@ -149,6 +149,25 @@ func ParseYAMLFlat(content string) map[string]string {
 	return result
 }
 
+// countLeadingSpaces returns the indentation width of s, counting a tab as four
+// spaces. Used by the YAML-flatten parser above to track nesting depth. (Moved
+// here from the retired complexity.go enricher in #4831 — it was the only live
+// consumer of this helper.)
+func countLeadingSpaces(s string) int {
+	n := 0
+	for _, ch := range s {
+		switch ch {
+		case ' ':
+			n++
+		case '\t':
+			n += 4
+		default:
+			return n
+		}
+	}
+	return n
+}
+
 // ParseDotenv parses a .env file.
 func ParseDotenv(content string) map[string]string {
 	result := make(map[string]string)

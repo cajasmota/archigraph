@@ -561,9 +561,12 @@ func braceSpanEnd(lines []string, headerIdx int) int {
 
 // decisionPointRe counts the control-flow decision points for cyclomatic
 // complexity: if/elif/else-if, case, catch/except/rescue, ternary, &&/||,
-// for/while/foreach. Mirrors enrichers.ComputeCyclomaticComplexity's keyword set
-// but lives here so the substrate facet has a single, self-contained source of
-// truth for the branch count surfaced alongside effect contexts. Language-
+// for/while/foreach. This is the single, validated source of truth for
+// cyclomatic complexity across the codebase (the former dead
+// enrichers.ComputeCyclomaticComplexity was retired in #4831); it lives here so
+// the substrate facet has a self-contained branch-count definition surfaced
+// alongside effect contexts and reused by the universal complexity pass
+// (internal/links/complexity_pass.go). Language-
 // neutral keyword set; comments/strings are not stripped (cheap, and the
 // over-count from the rare keyword-in-string is negligible and conservative).
 var decisionPointRe = []*regexp.Regexp{

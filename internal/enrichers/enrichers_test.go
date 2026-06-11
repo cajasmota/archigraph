@@ -18,64 +18,13 @@ func makeEntity(id, kind, subtype, sourceFile, name string) types.EntityRecord {
 	}
 }
 
-// complexity
-
-func TestCyclomaticComplexity_BaseOne(t *testing.T) {
-	if got := ComputeCyclomaticComplexity("x := 1"); got != 1 {
-		t.Fatalf("expected 1, got %d", got)
-	}
-}
-
-func TestCyclomaticComplexity_IfElse(t *testing.T) {
-	src := "if x > 0 {\n  y = 1\n} else {\n  y = 2\n}\n"
-	if got := ComputeCyclomaticComplexity(src); got < 3 {
-		t.Fatalf("expected >=3, got %d", got)
-	}
-}
-
-func TestCyclomaticComplexity_ForSwitch(t *testing.T) {
-	src := "for i := 0; i < 10; i++ { switch i { case 0: x = 1 case 1: x = 2 } }"
-	if got := ComputeCyclomaticComplexity(src); got < 5 {
-		t.Fatalf("expected >=5, got %d", got)
-	}
-}
-
-func TestHasConditionals_True(t *testing.T) {
-	if !HasConditionals("if x > 0 { return x }") {
-		t.Fatal("expected true")
-	}
-}
-
-func TestHasConditionals_False(t *testing.T) {
-	if HasConditionals("x := 1\ny := 2") {
-		t.Fatal("expected false")
-	}
-}
-
-func TestHasExternalCalls_HTTP(t *testing.T) {
-	if !HasExternalCalls(`resp, err := http.Get("https://example.com")`) {
-		t.Fatal("expected true for http.Get")
-	}
-}
-
-func TestHasExternalCalls_None(t *testing.T) {
-	if HasExternalCalls("x := 1 + 2") {
-		t.Fatal("expected false")
-	}
-}
-
-func TestComputeMaxCallDepth_Flat(t *testing.T) {
-	if got := ComputeMaxCallDepth("x := 1\ny := 2\n"); got != 0 {
-		t.Fatalf("expected 0, got %d", got)
-	}
-}
-
-func TestComputeMaxCallDepth_Nested(t *testing.T) {
-	src := "func f() {\n    if x {\n        if y {\n            z()\n        }\n    }\n}"
-	if got := ComputeMaxCallDepth(src); got < 1 {
-		t.Fatalf("expected >=1, got %d", got)
-	}
-}
+// complexity — the cyclomatic-complexity helpers (ComputeCyclomaticComplexity,
+// HasConditionals, HasExternalCalls, ComputeMaxCallDepth) were dead code
+// (referenced only by these tests) and have been retired (#4831, epic #4820).
+// The single, validated complexity implementation now lives in
+// substrate.ComputeFunctionComplexity and is persisted on EVERY function-like
+// entity by internal/links/complexity_pass.go (runComplexityPass), covered by
+// complexity_pass_test.go. There are no longer two divergent implementations.
 
 // api_version_enricher
 
