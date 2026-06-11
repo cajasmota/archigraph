@@ -413,6 +413,21 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	// regex (e.g. Spring's @GetMapping pattern). We only want one
 	// synthetic per endpoint per file.
 	seen := map[string]bool{}
+	// lastEndpointIdx records the index, in `entities`, of the http_endpoint
+	// (definition/call) entity appended by the most recent emit() call, or -1
+	// when that call emitted nothing (canonical-path empty, non-app file, or a
+	// dedup hit). The emitDef / emitDefSig / emitFile / emitResource wrappers use
+	// it to stamp StartLine / handler_file / signature onto the ENDPOINT entity.
+	//
+	// #4767 — this MUST NOT be `entities[len(entities)-1]`: when the route
+	// handler is inline (refKind == inlineHandlerRefKind, e.g. Sinatra block
+	// routes or Python lambda handlers) emit() appends a SECOND entity — the
+	// synthesized inline-handler SCOPE.Operation — AFTER the endpoint. The naive
+	// tail index then stamped the inline handler and left the endpoint at line 0,
+	// regressing TestIssue2691_Sinatra_EndpointAttribution and the Pyramid
+	// attribution test. Tracking the endpoint's own index keeps attribution
+	// correct regardless of how many trailing entities emit() appends.
+	lastEndpointIdx := -1
 	// makeEmit builds an emit-closure for the PRODUCER (backend handler) side.
 	// #1217: entities are now emitted with httpEndpointDefinitionKind. The
 	// synthetic ID retains the canonical `http:<METHOD>:<path>` form so
@@ -420,6 +435,9 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	// owning_backend is derived by walking the handler file path upward.
 	makeEmit := func(patternType, refPropKey string) emitFn {
 		return func(method, canonicalPath, framework, refKind, refName string) {
+			// #4767 — reset before any early-return so a wrapper never stamps a
+			// stale endpoint index when this emit() produced nothing.
+			lastEndpointIdx = -1
 			if canonicalPath == "" {
 				return
 			}
@@ -505,6 +523,10 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 				EnrichmentStatus:   types.StatusPending,
 				QualityScore:       0.8,
 			})
+			// #4767 — record the endpoint's index NOW, before the inline-handler
+			// branch below may append a second entity. The emitX wrappers stamp
+			// THIS index, never the tail.
+			lastEndpointIdx = len(entities) - 1
 
 			// #4319 LONG-TERM FIX — emit the endpoint→handler bridge AT SYNTHESIS
 			// TIME, from the decorated handler node, using a merge-stable,
@@ -621,10 +643,11 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	// #2678 requires the line to point at the `def <handler>` line, not
 	// the decorator line and not the default 0.
 	emitDef := func(method, canonicalPath, framework, refKind, refName string, defLine int) {
-		before := len(entities)
 		emit(method, canonicalPath, framework, refKind, refName)
-		if defLine > 0 && len(entities) > before {
-			entities[len(entities)-1].StartLine = defLine
+		// #4767 — stamp the ENDPOINT entity (lastEndpointIdx), not the tail: the
+		// inline-handler path appends a trailing SCOPE.Operation entity.
+		if defLine > 0 && lastEndpointIdx >= 0 {
+			entities[lastEndpointIdx].StartLine = defLine
 		}
 	}
 
@@ -636,12 +659,12 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	// table is empty and the Response row is "(none)" even though the handler
 	// declares both. defLine is the 1-based handler line; sig is parsed from it.
 	emitDefSig := func(method, canonicalPath, framework, refKind, refName string, defLine int, sig nestSignature) {
-		before := len(entities)
 		emit(method, canonicalPath, framework, refKind, refName)
-		if len(entities) == before {
+		// #4767 — stamp the ENDPOINT entity (lastEndpointIdx), not the tail.
+		if lastEndpointIdx < 0 {
 			return
 		}
-		last := &entities[len(entities)-1]
+		last := &entities[lastEndpointIdx]
 		if defLine > 0 {
 			last.StartLine = defLine
 		}
@@ -656,12 +679,15 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	// plus StartLine (#2691 — Sinatra anchors the synthetic at its verb
 	// block line in the same file). Either may be empty / 0.
 	emitFile := func(method, canonicalPath, framework, refKind, refName, handlerFile string, defLine int) {
-		before := len(entities)
 		emit(method, canonicalPath, framework, refKind, refName)
-		if len(entities) == before {
+		// #4767 — stamp the ENDPOINT entity (lastEndpointIdx), not the tail: for
+		// Sinatra inline-block routes emit() appends a trailing inline-handler
+		// entity, so the tail index would mis-stamp the handler and leave the
+		// endpoint at line 0.
+		if lastEndpointIdx < 0 {
 			return
 		}
-		last := &entities[len(entities)-1]
+		last := &entities[lastEndpointIdx]
 		if handlerFile != "" {
 			if last.Properties == nil {
 				last.Properties = map[string]string{}
@@ -697,12 +723,12 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 	// HONEST-PARTIAL: an action with no curated contract still gets the
 	// provenance tag but no fabricated status (routes.Stamp guarantees this).
 	emitResource := func(method, canonicalPath, framework, refKind, refName, handlerFile, action string) {
-		before := len(entities)
 		emit(method, canonicalPath, framework, refKind, refName)
-		if len(entities) == before {
+		// #4767 — stamp the ENDPOINT entity (lastEndpointIdx), not the tail.
+		if lastEndpointIdx < 0 {
 			return
 		}
-		last := &entities[len(entities)-1]
+		last := &entities[lastEndpointIdx]
 		if last.Properties == nil {
 			last.Properties = map[string]string{}
 		}
@@ -2789,6 +2815,21 @@ func synthesizeStarletteAddRoute(content string, emit emitDefFn) {
 			handlerArg = em[1]
 		} else if pm := pyFirstPositionalArgRe.FindStringSubmatch(tail); len(pm) >= 2 {
 			handlerArg = pm[1]
+		}
+
+		// #4767 — a Starlette `add_route` handler is ALWAYS a callable: an
+		// identifier (`add_route('/x', handler)`) or a lambda. It is NEVER a
+		// string literal. Pyramid's `config.add_route("name", "/path")` is a
+		// two-STRING-arg call (route name + URL path) that matches this same regex
+		// but is NOT a Starlette route — synthesizePyramid owns it (pairing the
+		// route name with its @view_config handler). Without this guard the
+		// pyramid call was mis-synthesized here as an inline-handler endpoint on
+		// the URL path string, colliding on the (verb,path) synthetic ID with the
+		// real Pyramid endpoint and stealing its (correct, handler-attributed)
+		// source line. Skip when the first positional handler arg is a string
+		// literal — that is never a Starlette handler.
+		if strings.HasPrefix(handlerArg, `"`) || strings.HasPrefix(handlerArg, `'`) {
+			continue
 		}
 
 		refKind, refName := pyProgrammaticHandlerRef(handlerArg)
