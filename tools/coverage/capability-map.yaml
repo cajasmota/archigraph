@@ -8077,6 +8077,16 @@ records:
 
   lang.rust.framework.axum:
     capabilities:
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         error_flow:
           status: full
@@ -8134,15 +8144,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -8756,6 +8757,16 @@ records:
 
   lang.rust.framework.actix:
     capabilities:
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -8801,15 +8812,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -9036,6 +9038,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -9081,15 +9093,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -9282,6 +9285,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -9327,15 +9340,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -9527,6 +9531,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -9572,15 +9586,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -9760,6 +9765,16 @@ records:
 
   lang.rust.framework.rocket:
     capabilities:
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -9805,15 +9820,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -10032,6 +10038,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -10077,15 +10093,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -10277,6 +10284,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -10322,15 +10339,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -10523,6 +10531,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -10568,15 +10586,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -10768,6 +10777,16 @@ records:
             - file: internal/custom/rust/minor_fw_routing_test.go
           issues_implemented: ["3410"]
           verified_at: "2026-05-30"
+      Data:
+        db_effect:
+          status: partial
+          symbols:
+            - file: internal/substrate/effect_sinks_rust.go
+              functions: [sniffEffectsRust, appendRustMatches]
+            - file: internal/links/effect_propagation.go
+              functions: [runEffectPropagationPass, stampEffectProperties]
+          issues_implemented: ["2765"]
+          verified_at: "2026-05-28"
       Substrate:
         constant_propagation:
           status: full
@@ -10813,15 +10832,6 @@ records:
             - file: internal/mcp/dead_code.go
               functions: [handleDeadCode, computeDeadCodeLive, computeDeadCodeFromEntry, bfsLive]
           issues_implemented: ["2767"]
-          verified_at: "2026-05-28"
-        db_effect:
-          status: partial
-          symbols:
-            - file: internal/substrate/effect_sinks_rust.go
-              functions: [sniffEffectsRust, appendRustMatches]
-            - file: internal/links/effect_propagation.go
-              functions: [runEffectPropagationPass, stampEffectProperties]
-          issues_implemented: ["2765"]
           verified_at: "2026-05-28"
         http_effect:
           status: partial
@@ -16843,7 +16853,7 @@ records:
           status: full
           symbols:
             - file: internal/custom/python/pytest.go
-              functions: [Extract, extractTestFuncBody]
+              functions: [Extract]
           tests:
             - file: internal/custom/python/extractors_test.go
               functions: [TestCelery_TestsEdges, TestCelery_TestsEdges_Apply, TestCelery_TestsEdges_NoFalsePositive]
