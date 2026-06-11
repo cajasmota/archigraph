@@ -246,3 +246,70 @@ func (r *OrderRepo) GetOrder(id int) Order {
 	by := groupByEffect(sniffEffectsGo(src))
 	mustHave(t, by, EffectDBRead, "GetOrder")
 }
+
+// ------------------------------------------------------ Rust / Diesel + sea-orm
+
+// A: ambiguous Diesel/sea-orm terminals (.first/.filter/.all/.one/.find) on a
+// query/table/Entity-typed receiver are db_read (#4737). Covers the inline
+// `users::table.filter(...).first(conn)` root form, a query-typed local, a
+// sea-orm `Entity::find()` chain, and a propagated `let q2 = q.filter(...)`.
+func TestRustDieselSeaOrmTypedRead_4737(t *testing.T) {
+	src := `
+impl UserRepository {
+    pub fn get_active(&self, conn: &mut PgConnection) -> Vec<User> {
+        users::table.filter(users::active.eq(true)).load(conn).unwrap()
+    }
+    pub fn newest(&self, conn: &mut PgConnection) -> User {
+        users::table.filter(users::id.eq(1)).first(conn).unwrap()
+    }
+    pub fn list_typed(&self, conn: &mut PgConnection) -> Vec<User> {
+        let q = users::table;
+        let q2 = q.filter(users::active.eq(true));
+        q2.all(conn)
+    }
+    pub async fn seaorm_one(&self, db: &DatabaseConnection) -> Option<User> {
+        let q = User::find();
+        q.filter(user::Column::Active.eq(true)).one(db).await.unwrap()
+    }
+    pub async fn seaorm_inline(&self, db: &DatabaseConnection) -> Vec<User> {
+        User::find().filter(user::Column::Active.eq(true)).all(db).await.unwrap()
+    }
+}
+`
+	by := groupByEffect(sniffEffectsRust(src))
+	mustHave(t, by, EffectDBRead, "get_active")
+	mustHave(t, by, EffectDBRead, "newest")
+	mustHave(t, by, EffectDBRead, "list_typed")
+	mustHave(t, by, EffectDBRead, "seaorm_one")
+	mustHave(t, by, EffectDBRead, "seaorm_inline")
+}
+
+// B (negative): the same verbs on a plain Vec/slice/iterator (Iterator
+// combinators) stay pure — the #4737 over-credit guard.
+func TestRustIteratorNoFalsePositive_4737(t *testing.T) {
+	src := `
+pub fn pick(items: Vec<Item>, names: &[String]) -> Option<Item> {
+    let head = items.first();
+    let found = items.iter().filter(|x| x.ok).find(|x| x.id == 1);
+    let mapped: Vec<_> = items.iter().map(|x| x.id).collect();
+    let any_ok = items.iter().all(|x| x.ok);
+    let one = names.iter().find(|n| n.len() > 0);
+    found.cloned()
+}
+`
+	by := groupByEffect(sniffEffectsRust(src))
+	mustNotHave(t, by, EffectDBRead, "pick")
+}
+
+// C: thin repo read method carries the db_read sink for the CALLS-union to lift.
+func TestRustRepoReadChainSink_4737(t *testing.T) {
+	src := `
+impl OrderRepository {
+    pub fn get_order(&self, conn: &mut PgConnection, id: i32) -> Order {
+        orders::table.filter(orders::id.eq(id)).first(conn).unwrap()
+    }
+}
+`
+	by := groupByEffect(sniffEffectsRust(src))
+	mustHave(t, by, EffectDBRead, "get_order")
+}
