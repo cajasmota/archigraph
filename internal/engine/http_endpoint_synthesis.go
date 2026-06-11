@@ -1259,11 +1259,19 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// screens with backend routes.
 		synthesizeDartClientWithRuntime(string(content), emitClientRuntime)
 	case "swift":
+		// Producer side (#4749): Vapor route registrations
+		// (`app.get("todos", ":id") { ... }`, `routes.post("users")`,
+		// `app.on(.GET, "health")`) → canonical http_endpoint_definition,
+		// in the same shape axum/Rocket/Express emit, so the shared resolver
+		// and the e2e route-test linker (#4351) light up for Swift. The
+		// custom_swift_vapor extractor's SCOPE.Operation/endpoint markers
+		// stay for navigation; this pass adds the canonical definitions the
+		// coverage substrate keys off.
+		synthesizeVaporRoutes(string(content), emit)
 		// Consumer side (#3574, epic #3571): iOS mobile HTTP clients —
 		// URLSession (`URL(string: "...")` + `httpMethod`) and Alamofire
 		// (`AF.request("...", method: .post)`). Emits outbound
-		// http_endpoint_call entities + FETCHES edges. The Swift PRODUCER
-		// side (Vapor) is handled by the custom_swift_* extractors.
+		// http_endpoint_call entities + FETCHES edges.
 		synthesizeSwiftClientWithRuntime(string(content), emitClientRuntime)
 	case "yaml", "json":
 		// Producer side (#3628, area #16): OpenAPI 3.x / Swagger 2.0 spec

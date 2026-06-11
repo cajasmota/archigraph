@@ -183,6 +183,13 @@ const (
 	// syntax, so canonicalisation is identity + slash normalisation (default
 	// case).
 	FrameworkGraphQLRuby = "graphql-ruby"
+	// FrameworkVapor (#4749) — Swift Vapor routes (`app.get("users", ":id")` /
+	// `routes.post("users")`) use the Express-style `:name` colon-prefixed path
+	// parameter convention. A Vapor route is declared as a sequence of path
+	// COMPONENTS — string literals and `:param` dynamic components — that the
+	// synthesizer joins with `/` before canonicalisation. Canonicalisation
+	// reuses canonicalizeColonParams.
+	FrameworkVapor = "vapor"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical
@@ -232,7 +239,7 @@ func Canonicalize(framework, raw string) string {
 	case FrameworkExpress, FrameworkGin, FrameworkEcho, FrameworkChi, FrameworkPhoenix,
 		FrameworkAdonis, FrameworkMarble, FrameworkPolka, FrameworkRestify, FrameworkSails,
 		FrameworkRobyn, FrameworkPlug, FrameworkCowboy,
-		FrameworkLapis, FrameworkOpenResty:
+		FrameworkLapis, FrameworkOpenResty, FrameworkVapor:
 		out = canonicalizeColonParams(raw)
 	default:
 		// Unknown framework: pass through but still normalise slashes.
