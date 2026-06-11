@@ -165,6 +165,88 @@ func TestSplitEnv(t *testing.T) {
 	}
 }
 
+// TestJoinModuleInstantiations_ContainmentAndEnv covers #4862 + #4657: each
+// definition resource gets ParentID = its instantiating module instance, env is
+// propagated onto the (env-less) definition, and INSTANTIATES relations are
+// drawn both directions. The FIRST instance (by entity id) wins containment.
+func TestJoinModuleInstantiations_ContainmentAndEnv(t *testing.T) {
+	// Two env instances of the same worker-service definition.
+	prod := &IaCResource{
+		EntityID:      "infra/inst-prod",
+		Repo:          "infra",
+		Name:          "module.worker_prod",
+		DefinitionDir: "modules/worker-service",
+		Env:           "prod",
+	}
+	dev := &IaCResource{
+		EntityID:      "infra/inst-dev",
+		Repo:          "infra",
+		Name:          "module.worker_dev",
+		DefinitionDir: "modules/worker-service",
+		Env:           "dev",
+	}
+	// Definition resources live under the definition directory (Module == dir).
+	task := &IaCResource{
+		EntityID: "infra/def-task",
+		Repo:     "infra",
+		Name:     "aws_ecs_task_definition.worker",
+		Module:   "modules/worker-service",
+	}
+	queue := &IaCResource{
+		EntityID: "infra/def-queue",
+		Repo:     "infra",
+		Name:     "aws_sqs_queue.work",
+		Module:   "modules/worker-service",
+	}
+
+	byID := map[string]*IaCResource{
+		prod.EntityID:  prod,
+		dev.EntityID:   dev,
+		task.EntityID:  task,
+		queue.EntityID: queue,
+	}
+
+	joinModuleInstantiations(byID, "infra")
+
+	// FIRST instance by entity id ("infra/inst-dev" < "infra/inst-prod") wins
+	// containment of both definition resources.
+	if task.ParentID != dev.EntityID {
+		t.Fatalf("task.ParentID = %q, want %q", task.ParentID, dev.EntityID)
+	}
+	if queue.ParentID != dev.EntityID {
+		t.Fatalf("queue.ParentID = %q, want %q", queue.ParentID, dev.EntityID)
+	}
+
+	// Env propagated from BOTH instantiating envs onto the shared definitions.
+	if task.Env != "dev,prod" {
+		t.Fatalf("task.Env = %q, want dev,prod", task.Env)
+	}
+
+	// Each instance gained an outbound INSTANTIATES relation per definition
+	// resource; each definition gained an inbound one per instance.
+	countFacet := func(r *IaCResource, dir string) int {
+		n := 0
+		for _, rel := range r.Relations {
+			if rel.Facet == "instantiates" && rel.Direction == dir {
+				n++
+			}
+		}
+		return n
+	}
+	if got := countFacet(dev, "out"); got != 2 {
+		t.Fatalf("dev out instantiates = %d, want 2", got)
+	}
+	if got := countFacet(task, "in"); got != 2 { // from dev + prod
+		t.Fatalf("task in instantiates = %d, want 2", got)
+	}
+
+	// An instance does not instantiate itself, and a resource with no
+	// instantiation keeps an empty ParentID.
+	if dev.ParentID != "" {
+		t.Fatalf("instance dev.ParentID = %q, want empty", dev.ParentID)
+	}
+}
+
 func TestIDTail(t *testing.T) {
 	if got := idTail("SCOPE.InfraResource:DataBucket"); got != "DataBucket" {
 		t.Fatalf("idTail = %q, want DataBucket", got)

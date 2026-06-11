@@ -2263,6 +2263,14 @@ export interface IaCResource {
   definition_dir?: string;
   /** For a module INSTANCE only (#4657): the raw `source` value. */
   module_source?: string;
+  /**
+   * Slug-prefixed entity id of the module INSTANCE that instantiates this
+   * resource (#4862). In Module group-by mode the diagram nests this resource
+   * INSIDE that module's container box (ownership-as-containment) instead of
+   * drawing an `instantiates` fan-out edge to it. Empty for resources not
+   * instantiated by any module instance.
+   */
+  parent_id?: string;
   /** Curated typed config props; [] when none stamped. */
   properties: IaCProperty[];
   /** Grants / event-sources / dependencies / topology / triggers; [] when none. */

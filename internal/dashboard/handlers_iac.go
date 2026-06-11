@@ -160,6 +160,17 @@ type IaCResource struct {
 	// (e.g. `../../modules/worker-service`, or a registry/git source).
 	ModuleSource string `json:"module_source,omitempty"`
 
+	// ParentID (#4862 — ownership-as-containment): the slug-prefixed entity id of
+	// the module INSTANCE that INSTANTIATES this resource, when one exists. The
+	// architecture diagram, in Module group-by mode, nests this resource INSIDE
+	// the instantiating module's container box (compound layout) rather than
+	// fanning an `instantiates` edge out from the module to it. A resource
+	// instantiated by several module instances is contained by the first
+	// (a containment box has a single parent); the remaining instantiation links
+	// are still surfaced as relations. Empty for resources not instantiated by
+	// any module instance (they keep their source-directory grouping).
+	ParentID string `json:"parent_id,omitempty"`
+
 	// Properties — curated typed config props (empty when none stamped).
 	Properties []IaCProperty `json:"properties"`
 	// Relations — grants / event-sources / dependencies / topology / triggers /
@@ -422,6 +433,93 @@ func mergeEnv(existing, add string) string {
 	}
 	sort.Strings(out)
 	return strings.Join(out, ",")
+}
+
+// joinModuleInstantiations resolves module instantiation by DIRECTORY (#4657)
+// for one repo's resources in byID, in place. The INSTANTIATES edge emitted by
+// the edge pass targets `tfmodule-def:<dir>`, which is not itself a rendered
+// resource (a Terraform module definition is a directory of .tf files, not one
+// entity). Here we join each module INSTANCE's DefinitionDir to the definition's
+// resources — every resource whose Module (source-file directory) equals that
+// dir — and:
+//
+//  1. draw an INSTANTIATES relation between the instance node and each of the
+//     definition's resources (so dev/staging/prod connect to the worker-service
+//     / sqs-queue definitions as rendered nodes),
+//  2. propagate the instance's env onto those definition resources so the env
+//     tabs can scope to "this env's instances + what they instantiate" even
+//     though the shared definition files carry no env, and
+//  3. (#4862) record the instantiating instance as each definition resource's
+//     ParentID — the ownership-as-containment key the diagram nests on, so the
+//     instance's box wraps the resources it instantiates rather than fanning an
+//     edge out to each. The FIRST instance to instantiate a definition wins the
+//     containment (a node has one parent); the rest still surface as relations.
+//
+// This is the directory-join the resolver cannot do (no entity to bind a
+// directory to) and is what clears the bulk of the unresolved relations.
+func joinModuleInstantiations(byID map[string]*IaCResource, slug string) {
+	defByDir := map[string][]*IaCResource{}
+	for _, r := range byID {
+		if r.Repo != slug || r.Module == "" {
+			continue
+		}
+		defByDir[r.Module] = append(defByDir[r.Module], r)
+	}
+	// Deterministic instance order so the FIRST-wins ParentID is stable across
+	// runs (map iteration order is randomized in Go).
+	insts := make([]*IaCResource, 0, len(byID))
+	for _, inst := range byID {
+		if inst.Repo != slug || inst.DefinitionDir == "" {
+			continue
+		}
+		insts = append(insts, inst)
+	}
+	sort.SliceStable(insts, func(i, j int) bool {
+		return insts[i].EntityID < insts[j].EntityID
+	})
+	for _, inst := range insts {
+		defs := defByDir[inst.DefinitionDir]
+		if len(defs) == 0 {
+			continue
+		}
+		for _, def := range defs {
+			if def == inst {
+				continue
+			}
+			// Propagate env onto the (env-less) shared definition resource so it
+			// surfaces under the instantiating env's tab. A definition
+			// instantiated by multiple envs accumulates a comma-joined list.
+			if inst.Env != "" {
+				def.Env = mergeEnv(def.Env, inst.Env)
+			}
+			// #4862 — ownership-as-containment: record the instantiating module
+			// instance as the definition resource's container parent so the
+			// diagram nests it inside the module box (vs an instantiates edge).
+			if def.ParentID == "" {
+				def.ParentID = inst.EntityID
+			}
+			inst.Relations = append(inst.Relations, IaCRelation{
+				Facet:          "instantiates",
+				Kind:           "INSTANTIATES",
+				Direction:      "out",
+				Target:         def.Name,
+				TargetResolved: true,
+				TargetID:       def.EntityID,
+				TargetEntityID: def.EntityID,
+				Detail:         inst.DefinitionDir,
+			})
+			def.Relations = append(def.Relations, IaCRelation{
+				Facet:          "instantiates",
+				Kind:           "INSTANTIATES",
+				Direction:      "in",
+				Target:         inst.Name,
+				TargetResolved: true,
+				TargetID:       inst.EntityID,
+				TargetEntityID: inst.EntityID,
+				Detail:         inst.DefinitionDir,
+			})
+		}
+	}
 }
 
 // idTail returns the last path segment of a graph entity ID (Kind:Name or
@@ -692,53 +790,7 @@ func (s *Server) handleIaC(w http.ResponseWriter, r *http.Request) {
 		//
 		// This is the directory-join the resolver cannot do (no entity to bind
 		// a directory to) and is what clears the bulk of the unresolved relations.
-		defByDir := map[string][]*IaCResource{}
-		for _, r := range byID {
-			if r.Repo != rp.Slug || r.Module == "" {
-				continue
-			}
-			defByDir[r.Module] = append(defByDir[r.Module], r)
-		}
-		for _, inst := range byID {
-			if inst.Repo != rp.Slug || inst.DefinitionDir == "" {
-				continue
-			}
-			defs := defByDir[inst.DefinitionDir]
-			if len(defs) == 0 {
-				continue
-			}
-			for _, def := range defs {
-				if def == inst {
-					continue
-				}
-				// Propagate env onto the (env-less) shared definition resource so
-				// it surfaces under the instantiating env's tab. A definition
-				// instantiated by multiple envs accumulates a comma-joined list.
-				if inst.Env != "" {
-					def.Env = mergeEnv(def.Env, inst.Env)
-				}
-				inst.Relations = append(inst.Relations, IaCRelation{
-					Facet:          "instantiates",
-					Kind:           "INSTANTIATES",
-					Direction:      "out",
-					Target:         def.Name,
-					TargetResolved: true,
-					TargetID:       def.EntityID,
-					TargetEntityID: def.EntityID,
-					Detail:         inst.DefinitionDir,
-				})
-				def.Relations = append(def.Relations, IaCRelation{
-					Facet:          "instantiates",
-					Kind:           "INSTANTIATES",
-					Direction:      "in",
-					Target:         inst.Name,
-					TargetResolved: true,
-					TargetID:       inst.EntityID,
-					TargetEntityID: inst.EntityID,
-					Detail:         inst.DefinitionDir,
-				})
-			}
-		}
+		joinModuleInstantiations(byID, rp.Slug)
 	}
 
 	// Collect the env set across all module instances (post-projection so

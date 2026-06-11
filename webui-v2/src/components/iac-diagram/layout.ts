@@ -175,6 +175,12 @@ interface IaCPlan {
   modules: Map<string, IaCResource[]>;
   /** group bucket key for a resource (module path or cloud tier). */
   moduleOf: (r: IaCResource) => string;
+  /**
+   * Display label for a group bucket key, when it is not just the key itself.
+   * Owner-instance containers (#4862) are keyed `instance:<entityId>` but
+   * labelled by the module name; map carries that override.
+   */
+  groupLabels: Map<string, string>;
   /** Unresolved relation count for a single resource (for its node chip). */
   unresolvedCountFor: (r: IaCResource) => number;
   rawEdges: RawEdge[];
@@ -204,12 +210,55 @@ function planIaCDiagram(
   const byEntityId = new Map<string, IaCResource>();
   for (const r of resources) byEntityId.set(r.entity_id, r);
 
+  // #4862 — ownership-as-containment (Module mode only). A resource whose
+  // backend `parent_id` points at a RENDERED module instance is nested INSIDE
+  // that module's container box: its bucket is that instance's entity id rather
+  // than its source-file directory. The instance node itself is placed in the
+  // SAME bucket so the box visually wraps the module + everything it
+  // instantiates. The synthetic group is keyed by the instance entity id and
+  // labelled by the module name. Outside Module mode this is inert. We only
+  // honour a parent_id that resolves to a rendered node (else fall back to
+  // directory grouping so nothing disappears).
+  const containedBy = (r: IaCResource): string | undefined => {
+    if (groupMode !== "module") return undefined;
+    const pid = r.parent_id;
+    if (pid && byEntityId.has(pid)) return pid;
+    return undefined;
+  };
+  // Module instances that own at least one contained resource become containers.
+  const ownerInstances = new Set<string>();
+  for (const r of resources) {
+    const owner = containedBy(r);
+    if (owner) ownerInstances.add(owner);
+  }
+  // Label for an owner-instance container bucket: the module name (falls back to
+  // its directory / entity id). Used by materialize via the modules map key.
+  const ownerLabel = new Map<string, string>();
+  for (const id of ownerInstances) {
+    const inst = byEntityId.get(id);
+    ownerLabel.set(
+      id,
+      (inst?.name && inst.name.trim()) ||
+        (inst?.module && inst.module.trim()) ||
+        id,
+    );
+  }
+
   // Assign each resource a container bucket. In "module" mode that is the
-  // module/stack directory ("" → "(ungrouped)"); in "tier" mode it is the cloud
-  // architecture tier derived from resource_category (#4625). Either way every
-  // node gets a parent container so the compound layout stays uniform.
-  const moduleOf = (r: IaCResource) =>
-    groupMode === "tier" ? cloudTier(r.category) : r.module || "(ungrouped)";
+  // instantiating module instance (ownership containment, #4862) when present,
+  // else the module/stack directory ("" → "(ungrouped)"); in "tier" mode it is
+  // the cloud architecture tier derived from resource_category (#4625). Either
+  // way every node gets a parent container so the compound layout stays uniform.
+  const moduleOf = (r: IaCResource): string => {
+    if (groupMode === "tier") return cloudTier(r.category);
+    // A contained resource (or an owner instance itself) buckets under the
+    // owner-instance container, keyed distinctly so it can't collide with a
+    // directory bucket of the same name.
+    const owner = containedBy(r);
+    if (owner) return `instance:${owner}`;
+    if (ownerInstances.has(r.entity_id)) return `instance:${r.entity_id}`;
+    return r.module || "(ungrouped)";
+  };
   const modules = new Map<string, IaCResource[]>();
   for (const r of resources) {
     const m = moduleOf(r);
@@ -234,6 +283,19 @@ function planIaCDiagram(
         unresolvedEdges++;
         continue;
       }
+      // #4862 — drop the redundant `instantiates` fan-out edge when the target
+      // resource is now CONTAINED inside this module instance's box (the
+      // module→resource ownership is expressed by nesting, not an edge). Only
+      // applies in Module mode; the target must be a real instantiates edge into
+      // a resource contained by THIS module (r is the owner instance). We do NOT
+      // count these as unresolved — they are intentionally elided, not missing.
+      if (
+        groupMode === "module" &&
+        rel.facet === "instantiates" &&
+        containedBy(byEntityId.get(targetEntity)!) === r.entity_id
+      ) {
+        continue;
+      }
       const key = `${r.entity_id}|${targetEntity}|${rel.kind}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -252,12 +314,19 @@ function planIaCDiagram(
       (rel) => !rel.target_entity_id || !byEntityId.has(rel.target_entity_id),
     ).length;
 
+  // Owner-instance container labels (#4862), keyed by their bucket id.
+  const groupLabels = new Map<string, string>();
+  for (const [id, label] of ownerLabel) {
+    groupLabels.set(`instance:${id}`, label);
+  }
+
   return {
     capped,
     unresolvedEdges,
     resources,
     modules,
     moduleOf,
+    groupLabels,
     unresolvedCountFor,
     rawEdges,
   };
@@ -282,7 +351,7 @@ function materialize(
   /** Optional ELK orthogonal routes per rawEdge index (absolute flow coords). */
   edgeRoutes?: Map<number, ElkPoint2D[]>,
 ): IaCLayoutResult {
-  const { resources, modules, unresolvedCountFor, rawEdges, capped, unresolvedEdges } = plan;
+  const { resources, modules, groupLabels, unresolvedCountFor, rawEdges, capped, unresolvedEdges } = plan;
 
   const sourcePos = direction === "LR" ? Position.Right : Position.Bottom;
   const targetPos = direction === "LR" ? Position.Left : Position.Top;
@@ -317,10 +386,14 @@ function materialize(
       gh = maxY - minY + GROUP_PAD_TOP + GROUP_PAD_BOTTOM;
     }
 
+    // #4862 — an owner-instance container is keyed `instance:<entityId>` but
+    // labelled by the module name (carried in groupLabels).
+    const ownerLabel = groupLabels.get(module);
     const groupData: IaCGroupData = {
-      module,
-      shortLabel:
-        module === "(ungrouped)"
+      module: ownerLabel ?? module,
+      shortLabel: ownerLabel
+        ? shortModuleLabel(ownerLabel)
+        : module === "(ungrouped)"
           ? "ungrouped"
           : groupMode === "tier"
             ? module
