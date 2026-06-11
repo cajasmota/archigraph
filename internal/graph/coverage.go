@@ -404,9 +404,44 @@ func isNonTestableFile(path string) bool {
 // Matching is case-insensitive on the entity Name suffix. The list is kept
 // conservative to avoid excluding real services that happen to end in a noun.
 var nonTestableNameSuffixes = []string{
-	"dto",       // Data Transfer Object
-	"dtos",      // pluralised barrel
-	"decorator", // cross-cutting annotation, not behaviour
+	"dto",        // Data Transfer Object
+	"dtos",       // pluralised barrel
+	"decorator",  // cross-cutting annotation, not behaviour
+	"decorators", // pluralised barrel
+	"annotation", // cross-cutting annotation, not behaviour
+}
+
+// nonTestableKinds are entity kinds that are type-only / data-shape contracts
+// with no executable body, so they are never testable production code even when
+// they slip into coverageEntityKinds-adjacent territory. These are matched on
+// the PERSISTED `Kind` field (round-trips through the flatbuffer read layer via
+// load.go fbEntityToGraphEntity), which is reliably set by every extractor —
+// unlike `Subtype`, which most extractors leave empty (#4534).
+//
+// Matching is case-insensitive on the bare kind and on the `SCOPE.<X>` tail, so
+// both raw kinds ("Interface", "TypeAlias") and namespaced kinds
+// ("SCOPE.Interface") are caught language-agnostically.
+var nonTestableKinds = map[string]bool{
+	"interface":   true, // type-only contract, no body
+	"typealias":   true, // alias, no body
+	"type_alias":  true,
+	"type":        true, // bare type declaration
+	"enum":        true, // value enumeration, no behaviour
+	"enummember":  true,
+	"enum_member": true,
+	"annotation":  true, // decorator/annotation declaration
+	"decorator":   true,
+}
+
+// kindTail returns the lower-cased, namespace-stripped kind for matching
+// against nonTestableKinds: "SCOPE.Interface" → "interface", "Interface" →
+// "interface". Operates purely on the persisted Kind field.
+func kindTail(kind string) string {
+	k := strings.ToLower(kind)
+	if i := strings.LastIndex(k, "."); i >= 0 {
+		k = k[i+1:]
+	}
+	return k
 }
 
 // isNonTestableEntity returns true when an in-scope-kind entity should still be
@@ -414,19 +449,27 @@ var nonTestableNameSuffixes = []string{
 // (DTO/decorator/type-only) or because it lives in a non-testable file.
 //
 // This is the single principled definition of "NOT testable production code"
-// (#4510). It is intentionally kind-/path-/name-driven (no language-specific
-// hacks) so it generalises across every extractor.
+// (#4510/#4534). It is keyed STRICTLY on read-layer-PERSISTED fields — the
+// source-file path (isNonTestableFile), the entity Kind, and the entity Name —
+// never on `Subtype`. Subtype round-trips through the flatbuffer writer/reader
+// but most extractors never populate it with role tags (dto/decorator/
+// annotation/enum_member are emitted by ZERO extractors today), so a
+// Subtype-keyed exclusion silently no-ops on the live reindexed graph even
+// though it passes against an in-memory fixture that hand-sets Subtype (#4534).
+// Path/Kind/Name are guaranteed present on the read layer, so the exclusion
+// fires identically in-pipeline and live.
 func isNonTestableEntity(e *Entity) bool {
 	if isNonTestableFile(e.SourceFile) {
 		return true
 	}
-	// Subtype-driven exclusions: extractors tag DTOs/decorators/type-only
-	// entities via Subtype on several languages. Treat the well-known data /
-	// annotation subtypes as non-testable.
-	switch strings.ToLower(e.Subtype) {
-	case "dto", "decorator", "annotation", "type_alias", "typealias", "enum_member":
+	// Kind-driven exclusions: type-only / data-shape contracts have no
+	// executable body. Keyed on the persisted Kind field (not Subtype).
+	if nonTestableKinds[kindTail(e.Kind)] {
 		return true
 	}
+	// Name-convention exclusions: DTOs, decorators and annotations whose
+	// concrete kind (Class/Struct) would otherwise count. Keyed on the
+	// persisted Name field, framework-agnostic.
 	lname := strings.ToLower(e.Name)
 	for _, suf := range nonTestableNameSuffixes {
 		if strings.HasSuffix(lname, suf) {
@@ -476,7 +519,15 @@ func isTestEntity(e *Entity) bool {
 	if testEntityKinds[e.Kind] {
 		return true
 	}
-	// One-per-file suite marker emitted by the non-JS test extractors.
+	// One-per-file suite marker emitted by the non-JS test extractors. The
+	// persisted `pattern_type` Property is checked first because it survives
+	// the flatbuffer read layer reliably (load.go copies all Properties); the
+	// Subtype/Kind checks are kept as compatible fallbacks (#4534). All three
+	// are read-layer-persisted, but pattern_type is the signal extractors set
+	// most consistently.
+	if e.Properties != nil && e.Properties["pattern_type"] == "test_suite" {
+		return true
+	}
 	return e.Subtype == "test_suite" || e.Kind == "test_suite"
 }
 

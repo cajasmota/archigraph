@@ -644,6 +644,113 @@ func TestComputeCoverage_4510_DenominatorAndAffinity(t *testing.T) {
 	}
 }
 
+// TestComputeCoverage_4534_DenominatorReadLayerShape pins the #4534 fix: the
+// testable-denominator exclusion must key on READ-LAYER-PERSISTED fields
+// (SourceFile path + Kind + Name), never on Subtype. The live flatbuffer read
+// layer round-trips Subtype but most extractors leave it EMPTY, so a
+// Subtype-keyed exclusion silently no-ops on the reindexed graph even though it
+// passes against an in-memory fixture that hand-sets Subtype.
+//
+// Every entity here is shaped exactly as the read layer presents it: Subtype is
+// EMPTY on all of them; only Kind / SourceFile / Name (and one persisted
+// Property for the suite) are set. The old Subtype-keyed switch
+// ("dto"/"decorator"/"annotation"/"enum_member"/"type_alias") would have
+// excluded NOTHING here (all Subtypes empty) and inflated the denominator with
+// the DTO, the enum and the type alias. The new path/Kind/Name-keyed logic must
+// drop them.
+func TestComputeCoverage_4534_DenominatorReadLayerShape(t *testing.T) {
+	t.Parallel()
+	entities := []Entity{
+		// Real, testable production code — MUST count. Subtype EMPTY.
+		{ID: "svc", Name: "OrderService", Kind: "Class", SourceFile: "src/orders/order_service.ts"},
+		{ID: "ctrl", Name: "OrderController", Kind: "SCOPE.Operation", SourceFile: "src/orders/order.controller.ts"},
+
+		// DTO whose CONCRETE kind is Class (slips past coverageEntityKinds) —
+		// excluded by NAME suffix, not Subtype. Subtype EMPTY (read-layer shape).
+		{ID: "dto", Name: "CreateOrderDto", Kind: "Class", SourceFile: "src/orders/dto/create-order.ts"},
+		// Decorator class — excluded by name suffix. Subtype EMPTY.
+		{ID: "dec", Name: "RolesDecorator", Kind: "Class", SourceFile: "src/auth/roles.ts"},
+		// Annotation class — excluded by the new name suffix (#4534). Subtype EMPTY.
+		{ID: "ann", Name: "AuditAnnotation", Kind: "Class", SourceFile: "src/audit/audit.ts"},
+
+		// Type-only / data-shape KINDS — excluded by Kind (persisted), not
+		// Subtype. These previously relied on a Subtype tag the extractor never
+		// sets. Subtype EMPTY.
+		{ID: "iface", Name: "IOrder", Kind: "SCOPE.Interface", SourceFile: "src/orders/order.types.ts"},
+		{ID: "alias", Name: "OrderId", Kind: "TypeAlias", SourceFile: "src/orders/ids.ts"},
+		{ID: "enm", Name: "OrderStatus", Kind: "Enum", SourceFile: "src/orders/status.ts"},
+
+		// Non-testable PATH — migration in a behaviour-bearing kind. Excluded by
+		// path. Subtype EMPTY.
+		{ID: "mig", Name: "up", Kind: "SCOPE.Operation", SourceFile: "src/common/database/migrations/0001_init.ts"},
+		// scripts/ dir — excluded by path. Subtype EMPTY.
+		{ID: "scr", Name: "seed", Kind: "Function", SourceFile: "scripts/seed.ts"},
+
+		// A read-layer-shaped pytest suite: SCOPE.Pattern with the PERSISTED
+		// pattern_type Property (Subtype intentionally EMPTY to prove the
+		// persisted-Property fallback fires). It lives in a test file and TESTS
+		// the service. Must be classified as a TEST entity (so it does not pad
+		// the production denominator) and credit the service.
+		{ID: "suite", Name: "pytest_suite:order", Kind: "SCOPE.Pattern",
+			SourceFile: "src/orders/__tests__/order_service.spec.ts",
+			Properties: map[string]string{"pattern_type": "test_suite"}},
+	}
+	rels := []Relationship{
+		{ID: "t1", FromID: "suite", ToID: "svc", Kind: "TESTS"},
+	}
+	report := ComputeCoverage(makeDoc(entities, rels))
+
+	// Only the two real production entities count: OrderService + OrderController.
+	if report.TotalProduction != 2 {
+		t.Fatalf("TotalProduction want 2 (OrderService+OrderController only); the DTO/decorator/interface/alias/enum/migration/script must drop out via persisted path/Kind/Name. got %d", report.TotalProduction)
+	}
+	// The persisted-Property suite must be recognised as a test and credit svc.
+	if report.CoveredProduction != 1 {
+		t.Errorf("CoveredProduction want 1 (suite TESTS OrderService via pattern_type-persisted suite), got %d", report.CoveredProduction)
+	}
+	// Guard: none of the excluded entities leaked into the uncovered list.
+	for _, u := range report.UncoveredEntities {
+		switch u.EntityID {
+		case "dto", "dec", "ann", "iface", "alias", "enm", "mig", "scr", "suite":
+			t.Errorf("entity %q (%s) must be excluded from the denominator, but appears in uncovered list", u.EntityID, u.Kind)
+		}
+	}
+}
+
+// TestIsNonTestableEntity_PersistedFieldsOnly is a focused unit test that the
+// exclusion predicate reads ONLY persisted fields. It pairs each case with an
+// EMPTY Subtype (read-layer shape) so a regression that reintroduces a
+// Subtype dependency fails here.
+func TestIsNonTestableEntity_PersistedFieldsOnly(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		e    Entity
+		want bool
+	}{
+		{"service-class", Entity{Name: "OrderService", Kind: "Class", SourceFile: "src/order_service.ts"}, false},
+		{"controller-op", Entity{Name: "list", Kind: "SCOPE.Operation", SourceFile: "src/order.controller.ts"}, false},
+		{"dto-by-name", Entity{Name: "CreateOrderDto", Kind: "Class", SourceFile: "src/create.ts"}, true},
+		{"decorator-by-name", Entity{Name: "RolesDecorator", Kind: "Class", SourceFile: "src/roles.ts"}, true},
+		{"annotation-by-name", Entity{Name: "AuditAnnotation", Kind: "Class", SourceFile: "src/audit.ts"}, true},
+		{"interface-by-kind", Entity{Name: "IOrder", Kind: "Interface", SourceFile: "src/order.ts"}, true},
+		{"scope-interface-by-kind", Entity{Name: "IOrder", Kind: "SCOPE.Interface", SourceFile: "src/order.ts"}, true},
+		{"typealias-by-kind", Entity{Name: "OrderId", Kind: "TypeAlias", SourceFile: "src/ids.ts"}, true},
+		{"enum-by-kind", Entity{Name: "Status", Kind: "Enum", SourceFile: "src/status.ts"}, true},
+		{"migration-by-path", Entity{Name: "up", Kind: "SCOPE.Operation", SourceFile: "db/migrations/1.ts"}, true},
+		{"script-by-path", Entity{Name: "seed", Kind: "Function", SourceFile: "scripts/seed.ts"}, true},
+	}
+	for _, tc := range cases {
+		// Subtype is EMPTY on every case (read-layer shape).
+		if tc.e.Subtype != "" {
+			t.Fatalf("%s: test must use read-layer shape (empty Subtype)", tc.name)
+		}
+		if got := isNonTestableEntity(&tc.e); got != tc.want {
+			t.Errorf("isNonTestableEntity(%s) = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // #4553: endpoint crediting via handler (read-layer shape)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -758,7 +865,7 @@ func TestIsContractSpecFile(t *testing.T) {
 	}{
 		{"test/contract/proposals.contract.spec.ts", true},
 		{"src/clients/clients.contract.spec.ts", true},
-		{"test/contract/foo.spec.ts", true},     // dir segment
+		{"test/contract/foo.spec.ts", true},      // dir segment
 		{"api/pact/consumer.pact.test.ts", true}, // pact dir + infix
 		{"src/user.contract.test.js", true},
 		// Plain specs / unit specs are NOT contract specs.
