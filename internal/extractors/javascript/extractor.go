@@ -285,6 +285,15 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 		// (generalises the NestJS global-DI fix #4329). Runs after walk so the
 		// @NgModule entity already exists.
 		x.angularGlobalProviders(root)
+		// Issue #4415 — Angular route-config guard/resolver wiring. The route
+		// array binds guard/resolver CLASSES declaratively
+		// ({ path, canActivate:[Guard], resolve:{x:Res}, canMatch:[...] }) on a
+		// separate path from the provider passes above. Emit route → guard
+		// class USES edges (di_role=guard|resolver) — array form, resolve
+		// object-map and best-effort functional guards (inject(Service)) — so
+		// the guard/resolver class is connected and resolves through the symbol
+		// table. Follow-up to #4378; runs after walk so owner entities exist.
+		x.angularRouteGuards(root)
 		// Issue #742 — snapshot length before collectImports so we can
 		// identify which entities were added by it (the import-placeholder
 		// SCOPE.Component/import entities). After collectImports we call
