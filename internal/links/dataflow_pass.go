@@ -47,6 +47,13 @@ const MethodDataFlow = "data_flow"
 const (
 	DataFlowPropertyKeyFlows = "data_flows"
 	DataFlowPropertyKeyCount = "data_flows_count"
+	// ComplexityPropertyKeyCyclomatic / *BranchCount carry the cheap
+	// per-function control-flow summary (#4821, epic #4820): cyclomatic
+	// complexity (decision points + 1) and the raw branch count. Stamped on the
+	// handler entity so they persist on the graph and are queryable without the
+	// on-demand effects MCP facet.
+	ComplexityPropertyKeyCyclomatic  = "cyclomatic_complexity"
+	ComplexityPropertyKeyBranchCount = "branch_count"
 )
 
 // maxDataFlowSummary bounds the compact per-entity property summary.
@@ -156,7 +163,7 @@ func runDataFlowPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (
 					links = append(links, l)
 					summaryFlows = append(summaryFlows, fl.DataFlow)
 				}
-				stampDataFlowSummary(g, fromID, summaryFlows)
+				stampDataFlowSummary(g, fromID, summaryFlows, string(content))
 			}
 		}
 	}
@@ -515,8 +522,14 @@ func lastIdent(s string) string {
 	return s
 }
 
-// stampDataFlowSummary writes the compact per-entity property summary.
-func stampDataFlowSummary(g *repoGraph, entityID string, flows []substrate.DataFlow) {
+// stampDataFlowSummary writes the compact per-entity property summary, plus the
+// #4821 cyclomatic_complexity / branch_count properties derived from the
+// handler's source window (fileContent is the full source of the file the
+// handler lives in; the window is sliced via the entity's StartLine/EndLine).
+// The complexity numbers persist on the graph so they are queryable without the
+// on-demand effects MCP facet; the facet remains the richer surface (it also
+// returns per-effect conditional/loop attribution).
+func stampDataFlowSummary(g *repoGraph, entityID string, flows []substrate.DataFlow, fileContent string) {
 	for ei := range g.Entities {
 		if g.Entities[ei].ID != entityID {
 			continue
@@ -527,8 +540,33 @@ func stampDataFlowSummary(g *repoGraph, entityID string, flows []substrate.DataF
 		}
 		e.Properties[DataFlowPropertyKeyFlows] = formatDataFlowSummary(flows, maxDataFlowSummary)
 		e.Properties[DataFlowPropertyKeyCount] = fmt.Sprintf("%d", len(flows))
+		if win := functionSourceWindow(fileContent, e.StartLine, e.EndLine); win != "" {
+			cx := substrate.ComputeFunctionComplexity(win)
+			e.Properties[ComplexityPropertyKeyCyclomatic] = fmt.Sprintf("%d", cx.Cyclomatic)
+			e.Properties[ComplexityPropertyKeyBranchCount] = fmt.Sprintf("%d", cx.BranchCount)
+		}
 		return
 	}
+}
+
+// functionSourceWindow slices the [start,end] 1-indexed line window out of a
+// file's content. Returns "" when the span is degenerate or out of range. When
+// EndLine is missing/zero it falls back to the rest of the file (the analyzer's
+// keyword count is body-local enough that a modest over-read is harmless, and
+// ComputeFunctionComplexity is monotone — a porting agent reads "≥ this many
+// branches", never fewer).
+func functionSourceWindow(content string, start, end int) string {
+	if content == "" || start <= 0 {
+		return ""
+	}
+	lines := strings.Split(content, "\n")
+	if start > len(lines) {
+		return ""
+	}
+	if end < start || end > len(lines) {
+		end = len(lines)
+	}
+	return strings.Join(lines[start-1:end], "\n")
 }
 
 // formatDataFlowSummary renders up to max flows as

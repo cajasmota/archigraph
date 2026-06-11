@@ -123,6 +123,10 @@ func (s *Server) handleEffects(_ context.Context, req mcpapi.CallToolRequest) (*
 	// #4423 — opt-in branches facet. Only computed when include=branches so
 	// the default effects payload stays byte-identical (no regression).
 	wantBranches := includeWants(req, "branches")
+	// #4821 — opt-in effect_contexts facet (conditional/loop effect attribution
+	// + per-function cyclomatic complexity). Same opt-in contract: default
+	// payload stays byte-identical (#2828 token-reduction respected).
+	wantEffectCtx := includeWants(req, "effect_contexts")
 
 	// Cross-repo prefixed ID? Resolve repo first for unambiguous lookup.
 	if rprefix, local := splitPrefixed(key); rprefix != "" {
@@ -130,6 +134,7 @@ func (s *Server) handleEffects(_ context.Context, req mcpapi.CallToolRequest) (*
 			if e, ok := r.LabelIndex.ByID[local]; ok {
 				out := buildEffectsPayload(r.Repo, e, sidecar)
 				attachBranchesFacet(out, r, e, wantBranches)
+				attachEffectContextsFacet(out, r, e, wantEffectCtx)
 				return jsonResult(out), nil
 			}
 		}
@@ -168,6 +173,7 @@ func (s *Server) handleEffects(_ context.Context, req mcpapi.CallToolRequest) (*
 	}
 	out := buildEffectsPayload(matches[0].repo.Repo, matches[0].ent, sidecar)
 	attachBranchesFacet(out, matches[0].repo, matches[0].ent, wantBranches)
+	attachEffectContextsFacet(out, matches[0].repo, matches[0].ent, wantEffectCtx)
 	return jsonResult(out), nil
 }
 
@@ -229,6 +235,73 @@ func attachBranchesFacet(out map[string]any, lr *LoadedRepo, e *graph.Entity, wa
 	facets := analyzer(src, start)
 	out["branches_supported"] = true
 	out["branches"] = branchFacetsToJSON(facets)
+}
+
+// attachEffectContextsFacet computes and attaches the #4821 `effect_contexts`
+// facet: for each effect the function performs, whether it runs conditionally
+// (and under which condition) and whether it is inside a loop, plus a per-
+// function cyclomatic_complexity + branch_count summary. Opt-in like the
+// branches facet — no-op when not requested, so the default effects payload is
+// byte-identical (#2828 token-reduction respected).
+//
+// Scope: the first increment validates Python (Django/oracle stack) and JS/TS
+// (NestJS) — the upvate-v3 + upvate groups. Other languages are computed when
+// their effect sniffer + block detector exist but are expanded/validated in the
+// per-language generalize follow-ups (see epic #4820).
+func attachEffectContextsFacet(out map[string]any, lr *LoadedRepo, e *graph.Entity, want bool) {
+	if !want || out == nil || lr == nil || e == nil {
+		return
+	}
+	lang := substrate.LanguageForPath(e.SourceFile)
+	start, end := branchSourceSpan(e)
+	if start <= 0 {
+		return
+	}
+	abs := e.SourceFile
+	if !filepath.IsAbs(abs) && lr.Path != "" {
+		abs = filepath.Join(lr.Path, e.SourceFile)
+	}
+	src, err := readRawSourceWindow(abs, start, end)
+	if err != nil || src == "" {
+		return
+	}
+	contexts, complexity := substrate.EffectContextsFor(lang, src, start)
+	// Complexity is always derivable (language-neutral keyword count); surface
+	// it so the caller gets the branch_count/cyclomatic_complexity numbers even
+	// when the language has no effect sniffer.
+	out["cyclomatic_complexity"] = complexity.Cyclomatic
+	out["branch_count"] = complexity.BranchCount
+	if substrate.EffectSnifferFor(lang) == nil {
+		out["effect_contexts_supported"] = false
+		out["effect_contexts_note"] = fmt.Sprintf(
+			"effect-context attribution not yet implemented for language %q (epic #4820); supported: %v",
+			lang, substrate.EffectLanguages())
+		return
+	}
+	out["effect_contexts_supported"] = true
+	out["effect_contexts"] = effectContextsToJSON(contexts)
+}
+
+// effectContextsToJSON converts substrate EffectContexts to the public JSON
+// shape, keeping fields terse + opt-in (omit empties) per #2828.
+func effectContextsToJSON(ctxs []substrate.EffectContext) []map[string]any {
+	out := make([]map[string]any, 0, len(ctxs))
+	for _, c := range ctxs {
+		m := map[string]any{
+			"effect":      c.Effect,
+			"sink":        c.Sink,
+			"line":        c.Line,
+			"conditional": c.Conditional,
+		}
+		if c.Condition != "" {
+			m["condition"] = c.Condition
+		}
+		if c.InLoop {
+			m["in_loop"] = true
+		}
+		out = append(out, m)
+	}
+	return out
 }
 
 // branchSourceSpan returns the [start,end] line window for an entity's body,
