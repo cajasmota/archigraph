@@ -213,6 +213,20 @@ const (
 	// Express-style `:name` colon convention, so the same canonicaliser handles
 	// both `%fmt` and `:name`.
 	FrameworkGiraffe = "giraffe"
+	// FrameworkGrails (#4749) — Groovy Grails. Grails has two route surfaces:
+	// (1) the convention `/<controller>/<action>` mapping derived from a
+	// `FooController` class in grails-app/controllers + its action methods, and
+	// (2) explicit `UrlMappings.groovy` mappings which use Grails dollar-prefixed
+	// path parameters (`/book/$id`, `/book/$author/$title`). The synthesizer
+	// pre-rewrites `$name` → `{name}`, so canonicalisation is the shared
+	// curly-brace pass.
+	FrameworkGrails = "grails"
+	// FrameworkRatpack (#4749) — Groovy/JVM Ratpack handler DSL
+	// (`get("path") { … }`, `path("api/:id") { … }`). Ratpack uses the
+	// Express-style `:name` colon-prefixed path-parameter convention and
+	// declares paths WITHOUT a leading slash (the synthesizer adds it).
+	// Canonicalisation reuses canonicalizeColonParams.
+	FrameworkRatpack = "ratpack"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical
@@ -251,7 +265,7 @@ func Canonicalize(framework, raw string) string {
 	case FrameworkFastAPI, FrameworkSpring, FrameworkJAXRS, FrameworkAxum,
 		FrameworkStarlette, FrameworkPyramid, FrameworkASPNetCore, FrameworkHapi,
 		FrameworkLitestar, FrameworkAiohttp, FrameworkFalcon, FrameworkHug,
-		FrameworkJavalin, FrameworkVertx:
+		FrameworkJavalin, FrameworkVertx, FrameworkGrails:
 		out = canonicalizeCurlyBraces(raw)
 	case FrameworkTornado:
 		// Tornado paths arrive already pre-processed by the synthesizer
@@ -263,7 +277,7 @@ func Canonicalize(framework, raw string) string {
 		FrameworkAdonis, FrameworkMarble, FrameworkPolka, FrameworkRestify, FrameworkSails,
 		FrameworkRobyn, FrameworkPlug, FrameworkCowboy,
 		FrameworkLapis, FrameworkOpenResty, FrameworkVapor, FrameworkClojure,
-		FrameworkKemal:
+		FrameworkKemal, FrameworkRatpack:
 		out = canonicalizeColonParams(raw)
 	case FrameworkGiraffe:
 		// Giraffe `routef "/users/%i"` printf placeholders → `{}` first, then

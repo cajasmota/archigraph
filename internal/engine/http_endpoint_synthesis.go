@@ -128,6 +128,14 @@ func synthesisSupportsLanguage(lang string) bool {
 	// marker + route token are no-ops inside the synthesizer.
 	case "fsharp":
 		return true
+	// #4749: Groovy Grails (convention `/controller/action` + UrlMappings.groovy)
+	// and Ratpack handler-DSL producer-side route synthesis — no compiled YAML
+	// rules emit http_endpoint_definition for Groovy (the Grails rule set is
+	// detection-only; spring_routes.go is gated lang=="java"), so allow Groovy
+	// through for synthesizeGroovyRoutes. Files without a Grails/Ratpack marker
+	// are no-ops inside the synthesizer.
+	case "groovy":
+		return true
 	// #3484: Lua Lapis / OpenResty producer-side route synthesis.
 	case "lua":
 		return true
@@ -1315,6 +1323,17 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// extractor stays structural-only; this pass adds the canonical
 		// definitions the coverage substrate keys off.
 		synthesizeGiraffeRoutes(string(content), emit)
+	case "groovy":
+		// Producer side (#4749): Groovy web route registrations — Grails
+		// convention controllers (`class BookController { def show() {…} }` →
+		// `ANY /book/show`), explicit UrlMappings.groovy (`"/book/$id"(...)` →
+		// `/book/{id}`), and Ratpack handler DSL (`get("api/books") {…}`) →
+		// canonical http_endpoint_definition, in the same shape
+		// axum/Express/Vapor/Kemal emit, so the shared resolver and the e2e
+		// route-test linker (#4351) light up for Groovy. The base groovy
+		// extractor stays structural-only; this pass adds the canonical
+		// definitions the coverage substrate keys off.
+		synthesizeGroovyRoutes(string(content), path, emit)
 	case "yaml", "json":
 		// Producer side (#3628, area #16): OpenAPI 3.x / Swagger 2.0 spec
 		// files declare the HTTP API surface as ground-truth. Each

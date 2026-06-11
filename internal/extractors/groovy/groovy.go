@@ -647,10 +647,28 @@ func extractCallRelationships(body *sitter.Node, src []byte, callerName string) 
 	if len(calls) == 0 {
 		return nil
 	}
+	// #4749 (Groovy slice of the coverage-linkage tail epic #4749/#4615; the JVM
+	// analog of Java #4682). Build a local-variable → constructed-type map from
+	// `def c = new FooController(...)` / `FooController c = new FooController()`
+	// declarations in this body so a later `c.index()` receiver call resolves to
+	// the class method `FooController.index` (test→CALLS crediting) instead of
+	// degrading to the bare leaf `index`. Only a DIRECT `new ClassName(...)`
+	// initialiser types the local — a factory/builder RHS (`def c =
+	// MyFactory.create()`) leaves the local UNtyped (no fabricated edge),
+	// mirroring the Java #4682 conservatism.
+	localVarTypes := collectGroovyLocalVarTypes(body, src)
+	// #4749 — the `function_call` that is the operand of a `new` unary_op is a
+	// CONSTRUCTOR (`new FooController()`), not an outbound method call; emitting
+	// it as a bare `FooController` CALLS edge is a phantom. Collect those nodes
+	// so they can be skipped (the type is already lifted into localVarTypes).
+	ctorCalls := groovyConstructorCalls(body)
 	seen := make(map[string]bool, len(calls))
 	rels := make([]types.RelationshipRecord, 0, len(calls))
 	for _, call := range calls {
-		target, recv := groovyCallTarget(call, src)
+		if ctorCalls[call] {
+			continue
+		}
+		target, recv := groovyCallTargetWithLocals(call, src, localVarTypes)
 		if target == "" {
 			continue
 		}
@@ -691,8 +709,20 @@ func extractCallRelationships(body *sitter.Node, src []byte, callerName string) 
 
 // groovyCallTarget resolves the callee target of a function_call node.
 // Returns (target, receiverType). receiverType is non-empty only when a
-// dotted_identifier receiver looks like a PascalCase type.
+// dotted_identifier receiver looks like a PascalCase type. This is the
+// no-locals convenience wrapper retained for callers that don't carry a
+// local-variable type table.
 func groovyCallTarget(call *sitter.Node, src []byte) (string, string) {
+	return groovyCallTargetWithLocals(call, src, nil)
+}
+
+// groovyCallTargetWithLocals is groovyCallTarget extended with a
+// local-variable → type table (#4749). When the receiver of an `obj.method()`
+// call is a local whose type was inferred from a `new ClassName(...)`
+// initialiser, the target is resolved to `<Type>.<method>` (with
+// receiver_type=<Type>), exactly as a PascalCase static-receiver call is. The
+// table may be nil.
+func groovyCallTargetWithLocals(call *sitter.Node, src []byte, localVarTypes map[string]string) (string, string) {
 	if call == nil || call.ChildCount() == 0 {
 		return "", ""
 	}
@@ -738,12 +768,164 @@ func groovyCallTarget(call *sitter.Node, src []byte) (string, string) {
 		if isPascalCase(receiver) {
 			return receiver + "." + method, receiver
 		}
+		// #4749 — local-variable receiver typing: `def c = new FooController();
+		// c.index()` → FooController.index. Only fires when the local was typed
+		// from a DIRECT `new ClassName(...)` initialiser (factory/builder RHS
+		// stays untyped), so no class edge is ever forged.
+		if typ, ok := localVarTypes[receiver]; ok && typ != "" {
+			return typ + "." + method, typ
+		}
 		return method, ""
 	case "function_call":
 		// Curried call — recurse.
-		return groovyCallTarget(first, src)
+		return groovyCallTargetWithLocals(first, src, localVarTypes)
 	}
 	return "", ""
+}
+
+// groovyConstructorCalls returns the set of function_call nodes that are the
+// operand of a `new` unary_op (i.e. constructor calls `new ClassName(...)`).
+// These are object instantiations, not outbound method CALLS, so they are
+// excluded from the CALLS edge set (#4749).
+func groovyConstructorCalls(body *sitter.Node) map[*sitter.Node]bool {
+	if body == nil {
+		return nil
+	}
+	out := map[*sitter.Node]bool{}
+	for _, uo := range findAllNodes(body, "unary_op") {
+		hasNew := false
+		for j := 0; j < int(uo.ChildCount()); j++ {
+			if c := uo.Child(j); c != nil && c.Type() == "new" {
+				hasNew = true
+				break
+			}
+		}
+		if !hasNew {
+			continue
+		}
+		for j := 0; j < int(uo.ChildCount()); j++ {
+			if c := uo.Child(j); c != nil && c.Type() == "function_call" {
+				out[c] = true
+			}
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// collectGroovyLocalVarTypes scans a method/function body for local-variable
+// declarations whose right-hand side is a DIRECT constructor call
+// (`new ClassName(...)`) and returns a varName → ClassName map (#4749).
+//
+// Two declaration shapes are recognised (both confirmed against the smacker
+// groovy grammar):
+//
+//	def c = new FooController(svc)         → declaration[def, id(c), =, unary_op[new, function_call[id(FooController)]]]
+//	FooController c = new FooController()  → declaration[id(FooController), id(c), =, unary_op[new, function_call[id(FooController)]]]
+//
+// The variable name is the `identifier` immediately preceding the `=`; the type
+// is the leading identifier of the `function_call` inside the `new` unary_op.
+// A declaration with no `new` unary_op (factory/builder RHS) types nothing —
+// the local is left out of the map, so its later receiver calls degrade to the
+// bare leaf and no spurious `<Class>.method` edge is forged (the Java #4682
+// negative-case guarantee).
+func collectGroovyLocalVarTypes(body *sitter.Node, src []byte) map[string]string {
+	if body == nil {
+		return nil
+	}
+	out := map[string]string{}
+	for _, decl := range findAllNodes(body, "declaration") {
+		varName, typeName := groovyDeclVarAndNewType(decl, src)
+		if varName == "" || typeName == "" {
+			continue
+		}
+		// PascalCase-only: a constructed type is a class name. Guards against
+		// edge-cases where the RHS leading identifier is not a type.
+		if !isPascalCase(typeName) {
+			continue
+		}
+		out[varName] = typeName
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// groovyDeclVarAndNewType returns (varName, ClassName) for a `declaration` node
+// whose RHS is a `new ClassName(...)` constructor, or ("","") otherwise.
+func groovyDeclVarAndNewType(decl *sitter.Node, src []byte) (string, string) {
+	// Find the `=` position; the var name is the identifier just before it.
+	eqIdx := -1
+	for i := 0; i < int(decl.ChildCount()); i++ {
+		if ch := decl.Child(i); ch != nil && ch.Type() == "=" {
+			eqIdx = i
+			break
+		}
+	}
+	if eqIdx <= 0 {
+		return "", ""
+	}
+	var varNode *sitter.Node
+	for i := eqIdx - 1; i >= 0; i-- {
+		if ch := decl.Child(i); ch != nil && ch.Type() == "identifier" {
+			varNode = ch
+			break
+		}
+	}
+	if varNode == nil {
+		return "", ""
+	}
+	varName := nodeText(varNode, src)
+	if varName == "" {
+		return "", ""
+	}
+	// The RHS (child after `=`) must be a `new` unary_op wrapping the
+	// constructor function_call.
+	typeName := groovyNewTypeFromRHS(decl, eqIdx)
+	if typeName == nil {
+		return "", ""
+	}
+	return varName, nodeText(typeName, src)
+}
+
+// groovyNewTypeFromRHS returns the type-name identifier node of a
+// `new ClassName(...)` RHS that follows the `=` at eqIdx in decl, or nil when
+// the RHS is not a direct constructor call.
+func groovyNewTypeFromRHS(decl *sitter.Node, eqIdx int) *sitter.Node {
+	for i := eqIdx + 1; i < int(decl.ChildCount()); i++ {
+		ch := decl.Child(i)
+		if ch == nil || ch.Type() != "unary_op" {
+			continue
+		}
+		hasNew := false
+		var ctorCall *sitter.Node
+		for j := 0; j < int(ch.ChildCount()); j++ {
+			c := ch.Child(j)
+			if c == nil {
+				continue
+			}
+			switch c.Type() {
+			case "new":
+				hasNew = true
+			case "function_call":
+				ctorCall = c
+			}
+		}
+		if !hasNew || ctorCall == nil {
+			return nil
+		}
+		// The constructor's leading identifier is the class name.
+		for j := 0; j < int(ctorCall.ChildCount()); j++ {
+			if c := ctorCall.Child(j); c != nil && c.Type() == "identifier" {
+				return c
+			}
+		}
+		return nil
+	}
+	return nil
 }
 
 // isPascalCase reports whether s starts with an uppercase ASCII letter
