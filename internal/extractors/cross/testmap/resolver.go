@@ -266,6 +266,27 @@ var stopwords = map[string]bool{
 	"tohavekey": true, "tobeempty": true, "tobeaninstanceof": true,
 	"tobestring": true, "tobefloat": true, "tobeinf": true, "tobenan": true,
 	"tobebetween": true, "tothrow": true, "tobegreaterhan": true,
+	// JS/TS — Jest / Vitest / Jasmine matcher verbs captured in BARE form
+	// (#4466). `expect(x).toBe(y)` yields a bare `toBe(` token because the
+	// `)` after the subject breaks the dotted chain (directCallRE then sees
+	// `toBe` alone — the `.tobe` SUFFIX filter never fires). Mirrors the
+	// AssertJ/Mockito bare-form handling added in #3855. Without these the
+	// resolver emits a medium-confidence TESTS edge to `toBe`/`toEqual`/…
+	// for nearly every assertion, driving TESTS edges toward one-per-entity.
+	"tobe": true, "tobedefined": true, "tobeundefined": true,
+	"tobecloseto": true, "tobegreaterthan": true,
+	"tobegreaterthanorequal": true, "tobelessthan": true,
+	"tobelessthanorequal": true, "tobeinstanceof": true,
+	"tomatch": true, "tomatchobject": true, "tomatchsnapshot": true,
+	"tomatchinlinesnapshot": true, "tocontainequal": true,
+	"tohavelength": true, "tohaveproperty": true,
+	"tohavebeencalled": true, "tohavebeencalledwith": true,
+	"tohavebeencalledtimes": true, "tohavebeencalledonce": true,
+	"tohavebeenlastcalledwith": true, "tohavebeennthcalledwith": true,
+	"tohavereturned": true, "tohavereturnedwith": true,
+	"toreturn": true, "tostrictequal": true, "tothrowerror": true,
+	"toresolve": true, "toreject": true, "tobetruthy": true,
+	"tobefalsy": true, "tohavebeencalledbefore": true,
 	// PHP — Laravel feature test HTTP helpers (test infrastructure, not prod calls)
 	// $this->get/post/put/patch/delete/json/getJson/postJson/putJson/patchJson/deleteJson
 	"$this->get": true, "$this->post": true, "$this->put": true,
@@ -688,6 +709,17 @@ func resolveCalls(tf testFunction, prodFile, convSymbol string, importedSyms map
 	}
 
 	// Pass 3b: naming convention fallback when no call/mock was found.
+	//
+	// #4466: this fallback is a last resort with NO per-function signal —
+	// the file-anchored convention symbol (convSymbol, from the test FILE
+	// name) or, when that is empty, the stripped test-function name. The
+	// previous behaviour emitted one such edge for EVERY test function with
+	// no resolvable call, so a spec with 30 it() blocks produced 30
+	// identical low-confidence edges, driving TESTS edges toward one per
+	// entity. The edge is still emitted (it preserves directory-convention
+	// coverage, e.g. e2e/ and tests/ files with no stem convention), but
+	// the Extract caller now caps the pure-fallback edge to ONCE per file
+	// via isPureLowConventionFallback.
 	if len(seen) == 0 {
 		sym := convSymbol
 		if sym == "" {

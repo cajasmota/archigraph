@@ -3837,3 +3837,59 @@ end`
 		t.Errorf("assert macro must be stop-worded, not a tested target")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// #4466 — over-broad TESTS-edge fallback regression guards
+// ---------------------------------------------------------------------------
+
+// countTestsEdges returns the total number of TESTS relationship edges across
+// all entity records.
+func countTestsEdges(recs []types.EntityRecord) int {
+	n := 0
+	for _, r := range recs {
+		for _, rel := range r.Relationships {
+			if rel.Kind == "TESTS" {
+				n++
+			}
+		}
+	}
+	return n
+}
+
+// TestTestsEdges_FallbackCappedPerFile is the #4466 fixture: a spec with many
+// co-located fallback-only tests (no resolvable call) must produce at most ONE
+// naming-convention TESTS edge for the whole file, not one per test function.
+// Previously every it() block emitted its own identical low-confidence edge to
+// the same convention subject, driving TESTS edges toward one-per-entity.
+func TestTestsEdges_FallbackCappedPerFile(t *testing.T) {
+	src := `import { describe, it } from 'vitest';
+describe('UserService', () => {
+  it('does a', () => { expect(1).toBe(1); });
+  it('does b', () => { expect(2).toBe(2); });
+  it('does c', () => { expect(3).toBe(3); });
+  it('does d', () => { expect(4).toBe(4); });
+});`
+	recs := runExtract(t, "src/user.service.spec.ts", "typescript", src)
+	edges := countTestsEdges(recs)
+	if edges > 1 {
+		t.Errorf("pure naming-convention fallback should emit ≤1 TESTS edge per file, got %d", edges)
+	}
+}
+
+// TestTestsEdges_RealCallNotThrottled guards that the per-file fallback cap
+// never suppresses a genuine high/medium-confidence subject: a test with a
+// real direct call still gets its own TESTS edge even when other co-located
+// tests are pure fallbacks.
+func TestTestsEdges_RealCallNotThrottled(t *testing.T) {
+	src := `import { describe, it } from 'vitest';
+import { OrderService } from './order.service';
+describe('OrderService', () => {
+  it('placebo a', () => { expect(1).toBe(1); });
+  it('places an order', () => { OrderService.placeOrder(payload); });
+  it('placebo b', () => { expect(2).toBe(2); });
+});`
+	recs := runExtract(t, "src/order.service.spec.ts", "typescript", src)
+	if !hasEdgeAny(recs, "it_places_an_order", "OrderService.placeOrder") {
+		t.Errorf("real direct-call subject must keep its TESTS edge; recs=%d", len(recs))
+	}
+}

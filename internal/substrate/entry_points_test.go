@@ -182,6 +182,35 @@ export { internalThing as renamedThing };
 	}
 }
 
+// TestSniffJSTSEntryPoints_TypeExportsExcluded is the #4466 fixture: type-only
+// exports (interface/type/enum) are compile-time-erased and can never be
+// invoked by the runtime, so they must NOT be emitted as library_export entry
+// points. Value exports (function/class/const) and the genuine roots stay.
+func TestSniffJSTSEntryPoints_TypeExportsExcluded(t *testing.T) {
+	src := `export function handler() {}
+export class Service {}
+export const helper = () => {};
+export interface UserDto { id: string }
+export type UserId = string;
+export enum Role { Admin, User }
+`
+	eps := sniffJSTSEntryPoints(src)
+	idents := map[string]EntryKind{}
+	for _, e := range eps {
+		idents[e.Ident] = e.Kind
+	}
+	for _, name := range []string{"handler", "Service", "helper"} {
+		if idents[name] != EntryKindLibraryExport {
+			t.Errorf("%q (value export) should be library_export, got %v", name, idents[name])
+		}
+	}
+	for _, name := range []string{"UserDto", "UserId", "Role"} {
+		if _, ok := idents[name]; ok {
+			t.Errorf("%q (type-only export) must NOT be an entry point (#4466), got %v", name, idents[name])
+		}
+	}
+}
+
 func TestSniffJSTSEntryPointsEmptyInput(t *testing.T) {
 	if eps := sniffJSTSEntryPoints(""); eps != nil {
 		t.Errorf("empty content should yield nil, got %v", eps)

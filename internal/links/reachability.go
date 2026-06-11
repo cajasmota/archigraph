@@ -237,7 +237,23 @@ func runReachabilityPass(group string, graphs []repoGraph, paths Paths) (PassRes
 				continue
 			}
 			fileNames := nameByFile[file]
+			// #4466: library_export entries are only genuine entry-point
+			// ROOTS when they form the package's public API surface — a
+			// barrel / index / explicit package entry file. In an
+			// application repo virtually every internal module re-exports
+			// its symbols (services, controllers, DTOs, every type), so
+			// honouring every export as a seed made ~65% of entities
+			// "entry points" and falsely marked unconsumed exports
+			// reachable. Internal-module exports that are actually used
+			// are still reached transitively via the IMPORTS edge, so
+			// dropping them as SEEDS does not lose live code — it only
+			// stops masking genuinely dead exports.
+			publicAPI := isPublicAPIFile(file)
 			for _, ep := range eps {
+				// Library exports from non-public-API files are not roots.
+				if ep.Kind == EntryKindLibraryExport && !publicAPI {
+					continue
+				}
 				// Match the sniffed ident against entities declared
 				// in the same file. Three lookup keys:
 				//   1. the ident as-is (covers function/class names)
@@ -378,6 +394,34 @@ func firstKey(m map[string]bool) string {
 		return k
 	}
 	return ""
+}
+
+// isPublicAPIFile reports whether a repo-relative source path is part of
+// the package's public API surface — the set of files whose exports are
+// genuine externally-invocable entry-point roots (#4466).
+//
+// Recognised as public API:
+//   - barrel / package-entry files: index.{ts,tsx,js,jsx,mjs,cjs}
+//   - explicit public-api / public_api files (Angular library convention)
+//   - mod.ts (Deno) and lib.rs / mod.rs entry roots
+//
+// Everything else is an internal module: its exports are wiring consumed
+// via IMPORTS edges, not external entry points. Internal exports that are
+// actually used stay reachable transitively; unused ones correctly fall
+// out as dead-code candidates rather than being masked as "entry points".
+func isPublicAPIFile(file string) bool {
+	base := strings.ToLower(file)
+	if i := strings.LastIndexAny(base, "/\\"); i >= 0 {
+		base = base[i+1:]
+	}
+	switch base {
+	case "index.ts", "index.tsx", "index.js", "index.jsx",
+		"index.mjs", "index.cjs",
+		"public-api.ts", "public_api.ts", "public-api.js", "public_api.js",
+		"mod.ts", "lib.rs", "mod.rs":
+		return true
+	}
+	return false
 }
 
 // keysOf returns the sorted keys of m.

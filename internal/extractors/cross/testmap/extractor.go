@@ -630,10 +630,25 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	// edge) so the entity is never degree-0 in the graph regardless of how
 	// many @pytest.mark.parametrize parameter sets the test function has.
 	out := make([]types.EntityRecord, 0, len(tests))
+	// #4466: cap the file-name-convention LOW fallback to ONE edge per
+	// test FILE. Every test function in a spec that has no resolvable
+	// call previously emitted its own low-confidence edge to the SAME
+	// convention subject (e.g. 30 it() blocks -> 30 edges to user.service),
+	// inflating TESTS edges toward one-per-entity. The first such function
+	// records the coverage; later pure-fallback functions are skipped (a
+	// real call/mock/describe-subject in any function is unaffected — only
+	// the bare naming-convention fallback is throttled).
+	lowFallbackEmitted := false
 	for _, tf := range tests {
 		called := resolveCalls(tf, prodFile, prodSymbol, importedSyms)
 		if len(called) == 0 {
 			continue
+		}
+		if isPureLowConventionFallback(called) {
+			if lowFallbackEmitted {
+				continue
+			}
+			lowFallbackEmitted = true
 		}
 		out = append(out, buildCollapsedEntity(file.Path, file.Language, fw.name, testType, tf.qname, called))
 	}
@@ -643,6 +658,24 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		attribute.Int("tests_found", len(out)),
 	)
 	return out, nil
+}
+
+// isPureLowConventionFallback reports whether a resolved call set is nothing
+// more than the single naming-convention LOW fallback edge (#4466).
+//
+// resolveCalls only ever emits a "low"-confidence call from Pass 3b (the
+// file-name / stripped-test-name fallback) and only when NOTHING else
+// resolved — so a single low-confidence call is, by construction, the pure
+// fallback. Those edges carry no per-function signal; they are identical for
+// every fallback-only test function in the file. Capping them to the first
+// per file collapses the previous one-per-test-function flood. The moment any
+// real (high/medium) direct call, mock target, or describe-subject is present
+// the call set is not "pure low" and is never throttled.
+func isPureLowConventionFallback(called []testedCall) bool {
+	if len(called) != 1 {
+		return false
+	}
+	return called[0].confidence == "low"
 }
 
 // ---------------------------------------------------------------------------

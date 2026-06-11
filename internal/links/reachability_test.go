@@ -126,3 +126,32 @@ func TestReachabilityNoSniffableFiles(t *testing.T) {
 		t.Errorf("expected at least 1 unreachable (z)")
 	}
 }
+
+// TestIsPublicAPIFile is the #4466 entry-point fixture: only package-entry /
+// barrel files form the public API surface whose exports are genuine
+// entry-point roots. Internal-module exports are reached via IMPORTS edges,
+// not seeded — so they no longer inflate the entry_points count nor mask
+// genuinely-dead exports.
+func TestIsPublicAPIFile(t *testing.T) {
+	public := []string{
+		"index.ts", "src/index.ts", "src/index.tsx",
+		"lib/index.js", "pkg/index.mjs",
+		"projects/ui/src/public-api.ts", "src/public_api.ts",
+		"deno/mod.ts", "crate/src/lib.rs", "crate/src/foo/mod.rs",
+	}
+	for _, p := range public {
+		if !isPublicAPIFile(p) {
+			t.Errorf("isPublicAPIFile(%q) = false, want true (public API surface)", p)
+		}
+	}
+	internal := []string{
+		"src/user/user.service.ts", "src/order/order.controller.ts",
+		"src/dto/user.dto.ts", "src/helpers/format.ts",
+		"src/auth/auth.module.ts", "components/Button.tsx",
+	}
+	for _, p := range internal {
+		if isPublicAPIFile(p) {
+			t.Errorf("isPublicAPIFile(%q) = true, want false (internal module, reached via IMPORTS)", p)
+		}
+	}
+}

@@ -2,7 +2,9 @@
 //
 // Recognises:
 //   - `export function <name>` / `export const <name>` / `export class
-//     <Name>` / `export default …` → library_export.
+//     <Name>` / `export default …` → library_export. Type-only exports
+//     (interface/type/enum) are excluded — they are compile-time-erased
+//     and never runtime entry roots (#4466).
 //   - `function main(` at module scope → cli_main.
 //   - `it(` / `test(` / `describe(` at module scope → test_entry (one
 //     entry per call site; the test runner invokes each).
@@ -20,8 +22,13 @@ func init() { RegisterEntryPoints("jsts", sniffJSTSEntryPoints) }
 
 // jstsExportNamedRe matches `export function|class|const|let|var <name>`.
 // Capture 1 = name.
+//
+// Type-only exports (`interface`, `type`, `enum`) are intentionally NOT
+// matched (#4466): they are compile-time-erased and can never be invoked
+// by the runtime, so they are never genuine entry-point roots. A type is
+// reachable iff something REFERENCES it (a graph edge), never as a seed.
 var jstsExportNamedRe = regexp.MustCompile(
-	`(?m)^export\s+(?:async\s+)?(?:function\*?|class|const|let|var|interface|type|enum)\s+([A-Za-z_$][\w$]*)`,
+	`(?m)^export\s+(?:async\s+)?(?:function\*?|class|const|let|var)\s+([A-Za-z_$][\w$]*)`,
 )
 
 // jstsExportDefaultFnRe matches `export default function <name>(` and
