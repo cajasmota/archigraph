@@ -14,9 +14,16 @@
                 depends); when an endpoint is inside a collapsed zone the edge
                 is re-targeted at the collapsed-zone box and aggregated.
 
-   Layout uses dagre as a COMPOUND graph (setParent) for the hierarchy, with a
-   tier-rank constraint so nodes of the same tier share a column. We then derive
-   each (expanded) zone's bounding box from its laid-out children.
+   Layout engine: as of the elkjs epic (#4824/#4825) the default backend is
+   ELK (elk.hierarchyHandling INCLUDE_CHILDREN + orthogonal routing) via the
+   shared `layoutWithElk` helper (lib/elk-layout.ts) — a true compound layout.
+   The legacy dagre compound pass (setParent + tier-rank hints + manual zone
+   bounding boxes) is KEPT as a synchronous fallback behind a flag so we can
+   revert visually if needed.
+
+   The "planning" stage (which nodes/zones render, edge folding into summary
+   edges) is engine-agnostic and shared by both backends; only the positioning
+   differs.
 
    Performance: hard node ceiling (MAX_NODES) + the graph-render crash-guard
    lessons (#4618/#4658) — we never emit a child whose parent box wasn't laid
@@ -31,6 +38,11 @@ import type {
   CompoundTier,
   CompoundEdgeType,
 } from "@/data/types";
+import {
+  layoutWithElk,
+  type ElkLayoutNode,
+  type ElkLayoutEdge,
+} from "@/lib/elk-layout";
 
 export const CT_NODE_TYPE = "ctNode";
 export const CT_ZONE_TYPE = "ctZone";
@@ -44,6 +56,20 @@ const ZONE_PAD_BOTTOM = 14;
 
 /** Hard ceiling so a huge group can't hang the browser (#4618/#4658). */
 export const MAX_NODES = 600;
+
+/**
+ * Layout engine selection. Defaults to ELK (#4825); set the env flag
+ * `VITE_CT_LAYOUT_ENGINE=dagre` (or pass engine="dagre") to use the legacy
+ * dagre fallback for a visual revert.
+ */
+export type CTLayoutEngine = "elk" | "dagre";
+export function defaultLayoutEngine(): CTLayoutEngine {
+  const env =
+    typeof import.meta !== "undefined"
+      ? (import.meta as { env?: Record<string, string | undefined> }).env
+      : undefined;
+  return env?.VITE_CT_LAYOUT_ENGINE === "dagre" ? "dagre" : "elk";
+}
 
 /** Canonical tier lane order (mirrors the backend canonicalTiers). */
 export const TIER_ORDER: CompoundTier[] = [
@@ -131,21 +157,47 @@ function tierRank(tier: CompoundTier): number {
   return i < 0 ? TIER_ORDER.length : i;
 }
 
-/**
- * layoutCompoundTopology builds a positioned React Flow graph.
- *
- * @param report     the compound payload (already fetched for a group_by).
- * @param collapsed  set of collapsed zone ids.
- */
-export function layoutCompoundTopology(
-  report: CompoundTopologyResponse | undefined,
-  collapsed: Set<string>,
-  onToggle: (zoneId: string) => void,
-): CTLayoutResult {
-  if (!report || report.nodes.length === 0) {
-    return { nodes: [], edges: [], capped: false, summaryEdgeCount: 0 };
-  }
+interface FoldedEdge {
+  from: string;
+  to: string;
+  type: CompoundEdgeType;
+  count: number;
+  summary: boolean;
+}
 
+/**
+ * CTPlan is the engine-agnostic intermediate produced from the payload + the
+ * collapse set: which leaf nodes and zone boxes render, their parent links, the
+ * folded (summary-aware) edges, and the helpers both backends need. The dagre
+ * and ELK positioners consume this identically.
+ */
+interface CTPlan {
+  capped: boolean;
+  visibleNodes: CompoundNode[];
+  renderedZoneIds: Set<string>;
+  folded: Map<string, FoldedEdge>;
+  /** Innermost VISIBLE zone id for a node ("" ⇒ root). */
+  innermostVisibleZone: (n: CompoundNode) => string;
+  /** Nearest rendered ancestor zone id for a zone ("" ⇒ root). */
+  zoneParentOf: (zoneId: string) => string;
+  isCollapsedRendered: (zoneId: string) => boolean;
+  depthOf: (zoneId: string) => number;
+  zoneOf: (zoneId: string) =>
+    | { id: string; label: string; kind: string; node_count: number; parent_id?: string }
+    | undefined;
+  /** True when an id corresponds to a rendered leaf node or zone box. */
+  layoutable: (id: string) => boolean;
+}
+
+/**
+ * planCompoundTopology computes the engine-agnostic render plan: visible nodes,
+ * rendered zones, parent relationships, and folded summary edges. This is the
+ * topology-specific logic shared by both the ELK and dagre backends.
+ */
+function planCompoundTopology(
+  report: CompoundTopologyResponse,
+  collapsed: Set<string>,
+): CTPlan {
   const capped = report.nodes.length > MAX_NODES;
   const allNodes = capped ? report.nodes.slice(0, MAX_NODES) : report.nodes;
 
@@ -154,8 +206,6 @@ export function layoutCompoundTopology(
 
   const zoneIndex = new Map(report.zones.map((z) => [z.id, z]));
 
-  // A zone is RENDERED collapsed only when it is collapsed AND no collapsed
-  // ancestor already swallows it (avoid drawing a zone-in-a-collapsed-zone).
   const isCollapsedRendered = (zoneId: string): boolean => {
     if (!collapsed.has(zoneId)) return false;
     let z = zoneIndex.get(zoneId);
@@ -166,31 +216,23 @@ export function layoutCompoundTopology(
     return true;
   };
 
-  // ── Visible leaves: nodes whose zone_path has no collapsed ancestor. ──────
   const visibleNodes = allNodes.filter(
     (n) => collapsedAncestor(n.zone_path, collapsed) === "",
   );
 
-  // Each visible node's innermost VISIBLE zone is its React Flow parent. A zone
-  // is visible when it is not inside a collapsed zone.
   const innermostVisibleZone = (n: CompoundNode): string => {
     let parent = "";
     for (const zid of n.zone_path) {
-      if (collapsed.has(zid)) break; // stop before a collapsed boundary.
+      if (collapsed.has(zid)) break;
       parent = zid;
     }
     return parent;
   };
 
-  // ── Which zones do we render as boxes? ────────────────────────────────────
-  // - collapsed-rendered zones → leaf boxes (no children).
-  // - expanded zones that contain ≥1 visible node OR a collapsed-rendered
-  //   child zone → container boxes.
   const renderedZoneIds = new Set<string>();
   for (const z of report.zones) {
     if (isCollapsedRendered(z.id)) {
       renderedZoneIds.add(z.id);
-      // also render all expanded ancestors (so the box nests visibly).
       let p = z.parent_id;
       while (p) {
         if (!collapsed.has(p)) renderedZoneIds.add(p);
@@ -206,67 +248,24 @@ export function layoutCompoundTopology(
     }
   }
 
-  // ── Dagre compound layout. ────────────────────────────────────────────────
-  const g = new dagre.graphlib.Graph({ compound: true });
-  g.setGraph({
-    rankdir: "LR",
-    nodesep: 22,
-    ranksep: 70,
-    marginx: 24,
-    marginy: 24,
-    ranker: "network-simplex",
-  });
-  g.setDefaultEdgeLabel(() => ({}));
-
   const zoneParentOf = (zoneId: string): string => {
     const z = zoneIndex.get(zoneId);
     let p = z?.parent_id || "";
-    // climb to nearest rendered ancestor.
     while (p && !renderedZoneIds.has(p)) {
       p = zoneIndex.get(p)?.parent_id || "";
     }
     return p;
   };
 
-  // Zone container/leaf nodes.
-  for (const zid of renderedZoneIds) {
-    if (isCollapsedRendered(zid)) {
-      // Collapsed → a sized leaf (dagre lays it out like a node).
-      g.setNode(zid, { width: NODE_W + 24, height: NODE_H + 8 });
-    } else {
-      g.setNode(zid, {}); // container; dagre sizes from children.
-    }
-    const parent = zoneParentOf(zid);
-    if (parent) g.setParent(zid, parent);
-  }
-
-  // Visible leaf nodes.
-  for (const n of visibleNodes) {
-    g.setNode(n.id, { width: NODE_W, height: NODE_H });
-    const parent = innermostVisibleZone(n);
-    if (parent && renderedZoneIds.has(parent)) g.setParent(n.id, parent);
-  }
-
-  // ── Edge folding. Re-target each typed edge at the effective (possibly
-  // collapsed-zone) endpoints, drop self/inside-collapsed edges, and aggregate
-  // by (src,tgt,type) so collapsed zones surface ONE summary edge. ──────────
-  interface FoldedEdge {
-    from: string;
-    to: string;
-    type: CompoundEdgeType;
-    count: number;
-    summary: boolean;
-  }
+  // ── Edge folding (summary-aware). ─────────────────────────────────────────
   const folded = new Map<string, FoldedEdge>();
   for (const e of report.edges) {
     const src = effectiveEndpoint(e.source, nodeIndex, collapsed);
     const tgt = effectiveEndpoint(e.target, nodeIndex, collapsed);
     if (!nodeIndex.has(e.source) || !nodeIndex.has(e.target)) continue;
-    if (src === tgt) continue; // wholly inside one collapsed zone → hidden.
-    // An endpoint is a summary edge when at least one side was re-targeted to
-    // a collapsed zone box (i.e. it differs from the raw node id).
+    if (src === tgt) continue;
     const summary = src !== e.source || tgt !== e.target;
-    const key = `${src} ${tgt} ${e.type}`;
+    const key = `${src} ${tgt} ${e.type}`;
     const prev = folded.get(key);
     if (prev) {
       prev.count += 1;
@@ -276,60 +275,81 @@ export function layoutCompoundTopology(
     }
   }
 
-  // Lay edges into dagre only when BOTH endpoints are laid-out nodes/zones.
   const layoutable = (id: string) =>
-    g.hasNode(id) && (nodeIndex.has(id) || renderedZoneIds.has(id));
-  for (const fe of folded.values()) {
-    if (layoutable(fe.from) && layoutable(fe.to)) g.setEdge(fe.from, fe.to);
-  }
+    nodeIndex.has(id) || renderedZoneIds.has(id);
 
-  // Tier-column hint: chain nodes within each tier so dagre keeps lanes ordered
-  // (invisible weight-0 edges between consecutive tiers' representatives).
-  applyTierHints(g, visibleNodes);
+  const depthOf = (zid: string): number => {
+    let d = 0;
+    let p = zoneIndex.get(zid)?.parent_id;
+    while (p) {
+      if (renderedZoneIds.has(p)) d++;
+      p = zoneIndex.get(p)?.parent_id;
+    }
+    return d;
+  };
 
-  dagre.layout(g);
+  return {
+    capped,
+    visibleNodes,
+    renderedZoneIds,
+    folded,
+    innermostVisibleZone,
+    zoneParentOf,
+    isCollapsedRendered,
+    depthOf,
+    zoneOf: (zid) => zoneIndex.get(zid),
+    layoutable,
+  };
+}
 
-  // ── Materialize React Flow nodes. ─────────────────────────────────────────
+/**
+ * materialize turns a CTPlan + absolute boxes for every laid-out leaf/collapsed
+ * zone into the final React-Flow node/edge lists (parent-relative positions,
+ * derived expanded-container boxes, summary edges). Engine-agnostic: both dagre
+ * and ELK feed it their absolute boxes.
+ */
+function materialize(
+  plan: CTPlan,
+  abs: Map<string, { x: number; y: number; w: number; h: number }>,
+  onToggle: (zoneId: string) => void,
+): CTLayoutResult {
+  const {
+    visibleNodes,
+    renderedZoneIds,
+    folded,
+    innermostVisibleZone,
+    zoneParentOf,
+    isCollapsedRendered,
+    depthOf,
+    zoneOf,
+    layoutable,
+  } = plan;
+
   const out: Node[] = [];
-  const finite = (v: number | undefined) => (Number.isFinite(v) ? (v as number) : 0);
 
-  // Absolute positions for everything dagre placed.
-  const abs = new Map<string, { x: number; y: number; w: number; h: number }>();
-  for (const zid of renderedZoneIds) {
-    const dn = g.node(zid);
-    if (!dn) continue;
-    abs.set(zid, {
-      x: finite(dn.x) - finite(dn.width) / 2,
-      y: finite(dn.y) - finite(dn.height) / 2,
-      w: finite(dn.width),
-      h: finite(dn.height),
-    });
-  }
-  for (const n of visibleNodes) {
-    const dn = g.node(n.id);
-    if (!dn) continue;
-    abs.set(n.id, {
-      x: finite(dn.x) - NODE_W / 2,
-      y: finite(dn.y) - NODE_H / 2,
-      w: NODE_W,
-      h: NODE_H,
-    });
-  }
-
-  // Recompute EXPANDED container boxes from member bounding boxes (dagre's own
-  // cluster sizing is unreliable for our padded headers).
-  const memberBox = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
-  const noteMember = (zoneId: string, a: { x: number; y: number; w: number; h: number }) => {
+  // Recompute EXPANDED container boxes from member bounding boxes when an engine
+  // doesn't size containers itself (dagre). ELK sizes containers natively, but
+  // recomputing from members is harmless and keeps padded headers consistent.
+  const memberBox = new Map<
+    string,
+    { minX: number; minY: number; maxX: number; maxY: number }
+  >();
+  const noteMember = (
+    zoneId: string,
+    a: { x: number; y: number; w: number; h: number },
+  ) => {
     let p: string | undefined = zoneId;
     while (p && renderedZoneIds.has(p)) {
-      const b = memberBox.get(p) ?? { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+      const b =
+        memberBox.get(p) ??
+        { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
       b.minX = Math.min(b.minX, a.x);
       b.minY = Math.min(b.minY, a.y);
       b.maxX = Math.max(b.maxX, a.x + a.w);
       b.maxY = Math.max(b.maxY, a.y + a.h);
       memberBox.set(p, b);
-      p = zoneIndex.get(p)?.parent_id;
-      while (p && !renderedZoneIds.has(p)) p = zoneIndex.get(p)?.parent_id;
+      p = zoneOf(p)?.parent_id;
+      while (p && !renderedZoneIds.has(p)) p = zoneOf(p)?.parent_id;
     }
   };
   for (const n of visibleNodes) {
@@ -345,26 +365,19 @@ export function layoutCompoundTopology(
   }
 
   // Order zones outermost→innermost so React Flow parents exist before children.
-  const depthOf = (zid: string): number => {
-    let d = 0;
-    let p = zoneIndex.get(zid)?.parent_id;
-    while (p) {
-      if (renderedZoneIds.has(p)) d++;
-      p = zoneIndex.get(p)?.parent_id;
-    }
-    return d;
-  };
   const zoneOrder = [...renderedZoneIds].sort((a, b) => depthOf(a) - depthOf(b));
 
-  // Emit zones. For expanded containers, derive padded box from members.
   const zoneAbs = new Map<string, { x: number; y: number }>();
   for (const zid of zoneOrder) {
-    const z = zoneIndex.get(zid)!;
+    const z = zoneOf(zid)!;
     const collapsedRendered = isCollapsedRendered(zid);
     let x: number, y: number, w: number, h: number;
     if (collapsedRendered) {
       const a = abs.get(zid)!;
-      x = a.x; y = a.y; w = a.w; h = a.h;
+      x = a.x;
+      y = a.y;
+      w = a.w;
+      h = a.h;
     } else {
       const b = memberBox.get(zid);
       if (!b || !Number.isFinite(b.minX)) continue; // empty container → skip.
@@ -375,7 +388,6 @@ export function layoutCompoundTopology(
     }
     zoneAbs.set(zid, { x, y });
 
-    // Parent-relative position for nested zones.
     const parent = zoneParentOf(zid);
     const pAbs = parent ? zoneAbs.get(parent) : undefined;
     const pos = pAbs ? { x: x - pAbs.x, y: y - pAbs.y } : { x, y };
@@ -419,7 +431,9 @@ export function layoutCompoundTopology(
       id: n.id,
       type: CT_NODE_TYPE,
       position: pos,
-      ...(parent && renderedZoneIds.has(parent) ? { parentId: parent, extent: "parent" as const } : {}),
+      ...(parent && renderedZoneIds.has(parent)
+        ? { parentId: parent, extent: "parent" as const }
+        : {}),
       data,
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
@@ -452,7 +466,218 @@ export function layoutCompoundTopology(
     });
   }
 
-  return { nodes: out, edges, capped, summaryEdgeCount };
+  return { nodes: out, edges, capped: plan.capped, summaryEdgeCount };
+}
+
+/* ============================================================
+   ELK backend (default, async) — #4825.
+   ============================================================ */
+
+/**
+ * layoutCompoundTopologyElk builds a positioned React Flow graph using the
+ * shared ELK helper (compound INCLUDE_CHILDREN layout + orthogonal routing).
+ * Async because ELK layout is Promise-based.
+ */
+export async function layoutCompoundTopologyElk(
+  report: CompoundTopologyResponse | undefined,
+  collapsed: Set<string>,
+  onToggle: (zoneId: string) => void,
+): Promise<CTLayoutResult> {
+  if (!report || report.nodes.length === 0) {
+    return { nodes: [], edges: [], capped: false, summaryEdgeCount: 0 };
+  }
+
+  const plan = planCompoundTopology(report, collapsed);
+  const { visibleNodes, renderedZoneIds, folded, innermostVisibleZone, zoneParentOf, isCollapsedRendered } =
+    plan;
+
+  // ── Build ELK inputs from the plan. ──────────────────────────────────────
+  const elkNodes: ElkLayoutNode[] = [];
+
+  // Zone boxes: expanded zones are containers (ELK sizes from children),
+  // collapsed-rendered zones are sized leaves.
+  for (const zid of renderedZoneIds) {
+    const collapsedRendered = isCollapsedRendered(zid);
+    const parent = zoneParentOf(zid);
+    elkNodes.push({
+      id: zid,
+      parentId: parent && renderedZoneIds.has(parent) ? parent : undefined,
+      isContainer: !collapsedRendered,
+      ...(collapsedRendered ? { width: NODE_W + 24, height: NODE_H + 8 } : {}),
+    });
+  }
+
+  // Visible leaf nodes, with a tier lane hint for left→right ordering.
+  for (const n of visibleNodes) {
+    const parent = innermostVisibleZone(n);
+    elkNodes.push({
+      id: n.id,
+      parentId: parent && renderedZoneIds.has(parent) ? parent : undefined,
+      width: NODE_W,
+      height: NODE_H,
+      lane: tierRank(n.tier),
+    });
+  }
+
+  // Folded edges between laid-out endpoints only.
+  const elkEdges: ElkLayoutEdge[] = [];
+  let ei = 0;
+  for (const fe of folded.values()) {
+    if (plan.layoutable(fe.from) && plan.layoutable(fe.to)) {
+      elkEdges.push({ id: `elk-e:${ei++}`, source: fe.from, target: fe.to });
+    }
+  }
+
+  const positions = await layoutWithElk(elkNodes, elkEdges, {
+    direction: "RIGHT",
+    edgeRouting: "ORTHOGONAL",
+    nodeSpacing: 22,
+    layerSpacing: 70,
+    padding: { top: ZONE_PAD_TOP, right: ZONE_PAD_X, bottom: ZONE_PAD_BOTTOM, left: ZONE_PAD_X },
+    defaultNodeWidth: NODE_W,
+    defaultNodeHeight: NODE_H,
+  });
+
+  // ELK positions are parent-relative; convert to ABSOLUTE for materialize()
+  // (which re-derives parent-relative positions + container boxes uniformly).
+  const finite = (v: number | undefined) =>
+    Number.isFinite(v) ? (v as number) : 0;
+  const absById = new Map<string, { x: number; y: number; w: number; h: number }>();
+
+  // Absolute position of a node = sum of its and all ancestors' relative pos.
+  const parentChain = (id: string): string[] => {
+    const chain: string[] = [];
+    const node = elkNodes.find((e) => e.id === id);
+    let p = node?.parentId;
+    const seen = new Set<string>();
+    while (p && !seen.has(p)) {
+      seen.add(p);
+      chain.push(p);
+      p = elkNodes.find((e) => e.id === p)?.parentId;
+    }
+    return chain;
+  };
+  const absPos = (id: string): { x: number; y: number } => {
+    const self = positions.get(id);
+    let x = finite(self?.x);
+    let y = finite(self?.y);
+    for (const anc of parentChain(id)) {
+      const ap = positions.get(anc);
+      x += finite(ap?.x);
+      y += finite(ap?.y);
+    }
+    return { x, y };
+  };
+
+  for (const n of visibleNodes) {
+    const p = absPos(n.id);
+    absById.set(n.id, { x: p.x, y: p.y, w: NODE_W, h: NODE_H });
+  }
+  for (const zid of renderedZoneIds) {
+    if (!isCollapsedRendered(zid)) continue;
+    const p = absPos(zid);
+    const pos = positions.get(zid);
+    absById.set(zid, {
+      x: p.x,
+      y: p.y,
+      w: finite(pos?.width) || NODE_W + 24,
+      h: finite(pos?.height) || NODE_H + 8,
+    });
+  }
+
+  return materialize(plan, absById, onToggle);
+}
+
+/* ============================================================
+   dagre backend (legacy fallback, synchronous) — kept for visual revert.
+   ============================================================ */
+
+/**
+ * layoutCompoundTopology builds a positioned React Flow graph using the legacy
+ * dagre compound pass. Kept as a synchronous fallback (see defaultLayoutEngine).
+ *
+ * @param report     the compound payload (already fetched for a group_by).
+ * @param collapsed  set of collapsed zone ids.
+ */
+export function layoutCompoundTopology(
+  report: CompoundTopologyResponse | undefined,
+  collapsed: Set<string>,
+  onToggle: (zoneId: string) => void,
+): CTLayoutResult {
+  if (!report || report.nodes.length === 0) {
+    return { nodes: [], edges: [], capped: false, summaryEdgeCount: 0 };
+  }
+
+  const plan = planCompoundTopology(report, collapsed);
+  const { visibleNodes, renderedZoneIds, folded, innermostVisibleZone, zoneParentOf, isCollapsedRendered } =
+    plan;
+
+  // ── Dagre compound layout. ────────────────────────────────────────────────
+  const g = new dagre.graphlib.Graph({ compound: true });
+  g.setGraph({
+    rankdir: "LR",
+    nodesep: 22,
+    ranksep: 70,
+    marginx: 24,
+    marginy: 24,
+    ranker: "network-simplex",
+  });
+  g.setDefaultEdgeLabel(() => ({}));
+
+  // Zone container/leaf nodes.
+  for (const zid of renderedZoneIds) {
+    if (isCollapsedRendered(zid)) {
+      g.setNode(zid, { width: NODE_W + 24, height: NODE_H + 8 });
+    } else {
+      g.setNode(zid, {});
+    }
+    const parent = zoneParentOf(zid);
+    if (parent) g.setParent(zid, parent);
+  }
+
+  // Visible leaf nodes.
+  for (const n of visibleNodes) {
+    g.setNode(n.id, { width: NODE_W, height: NODE_H });
+    const parent = innermostVisibleZone(n);
+    if (parent && renderedZoneIds.has(parent)) g.setParent(n.id, parent);
+  }
+
+  // Lay edges into dagre only when BOTH endpoints are laid-out nodes/zones.
+  const layoutable = (id: string) => g.hasNode(id) && plan.layoutable(id);
+  for (const fe of folded.values()) {
+    if (layoutable(fe.from) && layoutable(fe.to)) g.setEdge(fe.from, fe.to);
+  }
+
+  applyTierHints(g, visibleNodes);
+
+  dagre.layout(g);
+
+  // ── Absolute boxes for everything dagre placed. ───────────────────────────
+  const finite = (v: number | undefined) =>
+    Number.isFinite(v) ? (v as number) : 0;
+  const abs = new Map<string, { x: number; y: number; w: number; h: number }>();
+  for (const zid of renderedZoneIds) {
+    const dn = g.node(zid);
+    if (!dn) continue;
+    abs.set(zid, {
+      x: finite(dn.x) - finite(dn.width) / 2,
+      y: finite(dn.y) - finite(dn.height) / 2,
+      w: finite(dn.width),
+      h: finite(dn.height),
+    });
+  }
+  for (const n of visibleNodes) {
+    const dn = g.node(n.id);
+    if (!dn) continue;
+    abs.set(n.id, {
+      x: finite(dn.x) - NODE_W / 2,
+      y: finite(dn.y) - NODE_H / 2,
+      w: NODE_W,
+      h: NODE_H,
+    });
+  }
+
+  return materialize(plan, abs, onToggle);
 }
 
 /**
