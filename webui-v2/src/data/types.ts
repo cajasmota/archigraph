@@ -2611,6 +2611,103 @@ export interface DownstreamDAGResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Control-flow / flowchart (#4819, epic #4820) —
+// GET /api/v2/groups/:id/paths/:hash/control-flow
+//
+// The Flowchart view of the Downstream-flow modal: an on-demand control-flow
+// graph (CFG) of the endpoint's HANDLER function, rendered with classic
+// flowchart glyphs on the shared ELK canvas. Built server-side from the same
+// internal/substrate CFG builder the archigraph_control_flow MCP tool uses.
+// ---------------------------------------------------------------------------
+
+/** Detail level for the flowchart — maps 1:1 to the backend `detail` param and
+ *  the modal's Detail slider. Each level is a superset of the previous:
+ *   outline    → shapes + lines + complexity only
+ *   decisions  → + condition text on decision/loop nodes (default)
+ *   data       → + effect annotations on process nodes
+ *   full       → + node labels (the trimmed source line) */
+export type ControlFlowDetail = "outline" | "decisions" | "data" | "full";
+
+/** Flowchart node glyph. start/end are rounded terminals, decision is a
+ *  diamond, loop is a (back-edge target) diamond, process is a rectangle,
+ *  return/throw are exit terminals. */
+export type ControlFlowShape =
+  | "start"
+  | "end"
+  | "return"
+  | "throw"
+  | "decision"
+  | "loop"
+  | "process";
+
+/** Control-flow edge kind — drives edge labelling/routing on the flowchart:
+ *  the true/false branches off a decision, the loop back-edge, the early
+ *  return/throw exits, and plain sequential fall-through. */
+export type ControlFlowEdgeKind =
+  | "seq"
+  | "branch_true"
+  | "branch_false"
+  | "loop_back"
+  | "exit";
+
+/** A terse effect annotation on a process node (data detail+). */
+export interface ControlFlowEffect {
+  effect: string;
+  sink?: string;
+}
+
+/** One basic block / decision / terminal in the handler's CFG. */
+export interface ControlFlowNode {
+  id: string;
+  shape: ControlFlowShape;
+  line?: number;
+  /** Trimmed source line — full detail only. */
+  label?: string;
+  /** Predicate text on decision/loop nodes — decisions detail and up. */
+  condition?: string;
+  /** Side-effect annotations on process nodes — data detail and up. */
+  effects?: ControlFlowEffect[];
+}
+
+/** One directed control-flow edge between two node ids. */
+export interface ControlFlowEdge {
+  from: string;
+  to: string;
+  kind: ControlFlowEdgeKind;
+}
+
+/** The resolved handler function the CFG was built from. */
+export interface ControlFlowHandler {
+  id: string;
+  name: string;
+  kind: string;
+  file?: string;
+  line?: number;
+  repo: string;
+}
+
+/** GET /api/v2/groups/:id/paths/:hash/control-flow → the Flowchart-view payload. */
+export interface ControlFlowResponse {
+  path: string;
+  verb: string;
+  detail: ControlFlowDetail;
+  /** Resolved handler language slug ("python","jsts",…). */
+  language: string;
+  /** False when no block detector exists for the language (degenerate graph),
+   *  no handler resolved, or the source was unreadable — the modal then shows a
+   *  graceful "flowchart not available" state. */
+  supported: boolean;
+  /** Human explanation when supported is false. */
+  note?: string;
+  /** The handler function the CFG was built from (absent when unresolved). */
+  handler?: ControlFlowHandler;
+  cyclomatic_complexity: number;
+  branch_count: number;
+  nodes: ControlFlowNode[];
+  edges: ControlFlowEdge[];
+}
+
+// ---------------------------------------------------------------------------
 // Source peek (#4499) — GET /api/v2/groups/:id/source
 // ---------------------------------------------------------------------------
 

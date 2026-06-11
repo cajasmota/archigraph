@@ -32,7 +32,8 @@ import {
 } from "@/components/ui";
 import { TabCount, useSetInsight } from "@/components/ui";
 import type { InsightValue } from "@/components/ui";
-import { FlowDag } from "@/components/flow-dag";
+import { FlowDag, Flowchart } from "@/components/flow-dag";
+import type { ControlFlowDetail } from "@/data/types";
 import { RefLine } from "@/components/RefLine";
 import { getRepoColor } from "@/lib/repo-color";
 import { effectBadge } from "@/lib/effect-badge";
@@ -850,6 +851,55 @@ function responseToShapeTreeRows(s: ResponseShape, idx: number): ShapeTreeRow[] 
   });
 }
 
+/** The ordered detail levels for the Flowchart Detail slider (#4819). Each is a
+ *  superset of the previous; the label reads as the "+" it adds. */
+const CFG_DETAIL_LEVELS: { value: ControlFlowDetail; label: string; hint: string }[] = [
+  { value: "outline", label: "Outline", hint: "Shapes only — start/decision/loop/process/end" },
+  { value: "decisions", label: "+Decisions", hint: "Adds the condition text on decisions & loops" },
+  { value: "data", label: "+Data", hint: "Adds effect annotations (db_write, http_call, …)" },
+  { value: "full", label: "Full", hint: "Adds the source line label on every node" },
+];
+
+/** DetailSlider — the Flowchart-view Detail slider (#4819). A discrete 4-stop
+ *  slider mapping Outline → +Decisions → +Data → Full to the backend `detail`
+ *  param. Independent of the Tree view's depth control. */
+function DetailSlider({
+  value,
+  onChange,
+}: {
+  value: ControlFlowDetail;
+  onChange: (d: ControlFlowDetail) => void;
+}) {
+  const idx = Math.max(
+    0,
+    CFG_DETAIL_LEVELS.findIndex((l) => l.value === value),
+  );
+  const active = CFG_DETAIL_LEVELS[idx];
+  return (
+    <div className="inline-flex items-center gap-2">
+      <span className="text-[11px] text-text-4 uppercase tracking-wide">Detail</span>
+      <input
+        type="range"
+        min={0}
+        max={CFG_DETAIL_LEVELS.length - 1}
+        step={1}
+        value={idx}
+        onChange={(e) => onChange(CFG_DETAIL_LEVELS[Number(e.target.value)].value)}
+        className="w-28 accent-[var(--accent)] cursor-pointer"
+        aria-label="Flowchart detail level"
+        title={active.hint}
+        list="cfg-detail-stops"
+      />
+      <span
+        className="text-xs font-medium text-text-2 w-[88px] tabular-nums"
+        title={active.hint}
+      >
+        {active.label}
+      </span>
+    </div>
+  );
+}
+
 function DetailPane({ detail: rawDetail, initialVerb, groupId }: { detail: PathDetail; initialVerb?: string; groupId: string }) {
   const authForDetail = useAuthFor();
   // Real polyglot data can omit array/object fields entirely. Normalize once so
@@ -907,6 +957,11 @@ function DetailPane({ detail: rawDetail, initialVerb, groupId }: { detail: PathD
   // Fullscreen / maximize toggle for the downstream-flow modal (#4479). Persists
   // within the session so re-opening the modal keeps the user's last choice.
   const [dagMaximized, setDagMaximized] = useState(false);
+  // View toggle (#4819): Tree = the downstream call DAG (<FlowDag>), Flowchart =
+  // the handler's control-flow graph (<Flowchart>). The Detail slider only
+  // affects the Flowchart view (independent of the Tree's own depth control).
+  const [flowView, setFlowView] = useState<"tree" | "flowchart">("tree");
+  const [cfgDetail, setCfgDetail] = useState<ControlFlowDetail>("decisions");
   const dagVerb = verbFilter !== "all" ? verbFilter : detail.verbs[0];
 
   // Filter verb-scoped data. Backend slice fields can arrive as JSON null, so
@@ -1324,8 +1379,58 @@ function DetailPane({ detail: rawDetail, initialVerb, groupId }: { detail: PathD
               Downstream flow
             </DialogTitle>
             <DialogDescription>
-              {detail.path} — the endpoint's downstream as a branching tree.
+              {flowView === "tree"
+                ? `${detail.path} — the endpoint's downstream as a branching tree.`
+                : `${detail.path} — the handler's control flow as a flowchart.`}
             </DialogDescription>
+
+            {/* View toggle (Tree | Flowchart) + Detail slider (#4819). The
+                toggle swaps the renderer/data source; the Detail slider only
+                drives the Flowchart's CFG detail level (independent of the
+                Tree's own depth control, which lives in <FlowDag>). */}
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <div
+                className="inline-flex rounded-md border border-border overflow-hidden"
+                role="tablist"
+                aria-label="Flow view"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={flowView === "tree"}
+                  onClick={() => setFlowView("tree")}
+                  className={cn(
+                    "h-7 px-3 text-xs transition-colors",
+                    flowView === "tree"
+                      ? "bg-accent text-accent-text"
+                      : "bg-surface text-text-3 hover:bg-surface-2",
+                  )}
+                  title="Tree — the downstream call DAG"
+                >
+                  Tree
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={flowView === "flowchart"}
+                  onClick={() => setFlowView("flowchart")}
+                  className={cn(
+                    "h-7 px-3 text-xs transition-colors border-l border-border",
+                    flowView === "flowchart"
+                      ? "bg-accent text-accent-text"
+                      : "bg-surface text-text-3 hover:bg-surface-2",
+                  )}
+                  title="Flowchart — the handler's control flow (decisions, loops, effects)"
+                >
+                  Flowchart
+                </button>
+              </div>
+
+              {/* Detail slider — only meaningful for the Flowchart view. */}
+              {flowView === "flowchart" && (
+                <DetailSlider value={cfgDetail} onChange={setCfgDetail} />
+              )}
+            </div>
             {/* Maximize / restore toggle (#4479). Sits left of the Dialog's own
                 close button (which is absolute-positioned top-right). */}
             <button
@@ -1339,12 +1444,22 @@ function DetailPane({ detail: rawDetail, initialVerb, groupId }: { detail: PathD
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            {dagOpen && (
+            {dagOpen && flowView === "tree" && (
               <FlowDag
                 groupId={groupId}
                 pathHash={detail.path_hash}
                 verb={dagVerb}
                 enabled={dagOpen}
+                className="h-full"
+              />
+            )}
+            {dagOpen && flowView === "flowchart" && (
+              <Flowchart
+                groupId={groupId}
+                pathHash={detail.path_hash}
+                verb={dagVerb}
+                detail={cfgDetail}
+                enabled={dagOpen && flowView === "flowchart"}
                 className="h-full"
               />
             )}

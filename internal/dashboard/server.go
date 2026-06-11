@@ -751,6 +751,10 @@ func (s *Server) routes() http.Handler {
 	// #4349 (epic #4348) — endpoint downstream-DAG for the endpoint-flow modal:
 	// branching call tree rooted at the endpoint (depth/collapse/semantic).
 	mux.HandleFunc("GET /api/v2/groups/{id}/paths/{hash}/downstream-dag", s.handleV2PathDownstreamDAG)
+	// #4819 (epic #4820) — endpoint handler control-flow (CFG) for the
+	// Downstream-flow Flowchart view: on-demand flowchart of the handler function
+	// (reuses the internal/substrate CFG builder; detail = outline|decisions|data|full).
+	mux.HandleFunc("GET /api/v2/groups/{id}/paths/{hash}/control-flow", s.handleV2PathControlFlow)
 	// #1935 Phase 1 — ShapeTree subtree resolution (lazy class-field walk).
 	mux.HandleFunc("GET /api/v2/groups/{id}/shape", s.handleV2Shape)
 	// #4499 — shared "source peek": window of source for any file:line ref.

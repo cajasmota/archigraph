@@ -75,6 +75,8 @@ import type {
   DIReport,
   ErrorFlowReport,
   DownstreamDAGResponse,
+  ControlFlowResponse,
+  ControlFlowDetail,
   SourceReply,
 } from "@/data/types";
 
@@ -541,6 +543,28 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return requestV2<DownstreamDAGResponse>(
       `/groups/${encodeURIComponent(groupId)}/paths/${encodeURIComponent(pathHash)}/downstream-dag${suffix}`,
+    );
+  },
+
+  /**
+   * GET /api/v2/groups/:id/paths/:hash/control-flow — the Flowchart view of the
+   * Downstream-flow modal (#4819). Returns the on-demand control-flow graph
+   * (CFG) of the endpoint's handler function, parameterised by `detail`
+   * (outline|decisions|data|full — the Detail slider). `verb` disambiguates a
+   * multi-verb path hash. Fetched lazily (only when the modal is open and the
+   * Flowchart view is selected) so the main paths payload stays lean.
+   */
+  getPathControlFlow: (
+    groupId: string,
+    pathHash: string,
+    params?: { detail?: ControlFlowDetail; verb?: string },
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.detail) qs.set("detail", params.detail);
+    if (params?.verb) qs.set("verb", params.verb);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return requestV2<ControlFlowResponse>(
+      `/groups/${encodeURIComponent(groupId)}/paths/${encodeURIComponent(pathHash)}/control-flow${suffix}`,
     );
   },
 

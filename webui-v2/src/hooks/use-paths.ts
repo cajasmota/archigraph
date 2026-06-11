@@ -11,7 +11,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuthCoverage } from "@/hooks/use-security";
-import type { AuthEndpointFinding } from "@/data/types";
+import type { AuthEndpointFinding, ControlFlowDetail } from "@/data/types";
 
 export const pathsQueryKey = (groupId: string) =>
   ["paths", groupId] as const;
@@ -82,6 +82,42 @@ export function useDownstreamDAG(
         semantic: params.semantic,
         verb: params.verb,
       }),
+    enabled: !!groupId && !!pathHash && enabled,
+    staleTime: 60_000,
+  });
+}
+
+/* ============================================================
+   Control-flow / flowchart for the Downstream-flow modal (#4819, backend #4820)
+
+   The Flowchart VIEW of the modal. Parameterised by (detail, verb): moving the
+   Detail slider (outline→decisions→data→full) refetches with a new query key;
+   TanStack caches each detail level so sliding back is instant. Fetched lazily
+   (only when the modal is open AND the Flowchart view is selected).
+   ============================================================ */
+
+export const controlFlowQueryKey = (
+  groupId: string,
+  hash: string,
+  detail: ControlFlowDetail,
+  verb?: string,
+) => ["paths", groupId, "control-flow", hash, detail, verb ?? ""] as const;
+
+/**
+ * Fetch the endpoint handler's control-flow graph for the Flowchart view.
+ * Enabled only when the modal is open and the Flowchart view is selected, so the
+ * Tree view never pays for a CFG it isn't showing.
+ */
+export function useControlFlow(
+  groupId: string,
+  pathHash: string | null,
+  detail: ControlFlowDetail,
+  verb: string | undefined,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: controlFlowQueryKey(groupId, pathHash ?? "", detail, verb),
+    queryFn: () => api.getPathControlFlow(groupId, pathHash!, { detail, verb }),
     enabled: !!groupId && !!pathHash && enabled,
     staleTime: 60_000,
   });
