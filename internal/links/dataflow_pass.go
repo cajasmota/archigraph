@@ -540,10 +540,18 @@ func stampDataFlowSummary(g *repoGraph, entityID string, flows []substrate.DataF
 		}
 		e.Properties[DataFlowPropertyKeyFlows] = formatDataFlowSummary(flows, maxDataFlowSummary)
 		e.Properties[DataFlowPropertyKeyCount] = fmt.Sprintf("%d", len(flows))
-		if win := functionSourceWindow(fileContent, e.StartLine, e.EndLine); win != "" {
-			cx := substrate.ComputeFunctionComplexity(win)
-			e.Properties[ComplexityPropertyKeyCyclomatic] = fmt.Sprintf("%d", cx.Cyclomatic)
-			e.Properties[ComplexityPropertyKeyBranchCount] = fmt.Sprintf("%d", cx.BranchCount)
+		// #4831: the universal complexity pass (runComplexityPass) is the single
+		// source of truth for cyclomatic_complexity / branch_count and runs BEFORE
+		// this pass, so the value is already stamped here. Defer to it idempotently
+		// — only fall back to stamping when it is somehow absent (e.g. an isolated
+		// test harness that invokes the data-flow pass alone). Both paths call the
+		// same ComputeFunctionComplexity, so the numbers can never diverge.
+		if _, ok := e.Properties[ComplexityPropertyKeyCyclomatic]; !ok {
+			if win := functionSourceWindow(fileContent, e.StartLine, e.EndLine); win != "" {
+				cx := substrate.ComputeFunctionComplexity(win)
+				e.Properties[ComplexityPropertyKeyCyclomatic] = fmt.Sprintf("%d", cx.Cyclomatic)
+				e.Properties[ComplexityPropertyKeyBranchCount] = fmt.Sprintf("%d", cx.BranchCount)
+			}
 		}
 		return
 	}

@@ -482,6 +482,20 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	}
 	res.Results = append(res.Results, pTP)
 
+	// #4831 (epic #4820) — universal cyclomatic-complexity enrichment. Walks
+	// EVERY function-like entity with readable source-line info and stamps
+	// cyclomatic_complexity / branch_count via the validated
+	// substrate.ComputeFunctionComplexity. Runs BEFORE the data-flow pass so
+	// this pass is the single source of truth: data-flow's per-handler stamp is
+	// idempotent and finds the value already present (both call the same
+	// ComputeFunctionComplexity, so they can never diverge). Generalises part
+	// (a) (#4821), which only stamped data-flow-bound handlers.
+	pCx, err := runComplexityPass(graphs, paths)
+	if err != nil {
+		return nil, fmt.Errorf("complexity pass: %w", err)
+	}
+	res.Results = append(res.Results, pCx)
+
 	// #3628 area #22 — SCOPED request-input → sink dataflow. Emits
 	// DATA_FLOWS_TO links (intra-function + one local-call hop) from the
 	// per-language substrate dataflow sniffers. Honest-partial: see
