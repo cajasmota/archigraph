@@ -110,6 +110,73 @@ func (x *extractor) heritageClauseTypeNames(clause *sitter.Node) []string {
 				seen[name] = true
 				out = append(out, name)
 			}
+		case "call_expression":
+			// Issue #4845 — NestJS mapped-type DTOs declare their base via a
+			// helper CALL in the extends clause:
+			//
+			//	class UpdateThingBody extends PartialType(CreateThingBody) {}
+			//	class PickThingBody   extends PickType(CreateThingBody, [...]) {}
+			//	class OmitThingBody   extends OmitType(CreateThingBody, [...]) {}
+			//	class MergedBody      extends IntersectionType(A, B) {}
+			//
+			// tree-sitter parses this as a call_expression, which the
+			// identifier/generic_type cases above do not match — so before
+			// this branch the *real* base classes (the type ARGUMENTS that
+			// carry the fields) were dropped and the mapped DTO became a leaf
+			// with no EXTENDS edge to walk. We emit an EXTENDS edge to each
+			// type-identifier argument of a known mapped-type helper so the
+			// shape walker can recurse into the source DTO's fields. The
+			// helper name itself (PartialType/PickType/…) is intentionally NOT
+			// emitted — it is an external @nestjs/mapped-types/swagger symbol
+			// with no fields of its own.
+			for _, name := range mappedTypeBaseNames(x, c) {
+				if name != "" && !seen[name] {
+					seen[name] = true
+					out = append(out, name)
+				}
+			}
+		}
+	}
+	return out
+}
+
+// nestMappedTypeHelpers are the NestJS @nestjs/mapped-types / @nestjs/swagger
+// helper functions whose type ARGUMENTS are the field-bearing base DTO(s).
+var nestMappedTypeHelpers = map[string]bool{
+	"PartialType":      true,
+	"PickType":         true,
+	"OmitType":         true,
+	"IntersectionType": true,
+}
+
+// mappedTypeBaseNames returns the base DTO type names referenced by the
+// arguments of a mapped-type helper call (PartialType(X) -> ["X"]). It returns
+// nil for any call whose callee is not a recognized NestJS mapped-type helper,
+// so non-mapped extends-call shapes contribute no edge (#4845).
+func mappedTypeBaseNames(x *extractor, call *sitter.Node) []string {
+	fn := call.ChildByFieldName("function")
+	if fn == nil {
+		return nil
+	}
+	if !nestMappedTypeHelpers[heritageLeafTypeName(x.nodeText(fn))] {
+		return nil
+	}
+	args := call.ChildByFieldName("arguments")
+	if args == nil {
+		return nil
+	}
+	var out []string
+	for i := 0; i < int(args.ChildCount()); i++ {
+		a := args.Child(i)
+		if a == nil {
+			continue
+		}
+		switch a.Type() {
+		case "identifier", "type_identifier", "generic_type",
+			"member_expression", "nested_type_identifier":
+			if name := heritageLeafTypeName(x.nodeText(a)); name != "" {
+				out = append(out, name)
+			}
 		}
 	}
 	return out

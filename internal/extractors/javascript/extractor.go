@@ -1014,14 +1014,28 @@ func (x *extractor) handleClassDeclaration(n *sitter.Node) {
 		after := len(x.entities)
 		for k := before; k < after; k++ {
 			child := &x.entities[k]
-			if child.Kind != "SCOPE.Operation" {
+			var toID string
+			switch {
+			case child.Kind == "SCOPE.Operation":
+				// Issue #144 — emit a structural-ref (Format A) keyed on the
+				// source file so the resolver disambiguates by location when
+				// two classes in different files declare same-named methods
+				// (a common shape in Express/Nest/React-component apps).
+				toID = extreg.BuildOperationStructuralRef(x.language, x.filePath, child.Name)
+			case child.Kind == "SCOPE.Schema" && child.Subtype == "field":
+				// Issue #4845 — emit CONTAINS for plain/decorated class
+				// property fields, mirroring the Java (#690), Python (#689)
+				// and Kotlin fixes. Without this edge NestJS/TS DTO classes
+				// resolve to a class entity with ZERO field children, so the
+				// dashboard shape endpoint returns rows:[] and the Params /
+				// Response panels show no expand glyph. child.Name is the
+				// qualified "<Class>.<field>" string (see #679 emission in
+				// handlePublicFieldDefinition), which matches the byLocation
+				// index the resolver uses to bind the stub.
+				toID = extreg.BuildSchemaFieldStructuralRef(x.language, x.filePath, child.Name)
+			default:
 				continue
 			}
-			// Issue #144 — emit a structural-ref (Format A) keyed on the
-			// source file so the resolver disambiguates by location when
-			// two classes in different files declare same-named methods
-			// (a common shape in Express/Nest/React-component apps).
-			toID := extreg.BuildOperationStructuralRef(x.language, x.filePath, child.Name)
 			x.entities[classIdx].Relationships = append(x.entities[classIdx].Relationships,
 				types.RelationshipRecord{
 					ToID: toID,

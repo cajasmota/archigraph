@@ -374,3 +374,131 @@ func TestShape_InferNullable(t *testing.T) {
 		}
 	}
 }
+
+// nestMappedTypeFixture models the live upvate-v3 NestJS mapped-type DTO shape:
+// CreateThingBody owns its fields, UpdateThingBody (extends PartialType(...))
+// owns NONE — its field-set is inherited via the EXTENDS edge that #4845's
+// extractor change emits to the base DTO. AdminThingBody adds its own field on
+// top of a plain `extends CreateThingBody`.
+func nestMappedTypeFixture() *DashGroup {
+	const file = "src/thing/dto/thing.dto.ts"
+	entities := []graph.Entity{
+		{
+			ID: "cls_create", Name: "CreateThingBody",
+			Kind: "SCOPE.Component", Subtype: "class",
+			SourceFile: file, Language: "typescript",
+		},
+		{
+			ID: "fld_create_name", Name: "CreateThingBody.name",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: file, Language: "typescript", Signature: "name: string",
+		},
+		{
+			ID: "fld_create_size", Name: "CreateThingBody.size",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: file, Language: "typescript", Signature: "size: number",
+		},
+		// Mapped-type DTO — owns NO field entities of its own.
+		{
+			ID: "cls_update", Name: "UpdateThingBody",
+			Kind: "SCOPE.Component", Subtype: "class",
+			SourceFile: file, Language: "typescript",
+		},
+		// Plain-extends DTO that adds one own field.
+		{
+			ID: "cls_admin", Name: "AdminThingBody",
+			Kind: "SCOPE.Component", Subtype: "class",
+			SourceFile: file, Language: "typescript",
+		},
+		{
+			ID: "fld_admin_role", Name: "AdminThingBody.role",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: file, Language: "typescript", Signature: "role: string",
+		},
+	}
+	rels := []graph.Relationship{
+		{FromID: "cls_create", ToID: "fld_create_name", Kind: "CONTAINS"},
+		{FromID: "cls_create", ToID: "fld_create_size", Kind: "CONTAINS"},
+		// EXTENDS edges resolved to the base entity ID (the extractor emits a
+		// bare-name ToID that the resolver binds; here we model the resolved
+		// shape and also exercise the Properties["to"] name fallback).
+		{FromID: "cls_update", ToID: "cls_create", Kind: "EXTENDS",
+			Properties: map[string]string{"to": "CreateThingBody"}},
+		{FromID: "cls_admin", ToID: "cls_create", Kind: "EXTENDS",
+			Properties: map[string]string{"to": "CreateThingBody"}},
+		{FromID: "cls_admin", ToID: "fld_admin_role", Kind: "CONTAINS"},
+	}
+	return makePathsTestGroup(entities, rels)
+}
+
+// TestShape_MappedTypeInheritsBaseFields proves #4845's dashboard side: a NestJS
+// mapped-type DTO that owns no fields of its own still returns its base DTO's
+// field rows (and reports has_children=true) by recursing the EXTENDS edge.
+func TestShape_MappedTypeInheritsBaseFields(t *testing.T) {
+	grp := nestMappedTypeFixture()
+	ts := newPathsTestServer(t, grp)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/v2/groups/testgrp/shape?type=UpdateThingBody")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	var body struct {
+		OK   bool            `json:"ok"`
+		Data v2ShapeResponse `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	names := map[string]bool{}
+	for _, r := range body.Data.Rows {
+		names[r.Name] = true
+	}
+	if !names["name"] || !names["size"] {
+		t.Errorf("mapped-type DTO should inherit base fields name+size, got rows=%+v", body.Data.Rows)
+	}
+
+	// classHasFieldChildren must also see through EXTENDS so the path-detail
+	// handler renders the expand glyph.
+	upd := findClassEntityByName(grp, "UpdateThingBody")
+	if upd == nil {
+		t.Fatal("UpdateThingBody not resolved")
+	}
+	if !classHasFieldChildren(grp, upd) {
+		t.Error("mapped-type DTO must report has_children=true via inherited fields")
+	}
+}
+
+// TestShape_PlainExtendsMergesOwnAndInheritedFields proves the additive case: a
+// DTO that extends a base AND declares its own field renders both.
+func TestShape_PlainExtendsMergesOwnAndInheritedFields(t *testing.T) {
+	grp := nestMappedTypeFixture()
+	ts := newPathsTestServer(t, grp)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/v2/groups/testgrp/shape?type=AdminThingBody")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer resp.Body.Close()
+	var body struct {
+		OK   bool            `json:"ok"`
+		Data v2ShapeResponse `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	names := map[string]bool{}
+	for _, r := range body.Data.Rows {
+		names[r.Name] = true
+	}
+	for _, want := range []string{"role", "name", "size"} {
+		if !names[want] {
+			t.Errorf("AdminThingBody should expose field %q, got rows=%+v", want, body.Data.Rows)
+		}
+	}
+}

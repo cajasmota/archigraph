@@ -123,17 +123,34 @@ func (s *Server) handleV2Shape(w http.ResponseWriter, r *http.Request) {
 // nullable inference + a HasChildren flag so the frontend can render
 // the expansion glyph.
 func collectShapeRows(grp *DashGroup, repo *DashRepo, class *graph.Entity) []v2ShapeRow {
+	var rows []v2ShapeRow
+	seen := map[string]bool{}
+	collectShapeRowsInto(grp, repo, class, &rows, seen, map[string]bool{})
+	sort.SliceStable(rows, func(i, j int) bool { return rows[i].Name < rows[j].Name })
+	return rows
+}
+
+// collectShapeRowsInto appends the CONTAINS field rows of `class` into rows,
+// then recurses into the class's EXTENDS base(s) so inherited / mapped-type
+// fields are projected onto the requested DTO (#4845). visited guards against
+// inheritance cycles; seen de-dupes field names so a subclass field overrides
+// (shadows) the inherited one. A child field with the same name as an inherited
+// one wins because subclasses are walked before their bases.
+func collectShapeRowsInto(grp *DashGroup, repo *DashRepo, class *graph.Entity, rows *[]v2ShapeRow, seen, visited map[string]bool) {
 	if repo == nil || repo.Doc == nil || class == nil {
-		return nil
+		return
 	}
+	if visited[class.ID] {
+		return
+	}
+	visited[class.ID] = true
+
 	// Map field entities by ID for the FromID=class.ID CONTAINS walk.
 	byID := make(map[string]*graph.Entity, len(repo.Doc.Entities))
 	for i := range repo.Doc.Entities {
 		byID[repo.Doc.Entities[i].ID] = &repo.Doc.Entities[i]
 	}
 
-	var rows []v2ShapeRow
-	seen := map[string]bool{}
 	for _, rel := range repo.Doc.Relationships {
 		if rel.Kind != "CONTAINS" || rel.FromID != class.ID {
 			continue
@@ -146,16 +163,75 @@ func collectShapeRows(grp *DashGroup, repo *DashRepo, class *graph.Entity) []v2S
 			continue
 		}
 		row := buildShapeRow(grp, child)
-		// De-dupe by field name (Lombok synthesis can emit duplicates).
+		// De-dupe by field name (Lombok synthesis can emit duplicates;
+		// a subclass field shadows the inherited one walked later).
 		key := row.Name
 		if seen[key] {
 			continue
 		}
 		seen[key] = true
-		rows = append(rows, row)
+		*rows = append(*rows, row)
 	}
-	sort.SliceStable(rows, func(i, j int) bool { return rows[i].Name < rows[j].Name })
-	return rows
+
+	// #4845 — recurse into EXTENDS base classes so a mapped-type DTO
+	// (`extends PartialType(CreateThingBody)`) or a `extends BaseDto` DTO,
+	// which owns no fields of its own, still renders the inherited field-set.
+	for _, base := range extendsBaseEntities(grp, repo, class) {
+		baseRepo := repo
+		if base.ID != "" {
+			if _, r := findRepoForEntity(grp, base.ID); r != nil {
+				baseRepo = r
+			}
+		}
+		collectShapeRowsInto(grp, baseRepo, base, rows, seen, visited)
+	}
+}
+
+// extendsBaseEntities returns the resolved base-class entities a class
+// EXTENDS, resolving each edge first by its (resolved) ToID entity, then by
+// the bare base name carried in Properties["to"] (the JS/Java heritage edges
+// keep the source/target names there). Returns only entities that look like a
+// class/record/schema shape so EXTENDS edges to external framework interfaces
+// contribute nothing. (#4845)
+func extendsBaseEntities(g *DashGroup, repo *DashRepo, class *graph.Entity) []*graph.Entity {
+	if repo == nil || repo.Doc == nil || class == nil {
+		return nil
+	}
+	byID := make(map[string]*graph.Entity, len(repo.Doc.Entities))
+	for i := range repo.Doc.Entities {
+		byID[repo.Doc.Entities[i].ID] = &repo.Doc.Entities[i]
+	}
+	var out []*graph.Entity
+	seen := map[string]bool{}
+	for _, rel := range repo.Doc.Relationships {
+		if !strings.EqualFold(rel.Kind, "EXTENDS") || rel.FromID != class.ID {
+			continue
+		}
+		var base *graph.Entity
+		if e, ok := byID[rel.ToID]; ok && e.ID != class.ID {
+			base = e
+		} else if name := relTargetName(rel); name != "" {
+			base = findClassEntityByName(g, name)
+		}
+		if base == nil || base.ID == class.ID || seen[base.ID] {
+			continue
+		}
+		seen[base.ID] = true
+		out = append(out, base)
+	}
+	return out
+}
+
+// relTargetName returns the bare base/target name an EXTENDS edge carries in
+// its Properties (the heritage extractors store it under "to"), or "".
+func relTargetName(rel graph.Relationship) string {
+	if rel.Properties == nil {
+		return ""
+	}
+	if to := rel.Properties["to"]; to != "" {
+		return to
+	}
+	return ""
 }
 
 // isFieldEntity reports whether the entity represents a class field
@@ -447,9 +523,17 @@ func isJavaPrimitiveLikeName(name string) bool {
 // the path-detail handler to decide HasChildren on the request body /
 // response shape row without making the frontend pay a probe request.
 func classHasFieldChildren(g *DashGroup, class *graph.Entity) bool {
-	if class == nil {
+	return classHasFieldChildrenRec(g, class, map[string]bool{})
+}
+
+// classHasFieldChildrenRec is classHasFieldChildren with cycle protection,
+// returning true if the class or any of its EXTENDS bases owns a field child
+// (#4845: a mapped-type / `extends BaseDto` DTO inherits its fields).
+func classHasFieldChildrenRec(g *DashGroup, class *graph.Entity, visited map[string]bool) bool {
+	if class == nil || visited[class.ID] {
 		return false
 	}
+	visited[class.ID] = true
 	_, repo := findRepoForEntity(g, class.ID)
 	if repo == nil || repo.Doc == nil {
 		return false
@@ -463,6 +547,11 @@ func classHasFieldChildren(g *DashGroup, class *graph.Entity) bool {
 			continue
 		}
 		if child, ok := byID[rel.ToID]; ok && isFieldEntity(child) {
+			return true
+		}
+	}
+	for _, base := range extendsBaseEntities(g, repo, class) {
+		if classHasFieldChildrenRec(g, base, visited) {
 			return true
 		}
 	}
