@@ -293,17 +293,28 @@ func ExtractJUnit5(ctx PatternContext) PatternResult {
 		suite.Properties["e2e_route_calls"] = strings.Join(routeCalls, "\n")
 	}
 
-	// ── TESTS edge to the production class under test (name affinity + ref) ──
-	if subject := resolveJavaTestSubject(source, outerClassName); subject != "" {
-		suite.Properties["tests_target"] = subject
+	// ── TESTS edge to the production class under test (SUT disambiguation) ──
+	// #4390: when the test class injects MULTIPLE candidate fields, pick the ONE
+	// system-under-test (@InjectMocks ▸ stem-match ▸ single non-mock field ▸
+	// none) and exclude @Mock/@MockBean/@Spy collaborators. match_source records
+	// which tier selected the subject.
+	if res := resolveJavaTestSubjectDetail(source, outerClassName); res.subject != "" {
+		matchSource := "java_test_name_affinity"
+		switch res.tier {
+		case "injectmocks":
+			matchSource = "java_injectmocks_sut"
+		case "single_field":
+			matchSource = "java_single_injected_field"
+		}
+		suite.Properties["tests_target"] = res.subject
 		result.Relationships = append(result.Relationships, Relationship{
 			SourceRef:        suiteRef,
-			TargetRef:        "Class:" + subject,
+			TargetRef:        "Class:" + res.subject,
 			RelationshipType: "TESTS",
 			Properties: map[string]string{
 				"framework":    "junit5",
-				"match_source": "java_test_name_affinity",
-				"target_type":  subject,
+				"match_source": matchSource,
+				"target_type":  res.subject,
 			},
 		})
 	}
@@ -372,51 +383,154 @@ func subjectFromTestClassName(cls string) string {
 }
 
 var (
-	// @InjectMocks OrderService subject;  /  @Autowired OrderService subject;
-	// Captures the injected field's *type*, which (for a single such field) is
-	// the strongest SUT signal Mockito/Spring give us.
-	reJavaInjectField = regexp.MustCompile(
-		`@(?:InjectMocks|Autowired)\b(?:\s*\([^)]*\))?\s+(?:private\s+|public\s+|protected\s+|final\s+)*([A-Z][A-Za-z0-9_]*)\b`)
+	// @InjectMocks OrderService subject; — Mockito's explicit "this is the
+	// system under test" marker. The strongest possible SUT signal: Mockito
+	// injects all @Mock/@Spy collaborators INTO this one field.
+	reJavaInjectMocksField = regexp.MustCompile(
+		`@InjectMocks\b(?:\s*\([^)]*\))?\s+(?:private\s+|public\s+|protected\s+|final\s+|static\s+)*([A-Z][A-Za-z0-9_]*)\b`)
+	// @Autowired OrderService subject; — Spring-injected field. May be the SUT
+	// (an @SpringBootTest pulling the real bean) OR a collaborator (a clock, a
+	// repository). Disambiguated by stem-affinity against the field-type set.
+	reJavaAutowiredField = regexp.MustCompile(
+		`@Autowired\b(?:\s*\([^)]*\))?\s+(?:private\s+|public\s+|protected\s+|final\s+|static\s+)*([A-Z][A-Za-z0-9_]*)\b`)
+	// @Mock / @MockBean / @Spy / @SpyBean — Mockito/Spring collaborator markers.
+	// A field carrying any of these is a stubbed COLLABORATOR, never the SUT;
+	// its type is excluded from SUT candidacy regardless of name affinity.
+	reJavaMockField = regexp.MustCompile(
+		`@(?:Mock|MockBean|Spy|SpyBean)\b(?:\s*\([^)]*\))?\s+(?:private\s+|public\s+|protected\s+|final\s+|static\s+)*([A-Z][A-Za-z0-9_]*)\b`)
 	// new OrderService(...) — direct construction of the SUT in the test body.
 	reJavaNew = regexp.MustCompile(`\bnew\s+([A-Z][A-Za-z0-9_]*)\s*\(`)
 )
 
-// referencedJavaTypes returns the set of class names that are referenced in the
-// test file via the high-confidence SUT signals: @InjectMocks / @Autowired
-// field types and `new X(` construction. Only names in this set are eligible to
-// become a TESTS subject, keeping the edge pointed at an in-repo production
-// entity rather than a fixture/util/JDK type.
-func referencedJavaTypes(src string) map[string]bool {
+// eligibleType reports whether a captured type name is a usable in-repo class
+// name (capitalised identifier, not a Java primitive box / pseudo-type).
+func eligibleType(name string) bool {
+	return javaIdentRE.MatchString(name) && !primitiveTypes[name]
+}
+
+// collectTypes runs a single-capture regex over src and returns the set of
+// eligible captured type names.
+func collectTypes(re *regexp.Regexp, src string) map[string]bool {
 	out := map[string]bool{}
-	for _, m := range reJavaInjectField.FindAllStringSubmatch(src, -1) {
-		if javaIdentRE.MatchString(m[1]) && !primitiveTypes[m[1]] {
-			out[m[1]] = true
-		}
-	}
-	for _, m := range reJavaNew.FindAllStringSubmatch(src, -1) {
-		if javaIdentRE.MatchString(m[1]) && !primitiveTypes[m[1]] {
+	for _, m := range re.FindAllStringSubmatch(src, -1) {
+		if eligibleType(m[1]) {
 			out[m[1]] = true
 		}
 	}
 	return out
 }
 
+// referencedJavaTypes returns the set of class names that are referenced in the
+// test file via the high-confidence SUT signals: @InjectMocks / @Autowired
+// field types and `new X(` construction. Only names in this set are eligible to
+// become a TESTS subject, keeping the edge pointed at an in-repo production
+// entity rather than a fixture/util/JDK type. Mock/Spy collaborator types are
+// NOT included here — they are never SUT candidates (#4390).
+func referencedJavaTypes(src string) map[string]bool {
+	out := collectTypes(reJavaInjectMocksField, src)
+	for t := range collectTypes(reJavaAutowiredField, src) {
+		out[t] = true
+	}
+	for t := range collectTypes(reJavaNew, src) {
+		out[t] = true
+	}
+	return out
+}
+
 // resolveJavaTestSubject determines the unique production class under test for a
-// Java test-class file. A subject is emitted ONLY when it is both (a) derivable
-// by name affinity from the test class name, AND (b) actually referenced
-// (@InjectMocks / @Autowired / `new X(`) in the file. Requiring BOTH keeps the
-// TESTS edge conservative and unique — name affinity alone would over-link a
-// renamed/wrapper class, and a referenced type alone would link a collaborator
-// or fixture. Returns "" when no confident unique subject exists.
+// Java test-class file, disambiguating the SUT from its collaborators when the
+// test class injects MULTIPLE candidate fields (#4390, extending #4359/#4615).
+//
+// A Spring/Mockito test such as
+//
+//	class OrderServiceTest {
+//	    @InjectMocks OrderService sut;
+//	    @Mock PaymentClient pay;
+//	    @Mock InventoryRepo inv;
+//	}
+//
+// injects three fields but exercises exactly ONE production class. Emitting a
+// TESTS edge to PaymentClient/InventoryRepo would be a mis-link. The
+// disambiguation priority is:
+//
+//  1. @InjectMocks — Mockito's explicit SUT marker. If a single such field
+//     exists, its type IS the subject (the @Mock/@MockBean fields are the
+//     collaborators injected into it). Strongest signal; overrides stem.
+//  2. stem-match — strip Test/Tests/IT/… from the test-class name and match the
+//     stem against the injected/constructed (non-mock) field TYPE set; the
+//     member equal to the stem is the SUT (OrderServiceTest ▸ OrderService).
+//  3. single non-mock injected field — when exactly one @Autowired/`new X(`
+//     candidate remains after excluding mocks and there is no stem, that lone
+//     field is the SUT.
+//  4. none — ambiguous (multiple equally-plausible candidates, no @InjectMocks,
+//     no stem match) → emit NO SUT edge rather than guess among equals.
+//
+// Mock/Spy collaborator types (@Mock/@MockBean/@Spy/@SpyBean) are excluded from
+// candidacy at every tier, so a collaborator is never linked even when its name
+// matches the test-class stem.
 func resolveJavaTestSubject(src, testClassName string) string {
-	subject := subjectFromTestClassName(testClassName)
-	if subject == "" {
-		return ""
+	return resolveJavaTestSubjectDetail(src, testClassName).subject
+}
+
+// sutResolution carries the disambiguated subject plus the priority tier that
+// selected it, for diagnostics / edge provenance.
+type sutResolution struct {
+	subject string // "" when no confident unique SUT
+	tier    string // injectmocks | stem_match | single_field | "" (none)
+}
+
+func resolveJavaTestSubjectDetail(src, testClassName string) sutResolution {
+	mocks := collectTypes(reJavaMockField, src)
+
+	// candidates = injected/constructed types that are NOT mock collaborators.
+	candidates := map[string]bool{}
+	for t := range referencedJavaTypes(src) {
+		if !mocks[t] {
+			candidates[t] = true
+		}
 	}
-	if referencedJavaTypes(src)[subject] {
-		return subject
+
+	// Tier 1 — @InjectMocks is the explicit SUT marker (overrides stem). When
+	// exactly one @InjectMocks field exists, its (non-mock) type is the SUT.
+	injectMocks := collectTypes(reJavaInjectMocksField, src)
+	for t := range injectMocks {
+		if mocks[t] {
+			delete(injectMocks, t)
+		}
 	}
-	return ""
+	if len(injectMocks) == 1 {
+		for t := range injectMocks {
+			return sutResolution{subject: t, tier: "injectmocks"}
+		}
+	}
+
+	// Tier 2 — stem-affinity: the candidate type equal to the test-class stem.
+	if stem := subjectFromTestClassName(testClassName); stem != "" {
+		// Honour the original conservatism: stem must also be referenced (i.e.
+		// be a non-mock candidate) to be linked.
+		if candidates[stem] {
+			return sutResolution{subject: stem, tier: "stem_match"}
+		}
+		// If @InjectMocks disagreed (multiple) but the stem is among them, the
+		// stem still wins as the explicit named SUT.
+		if injectMocks[stem] {
+			return sutResolution{subject: stem, tier: "stem_match"}
+		}
+		// Stem derivable but not referenced as a non-mock candidate → no edge
+		// (conservative: do not link a renamed/wrapper or a mocked-out type).
+		return sutResolution{}
+	}
+
+	// Tier 3 — no stem: a single non-mock injected/constructed candidate is the
+	// SUT unambiguously.
+	if len(candidates) == 1 {
+		for t := range candidates {
+			return sutResolution{subject: t, tier: "single_field"}
+		}
+	}
+
+	// Tier 4 — ambiguous: do not guess among equals.
+	return sutResolution{}
 }
 
 // collectSpringTestRouteCalls extracts every Spring integration-test
