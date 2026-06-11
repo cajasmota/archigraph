@@ -1362,6 +1362,29 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 				"ingest-docs: %d markdown files → %d documents, %d sections, %d mentions (deterministic, no LLM)\n",
 				ingRes.FilesRead, ingRes.Documents, ingRes.Sections, ingRes.Mentions)
 		}
+
+		// #4308 (Layer 2 of epic #4294): emit per-Section semantic-extraction
+		// prompt bundles for the agent-driven path. STILL DETERMINISTIC — no LLM
+		// call, no network: this writes self-contained bundle artifacts an
+		// EXTERNAL agent picks up (runs its own LLM) and feeds back via
+		// archigraph_apply_doc_semantics. Persisted under the per-repo state dir,
+		// mirroring the docgen run-dir/artifact convention. Best-effort: a write
+		// failure never fails the index.
+		bundles := ingest.EmitSemanticBundles(absRepo, i.repoTag, mdFiles, doc.Entities)
+		if len(bundles) > 0 {
+			runDir := filepath.Join(daemon.StateDirForRepo(absRepo), "doc-semantics")
+			written := 0
+			for _, b := range bundles {
+				if _, err := ingest.WriteBundle(runDir, b); err == nil {
+					written++
+				}
+			}
+			if verbose() {
+				fmt.Fprintf(os.Stderr,
+					"ingest-docs-l2: emitted %d semantic prompt bundles → %s (agent-driven, no LLM)\n",
+					written, runDir)
+			}
+		}
 	}
 	// Drop the per-pass record slices now that buildDocument has produced
 	// the merged + deduped graph.Entity / graph.Relationship slices. These

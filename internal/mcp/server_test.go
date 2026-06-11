@@ -562,6 +562,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_auth_coverage",
 		// #1659 docgen→graph repair feedback loop
 		"archigraph_apply_docgen_repairs",
+		// #4309 doc ingestion L2: apply agent-produced semantic doc nodes/edges
+		"archigraph_apply_doc_semantics",
 		// #2442 re-wired agent-facing tools (restored from ≤3k budget cut)
 		"archigraph_save_finding",
 		"archigraph_list_findings",
@@ -709,8 +711,9 @@ func TestToolNameSurface(t *testing.T) {
 	// +1 archigraph_auth_posture_diff (#4422 cross-group auth-posture parity).
 	// +1 archigraph_stub_detector (#4425 cross-group stub effects-contrast heuristic).
 	// +1 archigraph_response_shape_diff (#4424 cross-group branch-aware response-shape parity).
-	if got := len(allRegisteredTools); got != 63 {
-		t.Errorf("expected 63 registered tools, got %d — update this count if tools are added/removed (added archigraph_response_shape_diff #4424 cross-group response-shape diff)", got)
+	// +1 archigraph_apply_doc_semantics (#4309 doc ingestion L2 apply step).
+	if got := len(allRegisteredTools); got != 64 {
+		t.Errorf("expected 64 registered tools, got %d — update this count if tools are added/removed (added archigraph_apply_doc_semantics #4309 doc ingestion L2)", got)
 	}
 }
 
@@ -3168,6 +3171,7 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_enrichments":          {"group": "g", "action": "list"},
 		"archigraph_repairs":              {"group": "g", "action": "list"},
 		"archigraph_apply_docgen_repairs": {"group": "g"},
+		"archigraph_apply_doc_semantics":  {"group": "g"},
 		"archigraph_patterns":             {"group": "g", "action": "query", "text": "test"},
 		"archigraph_topology":             {"group": "g", "action": "orphan_publishers"},
 		"archigraph_flows":                {"group": "g", "action": "dead_ends"},
@@ -3290,8 +3294,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 63 {
-		t.Errorf("expected 63 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_response_shape_diff #4424 cross-group response-shape diff)", len(tools))
+	if len(tools) != 64 {
+		t.Errorf("expected 64 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_apply_doc_semantics #4309 doc ingestion L2)", len(tools))
 	}
 
 	for _, st := range tools {

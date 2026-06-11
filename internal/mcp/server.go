@@ -803,6 +803,19 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("cwd"),
 	), s.wrap("archigraph_apply_docgen_repairs", s.handleApplyDocgenRepairs))
 
+	// archigraph_apply_doc_semantics — Layer-2 doc ingestion apply step
+	// (#4309, epic #4294). Reads agent-produced (bundle, result) pairs from each
+	// repo's <stateDir>/doc-semantics/, validates + applies them into
+	// SCOPE.DesignDecision nodes + RATIONALE_FOR edges. archigraph makes NO LLM
+	// call — it only validates and applies what the calling agent returned.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_apply_doc_semantics",
+		mcpapi.WithDescription("Doc L2: apply agent-produced DesignDecision nodes + RATIONALE_FOR edges."),
+		mcpapi.WithArray("repo_filter"),
+		mcpapi.WithBoolean("dry_run"),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+	), s.wrap("archigraph_apply_doc_semantics", s.handleApplyDocSemantics))
+
 	// archigraph_get_telemetry dropped (dashboard-only; use HTTP /api/telemetry instead).
 
 	// archigraph_patterns — ADR-0018. action=query|record.

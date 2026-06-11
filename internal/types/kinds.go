@@ -316,6 +316,21 @@ const (
 	// hierarchy/span contract.
 	EntityKindMarkdownDocument EntityKind = "SCOPE.MarkdownDocument"
 	EntityKindSection          EntityKind = "SCOPE.Section"
+
+	// #4308/#4309 (Layer 2 of epic #4294): agent-driven semantic doc ingestion.
+	// archigraph EMITS a per-Section prompt bundle; an EXTERNAL agent runs its
+	// own LLM and returns structured results; archigraph VALIDATES + APPLIES
+	// them. archigraph itself makes NO LLM call (emit→apply candidate pattern,
+	// mirroring docgen --llm-mode and archigraph_enrichments).
+	//
+	// EntityKindDesignDecision represents ONE agent-classified semantic node
+	// distilled from a Section — a design decision, rationale, spec, or
+	// constraint stated in prose. It is anchored to its source Section via a
+	// CONTAINS edge (Section → DesignDecision) and links to the code entities
+	// it justifies via RATIONALE_FOR (DesignDecision → code entity). Distinct
+	// from the deterministic SCOPE.Section node (which carries verbatim prose);
+	// a DesignDecision is the agent's distilled claim ABOUT that prose.
+	EntityKindDesignDecision EntityKind = "SCOPE.DesignDecision"
 )
 
 // AllEntityKinds returns every EntityKind that archigraph extractors are
@@ -402,6 +417,8 @@ func AllEntityKinds() []EntityKind {
 		// #4306 deterministic markdown doc ingestion (opt-in):
 		EntityKindMarkdownDocument,
 		EntityKindSection,
+		// #4308/#4309 agent-driven semantic doc ingestion (opt-in, emit/apply):
+		EntityKindDesignDecision,
 	}
 }
 
@@ -1257,6 +1274,17 @@ const (
 	// directory it instantiates (e.g. modules/worker-service). Connects the
 	// env stacks to the shared module definitions in the IaC architecture view.
 	RelationshipKindInstantiates RelationshipKind = "INSTANTIATES"
+
+	// #4308/#4309 (Layer 2 of epic #4294): agent-driven semantic doc ingestion.
+	//   RATIONALE_FOR : SCOPE.DesignDecision → code entity. Emitted by the
+	//                   apply step when an external agent classifies a Section
+	//                   as stating a design decision / rationale / spec that
+	//                   justifies a referenced code entity. archigraph only
+	//                   VALIDATES (the target entity must exist in the current
+	//                   graph) and APPLIES what the agent produced — no LLM
+	//                   call. The DesignDecision→Section anchoring uses the
+	//                   existing CONTAINS edge; no new hierarchy kind. OPT-IN.
+	RelationshipKindRationaleFor RelationshipKind = "RATIONALE_FOR"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -1415,6 +1443,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		// #4657 IaC module instantiation: env stack's module instance →
 		// the module definition directory it instantiates.
 		RelationshipKindInstantiates,
+		// #4308/#4309 agent-driven semantic doc ingestion (opt-in, emit/apply):
+		RelationshipKindRationaleFor,
 	}
 }
 
