@@ -26,6 +26,8 @@ decision itself, and the consequences we accepted.
 | [0018](0018-agent-learned-patterns.md) | Accepted | Agent-learned patterns |
 | [0019](0019-semantic-embedding-search.md) | Accepted | Semantic embedding search via configurable backend + RRF fusion |
 | [0020](0020-multi-branch-worktree.md) | Accepted | Multi-branch and worktree graph snapshots |
+| [0021](0021-engine-custom-extractors-rescue-remove-extend.md) | Accepted | Engine custom extractors — rescue / remove / extend |
+| [0022](0022-http-mcp-transport.md) | Proposed | Authenticated shared HTTP MCP transport for team deployments |
 
 Numbers are append-only.
 
