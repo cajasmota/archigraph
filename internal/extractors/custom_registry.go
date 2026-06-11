@@ -7,6 +7,7 @@ package extractors
 
 import (
 	_ "github.com/cajasmota/archigraph/internal/custom/cpp"
+	_ "github.com/cajasmota/archigraph/internal/custom/crystal"
 	_ "github.com/cajasmota/archigraph/internal/custom/csharp"
 	_ "github.com/cajasmota/archigraph/internal/custom/dart"
 	_ "github.com/cajasmota/archigraph/internal/custom/elixir"

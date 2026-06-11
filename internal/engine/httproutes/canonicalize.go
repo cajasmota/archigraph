@@ -190,6 +190,13 @@ const (
 	// synthesizer joins with `/` before canonicalisation. Canonicalisation
 	// reuses canonicalizeColonParams.
 	FrameworkVapor = "vapor"
+	// FrameworkKemal (#4749) — Crystal web frameworks (Kemal `get "/users/:id"`,
+	// Lucky/Amber `get "/users/:id", Controller, :action`) use the Sinatra/
+	// Express-style `:name` colon-prefixed path parameter convention (Crystal
+	// syntax is Ruby-like). Kemal also accepts a trailing `*` wildcard segment
+	// (`get "/files/*path"`), which the colon walker leaves intact (the segment
+	// matcher wildcards it). Canonicalisation reuses canonicalizeColonParams.
+	FrameworkKemal = "kemal"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical
@@ -239,7 +246,7 @@ func Canonicalize(framework, raw string) string {
 	case FrameworkExpress, FrameworkGin, FrameworkEcho, FrameworkChi, FrameworkPhoenix,
 		FrameworkAdonis, FrameworkMarble, FrameworkPolka, FrameworkRestify, FrameworkSails,
 		FrameworkRobyn, FrameworkPlug, FrameworkCowboy,
-		FrameworkLapis, FrameworkOpenResty, FrameworkVapor:
+		FrameworkLapis, FrameworkOpenResty, FrameworkVapor, FrameworkKemal:
 		out = canonicalizeColonParams(raw)
 	default:
 		// Unknown framework: pass through but still normalise slashes.
