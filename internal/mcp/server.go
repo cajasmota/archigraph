@@ -570,7 +570,7 @@ func (s *Server) registerTools() {
 	// confidence (0..1) and sink primitive tags. Pure functions report
 	// effects=[] with effect_source="pure" and a low confidence floor.
 	s.MCP.AddTool(mcpapi.NewTool("archigraph_effects",
-		mcpapi.WithDescription("Effects (db/http/fs/mutation) + confidence + sinks; include=branches for CFG"),
+		mcpapi.WithDescription("Effects + sinks; include=branches|effect_contexts (cond/loop+complexity)"),
 		mcpapi.WithString("entity_id", mcpapi.Required()),
 		mcpapi.WithString("include"),
 		mcpapi.WithArray("repo_filter"),

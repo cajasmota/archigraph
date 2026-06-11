@@ -625,6 +625,8 @@ type entityNode struct {
 	// real external packages (subtype=package) from bare-name built-in
 	// placeholders (subtype=function). See issue #566 / import_pass.go.
 	SourceFile string            // relative path
+	StartLine  int               // 1-indexed body start (0 when unknown)
+	EndLine    int               // 1-indexed body end (0 when unknown)
 	Properties map[string]string // optional
 }
 
@@ -753,6 +755,8 @@ func loadAllGraphs(graphsDir string) ([]repoGraph, error) {
 				Kind:       e.Kind,
 				Subtype:    e.Subtype,
 				SourceFile: e.SourceFile,
+				StartLine:  e.StartLine,
+				EndLine:    e.EndLine,
 				Properties: e.Properties,
 			})
 		}
