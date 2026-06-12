@@ -33,7 +33,7 @@
 //     drop_table), with props: framework, migration_op (the raw builder method),
 //     table, and column (when the op is column-scoped).
 //
-// Honest exclusions / follow-ups (#5032):
+// Honest exclusions / follow-ups (#5111):
 //   - `schema().alter` accepts the same Column() builder chains as create; we
 //     capture the column NAME + the op, not the full column type re-declaration
 //     for change()/alter ops (the engine pass keys on op+table+column).
