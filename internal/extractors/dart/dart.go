@@ -234,6 +234,11 @@ func extractDart(src, filePath string) []types.EntityRecord {
 		_ = methodEntityIdx
 	}
 
+	// Type System (#4912): enum / typedef / Dart3 modified-class constructs
+	// the base walk drops. Appended as a post-pass — never mutates the
+	// class/method records above.
+	entities = append(entities, extractDartTypes(src, filePath)...)
+
 	return entities
 }
 
