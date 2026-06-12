@@ -11,7 +11,17 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/install"
 	"github.com/cajasmota/archigraph/internal/install/skilllink"
+	"github.com/cajasmota/archigraph/internal/testsupport"
 )
+
+// TestMain fail-closes the install package: when
+// ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
+// user home. These tests install/uninstall and (de)register MCP, so they must
+// never operate against the developer's live config.
+func TestMain(m *testing.M) {
+	testsupport.GuardRealHomeMain()
+	os.Exit(m.Run())
+}
 
 // TestRunCopy_HappyPath verifies the complete COPY-mode install transaction:
 // skills are copied, MCP is registered, install.json is written with the
@@ -346,8 +356,17 @@ func newTestEnv(t *testing.T) *testEnv {
 		}
 	}
 
-	// Override HOME so home-dir dependent paths go to tmp.
+	// Override HOME (and the other config/state/socket-resolving env vars) so
+	// every home-dir dependent path goes to tmp, then assert via testsupport
+	// that the redirect did NOT land on the real user home — these tests
+	// register/deregister MCP entries and must never touch the live
+	// ~/.claude.json.
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "cfg"))
+	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", stateDir)
+	t.Setenv("ARCHIGRAPH_HOME", stateDir)
+	testsupport.GuardRealHome(t)
 
 	return &testEnv{
 		fakeBin:         fakeBin,

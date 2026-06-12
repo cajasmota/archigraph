@@ -10,13 +10,25 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/archigraph/internal/testsupport"
 )
+
+// TestMain fail-closes the dashboard package: when
+// ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
+// user home and no ARCHIGRAPH_DAEMON_ROOT isolation is in effect. Dashboard
+// tests resolve registry/docs paths from the environment and some default to
+// listing the home directory.
+func TestMain(m *testing.M) {
+	testsupport.GuardRealHomeMain()
+	os.Exit(m.Run())
+}
 
 // fakeStore is an in-memory RegistryStore. It removes the dependency on
 // ~/.archigraph for tests so they stay hermetic and parallel-safe.

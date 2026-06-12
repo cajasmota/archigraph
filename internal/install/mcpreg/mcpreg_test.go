@@ -5,13 +5,24 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/cajasmota/archigraph/internal/testsupport"
 )
 
-// withHome redirects HOME so settings paths land inside a TempDir.
+// TestMain fail-closes the package: when ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1
+// it refuses to run if HOME is the real user home (these tests write
+// ~/.claude.json and must never touch the developer's live MCP config).
+func TestMain(m *testing.M) {
+	testsupport.GuardRealHomeMain()
+	os.Exit(m.Run())
+}
+
+// withHome redirects HOME so settings paths land inside a TempDir, and asserts
+// (via testsupport) that the redirect did not land on the real user home.
 func withHome(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
-	t.Setenv("HOME", dir)
+	dir := testsupport.IsolateHome(t)
+	// Keep mcpreg's historical XDG layout (.config under the temp home).
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
 	return dir
 }
@@ -156,6 +167,7 @@ func TestRegisterPathUpdatesCommand(t *testing.T) {
 }
 
 func TestDetectClaudeConfigDirs_ExplicitOverride(t *testing.T) {
+	withHome(t) // isolate even though explicit dirs are passed (defense in depth)
 	explicit := []string{"/a/.claude.json", "/b/.claude.json"}
 	got := DetectClaudeConfigDirs(explicit)
 	if len(got) != 2 || got[0] != explicit[0] || got[1] != explicit[1] {

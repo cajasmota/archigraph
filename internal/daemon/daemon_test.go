@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -14,7 +15,18 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/client"
 	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/archigraph/internal/testsupport"
 )
+
+// TestMain fail-closes the daemon package: when
+// ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
+// user home and no ARCHIGRAPH_DAEMON_ROOT isolation is in effect — these tests
+// start an in-process daemon and dial its socket, and must never displace or
+// dial the developer's live daemon.
+func TestMain(m *testing.M) {
+	testsupport.GuardRealHomeMain()
+	os.Exit(m.Run())
+}
 
 // waitDaemonReady polls until the daemon at socketPath accepts a dial.
 // On Unix this is equivalent to os.Stat + Dial; on Windows named pipes are
@@ -72,6 +84,14 @@ func shortTempRoot(t *testing.T) string {
 func isolateDaemonEnv(t *testing.T) string {
 	t.Helper()
 	root := shortTempRoot(t)
+	// Safety: the isolated daemon root must never resolve under the real user
+	// home — otherwise EnsureLayout/Run would write the socket/pid/log into the
+	// developer's live ~/.archigraph and a Dial() could hit the live daemon.
+	if rh := testsupport.RealUserHome(); rh != "" {
+		if rel, err := filepath.Rel(rh, root); err == nil && !strings.HasPrefix(rel, "..") && rel != "." {
+			t.Fatalf("isolateDaemonEnv: temp daemon root %q is under the real user home %q — refusing", root, rh)
+		}
+	}
 	t.Setenv(daemon.EnvRoot, root)
 	t.Setenv(daemon.EnvDisableSelfDefense, "1")
 	return root

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/archigraph/internal/testsupport"
 )
 
 // fsListEnvelope is the decoded GET /api/v2/fs/list response.
@@ -113,13 +114,12 @@ func TestV2FsList_ListsSubdirsWithAbsPaths(t *testing.T) {
 // TestV2FsList_DefaultsToHome verifies that an empty path defaults to the
 // daemon's home directory.
 func TestV2FsList_DefaultsToHome(t *testing.T) {
+	// Isolate HOME so "default to home" resolves to a temp dir we list, rather
+	// than enumerating the developer's real home directory.
+	home := testsupport.IsolateHome(t)
 	ts, _ := newWizardTestServer(t, func(proto.RebuildArgs) (proto.RebuildReply, error) {
 		return proto.RebuildReply{}, nil
 	})
-	home, err := os.UserHomeDir()
-	if err != nil {
-		t.Skip("no home dir")
-	}
 	env := getFsList(t, ts.URL, "")
 	if !env.OK {
 		t.Fatalf("ok = false; reply = %+v", env.Data)
