@@ -3909,6 +3909,46 @@ public class OrderService {
 	}
 }
 
+// TestObservability_QuarkusPrintfLogging proves the JBoss Logging / Quarkus
+// static `Log` facade printf-style level methods (infof/errorf/debugf) are
+// recognised as log statements, folded onto the canonical log_level, and
+// stamped log_style=printf. Previously `Log.infof(...)` was missed because the
+// level matcher had no trailing-`f` form (#4917).
+func TestObservability_QuarkusPrintfLogging_Issue4917(t *testing.T) {
+	source := `
+import io.quarkus.logging.Log;
+
+@ApplicationScoped
+public class OrderResource {
+    public void place(Order o) {
+        Log.infof("placing order %s", o.getId());
+        Log.debugf("ctx %s", ctx);
+        if (o.isInvalid()) {
+            Log.errorf("invalid order %s", o.getId());
+        }
+        Log.info("plain standard call");
+    }
+}
+`
+	r := ExtractObservability(PatternContext{Source: source, Language: "java", Framework: "quarkus", FilePath: "OrderResource.java"})
+
+	if n := countObsSubtype(r, "log_statement"); n != 4 {
+		t.Fatalf("[#4917 log] expected 4 log statements (3 printf + 1 standard), got %d: %v", n, entityNames(r.Entities))
+	}
+	// printf-style infof must fold onto log_level=info with log_style=printf.
+	printf := findObsEntity(r, "log_statement", map[string]string{"log_level": "info", "log_style": "printf"})
+	if printf == nil {
+		t.Errorf("[#4917 log] missing Log.infof printf statement (log_level=info, log_style=printf)")
+	}
+	if findObsEntity(r, "log_statement", map[string]string{"log_level": "error", "log_style": "printf"}) == nil {
+		t.Errorf("[#4917 log] missing Log.errorf printf statement")
+	}
+	// the plain standard call must still be log_style=standard.
+	if findObsEntity(r, "log_statement", map[string]string{"log_level": "info", "log_style": "standard"}) == nil {
+		t.Errorf("[#4917 log] missing standard Log.info statement (log_style=standard)")
+	}
+}
+
 // TestObservability_LoggerFactoryVariants proves SLF4J / Log4j2 / JUL logger
 // factories are recognised with the right backing library.
 func TestObservability_LoggerFactoryVariants_Issue3006(t *testing.T) {

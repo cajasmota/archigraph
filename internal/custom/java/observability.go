@@ -76,10 +76,14 @@ var (
 
 	// obsLogStmtRE matches a log statement call: a receiver identifier ending in
 	// a log level method. We anchor on a small set of receiver names commonly
-	// used for loggers (log, logger, LOG, LOGGER, <Class>.log) to avoid matching
-	// unrelated `.error(` style calls. Group 1 = receiver, group 2 = level.
+	// used for loggers (log, logger, LOG, LOGGER, <Class>.log, and the Quarkus
+	// static `Log` facade from io.quarkus.logging.Log) to avoid matching
+	// unrelated `.error(` style calls. The level may carry a trailing `f`
+	// (JBoss Logging / Quarkus printf-style: infof/errorf/debugf/warnf/tracef/
+	// fatalf) which we capture in group 3 and fold into the canonical level.
+	// Group 1 = receiver, group 2 = base level, group 3 = optional `f` suffix.
 	obsLogStmtRE = regexp.MustCompile(
-		`\b([lL][oO][gG](?:[gG][eE][rR])?)\s*\.\s*(trace|debug|info|warn|error|fatal)\s*\(`)
+		`\b([lL][oO][gG](?:[gG][eE][rR])?)\s*\.\s*(trace|debug|info|warn|error|fatal)(f?)\s*\(`)
 
 	// --- metric_extraction ---
 
@@ -253,6 +257,13 @@ func extractLogging(result *PatternResult, seen map[string]bool, source, fp, fw 
 	for _, m := range obsLogStmtRE.FindAllStringSubmatchIndex(source, -1) {
 		receiver := source[m[2]:m[3]]
 		level := source[m[4]:m[5]]
+		// group 3 is the optional `f` printf-style suffix (JBoss Logging /
+		// Quarkus: infof/errorf/...). Fold it into the canonical log_level so
+		// `info` and `infof` converge, and record the call style.
+		logStyle := "standard"
+		if m[6] >= 0 && m[7] > m[6] && source[m[6]:m[7]] == "f" {
+			logStyle = "printf"
+		}
 		line := lineOf(source, m[0])
 		// Distinguish multiple statements on the same logger by line number.
 		ref := "scope:pattern:obs_log_statement:" + fp + ":" + receiver + ":" + level + ":" + itoa(line)
@@ -265,6 +276,7 @@ func extractLogging(result *PatternResult, seen map[string]bool, source, fp, fw 
 				"kind":      "log_statement",
 				"signal":    "log",
 				"log_level": level,
+				"log_style": logStyle,
 				"receiver":  receiver,
 				"framework": fw,
 			},
