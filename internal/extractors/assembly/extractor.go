@@ -11,7 +11,8 @@
 // extractors).
 //
 // A SINGLE "assembly" language token covers every dialect; the dialect
-// (x86/x86-64, ARM, ARM64/AArch64, m68k) and syntax (AT&T vs Intel/NASM) are
+// (x86/x86-64, ARM, ARM64/AArch64, RISC-V, m68k) and syntax (AT&T vs
+// Intel/NASM) are
 // recorded as entity *attributes*, never as separate languages — the same
 // taxonomy decision made for vue/svelte/astro = jsts (#2821) and for the
 // COBOL/legacy wave.
@@ -44,7 +45,8 @@
 //     Properties["locality"]="external".
 //   - IMPORTS — `.include "file"` / `%include "file"` (NASM).
 //   - syscall effect — `syscall`/`int 0x80` (x86), `svc`/`swi` (ARM),
-//     `trap #0` (m68k) emit a CALLS edge to the synthetic `__syscall` target
+//     `ecall` (RISC-V), `trap #0` (m68k) emit a CALLS edge to the synthetic
+//     `__syscall` target
 //     with Properties["effect"]="syscall" and stamp Properties["has_syscall"]
 //     on the enclosing procedure. This is the meaningful OS-boundary effect
 //     surface for assembly (#2744 Phase 1A).
@@ -176,6 +178,14 @@ var branchMnemonics = map[string]bool{
 	"dbra": true, "dbf": true, "dbeq": true, "dbne": true, "dbcc": true,
 	"dbcs": true, "dbhi": true, "dbls": true, "dbge": true, "dblt": true,
 	"dbgt": true, "dble": true, "dbpl": true, "dbmi": true,
+	// RISC-V branches. `j` is the unconditional jump (pseudo for `jal x0`);
+	// the b-family compares two registers then a label (beq/bne/blt/bge/bltu/
+	// bgeu) and the *z pseudos compare against x0 (beqz/bnez/blez/bgez/bltz/
+	// bgtz). beq/bne/blt/bge/ble overlap the ARM/m68k names already present
+	// above and are covered there; only the RISC-V-unique tokens are added.
+	"j": true, "beqz": true, "bnez": true, "blez": true, "bgez": true,
+	"bltz": true, "bgtz": true, "bltu": true, "bgeu": true, "bgtu": true,
+	"bleu": true,
 }
 
 // syscallMnemonics triggers a syscall effect. `int` and `trap` are
@@ -186,9 +196,13 @@ var branchMnemonics = map[string]bool{
 //	x86:    syscall, sysenter, int 0x80
 //	ARM:    svc, swi (legacy 32-bit gate)
 //	m68k:   trap #0 (Linux), and the unconditional trap variants
+//	RISC-V: ecall (the environment-call instruction — the RISC-V OS/EE
+//	        boundary gate; ebreak is the debugger trap, not an OS syscall,
+//	        so it is intentionally excluded)
 var syscallMnemonics = map[string]bool{
 	"syscall": true, "sysenter": true,
 	"svc": true, "swi": true,
+	"ecall": true,
 }
 
 // registerOperand reports whether an operand is a CPU register (so a
@@ -269,6 +283,16 @@ func detectDialect(src string) (dialect, syntax string) {
 	case strings.Contains(lower, "%eax") || strings.Contains(lower, "int 0x80") ||
 		strings.Contains(lower, "int 80h"):
 		dialect = "x86"
+	case strings.Contains(lower, "ecall") || strings.Contains(lower, "riscv") ||
+		regexp.MustCompile(`(?m)^\s*\.option\b`).MatchString(lower) ||
+		regexp.MustCompile(`\b(?:jal|jalr)\b[^\n]*\bra\b`).MatchString(lower) ||
+		regexp.MustCompile(`\b(?:lw|sw|ld|sd|addi|li|mv)\b[^\n]*\b(?:ra|sp|gp|tp|[at][0-7]|s[0-9]|s1[01])\b`).MatchString(lower):
+		// RISC-V shares x-registers with AArch64 but is uniquely identified by
+		// the ecall gate, the .option directive, the jal/jalr+ra return-address
+		// idiom, or its ABI register file (ra/sp/gp/tp/a0-a7/t0-t6/s0-s11)
+		// appearing as an instruction operand. Must precede the arm64 case below
+		// (which would otherwise claim the shared `x[0-9]` register shape).
+		dialect = "riscv"
 	case regexp.MustCompile(`\bx[0-9]{1,2}\b`).MatchString(lower) ||
 		strings.Contains(lower, "aarch64") || strings.Contains(lower, "blr") ||
 		strings.Contains(lower, "\tsvc") || strings.Contains(lower, " svc "):
@@ -630,7 +654,7 @@ func buildProcedureEntities(lines []string, filePath, lang, dialect string, expo
 		// procedure (not a local label, not self) is a tail call — control
 		// transfers without a return frame.
 		if isBranch && !localLabels[target] && target != out[curIdx].Name &&
-			(lower == "jmp" || lower == "jmpq" || lower == "bra" || lower == "b") {
+			(lower == "jmp" || lower == "jmpq" || lower == "bra" || lower == "b" || lower == "j") {
 			props["tail_call"] = "true"
 		}
 

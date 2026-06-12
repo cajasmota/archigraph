@@ -1,0 +1,28 @@
+# RISC-V (RV64) GNU as fixture — labels, jal call, j/beqz branch, ecall syscall.
+# Demonstrates: RISC-V procedures, jal call, j tail call, beqz branch to local
+# label, the ecall OS boundary, and the .equ equate constant.
+
+	.equ	SYS_exit, 93
+
+	.extern	memcpy
+
+	.text
+	.option	norvc
+	.global	_start
+_start:
+	jal	ra, setup           # intra-file call (return addr in ra)
+	jal	ra, memcpy          # external call
+	beqz	a0, .Ldone          # conditional branch to local label
+.Lloop:
+	addi	a0, a0, -1
+	bnez	a0, .Lloop          # conditional branch
+.Ldone:
+	li	a7, SYS_exit
+	ecall                       # OS boundary effect
+	j	.Ldone              # tail branch
+	ret
+
+	.global	setup
+setup:
+	li	a0, 0
+	ret

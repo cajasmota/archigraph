@@ -397,6 +397,69 @@ func TestExtractM68k(t *testing.T) {
 	}
 }
 
+// RISC-V -------------------------------------------------------------------
+
+func TestExtractRISCV(t *testing.T) {
+	src := loadFixture(t, "riscv.s.fixture")
+	recs := extractAssembly(src, "boot_rv.s", "assembly")
+
+	file := byName(recs, "boot_rv.s")
+	if file == nil || file.Properties["dialect"] != "riscv" {
+		t.Fatalf("dialect=%v want riscv", file)
+	}
+
+	start := byName(recs, "_start")
+	setup := byName(recs, "setup")
+	if start == nil || setup == nil {
+		t.Fatalf("procedures missing: _start=%v setup=%v", start, setup)
+	}
+
+	sc := callTargets(start)
+	// jal ra, setup → intra-file call (label is the LAST operand, ra skipped).
+	if e, ok := sc["setup"]; !ok {
+		t.Errorf("_start should jal→CALL setup; got %v", sc)
+	} else if e.Properties["edge_kind"] != "call" {
+		t.Errorf("setup edge_kind=%q want call", e.Properties["edge_kind"])
+	}
+	// jal ra, memcpy → external call.
+	if e, ok := sc["memcpy"]; !ok {
+		t.Error("_start should jal→CALL memcpy (external)")
+	} else if e.Properties["locality"] != "external" {
+		t.Errorf("memcpy locality=%q want external", e.Properties["locality"])
+	}
+	// beqz a0, .Ldone → branch to local label (label is LAST operand).
+	doneStub := localLabelStub("assembly", "boot_rv.s", ".Ldone")
+	if e, ok := sc[doneStub]; !ok {
+		t.Errorf("_start should beqz→branch .Ldone via stub %q; got %v", doneStub, sc)
+	} else if e.Properties["edge_kind"] != "branch" {
+		t.Errorf(".Ldone edge_kind=%q want branch", e.Properties["edge_kind"])
+	}
+	// bnez a0, .Lloop → branch to local label.
+	loopStub := localLabelStub("assembly", "boot_rv.s", ".Lloop")
+	if _, ok := sc[loopStub]; !ok {
+		t.Errorf("_start should bnez→branch .Lloop via stub %q; got %v", loopStub, sc)
+	}
+	// ecall → syscall effect.
+	if start.Properties["has_syscall"] != "true" {
+		t.Error("_start ecall should be a syscall effect")
+	}
+	if _, ok := sc[syntheticSyscallTarget]; !ok {
+		t.Error("_start should CALL __syscall via ecall")
+	}
+
+	// Local-label anchors emitted.
+	if a := byName(recs, ".Lloop"); a == nil || a.Kind != "SCOPE.CodeBlock" {
+		t.Error("missing .Lloop anchor")
+	}
+	// Constant (.equ) + section.
+	if byName(recs, "SYS_exit") == nil {
+		t.Error("missing RISC-V constant SYS_exit")
+	}
+	if byName(recs, ".text") == nil {
+		t.Error("missing .text section")
+	}
+}
+
 // trap #N gate selectivity ----------------------------------------------------
 
 func TestTrapSyscallGate(t *testing.T) {
