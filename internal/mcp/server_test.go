@@ -577,6 +577,7 @@ func TestToolNameSurface(t *testing.T) {
 		// Additional audit/analysis tools
 		"archigraph_secrets", "archigraph_quality_cycles",
 		"archigraph_test_coverage", "archigraph_license_audit",
+		"archigraph_test_reachability",
 		"archigraph_module_analysis", "archigraph_diff_refs",
 		// #1742 subgraph retained (despite deprecation)
 		"archigraph_subgraph",
@@ -718,8 +719,8 @@ func TestToolNameSurface(t *testing.T) {
 	// +1 archigraph_apply_doc_semantics (#4309 doc ingestion L2 apply step).
 	// +1 archigraph_control_flow (#4822 on-demand per-function CFG, control-flow epic #4820 part (b)).
 	// +1 archigraph_contract_test_effectiveness (#4893 tautological/oracle-blind spec detector).
-	if got := len(allRegisteredTools); got != 66 {
-		t.Errorf("expected 66 registered tools, got %d — update this count if tools are added/removed (added archigraph_contract_test_effectiveness #4893)", got)
+	if got := len(allRegisteredTools); got != 67 {
+		t.Errorf("expected 67 registered tools, got %d — update this count if tools are added/removed (added archigraph_test_reachability #5060)", got)
 	}
 }
 
@@ -3194,6 +3195,7 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		"archigraph_quality_cycles":       {"group": "g"},
 		"archigraph_auth_coverage":        {"group": "g"},
 		"archigraph_test_coverage":        {"group": "g"},
+		"archigraph_test_reachability":    {"group": "g"},
 		"archigraph_module_analysis":      {"group": "g"},
 		"archigraph_secrets":              {"group": "g"},
 		"archigraph_neighbors":            {"group": "g", "entity_id": "r1::a2", "direction": "both"},
@@ -3302,8 +3304,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 66 {
-		t.Errorf("expected 66 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_contract_test_effectiveness #4893)", len(tools))
+	if len(tools) != 67 {
+		t.Errorf("expected 67 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_test_reachability #5060)", len(tools))
 	}
 
 	for _, st := range tools {

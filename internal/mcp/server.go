@@ -1105,6 +1105,22 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("ref"), // PH1c: optional git ref
 	), s.wrap("archigraph_test_coverage", s.handleTestCoverage))
 
+	// #5060: static test-reachability — transitive TESTS+CALLS reach (#5037),
+	// stamped at index time by #5061. Surfaces orphan endpoints/functions with
+	// NO test path, the reaching tests, and min hop depth. Reads stamped props;
+	// does not recompute.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_test_reachability",
+		mcpapi.WithDescription("Static test-reachability: fns/endpoints with NO test path (orphans), depth."),
+		mcpapi.WithString("entity_id"),
+		mcpapi.WithArray("repo_filter"),
+		mcpapi.WithBoolean("untested_only", mcpapi.DefaultBool(false)),
+		mcpapi.WithBoolean("endpoints_only", mcpapi.DefaultBool(false)),
+		mcpapi.WithNumber("limit", mcpapi.DefaultNumber(100)),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+		mcpapi.WithAny("ref"), // PH1c: optional git ref
+	), s.wrap("archigraph_test_reachability", s.handleTestReachability))
+
 	// archigraph_module_analysis — module-level GDS (#1384, epic #1380).
 	// action=cycles|centrality|all over the aggregated module graph: SCCs,
 	// PageRank, betweenness. Bird's-eye view alongside entity-level tools.

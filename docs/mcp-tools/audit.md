@@ -46,6 +46,20 @@ Output: production entities lacking TESTS edges, ranked by severity.
 
 ---
 
+## `archigraph_test_reachability`
+
+Static test-reachability over the **TESTS + CALLS** call graph: which functions and endpoints are reached by *any* test path, and — the key signal — which are **orphans** with no test path at all.
+
+Unlike `archigraph_test_coverage` (which only checks for a *direct* inbound `TESTS` edge), this tool reflects *transitive* reachability: a function is reachable if a test reaches it through one or more `CALLS` hops. It surfaces the reaching tests and the minimum hop depth per entity.
+
+The signal is computed by the indexer (#5037 / #5061) and **stamped onto entity properties** (`test_reachable`, `reaching_tests`, `reaching_test_count`, `reach_depth`). This tool **reads those properties off the loaded graph — it does not recompute**. If a group was indexed before the reachability pass landed (no entity carries `test_reachable`), the tool says *"reachability not computed — reindex"* rather than returning a misleading empty/all-zero result.
+
+Key parameters: `entity_id` (optional — focus a single entity), `repo_filter[]`, `untested_only` (bool — list only orphans), `endpoints_only` (bool — HTTP endpoints/routes only), `limit` (default 100).
+
+Output: group and per-module reachability roll-ups (% reachable), an endpoint roll-up, and a row listing sorted **orphans-first** (endpoints before plain functions). Each reachable row shows `depth` and reaching-test count; a `[reachable-but-0%-lines]` tag flags entities statically reached by a test yet with 0% measured LCOV line coverage (the candidate-ineffective-test signal, crossing #5036). The canonical orphan query is `untested_only=true` (optionally with `endpoints_only=true`): "which endpoints/handlers have NO test reaching them".
+
+---
+
 ## `archigraph_dead_code`
 
 Reachability dead-code: entities unreached by entry-points.
