@@ -149,6 +149,23 @@ func walkGroovyWithContext(node *sitter.Node, file extractor.FileInput, imports 
 		}
 	}
 
+	// #4914 — Groovy enum value-set. The grammar has no dedicated enum node:
+	// `enum X {…}` parses as a `declaration[enum, X]` header whose body is the
+	// following `closure` sibling. Detect enum headers among THIS node's
+	// children (where the header/closure sibling pair lives) and emit one
+	// SCOPE.Enum value-set each. Done here rather than in the `declaration`
+	// case because the case handler only receives the header node, not its
+	// parent/sibling context. See types.go.
+	for i := 0; i < int(node.ChildCount()); i++ {
+		ch := node.Child(i)
+		if ch == nil || ch.Type() != "declaration" {
+			continue
+		}
+		if rec, ok := buildGroovyEnumValueSet(node, i, file); ok {
+			*out = append(*out, rec)
+		}
+	}
+
 	for i := range node.ChildCount() {
 		walkGroovyWithContext(node.Child(int(i)), file, imports, out, inClass)
 	}
