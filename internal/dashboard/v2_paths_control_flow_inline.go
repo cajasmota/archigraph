@@ -222,7 +222,12 @@ func (in *cfgInliner) inline(ent *graph.Entity, g *substrate.ControlFlowGraph, l
 	canRecurse := depth+1 < in.maxDepth
 	if canRecurse && len(callees) > 0 {
 		for _, n := range g.Nodes {
-			if n.Shape != substrate.ShapeProcess || n.Label == "" {
+			// A call site can appear on a straight-line process node OR on a
+			// terminal `return <call>()` / `throw <call>()` node — the dominant
+			// NestJS thin-delegator pattern (`return this.service.create(body)`)
+			// is a RETURN node, not a process node, so we must consider those too
+			// or the handler's single delegating return never inlines (#4883).
+			if !cfgShapeSpliceable(n.Shape) || n.Label == "" {
 				continue
 			}
 			callee := in.matchCallee(n.Label, callees, visited)
@@ -385,6 +390,21 @@ func (in *cfgInliner) isExternalCall(label string, ent *graph.Entity) bool {
 		}
 	}
 	return false
+}
+
+// cfgShapeSpliceable reports whether a CFG node of this shape can host an inlined
+// callee call site. A call can appear on a straight-line statement (process) OR
+// on a `return <call>()` / `throw <call>()` terminal — the latter being the
+// dominant NestJS thin-delegator form (`return this.service.create(body)`) that
+// the original splice loop (process-only) silently skipped, leaving the handler's
+// single delegating return un-inlined at every depth (#4883).
+func cfgShapeSpliceable(shape substrate.CFGNodeShape) bool {
+	switch shape {
+	case substrate.ShapeProcess, substrate.ShapeReturn, substrate.ShapeThrow:
+		return true
+	default:
+		return false
+	}
 }
 
 // cfgShortCalleeName reduces a (possibly scoped) callee name to the bare method
