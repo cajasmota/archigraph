@@ -392,6 +392,144 @@ func TestControlFlow_DepthInlining(t *testing.T) {
 	}
 }
 
+// makeDelegatorCFGFixture mirrors the dominant NestJS thin-delegator shape that
+// the live #4883 bug hit: the handler's ENTIRE body is a single
+// `return this.service.create(body)` — a RETURN node, not a process node. The
+// callee has real branches so a working splice is observable.
+//
+//	POST /addresses
+//	  <--IMPLEMENTS-- AddressController.create (handler: `return this.service.create(body)`)
+//	         --CALLS--> AddressService.create  (callee: has an `if` + `throw` + `return`)
+func makeDelegatorCFGFixture(t *testing.T) *DashGroup {
+	t.Helper()
+	root := t.TempDir()
+
+	// Handler body is a SINGLE delegating return (lines 1..3).
+	handlerSrc := `create(body) {
+  return this.service.create(body);
+}
+`
+	// Callee `create` starts at line 5 (after the handler's 3 lines + 1 blank).
+	calleeSrc := `
+create(body) {
+  if (!body.street) {
+    throw new BadRequest("street required");
+  }
+  const saved = this.repo.save(body);
+  return saved;
+}
+`
+	full := handlerSrc + calleeSrc
+	file := "address.controller.ts"
+	if err := os.WriteFile(filepath.Join(root, file), []byte(full), 0o644); err != nil {
+		t.Fatalf("write src: %v", err)
+	}
+
+	ent := func(id, name, kind string, start, end int) graph.Entity {
+		return graph.Entity{ID: id, Name: name, Kind: kind, SourceFile: file, StartLine: start, EndLine: end}
+	}
+	epEnt := graph.Entity{
+		ID: "ep", Name: "POST /addresses", Kind: "http_endpoint_definition",
+		SourceFile: "routers.ts", StartLine: 1,
+		Properties: map[string]string{"verb": "POST", "path": "/addresses"},
+	}
+	handler := ent("handler", "AddressController.create", "Operation", 1, 3)
+	callee := ent("callee", "AddressService.create", "Operation", 5, 12)
+
+	doc := &graph.Document{
+		Repo:     "api",
+		Entities: []graph.Entity{epEnt, handler, callee},
+		Relationships: []graph.Relationship{
+			{FromID: "handler", ToID: "ep", Kind: "IMPLEMENTS"},
+			{FromID: "handler", ToID: "callee", Kind: "CALLS"},
+		},
+	}
+	return &DashGroup{
+		Name:  "testgrp",
+		Repos: map[string]*DashRepo{"api": {Slug: "api", Path: root, Doc: doc}},
+	}
+}
+
+// TestControlFlow_ReturnDelegatorInlining is the regression guard for the live
+// #4883 bug: a handler whose whole body is `return this.service.create(body)`
+// (a RETURN node) must still inline the callee CFG at depth>=2. Before the fix
+// the splice loop only considered process nodes, so this returned the 3-node
+// stub (entry / return / exit) at every depth.
+func TestControlFlow_ReturnDelegatorInlining(t *testing.T) {
+	ts := newPathsTestServer(t, makeDelegatorCFGFixture(t))
+	defer ts.Close()
+
+	fetch := func(query string) v2ControlFlowResponse {
+		t.Helper()
+		pathHash := hashStr("/addresses")
+		url := ts.URL + "/api/v2/groups/testgrp/paths/" + pathHash + "/control-flow?" + query
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Fatalf("GET control-flow: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		var body struct {
+			OK   bool                  `json:"ok"`
+			Data v2ControlFlowResponse `json:"data"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		return body.Data
+	}
+
+	// Depth 1 — the 3-node delegator stub (entry / return / exit), one frame, no
+	// callee body.
+	d1 := fetch("depth=1&detail=full")
+	if !d1.Supported {
+		t.Fatalf("depth1: want supported; note=%q", d1.Note)
+	}
+	if len(d1.Functions) != 1 {
+		t.Errorf("depth1: want one frame, got %d", len(d1.Functions))
+	}
+	if cfgAnyLabelContains(d1.Nodes, "BadRequest") {
+		t.Errorf("depth1: callee body must not be inlined")
+	}
+
+	// Depth 2 — the callee CFG must be spliced in place of the return-call node:
+	// its `if`/`throw` nodes appear and a second frame is reported.
+	d2 := fetch("depth=2&detail=full")
+	if !d2.Supported {
+		t.Fatalf("depth2: want supported; note=%q", d2.Note)
+	}
+	if len(d2.Functions) != 2 {
+		t.Fatalf("depth2: want two frames (handler+service), got %d: %+v", len(d2.Functions), d2.Functions)
+	}
+	var calleeFrame *v2CFGFunction
+	for i := range d2.Functions {
+		if d2.Functions[i].Name == "AddressService.create" {
+			calleeFrame = &d2.Functions[i]
+		}
+	}
+	if calleeFrame == nil {
+		t.Fatalf("depth2: no inlined frame for AddressService.create: %+v", d2.Functions)
+	}
+	var sawCalleeBody bool
+	for _, n := range d2.Nodes {
+		if n.Func == calleeFrame.Func && strings.Contains(n.Label, "BadRequest") {
+			sawCalleeBody = true
+		}
+	}
+	if !sawCalleeBody {
+		t.Errorf("depth2: service body (throw BadRequest) not inlined under frame %q; nodes=%+v", calleeFrame.Func, d2.Nodes)
+	}
+	// The whole point: more nodes inlined than the bare stub.
+	if len(d2.Nodes) <= len(d1.Nodes) {
+		t.Errorf("depth2: want more nodes than the depth1 stub (%d); got %d", len(d1.Nodes), len(d2.Nodes))
+	}
+	if d2.Cyclomatic <= d1.Cyclomatic {
+		t.Errorf("depth2: combined cyclomatic (%d) must exceed delegator stub (%d)", d2.Cyclomatic, d1.Cyclomatic)
+	}
+}
+
 func cfgAnyLabelContains(nodes []v2CFGNode, sub string) bool {
 	for _, n := range nodes {
 		if strings.Contains(n.Label, sub) {
