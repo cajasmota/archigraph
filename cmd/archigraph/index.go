@@ -19,6 +19,7 @@ import (
 
 	"github.com/cajasmota/archigraph/internal/algorithms"
 	"github.com/cajasmota/archigraph/internal/classifier"
+	"github.com/cajasmota/archigraph/internal/coverage"
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/extract"
 	"github.com/cajasmota/archigraph/internal/daemon/walk"
@@ -66,13 +67,14 @@ const (
 	PassLibBoundary   = "lib-boundary"   // Pass 8.9: first_party/third_party boundary on DEPENDS_ON edges (#3638)
 	PassMigrationSeq  = "migration-seq"  // Pass 8.10: DB-migration ordering metadata + Alembic PRECEDES (#3639)
 	PassMigrationOps  = "migration-ops"  // Pass 8.11: per-migration schema-op MODIFIES_TABLE edges (#3628 [schema])
+	PassCoverage      = "coverage"       // Pass 8.12: LCOV line-coverage + static test-reachability stamping (#5061 / #5036 / #5037)
 	PassEmbed         = "embed"          // Pass 9: semantic embeddings sidecar (#461 / ADR-0019)
 	PassTestsWalkUp   = "tests-walkup"   // Pass 3.5: derive TESTS edges via helper walk-up
 )
 
 // allPassNames is used to validate --skip-pass entries.
 var allPassNames = []string{
-	PassExtract, PassFramework, PassCrossLang, PassTestsWalkUp, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow, PassEventFlow, PassModuleAgg, PassCommitCouple, PassCoupling, PassDepHygiene, PassSharedDB, PassLibBoundary, PassMigrationSeq, PassMigrationOps, PassEmbed,
+	PassExtract, PassFramework, PassCrossLang, PassTestsWalkUp, PassGraphAlgo, PassBuildDocument, PassRenameDetect, PassEnrichment, PassProcessFlow, PassEventFlow, PassModuleAgg, PassCommitCouple, PassCoupling, PassDepHygiene, PassSharedDB, PassLibBoundary, PassMigrationSeq, PassMigrationOps, PassCoverage, PassEmbed,
 }
 
 // fileTask carries one repo-relative path and its absolute counterpart
@@ -199,6 +201,14 @@ type Indexer struct {
 	// graph treat the repo as a single unit (issue #1628). For TRUE monorepos
 	// it stays empty and module.Derive's per-package rollup applies.
 	singleModuleLabel string
+
+	// coverageCfg is the per-group coverage-ingestion config (#5061/#5036).
+	// Zero value means "discover the default report path" (coverage/lcov.info);
+	// a populated Config honors its explicit report_paths globs. The coverage
+	// enrichment pass (Pass 8.12) is a strict no-op when no LCOV report is
+	// found — only the static test-reachability sub-pass (#5037) then runs,
+	// since it needs no external report. Wired via WithCoverage.
+	coverageCfg coverage.Config
 }
 
 // IndexOption configures optional behaviour on the Indexer. Used as a
@@ -310,6 +320,17 @@ func WithIncremental(stateDir string) IndexOption {
 		i.incremental = true
 		i.incrementalStateDir = stateDir
 	}
+}
+
+// WithCoverage wires the per-group coverage-ingestion config (#5061) into the
+// coverage enrichment pass (Pass 8.12). cfg mirrors SonarQube's report-path
+// model: archigraph does NOT run tests, it ingests the LCOV report CI already
+// emits (see internal/coverage.Config). When cfg is the zero value the pass
+// discovers the conventional coverage/lcov.info under the repo root; when no
+// report is found the LCOV sub-pass no-ops and only static test-reachability
+// (#5037) runs. Pass --skip-pass=coverage to disable the whole pass.
+func WithCoverage(cfg coverage.Config) IndexOption {
+	return func(i *Indexer) { i.coverageCfg = cfg }
 }
 
 type indexerStats struct {
@@ -1792,6 +1813,32 @@ func (i *Indexer) Run(ctx context.Context, absRepo string) (*graph.Document, err
 				"archigraph: migration-ops considered=%d tables=%d modifies_edges=%d access_converged=%d\n",
 				moStats.OpsConsidered, moStats.TablesConverged,
 				moStats.ModifiesEdges, moStats.AccessConvergedEdges)
+		}
+	}
+
+	// Pass 8.12 — coverage ingestion + static test-reachability (#5061, wiring
+	// the pure passes from #5036 + #5037). Runs AFTER all entity/relationship
+	// passes are finalised (so the TESTS+CALLS edges the reachability BFS reads,
+	// and the source spans the LCOV attribution overlays, reflect the final
+	// graph). Stamps coverage_pct/covered_lines/total_lines/coverage_source (from
+	// the configured LCOV report) and test_reachable/reaching_tests/reach_depth
+	// (from the in-graph call+test edges) onto entity Properties — no new Kinds,
+	// no fb-schema change (the Properties map round-trips via both serializers).
+	// OPT-IN + strict no-op when no LCOV report is configured/discovered; the
+	// reachability sub-pass still runs since it needs no external report.
+	// Skippable via --skip-pass=coverage.
+	if !i.skipPasses[PassCoverage] {
+		covStats := coverage.Enrich(doc, absRepo, i.coverageCfg)
+		if covStats.Skipped {
+			if verbose() {
+				fmt.Fprintf(os.Stderr, "archigraph: coverage skipped (%s)\n", covStats.SkipReason)
+			}
+		} else if verbose() || covStats.LCOVAttributed > 0 || covStats.ReachabilityReachable > 0 {
+			fmt.Fprintf(os.Stderr,
+				"archigraph: coverage report=%q report_files=%d lcov_attributed=%d "+
+					"reachability_production=%d reachable=%d\n",
+				covStats.ReportPath, covStats.ReportFiles, covStats.LCOVAttributed,
+				covStats.ReachabilityProduction, covStats.ReachabilityReachable)
 		}
 	}
 
