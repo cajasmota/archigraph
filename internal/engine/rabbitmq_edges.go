@@ -43,7 +43,7 @@ const queueEntityKind = "SCOPE.Queue"
 // can emit synthetics for `lang`.
 func rabbitmqSynthesisSupportsLanguage(lang string) bool {
 	switch lang {
-	case "java", "kotlin", "javascript", "typescript", "python", "go", "rust":
+	case "java", "kotlin", "javascript", "typescript", "python", "go", "rust", "csharp":
 		return true
 	default:
 		return false
@@ -146,6 +146,8 @@ func applyRabbitMQEdges(args DetectorPassArgs) DetectorPassResult {
 		synthesizeGoRabbitMQ(src, emitQueue, emitEdge)
 	case "rust":
 		synthesizeRustLapin(src, emitQueue, emitEdge)
+	case "csharp":
+		synthesizeCSharpRabbitMQ(src, emitQueue, emitEdge)
 	}
 
 	return DetectorPassResult{Entities: entities, Relationships: relationships}
@@ -943,5 +945,161 @@ func synthesizeRustLapin(
 		}
 		qID := rabbitmqQueueID(queueName)
 		emitQueue(qID, queueName, "", "", map[string]string{"declared": "true"})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// C# — RabbitMQ.Client (IModel / IChannel BasicPublish / BasicConsume)
+// ---------------------------------------------------------------------------
+//
+// Producer (the dispatch side):
+//
+//	channel.BasicPublish(exchange: "ex", routingKey: "orders", body: body);
+//	channel.BasicPublish("ex", "orders", null, body);            // positional
+//	await channel.BasicPublishAsync(exchange: "ex", routingKey: "orders", ...);
+//
+// Consumer (the consume side):
+//
+//	channel.BasicConsume(queue: "orders", autoAck: true, consumer: c);
+//	channel.BasicConsume("orders", true, consumer);              // positional
+//
+// Declaration (the topology side):
+//
+//	channel.QueueDeclare(queue: "orders", durable: true, ...);
+//	channel.QueueDeclare("orders", true, false, false, null);   // positional
+//
+// The routing-key / queue literal is the cross-repo identity (rabbitmq:<name>),
+// mirroring the lapin (Rust) and pika (Python) models. The exchange is recorded
+// as an edge property. Honest-partial: only string-literal args are resolved;
+// named-argument order independence is handled for the publish form, but
+// dynamic / expression args and fanout (empty routing key) publishes are not
+// attributed to a queue.
+
+// csRabbitPublishNamedRe captures the named-argument BasicPublish form
+// `BasicPublish(exchange: "ex", routingKey: "rk", ...)` in either argument
+// order. Group 1/2 = exchange (either order), group 3/4 = routing key.
+var csRabbitPublishNamedRe = regexp.MustCompile(
+	`\.BasicPublish(?:Async)?\s*\(\s*(?:exchange\s*:\s*"([^"\n\r]*)"\s*,\s*routingKey\s*:\s*"([^"\n\r]+)"|routingKey\s*:\s*"([^"\n\r]+)"\s*,\s*exchange\s*:\s*"([^"\n\r]*)")`,
+)
+
+// csRabbitPublishPosRe captures the positional BasicPublish form
+// `BasicPublish("ex", "rk", ...)`. Group 1 = exchange, group 2 = routing key.
+var csRabbitPublishPosRe = regexp.MustCompile(
+	`\.BasicPublish(?:Async)?\s*\(\s*"([^"\n\r]*)"\s*,\s*"([^"\n\r]+)"`,
+)
+
+// csRabbitConsumeNamedRe captures `BasicConsume(queue: "orders", ...)`.
+var csRabbitConsumeNamedRe = regexp.MustCompile(
+	`\.BasicConsume(?:Async)?\s*\([^)]*?queue\s*:\s*"([^"\n\r]+)"`,
+)
+
+// csRabbitConsumePosRe captures positional `BasicConsume("orders", ...)`.
+var csRabbitConsumePosRe = regexp.MustCompile(
+	`\.BasicConsume(?:Async)?\s*\(\s*"([^"\n\r]+)"`,
+)
+
+// csRabbitQueueDeclareNamedRe captures `QueueDeclare(queue: "orders", ...)`.
+var csRabbitQueueDeclareNamedRe = regexp.MustCompile(
+	`\.QueueDeclare(?:Async|Passive)?\s*\([^)]*?queue\s*:\s*"([^"\n\r]+)"`,
+)
+
+// csRabbitQueueDeclarePosRe captures positional `QueueDeclare("orders", ...)`.
+var csRabbitQueueDeclarePosRe = regexp.MustCompile(
+	`\.QueueDeclare(?:Async|Passive)?\s*\(\s*"([^"\n\r]+)"`,
+)
+
+func synthesizeCSharpRabbitMQ(
+	src string,
+	emitQueue func(queueID, queueName, exchange, routingKey string, props map[string]string),
+	emitEdge func(callerKind, callerName, queueID, edgeKind string, props map[string]string),
+) {
+	// Fast pre-filter: only process files that reference RabbitMQ.Client.
+	if !strings.Contains(src, "RabbitMQ") && !strings.Contains(src, "BasicPublish") &&
+		!strings.Contains(src, "BasicConsume") && !strings.Contains(src, "QueueDeclare") {
+		return
+	}
+
+	enclosing := func(offset int) string { return findEnclosingCSharpMethod(src, offset) }
+
+	emitPublish := func(exchange, routingKey string, offset int) {
+		if !looksLikeQueueName(routingKey) {
+			return
+		}
+		qID := rabbitmqQueueID(routingKey)
+		emitQueue(qID, routingKey, exchange, routingKey, map[string]string{
+			"messaging_layer": "rabbitmq-dotnet",
+		})
+		emitEdge("SCOPE.Operation", enclosing(offset), qID, publishesToEdgeKind, map[string]string{
+			"messaging_layer": "rabbitmq-dotnet",
+			"exchange":        exchange,
+			"routing_key":     routingKey,
+		})
+	}
+	emitConsume := func(queueName string, offset int) {
+		if !looksLikeQueueName(queueName) {
+			return
+		}
+		qID := rabbitmqQueueID(queueName)
+		emitQueue(qID, queueName, "", "", map[string]string{"messaging_layer": "rabbitmq-dotnet"})
+		emitEdge("SCOPE.Operation", enclosing(offset), qID, subscribesToEdgeKind, map[string]string{
+			"messaging_layer": "rabbitmq-dotnet",
+		})
+	}
+
+	// Producer: BasicPublish named form (either arg order).
+	pubOffsets := map[int]bool{}
+	for _, m := range csRabbitPublishNamedRe.FindAllStringSubmatchIndex(src, -1) {
+		pubOffsets[m[0]] = true
+		var exchange, routingKey string
+		if m[2] != -1 { // exchange, routingKey order
+			exchange, routingKey = src[m[2]:m[3]], src[m[4]:m[5]]
+		} else { // routingKey, exchange order
+			routingKey, exchange = src[m[6]:m[7]], src[m[8]:m[9]]
+		}
+		emitPublish(exchange, routingKey, m[0])
+	}
+	// Producer: BasicPublish positional form.
+	for _, m := range csRabbitPublishPosRe.FindAllStringSubmatchIndex(src, -1) {
+		if pubOffsets[m[0]] {
+			continue
+		}
+		emitPublish(src[m[2]:m[3]], src[m[4]:m[5]], m[0])
+	}
+
+	// Consumer: BasicConsume named form.
+	consOffsets := map[int]bool{}
+	for _, m := range csRabbitConsumeNamedRe.FindAllStringSubmatchIndex(src, -1) {
+		consOffsets[m[0]] = true
+		emitConsume(src[m[2]:m[3]], m[0])
+	}
+	// Consumer: BasicConsume positional form.
+	for _, m := range csRabbitConsumePosRe.FindAllStringSubmatchIndex(src, -1) {
+		if consOffsets[m[0]] {
+			continue
+		}
+		emitConsume(src[m[2]:m[3]], m[0])
+	}
+
+	// Declaration: QueueDeclare — record the node even with no pub/sub site.
+	declOffsets := map[int]bool{}
+	for _, m := range csRabbitQueueDeclareNamedRe.FindAllStringSubmatchIndex(src, -1) {
+		declOffsets[m[0]] = true
+		name := src[m[2]:m[3]]
+		if looksLikeQueueName(name) {
+			emitQueue(rabbitmqQueueID(name), name, "", "", map[string]string{
+				"messaging_layer": "rabbitmq-dotnet", "declared": "true",
+			})
+		}
+	}
+	for _, m := range csRabbitQueueDeclarePosRe.FindAllStringSubmatchIndex(src, -1) {
+		if declOffsets[m[0]] {
+			continue
+		}
+		name := src[m[2]:m[3]]
+		if looksLikeQueueName(name) {
+			emitQueue(rabbitmqQueueID(name), name, "", "", map[string]string{
+				"messaging_layer": "rabbitmq-dotnet", "declared": "true",
+			})
+		}
 	}
 }

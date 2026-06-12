@@ -493,3 +493,140 @@ async fn setup(channel: &Channel) {
 		t.Errorf("expected declared=true, got %q", q.props["declared"])
 	}
 }
+
+// ---------------------------------------------------------------------------
+// C# — RabbitMQ.Client (#4996)
+// ---------------------------------------------------------------------------
+
+// TestRabbitMQ_CSharp_BasicPublishNamed covers the named-argument
+// channel.BasicPublish(exchange:, routingKey:, body:) producer form.
+func TestRabbitMQ_CSharp_BasicPublishNamed(t *testing.T) {
+	src := `using RabbitMQ.Client;
+
+public class OrderPublisher
+{
+    public void Send(IModel channel, byte[] body)
+    {
+        channel.BasicPublish(exchange: "orders-exchange", routingKey: "orders.created", body: body);
+    }
+}
+`
+	ents, rels := runRabbitMQDetect(t, "csharp", "src/OrderPublisher.cs", src)
+	qID := rabbitmqQueueID("orders.created")
+	q := queueByName(ents, qID)
+	if q == nil {
+		t.Fatalf("expected SCOPE.Queue %q, ents=%v", qID, ents)
+	}
+	if q.props["broker"] != "rabbitmq" {
+		t.Errorf("queue broker = %q, want rabbitmq", q.props["broker"])
+	}
+	pubs := relsByKind(rels, publishesToEdgeKind)
+	found := false
+	for _, p := range pubs {
+		if strings.Contains(p.to, qID) {
+			found = true
+			if p.props["exchange"] != "orders-exchange" {
+				t.Errorf("exchange prop = %q, want orders-exchange", p.props["exchange"])
+			}
+			if p.props["messaging_layer"] != "rabbitmq-dotnet" {
+				t.Errorf("messaging_layer = %q, want rabbitmq-dotnet", p.props["messaging_layer"])
+			}
+			if !strings.Contains(p.from, "Send") {
+				t.Errorf("PUBLISHES_TO from = %q, want enclosing method Send", p.from)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected PUBLISHES_TO -> %q, pubs=%v", qID, pubs)
+	}
+}
+
+// TestRabbitMQ_CSharp_BasicPublishPositional covers the positional
+// channel.BasicPublish("ex", "rk", ...) form.
+func TestRabbitMQ_CSharp_BasicPublishPositional(t *testing.T) {
+	src := `using RabbitMQ.Client;
+
+public class Worker
+{
+    public void Emit(IModel channel, byte[] body)
+    {
+        channel.BasicPublish("ex", "tasks.queued", null, body);
+    }
+}
+`
+	ents, rels := runRabbitMQDetect(t, "csharp", "src/Worker.cs", src)
+	qID := rabbitmqQueueID("tasks.queued")
+	if queueByName(ents, qID) == nil {
+		t.Fatalf("expected SCOPE.Queue %q, ents=%v", qID, ents)
+	}
+	pubs := relsByKind(rels, publishesToEdgeKind)
+	if len(pubs) == 0 || !strings.Contains(pubs[0].to, qID) {
+		t.Fatalf("expected PUBLISHES_TO -> %q, pubs=%v", qID, pubs)
+	}
+}
+
+// TestRabbitMQ_CSharp_BasicConsume covers named + positional consumer forms.
+func TestRabbitMQ_CSharp_BasicConsume(t *testing.T) {
+	src := `using RabbitMQ.Client;
+
+public class OrderConsumer
+{
+    public void Start(IModel channel, IBasicConsumer c)
+    {
+        channel.BasicConsume(queue: "orders.created", autoAck: true, consumer: c);
+        channel.BasicConsume("payments.settled", true, c);
+    }
+}
+`
+	ents, rels := runRabbitMQDetect(t, "csharp", "src/OrderConsumer.cs", src)
+	for _, name := range []string{"orders.created", "payments.settled"} {
+		if queueByName(ents, rabbitmqQueueID(name)) == nil {
+			t.Fatalf("expected SCOPE.Queue for %q, ents=%v", name, ents)
+		}
+	}
+	subs := relsByKind(rels, subscribesToEdgeKind)
+	if len(subs) < 2 {
+		t.Fatalf("expected >=2 SUBSCRIBES_TO edges, got %d (%v)", len(subs), subs)
+	}
+	found := false
+	for _, s := range subs {
+		if strings.Contains(s.to, rabbitmqQueueID("payments.settled")) {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected SUBSCRIBES_TO -> rabbitmq:payments.settled, subs=%v", subs)
+	}
+}
+
+// TestRabbitMQ_CSharp_QueueDeclare asserts a QueueDeclare emits a queue node
+// even with no pub/sub call site.
+func TestRabbitMQ_CSharp_QueueDeclare(t *testing.T) {
+	src := `using RabbitMQ.Client;
+
+public class Topology
+{
+    public void Setup(IModel channel)
+    {
+        channel.QueueDeclare(queue: "audit.events", durable: true, exclusive: false, autoDelete: false, arguments: null);
+    }
+}
+`
+	ents, _ := runRabbitMQDetect(t, "csharp", "src/Topology.cs", src)
+	q := queueByName(ents, rabbitmqQueueID("audit.events"))
+	if q == nil {
+		t.Fatalf("expected SCOPE.Queue for audit.events, ents=%v", ents)
+	}
+	if q.props["declared"] != "true" {
+		t.Errorf("declared prop = %q, want true", q.props["declared"])
+	}
+}
+
+// TestRabbitMQ_CSharp_NoSignal asserts a non-RabbitMQ C# file emits nothing.
+func TestRabbitMQ_CSharp_NoSignal(t *testing.T) {
+	src := `public class Plain { public void Run() { var x = 1; } }`
+	ents, rels := runRabbitMQDetect(t, "csharp", "src/Plain.cs", src)
+	if len(ents) != 0 || len(rels) != 0 {
+		t.Fatalf("expected nothing for non-RabbitMQ file, got ents=%d rels=%d", len(ents), len(rels))
+	}
+}

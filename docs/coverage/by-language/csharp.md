@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # C#
 
-**Frameworks**: 17 · **Tools**: 7 · **ORMs**: 14 · **Other**: 6
+**Frameworks**: 17 · **Tools**: 7 · **ORMs**: 14 · **Other**: 8
 
 Back to [summary](../summary.md).
 
@@ -119,7 +119,9 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Consumer extraction | Producer extraction | Topic attribution | Notes |
 |---|---|---|---|---|
+| [Kafka — C# (Confluent.Kafka)](../detail/msg.broker.kafka-dotnet.md) | 🟢 | 🟢 | ✅ | |
 | [MassTransit (.NET cross-process service bus)](../detail/msg.masstransit.md) | ✅ | ✅ | 🟢 | |
 | [MediatR (.NET in-process CQRS / mediator)](../detail/msg.mediatr.md) | ✅ | ✅ | ✅ | |
 | [NServiceBus / Rebus (IHandleMessages<T> convention)](../detail/msg.nservicebus.md) | ✅ | ✅ | 🟢 | |
+| [RabbitMQ — C# (RabbitMQ.Client)](../detail/msg.broker.rabbitmq-dotnet.md) | 🟢 | 🟢 | 🟢 | |
 | [Wolverine (.NET convention-based message bus)](../detail/msg.wolverine.md) | ✅ | ✅ | 🟢 | |

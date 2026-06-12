@@ -893,3 +893,100 @@ void Worker::run(RdKafka::KafkaConsumer *consumer) {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// C# / Confluent.Kafka (#4996)
+// ---------------------------------------------------------------------------
+
+// TestKafka_CSharp_ProduceProducer covers Confluent.Kafka Produce/ProduceAsync
+// with a literal topic. Producer-side: PUBLISHES_TO.
+func TestKafka_CSharp_ProduceProducer(t *testing.T) {
+	src := `using Confluent.Kafka;
+
+public class OrderPublisher
+{
+    private readonly IProducer<Null, string> _producer;
+
+    public async Task Emit(string body)
+    {
+        await _producer.ProduceAsync("orders.created", new Message<Null, string> { Value = body });
+        _producer.Produce("orders.shipped", new Message<Null, string> { Value = body });
+    }
+}
+`
+	ents, rels := runKafkaDetect(t, "csharp", "src/OrderPublisher.cs", src)
+	if topicByName(ents, "orders.created") == nil {
+		t.Fatalf("expected MessageTopic for orders.created, got %v", ents)
+	}
+	if topicByName(ents, "orders.shipped") == nil {
+		t.Fatalf("expected MessageTopic for orders.shipped, got %v", ents)
+	}
+	pub := edgesOfKind(rels, publishesToEdgeKind)
+	if len(pub) < 2 {
+		t.Fatalf("expected >=2 PUBLISHES_TO edges, got %d", len(pub))
+	}
+	foundTopic, foundCaller := false, false
+	for _, p := range pub {
+		if strings.Contains(p.ToID, "kafka:orders.created") {
+			foundTopic = true
+		}
+		if strings.Contains(p.FromID, "Emit") {
+			foundCaller = true
+		}
+		if p.Properties["messaging_layer"] != "confluent-kafka-dotnet" {
+			t.Errorf("messaging_layer = %q, want confluent-kafka-dotnet", p.Properties["messaging_layer"])
+		}
+	}
+	if !foundTopic {
+		t.Fatalf("expected PUBLISHES_TO -> kafka:orders.created, pubs=%v", pub)
+	}
+	if !foundCaller {
+		t.Fatalf("expected PUBLISHES_TO from enclosing method Emit, pubs=%v", pub)
+	}
+}
+
+// TestKafka_CSharp_SubscribeConsumer covers consumer.Subscribe single-literal
+// and array forms. Consumer-side: SUBSCRIBES_TO.
+func TestKafka_CSharp_SubscribeConsumer(t *testing.T) {
+	src := `using Confluent.Kafka;
+
+public class OrderConsumer
+{
+    private readonly IConsumer<Null, string> _consumer;
+
+    public void Start()
+    {
+        _consumer.Subscribe("orders.created");
+        _consumer.Subscribe(new[] { "payments.settled", "orders.shipped" });
+    }
+}
+`
+	ents, rels := runKafkaDetect(t, "csharp", "src/OrderConsumer.cs", src)
+	for _, want := range []string{"orders.created", "payments.settled", "orders.shipped"} {
+		if topicByName(ents, want) == nil {
+			t.Fatalf("expected MessageTopic for %q, got %v", want, ents)
+		}
+	}
+	sub := edgesOfKind(rels, subscribesToEdgeKind)
+	if len(sub) < 3 {
+		t.Fatalf("expected >=3 SUBSCRIBES_TO edges, got %d (%v)", len(sub), sub)
+	}
+	found := false
+	for _, s := range sub {
+		if strings.Contains(s.ToID, "kafka:payments.settled") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected SUBSCRIBES_TO -> kafka:payments.settled, subs=%v", sub)
+	}
+}
+
+// TestKafka_CSharp_NoSignal asserts a non-Kafka C# file emits nothing.
+func TestKafka_CSharp_NoSignal(t *testing.T) {
+	src := `public class Plain { public void Run() { var x = 1; } }`
+	ents, rels := runKafkaDetect(t, "csharp", "src/Plain.cs", src)
+	if len(ents) != 0 || len(rels) != 0 {
+		t.Fatalf("expected no entities/edges for non-Kafka file, got ents=%d rels=%d", len(ents), len(rels))
+	}
+}

@@ -58,7 +58,7 @@ const transformsEdgeKind = "TRANSFORMS"
 // and Go — the languages with non-trivial Kafka adoption in the corpora.
 func kafkaSynthesisSupportsLanguage(lang string) bool {
 	switch lang {
-	case "java", "kotlin", "javascript", "typescript", "python", "go", "php", "rust", "cpp", "c":
+	case "java", "kotlin", "javascript", "typescript", "python", "go", "php", "rust", "cpp", "c", "csharp":
 		return true
 	default:
 		return false
@@ -184,6 +184,8 @@ func applyKafkaEdges(args DetectorPassArgs) DetectorPassResult {
 		synthesizeRustRdKafka(src, emitTopic, emitEdge)
 	case "cpp", "c":
 		synthesizeCppRdKafka(src, emitTopic, emitEdge)
+	case "csharp":
+		synthesizeCSharpKafka(src, emitTopic, emitEdge)
 	}
 
 	return DetectorPassResult{Entities: entities, Relationships: relationships}
@@ -1377,6 +1379,96 @@ func synthesizeCppRdKafka(
 				emitConsumer(unq, "rdkafkacpp", m[0])
 			}
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// C# — Confluent.Kafka (IProducer<K,V> / IConsumer<K,V>)
+// ---------------------------------------------------------------------------
+//
+// Producer (the dispatch side):
+//
+//	producer.Produce("orders", new Message<...> { ... });
+//	await producer.ProduceAsync("orders", new Message<...> { ... });
+//
+// Consumer (the consume side):
+//
+//	consumer.Subscribe("orders");
+//	consumer.Subscribe(new[] { "orders", "payments" });
+//	consumer.Subscribe(new List<string> { "orders", "payments" });
+//
+// The topic string is the explicit first argument, so attribution is FULL for
+// string literals. Dynamic / non-literal topic names are skipped — we never
+// fabricate a topic entity for a name we cannot read statically.
+
+// csKafkaProduceRe captures `producer.Produce("topic", ...)` and
+// `producer.ProduceAsync("topic", ...)`. Group 1 = topic literal.
+var csKafkaProduceRe = regexp.MustCompile(`\.Produce(?:Async)?\s*\(\s*"([^"\n\r]+)"`)
+
+// csKafkaSubscribeSingleRe captures `consumer.Subscribe("topic")` — a single
+// string-literal argument (not an array/list). Group 1 = topic literal.
+var csKafkaSubscribeSingleRe = regexp.MustCompile(`\.Subscribe\s*\(\s*"([^"\n\r]+)"\s*\)`)
+
+// csKafkaSubscribeListRe captures the array / collection form
+// `consumer.Subscribe(new[] { "a", "b" })` / `new List<string> { "a", "b" }`.
+// Group 1 = the brace body holding the comma-separated string literals.
+var csKafkaSubscribeListRe = regexp.MustCompile(`\.Subscribe\s*\(\s*new\s*[^{(]*?\{([^}]*)\}`)
+
+func synthesizeCSharpKafka(
+	src string,
+	emitTopic func(topicID, topicName, broker string, dynamic bool, props map[string]string),
+	emitEdge func(callerKind, callerName, topicID, edgeKind string, props map[string]string),
+) {
+	// Fast pre-filter: only process files that reference Confluent.Kafka.
+	if !strings.Contains(src, "Kafka") && !strings.Contains(src, "Produce") &&
+		!strings.Contains(src, "Subscribe") {
+		return
+	}
+
+	enclosing := func(offset int) string { return findEnclosingCSharpMethod(src, offset) }
+
+	emitProducer := func(topic string, offset int) {
+		if !looksLikeKafkaTopic(topic) {
+			return
+		}
+		id := kafkaTopicID(topic)
+		emitTopic(id, topic, "kafka", false, map[string]string{"messaging_layer": "confluent-kafka-dotnet"})
+		emitEdge("SCOPE.Operation", enclosing(offset), id, publishesToEdgeKind, map[string]string{
+			"messaging_layer": "confluent-kafka-dotnet",
+		})
+	}
+	emitConsumer := func(topic string, offset int) {
+		if !looksLikeKafkaTopic(topic) {
+			return
+		}
+		id := kafkaTopicID(topic)
+		emitTopic(id, topic, "kafka", false, map[string]string{"messaging_layer": "confluent-kafka-dotnet"})
+		emitEdge("SCOPE.Operation", enclosing(offset), id, subscribesToEdgeKind, map[string]string{
+			"messaging_layer": "confluent-kafka-dotnet",
+		})
+	}
+
+	// Producer: Produce("topic", ...) / ProduceAsync("topic", ...)
+	for _, m := range csKafkaProduceRe.FindAllStringSubmatchIndex(src, -1) {
+		emitProducer(src[m[2]:m[3]], m[0])
+	}
+	// Consumer: Subscribe(new[] { "a", "b" }) — the array/list form first so we
+	// can offset the single-literal form against it.
+	listOffsets := map[int]bool{}
+	for _, m := range csKafkaSubscribeListRe.FindAllStringSubmatchIndex(src, -1) {
+		listOffsets[m[0]] = true
+		for _, tok := range strings.Split(src[m[2]:m[3]], ",") {
+			if unq, ok := unquote(tok); ok {
+				emitConsumer(unq, m[0])
+			}
+		}
+	}
+	// Consumer: Subscribe("topic") — single string literal.
+	for _, m := range csKafkaSubscribeSingleRe.FindAllStringSubmatchIndex(src, -1) {
+		if listOffsets[m[0]] {
+			continue
+		}
+		emitConsumer(src[m[2]:m[3]], m[0])
 	}
 }
 
