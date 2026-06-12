@@ -16,6 +16,9 @@
 //         CE + conn.SelectAsync<T>.
 //       * Npgsql.FSharp: a `Sql.query "SELECT ..."` literal (classified by
 //         the leading SQL verb — fsharpNpgsqlReadRe).
+//       * SQLProvider (#4999): the `query { for x in ctx.Dbo.T ... }` CE
+//         (shared with fsharpEFQueryCERe) plus a direct table enumeration
+//         `ctx.Dbo.T |> Seq.toList` (fsharpSQLProviderReadRe).
 //   - db_write  :
 //       * EF Core (F#): ctx.SaveChanges()/SaveChangesAsync(),
 //         ctx.Users.Add/AddAsync/AddRange/Update/UpdateRange/Remove/
@@ -25,6 +28,10 @@
 //         conn.InsertAsync/UpdateAsync/DeleteAsync.
 //       * Npgsql.FSharp: `Sql.query "INSERT|UPDATE|DELETE|..."` literal
 //         (write SQL verb — fsharpNpgsqlWriteRe).
+//       * SQLProvider (#4999): ctx.SubmitUpdates()/SubmitUpdatesAsync(),
+//         the table ``.Create``(...) row factory, and row.Delete()
+//         (fsharpSQLProviderWriteRe). Best-effort `ctx.Schema.Table`
+//         attribution is folded into the Sink tag.
 //   - http_out  : System.Net.Http HttpClient.GetAsync/PostAsync/PutAsync/
 //     PatchAsync/DeleteAsync/SendAsync/GetStringAsync/GetByteArrayAsync,
 //     and FsHttp `http { GET ... }` / Http.get|post helpers.
@@ -108,6 +115,57 @@ var fsharpDapperWriteRe = regexp.MustCompile(
 		`|\b(?:insert|update|delete)\s*\{\s*(?:for\b|into\b|table\b)`,
 )
 
+// SQLProvider (F# type provider) recognition (#4999, follow-up #4941).
+//
+// SQLProvider exposes an erased data context whose tables are reached via
+// `ctx.Dbo.TableName` (the leading segment after the context is the SQL
+// schema — Dbo/Public/Main/etc.). There is no stable static call shape on
+// the provided types, so the provider's idiomatic surface is matched
+// syntactically:
+//
+//   - db_read  : the generic F# `query { for x in ctx.Dbo.T ... }` CE is
+//     already caught by fsharpEFQueryCERe. In addition a direct table
+//     enumeration `ctx.Dbo.TableName |> Seq.toList` / `|> Seq.map` /
+//     `|> List.ofSeq` (materialising the erased IQueryable) is a read
+//     (fsharpSQLProviderReadRe).
+//   - db_write : the provider commits via `ctx.SubmitUpdates()` /
+//     `ctx.SubmitUpdatesAsync()`; rows are inserted with the table's
+//     ``.Create``(...) / `.Create(...)` factory and removed with
+//     `row.Delete()` (fsharpSQLProviderWriteRe).
+//
+// Table attribution is best-effort: fsharpSQLProviderTableRe extracts the
+// `ctx.Schema.TableName` table segment so the matched read/write carries a
+// candidate table in its Sink tag (`sqlprovider.read:Users`). ACCESSES_TABLE
+// wiring stays a separate concern, as for every other sink language (see the
+// package note above).
+
+// fsharpSQLProviderReadRe matches a direct SQLProvider table enumeration
+// (`ctx.Dbo.Users |> Seq.toList` and friends). The `query { for ... }` read
+// path is already covered by fsharpEFQueryCERe, so this only adds the direct
+// pipe-to-collection-combinator materialisation shape.
+var fsharpSQLProviderReadRe = regexp.MustCompile(
+	`\b[A-Za-z_][\w']*\s*\.\s*(?:Dbo|Public|Main|dbo|public|main)\s*\.\s*[A-Z][\w']*\s*` +
+		`\|>\s*(?:Seq|List|Array)\s*\.\s*` +
+		`(?:toList|toArray|ofSeq|map|filter|tryHead|head|find|tryFind|length|isEmpty|iter|fold|sortBy)\b`,
+)
+
+// fsharpSQLProviderWriteRe matches SQLProvider commit / row-mutation
+// primitives: ctx.SubmitUpdates()/SubmitUpdatesAsync(), the table
+// ``.Create``(...)/.Create(...) row factory, and `row.Delete()`.
+var fsharpSQLProviderWriteRe = regexp.MustCompile(
+	`\b[A-Za-z_][\w']*\s*\.\s*(?:SubmitUpdates|SubmitUpdatesAsync)\s*\(` +
+		"|\\b[A-Za-z_][\\w']*\\s*\\.\\s*(?:Dbo|Public|Main|dbo|public|main)\\s*\\.\\s*[A-Z][\\w']*\\s*\\.\\s*(?:`Create`|Create)\\s*\\(" +
+		`|\b[A-Za-z_][\w']*\s*\.\s*Delete\s*\(\s*\)`,
+)
+
+// fsharpSQLProviderTableRe extracts the `ctx.Schema.TableName` table
+// segment for best-effort table attribution. Group 1 = schema, group 2 =
+// table. Schema is restricted to the common SQLProvider schema segments so
+// arbitrary `A.B.C` member chains do not false-match.
+var fsharpSQLProviderTableRe = regexp.MustCompile(
+	`\b[A-Za-z_][\w']*\s*\.\s*(?:Dbo|Public|Main|dbo|public|main)\s*\.\s*([A-Z][\w']*)`,
+)
+
 // fsharpNpgsqlReadRe matches Npgsql.FSharp `Sql.query "SELECT|WITH ..."`.
 var fsharpNpgsqlReadRe = regexp.MustCompile(
 	`\bSql\s*\.\s*query\s+(?:@?"""|@?")\s*(?i:SELECT|WITH)\b`,
@@ -132,7 +190,54 @@ func sniffEffectsFSharp(content string) []EffectMatch {
 	out = appendFSharpMatches(out, content, headers, fsharpDapperWriteRe, EffectDBWrite, "dapper.write", 0.85)
 	out = appendFSharpMatches(out, content, headers, fsharpNpgsqlReadRe, EffectDBRead, "npgsql.fsharp.read", 0.9)
 	out = appendFSharpMatches(out, content, headers, fsharpNpgsqlWriteRe, EffectDBWrite, "npgsql.fsharp.write", 0.9)
+	// SQLProvider type-provider (#4999): direct table enumeration -> db_read,
+	// SubmitUpdates/.Create/.Delete() -> db_write, each with best-effort
+	// `ctx.Schema.Table` attribution folded into the Sink tag.
+	out = appendFSharpSQLProviderMatches(out, content, headers, fsharpSQLProviderReadRe, EffectDBRead, "sqlprovider.read", 0.75)
+	out = appendFSharpSQLProviderMatches(out, content, headers, fsharpSQLProviderWriteRe, EffectDBWrite, "sqlprovider.write", 0.75)
 	return out
+}
+
+// appendFSharpSQLProviderMatches is appendFSharpMatches with best-effort
+// SQLProvider table attribution: when the matched line carries a
+// `ctx.Schema.TableName` segment, the resolved table name is appended to the
+// Sink tag (`sqlprovider.read:Users`). SQLProvider provided types are erased,
+// so the table is a best-effort hint, not a resolved entity (honest-partial).
+func appendFSharpSQLProviderMatches(out []EffectMatch, content string, headers []funcHeader, re *regexp.Regexp, eff Effect, sink string, conf float64) []EffectMatch {
+	for _, m := range re.FindAllStringIndex(content, -1) {
+		line := lineOfOffset(content, m[0])
+		fn := nearestHeader(headers, line)
+		s := sink
+		if tbl := fsharpSQLProviderTableOnLine(content, m[0]); tbl != "" {
+			s = sink + ":" + tbl
+		}
+		out = append(out, EffectMatch{
+			Function:   fn,
+			Line:       line,
+			Effect:     eff,
+			Sink:       s,
+			Confidence: conf,
+		})
+	}
+	return out
+}
+
+// fsharpSQLProviderTableOnLine returns the best-effort `ctx.Schema.Table`
+// table name for the source line containing offset off, or "" when none is
+// present (e.g. a `ctx.SubmitUpdates()` commit with no table on the line).
+func fsharpSQLProviderTableOnLine(content string, off int) string {
+	start := off
+	for start > 0 && content[start-1] != '\n' {
+		start--
+	}
+	end := off
+	for end < len(content) && content[end] != '\n' {
+		end++
+	}
+	if mm := fsharpSQLProviderTableRe.FindStringSubmatch(content[start:end]); mm != nil {
+		return mm[1]
+	}
+	return ""
 }
 
 func scanFSharpEffectHeaders(content string) []funcHeader {

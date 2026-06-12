@@ -50,9 +50,9 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [elixir](../by-language/elixir.md) | [Phoenix](../detail/lang.elixir.framework.phoenix.md) | 🟡 4/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 23/25 | 🟡 7/11 | |
 | [elixir](../by-language/elixir.md) | [Plug](../detail/lang.elixir.framework.plug.md) | 🟡 4/6 | ✅ 1/1 | 🟢 4/4 | ✅ 1/1 | 🟡 23/25 | 🟡 7/11 | |
 | [elixir](../by-language/elixir.md) | [Req](../detail/lang.elixir.framework.req.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 12/24 | 🟡 3/12 | |
-| [elixir](../by-language/elixir.md) | [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 13/24 | 🟡 5/12 | |
+| [elixir](../by-language/elixir.md) | [Tesla](../detail/lang.elixir.framework.tesla.md) | 🟡 1/6 | 🔴 0/1 | 🔴 0/4 | ✅ 1/1 | 🟡 13/24 | 🟡 4/12 | |
 | [erlang](../by-language/erlang.md) | [Cowboy](../detail/lang.erlang.framework.cowboy.md) | 🟡 3/6 | 🔴 0/1 | 🔴 0/4 | 🟢 1/1 | 🔴 0/24 | 🔴 0/13 | |
-| [F#](../by-language/fsharp.md) | [Giraffe / Saturn (F# HTTP)](../detail/lang.fsharp.framework.giraffe.md) | 🟡 3/6 | 🔴 0/1 | 🟢 4/4 | ✅ 1/1 | 🔴 0/24 | 🔴 0/13 | |
+| [F#](../by-language/fsharp.md) | [Giraffe / Saturn (F# HTTP)](../detail/lang.fsharp.framework.giraffe.md) | 🟡 3/6 | 🔴 0/1 | 🟢 4/4 | ✅ 1/1 | 🔴 0/24 | 🟡 1/13 | |
 | [go](../by-language/go.md) | [Beego](../detail/lang.go.framework.beego.md) | 🟡 3/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Buffalo](../detail/lang.go.framework.buffalo.md) | 🟡 4/6 | 🟢 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [Echo](../detail/lang.go.framework.echo.md) | 🟢 6/6 | ✅ 1/1 | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 8/12 | |

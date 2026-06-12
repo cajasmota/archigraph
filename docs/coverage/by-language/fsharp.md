@@ -26,7 +26,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
-| [Giraffe / Saturn (F# HTTP)](../detail/lang.fsharp.framework.giraffe.md) | 🟡 3/6 | 🔴 0/1 | 🟢 4/4 | ✅ 1/1 | 🔴 0/24 | 🔴 0/13 | |
+| [Giraffe / Saturn (F# HTTP)](../detail/lang.fsharp.framework.giraffe.md) | 🟡 3/6 | 🔴 0/1 | 🟢 4/4 | ✅ 1/1 | 🔴 0/24 | 🟡 1/13 | |
 
 
 ## Tools

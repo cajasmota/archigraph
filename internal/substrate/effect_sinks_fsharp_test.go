@@ -145,6 +145,90 @@ func TestSniffEffectsFSharp_HTTP(t *testing.T) {
 	}
 }
 
+// fsharpSinksByFn collapses sniffer output into fn -> set-of-sink-tags, so
+// table attribution (folded into the Sink tag) can be asserted.
+func fsharpSinksByFn(content string) map[string]map[string]bool {
+	out := map[string]map[string]bool{}
+	for _, m := range sniffEffectsFSharp(content) {
+		if out[m.Function] == nil {
+			out[m.Function] = map[string]bool{}
+		}
+		out[m.Function][m.Sink] = true
+	}
+	return out
+}
+
+// TestSniffEffectsFSharp_SQLProvider proves SQLProvider type-provider queries
+// (#4999): the `query { for x in ctx.Dbo.T ... }` CE + direct table
+// enumeration register as db_read, and SubmitUpdates/.Create/.Delete()
+// register as db_write, each with best-effort table attribution.
+func TestSniffEffectsFSharp_SQLProvider(t *testing.T) {
+	src := `module Repo
+
+let listUsers (ctx: Sql.dataContext) =
+    query {
+        for u in ctx.Dbo.Users do
+        where (u.Active = true)
+        select u
+    }
+
+let allRoles (ctx: Sql.dataContext) =
+    ctx.Dbo.Roles |> Seq.toList
+
+let addUser (ctx: Sql.dataContext) name =
+    ctx.Dbo.Users.` + "`" + `Create` + "`" + `(Name = name) |> ignore
+    ctx.SubmitUpdates()
+
+let deleteRole (ctx: Sql.dataContext) (row: Sql.dataContext.dbo.RolesEntity) =
+    row.Delete()
+    ctx.SubmitUpdatesAsync()
+`
+	got := fsharpEffectsByFn(src)
+	if !got["listUsers"][EffectDBRead] {
+		t.Errorf("listUsers expected db_read (query CE over provided ctx), got %v", got["listUsers"])
+	}
+	if !got["allRoles"][EffectDBRead] {
+		t.Errorf("allRoles expected db_read (direct enumeration), got %v", got["allRoles"])
+	}
+	if got["allRoles"][EffectDBWrite] {
+		t.Errorf("allRoles must not be db_write, got %v", got["allRoles"])
+	}
+	if !got["addUser"][EffectDBWrite] {
+		t.Errorf("addUser expected db_write (.Create + SubmitUpdates), got %v", got["addUser"])
+	}
+	if !got["deleteRole"][EffectDBWrite] {
+		t.Errorf("deleteRole expected db_write (.Delete + SubmitUpdatesAsync), got %v", got["deleteRole"])
+	}
+
+	// Best-effort table attribution: the enumeration read on ctx.Dbo.Roles
+	// and the .Create write on ctx.Dbo.Users carry their table in the Sink.
+	sinks := fsharpSinksByFn(src)
+	if !sinks["allRoles"]["sqlprovider.read:Roles"] {
+		t.Errorf("allRoles expected sink sqlprovider.read:Roles, got %v", sinks["allRoles"])
+	}
+	if !sinks["addUser"]["sqlprovider.write:Users"] {
+		t.Errorf("addUser expected sink sqlprovider.write:Users, got %v", sinks["addUser"])
+	}
+}
+
+// TestSniffEffectsFSharp_SQLProviderNoFalsePositive proves the SQLProvider
+// patterns do not fire on unrelated F# member chains / collection pipelines.
+func TestSniffEffectsFSharp_SQLProviderNoFalsePositive(t *testing.T) {
+	src := `module Pure
+
+let transform (xs: int list) =
+    xs |> List.map (fun x -> x + 1) |> List.toArray
+
+let label (cfg: Config) =
+    cfg.Display.Title
+`
+	for _, m := range sniffEffectsFSharp(src) {
+		if m.Effect == EffectDBRead || m.Effect == EffectDBWrite {
+			t.Errorf("pure module must yield no db effect, got %v (%s) at %s", m.Effect, m.Sink, m.Function)
+		}
+	}
+}
+
 func TestSniffEffectsFSharp_Registered(t *testing.T) {
 	if EffectSnifferFor("fsharp") == nil {
 		t.Fatal("fsharp effect sniffer not registered")
