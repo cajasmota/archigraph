@@ -195,3 +195,124 @@ fn app() -> Router { Router::new().route("/users", get(list)) }
 		t.Errorf("route naming a status-less handler must NOT be stamped, got %+v", ents)
 	}
 }
+
+// --- #5018: remaining handler-named frameworks -------------------------------
+
+// poem — `.at("/path", post(handler))`; handler returns a poem StatusCode.
+func TestRustRespCodes_PoemHandlerStatus(t *testing.T) {
+	src := `
+async fn create(req: Request) -> Response {
+    Response::builder().status(StatusCode::CREATED).body("ok")
+}
+fn route() -> Route {
+    Route::new().at("/items", post(create))
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("poem.rs", "rust", src))
+	op := findRustDep(ents, "SCOPE.Operation", "POST /items")
+	if op == nil {
+		t.Fatalf("expected POST /items, got %+v", ents)
+	}
+	propEq(t, op, "response_codes", "201")
+	propEq(t, op, "success_code", "201")
+	propEq(t, op, "framework", "poem")
+}
+
+// warp — `warp::reply::with_status(reply, StatusCode::CREATED)` in handler body.
+func TestRustRespCodes_WarpWithStatus(t *testing.T) {
+	src := `
+async fn create_item(body: Item) -> Result<impl warp::Reply, warp::Rejection> {
+    Ok(warp::reply::with_status(warp::reply::json(&body), StatusCode::CREATED))
+}
+fn routes() -> impl Filter {
+    warp::path!("items").and(warp::post()).and_then(create_item)
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("warp.rs", "rust", src))
+	op := findRustDep(ents, "SCOPE.Operation", "POST /items")
+	if op == nil {
+		t.Fatalf("expected POST /items, got %+v", ents)
+	}
+	propEq(t, op, "response_codes", "201")
+	propEq(t, op, "success_code", "201")
+	propEq(t, op, "framework", "warp")
+}
+
+// tide — `Response::builder(201)` positional status in handler body.
+func TestRustRespCodes_TideBuilderStatus(t *testing.T) {
+	src := `
+async fn create(_req: Request<()>) -> tide::Result {
+    Ok(Response::builder(201).body("created").build())
+}
+fn app() {
+    let mut app = tide::new();
+    app.at("/items").post(create);
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("tide.rs", "rust", src))
+	op := findRustDep(ents, "SCOPE.Operation", "POST /items")
+	if op == nil {
+		t.Fatalf("expected POST /items, got %+v", ents)
+	}
+	propEq(t, op, "response_codes", "201")
+	propEq(t, op, "success_code", "201")
+	propEq(t, op, "framework", "tide")
+	propEq(t, op, "response_codes_source", "Response::builder()")
+}
+
+// gotham — `route.get("/path").to(handler)`; handler builds a status response.
+func TestRustRespCodes_GothamRouteStatus(t *testing.T) {
+	src := `
+fn get_item(state: State) -> (State, Response<Body>) {
+    let res = create_response(&state, StatusCode::NOT_FOUND, mime::TEXT_PLAIN, "nope");
+    (state, res)
+}
+fn router() -> Router {
+    build_simple_router(|route| {
+        route.get("/items/:id").to(get_item);
+    })
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("gotham.rs", "rust", src))
+	op := findRustDep(ents, "SCOPE.Operation", "GET /items/{id}")
+	if op == nil {
+		t.Fatalf("expected GET /items/{id}, got %+v", ents)
+	}
+	propEq(t, op, "response_codes", "404")
+	propAbsent(t, op, "success_code") // 404 is not 2xx
+	propEq(t, op, "framework", "gotham")
+}
+
+// salvo — `res.status_code(StatusCode::CREATED)` in handler body.
+func TestRustRespCodes_SalvoStatusCode(t *testing.T) {
+	src := `
+#[handler]
+async fn create(res: &mut Response) {
+    res.status_code(StatusCode::CREATED);
+}
+fn route() -> Router {
+    Router::with_path("items").post(create)
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("salvo.rs", "rust", src))
+	op := findRustDep(ents, "SCOPE.Operation", "POST /items")
+	if op == nil {
+		t.Fatalf("expected POST /items, got %+v", ents)
+	}
+	propEq(t, op, "response_codes", "201")
+	propEq(t, op, "success_code", "201")
+	propEq(t, op, "framework", "salvo")
+}
+
+// honest-partial — a minor-framework route whose handler has no literal status
+// is NOT re-emitted.
+func TestRustRespCodes_MinorFwNoStatusNotStamped(t *testing.T) {
+	src := `
+async fn list(req: Request) -> Response { Response::builder().body("ok") }
+fn route() -> Route { Route::new().at("/items", get(list)) }
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("poem_plain.rs", "rust", src))
+	if findRustDep(ents, "SCOPE.Operation", "GET /items") != nil {
+		t.Errorf("poem handler with no literal status must NOT be stamped, got %+v", ents)
+	}
+}

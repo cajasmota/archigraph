@@ -106,9 +106,17 @@ var rustStatusEnumConstRe = regexp.MustCompile(`\b(?:StatusCode|Status)::([A-Za-
 var rustStatusFromNumRe = regexp.MustCompile(`\b(?:StatusCode|Status)::(?:from_u16|new|from_code)\s*\(\s*(\d{3})\b`)
 
 // rustStatusSetterRe matches a `.status(StatusCode::X)` / `.status(404)` setter
-// (actix `HttpResponseBuilder::status`, axum `Response::status`). Group 1 = enum
-// variant (optional), group 2 = numeric literal (optional).
-var rustStatusSetterRe = regexp.MustCompile(`\.\s*status\s*\(\s*(?:(?:StatusCode|Status)::([A-Za-z_][A-Za-z0-9_]*)|(\d{3}))`)
+// (actix `HttpResponseBuilder::status`, axum `Response::status`). It also matches
+// salvo's `.status_code(StatusCode::X)` (`res.status_code(...)`) and poem/tide's
+// `.set_status(StatusCode::X)` / `.set_status(404)` via the optional
+// `_code`/`set_` affixes. Group 1 = enum variant (optional), group 2 = numeric
+// literal (optional).
+var rustStatusSetterRe = regexp.MustCompile(`\.\s*(?:set_)?status(?:_code)?\s*\(\s*(?:(?:StatusCode|Status)::([A-Za-z_][A-Za-z0-9_]*)|(\d{3}))`)
+
+// rustResponseBuilderNumRe matches tide's `Response::builder(201)` /
+// `Response::new(404)` numeric status constructor (tide passes the status as the
+// first positional arg). Group 1 = the 3-digit literal.
+var rustResponseBuilderNumRe = regexp.MustCompile(`\bResponse::(?:builder|new)\s*\(\s*(\d{3})\b`)
 
 // rustHttpResponseBuilderRe matches the actix `HttpResponse::Created()` /
 // `HttpResponse::Ok()` … builder whose method names the status. Group 1 = the
@@ -232,6 +240,13 @@ func rustResolveResponseCodes(body string) rustRespCodesVerdict {
 		}
 	}
 
+	// tide Response::builder(NNN) / Response::new(NNN) positional status.
+	for _, m := range rustResponseBuilderNumRe.FindAllStringSubmatch(body, -1) {
+		if c, err := strconv.Atoi(m[1]); err == nil {
+			v.add(c, "Response::builder()")
+		}
+	}
+
 	// .status(StatusCode::X) / .status(404) setters.
 	for _, m := range rustStatusSetterRe.FindAllStringSubmatch(body, -1) {
 		if m[1] != "" {
@@ -323,9 +338,13 @@ func (e *rustEndpointResponseCodesExtractor) Extract(ctx context.Context, file e
 	}
 	src := string(file.Content)
 
-	// Fast guard: a status-code surface must mention a status idiom.
+	// Fast guard: a status-code surface must mention a status idiom. Includes
+	// the minor-framework idioms (#5018): `.status_code(` (salvo), `.set_status(`
+	// (poem/tide), and tide's `Response::builder(NNN)` positional status.
 	if !strings.Contains(src, "StatusCode") && !strings.Contains(src, "Status::") &&
-		!strings.Contains(src, "HttpResponse::") && !strings.Contains(src, ".status(") {
+		!strings.Contains(src, "HttpResponse::") && !strings.Contains(src, ".status(") &&
+		!strings.Contains(src, ".status_code(") && !strings.Contains(src, ".set_status(") &&
+		!strings.Contains(src, "Response::builder(") && !strings.Contains(src, "Response::new(") {
 		return nil, nil
 	}
 
@@ -347,6 +366,12 @@ func (e *rustEndpointResponseCodesExtractor) Extract(ctx context.Context, file e
 		add(ent)
 	}
 	for _, ent := range e.extractMacroFramework(src, file, "rocket") {
+		add(ent)
+	}
+	// #5018 — remaining handler-named HTTP frameworks. Each re-runs its producer
+	// extractor's route regexes and attaches the resolved verdict to the handler
+	// the route names (same shared StatusCode table + handler→verdict map as axum).
+	for _, ent := range e.extractHandlerNamed(src, file) {
 		add(ent)
 	}
 
@@ -520,4 +545,151 @@ func rustRespBodyWindow(src string, bodyStart int) string {
 		window = window[:loc[0]]
 	}
 	return window
+}
+
+// --- #5018: remaining handler-named HTTP frameworks ---------------------------
+//
+// poem / warp / tide / gotham / salvo all attribute a route to a named handler
+// function whose body lives ELSEWHERE in the file (exactly the axum situation).
+// The recipe is therefore identical to extractAxum: build a handler→verdict map
+// from every fn body once, then re-run each framework's PRODUCER route regexes
+// (the ones in minor_fw_routing.go) and stamp the verdict onto the routes that
+// name a resolving handler. Reusing the producer regexes guarantees the emitted
+// Name (`METHOD path`) merges onto the plain producer route op by Name.
+//
+// Per-framework status idioms (all flow through rustResolveResponseCodes):
+//
+//	poem   — `Response::builder().status(StatusCode::X)`, a bare `StatusCode::X`
+//	         return, or `.set_status(...)`. (poem re-exports http::StatusCode.)
+//	warp   — `warp::reply::with_status(reply, StatusCode::CREATED)` — the bare
+//	         StatusCode::X enum ref in the handler body is resolved.
+//	tide   — `Response::builder(201)` / `Response::new(404)` positional status,
+//	         or `resp.set_status(201)`.
+//	gotham — a `(StatusCode::X, body)` create_response / bare StatusCode::X.
+//	salvo  — `res.status_code(StatusCode::CREATED)`.
+//
+// hyper (raw match-arm dispatch, no named handler) and tower (no HTTP routes)
+// are DEFERRED — see the follow-up ticket. Honest-partial + no-fabrication hold:
+// a route whose handler resolves no literal status is left to the producer.
+func (e *rustEndpointResponseCodesExtractor) extractHandlerNamed(src string, file extractor.FileInput) []types.EntityRecord {
+	// Build handler-name → verdict from every fn body once (shared across all
+	// frameworks below — a handler is resolved the same way regardless of which
+	// framework's route happens to name it).
+	handlerCodes := map[string]rustRespCodesVerdict{}
+	for _, fm := range rustDepFnRe.FindAllStringSubmatchIndex(src, -1) {
+		name := src[fm[2]:fm[3]]
+		body := rustRespBodyWindow(src, fm[1])
+		if v := rustResolveResponseCodes(body); len(v.codes) > 0 {
+			handlerCodes[name] = v
+		}
+	}
+	if len(handlerCodes) == 0 {
+		return nil
+	}
+
+	var out []types.EntityRecord
+	seen := make(map[string]bool)
+	// emit stamps one endpoint op carrying the verdict for `handler`, keyed by
+	// the producer's `METHOD path` Name so it merges. No-op when the handler had
+	// no resolvable literal status (honest-partial).
+	emit := func(framework, method, path, handler string, off int) {
+		verdict, ok := handlerCodes[handler]
+		if !ok {
+			return
+		}
+		name := method + " " + path
+		if seen[name] {
+			return
+		}
+		seen[name] = true
+		ent := makeEntity(name, "SCOPE.Operation", "endpoint", file.Path, file.Language, lineOf(src, off))
+		setProps(&ent, "framework", framework,
+			"provenance", "INFERRED_FROM_"+strings.ToUpper(framework)+"_RESPONSE_CODES",
+			"http_method", method, "route_pattern", path, "handler_name", handler)
+		rustStampResponseCodes(&ent, verdict)
+		out = append(out, ent)
+	}
+
+	// poem — `.at("/path", get(handler).post(h2))`.
+	if strings.Contains(src, ".at") {
+		for _, m := range rePoemAt.FindAllStringSubmatchIndex(src, -1) {
+			path := rustNormalizePath(src[m[2]:m[3]])
+			methodRouter := src[m[4]:m[5]]
+			for _, vm := range rePoemVerb.FindAllStringSubmatch(methodRouter, -1) {
+				emit("poem", strings.ToUpper(vm[1]), path, vm[2], m[0])
+			}
+		}
+	}
+
+	// tide — `app.at("/path").get(a).post(b)`.
+	if strings.Contains(src, ".at") {
+		for _, m := range reTideAt.FindAllStringSubmatchIndex(src, -1) {
+			path := rustNormalizePath(src[m[2]:m[3]])
+			verbChain := src[m[4]:m[5]]
+			for _, vm := range reTideVerb.FindAllStringSubmatch(verbChain, -1) {
+				emit("tide", strings.ToUpper(vm[1]), path, vm[2], m[0])
+			}
+		}
+	}
+
+	// gotham — `route.get("/path").to(handler)` and `.associate("/p", |a| {…})`.
+	if strings.Contains(src, "route.") || strings.Contains(src, ".associate") {
+		for _, m := range reGothamRoute.FindAllStringSubmatchIndex(src, -1) {
+			emit("gotham", strings.ToUpper(src[m[2]:m[3]]), rustNormalizePath(src[m[4]:m[5]]), src[m[6]:m[7]], m[0])
+		}
+		for _, m := range reGothamAssociate.FindAllStringSubmatchIndex(src, -1) {
+			path := rustNormalizePath(src[m[2]:m[3]])
+			body := src[m[4]:m[5]]
+			for _, vm := range reGothamAssocVerb.FindAllStringSubmatch(body, -1) {
+				emit("gotham", strings.ToUpper(vm[1]), path, vm[2], m[0])
+			}
+		}
+	}
+
+	// salvo — `Router::with_path("p").get(handler)` verb chains. Mirrors the
+	// producer path composition (with_path prefix + optional .path segment).
+	if strings.Contains(src, "Router") || strings.Contains(src, "router") {
+		for _, m := range reSalvoPath.FindAllStringSubmatchIndex(src, -1) {
+			var withPath, dotPath string
+			if m[2] >= 0 {
+				withPath = rustNormalizePath(src[m[2]:m[3]])
+			}
+			if m[4] >= 0 {
+				dotPath = rustNormalizePath(src[m[4]:m[5]])
+			}
+			path := rustJoinPaths(withPath, dotPath)
+			if path != "" && !strings.HasPrefix(path, "/") {
+				path = "/" + path
+			}
+			verbChain := src[m[6]:m[7]]
+			for _, vm := range reSalvoVerb.FindAllStringSubmatch(verbChain, -1) {
+				emit("salvo", strings.ToUpper(vm[1]), path, vm[2], m[0])
+			}
+		}
+	}
+
+	// warp — filter chain `warp::path...(...).and_then(handler)`/`.map(handler)`.
+	// Path/method recovered from the chain blob exactly as the producer does.
+	if strings.Contains(src, "warp::") {
+		for _, m := range reWarpChain.FindAllStringSubmatchIndex(src, -1) {
+			blob := src[m[0]:m[1]]
+			handler := src[m[2]:m[3]]
+			method := "GET"
+			if mm := reWarpChainMethod.FindStringSubmatch(blob); mm != nil {
+				method = strings.ToUpper(mm[1])
+			}
+			path := ""
+			if pm := reWarpPathMacroIn.FindStringSubmatch(blob); pm != nil {
+				path = normWarpPath(pm[1])
+			} else if pf := reWarpPathFn.FindStringSubmatch(blob); pf != nil {
+				path = "/" + strings.Trim(pf[1], "/")
+			}
+			if path == "" {
+				continue
+			}
+			emit("warp", method, path, handler, m[0])
+		}
+	}
+
+	return out
 }
