@@ -14,18 +14,35 @@ package rust
 //     (native_module_imports: native module usage detection)
 //   - WindowBuilder / WebviewWindow creation → SCOPE.Component/renderer_window
 //
+// IPC topology edges (#5023, follow-up from #4965):
+//
+//   - generate_handler![a, b] → CALLS edge from the SCOPE.Component
+//     (ipc_handler_registration) to each registered SCOPE.Operation
+//     (tauri:command:<name>). This is the in-binary half of the IPC contract:
+//     the registration wires every command that the frontend `invoke("name")`
+//     can reach. The frontend (TS) `invoke(...)` side is cross-language /
+//     cross-repo and is deferred to a follow-up.
+//   - app.emit("evt", ..) / window.emit("evt", ..) / emit_all("evt", ..) →
+//     PUBLISHES_TO a synthetic SCOPE.Datastore(ipc_event) channel keyed by the
+//     literal event name (tauri:event:<name>).
+//   - app.listen("evt", ..) / window.listen("evt", ..) / listen_global("evt") →
+//     SUBSCRIBES_TO the same synthetic ipc_event channel.
+//
 // Honesty:
 //
 //	partial — heuristic regex match on source text. We detect the IPC command
-//	registration surface and main/renderer split at the file level but cannot
-//	perform cross-file call-graph analysis to fully verify the IPC contract.
-//	Fixtures prove the detection surface.
+//	registration surface, the registration→command CALLS contract, the
+//	emit/listen event-channel pub/sub topology, and main/renderer split. We do
+//	NOT resolve the TS-side `invoke("cmd")` caller (cross-language) nor
+//	dynamic / non-literal event names. Fixtures prove the detection surface.
 //
 // Issue #3267 — lang.rust.framework.tauri Process/Native cells.
+// Issue #5023 — Tauri IPC commands + emit/listen events.
 
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -92,6 +109,27 @@ var (
 	reTauriManager = regexp.MustCompile(
 		`tauri::Manager|AppHandle|tauri::AppHandle`,
 	)
+
+	// app.emit("evt", ..) / window.emit_all("evt", ..) / handle.emit_to(.., "evt", ..)
+	// Event-publish sites. We capture the FIRST string-literal argument as the
+	// event name. emit_to takes a target label first, so its event name is the
+	// second literal — handled by a dedicated pattern below.
+	reTauriEmit = regexp.MustCompile(
+		`\.\s*(?:emit|emit_all)\s*\(\s*"([^"]+)"`,
+	)
+	// emit_to("target", "evt", ..) — event name is the SECOND string literal.
+	reTauriEmitTo = regexp.MustCompile(
+		`\.\s*emit_to\s*\(\s*[^,]+,\s*"([^"]+)"`,
+	)
+
+	// app.listen("evt", ..) / window.listen_global("evt", ..) / once("evt", ..)
+	// Event-subscribe sites. First string-literal argument is the event name.
+	reTauriListen = regexp.MustCompile(
+		`\.\s*(?:listen|listen_global|once)\s*\(\s*"([^"]+)"`,
+	)
+
+	// A bare Rust identifier (validates a generate_handler! command entry).
+	reIdent = regexp.MustCompile(`^[A-Za-z_]\w*$`)
 )
 
 // ---------------------------------------------------------------------------
@@ -161,6 +199,33 @@ func (e *tauriExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 			"handler_list", handlerList,
 			"provenance", "INFERRED_FROM_TAURI_GENERATE_HANDLER",
 		)
+		// CALLS edge: the registration wires every listed command. ToID is the
+		// stable tauri:command:<name> token, the same Name the #[tauri::command]
+		// entity carries, so the linker joins registration → command in-file and
+		// a future TS-side invoke("name") can target the same command surface.
+		for _, raw := range strings.Split(handlerList, ",") {
+			cmd := strings.TrimSpace(raw)
+			// generate_handler! entries may be path-qualified (commands::greet)
+			// or generic-suffixed; take the final ident segment.
+			if i := strings.LastIndex(cmd, "::"); i >= 0 {
+				cmd = cmd[i+2:]
+			}
+			cmd = strings.TrimSpace(cmd)
+			if cmd == "" || !reIdent.MatchString(cmd) {
+				continue
+			}
+			ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+				FromID: "tauri:generate_handler",
+				ToID:   "tauri:command:" + cmd,
+				Kind:   string(types.RelationshipKindCalls),
+				Properties: map[string]string{
+					"framework":    "tauri",
+					"ipc":          "command",
+					"command_name": cmd,
+					"via":          "INFERRED_FROM_TAURI_GENERATE_HANDLER",
+				},
+			})
+		}
 		add(ent)
 	}
 
@@ -198,6 +263,66 @@ func (e *tauriExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		)
 		add(ent)
 	}
+
+	// -----------------------------------------------------------------------
+	// 3b. ipc_extraction — emit/listen event channel pub/sub topology
+	// -----------------------------------------------------------------------
+	// Each distinct literal event name becomes one synthetic SCOPE.Datastore
+	// (ipc_event) channel node, keyed tauri:event:<name>. emit sites attach a
+	// PUBLISHES_TO edge to it; listen sites attach a SUBSCRIBES_TO edge. The
+	// shared channel node lets the global linker join producer ↔ consumer even
+	// across files, mirroring the redis pub/sub channel modelling.
+	emittedChannel := make(map[string]bool)
+	ensureChannel := func(evt string, line int) {
+		if emittedChannel[evt] {
+			return
+		}
+		emittedChannel[evt] = true
+		ch := makeEntity("tauri:event:"+evt, "SCOPE.Datastore", "ipc_event",
+			file.Path, file.Language, line)
+		setProps(&ch,
+			"framework", "tauri",
+			"event_name", evt,
+			"channel", evt,
+			"provenance", "INFERRED_FROM_TAURI_EVENT",
+		)
+		add(ch)
+	}
+
+	emitEventEdge := func(re *regexp.Regexp, kind, role, provenance string) {
+		for _, m := range re.FindAllStringSubmatchIndex(src, -1) {
+			evt := src[m[2]:m[3]]
+			line := lineOf(src, m[0])
+			ensureChannel(evt, line)
+			owner := makeEntity("tauri:"+role+":"+evt, "SCOPE.Operation", "ipc_event_"+role,
+				file.Path, file.Language, line)
+			setProps(&owner,
+				"framework", "tauri",
+				"event_name", evt,
+				"ipc_role", role,
+				"provenance", provenance,
+			)
+			owner.Relationships = append(owner.Relationships, types.RelationshipRecord{
+				FromID: owner.Name,
+				ToID:   "tauri:event:" + evt,
+				Kind:   kind,
+				Properties: map[string]string{
+					"framework":  "tauri",
+					"event_name": evt,
+					"channel":    evt,
+					"via":        provenance,
+				},
+			})
+			add(owner)
+		}
+	}
+
+	emitEventEdge(reTauriEmit, string(types.RelationshipKindPublishesTo),
+		"publish", "INFERRED_FROM_TAURI_EMIT")
+	emitEventEdge(reTauriEmitTo, string(types.RelationshipKindPublishesTo),
+		"publish", "INFERRED_FROM_TAURI_EMIT_TO")
+	emitEventEdge(reTauriListen, string(types.RelationshipKindSubscribesTo),
+		"subscribe", "INFERRED_FROM_TAURI_LISTEN")
 
 	// -----------------------------------------------------------------------
 	// 4. native_module_imports — tauri::api::* usage

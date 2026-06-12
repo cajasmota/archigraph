@@ -14,7 +14,19 @@ async fn greet(name: String) -> String {
 fn read_file(path: String, app: AppHandle) -> Result<String, String> {
     let base = tauri::api::path::app_data_dir(&app.config())
         .ok_or("no app data dir")?;
+    // Publish a progress event back to the renderer.
+    app.emit_all("file-read-progress", 50).unwrap();
     Ok(format!("{:?}", base.join(path)))
+}
+
+/// Background worker that emits and listens to IPC events.
+fn wire_events(app: &AppHandle) {
+    // Event-publish site.
+    app.emit("backend-ready", ()).unwrap();
+    // Event-subscribe site (renderer → backend).
+    app.listen("frontend-command", move |event| {
+        println!("got event: {:?}", event.payload());
+    });
 }
 
 /// Main entry point — Rust backend (main process)
