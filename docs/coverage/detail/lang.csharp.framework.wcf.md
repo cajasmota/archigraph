@@ -24,7 +24,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Client codegen | 🔴 `missing` | — | 4968 | — | — |
+| Client codegen | 🟢 `partial` | — | 5004 | `internal/custom/csharp/wcf.go`<br>`internal/custom/csharp/wcf_test.go` | WCF client proxies -> SCOPE.Component/client_codegen (mirrors grpc_net.go): new ChannelFactory<IContract>(...) -> channel_factory:<Contract> with a USES edge -> contract:<Contract>; class XxxClient : ClientBase<IContract> -> client_base:<Name> + USES -> contract:<Contract>; new XxxClient(...) -> client:<Name> (common non-proxy *Client types like HttpClient excluded). Honest-partial: App.config/code binding address+mode props, channelFactory.CreateChannel() call-site attribution, and [FaultContract] error_flow deferred (#5004). |
 
 ### Transport
 

@@ -146,6 +146,105 @@ app.UseServiceModel(b =>
 	}
 }
 
+// ---------------------------------------------------------------------------
+// WCF — client proxy / client_codegen (#5004)
+// ---------------------------------------------------------------------------
+
+func TestWCFChannelFactoryClientProxy(t *testing.T) {
+	src := `
+using System.ServiceModel;
+
+class OrderClient
+{
+    public void Run()
+    {
+        var factory = new ChannelFactory<IOrderService>(new BasicHttpBinding(), "http://host/order");
+        var channel = factory.CreateChannel();
+        channel.GetOrder(1);
+    }
+}
+`
+	ents := extractFull(t, "custom_csharp_wcf", fi("OrderClient.cs", "csharp", src))
+
+	proxy := findEntity(ents, "channel_factory:IOrderService")
+	if proxy == nil {
+		t.Fatal("expected client_codegen channel_factory:IOrderService from new ChannelFactory<IOrderService>()")
+	}
+	if proxy.Kind != "SCOPE.Component" || proxy.Subtype != "client_codegen" {
+		t.Errorf("expected SCOPE.Component/client_codegen, got %s/%s", proxy.Kind, proxy.Subtype)
+	}
+	if proxy.Properties["contract_type"] != "IOrderService" {
+		t.Errorf("expected contract_type=IOrderService, got %q", proxy.Properties["contract_type"])
+	}
+	foundUses := false
+	for _, r := range proxy.Relationships {
+		if r.Kind == "USES" && r.ToID == "contract:IOrderService" {
+			foundUses = true
+		}
+	}
+	if !foundUses {
+		t.Error("expected USES edge -> contract:IOrderService from ChannelFactory proxy")
+	}
+}
+
+func TestWCFClientBaseProxy(t *testing.T) {
+	src := `
+using System.ServiceModel;
+
+public partial class OrderServiceClient : ClientBase<IOrderService>, IOrderService
+{
+    public Order GetOrder(int id) => Channel.GetOrder(id);
+}
+`
+	ents := extractFull(t, "custom_csharp_wcf", fi("OrderServiceClient.cs", "csharp", src))
+
+	proxy := findEntity(ents, "client_base:OrderServiceClient")
+	if proxy == nil {
+		t.Fatal("expected client_codegen client_base:OrderServiceClient from class : ClientBase<IOrderService>")
+	}
+	if proxy.Kind != "SCOPE.Component" || proxy.Subtype != "client_codegen" {
+		t.Errorf("expected SCOPE.Component/client_codegen, got %s/%s", proxy.Kind, proxy.Subtype)
+	}
+	if proxy.Properties["contract_type"] != "IOrderService" {
+		t.Errorf("expected contract_type=IOrderService, got %q", proxy.Properties["contract_type"])
+	}
+	foundUses := false
+	for _, r := range proxy.Relationships {
+		if r.Kind == "USES" && r.ToID == "contract:IOrderService" {
+			foundUses = true
+		}
+	}
+	if !foundUses {
+		t.Error("expected USES edge -> contract:IOrderService from ClientBase proxy class")
+	}
+}
+
+func TestWCFClientCtorAndExclusions(t *testing.T) {
+	src := `
+using System.ServiceModel;
+using System.Net.Http;
+
+public partial class OrderServiceClient : ClientBase<IOrderService> {}
+
+class Caller
+{
+    void Run()
+    {
+        var proxy = new OrderServiceClient();
+        var http = new HttpClient();
+    }
+}
+`
+	ents := extractFull(t, "custom_csharp_wcf", fi("Caller.cs", "csharp", src))
+
+	if findEntity(ents, "client:OrderServiceClient") == nil {
+		t.Error("expected client:OrderServiceClient from new OrderServiceClient()")
+	}
+	if findEntity(ents, "client:HttpClient") != nil {
+		t.Error("HttpClient must be excluded from WCF client_codegen proxies")
+	}
+}
+
 func TestWCFNoMatch(t *testing.T) {
 	src := `namespace MyApp { class Helper { public void Run() {} } }`
 	ents := extract(t, "custom_csharp_wcf", fi("Helper.cs", "csharp", src))

@@ -22,8 +22,18 @@
 //	  builder.Services.AddServiceModelServices()/AddServiceModelWebServices()
 //	  (CoreWCF) emitted as SCOPE.Pattern/transport_binding.
 //
+//	Codegen/client_codegen (#5004):
+//	  WCF client proxies emitted as SCOPE.Component/client_codegen, mirroring the
+//	  grpc_net.go client surface. Three idioms are recognised:
+//	    - new ChannelFactory<IContract>(...) — the factory carries a USES edge to
+//	      the consumed service contract (contract:<IContract>).
+//	    - class XxxClient : ClientBase<IContract> — a generated proxy class, with
+//	      a USES edge to its contract type argument.
+//	    - new XxxClient(...) — instantiation of a generated ClientBase proxy.
+//	  These are the WCF analogue of an outbound RPC call into a [ServiceContract].
+//
 // Registration key: "custom_csharp_wcf"
-// Issue #4968.
+// Issues #4968, #5004.
 package csharp
 
 import (
@@ -90,6 +100,26 @@ var (
 	reWCFAddServiceEndpoint = regexp.MustCompile(
 		`\.AddServiceEndpoint\s*<\s*(\w+)\s*,\s*(\w+)\s*>`,
 	)
+
+	// new ChannelFactory<IContract>(...) — the canonical WCF client proxy
+	// factory. Captures the consumed service-contract type argument. The leaf
+	// type is taken so qualified names (Foo.IBar) normalise to IBar.
+	reWCFChannelFactory = regexp.MustCompile(
+		`new\s+ChannelFactory\s*<\s*([\w.]+)\s*>`,
+	)
+
+	// class XxxClient : ClientBase<IContract> — a generated WCF client proxy
+	// class (svcutil/Add Service Reference output). Captures the proxy class name
+	// and its contract type argument.
+	reWCFClientBase = regexp.MustCompile(
+		`(?m)class\s+(\w+)\s*:\s*ClientBase\s*<\s*([\w.]+)\s*>`,
+	)
+
+	// new XxxClient(...) — instantiation of a generated proxy whose name ends in
+	// Client. Cheap heuristic mirroring grpc_net.go's reGRPCClientCtor.
+	reWCFClientCtor = regexp.MustCompile(
+		`new\s+([\w.]*Client)\s*\(`,
+	)
 )
 
 // ---------------------------------------------------------------------------
@@ -116,9 +146,10 @@ func (e *wcfExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 
 	src := string(file.Content)
 
-	// Cheap gate: only WCF files carry these attributes / host types.
+	// Cheap gate: only WCF files carry these attributes / host types / client
+	// proxy idioms.
 	if !regexpAny(src, "[ServiceContract", "[OperationContract", "[DataContract",
-		"ServiceHost", "AddServiceModel") {
+		"ServiceHost", "AddServiceModel", "ChannelFactory", "ClientBase") {
 		return nil, nil
 	}
 
@@ -210,8 +241,93 @@ func (e *wcfExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		add(ent)
 	}
 
+	// -------------------------------------------------------------------------
+	// Codegen/client_codegen — outbound WCF client proxies (#5004)
+	// -------------------------------------------------------------------------
+
+	// new ChannelFactory<IContract>(...) — channel-factory proxy. USES the
+	// consumed service contract, the WCF analogue of an outbound RPC call.
+	for _, m := range reWCFChannelFactory.FindAllStringSubmatchIndex(src, -1) {
+		contract := leafType(src[m[2]:m[3]])
+		if contract == "" {
+			continue
+		}
+		line := lineOf(src, m[0])
+		ent := makeEntity("channel_factory:"+contract, "SCOPE.Component", "client_codegen", file.Path, "csharp", line)
+		setProps(&ent, "framework", "wcf", "provenance", "INFERRED_FROM_CHANNEL_FACTORY",
+			"contract_type", contract, "proxy_kind", "channel_factory")
+		ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+			ToID: "contract:" + contract,
+			Kind: string(types.RelationshipKindUses),
+			Properties: map[string]string{
+				"contract_type": contract,
+				"framework":     "wcf",
+				"proxy_kind":    "channel_factory",
+				"line":          itoa(line),
+			},
+		})
+		add(ent)
+	}
+
+	// class XxxClient : ClientBase<IContract> — generated proxy class. USES the
+	// contract type argument it proxies.
+	for _, m := range reWCFClientBase.FindAllStringSubmatchIndex(src, -1) {
+		clientName := src[m[2]:m[3]]
+		contract := leafType(src[m[4]:m[5]])
+		line := lineOf(src, m[0])
+		ent := makeEntity("client_base:"+clientName, "SCOPE.Component", "client_codegen", file.Path, "csharp", line)
+		setProps(&ent, "framework", "wcf", "provenance", "INFERRED_FROM_CLIENT_BASE",
+			"client_class", clientName, "contract_type", contract, "proxy_kind", "client_base")
+		if contract != "" {
+			ent.Relationships = append(ent.Relationships, types.RelationshipRecord{
+				ToID: "contract:" + contract,
+				Kind: string(types.RelationshipKindUses),
+				Properties: map[string]string{
+					"client_class":  clientName,
+					"contract_type": contract,
+					"framework":     "wcf",
+					"proxy_kind":    "client_base",
+					"line":          itoa(line),
+				},
+			})
+		}
+		add(ent)
+	}
+
+	// new XxxClient(...) — instantiation of a generated proxy. Skip the
+	// ChannelFactory ctor (handled above) which also ends in "...Factory", not
+	// "...Client", so no overlap there.
+	for _, m := range reWCFClientCtor.FindAllStringSubmatchIndex(src, -1) {
+		clientName := leafType(src[m[2]:m[3]])
+		if clientName == "" || wcfNonProxyClients[clientName] {
+			continue
+		}
+		line := lineOf(src, m[0])
+		ent := makeEntity("client:"+clientName, "SCOPE.Component", "client_codegen", file.Path, "csharp", line)
+		setProps(&ent, "framework", "wcf", "provenance", "INFERRED_FROM_CLIENT_CTOR",
+			"client_class", clientName, "proxy_kind", "client_ctor")
+		add(ent)
+	}
+
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
 	return entities, nil
+}
+
+// wcfNonProxyClients are common .NET client types that end in "Client" but are
+// not WCF generated proxies — excluded from the new XxxClient(...) heuristic so
+// the client_codegen surface stays WCF-specific.
+var wcfNonProxyClients = map[string]bool{
+	"HttpClient":        true,
+	"WebClient":         true,
+	"TcpClient":         true,
+	"UdpClient":         true,
+	"SmtpClient":        true,
+	"GrpcClient":        true,
+	"HttpMessageClient": true,
+	"RestClient":        true,
+	"BlobClient":        true,
+	"QueueClient":       true,
+	"ServiceBusClient":  true,
 }
 
 // regexpAny reports whether src contains any of the literal substrings. Used as
