@@ -50,6 +50,24 @@ var (
 	reRailsActiveJobPerform = regexp.MustCompile(
 		`(?m)^\s*def\s+(perform)\s*\(`,
 	)
+	// ActiveJob job class declaration: `class FooJob < ApplicationJob` or
+	// `class FooJob < ActiveJob::Base`. ApplicationJob is the Rails-generated
+	// base; ActiveJob::Base is the framework primitive.
+	reRailsJobClass = regexp.MustCompile(
+		`(?m)^\s*class\s+([A-Z][A-Za-z0-9_:]*)\s*<\s*(ApplicationJob|ActiveJob::Base)\b`,
+	)
+	// `queue_as :mailers` / `queue_as "mailers"` queue attribution inside a job.
+	reRailsQueueAs = regexp.MustCompile(
+		`(?m)^\s*queue_as\s+(?::([a-z_][a-z0-9_]*)|['"]([^'"]+)['"])`,
+	)
+	// ActiveJob producer dispatch: `FooJob.perform_later(args)` /
+	// `FooJob.perform_now(args)` / `FooJob.set(...).perform_later`. The leading
+	// receiver is a CONSTANT (job class), distinguishing it from Sidekiq's
+	// `worker.perform_async` (lowercase receiver, handled by the sidekiq
+	// extractor).
+	reRailsJobDispatch = regexp.MustCompile(
+		`(?m)\b([A-Z][A-Za-z0-9_:]*)(?:\.set\([^)]*\))?\.(perform_later|perform_now)\b`,
+	)
 	reRailsMailerMethod = regexp.MustCompile(
 		`(?m)^\s*def\s+([a-z_]+)\s*(?:\()?`,
 	)
@@ -200,10 +218,52 @@ func (e *railsExtractor) Extract(ctx context.Context, file extractor.FileInput) 
 		add(ent)
 	}
 
-	// 9. ActiveJob perform -> SCOPE.Operation/function
+	// 9a. ActiveJob job class declaration -> SCOPE.Service (the queue consumer).
+	//     Capture an optional `queue_as` for queue attribution so the graph can
+	//     answer "which jobs run on the :mailers queue?".
+	jobClassMatches := reRailsJobClass.FindAllStringSubmatchIndex(src, -1)
+	queueAs := ""
+	if qm := reRailsQueueAs.FindStringSubmatch(src); qm != nil {
+		if qm[1] != "" {
+			queueAs = qm[1]
+		} else {
+			queueAs = qm[2]
+		}
+	}
+	for _, m := range jobClassMatches {
+		name := src[m[2]:m[3]]
+		base := src[m[4]:m[5]]
+		ent := makeEntity(name, "SCOPE.Service", "", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "activejob", "provenance", "INFERRED_FROM_ACTIVEJOB_CLASS",
+			"job_base", base)
+		if queueAs != "" {
+			setProps(&ent, "queue", queueAs)
+		}
+		add(ent)
+	}
+
+	// 9b. ActiveJob perform -> SCOPE.Operation/function (the consumer handler).
 	for _, m := range reRailsActiveJobPerform.FindAllStringSubmatchIndex(src, -1) {
 		ent := makeEntity("perform", "SCOPE.Operation", "function", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "rails", "provenance", "INFERRED_FROM_RAILS_JOB_PERFORM")
+		if queueAs != "" && len(jobClassMatches) > 0 {
+			setProps(&ent, "queue", queueAs)
+		}
+		add(ent)
+	}
+
+	// 9c. ActiveJob producer dispatch -> SCOPE.Operation/function. A
+	//     `FooJob.perform_later(args)` enqueue is the producer side that was
+	//     previously entirely missing (only Sidekiq's lowercase-receiver
+	//     `perform_async` was modelled). The constant receiver names the target
+	//     job class so producer and consumer converge by name.
+	for _, m := range reRailsJobDispatch.FindAllStringSubmatchIndex(src, -1) {
+		jobClass := src[m[2]:m[3]]
+		dispatchMethod := src[m[4]:m[5]]
+		name := jobClass + "." + dispatchMethod
+		ent := makeEntity(name, "SCOPE.Operation", "function", file.Path, file.Language, lineOf(src, m[0]))
+		setProps(&ent, "framework", "activejob", "provenance", "INFERRED_FROM_ACTIVEJOB_DISPATCH",
+			"job_class", jobClass, "dispatch_method", dispatchMethod)
 		add(ent)
 	}
 
