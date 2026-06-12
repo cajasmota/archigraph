@@ -454,6 +454,284 @@ type recView struct {
 	rels            []types.RelationshipRecord
 }
 
+func viewsOf(ents []types.EntityRecord) []recView {
+	views := make([]recView, len(ents))
+	for i, en := range ents {
+		views[i] = recView{en.Name, en.Subtype, en.Kind, en.Properties, en.Relationships}
+	}
+	return views
+}
+
+func pickView(views []recView, name, sub string) *recView {
+	for i := range views {
+		if views[i].name == name && views[i].sub == sub {
+			return &views[i]
+		}
+	}
+	return nil
+}
+
+// --- Debby ORM (#5028) ------------------------------------------------------
+
+// TestNimDebbyORM_ModelTableColumns proves a plain Debby `object` registered via
+// a Debby db op synthesises model + table + column SCOPE.Schema entities
+// (framework=debby), an FK edge for a field typed as another registered model and
+// for an explicit {.fk.} pragma, and QUERIES edges for insert/get usage.
+func TestNimDebbyORM_ModelTableColumns(t *testing.T) {
+	src := `
+import debby/sqlite
+
+type
+  User = object
+    id: int
+    name: string
+    email: string
+
+  Post = object
+    id: int
+    title: string
+    author: User
+    authorId {.fk: User.}: int
+
+db.createTable(User)
+db.createTable(Post)
+discard db.insert(Post)
+discard db.get(User, 1)
+`
+	e, ok := extreg.Get("custom_nim_debby_orm")
+	if !ok {
+		t.Fatal("custom_nim_debby_orm not registered")
+	}
+	ents, err := e.Extract(context.Background(), fi("src/models.nim", "nim", src))
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	views := viewsOf(ents)
+	for _, en := range ents {
+		if en.Kind != "SCOPE.Schema" {
+			t.Errorf("unexpected kind %q for %q", en.Kind, en.Name)
+		}
+		if en.Properties["framework"] != "debby" {
+			t.Errorf("entity %q missing framework=debby", en.Name)
+		}
+	}
+
+	for _, m := range []string{"User", "Post"} {
+		if pickView(views, m, "model") == nil {
+			t.Errorf("expected SCOPE.Schema/model %q", m)
+		}
+		if pickView(views, m, "table") == nil {
+			t.Errorf("expected SCOPE.Schema/table %q", m)
+		}
+	}
+	for _, c := range []string{"id", "name", "email", "title", "author", "authorId"} {
+		if pickView(views, c, "column") == nil {
+			t.Errorf("expected SCOPE.Schema/column %q", c)
+		}
+	}
+
+	// FK edge for the model-typed field author -> User.
+	post := pickView(views, "Post", "model")
+	if post == nil {
+		t.Fatal("missing Post model")
+	}
+	fkTyped, fkPragma, postInsert := false, false, false
+	for _, r := range post.rels {
+		if r.Kind == "REFERENCES" && r.ToID == "User" && r.Properties["fk_field"] == "author" {
+			fkTyped = true
+		}
+		if r.Kind == "REFERENCES" && r.ToID == "User" && r.Properties["fk_field"] == "authorId" && r.Properties["fk_pragma"] == "true" {
+			fkPragma = true
+		}
+		if r.Kind == "QUERIES" && r.Properties["operation"] == "insert" {
+			postInsert = true
+		}
+	}
+	if !fkTyped {
+		t.Error("expected REFERENCES Post->User (fk_field=author)")
+	}
+	if !fkPragma {
+		t.Error("expected REFERENCES Post->User (fk_field=authorId, fk_pragma=true)")
+	}
+	if !postInsert {
+		t.Error("expected Post QUERIES insert")
+	}
+
+	// author column stamped foreign_key.
+	if c := pickView(views, "author", "column"); c == nil || c.props["foreign_key"] != "true" || c.props["fk_target"] != "User" {
+		t.Error("expected author column foreign_key=true fk_target=User")
+	}
+
+	// User got a get query edge.
+	user := pickView(views, "User", "model")
+	userGet := false
+	if user != nil {
+		for _, r := range user.rels {
+			if r.Kind == "QUERIES" && r.Properties["operation"] == "get" {
+				userGet = true
+			}
+		}
+	}
+	if !userGet {
+		t.Error("expected User QUERIES get")
+	}
+}
+
+// TestNimDebbyORM_UnregisteredObjectNoop proves a plain object that is never
+// registered/used with a Debby db op is NOT treated as a model.
+func TestNimDebbyORM_UnregisteredObjectNoop(t *testing.T) {
+	src := `
+import debby/sqlite
+
+type
+  User = object
+    id: int
+    name: string
+
+  Config = object
+    host: string
+
+db.createTable(User)
+`
+	e, _ := extreg.Get("custom_nim_debby_orm")
+	ents, _ := e.Extract(context.Background(), fi("src/models.nim", "nim", src))
+	for _, en := range ents {
+		if en.Name == "Config" {
+			t.Error("expected unregistered Config object to be ignored")
+		}
+	}
+	if pickView(viewsOf(ents), "User", "model") == nil {
+		t.Error("expected registered User to be a model")
+	}
+}
+
+// TestNimDebbyORM_NoDebbyNoop proves a file without Debby is ignored.
+func TestNimDebbyORM_NoDebbyNoop(t *testing.T) {
+	src := `
+type User = object
+  id: int
+`
+	e, _ := extreg.Get("custom_nim_debby_orm")
+	ents, _ := e.Extract(context.Background(), fi("src/models.nim", "nim", src))
+	if len(ents) != 0 {
+		t.Fatalf("expected no entities for a non-Debby file, got %d", len(ents))
+	}
+}
+
+// TestNimDebbyORM_WrongLanguageNoop gates on language=="nim".
+func TestNimDebbyORM_WrongLanguageNoop(t *testing.T) {
+	src := `import debby/sqlite
+type User = object
+  id: int
+db.createTable(User)`
+	e, _ := extreg.Get("custom_nim_debby_orm")
+	ents, _ := e.Extract(context.Background(), fi("src/models.nim", "go", src))
+	if len(ents) != 0 {
+		t.Fatalf("expected no entities for non-nim language, got %d", len(ents))
+	}
+}
+
+// --- ormin ORM (#5028) ------------------------------------------------------
+
+// TestNimOrminORM_ImportModel proves a Nim `importModel(DbBackend.x, "file")`
+// call yields a SCOPE.Schema/model_import entity stamping backend + model_file.
+func TestNimOrminORM_ImportModel(t *testing.T) {
+	src := `
+import ormin
+
+importModel(DbBackend.postgre, "model")
+`
+	e, ok := extreg.Get("custom_nim_ormin_orm")
+	if !ok {
+		t.Fatal("custom_nim_ormin_orm not registered")
+	}
+	ents, err := e.Extract(context.Background(), fi("src/db.nim", "nim", src))
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	imp := pickView(viewsOf(ents), "model", "model_import")
+	if imp == nil {
+		t.Fatal("expected SCOPE.Schema/model_import keyed by model file")
+	}
+	if imp.props["framework"] != "ormin" || imp.props["backend"] != "postgre" || imp.props["model_file"] != "model" {
+		t.Errorf("expected model_import framework=ormin backend=postgre model_file=model, got %+v", imp.props)
+	}
+}
+
+// TestNimOrminORM_SQLSchema proves an ormin SQL DSL `create table` file
+// synthesises table + column entities (framework=ormin), stamps column_type,
+// primary_key / not_null, and yields a REFERENCES edge for an inline
+// `references Other(col)` foreign key.
+func TestNimOrminORM_SQLSchema(t *testing.T) {
+	src := `
+create table User(
+  id integer primary key,
+  name string not null,
+  email string not null
+);
+
+create table Post(
+  id integer primary key,
+  title string not null,
+  author integer references User(id)
+);
+`
+	e, _ := extreg.Get("custom_nim_ormin_orm")
+	ents, err := e.Extract(context.Background(), fi("model.sql", "sql", src))
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	views := viewsOf(ents)
+	for _, en := range ents {
+		if en.Properties["framework"] != "ormin" {
+			t.Errorf("entity %q missing framework=ormin", en.Name)
+		}
+	}
+	for _, tbl := range []string{"User", "Post"} {
+		if pickView(views, tbl, "table") == nil {
+			t.Errorf("expected SCOPE.Schema/table %q", tbl)
+		}
+	}
+	if c := pickView(views, "name", "column"); c == nil || c.props["column_type"] != "string" || c.props["table"] != "User" || c.props["not_null"] != "true" {
+		t.Errorf("expected name column column_type=string not_null=true table=User, got %+v", c)
+	}
+	if c := pickView(views, "id", "column"); c == nil || c.props["primary_key"] != "true" {
+		t.Error("expected id column primary_key=true")
+	}
+	// FK column + edge.
+	fkCol := pickView(views, "author", "column")
+	if fkCol == nil || fkCol.props["foreign_key"] != "true" || fkCol.props["fk_target"] != "User" || fkCol.props["fk_column"] != "id" {
+		t.Errorf("expected author column foreign_key=true fk_target=User fk_column=id, got %+v", fkCol)
+	}
+	fkEdge := false
+	if pt := pickView(views, "Post", "table"); pt != nil {
+		for _, r := range pt.rels {
+			if r.Kind == "REFERENCES" && r.ToID == "User" && r.Properties["fk_field"] == "author" && r.Properties["references"] == "id" {
+				fkEdge = true
+			}
+		}
+	}
+	if !fkEdge {
+		t.Error("expected REFERENCES edge Post->User (fk_field=author, references=id)")
+	}
+}
+
+// TestNimOrminORM_NonSQLNoop proves a non-.sql file without importModel is
+// ignored, and a plain Nim file without ormin is ignored.
+func TestNimOrminORM_NonSQLNoop(t *testing.T) {
+	e, _ := extreg.Get("custom_nim_ormin_orm")
+	// A .sql file with no create table.
+	ents, _ := e.Extract(context.Background(), fi("data.sql", "sql", "select 1;"))
+	if len(ents) != 0 {
+		t.Fatalf("expected no entities for a non-DDL sql file, got %d", len(ents))
+	}
+	// A Nim file with no ormin import.
+	ents2, _ := e.Extract(context.Background(), fi("src/x.nim", "nim", "echo \"hi\""))
+	if len(ents2) != 0 {
+		t.Fatalf("expected no entities for a non-ormin nim file, got %d", len(ents2))
+	}
+}
+
 // TestNimNormORM_OptionWrappedFK proves an Option[Model]/seq[Model] field is
 // unwrapped and recognised as a foreign key.
 func TestNimNormORM_OptionWrappedFK(t *testing.T) {

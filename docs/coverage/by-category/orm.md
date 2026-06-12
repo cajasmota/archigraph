@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 168 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 1 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 19 · **kotlin**: 7 · **nim**: 2 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
+**Total**: 170 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 1 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 19 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
@@ -110,7 +110,9 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [kotlin](../by-language/kotlin.md) | [SQLDelight](../detail/lang.kotlin.orm.sqldelight.md) | 🟡 7/10 | |
 | [kotlin](../by-language/kotlin.md) | [Spring Data (Kotlin)](../detail/lang.kotlin.orm.spring-data.md) | 🟡 8/11 | |
 | [nim](../by-language/nim.md) | [Allographer (Nim query/schema builder)](../detail/lang.nim.orm.allographer.md) | 🟡 3/6 | |
+| [nim](../by-language/nim.md) | [Debby (Nim ORM)](../detail/lang.nim.orm.debby.md) | 🟡 5/9 | |
 | [nim](../by-language/nim.md) | [Norm (Nim ORM)](../detail/lang.nim.orm.norm.md) | 🟡 6/9 | |
+| [nim](../by-language/nim.md) | [ormin (Nim compile-time ORM)](../detail/lang.nim.orm.ormin.md) | 🟡 4/8 | |
 | [php](../by-language/php.md) | [AWS SDK DynamoDB (PHP)](../detail/lang.php.driver.dynamodb.md) | 🟡 1/4 | |
 | [php](../by-language/php.md) | [CycleORM](../detail/lang.php.orm.cycleorm.md) | 🟡 8/11 | |
 | [php](../by-language/php.md) | [Doctrine ORM](../detail/lang.php.orm.doctrine.md) | 🟡 8/11 | |
