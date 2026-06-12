@@ -301,6 +301,91 @@ func main() {
 }
 
 // ---------------------------------------------------------------------------
+// Go — asynq (hibiken/asynq) task queue (#4923)
+// ---------------------------------------------------------------------------
+
+func TestScheduledJobs_GoAsynq_HandlerAndEnqueueConverge(t *testing.T) {
+	src := `package main
+
+import "github.com/hibiken/asynq"
+
+func registerHandlers(mux *asynq.ServeMux) {
+    mux.HandleFunc("email:send", handleEmailSend)
+    mux.Handle("image:resize", asynq.HandlerFunc(handleResize))
+}
+
+func DispatchWelcomeEmail() error {
+    task := asynq.NewTask("email:send", payload)
+    _, err := client.Enqueue(task)
+    return err
+}
+`
+	ents, rels := runScheduledDetect(t, "go", "tasks.go", src)
+
+	jobs := scheduledJobsByFramework(ents, "asynq")
+	if len(jobs) != 2 {
+		t.Fatalf("expected 2 asynq ScheduledJob entities (email:send, image:resize), got %d", len(jobs))
+	}
+	byType := map[string]types.EntityRecord{}
+	for _, j := range jobs {
+		byType[j.Properties["task_type"]] = j
+	}
+	if _, ok := byType["email:send"]; !ok {
+		t.Fatalf("missing asynq job for task_type email:send")
+	}
+	if _, ok := byType["image:resize"]; !ok {
+		t.Fatalf("missing asynq job for task_type image:resize")
+	}
+
+	// TRIGGERS edge: HandleFunc handler is resolved to handleEmailSend.
+	trig := triggersEdges(rels)
+	foundTrigger := false
+	for _, e := range trig {
+		if e.ToID == "Function:handleEmailSend" && e.Properties["framework"] == "asynq" {
+			foundTrigger = true
+		}
+	}
+	if !foundTrigger {
+		t.Errorf("expected TRIGGERS edge asynq job -> Function:handleEmailSend, got %+v", trig)
+	}
+
+	// ENQUEUES edge: producer (asynq.NewTask) converges on the same task-type
+	// node from its enclosing function.
+	enq := enqueuesEdges(rels)
+	foundEnqueue := false
+	for _, e := range enq {
+		if e.ToID == scheduledJobKind+":asynq:email:send" &&
+			e.FromID == "SCOPE.Operation:DispatchWelcomeEmail" &&
+			e.Properties["framework"] == "asynq" {
+			foundEnqueue = true
+		}
+	}
+	if !foundEnqueue {
+		t.Errorf("expected ENQUEUES edge DispatchWelcomeEmail -> asynq:email:send, got %+v", enq)
+	}
+}
+
+func TestScheduledJobs_GoAsynq_NoPhantomWhenHandlerUnknown(t *testing.T) {
+	// A NewTask producer for a task type that has no HandleFunc registration in
+	// any indexed file must NOT emit a phantom ENQUEUES edge.
+	src := `package main
+
+import "github.com/hibiken/asynq"
+
+func Dispatch() {
+    task := asynq.NewTask("unregistered:type", nil)
+    client.Enqueue(task)
+}
+`
+	_, rels := runScheduledDetect(t, "go", "producer.go", src)
+	for _, e := range enqueuesEdges(rels) {
+		if e.Properties["framework"] == "asynq" {
+			t.Errorf("expected no asynq ENQUEUES edge for unregistered task type, got %+v", e)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Kubernetes CronJob YAML
 // ---------------------------------------------------------------------------
 

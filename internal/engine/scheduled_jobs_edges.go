@@ -137,6 +137,16 @@ func applyScheduledJobEdges(args DetectorPassArgs) DetectorPassResult {
 		synthesizeQuarkusScheduled(src, path, lang, emitJob)
 	case "go":
 		synthesizeGoCron(src, path, emitJob)
+		// #4923: asynq (hibiken/asynq) — the de-facto Redis-backed Go task
+		// queue. A `mux.HandleFunc("task:type", handler)` registration on an
+		// asynq.ServeMux IS the consumer: we emit a SCOPE.ScheduledJob keyed
+		// by the literal task type (stable across files) with a TRIGGERS edge
+		// to the handler. synthesizeGoAsynqEnqueueEdges then resolves
+		// `asynq.NewTask("task:type", ...)` producer sites — typically wrapped
+		// in a `client.Enqueue(...)` — to an ENQUEUES edge from the enclosing
+		// function, so producer and consumer converge on the task-type node.
+		synthesizeGoAsynq(src, path, emitJob)
+		relationships = synthesizeGoAsynqEnqueueEdges(src, seenJob, relationships)
 	case "ruby":
 		// #3700: Sidekiq worker jobs + sidekiq-cron scheduled jobs, plus
 		// ENQUEUES edges from `Worker.perform_async/in/at` dispatch sites to
@@ -806,6 +816,106 @@ func synthesizeSidekiqEnqueueEdges(
 				"pattern_type":    "sidekiq_enqueue_synthesis",
 				"worker_class":    workerClass,
 				"dispatch_method": src[idx[4]:idx[5]],
+			},
+		})
+	}
+	return relationships
+}
+
+// ---------------------------------------------------------------------------
+// Go — asynq (hibiken/asynq) task queue (#4923)
+// ---------------------------------------------------------------------------
+//
+// asynq is the de-facto Redis-backed background-job library for Go. Its
+// producer/consumer rendezvous is the literal *task type* string:
+//
+//	Consumer: mux.HandleFunc("email:send", handleEmail)            (registration)
+//	          mux.Handle("email:send", asynq.HandlerFunc(handle))   (registration)
+//	Producer: client.Enqueue(asynq.NewTask("email:send", payload)) (dispatch)
+//
+// We model the registered handler as a SCOPE.ScheduledJob entity keyed by the
+// task type (no path → stable across files so a NewTask producer in one file
+// resolves to the handler registered in another), with a TRIGGERS edge to the
+// handler function, and emit ENQUEUES edges from the enclosing function of each
+// asynq.NewTask producer site to that job. Same join shape as Ruby Sidekiq.
+
+// goAsynqJobID is the canonical job-entity ID for an asynq task type. Stable
+// across files (no path) so a NewTask producer resolves to the handler.
+func goAsynqJobID(taskType string) string {
+	return "asynq:" + taskType
+}
+
+// goAsynqHandleRe captures `mux.HandleFunc("type", handler)` and
+// `mux.Handle("type", ...)` registrations on an asynq ServeMux.
+// Group 1 = task type, group 2 = handler identifier (may be empty for
+// asynq.HandlerFunc(...) / inline wrappers).
+var goAsynqHandleRe = regexp.MustCompile(`\.Handle(?:Func)?\s*\(\s*"([^"\n\r]+)"\s*,\s*([\w.]+)?`)
+
+// goAsynqNewTaskRe captures `asynq.NewTask("type", ...)` producer sites.
+// Group 1 = task type.
+var goAsynqNewTaskRe = regexp.MustCompile(`asynq\.NewTask\s*\(\s*"([^"\n\r]+)"`)
+
+// synthesizeGoAsynq emits a SCOPE.ScheduledJob per asynq HandleFunc/Handle
+// registration with a TRIGGERS edge to the handler. Registers every job ID
+// into the caller's seenJob map (via emitJob) so the enqueue pass can resolve
+// NewTask producer sites to those IDs.
+func synthesizeGoAsynq(
+	src, path string,
+	emitJob func(jobID, handler, schedule, framework string, extra map[string]string),
+) {
+	if !strings.Contains(src, "asynq") {
+		return
+	}
+	for _, m := range goAsynqHandleRe.FindAllStringSubmatch(src, -1) {
+		taskType := m[1]
+		handler := m[2]
+		// asynq.HandlerFunc(...) / inline wrappers leave the handler ident
+		// unresolved — emit the job node without a TRIGGERS target (honest;
+		// the producer side still converges on the task-type node).
+		if handler == "asynq.HandlerFunc" || handler == "asynq" {
+			handler = ""
+		}
+		emitJob(goAsynqJobID(taskType), handler, "", "asynq", map[string]string{
+			"task_type": taskType,
+			"job_type":  "queue",
+		})
+	}
+}
+
+// synthesizeGoAsynqEnqueueEdges emits ENQUEUES edges from the enclosing Go
+// function of each `asynq.NewTask("type", ...)` producer site to the task-type
+// job entity. Only emits when the job ID is present in knownJobs (the seenJob
+// map) so a NewTask whose handler lives in an un-indexed file does not create a
+// phantom node. Dedupes on (caller, jobID).
+func synthesizeGoAsynqEnqueueEdges(
+	src string,
+	knownJobs map[string]bool,
+	relationships []types.RelationshipRecord,
+) []types.RelationshipRecord {
+	if !strings.Contains(src, "asynq.NewTask") {
+		return relationships
+	}
+	seenEdge := map[string]bool{}
+	for _, idx := range goAsynqNewTaskRe.FindAllStringSubmatchIndex(src, -1) {
+		taskType := src[idx[2]:idx[3]]
+		jobID := goAsynqJobID(taskType)
+		if !knownJobs[jobID] {
+			continue
+		}
+		caller := findEnclosingGoFunctionName(src, idx[0])
+		key := caller + "|" + jobID
+		if seenEdge[key] {
+			continue
+		}
+		seenEdge[key] = true
+		relationships = append(relationships, types.RelationshipRecord{
+			FromID: "SCOPE.Operation:" + caller,
+			ToID:   scheduledJobKind + ":" + jobID,
+			Kind:   string(types.RelationshipKindEnqueues),
+			Properties: map[string]string{
+				"framework":    "asynq",
+				"pattern_type": "asynq_enqueue_synthesis",
+				"task_type":    taskType,
 			},
 		})
 	}
