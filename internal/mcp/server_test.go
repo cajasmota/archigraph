@@ -615,6 +615,8 @@ func TestToolNameSurface(t *testing.T) {
 		"archigraph_response_shape_diff",
 		// #4822 on-demand per-function CFG (control-flow epic #4820 part b).
 		"archigraph_control_flow",
+		// #4893 tautological/oracle-blind spec detector (contract_test_effectiveness).
+		"archigraph_contract_test_effectiveness",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -715,8 +717,9 @@ func TestToolNameSurface(t *testing.T) {
 	// +1 archigraph_response_shape_diff (#4424 cross-group branch-aware response-shape parity).
 	// +1 archigraph_apply_doc_semantics (#4309 doc ingestion L2 apply step).
 	// +1 archigraph_control_flow (#4822 on-demand per-function CFG, control-flow epic #4820 part (b)).
-	if got := len(allRegisteredTools); got != 65 {
-		t.Errorf("expected 65 registered tools, got %d — update this count if tools are added/removed (added archigraph_control_flow #4822 on-demand CFG)", got)
+	// +1 archigraph_contract_test_effectiveness (#4893 tautological/oracle-blind spec detector).
+	if got := len(allRegisteredTools); got != 66 {
+		t.Errorf("expected 66 registered tools, got %d — update this count if tools are added/removed (added archigraph_contract_test_effectiveness #4893)", got)
 	}
 }
 
@@ -3223,7 +3226,7 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		// #2766 Phase 1B reachability + dead-code identification
 		"archigraph_dead_code": {"group": "g"},
 		// #2764 Phase 1A effect classification — entity_id required.
-		"archigraph_effects": {"group": "g", "entity_id": "DashboardScreen"},
+		"archigraph_effects":      {"group": "g", "entity_id": "DashboardScreen"},
 		"archigraph_control_flow": {"group": "g", "entity_id": "DashboardScreen"},
 		// deploy-9 caps surfacing — posture facets. entity_id optional (omitted
 		// here exercises the repo-wide scan path).
@@ -3252,8 +3255,9 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 		// test group "g"; with no endpoint definitions in this fixture the handler
 		// returns an empty-results payload, still exercising the wrapper +
 		// elapsed_ms trailer.
-		"archigraph_stub_detector":       {"group_v3": "g", "group_oracle": "g"},
-		"archigraph_response_shape_diff": {"group_oracle": "g", "group_v3": "g"},
+		"archigraph_stub_detector":               {"group_v3": "g", "group_oracle": "g"},
+		"archigraph_response_shape_diff":         {"group_oracle": "g", "group_v3": "g"},
+		"archigraph_contract_test_effectiveness": {"group": "g"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3298,8 +3302,8 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	}
 
 	tools := srv.MCP.ListTools()
-	if len(tools) != 65 {
-		t.Errorf("expected 65 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_control_flow #4822 on-demand CFG)", len(tools))
+	if len(tools) != 66 {
+		t.Errorf("expected 66 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_contract_test_effectiveness #4893)", len(tools))
 	}
 
 	for _, st := range tools {

@@ -678,6 +678,19 @@ func (s *Server) registerTools() {
 		mcpapi.WithString("group_v3", mcpapi.Required()),
 	), s.wrap("archigraph_response_shape_diff", s.handleResponseShapeDiff))
 
+	// #4893 (epic #4419) — contract-test EFFECTIVENESS / tautological-spec
+	// detector. The sibling of stub_detector on the SPEC side: flags test
+	// entities whose assertions are oracle-blind and false-green the parity gate
+	// (self-compare expect(x).toBe(x); constant-true expect(true).toBe(true);
+	// same-literal expected==actual; + a low-confidence no_golden_linkage
+	// advisory). Single-group (the spec/v3 group). Optional (undeclared per
+	// #1639): repo_filter, entity_id, only_ineffective.
+	s.MCP.AddTool(mcpapi.NewTool("archigraph_contract_test_effectiveness",
+		mcpapi.WithDescription("Tautological-spec detector: assertions that can never fail (oracle-blind)."),
+		mcpapi.WithAny("group"),
+		mcpapi.WithAny("cwd"),
+	), s.wrap("archigraph_contract_test_effectiveness", s.handleContractTestEffectiveness))
+
 	// #2772 — Phase 2B taint flow / security findings. Returns
 	// SecurityFinding records emitted by the taint-flow pass:
 	// source→...→sink paths through the CALLS graph that lack an

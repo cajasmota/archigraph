@@ -205,6 +205,12 @@ var intentionalGaps = []intentionalGap{
 	// group_oracle) ARE declared; endpoint narrows to one "VERB /path".
 	{"archigraph_stub_detector", "endpoint", "#4425 token ceiling pattern — optional single-endpoint filter"},
 
+	// archigraph_contract_test_effectiveness: optional narrowing args undeclared
+	// for token budget (#4893 / #1639 pattern). entity_id pins one spec;
+	// only_ineffective (default true) omits effective specs from the result.
+	{"archigraph_contract_test_effectiveness", "entity_id", "#4893 token ceiling pattern — optional single-spec filter"},
+	{"archigraph_contract_test_effectiveness", "only_ineffective", "#4893 token ceiling pattern — optional verdict filter (default true)"},
+
 	// archigraph_endpoint_posture: scan-mode pagination undeclared for token
 	// budget (#1639 pattern). entity_id/facet/path_contains/method ARE declared.
 	{"archigraph_endpoint_posture", "limit", "#1639 token ceiling pattern — scan-mode result limit"},
