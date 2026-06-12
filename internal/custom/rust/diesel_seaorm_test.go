@@ -223,6 +223,108 @@ impl MigrationTrait for CreateUsersTable {
 }
 
 // ---------------------------------------------------------------------------
+// SeaORM — migration_schema_ops (#5022): up()/down() schema-builder ops
+// ---------------------------------------------------------------------------
+
+// The seaorm_migration.rs fixture creates a Users table in up() and drops it
+// in down(). We expect a migration component per op carrying migration_op +
+// the resolved table, plus a schema_column per ColumnDef::new(...).
+func TestSeaORM_MigrationSchemaOps_FromFixture(t *testing.T) {
+	src := readFixture(t, "testdata/seaorm_migration.rs")
+	ents := extract(t, "custom_rust_seaorm", fi("migration.rs", "rust", src))
+
+	create, ok := findEntity(ents, "SCOPE.Component", "seaorm:migration:create_table:Users")
+	if !ok {
+		t.Fatal("expected seaorm:migration:create_table:Users")
+	}
+	if create.Props["migration_op"] != "create_table" || create.Props["table_name"] != "Users" {
+		t.Errorf("create_table props = %v", create.Props)
+	}
+
+	if !containsEntity(ents, "SCOPE.Component", "seaorm:migration:drop_table:Users") {
+		t.Error("expected seaorm:migration:drop_table:Users from down()")
+	}
+
+	// Columns from ColumnDef::new(Users::Id) / ColumnDef::new(Users::Name).
+	idCol, ok := findEntity(ents, "SCOPE.Component", "seaorm:migration:column:Users.Id")
+	if !ok {
+		t.Fatal("expected schema_column seaorm:migration:column:Users.Id")
+	}
+	if idCol.Subtype != "schema_column" || idCol.Props["column_name"] != "Id" ||
+		idCol.Props["table_name"] != "Users" || idCol.Props["migration_op"] != "create_table" {
+		t.Errorf("Id column props = %v (subtype %q)", idCol.Props, idCol.Subtype)
+	}
+	if !containsEntity(ents, "SCOPE.Component", "seaorm:migration:column:Users.Name") {
+		t.Error("expected schema_column seaorm:migration:column:Users.Name")
+	}
+
+	// migration_parsing — migration id resolved from MigrationName::name impl.
+	mig, ok := findEntity(ents, "SCOPE.Component", "seaorm:migration:Migration")
+	if !ok {
+		t.Fatal("expected seaorm:migration:Migration component")
+	}
+	if mig.Props["migration_id"] != "m20220101_000001_create_users_table" {
+		t.Errorf("migration_id = %q", mig.Props["migration_id"])
+	}
+}
+
+// alter_table ops add columns to an existing table.
+func TestSeaORM_MigrationSchemaOps_AlterTable(t *testing.T) {
+	src := `
+use sea_orm_migration::prelude::*;
+
+impl MigrationTrait for AddEmail {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Users::Table)
+                    .add_column(ColumnDef::new(Users::Email).string().not_null())
+                    .to_owned(),
+            )
+            .await
+    }
+}
+`
+	ents := extract(t, "custom_rust_seaorm", fi("alter.rs", "rust", src))
+
+	alter, ok := findEntity(ents, "SCOPE.Component", "seaorm:migration:alter_table:Users")
+	if !ok {
+		t.Fatal("expected seaorm:migration:alter_table:Users")
+	}
+	if alter.Props["migration_op"] != "alter_table" {
+		t.Errorf("alter props = %v", alter.Props)
+	}
+	if !containsEntity(ents, "SCOPE.Component", "seaorm:migration:column:Users.Email") {
+		t.Error("expected schema_column Users.Email from alter_table add_column")
+	}
+}
+
+// create_index resolves the index name and does NOT emit table columns.
+func TestSeaORM_MigrationSchemaOps_CreateIndex(t *testing.T) {
+	src := `
+impl MigrationTrait for AddIdx {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .create_index(
+                Index::create().name("idx_users_email").table(Users::Table).col(Users::Email).to_owned(),
+            )
+            .await
+    }
+}
+`
+	ents := extract(t, "custom_rust_seaorm", fi("idx.rs", "rust", src))
+	// Table is resolvable via .table(Users::Table), so the op is keyed on it.
+	idx, ok := findEntity(ents, "SCOPE.Component", "seaorm:migration:create_index:Users")
+	if !ok {
+		t.Fatal("expected seaorm:migration:create_index:Users")
+	}
+	if idx.Props["migration_op"] != "create_index" {
+		t.Errorf("index props = %v", idx.Props)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // SeaORM — non-rust file is ignored
 // ---------------------------------------------------------------------------
 

@@ -79,6 +79,41 @@ var (
 		`\bimpl\s+MigrationTrait\s+for\s+(\w+)`,
 	)
 
+	// MigrationName::name impl returning the migration identifier string.
+	// fn name(&self) -> &str { "m20220101_000001_create_users_table" }
+	reSeaOrmMigrationName = regexp.MustCompile(
+		`fn\s+name\s*\(\s*&self\s*\)\s*->\s*&\s*str\s*\{\s*"([^"]+)"`,
+	)
+
+	// migration_schema_ops — schema-builder calls inside up()/down() bodies:
+	//   manager.create_table( Table::create().table(Users::Table) ... )
+	//   manager.alter_table(  Table::alter().table(Users::Table)  ... )
+	//   manager.drop_table(   Table::drop().table(Users::Table)   ... )
+	//   manager.create_index( Index::create().table(Users::Table) ... )
+	//   manager.drop_index(   Index::drop().name("idx_...")        ... )
+	// We anchor on the manager.<op>( call and then resolve the .table(<Iden>)
+	// or .name("<idx>") that names the affected object. The Iden enum's
+	// `::Table` variant maps the Rust enum name → logical table name.
+	reSeaOrmManagerOp = regexp.MustCompile(
+		`\bmanager\s*\.\s*(create_table|alter_table|drop_table|truncate_table|rename_table|create_index|drop_index)\s*\(`,
+	)
+
+	// .table(Users::Table) — names the target table via its Iden enum.
+	reSeaOrmTableIden = regexp.MustCompile(
+		`\.\s*table\s*\(\s*(\w+)\s*::\s*Table\s*\)`,
+	)
+
+	// .name("idx_users_name") — names an index target.
+	reSeaOrmIndexName = regexp.MustCompile(
+		`\.\s*name\s*\(\s*"([^"]+)"\s*\)`,
+	)
+
+	// ColumnDef::new(Users::Id) — a column definition inside a create/alter op.
+	// Captures the optional Iden enum and the column variant.
+	reSeaOrmColumnDef = regexp.MustCompile(
+		`ColumnDef::new\s*\(\s*(?:(\w+)\s*::\s*)?(\w+)\s*\)`,
+	)
+
 	// belongs_to with from/to column references → FK extraction
 	// #[sea_orm(belongs_to = "...", from = "Column::FieldId", to = "super::user::Column::Id")]
 	reSeaOrmBelongsToFK = regexp.MustCompile(
@@ -258,14 +293,100 @@ func (e *rustSeaORMExtractor) Extract(ctx context.Context, file extractor.FileIn
 	// 3. impl MigrationTrait for M → migration entity
 	for _, m := range reSeaOrmMigration.FindAllStringSubmatchIndex(src, -1) {
 		migName := src[m[2]:m[3]]
+		// migration_parsing — resolve the human migration id from the
+		// adjacent MigrationName::name impl when present.
+		migID := ""
+		if nm := reSeaOrmMigrationName.FindStringSubmatch(src); nm != nil {
+			migID = nm[1]
+		}
 		ent := makeEntity("seaorm:migration:"+migName, "SCOPE.Component", "migration",
 			file.Path, file.Language, lineOf(src, m[0]))
-		setProps(&ent,
+		props := []string{
 			"framework", "seaorm",
 			"migration_name", migName,
 			"provenance", "INFERRED_FROM_SEAORM_MIGRATION_TRAIT",
-		)
+		}
+		if migID != "" {
+			props = append(props, "migration_id", migID)
+		}
+		setProps(&ent, props...)
 		add(ent)
+	}
+
+	// 3b. migration_schema_ops — parse schema-builder calls in up()/down()
+	//     bodies. Each manager.<op>( ... ) call becomes a migration component
+	//     carrying migration_op + the resolved target table/index. For
+	//     create/alter ops we additionally emit a schema_column per
+	//     ColumnDef::new(...) found inside the call's balanced argument span.
+	for _, m := range reSeaOrmManagerOp.FindAllStringSubmatchIndex(src, -1) {
+		op := src[m[2]:m[3]]
+		// The opening paren of the manager.<op>( call is the last byte of the
+		// match. Find its balanced close to bound the call argument.
+		openParen := m[1] - 1
+		argSpan := src[m[1]:seaOrmBalancedClose(src, openParen)]
+
+		// Resolve the target object: a .table(<Iden>::Table) reference, or an
+		// index .name("...") for create_index/drop_index.
+		target := ""
+		targetKind := "table"
+		if tm := reSeaOrmTableIden.FindStringSubmatch(argSpan); tm != nil {
+			target = tm[1]
+		} else if strings.Contains(op, "index") {
+			if im := reSeaOrmIndexName.FindStringSubmatch(argSpan); im != nil {
+				target = im[1]
+				targetKind = "index"
+			}
+		}
+
+		name := "seaorm:migration:" + op
+		if target != "" {
+			name += ":" + target
+		}
+		opEnt := makeEntity(name, "SCOPE.Component", "migration",
+			file.Path, file.Language, lineOf(src, m[0]))
+		opProps := []string{
+			"framework", "seaorm",
+			"migration_op", op,
+			"provenance", "INFERRED_FROM_SEAORM_SCHEMA_MANAGER_OP",
+		}
+		if target != "" {
+			if targetKind == "index" {
+				opProps = append(opProps, "index_name", target)
+			} else {
+				opProps = append(opProps, "table_name", target)
+			}
+		}
+		setProps(&opEnt, opProps...)
+		add(opEnt)
+
+		// Columns are only meaningful for create/alter table ops.
+		if op == "create_table" || op == "alter_table" {
+			for _, cm := range reSeaOrmColumnDef.FindAllStringSubmatchIndex(argSpan, -1) {
+				colName := argSpan[cm[4]:cm[5]]
+				// Skip the table marker variant if it ever appears here.
+				if colName == "Table" {
+					continue
+				}
+				colKey := colName
+				if target != "" {
+					colKey = target + "." + colName
+				}
+				colEnt := makeEntity("seaorm:migration:column:"+colKey,
+					"SCOPE.Component", "schema_column",
+					file.Path, file.Language, lineOf(src, m[0]))
+				colProps := []string{
+					"framework", "seaorm",
+					"column_name", colName,
+					"migration_op", op,
+					"provenance", "INFERRED_FROM_SEAORM_COLUMN_DEF",
+				}
+				if target != "" {
+					colProps = append(colProps, "table_name", target)
+				}
+				setProps(&colEnt, colProps...)
+				add(colEnt)
+			}
+		}
 	}
 
 	// 4. foreign_key_extraction — belongs_to with explicit from/to column refs
@@ -331,4 +452,38 @@ func (e *rustSeaORMExtractor) Extract(ctx context.Context, file extractor.FileIn
 
 	span.SetAttributes(attribute.Int("entity_count", len(entities)))
 	return entities, nil
+}
+
+// seaOrmBalancedClose returns the index just past the byte at openIdx (which
+// must be an opening '(') up to and including its matching ')'. If the parens
+// are unbalanced (truncated source), it returns len(src). Parens inside string
+// literals are ignored. The returned index is suitable as an exclusive upper
+// bound: src[openIdx+1:seaOrmBalancedClose(src, openIdx)] is the call argument.
+func seaOrmBalancedClose(src string, openIdx int) int {
+	depth := 0
+	inStr := false
+	for i := openIdx; i < len(src); i++ {
+		c := src[i]
+		if inStr {
+			switch c {
+			case '\\':
+				i++ // skip escaped char
+			case '"':
+				inStr = false
+			}
+			continue
+		}
+		switch c {
+		case '"':
+			inStr = true
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return len(src)
 }

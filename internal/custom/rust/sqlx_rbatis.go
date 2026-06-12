@@ -111,7 +111,82 @@ var (
 
 	// struct Name (after FromRow derive)
 	reStructNameSqlx = regexp.MustCompile(`\bstruct\s+(\w+)`)
+
+	// migration_schema_ops — DDL in a sqlx `migrations/*.sql` file.
+	reSQLxCreateTable = regexp.MustCompile(
+		`(?is)CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["` + "`" + `]?(\w+)["` + "`" + `]?\s*\(`,
+	)
+	reSQLxAlterTable = regexp.MustCompile(
+		`(?is)ALTER\s+TABLE\s+["` + "`" + `]?(\w+)["` + "`" + `]?`,
+	)
+	reSQLxDropTable = regexp.MustCompile(
+		`(?is)DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?["` + "`" + `]?(\w+)["` + "`" + `]?`,
+	)
+	reSQLxReferences = regexp.MustCompile(
+		`(?i)\bREFERENCES\s+["` + "`" + `]?(\w+)["` + "`" + `]?\s*(?:\(\s*["` + "`" + `]?(\w+)["` + "`" + `]?\s*\))?`,
+	)
 )
+
+// isSqlxMigrationFile reports whether a `.sql` path looks like a sqlx
+// migration. sqlx places ordered DDL under a `migrations/` directory with a
+// numeric/timestamp prefix (migrations/0001_init.sql,
+// migrations/20230101_create_users.sql, and reversible *.up.sql/*.down.sql
+// variants). We accept any `.sql` under a `migrations/` segment. The diesel
+// extractor independently claims up.sql/down.sql; entity-name prefixes keep
+// the two framings disjoint.
+func isSqlxMigrationFile(path string) bool {
+	if !strings.HasSuffix(path, ".sql") {
+		return false
+	}
+	return strings.Contains(path, "migrations/") || strings.Contains(path, "migrations\\")
+}
+
+// extractSQLxMigration parses CREATE/ALTER/DROP TABLE (+ REFERENCES) DDL from a
+// sqlx migration .sql file, emitting one migration component per op carrying
+// migration_op + table_name, and a foreign_key pattern per REFERENCES clause.
+func (e *rustSqlxExtractor) extractSQLxMigration(src string, file extractor.FileInput, add func(types.EntityRecord)) {
+	emitOp := func(table, op, prov string, idx int) {
+		ent := makeEntity("sqlx:migration:"+op+":"+table,
+			"SCOPE.Component", "migration",
+			file.Path, "rust", lineOf(src, idx))
+		setProps(&ent,
+			"framework", "sqlx",
+			"table_name", table,
+			"migration_op", op,
+			"provenance", prov,
+		)
+		add(ent)
+	}
+	for _, m := range reSQLxCreateTable.FindAllStringSubmatchIndex(src, -1) {
+		emitOp(src[m[2]:m[3]], "create_table", "INFERRED_FROM_SQLX_SQL_CREATE_TABLE", m[0])
+	}
+	for _, m := range reSQLxAlterTable.FindAllStringSubmatchIndex(src, -1) {
+		emitOp(src[m[2]:m[3]], "alter_table", "INFERRED_FROM_SQLX_SQL_ALTER_TABLE", m[0])
+	}
+	for _, m := range reSQLxDropTable.FindAllStringSubmatchIndex(src, -1) {
+		emitOp(src[m[2]:m[3]], "drop_table", "INFERRED_FROM_SQLX_SQL_DROP_TABLE", m[0])
+	}
+	for _, m := range reSQLxReferences.FindAllStringSubmatchIndex(src, -1) {
+		refTable := src[m[2]:m[3]]
+		refCol := ""
+		if m[4] >= 0 {
+			refCol = src[m[4]:m[5]]
+		}
+		name := "sqlx:migration:fk:" + refTable
+		if refCol != "" {
+			name += "." + refCol
+		}
+		ent := makeEntity(name, "SCOPE.Pattern", "foreign_key",
+			file.Path, "rust", lineOf(src, m[0]))
+		setProps(&ent,
+			"framework", "sqlx",
+			"ref_table", refTable,
+			"ref_column", refCol,
+			"provenance", "INFERRED_FROM_SQLX_SQL_REFERENCES",
+		)
+		add(ent)
+	}
+}
 
 func (e *rustSqlxExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
 	tracer := otel.Tracer("archigraph/custom/rust")
@@ -138,6 +213,17 @@ func (e *rustSqlxExtractor) Extract(ctx context.Context, file extractor.FileInpu
 		}
 		seen[key] = true
 		entities = append(entities, ent)
+	}
+
+	// -----------------------------------------------------------------------
+	// 0. migration_schema_ops — sqlx `migrations/*.sql` DDL files.
+	//    These resolve at compile time from disk; parsing the DDL gives the
+	//    create/alter/drop table ops the .rs source can only reference.
+	// -----------------------------------------------------------------------
+	if isSqlxMigrationFile(file.Path) {
+		e.extractSQLxMigration(src, file, add)
+		span.SetAttributes(attribute.Int("entity_count", len(entities)))
+		return entities, nil
 	}
 
 	// -----------------------------------------------------------------------

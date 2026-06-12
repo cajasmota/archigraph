@@ -38,8 +38,8 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Migration parsing | 🟢 `partial` | `2026-05-30` | — | `internal/custom/rust/sqlx_rbatis.go`<br>`internal/custom/rust/sqlx_rbatis_test.go` | sqlx::migrate! path + migration file refs detected; parsing the referenced migrations/*.sql DDL is out of scope (sqlx resolves them at compile time, not in the .rs source). |
-| Migration schema ops | 🔴 `missing` | — | 3628 | — | — |
+| Migration parsing | 🟢 `partial` | `2026-06-12` | — | `internal/custom/rust/sqlx_rbatis.go`<br>`internal/custom/rust/sqlx_rbatis_test.go` | sqlx::migrate! path + migration file refs detected in .rs source; migrations/*.sql DDL files are now parsed directly for schema ops (see migration_schema_ops). |
+| Migration schema ops | 🟢 `partial` | `2026-06-12` | 5022 | `internal/custom/rust/sqlx_rbatis.go`<br>`internal/custom/rust/sqlx_rbatis_test.go`<br>`internal/custom/rust/testdata/sqlx_migration.sql` | #5022: a `.sql` file under a migrations/ directory is parsed for CREATE/ALTER/DROP TABLE -> migration components (migration_op + table_name) and REFERENCES -> foreign_key patterns. Column-level type parsing and migration ordering/up-down pairing are deferred. Proven by TestSqlx_MigrationSchemaOps (+ TestSqlx_NonMigrationSQLIgnored guard). |
 
 ### Transactions
 

@@ -117,6 +117,40 @@ func TestSqlx_FixtureFile(t *testing.T) {
 	}
 }
 
+// migration_schema_ops (#5022): parse DDL from a sqlx migrations/*.sql file.
+func TestSqlx_MigrationSchemaOps(t *testing.T) {
+	src := readFixture(t, "testdata/sqlx_migration.sql")
+	ents := extract(t, "custom_rust_sqlx",
+		fi("migrations/20230101000000_create_users.sql", "rust", src))
+
+	create, ok := findEntity(ents, "SCOPE.Component", "sqlx:migration:create_table:users")
+	if !ok {
+		t.Fatal("expected sqlx:migration:create_table:users")
+	}
+	if create.Props["migration_op"] != "create_table" || create.Props["table_name"] != "users" {
+		t.Errorf("create_table props = %v", create.Props)
+	}
+	if !containsEntity(ents, "SCOPE.Component", "sqlx:migration:create_table:posts") {
+		t.Error("expected sqlx:migration:create_table:posts")
+	}
+	if !containsEntity(ents, "SCOPE.Component", "sqlx:migration:alter_table:users") {
+		t.Error("expected sqlx:migration:alter_table:users")
+	}
+	// REFERENCES users(id) → foreign_key pattern.
+	if !containsEntity(ents, "SCOPE.Pattern", "sqlx:migration:fk:users.id") {
+		t.Error("expected sqlx:migration:fk:users.id from REFERENCES clause")
+	}
+}
+
+// A .sql file NOT under migrations/ is not treated as a sqlx migration.
+func TestSqlx_NonMigrationSQLIgnored(t *testing.T) {
+	src := `CREATE TABLE foo (id INT);`
+	ents := extract(t, "custom_rust_sqlx", fi("schema/foo.sql", "rust", src))
+	if containsEntitySubtype(ents, "SCOPE.Component", "migration") {
+		t.Error("non-migrations/ .sql must not yield sqlx migration ops")
+	}
+}
+
 func TestSqlx_NoMatch(t *testing.T) {
 	src := `
 fn main() {

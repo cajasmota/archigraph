@@ -69,7 +69,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|
 | [Diesel](../detail/lang.rust.orm.diesel.md) | 🟡 8/10 | |
 | [Rbatis](../detail/lang.rust.orm.rbatis.md) | 🟡 4/7 | |
-| [SeaORM](../detail/lang.rust.orm.seaorm.md) | 🟡 9/11 | |
+| [SeaORM](../detail/lang.rust.orm.seaorm.md) | 🟡 10/11 | |
 | [SeaQuery](../detail/lang.rust.framework.sea-query.md) | 🟡 3/11 | |
 | [aws-sdk-dynamodb (Rust)](../detail/lang.rust.driver.dynamodb.md) | 🟡 1/4 | |
 | [cdrs / scylla-rust-driver](../detail/lang.rust.driver.cassandra.md) | 🟡 1/4 | |
@@ -80,7 +80,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | [redis-rs](../detail/lang.rust.driver.redis.md) | 🟡 1/4 | |
 | [rusqlite](../detail/lang.rust.orm.rusqlite.md) | 🟡 2/4 | |
 | [sqlite (Rust)](../detail/lang.rust.driver.sqlite.md) | 🟡 1/4 | |
-| [sqlx (Rust)](../detail/lang.rust.orm.sqlx.md) | 🟡 5/7 | |
+| [sqlx (Rust)](../detail/lang.rust.orm.sqlx.md) | 🟡 6/7 | |
 | [tokio-postgres / postgres](../detail/lang.rust.driver.postgres.md) | 🟡 1/4 | |
 
 
