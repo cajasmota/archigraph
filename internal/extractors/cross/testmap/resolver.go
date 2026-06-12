@@ -455,6 +455,25 @@ var stopwords = map[string]bool{
 	"strcmp_equal": true, "strcmp_nocase_equal": true, "strncmp_equal": true,
 	"strcmp_contains": true, "test_exit": true, "fail_test": true,
 	"mock": true, "mock_c": true, "checkequal": true,
+	// F# — Expecto / Unquote / FsUnit / xUnit / NUnit assertion & DSL surface
+	// (#4906). These are test-harness identifiers (the case combinators, the
+	// Expecto `Expect.*` assertion family, FsUnit `should`, xUnit `Assert.*`)
+	// and must never surface as the F# production subject under test. The
+	// directCall scanner captures both the bare combinator (`testCase`) and the
+	// dotted assertion (`expect.equal`). Lower-cased (resolver lowercases first).
+	"testcase": true, "testcaseasync": true, "testlist": true, "testfixture": true,
+	"testtask": true, "ptestcase": true, "ftestcase": true, "testproperty": true,
+	"testpropertywithconfig": true, "testtheory": true, "tests": true,
+	"expect.equal": true, "expect.notequal": true, "expect.istrue": true,
+	"expect.isfalse": true, "expect.issome": true, "expect.isnone": true,
+	"expect.isok": true, "expect.iserror": true, "expect.isnull": true,
+	"expect.isnotnull": true, "expect.isempty": true, "expect.isnonempty": true,
+	"expect.throws": true, "expect.throwst": true, "expect.containsall": true,
+	"expect.sequenceequal": true, "expect.isgreaterthan": true, "expect.islessthan": true,
+	"expect.equals": true, "expect.all": true, "expect.exists": true,
+	// xUnit / NUnit (F# usage) — FsUnit `should` combinator (the Assert.* family
+	// is already covered by the C# xUnit denylist block above).
+	"should": true,
 	// Common language keywords that end up in call-like positions
 	"if": true, "for": true, "while": true, "switch": true, "return": true,
 	"func": true, "def": true, "class": true, "struct": true, "new": true,

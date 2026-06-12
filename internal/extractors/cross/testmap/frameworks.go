@@ -2346,6 +2346,24 @@ var frameworkOrder = []frameworkEntry{
 		},
 		detect: detectNimUnittest,
 	},
+	// F# — Expecto (testList/testCase) + xUnit/NUnit ([<Fact>]/[<Theory>]/[<Test>])
+	// (#4906). F# uses `open` (not `import`) so importTokenRE cannot gate it;
+	// detection is filename/path-hint gated on the standard F# test conventions
+	// and the detector self-confirms (a non-test .fs file yields zero cases and
+	// is dropped downstream, like the rust_test entry). Off-side-rule bodies are
+	// scanned via the shared indentation block extractor.
+	{
+		name: "fsharp-expecto",
+		filenameHints: []*regexp.Regexp{
+			regexp.MustCompile(`Tests?\.fs$`),
+			regexp.MustCompile(`^Test.*\.fs$`),
+			regexp.MustCompile(`_test\.fs$`),
+		},
+		pathHints: []*regexp.Regexp{
+			regexp.MustCompile(`/tests?/.*\.fs$`),
+		},
+		detect: detectFSharpExpecto,
+	},
 	// ---------------------------------------------------------------------
 	// C/C++ — gtest, catch2, doctest, boost.test, cppunit, cpputest (#3495).
 	//

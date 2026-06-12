@@ -177,6 +177,45 @@ type IService =
 	}
 }
 
+// TestFSharp_TypeSubtypes proves classifyTypeSubtype distinguishes the F# type
+// kinds (#4906): record (`= {`), discriminated_union (`= |`), interface. This is
+// the evidence behind the lang.fsharp.core / Giraffe Type-System coverage cells.
+func TestFSharp_TypeSubtypes(t *testing.T) {
+	src := `module Types
+
+type Person = {
+    Name: string
+    Age: int
+}
+
+type Shape =
+    | Circle of float
+    | Rectangle of float * float
+
+type IService =
+    interface
+        abstract member Process: string -> string
+    end
+`
+	ents := runFSharp(t, src, "types.fs")
+	got := make(map[string]string)
+	for _, e := range ents {
+		if e.Kind == "SCOPE.Component" {
+			got[e.Name] = e.Subtype
+		}
+	}
+	want := map[string]string{
+		"Person":   "record",
+		"Shape":    "discriminated_union",
+		"IService": "interface",
+	}
+	for name, sub := range want {
+		if got[name] != sub {
+			t.Errorf("type %q subtype=%q, want %q", name, got[name], sub)
+		}
+	}
+}
+
 // TestFSharp_OpenStatements — open statements emit IMPORTS edges.
 func TestFSharp_OpenStatements(t *testing.T) {
 	src := `module App
