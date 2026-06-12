@@ -235,6 +235,129 @@ describe("ownership-as-containment (#4862)", () => {
   });
 });
 
+/** #4884 — env-scoped containment fixture mirroring the live upvate-v3 prod tab:
+ *  ONE prod module instance whose definition resources are SHARED across envs, so
+ *  the backend left their parent_id EMPTY (cross-env). Only the prod instance is
+ *  rendered (the dev/staging instances were filtered out by the env tab). The
+ *  resources must still nest under the rendered prod instance — resolved from its
+ *  `instantiates` edges, NOT parent_id — and the fan-out must drop. */
+function crossEnvScopedFixture(): IaCReport {
+  const prod = res({
+    entity_id: "infra/inst-prod",
+    name: "module.worker",
+    category: "module",
+    module: "infra/terraform/envs/prod",
+    relations: [
+      rel({
+        facet: "instantiates",
+        kind: "INSTANTIATES",
+        target_entity_id: "infra/task",
+        target: "task",
+      }),
+      rel({
+        facet: "instantiates",
+        kind: "INSTANTIATES",
+        target_entity_id: "infra/queue",
+        target: "queue",
+      }),
+    ],
+  });
+  // Cross-env shared definitions: backend stamped NO parent_id (#4884).
+  const task = res({
+    entity_id: "infra/task",
+    name: "aws_ecs_task.worker",
+    module: "infra/terraform/modules/worker-service",
+    category: "compute",
+    relations: [
+      // mirror inbound instantiates edge from the instance.
+      rel({
+        facet: "instantiates",
+        kind: "INSTANTIATES",
+        direction: "in",
+        target_entity_id: "infra/inst-prod",
+        target: "module.worker",
+      }),
+      // a real resource→resource architectural edge — KEEP it.
+      rel({
+        facet: "dependency",
+        kind: "USES",
+        target_entity_id: "infra/queue",
+        target: "queue",
+      }),
+    ],
+  });
+  const queue = res({
+    entity_id: "infra/queue",
+    name: "aws_sqs_queue.work",
+    module: "infra/terraform/modules/worker-service",
+    category: "queue",
+    relations: [
+      rel({
+        facet: "instantiates",
+        kind: "INSTANTIATES",
+        direction: "in",
+        target_entity_id: "infra/inst-prod",
+        target: "module.worker",
+      }),
+    ],
+  });
+  return {
+    group: "g",
+    total_resources: 3,
+    total_grants: 0,
+    total_event_sources: 0,
+    total_dependencies: 1,
+    total_outputs: 0,
+    with_props_count: 0,
+    tools: ["terraform"],
+    envs: ["prod"],
+    counts_by_category: {},
+    groups: [{ tool: "terraform", count: 3, resources: [prod, task, queue] }],
+  };
+}
+
+describe("env-scoped containment (#4884)", () => {
+  it("nests cross-env definitions under the rendered instance via instantiates edges (no parent_id)", () => {
+    const { nodes, edges, unresolvedEdges } = layoutIaCDiagram(
+      crossEnvScopedFixture(),
+      "LR",
+      "module",
+    );
+    const groups = nodes.filter((n) => n.type === IAC_GROUP_TYPE);
+    const resources = nodes.filter((n) => n.type === IAC_NODE_TYPE);
+
+    // The defs carry NO parent_id, yet they still nest: one owner-instance
+    // container holds the prod instance + both definitions (resolved from the
+    // instance's instantiates edges).
+    expect(groups.length).toBe(1);
+    expect(resources.length).toBe(3);
+    const owner = groups[0];
+    expect(owner.id).toBe("group:instance:infra/inst-prod");
+    for (const r of resources) expect(r.parentId).toBe(owner.id);
+
+    // The two redundant instantiates fan-out edges are dropped; only the real
+    // task→queue architectural edge remains.
+    expect(edges.length).toBe(1);
+    expect(edges[0].source).toBe("infra/task");
+    expect(edges[0].target).toBe("infra/queue");
+    expect(unresolvedEdges).toBe(0);
+  });
+
+  it("ELK backend nests the same cross-env containment", async () => {
+    const { nodes, edges, unresolvedEdges } = await layoutIaCDiagramElk(
+      crossEnvScopedFixture(),
+      "LR",
+      "module",
+    );
+    const groups = nodes.filter((n) => n.type === IAC_GROUP_TYPE);
+    const resources = nodes.filter((n) => n.type === IAC_NODE_TYPE);
+    expect(groups.length).toBe(1);
+    expect(resources.length).toBe(3);
+    expect(edges.length).toBe(1);
+    expect(unresolvedEdges).toBe(0);
+  });
+});
+
 describe("layoutIaCDiagramElk (#4826 — ELK backend)", () => {
   it("produces the same nested-group render plan as dagre with finite positions", async () => {
     const { nodes, edges, unresolvedEdges } = await layoutIaCDiagramElk(

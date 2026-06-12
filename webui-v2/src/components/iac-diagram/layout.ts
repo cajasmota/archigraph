@@ -245,17 +245,46 @@ function planIaCDiagram(
   const byEntityId = new Map<string, IaCResource>();
   for (const r of resources) byEntityId.set(r.entity_id, r);
 
-  // #4862 — ownership-as-containment (Module mode only). A resource whose
-  // backend `parent_id` points at a RENDERED module instance is nested INSIDE
-  // that module's container box: its bucket is that instance's entity id rather
-  // than its source-file directory. The instance node itself is placed in the
-  // SAME bucket so the box visually wraps the module + everything it
-  // instantiates. The synthetic group is keyed by the instance entity id and
-  // labelled by the module name. Outside Module mode this is inert. We only
-  // honour a parent_id that resolves to a rendered node (else fall back to
-  // directory grouping so nothing disappears).
+  // #4884 — per-(rendered)-instance ownership map. The backend `parent_id`
+  // (#4862) names ONE instance, but the diagram is scoped to one ENV tab at a
+  // time and a shared module definition is instantiated by SEVERAL envs' module
+  // instances. On the prod tab the def survives (env-propagated) while its
+  // backend parent — e.g. the dev instance — is filtered out, so parent_id alone
+  // resolves to nothing and the resource falls back to its definition zone with
+  // the fan-out edge intact (the live #4862 regression). The cross-env case
+  // therefore stamps NO parent_id; instead each rendered module instance keeps an
+  // `instantiates` out-relation to every resource it instantiates, and those edges
+  // survive env scoping. We build the containment map from those edges so a
+  // definition nests under whichever instance is actually rendered on this tab.
+  // parent_id is honoured as a fallback for the single-env case (where it points
+  // at a co-rendered instance).
+  const ownerByResource = new Map<string, string>(); // resource entity_id → instance entity_id
+  if (groupMode === "module") {
+    for (const inst of resources) {
+      for (const rel of inst.relations) {
+        if (rel.direction !== "out" || rel.facet !== "instantiates") continue;
+        const target = rel.target_entity_id;
+        // Only the FIRST rendered instance to claim a resource owns it (a box has
+        // a single parent); later instances still surface their instantiates edge.
+        if (target && byEntityId.has(target) && !ownerByResource.has(target)) {
+          ownerByResource.set(target, inst.entity_id);
+        }
+      }
+    }
+  }
+  // #4862 — ownership-as-containment (Module mode only). A resource nested INSIDE
+  // its instantiating module's container box buckets under that instance's entity
+  // id rather than its source-file directory. The instance node itself is placed
+  // in the SAME bucket so the box visually wraps the module + everything it
+  // instantiates. We resolve the owner from the rendered instantiates edges
+  // (#4884, env-robust) and fall back to a parent_id that resolves to a rendered
+  // node (single-env case). Outside Module mode this is inert. We only honour an
+  // owner that resolves to a rendered node (else fall back to directory grouping
+  // so nothing disappears).
   const containedBy = (r: IaCResource): string | undefined => {
     if (groupMode !== "module") return undefined;
+    const owner = ownerByResource.get(r.entity_id);
+    if (owner && byEntityId.has(owner)) return owner;
     const pid = r.parent_id;
     if (pid && byEntityId.has(pid)) return pid;
     return undefined;

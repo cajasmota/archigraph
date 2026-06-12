@@ -477,6 +477,28 @@ func joinModuleInstantiations(byID map[string]*IaCResource, slug string) {
 	sort.SliceStable(insts, func(i, j int) bool {
 		return insts[i].EntityID < insts[j].EntityID
 	})
+	// #4884 — track, per definition resource, the distinct envs that instantiate
+	// it and the FIRST instance (by entity id) that does. A single ParentID field
+	// can only name ONE instance, but the diagram is scoped to one ENV tab at a
+	// time (#4657) and each env renders only its OWN instances. If we lock
+	// ParentID to (say) the dev instance while the def also belongs to prod, then
+	// on the prod tab the def survives (env propagation) but its parent — the dev
+	// instance — is filtered out, so the frontend cannot resolve the container and
+	// the resource falls back to its definition zone with the fan-out edge intact
+	// (the live #4862 regression). So we only stamp ParentID when the def is
+	// instantiated within a SINGLE env (the parent is then guaranteed to render
+	// alongside it on that env's tab); for cross-env definitions we leave ParentID
+	// empty and let the frontend nest per-env from each rendered instance's
+	// instantiates edges (which DO survive env scoping). The instantiates relations
+	// below are emitted unconditionally so that per-env resolution always has the
+	// ownership data it needs.
+	type parentCand struct {
+		instID string
+		envs   map[string]struct{}
+		single bool // false once a second distinct env is seen → ambiguous
+	}
+	parentByDef := map[*IaCResource]*parentCand{}
+
 	for _, inst := range insts {
 		defs := defByDir[inst.DefinitionDir]
 		if len(defs) == 0 {
@@ -492,11 +514,19 @@ func joinModuleInstantiations(byID map[string]*IaCResource, slug string) {
 			if inst.Env != "" {
 				def.Env = mergeEnv(def.Env, inst.Env)
 			}
-			// #4862 — ownership-as-containment: record the instantiating module
-			// instance as the definition resource's container parent so the
-			// diagram nests it inside the module box (vs an instantiates edge).
-			if def.ParentID == "" {
-				def.ParentID = inst.EntityID
+			// #4884 — record candidate containment; resolved after the loop.
+			cand := parentByDef[def]
+			if cand == nil {
+				cand = &parentCand{instID: inst.EntityID, envs: map[string]struct{}{}, single: true}
+				parentByDef[def] = cand
+			}
+			for _, e := range splitEnv(inst.Env) {
+				if _, seen := cand.envs[e]; !seen {
+					if len(cand.envs) > 0 {
+						cand.single = false
+					}
+					cand.envs[e] = struct{}{}
+				}
 			}
 			inst.Relations = append(inst.Relations, IaCRelation{
 				Facet:          "instantiates",
@@ -518,6 +548,19 @@ func joinModuleInstantiations(byID map[string]*IaCResource, slug string) {
 				TargetEntityID: inst.EntityID,
 				Detail:         inst.DefinitionDir,
 			})
+		}
+	}
+
+	// #4884 — stamp ParentID only for single-env (unambiguous) containment so it
+	// never points at an instance that the active env tab filters out. Cross-env
+	// definitions keep ParentID empty and nest per-env via instantiates edges in
+	// the frontend.
+	for def, cand := range parentByDef {
+		if def.ParentID != "" {
+			continue
+		}
+		if cand.single {
+			def.ParentID = cand.instID
 		}
 	}
 }

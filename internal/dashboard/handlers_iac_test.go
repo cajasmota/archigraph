@@ -208,13 +208,18 @@ func TestJoinModuleInstantiations_ContainmentAndEnv(t *testing.T) {
 
 	joinModuleInstantiations(byID, "infra")
 
-	// FIRST instance by entity id ("infra/inst-dev" < "infra/inst-prod") wins
-	// containment of both definition resources.
-	if task.ParentID != dev.EntityID {
-		t.Fatalf("task.ParentID = %q, want %q", task.ParentID, dev.EntityID)
+	// #4884 — a definition instantiated across MORE THAN ONE env (dev + prod) is
+	// CROSS-ENV: a single ParentID cannot serve both env tabs (the diagram is
+	// env-scoped and each env renders only its own instances), so ParentID is left
+	// EMPTY and the frontend nests it per-env from each rendered instance's
+	// instantiates edges. (Before #4884 it locked to the first instance by entity
+	// id — "infra/inst-dev" — which the prod tab then filtered out, leaving the
+	// resource un-nested in its definition zone with the fan-out edge intact.)
+	if task.ParentID != "" {
+		t.Fatalf("task.ParentID = %q, want empty for cross-env def", task.ParentID)
 	}
-	if queue.ParentID != dev.EntityID {
-		t.Fatalf("queue.ParentID = %q, want %q", queue.ParentID, dev.EntityID)
+	if queue.ParentID != "" {
+		t.Fatalf("queue.ParentID = %q, want empty for cross-env def", queue.ParentID)
 	}
 
 	// Env propagated from BOTH instantiating envs onto the shared definitions.
@@ -244,6 +249,66 @@ func TestJoinModuleInstantiations_ContainmentAndEnv(t *testing.T) {
 	// instantiation keeps an empty ParentID.
 	if dev.ParentID != "" {
 		t.Fatalf("instance dev.ParentID = %q, want empty", dev.ParentID)
+	}
+
+	// #4884 — each env instance keeps an OUTBOUND instantiates edge to every def
+	// it instantiates, so the frontend can resolve containment per-env even when
+	// ParentID is empty. On the prod tab, only the prod instance + the (env=prod-
+	// inclusive) defs render; prod's instantiates edges name task + queue.
+	if got := countFacet(prod, "out"); got != 2 {
+		t.Fatalf("prod out instantiates = %d, want 2", got)
+	}
+	prodTargets := map[string]bool{}
+	for _, rel := range prod.Relations {
+		if rel.Facet == "instantiates" && rel.Direction == "out" {
+			prodTargets[rel.TargetEntityID] = true
+		}
+	}
+	if !prodTargets[task.EntityID] || !prodTargets[queue.EntityID] {
+		t.Fatalf("prod instantiates targets = %v, want both %q and %q",
+			prodTargets, task.EntityID, queue.EntityID)
+	}
+}
+
+// TestJoinModuleInstantiations_SingleEnvKeepsParentID is the #4884 control: a
+// definition instantiated within a SINGLE env DOES keep a ParentID (the parent
+// instance is guaranteed to render alongside it on that env's tab), so the
+// simple one-env stack still nests via the direct parent_id path. This mirrors
+// the live upvate-v3 shape where the directory-join (resolveModuleSourceDir →
+// iacModuleOf) produces matching dirs (e.g. infra/terraform/modules/worker-
+// service) so the join fires; the regression was purely the cross-env ParentID
+// pointing at a filtered-out instance.
+func TestJoinModuleInstantiations_SingleEnvKeepsParentID(t *testing.T) {
+	// Module dir as iacModuleOf would derive it for a real upvate-v3 def file
+	// infra/terraform/modules/worker-service/main.tf, and the matching
+	// definition_dir resolveModuleSourceDir derives from
+	// infra/terraform/envs/prod/main.tf + source ../../modules/worker-service.
+	const defDir = "infra/terraform/modules/worker-service"
+	prod := &IaCResource{
+		EntityID:      "infra/inst-prod",
+		Repo:          "infra",
+		Name:          "module.worker",
+		DefinitionDir: defDir,
+		Env:           "prod",
+	}
+	task := &IaCResource{
+		EntityID: "infra/def-task",
+		Repo:     "infra",
+		Name:     "aws_ecs_task_definition.worker",
+		Module:   defDir,
+	}
+	byID := map[string]*IaCResource{
+		prod.EntityID: prod,
+		task.EntityID: task,
+	}
+
+	joinModuleInstantiations(byID, "infra")
+
+	if task.ParentID != prod.EntityID {
+		t.Fatalf("single-env task.ParentID = %q, want %q", task.ParentID, prod.EntityID)
+	}
+	if task.Env != "prod" {
+		t.Fatalf("single-env task.Env = %q, want prod", task.Env)
 	}
 }
 
