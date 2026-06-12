@@ -101,3 +101,36 @@ func TestElixirConfidenceOverlay_AllMatchesPositive(t *testing.T) {
 		}
 	}
 }
+
+// websockexSrc — a WebSockex WebSocket-client module. #4916: WebSockex is the
+// dominant Elixir WebSocket client (registry covered Finch/Req/Tesla outbound
+// but WebSockex had zero recognition). Connection establishment and frame
+// sends are outbound network egress -> http_out.
+const websockexSrc = `
+defmodule MyApp.Socket do
+  use WebSockex
+
+  def open(url) do
+    {:ok, pid} = WebSockex.start_link(url, __MODULE__, %{})
+    pid
+  end
+
+  def push(pid, payload) do
+    WebSockex.send_frame(pid, {:text, payload})
+  end
+end
+`
+
+// TestElixirConfidenceOverlay_WebSockex proves the #4916 WebSockex addition to
+// elixirHTTPRe feeds the overlay: WebSockex.start_link -> http_out on open,
+// conf 1.0, and the frame send -> http_out on push.
+func TestElixirConfidenceOverlay_WebSockex(t *testing.T) {
+	m := elixirConfMatch(t, websockexSrc, "open", EffectHTTPOut)
+	if m.Confidence != 1.0 {
+		t.Errorf("websockex open http_out confidence = %v, want 1.0", m.Confidence)
+	}
+	push := elixirConfMatch(t, websockexSrc, "push", EffectHTTPOut)
+	if push.Confidence != 1.0 {
+		t.Errorf("websockex push http_out confidence = %v, want 1.0", push.Confidence)
+	}
+}

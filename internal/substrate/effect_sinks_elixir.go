@@ -4,7 +4,10 @@
 //
 //   - http_out  : HTTPoison.<get|post|put|patch|delete|head|request>,
 //     Tesla.<verb> / Tesla.Client, Finch.build / Finch.request,
-//     Mint.HTTP, Req.<verb> / Req.new, :httpc.request
+//     Mint.HTTP, Req.<verb> / Req.new, :httpc.request,
+//     WebSockex.<start_link|send_frame|cast> (#4916 — WebSockex is the
+//     dominant Elixir WebSocket client; its connection establishment and
+//     frame sends are outbound network egress, so they belong to http_out)
 //   - db_read   : Ecto `Repo.all / Repo.get / Repo.get_by / Repo.one /
 //     Repo.stream / Repo.preload / Repo.aggregate /
 //     Repo.exists?`, `from(... in ..., select: ...) |> Repo.all`,
@@ -46,7 +49,8 @@ var elixirHTTPRe = regexp.MustCompile(
 		`|\bReq\s*\.\s*(?:get|post|put|patch|delete|head|new|request|request!)\s*\(` +
 		`|\bMint\s*\.\s*HTTP\b` +
 		`|\b:httpc\s*\.\s*request\s*\(` +
-		`|\b:hackney\s*\.\s*request\s*\(`,
+		`|\b:hackney\s*\.\s*request\s*\(` +
+		`|\bWebSockex\s*\.\s*(?:start_link|start|send_frame|cast)\s*\(`,
 )
 
 // elixirDBReadRe matches Ecto read primitives.
@@ -107,7 +111,7 @@ func sniffEffectsElixir(content string) []EffectMatch {
 	}
 	headers := scanElixirFuncHeaders(content)
 	var out []EffectMatch
-	out = appendElixirMatches(out, content, headers, elixirHTTPRe, EffectHTTPOut, "HTTPoison/Tesla/Finch/Req", 1.0)
+	out = appendElixirMatches(out, content, headers, elixirHTTPRe, EffectHTTPOut, "HTTPoison/Tesla/Finch/Req/WebSockex", 1.0)
 	out = appendElixirMatches(out, content, headers, elixirDBReadRe, EffectDBRead, "Repo.read", 0.9)
 	out = appendElixirMatches(out, content, headers, elixirRawSelectRe, EffectDBRead, "SQL.query(SELECT)", 1.0)
 	out = appendElixirMatches(out, content, headers, elixirDBWriteRe, EffectDBWrite, "Repo.write", 0.9)
