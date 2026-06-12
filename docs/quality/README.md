@@ -109,7 +109,6 @@ path rather than a corpus-level trend.
 - Framework + `archigraph quality` subcommand
 - One fixture: `python-django-mini`
 - Unit tests for the matcher
-- Baseline: see [baseline.md](./baseline.md)
 
 ## Phase 2 scope (PRs #617 + #607)
 

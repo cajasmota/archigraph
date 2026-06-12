@@ -2,8 +2,8 @@
 
 If you're an AI agent helping develop archigraph itself, follow these conventions.
 End-user-facing guidance for agents calling archigraph via MCP is delivered
-through the MCP `instructions` handshake (see `docs/agent-instructions-draft.md`
-and PR wiring it into `internal/mcp/server.go`), not from this file.
+through the MCP `instructions` handshake (wired into `internal/mcp/server.go`),
+not from this file.
 
 ## Repo conventions
 - Branches: feature branches only, never push to main
