@@ -166,6 +166,11 @@ func TestShape_TransferRequestResolvesFields(t *testing.T) {
 	if !strings.Contains(got["items"].TypeEntityID, "cls_item_dto") {
 		t.Errorf("items.type_entity_id: want suffix cls_item_dto, got %q", got["items"].TypeEntityID)
 	}
+	// #4869 — the resolved type's source location flows to the row so the
+	// frontend can open the type's source on a type-name click.
+	if got["items"].TypeSourceFile != "src/ItemDTO.java" {
+		t.Errorf("items.type_source_file: want src/ItemDTO.java, got %q", got["items"].TypeSourceFile)
+	}
 }
 
 // TestShape_NestedExpansion verifies that requesting LoginResponse and
@@ -221,6 +226,119 @@ func TestShape_NestedExpansion(t *testing.T) {
 	}
 	if len(body2.Data.Rows) != 1 || body2.Data.Rows[0].Name != "id" {
 		t.Errorf("UserDTO rows: want [id], got %+v", body2.Data.Rows)
+	}
+}
+
+// tsFieldShapeFixture models TS DTOs whose field entities carry the JS/TS
+// `name[?]: type` signature convention. CreateAlternateAddressBody is a class
+// DTO (handlePublicFieldDefinition path); AlternateAddressResponse is an
+// interface DTO (emitSchemaMemberFields path). It is the upvate-v3 shape that
+// surfaced #4868 — the field TYPE came out ” (→ "unknown") and everything was
+// marked required because the Java parser misread `name: type`.
+func tsFieldShapeFixture() *DashGroup {
+	const cfile = "src/address/dto/create-alternate-address.body.ts"
+	const ifile = "src/address/dto/alternate-address.response.ts"
+	entities := []graph.Entity{
+		// Class DTO with three fields: a plain string, a TS-optional string,
+		// and a nullable Date union.
+		{
+			ID: "cls_body", Name: "CreateAlternateAddressBody",
+			Kind: "SCOPE.Component", Subtype: "class",
+			SourceFile: cfile, Language: "typescript",
+		},
+		{
+			ID: "fld_body_line1", Name: "CreateAlternateAddressBody.line1",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: cfile, Language: "typescript", Signature: "line1: string",
+		},
+		{
+			ID: "fld_body_line2", Name: "CreateAlternateAddressBody.line2",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: cfile, Language: "typescript", Signature: "line2?: string",
+		},
+		{
+			ID: "fld_body_effective", Name: "CreateAlternateAddressBody.effectiveAt",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: cfile, Language: "typescript", Signature: "effectiveAt: Date | null",
+		},
+		// Interface DTO with one required + one nullable-union field.
+		{
+			ID: "iface_resp", Name: "AlternateAddressResponse",
+			Kind: "SCOPE.Schema", Subtype: "interface",
+			SourceFile: ifile, Language: "typescript",
+		},
+		{
+			ID: "fld_resp_id", Name: "AlternateAddressResponse.id",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: ifile, Language: "typescript", Signature: "id: string",
+		},
+		{
+			ID: "fld_resp_archived", Name: "AlternateAddressResponse.archivedAt",
+			Kind: "SCOPE.Schema", Subtype: "field",
+			SourceFile: ifile, Language: "typescript", Signature: "archivedAt: Date | null",
+		},
+	}
+	rels := []graph.Relationship{
+		{FromID: "cls_body", ToID: "fld_body_line1", Kind: "CONTAINS"},
+		{FromID: "cls_body", ToID: "fld_body_line2", Kind: "CONTAINS"},
+		{FromID: "cls_body", ToID: "fld_body_effective", Kind: "CONTAINS"},
+		{FromID: "iface_resp", ToID: "fld_resp_id", Kind: "CONTAINS"},
+		{FromID: "iface_resp", ToID: "fld_resp_archived", Kind: "CONTAINS"},
+	}
+	return makePathsTestGroup(entities, rels)
+}
+
+// TestShape_TSFieldTypesAndNullable is the #4868 regression: a TS class DTO and
+// a TS interface DTO must surface real field types (not ”) and correct
+// nullability — TS-optional `?` and `Date | null` unions both → nullable=true,
+// while required fields stay nullable=false.
+func TestShape_TSFieldTypesAndNullable(t *testing.T) {
+	grp := tsFieldShapeFixture()
+	ts := newPathsTestServer(t, grp)
+	defer ts.Close()
+
+	get := func(typeName string) map[string]v2ShapeRow {
+		resp, err := http.Get(ts.URL + "/api/v2/groups/testgrp/shape?type=" + typeName)
+		if err != nil {
+			t.Fatalf("GET %s: %v", typeName, err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("%s: want 200, got %d", typeName, resp.StatusCode)
+		}
+		var body struct {
+			OK   bool            `json:"ok"`
+			Data v2ShapeResponse `json:"data"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+			t.Fatalf("decode %s: %v", typeName, err)
+		}
+		out := map[string]v2ShapeRow{}
+		for _, r := range body.Data.Rows {
+			out[r.Name] = r
+		}
+		return out
+	}
+
+	// Class DTO.
+	cls := get("CreateAlternateAddressBody")
+	if r := cls["line1"]; r.Type != "string" || r.Nullable {
+		t.Errorf("class line1: want type=string nullable=false, got %+v", r)
+	}
+	if r := cls["line2"]; r.Type != "string" || !r.Nullable {
+		t.Errorf("class line2 (TS-optional): want type=string nullable=true, got %+v", r)
+	}
+	if r := cls["effectiveAt"]; r.Type != "Date | null" || !r.Nullable {
+		t.Errorf("class effectiveAt: want type=Date | null nullable=true, got %+v", r)
+	}
+
+	// Interface DTO.
+	iface := get("AlternateAddressResponse")
+	if r := iface["id"]; r.Type != "string" || r.Nullable {
+		t.Errorf("iface id: want type=string nullable=false, got %+v", r)
+	}
+	if r := iface["archivedAt"]; r.Type != "Date | null" || !r.Nullable {
+		t.Errorf("iface archivedAt: want type=Date | null nullable=true, got %+v", r)
 	}
 }
 
@@ -312,24 +430,36 @@ func TestShape_MissingTypeParam(t *testing.T) {
 // (including args), nullability inference, and primitive detection.
 func TestShape_ParseFieldSignature_Annotations(t *testing.T) {
 	cases := []struct {
-		sig       string
-		fieldName string
-		wantType  string
-		wantAnnos []string
+		sig          string
+		fieldName    string
+		wantType     string
+		wantAnnos    []string
+		wantOptional bool
 	}{
-		{"@NotBlank String email", "email", "String", []string{"@NotBlank"}},
-		{"@Min(0) @NotNull BigDecimal qty", "qty", "BigDecimal", []string{"@Min(0)", "@NotNull"}},
-		{"int count", "count", "int", nil},
-		{"@Email @NotNull String addr", "addr", "String", []string{"@Email", "@NotNull"}},
-		{"List<String> roles", "roles", "List<String>", nil},
+		{"@NotBlank String email", "email", "String", []string{"@NotBlank"}, false},
+		{"@Min(0) @NotNull BigDecimal qty", "qty", "BigDecimal", []string{"@Min(0)", "@NotNull"}, false},
+		{"int count", "count", "int", nil, false},
+		{"@Email @NotNull String addr", "addr", "String", []string{"@Email", "@NotNull"}, false},
+		{"List<String> roles", "roles", "List<String>", nil, false},
+		// #4868 — JS/TS `name[?]: type` convention. Previously parsed as
+		// Java `Type name`, yielding a garbage type ("email?:") → "unknown".
+		{"email?: string", "email", "string", nil, true},
+		{"count: number", "count", "number", nil, false},
+		{"createdAt: Date | null", "createdAt", "Date | null", nil, false},
+		{"id: string", "id", "string", nil, false},
+		{"meta: Record<string, number>", "meta", "Record<string, number>", nil, false},
+		{"readonly name?: string", "name", "string", nil, true},
 	}
 	for _, c := range cases {
-		annos, typ := parseFieldSignature(c.sig, c.fieldName)
+		annos, typ, optional := parseFieldSignature(c.sig, c.fieldName)
 		if typ != c.wantType {
 			t.Errorf("sig=%q: type want %q got %q", c.sig, c.wantType, typ)
 		}
 		if !reflect.DeepEqual(annos, c.wantAnnos) {
 			t.Errorf("sig=%q: annos want %v got %v", c.sig, c.wantAnnos, annos)
+		}
+		if optional != c.wantOptional {
+			t.Errorf("sig=%q: optional want %v got %v", c.sig, c.wantOptional, optional)
 		}
 	}
 }
@@ -367,9 +497,14 @@ func TestShape_InferNullable(t *testing.T) {
 		{nil, "Optional<Foo>", true},
 		{nil, "int", false},
 		{nil, "String", false},
+		// #4868 — TS union nullability.
+		{nil, "Date | null", true},
+		{nil, "string | undefined", true},
+		{nil, "string | number", false},
+		{nil, "Array<Foo> | null", true},
 	}
 	for _, c := range cases {
-		if got := inferNullable(c.annos, c.typ); got != c.want {
+		if got := inferNullable(c.annos, c.typ, nil); got != c.want {
 			t.Errorf("inferNullable(%v,%q)=%v want %v", c.annos, c.typ, got, c.want)
 		}
 	}

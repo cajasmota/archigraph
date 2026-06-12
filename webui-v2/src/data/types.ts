@@ -915,6 +915,15 @@ export interface ShapeRow {
   validations?: string[];
   nullable?: boolean;
   type_entity_id?: string;
+  /**
+   * Definition location of the field's TYPE (#4869) — lets the UI open the
+   * type's source in the peek modal when the user clicks the type-name link,
+   * independent of the row-body expand/collapse click. Present only when the
+   * type resolves to an in-group entity.
+   */
+  type_source_file?: string;
+  type_source_line?: number;
+  type_repo?: string;
   has_children: boolean;
 }
 

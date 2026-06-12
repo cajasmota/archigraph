@@ -1854,6 +1854,19 @@ func importRecord(modulePath string, file extractor.FileInput, props map[string]
 // blocks (`if X: y = ...`) is intentionally skipped — those are not
 // stable class attributes a resolver can rely on, and emitting them would
 // risk over-eager binding.
+// pyFieldSignature builds a class-field signature for the dashboard shape
+// resolver. When a PEP-526 annotation is present it emits the `name: type`
+// convention (e.g. `effectiveAt: datetime | None`) the shape parser
+// understands; otherwise it emits the bare name (no inferred type). A trailing
+// `| None` / `Optional[...]` annotation lets the resolver mark the field
+// nullable. (#4868)
+func pyFieldSignature(name, typeAnn string) string {
+	if typeAnn = strings.TrimSpace(typeAnn); typeAnn == "" {
+		return name
+	}
+	return name + ": " + typeAnn
+}
+
 func extractClassFields(
 	body *sitter.Node,
 	file extractor.FileInput,
@@ -1879,9 +1892,18 @@ func extractClassFields(
 				continue
 			}
 			var lhs *sitter.Node
+			var typeAnn string
 			switch expr.Type() {
 			case "assignment":
 				lhs = expr.ChildByFieldName("left")
+				// #4868 — capture the PEP-526 annotation on `x: int = 0` (the
+				// assignment's "type" field) so the dashboard shape row shows
+				// the real field type (and `| None` nullability) instead of
+				// "unknown". The shape parser reads the `name: type` convention
+				// emitted in the Signature below.
+				if tn := expr.ChildByFieldName("type"); tn != nil {
+					typeAnn = strings.TrimSpace(nodeText(tn, file.Content))
+				}
 			case "augmented_assignment":
 				// `count += 1` at class scope doesn't introduce a new
 				// attribute — skip.
@@ -1914,7 +1936,7 @@ func extractClassFields(
 					SourceFile:    file.Path,
 					StartLine:     int(stmt.StartPoint().Row) + 1,
 					EndLine:       int(stmt.EndPoint().Row) + 1,
-					Signature:     name,
+					Signature:     pyFieldSignature(name, typeAnn),
 				})
 			}
 		}

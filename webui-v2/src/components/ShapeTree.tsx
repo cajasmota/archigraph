@@ -22,10 +22,16 @@
    site reimplementing the expansion logic.
    ============================================================ */
 
-import { useState, type ReactNode } from "react";
+import {
+  useState,
+  type ReactNode,
+  type MouseEvent as ReactMouseEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useShape } from "@/hooks/use-paths";
+import { useSourcePeek } from "@/components/SourcePeek/SourcePeekProvider";
 import {
   indentForDepth,
   fieldTypeLabel,
@@ -292,6 +298,17 @@ function TreeGuide({ depth, children }: { depth: number; children: ReactNode }) 
   );
 }
 
+/**
+ * One nested field row, laid out as aligned COLUMNS (#4868):
+ *
+ *   [chevron] name… | type | constraints(optional? + validation/annotation chips)
+ *
+ * Click interactions are split (#4869):
+ *   - clicking the row body or the chevron toggles expand/collapse (only when
+ *     the field's type is itself expandable);
+ *   - clicking the TYPE-NAME link opens that type's SOURCE in the peek modal —
+ *     it stops propagation so it never also toggles the row.
+ */
 function NestedFieldRow({
   groupId,
   field,
@@ -302,8 +319,25 @@ function NestedFieldRow({
   depth: number;
 }) {
   const [open, setOpen] = useState(false);
+  const { openSourcePeek } = useSourcePeek();
   const expandable = field.has_children;
+  // A field is "optional" when nullable (TS `?`, `| null`/`| undefined`,
+  // Optional<…>, Python `| None`). Required is the implied default, so we
+  // render an indicator ONLY for the optional case (#4868) — no "required"
+  // chip clutter.
   const optional = !!field.nullable;
+  // The type-name link opens source when we know where the type is defined.
+  const canPeekType = !!field.type_source_file;
+  const openType = (e: ReactMouseEvent | ReactKeyboardEvent) => {
+    e.stopPropagation();
+    if (!canPeekType) return;
+    openSourcePeek({
+      groupId,
+      file: field.type_source_file as string,
+      line: field.type_source_line ?? 1,
+      repo: field.type_repo,
+    });
+  };
   return (
     <div>
       <div
@@ -326,53 +360,77 @@ function NestedFieldRow({
           }
         }}
       >
-        <ExpandGlyph expandable={expandable} open={open} />
-        <span className="font-mono text-text shrink-0">{field.name}</span>
+        {/* Col: chevron + name (indented). Fixed width so types align. */}
         <span
-          className={cn(
-            "font-mono shrink-0",
-            expandable
-              ? "text-accent underline decoration-dotted underline-offset-2"
-              : "text-text-3",
-          )}
-          title={expandable ? `${field.type} — click to expand fields` : field.type}
+          className="flex items-center gap-1 shrink-0 min-w-0"
+          style={{ width: 180 }}
         >
-          {fieldTypeLabel(field.type, field.nullable)}
-        </span>
-        <span
-          data-testid={`shape-field-optionality-${field.name}`}
-          className={cn(
-            "inline-flex items-center px-1 py-0.5 rounded-sm text-[10px] font-medium font-sans shrink-0",
-            optional
-              ? "bg-surface-2 text-text-4 border border-border"
-              : "bg-[var(--success-soft)] text-[var(--success)] border border-[var(--success-soft)]",
-          )}
-          title={fieldOptionality(field.nullable)}
-        >
-          {optional ? "optional" : "required"}
-        </span>
-        {field.validations && field.validations.length > 0 && (
+          <ExpandGlyph expandable={expandable} open={open} />
           <span
-            data-testid={`shape-field-validations-${field.name}`}
-            className="flex items-center gap-1 min-w-0 overflow-hidden"
+            className="font-mono text-text overflow-hidden text-ellipsis whitespace-nowrap"
+            title={field.name}
           >
-            {field.validations.map((v) => (
-              <span
-                key={v}
-                data-testid={`validation-chip-${v}`}
-                className="inline-flex items-center px-1 py-0.5 rounded-sm text-[10px] font-medium font-mono shrink-0 bg-[var(--info-soft)] text-[var(--info)] border border-[var(--info-soft)]"
-                title={v}
-              >
-                {v}
-              </span>
-            ))}
+            {field.name}
           </span>
-        )}
-        {field.annotations && field.annotations.length > 0 && (
-          <span className="text-text-4 truncate font-mono text-[11px]">
-            {field.annotations.join(" ")}
-          </span>
-        )}
+        </span>
+
+        {/* Col: type. A type-name LINK (own click → source peek) when the
+            type's definition location is known; plain text otherwise. */}
+        <span className="shrink-0 font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ width: 200 }}>
+          {canPeekType ? (
+            <button
+              type="button"
+              data-testid={`shape-field-type-link-${field.name}`}
+              onClick={openType}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") openType(e);
+              }}
+              title={`${field.type} — click to open type source`}
+              className="text-accent underline decoration-dotted underline-offset-2 hover:decoration-solid bg-transparent p-0 border-0 cursor-pointer font-mono text-left max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+            >
+              {fieldTypeLabel(field.type, field.nullable)}
+            </button>
+          ) : (
+            <span className="text-text-3" title={field.type}>
+              {fieldTypeLabel(field.type, field.nullable)}
+            </span>
+          )}
+        </span>
+
+        {/* Col: constraints — optional indicator (only when optional) + chips. */}
+        <span className="flex items-center gap-1 min-w-0 overflow-hidden flex-1">
+          {optional && (
+            <span
+              data-testid={`shape-field-optionality-${field.name}`}
+              className="inline-flex items-center px-1 py-0.5 rounded-sm text-[10px] font-medium font-sans shrink-0 bg-surface-2 text-text-4 border border-border"
+              title={fieldOptionality(field.nullable)}
+            >
+              optional
+            </span>
+          )}
+          {field.validations && field.validations.length > 0 && (
+            <span
+              data-testid={`shape-field-validations-${field.name}`}
+              className="flex items-center gap-1 min-w-0 overflow-hidden"
+            >
+              {field.validations.map((v) => (
+                <span
+                  key={v}
+                  data-testid={`validation-chip-${v}`}
+                  className="inline-flex items-center px-1 py-0.5 rounded-sm text-[10px] font-medium font-mono shrink-0 bg-[var(--info-soft)] text-[var(--info)] border border-[var(--info-soft)]"
+                  title={v}
+                >
+                  {v}
+                </span>
+              ))}
+            </span>
+          )}
+          {field.annotations && field.annotations.length > 0 && (
+            <span className="text-text-4 truncate font-mono text-[11px]">
+              {field.annotations.join(" ")}
+            </span>
+          )}
+        </span>
       </div>
       {open && expandable && (
         <NestedFieldRows

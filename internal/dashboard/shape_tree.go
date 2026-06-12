@@ -34,9 +34,9 @@ import (
 // `nullable` come from the field entity's signature; `type_entity_id`
 // + `has_children` indicate whether the frontend can drill further.
 type v2ShapeRow struct {
-	Name         string   `json:"name"`
-	Type         string   `json:"type"`
-	Annotations  []string `json:"annotations,omitempty"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	Annotations []string `json:"annotations,omitempty"`
 	// Validations are per-field constraint chips (#4858) parsed from the
 	// field entity's `validations` metadata property — e.g. for a NestJS DTO
 	// field `@IsString() @MaxLength(120) @IsOptional() name?: string` this is
@@ -45,7 +45,14 @@ type v2ShapeRow struct {
 	Validations  []string `json:"validations,omitempty"`
 	Nullable     bool     `json:"nullable,omitempty"`
 	TypeEntityID string   `json:"type_entity_id,omitempty"`
-	HasChildren  bool     `json:"has_children"`
+	// TypeSourceFile / TypeSourceLine locate the field TYPE's definition so the
+	// frontend can open it in the source-peek modal when the user clicks the
+	// type-name link (#4869) — independent of the row-body expand/collapse
+	// click. Populated only when the type resolves to an in-group entity.
+	TypeSourceFile string `json:"type_source_file,omitempty"`
+	TypeSourceLine int    `json:"type_source_line,omitempty"`
+	TypeRepo       string `json:"type_repo,omitempty"`
+	HasChildren    bool   `json:"has_children"`
 }
 
 // v2ShapeResponse is the wire shape of GET /api/v2/groups/{id}/shape.
@@ -270,14 +277,14 @@ func buildShapeRow(grp *DashGroup, field *graph.Entity) v2ShapeRow {
 	if idx := strings.LastIndex(name, "."); idx >= 0 {
 		name = name[idx+1:]
 	}
-	annotations, typ := parseFieldSignature(field.Signature, name)
+	annotations, typ, optional := parseFieldSignature(field.Signature, name)
 
 	row := v2ShapeRow{
 		Name:        name,
 		Type:        typ,
 		Annotations: annotations,
 		Validations: fieldValidations(field),
-		Nullable:    inferNullable(annotations, typ),
+		Nullable:    optional || inferNullable(annotations, typ, field),
 	}
 	// Resolve the field's element type to a class entity so the frontend
 	// can render the expansion glyph. Container element types (List<X>,
@@ -288,6 +295,11 @@ func buildShapeRow(grp *DashGroup, field *graph.Entity) v2ShapeRow {
 			tgtSlug, _ := findRepoForEntity(grp, target.ID)
 			row.TypeEntityID = dashPrefixedID(tgtSlug, target.ID)
 			row.HasChildren = true
+			// Carry the type's definition location so the frontend can open
+			// the type's source on a type-name click (#4869).
+			row.TypeSourceFile = target.SourceFile
+			row.TypeSourceLine = target.StartLine
+			row.TypeRepo = tgtSlug
 		}
 	}
 	return row
@@ -319,13 +331,32 @@ func fieldValidations(field *graph.Entity) []string {
 	return out
 }
 
-// parseFieldSignature splits a Java field signature like
-// `@NotBlank @Min(0) BigDecimal qty` into ([@NotBlank, @Min(0)], "BigDecimal")
-// using the field name as the right-anchor token.
-func parseFieldSignature(sig, fieldName string) (annotations []string, typ string) {
+// parseFieldSignature splits a field signature into ([annotations], type,
+// optional). It handles two conventions:
+//
+//   - JS/TS "name[?]: type" — emitted by handlePublicFieldDefinition (class
+//     fields) and emitSchemaMemberFields (interface / type-alias members). The
+//     leading token is the field name, an optional "?" marks a TS-optional
+//     field, and everything after the ":" is the type (`string`, `number`,
+//     `Date`, `number | null`, …). This is the path that was previously parsed
+//     as if it were Java `Type name`, yielding a garbage type and "unknown"
+//     in the UI (#4868).
+//   - Java "[@anno ...] Type name" — the annotation-prefixed, type-first
+//     convention emitted by the Java/JVM extractors.
+//
+// `optional` is true only for the TS-optional `?` marker; union nullability
+// (`| null` / `| undefined`) is folded into nullability by the caller via
+// inferNullable so it composes with annotation/Optional signals.
+func parseFieldSignature(sig, fieldName string) (annotations []string, typ string, optional bool) {
 	sig = strings.TrimSpace(sig)
 	if sig == "" {
-		return nil, ""
+		return nil, "", false
+	}
+	// JS/TS convention: "name[?]: type". Detect by a leading `name` (optionally
+	// followed by `?`) immediately before a top-level colon. This is
+	// unambiguous vs the Java `Type name` form, which carries no colon.
+	if annos, t, opt, ok := parseColonFieldSignature(sig, fieldName); ok {
+		return annos, t, opt
 	}
 	// Walk left-to-right collecting @Annotation tokens (with optional
 	// (...) argument lists). Stop at the first non-annotation token —
@@ -377,7 +408,72 @@ func parseFieldSignature(sig, fieldName string) (annotations []string, typ strin
 			typ = rest
 		}
 	}
-	return annotations, typ
+	return annotations, typ, false
+}
+
+// parseColonFieldSignature parses a JS/TS field signature of the form
+// `name[?]: type` into (annotations=nil, type, optional, ok=true). It returns
+// ok=false when the signature is not in this convention (no top-level colon
+// preceded by the field name), so the caller can fall back to the Java parser.
+//
+// Examples:
+//
+//	"email?: string"          → ("string", optional=true)
+//	"createdAt: Date | null"  → ("Date | null", optional=false)
+//	"count: number"           → ("number", optional=false)
+//	"id: string"              → ("string", optional=false)
+func parseColonFieldSignature(sig, fieldName string) (annotations []string, typ string, optional, ok bool) {
+	// Find the first top-level colon (depth 0 outside <…>, (…), […], {…}).
+	colon := topLevelColon(sig)
+	if colon < 0 {
+		return nil, "", false, false
+	}
+	head := strings.TrimSpace(sig[:colon])
+	typ = strings.TrimSpace(sig[colon+1:])
+	if typ == "" {
+		return nil, "", false, false
+	}
+	// head is the field name, optionally suffixed with `?` (and possibly a
+	// `readonly ` modifier prefix the extractor may include).
+	head = strings.TrimPrefix(head, "readonly ")
+	head = strings.TrimSpace(head)
+	if strings.HasSuffix(head, "?") {
+		optional = true
+		head = strings.TrimSpace(strings.TrimSuffix(head, "?"))
+	}
+	// The head must be the field name (when known) for this to be a
+	// `name: type` field signature and not, say, a Java `Map<K, V> name`
+	// whose generic args contain a colon (they don't, but be conservative).
+	if fieldName != "" && head != fieldName {
+		return nil, "", false, false
+	}
+	if fieldName == "" && head == "" {
+		return nil, "", false, false
+	}
+	return nil, typ, optional, true
+}
+
+// topLevelColon returns the byte index of the first colon at bracket-nesting
+// depth zero, or -1. Generic/paren/array/object brackets are tracked so a
+// colon inside `Record<string, number>` or `{ a: b }` is not mistaken for the
+// `name: type` separator.
+func topLevelColon(s string) int {
+	depth := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '<', '(', '[', '{':
+			depth++
+		case '>', ')', ']', '}':
+			if depth > 0 {
+				depth--
+			}
+		case ':':
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
 }
 
 // isIdentChar reports whether b is a valid Java identifier character.
@@ -387,11 +483,17 @@ func isIdentChar(b byte) bool {
 }
 
 // inferNullable returns true when the type or annotation set indicates
-// the field accepts null. `@Nullable` is the explicit signal; Optional<X>
-// is the structural signal. `@NotNull`/`@NotBlank`/`@NotEmpty` are
-// explicit non-null markers (returns false even if the type looks
-// nullable). Primitive types (lowercase) are non-nullable in Java.
-func inferNullable(annotations []string, typ string) bool {
+// the field accepts null. Signals, in precedence order:
+//
+//   - explicit non-null Java annotations (`@NotNull`/`@NotBlank`/`@NotEmpty`)
+//     force false even if the type looks nullable.
+//   - explicit nullable: `@Nullable` (Java), an explicit `nullable=true`
+//     Property stamped by an extractor, Java `Optional<X>`, or a TS union that
+//     admits `null`/`undefined` (`Date | null`, `string | undefined`).
+//
+// The TS-optional `?` marker is folded in by the caller (it lives on the field
+// name, not the type), so it is intentionally not re-checked here.
+func inferNullable(annotations []string, typ string, field *graph.Entity) bool {
 	for _, a := range annotations {
 		if strings.HasPrefix(a, "@NotNull") ||
 			strings.HasPrefix(a, "@NotBlank") ||
@@ -404,7 +506,25 @@ func inferNullable(annotations []string, typ string) bool {
 			return true
 		}
 	}
+	// Extractor-stamped explicit nullability, if any.
+	if field != nil && field.Properties != nil {
+		switch strings.TrimSpace(strings.ToLower(field.Properties["nullable"])) {
+		case "true":
+			return true
+		case "false":
+			return false
+		}
+	}
 	if strings.HasPrefix(typ, "Optional<") {
+		return true
+	}
+	// Python typing.Optional[X] is structurally nullable.
+	if strings.HasPrefix(typ, "Optional[") && strings.HasSuffix(typ, "]") {
+		return true
+	}
+	// TS union admitting null/undefined (`Date | null`, `string | undefined`)
+	// or Python union admitting None (`datetime | None`).
+	if typeUnionAdmitsNull(typ) {
 		return true
 	}
 	// Lowercase primitive (byte/short/int/long/float/double/boolean/char).
@@ -413,6 +533,47 @@ func inferNullable(annotations []string, typ string) bool {
 		return false
 	}
 	return false
+}
+
+// typeUnionAdmitsNull reports whether a TS type is a union with a `null` or
+// `undefined` member (`Date | null`, `string | null | undefined`). Only
+// top-level union members are considered.
+func typeUnionAdmitsNull(typ string) bool {
+	if !strings.Contains(typ, "|") {
+		return false
+	}
+	for _, part := range splitTopLevelUnion(typ) {
+		switch strings.TrimSpace(part) {
+		case "null", "undefined", "None":
+			return true
+		}
+	}
+	return false
+}
+
+// splitTopLevelUnion splits a TS type on `|` at bracket-nesting depth zero so
+// `A<B | C> | null` yields ["A<B | C>", "null"].
+func splitTopLevelUnion(s string) []string {
+	var out []string
+	depth := 0
+	start := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '<', '(', '[', '{':
+			depth++
+		case '>', ')', ']', '}':
+			if depth > 0 {
+				depth--
+			}
+		case '|':
+			if depth == 0 {
+				out = append(out, s[start:i])
+				start = i + 1
+			}
+		}
+	}
+	out = append(out, s[start:])
+	return out
 }
 
 // unwrapElementType returns the inner reference type from a Java
@@ -426,9 +587,31 @@ func unwrapElementType(t string) string {
 	if t == "" {
 		return ""
 	}
+	// TS union: drop null/undefined members and unwrap a single remaining
+	// reference member (`Foo | null` → `Foo`). Mixed/multi-member unions
+	// (`Foo | Bar`) are left as-is — they have no single element type.
+	if strings.Contains(t, "|") {
+		var keep []string
+		for _, part := range splitTopLevelUnion(t) {
+			p := strings.TrimSpace(part)
+			if p == "null" || p == "undefined" || p == "" {
+				continue
+			}
+			keep = append(keep, p)
+		}
+		if len(keep) == 1 {
+			t = keep[0]
+		}
+	}
+	// TS array sugar `Foo[]` → `Foo`.
+	if strings.HasSuffix(t, "[]") {
+		return strings.TrimSpace(t[:len(t)-2])
+	}
 	for _, w := range []string{
 		"List", "Set", "Collection", "Iterable", "Optional", "Stream",
 		"ArrayList", "LinkedList", "HashSet", "TreeSet",
+		// TS/JS containers + async wrappers.
+		"Array", "ReadonlyArray", "Promise", "Observable",
 	} {
 		prefix := w + "<"
 		if strings.HasPrefix(t, prefix) && strings.HasSuffix(t, ">") {
