@@ -81,6 +81,25 @@ var (
 	reGQLKFun = regexp.MustCompile(
 		`(?m)^[ \t]*(?:(?:public|open|override|final|suspend|inline)\s+)*fun\s+([A-Za-z_]\w*)\s*\(`,
 	)
+	// reGQLKFunSig captures the full resolver signature from the fun name through
+	// to the body/expression start: group 1 = fun name, group 2 = the parenthesised
+	// argument list (without the outer parens), group 3 = the optional `: ReturnType`
+	// return-type slice (everything between the closing arg paren and the next `{`
+	// or `=`). Used for Relay/connection pagination detection (first/after/last/
+	// before args, *Connection return type).
+	reGQLKFunSig = regexp.MustCompile(
+		`(?m)^[ \t]*(?:(?:public|open|override|final|suspend|inline)\s+)*fun\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?::\s*([^={\n]+))?`,
+	)
+	// reGQLKConnReturn matches a Relay-style connection return type — a generic or
+	// plain type whose name ends in `Connection` (e.g. `UserConnection`,
+	// `Connection<User>`). Anchored on a word boundary so `Disconnection` does not
+	// match.
+	reGQLKConnReturn = regexp.MustCompile(`\b([A-Za-z_]\w*)?Connection\b`)
+	// reGQLKPageArg matches a Relay forward/backward pagination argument by name
+	// (first/after/last/before) in a resolver argument list. Matched as a whole
+	// identifier immediately followed by `:` so a substring like `firstName` is not
+	// a false positive.
+	reGQLKPageArg = regexp.MustCompile(`(?m)(?:^|[\s,(])\s*(first|after|last|before)\s*:`)
 	// Non-exposed function modifiers — if any precede `fun`, the function is
 	// not a GraphQL field.
 	reGQLKNonPublicFun = regexp.MustCompile(
@@ -146,6 +165,26 @@ func gqlkAnnotationBlock(src string, declOffset int) string {
 		return ""
 	}
 	return src[i:end]
+}
+
+// gqlkRelayPosture inspects a resolver's argument list and return-type slice for
+// the Relay/connection-pagination shape and returns ("", "") when neither signal
+// is present. The posture string is "relay_connection" when a *Connection return
+// type and/or any forward/backward Relay pagination argument (first/after/last/
+// before) is found. The second return is the comma-joined set of detected Relay
+// argument names (evidence for the dashboard), or "" when only the return type
+// signalled. Honest-partial: this is a structural shape match — a hand-rolled
+// cursor scheme that does not follow the Relay naming is not detected.
+func gqlkRelayPosture(args, returnType string) (posture, pageArgs string) {
+	var found []string
+	for _, m := range reGQLKPageArg.FindAllStringSubmatch(args, -1) {
+		found = append(found, m[1])
+	}
+	connReturn := reGQLKConnReturn.MatchString(returnType)
+	if len(found) == 0 && !connReturn {
+		return "", ""
+	}
+	return "relay_connection", strings.Join(found, ",")
 }
 
 func (e *graphqlKotlinExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
@@ -244,6 +283,38 @@ func (e *graphqlKotlinExtractor) Extract(ctx context.Context, file extractor.Fil
 			if desc := reGQLKDescription.FindStringSubmatch(annBlock); desc != nil {
 				setProps(&ent, "graphql_description", desc[1])
 			}
+
+			// GraphQL-native field deprecation (#5010): a @Deprecated annotation /
+			// KDoc @deprecated tag in the annotation block above the resolver fun
+			// marks the FIELD as deprecated. This is the GraphQL-schema-directive
+			// analogue of REST endpoint_deprecation_versioning — distinct, and
+			// stamped on the synthesised GraphQL endpoint. Reuses the shared Kotlin
+			// deprecation resolver/contract (endpoint_deprecation.go) so the
+			// deprecated / deprecated_since / deprecated_replacement / deprecation_source
+			// property names match the flagship contract.
+			if verdict, dep := ktResolveAnnotationDeprecation(annBlock); dep {
+				ktStampDeprecation(&ent, verdict)
+				setProps(&ent, "graphql_deprecated", "true")
+			}
+
+			// GraphQL-native Relay/connection pagination (#5010): a resolver
+			// returning a *Connection type and/or taking forward/backward Relay
+			// args (first/after/last/before) carries the Relay connection
+			// pagination posture. Distinct from REST limit+offset query-param
+			// detection — stamped on the GraphQL field.
+			sigEnd := fm[1] + 400
+			if sigEnd > len(body) {
+				sigEnd = len(body)
+			}
+			sig := reGQLKFunSig.FindStringSubmatch(body[lineStart:sigEnd])
+			if sig != nil && sig[1] == funName {
+				if posture, pageArgs := gqlkRelayPosture(sig[2], sig[3]); posture != "" {
+					setProps(&ent, "graphql_pagination", posture)
+					if pageArgs != "" {
+						setProps(&ent, "graphql_pagination_args", pageArgs)
+					}
+				}
+			}
 			add(ent)
 		}
 	}
@@ -260,11 +331,31 @@ func (e *graphqlKotlinExtractor) Extract(ctx context.Context, file extractor.Fil
 		if nm := reGQLKName.FindStringSubmatch(annBlock); nm != nil {
 			schemaName = nm[1]
 		}
+		// Relay/connection pagination shape (#5010): a `data class` named
+		// *Connection / *Edge / *PageInfo is the GraphQL cursor-pagination
+		// wire model. Tag its dto role with the connection part so the schema's
+		// pagination posture is queryable from the type side as well as the
+		// field side.
+		dtoRole := "object"
+		paginationRole := ""
+		switch {
+		case strings.HasSuffix(typeName, "Connection"):
+			dtoRole, paginationRole = "connection", "connection"
+		case strings.HasSuffix(typeName, "Edge"):
+			dtoRole, paginationRole = "edge", "edge"
+		case typeName == "PageInfo" || strings.HasSuffix(typeName, "PageInfo"):
+			dtoRole, paginationRole = "page_info", "page_info"
+		}
+
 		ent := makeEntity("graphql_dto:"+schemaName, "SCOPE.Schema", "dto", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "graphql-kotlin",
 			"provenance", "INFERRED_FROM_GRAPHQL_KOTLIN_DTO",
 			"dto_name", schemaName, "dto_source_class", typeName,
-			"graphql_dto_role", "object")
+			"graphql_dto_role", dtoRole)
+		if paginationRole != "" {
+			setProps(&ent, "graphql_pagination", "relay_connection",
+				"graphql_pagination_role", paginationRole)
+		}
 		add(ent)
 	}
 

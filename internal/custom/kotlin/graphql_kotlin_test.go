@@ -154,3 +154,120 @@ func TestGraphQLKotlin_WrongLanguage(t *testing.T) {
 		t.Errorf("wrong language should return no entities, got %d", len(ents))
 	}
 }
+
+// gqlkRelaySrc — a graphql-kotlin schema carrying GraphQL-native directives:
+// a @Deprecated resolver field and a Relay/connection pagination field, plus the
+// Connection/Edge/PageInfo wire types. Exercises #5010.
+const gqlkRelaySrc = `
+package com.example.graphql
+
+import com.expediagroup.graphql.server.operations.Query
+import com.expediagroup.graphql.generator.annotations.GraphQLDescription
+
+data class User(val id: ID, val name: String)
+data class UserEdge(val node: User, val cursor: String)
+data class PageInfo(val hasNextPage: Boolean, val endCursor: String?)
+data class UserConnection(val edges: List<UserEdge>, val pageInfo: PageInfo)
+
+class UserQuery : Query {
+    @Deprecated("use users instead, since 2.0")
+    fun legacyUsers(): List<User> = repo.all()
+
+    @GraphQLDescription("Relay-paginated users")
+    fun users(first: Int, after: String?): UserConnection = repo.page(first, after)
+
+    fun plain(id: ID): User = repo.find(id)
+}
+`
+
+func TestGraphQLKotlin_FieldDeprecation(t *testing.T) {
+	ents := extract(t, "custom_kotlin_graphql_kotlin", fi("Relay.kt", "kotlin", gqlkRelaySrc))
+
+	e := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Query/legacyUsers")
+	if e == nil {
+		t.Fatal("expected legacyUsers endpoint")
+	}
+	if e.Props["graphql_deprecated"] != "true" {
+		t.Errorf("graphql_deprecated = %q, want true", e.Props["graphql_deprecated"])
+	}
+	if e.Props["deprecated"] != "true" {
+		t.Errorf("deprecated = %q, want true", e.Props["deprecated"])
+	}
+	if e.Props["deprecation_source"] != "@Deprecated" {
+		t.Errorf("deprecation_source = %q, want @Deprecated", e.Props["deprecation_source"])
+	}
+	if e.Props["deprecated_since"] != "2.0" {
+		t.Errorf("deprecated_since = %q, want 2.0", e.Props["deprecated_since"])
+	}
+	if e.Props["deprecated_replacement"] != "users" {
+		t.Errorf("deprecated_replacement = %q, want users", e.Props["deprecated_replacement"])
+	}
+
+	// A non-deprecated field must NOT carry the deprecation marker.
+	if p := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Query/plain"); p != nil {
+		if p.Props["graphql_deprecated"] != "" {
+			t.Errorf("plain: graphql_deprecated = %q, want empty", p.Props["graphql_deprecated"])
+		}
+	}
+}
+
+func TestGraphQLKotlin_RelayPagination(t *testing.T) {
+	ents := extract(t, "custom_kotlin_graphql_kotlin", fi("Relay.kt", "kotlin", gqlkRelaySrc))
+
+	// The users(first, after): UserConnection field is Relay-paginated.
+	e := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Query/users")
+	if e == nil {
+		t.Fatal("expected users endpoint")
+	}
+	if e.Props["graphql_pagination"] != "relay_connection" {
+		t.Errorf("graphql_pagination = %q, want relay_connection", e.Props["graphql_pagination"])
+	}
+	if e.Props["graphql_pagination_args"] != "first,after" {
+		t.Errorf("graphql_pagination_args = %q, want first,after", e.Props["graphql_pagination_args"])
+	}
+
+	// A non-paginated field must NOT carry the posture.
+	if p := findEntity(ents, "SCOPE.Operation", "GRAPHQL /graphql/Query/plain"); p != nil {
+		if p.Props["graphql_pagination"] != "" {
+			t.Errorf("plain: graphql_pagination = %q, want empty", p.Props["graphql_pagination"])
+		}
+	}
+}
+
+func TestGraphQLKotlin_RelayConnectionTypes(t *testing.T) {
+	ents := extract(t, "custom_kotlin_graphql_kotlin", fi("Relay.kt", "kotlin", gqlkRelaySrc))
+
+	cases := []struct {
+		dto, role string
+	}{
+		{"UserConnection", "connection"},
+		{"UserEdge", "edge"},
+		{"PageInfo", "page_info"},
+	}
+	for _, c := range cases {
+		e := findEntity(ents, "SCOPE.Schema", "graphql_dto:"+c.dto)
+		if e == nil {
+			t.Errorf("expected DTO %q", c.dto)
+			continue
+		}
+		if e.Props["graphql_dto_role"] != c.role {
+			t.Errorf("%s: graphql_dto_role = %q, want %q", c.dto, e.Props["graphql_dto_role"], c.role)
+		}
+		if e.Props["graphql_pagination"] != "relay_connection" {
+			t.Errorf("%s: graphql_pagination = %q, want relay_connection", c.dto, e.Props["graphql_pagination"])
+		}
+		if e.Props["graphql_pagination_role"] != c.role {
+			t.Errorf("%s: graphql_pagination_role = %q, want %q", c.dto, e.Props["graphql_pagination_role"], c.role)
+		}
+	}
+
+	// A plain DTO keeps role=object and no pagination.
+	if u := findEntity(ents, "SCOPE.Schema", "graphql_dto:User"); u != nil {
+		if u.Props["graphql_dto_role"] != "object" {
+			t.Errorf("User: graphql_dto_role = %q, want object", u.Props["graphql_dto_role"])
+		}
+		if u.Props["graphql_pagination"] != "" {
+			t.Errorf("User: graphql_pagination = %q, want empty", u.Props["graphql_pagination"])
+		}
+	}
+}
