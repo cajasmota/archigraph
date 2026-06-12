@@ -426,6 +426,140 @@ func extractCICSTransfers(body string) []cicsCmd {
 	return out
 }
 
+// ---------------------------------------------------------------------------
+// FILE-CONTROL / VSAM file-control extraction — #4908
+//
+// ENVIRONMENT DIVISION ▸ INPUT-OUTPUT SECTION ▸ FILE-CONTROL declares the
+// mapping from a logical COBOL file (the name used by OPEN/READ/WRITE in the
+// PROCEDURE DIVISION) to a physical dataset / VSAM cluster via
+//
+//	SELECT <logical-file> ASSIGN TO <ddname-or-dataset>
+//	    ORGANIZATION IS {SEQUENTIAL|INDEXED|RELATIVE|LINE SEQUENTIAL}
+//	    ACCESS MODE IS {SEQUENTIAL|RANDOM|DYNAMIC}
+//	    RECORD KEY IS <field>   (VSAM KSDS).
+//
+// Until now the extractor emitted abstract fs_read / fs_write effects but no
+// resolvable file entity, so `READ EMP-FILE` could not be bound to a physical
+// dataset and shared-VSAM coupling between programs (and the JCL DD that
+// allocates the same dataset) was invisible. We emit one SCOPE.Datastore/file
+// entity per SELECT. Its `assign_to` is upper-cased so it matches the JCL DD
+// name (the cross-language coupling key), mirroring the jcl extractor's
+// SCOPE.Datastore/dataset naming so the by-name resolver can bridge them.
+// ---------------------------------------------------------------------------
+
+var (
+	// fileControlRe marks the FILE-CONTROL paragraph that opens the SELECT
+	// declarations within INPUT-OUTPUT SECTION.
+	fileControlRe = regexp.MustCompile(`(?i)^\s*FILE-CONTROL\s*\.`)
+
+	// selectAssignRe captures `SELECT <logical> ASSIGN TO <target>`. The
+	// OPTIONAL keyword and a leading TO are tolerated; the target may be a
+	// quoted literal, a DDname, or an environment-variable style name.
+	selectAssignRe = regexp.MustCompile(
+		`(?i)\bSELECT\s+(?:OPTIONAL\s+)?([A-Za-z0-9][A-Za-z0-9-]*)\s+ASSIGN\s+(?:TO\s+)?` +
+			`['"]?([A-Za-z0-9$#@./_-]+)['"]?`,
+	)
+
+	// fileOrgRe / fileAccessRe / fileKeyRe capture the VSAM-relevant clauses
+	// that may follow a SELECT across continuation lines (the SELECT statement
+	// is buffered to its terminating period before these are scanned).
+	fileOrgRe    = regexp.MustCompile(`(?i)\bORGANIZATION\s+(?:IS\s+)?(LINE\s+SEQUENTIAL|SEQUENTIAL|INDEXED|RELATIVE)`)
+	fileAccessRe = regexp.MustCompile(`(?i)\bACCESS\s+(?:MODE\s+)?(?:IS\s+)?(SEQUENTIAL|RANDOM|DYNAMIC)`)
+	fileKeyRe    = regexp.MustCompile(`(?i)\bRECORD\s+KEY\s+(?:IS\s+)?([A-Za-z0-9][A-Za-z0-9-]*)`)
+)
+
+var (
+	// fileOpenRe captures `OPEN <mode> <file>...` — the mode governs whether
+	// subsequent traffic reads or writes; we record per-file open intent.
+	fileOpenRe = regexp.MustCompile(`(?i)\bOPEN\s+(INPUT|OUTPUT|I-O|EXTEND)\s+([A-Za-z][A-Za-z0-9-\s]*)`)
+	// fileReadRe / fileWriteRe capture record-level I/O verbs on a logical file
+	// (READ <file>; WRITE/REWRITE <record>; START/DELETE <file>). The operand
+	// is resolved against the FILE-CONTROL logical-file set, so a WRITE of an
+	// FD record name won't match (only file handles do).
+	fileReadRe  = regexp.MustCompile(`(?i)\b(READ|START)\s+([A-Za-z][A-Za-z0-9-]*)`)
+	fileWriteRe = regexp.MustCompile(`(?i)\b(WRITE|REWRITE|DELETE)\s+([A-Za-z][A-Za-z0-9-]*)`)
+)
+
+// fileSelect is one parsed SELECT ... ASSIGN clause.
+type fileSelect struct {
+	logical  string // logical file name (the OPEN/READ/WRITE handle)
+	assignTo string // physical DDname / dataset (upper-cased coupling key)
+	org      string // SEQUENTIAL | INDEXED | RELATIVE | LINE SEQUENTIAL
+	access   string // SEQUENTIAL | RANDOM | DYNAMIC
+	key      string // RECORD KEY (VSAM KSDS), when present
+	line     int    // 1-based line of the SELECT
+}
+
+// fileResourceRef builds a stable identity for a COBOL file SCOPE.Datastore so
+// READS_FROM / WRITES_TO edges from paragraphs resolve to it, and so the
+// physical-dataset coupling key (assign_to) is recoverable.
+func fileResourceRef(filePath, logical string) string {
+	return "scope:datastore:cobol:" + filepath.ToSlash(filePath) + "#file:" + strings.ToUpper(logical)
+}
+
+// parseFileSelect extracts a SELECT ... ASSIGN clause (with any VSAM clauses
+// gathered from the buffered statement body). Returns ok=false when the body
+// is not a SELECT or carries no ASSIGN target.
+func parseFileSelect(body string, line int) (fileSelect, bool) {
+	m := selectAssignRe.FindStringSubmatch(body)
+	if m == nil {
+		return fileSelect{}, false
+	}
+	fs := fileSelect{
+		logical:  m[1],
+		assignTo: strings.ToUpper(strings.TrimRight(m[2], ".")),
+		line:     line,
+	}
+	if om := fileOrgRe.FindStringSubmatch(body); om != nil {
+		fs.org = strings.ToUpper(strings.Join(strings.Fields(om[1]), " "))
+	}
+	if am := fileAccessRe.FindStringSubmatch(body); am != nil {
+		fs.access = strings.ToUpper(am[1])
+	}
+	if km := fileKeyRe.FindStringSubmatch(body); km != nil {
+		fs.key = km[1]
+	}
+	return fs, true
+}
+
+// buildFileResourceEntity turns a SELECT clause into a SCOPE.Datastore/file
+// entity. The org distinguishes a VSAM cluster (INDEXED/RELATIVE) from a flat
+// sequential dataset; the presence of a RECORD KEY marks a KSDS.
+func buildFileResourceEntity(filePath string, fs fileSelect) types.EntityRecord {
+	props := map[string]string{
+		"logical_file": fs.logical,
+		"assign_to":    fs.assignTo,
+	}
+	if fs.org != "" {
+		props["organization"] = fs.org
+	}
+	if fs.access != "" {
+		props["access_mode"] = fs.access
+	}
+	if fs.key != "" {
+		props["record_key"] = fs.key
+	}
+	// Classify the physical storage layer: VSAM for keyed/relative
+	// organizations, sequential dataset otherwise.
+	storage := "sequential"
+	if fs.org == "INDEXED" || fs.org == "RELATIVE" || fs.key != "" {
+		storage = "vsam"
+	}
+	props["storage"] = storage
+	return types.EntityRecord{
+		Name:          fs.logical,
+		Kind:          "SCOPE.Datastore",
+		Subtype:       "file",
+		QualifiedName: fileResourceRef(filePath, fs.logical),
+		SourceFile:    filePath,
+		Language:      "cobol",
+		StartLine:     fs.line,
+		EndLine:       fs.line,
+		Signature:     "SELECT " + fs.logical + " ASSIGN TO " + fs.assignTo,
+		Properties:    props,
+	}
+}
+
 // cicsCallEdge builds the CALLS relationship for a CICS program/transaction
 // transfer. external=true (cross-program); via=EXEC-CICS-<VERB>.
 func cicsCallEdge(c cicsCmd, line int) types.RelationshipRecord {

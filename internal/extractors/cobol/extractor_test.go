@@ -517,6 +517,100 @@ func TestExtractor_DataRedefinesOccurs(t *testing.T) {
 	}
 }
 
+// TestExtractor_FileControlSelect proves FILE-CONTROL SELECT...ASSIGN clauses
+// emit a resolvable SCOPE.Datastore/file resource whose assign_to is the
+// JCL-DD-matching coupling key (#4908).
+func TestExtractor_FileControlSelect(t *testing.T) {
+	src := loadFixture(t, "payroll.cbl")
+	recs := run(t, "payroll.cbl", src)
+
+	files := findByKind(recs, "SCOPE.Datastore", "file")
+	if len(files) != 2 {
+		t.Fatalf("expected 2 file resources, got %d", len(files))
+	}
+	want := map[string]string{"EMP-FILE": "EMPIN", "PAY-FILE": "PAYOUT"}
+	for _, f := range files {
+		exp, ok := want[f.Name]
+		if !ok {
+			t.Errorf("unexpected file resource %q", f.Name)
+			continue
+		}
+		if f.Properties["assign_to"] != exp {
+			t.Errorf("%s assign_to = %q, want %q", f.Name, f.Properties["assign_to"], exp)
+		}
+		if f.Properties["organization"] != "SEQUENTIAL" {
+			t.Errorf("%s organization = %q, want SEQUENTIAL", f.Name, f.Properties["organization"])
+		}
+		if f.Properties["storage"] != "sequential" {
+			t.Errorf("%s storage = %q, want sequential", f.Name, f.Properties["storage"])
+		}
+	}
+}
+
+// TestExtractor_FileIODataFlow proves OPEN/READ/WRITE on a logical file wire
+// READS_FROM / WRITES_TO edges to the file resource (#4908).
+func TestExtractor_FileIODataFlow(t *testing.T) {
+	src := loadFixture(t, "payroll.cbl")
+	recs := run(t, "payroll.cbl", src)
+
+	reads := relationsByKind(recs, "READS_FROM")
+	writes := relationsByKind(recs, "WRITES_TO")
+	hasFile := func(rels []types.RelationshipRecord, file string) bool {
+		for _, r := range rels {
+			if r.Properties["file"] == file {
+				return true
+			}
+		}
+		return false
+	}
+	// OPEN INPUT EMP-FILE + READ EMP-FILE → READS_FROM.
+	if !hasFile(reads, "EMP-FILE") {
+		t.Error("expected READS_FROM edge for EMP-FILE")
+	}
+	// OPEN OUTPUT PAY-FILE → WRITES_TO.
+	if !hasFile(writes, "PAY-FILE") {
+		t.Error("expected WRITES_TO edge for PAY-FILE")
+	}
+}
+
+// TestExtractor_VSAMKsds proves an INDEXED ORGANIZATION with a RECORD KEY is
+// classified as VSAM storage and captures access mode + key (#4908).
+func TestExtractor_VSAMKsds(t *testing.T) {
+	src := "       ENVIRONMENT DIVISION.\n" +
+		"       INPUT-OUTPUT SECTION.\n" +
+		"       FILE-CONTROL.\n" +
+		"           SELECT CUST-MASTER ASSIGN TO CUSTVS\n" +
+		"               ORGANIZATION IS INDEXED\n" +
+		"               ACCESS MODE IS DYNAMIC\n" +
+		"               RECORD KEY IS CM-CUST-ID.\n" +
+		"       DATA DIVISION.\n"
+	recs := run(t, "vsam.cbl", src)
+
+	files := findByKind(recs, "SCOPE.Datastore", "file")
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file resource, got %d", len(files))
+	}
+	f := files[0]
+	if f.Name != "CUST-MASTER" {
+		t.Errorf("file name = %q, want CUST-MASTER", f.Name)
+	}
+	if f.Properties["assign_to"] != "CUSTVS" {
+		t.Errorf("assign_to = %q, want CUSTVS", f.Properties["assign_to"])
+	}
+	if f.Properties["storage"] != "vsam" {
+		t.Errorf("storage = %q, want vsam", f.Properties["storage"])
+	}
+	if f.Properties["organization"] != "INDEXED" {
+		t.Errorf("organization = %q, want INDEXED", f.Properties["organization"])
+	}
+	if f.Properties["access_mode"] != "DYNAMIC" {
+		t.Errorf("access_mode = %q, want DYNAMIC", f.Properties["access_mode"])
+	}
+	if f.Properties["record_key"] != "CM-CUST-ID" {
+		t.Errorf("record_key = %q, want CM-CUST-ID", f.Properties["record_key"])
+	}
+}
+
 func loadFixture(t *testing.T, name string) string {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join("testdata", name))

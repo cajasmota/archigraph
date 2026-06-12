@@ -261,6 +261,18 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 	// span many lines; we buffer its body until END-EXEC, then extract.
 	var execBuf *execBlock
 
+	// FILE-CONTROL / SELECT tracking (#4908). When inside FILE-CONTROL we
+	// buffer each SELECT statement to its terminating period (the VSAM
+	// ORGANIZATION / ACCESS / RECORD KEY clauses usually trail on continuation
+	// lines) and then emit a SCOPE.Datastore/file resource. fileEntityIdx maps
+	// the upper-cased logical file name → its entity index so PROCEDURE-DIVISION
+	// OPEN/READ/WRITE verbs can attach READS_FROM / WRITES_TO edges that bind to
+	// a resolvable physical dataset / VSAM cluster.
+	inFileControl := false
+	var selectBuf strings.Builder
+	selectStartLine := 0
+	fileEntityIdx := map[string]int{}
+
 	// Data-hierarchy tracking: a stack of (level, entity index) so 05/10 items
 	// can record their parent group via a CONTAINS edge and a parent property.
 	type dataScope struct {
@@ -282,6 +294,35 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 			return currentParagraphName
 		}
 		return programName
+	}
+
+	// flushSelect emits the SCOPE.Datastore/file resource for a buffered
+	// SELECT ... ASSIGN statement (FILE-CONTROL, #4908) and records its index
+	// so file-I/O verbs can wire data-flow edges to it.
+	flushSelect := func() {
+		body := selectBuf.String()
+		selectBuf.Reset()
+		if strings.TrimSpace(body) == "" {
+			return
+		}
+		fs, ok := parseFileSelect(body, selectStartLine)
+		if !ok {
+			return
+		}
+		key := strings.ToUpper(fs.logical)
+		if _, dup := fileEntityIdx[key]; dup {
+			return
+		}
+		idx := len(entities)
+		ent := buildFileResourceEntity(filePath, fs)
+		entities = append(entities, ent)
+		fileEntityIdx[key] = idx
+		// CONTAINS: program → file resource (keep it from being an orphan).
+		if programIdx >= 0 {
+			entities[programIdx].Relationships = append(entities[programIdx].Relationships,
+				types.RelationshipRecord{ToID: ent.QualifiedName, Kind: "CONTAINS",
+					Properties: map[string]string{"file": fs.logical}})
+		}
 	}
 
 	// flushExecBlock processes a completed EXEC SQL / CICS block: SQL blocks
@@ -355,6 +396,8 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 		// ── DIVISION ──────────────────────────────────────────────────────
 		if m := divisionRe.FindStringSubmatch(ln.code); m != nil {
 			div := strings.ToUpper(m[1])
+			flushSelect()
+			inFileControl = false
 			inProcedureDivision = div == "PROCEDURE"
 			inDataItemArea = false
 			currentParagraphIdx = -1
@@ -384,6 +427,40 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 			inDataItemArea = true
 		} else if hasSectionKeyword(ln.upper, "FILE") && strings.Contains(ln.upper, "SECTION") {
 			inDataItemArea = true
+		}
+
+		// ── FILE-CONTROL / SELECT (#4908) ────────────────────────────────
+		// A SELECT statement may span continuation lines; buffer it until its
+		// terminating period, then emit the file resource. FILE-CONTROL opens
+		// the region; any DATA DIVISION marker closes it (handled below via the
+		// divisionRe branch above, which resets inFileControl indirectly —
+		// guarded here for the common case).
+		if fileControlRe.MatchString(ln.code) {
+			flushSelect()
+			inFileControl = true
+			continue
+		}
+		if inFileControl {
+			up := strings.TrimSpace(ln.upper)
+			// A SELECT begins a new clause; flush any prior buffered one first.
+			if strings.HasPrefix(up, "SELECT ") {
+				flushSelect()
+				selectStartLine = ln.num
+			}
+			if selectBuf.Len() > 0 || strings.HasPrefix(up, "SELECT ") {
+				selectBuf.WriteByte(' ')
+				selectBuf.WriteString(ln.code)
+				// A period terminates the SELECT entry (clauses use IS, not '.').
+				if strings.Contains(ln.code, ".") {
+					flushSelect()
+				}
+				continue
+			}
+			// I-O-CONTROL / DATA DIVISION ends the FILE-CONTROL region.
+			if strings.HasPrefix(up, "I-O-CONTROL") {
+				flushSelect()
+				inFileControl = false
+			}
 		}
 
 		// ── SECTION ───────────────────────────────────────────────────────
@@ -596,12 +673,55 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 					attachCall(entities, currentParagraphIdx, programIdx, rel)
 				}
 			}
+
+			// File I/O verbs (#4908): bind OPEN/READ/WRITE on a FILE-CONTROL
+			// logical file to its SCOPE.Datastore/file resource with a
+			// READS_FROM / WRITES_TO edge from the enclosing paragraph (else the
+			// program). This turns the abstract fs_read/fs_write effect into a
+			// resolvable data-flow edge to a physical dataset / VSAM cluster.
+			ioIdx := currentParagraphIdx
+			if ioIdx < 0 {
+				ioIdx = programIdx
+			}
+			if ioIdx >= 0 {
+				attachFileIO := func(logical, kind string) {
+					if fi, ok := fileEntityIdx[strings.ToUpper(logical)]; ok {
+						entities[ioIdx].Relationships = append(entities[ioIdx].Relationships,
+							types.RelationshipRecord{
+								ToID: entities[fi].QualifiedName,
+								Kind: kind,
+								Properties: map[string]string{
+									"line": strconv.Itoa(ln.num),
+									"file": logical,
+								},
+							})
+					}
+				}
+				for _, om := range fileOpenRe.FindAllStringSubmatch(ln.code, -1) {
+					mode := strings.ToUpper(om[1])
+					kind := "READS_FROM"
+					if mode == "OUTPUT" || mode == "EXTEND" {
+						kind = "WRITES_TO"
+					}
+					// OPEN may list several files after one mode keyword.
+					for _, f := range strings.Fields(om[2]) {
+						attachFileIO(f, kind)
+					}
+				}
+				for _, rm := range fileReadRe.FindAllStringSubmatch(ln.code, -1) {
+					attachFileIO(rm[2], "READS_FROM")
+				}
+				for _, wm := range fileWriteRe.FindAllStringSubmatch(ln.code, -1) {
+					attachFileIO(wm[2], "WRITES_TO")
+				}
+			}
 		}
 	}
 
 	// Flush a trailing EXEC block that lacked a closing END-EXEC (tolerant of
 	// malformed / truncated source).
 	flushExecBlock()
+	flushSelect()
 
 	_ = programName
 	return entities
