@@ -356,6 +356,107 @@ const utilJobFixture = `//UTILJOB  JOB (ACCT),'BILLING RUN',CLASS=A,MSGCLASS=X
 //
 `
 
+func TestExtractor_DSNRunProgramEdge(t *testing.T) {
+	recs := run(t, "db2job.jcl", db2JobFixture)
+	rel, ok := callTo(recs, "PAYRPT")
+	if !ok {
+		t.Fatal("expected CALLS edge to PAYRPT from DSN RUN PROGRAM control card")
+	}
+	if rel.Properties["via"] != "DSN RUN PROGRAM" {
+		t.Errorf("PAYRPT CALL via = %q, want 'DSN RUN PROGRAM'", rel.Properties["via"])
+	}
+	if rel.Properties["db2_plan"] != "PAYPLAN" {
+		t.Errorf("PAYRPT db2_plan = %q, want PAYPLAN", rel.Properties["db2_plan"])
+	}
+	if rel.Properties["db2_system"] != "DB2P" {
+		t.Errorf("PAYRPT db2_system = %q, want DB2P", rel.Properties["db2_system"])
+	}
+	if rel.Properties["cross_language"] != "cobol" {
+		t.Errorf("PAYRPT cross_language = %q, want cobol", rel.Properties["cross_language"])
+	}
+	if rel.Properties["host_program"] != "IKJEFT01" {
+		t.Errorf("PAYRPT host_program = %q, want IKJEFT01", rel.Properties["host_program"])
+	}
+}
+
+func TestExtractor_DSNUTILBRunProgram(t *testing.T) {
+	// DSNUTILB is itself recognised as a shell utility; a RUN PROGRAM card in
+	// its SYSIN must surface the same way.
+	const src = `//DB2UTIL  JOB (ACCT),'DB2 UTIL',CLASS=A
+//RUNSTEP  EXEC PGM=DSNUTILB,PARM='DB2P,RUNIT'
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *
+  RUN PROGRAM(LOADTAB) PLAN(LOADPLN)
+/*
+//
+`
+	recs := run(t, "db2utilb.jcl", src)
+	rel, ok := callTo(recs, "LOADTAB")
+	if !ok {
+		t.Fatal("expected CALLS edge to LOADTAB from DSNUTILB RUN PROGRAM")
+	}
+	if rel.Properties["via"] != "DSN RUN PROGRAM" {
+		t.Errorf("LOADTAB via = %q, want 'DSN RUN PROGRAM'", rel.Properties["via"])
+	}
+	if rel.Properties["db2_plan"] != "LOADPLN" {
+		t.Errorf("LOADTAB db2_plan = %q, want LOADPLN", rel.Properties["db2_plan"])
+	}
+}
+
+func TestExtractor_IDCAMSReproDatasets(t *testing.T) {
+	recs := run(t, "idcams.jcl", idcamsJobFixture)
+	// The IN/FROM dataset is a read; the OUT/TO dataset is a write.
+	if !hasEntity(recs, "SCOPE.Datastore", "dataset", "PROD.SRC.VSAM") {
+		t.Error("expected dataset entity PROD.SRC.VSAM from IDCAMS REPRO INDATASET")
+	}
+	if !hasEntity(recs, "SCOPE.Datastore", "dataset", "PROD.TGT.VSAM") {
+		t.Error("expected dataset entity PROD.TGT.VSAM from IDCAMS REPRO OUTDATASET")
+	}
+	var readOK, writeOK bool
+	for _, r := range relationsByKind(recs, string(types.RelationshipKindReadsFrom)) {
+		if r.ToID == "PROD.SRC.VSAM" && r.Properties["via"] == "IDCAMS" {
+			readOK = true
+		}
+	}
+	for _, r := range relationsByKind(recs, string(types.RelationshipKindWritesTo)) {
+		if r.ToID == "PROD.TGT.VSAM" && r.Properties["via"] == "IDCAMS" {
+			writeOK = true
+		}
+	}
+	if !readOK {
+		t.Error("expected READS_FROM PROD.SRC.VSAM via IDCAMS")
+	}
+	if !writeOK {
+		t.Error("expected WRITES_TO PROD.TGT.VSAM via IDCAMS")
+	}
+}
+
+// db2JobFixture runs a COBOL/DB2 program under the TSO terminal monitor via a
+// DSN SYSTEM(...) RUN PROGRAM(...) PLAN(...) control card.
+const db2JobFixture = `//DB2JOB   JOB (ACCT),'DB2 BATCH',CLASS=A,MSGCLASS=X
+//RUNSTEP  EXEC PGM=IKJEFT01,DYNAMNBR=20
+//STEPLIB  DD DSN=DB2P.SDSNLOAD,DISP=SHR
+//SYSTSPRT DD SYSOUT=*
+//SYSTSIN  DD *
+  DSN SYSTEM(DB2P)
+  RUN PROGRAM(PAYRPT) PLAN(PAYPLAN) LIB('PROD.DB2.LOADLIB')
+  END
+/*
+//
+`
+
+// idcamsJobFixture performs a VSAM copy via IDCAMS REPRO with literal dataset
+// operands on its SYSIN control cards.
+const idcamsJobFixture = `//IDCJOB   JOB (ACCT),'VSAM COPY',CLASS=A
+//COPYSTEP EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *
+  REPRO INDATASET(PROD.SRC.VSAM) -
+        OUTDATASET(PROD.TGT.VSAM)
+/*
+//
+`
+
 // payJobFixture mirrors testdata/payjob.jcl inline so the unit tests are
 // self-contained; the on-disk fixture exists for end-to-end pipeline runs.
 const payJobFixture = `//PAYJOB   JOB (ACCT),'PAYROLL RUN',CLASS=A,MSGCLASS=X,

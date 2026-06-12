@@ -33,6 +33,12 @@
 //   - CALLS    — TSO CALL <member>   (IKJEFTxx terminal-monitor step → the
 //     program named on its SYSTSIN instream control card; via="TSO CALL",
 //     recovers the indirect JCL→program edge a shell utility hides)
+//   - CALLS    — DSN RUN PROGRAM     (DB2 batch step → the application program
+//     named on a `DSN SYSTEM(ssid) RUN PROGRAM(p) PLAN(pl)` control card;
+//     via="DSN RUN PROGRAM", db2_plan/db2_system properties)
+//   - READS_FROM / WRITES_TO — IDCAMS REPRO/IMPORT/EXPORT IN/OUTDATASET(dsn)
+//     (the dataset I/O a `PGM=IDCAMS` step performs via its SYSIN control
+//     cards; via="IDCAMS")
 //   - CONTAINS — job → its steps; proc → its steps
 //   - READS_FROM / WRITES_TO — step → dataset (DD DISP governs direction)
 //   - IMPORTS  — INCLUDE MEMBER=<name> (job/proc → spliced PROCLIB/JCLLIB
@@ -105,7 +111,10 @@ var (
 	// cards. IKJEFT01/IKJEFT1B/IKJEFT1A are the TSO/E terminal monitor
 	// program; without recognising them, a `PGM=IKJEFT01` step with a
 	// `CALL 'lib(PAYROLL)'` control card hides the real JCL→COBOL/DB2 edge.
-	utilProgRe = regexp.MustCompile(`(?i)^(IKJEFT01|IKJEFT1B|IKJEFT1A)$`)
+	// IDCAMS (the access-method services utility) and DSNUTILB (the DB2
+	// stand-alone utility invoker) similarly hide dataset I/O and program/
+	// plan invocation behind their SYSIN control cards.
+	utilProgRe = regexp.MustCompile(`(?i)^(IKJEFT01|IKJEFT1B|IKJEFT1A|IDCAMS|DSNUTILB)$`)
 
 	// tsoCallParenRe matches a TSO `CALL 'dsn(MEMBER)'` control card — the
 	// load module is the parenthesised member of a load library. Group 1:
@@ -116,6 +125,32 @@ var (
 	// module named directly (resolved against the TSO search order / a
 	// STEPLIB). Group 1: member.
 	tsoCallBareRe = regexp.MustCompile(`(?i)^\s*CALL\s+'?([A-Za-z$#@][A-Za-z0-9$#@]*)'?\s*$`)
+
+	// dsnRunProgramRe matches a DB2 `DSN ... RUN PROGRAM(name) ...` control
+	// card (run under IKJEFT01 as the TSO command processor, or under
+	// DSNUTILB). It names the application program a DB2 batch step runs —
+	// the JCL→COBOL/DB2 edge a `PGM=IKJEFT01` + `DSN SYSTEM(...)` step hides.
+	// Group 1: program name.
+	dsnRunProgramRe = regexp.MustCompile(`(?i)\bRUN\s+PROGRAM\s*\(\s*([A-Za-z$#@][A-Za-z0-9$#@]*)\s*\)`)
+
+	// dsnPlanRe matches the `PLAN(name)` operand of a DB2 RUN command. The
+	// plan is the bound DB2 access package the program executes under.
+	// Group 1: plan name.
+	dsnPlanRe = regexp.MustCompile(`(?i)\bPLAN\s*\(\s*([A-Za-z$#@][A-Za-z0-9$#@]*)\s*\)`)
+
+	// dsnSystemRe matches the DB2 subsystem id on a `DSN SYSTEM(ssid)` card.
+	// Group 1: subsystem id.
+	dsnSystemRe = regexp.MustCompile(`(?i)^\s*DSN\s+SYSTEM\s*\(\s*([A-Za-z0-9$#@]+)\s*\)`)
+
+	// idcamsReproInRe / idcamsReproOutRe match the source/target datasets of
+	// an IDCAMS `REPRO INFILE(dd)/INDATASET(dsn) OUTFILE(dd)/OUTDATASET(dsn)`
+	// (or `IMPORT`/`EXPORT`) control card — dataset I/O the utility performs
+	// that the DD cards alone do not attribute as a read or a write. We match
+	// the IN*/OUT*-DATASET forms (a literal dataset name; the INFILE/OUTFILE
+	// DD-reference forms already surface as ordinary DD entities). Group 1:
+	// dataset name.
+	idcamsReproInRe  = regexp.MustCompile(`(?i)\b(?:IN|FROM)DATASET\s*\(\s*'?([A-Za-z0-9$#@.()-]+?)'?\s*[,)]`)
+	idcamsReproOutRe = regexp.MustCompile(`(?i)\b(?:OUT|TO)DATASET\s*\(\s*'?([A-Za-z0-9$#@.()-]+?)'?\s*[,)]`)
 )
 
 // Extract processes a JCL source file and returns entity records.
@@ -324,22 +359,47 @@ func extractJCL(src, filePath string) []types.EntityRecord {
 						"cross_language": "cobol",
 					},
 				})
-				// A z/OS "shell" utility (the TSO terminal monitor IKJEFTxx)
-				// runs a SECOND program named on its SYSTSIN instream control
-				// cards. Recover that indirect JCL→program edge by scanning the
-				// step's instream block for `CALL <member>` cards.
+				// A z/OS "shell" utility (the TSO terminal monitor IKJEFTxx,
+				// IDCAMS, or DSNUTILB) does its real work via a SECOND program
+				// and/or dataset I/O named on its SYSIN/SYSTSIN instream control
+				// cards. Recover those indirect edges by scanning the step's
+				// instream block under a per-utility control-card grammar.
 				if utilProgRe.MatchString(prog) {
-					for _, callee := range tsoCalledPrograms(rawLines, st.startLine) {
-						step.Properties["tso_call"] = callee
+					scan := scanControlCards(rawLines, st.startLine)
+					for _, callee := range scan.calls {
+						step.Properties["sysin_call"] = callee.member
 						step.Relationships = append(step.Relationships, types.RelationshipRecord{
-							ToID: callee,
+							ToID: callee.member,
 							Kind: "CALLS",
+							Properties: callsProps(st.startLine, callee, prog),
+						})
+					}
+					// IDCAMS REPRO/IMPORT/EXPORT dataset I/O — attribute the
+					// operated DSNs to this step as reads/writes (the fs_effect
+					// the bare DD cards do not express). Emit the dataset entity
+					// too so the edge target is not an orphan.
+					for _, ds := range scan.datasets {
+						kind := string(types.RelationshipKindReadsFrom)
+						if ds.write {
+							kind = string(types.RelationshipKindWritesTo)
+						}
+						entities = append(entities, types.EntityRecord{
+							Name:       ds.dsn,
+							Kind:       "SCOPE.Datastore",
+							Subtype:    "dataset",
+							SourceFile: filePath,
+							Language:   "jcl",
+							StartLine:  st.startLine,
+							EndLine:    st.startLine,
+							Signature:  "IDCAMS " + ds.dsn,
+							Properties: map[string]string{"dsn": ds.dsn, "via": "IDCAMS"},
+						})
+						step.Relationships = append(step.Relationships, types.RelationshipRecord{
+							ToID: ds.dsn,
+							Kind: kind,
 							Properties: map[string]string{
-								"line":           strconv.Itoa(st.startLine),
-								"via":            "TSO CALL",
-								"external":       "true",
-								"cross_language": "cobol",
-								"host_program":   prog,
+								"dataset": ds.dsn,
+								"via":     "IDCAMS",
 							},
 						})
 					}
@@ -499,20 +559,90 @@ func isStatementKeyword(s string) bool { return statementKeywords[s] }
 
 // sysInDDRe matches a SYSTSIN/SYSIN DD card that introduces an instream
 // control-card stream (`//SYSTSIN DD *` / `DD DATA`). These streams carry
-// the indirect program names a shell utility runs.
+// the indirect program names and dataset operations a shell utility runs.
 var sysInDDRe = regexp.MustCompile(`(?i)^//\s*(SYSTSIN|SYSIN)\s+DD\b.*\*`)
 
-// tsoCalledPrograms scans the instream SYSTSIN/SYSIN control cards belonging
-// to the step that begins at startLine (1-indexed) and returns the load
-// modules named by `CALL <member>` cards. The scan is bounded by the next
-// statement card that starts a new step/job (a `//NAME EXEC|JOB` card),
-// honouring the `/*` instream delimiter. This recovers the JCL→program edge
-// that a "shell" utility (the TSO terminal monitor IKJEFTxx) hides behind its
-// control cards — joinStatements drops these non-`//` data lines outright.
-func tsoCalledPrograms(rawLines []string, startLine int) []string {
-	var out []string
-	seen := map[string]bool{}
+// controlCall is one indirect program invocation recovered from an instream
+// control card (a TSO `CALL`, or a DB2 `DSN ... RUN PROGRAM(...)`).
+type controlCall struct {
+	member string // the invoked load module / DB2 application program
+	via    string // "TSO CALL" | "DSN RUN PROGRAM"
+	plan   string // DB2 plan name (RUN PROGRAM only); "" otherwise
+	system string // DB2 subsystem id from the enclosing DSN SYSTEM(...); "" otherwise
+}
+
+// controlDataset is one dataset I/O recovered from an IDCAMS REPRO/IMPORT/
+// EXPORT control card. write distinguishes the OUT/TO target from the IN/FROM
+// source.
+type controlDataset struct {
+	dsn   string
+	write bool
+}
+
+// controlScan is the structured result of scanning one step's instream
+// control-card stream under the per-utility grammar.
+type controlScan struct {
+	calls    []controlCall
+	datasets []controlDataset
+}
+
+// callsProps builds the CALLS edge properties for a recovered control-card
+// invocation, carrying the via verb, the DB2 plan/subsystem when present, and
+// the host shell-utility program.
+func callsProps(line int, c controlCall, host string) map[string]string {
+	p := map[string]string{
+		"line":           strconv.Itoa(line),
+		"via":            c.via,
+		"external":       "true",
+		"cross_language": "cobol",
+		"host_program":   host,
+	}
+	if c.plan != "" {
+		p["db2_plan"] = c.plan
+	}
+	if c.system != "" {
+		p["db2_system"] = c.system
+	}
+	return p
+}
+
+// scanControlCards scans the instream SYSIN/SYSTSIN control cards belonging to
+// the step that begins at startLine (1-indexed) under a per-utility grammar
+// and returns the indirect program invocations and dataset operations they
+// name. The scan is bounded by the next statement card that starts a new
+// step/job (a `//NAME EXEC|JOB` card), honouring the `/*` instream delimiter.
+// This recovers the JCL→program/dataset edges that a "shell" utility (the TSO
+// terminal monitor IKJEFTxx, the DB2 utility invoker DSNUTILB, or IDCAMS)
+// hides behind its control cards — joinStatements drops these non-`//` data
+// lines outright. Grammar covered:
+//   - TSO        CALL 'lib(MEMBER)' / CALL MEMBER       → program call
+//   - DB2        DSN SYSTEM(ssid) ... RUN PROGRAM(p) PLAN(pl) → program call
+//   - IDCAMS     REPRO/IMPORT/EXPORT IN/OUTDATASET(dsn) → dataset read/write
+func scanControlCards(rawLines []string, startLine int) controlScan {
+	var scan controlScan
+	seenCall := map[string]bool{}
+	seenDS := map[string]bool{}
 	inStream := false
+	system := "" // last seen DSN SYSTEM(ssid), threaded onto RUN PROGRAM cards
+	addCall := func(c controlCall) {
+		if c.member == "" || seenCall[c.member] {
+			return
+		}
+		seenCall[c.member] = true
+		scan.calls = append(scan.calls, c)
+	}
+	addDS := func(dsn string, write bool) {
+		dsn = strings.ToUpper(strings.TrimRight(dsn, "."))
+		key := dsn
+		if write {
+			key += "\x00W"
+		}
+		if dsn == "" || seenDS[key] {
+			return
+		}
+		seenDS[key] = true
+		scan.datasets = append(scan.datasets, controlDataset{dsn: dsn, write: write})
+	}
 	for i := startLine; i < len(rawLines); i++ { // startLine is 1-indexed; skip the EXEC card itself
 		line := strings.TrimRight(rawLines[i], "\r")
 		if len(line) > 72 {
@@ -540,22 +670,41 @@ func tsoCalledPrograms(rawLines []string, startLine int) []string {
 			continue
 		}
 		// A non-`//` line: instream data. Only parse it as a control card when
-		// we are inside a SYSTSIN/SYSIN block.
+		// we are inside a SYSIN/SYSTSIN block.
 		if !inStream {
 			continue
 		}
-		var member string
-		if cm := tsoCallParenRe.FindStringSubmatch(trimmed); cm != nil {
-			member = strings.ToUpper(cm[1])
-		} else if cm := tsoCallBareRe.FindStringSubmatch(trimmed); cm != nil {
-			member = strings.ToUpper(cm[1])
+		// DB2 subsystem context: `DSN SYSTEM(ssid)` precedes its RUN cards.
+		if sm := dsnSystemRe.FindStringSubmatch(trimmed); sm != nil {
+			system = strings.ToUpper(sm[1])
 		}
-		if member != "" && !seen[member] {
-			seen[member] = true
-			out = append(out, member)
+		// DB2 RUN PROGRAM(name) [PLAN(name)] — a JCL→DB2/COBOL program edge.
+		if rm := dsnRunProgramRe.FindStringSubmatch(trimmed); rm != nil {
+			c := controlCall{member: strings.ToUpper(rm[1]), via: "DSN RUN PROGRAM", system: system}
+			if pm := dsnPlanRe.FindStringSubmatch(trimmed); pm != nil {
+				c.plan = strings.ToUpper(pm[1])
+			}
+			addCall(c)
+			continue
+		}
+		// TSO CALL 'lib(MEMBER)' / CALL MEMBER — a program call.
+		if cm := tsoCallParenRe.FindStringSubmatch(trimmed); cm != nil {
+			addCall(controlCall{member: strings.ToUpper(cm[1]), via: "TSO CALL"})
+			continue
+		}
+		if cm := tsoCallBareRe.FindStringSubmatch(trimmed); cm != nil {
+			addCall(controlCall{member: strings.ToUpper(cm[1]), via: "TSO CALL"})
+			continue
+		}
+		// IDCAMS REPRO/IMPORT/EXPORT IN/OUTDATASET(dsn) — dataset read/write.
+		if im := idcamsReproInRe.FindStringSubmatch(trimmed); im != nil {
+			addDS(im[1], false)
+		}
+		if om := idcamsReproOutRe.FindStringSubmatch(trimmed); om != nil {
+			addDS(om[1], true)
 		}
 	}
-	return out
+	return scan
 }
 
 // truncSig trims a statement to a compact signature, collapsing runs of
