@@ -52,7 +52,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Type graph extraction | 🔴 `missing` | — | 4964 | — | #4964 deferred: the juniper code-first object-type->type GRAPH_RELATES graph (mirroring graphql_codefirst_typegraph.go for async-graphql) is not yet built; DTOs are catalogued but field->type edges are not emitted. Follow-up filed. |
+| Type graph extraction | ✅ `full` | `2026-06-13` | — | `internal/custom/rust/juniper.go`<br>`internal/custom/rust/juniper_typegraph.go`<br>`internal/custom/rust/juniper_typegraph_test.go` | #5007: new internal/custom/rust/juniper_typegraph.go mirrors the async-graphql code-first type-graph extractor (#3983) for juniper. Emits SCOPE.Schema/type nodes (BuildOperationStructuralRef("graphql",file,Type), shared identity with the SDL/async-graphql passes) + GRAPH_RELATES field->type edges off #[derive(GraphQLObject)] struct fields and #[graphql_object]/#[graphql_subscription] impl resolver return types, carrying the identical cardinality contract (field_name/list/nullable/item_nullable/cardinality/self_ref/framework=juniper). GraphQLInputObject/GraphQLEnum are edge targets but not field owners. Probe TestJunTG_ObjectStruct_FieldGraph asserts User.orders Vec<Order> to_many + Option<Account> nullable to_one + self_ref + input-object target + scalar fields no edge; TestJunTG_ResolverReturnType asserts Query.user FieldResult<User> unwrap to_one. Honest-partial: same-file resolution only; #[graphql(name=...)] field rename not yet honoured (follow-up). |
 
 ### Type System
 
