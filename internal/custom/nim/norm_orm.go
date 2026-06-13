@@ -113,9 +113,28 @@ var (
 	nimNormQueryRe = regexp.MustCompile(
 		`(?m)\b[A-Za-z_][A-Za-z0-9_]*\s*\.\s*(select|insert|update|delete)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)`)
 
+	// nimNormHandleBindModelRe binds a `let/var x = Model()` (or
+	// `var x = @[Model()]` seq) handle to its model type so a variable-handle
+	// query `db.select(x, …)` resolves to the model (#4991). Group 1 = the handle
+	// identifier, group 2 = the model constructor type name.
+	nimNormHandleBindModelRe = regexp.MustCompile(
+		`(?m)\b(?:let|var|const)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::[^\n=]+)?=\s*@?\[?\s*([A-Z][A-Za-z0-9_]*)\s*\(`)
+
+	// nimNormRawSelectRe matches a raw-SQL Norm query whose table is named in a
+	// `sql"… from <table> …"` string: `db.select(objs, sql"SELECT * FROM users …")`
+	// / `db.rawSelect(objs, sql"… FROM posts …")`. Group 1 = the SQL operation,
+	// group 2 = the table name parsed out of the FROM/INTO/UPDATE clause.
+	nimNormRawSelectRe = regexp.MustCompile(
+		`(?is)\.\s*(?:raw)?(select|insert|update|delete)\s*\([^)]*?sql?\s*["` + "`" + `][^"` + "`" + `]*?\b(?:from|into|update)\s+["` + "`" + `]?([A-Za-z_][A-Za-z0-9_]*)`)
+
 	// nimNormTxRe matches a Norm transaction block header `db.transaction:` /
 	// `dbConn.transaction:`. Group 1 is the receiver (the db handle).
 	nimNormTxRe = regexp.MustCompile(`(?m)^[ \t]*([A-Za-z_][A-Za-z0-9_]*)\s*\.\s*transaction\s*:`)
+
+	// nimNormProcRe matches a Nim proc/func declaration header so a
+	// `db.transaction:` block can be attributed to its enclosing proc (#4991).
+	// Group 1 = the proc name.
+	nimNormProcRe = regexp.MustCompile(`(?m)^[ \t]*(?:proc|func|method)\s+([A-Za-z_][A-Za-z0-9_]*)`)
 )
 
 // nimNormHasModel is a fast pre-filter: the file must reference Norm's Model
@@ -148,9 +167,28 @@ func (e *nimNormORMExtractor) Extract(
 		modelNames[m.name] = true
 	}
 
+	// Resolve `let/var x = Model()` handles so a variable-handle query
+	// `db.select(x, …)` binds to its model type (#4991).
+	handles := make(map[string]string)
+	for _, m := range nimNormHandleBindModelRe.FindAllStringSubmatch(src, -1) {
+		if modelNames[m[2]] {
+			handles[m[1]] = m[2]
+		}
+	}
+	// tableToModel maps a resolved table identity → its model name so a raw-SQL
+	// query naming a table (`sql"… FROM users"`) is attributed to that model.
+	tableToModel := make(map[string]string, len(models))
+	for _, m := range models {
+		tid := m.name
+		if m.tableName != "" {
+			tid = m.tableName
+		}
+		tableToModel[tid] = m.name
+	}
+
 	// queryOps maps a model name → the set of SQL operations attributed to it by
-	// db.<op>(model) call sites elsewhere in the file.
-	queryOps := collectNormQueries(src, modelNames)
+	// db.<op>(model) / db.<op>(handle) / raw-SQL call sites elsewhere in the file.
+	queryOps := collectNormQueries(src, modelNames, handles, tableToModel)
 
 	var out []types.EntityRecord
 	for _, m := range models {
@@ -251,22 +289,43 @@ func (e *nimNormORMExtractor) Extract(
 	return out, nil
 }
 
-// collectNormQueries scans db.<op>(model, …) call sites and returns, per model
-// name, the set of SQL operations (select/insert/update/delete) attributed to
-// it. Only first arguments that name a recognised model TYPE are attributed —
-// a variable handle like `post` is intentionally NOT matched (file-local,
-// honest), so the model-typed argument form `db.select(User, …)` is the signal.
-func collectNormQueries(src string, modelNames map[string]bool) map[string]map[string]bool {
+// collectNormQueries scans db.<op>(…) call sites and returns, per model name,
+// the set of SQL operations (select/insert/update/delete) attributed to it.
+// Three first-argument forms are attributed (#4991):
+//   - a recognised model TYPE — `db.select(User, …)`;
+//   - a variable handle bound to a model — `var u = User()` … `db.select(u, …)`,
+//     resolved via the `handles` map;
+//   - a raw-SQL query naming a table — `db.select(objs, sql"… FROM users …")` /
+//     `db.rawSelect(…)`, resolved via `tableToModel`.
+// A handle/table that resolves to no known model is intentionally skipped.
+func collectNormQueries(
+	src string,
+	modelNames map[string]bool,
+	handles map[string]string,
+	tableToModel map[string]string,
+) map[string]map[string]bool {
 	out := map[string]map[string]bool{}
+	add := func(model, op string) {
+		if out[model] == nil {
+			out[model] = map[string]bool{}
+		}
+		out[model][op] = true
+	}
 	for _, m := range nimNormQueryRe.FindAllStringSubmatch(src, -1) {
 		op, arg := m[1], m[2]
-		if !modelNames[arg] {
-			continue
+		switch {
+		case modelNames[arg]:
+			add(arg, op) // model-typed first argument
+		case handles[arg] != "":
+			add(handles[arg], op) // variable handle bound to a model
 		}
-		if out[arg] == nil {
-			out[arg] = map[string]bool{}
+	}
+	// Raw-SQL queries: resolve the FROM/INTO/UPDATE table to its model.
+	for _, m := range nimNormRawSelectRe.FindAllStringSubmatch(src, -1) {
+		op, table := m[1], m[2]
+		if model := tableToModel[table]; model != "" {
+			add(model, op)
 		}
-		out[arg][op] = true
 	}
 	return out
 }
@@ -285,16 +344,40 @@ func normQueryOpOrder(ops map[string]bool) []string {
 
 // collectNormTransactions emits a SCOPE.Pattern/transaction_boundary entity per
 // `db.transaction:` block header in the file (transactional=true), mirroring the
-// Kotlin/Java @Transactional boundary shape.
+// Kotlin/Java @Transactional boundary shape. #4991 deepening: the boundary is
+// stamped with its enclosing proc (the nearest preceding proc/func/method header
+// the block is indented under) and with the set of write operations
+// (insert/update/delete) issued inside the transaction body, so the boundary
+// records WHAT it wraps, not merely WHERE it opens.
 func collectNormTransactions(src, path string) []types.EntityRecord {
 	idx := nimNormTxRe.FindAllStringSubmatchIndex(src, -1)
 	if len(idx) == 0 {
 		return nil
 	}
+	lines := strings.Split(src, "\n")
+	// procAt maps each line to the name of the proc it is lexically inside, by a
+	// single forward indent-tracking scan over the proc headers.
+	procAt := buildNormProcMap(lines)
 	var out []types.EntityRecord
 	for _, m := range idx {
 		recv := src[m[2]:m[3]]
 		line := strings.Count(src[:m[0]], "\n") + 1
+		txIndent := leadingIndent(lineAt(lines, line))
+		props := map[string]string{
+			"framework":     "norm",
+			"transactional": "true",
+			"db_handle":     recv,
+			"provenance":    "INFERRED_FROM_NORM_TRANSACTION",
+		}
+		if proc := procAt[line]; proc != "" {
+			props["enclosing_proc"] = proc
+		}
+		// In-block writes: scan the indented body of the transaction for
+		// db.<insert|update|delete>(…) call sites and flag them on the boundary.
+		if writes := normTxWrites(lines, line, txIndent); writes != "" {
+			props["writes"] = writes
+			props["has_writes"] = "true"
+		}
 		ent := types.EntityRecord{
 			Name:       recv + ".transaction",
 			Kind:       "SCOPE.Pattern",
@@ -303,17 +386,77 @@ func collectNormTransactions(src, path string) []types.EntityRecord {
 			Language:   "nim",
 			StartLine:  line,
 			EndLine:    line,
-			Properties: map[string]string{
-				"framework":     "norm",
-				"transactional": "true",
-				"db_handle":     recv,
-				"provenance":    "INFERRED_FROM_NORM_TRANSACTION",
-			},
+			Properties: props,
 		}
 		ent.ID = ent.ComputeID()
 		out = append(out, ent)
 	}
 	return out
+}
+
+// buildNormProcMap returns, per 1-based line, the name of the proc/func/method
+// the line is lexically nested inside (or "" at top level). A proc body is every
+// subsequent line indented strictly more than the proc header, up to the next
+// line dedented to or below the header.
+func buildNormProcMap(lines []string) map[int]string {
+	out := make(map[int]string)
+	// Single scan: track the innermost open proc by header indent.
+	type frame struct {
+		name   string
+		indent int
+	}
+	var open *frame
+	for ln := 1; ln <= len(lines); ln++ {
+		raw := lineAt(lines, ln)
+		if strings.TrimSpace(raw) == "" {
+			if open != nil {
+				out[ln] = open.name
+			}
+			continue
+		}
+		ind := leadingIndent(raw)
+		if pm := nimNormProcRe.FindStringSubmatch(raw); pm != nil {
+			open = &frame{name: pm[1], indent: ind}
+			out[ln] = open.name
+			continue
+		}
+		if open != nil && ind > open.indent {
+			out[ln] = open.name
+		} else {
+			open = nil
+		}
+	}
+	return out
+}
+
+// normTxWrites scans the indented body of a `db.transaction:` block (starting
+// after headerLine, body = lines indented strictly more than txIndent) for
+// db.<insert|update|delete>(…) call sites and returns the distinct write ops in
+// stable order, comma-joined ("" when the block issues no writes).
+func normTxWrites(lines []string, headerLine, txIndent int) string {
+	found := map[string]bool{}
+	for ln := headerLine + 1; ln <= len(lines); ln++ {
+		raw := lineAt(lines, ln)
+		if strings.TrimSpace(raw) == "" {
+			continue
+		}
+		if leadingIndent(raw) <= txIndent {
+			break // dedent — transaction block ended
+		}
+		if qm := nimNormQueryRe.FindStringSubmatch(raw); qm != nil {
+			switch qm[1] {
+			case "insert", "update", "delete":
+				found[qm[1]] = true
+			}
+		}
+	}
+	var ws []string
+	for _, op := range []string{"insert", "update", "delete"} {
+		if found[op] {
+			ws = append(ws, op)
+		}
+	}
+	return strings.Join(ws, ",")
 }
 
 // normModel is a parsed Norm model with its fields.

@@ -195,6 +195,33 @@ func TestAllographerAlterDropMigration(t *testing.T) {
 	assertModifies(t, doc, "a2", "svc", "posts", "drop_table", "")
 }
 
+// TestNormCreateDropMigration proves a Nim Norm SCOPE.Evolution migration-op
+// entity (framework=norm, #4991) derives a MODIFIES_TABLE edge for both a
+// model-typed createTables op and a raw-DDL alter op.
+func TestNormCreateDropMigration(t *testing.T) {
+	create := graph.Entity{
+		ID: "n1", Name: "create_table:User", Kind: string(types.EntityKindEvolution),
+		Subtype: "create_table",
+		Properties: map[string]string{
+			"framework": "norm", "migration_op": "create_table", "table": "User",
+		},
+	}
+	alter := graph.Entity{
+		ID: "n2", Name: "alter_table:user", Kind: string(types.EntityKindEvolution),
+		Subtype: "alter_table",
+		Properties: map[string]string{
+			"framework": "norm", "migration_op": "alter_table", "table": "user",
+		},
+	}
+	doc := docOf("svc", create, alter)
+	st := ApplyMigrationSchemaOps(doc)
+	if st.Skipped {
+		t.Fatal("skipped")
+	}
+	assertModifies(t, doc, "n1", "svc", "user", "create_table", "")
+	assertModifies(t, doc, "n2", "svc", "user", "alter_table", "")
+}
+
 // ---- Flyway / Liquibase SQL ------------------------------------------------
 
 func TestFlywaySQLCreateTable(t *testing.T) {
