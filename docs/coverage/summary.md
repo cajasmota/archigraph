@@ -1,17 +1,17 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # archigraph capabilities
 
-**Languages**: 39 (25 active · 14 placeholder) · **Frameworks**: 250 · **ORMs**: 176 · **Tools**: 129 · **Other**: 205
+**Languages**: 39 (25 active · 14 placeholder) · **Frameworks**: 255 · **ORMs**: 176 · **Tools**: 129 · **Other**: 205
 
 ## Coverage by language
 
 | Language | Frameworks | Tools | ORMs | Other |
 |---|---:|---:|---:|---:|
 | [JS/TS](by-language/jsts.md) | 33 | 21 | 19 | 8 |
+| [C/C++](by-language/c-cpp.md) | 25 | 16 | 10 | 4 |
 | [python](by-language/python.md) | 25 | 15 | 18 | 10 |
 | [java](by-language/java.md) | 23 | 10 | 15 | 4 |
 | [go](by-language/go.md) | 21 | 8 | 17 | 5 |
-| [C/C++](by-language/c-cpp.md) | 20 | 16 | 10 | 4 |
 | [C#](by-language/csharp.md) | 18 | 7 | 16 | 9 |
 | [kotlin](by-language/kotlin.md) | 18 | 0 | 7 | 1 |
 | [rust](by-language/rust.md) | 17 | 10 | 15 | 5 |
@@ -83,4 +83,4 @@ The [Platform / k8s](by-category/platform.md) category splits into the lanes bel
 | [Verilog](by-language/verilog.md) |
 | [Zig](by-language/zig.md) |
 
-Total: 250 frameworks · 129 tools · 176 ORMs · 205 other
+Total: 255 frameworks · 129 tools · 176 ORMs · 205 other

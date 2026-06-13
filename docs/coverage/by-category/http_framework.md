@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # http_framework
 
-**Total**: 250 records · **C/C++**: 20 · **clojure**: 4 · **crystal**: 1 · **C#**: 18 · **dart**: 3 · **elixir**: 14 · **erlang**: 1 · **F#**: 2 · **go**: 21 · **groovy**: 1 · **java**: 23 · **JS/TS**: 33 · **kotlin**: 18 · **lua**: 4 · **nim**: 1 · **php**: 16 · **python**: 25 · **ruby**: 9 · **rust**: 17 · **scala**: 14 · **swift**: 5
+**Total**: 255 records · **C/C++**: 25 · **clojure**: 4 · **crystal**: 1 · **C#**: 18 · **dart**: 3 · **elixir**: 14 · **erlang**: 1 · **F#**: 2 · **go**: 21 · **groovy**: 1 · **java**: 23 · **JS/TS**: 33 · **kotlin**: 18 · **lua**: 4 · **nim**: 1 · **php**: 16 · **python**: 25 · **ruby**: 9 · **rust**: 17 · **scala**: 14 · **swift**: 5
 
 Back to [summary](../summary.md). Bucket: **Frameworks**.
 
@@ -262,8 +262,13 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 
 | Language | Name | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|
+| [C/C++](../by-language/c-cpp.md) | [Cocos2d-x](../detail/lang.c-cpp.framework.cocos2d-x.md) | 🟡 11/13 | 🔴 0/2 | |
+| [C/C++](../by-language/c-cpp.md) | [Dear ImGui](../detail/lang.c-cpp.framework.dear-imgui.md) | 🟡 11/13 | 🔴 0/1 | |
+| [C/C++](../by-language/c-cpp.md) | [JUCE](../detail/lang.c-cpp.framework.juce.md) | 🟡 11/13 | 🔴 0/2 | |
+| [C/C++](../by-language/c-cpp.md) | [OpenCV](../detail/lang.c-cpp.framework.opencv.md) | 🟡 11/13 | 🔴 0/1 | |
 | [C/C++](../by-language/c-cpp.md) | [ROS (Robot Operating System)](../detail/lang.c-cpp.framework.ros.md) | 🟡 11/13 | 🟢 2/2 | |
 | [C/C++](../by-language/c-cpp.md) | [Unreal Engine](../detail/lang.c-cpp.framework.unreal-engine.md) | 🟡 11/13 | 🟢 2/2 | |
+| [C/C++](../by-language/c-cpp.md) | [wxWidgets](../detail/lang.c-cpp.framework.wxwidgets.md) | 🟡 11/13 | 🔴 0/2 | |
 | [C#](../by-language/csharp.md) | [Uno Platform](../detail/lang.csharp.framework.uno.md) | 🟢 13/13 | 🟢 3/3 | |
 | [C#](../by-language/csharp.md) | [WPF](../detail/lang.csharp.framework.wpf.md) | 🟢 13/13 | 🟢 3/3 | |
 | [C#](../by-language/csharp.md) | [Windows Forms](../detail/lang.csharp.framework.winforms.md) | 🟢 13/13 | 🟢 3/3 | |

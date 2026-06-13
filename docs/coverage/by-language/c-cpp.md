@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # C/C++
 
-**Frameworks**: 20 · **Tools**: 16 · **ORMs**: 10 · **Other**: 4
+**Frameworks**: 25 · **Tools**: 16 · **ORMs**: 10 · **Other**: 4
 
 Back to [summary](../summary.md).
 
@@ -54,8 +54,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Substrate | Other capabilities | Notes |
 |---|---|---|---|
+| [Cocos2d-x](../detail/lang.c-cpp.framework.cocos2d-x.md) | 🟡 11/13 | 🔴 0/2 | |
+| [Dear ImGui](../detail/lang.c-cpp.framework.dear-imgui.md) | 🟡 11/13 | 🔴 0/1 | |
+| [JUCE](../detail/lang.c-cpp.framework.juce.md) | 🟡 11/13 | 🔴 0/2 | |
+| [OpenCV](../detail/lang.c-cpp.framework.opencv.md) | 🟡 11/13 | 🔴 0/1 | |
 | [ROS (Robot Operating System)](../detail/lang.c-cpp.framework.ros.md) | 🟡 11/13 | 🟢 2/2 | |
 | [Unreal Engine](../detail/lang.c-cpp.framework.unreal-engine.md) | 🟡 11/13 | 🟢 2/2 | |
+| [wxWidgets](../detail/lang.c-cpp.framework.wxwidgets.md) | 🟡 11/13 | 🔴 0/2 | |
 
 
 ### RPC Framework
