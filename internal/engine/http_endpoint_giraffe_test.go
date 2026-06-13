@@ -291,3 +291,118 @@ func TestGiraffe_E2ERouteTestLinkage(t *testing.T) {
 		t.Fatalf("expected TESTS edge from UsersTests suite to GET /users endpoint")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// #5114 — the non-db tail of #4941: Falco / Suave / Oxpecker / ASP.NET
+// minimal-API (F#) route extraction, alongside the existing Giraffe/Saturn
+// coverage (#4906).
+// ---------------------------------------------------------------------------
+
+// TestFSharp5114_Oxpecker covers Oxpecker's Giraffe-compatible verb-combinator
+// chains (`GET >=> route "/users"`, `routef "/users/%i"`), which ride the
+// existing giraffeRouteRe recogniser.
+func TestFSharp5114_Oxpecker(t *testing.T) {
+	src := `module App
+open Oxpecker
+
+let endpoints =
+    choose [
+        GET  >=> route "/users"     >=> listUsers
+        GET  >=> routef "/users/%i" getUser
+        POST >=> route "/users"     >=> createUser
+    ]
+`
+	ids, _ := runDetect(t, "fsharp", "src/Oxpecker.fs", src)
+	requireContains(t, ids, []string{
+		"http:GET:/users",
+		"http:GET:/users/{}",
+		"http:POST:/users",
+	}, "5114-oxpecker")
+}
+
+// TestFSharp5114_Falco covers the Falco endpoint DSL — both the bare verb form
+// (`get "/users" handler`, riding saturnRouteRe) and the `mapGet` register
+// helper (falcoMapRe).
+func TestFSharp5114_Falco(t *testing.T) {
+	src := `module App
+open Falco
+open Falco.Routing
+
+let endpoints = [
+    get  "/users"     listUsers
+    post "/users"     createUser
+    mapGet "/health"  healthCheck
+]
+`
+	ids, _ := runDetect(t, "fsharp", "src/Falco.fs", src)
+	requireContains(t, ids, []string{
+		"http:GET:/users",
+		"http:POST:/users",
+		"http:GET:/health",
+	}, "5114-falco")
+}
+
+// TestFSharp5114_Suave covers Suave verb-combinator composition with the
+// `path`/`pathScan` path combinator (`GET >=> path "/users"`, `POST >=>
+// pathScan "/users/%d" handler`).
+func TestFSharp5114_Suave(t *testing.T) {
+	src := `module App
+open Suave
+open Suave.Filters
+open Suave.Operators
+
+let app =
+    choose [
+        GET  >=> path "/users"                       >=> listUsers
+        POST >=> pathScan "/users/%d" (fun id -> ok)
+    ]
+`
+	ids, _ := runDetect(t, "fsharp", "src/Suave.fs", src)
+	requireContains(t, ids, []string{
+		"http:GET:/users",
+		"http:POST:/users/{}",
+	}, "5114-suave")
+}
+
+// TestFSharp5114_MinimalApi covers ASP.NET Core minimal-API route registration
+// in F# (`app.MapGet("/users", handler)`).
+func TestFSharp5114_MinimalApi(t *testing.T) {
+	src := `module Program
+open Microsoft.AspNetCore.Builder
+
+let app = builder.Build()
+app.MapGet("/users", listUsers) |> ignore
+app.MapPost("/users", createUser) |> ignore
+app.MapDelete("/users/{id}", deleteUser) |> ignore
+`
+	ids, _ := runDetect(t, "fsharp", "src/Program.fs", src)
+	requireContains(t, ids, []string{
+		"http:GET:/users",
+		"http:POST:/users",
+		"http:DELETE:/users/{}",
+	}, "5114-minimal-api")
+}
+
+// TestFSharp5114_NonWebFileIgnored is the no-match no-op: a plain F# file that
+// references none of the web markers emits no endpoint.
+func TestFSharp5114_NonWebFileIgnored(t *testing.T) {
+	src := `module Math
+let add a b = a + b
+let path = "/not/a/route"
+`
+	ids, _ := runDetect(t, "fsharp", "src/Math.fs", src)
+	requireNotContains(t, ids, []string{
+		"http:GET:/not/a/route",
+	}, "5114-non-web-ignored")
+}
+
+// TestFSharp5114_WrongLanguageNoOp is the wrong-language no-op: the F# route
+// synthesiser must not fire on a non-F# file even with matching markers.
+func TestFSharp5114_WrongLanguageNoOp(t *testing.T) {
+	src := `app.MapGet("/users", listUsers);
+`
+	ids, _ := runDetect(t, "ruby", "src/app.rb", src)
+	requireNotContains(t, ids, []string{
+		"http:GET:/users",
+	}, "5114-wrong-language")
+}

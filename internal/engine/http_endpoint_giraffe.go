@@ -145,6 +145,70 @@ var giraffeMountRe = regexp.MustCompile(
 	`(?m)\b(?:subRoute|forward)\s+"([^"\n\r]*)"\s*\(`,
 )
 
+// ---------------------------------------------------------------------------
+// #5114 — the non-db tail of #4941: Falco / Suave / Oxpecker / ASP.NET
+// minimal-API (F#) route extraction, alongside the existing Giraffe/Saturn
+// coverage (#4906). Each follows the same emit path (one canonical
+// http_endpoint_definition per statically-known (verb,path) via
+// httproutes.Canonicalize(FrameworkGiraffe)), so the shared resolver + e2e
+// route-test linker light up uniformly.
+//
+//   - Oxpecker is Giraffe-COMPATIBLE (`GET >=> route "/users"` / `routef
+//     "/users/%i"` inside `choose [ ... ]`), so it is already captured by
+//     giraffeRouteRe — only the pre-filter marker is widened.
+//   - Falco endpoint DSL (`get "/users" handler` / `post "/users" handler`,
+//     and `mapGet`/`mapPost` register helpers) shares the bare verb-then-
+//     literal shape with Saturn, so the plain forms ride saturnRouteRe; the
+//     `mapVerb` register helpers get their own recogniser (falcoMapRe).
+//   - Suave composes a verb HttpHandler with the `path`/`pathScan`/`pathCi`
+//     combinator via `>=>` (`GET >=> path "/users"`, `POST >=> pathScan
+//     "/users/%d" handler`) — suaveRouteRe.
+//   - ASP.NET minimal-API in F# uses the parenthesised, comma-separated
+//     `app.MapGet("/users", handler)` / `app.MapPost(...)` / `app.MapMethods`
+//     shape (the same as C#, but reached from the F# producer branch) —
+//     fsharpMinimalApiRe.
+// ---------------------------------------------------------------------------
+
+// falcoMapRe matches a Falco register-helper route — `mapGet "/users" handler`
+// (and `Routing.mapGet`, `Router.mapGet`, etc.), the function-style register
+// idiom that is NOT caught by the bare `get "/x"` saturnRouteRe. Capture group 1
+// is the verb; group 2 the path literal; group 3 (optional) the bare handler
+// symbol for the named IMPLEMENTS bridge.
+var falcoMapRe = regexp.MustCompile(
+	`(?m)\bmap(Get|Post|Put|Delete|Patch|Head|Options)\s+"([^"\n\r]*)"` +
+		`(?:\s+([A-Za-z_][A-Za-z0-9_']*))?`,
+)
+
+// suaveRouteRe matches a Suave route: a verb HttpHandler composed with a
+// `path`/`pathCi`/`pathScan`/`pathStarts` combinator via the `>=>` operator.
+//
+//	GET  >=> path "/users"                 → GET /users
+//	POST >=> pathScan "/users/%d" handler  → POST /users/{}  (printf param)
+//	GET  >=> pathCi "/x"                    → GET /x          (case-insensitive)
+//
+// Group 1 is the verb; group 2 the path-combinator suffix (`Scan`/`Ci`/
+// `Starts`/empty); group 3 the path literal; group 4 (optional) the trailing
+// bare handler symbol.
+var suaveRouteRe = regexp.MustCompile(
+	`(?m)\b(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\b\s*>=>\s*` +
+		`path(Scan|Ci|Starts)?\s+"([^"\n\r]*)"` +
+		`(?:\s*>=>\s*([A-Za-z_][A-Za-z0-9_']*)\s*$)?`,
+)
+
+// fsharpMinimalApiRe matches an ASP.NET Core minimal-API route registration in
+// F#: the parenthesised, comma-separated `app.MapGet("/users", handler)` shape.
+//
+//	app.MapGet("/users", listUsers)        → GET /users
+//	builder.MapPost("/users", createUser)  → POST /users
+//	app.MapDelete("/users/{id}", ...)      → DELETE /users/{id}
+//
+// Group 1 is the verb; group 2 the path literal; group 3 (optional) the bare
+// handler symbol immediately after the comma.
+var fsharpMinimalApiRe = regexp.MustCompile(
+	`(?m)\.Map(Get|Post|Put|Delete|Patch|Head|Options)\s*\(\s*"([^"\n\r]*)"` +
+		`(?:\s*,\s*([A-Za-z_][A-Za-z0-9_']*)\s*\))?`,
+)
+
 // giraffeHasRoute is a fast pre-filter: the file must reference an F# web marker
 // (Giraffe / Saturn) AND a route token to be worth scanning, so we never misfire
 // on arbitrary F# code.
@@ -153,6 +217,14 @@ func giraffeHasRoute(content string) bool {
 		strings.Contains(content, "giraffe") ||
 		strings.Contains(content, "Saturn") ||
 		strings.Contains(content, "saturn") ||
+		// #5114 — the non-db tail of #4941: Falco / Suave / Oxpecker /
+		// ASP.NET minimal-API (F#) markers.
+		strings.Contains(content, "Falco") ||
+		strings.Contains(content, "Suave") ||
+		strings.Contains(content, "Oxpecker") ||
+		strings.Contains(content, "endpoints") ||
+		// #5114 — minimal-API marker: the `app.Map<Verb>(` registration shape.
+		strings.Contains(content, ".Map") ||
 		strings.Contains(content, ">=>") ||
 		strings.Contains(content, "router {") ||
 		strings.Contains(content, "HttpHandler") ||
@@ -163,7 +235,13 @@ func giraffeHasRoute(content string) bool {
 		return false
 	}
 	return strings.Contains(content, "route") ||
-		strings.Contains(content, "router {")
+		strings.Contains(content, "router {") ||
+		// #5114: Falco `mapGet`/bare-verb, Suave `path`, minimal-API `.Map*`.
+		strings.Contains(content, "path ") ||
+		strings.Contains(content, ".Map") ||
+		strings.Contains(content, "mapGet") ||
+		strings.Contains(content, "mapPost") ||
+		strings.Contains(content, "endpoints")
 }
 
 // giraffeMount is a resolved subRoute/forward mount: a string-literal prefix
@@ -270,6 +348,21 @@ func canonicalizeRoutex(raw string) string {
 
 var routexGroupRe = regexp.MustCompile(`\([^)]*\)`)
 
+// canonicalizeMinimalApiCurly rewrites an ASP.NET minimal-API curly-brace path
+// param (`{id}`, `{id:int}`, `{*slug}`) into the printf `%s` placeholder so the
+// downstream FrameworkGiraffe canonicaliser maps it to the positional `{}`
+// wildcard — and so the emitRoute interpolation guard (which drops any literal
+// `{`) does not discard the whole route (#5114). A static `/users` path with no
+// `{` passes through unchanged.
+func canonicalizeMinimalApiCurly(raw string) string {
+	if !strings.Contains(raw, "{") {
+		return raw
+	}
+	return minimalApiCurlyRe.ReplaceAllString(raw, "%s")
+}
+
+var minimalApiCurlyRe = regexp.MustCompile(`\{[^}/]*\}`)
+
 // synthesizeGiraffeRoutes scans an F# source file for Giraffe / Saturn route
 // registrations and emits one http_endpoint_definition per statically-known
 // (verb, path). subRoute/forward mount prefixes are folded into nested child
@@ -332,4 +425,36 @@ func synthesizeGiraffeRoutes(content string, emit emitFn) {
 		handler := submatch(content, loc, 3)
 		emitRoute(verb, path, handler, loc[0])
 	}
+	// #5114 — Falco register helpers (`mapGet "/users" handler`). The bare
+	// Falco form `get "/users" handler` already rides saturnRouteRe above.
+	for _, loc := range falcoMapRe.FindAllStringSubmatchIndex(content, -1) {
+		verb := submatch(content, loc, 1)
+		path := submatch(content, loc, 2)
+		handler := submatch(content, loc, 3)
+		emitRoute(verb, path, handler, loc[0])
+	}
+	// #5114 — Suave (`GET >=> path "/users"` / `>=> pathScan "/users/%d" h`).
+	// `pathScan` carries printf placeholders handled by the FrameworkGiraffe
+	// canonicaliser exactly like Giraffe `routef`.
+	for _, loc := range suaveRouteRe.FindAllStringSubmatchIndex(content, -1) {
+		verb := submatch(content, loc, 1)
+		path := submatch(content, loc, 3)
+		handler := submatch(content, loc, 4)
+		emitRoute(verb, path, handler, loc[0])
+	}
+	// #5114 — ASP.NET minimal-API in F# (`app.MapGet("/users", handler)`).
+	// Minimal-API paths use the ASP.NET curly-brace param convention
+	// (`/users/{id}`); the emitRoute interpolation guard drops any literal `{`,
+	// so we pre-canonicalise each `{name}` to the printf `%s` token (which
+	// FrameworkGiraffe then maps to the positional `{}` wildcard), mirroring the
+	// routex pre-canonicalisation. A constrained param (`{id:int}`) collapses to
+	// a single `%s` too.
+	for _, loc := range fsharpMinimalApiRe.FindAllStringSubmatchIndex(content, -1) {
+		verb := submatch(content, loc, 1)
+		path := canonicalizeMinimalApiCurly(submatch(content, loc, 2))
+		handler := submatch(content, loc, 3)
+		emitRoute(verb, path, handler, loc[0])
+	}
+	// Oxpecker is Giraffe-compatible (`GET >=> route "/users"` / `routef`) and
+	// is captured by the giraffeRouteRe loop above — no separate recogniser.
 }

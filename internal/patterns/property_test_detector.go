@@ -19,6 +19,14 @@ var (
 	ptdScalaCheckRE   = regexp.MustCompile(`forAll\s*\{|Gen\.\w+`)
 	ptdRustProptest   = regexp.MustCompile(`proptest!\s*\{`)
 	ptdGoQuickCheckRE = regexp.MustCompile(`quick\.Check\s*\(`)
+	// #5114 — F# property-based testing (the non-db tail of #4941). FsCheck (the
+	// dominant F# property runner) declares properties via the `[<Property>]`
+	// attribute or the `Check.Quick`/`Check.One`/`Check.QuickThrowOnFailure`/
+	// `Prop.forAll` driver calls. Hedgehog declares them via the `property { … }`
+	// computation expression / `Property.check`. Both are F#-only gated (below)
+	// so the F#-shaped tokens never misfire on another language.
+	ptdFSharpFsCheckRE  = regexp.MustCompile(`\[<\s*Property\b|\bCheck\.(?:Quick|One|Verbose|QuickThrowOnFailure)\b|\bProp\.forAll\b`)
+	ptdFSharpHedgehogRE = regexp.MustCompile(`\bproperty\s*\{|\bProperty\.check\b`)
 )
 
 func (p *propertyTestDetector) Category() string { return "property_test" }
@@ -31,6 +39,8 @@ func (p *propertyTestDetector) AppliesTo(src string) bool {
 		ptdScalaCheckRE.MatchString(src) ||
 		ptdRustProptest.MatchString(src) ||
 		ptdGoQuickCheckRE.MatchString(src) ||
+		ptdFSharpFsCheckRE.MatchString(src) ||
+		ptdFSharpHedgehogRE.MatchString(src) ||
 		strings.Contains(src, "hypothesis") ||
 		strings.Contains(src, "fast-check")
 }
@@ -69,6 +79,17 @@ func (p *propertyTestDetector) Detect(filePath, language, src string) []types.En
 	}
 	if m := ptdGoQuickCheckRE.FindStringIndex(src); m != nil {
 		emit("go:quickcheck", "go-check", lineOf(src, m[0]))
+	}
+	// #5114 — F# property-test records, F#-only gated so the F#-shaped tokens
+	// (`[<Property>]`, `property { … }`) never misfire on another language that
+	// happens to contain a `property {` / `Check.Quick` substring.
+	if language == "fsharp" {
+		if m := ptdFSharpFsCheckRE.FindStringIndex(src); m != nil {
+			emit("fsharp:fscheck", "fscheck", lineOf(src, m[0]))
+		}
+		if m := ptdFSharpHedgehogRE.FindStringIndex(src); m != nil {
+			emit("fsharp:hedgehog", "hedgehog", lineOf(src, m[0]))
+		}
 	}
 
 	return results
