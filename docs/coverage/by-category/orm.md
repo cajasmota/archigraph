@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 170 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 1 · **C#**: 14 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 19 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
+**Total**: 172 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 1 · **C#**: 16 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 19 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
@@ -28,11 +28,13 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [clojure](../by-language/clojure.md) | [next.jdbc](../detail/lang.clojure.driver.next-jdbc.md) | 🔴 0/11 | |
 | [crystal](../by-language/crystal.md) | [Granite (Crystal ORM)](../detail/lang.crystal.orm.granite.md) | 🟡 7/10 | |
 | [C#](../by-language/csharp.md) | [AWSSDK.DynamoDBv2](../detail/lang.csharp.driver.dynamodb.md) | 🟡 2/5 | |
+| [C#](../by-language/csharp.md) | [AutoMapper (.NET object-object mapper)](../detail/lang.csharp.mapper.automapper.md) | ✅ 1/1 | |
 | [C#](../by-language/csharp.md) | [CassandraCSharpDriver](../detail/lang.csharp.driver.cassandra.md) | 🟡 2/5 | |
 | [C#](../by-language/csharp.md) | [Dapper](../detail/lang.csharp.orm.dapper.md) | 🟡 3/6 | |
 | [C#](../by-language/csharp.md) | [Entity Framework Core](../detail/lang.csharp.orm.efcore.md) | 🟡 8/11 | |
 | [C#](../by-language/csharp.md) | [LINQ to SQL](../detail/lang.csharp.orm.linq-to-sql.md) | 🟡 7/10 | |
 | [C#](../by-language/csharp.md) | [LinqToDB](../detail/lang.csharp.orm.linqtodb.md) | 🟡 6/9 | |
+| [C#](../by-language/csharp.md) | [Mapster (.NET object-object mapper)](../detail/lang.csharp.mapper.mapster.md) | ✅ 1/1 | |
 | [C#](../by-language/csharp.md) | [Microsoft.Data.Sqlite](../detail/lang.csharp.driver.sqlite.md) | 🔴 0/4 | |
 | [C#](../by-language/csharp.md) | [MongoDB.Driver (C#)](../detail/lang.csharp.driver.mongodb.md) | 🟡 3/6 | |
 | [C#](../by-language/csharp.md) | [MySQL.Data / MySqlConnector](../detail/lang.csharp.driver.mysql.md) | 🔴 0/4 | |

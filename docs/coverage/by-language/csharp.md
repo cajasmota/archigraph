@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # C#
 
-**Frameworks**: 17 · **Tools**: 7 · **ORMs**: 14 · **Other**: 8
+**Frameworks**: 17 · **Tools**: 7 · **ORMs**: 16 · **Other**: 8
 
 Back to [summary](../summary.md).
 
@@ -89,11 +89,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Other capabilities | Notes |
 |---|---|---|
 | [AWSSDK.DynamoDBv2](../detail/lang.csharp.driver.dynamodb.md) | 🟡 2/5 | |
+| [AutoMapper (.NET object-object mapper)](../detail/lang.csharp.mapper.automapper.md) | ✅ 1/1 | |
 | [CassandraCSharpDriver](../detail/lang.csharp.driver.cassandra.md) | 🟡 2/5 | |
 | [Dapper](../detail/lang.csharp.orm.dapper.md) | 🟡 3/6 | |
 | [Entity Framework Core](../detail/lang.csharp.orm.efcore.md) | 🟡 8/11 | |
 | [LINQ to SQL](../detail/lang.csharp.orm.linq-to-sql.md) | 🟡 7/10 | |
 | [LinqToDB](../detail/lang.csharp.orm.linqtodb.md) | 🟡 6/9 | |
+| [Mapster (.NET object-object mapper)](../detail/lang.csharp.mapper.mapster.md) | ✅ 1/1 | |
 | [Microsoft.Data.Sqlite](../detail/lang.csharp.driver.sqlite.md) | 🔴 0/4 | |
 | [MongoDB.Driver (C#)](../detail/lang.csharp.driver.mongodb.md) | 🟡 3/6 | |
 | [MySQL.Data / MySqlConnector](../detail/lang.csharp.driver.mysql.md) | 🔴 0/4 | |

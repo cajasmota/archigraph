@@ -1296,6 +1296,15 @@ const (
 	// supervision hierarchy a traversable subgraph rather than being buried
 	// inside the supervisor's init body.
 	RelationshipKindSupervises RelationshipKind = "SUPERVISES"
+
+	// #5074 object-mapping topology: a configured object-mapping
+	// (AutoMapper Profile.CreateMap<TSrc,TDest> / Mapster NewConfig /
+	// .Adapt<T>()) from a source DTO/entity type to a destination type.
+	//   MAPS_TO : source type (SCOPE.Schema/class) → destination type
+	// Carries the mapping framework, the optional member-mapping count and
+	// the owning profile on edge properties so DTO↔entity mapping topology is
+	// traversable rather than buried in a mapper configuration class.
+	RelationshipKindMapsTo RelationshipKind = "MAPS_TO"
 )
 
 // AllRelationshipKinds returns every RelationshipKind producers may emit.
@@ -1458,6 +1467,8 @@ func AllRelationshipKinds() []RelationshipKind {
 		RelationshipKindRationaleFor,
 		// #4929 Erlang/OTP supervision-tree child_spec edge:
 		RelationshipKindSupervises,
+		// #5074 object-mapping topology (AutoMapper/Mapster source→dest):
+		RelationshipKindMapsTo,
 	}
 }
 
