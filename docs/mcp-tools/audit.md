@@ -42,7 +42,9 @@ Production entities with no TESTS edge, ranked by severity.
 
 Key parameters: `entity_id` (optional — scoped query), `repo_filter[]`, `severity`, `limit` (default 100), `top_directories` (bool).
 
-Output: production entities lacking TESTS edges, ranked by severity.
+Output: production entities lacking TESTS edges, ranked by severity, followed by a **coverage-freshness** block (#5068).
+
+**Coverage freshness (#5068).** Both this tool and `archigraph_test_reachability` append a freshness section that tells an agent whether any *ingested* line-coverage report (LCOV/Cobertura/JaCoCo, #5036) is **stale relative to the latest index**. The verdict mirrors the dashboard provenance banner (#5038): a measurement is **STALE** when its `coverage_measured_at` predates the latest index `generated_at` (the report annotates a graph that has since been re-indexed, so "% covered" may no longer reflect current code) and **FRESH** when at/after it; the delta between the two is surfaced. It degrades honestly: *no* entity carrying `coverage_source` ⇒ "no coverage report ingested" (the counts above are static reach-coverage, not a measured line %); a report with no `coverage_measured_at` stamp, or no index timestamp to compare against ⇒ **UNKNOWN** rather than a fabricated verdict. STALE output tells the agent to re-run tests + reingest the report, then re-index.
 
 ---
 
@@ -56,7 +58,7 @@ The signal is computed by the indexer (#5037 / #5061) and **stamped onto entity 
 
 Key parameters: `entity_id` (optional — focus a single entity), `repo_filter[]`, `untested_only` (bool — list only orphans), `endpoints_only` (bool — HTTP endpoints/routes only), `limit` (default 100).
 
-Output: group and per-module reachability roll-ups (% reachable), an endpoint roll-up, and a row listing sorted **orphans-first** (endpoints before plain functions). Each reachable row shows `depth` and reaching-test count; a `[reachable-but-0%-lines]` tag flags entities statically reached by a test yet with 0% measured LCOV line coverage (the candidate-ineffective-test signal, crossing #5036). The canonical orphan query is `untested_only=true` (optionally with `endpoints_only=true`): "which endpoints/handlers have NO test reaching them".
+Output: group and per-module reachability roll-ups (% reachable), an endpoint roll-up, and a row listing sorted **orphans-first** (endpoints before plain functions). Each reachable row shows `depth` and reaching-test count; a `[reachable-but-0%-lines]` tag flags entities statically reached by a test yet with 0% measured LCOV line coverage (the candidate-ineffective-test signal, crossing #5036). The canonical orphan query is `untested_only=true` (optionally with `endpoints_only=true`): "which endpoints/handlers have NO test reaching them". The output ends with the same **coverage-freshness** block described under [`archigraph_test_coverage`](#archigraph_test_coverage) (#5068) — relevant here because the `[reachable-but-0%-lines]` cross-signal is only meaningful against a *current* coverage report.
 
 ---
 

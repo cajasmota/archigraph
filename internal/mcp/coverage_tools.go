@@ -184,6 +184,10 @@ func (s *Server) handleTestCoverage(ctx context.Context, req mcpapi.CallToolRequ
 		}
 	}
 
+	// Freshness signal (#5068): is any ingested line-coverage measurement stale
+	// relative to the latest index? Degrades honestly when nothing is ingested.
+	out += renderCoverageFreshness(computeCoverageFreshness(lg))
+
 	return mcpapi.NewToolResultText(out), nil
 }
 

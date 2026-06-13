@@ -241,6 +241,11 @@ func (s *Server) handleTestReachability(ctx context.Context, req mcpapi.CallTool
 		}
 	}
 
+	// Freshness signal (#5068): any reachable-but-0%-lines cross-signal above is
+	// only meaningful against a CURRENT coverage report — surface whether the
+	// ingested measurement is stale relative to the latest index.
+	out += renderCoverageFreshness(computeCoverageFreshness(lg))
+
 	return mcpapi.NewToolResultText(out), nil
 }
 
