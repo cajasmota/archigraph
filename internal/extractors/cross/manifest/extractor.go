@@ -166,6 +166,11 @@ var exactManifestNames = map[string]bool{
 	// Java / Kotlin — Gradle build scripts (Groovy DSL + Kotlin DSL)
 	"build.gradle":     true,
 	"build.gradle.kts": true,
+	// Erlang — rebar3 (hex.pm) + erlang.mk
+	"rebar.config": true,
+	"rebar.lock":   true,
+	"erlang.mk":    true,
+	"Makefile":     true,
 }
 
 // IsManifest returns true when filePath names a supported manifest file.
@@ -178,6 +183,11 @@ func IsManifest(filePath string) bool {
 	}
 	// *.csproj — NuGet <PackageReference> manifest
 	if strings.HasSuffix(basename, ".csproj") {
+		return true
+	}
+	// *.app.src — Erlang/OTP application resource manifest (rebar3/hex deps
+	// surface via the {applications, [...]} list).
+	if strings.HasSuffix(basename, ".app.src") {
 		return true
 	}
 	return false
@@ -215,6 +225,11 @@ func detectPackageManager(filePath string) string {
 		// Java / Kotlin — Gradle
 		"build.gradle":     "gradle",
 		"build.gradle.kts": "gradle",
+		// Erlang — rebar3 deps resolve from hex.pm
+		"rebar.config": "rebar3",
+		"rebar.lock":   "rebar3",
+		"erlang.mk":    "erlang_mk",
+		"Makefile":     "erlang_mk",
 	}
 	basename := filepath.Base(filePath)
 	if v, ok := pm[basename]; ok {
@@ -223,6 +238,10 @@ func detectPackageManager(filePath string) string {
 	// *.csproj → nuget
 	if strings.HasSuffix(basename, ".csproj") {
 		return "nuget"
+	}
+	// *.app.src → rebar3 (Erlang/OTP application resource)
+	if strings.HasSuffix(basename, ".app.src") {
+		return "rebar3"
 	}
 	return "unknown"
 }
@@ -1562,6 +1581,10 @@ var parsers = map[string]parserFn{
 	// Java / Kotlin — Gradle
 	"build.gradle":     parseBuildGradle,
 	"build.gradle.kts": parseBuildGradle,
+	// Erlang — rebar3 + erlang.mk
+	"rebar.config": parseRebarConfig,
+	"rebar.lock":   parseRebarLock,
+	"erlang.mk":    func(s string) []dep { return parseErlangMk(s, false) },
 }
 
 func dispatchParser(filePath, source string) (string, []dep) {
@@ -1573,6 +1596,15 @@ func dispatchParser(filePath, source string) (string, []dep) {
 	// *.csproj — NuGet project manifest
 	if strings.HasSuffix(basename, ".csproj") {
 		return "nuget", parseCsproj(source)
+	}
+	// *.app.src — Erlang/OTP application resource (rebar3 runtime apps).
+	if strings.HasSuffix(basename, ".app.src") {
+		return "rebar3", parseAppSrc(source)
+	}
+	// Makefile — only an erlang.mk build when it includes erlang.mk / declares
+	// PROJECT (requireSignal=true); a plain Makefile is a no-op.
+	if basename == "Makefile" {
+		return "erlang_mk", parseErlangMk(source, true)
 	}
 	return "unknown", nil
 }

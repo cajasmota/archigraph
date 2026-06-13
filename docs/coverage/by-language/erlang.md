@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # erlang
 
-**Frameworks**: 1 · **Tools**: 0 · **ORMs**: 0 · **Other**: 2
+**Frameworks**: 1 · **Tools**: 5 · **ORMs**: 0 · **Other**: 2
 
 Back to [summary](../summary.md).
 
@@ -28,6 +28,16 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|---|---|---|---|---|
 | [Cowboy](../detail/lang.erlang.framework.cowboy.md) | 🟡 3/7 | 🔴 0/1 | 🔴 0/4 | 🟢 1/1 | 🔴 0/24 | 🔴 0/13 | |
 
+
+## Tools
+
+| Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
+|---|---|---|---|---|---|---|
+| [Common Test (CT)](../detail/test.common-test.md) | ✅ | — | — | — | ✅ | |
+| [EUnit](../detail/test.eunit.md) | ✅ | — | — | — | ✅ | |
+| [erlang.mk (Makefile)](../detail/build.erlang-mk.md) | ✅ | — | — | — | 🔴 | |
+| [rebar3 (rebar.config)](../detail/build.rebar3.md) | ✅ | — | — | — | 🟢 | |
+| [rebar3 / hex.pm (rebar.config, rebar.lock)](../detail/pkg.rebar3.md) | — | — | ✅ | ✅ | — | |
 
 ## Other
 

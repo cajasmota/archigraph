@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # build_system
 
-**Total**: 104 records · **C/C++**: 12 · **clojure**: 4 · **C#**: 6 · **elixir**: 8 · **F#**: 1 · **go**: 7 · **groovy**: 1 · **java**: 8 · **JS/TS**: 20 · **multi**: 4 · **php**: 5 · **python**: 12 · **ruby**: 5 · **rust**: 9 · **scala**: 2
+**Total**: 108 records · **C/C++**: 12 · **clojure**: 4 · **C#**: 6 · **elixir**: 8 · **erlang**: 4 · **F#**: 1 · **go**: 7 · **groovy**: 1 · **java**: 8 · **JS/TS**: 20 · **multi**: 4 · **php**: 5 · **python**: 12 · **ruby**: 5 · **rust**: 9 · **scala**: 2
 
 Back to [summary](../summary.md). Bucket: **Tools**.
 
@@ -38,6 +38,10 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [elixir](../by-language/elixir.md) | [Mox](../detail/test.mox.md) | 🔴 | 🔴 | |
 | [elixir](../by-language/elixir.md) | [StreamData (property tests)](../detail/test.streamdata.md) | ✅ | ✅ | |
 | [elixir](../by-language/elixir.md) | [Wallaby](../detail/test.wallaby.md) | 🔴 | 🔴 | |
+| [erlang](../by-language/erlang.md) | [Common Test (CT)](../detail/test.common-test.md) | ✅ | ✅ | |
+| [erlang](../by-language/erlang.md) | [EUnit](../detail/test.eunit.md) | ✅ | ✅ | |
+| [erlang](../by-language/erlang.md) | [erlang.mk (Makefile)](../detail/build.erlang-mk.md) | ✅ | 🔴 | |
+| [erlang](../by-language/erlang.md) | [rebar3 (rebar.config)](../detail/build.rebar3.md) | ✅ | 🟢 | |
 | [F#](../by-language/fsharp.md) | [Expecto / xUnit (F#)](../detail/test.fsharp-expecto.md) | 🔴 | ✅ | |
 | [go](../by-language/go.md) | [Ginkgo](../detail/test.ginkgo.md) | 🟢 | ✅ | |
 | [go](../by-language/go.md) | [Gomega](../detail/test.gomega.md) | 🟢 | ✅ | |
