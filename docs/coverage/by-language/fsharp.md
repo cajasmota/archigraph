@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # F#
 
-**Frameworks**: 1 · **Tools**: 1 · **ORMs**: 0 · **Other**: 2
+**Frameworks**: 2 · **Tools**: 1 · **ORMs**: 0 · **Other**: 2
 
 Back to [summary](../summary.md).
 
@@ -27,6 +27,13 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 | Name | Routing | Auth | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|---|---|
 | [Giraffe / Saturn (F# HTTP)](../detail/lang.fsharp.framework.giraffe.md) | 🟡 3/7 | 🔴 0/1 | 🟢 4/4 | ✅ 1/1 | 🔴 0/24 | 🟡 2/13 | |
+
+
+### UI Frontend
+
+| Name | Type System | Testing | Substrate | Other capabilities | Notes |
+|---|---|---|---|---|---|
+| [Fable Elmish/Feliz (F# frontend)](../detail/lang.fsharp.framework.elmish.md) | 🔴 0/3 | 🔴 0/1 | 🔴 0/24 | 🟡 6/14 | |
 
 
 ## Tools

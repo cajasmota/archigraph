@@ -409,6 +409,12 @@ func extractFSharp(src, filePath string) []types.EntityRecord {
 		entities = append(entities, memberEnts...)
 	}
 
+	// #5129: Fable + Elmish/Feliz frontend decoration. Import-gated — a no-op
+	// for any file that does not `open` Elmish/Feliz/Fable. Mutates the entities
+	// in place (re-kinds Model/Msg, tags the MVU triad, re-kinds Feliz components
+	// + emits RENDERS, stamps Cmd dispatch USES edges).
+	applyElmishFeliz(src, filePath, imports, entities)
+
 	return entities
 }
 
