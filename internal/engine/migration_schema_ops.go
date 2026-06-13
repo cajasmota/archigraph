@@ -310,6 +310,21 @@ func evolutionOp(e *graph.Entity, p map[string]string) []migrationSchemaOp {
 			return nil
 		}
 		return []migrationSchemaOp{{op: op, table: table, column: p["column"]}}
+	// Nim Norm createTables/dropTables + raw-DDL migration op (#4991). The op
+	// subtype is the normalised op (create_table|drop_table|alter_table); the
+	// `table` property is either the literal DDL table name or the MODEL NAME (the
+	// model-typed createTables form), the latter bound to its table convergence
+	// node by the shared resolver.
+	case "norm":
+		op := e.Subtype
+		if op == "" {
+			return nil
+		}
+		table := p["table"]
+		if table == "" {
+			return nil
+		}
+		return []migrationSchemaOp{{op: op, table: table, column: p["column"]}}
 	}
 	return nil
 }

@@ -38,7 +38,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 |---|---|---|
 | [Allographer (Nim query/schema builder)](../detail/lang.nim.orm.allographer.md) | 🟢 7/7 | |
 | [Debby (Nim ORM)](../detail/lang.nim.orm.debby.md) | 🟡 5/9 | |
-| [Norm (Nim ORM)](../detail/lang.nim.orm.norm.md) | 🟡 6/9 | |
+| [Norm (Nim ORM)](../detail/lang.nim.orm.norm.md) | 🟢 8/8 | |
 | [ormin (Nim compile-time ORM)](../detail/lang.nim.orm.ormin.md) | 🟡 4/8 | |
 
 

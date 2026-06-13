@@ -331,6 +331,169 @@ proc store(db: DbConn, p: Post) =
 	}
 }
 
+// --- Norm migrations + lifecycle + cross-file/variable-handle (#4991) --------
+
+// TestNimNormMigrations_4991 proves Norm schema-migration ops: a model-typed
+// createTables/dropTables (`db.createTables(User())`), a variable-handle
+// createTables resolved via its `var u = User()` binding, and raw-DDL
+// db.exec(sql"CREATE/ALTER/DROP TABLE …") strings each yield a shared
+// SCOPE.Evolution migration-op entity (framework=norm) the engine pass converges.
+func TestNimNormMigrations_4991(t *testing.T) {
+	src := `
+import norm/[model, sqlite]
+
+type
+  User* = ref object of Model
+    name*: string
+  Post* = ref object of Model
+    title*: string
+
+proc setup(db: DbConn) =
+  var u = User()
+  db.createTables(u)
+  db.createTables(Post())
+  db.dropTables(Post())
+  db.exec(sql"CREATE TABLE audit (id INTEGER PRIMARY KEY)")
+  db.exec(sql"ALTER TABLE user ADD COLUMN bio TEXT")
+  db.exec(sql"DROP TABLE audit")
+`
+	e, ok := extreg.Get("custom_nim_norm_migrations")
+	if !ok {
+		t.Fatal("custom_nim_norm_migrations not registered")
+	}
+	ents, err := e.Extract(context.Background(), fi("src/migrate.nim", "nim", src))
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	got := map[string]string{} // name -> subtype
+	for _, en := range ents {
+		if en.Kind != "SCOPE.Evolution" || en.Properties["framework"] != "norm" {
+			t.Errorf("entity %q: expected SCOPE.Evolution framework=norm, got %s/%s", en.Name, en.Kind, en.Properties["framework"])
+		}
+		got[en.Name] = en.Subtype
+	}
+	want := map[string]string{
+		"create_table:User":  "create_table", // variable handle u -> User
+		"create_table:Post":  "create_table", // Post() constructor
+		"drop_table:Post":    "drop_table",
+		"create_table:audit": "create_table", // raw DDL
+		"alter_table:user":   "alter_table",
+		"drop_table:audit":   "drop_table",
+	}
+	for n, sub := range want {
+		if got[n] != sub {
+			t.Errorf("expected migration op %q subtype %q, got %q (all=%v)", n, sub, got[n], got)
+		}
+	}
+}
+
+// TestNimNormMigrations_NoMatchNoop proves a Norm file with no schema ops yields
+// no migration entities, and TestNimNormMigrations_WrongLanguageNoop gates lang.
+func TestNimNormMigrations_NoMatchNoop(t *testing.T) {
+	src := `
+import norm/model
+type User* = ref object of Model
+  name*: string
+`
+	e, _ := extreg.Get("custom_nim_norm_migrations")
+	ents, _ := e.Extract(context.Background(), fi("src/models.nim", "nim", src))
+	if len(ents) != 0 {
+		t.Fatalf("expected no migration entities for a model-only file, got %d", len(ents))
+	}
+}
+
+func TestNimNormMigrations_WrongLanguageNoop(t *testing.T) {
+	src := "db.createTables(User())"
+	e, _ := extreg.Get("custom_nim_norm_migrations")
+	ents, _ := e.Extract(context.Background(), fi("src/migrate.nim", "go", src))
+	if len(ents) != 0 {
+		t.Fatalf("expected no entities for non-nim language, got %d", len(ents))
+	}
+}
+
+// TestNimNormQuery_VariableHandleAndRawSQL_4991 proves the deepened query
+// attribution: a variable-handle query `db.select(u, …)` (u bound to User) and a
+// raw-SQL query `db.select(objs, sql"… FROM posts …")` are both attributed to
+// their model, not just the model-typed first-arg form.
+func TestNimNormQuery_VariableHandleAndRawSQL_4991(t *testing.T) {
+	src := `
+import norm/[model, sqlite]
+
+type
+  User* = ref object of Model
+    name*: string
+  Post* = ref object of Model
+    title*: string
+
+proc run(db: DbConn) =
+  var u = User()
+  db.select(u, "name = ?", "x")
+  db.update(u)
+  var objs = @[Post()]
+  db.select(objs, sql"SELECT * FROM posts WHERE title = ?", "t")
+`
+	e, _ := extreg.Get("custom_nim_norm_orm")
+	ents, err := e.Extract(context.Background(), fi("src/q.nim", "nim", src))
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	ops := map[string]map[string]bool{} // model -> ops via QUERIES edges
+	for _, en := range ents {
+		if en.Subtype != "model" {
+			continue
+		}
+		for _, r := range en.Relationships {
+			if r.Kind == "QUERIES" {
+				if ops[en.Name] == nil {
+					ops[en.Name] = map[string]bool{}
+				}
+				ops[en.Name][r.Properties["operation"]] = true
+			}
+		}
+	}
+	if !ops["User"]["select"] || !ops["User"]["update"] {
+		t.Errorf("expected User QUERIES select+update via variable handle, got %v", ops["User"])
+	}
+	if !ops["Post"]["select"] {
+		t.Errorf("expected Post QUERIES select via raw-SQL FROM posts, got %v", ops["Post"])
+	}
+}
+
+// TestNimNormTransaction_EnclosingProcAndWrites_4991 proves the transaction
+// boundary is stamped with its enclosing proc and the write ops issued inside it.
+func TestNimNormTransaction_EnclosingProcAndWrites_4991(t *testing.T) {
+	src := `
+import norm/[model, sqlite]
+
+type
+  Post* = ref object of Model
+    title*: string
+
+proc savePost(db: DbConn, p: Post) =
+  db.transaction:
+    db.insert(p)
+    db.update(p)
+`
+	e, _ := extreg.Get("custom_nim_norm_orm")
+	ents, _ := e.Extract(context.Background(), fi("src/tx.nim", "nim", src))
+	var txn *recView
+	views := viewsOf(ents)
+	for i := range views {
+		if views[i].sub == "transaction_boundary" {
+			txn = &views[i]
+		}
+	}
+	if txn == nil {
+		t.Fatal("expected a transaction_boundary entity")
+	}
+	if txn.props["enclosing_proc"] != "savePost" {
+		t.Errorf("expected enclosing_proc=savePost, got %q", txn.props["enclosing_proc"])
+	}
+	if txn.props["has_writes"] != "true" || txn.props["writes"] != "insert,update" {
+		t.Errorf("expected writes=insert,update has_writes=true, got writes=%q has_writes=%q", txn.props["writes"], txn.props["has_writes"])
+	}
+}
+
 // --- Allographer schema builder (#4933) -------------------------------------
 
 // TestNimAllographerORM_TablesColumnsFK proves an Allographer
