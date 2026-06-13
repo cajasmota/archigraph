@@ -1141,7 +1141,10 @@ rdb().transaction(proc() =
 	}
 	views := viewsOf(ents)
 	for _, en := range ents {
-		if en.Kind != "SCOPE.Schema" {
+		// SCOPE.Schema tables carry QUERIES edges; #5116 also synthesises a
+		// standalone SCOPE.Operation/transaction boundary entity per
+		// rdb().transaction(...) block.
+		if en.Kind != "SCOPE.Schema" && !(en.Kind == "SCOPE.Operation" && en.Subtype == "transaction") {
 			t.Errorf("unexpected kind %q for %q", en.Kind, en.Name)
 		}
 		if en.Properties["framework"] != "allographer" {
@@ -1215,5 +1218,131 @@ func TestNimAllographerQuery_WrongLanguageNoop(t *testing.T) {
 	e, _ := extreg.Get("custom_nim_allographer_query")
 	if ents, _ := e.Extract(context.Background(), fi("src/repo.nim", "go", src)); len(ents) != 0 {
 		t.Fatalf("expected no entities for non-nim language, got %d", len(ents))
+	}
+}
+
+// TestNimAllographerQuery_JoinsRawDynamicTxn proves the #5116 deepening:
+//   (a) join targets get a second QUERIES edge (join=true) against the joined table;
+//   (b) raw SQL via rdb().raw("...") attributes its FROM/JOIN/INTO/UPDATE table(s)
+//       (raw=true), op classified from the SQL verb;
+//   (c) a .table(ident) bound to a const/let/var string literal resolves to it,
+//       while an unbound identifier is skipped (no fabricated query);
+//   (d) a standalone SCOPE.Operation/transaction boundary entity is synthesised
+//       per rdb().transaction(...) block.
+func TestNimAllographerQuery_JoinsRawDynamicTxn(t *testing.T) {
+	src := `
+import allographer/query_builder
+
+const ordersTbl = "orders"
+
+# (a) join target
+let rows = rdb().table("users").join("posts", "users.id", "=", "posts.user_id").get()
+
+# (b) raw SQL
+let report = rdb().raw("SELECT * FROM analytics JOIN sessions ON analytics.sid = sessions.id").get()
+discard rdb().raw("INSERT INTO audit_log (msg) VALUES ('x')")
+
+# (c) dynamic table (bound) + unbound (skipped)
+let ords = rdb().table(ordersTbl).get()
+let mystery = rdb().table(unboundVar).get()
+
+# (d) transaction boundary entity
+rdb().transaction(proc() =
+  discard rdb().table("accounts").where("id", "=", 1).update(%*{"bal": 0})
+)
+`
+	e, _ := extreg.Get("custom_nim_allographer_query")
+	ents, err := e.Extract(context.Background(), fi("src/repo.nim", "nim", src))
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	views := viewsOf(ents)
+
+	// (a) join: users primary select + posts join=true select.
+	hasEdge := func(table string, want map[string]string) bool {
+		v := pickView(views, table, "table")
+		if v == nil {
+			return false
+		}
+		for _, r := range v.rels {
+			if r.Kind != "QUERIES" || r.ToID != table {
+				continue
+			}
+			ok := true
+			for k, val := range want {
+				if r.Properties[k] != val {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				return true
+			}
+		}
+		return false
+	}
+
+	if !hasEdge("users", map[string]string{"operation": "select", "table": "users"}) {
+		t.Error("(a) expected users primary select")
+	}
+	if !hasEdge("posts", map[string]string{"operation": "select", "join": "true"}) {
+		t.Error("(a) expected posts join=true select")
+	}
+
+	// (b) raw SQL: analytics + sessions (select, raw) and audit_log (insert, raw).
+	if !hasEdge("analytics", map[string]string{"operation": "select", "raw": "true"}) {
+		t.Error("(b) expected analytics select raw=true")
+	}
+	if !hasEdge("sessions", map[string]string{"operation": "select", "raw": "true"}) {
+		t.Error("(b) expected sessions select raw=true (raw JOIN)")
+	}
+	if !hasEdge("audit_log", map[string]string{"operation": "insert", "raw": "true"}) {
+		t.Error("(b) expected audit_log insert raw=true")
+	}
+
+	// (c) dynamic table: orders resolved from const binding; unboundVar skipped.
+	if !hasEdge("orders", map[string]string{"operation": "select", "table": "orders"}) {
+		t.Error("(c) expected orders select (resolved from const binding)")
+	}
+	if pickView(views, "unboundVar", "table") != nil {
+		t.Error("(c) expected unboundVar to be skipped (no fabricated query)")
+	}
+
+	// (d) standalone transaction-boundary entity + accounts stamped transaction=true.
+	var txnEnt *recView
+	for i := range views {
+		if views[i].kind == "SCOPE.Operation" && views[i].sub == "transaction" {
+			txnEnt = &views[i]
+			break
+		}
+	}
+	if txnEnt == nil {
+		t.Fatal("(d) expected a standalone SCOPE.Operation/transaction entity")
+	}
+	if txnEnt.props["framework"] != "allographer" || txnEnt.props["transaction"] != "true" {
+		t.Errorf("(d) transaction entity missing framework/transaction props: %v", txnEnt.props)
+	}
+	if !hasEdge("accounts", map[string]string{"operation": "update", "transaction": "true"}) {
+		t.Error("(d) expected accounts update transaction=true (enclosed query stamp preserved)")
+	}
+}
+
+// TestNimAllographerQuery_RawNoMatchNoop proves an rdb().raw(...) whose SQL has no
+// parseable FROM/JOIN/INTO/UPDATE target yields no fabricated table, and a file
+// with no rdb() at all is ignored even if it mentions raw/join tokens.
+func TestNimAllographerQuery_RawNoMatchNoop(t *testing.T) {
+	e, _ := extreg.Get("custom_nim_allographer_query")
+	// rdb().raw with no table-bearing clause -> no tables, no txn entity.
+	noTable := `
+import allographer/query_builder
+discard rdb().raw("PRAGMA foreign_keys = ON")
+`
+	if ents, _ := e.Extract(context.Background(), fi("src/a.nim", "nim", noTable)); len(ents) != 0 {
+		t.Fatalf("expected no entities for tableless raw SQL, got %d", len(ents))
+	}
+	// No rdb() head at all (pre-filter miss).
+	noRdb := `let s = "SELECT * FROM users join posts"` + "\n" + `echo s`
+	if ents, _ := e.Extract(context.Background(), fi("src/b.nim", "nim", noRdb)); len(ents) != 0 {
+		t.Fatalf("expected no entities for non-rdb file, got %d", len(ents))
 	}
 }
