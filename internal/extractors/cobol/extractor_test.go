@@ -274,6 +274,118 @@ func TestExtractor_CallIsExternal(t *testing.T) {
 	}
 }
 
+// callByDynamicTarget returns the first dynamic CALLS edge whose
+// dynamic_target property equals the given source data item.
+func callByDynamicTarget(recs []types.EntityRecord, item string) (types.RelationshipRecord, bool) {
+	for _, rel := range relationsByKind(recs, "CALLS") {
+		if rel.Properties["dynamic_target"] == item {
+			return rel, true
+		}
+	}
+	return types.RelationshipRecord{}, false
+}
+
+// TestExtractor_DynamicCallResolvedViaMoveLiteral proves #5040: a dynamic
+// `CALL <data-item>` is resolved to the real program-id by tracing a preceding
+// `MOVE '<lit>' TO <data-item>` in the same paragraph (last-write-wins), while
+// keeping dynamic_ref=true and recording resolved_via=move-literal. It also
+// asserts the conservative cases: a non-literal MOVE taints the item (stays
+// unresolved), and a binding never leaks across paragraph boundaries.
+func TestExtractor_DynamicCallResolvedViaMoveLiteral(t *testing.T) {
+	src := loadFixture(t, "dyncall.cbl")
+	recs := run(t, "dyncall.cbl", src)
+
+	// Happy path: CALL WS-PROGRAM resolves to TAXCALC.
+	rel, ok := callByDynamicTarget(recs, "WS-PROGRAM")
+	if !ok {
+		t.Fatal("expected a resolved dynamic CALL with dynamic_target=WS-PROGRAM")
+	}
+	if rel.ToID != "TAXCALC" {
+		t.Errorf("resolved dynamic CALL ToID = %q, want TAXCALC", rel.ToID)
+	}
+	if rel.Properties["resolved_via"] != "move-literal" {
+		t.Errorf("resolved CALL missing resolved_via=move-literal: %v", rel.Properties)
+	}
+	if rel.Properties["dynamic_ref"] != "true" {
+		t.Errorf("resolved CALL must keep dynamic_ref=true: %v", rel.Properties)
+	}
+	if rel.Properties["external"] != "true" {
+		t.Errorf("resolved CALL must keep external=true: %v", rel.Properties)
+	}
+
+	// Last-write-wins: CALL WS-OTHER resolves to the SECOND literal (NEWRATE).
+	if rel, ok := callByDynamicTarget(recs, "WS-OTHER"); !ok || rel.ToID != "NEWRATE" {
+		t.Errorf("expected WS-OTHER to resolve to NEWRATE (last-write-wins), got ok=%v ToID=%q", ok, rel.ToID)
+	}
+
+	// Tainted by a non-literal MOVE: CALL WS-COND stays unresolved (ToID is the
+	// bare data item, dynamic_ref=true, no resolved_via).
+	var foundCond bool
+	for _, rel := range relationsByKind(recs, "CALLS") {
+		if rel.ToID == "WS-COND" {
+			foundCond = true
+			if rel.Properties["resolved_via"] != "" {
+				t.Errorf("tainted CALL WS-COND should NOT carry resolved_via: %v", rel.Properties)
+			}
+			if rel.Properties["dynamic_ref"] != "true" {
+				t.Errorf("unresolved CALL WS-COND must keep dynamic_ref=true: %v", rel.Properties)
+			}
+		}
+	}
+	if !foundCond {
+		t.Error("expected an unresolved dynamic CALL edge to WS-COND (tainted item)")
+	}
+	if _, ok := callByDynamicTarget(recs, "WS-COND"); ok {
+		t.Error("tainted CALL WS-COND must not be a resolved dynamic_target")
+	}
+
+	// No cross-paragraph leak: SCOPE-PARA has no MOVE, so its CALL WS-PROGRAM
+	// stays unresolved — the bare data item appears as a ToID.
+	if !hasCallTo(recs, "WS-PROGRAM") {
+		t.Error("expected an unresolved CALL edge to bare WS-PROGRAM in SCOPE-PARA (no leak)")
+	}
+
+	// Literal CALL is untouched by move-literal tracking.
+	if !hasCallTo(recs, "AUDITLOG") {
+		t.Error("expected literal CALL edge to AUDITLOG")
+	}
+}
+
+// TestExtractor_DynamicCallWrongLanguageNoOp proves the move-literal resolver is
+// a no-op for non-COBOL input (wrong-language fixture): the COBOL extractor
+// emits nothing for source it cannot parse as COBOL procedure code.
+func TestExtractor_DynamicCallWrongLanguageNoOp(t *testing.T) {
+	src := "function callProgram() {\n  const WS_PROGRAM = 'TAXCALC';\n  call(WS_PROGRAM);\n}\n"
+	recs := run(t, "notcobol.js", src)
+	for _, rel := range relationsByKind(recs, "CALLS") {
+		if rel.Properties["resolved_via"] == "move-literal" {
+			t.Errorf("non-COBOL input produced a move-literal resolution: %v", rel.Properties)
+		}
+	}
+}
+
+// TestExtractor_DynamicCallNoMatchNoOp proves valid COBOL with no MOVE-to-call
+// data flow produces no spurious move-literal resolution.
+func TestExtractor_DynamicCallNoMatchNoOp(t *testing.T) {
+	src := "" +
+		"       IDENTIFICATION DIVISION.\n" +
+		"       PROGRAM-ID. NOMATCH.\n" +
+		"       PROCEDURE DIVISION.\n" +
+		"       MAIN-PARA.\n" +
+		"           CALL WS-PROGRAM USING WS-X.\n" +
+		"           CALL 'AUDITLOG' USING WS-X.\n"
+	recs := run(t, "nomatch.cbl", src)
+	for _, rel := range relationsByKind(recs, "CALLS") {
+		if rel.Properties["resolved_via"] == "move-literal" {
+			t.Errorf("no MOVE present but got a move-literal resolution: %v", rel.Properties)
+		}
+	}
+	// The unresolved dynamic CALL is still emitted to the bare data item.
+	if !hasCallTo(recs, "WS-PROGRAM") {
+		t.Error("expected unresolved dynamic CALL edge to bare WS-PROGRAM")
+	}
+}
+
 func TestExtractor_CopyIsImport(t *testing.T) {
 	src := loadFixture(t, "payroll.cbl")
 	recs := run(t, "payroll.cbl", src)

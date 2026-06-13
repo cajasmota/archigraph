@@ -106,6 +106,19 @@ var (
 	// variable holding the program name). Group 1: identifier.
 	callIdentRe = regexp.MustCompile(`(?i)\bCALL\s+([A-Za-z][A-Za-z0-9-]*)`)
 
+	// moveLiteralRe matches `MOVE '<literal>' TO <data-item>` — a quoted
+	// alphanumeric literal moved into a working-storage item. Used to recover
+	// the real program-id behind a dynamic `CALL <data-item>` (#5040). Group 1:
+	// the literal value (program name); group 2: the receiving data item.
+	moveLiteralRe = regexp.MustCompile(`(?i)\bMOVE\s+['"]([A-Za-z0-9$#@][A-Za-z0-9$#@_-]*)['"]\s+TO\s+([A-Za-z][A-Za-z0-9-]*)`)
+
+	// moveNonLiteralRe matches `MOVE <source> TO <data-item>` where the source
+	// is NOT a quoted literal (another data item, figurative constant, etc.).
+	// Such a move taints the receiving item: its program-id can no longer be
+	// statically recovered, so any pending move-literal binding is dropped
+	// (#5040, conservative best-effort). Group 1 (receiver) is the last token.
+	moveNonLiteralRe = regexp.MustCompile(`(?i)\bMOVE\s+(?:[^'"\s]\S*)\s+TO\s+([A-Za-z][A-Za-z0-9-]*)`)
+
 	// dataItemRe matches level-numbered data items, e.g. `01 CUSTOMER-REC.`
 	// or `05 CUST-ID PIC X(10).`. Group 1: level number; Group 2: item name.
 	dataItemRe = regexp.MustCompile(`(?i)^\s*(0[1-9]|[1-4][0-9]|66|77|88)\s+([A-Za-z0-9][A-Za-z0-9-]*)`)
@@ -270,6 +283,14 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 	// currentParagraphName tracks the open paragraph's name so embedded-SQL
 	// access entities can be attributed to it (the ACCESSES_TABLE FromID).
 	currentParagraphName := ""
+
+	// moveLiterals tracks `MOVE '<lit>' TO <item>` bindings (upper-cased item
+	// name → literal value) so a later dynamic `CALL <item>` can resolve to the
+	// real program-id (#5040). Last-write-wins within a paragraph; a subsequent
+	// non-literal MOVE into the same item clears the binding (the value is no
+	// longer statically known). Reset whenever a new paragraph opens so a
+	// binding never leaks across paragraph boundaries.
+	moveLiterals := map[string]string{}
 
 	// EXEC SQL / EXEC CICS block accumulation (#2838 Phase 2). A block may
 	// span many lines; we buffer its body until END-EXEC, then extract.
@@ -687,6 +708,9 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 				if !cobolReservedHeads[up] && !isAllDigits(name) {
 					currentParagraphIdx = len(entities)
 					currentParagraphName = name
+					// New paragraph scope: drop any move-literal bindings so a
+					// dynamic CALL only resolves from MOVEs in its own paragraph.
+					moveLiterals = map[string]string{}
 					rec := types.EntityRecord{
 						Name:       name,
 						Kind:       "SCOPE.Operation",
@@ -711,6 +735,26 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 			// Extend the enclosing paragraph's EndLine as its body scrolls by.
 			if currentParagraphIdx >= 0 && ln.num > entities[currentParagraphIdx].EndLine {
 				entities[currentParagraphIdx].EndLine = ln.num
+			}
+
+			// Track `MOVE '<lit>' TO <item>` / non-literal MOVEs to maintain the
+			// move-literal bindings used for dynamic-CALL target resolution
+			// (#5040). A literal MOVE records (last-write-wins); a non-literal
+			// MOVE into the same item clears the binding. Processed before the
+			// CALL scan below so a MOVE earlier on the SAME line still resolves a
+			// trailing CALL (rare, but `MOVE 'X' TO Y. CALL Y` on one line).
+			for _, mm := range moveLiteralRe.FindAllStringSubmatch(ln.code, -1) {
+				moveLiterals[strings.ToUpper(mm[2])] = mm[1]
+			}
+			for _, mm := range moveNonLiteralRe.FindAllStringSubmatch(ln.code, -1) {
+				recv := strings.ToUpper(mm[1])
+				// Only clear if this same line did not also set it via a literal
+				// MOVE (a literal MOVE wins for that token on the line).
+				if _, set := moveLiterals[recv]; set {
+					if !moveLiteralSetsOnLine(ln.code, recv) {
+						delete(moveLiterals, recv)
+					}
+				}
 			}
 
 			// PERFORM <paragraph> → CALLS (intra-program).
@@ -805,15 +849,26 @@ func extractCOBOL(src, filePath, repoRoot string) []types.EntityRecord {
 					if strings.EqualFold(ident, "USING") {
 						continue
 					}
+					props := map[string]string{
+						"line":        strconv.Itoa(ln.num),
+						"via":         "CALL",
+						"external":    "true",
+						"dynamic_ref": "true",
+					}
+					toID := ident
+					// Recover the real program-id by tracing a preceding
+					// `MOVE '<lit>' TO <ident>` (#5040). When found, the CALLS
+					// ToID becomes the literal program name; dynamic_ref stays
+					// true and resolved_via records how it was recovered.
+					if lit, ok := moveLiterals[strings.ToUpper(ident)]; ok {
+						toID = lit
+						props["resolved_via"] = "move-literal"
+						props["dynamic_target"] = ident
+					}
 					rel := types.RelationshipRecord{
-						ToID: ident,
-						Kind: "CALLS",
-						Properties: map[string]string{
-							"line":        strconv.Itoa(ln.num),
-							"via":         "CALL",
-							"external":    "true",
-							"dynamic_ref": "true",
-						},
+						ToID:       toID,
+						Kind:       "CALLS",
+						Properties: props,
 					}
 					attachCall(entities, currentParagraphIdx, programIdx, rel)
 				}
@@ -884,6 +939,19 @@ func attachCall(entities []types.EntityRecord, paragraphIdx, programIdx int, rel
 		return
 	}
 	entities[idx].Relationships = append(entities[idx].Relationships, rel)
+}
+
+// moveLiteralSetsOnLine reports whether the given line contains a
+// `MOVE '<lit>' TO <recv>` whose receiver (upper-cased) equals recvUpper. Used
+// to let a literal MOVE win over a non-literal MOVE for the same receiving item
+// when both appear on the same physical line (#5040).
+func moveLiteralSetsOnLine(code, recvUpper string) bool {
+	for _, mm := range moveLiteralRe.FindAllStringSubmatch(code, -1) {
+		if strings.EqualFold(mm[2], recvUpper) {
+			return true
+		}
+	}
+	return false
 }
 
 // hasSectionKeyword reports whether an upper-cased line begins (after
