@@ -118,6 +118,34 @@ var rustStatusSetterRe = regexp.MustCompile(`\.\s*(?:set_)?status(?:_code)?\s*\(
 // first positional arg). Group 1 = the 3-digit literal.
 var rustResponseBuilderNumRe = regexp.MustCompile(`\bResponse::(?:builder|new)\s*\(\s*(\d{3})\b`)
 
+// rustHyperRespArmRe matches a hyper match-arm route that DISPATCHES TO A NAMED
+// handler: `(&Method::GET, "/path") => get_users(req).await`. Group 1 = verb,
+// group 2 = path, group 3 = the handler-call symbol on the arm RHS (the bare
+// fn-name preceding the first `(`). This mirrors the producer reHyperMatchArm
+// (minor_fw_routing.go) but additionally captures the RHS handler so the resolved
+// verdict can be looked up in the shared handler→verdict map, exactly as axum
+// names a handler from `verb(handler)`. Inline-block arms
+// (`… => { Response::builder()… }`) are NOT matched here — they carry no named
+// handler and are handled by rustHyperRespInlineArmRe below.
+var rustHyperRespArmRe = regexp.MustCompile(
+	`&Method::(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*,\s*"([^"]+)"\s*\)?\s*=>\s*([A-Za-z_]\w*)\s*\(`,
+)
+
+// rustHyperRespInlineArmRe matches a hyper match-arm route whose body is an INLINE
+// BLOCK: `(&Method::POST, "/path") => { … }`. Group 1 = verb, group 2 = path; the
+// block body (from the `{`) is resolved directly via rustResolveResponseCodes, so
+// a status idiom written inline in the arm (no separate handler fn) is still
+// recovered. The match stops at the opening brace; the bounded body window is cut
+// at the next sibling `fn`/arm boundary by rustRespBodyWindow.
+var rustHyperRespInlineArmRe = regexp.MustCompile(
+	`&Method::(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*,\s*"([^"]+)"\s*\)?\s*=>\s*\{`,
+)
+
+// rustHyperArmBoundaryRe matches the start of the NEXT match arm — either a
+// typed `(&Method::VERB, …)` arm or the `_ =>` wildcard/fallback arm — so an
+// inline arm's body window is hard-clipped before a sibling arm's status literals.
+var rustHyperArmBoundaryRe = regexp.MustCompile(`&Method::(?:GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)|(?m)^\s*_\s*=>`)
+
 // rustHttpResponseBuilderRe matches the actix `HttpResponse::Created()` /
 // `HttpResponse::Ok()` … builder whose method names the status. Group 1 = the
 // builder name. `HttpResponse::build(...)` (dynamic) is excluded by the table.
@@ -567,10 +595,17 @@ func rustRespBodyWindow(src string, bodyStart int) string {
 //	         or `resp.set_status(201)`.
 //	gotham — a `(StatusCode::X, body)` create_response / bare StatusCode::X.
 //	salvo  — `res.status_code(StatusCode::CREATED)`.
+//	hyper  — a `match (req.method(), path) { (&Method::GET, "/p") => handler(req) }`
+//	         match-arm. The arm RHS NAMES a handler whose body lives elsewhere
+//	         (resolved via the shared handler→verdict map, exactly like axum); an
+//	         INLINE-block arm (`=> { Response::builder().status(StatusCode::X) }`)
+//	         is resolved directly from the arm body window.
 //
-// hyper (raw match-arm dispatch, no named handler) and tower (no HTTP routes)
-// are DEFERRED — see the follow-up ticket. Honest-partial + no-fabrication hold:
-// a route whose handler resolves no literal status is left to the producer.
+// tower (a middleware/service-composition layer that defines no verb+path routes —
+// `route_extraction` is structurally partial for it) has no endpoint to stamp and
+// is therefore not_applicable for endpoint_response_codes. Honest-partial +
+// no-fabrication hold: a route whose handler resolves no literal status is left to
+// the producer.
 func (e *rustEndpointResponseCodesExtractor) extractHandlerNamed(src string, file extractor.FileInput) []types.EntityRecord {
 	// Build handler-name → verdict from every fn body once (shared across all
 	// frameworks below — a handler is resolved the same way regardless of which
@@ -688,6 +723,47 @@ func (e *rustEndpointResponseCodesExtractor) extractHandlerNamed(src string, fil
 				continue
 			}
 			emit("warp", method, path, handler, m[0])
+		}
+	}
+
+	// hyper — `match (req.method(), path) { (&Method::GET, "/p") => handler(req) }`.
+	// The arm RHS NAMES a handler resolved via the shared handler→verdict map (the
+	// named-handler form), OR the arm is an INLINE block whose body carries the
+	// status idiom directly (the inline form). Both honour honest-partial.
+	if strings.Contains(src, "Method::") {
+		// Named-handler arms: `=> handler(req)`.
+		for _, m := range rustHyperRespArmRe.FindAllStringSubmatchIndex(src, -1) {
+			method := strings.ToUpper(src[m[2]:m[3]])
+			path := rustNormalizePath(src[m[4]:m[5]])
+			handler := src[m[6]:m[7]]
+			emit("hyper", method, path, handler, m[0])
+		}
+		// Inline-block arms: `=> { … StatusCode::X … }`. Resolve the arm body
+		// window directly (no named handler), then stamp by the producer Name.
+		for _, m := range rustHyperRespInlineArmRe.FindAllStringSubmatchIndex(src, -1) {
+			method := strings.ToUpper(src[m[2]:m[3]])
+			path := rustNormalizePath(src[m[4]:m[5]])
+			name := method + " " + path
+			if seen[name] {
+				continue
+			}
+			// m[1] is just past the matched `{`; resolve the block body window,
+			// clipped at the NEXT match arm so a sibling arm's status never bleeds in.
+			window := rustRespBodyWindow(src, m[1])
+			if loc := rustHyperArmBoundaryRe.FindStringIndex(window); loc != nil {
+				window = window[:loc[0]]
+			}
+			verdict := rustResolveResponseCodes(window)
+			if len(verdict.codes) == 0 {
+				continue
+			}
+			seen[name] = true
+			ent := makeEntity(name, "SCOPE.Operation", "endpoint", file.Path, file.Language, lineOf(src, m[0]))
+			setProps(&ent, "framework", "hyper",
+				"provenance", "INFERRED_FROM_HYPER_RESPONSE_CODES",
+				"http_method", method, "route_pattern", path)
+			rustStampResponseCodes(&ent, verdict)
+			out = append(out, ent)
 		}
 	}
 

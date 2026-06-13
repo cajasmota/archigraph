@@ -304,6 +304,107 @@ fn route() -> Router {
 	propEq(t, op, "framework", "salvo")
 }
 
+// hyper — `match (req.method(), path) { (&Method::GET, "/p") => handler(req) }`.
+// The arm RHS names a handler whose body carries the status idiom.
+func TestRustRespCodes_HyperNamedHandler(t *testing.T) {
+	src := `
+async fn get_users(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    Ok(Response::builder().status(StatusCode::OK).body(Body::empty()).unwrap())
+}
+async fn create_user(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    Ok(Response::builder().status(StatusCode::CREATED).body(Body::empty()).unwrap())
+}
+async fn router(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    match (req.method(), req.uri().path()) {
+        (&Method::GET, "/users") => get_users(req).await,
+        (&Method::POST, "/users") => create_user(req).await,
+        _ => not_found(),
+    }
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("hyper.rs", "rust", src))
+
+	get := findRustDep(ents, "SCOPE.Operation", "GET /users")
+	if get == nil {
+		t.Fatalf("expected GET /users, got %+v", ents)
+	}
+	propEq(t, get, "response_codes", "200")
+	propEq(t, get, "success_code", "200")
+	propEq(t, get, "framework", "hyper")
+
+	post := findRustDep(ents, "SCOPE.Operation", "POST /users")
+	if post == nil {
+		t.Fatalf("expected POST /users, got %+v", ents)
+	}
+	propEq(t, post, "response_codes", "201")
+	propEq(t, post, "success_code", "201")
+	propEq(t, post, "framework", "hyper")
+}
+
+// hyper — INLINE-block arm: status idiom written directly in the match arm body
+// (no separate handler fn), clipped at the next arm.
+func TestRustRespCodes_HyperInlineArm(t *testing.T) {
+	src := `
+async fn router(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    match (req.method(), req.uri().path()) {
+        (&Method::POST, "/items") => {
+            Ok(Response::builder().status(StatusCode::CREATED).body(Body::empty()).unwrap())
+        }
+        (&Method::GET, "/health") => {
+            Ok(Response::builder().status(StatusCode::NO_CONTENT).body(Body::empty()).unwrap())
+        }
+        _ => Ok(Response::builder().status(StatusCode::NOT_FOUND).body(Body::empty()).unwrap()),
+    }
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("hyper_inline.rs", "rust", src))
+
+	post := findRustDep(ents, "SCOPE.Operation", "POST /items")
+	if post == nil {
+		t.Fatalf("expected POST /items, got %+v", ents)
+	}
+	// Clipped at the next arm: only 201, not the sibling 204.
+	propEq(t, post, "response_codes", "201")
+	propEq(t, post, "success_code", "201")
+	propEq(t, post, "framework", "hyper")
+
+	health := findRustDep(ents, "SCOPE.Operation", "GET /health")
+	if health == nil {
+		t.Fatalf("expected GET /health, got %+v", ents)
+	}
+	propEq(t, health, "response_codes", "204")
+}
+
+// hyper — wrong language is a no-op (the extractor only runs on rust files).
+func TestRustRespCodes_HyperWrongLanguageNoOp(t *testing.T) {
+	src := `(&Method::GET, "/users") => get_users(req).await,
+fn get_users() { StatusCode::OK }`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("hyper.go", "go", src))
+	if len(ents) != 0 {
+		t.Errorf("non-rust file must produce no entities, got %+v", ents)
+	}
+}
+
+// hyper — honest-partial: a match-arm handler with no literal status is NOT
+// re-emitted (no fabricated default 200).
+func TestRustRespCodes_HyperNoStatusNotStamped(t *testing.T) {
+	src := `
+async fn get_users(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    Ok(Response::new(Body::from("ok")))
+}
+async fn router(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    match (req.method(), req.uri().path()) {
+        (&Method::GET, "/users") => get_users(req).await,
+        _ => not_found(),
+    }
+}
+`
+	ents := extract(t, "custom_rust_endpoint_response_codes", fi("hyper_plain.rs", "rust", src))
+	if findRustDep(ents, "SCOPE.Operation", "GET /users") != nil {
+		t.Errorf("hyper handler with no literal status must NOT be stamped, got %+v", ents)
+	}
+}
+
 // honest-partial — a minor-framework route whose handler has no literal status
 // is NOT re-emitted.
 func TestRustRespCodes_MinorFwNoStatusNotStamped(t *testing.T) {
