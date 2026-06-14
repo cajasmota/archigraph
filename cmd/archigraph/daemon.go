@@ -12,16 +12,20 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/cajasmota/archigraph/internal/agents"
 	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/archigraph/internal/daemon/caps"
+	"github.com/cajasmota/archigraph/internal/daemon/extract"
 	"github.com/cajasmota/archigraph/internal/daemon/mode"
 	"github.com/cajasmota/archigraph/internal/daemon/proto"
 	"github.com/cajasmota/archigraph/internal/daemon/sched"
@@ -191,7 +195,21 @@ func resolveEnvRebuildConcurrency() int {
 // extractor is enabled, prefer ARCHIGRAPH_EXTRACT_GOMAXPROCS / _CONCURRENCY,
 // which throttle the children without touching query latency.
 func resolveDaemonGOMAXPROCS(hostCPU int) int {
+	return resolveDaemonGOMAXPROCSWith(hostCPU, 0)
+}
+
+// resolveDaemonGOMAXPROCSWith is the #5137 runtime-reloadable form of
+// resolveDaemonGOMAXPROCS. fileVal is the cpu.json override (0 = unset). The
+// precedence is env (ARCHIGRAPH_DAEMON_GOMAXPROCS) > cpu.json > "no cap": env is
+// captured at process start and never changes in a running daemon, so the
+// config file is the live-mutable surface the SIGHUP handler reads. As with the
+// env-only form, a requested value at/above the host core count returns 0 ("the
+// Go default is already correct, leave it untouched").
+func resolveDaemonGOMAXPROCSWith(hostCPU, fileVal int) int {
 	n := envPositiveInt2("ARCHIGRAPH_DAEMON_GOMAXPROCS")
+	if n <= 0 && fileVal > 0 {
+		n = fileVal
+	}
 	if n <= 0 {
 		return 0
 	}
@@ -200,6 +218,61 @@ func resolveDaemonGOMAXPROCS(hostCPU int) int {
 		return 0
 	}
 	return n
+}
+
+// applyDaemonGOMAXPROCSFromCaps re-resolves the daemon's in-process GOMAXPROCS
+// from (env + cpu.json) and live-applies it via runtime.GOMAXPROCS when it
+// differs from the current setting. Returns (newValue, previousValue, changed).
+// runtime.GOMAXPROCS(n) is documented as safe to call from a running program,
+// so this is the #5137 no-restart live re-apply. A resolved value of 0 means
+// "no cap" — we restore the Go default (host core count) so lowering then
+// clearing the cap in cpu.json restores full parallelism without a restart.
+func applyDaemonGOMAXPROCSFromCaps(store *caps.Store, hostCPU int) (int, int, bool) {
+	fileVal := 0
+	if store != nil {
+		if cfg, err := store.Load(); err == nil {
+			fileVal = cfg.DaemonGOMAXPROCSValue()
+		}
+	}
+	target := resolveDaemonGOMAXPROCSWith(hostCPU, fileVal)
+	if target <= 0 {
+		// No cap requested — ensure we are at the Go default (host cores).
+		target = hostCPU
+	}
+	if target < 1 {
+		target = 1
+	}
+	cur := runtime.GOMAXPROCS(0) // query without changing
+	if cur == target {
+		return target, cur, false
+	}
+	prev := runtime.GOMAXPROCS(target)
+	return target, prev, true
+}
+
+// installCapReloadHandler registers a SIGHUP handler that re-reads cpu.json and
+// live-applies the daemon's in-process GOMAXPROCS (#5137). The per-subprocess
+// extract caps need no signal — the coordinator re-reads cpu.json on each
+// reindex via the installed extract caps Store — but the daemon's OWN GOMAXPROCS
+// is applied once at process start, so a signal (or restart) is required to
+// change it live. SIGHUP is the conventional "reload config" signal.
+//
+// The handler runs for the life of the process; the registered channel is never
+// closed (daemon teardown is process exit), matching the daemon's other
+// long-lived goroutines.
+func installCapReloadHandler(store *caps.Store, logf interface{ Printf(string, ...any) }) {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGHUP)
+	go func() {
+		for range ch {
+			n, prev, changed := applyDaemonGOMAXPROCSFromCaps(store, runtime.NumCPU())
+			if changed {
+				logf.Printf("cpu-tune: SIGHUP reload — daemon GOMAXPROCS=%d applied (was %d, host=%d)", n, prev, runtime.NumCPU())
+			} else {
+				logf.Printf("cpu-tune: SIGHUP reload — daemon GOMAXPROCS unchanged (=%d, host=%d)", n, runtime.NumCPU())
+			}
+		}
+	}()
 }
 
 // envPositiveInt2 reads a strictly-positive integer from the named env var,
@@ -314,6 +387,17 @@ func runDaemon(argv []string) error {
 	if err := daemon.EnsureLayout(layout); err != nil {
 		return fmt.Errorf("ensure layout: %w", err)
 	}
+
+	// #5137: install the runtime-reloadable CPU/concurrency cap store and a
+	// SIGHUP handler. cpu.json under the daemon root is re-read cheaply (mtime
+	// cached) on the reindex hot path by the extract coordinator (so editing it
+	// changes the per-subprocess extract caps on the NEXT reindex with no
+	// restart), and SIGHUP triggers a LIVE re-apply of the daemon's own
+	// in-process GOMAXPROCS via runtime.GOMAXPROCS — which is safe to call at
+	// runtime. Precedence (per knob): env var > cpu.json > built-in default.
+	capStore := caps.NewStore(caps.DefaultPath(layout.Root))
+	extract.SetRuntimeCaps(capStore)
+	installCapReloadHandler(capStore, gcLog)
 
 	// #1626: one-time sweep to relocate any pre-existing in-repo
 	// `.archigraph/` graph artifacts into the external store, so groups

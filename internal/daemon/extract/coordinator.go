@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/cajasmota/archigraph/internal/classifier"
+	"github.com/cajasmota/archigraph/internal/daemon/caps"
 	"github.com/cajasmota/archigraph/internal/engine"
 	bazelextract "github.com/cajasmota/archigraph/internal/extractors/bazel"
 	configextract "github.com/cajasmota/archigraph/internal/extractors/config"
@@ -71,6 +72,41 @@ type CoordinatorConfig struct {
 	Interactive bool
 }
 
+// runtimeCaps is the process-wide runtime-reloadable cap store (#5137). The
+// daemon installs a real *caps.Store at startup (NewStore(layout.Root/cpu.json));
+// when nil — non-daemon callers, plain `archigraph index` subprocesses, tests —
+// the config-file tier is simply skipped and resolution falls through to
+// env → default exactly as before #5137. Guarded by runtimeCapsMu so the
+// SIGHUP handler and the scheduler worker pool can touch it concurrently.
+var (
+	runtimeCapsMu sync.RWMutex
+	runtimeCaps   *caps.Store
+)
+
+// SetRuntimeCaps installs (or clears, with nil) the runtime cap store. Called
+// once by the daemon at startup. Safe for concurrent use.
+func SetRuntimeCaps(s *caps.Store) {
+	runtimeCapsMu.Lock()
+	runtimeCaps = s
+	runtimeCapsMu.Unlock()
+}
+
+// loadRuntimeCaps does a cheap (mtime-cached) re-read of cpu.json. Returns the
+// zero Config when no store is installed or the file is absent/unreadable, so a
+// missing file is indistinguishable from "no overrides". Parse errors are
+// swallowed here (the daemon's SIGHUP handler logs them); a bad file must never
+// change the effective cap from its env/default value.
+func loadRuntimeCaps() caps.Config {
+	runtimeCapsMu.RLock()
+	s := runtimeCaps
+	runtimeCapsMu.RUnlock()
+	if s == nil {
+		return caps.Config{}
+	}
+	cfg, _ := s.Load()
+	return cfg
+}
+
 func (c CoordinatorConfig) concurrency() int {
 	if c.Concurrency > 0 {
 		return c.Concurrency
@@ -82,7 +118,14 @@ func (c CoordinatorConfig) concurrency() int {
 	// continuous full-reindex fan-out (#3648). It applies to BOTH paths — an
 	// operator-set ceiling on contended hosts is honored even for explicit
 	// rebuilds.
+	//
+	// #5137: env wins over the runtime-reloadable cpu.json, which wins over the
+	// auto-tuned default. Editing cpu.json takes effect on the NEXT reindex with
+	// no daemon restart.
 	if n := envPositiveInt("ARCHIGRAPH_EXTRACT_CONCURRENCY"); n > 0 {
+		return n
+	}
+	if n := loadRuntimeCaps().ExtractConcurrencyValue(); n > 0 {
 		return n
 	}
 	// #5135: explicit foreground rebuilds fan out wider (the user is waiting
@@ -125,6 +168,10 @@ func extractGOMAXPROCS() int {
 	if n := envPositiveInt("ARCHIGRAPH_EXTRACT_GOMAXPROCS"); n > 0 {
 		return n
 	}
+	// #5137: runtime-reloadable cpu.json override (env > file > default).
+	if n := loadRuntimeCaps().ExtractGOMAXPROCSValue(); n > 0 {
+		return n
+	}
 	return 2
 }
 
@@ -137,6 +184,10 @@ func extractGOMAXPROCS() int {
 //	Default: host core count (runtime.NumCPU()), i.e. effectively uncapped.
 func rebuildGOMAXPROCS() int {
 	if n := envPositiveInt("ARCHIGRAPH_REBUILD_GOMAXPROCS"); n > 0 {
+		return n
+	}
+	// #5137: runtime-reloadable cpu.json override (env > file > default).
+	if n := loadRuntimeCaps().RebuildGOMAXPROCSValue(); n > 0 {
 		return n
 	}
 	n := runtime.NumCPU()

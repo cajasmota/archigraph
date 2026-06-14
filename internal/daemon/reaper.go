@@ -32,7 +32,11 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"syscall"
 	"time"
+
+	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
+	"github.com/cajasmota/archigraph/internal/process"
 )
 
 // TierForgetter is the narrow slice of tier.Manager the reaper needs: drop all
@@ -66,6 +70,17 @@ type ReaperConfig struct {
 	// poller, fsnotify subscription). Invoked after the store is removed.
 	Untrack func(repoPath string)
 
+	// WatchRegistry, when non-nil, is the daemon-owned `archigraph watch` PID
+	// registry (#5142). On every sweep the reaper reconciles it: entries whose
+	// process is dead are dropped, and live-but-orphaned watchers (owned by a
+	// previous daemon generation) are SIGTERM'd and dropped. nil disables
+	// watcher reaping (e.g. modes without standalone watchers).
+	WatchRegistry *watchreg.Registry
+
+	// LiveDaemonPID returns the PID of the currently-live daemon, used to detect
+	// orphaned watchers. nil → os.Getpid (the running daemon owns the sweep).
+	LiveDaemonPID func() int
+
 	// Interval between sweeps. Default (zero value): 5 minutes.
 	Interval time.Duration
 
@@ -83,6 +98,9 @@ type ReapResult struct {
 	SlotsForgotten int
 	// FreedBytes is the total bytes reclaimed from deleted store dirs.
 	FreedBytes int64
+	// WatchersReaped is the number of stale/orphaned `archigraph watch` PID
+	// registry entries reaped this sweep (#5142).
+	WatchersReaped int
 }
 
 // Reaper periodically GCs stores for repos that no longer exist on disk.
@@ -132,6 +150,9 @@ func (r *Reaper) Start(stopCh <-chan struct{}) {
 // Safe to call directly from tests.
 func (r *Reaper) Sweep() ReapResult {
 	var res ReapResult
+	// #5142: reap stale/orphaned `archigraph watch` PIDs. Independent of the
+	// vanished-repo GC below, so it runs even in configs without TrackedRepos.
+	res.WatchersReaped = r.sweepWatchers()
 	if r.cfg.TrackedRepos == nil {
 		return res
 	}
@@ -177,6 +198,56 @@ func (r *Reaper) Sweep() ReapResult {
 			"freed_bytes", res.FreedBytes)
 	}
 	return res
+}
+
+// sweepWatchers reconciles the daemon-owned `archigraph watch` PID registry
+// (#5142): it drops entries whose process is dead and SIGTERMs + drops
+// live-but-orphaned watchers (owned by a previous daemon generation). Returns
+// the number of entries reaped. A nil WatchRegistry disables the sweep.
+//
+// Liveness uses the same signal-0 probe as the daemon pidfile; the kill is a
+// SIGTERM (graceful — the watcher's signal handler exits cleanly). Both are
+// injected as functions only in tests; production uses the real syscalls.
+func (r *Reaper) sweepWatchers() int {
+	if r.cfg.WatchRegistry == nil {
+		return 0
+	}
+	liveDaemonPID := r.cfg.LiveDaemonPID
+	if liveDaemonPID == nil {
+		liveDaemonPID = os.Getpid
+	}
+	res, err := r.cfg.WatchRegistry.Sweep(watchreg.SweepDeps{
+		Alive:         pidAliveProbe,
+		Kill:          sigtermPID,
+		LiveDaemonPID: liveDaemonPID,
+	})
+	if err != nil {
+		r.logger.Warn("reaper: watcher PID registry sweep failed (non-fatal)", "err", err)
+		return 0
+	}
+	if res.Reaped() > 0 {
+		r.logger.Info("reaper: reaped stale archigraph-watch PIDs",
+			"dead", res.Dead, "orphaned", res.Orphaned, "kill_errors", len(res.KillErrors))
+	}
+	return res.Reaped()
+}
+
+// pidAliveProbe reports whether pid names a live process (signal-0 existence
+// probe; portable on darwin/linux).
+func pidAliveProbe(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	return p.Signal(syscall.Signal(0)) == nil
+}
+
+// sigtermPID sends SIGTERM to pid via the process package's portable Kill.
+func sigtermPID(pid int) error {
+	return process.Kill(pid)
 }
 
 // removeStore deletes storeDir and returns the bytes it freed. A non-existent

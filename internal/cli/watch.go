@@ -14,6 +14,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon"
 	"github.com/cajasmota/archigraph/internal/daemon/client"
 	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
 	"github.com/cajasmota/archigraph/internal/registry"
 )
 
@@ -127,6 +128,25 @@ func runWatch(repo, group string, interval time.Duration) error {
 	defer tick.Stop()
 	fmt.Fprintf(os.Stderr, "archigraph watch: %s (every %s)\n", repo, interval)
 
+	// #5142: register this standalone watcher in the daemon-owned PID registry
+	// so the daemon can reap us if we are ever orphaned (our owning daemon dies
+	// or restarts onto a new PID). The OwnerDaemonPID stamp lets the daemon's
+	// sweep distinguish a watcher it still owns from a leftover from a previous
+	// daemon generation. Best-effort: a registry write failure must never stop
+	// the watcher from doing its job, and the #5141 self-reap is the fallback.
+	if reg := watcherRegistry(); reg != nil {
+		entry := watchreg.Entry{
+			PID:            os.Getpid(),
+			Repo:           absRepoForWatch(repo),
+			OwnerDaemonPID: liveDaemonPID(),
+		}
+		if err := reg.Register(entry); err != nil {
+			fmt.Fprintf(os.Stderr, "archigraph watch: pid registry register failed (non-fatal): %v\n", err)
+		} else {
+			defer func() { _ = reg.Deregister(entry.PID) }()
+		}
+	}
+
 	// graphMtimes tracks the last-seen mtime of every registered repo's
 	// graph.json across the groups we care about. When any value
 	// changes between ticks, we re-run the link passes for the affected
@@ -191,6 +211,37 @@ func runWatch(repo, group string, interval time.Duration) error {
 			}
 		}
 	}
+}
+
+// watcherRegistry returns the daemon-owned watcher PID registry (#5142), or nil
+// when the daemon layout cannot be resolved (in which case the watcher simply
+// does not register — the #5141 self-reap remains the fallback).
+func watcherRegistry() *watchreg.Registry {
+	layout, err := daemon.DefaultLayout()
+	if err != nil || layout.Root == "" {
+		return nil
+	}
+	return watchreg.New(watchreg.DefaultPath(layout.Root))
+}
+
+// absRepoForWatch resolves repo to an absolute path for the registry entry,
+// falling back to the raw value on error (diagnostic field only).
+func absRepoForWatch(repo string) string {
+	if abs, err := filepath.Abs(repo); err == nil {
+		return abs
+	}
+	return repo
+}
+
+// liveDaemonPID returns the PID recorded in the daemon pidfile, or 0 when it is
+// missing/unreadable. Stamped into the watcher's registry entry as its owner so
+// the daemon sweep can detect orphans from a previous daemon generation.
+func liveDaemonPID() int {
+	layout, err := daemon.DefaultLayout()
+	if err != nil {
+		return 0
+	}
+	return daemon.ReadPIDFile(layout.PIDPath)
 }
 
 // groupsForRepo returns the names of the groups whose config lists

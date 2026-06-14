@@ -68,10 +68,39 @@ per file batch. When it is off (the default), the daemon extracts in-process and
 | `ARCHIGRAPH_INCREMENTAL_REINDEX` | `0` (off) | background | `1` switches single-file edits to a diff-aware incremental reindex (only changed files are re-extracted) instead of a full repo reindex on every settle. Recommended on high-churn repos to cut continuous reindex thrash. |
 | `ARCHIGRAPH_REBUILD_CONCURRENCY` | auto (memory-tuned, floor 2, cap 16) | explicit | Number of **repos** indexed in parallel during a group rebuild (distinct from subprocess fan-out *within* a repo). Auto-tuned from system RAM; override to bound memory on constrained hosts. (Legacy alias: `ARCHIGRAPH_MAX_CONCURRENT_GROUPS`.) |
 
-All of the above are **read at daemon start** and require a restart to apply —
-they cannot yet be changed live. Runtime-without-restart reload is tracked
-separately; until then, restart the daemon (`archigraph restart`) after changing
-any value.
+### Runtime reload without restart (#5137)
+
+The four CPU/concurrency caps —
+`ARCHIGRAPH_EXTRACT_GOMAXPROCS`, `ARCHIGRAPH_REBUILD_GOMAXPROCS`,
+`ARCHIGRAPH_EXTRACT_CONCURRENCY`, and `ARCHIGRAPH_DAEMON_GOMAXPROCS` — can be
+changed **without restarting the daemon** via a JSON config file at
+`~/.archigraph/cpu.json` (under `$ARCHIGRAPH_DAEMON_ROOT` when set):
+
+```json
+{
+  "extract_gomaxprocs": 1,
+  "rebuild_gomaxprocs": 8,
+  "extract_concurrency": 2,
+  "daemon_gomaxprocs": 4
+}
+```
+
+Precedence per knob is **env var > `cpu.json` > built-in default** (an explicit
+`--flag`/config field still wins over all three). The env vars themselves are
+still read once at process start and cannot change in a running daemon —
+`cpu.json` is the live-mutable surface.
+
+- The three **per-subprocess** caps (`extract_gomaxprocs`,
+  `rebuild_gomaxprocs`, `extract_concurrency`) are re-read cheaply (mtime-cached)
+  at the start of **every reindex**: edit `cpu.json` and the new value applies on
+  the next reindex, no restart.
+- The **in-process** `daemon_gomaxprocs` is applied live on `SIGHUP`
+  (`kill -HUP <daemon-pid>`): the daemon re-reads `cpu.json` and calls
+  `runtime.GOMAXPROCS` immediately. Clearing the cap restores the host default.
+
+The remaining knobs in this doc (`daemon_rss_budget_mb`, `indexer_parallelism`,
+`ARCHIGRAPH_REBUILD_CONCURRENCY`, the `ARCHIGRAPH_MAX_*` budgets) are still
+**read at daemon start** and require `archigraph restart` to apply.
 
 ## API endpoints
 

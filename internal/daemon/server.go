@@ -22,6 +22,7 @@ import (
 	"github.com/cajasmota/archigraph/internal/daemon/sched"
 	"github.com/cajasmota/archigraph/internal/daemon/transport"
 	"github.com/cajasmota/archigraph/internal/daemon/watch"
+	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
 	"github.com/cajasmota/archigraph/internal/daemon/worktree"
 	"github.com/cajasmota/archigraph/internal/extractor"
 	"github.com/cajasmota/archigraph/internal/gitmeta"
@@ -458,7 +459,10 @@ func Run(ctx context.Context, cfg Config) error {
 				Untrack: func(repoPath string) {
 					watcher.RemoveRepo(repoPath)
 				},
-				Logger: logger,
+				// #5142: also reap stale/orphaned `archigraph watch` PIDs that
+				// registered in the daemon-owned registry under the daemon root.
+				WatchRegistry: watchreg.New(watchreg.DefaultPath(cfg.Layout.Root)),
+				Logger:        logger,
 			})
 			reaperStop := make(chan struct{})
 			reaper.Start(reaperStop)
