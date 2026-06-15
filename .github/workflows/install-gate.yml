@@ -41,8 +41,8 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      - name: Build archigraph binary
-        run: go build -o /tmp/archigraph-test ./cmd/archigraph
+      - name: Build grafel binary
+        run: go build -o /tmp/grafel-test ./cmd/grafel
 
       - name: Prepare clean home directory
         run: |
@@ -51,11 +51,11 @@ jobs:
           mkdir -p "$INSTALL_TEST_HOME/.claude"
           echo '{}' > "$INSTALL_TEST_HOME/.claude/.claude.json"
 
-      - name: Run archigraph install (copy mode)
+      - name: Run grafel install (copy mode)
         env:
           HOME: ${{ env.INSTALL_TEST_HOME }}
         run: |
-          /tmp/archigraph-test install \
+          /tmp/grafel-test install \
             --copy \
             --skills-source-dir ./skills \
             --claude-config-dirs "$INSTALL_TEST_HOME/.claude/.claude.json" \
@@ -63,16 +63,16 @@ jobs:
           # Note: daemon restart is expected to fail in CI (no launchd/systemd).
           # The install succeeds through step 5 even if step 4 warns.
 
-      - name: Run archigraph doctor and verify zero exit
+      - name: Run grafel doctor and verify zero exit
         env:
           HOME: ${{ env.INSTALL_TEST_HOME }}
-          ARCHIGRAPH_SKIP_QUICK_DOCTOR: "1"
+          GRAFEL_SKIP_QUICK_DOCTOR: "1"
         run: |
-          /tmp/archigraph-test doctor \
+          /tmp/grafel-test doctor \
             --claude-config-dirs "$INSTALL_TEST_HOME/.claude/.claude.json" \
             --json > /tmp/doctor-report.json || true
           # Verify install.json was written.
-          test -f "$INSTALL_TEST_HOME/.archigraph/install.json" \
+          test -f "$INSTALL_TEST_HOME/.grafel/install.json" \
             && echo "install.json present: OK" \
             || (echo "install.json MISSING" && exit 1)
           # Verify skills were copied.
@@ -82,11 +82,11 @@ jobs:
           # Print the doctor report for visibility.
           cat /tmp/doctor-report.json || true
 
-      - name: Run archigraph uninstall
+      - name: Run grafel uninstall
         env:
           HOME: ${{ env.INSTALL_TEST_HOME }}
         run: |
-          /tmp/archigraph-test uninstall \
+          /tmp/grafel-test uninstall \
             --yes \
             --claude-config-dirs "$INSTALL_TEST_HOME/.claude/.claude.json" || true
 
@@ -94,7 +94,7 @@ jobs:
         env:
           HOME: ${{ env.INSTALL_TEST_HOME }}
         run: |
-          if [ -f "$INSTALL_TEST_HOME/.archigraph/install.json" ]; then
+          if [ -f "$INSTALL_TEST_HOME/.grafel/install.json" ]; then
             echo "install.json still present after uninstall — FAIL"
             exit 1
           fi

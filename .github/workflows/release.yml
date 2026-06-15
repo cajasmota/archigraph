@@ -8,7 +8,52 @@ permissions:
   contents: write
 
 jobs:
+  # Build the dashboard SPA exactly ONCE and publish it as an artifact. Every
+  # OS/arch leg of the build matrix below downloads this same bundle into
+  # internal/dashboard/dist/ before `go build`, so the //go:embed picks up the
+  # real UI instead of the checked-in PLACEHOLDER.md. Without this job the Go
+  # binary embeds a BLANK dashboard on every release. Fixes #4457.
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: webui-v2/package-lock.json
+
+      - name: Build dashboard SPA
+        run: |
+          cd webui-v2
+          npm ci
+          npx vite build
+
+      - name: Stage bundle into embed dir
+        run: |
+          rm -rf internal/dashboard/dist
+          cp -r webui-v2/dist internal/dashboard/dist
+
+      # Guard (#4468): both webui-v2/dist and the freshly-copied
+      # internal/dashboard/dist exist here, so this catches a failed/empty
+      # build before the bundle is ever fanned out to the matrix legs.
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Verify dashboard embed is current
+        run: go run ./cmd/verify-dashboard -root .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dist
+          path: internal/dashboard/dist
+          if-no-files-found: error
+          retention-days: 7
+
   build:
+    needs: dashboard
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +78,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Restore the dashboard SPA built once by the `dashboard` job into the
+      # embed dir so this OS/arch binary ships the real UI, not the blank
+      # PLACEHOLDER.md placeholder. Fixes #4457.
+      - name: Restore dashboard bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-dist
+          path: internal/dashboard/dist
 
       # MinGW is required on Windows for CGO (tree-sitter bindings). Static
       # linking (-extldflags=-static) ensures the released binary has no
@@ -69,6 +123,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.goarch }}-go-
 
+      # Guard (#4468): fail loudly if the restored embed is missing or is just
+      # the placeholder, so a broken `dashboard` artifact never ships as a
+      # blank UI. webui-v2/dist is absent on the matrix legs, so verify-dashboard
+      # passes with a notice; this explicit check is what catches a bad restore.
+      - name: Verify dashboard bundle present
+        shell: bash
+        run: |
+          if [ ! -f internal/dashboard/dist/index.html ]; then
+            echo "FAIL: internal/dashboard/dist/index.html missing — dashboard artifact restore failed (would ship a blank UI). See #4457."
+            ls -la internal/dashboard/dist || true
+            exit 1
+          fi
+          go run ./cmd/verify-dashboard -root .
+          echo "OK: dashboard bundle restored"
+
       - name: Build
         env:
           CGO_ENABLED: '1'
@@ -76,8 +145,8 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           mkdir -p dist
-          BIN=archigraph
-          if [ "${{ matrix.goos }}" = "windows" ]; then BIN=archigraph.exe; fi
+          BIN=grafel
+          if [ "${{ matrix.goos }}" = "windows" ]; then BIN=grafel.exe; fi
           BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           SHORT_SHA=${GITHUB_SHA::7}
           VERSION=${GITHUB_REF_NAME}
@@ -88,8 +157,8 @@ jobs:
             EXTRA_LDFLAGS="-extldflags=-static"
           fi
           go build -trimpath \
-            -ldflags "-s -w ${EXTRA_LDFLAGS} -X github.com/cajasmota/archigraph/internal/version.Version=${VERSION} -X github.com/cajasmota/archigraph/internal/version.Commit=${SHORT_SHA} -X github.com/cajasmota/archigraph/internal/version.Date=${BUILD_DATE}" \
-            -o dist/${BIN} ./cmd/archigraph
+            -ldflags "-s -w ${EXTRA_LDFLAGS} -X github.com/cajasmota/grafel/internal/version.Version=${VERSION} -X github.com/cajasmota/grafel/internal/version.Commit=${SHORT_SHA} -X github.com/cajasmota/grafel/internal/version.Date=${BUILD_DATE}" \
+            -o dist/${BIN} ./cmd/grafel
         shell: bash
 
       - name: Package archive
@@ -99,20 +168,20 @@ jobs:
           if [ "${ARCH_LABEL}" = "amd64" ]; then ARCH_LABEL=x86_64; fi
           OS_LABEL=${{ matrix.goos }}
           if [ "${OS_LABEL}" = "darwin" ]; then OS_LABEL=macos; fi
-          NAME="archigraph_${VERSION}_${OS_LABEL}_${ARCH_LABEL}"
+          NAME="grafel_${VERSION}_${OS_LABEL}_${ARCH_LABEL}"
           mkdir -p out
           if [ "${{ matrix.goos }}" = "windows" ]; then
             cp LICENSE README.md dist/
-            (cd dist && 7z a -tzip "../out/${NAME}.zip" archigraph.exe LICENSE README.md)
+            (cd dist && 7z a -tzip "../out/${NAME}.zip" grafel.exe LICENSE README.md)
           else
             cp LICENSE README.md dist/
-            (cd dist && tar czf "../out/${NAME}.tar.gz" archigraph LICENSE README.md)
+            (cd dist && tar czf "../out/${NAME}.tar.gz" grafel LICENSE README.md)
           fi
         shell: bash
 
       - uses: actions/upload-artifact@v4
         with:
-          name: archigraph-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: grafel-${{ matrix.goos }}-${{ matrix.goarch }}
           path: out/*
           if-no-files-found: error
           retention-days: 7
@@ -121,9 +190,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # Pull ONLY the per-OS/arch binary archives — exclude the dashboard-dist
+      # bundle artifact (consumed by the build job) so it is not checksummed or
+      # uploaded as a release asset.
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: grafel-*
           merge-multiple: true
 
       - name: Generate checksums

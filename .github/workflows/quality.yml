@@ -17,12 +17,12 @@ jobs:
           go-version: '1.22'
           cache: true
       - run: go mod download
-      - name: Build archigraph
-        run: go build -o build/archigraph ./cmd/archigraph
+      - name: Build grafel
+        run: go build -o build/grafel ./cmd/grafel
       - name: Run extraction-quality fixtures
         run: scripts/verify2/run-quality.sh
         env:
-          ARCHIGRAPH_BIN: ${{ github.workspace }}/build/archigraph
+          GRAFEL_BIN: ${{ github.workspace }}/build/grafel
           QUALITY_OUT_DIR: ${{ github.workspace }}/reports/quality
       - name: Upload quality reports
         if: always()

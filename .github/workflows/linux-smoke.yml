@@ -18,16 +18,16 @@ jobs:
         with:
           go-version: '1.26'
 
-      - name: Build archigraph
-        run: go build -o archigraph ./cmd/archigraph
+      - name: Build grafel
+        run: go build -o grafel ./cmd/grafel
         timeout-minutes: 2
 
       - name: Initialize golden fixture as git repo
         run: |
           cd ./internal/quality/golden/go-chi-mini
           git init
-          git config user.email "test@archigraph.local"
-          git config user.name "Archigraph Test"
+          git config user.email "test@grafel.local"
+          git config user.name "Grafel Test"
           git add -A
           git commit -m "Golden fixture for smoke test"
 
@@ -39,13 +39,13 @@ jobs:
 
           # Both env vars must point to the same dir so the daemon and all CLI
           # commands use the same isolated registry/socket/log. Without
-          # ARCHIGRAPH_HOME the registry writes to ~/.archigraph while the
+          # GRAFEL_HOME the registry writes to ~/.grafel while the
           # daemon socket lives in $SMOKE_ROOT — two separate namespaces that
           # can never see each other's state.
-          export ARCHIGRAPH_DAEMON_ROOT="$SMOKE_ROOT"
-          export ARCHIGRAPH_HOME="$SMOKE_ROOT"
-          echo "ARCHIGRAPH_DAEMON_ROOT=$SMOKE_ROOT" >> $GITHUB_ENV
-          echo "ARCHIGRAPH_HOME=$SMOKE_ROOT" >> $GITHUB_ENV
+          export GRAFEL_DAEMON_ROOT="$SMOKE_ROOT"
+          export GRAFEL_HOME="$SMOKE_ROOT"
+          echo "GRAFEL_DAEMON_ROOT=$SMOKE_ROOT" >> $GITHUB_ENV
+          echo "GRAFEL_HOME=$SMOKE_ROOT" >> $GITHUB_ENV
 
           # Register the fixture as a group BEFORE starting the daemon so the
           # daemon's startup repo-scan picks it up. Use wizard --non-interactive
@@ -54,7 +54,7 @@ jobs:
           # --install=false also skips the daemon service registration step which
           # would fail in CI without a user-session systemd/launchd.
           FIXTURE_SRC=$(realpath ./internal/quality/golden/go-chi-mini/src)
-          ./archigraph wizard \
+          ./grafel wizard \
             --non-interactive \
             --group=go-chi-mini \
             "--repos=$FIXTURE_SRC" \
@@ -65,13 +65,13 @@ jobs:
       - name: Start daemon
         run: |
           set -x
-          export ARCHIGRAPH_DAEMON_ROOT=${{ env.ARCHIGRAPH_DAEMON_ROOT }}
-          export ARCHIGRAPH_HOME=${{ env.ARCHIGRAPH_HOME }}
+          export GRAFEL_DAEMON_ROOT=${{ env.GRAFEL_DAEMON_ROOT }}
+          export GRAFEL_HOME=${{ env.GRAFEL_HOME }}
 
           # Run without a timeout wrapper: the daemon must outlive the 120s
           # rebuild window below. The job-level timeout-minutes: 5 is the hard
           # ceiling that keeps CI from hanging forever.
-          ./archigraph daemon &
+          ./grafel daemon &
           DAEMON_PID=$!
           echo "DAEMON_PID=$DAEMON_PID" >> $GITHUB_ENV
 
@@ -94,21 +94,21 @@ jobs:
 
       - name: Trigger rebuild and verify indexed
         run: |
-          export ARCHIGRAPH_DAEMON_ROOT=${{ env.ARCHIGRAPH_DAEMON_ROOT }}
-          export ARCHIGRAPH_HOME=${{ env.ARCHIGRAPH_HOME }}
+          export GRAFEL_DAEMON_ROOT=${{ env.GRAFEL_DAEMON_ROOT }}
+          export GRAFEL_HOME=${{ env.GRAFEL_HOME }}
 
           # Explicit synchronous rebuild: sends the Rebuild RPC to the daemon
           # and blocks until indexing completes. This exercises the full
           # daemon -> extractor -> graph.fb path in one step, and replaces
           # the previous passive-wait approach that polled for a JSON field
-          # ("indexed":true) that archigraph status never emits.
+          # ("indexed":true) that grafel status never emits.
           # --plain disables ANSI control codes for clean CI log output.
-          timeout 120 ./archigraph rebuild go-chi-mini --plain
+          timeout 120 ./grafel rebuild go-chi-mini --plain
 
           # Verify the daemon reports the repo as indexed in its status output.
           # status prints: "  <slug>  N files  M entities  K rels  indexed Xs ago"
           # We confirm by checking "indexed" appears and is NOT "(never)".
-          output=$(./archigraph status 2>&1 || true)
+          output=$(./grafel status 2>&1 || true)
           echo "$output"
 
           if echo "$output" | grep -q "indexed" && ! echo "$output" | grep -qF "(never)"; then
