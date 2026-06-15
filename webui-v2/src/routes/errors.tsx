@@ -93,17 +93,17 @@ const ERR_VARIANTS: Record<ErrorVariant, ErrorVariantSpec> = {
     chrome: "full",
     severity: "danger",
     code: "Daemon unreachable",
-    title: "archigraph can't reach the daemon.",
+    title: "grafel can't reach the daemon.",
     sub: "Your repos are safe — only the local indexing service stopped responding. The dashboard will reconnect automatically once it's back.",
     primary: { label: "Try reconnecting", action: "retry", Icon: RefreshCw },
     secondary: { label: "View daemon logs", action: "logs", Icon: ExternalLink },
     details: [
-      { k: "Socket", v: "~/.archigraph/sockets/daemon.sock" },
+      { k: "Socket", v: "~/.grafel/sockets/daemon.sock" },
       { k: "Last contact", v: "—" },
       { k: "Daemon PID", v: "— (not responding)" },
       {
         k: "How to recover",
-        v: "Open a terminal and run `archigraph restart`, or check the logs for crashes.",
+        v: "Open a terminal and run `grafel restart`, or check the logs for crashes.",
       },
     ],
   },
@@ -112,7 +112,7 @@ const ERR_VARIANTS: Record<ErrorVariant, ErrorVariantSpec> = {
     severity: "warn",
     code: "Indexer failed",
     title: "The last index of this repo errored out.",
-    sub: "archigraph rolled back to the previous good graph. Re-run the indexer once the underlying issue is fixed; the rest of the group is unaffected.",
+    sub: "grafel rolled back to the previous good graph. Re-run the indexer once the underlying issue is fixed; the rest of the group is unaffected.",
     primary: { label: "Rebuild repo", action: "rebuild", Icon: RefreshCw },
     secondary: { label: "View error log", action: "logs", Icon: ExternalLink },
     details: [
@@ -126,7 +126,7 @@ const ERR_VARIANTS: Record<ErrorVariant, ErrorVariantSpec> = {
     chrome: "full",
     severity: "info",
     code: "Upgrading",
-    title: "Updating archigraph in the background…",
+    title: "Updating grafel in the background…",
     sub: "The daemon is restarting on a new version. Indexing is paused; surfaces are read-only until it's back. Usually under a minute.",
     primary: { label: "View release notes", action: "notes", Icon: ExternalLink },
     secondary: null,
@@ -393,12 +393,12 @@ function resolveDetails(
   }
   if (variant === "daemonDown") {
     return [
-      { k: "Socket", v: "~/.archigraph/sockets/daemon.sock" },
+      { k: "Socket", v: "~/.grafel/sockets/daemon.sock" },
       { k: "Last contact", v: ctx.lastContact ?? "—" },
       { k: "Daemon PID", v: "— (not responding)" },
       {
         k: "How to recover",
-        v: "Open a terminal and run `archigraph restart`, or check the logs for crashes.",
+        v: "Open a terminal and run `grafel restart`, or check the logs for crashes.",
       },
     ];
   }
@@ -444,7 +444,7 @@ function MinimalChrome({ children }: { children: React.ReactNode }) {
         <Link
           to="/"
           className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)] rounded"
-          aria-label="archigraph — back to all groups"
+          aria-label="grafel — back to all groups"
         >
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <defs>
@@ -463,7 +463,7 @@ function MinimalChrome({ children }: { children: React.ReactNode }) {
               fill="none"
             />
           </svg>
-          <span className="font-mono text-md font-semibold text-text">archigraph</span>
+          <span className="font-mono text-md font-semibold text-text">grafel</span>
         </Link>
       </header>
       <main className="flex-1 min-h-0 ag-scroll">{children}</main>

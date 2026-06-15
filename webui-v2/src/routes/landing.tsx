@@ -47,7 +47,7 @@ function relativeTime(ms: number | null): string {
 /* ---------- info tips ---------- */
 
 const ENTITIES_TIP =
-  "Every function, class, hook, component, endpoint and module archigraph extracted — the nodes of the graph.";
+  "Every function, class, hook, component, endpoint and module Grafel extracted — the nodes of the graph.";
 const REPOS_TIP =
   "Top-level git repositories in this group. Monorepos count as one; open the group to see sub-packages.";
 const FIDELITY_TIP =
@@ -196,7 +196,7 @@ function AddGroupCard({ onClick }: { onClick: () => void }) {
           <Plus size={22} />
         </span>
         <span className="text-md font-medium text-text-2">Add a group</span>
-        <span className="text-sm text-text-4">Point archigraph at one or more repos</span>
+        <span className="text-sm text-text-4">Point Grafel at one or more repos</span>
       </div>
     </button>
   );
@@ -239,7 +239,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <EmptyArt />
       <h1 className="mt-6 text-2xl font-semibold text-text">Index your first group.</h1>
       <p className="mt-2 max-w-md text-md text-text-3">
-        Point archigraph at one or more repositories to build a queryable graph of every function,
+        Point Grafel at one or more repositories to build a queryable graph of every function,
         class, endpoint, and the edges between them.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -256,7 +256,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       </div>
       <button
         type="button"
-        onClick={() => toast.info("Re-scanning ~/.config/archigraph isn't wired yet.")}
+        onClick={() => toast.info("Re-scanning ~/.config/grafel isn't wired yet.")}
         className="mt-5 text-sm text-text-4 hover:text-text-2"
       >
         Already configured via CLI? Re-scan local groups →
@@ -294,7 +294,7 @@ export default function Landing() {
             <div className="py-20 text-center">
               <h1 className="text-xl font-semibold text-text">Couldn't reach the daemon.</h1>
               <p className="mt-2 text-md text-text-3">
-                Make sure archigraph is running, then reload.
+                Make sure Grafel is running, then reload.
               </p>
             </div>
           ) : isLoading ? (
@@ -330,7 +330,7 @@ export default function Landing() {
                 <span>Tip: press</span>
                 <Kbd>⌘</Kbd>
                 <Kbd>K</Kbd>
-                <span>to open the command palette anywhere in archigraph.</span>
+                <span>to open the command palette anywhere in Grafel.</span>
               </footer>
             </>
           )}

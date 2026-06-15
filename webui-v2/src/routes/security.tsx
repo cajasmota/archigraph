@@ -796,9 +796,9 @@ const SECURITY_INSIGHTS: Record<SecurityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_auth_coverage",
+      tool: "grafel_auth_coverage",
       example:
-        "Reviewing a PR that adds GET /admin/users, an agent calls archigraph_auth_coverage to verify the new route picked up an auth guard — and blocks the merge when it finds the endpoint exposed without one and not on the public-by-design allowlist.",
+        "Reviewing a PR that adds GET /admin/users, an agent calls grafel_auth_coverage to verify the new route picked up an auth guard — and blocks the merge when it finds the endpoint exposed without one and not on the public-by-design allowlist.",
     },
   },
   secrets: {
@@ -820,9 +820,9 @@ const SECURITY_INSIGHTS: Record<SecurityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_secrets",
+      tool: "grafel_secrets",
       example:
-        "Scanning a PR diff, an agent calls archigraph_secrets and finds a newly-added AWS key string literal in a config file; it blocks the merge, points at the exact line, and suggests moving it into the existing Vault integration instead.",
+        "Scanning a PR diff, an agent calls grafel_secrets and finds a newly-added AWS key string literal in a config file; it blocks the merge, points at the exact line, and suggests moving it into the existing Vault integration instead.",
     },
   },
   cycles: {
@@ -844,9 +844,9 @@ const SECURITY_INSIGHTS: Record<SecurityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_import_cycles",
+      tool: "grafel_import_cycles",
       example:
-        "After a refactor introduces a new A→B→A loop, an agent calls archigraph_import_cycles to locate the suggested extraction point and proposes moving the shared type into its own module — breaking the cycle with the smallest possible diff.",
+        "After a refactor introduces a new A→B→A loop, an agent calls grafel_import_cycles to locate the suggested extraction point and proposes moving the shared type into its own module — breaking the cycle with the smallest possible diff.",
     },
   },
 };

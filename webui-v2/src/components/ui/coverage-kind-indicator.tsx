@@ -11,7 +11,7 @@ import {
  * CoverageKindIndicator (#5067) — a compact inline chip that sits next to an
  * individual coverage "%" on a diagram surface (file-tree / module / endpoint
  * row, and where cheap a topology node) so the user can always tell WHICH of
- * the three archigraph coverages that specific number is.
+ * the three grafel coverages that specific number is.
  *
  * The full {@link CoverageProvenanceBanner} (#5038) disambiguates a whole
  * surface; this disambiguates one row. Both share {@link

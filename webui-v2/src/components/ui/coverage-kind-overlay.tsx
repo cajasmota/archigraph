@@ -83,7 +83,7 @@ export function CoverageKindOverlayToggle({
         title={
           enabled
             ? "Hide the coverage-kind ring on nodes"
-            : "Tint nodes by which archigraph coverage applies to this group (line / reach / capability)"
+            : "Tint nodes by which grafel coverage applies to this group (line / reach / capability)"
         }
       >
         {enabled ? <Eye size={12} /> : <EyeOff size={12} />}

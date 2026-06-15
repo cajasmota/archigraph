@@ -734,9 +734,9 @@ const DATAFLOW_INSIGHT: InsightValue = {
   storageKey: "dataflow",
   human: <TaintHuman />,
   agent: {
-    tool: "archigraph_data_flows",
+    tool: "grafel_data_flows",
     example:
-      "Reviewing a PR that builds a SQL string from a request param, an agent calls archigraph_data_flows to confirm the param reaches the query sink with no sanitizer in between, then blocks the merge and points at the exact source→sink hop as a SQL-injection finding.",
+      "Reviewing a PR that builds a SQL string from a request param, an agent calls grafel_data_flows to confirm the param reaches the query sink with no sanitizer in between, then blocks the merge and points at the exact source→sink hop as a SQL-injection finding.",
   },
 };
 

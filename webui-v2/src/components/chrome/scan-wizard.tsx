@@ -242,7 +242,7 @@ export function ScanWizard(props: ScanWizardProps) {
           {mode === "create" ? "Index a new group" : <>Add a repo to <span className="font-mono">{groupName}</span></>}
         </DialogTitle>
         <DialogDescription>
-          {step === "pick" && "Point archigraph at a repository folder on this machine."}
+          {step === "pick" && "Point Grafel at a repository folder on this machine."}
           {step === "detect" && "Review what we detected, then start indexing."}
           {step === "index" && "Indexing in progress — you can leave this open."}
         </DialogDescription>

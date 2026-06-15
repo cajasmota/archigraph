@@ -2,12 +2,12 @@ import { useCallback, useState, type ReactNode } from "react";
 import { Bot, Info, UserRound, X } from "lucide-react";
 
 export interface InsightBannerAgent {
-  /** The MCP tool name this data backs, e.g. "archigraph_test_coverage". */
+  /** The MCP tool name this data backs, e.g. "grafel_test_coverage". */
   tool: string;
   /**
    * A concrete, scenario-driven example of how an agent uses this data —
    * not a single bland line. e.g. "Before adding a test, an agent calls
-   * archigraph_test_coverage to find endpoints with no TESTS edge, then …".
+   * grafel_test_coverage to find endpoints with no TESTS edge, then …".
    */
   example: ReactNode;
 }

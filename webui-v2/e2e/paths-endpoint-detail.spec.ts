@@ -4,7 +4,7 @@
  * Tests the restructured Parameters/Response sections, truncation helpers,
  * shape-tree expansion, and Auth section.
  *
- * NOTE: These tests require a running archigraph daemon with the client-fixture-a
+ * NOTE: These tests require a running grafel daemon with the client-fixture-a
  * group indexed. They are designed to be robust against timing but will skip
  * gracefully if no route is selectable (daemon not running in CI).
  */

@@ -120,7 +120,7 @@ export default function PrimitivesShowcase() {
             <TooltipContent>A token-styled Radix tooltip.</TooltipContent>
           </Tooltip>
           <span className="text-md text-text-2">
-            <InfoLabel label="Fidelity" hint="How complete archigraph's map of your code is — the percentage of your code's references it linked to a real target. Higher is better." />
+            <InfoLabel label="Fidelity" hint="How complete grafel's map of your code is — the percentage of your code's references it linked to a real target. Higher is better." />
           </span>
         </Section>
 

@@ -12,7 +12,7 @@
      - groups = module containers: resources sharing a `module` are laid out as
                 children of a React Flow parent (group) node, so a modularized
                 Terraform / CDK stack reads as grouped boxes. This is the key
-                ask — archigraph flattens modules to the resolved resource
+                ask — grafel flattens modules to the resolved resource
                 graph, so grouping by module reconstructs the stack structure.
 
    Layout engine: as of the elkjs epic (#4824/#4826) the default backend is ELK

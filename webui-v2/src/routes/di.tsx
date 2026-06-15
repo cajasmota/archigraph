@@ -552,9 +552,9 @@ const DI_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_neighbors",
+    tool: "grafel_neighbors",
     example:
-      "About to change a method signature on PaymentService, an agent calls archigraph_neighbors to list every controller and service it's injected into, then updates all call sites in one pass instead of discovering broken consumers at runtime.",
+      "About to change a method signature on PaymentService, an agent calls grafel_neighbors to list every controller and service it's injected into, then updates all call sites in one pass instead of discovering broken consumers at runtime.",
   },
 };
 

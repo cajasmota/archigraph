@@ -401,9 +401,9 @@ function ErrorFlowBody({
         </>
       ),
       agent: {
-        tool: "archigraph_find",
+        tool: "grafel_find",
         example:
-          "Before adding a try/catch, an agent calls archigraph_find for SCOPE.ExceptionType nodes (the synthetic exception:<Type> entities) to see which exceptions are thrown but reach the top with no catcher in the graph, then wraps the one that actually escapes uncaught instead of guessing.",
+          "Before adding a try/catch, an agent calls grafel_find for SCOPE.ExceptionType nodes (the synthetic exception:<Type> entities) to see which exceptions are thrown but reach the top with no catcher in the graph, then wraps the one that actually escapes uncaught instead of guessing.",
       },
     }),
     [

@@ -25,7 +25,7 @@ function Wordmark() {
         <circle cx="12" cy="18" r="2.6" fill="var(--accent-strong)" />
         <path d="M7.6 7.6l3 8M16 7.6l-3 8M8 6h8" stroke="var(--accent)" strokeWidth="1.4" fill="none" />
       </svg>
-      <span className="font-mono text-md font-semibold text-text">archigraph</span>
+      <span className="font-mono text-md font-semibold text-text">Grafel</span>
     </div>
   );
 }
@@ -60,15 +60,17 @@ export function LandingTopBar({ version }: LandingTopBarProps) {
 
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" className={iconBtn} title="About archigraph" aria-label="About archigraph">
+            <button type="button" className={iconBtn} title="About Grafel" aria-label="About Grafel">
               <Info size={15} />
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-text">archigraph</span>
+              <span className="font-semibold text-text">Grafel</span>
               <span className="font-mono text-sm text-text-3">{version ?? "—"}</span>
             </div>
+            <p className="mt-1 text-sm text-text-3">Map your codebase, navigate any part.</p>
+            <p className="mt-1 text-xs text-text-4 italic">Where grep gets lost, the Grafel shows the way.</p>
             <dl className="mt-3 space-y-1.5 text-sm">
               <div className="flex items-center justify-between">
                 <dt className="text-text-3">Dashboard</dt>
@@ -76,7 +78,7 @@ export function LandingTopBar({ version }: LandingTopBarProps) {
               </div>
             </dl>
             <a
-              href="https://github.com/cajasmota/archigraph"
+              href="https://github.com/cajasmota/grafel"
               target="_blank"
               rel="noreferrer"
               className="mt-3 inline-flex items-center gap-1.5 text-sm text-accent-strong hover:underline"

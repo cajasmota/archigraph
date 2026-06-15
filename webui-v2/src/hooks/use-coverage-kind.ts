@@ -5,7 +5,7 @@
    #5067 landed the per-ROW coverage-kind indicator on the Quality tab. #5147
    extends that same disambiguation to the diagram NODE surfaces (flow-dag /
    topology / iac). Every one of those surfaces needs to know WHICH of the three
-   archigraph coverages applies to the current group so it can tint its nodes
+   grafel coverages applies to the current group so it can tint its nodes
    accordingly — but they must NOT issue a second coverage fetch.
 
    This hook reads the EXISTING `useQualityCoverage(groupId)` query (#5066). That

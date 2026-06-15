@@ -3,7 +3,7 @@
 
    A non-interactive container that visually clusters the resources of one
    module / construct / stack. This is the key affordance for modularized IaC:
-   archigraph flattens modules to the resolved resource graph, so grouping the
+   grafel flattens modules to the resolved resource graph, so grouping the
    flattened resources back by `module` reconstructs the stack structure as
    labelled boxes. Header shows the short module label + the resource count;
    the full module path is on hover.

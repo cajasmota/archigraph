@@ -350,9 +350,9 @@ const GRAPHQL_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_effects",
+    tool: "grafel_effects",
     example:
-      "Before changing a GraphQL mutation, an agent calls archigraph_effects on the resolver entity to enumerate its db_write / http side effects and confidence, so it knows the blast radius of the field it is about to edit rather than reading the resolver body and guessing.",
+      "Before changing a GraphQL mutation, an agent calls grafel_effects on the resolver entity to enumerate its db_write / http side effects and confidence, so it knows the blast radius of the field it is about to edit rather than reading the resolver body and guessing.",
   },
 };
 

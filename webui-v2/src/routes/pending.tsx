@@ -6,7 +6,7 @@
    2. Tab bar (44px): tabs left · filter + groupBy right
    3. Split pane: left list (440px) + right detail (flex-1)
 
-   The AppShell TopBar handles the outer breadcrumb (archigraph › group › Pending).
+   The AppShell TopBar handles the outer breadcrumb (grafel › group › Pending).
    ============================================================ */
 
 import { useState, useMemo, useRef, useEffect } from "react";
@@ -119,10 +119,10 @@ function buildPrompt(
 
 File: ${c.entity.file}
 
-What archigraph detected:
+What grafel detected:
 ${c.description}
 ${hintSection}
-After making the change, run \`archigraph rebuild ${c.entity.repo}\` to refresh the graph.`;
+After making the change, run \`grafel rebuild ${c.entity.repo}\` to refresh the graph.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -388,7 +388,7 @@ function DetailPane({
         <Wrench size={28} strokeWidth={1.4} className="text-text-4" />
         <p className="text-sm font-medium text-text-2">Pick a suggestion</p>
         <p className="text-xs text-text-4 max-w-[28ch]">
-          Choose any row to see what archigraph detected, then hand it off to
+          Choose any row to see what grafel detected, then hand it off to
           your agent.
         </p>
       </div>
@@ -467,10 +467,10 @@ function DetailPane({
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
-        {/* Section 1: What archigraph detected */}
+        {/* Section 1: What grafel detected */}
         <section>
           <h4 className="text-xs font-semibold text-text-3 uppercase tracking-wide mb-2">
-            What archigraph detected
+            What grafel detected
           </h4>
           <p className="text-sm text-text leading-relaxed max-w-[64ch]">
             {item.description}
@@ -515,7 +515,7 @@ function DetailPane({
 
           <div className="flex items-start gap-3 mt-2">
             <p className="flex-1 text-xs text-text-4 leading-relaxed">
-              archigraph doesn&apos;t write code or prose itself. The hint is
+              grafel doesn&apos;t write code or prose itself. The hint is
               persisted and included when you hand the task off to your agent.
             </p>
             <Button
@@ -545,7 +545,7 @@ function DetailPane({
       {/* Footer (sticky bottom) */}
       <footer className="shrink-0 flex items-center justify-between gap-4 px-6 py-3 border-t border-border-soft bg-bg">
         <p className="text-xs text-text-4">
-          Only the agent can resolve this candidate — archigraph will clear it
+          Only the agent can resolve this candidate — grafel will clear it
           on the next index.
         </p>
         <div className="flex items-center gap-2 shrink-0">
@@ -595,16 +595,16 @@ const PENDING_INSIGHT: InsightValue = {
   storageKey: "pending",
   human: (
     <>
-      Pending candidates — edits archigraph has queued but not yet
+      Pending candidates — edits grafel has queued but not yet
       applied to the graph: repairs (resolving an unresolved reference)
       and enrichments (adding inferred metadata). Review each, then
       accept or dismiss it.
     </>
   ),
   agent: {
-    tool: "archigraph_enrichments",
+    tool: "grafel_enrichments",
     example:
-      "After an index run, an agent calls archigraph_enrichments to see the queued metadata and repair candidates, auto-accepts the unambiguous ones (a single obvious URL→endpoint match), and leaves the ambiguous dynamic-dispatch repairs flagged for a human to confirm.",
+      "After an index run, an agent calls grafel_enrichments to see the queued metadata and repair candidates, auto-accepts the unambiguous ones (a single obvious URL→endpoint match), and leaves the ambiguous dynamic-dispatch repairs flagged for a human to confirm.",
   },
 };
 

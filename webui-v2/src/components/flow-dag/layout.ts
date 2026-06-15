@@ -87,7 +87,7 @@ export interface FlowDagNodeData extends Record<string, unknown> {
   replay?: "active" | "traversed" | "pending";
   /**
    * #5147 coverage-kind overlay: when present + enabled, the node draws a tone
-   * ring keyed to which archigraph coverage applies to this group (line ▸ reach
+   * ring keyed to which grafel coverage applies to this group (line ▸ reach
    * ▸ capability). Threaded from the surface's shared coverage state (#5066),
    * not per-node — node payloads carry no per-node coverage signal — so every
    * node tints the same kind, and the capability default renders NO ring (never

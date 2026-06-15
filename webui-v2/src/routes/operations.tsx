@@ -19,7 +19,7 @@
      - Doctor health check: reuses useRunDoctor from settings; shown inline.
      - install / uninstall / start via launchd: system-level CLI only.
        Stop daemon button here calls POST /api/system/stop (safe destructive).
-     - archigraph update: check calls GET /api/updates/check (live). Apply is
+     - grafel update: check calls GET /api/updates/check (live). Apply is
        a stub that shows CLI hint — SSE streaming planned for follow-up.
    ============================================================ */
 
@@ -425,7 +425,7 @@ function DaemonStatusCard({
           <span>v{status.version}</span>
           {status.commit_sha && (
             <a
-              href={`https://github.com/cajasmota/archigraph/commit/${status.commit_sha}`}
+              href={`https://github.com/cajasmota/grafel/commit/${status.commit_sha}`}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-accent-strong flex items-center gap-1"
@@ -489,7 +489,7 @@ function SystemTab({ groupId }: { groupId: string }) {
           <div className="flex items-center gap-2 text-sm text-text-3 py-4">
             <AlertTriangle size={14} className="text-warning" />
             Could not reach daemon — it may be stopped. Use{" "}
-            <code className="font-mono text-text-2">archigraph start</code> to restart.
+            <code className="font-mono text-text-2">grafel start</code> to restart.
           </div>
         ) : (
           <DaemonStatusCard
@@ -559,7 +559,7 @@ function SystemTab({ groupId }: { groupId: string }) {
       {/* Health check */}
       <Section
         title="Health check"
-        sub="Runs archigraph doctor for this group — catches stale caches, missing hooks, daemon issues."
+        sub="Runs grafel doctor for this group — catches stale caches, missing hooks, daemon issues."
         action={
           <Button
             variant="primary"
@@ -623,7 +623,7 @@ function SystemTab({ groupId }: { groupId: string }) {
       <ConfirmModal
         open={confirmStop}
         title="Stop daemon?"
-        description="Sends SIGTERM. The daemon will NOT restart automatically — you'll lose the dashboard until you run 'archigraph start' from a terminal."
+        description="Sends SIGTERM. The daemon will NOT restart automatically — you'll lose the dashboard until you run 'grafel start' from a terminal."
         primaryLabel="Stop daemon"
         intent="danger"
         pending={stopDaemon.isPending}
@@ -1046,7 +1046,7 @@ function PatternsTab({ groupId }: { groupId: string }) {
 // ---------------------------------------------------------------------------
 
 const FIDELITY_TIP_OPS =
-  "Fidelity — how complete archigraph's map of your code is. Whenever your code points at something (calls a function, imports a module, calls an API), archigraph links it to where that's defined. Fidelity is the percentage of those links it resolved. The rest point at things it couldn't locate yet — external libraries, dynamically-loaded code, or extraction gaps.";
+  "Fidelity — how complete grafel's map of your code is. Whenever your code points at something (calls a function, imports a module, calls an API), grafel links it to where that's defined. Fidelity is the percentage of those links it resolved. The rest point at things it couldn't locate yet — external libraries, dynamically-loaded code, or extraction gaps.";
 const HEALTH_TIP_OPS =
   "Health is a composite score (0–100) that ALSO factors in orphan rate and recall miss — not just how many references resolved. It is computed only from a real audit run, so it can differ from Fidelity: a graph can resolve most references (high fidelity) yet still have many orphaned entities (lower health).";
 
@@ -1058,7 +1058,7 @@ function FidelityBanner() {
       <Info size={14} className="text-accent-strong shrink-0 mt-0.5" />
       <p>
         <span className="text-text-2 font-medium">Fidelity measures extraction completeness</span>{" "}
-        — the share of your code's references that archigraph linked to a real target. Running the
+        — the share of your code's references that grafel linked to a real target. Running the
         docs skill improves <span className="text-text-2">documentation</span> coverage, which is a
         different axis and does not change Fidelity.
       </p>
@@ -1136,7 +1136,7 @@ function UnresolvedReferencesPane({ groupId }: { groupId: string }) {
           <Activity size={28} className="text-text-4 mb-3" />
           <p className="text-sm font-medium">Not measured yet</p>
           <p className="text-xs mt-1">
-            Run audit to see which of your code's references archigraph could resolve.
+            Run audit to see which of your code's references grafel could resolve.
           </p>
         </div>
       ) : (
@@ -1206,7 +1206,7 @@ function UnresolvedReferencesPane({ groupId }: { groupId: string }) {
           {reasons.length > 0 ? (
             <Section
               title="Unresolved references"
-              sub="What stops archigraph from linking the rest of your code's references — the reasons that drive Fidelity below 100%."
+              sub="What stops grafel from linking the rest of your code's references — the reasons that drive Fidelity below 100%."
             >
               <div className="space-y-2.5">
                 {reasons.map((r, i) => (
@@ -1660,7 +1660,7 @@ function UpdatesTab() {
     <div className="space-y-5">
       <Section
         title="Version management"
-        sub="Check for new archigraph releases and refresh extraction rules."
+        sub="Check for new grafel releases and refresh extraction rules."
         action={
           <Button
             variant="secondary"
@@ -1765,7 +1765,7 @@ function UpdatesTab() {
                   </pre>
                 )}
                 <code className="block font-mono text-text-2 bg-bg-soft border border-border-soft rounded px-2 py-1 text-xs">
-                  archigraph update
+                  grafel update
                 </code>
               </div>
             ) : (
@@ -1790,7 +1790,7 @@ function UpdatesTab() {
                 size="sm"
                 onClick={() => {
                   toast.info(
-                    "Run `archigraph update --refresh-rules-lite` from your terminal.",
+                    "Run `grafel update --refresh-rules-lite` from your terminal.",
                   );
                 }}
               >
@@ -1826,9 +1826,9 @@ const OPERATIONS_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_repairs",
+    tool: "grafel_repairs",
     example:
-      "Before trusting the graph to answer 'who calls this?', an agent calls archigraph_repairs to review unresolved references and pending fixes — if a key dynamic-dispatch edge is still unresolved it pauses and asks for a re-index rather than reporting an incomplete caller list as complete.",
+      "Before trusting the graph to answer 'who calls this?', an agent calls grafel_repairs to review unresolved references and pending fixes — if a key dynamic-dispatch edge is still unresolved it pauses and asks for a re-index rather than reporting an incomplete caller list as complete.",
   },
 };
 

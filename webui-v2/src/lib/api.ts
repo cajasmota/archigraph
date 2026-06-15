@@ -1,5 +1,5 @@
 /* ============================================================
-   lib/api.ts — typed archigraph daemon client.
+   lib/api.ts — typed grafel daemon client.
 
    Thin, typed fetch wrapper. Every screen's data hook calls through
    this client (never raw fetch), so auth headers, base URL, and error
@@ -573,7 +573,7 @@ export const api = {
   /**
    * GET /api/v2/groups/:id/paths/:hash/posture — lazy posture +
    * effective-contract sections for the detail pane (#4254). Reuses the
-   * archigraph_endpoint_posture / archigraph_effective_contract computation
+   * grafel_endpoint_posture / grafel_effective_contract computation
    * server-side. Fetched only when a path is opened so the main paths payload
    * stays lean.
    */
@@ -692,7 +692,7 @@ export const api = {
     }),
 
   /**
-   * POST /api/v2/update/apply — run `archigraph update` (#1512).
+   * POST /api/v2/update/apply — run `grafel update` (#1512).
    * Subprocess-based, so the daemon is not replaced mid-request. The version
    * check stays on GET /api/updates/check (checkForUpdates above).
    */
@@ -756,7 +756,7 @@ export const api = {
 
   /**
    * POST /api/v2/daemon/mode — writes the mode to daemon.config.json and
-   * triggers a daemon restart. Equivalent to `archigraph mode <m>` via CLI.
+   * triggers a daemon restart. Equivalent to `grafel mode <m>` via CLI.
    */
   setDaemonMode: (newMode: string) =>
     requestV2<SetDaemonModeReply>(`/daemon/mode`, {

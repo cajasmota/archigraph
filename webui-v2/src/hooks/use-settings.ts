@@ -147,7 +147,7 @@ export function usePatchMonorepo(groupId: string) {
   });
 }
 
-/** Runs archigraph doctor for the group. Returns a DoctorCheck[]. */
+/** Runs grafel doctor for the group. Returns a DoctorCheck[]. */
 export function useRunDoctor(groupId: string) {
   return useMutation({
     mutationFn: () => api.runDoctor(groupId),

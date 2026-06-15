@@ -2,7 +2,7 @@
    Settings — per-group management surface.
 
    Route: /g/:groupId/settings
-   Per docs/screens/settings.md and design_handoff_archigraph prototype.
+   Per docs/screens/settings.md and design_handoff_grafel prototype.
 
    Sections (top to bottom):
      1. Header card — group name, health, stats, Rebuild button
@@ -297,7 +297,7 @@ function HeaderCard({ group, onRebuild }: { group: SettingsGroup; onRebuild: () 
           {
             key: "entities",
             label: "Entities",
-            hint: "Every function, class, hook, endpoint, and module archigraph extracted.",
+            hint: "Every function, class, hook, endpoint, and module grafel extracted.",
             value: group.entities.toLocaleString(),
             mono: true,
           },
@@ -312,7 +312,7 @@ function HeaderCard({ group, onRebuild }: { group: SettingsGroup; onRebuild: () 
           {
             key: "indexed",
             label: "Last indexed",
-            hint: "Most recent time archigraph re-scanned any repo in this group.",
+            hint: "Most recent time grafel re-scanned any repo in this group.",
             value: relativeTime(group.indexedAt),
             mono: true,
           },
@@ -852,7 +852,7 @@ function HealthSection({ groupId }: { groupId: string }) {
     <Section
       id="health"
       title="Health check"
-      sub="Runs archigraph doctor across this group. Catches stale caches, missing hooks, daemon issues."
+      sub="Runs grafel doctor across this group. Catches stale caches, missing hooks, daemon issues."
       action={
         <Button
           variant="primary"
@@ -1038,7 +1038,7 @@ function ImportGroupModal({ open, onClose }: { open: boolean; onClose: () => voi
         <DialogTitle>Import a group</DialogTitle>
         <DialogDescription>
           Restore a group from a zip archive previously produced by Export. The
-          imported store is written under the daemon&apos;s archigraph home; source
+          imported store is written under the daemon&apos;s grafel home; source
           repos on disk are untouched.
         </DialogDescription>
 
@@ -1251,7 +1251,7 @@ function DeleteGroupModal({
           Delete <span className="font-mono">{groupName}</span>?
         </DialogTitle>
         <DialogDescription>
-          This permanently removes the group from archigraph. It cannot be undone.
+          This permanently removes the group from grafel. It cannot be undone.
         </DialogDescription>
 
         <div className="mt-4 space-y-3">
@@ -1259,7 +1259,7 @@ function DeleteGroupModal({
             <p className="text-xs font-semibold text-text-3 uppercase tracking-wide mb-1.5">Will be removed</p>
             <ul className="space-y-1 text-sm text-text-2">
               <li>
-                <code className="font-mono text-text">~/.config/archigraph/{groupName}.fleet.json</code>
+                <code className="font-mono text-text">~/.config/grafel/{groupName}.fleet.json</code>
               </li>
               <li>
                 {repoCount} cached graph{repoCount !== 1 ? "s" : ""} for this group
@@ -1271,7 +1271,7 @@ function DeleteGroupModal({
             <p className="text-xs font-semibold text-text-3 uppercase tracking-wide mb-1.5">Will NOT be removed</p>
             <ul className="space-y-1 text-sm text-text-3">
               <li>Your repository source code (untouched on disk)</li>
-              <li>The archigraph daemon</li>
+              <li>The grafel daemon</li>
               <li>Other groups</li>
             </ul>
           </div>
@@ -1463,7 +1463,7 @@ const CONFIRM_SPECS: Record<
     description:
       "Wipes the cached AST + graph for this repo, then re-indexes from scratch. Use when the graph looks wrong.",
     bullets: [
-      { kind: "warn", text: `Deletes ${repo?.slug}/.archigraph/ (cached AST freed).` },
+      { kind: "warn", text: `Deletes ${repo?.slug}/.grafel/ (cached AST freed).` },
       { kind: "warn", text: "Slower than rebuild — no cache to reuse. Expect 30–120 seconds." },
       { kind: "ok", text: "Repo source code is untouched on disk." },
     ],

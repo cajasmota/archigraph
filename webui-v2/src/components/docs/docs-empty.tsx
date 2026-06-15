@@ -13,7 +13,7 @@ import { useState, useCallback } from "react";
 import { BookOpen, Sparkles, Copy, Check } from "lucide-react";
 
 interface DocsNotGeneratedProps {
-  /** The current archigraph group slug — used in the description. */
+  /** The current Grafel group slug — used in the description. */
   groupId: string;
 }
 

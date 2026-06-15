@@ -3,7 +3,7 @@
 
    Behavior (per #1922):
      • OFF BY DEFAULT (callers must explicitly toggle).
-     • Persisted in localStorage["archigraph:flows:audio"] as "on"/"off".
+     • Persisted in localStorage["grafel:flows:audio"] as "on"/"off".
      • One shared AudioContext lazily constructed on first blip.
      • Sine wave, ~440Hz, 60ms total, peak ~-20dB, fast attack + decay.
 
@@ -11,7 +11,7 @@
    typeof window / AudioContext).
    ============================================================ */
 
-export const FLOW_AUDIO_KEY = "archigraph:flows:audio";
+export const FLOW_AUDIO_KEY = "grafel:flows:audio";
 
 export function readFlowAudio(): boolean {
   if (typeof localStorage === "undefined") return false;

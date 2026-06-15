@@ -54,7 +54,7 @@ export function NavRail() {
       <div className="flex items-center h-14 px-4 gap-2.5 shrink-0">
         <BrandMark />
         <span className="font-semibold text-text whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">
-          archigraph
+          Grafel
         </span>
       </div>
 

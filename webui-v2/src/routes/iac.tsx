@@ -777,9 +777,9 @@ const IAC_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_topology",
+    tool: "grafel_topology",
     example:
-      "Before editing a Terraform module that defines a Lambda, an agent calls archigraph_topology to see which queues, datastores and IAM grants that function depends on across stacks — so it doesn't remove a network or secret another service still wires into.",
+      "Before editing a Terraform module that defines a Lambda, an agent calls grafel_topology to see which queues, datastores and IAM grants that function depends on across stacks — so it doesn't remove a network or secret another service still wires into.",
   },
 };
 

@@ -20,7 +20,7 @@
            (#1932-8) — drag the playhead to scrub forward / backward; the
            backward direction triggers reverse-decay on the trail tint.
          · a graph-scoped audio toggle (#1932-12, off by default,
-           persisted in localStorage["archigraph:graph:audio"]).
+           persisted in localStorage["grafel:graph:audio"]).
 
    The graph canvas's existing glow loop (#1157, see graph-canvas.tsx) is the
    bedrock — every per-entry replay AND each Replay-all step still flows
@@ -43,7 +43,7 @@ function formatTs(ts: number): string {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-const shortTool = (t: string) => t.replace(/^archigraph_/, "");
+const shortTool = (t: string) => t.replace(/^grafel_/, "");
 
 // ── #1920 — primary arg extraction ────────────────────────────────────────────
 
@@ -349,7 +349,7 @@ export const MCPActivityOverlay = memo(function MCPActivityOverlay({
           <div ref={logRef} className="max-h-64 overflow-y-auto">
             {eventLog.length === 0 ? (
               <p className="px-3 py-4 text-center text-xs text-text-4">
-                No MCP queries yet. Run an archigraph MCP tool and watch the graph glow.
+                No MCP queries yet. Run an grafel MCP tool and watch the graph glow.
               </p>
             ) : (
               (() => {

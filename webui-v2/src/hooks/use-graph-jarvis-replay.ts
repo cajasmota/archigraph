@@ -17,7 +17,7 @@
      • Speed (0.5×/1×/2×) + audio toggle persisted to localStorage with
        graph-scoped keys (independent of the flow view's keys).
      • ESC pauses/resumes while a replay is running (matches flows' behavior).
-     • Audio default OFF, persisted in `archigraph:graph:audio`.
+     • Audio default OFF, persisted in `grafel:graph:audio`.
 
    The hook is ALWAYS instantiated so the host can wire the scrubber UI
    without conditional hooks. When there's no event log it stays idle.
@@ -36,7 +36,7 @@ import type { MCPActivityEvent } from "./use-mcp-activity";
 import type { JarvisStep } from "@/components/graph/graph-jarvis-overlay";
 
 // Storage keys are graph-scoped so flow + graph preferences don't clobber.
-const SPEED_KEY = "archigraph:graph:speed";
+const SPEED_KEY = "grafel:graph:speed";
 
 // #1953 — speed table for the two-phase model. Per-call total time at each
 // multiplier (sweep+glow+gap = ~650ms / mult). The 4× option was added by

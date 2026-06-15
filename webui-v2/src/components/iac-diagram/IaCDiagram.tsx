@@ -10,7 +10,7 @@
      - Groups = module containers — resources sharing a `module` cluster into a
                 labelled box, so a modularized Terraform / CDK stack reads as
                 grouped boxes. This works across modularized IaC because
-                archigraph flattens modules to the resolved resource graph.
+                grafel flattens modules to the resolved resource graph.
 
    Controls: H/V layout toggle, zoom/fit (React Flow Controls), MiniMap. Click a
    resource node → its source peek (file:line) via the node renderer. Unresolved

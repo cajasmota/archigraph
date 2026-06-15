@@ -1,7 +1,7 @@
 /* ============================================================
    data/types.ts — the typed domain model.
 
-   These shapes mirror the archigraph daemon's responses and the
+   These shapes mirror the grafel daemon's responses and the
    per-screen "Data model" sections in the design handoff docs.
    Screen tickets extend this file as they wire real endpoints.
    ============================================================ */
@@ -1048,7 +1048,7 @@ export interface PathDetail {
    Returned by GET /api/v2/groups/:id/paths/:hash/posture — the lazy
    sibling route the detail pane fetches when a path is opened. Mirrors
    the Go internal/mcp.PosturePayload / EffectiveContractResult shapes
-   the archigraph_endpoint_posture / archigraph_effective_contract tools
+   the grafel_endpoint_posture / grafel_effective_contract tools
    emit (same code path, no drift). All facets are honest-empty: a row
    may carry no posture at all (has_posture=false), and `contract` is
    null for non-ViewSet endpoints.
@@ -1487,7 +1487,7 @@ export interface UnresolvedReason {
 
 /**
  * Unresolved-references breakdown — the real driver of Fidelity. Of every
- * import/reference edge archigraph extracted, how many it linked to a real
+ * import/reference edge grafel extracted, how many it linked to a real
  * target and, for the rest, the reason it could not.
  */
 export interface UnresolvedReferences {
@@ -1636,7 +1636,7 @@ export interface RefEntry {
   tier: RefTier;
   /** ms epoch when this ref was last indexed; null if never. */
   indexedAt: number | null;
-  /** archigraph indexer version that produced the last index. */
+  /** grafel indexer version that produced the last index. */
   indexerVersion: string | null;
   /** Whether this ref originates from a branch checkout or a worktree. */
   source: RefSource;
@@ -2695,7 +2695,7 @@ export interface DownstreamDAGResponse {
 // The Flowchart view of the Downstream-flow modal: an on-demand control-flow
 // graph (CFG) of the endpoint's HANDLER function, rendered with classic
 // flowchart glyphs on the shared ELK canvas. Built server-side from the same
-// internal/substrate CFG builder the archigraph_control_flow MCP tool uses.
+// internal/substrate CFG builder the grafel_control_flow MCP tool uses.
 // ---------------------------------------------------------------------------
 
 /** Detail level for the flowchart — maps 1:1 to the backend `detail` param and

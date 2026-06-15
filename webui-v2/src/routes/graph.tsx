@@ -113,9 +113,9 @@ const GRAPH_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_find",
+    tool: "grafel_find",
     example:
-      "Asked to fix a bug in `placeOrder`, an agent calls archigraph_find to jump straight to its definition and one-hop neighbors — the callers, the services it invokes, the file it lives in — instead of grepping the repo for a name that appears in dozens of comments and strings.",
+      "Asked to fix a bug in `placeOrder`, an agent calls grafel_find to jump straight to its definition and one-hop neighbors — the callers, the services it invokes, the file it lives in — instead of grepping the repo for a name that appears in dozens of comments and strings.",
   },
 };
 
@@ -798,7 +798,7 @@ export default function GraphScreen() {
               <div className="pointer-events-none rounded-md border border-border bg-surface/80 px-2 py-1 font-mono text-xs text-text-3 backdrop-blur-sm">
                 LOD: {lodLabel}
               </div>
-              {/* #5147 coverage-kind legend — which archigraph coverage applies
+              {/* #5147 coverage-kind legend — which grafel coverage applies
                   to this group (line ▸ reach ▸ capability). The WebGL canvas
                   can't ring individual nodes, so this HTML chip carries the kind
                   for the whole surface. Shown only once coverage has settled so

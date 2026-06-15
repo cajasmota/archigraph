@@ -1,6 +1,6 @@
-# archigraph WebUI v2 — Architecture
+# Grafel WebUI v2 — Architecture
 
-This is the **clean-room rebuild** of the archigraph dashboard. It lives
+This is the **clean-room rebuild** of the Grafel dashboard. It lives
 beside the legacy `dashboard/` app and **never imports from it** — both UIs
 stay alive until v2 reaches parity.
 

@@ -429,9 +429,9 @@ const LINKS_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_cross_links",
+    tool: "grafel_cross_links",
     example:
-      "Debugging a frontend call that hits a 404, an agent calls archigraph_cross_links to confirm which backend endpoint the fetch actually resolves to across repos — and spots that the client points at /v1/users while the server only serves /v2/users.",
+      "Debugging a frontend call that hits a 404, an agent calls grafel_cross_links to confirm which backend endpoint the fetch actually resolves to across repos — and spots that the client points at /v1/users while the server only serves /v2/users.",
   },
 };
 

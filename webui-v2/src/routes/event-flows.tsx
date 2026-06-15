@@ -254,9 +254,9 @@ const EVENT_FLOWS_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_flows",
+    tool: "grafel_flows",
     example:
-      "Before changing the payload published to an `order.created` topic, an agent calls archigraph_flows to walk the pub/sub chain and list every downstream subscriber, so it updates all consumers in the same change instead of breaking a handler two hops away.",
+      "Before changing the payload published to an `order.created` topic, an agent calls grafel_flows to walk the pub/sub chain and list every downstream subscriber, so it updates all consumers in the same change instead of breaking a handler two hops away.",
   },
 };
 

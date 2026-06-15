@@ -70,7 +70,7 @@ export function useUpdateCheck() {
   });
 }
 
-/** Runs `archigraph update` (#1512). Re-checks the version on success. */
+/** Runs `grafel update` (#1512). Re-checks the version on success. */
 export function useApplyUpdate() {
   const qc = useQueryClient();
   return useMutation({

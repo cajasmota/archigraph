@@ -2,7 +2,7 @@
    TopBar — per-project header. Single row. 56px tall.
    (prototype `.ag-topbar`)
 
-   Left: breadcrumb — archigraph › <group> › <surface>.
+   Left: breadcrumb — Grafel › <group> › <surface>.
    Right: ModeBadge (S7a #2169) + RefSelector (PH4 #2092) + PROJECT switcher (⌘K).
 
    The per-screen nav lives in the LEFT SIDEBAR (chrome/nav-rail.tsx).
@@ -41,7 +41,7 @@ export function TopBar({ group, surfaceLabel }: TopBarProps) {
   return (
     <header className="flex items-center justify-between h-14 shrink-0 px-4 border-b border-border bg-bg">
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-md">
-        <span className="text-text-3">archigraph</span>
+        <span className="text-text-3">Grafel</span>
         <ChevronRight size={12} className="text-text-4" />
         <span className="font-mono text-text-2">{group}</span>
         <ChevronRight size={12} className="text-text-4" />

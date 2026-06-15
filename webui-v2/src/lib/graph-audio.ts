@@ -6,13 +6,13 @@
    independent localStorage toggles, so a user can enable audio on the
    graph without re-enabling it on flows or vice-versa.
 
-   Key per spec: localStorage["archigraph:graph:audio"] = "on" | "off".
+   Key per spec: localStorage["grafel:graph:audio"] = "on" | "off".
    Default OFF.
    ============================================================ */
 
 export { playStepBlip, suspendAudioCtx as suspendGraphAudio } from "./flow-audio";
 
-export const GRAPH_AUDIO_KEY = "archigraph:graph:audio";
+export const GRAPH_AUDIO_KEY = "grafel:graph:audio";
 
 export function readGraphAudio(): boolean {
   if (typeof localStorage === "undefined") return false;

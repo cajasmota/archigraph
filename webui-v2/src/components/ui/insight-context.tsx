@@ -14,7 +14,7 @@
    Usage (in a route or tab):
      useSetInsight({
        human: <>…</>,
-       agent: { tool: "archigraph_test_coverage", example: "…" },
+       agent: { tool: "grafel_test_coverage", example: "…" },
      });
 
    `useSetInsight` registers on mount / when its value changes (by identity)

@@ -1,7 +1,7 @@
 /* ============================================================
    Topology — Async Message-Channel Map.
 
-   Per design: /Users/jorgecajas/Downloads/design_handoff_archigraph/docs/screens/topology.md
+   Per design: /Users/jorgecajas/Downloads/design_handoff_grafel/docs/screens/topology.md
 
    Layout: TopBar › Tab strip › Controls row › Workspace (canvas|list + detail).
    Anti-hallucination: ONLY static pub/sub data. No runtime metrics.
@@ -1715,9 +1715,9 @@ const TOPOLOGY_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_topology",
+    tool: "grafel_topology",
     example:
-      "Before changing the schema of the `order.created` event, an agent calls archigraph_topology to enumerate every subscriber, so it updates all consumers in lockstep — and flags the orphaned topic that has a publisher but no subscriber as a likely dropped-message bug.",
+      "Before changing the schema of the `order.created` event, an agent calls grafel_topology to enumerate every subscriber, so it updates all consumers in lockstep — and flags the orphaned topic that has a publisher but no subscriber as a likely dropped-message bug.",
   },
 };
 

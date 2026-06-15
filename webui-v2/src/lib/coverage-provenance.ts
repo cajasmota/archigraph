@@ -2,7 +2,7 @@
  * coverage-provenance — pure provenance/branch logic for the dashboard
  * coverage-provenance banner (#5038).
  *
- * archigraph surfaces THREE distinct things all colloquially called
+ * grafel surfaces THREE distinct things all colloquially called
  * "coverage", and a bare "%" reads as authoritative when it may be any of
  * them, stale, or absent. This module turns the raw availability state for a
  * given view into a single, unambiguous provenance descriptor that the
@@ -14,7 +14,7 @@
  * The three concepts (kept verbatim in {@link COVERAGE_DEFINITIONS} for the
  * self-documenting tooltip):
  *
- *   1. CAPABILITY coverage (registry.json) — what archigraph's EXTRACTOR
+ *   1. CAPABILITY coverage (registry.json) — what grafel's EXTRACTOR
  *      supports per language/framework. NOT test execution.
  *   2. LINE coverage (dynamic, #5036) — real %, present ONLY if an
  *      LCOV/Cobertura/JaCoCo report was ingested. Stamps entity props
@@ -34,7 +34,7 @@
 /** Which of the three coverage concepts a rendered number actually is. */
 export type CoverageProvenanceKind = "line" | "reachability" | "capability";
 
-/** Coverage-report format archigraph can ingest (mirrors sonar.*.reportPaths). */
+/** Coverage-report format grafel can ingest (mirrors sonar.*.reportPaths). */
 export type CoverageReportFormat = "lcov" | "cobertura" | "jacoco";
 
 /**
@@ -112,7 +112,7 @@ export interface CoverageProvenance {
 }
 
 /** The MCP tool agents use to query coverage provenance. */
-export const COVERAGE_MCP_TOOL = "archigraph_coverage";
+export const COVERAGE_MCP_TOOL = "grafel_coverage";
 
 /**
  * Self-documenting definitions of all three coverage concepts — rendered
@@ -129,7 +129,7 @@ export const COVERAGE_DEFINITIONS: ReadonlyArray<{
     body:
       "A real, executed percentage — % of source lines a test suite actually ran. " +
       "Present only when a coverage report (LCOV / Cobertura / JaCoCo) was ingested. " +
-      "archigraph reads the report (SonarQube model); it never runs your tests.",
+      "grafel reads the report (SonarQube model); it never runs your tests.",
   },
   {
     kind: "reachability",
@@ -143,9 +143,9 @@ export const COVERAGE_DEFINITIONS: ReadonlyArray<{
     kind: "capability",
     title: "Capability coverage",
     body:
-      "What archigraph's EXTRACTOR supports for a language/framework " +
+      "What grafel's EXTRACTOR supports for a language/framework " +
       "(from registry.json). This is NOT test coverage and NOT test execution — " +
-      "it describes how completely archigraph can model your code.",
+      "it describes how completely grafel can model your code.",
   },
 ];
 
@@ -158,11 +158,11 @@ const AGENT_MEANING: Record<CoverageProvenanceKind, string> = {
     "are flagged in parity checks so an agent knows what to test next.",
   capability:
     `Agents read this from the capability registry, not ${COVERAGE_MCP_TOOL}; it tells ` +
-    "them how much of the code archigraph can model, not what tests cover.",
+    "them how much of the code grafel can model, not what tests cover.",
 };
 
 const HOW_TO_ENABLE =
-  "Enable real line coverage: point archigraph at your lcov/cobertura/jacoco " +
+  "Enable real line coverage: point grafel at your lcov/cobertura/jacoco " +
   "report path (coverage.report_paths, mirroring sonar.*.reportPaths), then re-index.";
 
 /** Format the measured-at line, defensively (the input may be malformed). */
@@ -230,7 +230,7 @@ export function resolveCoverageProvenance(
     tone: "neutral",
     label: "Capability coverage",
     method:
-      "Capability coverage — what archigraph's extractor supports for this " +
+      "Capability coverage — what grafel's extractor supports for this " +
       "language/framework. NOT test execution and NOT test reachability.",
     howToEnable: s.reportIngestionConfigured ? null : HOW_TO_ENABLE,
     agentMeaning: AGENT_MEANING.capability,

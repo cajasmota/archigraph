@@ -5,7 +5,7 @@
    localStorage lets a return visit skip the explode/settle animation
    entirely and render the laid-out graph INSTANTLY.
 
-   Key:   archigraph.v2.layout.<layoutVersion>.<group>.<nodesetHash>
+   Key:   grafel.v2.layout.<layoutVersion>.<group>.<nodesetHash>
    Value: base64-encoded Float32Array of [x0, y0, x1, y1, ...]
 
    The node-set hash (FNV-1a over sorted node IDs) keys the cache so a graph
@@ -24,7 +24,7 @@
    ============================================================ */
 
 const MAX_BYTES = 2 * 1024 * 1024;
-const PREFIX = "archigraph.v2.layout";
+const PREFIX = "grafel.v2.layout";
 
 /**
  * Fix #1581: version stamp baked into every layout-cache key. Bump this whenever

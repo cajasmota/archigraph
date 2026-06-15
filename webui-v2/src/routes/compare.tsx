@@ -207,9 +207,9 @@ const COMPARE_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_diff_refs",
+    tool: "grafel_diff_refs",
     example:
-      "Reviewing a feature branch, an agent calls archigraph_diff_refs(refA=main, refB=feature) to get the added/removed/modified entities and changed edges, then focuses its review on the modified callables and their new dependencies instead of skimming the whole patch.",
+      "Reviewing a feature branch, an agent calls grafel_diff_refs(refA=main, refB=feature) to get the added/removed/modified entities and changed edges, then focuses its review on the modified callables and their new dependencies instead of skimming the whole patch.",
   },
 };
 

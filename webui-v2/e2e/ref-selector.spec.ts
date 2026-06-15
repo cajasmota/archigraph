@@ -12,7 +12,7 @@
  * or "Loading refs…" — both are valid states and the test only asserts UI
  * behavior, not data presence.
  *
- * NOTE: Tests that use client-fixture-a rely on a running archigraph daemon
+ * NOTE: Tests that use client-fixture-a rely on a running grafel daemon
  * with that group indexed. Tests that only need the chrome work without a daemon.
  */
 import { test, expect } from "@playwright/test";

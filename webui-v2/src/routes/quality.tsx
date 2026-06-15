@@ -1695,9 +1695,9 @@ const QUALITY_INSIGHTS: Record<QualityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_test_coverage",
+      tool: "grafel_test_coverage",
       example:
-        "Before writing tests for a payments module, an agent calls archigraph_test_coverage to list endpoints with no reach-coverage, distinguishes the contract-covered-only ones (shape already asserted offline) from the truly uncovered, and generates execution tests targeting exactly the real gaps instead of duplicating existing contract specs.",
+        "Before writing tests for a payments module, an agent calls grafel_test_coverage to list endpoints with no reach-coverage, distinguishes the contract-covered-only ones (shape already asserted offline) from the truly uncovered, and generates execution tests targeting exactly the real gaps instead of duplicating existing contract specs.",
     },
   },
   dependencies: {
@@ -1710,9 +1710,9 @@ const QUALITY_INSIGHTS: Record<QualityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_import_cycles",
+      tool: "grafel_import_cycles",
       example:
-        "Before splitting a large module, an agent calls archigraph_import_cycles to confirm the move won't introduce a circular import, and cross-references phantom packages so it adds the right dependency to package.json instead of guessing.",
+        "Before splitting a large module, an agent calls grafel_import_cycles to confirm the move won't introduce a circular import, and cross-references phantom packages so it adds the right dependency to package.json instead of guessing.",
     },
   },
   "anti-patterns": {
@@ -1725,9 +1725,9 @@ const QUALITY_INSIGHTS: Record<QualityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_graph_patterns",
+      tool: "grafel_graph_patterns",
       example:
-        "Reviewing a PR that adds a loop over orders, an agent calls archigraph_graph_patterns to detect a new N+1 query it introduced, then suggests a bulk prefetch or select_related fix before approving.",
+        "Reviewing a PR that adds a loop over orders, an agent calls grafel_graph_patterns to detect a new N+1 query it introduced, then suggests a bulk prefetch or select_related fix before approving.",
     },
   },
   "god-nodes": {
@@ -1740,9 +1740,9 @@ const QUALITY_INSIGHTS: Record<QualityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_impact_radius",
+      tool: "grafel_impact_radius",
       example:
-        "Before refactoring a high-PageRank service class, an agent calls archigraph_impact_radius to enumerate every downstream caller and route, then scopes the change set and flags the blast radius for human review rather than editing blind.",
+        "Before refactoring a high-PageRank service class, an agent calls grafel_impact_radius to enumerate every downstream caller and route, then scopes the change set and flags the blast radius for human review rather than editing blind.",
     },
   },
   trends: {
@@ -1756,9 +1756,9 @@ const QUALITY_INSIGHTS: Record<QualityTab, InsightValue> = {
       </>
     ),
     agent: {
-      tool: "archigraph_test_coverage",
+      tool: "grafel_test_coverage",
       example:
-        "Running in CI after each index, an agent calls archigraph_test_coverage across snapshots to detect that coverage dropped 4% on the last merge, then opens a follow-up issue naming the newly-uncovered entities responsible for the regression.",
+        "Running in CI after each index, an agent calls grafel_test_coverage across snapshots to detect that coverage dropped 4% on the last merge, then opens a follow-up issue naming the newly-uncovered entities responsible for the regression.",
     },
   },
 };

@@ -13,7 +13,7 @@
    Data: useFlows / useFlowDeadEnds / useFlowDetail hooks
          -> /api/flows/:group (v1, no wrapper needed for frontend)
 
-   Per docs/screens/flows.md + design_handoff_archigraph/prototypes/.
+   Per docs/screens/flows.md + design_handoff_grafel/prototypes/.
    ============================================================ */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -1298,7 +1298,7 @@ function DeadEndDetail({ de, onClose }: { de: FlowDeadEnd; onClose: () => void }
         <Section title="Suggested fix">
           <p className="text-sm text-text-2 leading-relaxed m-0">
             Review the entry chain and add explicit sink calls, or mark the flow as expected
-            dead-end in your archigraph config. You can also triage this in the Pending queue.
+            dead-end in your grafel config. You can also triage this in the Pending queue.
           </p>
           <button
             type="button"
@@ -1637,9 +1637,9 @@ const FLOWS_INSIGHT: InsightValue = {
     </>
   ),
   agent: {
-    tool: "archigraph_traces",
+    tool: "grafel_traces",
     example:
-      "Asked 'what happens when a user submits the checkout form?', an agent calls archigraph_traces from the POST /checkout entry point to walk the whole flow — validation, the payment-service call, the order DB write, the confirmation-email publish — and explains the end-to-end path instead of reading each file blind.",
+      "Asked 'what happens when a user submits the checkout form?', an agent calls grafel_traces from the POST /checkout entry point to walk the whole flow — validation, the payment-service call, the order DB write, the confirmation-email publish — and explains the end-to-end path instead of reading each file blind.",
   },
 };
 

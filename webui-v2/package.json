@@ -1,9 +1,9 @@
 {
-  "name": "archigraph-webui-v2",
+  "name": "grafel-webui-v2",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "archigraph WebUI v2 — clean-architecture rebuild of the dashboard. Coexists with the legacy dashboard/ app.",
+  "description": "Grafel WebUI v2 — clean-architecture rebuild of the dashboard. Coexists with the legacy dashboard/ app.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
