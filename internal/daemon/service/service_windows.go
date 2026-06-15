@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // resolvePlatformPaths fills in SocketPath and LogDir for Windows using
-// %APPDATA%\archigraph as the base directory and a named-pipe path for
+// %APPDATA%\grafel as the base directory and a named-pipe path for
 // SocketPath.
 func resolvePlatformPaths(opts *Options) error {
 	if opts.SocketPath == "" {
@@ -26,7 +26,7 @@ func resolvePlatformPaths(opts *Options) error {
 			}
 			appData = home
 		}
-		opts.LogDir = filepath.Join(appData, "archigraph", "logs")
+		opts.LogDir = filepath.Join(appData, "grafel", "logs")
 	}
 	return nil
 }

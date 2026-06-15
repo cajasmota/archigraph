@@ -1,5 +1,5 @@
 // Package bazel implements the BUILD/BUCK/WORKSPACE file extractor for
-// archigraph. It parses Bazel build files as first-class dependency signals,
+// grafel. It parses Bazel build files as first-class dependency signals,
 // emitting BAZEL_DEPENDS_ON edges between declared targets.
 //
 // # Issue #2183 — Monorepo M6: Bazel BUILD-graph fusion
@@ -156,7 +156,7 @@ func ParseBUILD(content []byte, pkg, sourceFile string) ([]Rule, error) {
 	return rules, nil
 }
 
-// recognisedRuleKinds contains the suffixes that archigraph treats as build
+// recognisedRuleKinds contains the suffixes that grafel treats as build
 // targets. A rule is recognised if its function name ends with one of these
 // suffixes (case-sensitive). The leading "<lang>_" prefix is intentionally
 // not constrained so that custom rules (e.g. "my_go_library") are included.

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // fixtureBuilder is a tiny DSL for assembling pub/sub graphs in tests.

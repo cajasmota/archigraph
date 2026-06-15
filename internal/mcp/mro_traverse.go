@@ -1,6 +1,6 @@
 package mcp
 
-// mro_traverse.go — MRO-aware TRAVERSAL for archigraph_neighbors / _def_use /
+// mro_traverse.go — MRO-aware TRAVERSAL for grafel_neighbors / _def_use /
 // _trace (epic #3829, ticket #3834 — MRO T4).
 //
 // Problem (the rewrite agent's G5): an inherited member STUB has an empty call
@@ -39,8 +39,8 @@ package mcp
 // the helpers below skip stubs that already carry an explicit INHERITS edge.
 
 import (
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // inheritsEdgeKind is the member-granularity inheritance edge kind (#3834).

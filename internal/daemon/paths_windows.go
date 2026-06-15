@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // isWindowsPipePath reports whether path is a Windows named-pipe path
@@ -21,9 +21,9 @@ func isWindowsPipePath(path string) bool {
 // on Windows. The socket path is a named-pipe path; SocketDir is empty
 // because pipes are not filesystem objects.
 //
-// When ARCHIGRAPH_DAEMON_ROOT is set, that directory is used for all
+// When GRAFEL_DAEMON_ROOT is set, that directory is used for all
 // filesystem paths (pid file, logs). The named-pipe path is always
-// user-scoped and does not change based on ARCHIGRAPH_DAEMON_ROOT.
+// user-scoped and does not change based on GRAFEL_DAEMON_ROOT.
 func DefaultLayout() (Layout, error) {
 	pipePath := transport.WindowsPipeName()
 
@@ -37,7 +37,7 @@ func DefaultLayout() (Layout, error) {
 				return Layout{}, err
 			}
 		}
-		root = filepath.Join(appData, "archigraph")
+		root = filepath.Join(appData, "grafel")
 	}
 
 	logDir := filepath.Join(root, "logs")

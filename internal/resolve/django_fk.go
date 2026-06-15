@@ -38,7 +38,7 @@ package resolve
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // lookupUniqueModelByName returns the entity ID of the unique entity with

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #2877 — Svelte Internals taxonomy: prove the seven idiom cells from a

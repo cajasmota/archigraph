@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/quality/audit"
+	"github.com/cajasmota/grafel/internal/quality/audit"
 )
 
 func TestOrphanAuditStore_RoundTrip(t *testing.T) {

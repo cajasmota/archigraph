@@ -32,7 +32,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makeXRepoFixture builds a two-repo fixture mirroring the #1893

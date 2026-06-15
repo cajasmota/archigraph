@@ -7,15 +7,15 @@ import (
 )
 
 // TestMigrateInRepoState_MovesArtifactsAndCleansRepo verifies the #1626
-// migration: a pre-existing in-repo `.archigraph/` with a graph is moved
+// migration: a pre-existing in-repo `.grafel/` with a graph is moved
 // into the external store, and the repo working tree is left clean.
 func TestMigrateInRepoState_MovesArtifactsAndCleansRepo(t *testing.T) {
 	t.Setenv(EnvRoot, "")
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repo := t.TempDir()
-	legacy := filepath.Join(repo, ".archigraph")
+	legacy := filepath.Join(repo, ".grafel")
 	if err := os.MkdirAll(filepath.Join(legacy, "enrichments"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -54,10 +54,10 @@ func TestMigrateInRepoState_MovesArtifactsAndCleansRepo(t *testing.T) {
 func TestMigrateInRepoState_CleansEmptyLegacyDir(t *testing.T) {
 	t.Setenv(EnvRoot, "")
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repo := t.TempDir()
-	legacy := filepath.Join(repo, ".archigraph")
+	legacy := filepath.Join(repo, ".grafel")
 	if err := os.MkdirAll(legacy, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -72,11 +72,11 @@ func TestMigrateInRepoState_CleansEmptyLegacyDir(t *testing.T) {
 }
 
 // TestMigrateInRepoState_NoopWhenIsolatedRoot verifies migration is a
-// no-op under ARCHIGRAPH_DAEMON_ROOT (isolation mode never used in-repo).
+// no-op under GRAFEL_DAEMON_ROOT (isolation mode never used in-repo).
 func TestMigrateInRepoState_NoopWhenIsolatedRoot(t *testing.T) {
 	t.Setenv(EnvRoot, t.TempDir())
 	repo := t.TempDir()
-	legacy := filepath.Join(repo, ".archigraph")
+	legacy := filepath.Join(repo, ".grafel")
 	if err := os.MkdirAll(legacy, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestMigrateInRepoState_NoopWhenIsolatedRoot(t *testing.T) {
 func TestMigrateInRepoState_NoopWhenStoreAlreadyHasGraph(t *testing.T) {
 	t.Setenv(EnvRoot, "")
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repo := t.TempDir()
 	store := StateDirForRepo(repo)
@@ -108,7 +108,7 @@ func TestMigrateInRepoState_NoopWhenStoreAlreadyHasGraph(t *testing.T) {
 	}
 	mustWrite(t, filepath.Join(store, "graph.fb"), "fresh")
 
-	legacy := filepath.Join(repo, ".archigraph")
+	legacy := filepath.Join(repo, ".grafel")
 	if err := os.MkdirAll(legacy, 0o755); err != nil {
 		t.Fatal(err)
 	}

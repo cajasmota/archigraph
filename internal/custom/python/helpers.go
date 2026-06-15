@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // lineOf returns the 1-indexed line number for a byte offset in source.

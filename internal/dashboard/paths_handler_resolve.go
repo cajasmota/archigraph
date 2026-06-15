@@ -21,7 +21,7 @@ package dashboard
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // repoEntityIndex is a per-repo lookup built once per request so the

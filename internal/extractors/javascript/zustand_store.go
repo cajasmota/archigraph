@@ -50,7 +50,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 	sitter "github.com/smacker/go-tree-sitter"
 )
 
@@ -530,7 +530,7 @@ func collectFunctionValuedKeysWithNodes(x *extractor, obj *sitter.Node) (map[str
 // method found in every Zustand store in this file. This is the fix for
 // issue #2626: without standalone entities for store actions, the graph's
 // CALLS adjacency has no outgoing edges FROM the store actions, so BFS
-// (archigraph_traces action=follow) terminates at useAuthStore instead of
+// (grafel_traces action=follow) terminates at useAuthStore instead of
 // entering the closure body.
 //
 // Each entity gets:

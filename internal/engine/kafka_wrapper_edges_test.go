@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runWrapperDetect is the parallel to runKafkaDetect for the wrapper pass.

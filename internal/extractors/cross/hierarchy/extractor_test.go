@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // migrationSrc is a minimal Django migration file body that matches pyClassRE.
@@ -23,14 +23,14 @@ class Migration(migrations.Migration):
 `
 
 // TestMigrationFile_NoSCOPEComponentEntity verifies that by default (no
-// ARCHIGRAPH_EMIT_MIGRATION_ENTITIES env var) the hierarchy extractor emits
+// GRAFEL_EMIT_MIGRATION_ENTITIES env var) the hierarchy extractor emits
 // zero entities for Django migration files (issue #2603).
 //
 // Before the fix the pyClassRE matched `class Migration(migrations.Migration):`
 // and emitted a SCOPE.Component/class entity named "Migration" — bypassing the
 // prune that the Python extractor performs via its early-return gate.
 func TestMigrationFile_NoSCOPEComponentEntity(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 
 	got := runExtract(t, "python", "core/migrations/0001_initial.py", migrationSrc)
 
@@ -43,10 +43,10 @@ func TestMigrationFile_NoSCOPEComponentEntity(t *testing.T) {
 }
 
 // TestMigrationFile_OptInEmitsComponent verifies that when
-// ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1 the hierarchy extractor DOES emit the
+// GRAFEL_EMIT_MIGRATION_ENTITIES=1 the hierarchy extractor DOES emit the
 // Migration class entity (opt-in path, symmetric with the Python extractor).
 func TestMigrationFile_OptInEmitsComponent(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	got := runExtract(t, "python", "core/migrations/0001_initial.py", migrationSrc)
 

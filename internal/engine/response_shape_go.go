@@ -19,7 +19,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // goRouteRe matches the canonical Gin / Echo / Chi / Fiber route registration,

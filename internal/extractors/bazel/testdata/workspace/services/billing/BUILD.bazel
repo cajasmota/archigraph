@@ -1,5 +1,5 @@
 # services/billing BUILD.bazel — billing service targets.
-# Used by archigraph M6 (issue #2183) Bazel extractor tests.
+# Used by grafel M6 (issue #2183) Bazel extractor tests.
 
 java_library(
     name = "billing_lib",

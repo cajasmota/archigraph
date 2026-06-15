@@ -28,12 +28,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // Prefixed entity IDs — the fixtures' labels collide case-insensitively
 // (createUser / CreateUser), so the tests resolve via the unambiguous
-// prefixed id (mirroring archigraph_inspect's how_to_choose guidance).
+// prefixed id (mirroring grafel_inspect's how_to_choose guidance).
 const (
 	tsEnt   = "polyglot-svc::op_create_user_ts"
 	javaEnt = "polyglot-svc::op_create_user_java"

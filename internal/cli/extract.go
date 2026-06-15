@@ -6,14 +6,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newExtractCmd registers the hidden `archigraph extract` subcommand.
+// newExtractCmd registers the hidden `grafel extract` subcommand.
 // This is the subprocess-side entrypoint for Phase F: the daemon's
 // extract coordinator fork-execs the same binary with `extract --lang
 // --batch ...` to run per-file passes (1, 2.5, 3) on a bounded set of
 // files, streaming JSONL records back over stdout.
 //
 // The command is hidden from the user-facing help surface: it is not
-// intended for direct invocation. It is reachable via `archigraph
+// intended for direct invocation. It is reachable via `grafel
 // extract` for diagnostics, but the help template hides it.
 func newExtractCmd() *cobra.Command {
 	cmd := &cobra.Command{

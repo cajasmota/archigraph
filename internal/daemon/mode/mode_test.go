@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/mode"
+	"github.com/cajasmota/grafel/internal/daemon/mode"
 )
 
 func TestParse(t *testing.T) {
@@ -41,30 +41,30 @@ func TestParse(t *testing.T) {
 
 func TestModeDefaultsBackground(t *testing.T) {
 	d := mode.ModeDefaults(mode.Background)
-	if d["ARCHIGRAPH_EAGER_ALGO"] != "false" {
-		t.Errorf("background: ARCHIGRAPH_EAGER_ALGO = %q, want false", d["ARCHIGRAPH_EAGER_ALGO"])
+	if d["GRAFEL_EAGER_ALGO"] != "false" {
+		t.Errorf("background: GRAFEL_EAGER_ALGO = %q, want false", d["GRAFEL_EAGER_ALGO"])
 	}
-	if d["ARCHIGRAPH_HEAP_MAX_PCT"] != "60" {
-		t.Errorf("background: ARCHIGRAPH_HEAP_MAX_PCT = %q, want 60", d["ARCHIGRAPH_HEAP_MAX_PCT"])
+	if d["GRAFEL_HEAP_MAX_PCT"] != "60" {
+		t.Errorf("background: GRAFEL_HEAP_MAX_PCT = %q, want 60", d["GRAFEL_HEAP_MAX_PCT"])
 	}
-	if _, ok := d["ARCHIGRAPH_EMBEDDING_URL"]; !ok {
-		t.Error("background: ARCHIGRAPH_EMBEDDING_URL key should be present (empty string)")
+	if _, ok := d["GRAFEL_EMBEDDING_URL"]; !ok {
+		t.Error("background: GRAFEL_EMBEDDING_URL key should be present (empty string)")
 	}
 }
 
 func TestModeDefaultsWorkstation(t *testing.T) {
 	d := mode.ModeDefaults(mode.Workstation)
-	if d["ARCHIGRAPH_EAGER_ALGO"] != "true" {
-		t.Errorf("workstation: ARCHIGRAPH_EAGER_ALGO = %q, want true", d["ARCHIGRAPH_EAGER_ALGO"])
+	if d["GRAFEL_EAGER_ALGO"] != "true" {
+		t.Errorf("workstation: GRAFEL_EAGER_ALGO = %q, want true", d["GRAFEL_EAGER_ALGO"])
 	}
-	if d["ARCHIGRAPH_HEAP_MAX_PCT"] != "80" {
-		t.Errorf("workstation: ARCHIGRAPH_HEAP_MAX_PCT = %q, want 80", d["ARCHIGRAPH_HEAP_MAX_PCT"])
+	if d["GRAFEL_HEAP_MAX_PCT"] != "80" {
+		t.Errorf("workstation: GRAFEL_HEAP_MAX_PCT = %q, want 80", d["GRAFEL_HEAP_MAX_PCT"])
 	}
 }
 
 func TestModeDefaultsReadonly(t *testing.T) {
 	d := mode.ModeDefaults(mode.Readonly)
-	for _, k := range []string{"ARCHIGRAPH_DISABLE_WATCHER", "ARCHIGRAPH_DISABLE_REBUILD", "ARCHIGRAPH_DISABLE_ALGO"} {
+	for _, k := range []string{"GRAFEL_DISABLE_WATCHER", "GRAFEL_DISABLE_REBUILD", "GRAFEL_DISABLE_ALGO"} {
 		if d[k] != "true" {
 			t.Errorf("readonly: %s = %q, want true", k, d[k])
 		}
@@ -73,22 +73,22 @@ func TestModeDefaultsReadonly(t *testing.T) {
 
 func TestApplyDefaults_setsUnset(t *testing.T) {
 	// Unset the key, apply background, verify it is set.
-	os.Unsetenv("ARCHIGRAPH_EAGER_ALGO")
-	t.Cleanup(func() { os.Unsetenv("ARCHIGRAPH_EAGER_ALGO") })
+	os.Unsetenv("GRAFEL_EAGER_ALGO")
+	t.Cleanup(func() { os.Unsetenv("GRAFEL_EAGER_ALGO") })
 
 	mode.ApplyDefaults(mode.Background)
-	if v := os.Getenv("ARCHIGRAPH_EAGER_ALGO"); v != "false" {
-		t.Errorf("ARCHIGRAPH_EAGER_ALGO = %q after ApplyDefaults, want false", v)
+	if v := os.Getenv("GRAFEL_EAGER_ALGO"); v != "false" {
+		t.Errorf("GRAFEL_EAGER_ALGO = %q after ApplyDefaults, want false", v)
 	}
 }
 
 func TestApplyDefaults_doesNotOverrideExisting(t *testing.T) {
-	os.Setenv("ARCHIGRAPH_EAGER_ALGO", "true")
-	t.Cleanup(func() { os.Unsetenv("ARCHIGRAPH_EAGER_ALGO") })
+	os.Setenv("GRAFEL_EAGER_ALGO", "true")
+	t.Cleanup(func() { os.Unsetenv("GRAFEL_EAGER_ALGO") })
 
 	mode.ApplyDefaults(mode.Background)
-	if v := os.Getenv("ARCHIGRAPH_EAGER_ALGO"); v != "true" {
-		t.Errorf("ARCHIGRAPH_EAGER_ALGO = %q after ApplyDefaults, want true (existing override preserved)", v)
+	if v := os.Getenv("GRAFEL_EAGER_ALGO"); v != "true" {
+		t.Errorf("GRAFEL_EAGER_ALGO = %q after ApplyDefaults, want true (existing override preserved)", v)
 	}
 }
 
@@ -98,7 +98,7 @@ func TestSaveLoadConfig(t *testing.T) {
 
 	cfg := mode.Config{
 		Mode:         mode.Background,
-		EnvOverrides: map[string]string{"ARCHIGRAPH_HEAP_MAX_PCT": "50"},
+		EnvOverrides: map[string]string{"GRAFEL_HEAP_MAX_PCT": "50"},
 	}
 	if err := mode.SaveConfig(path, cfg); err != nil {
 		t.Fatalf("SaveConfig: %v", err)
@@ -111,8 +111,8 @@ func TestSaveLoadConfig(t *testing.T) {
 	if got.Mode != mode.Background {
 		t.Errorf("loaded mode = %q, want background", got.Mode)
 	}
-	if got.EnvOverrides["ARCHIGRAPH_HEAP_MAX_PCT"] != "50" {
-		t.Errorf("loaded override = %q, want 50", got.EnvOverrides["ARCHIGRAPH_HEAP_MAX_PCT"])
+	if got.EnvOverrides["GRAFEL_HEAP_MAX_PCT"] != "50" {
+		t.Errorf("loaded override = %q, want 50", got.EnvOverrides["GRAFEL_HEAP_MAX_PCT"])
 	}
 }
 

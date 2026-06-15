@@ -7,14 +7,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
 
-// buildMinimalGroupForTier4 creates a minimal ARCHIGRAPH_HOME fixture with one
+// buildMinimalGroupForTier4 creates a minimal GRAFEL_HOME fixture with one
 // group, two repos, and synthetic graphs. It mirrors buildMinimalGroupForTier3
 // but registers two repos so cross-repo contract checks have material to work on.
 func buildMinimalGroupForTier4(t *testing.T) (archHome, group string, slugs []string) {
@@ -23,12 +23,12 @@ func buildMinimalGroupForTier4(t *testing.T) (archHome, group string, slugs []st
 	group = "tier4-test-group"
 	slugs = []string{"alpha", "beta"}
 
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
+	t.Setenv("GRAFEL_HOME", archHome)
 
 	xdgConfigHome := filepath.Join(archHome, "xdg-config")
 	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
 
-	cfgDir := filepath.Join(xdgConfigHome, "archigraph")
+	cfgDir := filepath.Join(xdgConfigHome, "grafel")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatalf("mkdir cfgDir: %v", err)
 	}
@@ -54,7 +54,7 @@ func buildMinimalGroupForTier4(t *testing.T) (archHome, group string, slugs []st
 			"entities": entities, "relationships": []interface{}{},
 		}
 		graphBytes, _ := json.Marshal(graphDoc)
-		archDir := filepath.Join(repoPath, ".archigraph")
+		archDir := filepath.Join(repoPath, ".grafel")
 		if err := os.MkdirAll(archDir, 0o755); err != nil {
 			t.Fatalf("mkdir archDir: %v", err)
 		}

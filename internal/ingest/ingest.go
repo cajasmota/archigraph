@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // maxDocBytes bounds how much of a single markdown file is read. Documentation

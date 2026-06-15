@@ -1,6 +1,6 @@
 // Package worktree implements PH3 of epic #2087 (#2091):
 // automatic discovery and ephemeral registration of git linked worktrees
-// that belong to repos already registered in the archigraph fleet.
+// that belong to repos already registered in the grafel fleet.
 //
 // # Data model
 //
@@ -8,7 +8,7 @@
 // they can be invalidated and rebuilt without touching user-edited fleet
 // configs.  On disk:
 //
-//	~/.archigraph/worktrees.json
+//	~/.grafel/worktrees.json
 //
 // A WorktreeChild is an ephemeral child of a parent repo slug within a
 // group. It DOES NOT appear as a top-level registered repo; it inherits
@@ -20,8 +20,8 @@
 // fsnotify watch on each parent's .git/worktrees/ directory call Sync()
 // promptly when a worktree is added or removed.  The Watcher ALSO runs a
 // periodic RECONCILIATION poll of `git worktree list --porcelain` for
-// every registered repo (default 60s, ARCHIGRAPH_WORKTREE_POLL_SECONDS
-// override; ARCHIGRAPH_WORKTREE_POLL_MINUTES still honoured) to catch any
+// every registered repo (default 60s, GRAFEL_WORKTREE_POLL_SECONDS
+// override; GRAFEL_WORKTREE_POLL_MINUTES still honoured) to catch any
 // events missed while the daemon was down or dropped.
 //
 //   - New worktrees → added to the Store; OnActivate fires.
@@ -32,7 +32,7 @@
 // # Per-parent cap
 //
 // At most MaxWorktreesPerRepo (default 10, configurable via
-// ARCHIGRAPH_MAX_WORKTREES_PER_REPO) worktrees are tracked per parent.
+// GRAFEL_MAX_WORKTREES_PER_REPO) worktrees are tracked per parent.
 // When the parent has more linked worktrees the N most-recently-modified
 // directories are kept; the rest are skipped with a warning log.
 //
@@ -111,7 +111,7 @@ const (
 type WorktreeChild struct {
 	// ParentSlug is the repo slug inside the fleet group (e.g. "my-service").
 	ParentSlug string `json:"parent_slug"`
-	// GroupName is the archigraph group that owns the parent.
+	// GroupName is the grafel group that owns the parent.
 	GroupName string `json:"group_name"`
 	// Path is the absolute path of the worktree on disk.
 	Path string `json:"path"`
@@ -399,9 +399,9 @@ func runWorktreeList(repoPath string) ([]RawWorktree, error) {
 // defaultMaxWorktrees is the maximum tracked worktrees per parent repo.
 const defaultMaxWorktrees = 10
 
-// maxWorktrees reads ARCHIGRAPH_MAX_WORKTREES_PER_REPO or returns the default.
+// maxWorktrees reads GRAFEL_MAX_WORKTREES_PER_REPO or returns the default.
 func maxWorktrees() int {
-	if v := os.Getenv("ARCHIGRAPH_MAX_WORKTREES_PER_REPO"); v != "" {
+	if v := os.Getenv("GRAFEL_MAX_WORKTREES_PER_REPO"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
 		}
@@ -487,16 +487,16 @@ const defaultPollInterval = 60 * time.Second
 
 // pollInterval returns the reconciliation interval.
 //
-// ARCHIGRAPH_WORKTREE_POLL_SECONDS takes precedence (the poll is now a
-// fast reconciliation pass, #3354).  ARCHIGRAPH_WORKTREE_POLL_MINUTES is
+// GRAFEL_WORKTREE_POLL_SECONDS takes precedence (the poll is now a
+// fast reconciliation pass, #3354).  GRAFEL_WORKTREE_POLL_MINUTES is
 // still honoured for backward compatibility when SECONDS is unset.
 func pollInterval() time.Duration {
-	if v := os.Getenv("ARCHIGRAPH_WORKTREE_POLL_SECONDS"); v != "" {
+	if v := os.Getenv("GRAFEL_WORKTREE_POLL_SECONDS"); v != "" {
 		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
 			return time.Duration(n) * time.Second
 		}
 	}
-	if v := os.Getenv("ARCHIGRAPH_WORKTREE_POLL_MINUTES"); v != "" {
+	if v := os.Getenv("GRAFEL_WORKTREE_POLL_MINUTES"); v != "" {
 		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
 			return time.Duration(n) * time.Minute
 		}
@@ -685,7 +685,7 @@ func (w *Watcher) poll() {
 
 		kept, skipped := enforceCap(linked, cap)
 		if skipped > 0 {
-			w.logger.Warn("worktree: per-parent cap enforced", "group", p.GroupName, "slug", p.Slug, "total", len(linked), "kept", cap, "skipped", skipped, "cap", cap, "override_env", "ARCHIGRAPH_MAX_WORKTREES_PER_REPO")
+			w.logger.Warn("worktree: per-parent cap enforced", "group", p.GroupName, "slug", p.Slug, "total", len(linked), "kept", cap, "skipped", skipped, "cap", cap, "override_env", "GRAFEL_MAX_WORKTREES_PER_REPO")
 		}
 
 		w.store.mu.Lock()

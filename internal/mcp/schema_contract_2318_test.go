@@ -22,7 +22,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 	mcpsrv "github.com/mark3labs/mcp-go/server"
 )
 
@@ -113,7 +113,7 @@ func assertNumberDefault(t *testing.T, byName map[string]*mcpsrv.ServerTool, too
 
 // TestSchemaContract_2318_clusters verifies that the two args added to
 // handleListCommunities in PR #2310 (issue #2289) are now declared in the
-// archigraph_clusters tool schema (#2318).
+// grafel_clusters tool schema (#2318).
 //
 // Before this fix, callers had no way to discover top_entities_limit or min_size
 // from the tools/list handshake — they worked at runtime but were invisible to
@@ -123,22 +123,22 @@ func TestSchemaContract_2318_clusters(t *testing.T) {
 	byName := srv.MCP.ListTools()
 
 	// top_entities_limit: default 3 (caps the top_entities array per community)
-	assertParamDeclared(t, byName, "archigraph_clusters", "top_entities_limit")
-	assertNumberDefault(t, byName, "archigraph_clusters", "top_entities_limit", 3)
+	assertParamDeclared(t, byName, "grafel_clusters", "top_entities_limit")
+	assertNumberDefault(t, byName, "grafel_clusters", "top_entities_limit", 3)
 
 	// min_size: default 20 (filters out small communities)
-	assertParamDeclared(t, byName, "archigraph_clusters", "min_size")
-	assertNumberDefault(t, byName, "archigraph_clusters", "min_size", 20)
+	assertParamDeclared(t, byName, "grafel_clusters", "min_size")
+	assertNumberDefault(t, byName, "grafel_clusters", "min_size", 20)
 }
 
 // TestSchemaContract_2318_find_context_filter verifies that context_filter,
 // which was documented in SCHEMA.md and read by handleQueryGraph, is now
-// declared in the archigraph_find tool schema (#2318).
+// declared in the grafel_find tool schema (#2318).
 func TestSchemaContract_2318_find_context_filter(t *testing.T) {
 	srv := newMinimalServer(t)
 	byName := srv.MCP.ListTools()
 
-	assertParamDeclared(t, byName, "archigraph_find", "context_filter")
+	assertParamDeclared(t, byName, "grafel_find", "context_filter")
 }
 
 // TestSchemaContract_2318_intentionally_undeclared documents the known
@@ -154,24 +154,24 @@ func TestSchemaContract_2318_intentionally_undeclared(t *testing.T) {
 		param string
 		why   string
 	}{
-		// archigraph_find: verbose, min_score, max_results — #1639 pattern / #1921 / #1807
-		{"archigraph_find", "verbose", "#1639 token ceiling pattern (#1921/#1807)"},
-		{"archigraph_find", "min_score", "#1639 token ceiling pattern (#1921/#1807)"},
-		{"archigraph_find", "max_results", "#1639 token ceiling pattern (#1921/#1807)"},
-		// archigraph_traces: min_steps, cross_stack_only, verbose — #1639 pattern
-		{"archigraph_traces", "min_steps", "#1639 token ceiling pattern"},
-		{"archigraph_traces", "cross_stack_only", "#1639 token ceiling pattern"},
-		{"archigraph_traces", "verbose", "#1639 token ceiling pattern"},
-		// archigraph_find_callers/callees: verbose — #1639 token ceiling pattern
-		{"archigraph_find_callers", "verbose", "#1639 token ceiling pattern"},
-		{"archigraph_find_callees", "verbose", "#1639 token ceiling pattern"},
-		// archigraph_module_analysis: top_n, limit, min_size, repo_filter — #1639 pattern
-		{"archigraph_module_analysis", "top_n", "#1639 token ceiling pattern"},
-		{"archigraph_module_analysis", "limit", "#1639 token ceiling pattern"},
-		{"archigraph_module_analysis", "min_size", "#1639 token ceiling pattern"},
-		// archigraph_repairs: submit-only args — #1756 / #1639 pattern
-		{"archigraph_repairs", "residual_id", "#1756 token ceiling pattern"},
-		{"archigraph_repairs", "resolution", "#1756 token ceiling pattern"},
+		// grafel_find: verbose, min_score, max_results — #1639 pattern / #1921 / #1807
+		{"grafel_find", "verbose", "#1639 token ceiling pattern (#1921/#1807)"},
+		{"grafel_find", "min_score", "#1639 token ceiling pattern (#1921/#1807)"},
+		{"grafel_find", "max_results", "#1639 token ceiling pattern (#1921/#1807)"},
+		// grafel_traces: min_steps, cross_stack_only, verbose — #1639 pattern
+		{"grafel_traces", "min_steps", "#1639 token ceiling pattern"},
+		{"grafel_traces", "cross_stack_only", "#1639 token ceiling pattern"},
+		{"grafel_traces", "verbose", "#1639 token ceiling pattern"},
+		// grafel_find_callers/callees: verbose — #1639 token ceiling pattern
+		{"grafel_find_callers", "verbose", "#1639 token ceiling pattern"},
+		{"grafel_find_callees", "verbose", "#1639 token ceiling pattern"},
+		// grafel_module_analysis: top_n, limit, min_size, repo_filter — #1639 pattern
+		{"grafel_module_analysis", "top_n", "#1639 token ceiling pattern"},
+		{"grafel_module_analysis", "limit", "#1639 token ceiling pattern"},
+		{"grafel_module_analysis", "min_size", "#1639 token ceiling pattern"},
+		// grafel_repairs: submit-only args — #1756 / #1639 pattern
+		{"grafel_repairs", "residual_id", "#1756 token ceiling pattern"},
+		{"grafel_repairs", "resolution", "#1756 token ceiling pattern"},
 	}
 
 	for _, g := range intentionalGaps {

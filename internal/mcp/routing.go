@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // resolveGroup implements the ADR-0008 cascade (#1746):
 //
 //  1. explicit `group` argument
-//  2. CWD inference via .archigraph/group.json marker (walk upward)
+//  2. CWD inference via .grafel/group.json marker (walk upward)
 //  3. Registry-based CWD inference: match cwd against registered repo paths
 //  4. Singleton-group fallback (only one group registered)
 //
@@ -245,7 +245,7 @@ func hasGitDirInTree(dir string) bool {
 	}
 }
 
-// groupFromCWD walks dir upward looking for .archigraph/group.json which
+// groupFromCWD walks dir upward looking for .grafel/group.json which
 // encodes {"group": "<name>"}.
 func groupFromCWD(dir string) string {
 	if dir == "" {
@@ -253,7 +253,7 @@ func groupFromCWD(dir string) string {
 	}
 	cur := dir
 	for {
-		marker := filepath.Join(cur, ".archigraph", "group.json")
+		marker := filepath.Join(cur, ".grafel", "group.json")
 		if data, err := os.ReadFile(marker); err == nil {
 			var doc struct {
 				Group string `json:"group"`
@@ -270,7 +270,7 @@ func groupFromCWD(dir string) string {
 	}
 }
 
-// repoFromCWD walks dir upward looking for the repo's .archigraph dir; the
+// repoFromCWD walks dir upward looking for the repo's .grafel dir; the
 // repo's directory name is returned if found.
 func repoFromCWD(dir string) string {
 	if dir == "" {
@@ -278,7 +278,7 @@ func repoFromCWD(dir string) string {
 	}
 	cur := dir
 	for {
-		if _, err := os.Stat(filepath.Join(cur, ".archigraph")); err == nil {
+		if _, err := os.Stat(filepath.Join(cur, ".grafel")); err == nil {
 			return filepath.Base(cur)
 		}
 		parent := filepath.Dir(cur)
@@ -292,7 +292,7 @@ func repoFromCWD(dir string) string {
 // CWDResolution carries the result of resolving a cwd to a (group, repo, ref)
 // triple. It is the canonical output of ResolveCWD (PH1c, epic #2087).
 type CWDResolution struct {
-	// Group is the archigraph group name, or "" if unresolved.
+	// Group is the grafel group name, or "" if unresolved.
 	Group string
 	// RepoSlug is the slug of the repo within the group whose path contains cwd.
 	RepoSlug string

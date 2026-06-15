@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ func descriptionFromContext(ctx map[string]any, _ string) string {
 			}
 		}
 	}
-	return "Detected by archigraph. No additional context available."
+	return "Detected by grafel. No additional context available."
 }
 
 // ---------------------------------------------------------------------------
@@ -320,7 +320,7 @@ func (s *Server) handleV2CandidateHint(w http.ResponseWriter, r *http.Request) {
 
 // entityHintsFile returns the path to the entity-hints store for a repo.
 // The store is a flat JSON object: { "<entityID>": "<hint>", ... }.
-// It lives next to enrichment-candidates.json in the archigraph state dir.
+// It lives next to enrichment-candidates.json in the grafel state dir.
 func entityHintsFile(repoPath string) string {
 	return filepath.Join(daemon.StateDirForRepo(repoPath), "entity-hints.json")
 }

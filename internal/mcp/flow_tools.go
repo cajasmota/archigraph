@@ -1,11 +1,11 @@
 // flow_tools.go — MCP handlers for flow-aware graph traversal tools (issue #1252).
 //
 // Implements:
-//   - archigraph_find_callers       — what calls this entity (inbound edges, N hops)
-//   - archigraph_find_callees       — what does this entity call (outbound edges, N hops)
-//   - archigraph_impact_radius      — entities affected if this one changes, with risk score
-//   - archigraph_subgraph           — unified subgraph tool (format=raw|markdown) (#1754)
-//   - archigraph_find_dead_code     — unreferenced public operations carrying a dead-code marker
+//   - grafel_find_callers       — what calls this entity (inbound edges, N hops)
+//   - grafel_find_callees       — what does this entity call (outbound edges, N hops)
+//   - grafel_impact_radius      — entities affected if this one changes, with risk score
+//   - grafel_subgraph           — unified subgraph tool (format=raw|markdown) (#1754)
+//   - grafel_find_dead_code     — unreferenced public operations carrying a dead-code marker
 //
 // All handlers operate against the in-memory LoadedGroup data — no HTTP calls.
 package mcp
@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -51,7 +51,7 @@ func neighborTruncationNote(kind string, tokenBudget, budgetBytes, dropped, drop
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_neighbors (#1753) — unified callers + callees + both.
+// grafel_neighbors (#1753) — unified callers + callees + both.
 // ---------------------------------------------------------------------------
 
 // handleNeighbors is the unified neighbors tool that subsumes find_callers and
@@ -130,7 +130,7 @@ func mergeNeighbors(in map[string]any, inErr *mcpapi.CallToolResult, out map[str
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_callers
+// grafel_find_callers
 // ---------------------------------------------------------------------------
 
 // handleFindCallers returns entities that call (directly or transitively) the
@@ -168,7 +168,7 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 	// literal: find NAVIGATES_TO edges whose ToID is "route:<literal>" (or
 	// whose Properties["route"] matches) and return the push-site callers
 	// directly. This makes find_callers discoverable for in-app navigation
-	// without users having to remember the dedicated archigraph_navigates tool.
+	// without users having to remember the dedicated grafel_navigates tool.
 	if strings.HasPrefix(entityID, "/") && !entityExistsAnywhere(lg, entityID) {
 		if res := s.tryFindCallersByRoute(req, lg, entityID); res != nil {
 			return res, nil
@@ -495,7 +495,7 @@ func (s *Server) findCallersStructured(_ context.Context, req mcpapi.CallToolReq
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_callees
+// grafel_find_callees
 // ---------------------------------------------------------------------------
 
 // handleFindCallees returns entities called by the given entity. It walks the
@@ -755,7 +755,7 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_impact_radius
+// grafel_impact_radius
 // ---------------------------------------------------------------------------
 
 // impactRiskScore computes a heuristic risk score [0.0, 1.0] for an affected
@@ -987,7 +987,7 @@ func (s *Server) handleImpactRadius(_ context.Context, req mcpapi.CallToolReques
 			"affected":  []any{},
 			"count":     0,
 			"reason": fmt.Sprintf("no entity matched %q by ID or name in the loaded graph. "+
-				"Use archigraph_find or archigraph_search_entities to locate the entity, "+
+				"Use grafel_find or grafel_search_entities to locate the entity, "+
 				"then pass its exact entity_id.", entityID),
 		}), nil
 	}
@@ -1175,7 +1175,7 @@ func buildRiskReason(e *graph.Entity, namedCallers, moduleNodes, total int, hasI
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_subgraph (unified, #1754)
+// grafel_subgraph (unified, #1754)
 // ---------------------------------------------------------------------------
 
 // subgraphRawMaxNodes bounds the format=raw node expansion (#3924). A
@@ -1186,7 +1186,7 @@ func buildRiskReason(e *graph.Entity, namedCallers, moduleNodes, total int, hasI
 // "truncated" flag + "truncation_note". Callers may raise it via max_nodes.
 const subgraphRawMaxNodes = 1500
 
-// handleSubgraph is the unified handler for archigraph_subgraph.
+// handleSubgraph is the unified handler for grafel_subgraph.
 // format="raw"      → JSON graph (nodes + edges), identical output to old get_subgraph.
 // format="markdown" → LLM-friendly Markdown summary, identical output to old summarize_subgraph.
 // Both legacy tools delegate here as deprecated trampolines.
@@ -1505,7 +1505,7 @@ func (s *Server) subgraphMarkdown(entityID string, req mcpapi.CallToolRequest) (
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_dead_code
+// grafel_find_dead_code
 // ---------------------------------------------------------------------------
 
 // stdlibKindPrefixes is the set of entity kind prefixes that represent
@@ -1586,7 +1586,7 @@ var inboundNeighborStructuralKinds = map[string]bool{
 
 // isInboundNeighborKind reports whether an inbound edge of the given kind
 // represents a real predecessor (caller / in-neighbor) of an entity for the
-// archigraph_neighbors(direction=in) / find_callers walk.
+// grafel_neighbors(direction=in) / find_callers walk.
 //
 // #4242: the pre-fix walk used the inboundRefKinds allow-list only, which
 // covered CALLS/REFERENCES/IMPORTS/TESTS/… but DROPPED every non-CALLS semantic
@@ -2008,7 +2008,7 @@ func (s *Server) handleFindDeadCode(_ context.Context, req mcpapi.CallToolReques
 }
 
 // ---------------------------------------------------------------------------
-// #2665 — route-literal resolution for archigraph_find_callers
+// #2665 — route-literal resolution for grafel_find_callers
 // ---------------------------------------------------------------------------
 
 // entityExistsAnywhere reports whether the given id matches an entity ID or

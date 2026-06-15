@@ -17,9 +17,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tshcl "github.com/smacker/go-tree-sitter/hcl"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/hcl" // register hcl/terraform
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/hcl" // register hcl/terraform
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // realCoreBackendSQSModule is a verbatim copy of

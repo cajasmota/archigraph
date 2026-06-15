@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makeSyntheticDoc builds a graph.Document with nEntities entities and

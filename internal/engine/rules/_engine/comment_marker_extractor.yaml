@@ -12,6 +12,6 @@ description: >-
   Detect TODO, FIXME, HACK, and XXX comment markers across all languages.
   Emits SCOPE.Pattern entities with kind=code_marker, marker_type, message,
   line_number, and source_file.
-module: archigraph.engine.rules.pattern_detectors.comment_marker_extractor
+module: grafel.engine.rules.pattern_detectors.comment_marker_extractor
 function: detect
 applies_to_function: applies_to

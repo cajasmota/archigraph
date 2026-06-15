@@ -1,4 +1,4 @@
-// Package fbreader provides zero-copy mmap access to the archigraph v2
+// Package fbreader provides zero-copy mmap access to the grafel v2
 // FlatBuffers graph format produced by internal/graph/fbwriter.
 //
 // The Reader is intentionally thin: it memory-maps the file, parses the
@@ -14,7 +14,7 @@ import (
 
 	"golang.org/x/exp/mmap"
 
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
 )
 
 // Reader holds an mmap'd graph.fb plus a parsed root view. The zero

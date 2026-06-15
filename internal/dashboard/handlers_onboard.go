@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/install/detect"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,9 +49,9 @@ type OnboardCheckPathReply struct {
 	IsMonorepo bool `json:"is_monorepo"`
 	// HasAgentsMD is true when an AGENTS.md or CLAUDE.md was found at the root.
 	HasAgentsMD bool `json:"has_agents_md"`
-	// HasArchigraphConfig is true when .archigraph/group.json exists in the repo.
-	HasArchigraphConfig bool `json:"has_archigraph_config"`
-	// ExistingGroupName is the group name from .archigraph/group.json (if present).
+	// HasGrafelConfig is true when .grafel/group.json exists in the repo.
+	HasGrafelConfig bool `json:"has_grafel_config"`
+	// ExistingGroupName is the group name from .grafel/group.json (if present).
 	ExistingGroupName string `json:"existing_group_name,omitempty"`
 	// Error is set when Valid is false with a human-readable reason.
 	Error string `json:"error,omitempty"`
@@ -145,23 +145,23 @@ func (s *Server) handleOnboardCheckPath(w http.ResponseWriter, r *http.Request) 
 	isMonorepo := mono.Kind != detect.KindNone
 
 	hasAgentsMD := fileExists(abs, "AGENTS.md") || fileExists(abs, "CLAUDE.md") || fileExists(abs, "GEMINI.md")
-	hasArchigraphConfig := fileExists(abs, ".archigraph/group.json")
+	hasGrafelConfig := fileExists(abs, ".grafel/group.json")
 
 	var existingGroup string
-	if hasArchigraphConfig {
-		existingGroup = readManifestGroup(filepath.Join(abs, ".archigraph", "group.json"))
+	if hasGrafelConfig {
+		existingGroup = readManifestGroup(filepath.Join(abs, ".grafel", "group.json"))
 	}
 
 	writeJSON(w, http.StatusOK, OnboardCheckPathReply{
-		Valid:               true,
-		AbsPath:             abs,
-		SuggestedGroupName:  base,
-		SuggestedSlug:       slug,
-		Stack:               stack,
-		IsMonorepo:          isMonorepo,
-		HasAgentsMD:         hasAgentsMD,
-		HasArchigraphConfig: hasArchigraphConfig,
-		ExistingGroupName:   existingGroup,
+		Valid:              true,
+		AbsPath:            abs,
+		SuggestedGroupName: base,
+		SuggestedSlug:      slug,
+		Stack:              stack,
+		IsMonorepo:         isMonorepo,
+		HasAgentsMD:        hasAgentsMD,
+		HasGrafelConfig:    hasGrafelConfig,
+		ExistingGroupName:  existingGroup,
 	})
 }
 
@@ -294,7 +294,7 @@ func fileExists(root, rel string) bool {
 	return err == nil
 }
 
-// readManifestGroup reads the "group" field from .archigraph/group.json.
+// readManifestGroup reads the "group" field from .grafel/group.json.
 func readManifestGroup(path string) string {
 	data, err := os.ReadFile(path)
 	if err != nil {

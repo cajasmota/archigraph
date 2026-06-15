@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	pyextr "github.com/cajasmota/archigraph/internal/extractors/python"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	pyextr "github.com/cajasmota/grafel/internal/extractors/python"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // stampTestIDs simulates the indexer's stampEntityIDs pass so BuildImportTable

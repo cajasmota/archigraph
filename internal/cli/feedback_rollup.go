@@ -14,7 +14,7 @@ import (
 )
 
 // feedbackEventRecord mirrors mcp.FeedbackEvent for parsing the JSONL written
-// by archigraph_feedback_event. Kept local to avoid a cli→mcp import.
+// by grafel_feedback_event. Kept local to avoid a cli→mcp import.
 type feedbackEventRecord struct {
 	Timestamp  string `json:"ts"`
 	Group      string `json:"group,omitempty"`
@@ -30,8 +30,8 @@ type feedbackEventRecord struct {
 // deliberately excludes it (only wrong+missing_capability count as negative).
 var outcomeOrder = []string{"helped", "partial", "wrong", "missing_capability", "milestone"}
 
-// newFeedbackRollupCmd returns `archigraph feedback rollup`, which aggregates
-// the agent-experience feedback JSONL (written by archigraph_feedback_event)
+// newFeedbackRollupCmd returns `grafel feedback rollup`, which aggregates
+// the agent-experience feedback JSONL (written by grafel_feedback_event)
 // into an analyzable bundle. Internal testing harness (#3204).
 func newFeedbackRollupCmd() *cobra.Command {
 	var (
@@ -43,7 +43,7 @@ func newFeedbackRollupCmd() *cobra.Command {
 		Use:   "rollup",
 		Short: "Aggregate agent-experience feedback events into a report (internal test harness)",
 		Long: `rollup scans the local feedback-events JSONL (written by the
-archigraph_feedback_event MCP tool) and produces an analyzable bundle:
+grafel_feedback_event MCP tool) and produces an analyzable bundle:
 outcome distribution per group, per capability, and per library, plus a ranked
 "fix queue" of the capabilities and libraries with the most wrong/missing
 outcomes.
@@ -55,8 +55,8 @@ data is local; no network calls.`,
 		},
 	}
 	cmd.Flags().StringVar(&since, "since", "", "only include events on/after this UTC date (YYYY-MM-DD); default: all")
-	cmd.Flags().StringVar(&outDir, "out", "", "output directory (default: ~/.archigraph/feedback/rollup-<timestamp>)")
-	cmd.Flags().StringVar(&eventsDir, "events-dir", "", "events directory (default: ~/.archigraph/events)")
+	cmd.Flags().StringVar(&outDir, "out", "", "output directory (default: ~/.grafel/feedback/rollup-<timestamp>)")
+	cmd.Flags().StringVar(&eventsDir, "events-dir", "", "events directory (default: ~/.grafel/events)")
 	return cmd
 }
 
@@ -68,10 +68,10 @@ func runFeedbackRollup(cmd *cobra.Command, since, outDir, eventsDir string) erro
 		return fmt.Errorf("feedback rollup: resolve home: %w", err)
 	}
 	if eventsDir == "" {
-		eventsDir = filepath.Join(home, ".archigraph", "events")
+		eventsDir = filepath.Join(home, ".grafel", "events")
 	}
 	if outDir == "" {
-		outDir = filepath.Join(home, ".archigraph", "feedback",
+		outDir = filepath.Join(home, ".grafel", "feedback",
 			"rollup-"+time.Now().UTC().Format("20060102-150405"))
 	}
 
@@ -230,7 +230,7 @@ func buildFixQueue(m map[string]map[string]int, dim string) []fixQueueItem {
 
 func renderFeedbackMarkdown(r feedbackRollup, since string) string {
 	var b strings.Builder
-	b.WriteString("# archigraph feedback rollup\n\n")
+	b.WriteString("# grafel feedback rollup\n\n")
 	if since != "" {
 		fmt.Fprintf(&b, "Events since **%s**. ", since)
 	}

@@ -51,7 +51,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // navigatorFactoryNames is the set of React-Navigation navigator factory

@@ -23,9 +23,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ func (s *Server) dispatchRebuild(w http.ResponseWriter, group, repo string, wipe
 	c, err := client.Dial()
 	if err != nil {
 		writeErr(w, http.StatusServiceUnavailable,
-			"daemon not reachable — run 'archigraph start' first")
+			"daemon not reachable — run 'grafel start' first")
 		return
 	}
 	c.Close() // close probe connection; goroutine will open its own

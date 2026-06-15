@@ -3,7 +3,7 @@ package resolve
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #3936 — a scope-local synthetic DISCRIMINATES_ON stub ("var:order",

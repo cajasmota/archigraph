@@ -3,8 +3,8 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // helper: build a doc from entities (no pre-existing edges).

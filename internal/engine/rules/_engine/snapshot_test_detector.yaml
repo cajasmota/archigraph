@@ -18,6 +18,6 @@ description: >-
   pytest-snapshot/snapshottest/syrupy, approvals gem, insta, cupaloy/go-snapshot,
   ApprovalTests, swift-snapshot-testing, flutter_test, Mneme).
   Emits SCOPE.Pattern entities with kind=snapshot_test.
-module: archigraph.engine.rules.pattern_detectors.snapshot_test_detector
+module: grafel.engine.rules.pattern_detectors.snapshot_test_detector
 function: detect
 applies_to_function: applies_to

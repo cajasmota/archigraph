@@ -17,8 +17,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // parseTSForAlias is a minimal helper that parses TypeScript source with

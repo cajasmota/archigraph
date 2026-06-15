@@ -17,10 +17,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/mcp"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/mcp"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

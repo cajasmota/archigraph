@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // buildLombokSynthStub returns a synthetic Java source excerpt for the

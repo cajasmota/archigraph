@@ -18,13 +18,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
 )
 
-// jsonStats mirrors the cmd/archigraph JSONStats shape. Re-declared here
-// (instead of imported) because cmd/archigraph is package main, which is
+// jsonStats mirrors the cmd/grafel JSONStats shape. Re-declared here
+// (instead of imported) because cmd/grafel is package main, which is
 // not importable.
 type jsonStats struct {
 	Repo                 string         `json:"repo"`
@@ -55,7 +55,7 @@ func repoRoot(t *testing.T) string {
 	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 }
 
-// TestHarness_FixturesCorpus builds archigraph, runs `index --json-stats`
+// TestHarness_FixturesCorpus builds grafel, runs `index --json-stats`
 // against testdata/fixtures/sources/, and asserts the regression net: at least
 // some entities / relationships were extracted and the bug-rate is well
 // below the catastrophic-failure threshold. The actual ship-gate
@@ -66,13 +66,13 @@ func TestHarness_FixturesCorpus(t *testing.T) {
 		t.Skip("short mode")
 	}
 	root := repoRoot(t)
-	binName := "archigraph"
+	binName := "grafel"
 	if runtime.GOOS == "windows" {
-		binName = "archigraph.exe"
+		binName = "grafel.exe"
 	}
 	bin := filepath.Join(t.TempDir(), binName)
 
-	build := exec.Command("go", "build", "-o", bin, "./cmd/archigraph")
+	build := exec.Command("go", "build", "-o", bin, "./cmd/grafel")
 	build.Dir = root
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("go build failed: %v\n%s", err, out)
@@ -81,7 +81,7 @@ func TestHarness_FixturesCorpus(t *testing.T) {
 	corpus := filepath.Join(root, "testdata", "fixtures", "sources")
 
 	// Per ADR-0017, indexing happens inside the daemon. Point the daemon
-	// at an isolated tempdir (so this test never touches ~/.archigraph)
+	// at an isolated tempdir (so this test never touches ~/.grafel)
 	// and start it in the background; the test calls Index via RPC and
 	// stops the daemon on cleanup.
 	//

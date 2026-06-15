@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/razor" // trigger init()
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/razor" // trigger init()
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---- helpers ----------------------------------------------------------------

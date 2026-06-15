@@ -19,7 +19,7 @@
 // Pure: this is a read-only transformation over already-stamped entity
 // Properties. It does not run the LCOV or reachability passes, does not mutate
 // inputs, does not touch Kinds, and does not call the indexer/daemon. The MCP
-// surfacing (archigraph_coverage_effectiveness) and dashboard surfacing
+// surfacing (grafel_coverage_effectiveness) and dashboard surfacing
 // (#5062 / #5067) consume this report.
 //
 // HONEST degradation: an entity that is reachability-stamped but has NO line
@@ -34,7 +34,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // EffectivenessVerdict is the quadrant an entity falls into when static

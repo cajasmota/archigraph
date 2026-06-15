@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // normalizeTopLevel converts a path to a canonical form for comparison.

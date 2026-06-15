@@ -33,7 +33,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // scSttpVerbURIRe matches an sttp verb combinator whose argument is a

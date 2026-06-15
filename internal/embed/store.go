@@ -12,7 +12,7 @@ import (
 )
 
 // StoreFileName is the per-repo vector sidecar living next to graph.fb in the
-// store dir (~/.archigraph/store/<slug>/embeddings.bin). It is intentionally
+// store dir (~/.grafel/store/<slug>/embeddings.bin). It is intentionally
 // separate from graph.json/graph.fb to keep cold-start cost predictable
 // (ADR-0006: vectors in a sidecar) and to allow loading vectors lazily.
 const StoreFileName = "embeddings.bin"

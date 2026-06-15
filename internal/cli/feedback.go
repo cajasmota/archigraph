@@ -11,14 +11,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/feedback"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/feedback"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
-// newFeedbackCmd returns the cobra command for `archigraph feedback`.
+// newFeedbackCmd returns the cobra command for `grafel feedback`.
 //
 // The command generates a privacy-preserving markdown quality report from the
 // local graph (fully offline — no network calls). The report covers extractor
@@ -34,7 +34,7 @@ func newFeedbackCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "feedback",
-		Short: "Generate an anonymized quality report for sharing with archigraph maintainers",
+		Short: "Generate an anonymized quality report for sharing with grafel maintainers",
 		Long: `Generate a privacy-preserving markdown report covering:
   - Extractor coverage (entity kinds, source-window completeness, annotation coverage)
   - Orphan rate by entity kind
@@ -55,14 +55,14 @@ The user decides whether to paste it into a GitHub issue.`,
 	}
 
 	cmd.Flags().StringVar(&groupFlag, "group", "", "group name (default: inferred from current directory)")
-	cmd.Flags().StringVar(&outFlag, "out", "", "output path (default: ~/.archigraph/feedback/<group>-<timestamp>.md)")
+	cmd.Flags().StringVar(&outFlag, "out", "", "output path (default: ~/.grafel/feedback/<group>-<timestamp>.md)")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "skip confirmation prompt (for CI / scripting)")
 	cmd.AddCommand(newFeedbackRollupCmd())
 	cmd.AddCommand(newFeedbackTimelineCmd())
 	return cmd
 }
 
-// runFeedback is the implementation of `archigraph feedback`.
+// runFeedback is the implementation of `grafel feedback`.
 func runFeedback(cmd *cobra.Command, groupName, outPath string, yes bool) error {
 	w := cmd.OutOrStdout()
 
@@ -88,7 +88,7 @@ func runFeedback(cmd *cobra.Command, groupName, outPath string, yes bool) error 
 		}
 	}
 	if groupRef == nil {
-		return fmt.Errorf("feedback: group %q not found in registry (run `archigraph list` to see available groups)", groupName)
+		return fmt.Errorf("feedback: group %q not found in registry (run `grafel list` to see available groups)", groupName)
 	}
 
 	cfg, err := registry.LoadGroupConfig(groupRef.ConfigPath)
@@ -113,7 +113,7 @@ func runFeedback(cmd *cobra.Command, groupName, outPath string, yes bool) error 
 	// 4. Show confirmation prompt (skipped with --yes).
 	totalEntities, totalRels, nRepos := quickGroupStats(cfg.Repos)
 	if !yes {
-		fmt.Fprintf(w, "archigraph feedback — anonymized quality report\n")
+		fmt.Fprintf(w, "grafel feedback — anonymized quality report\n")
 		fmt.Fprintf(w, "Group: %s (%d repos, ~%d entities, ~%d relationships)\n\n",
 			groupName, nRepos, totalEntities, totalRels)
 		fmt.Fprintf(w, "What will be collected:\n")
@@ -153,7 +153,7 @@ func runFeedback(cmd *cobra.Command, groupName, outPath string, yes bool) error 
 	}
 
 	if len(docs) == 0 {
-		return fmt.Errorf("feedback: no indexed graphs found for group %q — run `archigraph index` first", groupName)
+		return fmt.Errorf("feedback: no indexed graphs found for group %q — run `grafel index` first", groupName)
 	}
 
 	// 6. Generate report.
@@ -179,7 +179,7 @@ func runFeedback(cmd *cobra.Command, groupName, outPath string, yes bool) error 
 
 	if report.IsSuppressed() {
 		fmt.Fprintf(w, "\nReport suppressed: group has fewer than 50 entities (got %d).\n", report.TotalEntities)
-		fmt.Fprintf(w, "Index a larger group and re-run `archigraph feedback`.\n")
+		fmt.Fprintf(w, "Index a larger group and re-run `grafel feedback`.\n")
 		fmt.Fprintf(w, "Suppression notice written to: %s\n", outPath)
 		return nil
 	}
@@ -195,7 +195,7 @@ func runFeedback(cmd *cobra.Command, groupName, outPath string, yes bool) error 
 		report.Confidence, passing, len(report.SanityResults))
 	fmt.Fprintf(w, "\nVerify the report by opening the .md file and scanning for any unhashed paths or\n")
 	fmt.Fprintf(w, "identifiers before sharing. Then file a GitHub issue using the template at:\n")
-	fmt.Fprintf(w, "  https://github.com/cajasmota/archigraph/issues/new?template=feedback-report.yml\n")
+	fmt.Fprintf(w, "  https://github.com/cajasmota/grafel/issues/new?template=feedback-report.yml\n")
 	return nil
 }
 

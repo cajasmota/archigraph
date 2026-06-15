@@ -67,8 +67,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -113,7 +113,7 @@ var (
 )
 
 func (e *daggerHiltExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.dagger_hilt.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

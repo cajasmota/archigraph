@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // mkDoc builds a minimal Document for apply-path tests. Entities a/b/c

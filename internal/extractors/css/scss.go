@@ -23,8 +23,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // scssVarRE matches SCSS variable declarations: $name: value

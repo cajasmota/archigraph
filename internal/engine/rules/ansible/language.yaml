@@ -34,6 +34,6 @@ meta:
     YAML with hosts: + tasks: or roles: at top level, 3) roles/ directory with standard
     subdirs (tasks/, handlers/, templates/, vars/, defaults/), 4) galaxy.yml (collection
     root), 5) inventory files in hosts, inventory.yml, or inventory.ini format. All
-    extracted entities should map to archigraph SCOPE.Service.
+    extracted entities should map to grafel SCOPE.Service.
 
     '

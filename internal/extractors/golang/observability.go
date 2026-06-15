@@ -45,7 +45,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // goInstrHit captures one non-OTel instrumentation site (span or metric).

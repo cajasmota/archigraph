@@ -25,8 +25,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // refFlagUsage is the canonical --ref help string shared across all commands
@@ -76,7 +76,7 @@ func resolveRef(rawRef string, allowAll bool) (resolved string, isAll bool, err 
 	// Not found.
 	if len(known) == 0 {
 		return "", false, fmt.Errorf(
-			"ref %q not found in the graph store (no refs indexed yet; run 'archigraph index')",
+			"ref %q not found in the graph store (no refs indexed yet; run 'grafel index')",
 			rawRef,
 		)
 	}

@@ -1,4 +1,4 @@
 workspace(name = "myapp")
 
-# Example Bazel workspace used by archigraph M6 tests.
+# Example Bazel workspace used by grafel M6 tests.
 # This file's presence marks the repo root for bazel query tooling.

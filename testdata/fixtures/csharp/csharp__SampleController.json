@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs",
   "language": "csharp",
   "entities": [
     {
@@ -123,8 +123,8 @@
       }
     },
     {
-      "name": "ApiController@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:8",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:ApiController:8",
+      "name": "ApiController@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:8",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:ApiController:8",
       "kind": "SCOPE.Pattern",
       "start_line": 8,
       "end_line": 8,
@@ -142,8 +142,8 @@
       }
     },
     {
-      "name": "Route@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:9",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:Route:9",
+      "name": "Route@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:9",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:Route:9",
       "kind": "SCOPE.Pattern",
       "start_line": 9,
       "end_line": 9,
@@ -164,8 +164,8 @@
       }
     },
     {
-      "name": "HttpGet@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:17",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:HttpGet:17",
+      "name": "HttpGet@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:17",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:HttpGet:17",
       "kind": "SCOPE.Pattern",
       "start_line": 17,
       "end_line": 17,
@@ -186,8 +186,8 @@
       }
     },
     {
-      "name": "HttpGet@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:20",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:HttpGet:20",
+      "name": "HttpGet@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:20",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:HttpGet:20",
       "kind": "SCOPE.Pattern",
       "start_line": 20,
       "end_line": 20,
@@ -205,8 +205,8 @@
       }
     },
     {
-      "name": "HttpGet@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:23",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:HttpGet:23",
+      "name": "HttpGet@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:23",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:HttpGet:23",
       "kind": "SCOPE.Pattern",
       "start_line": 23,
       "end_line": 23,
@@ -227,8 +227,8 @@
       }
     },
     {
-      "name": "HttpPost@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:31",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:HttpPost:31",
+      "name": "HttpPost@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:31",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:HttpPost:31",
       "kind": "SCOPE.Pattern",
       "start_line": 31,
       "end_line": 31,
@@ -246,8 +246,8 @@
       }
     },
     {
-      "name": "HttpDelete@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:39",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/csharp/SampleController.cs:HttpDelete:39",
+      "name": "HttpDelete@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:39",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/csharp/SampleController.cs:HttpDelete:39",
       "kind": "SCOPE.Pattern",
       "start_line": 39,
       "end_line": 39,

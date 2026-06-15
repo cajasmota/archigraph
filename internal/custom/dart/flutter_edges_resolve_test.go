@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/dart"
+	_ "github.com/cajasmota/grafel/internal/custom/dart"
 )
 
 func isHex16(s string) bool {

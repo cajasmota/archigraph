@@ -96,7 +96,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // giraffeRouteRe matches a Giraffe route combinator preceded (on the same

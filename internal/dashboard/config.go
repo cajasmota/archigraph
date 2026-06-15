@@ -1,4 +1,4 @@
-// Package dashboard implements the `archigraph dashboard serve` subcommand:
+// Package dashboard implements the `grafel dashboard serve` subcommand:
 // a Go-native HTTP server that exposes a small read/write REST surface over
 // the local registry plus an embedded placeholder SPA. Designed to run on a
 // developer workstation only; bind defaults to loopback and auth defaults
@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // PortRange is the inclusive [Min, Max] window the server picks a random
@@ -30,7 +30,7 @@ type AuthConfig struct {
 	Token   string `json:"token,omitempty"`
 }
 
-// Config is the on-disk shape of ~/.archigraph/dashboard.json. Every field
+// Config is the on-disk shape of ~/.grafel/dashboard.json. Every field
 // has a zero-value default that produces a usable loopback server, so the
 // file does not need to exist for `dashboard serve` to work.
 type Config struct {

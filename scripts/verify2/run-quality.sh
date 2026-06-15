@@ -19,7 +19,7 @@
 #   scripts/verify2/run-quality.sh [--runs N]
 #
 # Env vars:
-#   ARCHIGRAPH_BIN   path to archigraph binary (default: auto-built)
+#   GRAFEL_BIN   path to grafel binary (default: auto-built)
 #   QUALITY_OUT_DIR  directory to write per-fixture JSON reports into
 #                    (default: reports/quality)
 #   QUALITY_RUNS     number of runs per fixture for median measurement
@@ -35,9 +35,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 export QUALITY_OUT_DIR="${QUALITY_OUT_DIR:-$REPO_ROOT/reports/quality}"
 mkdir -p "$QUALITY_OUT_DIR"
 
-# Pass ARCHIGRAPH_BIN through if set; otherwise let run.sh auto-build.
-if [[ -n "${ARCHIGRAPH_BIN:-}" ]]; then
-  export ARCHIGRAPH_BIN
+# Pass GRAFEL_BIN through if set; otherwise let run.sh auto-build.
+if [[ -n "${GRAFEL_BIN:-}" ]]; then
+  export GRAFEL_BIN
 fi
 
 # Resolve --runs: command-line flag beats QUALITY_RUNS env var beats default.

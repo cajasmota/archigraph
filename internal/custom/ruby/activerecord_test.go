@@ -7,9 +7,9 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/ruby"
+	_ "github.com/cajasmota/grafel/internal/custom/ruby"
 )
 
 // ---------------------------------------------------------------------------

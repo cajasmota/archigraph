@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func runExtract(t *testing.T, filePath, source string) []types.EntityRecord {

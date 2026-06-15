@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/java"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/java"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestIssue2062_ObjectCreationEmitsConstructorTarget verifies that

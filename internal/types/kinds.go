@@ -1,6 +1,6 @@
 package types
 
-// EntityKind enumerates the SCOPE.* entity kinds emitted by archigraph
+// EntityKind enumerates the SCOPE.* entity kinds emitted by grafel
 // extractors. Producers should use these typed constants rather than
 // free-form string literals so that drift between code and SCHEMA.md
 // (Issue #77) stays detectable at compile time.
@@ -318,10 +318,10 @@ const (
 	EntityKindSection          EntityKind = "SCOPE.Section"
 
 	// #4308/#4309 (Layer 2 of epic #4294): agent-driven semantic doc ingestion.
-	// archigraph EMITS a per-Section prompt bundle; an EXTERNAL agent runs its
-	// own LLM and returns structured results; archigraph VALIDATES + APPLIES
-	// them. archigraph itself makes NO LLM call (emit→apply candidate pattern,
-	// mirroring docgen --llm-mode and archigraph_enrichments).
+	// grafel EMITS a per-Section prompt bundle; an EXTERNAL agent runs its
+	// own LLM and returns structured results; grafel VALIDATES + APPLIES
+	// them. grafel itself makes NO LLM call (emit→apply candidate pattern,
+	// mirroring docgen --llm-mode and grafel_enrichments).
 	//
 	// EntityKindDesignDecision represents ONE agent-classified semantic node
 	// distilled from a Section — a design decision, rationale, spec, or
@@ -333,7 +333,7 @@ const (
 	EntityKindDesignDecision EntityKind = "SCOPE.DesignDecision"
 )
 
-// AllEntityKinds returns every EntityKind that archigraph extractors are
+// AllEntityKinds returns every EntityKind that grafel extractors are
 // permitted to emit. Used by tests and tooling to validate that no
 // producer leaks a free-form kind string.
 func AllEntityKinds() []EntityKind {
@@ -462,7 +462,7 @@ func IsValidEntityKind(s string) bool {
 	return false
 }
 
-// RelationshipKind enumerates the directed-edge kinds emitted by archigraph
+// RelationshipKind enumerates the directed-edge kinds emitted by grafel
 // extractors and resolvers. As with EntityKind, producers should reference
 // these constants rather than ad-hoc string literals.
 type RelationshipKind string
@@ -771,7 +771,7 @@ const (
 	//   "params"  : comma-separated param key names (omitted when empty)
 	//   "line"    : 1-indexed source line of the navigation call
 	//   "via"     : "navigation_call" (traceability tag)
-	// Phase 2 (followup): dedicated archigraph_navigates MCP query tool.
+	// Phase 2 (followup): dedicated grafel_navigates MCP query tool.
 	RelationshipKindNavigatesTo RelationshipKind = "NAVIGATES_TO"
 
 	// #2183 — Monorepo M6: Bazel BUILD-graph fusion.
@@ -840,7 +840,7 @@ const (
 	// Properties:
 	//   "line"    : 1-indexed source line of the comparison
 	//   "literal" : RHS literal value as a string (e.g. "2", "periodic")
-	// Surfaced by archigraph_inspect (discriminators section) and mixed into
+	// Surfaced by grafel_inspect (discriminators section) and mixed into
 	// BM25 doc terms so literal-value queries (e.g. "checklistType 2") rank
 	// the enclosing entity higher.
 	RelationshipKindDiscriminatesOn RelationshipKind = "DISCRIMINATES_ON"
@@ -1300,7 +1300,7 @@ const (
 	//   RATIONALE_FOR : SCOPE.DesignDecision → code entity. Emitted by the
 	//                   apply step when an external agent classifies a Section
 	//                   as stating a design decision / rationale / spec that
-	//                   justifies a referenced code entity. archigraph only
+	//                   justifies a referenced code entity. grafel only
 	//                   VALIDATES (the target entity must exist in the current
 	//                   graph) and APPLIES what the agent produced — no LLM
 	//                   call. The DesignDecision→Section anchoring uses the

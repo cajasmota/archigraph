@@ -15,7 +15,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // Broker entity kinds (suffix after stripping the optional "SCOPE." prefix).

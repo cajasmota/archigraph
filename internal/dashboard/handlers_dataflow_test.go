@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/links"
+	"github.com/cajasmota/grafel/internal/links"
 )
 
 // TestDataflowConfidenceFloorMatchesProducer asserts the dashboard's surfaced

@@ -10,10 +10,10 @@ description: >-
   Extracts Redis cache key patterns from application code.
   Emits SCOPE.Pattern entities with kind=cache_key, key_pattern, operation,
   and client_library properties.
-module: archigraph.engine.rules.pattern_detectors.redis_key_extractor
+module: grafel.engine.rules.pattern_detectors.redis_key_extractor
 class: RedisKeyExtractor
 category: cache_key
-registration: archigraph/engine/rules/pattern_detectors/__init__.py
+registration: grafel/engine/rules/pattern_detectors/__init__.py
 otel_span: indexer.redis_key_extract
 otel_attributes:
   - key_count

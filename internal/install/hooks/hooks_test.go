@@ -18,14 +18,14 @@ func gitRepo(t *testing.T) string {
 
 func TestInstallIdempotent(t *testing.T) {
 	repo := gitRepo(t)
-	if err := Install(repo, "/usr/local/bin/archigraph"); err != nil {
+	if err := Install(repo, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	first, err := os.ReadFile(filepath.Join(repo, ".git/hooks/post-commit"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := Install(repo, "/usr/local/bin/archigraph"); err != nil {
+	if err := Install(repo, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	second, _ := os.ReadFile(filepath.Join(repo, ".git/hooks/post-commit"))
@@ -49,7 +49,7 @@ func TestInstallIdempotent(t *testing.T) {
 // path, and does NOT hardcode the registered repo path. This ensures that when
 // the hook fires inside a worktree it indexes that worktree's branch, not main.
 func TestBlockForWorktreeResolution(t *testing.T) {
-	const binPath = "/usr/local/bin/archigraph"
+	const binPath = "/usr/local/bin/grafel"
 	const registeredRepo = "/home/user/myrepo"
 	const group = "mygroup"
 
@@ -114,7 +114,7 @@ func assertRebaseGuard(t *testing.T, hookName, block string) {
 // Install call) uses runtime worktree resolution and preserves the managed markers.
 func TestInstallWorktreeResolution(t *testing.T) {
 	repo := gitRepo(t)
-	const binPath = "/usr/local/bin/archigraph"
+	const binPath = "/usr/local/bin/grafel"
 	if err := Install(repo, binPath, "mygroup"); err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestInstallPreservesUserContent(t *testing.T) {
 	if err := os.WriteFile(hookPath, []byte(user), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Install(repo, "/bin/archigraph"); err != nil {
+	if err := Install(repo, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	got, _ := os.ReadFile(hookPath)

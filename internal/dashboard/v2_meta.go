@@ -14,7 +14,7 @@ package dashboard
 import (
 	"net/http"
 
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // v2MetaReply is the data payload inside the v2 envelope for /api/v2/meta.

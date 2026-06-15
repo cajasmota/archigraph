@@ -31,8 +31,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -110,7 +110,7 @@ func ntexScopePrefix(src string, routeOff int) string {
 }
 
 func (e *ntexExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.ntex_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -267,7 +267,7 @@ func locoPrefix(src string, routeOff int) string {
 }
 
 func (e *locoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.loco_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -356,7 +356,7 @@ var (
 )
 
 func (e *shuttleExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.shuttle_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

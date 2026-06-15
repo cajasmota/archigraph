@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func goDIEdges(t *testing.T, src string) []types.RelationshipRecord {

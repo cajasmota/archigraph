@@ -12,7 +12,7 @@
 package daemon
 
 import (
-	"github.com/cajasmota/archigraph/internal/daemon/worktree"
+	"github.com/cajasmota/grafel/internal/daemon/worktree"
 )
 
 // makeWorktreeEnqueueGate returns a sched.SkipEnqueueFn-compatible predicate

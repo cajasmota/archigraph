@@ -1,4 +1,4 @@
-// license_tools.go — MCP handler for archigraph_license_audit (#1334).
+// license_tools.go — MCP handler for grafel_license_audit (#1334).
 //
 // Reads ExternalPackage / external_dependency entities from loaded graph docs,
 // enriches each with detected license metadata, flags incompatible combinations
@@ -15,7 +15,7 @@
 // The project license is inferred from the repo root (LICENSE file, package.json,
 // pyproject.toml, Cargo.toml).
 //
-// Registered MCP tool: archigraph_license_audit
+// Registered MCP tool: grafel_license_audit
 package mcp
 
 import (
@@ -23,11 +23,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/licenses"
+	"github.com/cajasmota/grafel/internal/licenses"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handleLicenseAudit is the MCP handler for archigraph_license_audit.
+// handleLicenseAudit is the MCP handler for grafel_license_audit.
 func (s *Server) handleLicenseAudit(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {

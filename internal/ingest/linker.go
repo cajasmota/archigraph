@@ -211,7 +211,7 @@ func isIdentByte(b byte) bool {
 }
 
 // skipWords are tokens that must never be linked even when an entity shares the
-// name: programming keywords across the languages archigraph indexes, plus a
+// name: programming keywords across the languages grafel indexes, plus a
 // handful of extremely common English/prose words that frequently appear in
 // documentation. Kept explicit and lowercase; matching is case-insensitive for
 // the skip check only (entity matching itself stays case-sensitive).

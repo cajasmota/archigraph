@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4487 — contract specs name the endpoint in their describe/it label and

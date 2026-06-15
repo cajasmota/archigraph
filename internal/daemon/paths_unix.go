@@ -13,24 +13,24 @@ func isWindowsPipePath(_ string) bool { return false }
 
 // selectSocketPath returns a suitable Unix-domain socket path, trying
 // XDG_RUNTIME_DIR first (Linux standard) then falling back to
-// ~/.archigraph/sockets. Returns an error if both candidate paths exceed
+// ~/.grafel/sockets. Returns an error if both candidate paths exceed
 // the kernel's sun_path limit (104 bytes on most Unix systems).
 func selectSocketPath() (string, error) {
 	// Prefer XDG_RUNTIME_DIR when set — common on Linux desktop sessions.
 	xdgRuntime := os.Getenv("XDG_RUNTIME_DIR")
 	if xdgRuntime != "" {
-		path := filepath.Join(xdgRuntime, "archigraph", "daemon.sock")
+		path := filepath.Join(xdgRuntime, "grafel", "daemon.sock")
 		if len(path) <= UnixSocketPathMax {
 			return path, nil
 		}
 	}
 
-	// Fall back to ~/.archigraph/sockets/daemon.sock
+	// Fall back to ~/.grafel/sockets/daemon.sock
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	path := filepath.Join(home, ".archigraph", "sockets", "daemon.sock")
+	path := filepath.Join(home, ".grafel", "sockets", "daemon.sock")
 	if len(path) <= UnixSocketPathMax {
 		return path, nil
 	}
@@ -44,7 +44,7 @@ func selectSocketPath() (string, error) {
 // startup invoke EnsureLayout. We split the two so client-side code
 // (which only reads the socket path) does not have to be a writer.
 //
-// When ARCHIGRAPH_DAEMON_ROOT is set, that directory replaces ~/.archigraph
+// When GRAFEL_DAEMON_ROOT is set, that directory replaces ~/.grafel
 // for all paths in the returned layout. This is used exclusively by tests.
 func DefaultLayout() (Layout, error) {
 	root := os.Getenv(EnvRoot)
@@ -71,7 +71,7 @@ func DefaultLayout() (Layout, error) {
 	if err != nil {
 		return Layout{}, err
 	}
-	root = filepath.Join(home, ".archigraph")
+	root = filepath.Join(home, ".grafel")
 	// See no-rotation contract in layoutFromRoot (paths.go).
 	return Layout{
 		Root:       root,

@@ -2,13 +2,13 @@
 //
 // The `generate-docs` skill used to write its markdown into each repo's
 // `<repo>/docs/` directory. That created commit noise in source repos and
-// violated the #1626 principle that archigraph never writes into the working
+// violated the #1626 principle that grafel never writes into the working
 // tree of a registered repo.
 //
-// As of #1624 generated docs live under an archigraph-managed location:
+// As of #1624 generated docs live under an grafel-managed location:
 //
-//	$ARCHIGRAPH_HOME (or ~/.archigraph)/docs/<group>/<repoSlug>/...   (technical tier, per-repo)
-//	$ARCHIGRAPH_HOME (or ~/.archigraph)/docs/<group>/business/...     (business tier, group-synthesised)
+//	$GRAFEL_HOME (or ~/.grafel)/docs/<group>/<repoSlug>/...   (technical tier, per-repo)
+//	$GRAFEL_HOME (or ~/.grafel)/docs/<group>/business/...     (business tier, group-synthesised)
 //
 // `<repoSlug>` matches the repo slug used by the registry / group config so the
 // dashboard layer can address a repo's docs without recomputing path hashes.
@@ -23,7 +23,7 @@ import (
 )
 
 // DocsDir returns the root of the daemon's external docs store —
-// `$ARCHIGRAPH_HOME (or ~/.archigraph)/docs`. New code MUST use this helper
+// `$GRAFEL_HOME (or ~/.grafel)/docs`. New code MUST use this helper
 // (or one of the per-group / per-repo wrappers) instead of joining paths to
 // the repo working tree.
 func DocsDir() string {
@@ -31,7 +31,7 @@ func DocsDir() string {
 }
 
 // GroupDocsDir returns the docs root for a single group:
-// `~/.archigraph/docs/<group>`. The returned path is NOT created.
+// `~/.grafel/docs/<group>`. The returned path is NOT created.
 func GroupDocsDir(group string) string {
 	if group == "" {
 		return ""
@@ -40,7 +40,7 @@ func GroupDocsDir(group string) string {
 }
 
 // RepoDocsDir returns the technical-tier per-repo docs directory:
-// `~/.archigraph/docs/<group>/<repoSlug>`.
+// `~/.grafel/docs/<group>/<repoSlug>`.
 func RepoDocsDir(group, repoSlug string) string {
 	if group == "" || repoSlug == "" {
 		return ""
@@ -49,7 +49,7 @@ func RepoDocsDir(group, repoSlug string) string {
 }
 
 // BusinessDocsDir returns the business-tier docs directory for a group:
-// `~/.archigraph/docs/<group>/business`. The business tier is group-
+// `~/.grafel/docs/<group>/business`. The business tier is group-
 // synthesised, not per-repo.
 func BusinessDocsDir(group string) string {
 	if group == "" {
@@ -92,7 +92,7 @@ func looksLikeSkillGeneratedDocs(dir string) bool {
 
 // MigrateInRepoDocs relocates a pre-#1624 `<repo>/docs/` directory produced
 // by the generate-docs skill into the new store layout
-// `~/.archigraph/docs/<group>/<repoSlug>/`. It is a no-op when:
+// `~/.grafel/docs/<group>/<repoSlug>/`. It is a no-op when:
 //
 //   - the legacy dir does not exist,
 //   - the legacy dir does not look like skill-generated output, or

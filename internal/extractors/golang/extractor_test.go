@@ -9,9 +9,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsgo "github.com/smacker/go-tree-sitter/golang"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/golang" // trigger init()
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/golang" // trigger init()
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---- helpers ----------------------------------------------------------------

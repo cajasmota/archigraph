@@ -1,7 +1,7 @@
 // coverage_freshness.go — shared coverage-freshness signal for the coverage MCP
 // tools (#5068).
 //
-// archigraph can ingest a real line-coverage report (LCOV / Cobertura / JaCoCo,
+// grafel can ingest a real line-coverage report (LCOV / Cobertura / JaCoCo,
 // #5036) and stamp `coverage_source` / `coverage_measured_at` onto entities at
 // index time (#5061). That ingested measurement can go STALE: if the source is
 // re-indexed after the coverage report was produced, the report predates the
@@ -25,7 +25,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
+	"github.com/cajasmota/grafel/internal/coverage"
 )
 
 // coverageFreshness is the freshness verdict for a group's ingested
@@ -126,7 +126,7 @@ func renderCoverageFreshness(f coverageFreshness) string {
 	if !f.ingested {
 		out += "_No coverage report ingested for this group_ — the counts above are " +
 			"static reach-coverage (graph-derived TESTS edges), not a measured line %. " +
-			"To ingest real line coverage, point archigraph at your lcov/cobertura/jacoco " +
+			"To ingest real line coverage, point grafel at your lcov/cobertura/jacoco " +
 			"report (coverage.report_paths) and re-index.\n"
 		return out
 	}

@@ -54,7 +54,7 @@ package elixir
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // grpcElixirAuthMethod is the auth_method value stamped on a grpc-elixir method
@@ -99,12 +99,12 @@ type grpcElixirAuthResult struct {
 	// in the file and WIRED into an intercept/interceptors registration.
 	enforced bool
 	// symbol is the interceptor module name credited as the auth enforcer (the
-	// auth_middleware MCP archigraph_auth_coverage signal-1 value).
+	// auth_middleware MCP grafel_auth_coverage signal-1 value).
 	symbol string
 }
 
 // grpcElixirStampAuth stamps the auth_required / auth_method / auth_confidence /
-// auth_middleware (the MCP archigraph_auth_coverage signal-1 key) /
+// auth_middleware (the MCP grafel_auth_coverage signal-1 key) /
 // auth_enforcer_kind properties on a gRPC entity when the file's auth verdict is
 // enforced. No-op otherwise — append-property-only, never clobbers.
 func grpcElixirStampAuth(e *types.EntityRecord, auth grpcElixirAuthResult) {

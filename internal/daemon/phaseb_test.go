@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
 )
 
 // runDaemonWithPhaseBForTest spins up daemon.Run with a synthetic
@@ -66,10 +66,10 @@ func TestPhaseB_FileWriteTriggersReindex(t *testing.T) {
 	}
 	// fsnotify on macOS /var/folders (where t.TempDir lives) is flaky in
 	// sandboxed CI/test runs — events do not always reach the watcher
-	// within the debounce window. Opt-in via ARCHIGRAPH_FSNOTIFY_TESTS=1
+	// within the debounce window. Opt-in via GRAFEL_FSNOTIFY_TESTS=1
 	// when running on a host where fsnotify is known to work end-to-end.
-	if os.Getenv("ARCHIGRAPH_FSNOTIFY_TESTS") != "1" {
-		t.Skip("set ARCHIGRAPH_FSNOTIFY_TESTS=1 to run fsnotify-backed phaseb tests")
+	if os.Getenv("GRAFEL_FSNOTIFY_TESTS") != "1" {
+		t.Skip("set GRAFEL_FSNOTIFY_TESTS=1 to run fsnotify-backed phaseb tests")
 	}
 	repo := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(repo, "src"), 0o755); err != nil {
@@ -124,9 +124,9 @@ func TestPhaseB_RapidWritesCoalesce(t *testing.T) {
 		t.Skip("skipping in short mode")
 	}
 	// See TestPhaseB_FileWriteTriggersReindex for the rationale on the
-	// ARCHIGRAPH_FSNOTIFY_TESTS gate.
-	if os.Getenv("ARCHIGRAPH_FSNOTIFY_TESTS") != "1" {
-		t.Skip("set ARCHIGRAPH_FSNOTIFY_TESTS=1 to run fsnotify-backed phaseb tests")
+	// GRAFEL_FSNOTIFY_TESTS gate.
+	if os.Getenv("GRAFEL_FSNOTIFY_TESTS") != "1" {
+		t.Skip("set GRAFEL_FSNOTIFY_TESTS=1 to run fsnotify-backed phaseb tests")
 	}
 	repo := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(repo, "src"), 0o755); err != nil {

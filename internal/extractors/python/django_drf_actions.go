@@ -48,8 +48,8 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitDRFActionProperties walks every class_definition in root and, for each
@@ -150,7 +150,7 @@ func scanClassBodyForActions(body *sitter.Node, parentClass string, file extract
 			}
 			// #3628 area #6 — endpoint protection. Normalise the @action's
 			// permission_classes into the cross-framework auth contract so the
-			// parity oracle / archigraph_auth_coverage reads DRF action guards the
+			// parity oracle / grafel_auth_coverage reads DRF action guards the
 			// same way as Spring/FastAPI/Express.
 			stampDRFActionAuth(op.Properties)
 		}

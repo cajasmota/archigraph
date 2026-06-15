@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
-	"github.com/cajasmota/archigraph/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // extractResult holds extracted entity fields for assertion.

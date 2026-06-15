@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // TestEveryRegisteredCustomKeyDispatches is the dispatch-parity guard.

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findEndpoint returns the first http_endpoint_definition entity with the

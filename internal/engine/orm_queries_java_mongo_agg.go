@@ -57,7 +57,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoAggJavaGateRe gates the scan to files that plausibly use Spring Data

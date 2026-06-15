@@ -3,8 +3,8 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/links"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/links"
 )
 
 // TestBuildEffectsPayload_SidecarWins is the #2804 regression at the MCP

@@ -3,7 +3,7 @@ package links
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestPromoteToPhantomEdges_BasicHTTP verifies that a CALLS/http Link

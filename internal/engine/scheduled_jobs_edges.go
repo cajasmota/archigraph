@@ -37,7 +37,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // scheduledJobKind is the entity kind for scheduled-job entry points.

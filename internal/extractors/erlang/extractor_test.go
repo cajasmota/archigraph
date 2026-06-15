@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/erlang"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/erlang"
 )
 
 // genServerFixture is a minimal OTP gen_server used as a fixture for recall tests.

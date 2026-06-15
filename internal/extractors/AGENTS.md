@@ -1,6 +1,6 @@
 # Language extractors — agent guide
 
-Per-language extractors that lift source into archigraph entities + edges. One sibling directory per language; everything else is shared scaffolding.
+Per-language extractors that lift source into grafel entities + edges. One sibling directory per language; everything else is shared scaffolding.
 
 ## Conventions
 

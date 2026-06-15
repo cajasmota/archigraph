@@ -15,7 +15,7 @@ package resolve
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func resolveDotted(t *testing.T, recs []types.EntityRecord, dotted string) (string, bool) {

@@ -22,7 +22,7 @@ package enrichment
 //
 // Each detected entity is emitted as an enrichment Candidate of kind
 // KindDynamicBaseURLEndpoint with category "cross-repo runtime". The
-// candidates appear in archigraph_repairs action=list so an agent can
+// candidates appear in grafel_repairs action=list so an agent can
 // submit a baseURL hint via the repairs/enrichments curation surface.
 //
 // After annotation the link pass re-runs against the curated baseURL and
@@ -37,7 +37,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // KindDynamicBaseURLEndpoint is the enrichment candidate kind for
@@ -46,7 +46,7 @@ import (
 const KindDynamicBaseURLEndpoint = "dynamic_baseurl_endpoint"
 
 // CategoryCrossRepoRuntime is the category string written to every
-// dynamic-baseurl candidate's context so archigraph_repairs consumers can
+// dynamic-baseurl candidate's context so grafel_repairs consumers can
 // filter by category.
 const CategoryCrossRepoRuntime = "cross-repo runtime"
 

@@ -9,11 +9,11 @@ import (
 	"os"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Blank import to trigger init() registrations.
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
 )
 
 // extractFull runs the named extractor and returns full EntityRecord slice.

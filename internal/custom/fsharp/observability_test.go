@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // logExtract runs the F# observability extractor and returns its records.

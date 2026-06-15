@@ -26,7 +26,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // isGoInlineHandlerToken reports whether a handler token captured by a Go HTTP

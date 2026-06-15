@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
 )
 
 // Issue #4488 LIVE-REPRO — response DTO shape resolution + void labeling.

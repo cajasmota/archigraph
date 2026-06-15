@@ -34,9 +34,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ── /api/groups/:g/stats ─────────────────────────────────────────────────────

@@ -2,9 +2,9 @@ package cli
 
 // Tests for the storage-discipline helpers introduced by #2190 and the
 // output-discipline helpers introduced by #2194:
-//   - `archigraph docgen migrate-in-repo`   (#2190)
-//   - `archigraph docgen audit`             (#2190)
-//   - `archigraph docgen cleanup-scaffolding` (#2194)
+//   - `grafel docgen migrate-in-repo`   (#2190)
+//   - `grafel docgen audit`             (#2190)
+//   - `grafel docgen cleanup-scaffolding` (#2194)
 //   - ssgArtifactReason / findSSGScaffoldingArtifacts unit tests
 //
 // Fixtures use synthetic ("client-fixture-X") directory names — no real
@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // makeFixtureGroup creates a synthetic group config under tmpDir that
@@ -188,9 +188,9 @@ func TestMigrateInRepo_MovesDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Override ARCHIGRAPH_HOME to a temp dir so we don't touch real user state.
+	// Override GRAFEL_HOME to a temp dir so we don't touch real user state.
 	storeRoot := filepath.Join(tmpDir, "store")
-	t.Setenv("ARCHIGRAPH_HOME", storeRoot)
+	t.Setenv("GRAFEL_HOME", storeRoot)
 
 	// Build the cobra command tree.
 	root := newRoot()
@@ -227,7 +227,7 @@ func TestMigrateInRepo_IdempotentSkipsExisting(t *testing.T) {
 	srcDocs := plantDocgenMarker(t, repoA, ".plan.md")
 
 	storeRoot := filepath.Join(tmpDir, "store")
-	t.Setenv("ARCHIGRAPH_HOME", storeRoot)
+	t.Setenv("GRAFEL_HOME", storeRoot)
 
 	// Pre-create the target so the idempotency guard triggers.
 	targetDocs := filepath.Join(storeRoot, "docs", "fixture-group", "client-fixture-a")
@@ -259,7 +259,7 @@ func TestDocgenAudit_ReportsWithoutMoving(t *testing.T) {
 	srcDocs := plantDocgenMarker(t, repoA, ".inventory.json")
 
 	storeRoot := filepath.Join(tmpDir, "store")
-	t.Setenv("ARCHIGRAPH_HOME", storeRoot)
+	t.Setenv("GRAFEL_HOME", storeRoot)
 	seedRegistry(t, tmpDir, cfgPath)
 
 	root := newRoot()
@@ -290,7 +290,7 @@ func TestDocgenAudit_CleanGroupReturnsNil(t *testing.T) {
 	// No docgen markers planted.
 
 	storeRoot := filepath.Join(tmpDir, "store")
-	t.Setenv("ARCHIGRAPH_HOME", storeRoot)
+	t.Setenv("GRAFEL_HOME", storeRoot)
 	seedRegistry(t, tmpDir, cfgPath)
 
 	root := newRoot()
@@ -310,7 +310,7 @@ func TestDoctorAuditDocs_ReportsOffenders(t *testing.T) {
 	plantDocgenMarker(t, repoA, ".plan.md")
 
 	storeRoot := filepath.Join(tmpDir, "store")
-	t.Setenv("ARCHIGRAPH_HOME", storeRoot)
+	t.Setenv("GRAFEL_HOME", storeRoot)
 	seedRegistry(t, tmpDir, cfgPath)
 
 	root := newRoot()
@@ -334,7 +334,7 @@ func TestDoctorAuditDocs_ReportsOffenders(t *testing.T) {
 
 func TestDocsDirFor(t *testing.T) {
 	storeRoot := filepath.Join(t.TempDir(), "store")
-	t.Setenv("ARCHIGRAPH_HOME", storeRoot)
+	t.Setenv("GRAFEL_HOME", storeRoot)
 
 	got, err := DocsDirFor("my-group")
 	if err != nil {
@@ -354,7 +354,7 @@ func TestDocsDirFor(t *testing.T) {
 // resolveGroup("fixture-group") works in tests.
 func seedRegistry(t *testing.T, tmpDir, cfgPath string) {
 	t.Helper()
-	storeRoot := os.Getenv("ARCHIGRAPH_HOME")
+	storeRoot := os.Getenv("GRAFEL_HOME")
 	if storeRoot == "" {
 		storeRoot = filepath.Join(tmpDir, "store")
 	}
@@ -527,7 +527,7 @@ func TestFindSSGScaffoldingArtifacts_MultipleRoots(t *testing.T) {
 func TestCleanupScaffoldingCmd_RemovesArtifactsWithYes(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfgPath, repoA, _ := makeFixtureGroup(t, tmpDir)
-	t.Setenv("ARCHIGRAPH_HOME", filepath.Join(tmpDir, "store"))
+	t.Setenv("GRAFEL_HOME", filepath.Join(tmpDir, "store"))
 	seedRegistry(t, tmpDir, cfgPath)
 
 	// Plant a .vitepress dir in repoA/docs/ (simulating a misbehaving agent).
@@ -573,7 +573,7 @@ func TestCleanupScaffoldingCmd_RemovesArtifactsWithYes(t *testing.T) {
 func TestCleanupScaffoldingCmd_NoArtifacts(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfgPath, repoA, _ := makeFixtureGroup(t, tmpDir)
-	t.Setenv("ARCHIGRAPH_HOME", filepath.Join(tmpDir, "store"))
+	t.Setenv("GRAFEL_HOME", filepath.Join(tmpDir, "store"))
 	seedRegistry(t, tmpDir, cfgPath)
 
 	// Clean docs dir (only markdown).

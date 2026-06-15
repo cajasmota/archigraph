@@ -1,18 +1,18 @@
-// uninstall.go implements `archigraph uninstall` (issue #2213).
+// uninstall.go implements `grafel uninstall` (issue #2213).
 //
 // Uninstall is the symmetric inverse of RunCopy / RunDev:
 //  1. Read install.json for the list of owned skills and MCP paths.
 //  2. Remove copied/linked skills from ~/.claude/skills/<name>/ (only those in install.json).
-//  3. Deregister archigraph from MCP in every registered .claude.json.
+//  3. Deregister grafel from MCP in every registered .claude.json.
 //  4. Stop the daemon and tear down the OS service (launchd/systemd/schtasks
 //     unit, socket, pidfile) via service.Uninstall.
 //  5. Default: leave the installed CLI binary in place so a subsequent
 //     install/start works without re-downloading or rebuilding (#4478).
 //     --remove-binary: also remove the CLI binary (with confirmation prompt
 //     unless --yes).
-//  6. Remove ~/.archigraph/install.json.
-//  7. Default: leave ~/.archigraph/store/ intact.
-//     --purge: also remove ~/.archigraph/store/ and ~/.archigraph/docs/.
+//  6. Remove ~/.grafel/install.json.
+//  7. Default: leave ~/.grafel/store/ intact.
+//     --purge: also remove ~/.grafel/store/ and ~/.grafel/docs/.
 //
 // All steps are idempotent: missing files are silently skipped.
 // If no install.json is found the command exits 0 (nothing to do).
@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon/service"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
 )
 
 // UninstallOptions controls RunUninstall behaviour.
@@ -36,8 +36,8 @@ type UninstallOptions struct {
 	// Defaults to DefaultStatePath().
 	StatePath string
 
-	// Purge, when true, also removes ~/.archigraph/store/ and
-	// ~/.archigraph/docs/ in addition to the install artifacts.
+	// Purge, when true, also removes ~/.grafel/store/ and
+	// ~/.grafel/docs/ in addition to the install artifacts.
 	Purge bool
 
 	// RemoveBinary, when true, removes the installed CLI binary as part of
@@ -81,10 +81,10 @@ type UninstallResult struct {
 	// StateRemoved is true when install.json was removed.
 	StateRemoved bool
 
-	// StoreRemoved is true when ~/.archigraph/store/ was removed (--purge only).
+	// StoreRemoved is true when ~/.grafel/store/ was removed (--purge only).
 	StoreRemoved bool
 
-	// DocsRemoved is true when ~/.archigraph/docs/ was removed (--purge only).
+	// DocsRemoved is true when ~/.grafel/docs/ was removed (--purge only).
 	DocsRemoved bool
 }
 
@@ -154,13 +154,13 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 		for skillName := range state.Skills {
 			dst := filepath.Join(skillsDestDir, skillName)
 			if opts.DryRun {
-				fmt.Fprintf(os.Stderr, "archigraph uninstall (dry-run): would remove skill %s\n", dst)
+				fmt.Fprintf(os.Stderr, "grafel uninstall (dry-run): would remove skill %s\n", dst)
 				removedSet[skillName] = true
 				continue
 			}
 			if _, err := os.Lstat(dst); err == nil {
 				if err := os.RemoveAll(dst); err != nil {
-					fmt.Fprintf(os.Stderr, "archigraph uninstall: remove skill %s: %v\n", dst, err)
+					fmt.Fprintf(os.Stderr, "grafel uninstall: remove skill %s: %v\n", dst, err)
 				} else {
 					removedSet[skillName] = true
 				}
@@ -174,12 +174,12 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 	// ── Step 2: Deregister MCP ────────────────────────────────────────────────
 	for _, cfgPath := range state.MCP.RegisteredPaths {
 		if opts.DryRun {
-			fmt.Fprintf(os.Stderr, "archigraph uninstall (dry-run): would deregister MCP from %s\n", cfgPath)
+			fmt.Fprintf(os.Stderr, "grafel uninstall (dry-run): would deregister MCP from %s\n", cfgPath)
 			result.MCPPaths = append(result.MCPPaths, cfgPath)
 			continue
 		}
 		if err := mcpreg.UnregisterPath(cfgPath); err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph uninstall: deregister MCP %s: %v\n", cfgPath, err)
+			fmt.Fprintf(os.Stderr, "grafel uninstall: deregister MCP %s: %v\n", cfgPath, err)
 		} else {
 			result.MCPPaths = append(result.MCPPaths, cfgPath)
 		}
@@ -188,7 +188,7 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 	// ── Step 3: Stop daemon ───────────────────────────────────────────────────
 	if !opts.SkipDaemonStop && !opts.DryRun {
 		if err := service.Uninstall(service.Options{}); err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph uninstall: stop daemon: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel uninstall: stop daemon: %v\n", err)
 		} else {
 			result.DaemonStopped = true
 		}
@@ -204,7 +204,7 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 			removeIt := opts.Yes || opts.DryRun
 			if !removeIt {
 				confirmed, cerr := opts.ConfirmFn(
-					fmt.Sprintf("Remove archigraph binary %s? [y/N] ", state.CLI.Path))
+					fmt.Sprintf("Remove grafel binary %s? [y/N] ", state.CLI.Path))
 				if cerr != nil {
 					return nil, fmt.Errorf("confirmation prompt: %w", cerr)
 				}
@@ -212,11 +212,11 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 			}
 
 			if opts.DryRun {
-				fmt.Fprintf(os.Stderr, "archigraph uninstall (dry-run): would remove binary %s\n", state.CLI.Path)
+				fmt.Fprintf(os.Stderr, "grafel uninstall (dry-run): would remove binary %s\n", state.CLI.Path)
 				result.BinaryRemoved = true
 			} else if removeIt {
 				if err := os.Remove(state.CLI.Path); err != nil {
-					fmt.Fprintf(os.Stderr, "archigraph uninstall: remove binary %s: %v\n", state.CLI.Path, err)
+					fmt.Fprintf(os.Stderr, "grafel uninstall: remove binary %s: %v\n", state.CLI.Path, err)
 				} else {
 					result.BinaryRemoved = true
 				}
@@ -226,11 +226,11 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 
 	// ── Step 5: Remove install.json ───────────────────────────────────────────
 	if opts.DryRun {
-		fmt.Fprintf(os.Stderr, "archigraph uninstall (dry-run): would remove %s\n", opts.StatePath)
+		fmt.Fprintf(os.Stderr, "grafel uninstall (dry-run): would remove %s\n", opts.StatePath)
 		result.StateRemoved = true
 	} else {
 		if err := os.Remove(opts.StatePath); err != nil && !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "archigraph uninstall: remove install.json: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel uninstall: remove install.json: %v\n", err)
 		} else {
 			result.StateRemoved = true
 		}
@@ -238,27 +238,27 @@ func RunUninstall(opts UninstallOptions) (*UninstallResult, error) {
 
 	// ── Step 6 (--purge): Remove store/ and docs/ ─────────────────────────────
 	if opts.Purge {
-		archigraphDir := filepath.Dir(opts.StatePath)
+		grafelDir := filepath.Dir(opts.StatePath)
 
-		storePath := filepath.Join(archigraphDir, "store")
+		storePath := filepath.Join(grafelDir, "store")
 		if opts.DryRun {
-			fmt.Fprintf(os.Stderr, "archigraph uninstall --purge (dry-run): would remove %s\n", storePath)
+			fmt.Fprintf(os.Stderr, "grafel uninstall --purge (dry-run): would remove %s\n", storePath)
 			result.StoreRemoved = true
 		} else {
 			if err := os.RemoveAll(storePath); err != nil {
-				fmt.Fprintf(os.Stderr, "archigraph uninstall --purge: remove store: %v\n", err)
+				fmt.Fprintf(os.Stderr, "grafel uninstall --purge: remove store: %v\n", err)
 			} else {
 				result.StoreRemoved = true
 			}
 		}
 
-		docsPath := filepath.Join(archigraphDir, "docs")
+		docsPath := filepath.Join(grafelDir, "docs")
 		if opts.DryRun {
-			fmt.Fprintf(os.Stderr, "archigraph uninstall --purge (dry-run): would remove %s\n", docsPath)
+			fmt.Fprintf(os.Stderr, "grafel uninstall --purge (dry-run): would remove %s\n", docsPath)
 			result.DocsRemoved = true
 		} else {
 			if err := os.RemoveAll(docsPath); err != nil {
-				fmt.Fprintf(os.Stderr, "archigraph uninstall --purge: remove docs: %v\n", err)
+				fmt.Fprintf(os.Stderr, "grafel uninstall --purge: remove docs: %v\n", err)
 			} else {
 				result.DocsRemoved = true
 			}

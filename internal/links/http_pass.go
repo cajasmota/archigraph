@@ -2455,7 +2455,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 	//   - multiple candidates OR a short/generic suffix → DO NOT guess. The
 	//     consumer stays orphaned and is surfaced as a ranked residual by the
 	//     per-repo dynamic_baseurl_endpoint enrichment candidate (#708), which
-	//     archigraph-resolve consumes. We record the candidate set on the link-
+	//     grafel-resolve consumes. We record the candidate set on the link-
 	//     pass telemetry (residual_candidates) so the resolve surface can show
 	//     candidate endpoints + confidence without re-deriving them.
 	//
@@ -2526,7 +2526,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 
 				// Specificity × uniqueness gate. Auto-link only when exactly one
 				// candidate AND the suffix is specific enough. Otherwise emit a
-				// ranked residual for archigraph-resolve and stop (no edge).
+				// ranked residual for grafel-resolve and stop (no edge).
 				if len(candidates) != 1 || leadingStatic < dynamicSuffixMinStaticSegments {
 					residualCandidates += len(candidates)
 					missesByReason["dynamic_baseurl"]++

@@ -26,7 +26,7 @@ meta:
     identical formats — OCI-compliant runtimes (Podman, Buildah, kaniko) consume both.
     The docker-compose / Compose Specification files define multi-service topologies.
     Procfile is included because it defines the process model for containerised PaaS
-    deployments (Heroku, Railway, Render, Dokku) and maps naturally to archigraph Service
-    entities. All entities extracted from these files should use archigraph SCOPE.Service.
+    deployments (Heroku, Railway, Render, Dokku) and maps naturally to grafel Service
+    entities. All entities extracted from these files should use grafel SCOPE.Service.
 
     '

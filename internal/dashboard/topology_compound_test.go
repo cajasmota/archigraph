@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // compoundFixture builds a two-repo group with code (endpoint→service→datastore

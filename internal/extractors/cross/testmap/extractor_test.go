@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ func main() { fmt.Println("hi") }`
 // Issue #2060 — TESTS edges carry a convention-derived prodFile hint at every
 // confidence so the resolver short-form path can bind (file, name) without
 // falling through to the "?" global byName lookup (which only resolves
-// globally-unique names — rare in archigraph + upvate where production
+// globally-unique names — rare in grafel + upvate where production
 // callees like `GetUser` / `create_order` collide across packages).
 // ---------------------------------------------------------------------------
 

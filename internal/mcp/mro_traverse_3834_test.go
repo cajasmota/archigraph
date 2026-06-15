@@ -29,7 +29,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -325,7 +325,7 @@ func calleeFlaggedInherits(out map[string]any, name string) bool {
 
 func writeSidecar(t *testing.T, home, group, suffix string, doc any) {
 	t.Helper()
-	dir := filepath.Join(home, ".archigraph", "groups")
+	dir := filepath.Join(home, ".grafel", "groups")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir sidecar dir: %v", err)
 	}

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/quality"
+	"github.com/cajasmota/grafel/internal/quality"
 )
 
 func TestFidelityFromBugRate(t *testing.T) {

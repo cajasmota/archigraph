@@ -1,4 +1,4 @@
-// sweeper.go — background docgen cleanup goroutine for the archigraph daemon
+// sweeper.go — background docgen cleanup goroutine for the grafel daemon
 // (issue #2216, epic #2207).
 //
 // StartDocgenSweeper launches a goroutine that calls an injected CleanupFn at
@@ -6,9 +6,9 @@
 // that would arise from importing internal/docgen here (internal/docgen itself
 // imports internal/daemon for StateDirForRepo).
 //
-// The Config.DocgenSweep hook is populated by cmd/archigraph (which imports
+// The Config.DocgenSweep hook is populated by cmd/grafel (which imports
 // both packages) and passed down into daemon.Run.  Disabled via the
-// --no-auto-cleanup flag on `archigraph start`.
+// --no-auto-cleanup flag on `grafel start`.
 package daemon
 
 import (
@@ -21,7 +21,7 @@ import (
 // DocgenSweeperConfig controls the background docgen cleanup goroutine.
 type DocgenSweeperConfig struct {
 	// CleanupFn is the function that performs the actual cleanup.
-	// It is injected from cmd/archigraph to avoid the import cycle
+	// It is injected from cmd/grafel to avoid the import cycle
 	// internal/daemon → internal/docgen → internal/daemon.
 	//
 	// The function returns (removedCount, freedBytes, error).

@@ -11,11 +11,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/watchreg"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // watchBackoffConfig tunes the standalone watcher's failure handling
@@ -74,7 +74,7 @@ func (c watchBackoffConfig) shouldDie(failures int) bool {
 
 // indexViaDaemon calls the daemon's Index RPC for one repo. Returns
 // the canonical "daemon not running" error so the watcher loop's log
-// line is identical to what `archigraph index` would print.
+// line is identical to what `grafel index` would print.
 func indexViaDaemon(repo string) error {
 	c, err := client.Dial()
 	if err != nil {
@@ -90,12 +90,12 @@ func indexViaDaemon(repo string) error {
 
 // newWatchCmd is the long-lived watcher daemon. The actual fsnotify-
 // driven loop is intentionally minimal here: it polls graph.json's
-// staleness and re-runs `archigraph index <repo>` when the repo has
+// staleness and re-runs `grafel index <repo>` when the repo has
 // been modified since the last index. We keep dependencies low until
 // PORT-7 brings in a real fsnotify-backed watcher.
 //
 // In addition to the per-repo reindex, the watcher also tracks the
-// mtime of every registered repo's `<repo>/.archigraph/graph.json`
+// mtime of every registered repo's `<repo>/.grafel/graph.json`
 // across the group(s) the watched repo participates in. Whenever any
 // of those mtimes advances, the cross-repo link passes are re-run
 // via the RunLinks hook so links.json stays in sync with the freshly
@@ -126,7 +126,7 @@ func runWatch(repo, group string, interval time.Duration) error {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
-	fmt.Fprintf(os.Stderr, "archigraph watch: %s (every %s)\n", repo, interval)
+	fmt.Fprintf(os.Stderr, "grafel watch: %s (every %s)\n", repo, interval)
 
 	// #5142: register this standalone watcher in the daemon-owned PID registry
 	// so the daemon can reap us if we are ever orphaned (our owning daemon dies
@@ -141,7 +141,7 @@ func runWatch(repo, group string, interval time.Duration) error {
 			OwnerDaemonPID: liveDaemonPID(),
 		}
 		if err := reg.Register(entry); err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph watch: pid registry register failed (non-fatal): %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel watch: pid registry register failed (non-fatal): %v\n", err)
 		} else {
 			defer func() { _ = reg.Deregister(entry.PID) }()
 		}
@@ -155,11 +155,11 @@ func runWatch(repo, group string, interval time.Duration) error {
 	// NOTE (issue #5140): this is a *staleness/cross-repo-link* signal
 	// only. The watcher deliberately does NOT treat a graph.json mtime
 	// bump as a source change that re-triggers a repo reindex — the
-	// daemon writes <repo>/.archigraph/graph.json as the OUTPUT of every
+	// daemon writes <repo>/.grafel/graph.json as the OUTPUT of every
 	// index, and reading that write back as an input would form a
 	// self-reinforcing reindex loop. The repo reindex below is driven
 	// purely by the poll tick (and, in Phase B, by the daemon's own
-	// fsnotify watcher, which already excludes <repo>/.archigraph/ via
+	// fsnotify watcher, which already excludes <repo>/.grafel/ via
 	// watch.ShouldSkipPath).
 	graphMtimes := snapshotGraphMtimes(repo, group)
 
@@ -177,14 +177,14 @@ func runWatch(repo, group string, interval time.Duration) error {
 			// once the daemon's fsnotify loop is wired in.
 			if err := indexViaDaemon(repo); err != nil {
 				consecutiveFailures++
-				fmt.Fprintf(os.Stderr, "archigraph watch: index failed (%d/%d): %v\n",
+				fmt.Fprintf(os.Stderr, "grafel watch: index failed (%d/%d): %v\n",
 					consecutiveFailures, backoff.maxConsecutive, err)
 				// Backoff + die (issue #5140): a watcher whose daemon was
 				// restarted (or is permanently gone) must not tight-loop
 				// and spam its err log forever. Exit after N consecutive
 				// failures so an orphaned watcher reaps itself.
 				if backoff.shouldDie(consecutiveFailures) {
-					return fmt.Errorf("archigraph watch: giving up after %d consecutive index failures (last: %w)",
+					return fmt.Errorf("grafel watch: giving up after %d consecutive index failures (last: %w)",
 						consecutiveFailures, err)
 				}
 				sleep := backoff.backoffSleep(consecutiveFailures)
@@ -206,7 +206,7 @@ func runWatch(repo, group string, interval time.Duration) error {
 					break
 				}
 				if err := activeHooks.RunLinks(g); err != nil {
-					fmt.Fprintf(os.Stderr, "archigraph watch: links pass failed for %s: %v\n", g, err)
+					fmt.Fprintf(os.Stderr, "grafel watch: links pass failed for %s: %v\n", g, err)
 				}
 			}
 		}

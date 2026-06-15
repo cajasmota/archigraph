@@ -3,7 +3,7 @@ package patterns
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // assertionLibDetector detects F# assertion-library usage (#5114 — the non-db

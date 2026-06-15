@@ -80,7 +80,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // featureFlagEntityKind / featureFlagEdgeKind are aliased through the typed

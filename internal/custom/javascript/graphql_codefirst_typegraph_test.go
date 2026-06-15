@@ -12,9 +12,9 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func runGqlCF(t *testing.T, path, src string) []types.EntityRecord {

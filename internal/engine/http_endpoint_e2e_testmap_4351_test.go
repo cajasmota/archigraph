@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4351 — e2e HTTP route tests (supertest route-by-string) must produce a

@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the Nim route-hit extractor so the test_suite (carrying
 	// e2e_route_calls) comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/nim"
+	_ "github.com/cajasmota/grafel/internal/custom/nim"
 )
 
 // Issue #4749 LIVE-REPRO (resolve side) — Nim std/httpclient route-hit tests.

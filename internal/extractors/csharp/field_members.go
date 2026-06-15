@@ -3,7 +3,7 @@ package csharp
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitFieldMembers returns one SCOPE.Schema/field EntityRecord per property,

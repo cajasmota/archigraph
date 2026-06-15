@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makeControlFlowFixture writes a real handler source file to a temp repo root

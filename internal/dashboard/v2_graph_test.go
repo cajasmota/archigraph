@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makeV2GraphTestServer builds a test server loaded with n fake entities.

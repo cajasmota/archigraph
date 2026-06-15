@@ -54,7 +54,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // formatLine renders a 1-based line number for property serialisation.
@@ -77,7 +77,7 @@ var resolverKindEquivalents = map[string][]string{
 }
 
 // ResolveHTTPEndpointStats reports counters for a single resolve pass.
-// Exposed so cmd/archigraph can log a stats line analogous to the
+// Exposed so cmd/grafel can log a stats line analogous to the
 // import-aware resolver line.
 type ResolveHTTPEndpointStats struct {
 	Synthetics       int // total http_endpoint* records seen
@@ -1031,8 +1031,8 @@ func itoaSmall(n int) string {
 // authorisation identity from a synthesized http_endpoint onto its handler
 // entity (deploy-9 item-3). The DRF get_permissions per-action page-key pass
 // (#3978) stamps `auth_permissions` (e.g. the PERMISSION_PAGES["JURISDICTIONS"]
-// constant key) on the endpoint, but symbol-keyed consumers — archigraph_inspect
-// / get_source on the @action method, archigraph_auth_coverage starting from the
+// constant key) on the endpoint, but symbol-keyed consumers — grafel_inspect
+// / get_source on the @action method, grafel_auth_coverage starting from the
 // handler — read the property off the handler Operation, which never carried it.
 // We copy it (plus `auth_required`, which a page-key guard always implies) at the
 // resolution site that already pairs an endpoint with its handler.

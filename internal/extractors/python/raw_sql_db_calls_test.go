@@ -13,9 +13,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractPyContent1414(t *testing.T, src, path string) []types.EntityRecord {

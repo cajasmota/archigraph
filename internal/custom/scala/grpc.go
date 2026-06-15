@@ -48,8 +48,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -140,7 +140,7 @@ var (
 )
 
 func (e *scalaGRPCExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.scala_grpc.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -361,7 +361,7 @@ func scalaGRPCResolveAuth(src string) scalaGRPCAuthInfo {
 // scalaGRPCStampAuth writes the auth property contract onto a gRPC endpoint /
 // service entity. Mirrors the cross-language auth key set (auth_required +
 // auth_method + auth_middleware MCP signal-1 + auth_confidence) so
-// archigraph_auth_coverage fires on the gRPC methods guarded by the interceptor.
+// grafel_auth_coverage fires on the gRPC methods guarded by the interceptor.
 func scalaGRPCStampAuth(e *types.EntityRecord, info scalaGRPCAuthInfo) {
 	setProps(e,
 		"auth_required", "true",

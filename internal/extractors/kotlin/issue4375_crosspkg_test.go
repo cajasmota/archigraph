@@ -17,7 +17,7 @@
 // (#4374) qualifier drops.
 //
 // These tests drive the REAL extraction + resolver passes — the same sequence
-// cmd/archigraph/index.go runs (extract per file → stamp deterministic IDs →
+// cmd/grafel/index.go runs (extract per file → stamp deterministic IDs →
 // BuildIndex → ResolveKotlinCrossPackageCalls → ReferencesEmbedded) — on a
 // faithful multi-package project that reproduces a cross-package call WITH a
 // same-named type/function collision in two packages. The collision is
@@ -33,11 +33,11 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tskotlin "github.com/smacker/go-tree-sitter/kotlin"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/kotlin"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/kotlin"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractKotlinProjectForTest(t *testing.T, files map[string]string) []types.EntityRecord {

@@ -1,12 +1,12 @@
-// Source: https://github.com/cajasmota/sample-proto (synthetic based on real archigraph gRPC service definition) | License: Apache-2.0
+// Source: https://github.com/cajasmota/sample-proto (synthetic based on real grafel gRPC service definition) | License: Apache-2.0
 
 syntax = "proto3";
 
-package archigraph.v1;
+package grafel.v1;
 
-option go_package = "github.com/cajasmota/sample-proto/gen/go/archigraph/v1;verav1";
+option go_package = "github.com/cajasmota/sample-proto/gen/go/grafel/v1;verav1";
 option java_multiple_files = true;
-option java_package = "io.archigraph.v1";
+option java_package = "io.grafel.v1";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";

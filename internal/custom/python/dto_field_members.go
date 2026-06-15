@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // dto_field_members.go — Python DTO/serializer FIELD-as-member indexing,

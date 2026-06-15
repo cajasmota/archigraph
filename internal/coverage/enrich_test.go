@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 // fixtureLCOV is a tiny LCOV report: src/svc.go has lines 10-13 instrumented,
@@ -83,11 +83,11 @@ func TestEnrich_EndToEnd(t *testing.T) {
 
 	// Persist to graph.fb and reload — proving the stamped Properties survive
 	// the serializer round-trip (the persistence requirement of #5061).
-	fbPath := filepath.Join(repo, ".archigraph", "graph.fb")
+	fbPath := filepath.Join(repo, ".grafel", "graph.fb")
 	if err := fbwriter.WriteAtomic(fbPath, doc); err != nil {
 		t.Fatalf("write fb: %v", err)
 	}
-	reloaded, err := graph.LoadGraphFromDir(filepath.Join(repo, ".archigraph"))
+	reloaded, err := graph.LoadGraphFromDir(filepath.Join(repo, ".grafel"))
 	if err != nil {
 		t.Fatalf("reload: %v", err)
 	}

@@ -23,7 +23,7 @@ package javascript
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // emitConfigConsumerEdges scans the AST for config-read shapes and appends

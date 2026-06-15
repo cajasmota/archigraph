@@ -248,10 +248,10 @@ func TestWalkRepo_HardcodedSkip(t *testing.T) {
 	}
 }
 
-func TestWalkRepo_ArchigraphIgnore(t *testing.T) {
+func TestWalkRepo_GrafelIgnore(t *testing.T) {
 	root := t.TempDir()
-	// .archigraphignore skips "test-fixtures" even though it's committed.
-	mkfile(t, root, ".archigraphignore", "test-fixtures\n")
+	// .grafelignore skips "test-fixtures" even though it's committed.
+	mkfile(t, root, ".grafelignore", "test-fixtures\n")
 	mkfile(t, root, "test-fixtures/big_fixture.json", "big json")
 	mkfile(t, root, "src/main.go", "package main")
 
@@ -265,7 +265,7 @@ func TestWalkRepo_ArchigraphIgnore(t *testing.T) {
 		skippedNames[filepath.Base(s.AbsPath)] = true
 	}
 	if !skippedNames["test-fixtures"] {
-		t.Errorf("expected test-fixtures to be skipped via .archigraphignore; skipped=%v", skipped)
+		t.Errorf("expected test-fixtures to be skipped via .grafelignore; skipped=%v", skipped)
 	}
 
 	fileSet := make(map[string]bool)

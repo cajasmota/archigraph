@@ -3,7 +3,7 @@ package coverage
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // effFixture is a set of production entities already stamped with #5037

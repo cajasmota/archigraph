@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // sampleKotlinSpringController mirrors the Java fixture in spring_routes_test.go.

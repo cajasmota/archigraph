@@ -3,8 +3,8 @@ package scala_test
 import (
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/extractors/scala"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/extractors/scala"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // scalaCallRecv returns the receiver_type stamped on a CALLS edge from `fn`

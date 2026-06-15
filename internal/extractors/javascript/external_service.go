@@ -38,7 +38,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // emitServiceDependencyEdges scans the AST for SDK construction / call shapes

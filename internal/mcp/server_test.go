@@ -10,22 +10,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
 // writeGraph writes a graph.Document to the repo's external store state
-// dir (#1626: per-repo state no longer lives in <repo>/.archigraph).
-// #2083: pins ARCHIGRAPH_DAEMON_ROOT to an isolated temp dir so state never
-// leaks into the real ~/.archigraph/store/. Only sets the env var if the
+// dir (#1626: per-repo state no longer lives in <repo>/.grafel).
+// #2083: pins GRAFEL_DAEMON_ROOT to an isolated temp dir so state never
+// leaks into the real ~/.grafel/store/. Only sets the env var if the
 // caller hasn't already established a root (so multi-writeGraph tests share
 // one consistent root across calls).
 func writeGraph(t *testing.T, repoDir string, doc *graph.Document) string {
 	t.Helper()
-	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
-		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	if os.Getenv("GRAFEL_DAEMON_ROOT") == "" {
+		t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 	}
 	dir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -238,7 +238,7 @@ func TestEmptyRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "archigraph_whoami", nil)
+	res := callTool(t, srv, "grafel_whoami", nil)
 	txt := resultText(res)
 	if !strings.Contains(txt, "\"error\"") {
 		t.Errorf("expected error in whoami output for empty registry, got: %s", txt)
@@ -302,7 +302,7 @@ func TestGetNodeViaIndex(t *testing.T) {
 	writeGraph(t, repo, fixtureDoc("r1"))
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
-	res := callTool(t, srv, "archigraph_inspect", map[string]any{"label_or_id": "DashboardScreen"})
+	res := callTool(t, srv, "grafel_inspect", map[string]any{"label_or_id": "DashboardScreen"})
 	txt := resultText(res)
 	if !strings.Contains(txt, "DashboardScreen") {
 		t.Fatalf("expected DashboardScreen in result, got: %s", txt)
@@ -340,7 +340,7 @@ func TestShortestPathCrossRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "archigraph_trace", map[string]any{"source": "rA::a1", "target": "rB::a4"})
+	res := callTool(t, srv, "grafel_trace", map[string]any{"source": "rA::a1", "target": "rB::a4"})
 	txt := resultText(res)
 	if !strings.Contains(txt, "\"crosses_repos\":true") {
 		t.Fatalf("expected crosses_repos=true, got: %s", txt)
@@ -396,11 +396,11 @@ func TestTokenBudgetEnforcement(t *testing.T) {
 	}
 }
 
-// 8. archigraph_cross_links was dropped in refactor/mcp-real-3k (≤3k handshake).
+// 8. grafel_cross_links was dropped in refactor/mcp-real-3k (≤3k handshake).
 // The link-candidate handler still exists internally; this test is skipped to reflect
 // the tool's removal from the MCP surface.
 func TestLinkCandidateRoundTrip(t *testing.T) {
-	t.Skip("archigraph_cross_links dropped from MCP surface in refactor/mcp-real-3k")
+	t.Skip("grafel_cross_links dropped from MCP surface in refactor/mcp-real-3k")
 }
 
 // 9. Enrichment candidate submit round-trip.
@@ -415,11 +415,11 @@ func TestEnrichmentCandidateRoundTrip(t *testing.T) {
 	_ = os.WriteFile(candPath, d, 0o644)
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
-	listRes := callTool(t, srv, "archigraph_enrichments", map[string]any{"action": "list"})
+	listRes := callTool(t, srv, "grafel_enrichments", map[string]any{"action": "list"})
 	if !strings.Contains(resultText(listRes), "e1") {
 		t.Fatalf("expected e1 in list: %s", resultText(listRes))
 	}
-	subRes := callTool(t, srv, "archigraph_enrichments", map[string]any{
+	subRes := callTool(t, srv, "grafel_enrichments", map[string]any{
 		"action": "submit", "candidate_id": "e1", "value": "controls dashboard", "confidence": 0.9, "reason": "test",
 	})
 	if strings.Contains(resultText(subRes), "error") {
@@ -441,11 +441,11 @@ func TestTelemetryIncrements(t *testing.T) {
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
 	for i := 0; i < 3; i++ {
-		callTool(t, srv, "archigraph_whoami", nil)
+		callTool(t, srv, "grafel_whoami", nil)
 	}
 	snap := srv.Tel.Snapshot()
 	tools := snap["tools"].(map[string]any)
-	w := tools["archigraph_whoami"].(map[string]any)
+	w := tools["grafel_whoami"].(map[string]any)
 	if int(w["calls"].(int)) < 3 {
 		t.Fatalf("expected calls >= 3, got %v", w["calls"])
 	}
@@ -470,13 +470,13 @@ func TestPerRepoUnavailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "archigraph_stats", nil)
+	res := callTool(t, srv, "grafel_stats", nil)
 	txt := resultText(res)
 	if !strings.Contains(txt, "unavailable") {
 		t.Errorf("expected 'unavailable' in stats, got: %s", txt)
 	}
 	// good repo still queryable
-	res2 := callTool(t, srv, "archigraph_inspect", map[string]any{"label_or_id": "DashboardScreen"})
+	res2 := callTool(t, srv, "grafel_inspect", map[string]any{"label_or_id": "DashboardScreen"})
 	if !strings.Contains(resultText(res2), "DashboardScreen") {
 		t.Errorf("expected good repo to serve inspect, got: %s", resultText(res2))
 	}
@@ -490,7 +490,7 @@ func TestQueryGraphRendersCompact(t *testing.T) {
 	writeGraph(t, repo, fixtureDoc("r1"))
 	regPath := makeRegistry(t, dir, map[string]map[string]string{"g": {"r1": repo}})
 	srv, _ := NewServer(Config{RegistryPath: regPath})
-	res := callTool(t, srv, "archigraph_find", map[string]any{
+	res := callTool(t, srv, "grafel_find", map[string]any{
 		"question":     "rareUniqueWidget",
 		"depth":        1,
 		"token_budget": 800,
@@ -520,105 +520,105 @@ func TestToolNameSurface(t *testing.T) {
 	for _, st := range srv.MCP.ListTools() {
 		registered[st.Tool.Name] = true
 	}
-	// 45 tools as of #2658 (+archigraph_navigates). 44 from #2474 (+archigraph_persona_event). 42 baseline from PR #2442 re-wires.
-	// 1 remaining intentional drop: archigraph_recent_activity (≤3k budget).
-	// 3 tools re-wired in #2442: archigraph_save_finding, archigraph_list_findings, archigraph_cross_links.
-	// 4 dashboard-only tools dropped: archigraph_diagnostics, archigraph_quality_orphans,
-	//   archigraph_get_next_enrichment_task, archigraph_get_telemetry.
+	// 45 tools as of #2658 (+grafel_navigates). 44 from #2474 (+grafel_persona_event). 42 baseline from PR #2442 re-wires.
+	// 1 remaining intentional drop: grafel_recent_activity (≤3k budget).
+	// 3 tools re-wired in #2442: grafel_save_finding, grafel_list_findings, grafel_cross_links.
+	// 4 dashboard-only tools dropped: grafel_diagnostics, grafel_quality_orphans,
+	//   grafel_get_next_enrichment_task, grafel_get_telemetry.
 	wantPresent := []string{
 		// renamed (5)
-		"archigraph_find", "archigraph_inspect", "archigraph_expand",
-		"archigraph_clusters", "archigraph_stats",
+		"grafel_find", "grafel_inspect", "grafel_expand",
+		"grafel_clusters", "grafel_stats",
 		// #4290 graph-orientation analysis
-		"archigraph_orient",
+		"grafel_orient",
 		// #4292 PR-scoped impact + cross-change merge-risk
-		"archigraph_pr_impact",
+		"grafel_pr_impact",
 		// bundled (2 retained; cross_links re-wired)
-		"archigraph_enrichments", "archigraph_repairs",
+		"grafel_enrichments", "grafel_repairs",
 		// unchanged — trace included here as it was not renamed
-		"archigraph_trace",
-		"archigraph_whoami", "archigraph_get_source",
+		"grafel_trace",
+		"grafel_whoami", "grafel_get_source",
 		// ADR-0018 β
-		"archigraph_patterns",
+		"grafel_patterns",
 		// #724 process-flow BFS query surface
-		"archigraph_traces",
+		"grafel_traces",
 		// #1281 consolidated topology v2 (was 3 tools)
-		"archigraph_topology",
+		"grafel_topology",
 		// #1281 consolidated flows v2 (was 3 tools)
-		"archigraph_flows",
+		"grafel_flows",
 		// #1281 consolidated graph-indexed patterns (was 2 tools; renamed)
-		"archigraph_graph_patterns",
+		"grafel_graph_patterns",
 		// #1202 bonus traversal
-		"archigraph_search_entities",
-		"archigraph_find_paths",
+		"grafel_search_entities",
+		"grafel_find_paths",
 		// #1281 consolidated HTTP endpoint tools (was 3 tools)
-		"archigraph_endpoints",
-		"archigraph_effective_contract",
+		"grafel_endpoints",
+		"grafel_effective_contract",
 		// #1252 flow-aware traversal tools
-		"archigraph_find_callers",
-		"archigraph_find_callees",
-		"archigraph_impact_radius",
-		"archigraph_find_dead_code",
-		"archigraph_auth_coverage",
+		"grafel_find_callers",
+		"grafel_find_callees",
+		"grafel_impact_radius",
+		"grafel_find_dead_code",
+		"grafel_auth_coverage",
 		// #1659 docgen→graph repair feedback loop
-		"archigraph_apply_docgen_repairs",
+		"grafel_apply_docgen_repairs",
 		// #4309 doc ingestion L2: apply agent-produced semantic doc nodes/edges
-		"archigraph_apply_doc_semantics",
+		"grafel_apply_doc_semantics",
 		// #2442 re-wired agent-facing tools (restored from ≤3k budget cut)
-		"archigraph_save_finding",
-		"archigraph_list_findings",
-		"archigraph_cross_links",
+		"grafel_save_finding",
+		"grafel_list_findings",
+		"grafel_cross_links",
 		// #2214 docgen surface
-		"archigraph_docgen_start_run", "archigraph_docgen_status",
-		"archigraph_docgen_list", "archigraph_docgen_validate",
-		"archigraph_docgen_promote", "archigraph_docgen_abort",
+		"grafel_docgen_start_run", "grafel_docgen_status",
+		"grafel_docgen_list", "grafel_docgen_validate",
+		"grafel_docgen_promote", "grafel_docgen_abort",
 		// #1753 traversal fold & #1769 status sentinel
-		"archigraph_neighbors", "archigraph_status",
+		"grafel_neighbors", "grafel_status",
 		// Additional audit/analysis tools
-		"archigraph_secrets", "archigraph_quality_cycles",
-		"archigraph_test_coverage", "archigraph_license_audit",
-		"archigraph_test_reachability",
-		"archigraph_coverage_effectiveness",
-		"archigraph_module_analysis", "archigraph_diff_refs",
+		"grafel_secrets", "grafel_quality_cycles",
+		"grafel_test_coverage", "grafel_license_audit",
+		"grafel_test_reachability",
+		"grafel_coverage_effectiveness",
+		"grafel_module_analysis", "grafel_diff_refs",
 		// #1742 subgraph retained (despite deprecation)
-		"archigraph_subgraph",
+		"grafel_subgraph",
 		// #2474 persona lifecycle telemetry
-		"archigraph_persona_event",
+		"grafel_persona_event",
 		// #3204 agent-experience feedback (internal test harness)
-		"archigraph_feedback_event",
+		"grafel_feedback_event",
 		// #2192 MCP session metrics
-		"archigraph_mcp_metrics",
+		"grafel_mcp_metrics",
 		// #2658 NAVIGATES_TO query tool (Phase 2 of #2655)
-		"archigraph_navigates",
+		"grafel_navigates",
 		// #2766 Phase 1B reachability + dead-code identification
-		"archigraph_dead_code",
+		"grafel_dead_code",
 		// #2764 Phase 1A effect classification surface
-		"archigraph_effects",
+		"grafel_effects",
 		// deploy-9 caps surfacing — per-endpoint/function posture.
-		"archigraph_endpoint_posture",
+		"grafel_endpoint_posture",
 		// #2770 Phase 2A payload-shape drift findings.
-		"archigraph_payload_drift",
+		"grafel_payload_drift",
 		// #2772 Phase 2B taint-flow security findings surface
-		"archigraph_security_findings",
+		"grafel_security_findings",
 		// #2774 / #2775 Phase 3 misc — pure functions, module cycles,
 		// def-use chains, template-pattern catalog.
-		"archigraph_pure_functions",
-		"archigraph_import_cycles",
-		"archigraph_def_use",
-		"archigraph_data_flows",
-		"archigraph_template_patterns",
+		"grafel_pure_functions",
+		"grafel_import_cycles",
+		"grafel_def_use",
+		"grafel_data_flows",
+		"grafel_template_patterns",
 		// #4421 cross-group ConstantSet / SCOPE.Enum value-set parity.
-		"archigraph_literal_parity",
+		"grafel_literal_parity",
 		// #4422 cross-group auth-posture parity (oracle vs v3).
-		"archigraph_auth_posture_diff",
+		"grafel_auth_posture_diff",
 		// #4425 cross-group stub detector (effects-contrast heuristic).
-		"archigraph_stub_detector",
+		"grafel_stub_detector",
 		// #4424 cross-group branch-aware response-shape parity (oracle vs v3).
-		"archigraph_response_shape_diff",
+		"grafel_response_shape_diff",
 		// #4822 on-demand per-function CFG (control-flow epic #4820 part b).
-		"archigraph_control_flow",
+		"grafel_control_flow",
 		// #4893 tautological/oracle-blind spec detector (contract_test_effectiveness).
-		"archigraph_contract_test_effectiveness",
+		"grafel_contract_test_effectiveness",
 	}
 	for _, n := range wantPresent {
 		if !registered[n] {
@@ -630,12 +630,12 @@ func TestToolNameSurface(t *testing.T) {
 	// Dashboard-only tools dropped in this PR must also be absent.
 	wantAbsent := []string{
 		// old singular tool names replaced by bundles (pre-#668)
-		"archigraph_list_link_candidates", "archigraph_resolve_link_candidate",
-		"archigraph_list_enrichment_candidates", "archigraph_submit_enrichment", "archigraph_reject_enrichment",
-		"archigraph_list_residuals", "archigraph_submit_repair",
+		"grafel_list_link_candidates", "grafel_resolve_link_candidate",
+		"grafel_list_enrichment_candidates", "grafel_submit_enrichment", "grafel_reject_enrichment",
+		"grafel_list_residuals", "grafel_submit_repair",
 		// old renamed tool names
-		"archigraph_search", "archigraph_describe", "archigraph_related",
-		"archigraph_list_clusters", "archigraph_graph_stats",
+		"grafel_search", "grafel_describe", "grafel_related",
+		"grafel_list_clusters", "grafel_graph_stats",
 		// bare unprefixed names (Refs #62)
 		"query_graph", "get_node", "get_neighbors", "shortest_path",
 		"list_communities", "save_result", "get_node_source",
@@ -643,29 +643,29 @@ func TestToolNameSurface(t *testing.T) {
 		"list_clusters", "save_finding", "get_source",
 		"whoami", "recent_activity", "graph_stats", "get_telemetry",
 		// #1281 removed (merged into bundles)
-		"archigraph_topology_orphan_publishers",
-		"archigraph_topology_orphan_subscribers",
-		"archigraph_topology_topic_detail",
-		"archigraph_flow_dead_ends",
-		"archigraph_flow_truncated",
-		"archigraph_flow_detail",
-		"archigraph_patterns_list",
-		"archigraph_patterns_get",
-		"archigraph_endpoint_definitions",
-		"archigraph_endpoint_calls",
-		"archigraph_endpoint_stats",
+		"grafel_topology_orphan_publishers",
+		"grafel_topology_orphan_subscribers",
+		"grafel_topology_topic_detail",
+		"grafel_flow_dead_ends",
+		"grafel_flow_truncated",
+		"grafel_flow_detail",
+		"grafel_patterns_list",
+		"grafel_patterns_get",
+		"grafel_endpoint_definitions",
+		"grafel_endpoint_calls",
+		"grafel_endpoint_stats",
 		// dashboard-only tools dropped (32 → 28)
-		"archigraph_diagnostics",
-		"archigraph_quality_orphans",
-		"archigraph_get_next_enrichment_task",
-		"archigraph_get_telemetry",
+		"grafel_diagnostics",
+		"grafel_quality_orphans",
+		"grafel_get_next_enrichment_task",
+		"grafel_get_telemetry",
 		// agent-facing tools dropped in refactor/mcp-real-3k (≤3k budget)
-		// NOTE: archigraph_save_finding, archigraph_list_findings, archigraph_cross_links
+		// NOTE: grafel_save_finding, grafel_list_findings, grafel_cross_links
 		// were re-wired in #2442; see wantPresent list.
-		"archigraph_recent_activity",
+		"grafel_recent_activity",
 		// deprecated shims dropped in feat/drop-subgraph-shims (no real callers per #1742)
-		"archigraph_get_subgraph",
-		"archigraph_summarize_subgraph",
+		"grafel_get_subgraph",
+		"grafel_summarize_subgraph",
 	}
 	for _, n := range wantAbsent {
 		if registered[n] {
@@ -695,44 +695,44 @@ func TestToolNameSurface(t *testing.T) {
 		}
 	}
 
-	// Total count: 31 = 29 baseline + archigraph_neighbors (#1753 fold of
-	// find_callers + find_callees behind direction=) + archigraph_status
+	// Total count: 31 = 29 baseline + grafel_neighbors (#1753 fold of
+	// find_callers + find_callees behind direction=) + grafel_status
 	// sentinel registered as a real callable tool (#1769). find_callers /
 	// find_callees stay registered as deprecated aliases for one release.
-	// +1 archigraph_persona_event (#2474 persona lifecycle telemetry).
-	// +1 archigraph_navigates (#2658 NAVIGATES_TO Phase 2 query tool).
-	// +1 archigraph_dead_code (#2766 Phase 1B reachability + dead-code).
-	// +1 archigraph_effects (#2764 Phase 1A effect classification).
-	// +1 archigraph_payload_drift (#2770 Phase 2A drift findings).
-	// +1 archigraph_security_findings (#2772 Phase 2B taint-flow).
-	// +4 archigraph_pure_functions/_import_cycles/_def_use/_template_patterns (#2774/#2775 Phase 3 misc).
-	// +1 archigraph_feedback_event (#3204 agent-experience feedback, internal test harness).
-	// +1 archigraph_data_flows (#3867 request-input→sink DATA_FLOWS_TO projection).
-	// +1 archigraph_effective_contract (#3836 per-verb ViewSet effective contract).
-	// +1 archigraph_endpoint_posture (deploy-9 caps surfacing: error_flow/
+	// +1 grafel_persona_event (#2474 persona lifecycle telemetry).
+	// +1 grafel_navigates (#2658 NAVIGATES_TO Phase 2 query tool).
+	// +1 grafel_dead_code (#2766 Phase 1B reachability + dead-code).
+	// +1 grafel_effects (#2764 Phase 1A effect classification).
+	// +1 grafel_payload_drift (#2770 Phase 2A drift findings).
+	// +1 grafel_security_findings (#2772 Phase 2B taint-flow).
+	// +4 grafel_pure_functions/_import_cycles/_def_use/_template_patterns (#2774/#2775 Phase 3 misc).
+	// +1 grafel_feedback_event (#3204 agent-experience feedback, internal test harness).
+	// +1 grafel_data_flows (#3867 request-input→sink DATA_FLOWS_TO projection).
+	// +1 grafel_effective_contract (#3836 per-verb ViewSet effective contract).
+	// +1 grafel_endpoint_posture (deploy-9 caps surfacing: error_flow/
 	// rate_limit/deprecation/feature_flag/grpc-auth posture).
-	// +1 archigraph_orient (#4290 graph-orientation analysis).
-	// +1 archigraph_pr_impact (#4292 PR-scoped impact + cross-change merge-risk).
-	// +1 archigraph_literal_parity (#4421 cross-group ConstantSet value-set parity).
-	// +1 archigraph_auth_posture_diff (#4422 cross-group auth-posture parity).
-	// +1 archigraph_stub_detector (#4425 cross-group stub effects-contrast heuristic).
-	// +1 archigraph_response_shape_diff (#4424 cross-group branch-aware response-shape parity).
-	// +1 archigraph_apply_doc_semantics (#4309 doc ingestion L2 apply step).
-	// +1 archigraph_control_flow (#4822 on-demand per-function CFG, control-flow epic #4820 part (b)).
-	// +1 archigraph_contract_test_effectiveness (#4893 tautological/oracle-blind spec detector).
-	// +1 archigraph_coverage_effectiveness (#5063 reachability x line-coverage cross-product).
+	// +1 grafel_orient (#4290 graph-orientation analysis).
+	// +1 grafel_pr_impact (#4292 PR-scoped impact + cross-change merge-risk).
+	// +1 grafel_literal_parity (#4421 cross-group ConstantSet value-set parity).
+	// +1 grafel_auth_posture_diff (#4422 cross-group auth-posture parity).
+	// +1 grafel_stub_detector (#4425 cross-group stub effects-contrast heuristic).
+	// +1 grafel_response_shape_diff (#4424 cross-group branch-aware response-shape parity).
+	// +1 grafel_apply_doc_semantics (#4309 doc ingestion L2 apply step).
+	// +1 grafel_control_flow (#4822 on-demand per-function CFG, control-flow epic #4820 part (b)).
+	// +1 grafel_contract_test_effectiveness (#4893 tautological/oracle-blind spec detector).
+	// +1 grafel_coverage_effectiveness (#5063 reachability x line-coverage cross-product).
 	if got := len(allRegisteredTools); got != 68 {
-		t.Errorf("expected 68 registered tools, got %d — update this count if tools are added/removed (added archigraph_coverage_effectiveness #5063)", got)
+		t.Errorf("expected 68 registered tools, got %d — update this count if tools are added/removed (added grafel_coverage_effectiveness #5063)", got)
 	}
 }
 
-// 14. archigraph_save_finding / archigraph_list_findings dropped in refactor/mcp-real-3k.
+// 14. grafel_save_finding / grafel_list_findings dropped in refactor/mcp-real-3k.
 func TestFindingsRoundTrip(t *testing.T) {
-	t.Skip("archigraph_save_finding and archigraph_list_findings dropped from MCP surface in refactor/mcp-real-3k")
+	t.Skip("grafel_save_finding and grafel_list_findings dropped from MCP surface in refactor/mcp-real-3k")
 }
 
 // 15. inspect attaches saved findings keyed by entity ID (Refs #59 strategy A).
-// archigraph_save_finding was dropped; write the finding JSON directly to disk.
+// grafel_save_finding was dropped; write the finding JSON directly to disk.
 func TestDescribeAttachesFindings(t *testing.T) {
 	dir := t.TempDir()
 	repo := filepath.Join(dir, "r1")
@@ -755,7 +755,7 @@ func TestDescribeAttachesFindings(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(memDir, "f1.json"), fd, 0o644)
 
 	// Inspect should include it under "findings".
-	res := callTool(t, srv, "archigraph_inspect", map[string]any{
+	res := callTool(t, srv, "grafel_inspect", map[string]any{
 		"label_or_id": "DashboardScreen",
 	})
 	txt := resultText(res)
@@ -767,9 +767,9 @@ func TestDescribeAttachesFindings(t *testing.T) {
 	}
 }
 
-// 16. archigraph_list_findings dropped in refactor/mcp-real-3k.
+// 16. grafel_list_findings dropped in refactor/mcp-real-3k.
 func TestListFindingsSinceFilter(t *testing.T) {
-	t.Skip("archigraph_list_findings dropped from MCP surface in refactor/mcp-real-3k")
+	t.Skip("grafel_list_findings dropped from MCP surface in refactor/mcp-real-3k")
 }
 
 // TestGraphStatsRepoFilter verifies repo_filter narrows graph_stats to the
@@ -791,7 +791,7 @@ func TestGraphStatsRepoFilter(t *testing.T) {
 	}
 
 	// Baseline: no filter -> both repos in totals.
-	resAll := callTool(t, srv, "archigraph_stats", nil)
+	resAll := callTool(t, srv, "grafel_stats", nil)
 	var allOut struct {
 		Entities      int              `json:"entities"`
 		Relationships int              `json:"relationships"`
@@ -808,7 +808,7 @@ func TestGraphStatsRepoFilter(t *testing.T) {
 	}
 
 	// Filtered: only alpha -> totals halved, single repo entry.
-	resFiltered := callTool(t, srv, "archigraph_stats", map[string]any{
+	resFiltered := callTool(t, srv, "grafel_stats", map[string]any{
 		"repo_filter": []any{"alpha"},
 	})
 	var filtOut struct {
@@ -830,7 +830,7 @@ func TestGraphStatsRepoFilter(t *testing.T) {
 	}
 
 	// Star: ["*"] equals no filter.
-	resStar := callTool(t, srv, "archigraph_stats", map[string]any{
+	resStar := callTool(t, srv, "grafel_stats", map[string]any{
 		"repo_filter": []any{"*"},
 	})
 	var starOut struct {
@@ -845,7 +845,7 @@ func TestGraphStatsRepoFilter(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// #1837 archigraph_stats breakdown="unresolved_imports"
+// #1837 grafel_stats breakdown="unresolved_imports"
 // ---------------------------------------------------------------------------
 
 // fixtureDocWithUnresolved builds a small graph that contains a mix of resolved
@@ -932,7 +932,7 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	}
 
 	// --- 1. Without breakdown: behavior unchanged, no extra fields. ---
-	resBase := callTool(t, srv, "archigraph_stats", nil)
+	resBase := callTool(t, srv, "grafel_stats", nil)
 	var base map[string]any
 	if err := json.Unmarshal([]byte(resultText(resBase)), &base); err != nil {
 		t.Fatalf("unmarshal base: %v", err)
@@ -952,7 +952,7 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	}
 
 	// --- 2. With breakdown="unresolved_imports": three extra fields present and non-empty. ---
-	resBD := callTool(t, srv, "archigraph_stats", map[string]any{"breakdown": "unresolved_imports"})
+	resBD := callTool(t, srv, "grafel_stats", map[string]any{"breakdown": "unresolved_imports"})
 	var bd struct {
 		Fidelity            float64          `json:"fidelity"`
 		FidelityImportTotal int              `json:"fidelity_import_total"`
@@ -1024,7 +1024,7 @@ func TestStatsBreakdownUnresolvedImports(t *testing.T) {
 	}
 
 	// --- 3. breakdown="invalid_value": returns a clear error. ---
-	resErr := callTool(t, srv, "archigraph_stats", map[string]any{"breakdown": "invalid_value"})
+	resErr := callTool(t, srv, "grafel_stats", map[string]any{"breakdown": "invalid_value"})
 	txt := resultText(resErr)
 	if !strings.Contains(txt, "unsupported breakdown") {
 		t.Errorf("expected error message for invalid breakdown, got: %s", txt)
@@ -1062,7 +1062,7 @@ func TestStatsBreakdownEmptyUnresolved(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "archigraph_stats", map[string]any{"breakdown": "unresolved_imports"})
+	res := callTool(t, srv, "grafel_stats", map[string]any{"breakdown": "unresolved_imports"})
 	var out struct {
 		ByDisposition map[string]int   `json:"unresolved_imports_by_disposition"`
 		ByLanguage    map[string]int   `json:"unresolved_imports_by_language"`
@@ -1085,7 +1085,7 @@ func TestStatsBreakdownEmptyUnresolved(t *testing.T) {
 
 // TestFidelityReflectsPostResolverState is the regression test for #1842.
 //
-// It verifies that archigraph_stats.fidelity_import_bug counts only IMPORTS
+// It verifies that grafel_stats.fidelity_import_bug counts only IMPORTS
 // edges (not CALLS or REFERENCES) so that in-tree resolver improvements (e.g.
 // ResolveGoInTreeImports rewriting Go package paths to hex entity IDs) are
 // immediately reflected in the MCP metric — the same scope used by
@@ -1151,7 +1151,7 @@ func TestFidelityReflectsPostResolverState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := callTool(t, srv, "archigraph_stats", map[string]any{"group": "g"})
+	res := callTool(t, srv, "grafel_stats", map[string]any{"group": "g"})
 	var out struct {
 		FidelityImportTotal int     `json:"fidelity_import_total"`
 		FidelityImportBug   int     `json:"fidelity_import_bug"`
@@ -1176,7 +1176,7 @@ func TestFidelityReflectsPostResolverState(t *testing.T) {
 	}
 }
 
-// ADR-0015 phase-1 (#549 + #550): archigraph_repairs action=list|submit round-trip.
+// ADR-0015 phase-1 (#549 + #550): grafel_repairs action=list|submit round-trip.
 func TestRepairToolsRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	repo := filepath.Join(dir, "rA")
@@ -1230,7 +1230,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	}
 
 	// 1. action=list returns the repair_edge entry and skips describe_entity.
-	listRes := callTool(t, srv, "archigraph_repairs", map[string]any{"action": "list"})
+	listRes := callTool(t, srv, "grafel_repairs", map[string]any{"action": "list"})
 	text := resultText(listRes)
 	if !strings.Contains(text, "er:deadbeef00000001") {
 		t.Fatalf("expected edge_id in list: %s", text)
@@ -1253,7 +1253,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	}
 
 	// 2. action=submit with an unknown resolution must fail validation.
-	badRes := callTool(t, srv, "archigraph_repairs", map[string]any{
+	badRes := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":      "submit",
 		"residual_id": "er:deadbeef00000001",
 		"resolution":  "make_it_work",
@@ -1263,7 +1263,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	}
 
 	// 3. action=submit with a valid resolution appends to repair.json.
-	okRes := callTool(t, srv, "archigraph_repairs", map[string]any{
+	okRes := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":           "submit",
 		"residual_id":      "er:deadbeef00000001",
 		"resolution":       "bind_to_entity",
@@ -1287,7 +1287,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	}
 
 	// 4. Second submit appends — repair_count should be 2.
-	okRes2 := callTool(t, srv, "archigraph_repairs", map[string]any{
+	okRes2 := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":         "submit",
 		"residual_id":    "er:deadbeef00000001",
 		"resolution":     "abandon",
@@ -1309,7 +1309,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	}
 
 	// 5. Confidence out-of-range is rejected.
-	badConf := callTool(t, srv, "archigraph_repairs", map[string]any{
+	badConf := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":      "submit",
 		"residual_id": "er:deadbeef00000001",
 		"resolution":  "abandon",
@@ -1320,7 +1320,7 @@ func TestRepairToolsRoundTrip(t *testing.T) {
 	}
 
 	// 6. Unknown residual_id is rejected when not in any repo.
-	unknownEdge := callTool(t, srv, "archigraph_repairs", map[string]any{
+	unknownEdge := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":      "submit",
 		"residual_id": "er:notfoundnotfound",
 		"resolution":  "abandon",
@@ -1386,9 +1386,9 @@ func TestRepairsSubmitUndeclaredParamsStillWork(t *testing.T) {
 
 	// Verify none of the submit-only params appear in the declared schema.
 	byName := srv.MCP.ListTools()
-	st, ok := byName["archigraph_repairs"]
+	st, ok := byName["grafel_repairs"]
 	if !ok {
-		t.Fatal("archigraph_repairs not registered")
+		t.Fatal("grafel_repairs not registered")
 	}
 	submitOnlyParams := []string{
 		"residual_id", "resolution", "target_entity_id", "module",
@@ -1405,7 +1405,7 @@ func TestRepairsSubmitUndeclaredParamsStillWork(t *testing.T) {
 	// Now verify the handler still reads residual_id, resolution, confidence,
 	// reasoning, and abandon_reason from args correctly despite them being
 	// undeclared in the schema.
-	res := callTool(t, srv, "archigraph_repairs", map[string]any{
+	res := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":         "submit",
 		"residual_id":    "er:1756beef00000001", // undeclared in schema
 		"resolution":     "abandon",             // undeclared in schema
@@ -1426,7 +1426,7 @@ func TestRepairsSubmitUndeclaredParamsStillWork(t *testing.T) {
 // Source-attribution tests (ADR-0015 #4/8 — issue #547)
 // ---------------------------------------------------------------------------
 
-// TestInspect_AgentResolvedEdges verifies that archigraph_inspect includes
+// TestInspect_AgentResolvedEdges verifies that grafel_inspect includes
 // agent_resolved_edges when the graph contains edges whose resolved_by
 // property is "agent-repair". This confirms source-attribution survives
 // from the repair-apply layer into the MCP surface.
@@ -1452,7 +1452,7 @@ func TestInspect_AgentResolvedEdges(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callTool(t, srv, "archigraph_inspect", map[string]any{"label_or_id": "DashboardScreen"})
+	res := callTool(t, srv, "grafel_inspect", map[string]any{"label_or_id": "DashboardScreen"})
 	if res.IsError {
 		t.Fatalf("inspect error: %s", resultText(res))
 	}
@@ -1470,7 +1470,7 @@ func TestInspect_AgentResolvedEdges(t *testing.T) {
 	}
 
 	// A node with no agent edges (a3) should NOT have the field.
-	res2 := callTool(t, srv, "archigraph_inspect", map[string]any{"label_or_id": "ProposalsService"})
+	res2 := callTool(t, srv, "grafel_inspect", map[string]any{"label_or_id": "ProposalsService"})
 	if res2.IsError {
 		t.Fatalf("inspect a3 error: %s", resultText(res2))
 	}
@@ -1519,7 +1519,7 @@ func TestListResiduals_IncludeStale(t *testing.T) {
 	}
 
 	// Without include_stale the stale list is not returned.
-	res := callTool(t, srv, "archigraph_repairs", map[string]any{"action": "list"})
+	res := callTool(t, srv, "grafel_repairs", map[string]any{"action": "list"})
 	if res.IsError {
 		t.Fatalf("list error: %s", resultText(res))
 	}
@@ -1528,7 +1528,7 @@ func TestListResiduals_IncludeStale(t *testing.T) {
 	}
 
 	// With include_stale=true stale entries appear.
-	staleRes := callTool(t, srv, "archigraph_repairs", map[string]any{"action": "list", "include_stale": true})
+	staleRes := callTool(t, srv, "grafel_repairs", map[string]any{"action": "list", "include_stale": true})
 	if staleRes.IsError {
 		t.Fatalf("stale list error: %s", resultText(staleRes))
 	}
@@ -1557,7 +1557,7 @@ func TestListResiduals_IncludeStale(t *testing.T) {
 	}
 
 	// Pagination: limit=1 offset=1 returns only the second stale entry.
-	pagedRes := callTool(t, srv, "archigraph_repairs", map[string]any{
+	pagedRes := callTool(t, srv, "grafel_repairs", map[string]any{
 		"action":        "list",
 		"include_stale": true,
 		"limit":         1,
@@ -1576,7 +1576,7 @@ func TestListResiduals_IncludeStale(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_patterns tests (ADR-0018 β)
+// grafel_patterns tests (ADR-0018 β)
 // ---------------------------------------------------------------------------
 
 // makePatternsServer creates a Server wired to a single-repo group with one
@@ -1604,7 +1604,7 @@ func TestPatterns_RecordThenQuery(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	// 1. Record.
-	recRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	recRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "create a new HTTP endpoint", "keywords": []any{"endpoint", "handler", "http"}},
 		"steps":     []any{"Create handler in internal/handlers/", "Register route in routes.go"},
@@ -1629,7 +1629,7 @@ func TestPatterns_RecordThenQuery(t *testing.T) {
 	}
 
 	// 2. Query by text.
-	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action": "query",
 		"text":   "create a new HTTP endpoint",
 	})
@@ -1666,7 +1666,7 @@ func TestPatterns_DocumentationURLRoundtrip(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	docURL := "https://docs.example.com/patterns/code/endpoint.md"
-	recRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	recRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":            "record",
 		"trigger":           map[string]any{"natural_language": "doc url round trip pattern"},
 		"steps":             []any{"step one"},
@@ -1678,7 +1678,7 @@ func TestPatterns_DocumentationURLRoundtrip(t *testing.T) {
 		t.Fatalf("record error: %s", resultText(recRes))
 	}
 
-	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action": "query",
 		"text":   "doc url round trip pattern",
 	})
@@ -1705,7 +1705,7 @@ func TestPatterns_CandidateConvergence(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	recordCandidate := func(proposer string) map[string]any {
-		res := callTool(t, srv, "archigraph_patterns", map[string]any{
+		res := callTool(t, srv, "grafel_patterns", map[string]any{
 			"action":            "record",
 			"trigger":           map[string]any{"natural_language": "add a new service endpoint following the chi pattern", "keywords": []any{"chi", "endpoint", "handler"}},
 			"steps":             []any{"Create handler", "Register route"},
@@ -1761,7 +1761,7 @@ func TestPatterns_SpecificityScopedQueryWins(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	// Broad pattern — no scope constraints.
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "register a new service broad variant", "keywords": []any{"service", "register", "new"}},
 		"steps":     []any{"Step 1 — broad"},
@@ -1770,7 +1770,7 @@ func TestPatterns_SpecificityScopedQueryWins(t *testing.T) {
 	})
 
 	// Specific pattern — repos + languages set (2 non-empty scope fields).
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "register a new service specific variant", "keywords": []any{"service", "register", "new"}},
 		"steps":     []any{"Step A — specific"},
@@ -1779,7 +1779,7 @@ func TestPatterns_SpecificityScopedQueryWins(t *testing.T) {
 		"scope":     map[string]any{"repos": []any{"myrepo"}, "languages": []any{"go"}},
 	})
 
-	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action": "query",
 		"text":   "register a new service",
 		"limit":  5,
@@ -1810,7 +1810,7 @@ func TestPatterns_ExplicitScopeFilter(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	// Pattern for repo "myrepo".
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "create a new endpoint for myrepo"},
 		"steps":     []any{"myrepo step"},
@@ -1819,7 +1819,7 @@ func TestPatterns_ExplicitScopeFilter(t *testing.T) {
 		"scope":     map[string]any{"repos": []any{"myrepo"}},
 	})
 	// Pattern for repo "otherrepo".
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "create a new endpoint for otherrepo"},
 		"steps":     []any{"otherrepo step"},
@@ -1829,7 +1829,7 @@ func TestPatterns_ExplicitScopeFilter(t *testing.T) {
 	})
 
 	// Query with explicit scope override restricting to "otherrepo".
-	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action": "query",
 		"text":   "create a new endpoint",
 		"scope":  map[string]any{"repos": []any{"otherrepo"}},
@@ -1862,7 +1862,7 @@ func TestPatterns_ExplicitScopeFilter(t *testing.T) {
 func TestPatterns_PrivateAntiPatternExclusion(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":  "record",
 		"trigger": map[string]any{"natural_language": "handler with private anti-pattern"},
 		"steps":   []any{"do the thing"},
@@ -1875,7 +1875,7 @@ func TestPatterns_PrivateAntiPatternExclusion(t *testing.T) {
 	})
 
 	// Default query: private anti-pattern hidden.
-	qRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action": "query",
 		"text":   "handler with private anti-pattern",
 	})
@@ -1888,7 +1888,7 @@ func TestPatterns_PrivateAntiPatternExclusion(t *testing.T) {
 	}
 
 	// With include_private=true: private anti-pattern visible.
-	qResPriv := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qResPriv := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":          "query",
 		"text":            "handler with private anti-pattern",
 		"include_private": true,
@@ -1904,7 +1904,7 @@ func TestPatterns_RecordErrorCases(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	// Missing exemplars.
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":   "record",
 		"trigger":  map[string]any{"natural_language": "test pattern"},
 		"steps":    []any{"step one"},
@@ -1915,7 +1915,7 @@ func TestPatterns_RecordErrorCases(t *testing.T) {
 	}
 
 	// Invalid category.
-	res2 := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res2 := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "test pattern 2"},
 		"steps":     []any{"step one"},
@@ -1927,7 +1927,7 @@ func TestPatterns_RecordErrorCases(t *testing.T) {
 	}
 
 	// Missing steps.
-	res3 := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res3 := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "test pattern 3"},
 		"exemplars": []any{"myrepo::a1"},
@@ -1947,7 +1947,7 @@ func TestPatterns_GammaActionsImplemented(t *testing.T) {
 	// Each γ action should now return a real error (missing required arg) —
 	// NOT the "not implemented yet — γ" message.
 	for _, action := range []string{"refine", "apply", "reject", "promote"} {
-		res := callTool(t, srv, "archigraph_patterns", map[string]any{
+		res := callTool(t, srv, "grafel_patterns", map[string]any{
 			"action": action,
 			// Intentionally missing required args to trigger validation errors.
 		})
@@ -1966,7 +1966,7 @@ func TestPatterns_GammaActionsImplemented(t *testing.T) {
 func TestPatterns_QueryIncludeCandidates(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":       "record",
 		"trigger":      map[string]any{"natural_language": "candidate endpoint pattern"},
 		"steps":        []any{"step one"},
@@ -1976,7 +1976,7 @@ func TestPatterns_QueryIncludeCandidates(t *testing.T) {
 	})
 
 	// Default: candidates excluded.
-	qDefault := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qDefault := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action": "query",
 		"text":   "candidate endpoint pattern",
 	})
@@ -1990,7 +1990,7 @@ func TestPatterns_QueryIncludeCandidates(t *testing.T) {
 	}
 
 	// With include_candidates=true.
-	qWithCands := callTool(t, srv, "archigraph_patterns", map[string]any{
+	qWithCands := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":             "query",
 		"text":               "candidate endpoint pattern",
 		"include_candidates": true,
@@ -2010,7 +2010,7 @@ func TestPatterns_QueryIncludeCandidates(t *testing.T) {
 func TestPatterns_EdgeEmission(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": "edge emission test"},
 		"steps":     []any{"step one"},
@@ -2051,7 +2051,7 @@ func absF(x float64) float64 {
 // recordPattern is a helper that records a pattern and returns its id.
 func recordPattern(t *testing.T, srv *Server, nl string) string {
 	t.Helper()
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":    "record",
 		"trigger":   map[string]any{"natural_language": nl, "keywords": []any{"test"}},
 		"steps":     []any{"step A", "step B"},
@@ -2076,7 +2076,7 @@ func TestPatterns_RefineAddRemoveStep(t *testing.T) {
 	id := recordPattern(t, srv, "refine step test pattern")
 
 	// Add a step.
-	refRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	refRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "refine",
 		"pattern_id": id,
 		"changes":    map[string]any{"add_step": "step C — added by refine"},
@@ -2100,7 +2100,7 @@ func TestPatterns_RefineAddRemoveStep(t *testing.T) {
 	}
 
 	// Remove step at index 0.
-	rem := callTool(t, srv, "archigraph_patterns", map[string]any{
+	rem := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "refine",
 		"pattern_id": id,
 		"changes":    map[string]any{"remove_step_index": float64(0)},
@@ -2137,7 +2137,7 @@ func TestPatterns_RefineAddRemoveExemplar(t *testing.T) {
 	id := recordPattern(t, srv, "refine exemplar test pattern")
 
 	// Add exemplar.
-	addRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	addRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "refine",
 		"pattern_id": id,
 		"changes":    map[string]any{"add_exemplar": "myrepo::a2"},
@@ -2164,7 +2164,7 @@ func TestPatterns_RefineAddRemoveExemplar(t *testing.T) {
 	}
 
 	// Remove exemplar.
-	remRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	remRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "refine",
 		"pattern_id": id,
 		"changes":    map[string]any{"remove_exemplar": "myrepo::a2"},
@@ -2189,7 +2189,7 @@ func TestPatterns_RefineChangeScope(t *testing.T) {
 	id := recordPattern(t, srv, "refine scope test pattern")
 
 	// Start by setting a scope.
-	callTool(t, srv, "archigraph_patterns", map[string]any{
+	callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "refine",
 		"pattern_id": id,
 		"changes": map[string]any{
@@ -2201,7 +2201,7 @@ func TestPatterns_RefineChangeScope(t *testing.T) {
 	})
 
 	// Now change only languages; repos must be preserved.
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "refine",
 		"pattern_id": id,
 		"changes": map[string]any{
@@ -2235,7 +2235,7 @@ func TestPatterns_ApplySuccess(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 	id := recordPattern(t, srv, "apply success test pattern")
 
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":           "apply",
 		"pattern_id":       id,
 		"success":          true,
@@ -2296,7 +2296,7 @@ func TestPatterns_ApplyFailure(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 	id := recordPattern(t, srv, "apply failure test pattern")
 
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "apply",
 		"pattern_id": id,
 		"success":    false,
@@ -2327,7 +2327,7 @@ func TestPatterns_ApplyFloorNotBroken(t *testing.T) {
 	id := recordPattern(t, srv, "apply floor test pattern")
 
 	for i := 0; i < 10; i++ {
-		res := callTool(t, srv, "archigraph_patterns", map[string]any{
+		res := callTool(t, srv, "grafel_patterns", map[string]any{
 			"action":     "apply",
 			"pattern_id": id,
 			"success":    false,
@@ -2336,7 +2336,7 @@ func TestPatterns_ApplyFloorNotBroken(t *testing.T) {
 			t.Fatalf("apply iteration %d error: %s", i, resultText(res))
 		}
 	}
-	getRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	getRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "get",
 		"pattern_id": id,
 	})
@@ -2361,7 +2361,7 @@ func TestPatterns_RejectDelta(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 	id := recordPattern(t, srv, "reject delta test pattern")
 
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "reject",
 		"pattern_id": id,
 		"reason":     "outdated approach",
@@ -2398,7 +2398,7 @@ func TestPatterns_RejectSetToZero(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 	id := recordPattern(t, srv, "reject zero test pattern")
 
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":      "reject",
 		"pattern_id":  id,
 		"reason":      "completely wrong",
@@ -2424,7 +2424,7 @@ func TestPatterns_PromoteCandidate(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	// Record as candidate.
-	recRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	recRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":       "record",
 		"trigger":      map[string]any{"natural_language": "promote test pattern"},
 		"steps":        []any{"do the thing"},
@@ -2443,7 +2443,7 @@ func TestPatterns_PromoteCandidate(t *testing.T) {
 	}
 
 	// Promote.
-	promRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	promRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":        "promote",
 		"candidate_id":  recOut.ID,
 		"approval_note": "reviewed and approved in sprint S19",
@@ -2471,7 +2471,7 @@ func TestPatterns_PromoteAlreadyApproved(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 
 	// Record as candidate so we can promote.
-	recRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	recRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":       "record",
 		"trigger":      map[string]any{"natural_language": "promote twice test pattern"},
 		"steps":        []any{"do the thing"},
@@ -2490,7 +2490,7 @@ func TestPatterns_PromoteAlreadyApproved(t *testing.T) {
 	}
 
 	// First promote: should succeed.
-	promRes1 := callTool(t, srv, "archigraph_patterns", map[string]any{
+	promRes1 := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":       "promote",
 		"candidate_id": recOut.ID,
 	})
@@ -2499,7 +2499,7 @@ func TestPatterns_PromoteAlreadyApproved(t *testing.T) {
 	}
 
 	// Second promote on already-approved pattern → error.
-	promRes2 := callTool(t, srv, "archigraph_patterns", map[string]any{
+	promRes2 := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":       "promote",
 		"candidate_id": recOut.ID,
 	})
@@ -2513,7 +2513,7 @@ func TestPatterns_GetByID(t *testing.T) {
 	srv, _ := makePatternsServer(t)
 	id := recordPattern(t, srv, "get by id test pattern")
 
-	getRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	getRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "get",
 		"pattern_id": id,
 	})
@@ -2535,7 +2535,7 @@ func TestPatterns_GetByID(t *testing.T) {
 // TestPatterns_GetNotFound verifies get returns error for unknown id.
 func TestPatterns_GetNotFound(t *testing.T) {
 	srv, _ := makePatternsServer(t)
-	res := callTool(t, srv, "archigraph_patterns", map[string]any{
+	res := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "get",
 		"pattern_id": "nonexistentdeadbeef",
 	})
@@ -2560,13 +2560,13 @@ func TestPatterns_ConcurrentRefineApply(t *testing.T) {
 			defer func() { done <- struct{}{} }()
 			var res *mcpapi.CallToolResult
 			if i%2 == 0 {
-				res = callTool(t, srv, "archigraph_patterns", map[string]any{
+				res = callTool(t, srv, "grafel_patterns", map[string]any{
 					"action":     "refine",
 					"pattern_id": id,
 					"changes":    map[string]any{"add_step": fmt.Sprintf("concurrent step %d", i)},
 				})
 			} else {
-				res = callTool(t, srv, "archigraph_patterns", map[string]any{
+				res = callTool(t, srv, "grafel_patterns", map[string]any{
 					"action":     "apply",
 					"pattern_id": id,
 					"success":    i%4 == 1,
@@ -2585,7 +2585,7 @@ func TestPatterns_ConcurrentRefineApply(t *testing.T) {
 		t.Errorf("concurrent op error: %s", e)
 	}
 	// After all goroutines, pattern must still be loadable and valid.
-	getRes := callTool(t, srv, "archigraph_patterns", map[string]any{
+	getRes := callTool(t, srv, "grafel_patterns", map[string]any{
 		"action":     "get",
 		"pattern_id": id,
 	})
@@ -2741,7 +2741,7 @@ func TestTOONWire_SingleEntityObjectUnchanged(t *testing.T) {
 	}
 }
 
-// TestTOONWire_LiveEndpointsTool verifies end-to-end that archigraph_find_dead_code
+// TestTOONWire_LiveEndpointsTool verifies end-to-end that grafel_find_dead_code
 // (a list tool) returns TOON-encoded items in its response when MCP_WIRE_FORMAT=toon.
 // This exercises the full wrap → injectElapsedMS → TOON path with a real Server.
 func TestTOONWire_LiveEndpointsTool(t *testing.T) {
@@ -2759,7 +2759,7 @@ func TestTOONWire_LiveEndpointsTool(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callTool(t, srv, "archigraph_find_dead_code", map[string]any{
+	res := callTool(t, srv, "grafel_find_dead_code", map[string]any{
 		"limit": float64(10),
 	})
 	if res.IsError {
@@ -2931,7 +2931,7 @@ func TestTOONWire_EnvelopeEmptyItemsUnchanged(t *testing.T) {
 }
 
 // TestTOONWire_LiveEnvelopeTool_Endpoints verifies end-to-end that a tool that
-// returns a {items:[...], count, elapsed_ms} envelope (archigraph_endpoints)
+// returns a {items:[...], count, elapsed_ms} envelope (grafel_endpoints)
 // emits TOON-encoded items when MCP_WIRE_FORMAT=toon.
 func TestTOONWire_LiveEnvelopeTool_Endpoints(t *testing.T) {
 	t.Setenv("MCP_WIRE_FORMAT", "toon")
@@ -2948,12 +2948,12 @@ func TestTOONWire_LiveEnvelopeTool_Endpoints(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callTool(t, srv, "archigraph_endpoints", map[string]any{
+	res := callTool(t, srv, "grafel_endpoints", map[string]any{
 		"action": "definitions",
 		"limit":  float64(10),
 	})
 	if res.IsError {
-		t.Fatalf("archigraph_endpoints error: %s", resultText(res))
+		t.Fatalf("grafel_endpoints error: %s", resultText(res))
 	}
 	text := resultText(res)
 
@@ -2982,7 +2982,7 @@ func TestTOONWire_LiveEnvelopeTool_Endpoints(t *testing.T) {
 	}
 }
 
-// TestTOONWire_LiveEnvelopeTool_Topology verifies that archigraph_topology
+// TestTOONWire_LiveEnvelopeTool_Topology verifies that grafel_topology
 // (another list tool with envelope shape) emits TOON items when enabled.
 func TestTOONWire_LiveEnvelopeTool_Topology(t *testing.T) {
 	t.Setenv("MCP_WIRE_FORMAT", "toon")
@@ -2999,11 +2999,11 @@ func TestTOONWire_LiveEnvelopeTool_Topology(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callTool(t, srv, "archigraph_topology", map[string]any{
+	res := callTool(t, srv, "grafel_topology", map[string]any{
 		"action": "orphan_publishers",
 	})
 	if res.IsError {
-		t.Fatalf("archigraph_topology error: %s", resultText(res))
+		t.Fatalf("grafel_topology error: %s", resultText(res))
 	}
 	text := resultText(res)
 
@@ -3030,15 +3030,15 @@ func TestTOONWire_LiveEnvelopeTool_Topology(t *testing.T) {
 	}
 }
 
-// writeGraphFB writes a graph.Document to <repoDir>/.archigraph/graph.fb
+// writeGraphFB writes a graph.Document to <repoDir>/.grafel/graph.fb
 // (FlatBuffers format). Used to verify fix for issue #1374 item #1.
-// #2083: pins ARCHIGRAPH_DAEMON_ROOT to an isolated temp dir so state never
-// leaks into the real ~/.archigraph/store/. Only sets the env var if the
+// #2083: pins GRAFEL_DAEMON_ROOT to an isolated temp dir so state never
+// leaks into the real ~/.grafel/store/. Only sets the env var if the
 // caller hasn't already established a root.
 func writeGraphFB(t *testing.T, repoDir string, doc *graph.Document) string {
 	t.Helper()
-	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
-		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	if os.Getenv("GRAFEL_DAEMON_ROOT") == "" {
+		t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 	}
 	dir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -3167,102 +3167,102 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 	// Go-level error. The wrap middleware injects elapsed_ms on both success
 	// and IsError=true results, so this test validates both paths.
 	minimalArgs := map[string]map[string]any{
-		"archigraph_whoami":                 {"group": "g"},
-		"archigraph_get_source":             {"group": "g", "entity_id": "DashboardScreen"},
-		"archigraph_find":                   {"group": "g", "query": "DashboardScreen"},
-		"archigraph_inspect":                {"group": "g", "label_or_id": "DashboardScreen"},
-		"archigraph_expand":                 {"group": "g", "node": "DashboardScreen"},
-		"archigraph_trace":                  {"group": "g", "source": "r1::a1", "target": "r1::a4"},
-		"archigraph_traces":                 {"group": "g", "action": "list"},
-		"archigraph_clusters":               {"group": "g"},
-		"archigraph_orient":                 {"group": "g"}, // #4290 orientation analysis
-		"archigraph_stats":                  {"group": "g"},
-		"archigraph_enrichments":            {"group": "g", "action": "list"},
-		"archigraph_repairs":                {"group": "g", "action": "list"},
-		"archigraph_apply_docgen_repairs":   {"group": "g"},
-		"archigraph_apply_doc_semantics":    {"group": "g"},
-		"archigraph_patterns":               {"group": "g", "action": "query", "text": "test"},
-		"archigraph_topology":               {"group": "g", "action": "orphan_publishers"},
-		"archigraph_flows":                  {"group": "g", "action": "dead_ends"},
-		"archigraph_graph_patterns":         {"group": "g", "action": "list"},
-		"archigraph_search_entities":        {"group": "g", "query": "Dashboard"},
-		"archigraph_subgraph":               {"group": "g", "entity_id": "r1::a1"},
-		"archigraph_find_paths":             {"group": "g", "from": "r1::a1", "to": "r1::a4"},
-		"archigraph_endpoints":              {"group": "g", "action": "definitions"},
-		"archigraph_effective_contract":     {"group": "g", "entity_id": "r1::a2"},
-		"archigraph_find_callers":           {"group": "g", "entity_id": "r1::a2"},
-		"archigraph_find_callees":           {"group": "g", "entity_id": "r1::a2"},
-		"archigraph_impact_radius":          {"group": "g", "entity_id": "r1::a2"},
-		"archigraph_find_dead_code":         {"group": "g"},
-		"archigraph_quality_cycles":         {"group": "g"},
-		"archigraph_auth_coverage":          {"group": "g"},
-		"archigraph_test_coverage":          {"group": "g"},
-		"archigraph_test_reachability":      {"group": "g"},
-		"archigraph_coverage_effectiveness": {"group": "g"},
-		"archigraph_module_analysis":        {"group": "g"},
-		"archigraph_secrets":                {"group": "g"},
-		"archigraph_neighbors":              {"group": "g", "entity_id": "r1::a2", "direction": "both"},
-		"archigraph_status":                 {"group": "g"},
+		"grafel_whoami":                 {"group": "g"},
+		"grafel_get_source":             {"group": "g", "entity_id": "DashboardScreen"},
+		"grafel_find":                   {"group": "g", "query": "DashboardScreen"},
+		"grafel_inspect":                {"group": "g", "label_or_id": "DashboardScreen"},
+		"grafel_expand":                 {"group": "g", "node": "DashboardScreen"},
+		"grafel_trace":                  {"group": "g", "source": "r1::a1", "target": "r1::a4"},
+		"grafel_traces":                 {"group": "g", "action": "list"},
+		"grafel_clusters":               {"group": "g"},
+		"grafel_orient":                 {"group": "g"}, // #4290 orientation analysis
+		"grafel_stats":                  {"group": "g"},
+		"grafel_enrichments":            {"group": "g", "action": "list"},
+		"grafel_repairs":                {"group": "g", "action": "list"},
+		"grafel_apply_docgen_repairs":   {"group": "g"},
+		"grafel_apply_doc_semantics":    {"group": "g"},
+		"grafel_patterns":               {"group": "g", "action": "query", "text": "test"},
+		"grafel_topology":               {"group": "g", "action": "orphan_publishers"},
+		"grafel_flows":                  {"group": "g", "action": "dead_ends"},
+		"grafel_graph_patterns":         {"group": "g", "action": "list"},
+		"grafel_search_entities":        {"group": "g", "query": "Dashboard"},
+		"grafel_subgraph":               {"group": "g", "entity_id": "r1::a1"},
+		"grafel_find_paths":             {"group": "g", "from": "r1::a1", "to": "r1::a4"},
+		"grafel_endpoints":              {"group": "g", "action": "definitions"},
+		"grafel_effective_contract":     {"group": "g", "entity_id": "r1::a2"},
+		"grafel_find_callers":           {"group": "g", "entity_id": "r1::a2"},
+		"grafel_find_callees":           {"group": "g", "entity_id": "r1::a2"},
+		"grafel_impact_radius":          {"group": "g", "entity_id": "r1::a2"},
+		"grafel_find_dead_code":         {"group": "g"},
+		"grafel_quality_cycles":         {"group": "g"},
+		"grafel_auth_coverage":          {"group": "g"},
+		"grafel_test_coverage":          {"group": "g"},
+		"grafel_test_reachability":      {"group": "g"},
+		"grafel_coverage_effectiveness": {"group": "g"},
+		"grafel_module_analysis":        {"group": "g"},
+		"grafel_secrets":                {"group": "g"},
+		"grafel_neighbors":              {"group": "g", "entity_id": "r1::a2", "direction": "both"},
+		"grafel_status":                 {"group": "g"},
 		// PH5 (#2093): diff tool — repo/ref_a/ref_b all required.
-		"archigraph_diff_refs": {"group": "g", "repo": "r1", "ref_a": "main", "ref_b": "feat/x"},
+		"grafel_diff_refs": {"group": "g", "repo": "r1", "ref_a": "main", "ref_b": "feat/x"},
 		// #4292: PR-impact tool. Single mode args; repo lookup fails gracefully
 		// (text result) in the test registry, which still exercises the wrapper.
-		"archigraph_pr_impact": {"group": "g", "repo": "r1", "base": "main", "head": "feat/x"},
+		"grafel_pr_impact": {"group": "g", "repo": "r1", "base": "main", "head": "feat/x"},
 		// #2214 (epic #2207): 6 docgen staging tools. Pass no_git=true so the
 		// handler doesn't require a real git repo. group is required for most.
-		"archigraph_docgen_start_run": {"group": "g", "no_git": true},
-		"archigraph_docgen_status":    {"run_id": "2026-05-26-testid01", "no_git": true},
-		"archigraph_docgen_validate":  {"run_id": "2026-05-26-testid01", "no_git": true},
-		"archigraph_docgen_promote":   {"run_id": "2026-05-26-testid01", "group": "g", "no_git": true},
-		"archigraph_docgen_abort":     {"run_id": "2026-05-26-testid01", "group": "g", "no_git": true},
-		"archigraph_docgen_list":      {"group": "g"},
+		"grafel_docgen_start_run": {"group": "g", "no_git": true},
+		"grafel_docgen_status":    {"run_id": "2026-05-26-testid01", "no_git": true},
+		"grafel_docgen_validate":  {"run_id": "2026-05-26-testid01", "no_git": true},
+		"grafel_docgen_promote":   {"run_id": "2026-05-26-testid01", "group": "g", "no_git": true},
+		"grafel_docgen_abort":     {"run_id": "2026-05-26-testid01", "group": "g", "no_git": true},
+		"grafel_docgen_list":      {"group": "g"},
 		// #2442 re-wires: 4 tools re-enabled for API surface
-		"archigraph_save_finding":  {"group": "g", "question": "test", "answer": "test"},
-		"archigraph_list_findings": {"group": "g"},
-		"archigraph_cross_links":   {"group": "g", "action": "list"},
-		"archigraph_license_audit": {"group": "g"},
+		"grafel_save_finding":  {"group": "g", "question": "test", "answer": "test"},
+		"grafel_list_findings": {"group": "g"},
+		"grafel_cross_links":   {"group": "g", "action": "list"},
+		"grafel_license_audit": {"group": "g"},
 		// #2474 persona lifecycle telemetry
-		"archigraph_persona_event":  {"persona": "architect", "event_type": "invoke"},
-		"archigraph_feedback_event": {"outcome": "helped"},
+		"grafel_persona_event":  {"persona": "architect", "event_type": "invoke"},
+		"grafel_feedback_event": {"outcome": "helped"},
 		// #2192 MCP session metrics
-		"archigraph_mcp_metrics": {"days": float64(1)},
+		"grafel_mcp_metrics": {"days": float64(1)},
 		// #2658 NAVIGATES_TO Phase 2 query tool
-		"archigraph_navigates": {"group": "g"},
+		"grafel_navigates": {"group": "g"},
 		// #2766 Phase 1B reachability + dead-code identification
-		"archigraph_dead_code": {"group": "g"},
+		"grafel_dead_code": {"group": "g"},
 		// #2764 Phase 1A effect classification — entity_id required.
-		"archigraph_effects":      {"group": "g", "entity_id": "DashboardScreen"},
-		"archigraph_control_flow": {"group": "g", "entity_id": "DashboardScreen"},
+		"grafel_effects":      {"group": "g", "entity_id": "DashboardScreen"},
+		"grafel_control_flow": {"group": "g", "entity_id": "DashboardScreen"},
 		// deploy-9 caps surfacing — posture facets. entity_id optional (omitted
 		// here exercises the repo-wide scan path).
-		"archigraph_endpoint_posture": {"group": "g"},
+		"grafel_endpoint_posture": {"group": "g"},
 		// #2770 Phase 2A payload-shape drift — no required args.
-		"archigraph_payload_drift": {"group": "g"},
+		"grafel_payload_drift": {"group": "g"},
 		// #2772 Phase 2B taint-flow — no required args.
-		"archigraph_security_findings": {"group": "g"},
+		"grafel_security_findings": {"group": "g"},
 		// #2774 / #2775 Phase 3 misc — sidecar readers, no required args.
-		"archigraph_pure_functions":    {"group": "g"},
-		"archigraph_import_cycles":     {"group": "g"},
-		"archigraph_def_use":           {"group": "g"},
-		"archigraph_data_flows":        {"group": "g"},
-		"archigraph_template_patterns": {"group": "g"},
+		"grafel_pure_functions":    {"group": "g"},
+		"grafel_import_cycles":     {"group": "g"},
+		"grafel_def_use":           {"group": "g"},
+		"grafel_data_flows":        {"group": "g"},
+		"grafel_template_patterns": {"group": "g"},
 		// #4421 cross-group ConstantSet value-set parity. Both group params
 		// point at the single test group "g"; auto-locate misses the alias in
 		// this fixture and the handler returns a graceful text error result,
 		// which still exercises the wrapper + elapsed_ms trailer.
-		"archigraph_literal_parity": {"group_oracle": "g", "group_v3": "g", "set": "page_slugs"},
+		"grafel_literal_parity": {"group_oracle": "g", "group_v3": "g", "set": "page_slugs"},
 		// #4422 cross-group auth-posture parity. Both group params point at the
 		// single test group "g"; the join finds no linked endpoints in this bare
 		// fixture and the handler returns an empty-records result, still
 		// exercising the wrapper + elapsed_ms trailer.
-		"archigraph_auth_posture_diff": {"group_oracle": "g", "group_v3": "g"},
+		"grafel_auth_posture_diff": {"group_oracle": "g", "group_v3": "g"},
 		// #4425 cross-group stub detector. Both group params point at the single
 		// test group "g"; with no endpoint definitions in this fixture the handler
 		// returns an empty-results payload, still exercising the wrapper +
 		// elapsed_ms trailer.
-		"archigraph_stub_detector":               {"group_v3": "g", "group_oracle": "g"},
-		"archigraph_response_shape_diff":         {"group_oracle": "g", "group_v3": "g"},
-		"archigraph_contract_test_effectiveness": {"group": "g"},
+		"grafel_stub_detector":               {"group_v3": "g", "group_oracle": "g"},
+		"grafel_response_shape_diff":         {"group_oracle": "g", "group_v3": "g"},
+		"grafel_contract_test_effectiveness": {"group": "g"},
 	}
 
 	// extractElapsedMS mirrors the bench extraction logic:
@@ -3308,7 +3308,7 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 
 	tools := srv.MCP.ListTools()
 	if len(tools) != 68 {
-		t.Errorf("expected 68 registered tools, got %d — update minimalArgs if tools are added/removed (added archigraph_coverage_effectiveness #5063)", len(tools))
+		t.Errorf("expected 68 registered tools, got %d — update minimalArgs if tools are added/removed (added grafel_coverage_effectiveness #5063)", len(tools))
 	}
 
 	for _, st := range tools {
@@ -3350,9 +3350,9 @@ func TestElapsedMSCoverageAllTools(t *testing.T) {
 //   - Config.CWD set to a temp dir (non-git): prevents ResolveCWD step 2 from
 //     calling gitmeta.Capture; git exits immediately for non-repo paths but even
 //     that subprocess overhead is eliminated by pointing CWD at an isolated dir.
-//   - ARCHIGRAPH_WHOAMI_NUDGE=quiet: suppresses the doc-state block (no disk I/O).
+//   - GRAFEL_WHOAMI_NUDGE=quiet: suppresses the doc-state block (no disk I/O).
 //
-// archigraph_mcp_metrics is also validated as a "zero-handler-work" baseline.
+// grafel_mcp_metrics is also validated as a "zero-handler-work" baseline.
 func TestMCP_WhoamiP50Under50ms(t *testing.T) {
 	dir := t.TempDir()
 	regPath := filepath.Join(dir, "registry.json")
@@ -3361,7 +3361,7 @@ func TestMCP_WhoamiP50Under50ms(t *testing.T) {
 	}
 	// Suppress whoami doc-state I/O and point CWD at a temp dir that has no
 	// git repo, so ResolveCWD → gitmeta.Capture is a fast no-op.
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "quiet")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "quiet")
 	srv, err := NewServer(Config{
 		RegistryPath: regPath,
 		CWD:          dir, // isolated non-git directory
@@ -3385,23 +3385,23 @@ func TestMCP_WhoamiP50Under50ms(t *testing.T) {
 
 	const iterations = 100
 
-	// ── archigraph_whoami ──────────────────────────────────────────────────
+	// ── grafel_whoami ──────────────────────────────────────────────────
 	// Warm up: first call may pay cold-start cost (registry load, git HEAD).
-	callTool(t, srv, "archigraph_whoami", map[string]any{"group": "g", "cwd": dir})
+	callTool(t, srv, "grafel_whoami", map[string]any{"group": "g", "cwd": dir})
 	samples := make([]int64, 0, iterations)
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
-		callTool(t, srv, "archigraph_whoami", map[string]any{"group": "g", "cwd": dir})
+		callTool(t, srv, "grafel_whoami", map[string]any{"group": "g", "cwd": dir})
 		samples = append(samples, time.Since(start).Milliseconds())
 	}
 	p50 := percentileInt64(samples, 50)
 
-	// ── archigraph_mcp_metrics ─────────────────────────────────────────────
-	callTool(t, srv, "archigraph_mcp_metrics", map[string]any{"days": 1}) // warm up
+	// ── grafel_mcp_metrics ─────────────────────────────────────────────
+	callTool(t, srv, "grafel_mcp_metrics", map[string]any{"days": 1}) // warm up
 	metricsSamples := make([]int64, 0, iterations)
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
-		callTool(t, srv, "archigraph_mcp_metrics", map[string]any{"days": 1})
+		callTool(t, srv, "grafel_mcp_metrics", map[string]any{"days": 1})
 		metricsSamples = append(metricsSamples, time.Since(start).Milliseconds())
 	}
 	metricsP50 := percentileInt64(metricsSamples, 50)
@@ -3412,10 +3412,10 @@ func TestMCP_WhoamiP50Under50ms(t *testing.T) {
 			p50, p50LimitMS)
 	}
 	if metricsP50 > p50LimitMS {
-		t.Errorf("archigraph_mcp_metrics p50=%dms exceeds %dms limit (#2550 regression)",
+		t.Errorf("grafel_mcp_metrics p50=%dms exceeds %dms limit (#2550 regression)",
 			metricsP50, p50LimitMS)
 	}
-	t.Logf("whoami p50=%dms (limit %dms), archigraph_mcp_metrics p50=%dms", p50, p50LimitMS, metricsP50)
+	t.Logf("whoami p50=%dms (limit %dms), grafel_mcp_metrics p50=%dms", p50, p50LimitMS, metricsP50)
 }
 
 // TestMCPInstructionsOrientationMap guards the handshake orientation map
@@ -3432,8 +3432,8 @@ func TestMCPInstructionsOrientationMap(t *testing.T) {
 	t.Parallel()
 
 	// (1) whoami-first directive.
-	if !strings.Contains(mcpInstructions, "archigraph_whoami") {
-		t.Errorf("instructions must direct agents to call archigraph_whoami first")
+	if !strings.Contains(mcpInstructions, "grafel_whoami") {
+		t.Errorf("instructions must direct agents to call grafel_whoami first")
 	}
 	if !strings.Contains(mcpInstructions, "suggested_action") {
 		t.Errorf("instructions must tell agents to act on suggested_action")
@@ -3488,7 +3488,7 @@ func TestMCPInstructionsOrientationMap(t *testing.T) {
 		"expand", "find_callers", "find_callees",
 	}
 	for _, c := range candidates {
-		full := "archigraph_" + c
+		full := "grafel_" + c
 		if !strings.Contains(mcpInstructions, c) {
 			continue // only validate names that actually appear in the map
 		}

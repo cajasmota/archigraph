@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/daemon/service"
 )
 
 // windowsOpts returns Options with all fields explicit so that
@@ -14,9 +14,9 @@ import (
 // user home directory.
 func windowsOpts() service.Options {
 	return service.Options{
-		BinPath:    `C:\Program Files\archigraph\archigraph.exe`,
-		SocketPath: `\\.\pipe\archigraph-daemon-testuser`,
-		LogDir:     `C:\Users\testuser\AppData\Local\archigraph\logs`,
+		BinPath:    `C:\Program Files\grafel\grafel.exe`,
+		SocketPath: `\\.\pipe\grafel-daemon-testuser`,
+		LogDir:     `C:\Users\testuser\AppData\Local\grafel\logs`,
 	}
 }
 
@@ -81,7 +81,7 @@ func TestGenerateTaskXML_BinPath(t *testing.T) {
 		t.Fatalf("GenerateTaskXML: %v", err)
 	}
 	s := string(xml)
-	wantBin := `C:\Program Files\archigraph\archigraph.exe`
+	wantBin := `C:\Program Files\grafel\grafel.exe`
 	if !strings.Contains(s, wantBin) {
 		t.Errorf("task XML missing BinPath %q:\n%s", wantBin, s)
 	}
@@ -89,7 +89,7 @@ func TestGenerateTaskXML_BinPath(t *testing.T) {
 
 // TestGenerateTaskXML_DaemonArgument verifies the task passes "daemon" as
 // the argument to the binary — not "start" or "run". Task Scheduler owns
-// the process lifecycle so we invoke archigraph daemon directly.
+// the process lifecycle so we invoke grafel daemon directly.
 func TestGenerateTaskXML_DaemonArgument(t *testing.T) {
 	xml, err := service.GenerateTaskXML(windowsOpts())
 	if err != nil {
@@ -120,14 +120,14 @@ func TestGenerateTaskXML_LeastPrivilege(t *testing.T) {
 }
 
 // TestGenerateTaskXML_TaskName verifies the task is registered under the
-// canonical reverse-DNS name com.archigraph.daemon.
+// canonical reverse-DNS name com.grafel.daemon.
 func TestGenerateTaskXML_TaskName(t *testing.T) {
 	xml, err := service.GenerateTaskXML(windowsOpts())
 	if err != nil {
 		t.Fatalf("GenerateTaskXML: %v", err)
 	}
 	s := string(xml)
-	if !strings.Contains(s, "com.archigraph.daemon") {
-		t.Errorf("task XML missing task name com.archigraph.daemon:\n%s", s)
+	if !strings.Contains(s, "com.grafel.daemon") {
+		t.Errorf("task XML missing task name com.grafel.daemon:\n%s", s)
 	}
 }

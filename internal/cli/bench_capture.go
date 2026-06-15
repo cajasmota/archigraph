@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newBenchCaptureCmd returns the cobra command for `archigraph bench-capture`.
+// newBenchCaptureCmd returns the cobra command for `grafel bench-capture`.
 //
-// The actual implementation lives in cmd/archigraph/bench_capture.go (package
+// The actual implementation lives in cmd/grafel/bench_capture.go (package
 // main) to keep internal/cli free of the heavy stdlib math + IO imports.
 // The command is wired via activeHooks.RunBenchCapture set by cli.Execute().
 //
-// Surface: `archigraph bench-capture rpc [--log <path>] [--start-offset N] [--end-offset N]`
+// Surface: `grafel bench-capture rpc [--log <path>] [--start-offset N] [--end-offset N]`
 //
 // Closes #2298, #2362, #2363.
 func newBenchCaptureCmd() *cobra.Command {
@@ -34,7 +34,7 @@ func newBenchCaptureCmd() *cobra.Command {
 	return cmd
 }
 
-// newBenchCaptureRPCCmd returns the cobra command for `archigraph bench-capture rpc`.
+// newBenchCaptureRPCCmd returns the cobra command for `grafel bench-capture rpc`.
 func newBenchCaptureRPCCmd() *cobra.Command {
 	var (
 		logPath  string
@@ -50,7 +50,7 @@ func newBenchCaptureRPCCmd() *cobra.Command {
 and emits JSON to stdout.
 
 Flags:
-  --log <path>           path to daemon log file (default: ~/.archigraph/logs/daemon.log)
+  --log <path>           path to daemon log file (default: ~/.grafel/logs/daemon.log)
   --start-offset <N>     byte offset to start reading from (inclusive, default: 0)
   --end-offset <N>       byte offset to stop reading at (exclusive, default: -1 for EOF)`,
 		Args: cobra.NoArgs,
@@ -64,7 +64,7 @@ Flags:
 		},
 	}
 
-	cmd.Flags().StringVar(&logPath, "log", "~/.archigraph/logs/daemon.log", "path to daemon log file")
+	cmd.Flags().StringVar(&logPath, "log", "~/.grafel/logs/daemon.log", "path to daemon log file")
 	cmd.Flags().Int64Var(&startOff, "start-offset", 0, "byte offset to start reading from (inclusive)")
 	cmd.Flags().Int64Var(&endOff, "end-offset", -1, "byte offset to stop reading at (exclusive); -1 = EOF")
 

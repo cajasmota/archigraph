@@ -10,9 +10,9 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/detect"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newOnboardCmd() *cobra.Command {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/shell"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/shell"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findEntity returns the first entity matching the predicate.

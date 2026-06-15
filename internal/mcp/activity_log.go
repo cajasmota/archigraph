@@ -1,7 +1,7 @@
 // Package mcp — activity_log.go
 //
 // ActivityLog writes MCP activity events to a rotating JSONL file at
-// ~/.archigraph/mcp-activity.jsonl. Each line is a JSON-encoded
+// ~/.grafel/mcp-activity.jsonl. Each line is a JSON-encoded
 // MCPActivityEvent. The log file is rotated when it exceeds maxLogBytes
 // (the previous file is renamed with a .1 suffix, capping disk usage to
 // 2 × maxLogBytes). All disk I/O is non-blocking: Append queues events to
@@ -20,7 +20,7 @@ const (
 	// At 10 MiB the file is renamed .1 and a new file is started.
 	maxLogBytes = 10 * 1024 * 1024 // 10 MiB
 
-	// activityLogFile is the base file name inside ~/.archigraph/.
+	// activityLogFile is the base file name inside ~/.grafel/.
 	activityLogFile = "mcp-activity.jsonl"
 
 	// logQueueDepth is the internal channel buffer. Events that overflow
@@ -46,7 +46,7 @@ func NewActivityLog(path string) *ActivityLog {
 	}
 }
 
-// DefaultActivityLogPath returns ~/.archigraph/mcp-activity.jsonl.
+// DefaultActivityLogPath returns ~/.grafel/mcp-activity.jsonl.
 // Returns an empty string when the home directory cannot be determined
 // (the caller should treat that as "disk logging disabled").
 func DefaultActivityLogPath() string {
@@ -60,7 +60,7 @@ func DefaultActivityLogPath() string {
 			return ""
 		}
 	}
-	return filepath.Join(home, ".archigraph", activityLogFile)
+	return filepath.Join(home, ".grafel", activityLogFile)
 }
 
 // Append enqueues e for disk write. Returns immediately; never blocks.

@@ -10,7 +10,7 @@ import (
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 	mcpsrv "github.com/mark3labs/mcp-go/server"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // TestMCPHandshakeBudget verifies that the total MCP handshake size stays
@@ -162,11 +162,11 @@ func TestDefaultLimitsReduced(t *testing.T) {
 		param string
 		want  float64
 	}{
-		{"archigraph_expand", "depth", 1},
-		{"archigraph_traces", "limit", 10},
-		{"archigraph_endpoints", "limit", 20},
-		{"archigraph_find_callers", "depth", 1},
-		{"archigraph_find_callees", "depth", 1},
+		{"grafel_expand", "depth", 1},
+		{"grafel_traces", "limit", 10},
+		{"grafel_endpoints", "limit", 20},
+		{"grafel_find_callers", "depth", 1},
+		{"grafel_find_callees", "depth", 1},
 	}
 
 	for _, tc := range cases {
@@ -200,12 +200,12 @@ func TestTokenBudgetParamPresent(t *testing.T) {
 	byName := srv.MCP.ListTools()
 
 	tools := []string{
-		"archigraph_find",
-		"archigraph_expand",
-		"archigraph_traces",
-		"archigraph_endpoints",
-		"archigraph_find_callers",
-		"archigraph_find_callees",
+		"grafel_find",
+		"grafel_expand",
+		"grafel_traces",
+		"grafel_endpoints",
+		"grafel_find_callers",
+		"grafel_find_callees",
 	}
 
 	for _, toolName := range tools {

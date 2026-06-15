@@ -11,12 +11,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/engine"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
-	"github.com/cajasmota/archigraph/internal/links"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/engine"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/links"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // newLinksCmd is the hidden top-level entry point used by hooks. It
@@ -38,7 +38,7 @@ func newLinksCmd() *cobra.Command {
 // pass (#769) to promote cross-repo CALLS links into phantom Relationships
 // on each source repo's graph.Document, and re-runs RunProcessFlow on
 // any doc that gained phantom edges so Process entities reflect the new
-// cross-repo chains. Writes all output to the canonical archigraph home.
+// cross-repo chains. Writes all output to the canonical grafel home.
 // Returns nil when the group has no per-repo graph.json files yet
 // (links are a no-op until the indexer has run at least once).
 func RunLinksForGroup(group string) error {
@@ -81,7 +81,7 @@ func RunLinksForGroup(group string) error {
 	// P5 — phantom-edge promotion (#769).
 	if _, perr := runPhantomEdgePass(group, cfg, res.OutLinks); perr != nil {
 		// Best-effort: log but don't fail the link pass.
-		fmt.Fprintf(os.Stderr, "archigraph: phantom-edge pass warning: %v\n", perr)
+		fmt.Fprintf(os.Stderr, "grafel: phantom-edge pass warning: %v\n", perr)
 	}
 	return nil
 }
@@ -100,7 +100,7 @@ func newLinksPassCmd() *cobra.Command {
 }
 
 // runLinksForGroup loads the group config, builds a synthetic graphs dir
-// where each repo's path resolves to its per-repo .archigraph/graph.json,
+// where each repo's path resolves to its per-repo .grafel/graph.json,
 // then invokes links.RunAllPasses. The graphs-dir convention used by
 // loadAllGraphs is "any directory containing one or more graph.json
 // files at any depth"; we pass the group state dir and write symlinks
@@ -170,7 +170,7 @@ func runLinksForGroup(cmd *cobra.Command, group string) error {
 // (#808): graph.fb is symlinked when present so LoadGraphFromDir
 // can prefer the binary format in downstream passes.
 func stageGraphsDir(cfg *registry.GroupConfig) (string, func(), error) {
-	tmp, err := os.MkdirTemp("", "archigraph-links-")
+	tmp, err := os.MkdirTemp("", "grafel-links-")
 	if err != nil {
 		return "", func() {}, err
 	}
@@ -349,7 +349,7 @@ func runPhantomEdgePass(group string, cfg *registry.GroupConfig, linksPath strin
 		_ = os.Chtimes(fbPath, now, now)
 		_ = os.Chtimes(p, now, now)
 		fmt.Fprintf(os.Stderr,
-			"archigraph: phantom-edge pass group=%s repo=%s phantom_edges=%d\n",
+			"grafel: phantom-edge pass group=%s repo=%s phantom_edges=%d\n",
 			group, slug, added)
 	}
 	return added, nil

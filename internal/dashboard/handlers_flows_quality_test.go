@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

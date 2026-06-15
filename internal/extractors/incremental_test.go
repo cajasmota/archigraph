@@ -35,13 +35,13 @@ import (
 	"time"
 
 	// Pull in the Go extractor so it registers itself.
-	_ "github.com/cajasmota/archigraph/internal/extractors/golang"
+	_ "github.com/cajasmota/grafel/internal/extractors/golang"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
-	"github.com/cajasmota/archigraph/internal/indexer/diff"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/indexer/diff"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -150,23 +150,23 @@ func loadGraphRelKinds(t *testing.T, stateDir string) []string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 func TestIncrementalEnabled_DefaultOff(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "")
 	if extractors.IncrementalEnabled() {
 		t.Error("IncrementalEnabled() should be false when env var is unset")
 	}
 }
 
 func TestIncrementalEnabled_OptIn(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "1")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "1")
 	if !extractors.IncrementalEnabled() {
-		t.Error("IncrementalEnabled() should be true when ARCHIGRAPH_INCREMENTAL_REINDEX=1")
+		t.Error("IncrementalEnabled() should be true when GRAFEL_INCREMENTAL_REINDEX=1")
 	}
 }
 
 func TestIncrementalEnabled_TrueVariant(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "true")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "true")
 	if !extractors.IncrementalEnabled() {
-		t.Error("IncrementalEnabled() should be true when ARCHIGRAPH_INCREMENTAL_REINDEX=true")
+		t.Error("IncrementalEnabled() should be true when GRAFEL_INCREMENTAL_REINDEX=true")
 	}
 }
 
@@ -490,7 +490,7 @@ func TestIncremental_TooManyChangedFiles_Fallback(t *testing.T) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Test: env override — ARCHIGRAPH_INCREMENTAL_MAX_FILES raises the limit (#2170)
+// Test: env override — GRAFEL_INCREMENTAL_MAX_FILES raises the limit (#2170)
 // ─────────────────────────────────────────────────────────────────────────────
 
 func TestIncremental_EnvOverrideLimit(t *testing.T) {
@@ -509,11 +509,11 @@ func TestIncremental_EnvOverrideLimit(t *testing.T) {
 
 	// Without env override: 8 files would be below the new default limit (20)
 	// so it should succeed — but with env override set to 5 it should fallback.
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "5")
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "5")
 
 	res := extractors.TryIncremental(context.Background(), repo, stateDir, nil, nil)
 	if res.Done {
-		t.Error("TryIncremental should fall back when files exceed ARCHIGRAPH_INCREMENTAL_MAX_FILES=5")
+		t.Error("TryIncremental should fall back when files exceed GRAFEL_INCREMENTAL_MAX_FILES=5")
 	}
 	t.Logf("fallback reason (env=5): %s", res.FallbackReason)
 }
@@ -540,7 +540,7 @@ func TestIncremental_MainBranchHotPath_30Files(t *testing.T) {
 
 	// Simulate main-branch hot-path by setting the env override to 50
 	// (same as mainBranchIncrementalFiles).
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "50")
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "50")
 
 	res := extractors.TryIncremental(context.Background(), repo, stateDir, nil, nil)
 	if !res.Done {
@@ -780,7 +780,7 @@ func TestIncremental_NoChanges_DoneWithoutWork(t *testing.T) {
 // relationship tuples as a freshly produced graph would contain.
 //
 // Implementation note: we cannot run the full Index() pipeline here without
-// importing cmd/archigraph (cycle). So we use a reference approach: run
+// importing cmd/grafel (cycle). So we use a reference approach: run
 // TryIncremental twice — once on the original state (no change), once on a
 // mutated repo — and verify the expected entity set is present/absent.
 func TestIncremental_GoldenSemanticEquivalence(t *testing.T) {
@@ -1109,7 +1109,7 @@ func assertFBBytesEqual(t *testing.T, a, b []byte, label string) {
 // ExtractorConfig.IsIncrementalEnabled returns true when IncrementalReindexSet=true
 // and IncrementalReindex=true, even with env var cleared.
 func TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_On(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "")
 	cfg := extractor.ExtractorConfig{
 		IncrementalReindex:    true,
 		IncrementalReindexSet: true,
@@ -1122,7 +1122,7 @@ func TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_On(t *testing.T) {
 // TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_Off verifies that
 // Config=false overrides the default-off env (i.e., returns false deterministically).
 func TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_Off(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "")
 	cfg := extractor.ExtractorConfig{
 		IncrementalReindex:    false,
 		IncrementalReindexSet: true,
@@ -1135,17 +1135,17 @@ func TestIncrementalConfig_IsIncrementalEnabled_ConfigOnly_Off(t *testing.T) {
 // TestIncrementalConfig_IsIncrementalEnabled_EnvOnly verifies backward compat:
 // nil Config + env=1 → enabled.
 func TestIncrementalConfig_IsIncrementalEnabled_EnvOnly(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "1")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "1")
 	var cfg *extractor.ExtractorConfig // nil → pure env path
 	if !cfg.IsIncrementalEnabled() {
-		t.Error("env-only: IsIncrementalEnabled() should return true when ARCHIGRAPH_INCREMENTAL_REINDEX=1 and Config is nil")
+		t.Error("env-only: IsIncrementalEnabled() should return true when GRAFEL_INCREMENTAL_REINDEX=1 and Config is nil")
 	}
 }
 
 // TestIncrementalConfig_IsIncrementalEnabled_ConfigWins verifies that Config wins
 // over the env var when both are set.
 func TestIncrementalConfig_IsIncrementalEnabled_ConfigWins(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "1") // env says on
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "1") // env says on
 	cfg := extractor.ExtractorConfig{
 		IncrementalReindex:    false, // Config says off
 		IncrementalReindexSet: true,
@@ -1158,7 +1158,7 @@ func TestIncrementalConfig_IsIncrementalEnabled_ConfigWins(t *testing.T) {
 // TestIncrementalConfig_IsIncrementalEnabled_NilConfig_EnvUnset checks the
 // documented default: nil Config + unset env → false (disabled).
 func TestIncrementalConfig_IsIncrementalEnabled_NilConfig_EnvUnset(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_REINDEX", "")
+	t.Setenv("GRAFEL_INCREMENTAL_REINDEX", "")
 	var cfg *extractor.ExtractorConfig
 	if cfg.IsIncrementalEnabled() {
 		t.Error("nil Config + unset env: default should be off (false)")
@@ -1168,7 +1168,7 @@ func TestIncrementalConfig_IsIncrementalEnabled_NilConfig_EnvUnset(t *testing.T)
 // TestIncrementalConfig_EffectiveMaxFiles_ConfigOnly verifies that Config.IncrementalMaxFiles
 // overrides the env var.
 func TestIncrementalConfig_EffectiveMaxFiles_ConfigOnly(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "")
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "")
 	cfg := extractor.ExtractorConfig{IncrementalMaxFiles: 42}
 	if got := cfg.EffectiveIncrementalMaxFiles(); got != 42 {
 		t.Errorf("Config-only maxFiles: got %d, want 42", got)
@@ -1178,7 +1178,7 @@ func TestIncrementalConfig_EffectiveMaxFiles_ConfigOnly(t *testing.T) {
 // TestIncrementalConfig_EffectiveMaxFiles_EnvOnly verifies backward compat:
 // nil Config + env → env value used.
 func TestIncrementalConfig_EffectiveMaxFiles_EnvOnly(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "99")
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "99")
 	var cfg *extractor.ExtractorConfig
 	if got := cfg.EffectiveIncrementalMaxFiles(); got != 99 {
 		t.Errorf("env-only maxFiles: got %d, want 99", got)
@@ -1187,7 +1187,7 @@ func TestIncrementalConfig_EffectiveMaxFiles_EnvOnly(t *testing.T) {
 
 // TestIncrementalConfig_EffectiveMaxFiles_ConfigWins verifies Config beats env.
 func TestIncrementalConfig_EffectiveMaxFiles_ConfigWins(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "7")         // env says 7
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "7")             // env says 7
 	cfg := extractor.ExtractorConfig{IncrementalMaxFiles: 30} // Config says 30
 	if got := cfg.EffectiveIncrementalMaxFiles(); got != 30 {
 		t.Errorf("Config-wins maxFiles: got %d, want 30 (Config should win over env=7)", got)
@@ -1196,7 +1196,7 @@ func TestIncrementalConfig_EffectiveMaxFiles_ConfigWins(t *testing.T) {
 
 // TestIncrementalConfig_EffectiveMaxFiles_NilConfig_EnvUnset checks default: 0 (auto).
 func TestIncrementalConfig_EffectiveMaxFiles_NilConfig_EnvUnset(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "")
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "")
 	var cfg *extractor.ExtractorConfig
 	if got := cfg.EffectiveIncrementalMaxFiles(); got != 0 {
 		t.Errorf("nil Config + unset env: expected 0 (auto); got %d", got)
@@ -1216,7 +1216,7 @@ func TestIncrementalConfig_EffectiveMaxFiles_NilConfig_EnvUnset(t *testing.T) {
 // "too-many-changed" because 2 > 1, even though the env-var-based default
 // would allow up to 20 files.
 func TestTryIncremental_InjectedConfig_MaxFilesOverride(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "") // ensure env var is unset
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "") // ensure env var is unset
 
 	repo := t.TempDir()
 	stateDir := t.TempDir()
@@ -1259,7 +1259,7 @@ func TestTryIncremental_InjectedConfig_MaxFilesOverride(t *testing.T) {
 // case: injected config with a generous limit allows the incremental path to
 // succeed even though the env-var path would use the default lower limit.
 func TestTryIncremental_InjectedConfig_MaxFilesPermitsChange(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES", "") // ensure env var is unset
+	t.Setenv("GRAFEL_INCREMENTAL_MAX_FILES", "") // ensure env var is unset
 
 	repo := t.TempDir()
 	stateDir := t.TempDir()

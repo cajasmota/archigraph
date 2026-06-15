@@ -58,7 +58,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // javaBeanValidationMarkers maps a Bean Validation annotation's simple name to

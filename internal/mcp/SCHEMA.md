@@ -1,6 +1,6 @@
-# archigraph MCP — Tool & Schema Reference
+# grafel MCP — Tool & Schema Reference
 
-Canonical contract for the archigraph MCP server's tool surface, request/response
+Canonical contract for the grafel MCP server's tool surface, request/response
 shapes, and the entity / relationship vocabulary it exposes.
 
 This document is referenced by ADR-0002 (clean-room MCP server in Go) as the
@@ -15,20 +15,20 @@ for clients (Claude Code, Windsurf, etc.) and tracks the implementation in
 
 ## Overview
 
-- **Server name (as advertised to MCP clients):** `archigraph`
+- **Server name (as advertised to MCP clients):** `grafel`
 - **Transport:** stdio
 - **Process model:** one server per machine, multiple registered groups, lazy
   mtime-driven reload before every tool call. See ADR-0004.
-- **Tool count:** 29 (as of this PR), all prefixed `archigraph_*` to avoid client-side
+- **Tool count:** 29 (as of this PR), all prefixed `grafel_*` to avoid client-side
   collisions when other MCP servers are installed alongside (Refs #62).
   Prior history: 19 tools → #668 bundled 3 action-dispatch tools (saved 4) → 39 tools
   after #1202/#1220/#1252 additions → #1281 merged 9 tools into 4 bundles → 32 tools
   → dropped 4 dashboard-only tools → 28 tools → #1314 added auth_coverage → 29 tools
-  → #1384 (epic #1380) added `archigraph_module_analysis` (action-dispatched
+  → #1384 (epic #1380) added `grafel_module_analysis` (action-dispatched
   cycles|centrality|all over the aggregated module graph).
 - **Handshake token ceiling:** 3,100 (bumped from 3,000 in #1384 to seat
-  `archigraph_module_analysis`; current measurement 3,085 tokens).
-- **State:** in-memory `Document`s loaded from per-repo `.archigraph/graph.json`
+  `grafel_module_analysis`; current measurement 3,085 tokens).
+- **State:** in-memory `Document`s loaded from per-repo `.grafel/graph.json`
   files; no database. See ADR-0006.
 - **Routing:** every tool that touches graph data resolves a group via the
   `group` arg → CWD marker → singleton fallback cascade. See ADR-0008.
@@ -40,13 +40,13 @@ for clients (Claude Code, Windsurf, etc.) and tracks the implementation in
 ### Deprecated parameter aliases
 
 The following parameter names were renamed for consistency (#1790). The old
-names are still accepted at runtime and print a `[archigraph deprecation]`
+names are still accepted at runtime and print a `[grafel deprecation]`
 message to `os.Stderr`; they will be removed in the next major version.
 
 | Tool | Old name (deprecated) | New canonical name |
 |------|-----------------------|--------------------|
-| `archigraph_find` | `question` | `query` |
-| `archigraph_get_source` | `node_id` | `entity_id` |
+| `grafel_find` | `question` | `query` |
+| `grafel_get_source` | `node_id` | `entity_id` |
 
 ### Stability policy
 
@@ -59,18 +59,18 @@ bump (and a deprecation warning lap in the prior minor).
 
 | Variable | Effect |
 |----------|--------|
-| `ARCHIGRAPH_MCP_DEBUG` | `0` silent (default), `1` print per-tool summary on shutdown, `2` per-call telemetry. Read by `cmd/archigraph/mcp.go`. |
-| `ARCHIGRAPH_VERBOSE` | When `1`, the indexer (`archigraph index`) prints per-language relationship breakdowns. Indexer-side; the MCP server itself does not read this. |
+| `GRAFEL_MCP_DEBUG` | `0` silent (default), `1` print per-tool summary on shutdown, `2` per-call telemetry. Read by `cmd/grafel/mcp.go`. |
+| `GRAFEL_VERBOSE` | When `1`, the indexer (`grafel index`) prints per-language relationship breakdowns. Indexer-side; the MCP server itself does not read this. |
 | `MCP_WIRE_FORMAT` | `toon` (default) or `json`. Controls whether list-of-record responses use TOON encoding or fall back to minified JSON arrays in the `items` field. See [Wire Format](#wire-format) below. |
 
-The registry path defaults to `~/.archigraph/registry.json` and can be
+The registry path defaults to `~/.grafel/registry.json` and can be
 overridden via the `--registry` CLI flag.
 
 ---
 
 ## Tools
 
-All tools are prefixed `archigraph_`. Common arguments are documented once
+All tools are prefixed `grafel_`. Common arguments are documented once
 below; per-tool tables omit them unless the semantics differ.
 
 ### Common arguments
@@ -89,64 +89,64 @@ Agents using these names will receive a "tool not found" error — update to the
 
 | Removed tool | Replacement |
 |---|---|
-| `archigraph_topology_orphan_publishers` | `archigraph_topology(action=orphan_publishers)` |
-| `archigraph_topology_orphan_subscribers` | `archigraph_topology(action=orphan_subscribers)` |
-| `archigraph_topology_topic_detail` | `archigraph_topology(action=topic_detail, topic_id=…)` |
-| `archigraph_flow_dead_ends` | `archigraph_flows(action=dead_ends)` |
-| `archigraph_flow_truncated` | `archigraph_flows(action=truncated)` |
-| `archigraph_flow_detail` | `archigraph_flows(action=detail, process_id=…)` |
-| `archigraph_patterns_list` | `archigraph_graph_patterns(action=list)` |
-| `archigraph_patterns_get` | `archigraph_graph_patterns(action=get, pattern_id=…)` |
-| `archigraph_endpoint_definitions` | `archigraph_endpoints(action=definitions)` |
-| `archigraph_endpoint_calls` | `archigraph_endpoints(action=calls)` |
-| `archigraph_endpoint_stats` | `archigraph_endpoints(action=stats)` |
+| `grafel_topology_orphan_publishers` | `grafel_topology(action=orphan_publishers)` |
+| `grafel_topology_orphan_subscribers` | `grafel_topology(action=orphan_subscribers)` |
+| `grafel_topology_topic_detail` | `grafel_topology(action=topic_detail, topic_id=…)` |
+| `grafel_flow_dead_ends` | `grafel_flows(action=dead_ends)` |
+| `grafel_flow_truncated` | `grafel_flows(action=truncated)` |
+| `grafel_flow_detail` | `grafel_flows(action=detail, process_id=…)` |
+| `grafel_patterns_list` | `grafel_graph_patterns(action=list)` |
+| `grafel_patterns_get` | `grafel_graph_patterns(action=get, pattern_id=…)` |
+| `grafel_endpoint_definitions` | `grafel_endpoints(action=definitions)` |
+| `grafel_endpoint_calls` | `grafel_endpoints(action=calls)` |
+| `grafel_endpoint_stats` | `grafel_endpoints(action=stats)` |
 
 ### Tool index
 
 | Tool | One-line description |
 |------|----------------------|
-| [`archigraph_whoami`](#archigraph_whoami) | Return the inferred group + repo for the caller session. |
-| [`archigraph_find`](#archigraph_find) | BM25-ranked graph query, optionally BFS-expanded. |
-| [`archigraph_inspect`](#archigraph_inspect) | Look up an entity by id, qualified name, or label. |
-| [`archigraph_expand`](#archigraph_expand) | Return neighbors of a node out to a given depth. |
-| [`archigraph_trace`](#archigraph_trace) | Confidence-weighted shortest path between two nodes. |
-| [`archigraph_traces`](#archigraph_traces) | Process-flow traces (action: list\|get\|follow). |
-| [`archigraph_clusters`](#archigraph_clusters) | List Louvain communities across the loaded graphs. |
-| [`archigraph_stats`](#archigraph_stats) | Corpus-level metrics for the resolved group. |
-| [`archigraph_enrichments`](#archigraph_enrichments) | Manage enrichment candidates (action: list\|submit\|reject). |
-| [`archigraph_cross_links`](#archigraph_cross_links) | Manage cross-repo link candidates (action: list\|accept\|reject). |
-| [`archigraph_repairs`](#archigraph_repairs) | Manage residual-edge repair queue (action: list\|submit). |
-| [`archigraph_save_finding`](#archigraph_save_finding) | Persist a Q/A pair to the group's memory directory. |
-| [`archigraph_list_findings`](#archigraph_list_findings) | List previously saved findings, optionally filtered. |
-| [`archigraph_get_source`](#archigraph_get_source) | Return source-file snippet for a node from disk. |
-| [`archigraph_recent_activity`](#archigraph_recent_activity) | Entities whose source files were modified after a given time. |
-| ~~`archigraph_get_telemetry`~~ | Dropped — HTTP-only. |
-| [`archigraph_patterns`](#archigraph_patterns) | Agent-learned pattern store (action: query\|record\|refine\|apply\|reject\|promote\|get). |
-| ~~`archigraph_get_next_enrichment_task`~~ | Dropped — use `enrichments(action=list,limit=1)`. |
-| [`archigraph_topology`](#archigraph_topology) | Message-channel topology (action: orphan\_publishers\|orphan\_subscribers\|topic\_detail). |
-| [`archigraph_flows`](#archigraph_flows) | Flow-process diagnostics (action: dead\_ends\|truncated\|detail). |
-| ~~`archigraph_diagnostics`~~ | Dropped — HTTP-only (`/api/diagnostics`). |
-| ~~`archigraph_quality_orphans`~~ | Dropped — use `archigraph_find_dead_code`. |
-| [`archigraph_graph_patterns`](#archigraph_graph_patterns) | Indexer-extracted graph patterns (action: list\|get). |
-| [`archigraph_search_entities`](#archigraph_search_entities) | Full-text substring search across entity names. |
-| [`archigraph_subgraph`](#archigraph_subgraph) | Nodes+edges (format=raw) or Markdown summary (format=markdown) within N hops. |
-| [`archigraph_find_paths`](#archigraph_find_paths) | Shortest path between two entities. |
-| [`archigraph_endpoints`](#archigraph_endpoints) | HTTP endpoint surface (action: definitions\|calls\|stats). |
-| `archigraph_endpoint_posture` | Per-endpoint/function posture: error_flow (throws/catches → ExceptionType), rate_limit, deprecation/version, feature_gates (GATED_BY → FeatureFlag), and HTTP/gRPC/tRPC auth. `entity_id` for one entity; omit for a repo-wide scan (facet/path_contains/method filters). |
-| `archigraph_control_flow` | On-demand (not persisted) per-function control-flow graph for the flowchart view (#4819): nodes (start/decision/loop/process/return/throw/end) + edges (seq/branch_true/branch_false/loop_back/exit), with predicate text on decision/loop nodes and effect annotations on process nodes, plus cyclomatic complexity. `entity_id` required; `detail`=outline\|decisions\|data\|full for token control. Languages: python + jsts validated. |
-| [`archigraph_effective_contract`](#archigraph_effective_contract) | Per-verb effective contract of a ViewSet/controller (kind, status, error_statuses, serializer, pagination, permissions). |
-| `archigraph_neighbors` | Graph neighbors of `entity_id` (`direction=in\|out\|both`, default `both`). **Unifies `find_callers` + `find_callees` (#1753).** |
-| [`archigraph_find_callers`](#archigraph_find_callers) | **Deprecated alias** of `archigraph_neighbors(direction=in)`. Removed next release. |
-| [`archigraph_find_callees`](#archigraph_find_callees) | **Deprecated alias** of `archigraph_neighbors(direction=out)`. Removed next release. |
-| [`archigraph_impact_radius`](#archigraph_impact_radius) | Blast-radius analysis with per-entity risk score. |
-| [`archigraph_find_dead_code`](#archigraph_find_dead_code) | Entities with 0 inbound/outbound project edges. |
-| [`archigraph_auth_coverage`](#archigraph_auth_coverage) | Security audit: flag HTTP endpoints missing auth decorators/middleware. |
-| [`archigraph_secrets`](#archigraph_secrets) | Security scan: detect hardcoded API keys, passwords, JWT tokens, and other credentials in source files. |
-| [`archigraph_module_analysis`](#archigraph_module_analysis) | Module-level SCC + PageRank + betweenness over the aggregated module graph (action: cycles\|centrality\|all). |
+| [`grafel_whoami`](#grafel_whoami) | Return the inferred group + repo for the caller session. |
+| [`grafel_find`](#grafel_find) | BM25-ranked graph query, optionally BFS-expanded. |
+| [`grafel_inspect`](#grafel_inspect) | Look up an entity by id, qualified name, or label. |
+| [`grafel_expand`](#grafel_expand) | Return neighbors of a node out to a given depth. |
+| [`grafel_trace`](#grafel_trace) | Confidence-weighted shortest path between two nodes. |
+| [`grafel_traces`](#grafel_traces) | Process-flow traces (action: list\|get\|follow). |
+| [`grafel_clusters`](#grafel_clusters) | List Louvain communities across the loaded graphs. |
+| [`grafel_stats`](#grafel_stats) | Corpus-level metrics for the resolved group. |
+| [`grafel_enrichments`](#grafel_enrichments) | Manage enrichment candidates (action: list\|submit\|reject). |
+| [`grafel_cross_links`](#grafel_cross_links) | Manage cross-repo link candidates (action: list\|accept\|reject). |
+| [`grafel_repairs`](#grafel_repairs) | Manage residual-edge repair queue (action: list\|submit). |
+| [`grafel_save_finding`](#grafel_save_finding) | Persist a Q/A pair to the group's memory directory. |
+| [`grafel_list_findings`](#grafel_list_findings) | List previously saved findings, optionally filtered. |
+| [`grafel_get_source`](#grafel_get_source) | Return source-file snippet for a node from disk. |
+| [`grafel_recent_activity`](#grafel_recent_activity) | Entities whose source files were modified after a given time. |
+| ~~`grafel_get_telemetry`~~ | Dropped — HTTP-only. |
+| [`grafel_patterns`](#grafel_patterns) | Agent-learned pattern store (action: query\|record\|refine\|apply\|reject\|promote\|get). |
+| ~~`grafel_get_next_enrichment_task`~~ | Dropped — use `enrichments(action=list,limit=1)`. |
+| [`grafel_topology`](#grafel_topology) | Message-channel topology (action: orphan\_publishers\|orphan\_subscribers\|topic\_detail). |
+| [`grafel_flows`](#grafel_flows) | Flow-process diagnostics (action: dead\_ends\|truncated\|detail). |
+| ~~`grafel_diagnostics`~~ | Dropped — HTTP-only (`/api/diagnostics`). |
+| ~~`grafel_quality_orphans`~~ | Dropped — use `grafel_find_dead_code`. |
+| [`grafel_graph_patterns`](#grafel_graph_patterns) | Indexer-extracted graph patterns (action: list\|get). |
+| [`grafel_search_entities`](#grafel_search_entities) | Full-text substring search across entity names. |
+| [`grafel_subgraph`](#grafel_subgraph) | Nodes+edges (format=raw) or Markdown summary (format=markdown) within N hops. |
+| [`grafel_find_paths`](#grafel_find_paths) | Shortest path between two entities. |
+| [`grafel_endpoints`](#grafel_endpoints) | HTTP endpoint surface (action: definitions\|calls\|stats). |
+| `grafel_endpoint_posture` | Per-endpoint/function posture: error_flow (throws/catches → ExceptionType), rate_limit, deprecation/version, feature_gates (GATED_BY → FeatureFlag), and HTTP/gRPC/tRPC auth. `entity_id` for one entity; omit for a repo-wide scan (facet/path_contains/method filters). |
+| `grafel_control_flow` | On-demand (not persisted) per-function control-flow graph for the flowchart view (#4819): nodes (start/decision/loop/process/return/throw/end) + edges (seq/branch_true/branch_false/loop_back/exit), with predicate text on decision/loop nodes and effect annotations on process nodes, plus cyclomatic complexity. `entity_id` required; `detail`=outline\|decisions\|data\|full for token control. Languages: python + jsts validated. |
+| [`grafel_effective_contract`](#grafel_effective_contract) | Per-verb effective contract of a ViewSet/controller (kind, status, error_statuses, serializer, pagination, permissions). |
+| `grafel_neighbors` | Graph neighbors of `entity_id` (`direction=in\|out\|both`, default `both`). **Unifies `find_callers` + `find_callees` (#1753).** |
+| [`grafel_find_callers`](#grafel_find_callers) | **Deprecated alias** of `grafel_neighbors(direction=in)`. Removed next release. |
+| [`grafel_find_callees`](#grafel_find_callees) | **Deprecated alias** of `grafel_neighbors(direction=out)`. Removed next release. |
+| [`grafel_impact_radius`](#grafel_impact_radius) | Blast-radius analysis with per-entity risk score. |
+| [`grafel_find_dead_code`](#grafel_find_dead_code) | Entities with 0 inbound/outbound project edges. |
+| [`grafel_auth_coverage`](#grafel_auth_coverage) | Security audit: flag HTTP endpoints missing auth decorators/middleware. |
+| [`grafel_secrets`](#grafel_secrets) | Security scan: detect hardcoded API keys, passwords, JWT tokens, and other credentials in source files. |
+| [`grafel_module_analysis`](#grafel_module_analysis) | Module-level SCC + PageRank + betweenness over the aggregated module graph (action: cycles\|centrality\|all). |
 
 ---
 
-### `archigraph_module_analysis`
+### `grafel_module_analysis`
 
 Module-level graph data-science (#1384, part of epic #1380). Runs SCC,
 PageRank, and betweenness over the **aggregated module graph** — the
@@ -212,9 +212,9 @@ dashboard server (same payload shape, v2 envelope).
 
 ---
 
-### `archigraph_whoami`
+### `grafel_whoami`
 
-Return the inferred archigraph group + repo for the caller session. Useful as a
+Return the inferred grafel group + repo for the caller session. Useful as a
 self-orientation call when an agent is uncertain which group is in scope. See
 ADR-0008 for the resolution cascade.
 
@@ -232,7 +232,7 @@ ADR-0008 for the resolution cascade.
   "group": "example-group",
   "repo": "mobile-app",
   "source": "cwd-marker",
-  "registry_path": "/Users/me/.archigraph/registry.json"
+  "registry_path": "/Users/me/.grafel/registry.json"
 }
 ```
 
@@ -241,13 +241,13 @@ the call still returns 200 with `error` populated.
 
 ---
 
-### `archigraph_find`
+### `grafel_find`
 
 BM25-ranked graph query across every repo in scope, optionally BFS-expanded
 from each top hit. The default rendering is compact text optimised for an LLM
 context budget; pass `full=true` for raw JSON.
 
-Previously named `archigraph_search` (renamed in #668).
+Previously named `grafel_search` (renamed in #668).
 
 **Inputs**
 
@@ -309,11 +309,11 @@ With `verbose=true`, each match also includes `qualified_name` and `repo`.
 
 ---
 
-### `archigraph_inspect`
+### `grafel_inspect`
 
 Look up an entity by ID, prefixed cross-repo ID, qualified name, or label.
 
-Previously named `archigraph_describe` (renamed in #668).
+Previously named `grafel_describe` (renamed in #668).
 
 **Inputs**
 
@@ -386,19 +386,19 @@ If the call resolves to a single repo, `id` is local; otherwise it is prefixed.
 Returns a tool error when no entity matches.
 
 The response also carries a `findings` array — every saved finding (see
-`archigraph_save_finding`) whose `nodes` list references this entity (in either
+`grafel_save_finding`) whose `nodes` list references this entity (in either
 local or `<repo>::<localId>` form). Empty array when no findings reference the
-entity. See [`archigraph_list_findings`](#archigraph_list_findings) for explicit
+entity. See [`grafel_list_findings`](#grafel_list_findings) for explicit
 retrieval. (Refs #59.)
 
 ---
 
-### `archigraph_expand`
+### `grafel_expand`
 
 Return BFS neighbours of a node out to a given depth, plus any cross-repo
 overlay edges that originate from that node.
 
-Previously named `archigraph_related` (renamed in #668).
+Previously named `grafel_related` (renamed in #668).
 
 **Inputs**
 
@@ -442,7 +442,7 @@ connecting edge kind was dropped from neighbour rows entirely. Fields are absent
 on neighbours that are not connected by a DI edge.
 
 Generalizing this (#3897), direct neighbours connected by ANY projected semantic
-edge (the `semantic_edges` kind set documented under `archigraph_inspect`)
+edge (the `semantic_edges` kind set documented under `grafel_inspect`)
 additionally carry `semantic_kind` and `semantic_direction` (same semantics as
 `di_kind`/`di_direction`). This lets a consumer distinguish e.g. a
 `DEPENDS_ON_SERVICE`, `THROWS`, or `DATA_FLOWS_TO` neighbour from a plain `CALLS`
@@ -452,7 +452,7 @@ semantic edge.
 
 ---
 
-### `archigraph_trace`
+### `grafel_trace`
 
 Confidence-weighted shortest path between two nodes (Dijkstra over
 `-log(confidence)` weights). Aware of cross-repo overlay links from
@@ -492,7 +492,7 @@ The response also carries a `findings` array — every saved finding whose
 
 ---
 
-### `archigraph_traces`
+### `grafel_traces`
 
 Process-flow query surface (#724). Surfaces the `SCOPE.Process` entities
 emitted by the indexer's Pass 7 BFS over the CALLS graph from
@@ -554,12 +554,12 @@ Three sub-actions selected via the required `action` argument:
 
 ---
 
-### `archigraph_clusters`
+### `grafel_clusters`
 
 List Louvain communities pre-baked into each repo's `graph.json` (see
 ADR-0005).
 
-Previously named `archigraph_list_clusters` (renamed in #668).
+Previously named `grafel_list_clusters` (renamed in #668).
 
 **Inputs**
 
@@ -586,13 +586,13 @@ Previously named `archigraph_list_clusters` (renamed in #668).
 
 ---
 
-### `archigraph_stats`
+### `grafel_stats`
 
 Corpus-level metrics for the resolved group: per-repo entity / relationship /
 community counts, plus group-level totals and any unavailable repos (with
 load errors).
 
-Previously named `archigraph_graph_stats` (renamed in #668).
+Previously named `grafel_graph_stats` (renamed in #668).
 
 **Inputs** — common args only. When `repo_filter` is supplied, totals,
 the `repos` array, and `cross_repo_links` are scoped to the named repos
@@ -609,17 +609,17 @@ both mean "every loaded repo".
   "repos": [
     { "repo": "mobile-app", "entities": 4321, "relationships": 12000, "communities": 23 }
   ],
-  "unavailable": ["legacy-tools: open .archigraph/graph.json: no such file"]
+  "unavailable": ["legacy-tools: open .grafel/graph.json: no such file"]
 }
 ```
 
 ---
 
-### `archigraph_enrichments`
+### `grafel_enrichments`
 
 Manage enrichment candidates via a single action-dispatch interface. Combines
-the former `archigraph_list_enrichment_candidates`, `archigraph_submit_enrichment`,
-and `archigraph_reject_enrichment` tools (bundled in #668).
+the former `grafel_list_enrichment_candidates`, `grafel_submit_enrichment`,
+and `grafel_reject_enrichment` tools (bundled in #668).
 
 **Inputs**
 
@@ -663,11 +663,11 @@ and `archigraph_reject_enrichment` tools (bundled in #668).
 
 ---
 
-### `archigraph_cross_links`
+### `grafel_cross_links`
 
 Manage cross-repo link candidates via a single action-dispatch interface.
-Combines the former `archigraph_list_link_candidates` and
-`archigraph_resolve_link_candidate` tools (bundled in #668).
+Combines the former `grafel_list_link_candidates` and
+`grafel_resolve_link_candidate` tools (bundled in #668).
 
 **Inputs**
 
@@ -694,11 +694,11 @@ target, kind, confidence, channel, method).
 
 ---
 
-### `archigraph_repairs`
+### `grafel_repairs`
 
 Manage the residual-edge repair queue (ADR-0015) via a single action-dispatch
-interface. Combines the former `archigraph_list_residuals` and
-`archigraph_submit_repair` tools (bundled in #668).
+interface. Combines the former `grafel_list_residuals` and
+`grafel_submit_repair` tools (bundled in #668).
 
 The 10 submit-only optional params below are **not declared in the JSON-Schema**
 (#1756 — #1639 pattern) to keep the handshake under its token ceiling. They are
@@ -763,7 +763,7 @@ read from `args` by the handler exactly as before — no behavior change.
 
 ---
 
-### `archigraph_save_finding`
+### `grafel_save_finding`
 
 Persist a question/answer pair into the resolved group's memory directory as a
 timestamped JSON file. The MCP does not interpret the contents; this is a
@@ -783,7 +783,7 @@ durable agent scratchpad.
 **Output**
 
 ```json
-{ "path": "/Users/me/.archigraph/groups/example-memory/20260509T020131Z-1a2b3c4d.json" }
+{ "path": "/Users/me/.grafel/groups/example-memory/20260509T020131Z-1a2b3c4d.json" }
 ```
 
 See [Save_finding semantics](#save_finding-semantics) below for full storage
@@ -791,9 +791,9 @@ layout.
 
 ---
 
-### `archigraph_list_findings`
+### `grafel_list_findings`
 
-Read previously saved findings back. Counterpart to `archigraph_save_finding`;
+Read previously saved findings back. Counterpart to `grafel_save_finding`;
 makes the agent scratchpad discoverable across sessions (Refs #59).
 
 **Inputs**
@@ -815,17 +815,17 @@ makes the agent scratchpad discoverable across sessions (Refs #59).
     "type":     "note",
     "nodes":    ["mobile-app::aaaa", "api-backend::bbbb"],
     "saved_at": "2026-05-09T02:01:31Z",
-    "path":     "/Users/me/.archigraph/groups/example-memory/20260509T020131Z-1a2b3c4d.json"
+    "path":     "/Users/me/.grafel/groups/example-memory/20260509T020131Z-1a2b3c4d.json"
   }
 ]
 ```
 
-Findings are read from the same memory directory `archigraph_save_finding`
+Findings are read from the same memory directory `grafel_save_finding`
 writes to. Files that fail to parse as JSON are silently skipped.
 
 ---
 
-### `archigraph_get_source`
+### `grafel_get_source`
 
 Return the source-file snippet for a node from disk, with `context_lines`
 above and below the entity's recorded `[start_line, end_line]` range.
@@ -872,7 +872,7 @@ Returns a tool error if the source file cannot be opened.
 
 ---
 
-### `archigraph_recent_activity`
+### `grafel_recent_activity`
 
 Return entities whose source files were modified after a given time, sorted
 by mtime descending.
@@ -902,7 +902,7 @@ by mtime descending.
 
 ---
 
-### `archigraph_get_telemetry`
+### `grafel_get_telemetry`
 
 Server uptime, per-tool call counters, error counts, and lazy-reload counts.
 Does NOT take a `group`/`cwd` — it is global to the server process.
@@ -917,8 +917,8 @@ Does NOT take a `group`/`cwd` — it is global to the server process.
   "reload_count": 12,
   "files_reloaded": 38,
   "tools": {
-    "archigraph_find":    { "calls": 42, "errors": 1, "p50_ms": 8.2, "p95_ms": 31.7 },
-    "archigraph_inspect": { "calls": 17, "errors": 0, "p50_ms": 1.1, "p95_ms": 2.3 }
+    "grafel_find":    { "calls": 42, "errors": 1, "p50_ms": 8.2, "p95_ms": 31.7 },
+    "grafel_inspect": { "calls": 17, "errors": 0, "p50_ms": 1.1, "p95_ms": 2.3 }
   }
 }
 ```
@@ -990,7 +990,7 @@ Relationship `kind` is a closed enum (ADR-0003). All edges are directed
 | `RETURNS` | Operation/Function returns a Schema or typed value. |
 | `TESTS` | Test entity exercises another entity. |
 
-The full list of edge kinds the agent may pass to `archigraph_find`'s
+The full list of edge kinds the agent may pass to `grafel_find`'s
 `context_filter` is the union of the above plus any `SCOPE.*`-prefixed
 forms emitted by extractors that haven't been stripped — the filter
 matches both forms.
@@ -1001,7 +1001,7 @@ matches both forms.
 
 Every resolver-touched relationship endpoint is classified into exactly one
 disposition. Dispositions are an *internal* signal surfaced through the
-indexer's verbose log (`ARCHIGRAPH_VERBOSE=1`) and through enrichment
+indexer's verbose log (`GRAFEL_VERBOSE=1`) and through enrichment
 candidate generation; the MCP does not (yet) expose them as a first-class
 filter.
 
@@ -1021,7 +1021,7 @@ The bug-rate metric is `(bug-extractor + bug-resolver) / total endpoints`.
 
 ## Cross-repo ID format
 
-Per ADR-0009, archigraph uses two-layer ID namespacing:
+Per ADR-0009, grafel uses two-layer ID namespacing:
 
 - **Index layer (per repo):** `entity.id` is a 16-char hex hash local to the
   repo. IDs are NOT prefixed in `graph.json`. Each entity carries a `repo`
@@ -1039,12 +1039,12 @@ unambiguously single-repo.
 
 ---
 
-## `archigraph_save_finding` semantics
+## `grafel_save_finding` semantics
 
-`archigraph_save_finding` writes a JSON document to the resolved group's
+`grafel_save_finding` writes a JSON document to the resolved group's
 memory directory:
 
-- **Default location:** `~/.archigraph/groups/<group>-memory/`. Override per
+- **Default location:** `~/.grafel/groups/<group>-memory/`. Override per
   group via `memory_dir` in `registry.json`.
 - **Filename:** `<UTC RFC3339-compact>-<sha256(question+answer)[0:8]>.json`,
   e.g. `20260509T020131Z-1a2b3c4d.json`. The hash provides idempotency for
@@ -1062,9 +1062,9 @@ memory directory:
 }
 ```
 
-- **Reading API:** `archigraph_list_findings` reads them back, optionally
-  filtered by `entity_id` or `since`. `archigraph_inspect` and
-  `archigraph_trace` also auto-attach matching findings under a `findings`
+- **Reading API:** `grafel_list_findings` reads them back, optionally
+  filtered by `entity_id` or `since`. `grafel_inspect` and
+  `grafel_trace` also auto-attach matching findings under a `findings`
   field of their response (Refs #59). Ingestion back into the graph proper
   is still out of scope for v1.0.
 - **No deduplication beyond the filename hash:** repeated calls with the
@@ -1073,7 +1073,7 @@ memory directory:
 
 ---
 
-### `archigraph_endpoint_definitions`
+### `grafel_endpoint_definitions`
 
 > Added in #1220 (Sub-D of paths v2 epic #1115).
 
@@ -1123,7 +1123,7 @@ The response carries `total`, `offset`, and `truncated` so a caller can answer
 
 ---
 
-### `archigraph_endpoint_calls`
+### `grafel_endpoint_calls`
 
 > Added in #1220 (Sub-D of paths v2 epic #1115).
 
@@ -1172,7 +1172,7 @@ When `orphan_hint` is non-empty it reads: `"this call to /some/path has no match
 
 ---
 
-### `archigraph_endpoint_stats`
+### `grafel_endpoint_stats`
 
 > Added in #1220 (Sub-D of paths v2 epic #1115).
 
@@ -1217,11 +1217,11 @@ When `migrated: false`, `note` contains a migration reminder.
 
 ---
 
-### `archigraph_endpoints`
+### `grafel_endpoints`
 
 > Unified HTTP endpoint surface (#1281, overhaul #1650). Replaces the separate
-> `archigraph_endpoint_definitions`, `archigraph_endpoint_calls`, and
-> `archigraph_endpoint_stats` tools.
+> `grafel_endpoint_definitions`, `grafel_endpoint_calls`, and
+> `grafel_endpoint_stats` tools.
 
 **Inputs** (shared)
 
@@ -1243,7 +1243,7 @@ how many items were omitted and how to get more. Use `limit=N` for simple pagina
 
 ---
 
-### `archigraph_effective_contract`
+### `grafel_effective_contract`
 
 > Added in #3836 (epic #3829, MRO T6). Per-verb **effective contract** of a
 > ViewSet / controller. Thin serving/grouping layer over the T5 (#3964)
@@ -1306,7 +1306,7 @@ routes carry it.
 
 **MRO wiring.** The tool does not depend solely on the engine-stamped
 `effective_*` props. It resolves the same MRO + baseknowledge-pack data
-`archigraph_get_source` reads, so it returns a contract wherever `get_source`
+`grafel_get_source` reads, so it returns a contract wherever `get_source`
 can: (1) a router-expanded route whose `effective_*` fields are absent is
 **backfilled** from the inherited-endpoint MRO resolution → the pack (stamped
 values always win), and (2) when **no** router-expanded routes exist for the
@@ -1321,9 +1321,9 @@ pack-resolvable `EXTENDS` chain returns an empty `groups` list with a `note`.
 
 ---
 
-### `archigraph_subgraph`
+### `grafel_subgraph`
 
-> Added in #1754. Folds `archigraph_get_subgraph` + `archigraph_summarize_subgraph`
+> Added in #1754. Folds `grafel_get_subgraph` + `grafel_summarize_subgraph`
 > into a single entry point discriminated by `format`.
 
 Return nodes+edges within N hops of an entity (`format="raw"`) or an LLM-friendly
@@ -1361,7 +1361,7 @@ Markdown summary of the same neighbourhood (`format="markdown"`).
 
 ---
 
-### `archigraph_find_callers`
+### `grafel_find_callers`
 
 > Added in #1252.
 
@@ -1397,7 +1397,7 @@ When budget is exceeded: `truncation_note` explains omissions.
 
 ---
 
-### `archigraph_find_callees`
+### `grafel_find_callees`
 
 > Added in #1252.
 
@@ -1413,14 +1413,14 @@ Return entities called by the given entity. Walks the outbound CALLS adjacency u
 | `token_budget` | number | no | `800` | Max approximate tokens; callees shed from tail when exceeded (#1738). |
 | `group`, `cwd` | string | no | — | Common args. |
 
-**Output** — JSON object with `callees` array (same shape as `callers` in `archigraph_find_callers`).
+**Output** — JSON object with `callees` array (same shape as `callers` in `grafel_find_callers`).
 When no callees exist: `"result": "no_outgoing_edges"` is set.
 
 ---
 
 ---
 
-### `archigraph_auth_coverage`
+### `grafel_auth_coverage`
 
 Security audit tool (#1314). Walk every `http_endpoint_definition` entity in the group and
 determine whether it is covered by an auth decorator, middleware, or guard.
@@ -1512,7 +1512,7 @@ If ≥ 80 % of endpoints in a repo are covered, the repo is classified as `defau
 
 ---
 
-### `archigraph_secrets`
+### `grafel_secrets`
 
 Hardcoded-secret detector (#1322). Walks every source file in each repo of the group and flags
 lines that appear to contain embedded credentials: AWS access keys, GitHub tokens, JWT tokens,
@@ -1521,7 +1521,7 @@ Stripe keys, SendGrid keys, Slack tokens, generic high-entropy assignments, and 
 **Suppression rules**
 
 - Files in test directories (`/test/`, `/tests/`, `/testdata/`, `__tests__`, `*.test.*`, `*_test.go`, etc.) are skipped entirely.
-- Lines with the opt-out comment `// archigraph: ignore-secret` are skipped.
+- Lines with the opt-out comment `// grafel: ignore-secret` are skipped.
 - Values that match common placeholder patterns (`example`, `changeme`, `REPLACE_ME`, all-same-char sequences, well-known AWS documentation keys) are suppressed.
 
 **Severity grades**
@@ -1569,7 +1569,7 @@ Stripe keys, SendGrid keys, Slack tokens, generic high-entropy assignments, and 
       ]
     }
   ],
-  "tip": "Add '// archigraph: ignore-secret' to suppress a specific line. Replace hardcoded values with the suggested env var."
+  "tip": "Add '// grafel: ignore-secret' to suppress a specific line. Replace hardcoded values with the suggested env var."
 }
 ```
 
@@ -1677,8 +1677,8 @@ Measured on a representative 40-record endpoint payload (8 fields per row):
 | Minified JSON array | 2,270 | — |
 | TOON-encoded | 1,388 | **~39%** |
 
-For list-heavy tools (`archigraph_endpoints`, `archigraph_topology`,
-`archigraph_auth_coverage`, `archigraph_find_dead_code`, etc.) this is
+For list-heavy tools (`grafel_endpoints`, `grafel_topology`,
+`grafel_auth_coverage`, `grafel_find_dead_code`, etc.) this is
 additive on top of the minification savings from #1663.
 
 ---
@@ -1694,8 +1694,8 @@ additive on top of the minification savings from #1663.
 - ADR-0007 — Doc-as-bridge for cross-repo and dynamic connections
 - ADR-0008 — Caller-CWD aware routing for multi-group setups
 - ADR-0009 — Cross-repo ID namespacing (`<repo>::<localId>`)
-- ADR-0015 — Residual-edge repair flow (now `archigraph_repairs`)
+- ADR-0015 — Residual-edge repair flow (now `grafel_repairs`)
 - ADR-0017 — No backwards compatibility guarantee for tool renames
 - Source — `internal/mcp/server.go`, `internal/mcp/tools.go`
 - Docgen LLM mode — 5-tier ladder, emit/apply loop, Pass 20 skill integration: [`docs/docgen-llm-mode.md`](../../docs/docgen-llm-mode.md)
-- Issues — #52 (initial rename), #62 (`archigraph_*` prefix), #57 (this doc), #661 (SCHEMA.md stale), #668 (tool rename + bundle)
+- Issues — #52 (initial rename), #62 (`grafel_*` prefix), #57 (this doc), #661 (SCHEMA.md stale), #668 (tool rename + bundle)

@@ -14,7 +14,7 @@ func windowsSampleUnit() Unit {
 	return Unit{
 		Group:   "demo",
 		Repo:    `C:\Users\testuser\src\core`,
-		BinPath: `C:\Program Files\archigraph\archigraph.exe`,
+		BinPath: `C:\Program Files\grafel\grafel.exe`,
 	}
 }
 
@@ -107,9 +107,9 @@ func TestWatcherTaskName(t *testing.T) {
 func TestParseWatcherTaskStatus_Running(t *testing.T) {
 	// Minimal CSV matching the schtasks /query /fo csv /v format.
 	csv := `"HostName","TaskName","Next Run Time","Status","Logon Mode","Last Run Time","Last Result","Author","Task To Run","Start In","Comment","Scheduled Task State","Idle Time","Power Management","Run As User","Delete Task If Not Scheduled","Stop Task If Runs X Hours and X Mins","Schedule","Schedule Type","Start Time","Start Date","End Date","Days","Months","Repeat: Every","Repeat: Until: Time","Repeat: Until: Duration","Repeat: Stop If Still Running","PID"
-"DESKTOP","com.archigraph.watcher.demo.core","N/A","Running","Interactive/Background","5/23/2026 10:00:00 AM","0","testuser","C:\Program Files\archigraph\archigraph.exe","N/A","N/A","Enabled","Disabled","N/A","testuser","Disabled","Disabled","Scheduling data is not available in this format.","One Time Only","10:00:00 AM","5/23/2026","N/A","N/A","N/A","Disabled","N/A","N/A","N/A","4242"
+"DESKTOP","com.grafel.watcher.demo.core","N/A","Running","Interactive/Background","5/23/2026 10:00:00 AM","0","testuser","C:\Program Files\grafel\grafel.exe","N/A","N/A","Enabled","Disabled","N/A","testuser","Disabled","Disabled","Scheduling data is not available in this format.","One Time Only","10:00:00 AM","5/23/2026","N/A","N/A","N/A","Disabled","N/A","N/A","N/A","4242"
 `
-	ws := WatcherStatus{TaskName: "com.archigraph.watcher.demo.core"}
+	ws := WatcherStatus{TaskName: "com.grafel.watcher.demo.core"}
 	result := parseWatcherTaskStatus(ws, []byte(csv))
 	if !result.Running {
 		t.Error("expected Running=true from 'Running' status column")
@@ -123,9 +123,9 @@ func TestParseWatcherTaskStatus_Running(t *testing.T) {
 // leaves Running=false.
 func TestParseWatcherTaskStatus_NotRunning(t *testing.T) {
 	csv := `"HostName","TaskName","Next Run Time","Status","PID"
-"DESKTOP","com.archigraph.watcher.demo.core","N/A","Ready","0"
+"DESKTOP","com.grafel.watcher.demo.core","N/A","Ready","0"
 `
-	ws := WatcherStatus{TaskName: "com.archigraph.watcher.demo.core", Installed: true}
+	ws := WatcherStatus{TaskName: "com.grafel.watcher.demo.core", Installed: true}
 	result := parseWatcherTaskStatus(ws, []byte(csv))
 	if result.Running {
 		t.Error("expected Running=false for 'Ready' status")

@@ -3,9 +3,9 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/csharp"
+	_ "github.com/cajasmota/grafel/internal/custom/csharp"
 )
 
 // findTrigger returns the first trigger entity, or nil.

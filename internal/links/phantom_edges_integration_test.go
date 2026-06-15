@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/engine"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/engine"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestPhantomEdges_CrossRepoBFSChain is an end-to-end integration test

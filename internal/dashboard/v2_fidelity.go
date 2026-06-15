@@ -11,7 +11,7 @@
 //	fidelity  < 0.90  → degraded
 //
 // The most-recent bug_rate is read from the quality health-history JSONL
-// file (~/.archigraph/health-history.jsonl) by latestGroupBugRate.
+// file (~/.grafel/health-history.jsonl) by latestGroupBugRate.
 // When no history exists for a group the callers fall back to their previous
 // logic (indexed → 1.0/healthy).
 
@@ -20,7 +20,7 @@ package dashboard
 import (
 	"math"
 
-	"github.com/cajasmota/archigraph/internal/quality"
+	"github.com/cajasmota/grafel/internal/quality"
 )
 
 const healthDegraded = "degraded"
@@ -53,7 +53,7 @@ func deriveHealthFromFidelity(fidelity float64) (float64, string) {
 }
 
 // latestGroupBugRate reads the quality health-history JSONL stored under
-// root (e.g. ~/.archigraph) and returns the bug_rate of the most-recent
+// root (e.g. ~/.grafel) and returns the bug_rate of the most-recent
 // HealthEntry for groupName. Returns (0, false) when no entry exists.
 //
 // Uses quality.ReadHistory with a generous 3650-day window so all history

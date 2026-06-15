@@ -8,31 +8,31 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
 // ---------------------------------------------------------------------------
 
-// buildSeedEntityFixture creates a minimal ARCHIGRAPH_HOME + ARCHIGRAPH_DAEMON_ROOT
+// buildSeedEntityFixture creates a minimal GRAFEL_HOME + GRAFEL_DAEMON_ROOT
 // with a single group containing one repo with one entity whose ID is rawHex.
 // It returns the group name. The graph.json is placed at the path that
-// daemon.StateDirForRepo resolves to under ARCHIGRAPH_DAEMON_ROOT.
+// daemon.StateDirForRepo resolves to under GRAFEL_DAEMON_ROOT.
 func buildSeedEntityFixture(t *testing.T, rawHex string) (group string) {
 	t.Helper()
 	archHome := t.TempDir()
 	daemonRoot := t.TempDir()
-	group = "archigraph"
+	group = "grafel"
 
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
+	t.Setenv("GRAFEL_HOME", archHome)
 	t.Setenv(daemon.EnvRoot, daemonRoot)
 
 	xdgConfigHome := filepath.Join(archHome, "xdg-config")
 	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
 
-	cfgDir := filepath.Join(xdgConfigHome, "archigraph")
+	cfgDir := filepath.Join(xdgConfigHome, "grafel")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatalf("mkdir cfgDir: %v", err)
 	}
@@ -113,23 +113,23 @@ func TestSeedEntity_RawHex(t *testing.T) {
 	}
 }
 
-// TestSeedEntity_ArchigraphPrefixed checks that "archigraph::<hex>" resolves —
+// TestSeedEntity_GrafelPrefixed checks that "grafel::<hex>" resolves —
 // this was the broken form before #1826.
-func TestSeedEntity_ArchigraphPrefixed(t *testing.T) {
+func TestSeedEntity_GrafelPrefixed(t *testing.T) {
 	const rawHex = "7a349f6cd77984c9"
 	group := buildSeedEntityFixture(t, rawHex)
 
 	_, _, score, err := docgen.Run(docgen.RunOpts{
 		Group:        group,
-		SeedEntityID: "archigraph::" + rawHex, // prefixed form from archigraph_find
+		SeedEntityID: "grafel::" + rawHex, // prefixed form from grafel_find
 		Section:      "overview",
 		OutputDir:    t.TempDir(),
 	})
 	if err != nil {
-		t.Fatalf("Run with prefixed archigraph:: form: %v", err)
+		t.Fatalf("Run with prefixed grafel:: form: %v", err)
 	}
 	if !score.SeedEntityFound {
-		t.Errorf("seed_entity_found: want true (archigraph:: prefix), got false — #1826 regression")
+		t.Errorf("seed_entity_found: want true (grafel:: prefix), got false — #1826 regression")
 	}
 }
 
@@ -153,7 +153,7 @@ func TestSeedEntity_ArbitraryGroupPrefixed(t *testing.T) {
 	}
 }
 
-// TestSeedEntity_InvalidPrefixedForm checks that "archigraph::" (empty RHS) returns
+// TestSeedEntity_InvalidPrefixedForm checks that "grafel::" (empty RHS) returns
 // a clear error rather than silently producing found:false.
 func TestSeedEntity_InvalidPrefixedForm(t *testing.T) {
 	const rawHex = "7a349f6cd77984c9"
@@ -161,11 +161,11 @@ func TestSeedEntity_InvalidPrefixedForm(t *testing.T) {
 
 	_, _, _, err := docgen.Run(docgen.RunOpts{
 		Group:        group,
-		SeedEntityID: "archigraph::", // empty RHS
+		SeedEntityID: "grafel::", // empty RHS
 		Section:      "overview",
 		OutputDir:    t.TempDir(),
 	})
 	if err == nil {
-		t.Fatal("expected error for 'archigraph::', got nil")
+		t.Fatal("expected error for 'grafel::', got nil")
 	}
 }

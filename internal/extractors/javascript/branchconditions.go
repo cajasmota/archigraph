@@ -31,7 +31,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // branchKind classifies the syntactic construct a branch condition came from.

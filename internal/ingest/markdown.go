@@ -1,5 +1,5 @@
 // Package ingest implements deterministic markdown documentation ingestion
-// for archigraph (Layer 1 of epic #4294, issue #4306).
+// for grafel (Layer 1 of epic #4294, issue #4306).
 //
 // It is FULLY DETERMINISTIC: a markdown file is parsed by a pure line/heading
 // scanner into one Document node and a tree of heading-delimited Section nodes,

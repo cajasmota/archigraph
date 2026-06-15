@@ -14,7 +14,7 @@
 //  2. The writer appends a DocgenRepairCandidate record to
 //     <stateDir>/docgen-repairs.jsonl (append-only, one JSON object per
 //     line).
-//  3. On the next daemon load (or via archigraph_apply_docgen_repairs),
+//  3. On the next daemon load (or via grafel_apply_docgen_repairs),
 //     ReadDocgenRepairs loads the file and ApplyDocgenRepairs splits it:
 //     - Confidence ≥ HighConfidenceThreshold → applied immediately as
 //     graph enrichment enrichment-resolutions.json or a new edge.
@@ -24,7 +24,7 @@
 // # Schema contract
 //
 // DocgenRepairCandidate is the on-disk record shape emitted by the skill.
-// It is also what archigraph_apply_docgen_repairs returns in its response
+// It is also what grafel_apply_docgen_repairs returns in its response
 // so the skill can confirm which repairs landed.
 package enrichment
 

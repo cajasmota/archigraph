@@ -1,7 +1,7 @@
 package java
 
 import (
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // javaClassRef returns the resolvable stub naming a Java class entity. The

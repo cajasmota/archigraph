@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
 )
 
 // slowRebuildFunc returns a RebuildFunc that sleeps for delay before

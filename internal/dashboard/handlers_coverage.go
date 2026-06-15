@@ -25,8 +25,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -276,7 +276,7 @@ func (s *Server) handleQualityCoverage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if doc == nil {
-			stateDir := filepath.Join(rp.Path, ".archigraph")
+			stateDir := filepath.Join(rp.Path, ".grafel")
 			var loadErr error
 			doc, loadErr = graph.LoadGraphFromDir(stateDir)
 			if loadErr != nil {

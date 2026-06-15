@@ -33,7 +33,7 @@ import (
 // `phys_footprint`, which counts dirty + swapped-out + compressed pages.
 // Reading it requires the mach `task_info(TASK_VM_INFO)` trap, which is a
 // MIG routine over mach_msg and is not reachable from pure Go without cgo.
-// archigraph is a pure-Go, cgo-free binary, so on darwin we report the
+// grafel is a pure-Go, cgo-free binary, so on darwin we report the
 // RESIDENT set size (`ps -o rss`), which UNDER-counts swapped/compressed
 // pages — under heavy memory pressure the real footprint can be much
 // larger than what we report here. The Label makes that explicit rather
@@ -95,23 +95,23 @@ func (errUnsupported) Error() string {
 	return "process introspection unsupported on " + runtime.GOOS
 }
 
-// PidIsArchigraph reports whether the live process with the given pid is an
-// archigraph binary. It is the PID-reuse-safe companion to a bare
+// PidIsGrafel reports whether the live process with the given pid is an
+// grafel binary. It is the PID-reuse-safe companion to a bare
 // kill(pid,0) liveness probe: after a daemon dies, its pid can be recycled
 // by an unrelated process, and honoring a stale pidfile purely because
 // "some process with that pid is alive" produces the false "daemon already
 // running" wedge in issue #4549.
 //
 // Returns:
-//   - (true,  nil)            — pid is live AND its command name/exe matches "archigraph".
-//   - (false, nil)            — pid is not a live archigraph process (dead, or a different program).
+//   - (true,  nil)            — pid is live AND its command name/exe matches "grafel".
+//   - (false, nil)            — pid is not a live grafel process (dead, or a different program).
 //   - (false, ErrUnsupported) — this platform cannot enumerate processes; caller must
 //     fall back to a coarser liveness check and NOT treat the pid as definitively foreign.
-func PidIsArchigraph(pid int) (bool, error) {
+func PidIsGrafel(pid int) (bool, error) {
 	if pid <= 0 {
 		return false, nil
 	}
-	procs, err := FindByName("archigraph")
+	procs, err := FindByName("grafel")
 	if err != nil {
 		// Distinguish "platform can't enumerate" from a transient scan error.
 		// Both surface as an error so the caller can decide how to degrade,

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func relsOfKind(rels []types.RelationshipRecord, kind string) []types.RelationshipRecord {

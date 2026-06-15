@@ -102,7 +102,7 @@ func TestRepoStateHashCaseVariants(t *testing.T) {
 // path does not panic and produces a non-empty, valid hash string.
 func TestRepoStateHashMissingPath(t *testing.T) {
 	clearCanonicalCache()
-	h := repoStateHash("/tmp/nonexistent-archigraph-test-2086/sub/dir")
+	h := repoStateHash("/tmp/nonexistent-grafel-test-2086/sub/dir")
 	if h == "" {
 		t.Fatal("repoStateHash returned empty string for missing path")
 	}
@@ -241,7 +241,7 @@ func TestWarnCaseCollisions_EmptyStore(t *testing.T) {
 	if dups != nil {
 		t.Errorf("expected nil for empty storeDir, got %v", dups)
 	}
-	dups = WarnCaseCollisions("/tmp/nonexistent-store-archigraph-2086", []string{"/some/repo"})
+	dups = WarnCaseCollisions("/tmp/nonexistent-store-grafel-2086", []string{"/some/repo"})
 	if dups != nil {
 		t.Errorf("expected nil for nonexistent storeDir, got %v", dups)
 	}

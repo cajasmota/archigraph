@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/golang"
+	_ "github.com/cajasmota/grafel/internal/custom/golang"
 )
 
 // dtoRecords runs the Go DTO extractor and returns the full entity records so

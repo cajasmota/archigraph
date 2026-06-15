@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -1172,7 +1172,7 @@ func TestSubgraph_FormatMarkdown_RootNoCallers(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestSubgraph — unified archigraph_subgraph tool (#1754)
+// TestSubgraph — unified grafel_subgraph tool (#1754)
 // ---------------------------------------------------------------------------
 
 // TestSubgraph_FormatRaw_DefaultsToRaw verifies that omitting format= returns
@@ -1206,7 +1206,7 @@ func TestSubgraph_FormatRaw_DefaultsToRaw(t *testing.T) {
 }
 
 // TestSubgraph_FormatRaw_GraphCounts verifies node_count and edge_count for
-// a known fixture using format="raw" on the canonical archigraph_subgraph tool.
+// a known fixture using format="raw" on the canonical grafel_subgraph tool.
 func TestSubgraph_FormatRaw_GraphCounts(t *testing.T) {
 	entities := []graph.Entity{
 		{ID: "root", Name: "Root", Kind: "Function"},
@@ -1625,7 +1625,7 @@ func buildIsolatedDoc() *graph.Document {
 	)
 }
 
-// TestExpand_NoEdgeSignal verifies that archigraph_expand returns the explicit
+// TestExpand_NoEdgeSignal verifies that grafel_expand returns the explicit
 // no-edge signal when the entity is found but has zero neighbours (#1618).
 func TestExpand_NoEdgeSignal(t *testing.T) {
 	doc := buildIsolatedDoc()
@@ -1758,7 +1758,7 @@ func TestFindCallees_TokenBudgetEnforced(t *testing.T) {
 	}
 }
 
-// TestExpand_TokenBudgetEnforced verifies that archigraph_expand caps its
+// TestExpand_TokenBudgetEnforced verifies that grafel_expand caps its
 // output when token_budget is tight (#1738).
 func TestExpand_TokenBudgetEnforced(t *testing.T) {
 	// Build a star graph: root connected to 30 leaf nodes via CALLS.

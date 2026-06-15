@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/ruby/sample_rails.rb",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/ruby/sample_rails.rb",
   "language": "ruby",
   "entities": [
     {
@@ -223,8 +223,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/ruby/sample_rails.rb",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/ruby/sample_rails.rb",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/ruby/sample_rails.rb",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/ruby/sample_rails.rb",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -239,7 +239,7 @@
         "convention": "snake_case",
         "dominant_percentage": 27.27272727272727,
         "sample_count": 11,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/ruby/sample_rails.rb"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/ruby/sample_rails.rb"
       }
     }
   ],

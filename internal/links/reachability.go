@@ -1,6 +1,6 @@
 // Phase 1B reachability + dead-code identification (#2766).
 //
-// Replaces the heuristic in archigraph_find_dead_code with a rigorous
+// Replaces the heuristic in grafel_find_dead_code with a rigorous
 // reachability pass: BFS from the per-repo entry-point set across
 // reachability-bearing edges (CALLS, IMPORTS, REFERENCES, USES,
 // HANDLES, HANDLES_SIGNAL, NAVIGATES_TO, ROUTES_TO, IMPLEMENTS,
@@ -27,7 +27,7 @@
 // Storage model: in-memory mutation of entityNode.Properties (so
 // downstream passes see the marking), plus a persistent
 // <group>-reachability.json sidecar that MCP reads via
-// archigraph_dead_code. The per-repo graph.fb files are NOT
+// grafel_dead_code. The per-repo graph.fb files are NOT
 // rewritten — this mirrors the Phase 0 RESOLVES_TO sidecar model.
 package links
 
@@ -39,7 +39,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // MethodReachability identifies entries produced by the Phase 1B

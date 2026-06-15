@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the Go + Ruby custom extractors so the test_suite (carrying
 	// e2e_route_calls) comes from the REAL extractors, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/golang"
-	_ "github.com/cajasmota/archigraph/internal/custom/ruby"
+	_ "github.com/cajasmota/grafel/internal/custom/golang"
+	_ "github.com/cajasmota/grafel/internal/custom/ruby"
 )
 
 // Issue #4371 LIVE-REPRO (resolve side, full in-pipeline) — Go + Rails.

@@ -13,7 +13,7 @@ package main
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func entity(kind, subtype, name string, props map[string]string) *graph.Entity {

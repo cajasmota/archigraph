@@ -145,7 +145,7 @@ func TestFilterByConfidence_RankLifts(t *testing.T) {
 // TestFilterByConfidence_ToggleOff verifies the master env toggle disables
 // floor filtering — everything ends up in Kept regardless of score.
 func TestFilterByConfidence_ToggleOff(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_CONFIDENCE_FLOOR", "off")
+	t.Setenv("GRAFEL_CONFIDENCE_FLOOR", "off")
 	entries := []map[string]any{
 		{"label": "<module>", "step_count": 1},
 		{"label": "ProperFlow", "step_count": 4, "source_file": "x/y.py"},
@@ -165,7 +165,7 @@ func TestFilterByConfidence_ToggleOff(t *testing.T) {
 // TestFloorFor_EnvOverride verifies that a per-surface env override beats the
 // built-in default.
 func TestFloorFor_EnvOverride(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_CONFIDENCE_FLOOR_FLOWS", "0.8")
+	t.Setenv("GRAFEL_CONFIDENCE_FLOOR_FLOWS", "0.8")
 	if got := FloorFor(SurfaceFlows); got != 0.8 {
 		t.Fatalf("FloorFor(flows) override: got %.2f want 0.80", got)
 	}
@@ -174,7 +174,7 @@ func TestFloorFor_EnvOverride(t *testing.T) {
 // TestFloorFor_InvalidEnvFallsBack verifies an unparseable env var falls back
 // to the built-in default rather than crashing or scoring everything as 0.
 func TestFloorFor_InvalidEnvFallsBack(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_CONFIDENCE_FLOOR_TOPOLOGY", "not-a-float")
+	t.Setenv("GRAFEL_CONFIDENCE_FLOOR_TOPOLOGY", "not-a-float")
 	if got := FloorFor(SurfaceTopology); got != defaultFloors[SurfaceTopology] {
 		t.Fatalf("invalid env should fall back to default; got %.2f", got)
 	}

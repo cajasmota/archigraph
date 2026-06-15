@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // callToIDs returns the set of CALLS ToIDs emitted from callerName.

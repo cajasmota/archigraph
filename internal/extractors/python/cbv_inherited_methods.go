@@ -30,9 +30,9 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/frameworks/baseknowledge"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/frameworks/baseknowledge"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // The recognised Django / DRF generic base classes and the HTTP-handler

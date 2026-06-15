@@ -26,6 +26,6 @@ description: >-
   pub mod), Kotlin (typealias), Ruby (include/extend/prepend, autoload), PHP
   (use statements), and Elixir (defdelegate). Emits SCOPE.Pattern entities
   with kind=re_export.
-module: archigraph.engine.rules.pattern_detectors.re_export_detector
+module: grafel.engine.rules.pattern_detectors.re_export_detector
 function: detect
 applies_to_function: applies_to

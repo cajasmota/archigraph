@@ -44,7 +44,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // handlerKey is the (Kind, Name) tuple used to index handler entities

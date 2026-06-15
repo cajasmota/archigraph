@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/hooks"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/hooks"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newUpdateCmd() *cobra.Command {
@@ -24,17 +24,17 @@ func newUpdateCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Update archigraph to the latest release (or a pinned version)",
-		Long: `Update downloads the latest archigraph release from GitHub, atomically
+		Short: "Update grafel to the latest release (or a pinned version)",
+		Long: `Update downloads the latest grafel release from GitHub, atomically
 replaces the current binary, and re-runs the install transaction
 (skills, MCP, daemon restart).
 
 On success the previous binary is removed. On failure the previous
 binary is restored automatically (rollback).
 
-  archigraph update                # latest stable release
-  archigraph update --pre          # latest pre-release
-  archigraph update --tag v1.2.3   # pin to a specific version
+  grafel update                # latest stable release
+  grafel update --pre          # latest pre-release
+  grafel update --tag v1.2.3   # pin to a specific version
 
 The update is idempotent: if the binary is already at the target
 version the command exits 0 without downloading anything.`,
@@ -113,11 +113,11 @@ func runSelfUpdate(out io.Writer, opts install.UpdateOptions) error {
 	}
 
 	if result.Skipped {
-		fmt.Fprintf(out, "✓ archigraph is already at the latest version (%s)\n", result.Tag)
+		fmt.Fprintf(out, "✓ grafel is already at the latest version (%s)\n", result.Tag)
 		return nil
 	}
 
-	fmt.Fprintf(out, "✓ archigraph updated to %s\n", result.Tag)
+	fmt.Fprintf(out, "✓ grafel updated to %s\n", result.Tag)
 	if result.PreviousVersion != "" && len(result.PreviousVersion) >= 16 {
 		fmt.Fprintf(out, "  previous: %s...\n", result.PreviousVersion[:16])
 	}

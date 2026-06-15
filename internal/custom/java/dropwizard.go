@@ -277,7 +277,7 @@ func ExtractDropwizard(ctx PatternContext) PatternResult {
 				"auth_annotation": "Authenticated",
 				"framework":       "dropwizard",
 				"auth_required":   true,
-				// auth_guard is the key archigraph_auth_coverage reads to count
+				// auth_guard is the key grafel_auth_coverage reads to count
 				// the co-located JAX-RS endpoint as covered (#3862).
 				"auth_guard": "Authenticated",
 			},

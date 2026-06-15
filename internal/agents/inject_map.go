@@ -1,12 +1,12 @@
 // Package agents provides the Architecture Map injector that appends (or
 // updates) an idempotent marker block in a project's AGENTS.md (or CLAUDE.md)
-// after every archigraph rebuild. The block tells AI coding agents that this
+// after every grafel rebuild. The block tells AI coding agents that this
 // repo is indexed, where the dashboard lives, and which MCP endpoints to
 // query.
 //
 // Design notes:
-//   - The block is bounded by <!-- archigraph:architecture-map:start --> …
-//     <!-- archigraph:architecture-map:end --> so re-runs UPDATE in place.
+//   - The block is bounded by <!-- grafel:architecture-map:start --> …
+//     <!-- grafel:architecture-map:end --> so re-runs UPDATE in place.
 //   - If the marker pair is missing from an existing file the block is
 //     appended at the end with a blank-line separator.
 //   - If no agent file exists at all, AGENTS.md is created.
@@ -26,11 +26,11 @@ import (
 )
 
 // Marker tokens for the architecture-map block. Use a distinct namespace
-// from the patterns block (archigraph:patterns) so the two can coexist
+// from the patterns block (grafel:patterns) so the two can coexist
 // independently in the same file.
 const (
-	MapStartMarker = "<!-- archigraph:architecture-map:start -->"
-	MapEndMarker   = "<!-- archigraph:architecture-map:end -->"
+	MapStartMarker = "<!-- grafel:architecture-map:start -->"
+	MapEndMarker   = "<!-- grafel:architecture-map:end -->"
 )
 
 // blockRegex matches the entire marker-wrapped region (start + content + end),
@@ -43,7 +43,7 @@ var blockRegex = regexp.MustCompile(`(?s)` +
 // Stats carries the per-repo counters that the Architecture Map block
 // displays. All fields are optional — zero values render as 0.
 type Stats struct {
-	// Group is the archigraph group this repo belongs to (used to construct
+	// Group is the grafel group this repo belongs to (used to construct
 	// the dashboard URL fragment).
 	Group string
 
@@ -71,7 +71,7 @@ type Stats struct {
 	// IndexedAt is the timestamp written into the block. Defaults to now.
 	IndexedAt time.Time
 
-	// BinaryPath is the absolute path to the archigraph binary used for the
+	// BinaryPath is the absolute path to the grafel binary used for the
 	// MCP snippet. Defaults to os.Executable() at render time if empty.
 	BinaryPath string
 }
@@ -96,7 +96,7 @@ func InjectArchitectureMap(repoPath string, stats Stats) error {
 		if exe, err := os.Executable(); err == nil {
 			stats.BinaryPath = exe
 		} else {
-			stats.BinaryPath = "archigraph"
+			stats.BinaryPath = "grafel"
 		}
 	}
 
@@ -146,7 +146,7 @@ func renderBlock(s Stats, tools detectedTools) string {
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "## Architecture Map")
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "This repo is indexed by [archigraph](https://archigraph.dev).")
+	fmt.Fprintln(&b, "This repo is indexed by [grafel](https://grafel.dev).")
 	fmt.Fprintln(&b)
 
 	dashURL := fmt.Sprintf("http://127.0.0.1:%d", s.DashboardPort)
@@ -190,19 +190,19 @@ func renderBlock(s Stats, tools detectedTools) string {
 	fmt.Fprintln(&b)
 
 	if tools.claude {
-		fmt.Fprintln(&b, "Claude Code (`.claude/settings.json`) — archigraph is already registered via `archigraph install`.")
+		fmt.Fprintln(&b, "Claude Code (`.claude/settings.json`) — grafel is already registered via `grafel install`.")
 		fmt.Fprintln(&b, "If you need to add it manually:")
 	} else if tools.cursor {
-		fmt.Fprintln(&b, "Cursor (`.cursor/mcp.json`) — add the archigraph MCP server:")
+		fmt.Fprintln(&b, "Cursor (`.cursor/mcp.json`) — add the grafel MCP server:")
 	} else {
-		fmt.Fprintln(&b, "Add the archigraph MCP server to your AI agent config:")
+		fmt.Fprintln(&b, "Add the grafel MCP server to your AI agent config:")
 	}
 
 	fmt.Fprintln(&b)
-	fmt.Fprintf(&b, "```json\n{ \"mcpServers\": { \"archigraph\": { \"command\": \"%s\", \"args\": [\"mcp\"] } } }\n```\n",
+	fmt.Fprintf(&b, "```json\n{ \"mcpServers\": { \"grafel\": { \"command\": \"%s\", \"args\": [\"mcp\"] } } }\n```\n",
 		s.BinaryPath)
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "_Do not edit between the markers — this block is auto-updated by `archigraph rebuild`._")
+	fmt.Fprintln(&b, "_Do not edit between the markers — this block is auto-updated by `grafel rebuild`._")
 	fmt.Fprintln(&b)
 	fmt.Fprint(&b, MapEndMarker)
 

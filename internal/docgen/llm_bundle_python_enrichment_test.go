@@ -18,13 +18,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/docgen"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/docgen"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// writeGroupGraph is a small harness that builds an isolated archigraph
+// writeGroupGraph is a small harness that builds an isolated grafel
 // group whose only repo contains the supplied graph document. Returns the
 // group name and the chosen seed entity ID.
 func writeGroupGraph(t *testing.T, groupName, seedID string, doc graph.Document) string {
@@ -39,7 +39,7 @@ func writeGroupGraph(t *testing.T, groupName, seedID string, doc graph.Document)
 			t.Fatalf("mkdir %s: %v", d, err)
 		}
 	}
-	t.Setenv("ARCHIGRAPH_HOME", homeDir)
+	t.Setenv("GRAFEL_HOME", homeDir)
 	t.Setenv("XDG_CONFIG_HOME", xdgDir)
 	t.Setenv(daemon.EnvRoot, daemonRoot)
 

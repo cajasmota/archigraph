@@ -3,7 +3,7 @@ package scala_test
 import (
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // Value-asserting fixtures for the 5 trailing Scala frameworks (#3990, epic

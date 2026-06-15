@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // sqlcRecords runs the sqlc extractor against a testdata fixture and returns

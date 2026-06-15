@@ -22,11 +22,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// buildGraphExportTestServer seeds a fake archigraph home with one group
+// buildGraphExportTestServer seeds a fake grafel home with one group
 // "alpha" containing one repo whose store dir is populated with the
 // canonical files that ship in a real graph (graph.fb / graph.json /
 // enrichments / links / metadata / embeddings.bin).
@@ -34,7 +34,7 @@ func buildGraphExportTestServer(t *testing.T) (*Server, *registry.GroupConfig, s
 	t.Helper()
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "xdg"))
 
 	repoPath := filepath.Join(home, "repos", "alpha-repo")

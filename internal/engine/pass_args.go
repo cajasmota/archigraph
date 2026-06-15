@@ -26,7 +26,7 @@ package engine
 import (
 	"context"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // DetectorPassArgs is the single struct-of-args passed to every engine pass

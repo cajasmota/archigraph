@@ -19,6 +19,6 @@ description: >-
   Names shorter than 3 characters are ignored. Fewer than 3 qualifying names
   yields convention=unknown. Two conventions within 5% of each other yield
   convention=mixed.
-module: archigraph.engine.rules.pattern_detectors.naming_convention_detector
+module: grafel.engine.rules.pattern_detectors.naming_convention_detector
 function: detect
 applies_to_function: applies_to

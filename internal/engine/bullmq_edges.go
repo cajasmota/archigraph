@@ -32,7 +32,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // bullmqQueueEntityKind reuses SCOPE.Queue, matching the broker synthetics in

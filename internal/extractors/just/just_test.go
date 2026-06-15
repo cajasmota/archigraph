@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/just"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/just"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestJustExtractor_Registered(t *testing.T) {

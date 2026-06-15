@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/ocaml"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/ocaml"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runOCaml runs the extractor on raw source and returns entity records.

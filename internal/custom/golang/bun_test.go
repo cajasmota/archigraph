@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 func bunRecords(t *testing.T, name, lang string) (sums []entitySummary, props map[string]map[string]string) {

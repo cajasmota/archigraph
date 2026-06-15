@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/java"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/java"
 )
 
 // Issue #1996 — Java class entities MUST emit EXTENDS / IMPLEMENTS edges

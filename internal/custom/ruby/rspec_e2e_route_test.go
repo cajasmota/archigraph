@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // Issue #4371 (Ruby extractor side): the RSpec extractor must capture every

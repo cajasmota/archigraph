@@ -3,7 +3,7 @@ package extractors
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // java_edge_carrier_reverify_test.go — live-path re-verification for #3605 (epic

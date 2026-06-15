@@ -19,8 +19,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -70,7 +70,7 @@ var (
 )
 
 func (e *poemExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.poem_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -211,7 +211,7 @@ func normWarpPath(raw string) string {
 }
 
 func (e *warpExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.warp_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -341,7 +341,7 @@ var (
 )
 
 func (e *tideExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.tide_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -442,7 +442,7 @@ var (
 )
 
 func (e *gothamExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.gotham_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -549,7 +549,7 @@ var (
 )
 
 func (e *hyperExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.hyper_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -649,7 +649,7 @@ var (
 )
 
 func (e *salvoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.salvo_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -767,7 +767,7 @@ var (
 )
 
 func (e *towerExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.tower_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

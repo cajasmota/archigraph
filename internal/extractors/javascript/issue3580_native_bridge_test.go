@@ -17,7 +17,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // nativeBridgeEntity returns the SCOPE.External entity with the given name and

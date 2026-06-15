@@ -14,7 +14,7 @@ package dashboard
 //
 //  2. YAML-frontmatter Markdown file — written to
 //     <repo>/docs/enrichments/<kind>/<entity_id>.md following the convention
-//     documented in skills/archigraph-tech-docs/SKILL.md. This is the file that
+//     documented in skills/grafel-tech-docs/SKILL.md. This is the file that
 //     dashboard panels and MCP tools read for rich descriptions.
 //
 //  3. Audit log — the enrichment action is recorded via s.auditor.OK so it
@@ -39,9 +39,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,7 +235,7 @@ func (s *Server) handleEnrichmentWriteback(w http.ResponseWriter, r *http.Reques
 
 	// ─── Target 2: write YAML-frontmatter Markdown doc ────────────────────
 	// Path: <repo>/docs/enrichments/<kind>/<entity_id>.md
-	// This is the convention from skills/archigraph-tech-docs/SKILL.md.
+	// This is the convention from skills/grafel-tech-docs/SKILL.md.
 	docPath := filepath.Join(
 		found.repoPath, "docs", "enrichments", req.Kind,
 		sanitizePathSegment(subjectID)+".md",

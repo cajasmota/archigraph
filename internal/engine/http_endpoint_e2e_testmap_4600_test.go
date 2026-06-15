@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4600 — data-driven supertest route tables credit coverage end-to-end.

@@ -35,8 +35,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -189,7 +189,7 @@ func (e *rustSqlxExtractor) extractSQLxMigration(src string, file extractor.File
 }
 
 func (e *rustSqlxExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.rust_sqlx_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -371,7 +371,7 @@ var (
 )
 
 func (e *rustRbatisExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.rust_rbatis_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

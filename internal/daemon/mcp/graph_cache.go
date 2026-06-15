@@ -24,8 +24,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
 )
 
 // DefaultCapacity is the default maximum number of simultaneously
@@ -53,7 +53,7 @@ var ErrUnknownRef = errors.New("graph cache: refusing to load refs/_unknown sent
 
 // Entry holds one open mmap handle plus the mtime captured when it was
 // opened. The mtime lets the daemon detect stale handles after an
-// out-of-band write (e.g. someone reran `archigraph index` manually);
+// out-of-band write (e.g. someone reran `grafel index` manually);
 // the explicit Invalidate hook from the scheduler is the primary path,
 // mtime check is the belt-and-braces fallback.
 type Entry struct {
@@ -67,7 +67,7 @@ type Entry struct {
 // AccessHook is an optional callback invoked after a successful
 // GetForRepoRef call. It receives (repoPath, ref) so the PH2 tier manager
 // can update lastAccessedAt without creating an import cycle between
-// internal/daemon/mcp and internal/daemon/tier. cmd/archigraph wires them
+// internal/daemon/mcp and internal/daemon/tier. cmd/grafel wires them
 // together via SetAccessHook.
 type AccessHook func(repoPath, ref string)
 

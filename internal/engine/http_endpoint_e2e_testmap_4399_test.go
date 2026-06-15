@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the browser-e2e extractor so the suite (with e2e_route_calls)
 	// comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
 )
 
 // Issue #4399 LIVE-REPRO (resolve side, full in-pipeline).

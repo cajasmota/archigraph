@@ -3,9 +3,9 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4628 — END-TO-END coverage repro for the upvate-v3 (Django/DRF + pytest)

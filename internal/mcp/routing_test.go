@@ -12,7 +12,7 @@ var osMkdirAll = os.MkdirAll
 
 // TestResolveGroup_CWDFromRegistry verifies that when cwd is inside a
 // registered repo path, the group is inferred without an explicit group=
-// argument and without a .archigraph/group.json marker (#1650).
+// argument and without a .grafel/group.json marker (#1650).
 func TestResolveGroup_CWDFromRegistry(t *testing.T) {
 	tmp := t.TempDir()
 	repoPath := filepath.Join(tmp, "upvate_core")

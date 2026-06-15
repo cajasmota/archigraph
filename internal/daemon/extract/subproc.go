@@ -13,14 +13,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/classifier"
-	"github.com/cajasmota/archigraph/internal/engine"
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/extractors/cross"
-	pyextr "github.com/cajasmota/archigraph/internal/extractors/python"
-	"github.com/cajasmota/archigraph/internal/treesitter"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/classifier"
+	"github.com/cajasmota/grafel/internal/engine"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	"github.com/cajasmota/grafel/internal/extractors/cross"
+	pyextr "github.com/cajasmota/grafel/internal/extractors/python"
+	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // SubprocessOptions configures a single short-lived extractor run.
@@ -77,7 +77,7 @@ type SubprocessOptions struct {
 }
 
 // Run is the subprocess-side entrypoint. It is invoked from
-// `archigraph extract` (see cmd/archigraph/extract.go) and runs the
+// `grafel extract` (see cmd/grafel/extract.go) and runs the
 // per-file passes against the supplied batch, streaming JSONL records
 // to opts.Output. Run returns nil on success even if some files within
 // the batch fail to extract — per-file failures are surfaced as
@@ -369,7 +369,7 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 		// Pass 2.5 — YAML framework rules.
 		// Stamp Pass1Entities with the SCOPE.Schema(subtype=field) subset of
 		// the Pass 1 records collected above (issue #2429). This is the same
-		// filter as the in-process path in cmd/archigraph/index.go
+		// filter as the in-process path in cmd/grafel/index.go
 		// (runPass25FrameworkRules). Engine passes that consume this field
 		// (e.g. applyORMFieldEdges) MUST fall back to their pre-#2352
 		// source-scan behaviour when Pass1Entities is nil/empty, so this

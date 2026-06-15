@@ -6,7 +6,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // DefaultTopN is the default node cap applied by the SVG and HTML writers when

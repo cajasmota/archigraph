@@ -55,7 +55,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoidAggPatternType tags the aggregation-pipeline outputs of this pass.

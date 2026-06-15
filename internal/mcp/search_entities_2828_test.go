@@ -1,7 +1,7 @@
 package mcp
 
 // search_entities_2828_test.go — #2828 token-cost optimisation for the
-// high-volume archigraph_search_entities tool (248 calls in live telemetry).
+// high-volume grafel_search_entities tool (248 calls in live telemetry).
 // Verifies the opt-in format=terse compact-line output is smaller than the
 // default `results` array while preserving id/name/kind/location, and that
 // token_budget caps the returned list with a truncation marker.
@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 

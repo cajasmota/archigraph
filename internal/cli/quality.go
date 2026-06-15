@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newQualityCmd is the cobra shim for `archigraph quality <fixture-dir>`.
-// Implementation lives in cmd/archigraph because it pulls in the indexer.
+// newQualityCmd is the cobra shim for `grafel quality <fixture-dir>`.
+// Implementation lives in cmd/grafel because it pulls in the indexer.
 func newQualityCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:                "quality <fixture-dir>",

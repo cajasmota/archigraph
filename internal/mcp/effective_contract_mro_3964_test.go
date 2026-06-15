@@ -1,7 +1,7 @@
 package mcp
 
 // effective_contract_mro_3964_test.go — LAYER 2 of the deploy-9 item-4 fix:
-// archigraph_effective_contract returned EMPTY on every DRF ViewSet because it
+// grafel_effective_contract returned EMPTY on every DRF ViewSet because it
 // read ONLY the engine-stamped effective_* props on router-expanded routes, and
 // on a real index those routes either (a) lacked the stamped contract fields, or
 // (b) were not emitted at all for a ViewSet whose routing the expansion pass did
@@ -11,7 +11,7 @@ package mcp
 //
 // These tests load graphs THROUGH graph.fb (the daemon's real load path) and
 // call handleEffectiveContract directly. The class-fallback test replicates the
-// EXACT full-pipeline shape captured from cmd/archigraph (Kind="View",
+// EXACT full-pipeline shape captured from cmd/grafel (Kind="View",
 // subtype="", an EXTENDS edge base_name="viewsets.ModelViewSet", and ZERO
 // router-expanded routes) — the live-daemon empty case. It MUST fail before the
 // fix and pass after.
@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -59,7 +59,7 @@ func callEffContractFB(t *testing.T, doc *graph.Document, entityID string) effec
 }
 
 // unroutedViewSetDoc replicates the full-pipeline shape of the unrouted
-// WidgetViewSet fixture (verified in cmd/archigraph Layer 1):
+// WidgetViewSet fixture (verified in cmd/grafel Layer 1):
 //   - the ViewSet declaration is Kind="View", subtype="" (NOT isClassEntity).
 //   - it has an EXTENDS edge to an external ModelViewSet base (base_name carries
 //     "viewsets.ModelViewSet"); the pack resolves the CRUD contract from it.

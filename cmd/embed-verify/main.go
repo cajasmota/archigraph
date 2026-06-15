@@ -13,10 +13,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/embed"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/embed"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 func main() {
@@ -47,9 +47,9 @@ func run(repo, query string) error {
 	// NOTE: this is the trimmed indexing path — for the smoke probe we
 	// re-implement extract→build skipping all the optional passes the
 	// real indexer chains, by calling the public Index entrypoint of
-	// cmd/archigraph via go run. To keep this tool self-contained we
+	// cmd/grafel via go run. To keep this tool self-contained we
 	// instead build a synthetic Document from the file tree below.
-	// The real indexer runs via `archigraph index` (daemon RPC).
+	// The real indexer runs via `grafel index` (daemon RPC).
 	doc, err := buildSyntheticDoc(absRepo)
 	if err != nil {
 		return fmt.Errorf("synth doc: %w", err)

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/swift"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/swift"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runSwift parses src with the real swift grammar and returns extracted entities.

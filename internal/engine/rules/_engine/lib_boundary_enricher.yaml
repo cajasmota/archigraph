@@ -10,7 +10,7 @@ description: >-
   org_config["first_party_namespaces"] (case-sensitive). Everything else is
   third_party. When first_party_namespaces is empty, all packages default to
   third_party and a WARNING is logged.
-module: archigraph.engine.rules.languages._engine.lib_boundary_enricher
+module: grafel.engine.rules.languages._engine.lib_boundary_enricher
 function: annotate_lib_boundaries
 config:
   first_party_namespaces:

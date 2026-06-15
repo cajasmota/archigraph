@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // Candidate kinds. These are the canonical "kind" string values the agent
@@ -56,7 +56,7 @@ func communitySubjectID(communityID int) string {
 // need to set this to 2.
 const CandidatesSchemaVersion = 2
 
-// Candidate is one row in <repo>/.archigraph/enrichment-candidates.json.
+// Candidate is one row in <repo>/.grafel/enrichment-candidates.json.
 // Subject_id is always the local entity id (NOT prefixed with repo).
 type Candidate struct {
 	ID        string `json:"id"`
@@ -317,7 +317,7 @@ func isPrivateHelper(name string) bool {
 	return strings.ContainsRune(name, '_')
 }
 
-// Resolution is one row in <repo>/.archigraph/enrichment-resolutions.json.
+// Resolution is one row in <repo>/.grafel/enrichment-resolutions.json.
 // When index runs it loads resolutions and writes Value into the matching
 // entity's Properties (under the resolution's Kind key) before final emit.
 type Resolution struct {
@@ -330,7 +330,7 @@ type Resolution struct {
 	ResolvedAt string  `json:"resolved_at,omitempty"`
 }
 
-// Rejection is one row in <repo>/.archigraph/enrichment-rejections.json.
+// Rejection is one row in <repo>/.grafel/enrichment-rejections.json.
 // Rejected (subject_id, kind) pairs are skipped on subsequent index runs.
 type Rejection struct {
 	ID         string `json:"id"`
@@ -1053,18 +1053,18 @@ func CollectCandidates(doc *graph.Document, emitters []CandidateEmitter, rejecte
 }
 
 // candidatesPath returns the on-disk path for enrichment-candidates.json.
-func candidatesPath(repoArchigraphDir string) string {
-	return filepath.Join(repoArchigraphDir, "enrichment-candidates.json")
+func candidatesPath(repoGrafelDir string) string {
+	return filepath.Join(repoGrafelDir, "enrichment-candidates.json")
 }
 
 // resolutionsPath returns the on-disk path for enrichment-resolutions.json.
-func resolutionsPath(repoArchigraphDir string) string {
-	return filepath.Join(repoArchigraphDir, "enrichment-resolutions.json")
+func resolutionsPath(repoGrafelDir string) string {
+	return filepath.Join(repoGrafelDir, "enrichment-resolutions.json")
 }
 
 // rejectionsPath returns the on-disk path for enrichment-rejections.json.
-func rejectionsPath(repoArchigraphDir string) string {
-	return filepath.Join(repoArchigraphDir, "enrichment-rejections.json")
+func rejectionsPath(repoGrafelDir string) string {
+	return filepath.Join(repoGrafelDir, "enrichment-rejections.json")
 }
 
 // candidatesEnvelope is the on-disk array form. We accept a bare array
@@ -1085,11 +1085,11 @@ type candidatesEnvelope struct {
 // we merge with any prior on-disk candidate set and preserve the existing
 // discovered_at for any candidate whose ID already appeared. New
 // candidates keep whatever DiscoveredAt the emitter assigned.
-func WriteCandidates(archigraphDir string, cs []Candidate) error {
-	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
-		return fmt.Errorf("enrichment: mkdir %s: %w", archigraphDir, err)
+func WriteCandidates(grafelDir string, cs []Candidate) error {
+	if err := os.MkdirAll(grafelDir, 0o755); err != nil {
+		return fmt.Errorf("enrichment: mkdir %s: %w", grafelDir, err)
 	}
-	path := candidatesPath(archigraphDir)
+	path := candidatesPath(grafelDir)
 
 	// Merge prior discovered_at values so a candidate ID seen on a previous
 	// run keeps its original timestamp. This is what makes consecutive runs
@@ -1157,8 +1157,8 @@ func mergeDiscoveredAt(path string, cs []Candidate) []Candidate {
 // ReadResolutions reads enrichment-resolutions.json. Tolerates both the
 // bare array and the {"resolutions": [...]} envelope. Returns nil on
 // missing file.
-func ReadResolutions(archigraphDir string) []Resolution {
-	data, err := os.ReadFile(resolutionsPath(archigraphDir))
+func ReadResolutions(grafelDir string) []Resolution {
+	data, err := os.ReadFile(resolutionsPath(grafelDir))
 	if err != nil {
 		return nil
 	}
@@ -1203,8 +1203,8 @@ func ReadResolutions(archigraphDir string) []Resolution {
 // the MCP server's legacy {candidate_id, reason} shape: when we see one
 // of those we record it by candidate_id (no subject/kind known), but we
 // also register all on-disk Rejection records by their proper key.
-func ReadRejections(archigraphDir string) map[string]bool {
-	data, err := os.ReadFile(rejectionsPath(archigraphDir))
+func ReadRejections(grafelDir string) map[string]bool {
+	data, err := os.ReadFile(rejectionsPath(grafelDir))
 	if err != nil {
 		return map[string]bool{}
 	}
@@ -1240,8 +1240,8 @@ func ReadRejections(archigraphDir string) map[string]bool {
 
 // CollectCandidatesSkippingRejected is a convenience wrapper that loads
 // the rejections file and filters them out in one call.
-func CollectCandidatesSkippingRejected(doc *graph.Document, emitters []CandidateEmitter, archigraphDir string) []Candidate {
-	rej := ReadRejections(archigraphDir)
+func CollectCandidatesSkippingRejected(doc *graph.Document, emitters []CandidateEmitter, grafelDir string) []Candidate {
+	rej := ReadRejections(grafelDir)
 	cands := CollectCandidates(doc, emitters, rej)
 	if len(rej) == 0 {
 		return cands
@@ -1548,18 +1548,18 @@ func ApplyCommunityNameResolutions(doc *graph.Document, resolutions []Resolution
 }
 
 // AppendResolution appends one resolution record to
-// <archigraphDir>/enrichment-resolutions.json atomically. The existing
+// <grafelDir>/enrichment-resolutions.json atomically. The existing
 // array is read, the new entry appended, and the file rewritten so
 // callers never leave a half-written file.
-func AppendResolution(archigraphDir string, res Resolution) error {
-	if archigraphDir == "" {
-		return fmt.Errorf("enrichment: archigraphDir is empty")
+func AppendResolution(grafelDir string, res Resolution) error {
+	if grafelDir == "" {
+		return fmt.Errorf("enrichment: grafelDir is empty")
 	}
-	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
+	if err := os.MkdirAll(grafelDir, 0o755); err != nil {
 		return err
 	}
-	path := resolutionsPath(archigraphDir)
-	cur := ReadResolutions(archigraphDir)
+	path := resolutionsPath(grafelDir)
+	cur := ReadResolutions(grafelDir)
 	cur = append(cur, res)
 	data, err := json.MarshalIndent(cur, "", "  ")
 	if err != nil {
@@ -1577,15 +1577,15 @@ func AppendResolution(archigraphDir string, res Resolution) error {
 }
 
 // AppendRejection appends one rejection record to
-// <archigraphDir>/enrichment-rejections.json. Tolerates a missing file.
-func AppendRejection(archigraphDir, candidateID, subjectID, kind, reason string) error {
-	if archigraphDir == "" {
-		return fmt.Errorf("enrichment: archigraphDir is empty")
+// <grafelDir>/enrichment-rejections.json. Tolerates a missing file.
+func AppendRejection(grafelDir, candidateID, subjectID, kind, reason string) error {
+	if grafelDir == "" {
+		return fmt.Errorf("enrichment: grafelDir is empty")
 	}
-	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
+	if err := os.MkdirAll(grafelDir, 0o755); err != nil {
 		return err
 	}
-	path := rejectionsPath(archigraphDir)
+	path := rejectionsPath(grafelDir)
 	var cur []Rejection
 	if data, err := os.ReadFile(path); err == nil {
 		_ = json.Unmarshal(data, &cur)
@@ -1614,13 +1614,13 @@ func AppendRejection(archigraphDir, candidateID, subjectID, kind, reason string)
 }
 
 // RemoveCandidateByID removes the candidate with the given ID from
-// <archigraphDir>/enrichment-candidates.json (if present). Returns nil
+// <grafelDir>/enrichment-candidates.json (if present). Returns nil
 // when the candidate is absent (idempotent).
-func RemoveCandidateByID(archigraphDir, candidateID string) error {
-	if archigraphDir == "" {
-		return fmt.Errorf("enrichment: archigraphDir is empty")
+func RemoveCandidateByID(grafelDir, candidateID string) error {
+	if grafelDir == "" {
+		return fmt.Errorf("enrichment: grafelDir is empty")
 	}
-	path := candidatesPath(archigraphDir)
+	path := candidatesPath(grafelDir)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {

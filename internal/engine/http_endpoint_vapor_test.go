@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestVapor_BasicRoute covers the common Vapor controller shape:

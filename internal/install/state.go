@@ -1,7 +1,7 @@
 // Package install provides the install/uninstall/update logic for the
-// archigraph CLI, daemon, skills, and MCP registration. This file owns
-// the ~/ .archigraph/install.json schema and read/write helpers used by
-// `archigraph install` (COPY mode) and future `archigraph doctor` (#2211).
+// grafel CLI, daemon, skills, and MCP registration. This file owns
+// the ~/ .grafel/install.json schema and read/write helpers used by
+// `grafel install` (COPY mode) and future `grafel doctor` (#2211).
 package install
 
 import (
@@ -30,7 +30,7 @@ const (
 // CLIRecord holds information about the running binary that performed
 // the install.
 type CLIRecord struct {
-	// Path is the absolute path to the archigraph binary.
+	// Path is the absolute path to the grafel binary.
 	Path string `json:"path"`
 	// SHA256 is the hex-encoded SHA-256 hash of the binary at Path.
 	SHA256 string `json:"sha256"`
@@ -50,21 +50,21 @@ type SkillRecord struct {
 
 // MCPRecord holds the MCP registration state.
 type MCPRecord struct {
-	// Name is the mcpServers key used in .claude.json (always "archigraph").
+	// Name is the mcpServers key used in .claude.json (always "grafel").
 	Name string `json:"name"`
 	// RegisteredPaths is the list of .claude.json paths we wrote to.
 	RegisteredPaths []string `json:"registered_paths,omitempty"`
 }
 
-// GitignoreRecord records which git repos we appended .archigraph/ to.
+// GitignoreRecord records which git repos we appended .grafel/ to.
 type GitignoreRecord struct {
 	// Repos lists the absolute repo roots where we added the .gitignore entry.
 	Repos []string `json:"repos,omitempty"`
 }
 
-// State is the schema of ~/.archigraph/install.json.
+// State is the schema of ~/.grafel/install.json.
 // It is the authoritative record of an install transaction. Future
-// `archigraph doctor` (#2211) reads from this file.
+// `grafel doctor` (#2211) reads from this file.
 type State struct {
 	// SchemaVersion must equal StateSchemaVersion; future tooling can
 	// refuse to read older/newer schemas.
@@ -108,7 +108,7 @@ type State struct {
 	RollbackFromStep int `json:"rollback_from_step,omitempty"`
 
 	// PartialInstall is true when the state reflects a partial/rolled-back
-	// install. A truthy value causes future `archigraph install` runs
+	// install. A truthy value causes future `grafel install` runs
 	// (without --force) to refuse and direct the user to --force or uninstall.
 	PartialInstall bool `json:"partial_install,omitempty"`
 }
@@ -120,7 +120,7 @@ func DefaultStatePath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve home dir: %w", err)
 	}
-	return filepath.Join(home, ".archigraph", "install.json"), nil
+	return filepath.Join(home, ".grafel", "install.json"), nil
 }
 
 // userHomeDir returns the user's home directory, preferring the HOME

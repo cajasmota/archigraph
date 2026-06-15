@@ -22,7 +22,7 @@
 // # How target identity is mapped
 //
 // Each Bazel target entity carries Properties["label"] = "//pkg:name".
-// CALLS edges use archigraph entity IDs (16-char hex). The overlay builds
+// CALLS edges use grafel entity IDs (16-char hex). The overlay builds
 // a bipartite index:
 //
 //	entityID → bazel label  (from target entities)
@@ -36,8 +36,8 @@
 package resolve
 
 import (
-	"github.com/cajasmota/archigraph/internal/extractors/bazel"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractors/bazel"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // BazelOverlayResult holds the output of the overlay pass.

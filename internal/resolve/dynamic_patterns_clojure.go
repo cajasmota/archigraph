@@ -19,7 +19,7 @@ import "regexp"
 //     swap!, count, filter, filterv, first, reduce-kv, map?, boolean,
 //     re-matches. These appear in every Clojure codebase and are
 //     statically unresolvable because clojure.core is an external
-//     dependency, not source code indexed by archigraph.
+//     dependency, not source code indexed by grafel.
 //
 //  2. Ring / HTTP response helpers — ring.util.response functions
 //     (response, status, not-found, created, redirect) that are brought

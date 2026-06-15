@@ -11,7 +11,7 @@ import (
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// personaEventTypes is the set of allowed event_type values for archigraph_persona_event.
+// personaEventTypes is the set of allowed event_type values for grafel_persona_event.
 var personaEventTypes = map[string]bool{
 	"invoke":       true,
 	"consult_out":  true,
@@ -19,7 +19,7 @@ var personaEventTypes = map[string]bool{
 }
 
 // personaEventsDir returns the daily JSONL file path for persona telemetry.
-// Files rotate by calendar date: ~/.archigraph/events/persona-events-YYYY-MM-DD.jsonl
+// Files rotate by calendar date: ~/.grafel/events/persona-events-YYYY-MM-DD.jsonl
 // The directory is created on first write; callers must handle the mkdirall.
 func personaEventsDir() (string, error) {
 	// Prefer $HOME so tests (t.Setenv("HOME", tmp)) and the sidecar/patterns
@@ -36,7 +36,7 @@ func personaEventsDir() (string, error) {
 			return "", fmt.Errorf("persona_telemetry: resolve home dir: %w", err)
 		}
 	}
-	return filepath.Join(home, ".archigraph", "events"), nil
+	return filepath.Join(home, ".grafel", "events"), nil
 }
 
 // personaEventsFile returns the path for today's persona-events JSONL file.
@@ -50,7 +50,7 @@ func personaEventsFile() (string, error) {
 }
 
 // PersonaEvent is the structure written to the JSONL event log.
-// All fields map directly to archigraph_persona_event inputs.
+// All fields map directly to grafel_persona_event inputs.
 // LOCAL ONLY — never transmitted remotely (privacy promise; see Section 10 in personas.md).
 type PersonaEvent struct {
 	// Timestamp is the UTC ISO-8601 instant the event was recorded.
@@ -98,7 +98,7 @@ func appendPersonaEvent(evt PersonaEvent) (string, error) {
 	return path, nil
 }
 
-// handlePersonaEvent is the handler for archigraph_persona_event (#2474).
+// handlePersonaEvent is the handler for grafel_persona_event (#2474).
 //
 // Personas call this tool:
 //   - On session start:   event_type="invoke"
@@ -107,26 +107,26 @@ func appendPersonaEvent(evt PersonaEvent) (string, error) {
 //
 // The event is appended to the daily JSONL file at:
 //
-//	~/.archigraph/events/persona-events-YYYY-MM-DD.jsonl
+//	~/.grafel/events/persona-events-YYYY-MM-DD.jsonl
 //
 // Privacy guarantee: LOCAL ONLY. No remote emission occurs. Callers need not
 // pass group/cwd — this tool is group-agnostic by design.
 func (s *Server) handlePersonaEvent(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	persona, err := req.RequireString("persona")
 	if err != nil {
-		return mcpapi.NewToolResultError("archigraph_persona_event: persona (string, required): " + err.Error()), nil
+		return mcpapi.NewToolResultError("grafel_persona_event: persona (string, required): " + err.Error()), nil
 	}
 	if persona == "" {
-		return mcpapi.NewToolResultError("archigraph_persona_event: persona must not be empty"), nil
+		return mcpapi.NewToolResultError("grafel_persona_event: persona must not be empty"), nil
 	}
 
 	eventType, err := req.RequireString("event_type")
 	if err != nil {
-		return mcpapi.NewToolResultError("archigraph_persona_event: event_type (string, required): " + err.Error()), nil
+		return mcpapi.NewToolResultError("grafel_persona_event: event_type (string, required): " + err.Error()), nil
 	}
 	if !personaEventTypes[eventType] {
 		return mcpapi.NewToolResultError(
-			fmt.Sprintf("archigraph_persona_event: event_type must be one of invoke|consult_out|save_finding; got %q", eventType),
+			fmt.Sprintf("grafel_persona_event: event_type must be one of invoke|consult_out|save_finding; got %q", eventType),
 		), nil
 	}
 

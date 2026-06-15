@@ -1,8 +1,8 @@
 // Package resolve — M5 production-parity guard + harness (#4331).
 //
 // Issue #4331 wired BuildIndexFromModulesOrdered (M5, #2182/#2184) into the
-// production index pipeline (cmd/archigraph/index.go) BEHIND A DEFAULT-OFF flag
-// (ARCHIGRAPH_RESOLVE_MODULE_INDEX=1). This file is the parity contract for
+// production index pipeline (cmd/grafel/index.go) BEHIND A DEFAULT-OFF flag
+// (GRAFEL_RESOLVE_MODULE_INDEX=1). This file is the parity contract for
 // that wiring.
 //
 // # TWO M5 ENTRY POINTS, TWO BEHAVIOURS
@@ -29,7 +29,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // platformVariantTriple builds three mutually-exclusive GOOS variants of one

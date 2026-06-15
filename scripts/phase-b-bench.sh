@@ -5,17 +5,17 @@
 #   3) peak RSS during one reactive reindex
 #   4) peak RSS during concurrent reindex of all repos
 #
-# Uses ARCHIGRAPH_DAEMON_ROOT + ARCHIGRAPH_HOME to point at a tempdir
-# so the real ~/.archigraph state is never touched.
+# Uses GRAFEL_DAEMON_ROOT + GRAFEL_HOME to point at a tempdir
+# so the real ~/.grafel state is never touched.
 set -euo pipefail
 
-BIN="${BIN:-./build/archigraph}"
+BIN="${BIN:-./build/grafel}"
 ROOT="$(mktemp -d /tmp/archi-pb-XXXX)"
-trap 'pkill -f "archigraph daemon" 2>/dev/null || true; rm -rf "$ROOT"' EXIT
+trap 'pkill -f "grafel daemon" 2>/dev/null || true; rm -rf "$ROOT"' EXIT
 
-export ARCHIGRAPH_DAEMON_ROOT="$ROOT/daemon"
-export ARCHIGRAPH_HOME="$ROOT/home"
-mkdir -p "$ARCHIGRAPH_HOME"
+export GRAFEL_DAEMON_ROOT="$ROOT/daemon"
+export GRAFEL_HOME="$ROOT/home"
+mkdir -p "$GRAFEL_HOME"
 
 # Make 3 small repos from existing fixtures.
 mkdir -p "$ROOT/repos"
@@ -28,8 +28,8 @@ REPO_B="$ROOT/repos/repo-b"
 REPO_C="$ROOT/repos/repo-c"
 
 # Write registry + per-group config so daemonReposToWatch() picks them up.
-mkdir -p "$ARCHIGRAPH_HOME/groups/bench"
-cat > "$ARCHIGRAPH_HOME/groups/bench/group.json" <<EOF
+mkdir -p "$GRAFEL_HOME/groups/bench"
+cat > "$GRAFEL_HOME/groups/bench/group.json" <<EOF
 {
   "name": "bench",
   "repos": [
@@ -40,8 +40,8 @@ cat > "$ARCHIGRAPH_HOME/groups/bench/group.json" <<EOF
   "features": {"watchers": true, "git_hooks": false}
 }
 EOF
-cat > "$ARCHIGRAPH_HOME/registry.json" <<EOF
-{"version":1,"groups":[{"name":"bench","config_path":"$ARCHIGRAPH_HOME/groups/bench/group.json"}]}
+cat > "$GRAFEL_HOME/registry.json" <<EOF
+{"version":1,"groups":[{"name":"bench","config_path":"$GRAFEL_HOME/groups/bench/group.json"}]}
 EOF
 
 echo "=== Starting daemon (root=$ROOT) ==="

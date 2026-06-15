@@ -8,7 +8,7 @@ package service_test
 // Skipped automatically when:
 //   - /run/user/$UID/systemd/ does not exist (no systemd-user session, e.g.
 //     most GitHub Actions ubuntu-latest containers).
-//   - ARCHIGRAPH_SKIP_SYSTEMD_INTEGRATION=1 is set (opt-out for restricted
+//   - GRAFEL_SKIP_SYSTEMD_INTEGRATION=1 is set (opt-out for restricted
 //     environments).
 //
 // To run on a developer machine with a live systemd-user session:
@@ -24,10 +24,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/daemon/service"
 )
 
-const envSkipSystemd = "ARCHIGRAPH_SKIP_SYSTEMD_INTEGRATION"
+const envSkipSystemd = "GRAFEL_SKIP_SYSTEMD_INTEGRATION"
 
 // skipIfSystemdUnavailable calls t.Skip when systemd-user is not
 // running in the current session. CI containers typically lack a D-Bus
@@ -35,7 +35,7 @@ const envSkipSystemd = "ARCHIGRAPH_SKIP_SYSTEMD_INTEGRATION"
 func skipIfSystemdUnavailable(t *testing.T) {
 	t.Helper()
 	if os.Getenv(envSkipSystemd) == "1" {
-		t.Skipf("ARCHIGRAPH_SKIP_SYSTEMD_INTEGRATION=1; skipping systemd integration test")
+		t.Skipf("GRAFEL_SKIP_SYSTEMD_INTEGRATION=1; skipping systemd integration test")
 	}
 	uid := fmt.Sprintf("%d", os.Getuid())
 	socketDir := filepath.Join("/run/user", uid, "systemd")
@@ -44,14 +44,14 @@ func skipIfSystemdUnavailable(t *testing.T) {
 	}
 }
 
-// unitFilePath returns the expected path for the archigraph-daemon.service unit.
+// unitFilePath returns the expected path for the grafel-daemon.service unit.
 func unitFilePath(t *testing.T) string {
 	t.Helper()
 	home, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("os.UserHomeDir: %v", err)
 	}
-	return filepath.Join(home, ".config", "systemd", "user", "archigraph-daemon.service")
+	return filepath.Join(home, ".config", "systemd", "user", "grafel-daemon.service")
 }
 
 // TestSystemdInstallUninstall exercises the full install → status → uninstall
@@ -68,7 +68,7 @@ func TestSystemdInstallUninstall(t *testing.T) {
 	// ── Clean up before and after ─────────────────────────────────────────
 	cleanup := func() {
 		// Best-effort: stop+disable the unit even if the test left it running.
-		_ = exec.Command("systemctl", "--user", "disable", "--now", "archigraph-daemon.service").Run()
+		_ = exec.Command("systemctl", "--user", "disable", "--now", "grafel-daemon.service").Run()
 		_ = exec.Command("systemctl", "--user", "daemon-reload").Run()
 		_ = os.Remove(unitPath)
 	}
@@ -114,14 +114,14 @@ func TestSystemdInstallUninstall(t *testing.T) {
 	// We test the file+reload+enable path; starting the daemon requires a
 	// real binary at the ExecStart path which may not match /usr/local/bin
 	// in CI. The important thing is that systemd accepts the unit.
-	if out, err := exec.Command("systemctl", "--user", "enable", "archigraph-daemon.service").CombinedOutput(); err != nil {
+	if out, err := exec.Command("systemctl", "--user", "enable", "grafel-daemon.service").CombinedOutput(); err != nil {
 		t.Fatalf("systemctl enable: %v\n%s", err, out)
 	}
 
 	// ── is-enabled confirms the unit was accepted ─────────────────────────
 	// Wait briefly for systemd to process the enable.
 	time.Sleep(200 * time.Millisecond)
-	out, err := exec.Command("systemctl", "--user", "is-enabled", "archigraph-daemon.service").Output()
+	out, err := exec.Command("systemctl", "--user", "is-enabled", "grafel-daemon.service").Output()
 	if err != nil {
 		t.Logf("systemctl is-enabled returned error (may be harmless in some containers): %v", err)
 	}
@@ -131,7 +131,7 @@ func TestSystemdInstallUninstall(t *testing.T) {
 	}
 
 	// ── Uninstall: disable + remove unit ─────────────────────────────────
-	_ = exec.Command("systemctl", "--user", "disable", "archigraph-daemon.service").Run()
+	_ = exec.Command("systemctl", "--user", "disable", "grafel-daemon.service").Run()
 	_ = exec.Command("systemctl", "--user", "daemon-reload").Run()
 	if err := os.Remove(unitPath); err != nil {
 		t.Fatalf("remove unit file: %v", err)

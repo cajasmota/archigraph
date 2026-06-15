@@ -33,8 +33,8 @@
 package engine
 
 import (
-	"github.com/cajasmota/archigraph/internal/extractors/cross/deplinker"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/extractors/cross/deplinker"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // DependencyHygieneStats summarises one ApplyDependencyHygiene run.

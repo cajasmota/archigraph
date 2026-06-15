@@ -57,7 +57,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // responseCodesVerdict is the resolved status-code set for one endpoint.

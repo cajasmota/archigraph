@@ -1,14 +1,14 @@
-// hooks_install.go implements `archigraph install-hooks` (issues #2213, #2222).
+// hooks_install.go implements `grafel install-hooks` (issues #2213, #2222).
 //
 // InstallPrePushHook writes a pre-push hook script into <repo>/.git/hooks/
 // (or delegates to husky / lefthook if detected). The hook runs
-// `archigraph doctor` before every push and warns on drift — it NEVER
+// `grafel doctor` before every push and warns on drift — it NEVER
 // blocks the push.
 //
 // InstallGitHooks (issue #2222) extends the above to also install
 // post-checkout, post-merge, and post-rewrite hooks that trigger
 // ref-aware reindex via the existing daemon. All 4 hooks are managed
-// idempotently and are tolerant of `archigraph` not being on PATH.
+// idempotently and are tolerant of `grafel` not being on PATH.
 package install
 
 import (
@@ -19,51 +19,51 @@ import (
 )
 
 const (
-	// PrePushHookMarkerBegin / MarkerEnd delimit the archigraph-managed block.
-	prePushMarkerBegin = "# >>> archigraph pre-push >>>"
-	prePushMarkerEnd   = "# <<< archigraph pre-push <<<"
+	// PrePushHookMarkerBegin / MarkerEnd delimit the grafel-managed block.
+	prePushMarkerBegin = "# >>> grafel pre-push >>>"
+	prePushMarkerEnd   = "# <<< grafel pre-push <<<"
 
 	// prePushHookScript is the managed block content.
 	prePushHookScript = `%s
-# archigraph doctor — warns on install drift but NEVER blocks the push.
-if command -v archigraph >/dev/null 2>&1; then
-  archigraph doctor --quick 2>/dev/null || \
-    echo "archigraph: drift detected — run 'archigraph doctor' to investigate" >&2
+# grafel doctor — warns on install drift but NEVER blocks the push.
+if command -v grafel >/dev/null 2>&1; then
+  grafel doctor --quick 2>/dev/null || \
+    echo "grafel: drift detected — run 'grafel doctor' to investigate" >&2
 fi
 %s
 `
 
 	// post-checkout hook: fires on branch switches; signals daemon via status RPC.
-	postCheckoutMarkerBegin = "# >>> archigraph post-checkout >>>"
-	postCheckoutMarkerEnd   = "# <<< archigraph post-checkout <<<"
+	postCheckoutMarkerBegin = "# >>> grafel post-checkout >>>"
+	postCheckoutMarkerEnd   = "# <<< grafel post-checkout <<<"
 	postCheckoutHookScript  = `%s
 # Only act on branch switches (arg 3 == 1), not file checkouts.
-if [ "${3:-0}" = "1" ] && command -v archigraph >/dev/null 2>&1; then
-  archigraph status --ref @current >/dev/null 2>&1 &
+if [ "${3:-0}" = "1" ] && command -v grafel >/dev/null 2>&1; then
+  grafel status --ref @current >/dev/null 2>&1 &
 fi
 %s
 `
 
 	// post-merge hook: fires after git merge / git pull.
-	postMergeMarkerBegin = "# >>> archigraph post-merge >>>"
-	postMergeMarkerEnd   = "# <<< archigraph post-merge <<<"
+	postMergeMarkerBegin = "# >>> grafel post-merge >>>"
+	postMergeMarkerEnd   = "# <<< grafel post-merge <<<"
 	postMergeHookScript  = `%s
 # Signal the daemon to reindex after the merge; run in background so the
 # hook returns immediately and never delays the user's merge workflow.
-if command -v archigraph >/dev/null 2>&1; then
-  archigraph status --ref @current >/dev/null 2>&1 &
+if command -v grafel >/dev/null 2>&1; then
+  grafel status --ref @current >/dev/null 2>&1 &
 fi
 %s
 `
 
 	// post-rewrite hook: fires after git rebase / git commit --amend.
-	postRewriteMarkerBegin = "# >>> archigraph post-rewrite >>>"
-	postRewriteMarkerEnd   = "# <<< archigraph post-rewrite <<<"
+	postRewriteMarkerBegin = "# >>> grafel post-rewrite >>>"
+	postRewriteMarkerEnd   = "# <<< grafel post-rewrite <<<"
 	postRewriteHookScript  = `%s
 # Signal the daemon to reindex after the rewrite; run in background so
 # the hook returns immediately and never delays the user's workflow.
-if command -v archigraph >/dev/null 2>&1; then
-  archigraph status --ref @current >/dev/null 2>&1 &
+if command -v grafel >/dev/null 2>&1; then
+  grafel status --ref @current >/dev/null 2>&1 &
 fi
 %s
 `
@@ -81,7 +81,7 @@ type HookInstallOptions struct {
 	Force bool
 }
 
-// InstallPrePushHook installs the archigraph pre-push hook into the repo.
+// InstallPrePushHook installs the grafel pre-push hook into the repo.
 // If husky or lefthook is detected in the repo, a config snippet is printed
 // instead (these tools manage their own hook directory).
 func InstallPrePushHook(opts HookInstallOptions) error {
@@ -109,7 +109,7 @@ func InstallPrePushHook(opts HookInstallOptions) error {
 	block := fmt.Sprintf(prePushHookScript, prePushMarkerBegin, prePushMarkerEnd)
 
 	if opts.DryRun {
-		fmt.Fprintf(os.Stdout, "archigraph install-hooks (dry-run): would write pre-push hook to %s\n", hookPath)
+		fmt.Fprintf(os.Stdout, "grafel install-hooks (dry-run): would write pre-push hook to %s\n", hookPath)
 		fmt.Fprintf(os.Stdout, "Block content:\n%s\n", block)
 		return nil
 	}
@@ -117,9 +117,9 @@ func InstallPrePushHook(opts HookInstallOptions) error {
 	return writeHookBlock(hookPath, block)
 }
 
-// InstallGitHooks installs all 4 archigraph-managed git hooks into the repo:
+// InstallGitHooks installs all 4 grafel-managed git hooks into the repo:
 //
-//   - pre-push        (from #2213) — runs `archigraph doctor --quick`
+//   - pre-push        (from #2213) — runs `grafel doctor --quick`
 //   - post-checkout   (from #2222) — signals daemon on branch switch
 //   - post-merge      (from #2222) — signals daemon after merge
 //   - post-rewrite    (from #2222) — signals daemon after rebase/amend
@@ -176,7 +176,7 @@ func InstallGitHooks(opts HookInstallOptions) error {
 	for _, h := range hooks {
 		hookPath := filepath.Join(hooksDir, h.name)
 		if opts.DryRun {
-			fmt.Fprintf(os.Stdout, "archigraph install-hooks (dry-run): would write %s hook to %s\n", h.name, hookPath)
+			fmt.Fprintf(os.Stdout, "grafel install-hooks (dry-run): would write %s hook to %s\n", h.name, hookPath)
 			fmt.Fprintf(os.Stdout, "Block content:\n%s\n", h.script)
 			continue
 		}
@@ -187,7 +187,7 @@ func InstallGitHooks(opts HookInstallOptions) error {
 	return nil
 }
 
-// writeHookBlock writes the archigraph managed block into hookPath.
+// writeHookBlock writes the grafel managed block into hookPath.
 // If the file does not exist it is created with a shebang.
 // If the block already exists it is replaced (idempotent).
 func writeHookBlock(hookPath, block string) error {
@@ -209,7 +209,7 @@ func writeHookBlock(hookPath, block string) error {
 	return nil
 }
 
-// mergeHookBlock inserts or replaces the archigraph managed block in content.
+// mergeHookBlock inserts or replaces the grafel managed block in content.
 // The begin/end markers are extracted from the first and last "# >>> / # <<<"
 // lines of block itself so the function works for any hook type.
 // The result always starts with a sh shebang if the file was empty.
@@ -256,13 +256,13 @@ func extractMarkers(block string) (begin, end string) {
 	return
 }
 
-// removeHookBlock strips the archigraph pre-push managed block from content.
+// removeHookBlock strips the grafel pre-push managed block from content.
 // Kept for backward compatibility with existing call sites.
 func removeHookBlock(content string) string {
 	return removeHookBlockMarked(content, prePushMarkerBegin, prePushMarkerEnd)
 }
 
-// removeHookBlockMarked strips the archigraph managed block delimited by
+// removeHookBlockMarked strips the grafel managed block delimited by
 // markerBegin and markerEnd from content.
 func removeHookBlockMarked(content, markerBegin, markerEnd string) string {
 	startIdx := indexOf(content, markerBegin)
@@ -312,54 +312,54 @@ func detectHookManager(repoPath string) (bool, string) {
 	return false, ""
 }
 
-// printHookManagerAdvice prints instructions for adding the archigraph
+// printHookManagerAdvice prints instructions for adding the grafel
 // hooks via the detected hook manager (pre-push + post-checkout/merge/rewrite).
 func printHookManagerAdvice(manager, repoPath string) {
 	fmt.Fprintf(os.Stdout, "Detected %s in %s.\n", manager, repoPath)
 	fmt.Fprintln(os.Stdout, "")
 	switch manager {
 	case "husky":
-		fmt.Fprintln(os.Stdout, "Add the archigraph hooks to husky:")
-		fmt.Fprintln(os.Stdout, "  npx husky add .husky/pre-push \"archigraph doctor --quick 2>/dev/null || echo 'archigraph: drift detected — run archigraph doctor' >&2\"")
-		fmt.Fprintln(os.Stdout, "  npx husky add .husky/post-checkout \"if [ \\\"${3:-0}\\\" = '1' ]; then archigraph status --ref @current >/dev/null 2>&1 & fi\"")
-		fmt.Fprintln(os.Stdout, "  npx husky add .husky/post-merge \"archigraph status --ref @current >/dev/null 2>&1 &\"")
-		fmt.Fprintln(os.Stdout, "  npx husky add .husky/post-rewrite \"archigraph status --ref @current >/dev/null 2>&1 &\"")
+		fmt.Fprintln(os.Stdout, "Add the grafel hooks to husky:")
+		fmt.Fprintln(os.Stdout, "  npx husky add .husky/pre-push \"grafel doctor --quick 2>/dev/null || echo 'grafel: drift detected — run grafel doctor' >&2\"")
+		fmt.Fprintln(os.Stdout, "  npx husky add .husky/post-checkout \"if [ \\\"${3:-0}\\\" = '1' ]; then grafel status --ref @current >/dev/null 2>&1 & fi\"")
+		fmt.Fprintln(os.Stdout, "  npx husky add .husky/post-merge \"grafel status --ref @current >/dev/null 2>&1 &\"")
+		fmt.Fprintln(os.Stdout, "  npx husky add .husky/post-rewrite \"grafel status --ref @current >/dev/null 2>&1 &\"")
 	case "lefthook":
 		fmt.Fprintln(os.Stdout, "Add to lefthook.yml:")
 		fmt.Fprintln(os.Stdout, "  pre-push:")
 		fmt.Fprintln(os.Stdout, "    commands:")
-		fmt.Fprintln(os.Stdout, "      archigraph-doctor:")
-		fmt.Fprintln(os.Stdout, "        run: archigraph doctor --quick 2>/dev/null || echo 'archigraph: drift detected' >&2")
+		fmt.Fprintln(os.Stdout, "      grafel-doctor:")
+		fmt.Fprintln(os.Stdout, "        run: grafel doctor --quick 2>/dev/null || echo 'grafel: drift detected' >&2")
 		fmt.Fprintln(os.Stdout, "  post-checkout:")
 		fmt.Fprintln(os.Stdout, "    commands:")
-		fmt.Fprintln(os.Stdout, "      archigraph-reindex:")
-		fmt.Fprintln(os.Stdout, "        run: archigraph status --ref @current >/dev/null 2>&1")
+		fmt.Fprintln(os.Stdout, "      grafel-reindex:")
+		fmt.Fprintln(os.Stdout, "        run: grafel status --ref @current >/dev/null 2>&1")
 		fmt.Fprintln(os.Stdout, "  post-merge:")
 		fmt.Fprintln(os.Stdout, "    commands:")
-		fmt.Fprintln(os.Stdout, "      archigraph-reindex:")
-		fmt.Fprintln(os.Stdout, "        run: archigraph status --ref @current >/dev/null 2>&1")
+		fmt.Fprintln(os.Stdout, "      grafel-reindex:")
+		fmt.Fprintln(os.Stdout, "        run: grafel status --ref @current >/dev/null 2>&1")
 		fmt.Fprintln(os.Stdout, "  post-rewrite:")
 		fmt.Fprintln(os.Stdout, "    commands:")
-		fmt.Fprintln(os.Stdout, "      archigraph-reindex:")
-		fmt.Fprintln(os.Stdout, "        run: archigraph status --ref @current >/dev/null 2>&1")
+		fmt.Fprintln(os.Stdout, "      grafel-reindex:")
+		fmt.Fprintln(os.Stdout, "        run: grafel status --ref @current >/dev/null 2>&1")
 	case "pre-commit":
 		fmt.Fprintln(os.Stdout, "Add to .pre-commit-config.yaml:")
 		fmt.Fprintln(os.Stdout, "  - repo: local")
 		fmt.Fprintln(os.Stdout, "    hooks:")
-		fmt.Fprintln(os.Stdout, "      - id: archigraph-doctor")
-		fmt.Fprintln(os.Stdout, "        name: archigraph doctor")
-		fmt.Fprintln(os.Stdout, "        entry: archigraph doctor --quick")
+		fmt.Fprintln(os.Stdout, "      - id: grafel-doctor")
+		fmt.Fprintln(os.Stdout, "        name: grafel doctor")
+		fmt.Fprintln(os.Stdout, "        entry: grafel doctor --quick")
 		fmt.Fprintln(os.Stdout, "        language: system")
 		fmt.Fprintln(os.Stdout, "        stages: [pre-push]")
 		fmt.Fprintln(os.Stdout, "  Note: pre-commit does not support post-checkout/merge/rewrite hooks.")
-		fmt.Fprintln(os.Stdout, "        Run 'archigraph install-hooks --force' to install those directly.")
+		fmt.Fprintln(os.Stdout, "        Run 'grafel install-hooks --force' to install those directly.")
 	}
 	fmt.Fprintln(os.Stdout, "")
-	fmt.Fprintln(os.Stdout, "Or run 'archigraph install-hooks --force' to install directly into .git/hooks/ instead.")
+	fmt.Fprintln(os.Stdout, "Or run 'grafel install-hooks --force' to install directly into .git/hooks/ instead.")
 }
 
 // IsDoctorQuickFlagSupported is a helper that checks whether the
-// `archigraph doctor --quick` flag exists in the installed binary.
+// `grafel doctor --quick` flag exists in the installed binary.
 // Used by tests; not part of the public API.
 func IsDoctorQuickFlagSupported(binPath string) bool {
 	cmd := exec.Command(binPath, "doctor", "--help")

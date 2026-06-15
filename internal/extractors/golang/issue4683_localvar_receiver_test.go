@@ -33,7 +33,7 @@ package golang_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // callsEdge returns the CALLS edge to method `to` on entity `from` in records,

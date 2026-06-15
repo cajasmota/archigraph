@@ -1,12 +1,12 @@
 # VERIFY-2 — bug-rate / resolution-rate harness
 
-This directory hosts the `archigraph` indexer regression harness used to
+This directory hosts the `grafel` indexer regression harness used to
 measure the **bug-rate** and **resolution-rate** required by the v1.0
 ship gate (Refs issue #58).
 
 ## What it measures
 
-For each indexed repository, `archigraph index --json-stats` emits a
+For each indexed repository, `grafel index --json-stats` emits a
 per-disposition tally for every relationship endpoint the resolver
 inspected:
 
@@ -30,15 +30,15 @@ extractor matrix.
 
 ## Filesystem layout
 
-The harness writes **outside** the archigraph repo — corpora and reports
+The harness writes **outside** the grafel repo — corpora and reports
 are large and not appropriate for git tracking.
 
-- Corpus clones: `$ARCHIGRAPH_CORPORA_DIR/<repo-name>/`
-- Reports: `$ARCHIGRAPH_CORPORA_DIR/_reports/<ISO-timestamp>.md`
-- Built binary (cached): `$ARCHIGRAPH_CORPORA_DIR/_bin/archigraph`
+- Corpus clones: `$GRAFEL_CORPORA_DIR/<repo-name>/`
+- Reports: `$GRAFEL_CORPORA_DIR/_reports/<ISO-timestamp>.md`
+- Built binary (cached): `$GRAFEL_CORPORA_DIR/_bin/grafel`
 
-`ARCHIGRAPH_CORPORA_DIR` defaults to
-`$HOME/Documents/Projects/archigraph-corpora`.
+`GRAFEL_CORPORA_DIR` defaults to
+`$HOME/Documents/Projects/grafel-corpora`.
 
 ## How to run
 
@@ -47,13 +47,13 @@ are large and not appropriate for git tracking.
 scripts/verify2/run.sh
 
 # Override the corpora dir.
-ARCHIGRAPH_CORPORA_DIR=/tmp/ag-corp scripts/verify2/run.sh
+GRAFEL_CORPORA_DIR=/tmp/ag-corp scripts/verify2/run.sh
 
 # Forward verbose indexer logs.
-ARCHIGRAPH_VERBOSE=1 scripts/verify2/run.sh
+GRAFEL_VERBOSE=1 scripts/verify2/run.sh
 
 # Reuse a pre-built binary (skip the in-script `go build`).
-ARCHIGRAPH_BIN=/usr/local/bin/archigraph scripts/verify2/run.sh
+GRAFEL_BIN=/usr/local/bin/grafel scripts/verify2/run.sh
 ```
 
 The script prints the full report path on stdout when it completes.
@@ -62,8 +62,8 @@ The script prints the full report path on stdout when it completes.
 
 ```bash
 scripts/verify2/compare.sh \
-  ~/Documents/Projects/archigraph-corpora/_reports/2026-04-01T00-00-00Z.md \
-  ~/Documents/Projects/archigraph-corpora/_reports/2026-05-09T00-00-00Z.md
+  ~/Documents/Projects/grafel-corpora/_reports/2026-04-01T00-00-00Z.md \
+  ~/Documents/Projects/grafel-corpora/_reports/2026-05-09T00-00-00Z.md
 ```
 
 The output shows per-repo entity/relationship deltas plus the change in
@@ -147,9 +147,9 @@ average source-file size (~5–20 KB) for a rough working-tree number.
 ### Per-repo wall-clock cap
 
 Large repos can keep the indexer running for a long time. The harness
-caps each repo at `ARCHIGRAPH_VERIFY2_TIMEOUT` seconds (default
+caps each repo at `GRAFEL_VERIFY2_TIMEOUT` seconds (default
 **600s = 10 min**) using `gtimeout` (coreutils) when available, falling
-back to `timeout`. Set `ARCHIGRAPH_VERIFY2_TIMEOUT=0` to disable the cap.
+back to `timeout`. Set `GRAFEL_VERIFY2_TIMEOUT=0` to disable the cap.
 A timed-out repo is recorded as `ERROR` in the per-repo table and does
 not abort the rest of the run.
 
@@ -186,7 +186,7 @@ are never produced.
 
 When `bug_rate` regresses, the `bug-extractor` and `bug-resolver`
 buckets in the breakdown identify which side of the resolver split the
-new failures landed in. Pair the report with `ARCHIGRAPH_VERBOSE=1` on a
+new failures landed in. Pair the report with `GRAFEL_VERBOSE=1` on a
 single repo to print sample stub strings for those buckets — they point
 directly at the missing extraction or the ambiguous-resolution case.
 

@@ -58,10 +58,10 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/cross/endpoint"
-	"github.com/cajasmota/archigraph/internal/extractors/cross/httpclient"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/cross/endpoint"
+	"github.com/cajasmota/grafel/internal/extractors/cross/httpclient"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {

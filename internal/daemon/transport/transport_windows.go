@@ -26,7 +26,7 @@ import (
 const maxDialTimeout = 2 * time.Second
 
 // WindowsPipeName returns the canonical named-pipe path for the current user.
-// Form: \\.\pipe\archigraph-daemon-<username>
+// Form: \\.\pipe\grafel-daemon-<username>
 // The username is lower-cased and stripped of any domain prefix so that
 // "DOMAIN\User" → "user".
 func WindowsPipeName() string {
@@ -40,7 +40,7 @@ func WindowsPipeName() string {
 		}
 		username = strings.ToLower(username)
 	}
-	return `\\.\pipe\archigraph-daemon-` + username
+	return `\\.\pipe\grafel-daemon-` + username
 }
 
 // listen creates a Windows named-pipe listener at addr.

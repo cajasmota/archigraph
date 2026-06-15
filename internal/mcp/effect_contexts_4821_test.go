@@ -2,7 +2,7 @@ package mcp
 
 // effect_contexts_4821_test.go — end-to-end test for the #4821 `effect_contexts`
 // facet (control-flow epic #4820 part a): conditional/loop effect attribution +
-// per-function cyclomatic complexity, surfaced via archigraph_effects
+// per-function cyclomatic complexity, surfaced via grafel_effects
 // include="effect_contexts". Runs the REAL handler against small Python
 // (Django-shaped) and TS (NestJS-shaped) fixtures in testdata/effect_contexts_4821/.
 
@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func effectContextsTestServer(t *testing.T, sourceFile string, start, end int) *Server {

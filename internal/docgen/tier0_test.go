@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
@@ -59,7 +59,7 @@ func buildMinimalGraph(t *testing.T, dir string) {
 	// We need a minimal fleet config that points to a repo that has a graph.
 	// Tier0 uses findGroupGraphDirs → daemon.StateDirForRepo(repo.Path).
 	// We bypass that by specifying OutputDir AND by supplying a temp fleet
-	// config via ARCHIGRAPH_HOME override.  The cleanest approach is to
+	// config via GRAFEL_HOME override.  The cleanest approach is to
 	// call Run with a fake group and accept a "no repos registered" error,
 	// which is distinct from "unknown section".
 }
@@ -89,7 +89,7 @@ func TestRun_MissingGroup(t *testing.T) {
 
 func TestBuildScore_Fields(t *testing.T) {
 	// Write minimal output to a temp dir and read the score.json back.
-	// We use ARCHIGRAPH_HOME to point to a temp home with an empty fleet config
+	// We use GRAFEL_HOME to point to a temp home with an empty fleet config
 	// so that Run fails gracefully after writing the score (it won't get that
 	// far — but we can test score JSON structure by reading an existing score).
 
@@ -180,9 +180,9 @@ func TestNormalizeSeedEntityID_RawHex(t *testing.T) {
 	}
 }
 
-func TestNormalizeSeedEntityID_ArchigraphPrefix(t *testing.T) {
-	// archigraph::<hex> — was broken before this fix.
-	got, err := docgen.NormalizeSeedEntityID("archigraph::7a349f6cd77984c9")
+func TestNormalizeSeedEntityID_GrafelPrefix(t *testing.T) {
+	// grafel::<hex> — was broken before this fix.
+	got, err := docgen.NormalizeSeedEntityID("grafel::7a349f6cd77984c9")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -204,9 +204,9 @@ func TestNormalizeSeedEntityID_ArbitraryGroupPrefix(t *testing.T) {
 
 func TestNormalizeSeedEntityID_InvalidEmptyRHS(t *testing.T) {
 	// "group::" with empty RHS must return an error.
-	_, err := docgen.NormalizeSeedEntityID("archigraph::")
+	_, err := docgen.NormalizeSeedEntityID("grafel::")
 	if err == nil {
-		t.Fatal("expected error for 'archigraph::', got nil")
+		t.Fatal("expected error for 'grafel::', got nil")
 	}
 	if !strings.Contains(err.Error(), "invalid --seed-entity") {
 		t.Errorf("expected 'invalid --seed-entity' in error, got: %v", err)

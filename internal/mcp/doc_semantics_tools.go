@@ -1,6 +1,6 @@
 package mcp
 
-// archigraph_apply_doc_semantics — MCP submit/apply tool for Layer-2 (agent-
+// grafel_apply_doc_semantics — MCP submit/apply tool for Layer-2 (agent-
 // driven semantic) doc ingestion (#4309, epic #4294).
 //
 // This is the apply-path companion to the emit step (internal/ingest:
@@ -10,7 +10,7 @@ package mcp
 //             <stateDir>/doc-semantics/<documentID>.bundle.json.
 //  2. (fill)  the EXTERNAL calling agent reads each bundle, runs its OWN LLM to
 //             classify sections, and writes <documentID>.result.json back beside
-//             the bundle. archigraph makes NO LLM call.
+//             the bundle. grafel makes NO LLM call.
 //  3. (apply) THIS tool reads each (bundle, result) pair, validates + applies via
 //             ingest.ApplySemanticResult, and writes the produced
 //             SCOPE.DesignDecision nodes + CONTAINS/RATIONALE_FOR edges to
@@ -18,7 +18,7 @@ package mcp
 //             mirroring enrichment-resolutions.json). dry_run validates without
 //             writing.
 //
-// Mirrors archigraph_apply_docgen_repairs (docgen_repair_tools.go): per-repo
+// Mirrors grafel_apply_docgen_repairs (docgen_repair_tools.go): per-repo
 // summary, repo_filter + dry_run params, deterministic ordering, honest partial.
 //
 // IDEMPOTENCY: ApplySemanticResult derives node/edge IDs deterministically, and
@@ -34,9 +34,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/ingest"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/ingest"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -54,7 +54,7 @@ type docSemanticsSidecar struct {
 	Relationships []graph.Relationship `json:"relationships"`
 }
 
-// handleApplyDocSemantics implements archigraph_apply_doc_semantics.
+// handleApplyDocSemantics implements grafel_apply_doc_semantics.
 //
 // Parameters (all optional):
 //

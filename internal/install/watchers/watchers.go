@@ -1,5 +1,5 @@
 // Package watchers generates per-platform unit files that launch
-// `archigraph watch <repo>` at user login.
+// `grafel watch <repo>` at user login.
 //
 // We deliberately keep the unit-generation pure: each function returns
 // the on-disk text for a unit/plist/scheduled-task. Tests can string-
@@ -19,13 +19,13 @@ import (
 type Unit struct {
 	Group   string
 	Repo    string
-	BinPath string // absolute path to the archigraph binary
+	BinPath string // absolute path to the grafel binary
 }
 
 // Label returns the platform-agnostic label for a unit.
 func (u Unit) Label() string {
 	slug := slugify(u.Repo)
-	return fmt.Sprintf("com.archigraph.watcher.%s.%s", u.Group, slug)
+	return fmt.Sprintf("com.grafel.watcher.%s.%s", u.Group, slug)
 }
 
 // LaunchdPlist returns the macOS launchd .plist body for a watcher.
@@ -40,7 +40,7 @@ func LaunchdPlist(u Unit) string {
 		StdOutPath  string
 		StdErrPath  string
 	}
-	logDir := filepath.Join(u.Repo, ".archigraph", "logs")
+	logDir := filepath.Join(u.Repo, ".grafel", "logs")
 	body := strings.Builder{}
 	body.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	body.WriteString(`<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">` + "\n")
@@ -70,7 +70,7 @@ func LaunchdPlist(u Unit) string {
 // SystemdUnit returns the Linux systemd-user .service body.
 func SystemdUnit(u Unit) string {
 	return fmt.Sprintf(`[Unit]
-Description=archigraph watcher (%s/%s)
+Description=grafel watcher (%s/%s)
 After=default.target
 
 [Service]
@@ -90,7 +90,7 @@ func SchtasksXML(u Unit) string {
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>archigraph watcher (%s/%s)</Description>
+    <Description>grafel watcher (%s/%s)</Description>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger><Enabled>true</Enabled></LogonTrigger>
@@ -148,7 +148,7 @@ func UnitDir() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return filepath.Join(home, "AppData", "Local", "archigraph", "tasks"), nil
+		return filepath.Join(home, "AppData", "Local", "grafel", "tasks"), nil
 	}
 	return "", fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 }

@@ -8,7 +8,7 @@
 //	Layer 2 (P1) — extended hard-coded skip list: a curated set of
 //	               well-known build/cache directory names (iOS Pods,
 //	               Android Gradle output, JS dist, Python __pycache__, etc.)
-//	Layer 3 (P2) — .archigraphignore: gitignore-syntax overlay file at
+//	Layer 3 (P2) — .grafelignore: gitignore-syntax overlay file at
 //	               the repo root for user-defined skips (test fixtures,
 //	               vendored code that IS committed, etc.)
 //
@@ -106,14 +106,14 @@ type SkipResult struct {
 	Rule string
 }
 
-// IgnoreFile is a parsed ignore file (either .gitignore or .archigraphignore).
+// IgnoreFile is a parsed ignore file (either .gitignore or .grafelignore).
 // It contains the ordered list of patterns from the file, anchored to the
 // directory that contains the file.
 type IgnoreFile struct {
 	// Dir is the directory that owns this ignore file (patterns are
 	// relative to this directory).
 	Dir string
-	// Source identifies the file ("gitignore", "archigraphignore").
+	// Source identifies the file ("gitignore", "grafelignore").
 	Source string
 	// patterns holds the compiled rules in declaration order.
 	patterns []ignorePattern
@@ -320,7 +320,7 @@ func matchDoubleStarGlob(pat, s string) bool {
 
 // IgnoreStack manages a stack of IgnoreFile values as the walker descends
 // into subdirectories. On entry to each directory, call Push with any
-// .gitignore/.archigraphignore found there. On exit call Pop.
+// .gitignore/.grafelignore found there. On exit call Pop.
 type IgnoreStack struct {
 	files []*IgnoreFile
 }

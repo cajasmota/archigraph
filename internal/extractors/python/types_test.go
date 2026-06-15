@@ -12,7 +12,7 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findClass returns the SCOPE.Component/class entity whose trailing name leaf

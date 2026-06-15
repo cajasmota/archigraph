@@ -26,7 +26,7 @@
 //     (endpoint, direction).
 //
 //  4. Write findings to a sidecar <group>-links-payload-drift.json
-//     document read by the new MCP tool archigraph_payload_drift.
+//     document read by the new MCP tool grafel_payload_drift.
 //
 // Confidence model: each drift finding inherits the MIN of the two
 // shape confidences and a per-finding severity tag computed from the
@@ -41,7 +41,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // MethodPayloadDrift identifies sidecar artefacts produced by this

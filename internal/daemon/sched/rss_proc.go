@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // currentProcessRSSMB returns the current process resident-set size in

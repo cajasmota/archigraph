@@ -1,9 +1,9 @@
-// Package diff provides diff-aware (incremental) re-indexing for archigraph.
+// Package diff provides diff-aware (incremental) re-indexing for grafel.
 //
 // On every full rebuild every source file in a repo is re-processed, even when
 // only a handful changed. For a 1 500-file repo with 5 edited files that is
 // ~1 495 wasted AST parses. This package tracks per-file SHA-256 content
-// hashes in a small manifest persisted to `.archigraph/file-index.json` and
+// hashes in a small manifest persisted to `.grafel/file-index.json` and
 // exposes helpers that tell the indexer which files actually changed since the
 // last run.
 //
@@ -18,9 +18,9 @@
 //     --name-only HEAD` provides the changed-file list in O(1) without
 //     reading every file. Falls back to hash comparison otherwise.
 //   - Full-rebuild escape hatch: callers pass Incremental=false (the
-//     `archigraph rebuild --full` flag) to skip all diffing.
+//     `grafel rebuild --full` flag) to skip all diffing.
 //
-// Manifest format (`.archigraph/file-index.json`):
+// Manifest format (`.grafel/file-index.json`):
 //
 //	{
 //	  "version": 1,

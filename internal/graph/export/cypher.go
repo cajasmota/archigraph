@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // WriteCypher streams doc as a Neo4j Cypher script to w. Each entity becomes a
@@ -28,7 +28,7 @@ func WriteCypher(w io.Writer, doc *graph.Document) error {
 	bw := bufio.NewWriter(w)
 
 	if _, err := io.WriteString(bw,
-		"// archigraph static graph export (Cypher)\n"); err != nil {
+		"// grafel static graph export (Cypher)\n"); err != nil {
 		return err
 	}
 

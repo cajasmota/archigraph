@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 // makeTestDoc creates a small Document for use in loader tests.

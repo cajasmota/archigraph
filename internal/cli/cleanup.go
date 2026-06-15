@@ -10,9 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/embed"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/embed"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newCleanupCmd() *cobra.Command {
@@ -24,9 +24,9 @@ func newCleanupCmd() *cobra.Command {
 		Long: `Scan registry.json and remove entries for groups whose fleet config
 files no longer exist at the target path.
 
-Also sweeps the cross-ref embedding cache (~/.archigraph/embeddings/) to
+Also sweeps the cross-ref embedding cache (~/.grafel/embeddings/) to
 remove .vec files that are no longer referenced by any active graph and whose
-mtime is older than --ttl-days (default: 30, or ARCHIGRAPH_EMBEDDING_TTL_DAYS).
+mtime is older than --ttl-days (default: 30, or GRAFEL_EMBEDDING_TTL_DAYS).
 
 Use --dry-run to list orphaned entries without removing them.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -36,7 +36,7 @@ Use --dry-run to list orphaned entries without removing them.`,
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true,
 		"list orphaned entries without removing them (default: true)")
 	cmd.Flags().IntVar(&ttlDays, "ttl-days", 0,
-		"embedding cache TTL in days (0 = use ARCHIGRAPH_EMBEDDING_TTL_DAYS or 30)")
+		"embedding cache TTL in days (0 = use GRAFEL_EMBEDDING_TTL_DAYS or 30)")
 	return cmd
 }
 
@@ -64,7 +64,7 @@ func runCleanup(w io.Writer, dryRun bool, ttlDays int) error {
 			fmt.Fprintf(w, "  - %s (config: %s)\n", g.Name, g.ConfigPath)
 		}
 		if dryRun {
-			fmt.Fprintln(w, "\nRun 'archigraph cleanup' (without --dry-run) to remove these entries")
+			fmt.Fprintln(w, "\nRun 'grafel cleanup' (without --dry-run) to remove these entries")
 		} else {
 			var cleaned []registry.GroupRef
 			for _, g := range reg.Groups {
@@ -110,16 +110,16 @@ func runCleanup(w io.Writer, dryRun bool, ttlDays int) error {
 	return nil
 }
 
-// collectActiveEmbeddingHashes walks all graph.fb files under the archigraph
+// collectActiveEmbeddingHashes walks all graph.fb files under the grafel
 // store directory and collects the set of embedding_ref values referenced by
 // any entity in any active graph.
 //
 // The store layout is:
 //
-//	~/.archigraph/store/<slug>-<hash>/refs/<ref-safe>/graph.fb
+//	~/.grafel/store/<slug>-<hash>/refs/<ref-safe>/graph.fb
 //
-// plus (legacy) <repo>/.archigraph/graph.fb for repos indexed before PH1a.
-// We walk the daemon store directory; .archigraph sidecar graphs are not
+// plus (legacy) <repo>/.grafel/graph.fb for repos indexed before PH1a.
+// We walk the daemon store directory; .grafel sidecar graphs are not
 // swept (they are repo-local, managed by the repo owner).
 func collectActiveEmbeddingHashes() (map[string]bool, error) {
 	h, err := registry.HomeDir()

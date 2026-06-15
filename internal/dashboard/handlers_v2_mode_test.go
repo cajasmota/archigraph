@@ -10,19 +10,19 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/mode"
+	"github.com/cajasmota/grafel/internal/daemon/mode"
 )
 
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
 
-// newModeTestServer creates a test server backed by a temp ARCHIGRAPH_HOME.
+// newModeTestServer creates a test server backed by a temp GRAFEL_HOME.
 // Returns the server URL and the daemon-root directory (for config assertions).
 func newModeTestServer(t *testing.T) (serverURL, daemonRoot string) {
 	t.Helper()
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	daemonRoot = filepath.Join(home, "daemon")
 	if err := os.MkdirAll(daemonRoot, 0o700); err != nil {
@@ -210,7 +210,7 @@ func TestHandleV2SetDaemonMode_preservesEnvOverrides(t *testing.T) {
 	cfgPath := filepath.Join(daemonRoot, "daemon.config.json")
 	if err := mode.SaveConfig(cfgPath, mode.Config{
 		Mode:         mode.Background,
-		EnvOverrides: map[string]string{"ARCHIGRAPH_HEAP_MAX_PCT": "50"},
+		EnvOverrides: map[string]string{"GRAFEL_HEAP_MAX_PCT": "50"},
 	}); err != nil {
 		t.Fatalf("SaveConfig: %v", err)
 	}
@@ -233,7 +233,7 @@ func TestHandleV2SetDaemonMode_preservesEnvOverrides(t *testing.T) {
 	if cfg.Mode != mode.Workstation {
 		t.Errorf("mode = %q, want workstation", cfg.Mode)
 	}
-	if cfg.EnvOverrides["ARCHIGRAPH_HEAP_MAX_PCT"] != "50" {
-		t.Errorf("EnvOverrides lost; got %q, want '50'", cfg.EnvOverrides["ARCHIGRAPH_HEAP_MAX_PCT"])
+	if cfg.EnvOverrides["GRAFEL_HEAP_MAX_PCT"] != "50" {
+		t.Errorf("EnvOverrides lost; got %q, want '50'", cfg.EnvOverrides["GRAFEL_HEAP_MAX_PCT"])
 	}
 }

@@ -16,8 +16,8 @@ package golang_test
 import (
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // goFieldEntityExists reports whether a SCOPE.Schema/field entity named

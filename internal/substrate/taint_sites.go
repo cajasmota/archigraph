@@ -105,7 +105,7 @@ type TaintMatch struct {
 	Category TaintCategory
 	// Primitive is a short tag identifying the matched primitive
 	// (e.g. "cursor.execute(non-literal)", "subprocess.run(shell=True)",
-	// "html.escape", "z.object"). Surfaced by archigraph_security_findings
+	// "html.escape", "z.object"). Surfaced by grafel_security_findings
 	// so the agent can see why a function is flagged.
 	Primitive string
 	// Confidence is the per-match confidence in [0, 1]. Direct

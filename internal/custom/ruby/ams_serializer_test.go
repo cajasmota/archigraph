@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/ruby"
+	_ "github.com/cajasmota/grafel/internal/custom/ruby"
 )
 
 // Issue #4715 — Ruby ActiveModel::Serializer (AMS) DTO FIELD-as-member indexing.

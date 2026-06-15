@@ -15,6 +15,6 @@ description: >-
   Swift @attribute. Go and Ruby are explicitly excluded (no decorator
   mechanism). Each entity carries decorator_name, optional target, and raw
   arguments list (max 10).
-module: archigraph.engine.rules.pattern_detectors.decorator_extractor
+module: grafel.engine.rules.pattern_detectors.decorator_extractor
 function: detect
 applies_to_function: applies_to

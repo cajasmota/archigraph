@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/module"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/module"
 )
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

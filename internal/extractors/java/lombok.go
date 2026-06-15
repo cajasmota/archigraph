@@ -33,7 +33,7 @@ package java
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // lombokSynthQuality is the quality score for all Lombok-synthesized entities.

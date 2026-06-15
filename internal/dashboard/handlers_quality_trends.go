@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/quality"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/quality"
 )
 
 // TrendPoint is a single data point in a metric series.

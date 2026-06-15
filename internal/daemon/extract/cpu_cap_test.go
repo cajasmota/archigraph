@@ -6,10 +6,10 @@ import (
 )
 
 // TestConcurrencyEnvOverride verifies the #3648 emergency throttle:
-// ARCHIGRAPH_EXTRACT_CONCURRENCY overrides the auto-tuned subprocess fan-out,
+// GRAFEL_EXTRACT_CONCURRENCY overrides the auto-tuned subprocess fan-out,
 // while an explicit CoordinatorConfig.Concurrency still wins over the env var.
 func TestConcurrencyEnvOverride(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EXTRACT_CONCURRENCY", "1")
+	t.Setenv("GRAFEL_EXTRACT_CONCURRENCY", "1")
 	if got := (CoordinatorConfig{}).concurrency(); got != 1 {
 		t.Fatalf("env override: concurrency() = %d, want 1", got)
 	}
@@ -20,7 +20,7 @@ func TestConcurrencyEnvOverride(t *testing.T) {
 	}
 
 	// Garbage / non-positive values are ignored → fall back to auto-tune.
-	t.Setenv("ARCHIGRAPH_EXTRACT_CONCURRENCY", "not-a-number")
+	t.Setenv("GRAFEL_EXTRACT_CONCURRENCY", "not-a-number")
 	auto := (CoordinatorConfig{}).concurrency()
 	want := runtime.NumCPU() / 2
 	if want < 1 {
@@ -42,17 +42,17 @@ func TestExtractGOMAXPROCS(t *testing.T) {
 		t.Fatalf("default extractGOMAXPROCS() = %d, want 2", got)
 	}
 
-	t.Setenv("ARCHIGRAPH_EXTRACT_GOMAXPROCS", "1")
+	t.Setenv("GRAFEL_EXTRACT_GOMAXPROCS", "1")
 	if got := extractGOMAXPROCS(); got != 1 {
 		t.Fatalf("override extractGOMAXPROCS() = %d, want 1", got)
 	}
 
 	// Non-positive / garbage → default.
-	t.Setenv("ARCHIGRAPH_EXTRACT_GOMAXPROCS", "0")
+	t.Setenv("GRAFEL_EXTRACT_GOMAXPROCS", "0")
 	if got := extractGOMAXPROCS(); got != 2 {
 		t.Fatalf("zero override ignored: extractGOMAXPROCS() = %d, want 2", got)
 	}
-	t.Setenv("ARCHIGRAPH_EXTRACT_GOMAXPROCS", "-4")
+	t.Setenv("GRAFEL_EXTRACT_GOMAXPROCS", "-4")
 	if got := extractGOMAXPROCS(); got != 2 {
 		t.Fatalf("negative override ignored: extractGOMAXPROCS() = %d, want 2", got)
 	}
@@ -84,7 +84,7 @@ func TestEnvPositiveInt(t *testing.T) {
 
 // TestRebuildGOMAXPROCS verifies the #5135 explicit-rebuild cap and its
 // override. Foreground rebuilds run at host speed by default (= NumCPU), and
-// ARCHIGRAPH_REBUILD_GOMAXPROCS overrides the per-child value.
+// GRAFEL_REBUILD_GOMAXPROCS overrides the per-child value.
 func TestRebuildGOMAXPROCS(t *testing.T) {
 	wantDefault := runtime.NumCPU()
 	if wantDefault < 1 {
@@ -94,17 +94,17 @@ func TestRebuildGOMAXPROCS(t *testing.T) {
 		t.Fatalf("default rebuildGOMAXPROCS() = %d, want host cores %d", got, wantDefault)
 	}
 
-	t.Setenv("ARCHIGRAPH_REBUILD_GOMAXPROCS", "6")
+	t.Setenv("GRAFEL_REBUILD_GOMAXPROCS", "6")
 	if got := rebuildGOMAXPROCS(); got != 6 {
 		t.Fatalf("override rebuildGOMAXPROCS() = %d, want 6", got)
 	}
 
 	// Non-positive / garbage → host-cores default.
-	t.Setenv("ARCHIGRAPH_REBUILD_GOMAXPROCS", "0")
+	t.Setenv("GRAFEL_REBUILD_GOMAXPROCS", "0")
 	if got := rebuildGOMAXPROCS(); got != wantDefault {
 		t.Fatalf("zero override ignored: rebuildGOMAXPROCS() = %d, want %d", got, wantDefault)
 	}
-	t.Setenv("ARCHIGRAPH_REBUILD_GOMAXPROCS", "garbage")
+	t.Setenv("GRAFEL_REBUILD_GOMAXPROCS", "garbage")
 	if got := rebuildGOMAXPROCS(); got != wantDefault {
 		t.Fatalf("garbage override ignored: rebuildGOMAXPROCS() = %d, want %d", got, wantDefault)
 	}
@@ -114,8 +114,8 @@ func TestRebuildGOMAXPROCS(t *testing.T) {
 // the LOW background cap for a watch/churn reindex and the HIGH rebuild cap for
 // an explicit foreground rebuild, dispatched purely on CoordinatorConfig.Interactive.
 func TestChildGOMAXPROCSSplit(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EXTRACT_GOMAXPROCS", "2")
-	t.Setenv("ARCHIGRAPH_REBUILD_GOMAXPROCS", "9")
+	t.Setenv("GRAFEL_EXTRACT_GOMAXPROCS", "2")
+	t.Setenv("GRAFEL_REBUILD_GOMAXPROCS", "9")
 
 	bg := CoordinatorConfig{Interactive: false}.childGOMAXPROCS()
 	if bg != 2 {
@@ -135,7 +135,7 @@ func TestChildGOMAXPROCSSplit(t *testing.T) {
 // TestInteractiveConcurrency verifies the #5135 fan-out split: an explicit
 // rebuild fans out to NumCPU subprocesses while a background reindex stays at
 // the conservative NumCPU/2-capped-at-4 default — unless an explicit
-// CoordinatorConfig.Concurrency or ARCHIGRAPH_EXTRACT_CONCURRENCY ceiling is set.
+// CoordinatorConfig.Concurrency or GRAFEL_EXTRACT_CONCURRENCY ceiling is set.
 func TestInteractiveConcurrency(t *testing.T) {
 	// No env override: interactive fans wider than background.
 	bg := CoordinatorConfig{Interactive: false}.concurrency()
@@ -152,11 +152,11 @@ func TestInteractiveConcurrency(t *testing.T) {
 		t.Fatalf("expected interactive concurrency (%d) > background (%d) on a >8-core host", fg, bg)
 	}
 
-	// An operator-set ceiling (ARCHIGRAPH_EXTRACT_CONCURRENCY) is honored on
+	// An operator-set ceiling (GRAFEL_EXTRACT_CONCURRENCY) is honored on
 	// BOTH paths — even interactive rebuilds respect a contended-host cap.
-	t.Setenv("ARCHIGRAPH_EXTRACT_CONCURRENCY", "1")
+	t.Setenv("GRAFEL_EXTRACT_CONCURRENCY", "1")
 	if got := (CoordinatorConfig{Interactive: true}).concurrency(); got != 1 {
-		t.Fatalf("interactive should honor ARCHIGRAPH_EXTRACT_CONCURRENCY ceiling: got %d, want 1", got)
+		t.Fatalf("interactive should honor GRAFEL_EXTRACT_CONCURRENCY ceiling: got %d, want 1", got)
 	}
 
 	// An explicit config field still wins over everything.

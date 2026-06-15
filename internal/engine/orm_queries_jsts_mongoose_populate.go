@@ -58,7 +58,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoosePopulatePatternType tags every edge this pass emits.

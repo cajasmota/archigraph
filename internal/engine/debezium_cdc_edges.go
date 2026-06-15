@@ -75,7 +75,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // debeziumCDCSupportsLanguage gates applyDebeziumCDCEdges. The classifier

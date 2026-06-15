@@ -15,7 +15,7 @@
 //
 // The generic catalog pass in internal/links/template_pattern_pass.go
 // stores every match as a TemplatePattern record in the sidecar JSON
-// surfaced by archigraph_template_patterns. Overlaps with Phase 2B
+// surfaced by grafel_template_patterns. Overlaps with Phase 2B
 // (taint-flow SQL injection) are intentional: that pass tracks data
 // flow into the literal; this pass catalogues the literal itself.
 //

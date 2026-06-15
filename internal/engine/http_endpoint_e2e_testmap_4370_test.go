@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the Java custom extractor so the test_suite (with e2e_route_calls)
 	// comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
 )
 
 // Issue #4370 LIVE-REPRO (resolve side, full in-pipeline).

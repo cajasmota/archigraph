@@ -4,20 +4,20 @@
 // Layer 1 (markdown.go / ingest.go) is fully deterministic: it produces
 // Document/Section nodes and exact-match MENTIONS edges with NO LLM call. Layer
 // 2 is the OPT-IN, agent-driven semantic enrichment on top of those Sections,
-// and it preserves the same core invariant: archigraph makes ZERO LLM calls.
+// and it preserves the same core invariant: grafel makes ZERO LLM calls.
 //
 // This file is the EMIT half. For each L1 Section it produces a serialisable
 // SemanticBundle carrying the section's prose, grounding context (the code
 // entities the section MENTIONS), and an extraction SCHEMA telling an EXTERNAL
 // agent what semantic nodes/edges to extract (classify the section as a
 // DesignDecision / Rationale / Spec, and extract rationale relationships to the
-// code entities it references). archigraph EMITS the bundle only; the external
+// code entities it references). grafel EMITS the bundle only; the external
 // agent (a Claude Code skill, not this code) runs the LLM and writes back a
 // SemanticRunResult, which the APPLY half (semantic_apply.go, #4309) validates
 // and merges into the graph.
 //
 // This mirrors the docgen --llm-mode=emit pattern (internal/docgen/llm_bundle.go:
-// LLMPromptBundle / LLMRunResult) and the archigraph_enrichments emit→submit
+// LLMPromptBundle / LLMRunResult) and the grafel_enrichments emit→submit
 // candidate pattern. No LLM calls, no network, no API keys.
 package ingest
 
@@ -31,8 +31,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // SemanticBundleVersion is the schema version embedded in every bundle and
@@ -94,7 +94,7 @@ type SemanticBundle struct {
 	Sections []SemanticSectionPrompt `json:"sections"`
 	// Schema is the extraction instruction set (closed-set classes + the edge
 	// kind + agent-facing guidance). Repeated in the bundle so the artifact is
-	// self-describing for an agent that has never seen archigraph.
+	// self-describing for an agent that has never seen grafel.
 	Schema SemanticExtractionSchema `json:"schema"`
 	// PromptHash is the bundle-level cache key (sha256 over per-section hashes).
 	// The result must echo it so apply can detect a stale/mismatched result.
@@ -177,8 +177,8 @@ func defaultSemanticSchema() SemanticExtractionSchema {
 			"claim actually justifies or constrains. You MUST NOT invent target IDs — only IDs present in " +
 			"this section's mention_targets are permitted; any other ID will be rejected. Each accepted " +
 			"non-None classification becomes a SCOPE.DesignDecision node anchored to the section, with one " +
-			"RATIONALE_FOR edge to each cited target. archigraph runs NO LLM — you (the calling agent) run " +
-			"the model; archigraph only validates and applies what you return.",
+			"RATIONALE_FOR edge to each cited target. grafel runs NO LLM — you (the calling agent) run " +
+			"the model; grafel only validates and applies what you return.",
 	}
 }
 
@@ -186,7 +186,7 @@ func defaultSemanticSchema() SemanticExtractionSchema {
 // one SemanticBundle per document (the #4308 emit step). It mirrors Ingest's
 // parse → section-ID-stamp → exact-mention-link sequence so the bundles carry
 // EXACTLY the section IDs and MENTIONS targets that L1 produced — keeping emit
-// and the deterministic graph in lockstep. archigraph makes NO LLM call here.
+// and the deterministic graph in lockstep. grafel makes NO LLM call here.
 //
 // repoRoot/repoTag/codeEntities have the same meaning as in Ingest. Bundles for
 // documents with no sections are skipped. Output is deterministic (files sorted,

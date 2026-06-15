@@ -1,6 +1,6 @@
 // coverage_tools.go — MCP tool for test-coverage analysis (issue #1323).
 //
-// Tool: archigraph_test_coverage
+// Tool: grafel_test_coverage
 //
 //	Returns per-entity and per-directory test coverage statistics for the
 //	resolved group. Identifies production entities that have no TESTS edge
@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handleTestCoverage implements archigraph_test_coverage.
+// handleTestCoverage implements grafel_test_coverage.
 func (s *Server) handleTestCoverage(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, toolErr := s.resolveAndGroup(req)
 	if toolErr != nil {

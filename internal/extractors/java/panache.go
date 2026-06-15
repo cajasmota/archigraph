@@ -51,7 +51,7 @@ package java
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // panacheSynthQuality matches lombokSynthQuality — below real entities (1.0)

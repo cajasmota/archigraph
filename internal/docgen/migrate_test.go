@@ -59,7 +59,7 @@ func TestMigrateInRepoStagingRun(t *testing.T) {
 	projectRoot := t.TempDir()
 
 	// Create an orphaned staging run.
-	stagingRun := filepath.Join(projectRoot, ".archigraph", "staging", "2026-05-25-abcd1234")
+	stagingRun := filepath.Join(projectRoot, ".grafel", "staging", "2026-05-25-abcd1234")
 	writeFile(t, filepath.Join(stagingRun, "index.md"))
 
 	opts := MigrateOptions{

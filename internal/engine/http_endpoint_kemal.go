@@ -65,7 +65,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // kemalRouteRe matches a Crystal verb-macro route registration with a leading

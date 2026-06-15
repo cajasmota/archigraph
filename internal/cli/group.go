@@ -10,13 +10,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/install/detect"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// newGroupCmd returns the `archigraph group` parent command. Today it hosts a
+// newGroupCmd returns the `grafel group` parent command. Today it hosts a
 // single subcommand, `add`, the non-interactive counterpart to `wizard` so
 // agents and CI can register a group without a TTY. It is grouped under a
 // parent (rather than flat like delete/remove) to leave room for future
@@ -24,7 +24,7 @@ import (
 func newGroupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "group",
-		Short: "Manage archigraph groups (non-interactive)",
+		Short: "Manage grafel groups (non-interactive)",
 	}
 	cmd.AddCommand(newGroupAddCmd())
 	return cmd
@@ -69,8 +69,8 @@ all groups), so adding a group never duplicates the mcp.json entry — query the
 new group immediately via the 'group' MCP parameter.
 
 Examples:
-  archigraph group add new-backend --repo core=/abs/path/to/repo --index
-  archigraph group add legacy --repo /abs/api --repo /abs/web --no-watchers --json`,
+  grafel group add new-backend --repo core=/abs/path/to/repo --index
+  grafel group add legacy --repo /abs/api --repo /abs/web --no-watchers --json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			gaFlags := groupAddFlags{

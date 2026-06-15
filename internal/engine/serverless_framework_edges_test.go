@@ -14,8 +14,8 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func runSLSFrameworkDetect(t *testing.T, path, src string) ([]types.EntityRecord, []types.RelationshipRecord) {

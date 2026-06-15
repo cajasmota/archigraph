@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // TestComputeRepoHealth verifies per-repo health snapshot computation.

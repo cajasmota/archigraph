@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // ---------------------------------------------------------------------------
@@ -922,16 +922,16 @@ func TestPathDetail_DocgenFields(t *testing.T) {
 func TestPathDetail_DocgenFields_WithDocumentation(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
-	// Also set ARCHIGRAPH_HOME so docstate functions find the right directory
+	// Also set GRAFEL_HOME so docstate functions find the right directory
 	// on Windows, where os.UserHomeDir() reads USERPROFILE instead of HOME.
-	t.Setenv("ARCHIGRAPH_HOME", filepath.Join(tmp, ".archigraph"))
+	t.Setenv("GRAFEL_HOME", filepath.Join(tmp, ".grafel"))
 
 	ts, _ := newPhase1Server(t)
 
 	// Create docgen state with a generated doc file for the /api/users endpoint.
 	pathHash := hashStr("/api/users")
 	docPath := "reference/endpoints/" + pathHash + ".md"
-	docsDir := filepath.Join(tmp, ".archigraph", "groups", "testgroup", "docs", "reference", "endpoints")
+	docsDir := filepath.Join(tmp, ".grafel", "groups", "testgroup", "docs", "reference", "endpoints")
 	if err := os.MkdirAll(docsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

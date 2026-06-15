@@ -1,4 +1,4 @@
-// archigraph binary graph format — FlatBuffers schema.
+// grafel binary graph format — FlatBuffers schema.
 //
 // This schema is the v2 on-disk format companion to the legacy v1
 // graph.json (encoding/json). It is designed for zero-copy mmap reads
@@ -13,7 +13,7 @@
 //
 // See docs/adrs/0016-binary-graph-format.md for rationale.
 
-namespace archigraph;
+namespace grafel;
 
 table PropertyEntry {
   key: string;
@@ -48,7 +48,7 @@ table Entity {
   is_articulation_point: bool = false;
 
   // PH8 (#2100): content-hash pointer into the shared embedding cache
-  // (~/.archigraph/embeddings/<shard>/<hash>.vec). When non-empty, readers
+  // (~/.grafel/embeddings/<shard>/<hash>.vec). When non-empty, readers
   // load the vector from the cache instead of inlining it in graph.fb. Old
   // graphs have this field absent (FlatBuffers defaults to "") and continue
   // to work — their vectors are served from embeddings.bin as before.
@@ -58,7 +58,7 @@ table Entity {
   // (e.g. "python", "rust", "ocaml"). Previously tunneled through
   // Properties["language"] by PR #2365 because the FB schema had no
   // such slot. Adding it here retires the property-tunnel workaround;
-  // FormatVersion is bumped to force a clean reindex (archigraph is
+  // FormatVersion is bumped to force a clean reindex (grafel is
   // pre-1.0; no backward-compat path).
   language: string;
 
@@ -79,7 +79,7 @@ table Entity {
 
 // Community is one Louvain modularity community summarised for the
 // on-disk graph (mirrors graph.CommunityResult). The aggregate list lets
-// `archigraph_clusters` return real communities straight from graph.fb
+// `grafel_clusters` return real communities straight from graph.fb
 // without re-running Pass 4 (#1620).
 table Community {
   id: int;

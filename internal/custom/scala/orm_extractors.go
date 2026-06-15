@@ -21,8 +21,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -84,7 +84,7 @@ var (
 )
 
 func (e *slickExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.slick_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -267,7 +267,7 @@ func sqlVerb(body string) string {
 }
 
 func (e *doobieExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.doobie_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -400,7 +400,7 @@ var (
 )
 
 func (e *quillExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.quill_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -554,7 +554,7 @@ var (
 )
 
 func (e *scalikejdbcExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.scalikejdbc_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -708,7 +708,7 @@ var (
 )
 
 func (e *scanamoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.scanamo_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -826,7 +826,7 @@ var (
 )
 
 func (e *elastic4sExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.elastic4s_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

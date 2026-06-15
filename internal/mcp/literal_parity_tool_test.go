@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -51,7 +51,7 @@ func twoGroupServer(t *testing.T, oracleEnts, v3Ents []graph.Entity) *Server {
 func callLiteralParity(t *testing.T, s *Server, args map[string]any) map[string]any {
 	t.Helper()
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_literal_parity"
+	req.Params.Name = "grafel_literal_parity"
 	req.Params.Arguments = args
 	res, err := s.handleLiteralParity(context.Background(), req)
 	if err != nil {
@@ -133,7 +133,7 @@ func TestLiteralParity_E2E_ExplicitSource(t *testing.T) {
 func TestLiteralParity_E2E_MissingArgs(t *testing.T) {
 	s := twoGroupServer(t, nil, nil)
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_literal_parity"
+	req.Params.Name = "grafel_literal_parity"
 	req.Params.Arguments = map[string]any{"group_oracle": "oracle"}
 	res, err := s.handleLiteralParity(context.Background(), req)
 	if err != nil {
@@ -350,7 +350,7 @@ func TestLiteralParity_E2E_DerivationUnknownKind(t *testing.T) {
 			enumEntity("v1", "PermissionAction", `[{"key":"LITE","value":"lite"}]`)}},
 	)
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_literal_parity"
+	req.Params.Name = "grafel_literal_parity"
 	req.Params.Arguments = map[string]any{
 		"group_oracle": "oracle", "group_v3": "v3", "set": "action_codenames",
 		"oracle_derive": "bogus_kind", "v3_source": "v1",

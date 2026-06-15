@@ -32,7 +32,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // PrecisionDedupEnabled is the master switch for the precision pass. Default

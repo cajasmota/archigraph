@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	cobol "github.com/cajasmota/archigraph/internal/extractors/cobol"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	cobol "github.com/cajasmota/grafel/internal/extractors/cobol"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // run extracts entities from a JCL source string.

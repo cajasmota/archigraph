@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/jobs"
+	"github.com/cajasmota/grafel/internal/jobs"
 )
 
 // doJSONRequest fires a request with a JSON body against the server routes.

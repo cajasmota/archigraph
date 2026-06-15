@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func ip(v int) *int           { return &v }
 func f64p(v float64) *float64 { return &v }
 
-// Test_handleOrient_4290 verifies the archigraph_orient MCP handler returns the
+// Test_handleOrient_4290 verifies the grafel_orient MCP handler returns the
 // three orientation parts (key entities, cross-cutting edges, questions) for a
 // loaded repo, reading the Pass-4 attributes off the in-memory doc.
 func Test_handleOrient_4290(t *testing.T) {

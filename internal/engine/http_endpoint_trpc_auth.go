@@ -45,7 +45,7 @@
 //     procedure.
 //
 // Output (same property contract the JS/TS resolver writes, so
-// archigraph_auth_coverage signal-1 + the security dashboard light up):
+// grafel_auth_coverage signal-1 + the security dashboard light up):
 //
 //	auth_required   — "true"
 //	auth_method     — "trpc_middleware"
@@ -61,7 +61,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // trpcAuthMethod is the auth_method value stamped on a tRPC procedure whose
@@ -165,7 +165,7 @@ func applyTRPCAuthBinding(content string, entities []types.EntityRecord, from in
 }
 
 // stampTRPCAuth writes the auth property contract for an auth-required tRPC
-// procedure. Mirrors stampAuthPolicy's key set so archigraph_auth_coverage
+// procedure. Mirrors stampAuthPolicy's key set so grafel_auth_coverage
 // (signal-1 auth_middleware) and the dashboard (auth_policy JSON) light up,
 // but stamps the tRPC-specific auth_method and never overwrites a stronger
 // already-resolved policy.

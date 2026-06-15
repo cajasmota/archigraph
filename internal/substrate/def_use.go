@@ -12,7 +12,7 @@
 // intervening def of the same name (last-write-wins). The result is a
 // list of DefUseChain edges stamped onto the function entity's
 // Properties as a compact "uses=<n>;defs=<n>;chains=v@def_line→use_line,..."
-// string and surfaced via the archigraph_def_use MCP tool.
+// string and surfaced via the grafel_def_use MCP tool.
 //
 // Out of scope (intentionally) per the issue body:
 //   - Inter-procedural def-use (requires alias analysis — Phase 4).

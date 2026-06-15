@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // eventFlowEntity builds a synthetic SCOPE.EventFlow entity with the

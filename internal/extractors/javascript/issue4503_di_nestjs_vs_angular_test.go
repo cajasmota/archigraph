@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4503 LIVE-REPRO — NestJS @Injectable providers mis-classified as

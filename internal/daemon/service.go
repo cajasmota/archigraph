@@ -11,14 +11,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/daemon/sched"
-	"github.com/cajasmota/archigraph/internal/daemon/watch"
-	"github.com/cajasmota/archigraph/internal/install/hooks"
-	"github.com/cajasmota/archigraph/internal/perf"
-	"github.com/cajasmota/archigraph/internal/process"
-	"github.com/cajasmota/archigraph/internal/registry"
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/sched"
+	"github.com/cajasmota/grafel/internal/daemon/watch"
+	"github.com/cajasmota/grafel/internal/install/hooks"
+	"github.com/cajasmota/grafel/internal/perf"
+	"github.com/cajasmota/grafel/internal/process"
+	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // rebuildRPCTimeout is the maximum wall-clock time a single Rebuild RPC is
@@ -30,7 +30,7 @@ import (
 const rebuildRPCTimeout = 2 * time.Hour
 
 // IndexFunc runs a one-shot index. The daemon does not import the
-// extractor stack directly — that lives in cmd/archigraph — so it
+// extractor stack directly — that lives in cmd/grafel — so it
 // receives the entrypoint as a function value at construction time.
 // Returning the graph.json path and the stats JSON (opaque) keeps the
 // wire shape stable as the extractor evolves.
@@ -38,13 +38,13 @@ type IndexFunc func(args proto.IndexArgs) (graphPath string, statsJSON string, e
 
 // RebuildFunc force-rebuilds a group. As with IndexFunc, the daemon
 // stays decoupled from registry + extractor — the entrypoint is
-// injected from cmd/archigraph at construction.
+// injected from cmd/grafel at construction.
 type RebuildFunc func(args proto.RebuildArgs) (repos []string, warning string, err error)
 
 // QualityAuditFunc runs the audit-orphans analysis for a repo (or
 // corpus directory). Returns the pre-formatted markdown (or JSON) report
 // and the scalar summary. Like IndexFunc, the heavy audit package lives
-// in cmd/archigraph and is injected here at construction time.
+// in cmd/grafel and is injected here at construction time.
 type QualityAuditFunc func(args proto.QualityAuditRequest) (reply proto.QualityAuditReply, err error)
 
 // watcherMgrStatsIface is the narrow interface used by Service.Status to read
@@ -156,7 +156,7 @@ type Service struct {
 	progress   map[string]*rebuildSession
 
 	// Phase D — MCP RPC surface (ADR-0017 #832).
-	// Both fields are injected from cmd/archigraph to avoid the import
+	// Both fields are injected from cmd/grafel to avoid the import
 	// cycle that would arise from importing internal/mcp here.
 	// nil means "not configured" — MCPToolList returns empty; MCPToolCall
 	// returns a structured "daemon not ready" error.
@@ -166,7 +166,7 @@ type Service struct {
 	// logger is the daemon's structured logger, forwarded to the MCP
 	// dispatcher for per-call debug logging (tool=name elapsed_ms=X repo=Y).
 	// Handler selection (text vs JSON) happens at construction time via
-	// ARCHIGRAPH_DAEMON_LOG_JSON; see newService.
+	// GRAFEL_DAEMON_LOG_JSON; see newService.
 	logger *slog.Logger
 
 	// dashboardPort is the TCP port the embedded dashboard server is
@@ -175,7 +175,7 @@ type Service struct {
 	dashboardPort int
 
 	// daemonMode is the operational mode the daemon booted in (S7 #2157).
-	// Surfaced by the Status RPC for `archigraph status`.
+	// Surfaced by the Status RPC for `grafel status`.
 	daemonMode string
 }
 
@@ -188,7 +188,7 @@ type Service struct {
 // (0 or 1 → serial; ≥2 → worker pool). Added in #1276.
 //
 // The logger is a *slog.Logger whose handler (text or JSON) is selected by
-// the caller based on ARCHIGRAPH_DAEMON_LOG_JSON. Handler selection at
+// the caller based on GRAFEL_DAEMON_LOG_JSON. Handler selection at
 // construction time eliminates the prefix-corruption risk that required the
 // startup guard removed in #2375 — slog cannot be misconfigured this way.
 func newService(idx IndexFunc, rb RebuildFunc, qa QualityAuditFunc, socketPath string, stopReq chan<- struct{}, logger *slog.Logger, maxConcurrentGroups int) *Service {
@@ -246,7 +246,7 @@ func (s *Service) Status(_ *proto.StatusArgs, reply *proto.StatusReply) error {
 	if bin, err := os.Executable(); err == nil {
 		reply.BinaryPath = bin
 	}
-	// Report the dashboard port so `archigraph dashboard` can construct
+	// Report the dashboard port so `grafel dashboard` can construct
 	// the URL without a separate config read (#938).
 	reply.DashboardPort = s.dashboardPort
 
@@ -354,7 +354,7 @@ func (s *Service) Index(args *proto.IndexArgs, reply *proto.IndexReply) error {
 }
 
 // Rebuild force-indexes every repo in a group (or one slug). Wipes
-// .archigraph/ first when args.Wipe is true. Cross-repo link passes
+// .grafel/ first when args.Wipe is true. Cross-repo link passes
 // run inside RebuildFunc so the daemon does not need to know the
 // graph package.
 //
@@ -809,7 +809,7 @@ func dirSize(dir string) (int64, error) {
 
 // QualityAudit runs the audit-orphans analysis for a repo or corpus
 // directory and returns the pre-formatted report. The heavy audit
-// package lives in cmd/archigraph; it is injected via QualityAuditFunc.
+// package lives in cmd/grafel; it is injected via QualityAuditFunc.
 func (s *Service) QualityAudit(args *proto.QualityAuditRequest, reply *proto.QualityAuditReply) error {
 	if s.qualityAudit == nil {
 		return errors.New("quality audit entrypoint not configured")

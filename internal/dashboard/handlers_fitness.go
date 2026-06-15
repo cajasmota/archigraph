@@ -5,7 +5,7 @@ package dashboard
 // Route:
 //
 //	GET /api/fitness/{group}
-//	    Evaluates .archigraph/fitness.yaml rules for every repo in the group
+//	    Evaluates .grafel/fitness.yaml rules for every repo in the group
 //	    and returns per-repo results plus aggregate violation counts.
 //
 // Query parameters:
@@ -19,8 +19,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/quality/fitness"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/quality/fitness"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ func (s *Server) handleFitness(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		stateDir := filepath.Join(rp.Path, ".archigraph")
+		stateDir := filepath.Join(rp.Path, ".grafel")
 
 		// Load fitness config (empty config if file absent).
 		fitCfg, cfgErr := fitness.LoadConfig(stateDir)

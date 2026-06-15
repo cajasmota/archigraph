@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/caps"
+	"github.com/cajasmota/grafel/internal/daemon/caps"
 )
 
 // installCapsFile writes a cpu.json into a temp dir, installs a Store pointing at
@@ -35,17 +35,17 @@ func TestRuntimeCaps_ExtractGOMAXPROCS_FileOverridesDefault(t *testing.T) {
 func TestRuntimeCaps_EnvBeatsFile(t *testing.T) {
 	installCapsFile(t, `{"extract_gomaxprocs": 5, "rebuild_gomaxprocs": 5, "extract_concurrency": 5}`)
 
-	t.Setenv("ARCHIGRAPH_EXTRACT_GOMAXPROCS", "9")
+	t.Setenv("GRAFEL_EXTRACT_GOMAXPROCS", "9")
 	if got := extractGOMAXPROCS(); got != 9 {
 		t.Fatalf("env should beat file: extractGOMAXPROCS() = %d, want 9", got)
 	}
 
-	t.Setenv("ARCHIGRAPH_REBUILD_GOMAXPROCS", "11")
+	t.Setenv("GRAFEL_REBUILD_GOMAXPROCS", "11")
 	if got := rebuildGOMAXPROCS(); got != 11 {
 		t.Fatalf("env should beat file: rebuildGOMAXPROCS() = %d, want 11", got)
 	}
 
-	t.Setenv("ARCHIGRAPH_EXTRACT_CONCURRENCY", "7")
+	t.Setenv("GRAFEL_EXTRACT_CONCURRENCY", "7")
 	if got := (CoordinatorConfig{}).concurrency(); got != 7 {
 		t.Fatalf("env should beat file: concurrency() = %d, want 7", got)
 	}

@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/go/sample_handler.go",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/go/sample_handler.go",
   "language": "go",
   "entities": [
     {

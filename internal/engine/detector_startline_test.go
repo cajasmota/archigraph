@@ -5,7 +5,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // langchainYAML is a minimal LangChain framework YAML for tests.

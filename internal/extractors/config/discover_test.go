@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // writeFixture writes name relative to dir with content. Helper for tests.

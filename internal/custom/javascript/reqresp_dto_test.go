@@ -3,9 +3,9 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
 )
 
 // hasDTOEdge reports whether some entity carries an edge of (kind -> toID).

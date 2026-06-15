@@ -6,7 +6,7 @@ package golang_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func goEnumRecords(t *testing.T, src string) []types.EntityRecord {

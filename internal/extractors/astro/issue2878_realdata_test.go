@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // issue2878_realdata_test.go — real-data verification for the Astro idiom cells

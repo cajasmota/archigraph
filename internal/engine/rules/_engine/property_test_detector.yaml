@@ -23,6 +23,6 @@ description: >-
   (Hypothesis, fast-check, jqwik, Kotest, ScalaCheck, QuickCheck, gopter, rapid,
   proptest, FsCheck, rantly, StreamData, PropEr, SwiftCheck, Glados).
   Emits SCOPE.Pattern entities with kind=property_test.
-module: archigraph.engine.rules.pattern_detectors.property_test_detector
+module: grafel.engine.rules.pattern_detectors.property_test_detector
 function: detect
 applies_to_function: applies_to

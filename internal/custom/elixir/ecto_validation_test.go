@@ -3,7 +3,7 @@ package elixir_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractFull and assertProp are shared with ecto_test.go (same package);

@@ -10,7 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/perf"
+	"github.com/cajasmota/grafel/internal/perf"
 )
 
 // newPerfTestServer creates a minimal *Server for perf handler tests,
@@ -36,7 +36,7 @@ func newPerfTestServer(t *testing.T) *Server {
 
 func TestHandlePerfBudgets_Empty(t *testing.T) {
 	srv := newPerfTestServer(t)
-	// Seed recorder with a temp path to avoid touching ~/.archigraph.
+	// Seed recorder with a temp path to avoid touching ~/.grafel.
 	dir := t.TempDir()
 	srv.perfMu.Lock()
 	srv.perfRecorder = perf.NewRecorder(dir + "/h.jsonl")

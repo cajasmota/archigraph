@@ -15,6 +15,6 @@ description: >-
   Detect error handling idioms across Java/JS/TS/Python (try/catch), Go (if err != nil),
   Rust (match Ok/Err, ? operator), and Elixir ({:ok, _}/{:error, _} case). Emits
   SCOPE.Pattern entities with kind=error_handling and a style field.
-module: archigraph.engine.rules.pattern_detectors.error_handling_detector
+module: grafel.engine.rules.pattern_detectors.error_handling_detector
 function: detect
 applies_to_function: applies_to

@@ -1,7 +1,7 @@
 // Pattern configuration: tunable thresholds documented in ADR-0018 (the
-// "Configuration" table) and surfaced via `archigraph patterns config`.
+// "Configuration" table) and surfaced via `grafel patterns config`.
 //
-// Config lives at <group>/.archigraph/patterns-config.json alongside
+// Config lives at <group>/.grafel/patterns-config.json alongside
 // patterns.json. Defaults are returned when the file does not exist; the
 // daemon decay scheduler, the MCP convergence pass, and the CLI all read
 // through this package so a single source of truth governs every consumer.
@@ -57,17 +57,17 @@ func DefaultConfig() Config {
 }
 
 // ConfigPath returns the canonical path to patterns-config.json for the
-// supplied <group>/.archigraph/ directory.
-func ConfigPath(groupArchigraphDir string) string {
-	return filepath.Join(groupArchigraphDir, "patterns-config.json")
+// supplied <group>/.grafel/ directory.
+func ConfigPath(groupGrafelDir string) string {
+	return filepath.Join(groupGrafelDir, "patterns-config.json")
 }
 
 // LoadConfig reads the config file or returns defaults if absent. Any
 // fields missing from the on-disk file are filled in from DefaultConfig
 // so partial configs still behave correctly.
-func LoadConfig(groupArchigraphDir string) (Config, error) {
+func LoadConfig(groupGrafelDir string) (Config, error) {
 	cfg := DefaultConfig()
-	data, err := os.ReadFile(ConfigPath(groupArchigraphDir))
+	data, err := os.ReadFile(ConfigPath(groupGrafelDir))
 	if os.IsNotExist(err) {
 		return cfg, nil
 	}
@@ -83,15 +83,15 @@ func LoadConfig(groupArchigraphDir string) (Config, error) {
 }
 
 // SaveConfig persists the config atomically (tmp + rename).
-func SaveConfig(groupArchigraphDir string, cfg Config) error {
-	if err := os.MkdirAll(groupArchigraphDir, 0o755); err != nil {
+func SaveConfig(groupGrafelDir string, cfg Config) error {
+	if err := os.MkdirAll(groupGrafelDir, 0o755); err != nil {
 		return fmt.Errorf("agentpatterns: mkdir config dir: %w", err)
 	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("agentpatterns: marshal config: %w", err)
 	}
-	path := ConfigPath(groupArchigraphDir)
+	path := ConfigPath(groupGrafelDir)
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return fmt.Errorf("agentpatterns: write config tmp: %w", err)
@@ -104,7 +104,7 @@ func SaveConfig(groupArchigraphDir string, cfg Config) error {
 }
 
 // SetConfigKey applies a single `key=value` mutation in the form accepted
-// by the `archigraph patterns config` CLI verb. Recognised keys:
+// by the `grafel patterns config` CLI verb. Recognised keys:
 //
 //	per_subagent_threshold              (int)
 //	convergence_threshold               (int)

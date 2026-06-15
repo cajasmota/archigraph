@@ -7,7 +7,7 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // djangoGraphRelates returns the first GRAPH_RELATES edge whose ToID contains

@@ -1,4 +1,4 @@
-# archigraph API v2 — Contract Reference
+# grafel API v2 — Contract Reference
 
 > This document is the contract for the `/api/v2/...` surface.
 > Screen-building agents MUST read this before implementing any v2 handler.
@@ -240,7 +240,7 @@ v1 `GET /api/graph/{group}/entity/{id}` (unchanged, raw JSON).
 
 The Operations + Settings screens trigger CLI-equivalent mutating actions.
 Every such endpoint is a thin REST wrapper over the SAME internal function the
-corresponding `archigraph` CLI command calls — no logic is duplicated.
+corresponding `grafel` CLI command calls — no logic is duplicated.
 
 ### Async jobs (rebuild / reset)
 
@@ -299,22 +299,22 @@ it automatically.
 
 | Method + path | Wraps | Notes |
 |---|---|---|
-| `POST /api/v2/groups/{group}/rebuild` | `archigraph rebuild <group>` | async → 202 + job id |
-| `POST /api/v2/groups/{group}/repos/{repo}/rebuild` | `archigraph rebuild <group> <repo>` | async → 202 + job id |
-| `POST /api/v2/groups/{group}/repos/{repo}/reset` | `archigraph rebuild --wipe` | async → 202 + job id (destructive) |
+| `POST /api/v2/groups/{group}/rebuild` | `grafel rebuild <group>` | async → 202 + job id |
+| `POST /api/v2/groups/{group}/repos/{repo}/rebuild` | `grafel rebuild <group> <repo>` | async → 202 + job id |
+| `POST /api/v2/groups/{group}/repos/{repo}/reset` | `grafel rebuild --wipe` | async → 202 + job id (destructive) |
 | `GET /api/v2/jobs/{id}` | — | job status/progress |
 | `GET /api/v2/jobs/{id}/stream` | — | job SSE feed |
 | `PATCH /api/v2/groups/{group}/repos/{repo}/monorepo` | module selection | persists to fleet.json **and** triggers a watcher `ForceRescan` so the running daemon re-reconciles (no longer persist-only). Reports `watcher_reloaded`. |
-| `POST /api/v2/maintenance/cleanup` | `archigraph cleanup` | body `{"dry_run":true}` (default) previews orphaned registry entries; `false` removes them |
-| `POST /api/v2/update/apply` | `archigraph update` | runs the updater as a subprocess (so this daemon is not replaced mid-request); returns `{exit_code, output[], applied}`. Version check stays at `GET /api/updates/check`. |
-| `POST /api/v2/patterns/{group}/export` | `archigraph patterns export` | body `{"file"}` or `{"repo"}` → writes approved patterns to CLAUDE.md |
-| `POST /api/v2/patterns/{group}/gc` | `archigraph patterns gc` | body `{"dry_run":true}` (default) previews; `false` prunes decayed candidates |
+| `POST /api/v2/maintenance/cleanup` | `grafel cleanup` | body `{"dry_run":true}` (default) previews orphaned registry entries; `false` removes them |
+| `POST /api/v2/update/apply` | `grafel update` | runs the updater as a subprocess (so this daemon is not replaced mid-request); returns `{exit_code, output[], applied}`. Version check stays at `GET /api/updates/check`. |
+| `POST /api/v2/patterns/{group}/export` | `grafel patterns export` | body `{"file"}` or `{"repo"}` → writes approved patterns to CLAUDE.md |
+| `POST /api/v2/patterns/{group}/gc` | `grafel patterns gc` | body `{"dry_run":true}` (default) previews; `false` prunes decayed candidates |
 
 ---
 
 ## 10. Intentionally CLI-only (no REST wrapper)
 
-**Daemon install / uninstall** (`archigraph daemon install|uninstall`) are NOT
+**Daemon install / uninstall** (`grafel daemon install|uninstall`) are NOT
 exposed over REST. They register/unregister a launchd service (macOS) /
 systemd unit (Linux), which requires elevated privileges and filesystem changes
 outside the daemon's own process — there is no safe in-process REST trigger

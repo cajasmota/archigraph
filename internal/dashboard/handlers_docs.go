@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // DocTreeNode is one file/directory in the docs tree.
@@ -147,7 +147,7 @@ func (s *Server) handleDocPage(w http.ResponseWriter, r *http.Request) {
 // groupDocPaths returns a map of repo-slug -> docs root path for a group.
 //
 // Resolution order (#1624 — docs no longer live in repos):
-//  1. The archigraph-managed store at `~/.archigraph/docs/<group>/<slug>/`.
+//  1. The grafel-managed store at `~/.grafel/docs/<group>/<slug>/`.
 //     When that directory exists it ALWAYS wins.
 //  2. A one-time best-effort migration: if the store directory is empty but
 //     the repo's legacy `<repo>/docs/` looks like skill-generated output, it

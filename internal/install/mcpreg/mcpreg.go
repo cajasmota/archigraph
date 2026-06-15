@@ -1,7 +1,7 @@
-// Package mcpreg writes archigraph entries into the per-tool MCP
+// Package mcpreg writes grafel entries into the per-tool MCP
 // configuration files used by IDEs and AI clients.
 //
-// Per ADR-0004 there is exactly ONE archigraph MCP entry per tool — a
+// Per ADR-0004 there is exactly ONE grafel MCP entry per tool — a
 // single global server that routes by caller-CWD. We never write
 // per-project `.mcp.json` files.
 //
@@ -28,13 +28,13 @@ import (
 )
 
 // ServerName is the canonical key used in mcpServers maps.
-const ServerName = "archigraph"
+const ServerName = "grafel"
 
 // backupSentinelAbsent is the byte content written into a backup file when the
-// original target did NOT exist before archigraph touched it. On restore this
-// tells us to DELETE the file archigraph created rather than leave an orphan
+// original target did NOT exist before grafel touched it. On restore this
+// tells us to DELETE the file grafel created rather than leave an orphan
 // `{}` or `{"mcpServers":{}}` behind.
-const backupSentinelAbsent = "ARCHIGRAPH_BACKUP_ORIGINAL_ABSENT"
+const backupSentinelAbsent = "GRAFEL_BACKUP_ORIGINAL_ABSENT"
 
 // homeDir returns the current user's home directory.
 // On all platforms it checks the HOME environment variable first so
@@ -298,7 +298,7 @@ func DetectClaudeConfigDirs(dirs []string) []string {
 	return out
 }
 
-// Register writes (or updates) the archigraph entry in the given tool's
+// Register writes (or updates) the grafel entry in the given tool's
 // settings file. Other entries in `mcpServers` are preserved.
 //
 // The entry registered points at binPath with args ["mcp-bridge"] — the
@@ -315,13 +315,13 @@ func Register(tool Tool, binPath, _ string) (string, error) {
 	return RegisterPath(path, binPath)
 }
 
-// backupDir returns ~/.archigraph/backups/mcpreg, creating it on demand.
+// backupDir returns ~/.grafel/backups/mcpreg, creating it on demand.
 func backupDir() (string, error) {
 	home, err := homeDir()
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(home, ".archigraph", "backups", "mcpreg")
+	dir := filepath.Join(home, ".grafel", "backups", "mcpreg")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
@@ -341,22 +341,22 @@ func sanitizePath(path string) string {
 	return token + "-" + hex.EncodeToString(sum[:4])
 }
 
-// sidecarBackupPath is the in-place ".archigraph.bak" sidecar next to the
+// sidecarBackupPath is the in-place ".grafel.bak" sidecar next to the
 // target. It is the file consulted on restore.
 func sidecarBackupPath(path string) string {
-	return path + ".archigraph.bak"
+	return path + ".grafel.bak"
 }
 
-// backupOnce snapshots the original target file BEFORE archigraph's first
+// backupOnce snapshots the original target file BEFORE grafel's first
 // modification. It is a no-op if a sidecar backup already exists (so repeated
 // RegisterPath calls within one install don't clobber the pristine snapshot).
 //
 // Two copies are written:
-//   - an in-place sidecar `<path>.archigraph.bak` (consulted on restore), and
-//   - a timestamped copy under ~/.archigraph/backups/mcpreg/ (audit trail).
+//   - an in-place sidecar `<path>.grafel.bak` (consulted on restore), and
+//   - a timestamped copy under ~/.grafel/backups/mcpreg/ (audit trail).
 //
 // If the original file does not exist, a sentinel backup is written instead so
-// that restore knows to DELETE archigraph's file rather than leave an orphan.
+// that restore knows to DELETE grafel's file rather than leave an orphan.
 func backupOnce(path string) error {
 	sidecar := sidecarBackupPath(path)
 	if _, err := os.Stat(sidecar); err == nil {
@@ -389,13 +389,13 @@ func backupOnce(path string) error {
 	return nil
 }
 
-// RegisterPath writes (or updates) the archigraph entry in an arbitrary
+// RegisterPath writes (or updates) the grafel entry in an arbitrary
 // .claude.json file. This is the workhorse used by both Register (single
 // path) and the multi-dir install loop.
 //
 // Before its FIRST modification of a given file, RegisterPath snapshots the
 // original (via backupOnce) so a later rollback can restore it exactly — see
-// RestorePath. The merge is surgical: only mcpServers.archigraph is added or
+// RestorePath. The merge is surgical: only mcpServers.grafel is added or
 // updated; every other key and sibling server is preserved.
 func RegisterPath(path, binPath string) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -421,7 +421,7 @@ func RegisterPath(path, binPath string) (string, error) {
 	return path, writeSettings(path, doc)
 }
 
-// Unregister removes the archigraph entry from the tool's settings.
+// Unregister removes the grafel entry from the tool's settings.
 // Returns nil if the file or entry doesn't exist (idempotent).
 func Unregister(tool Tool) error {
 	path, err := SettingsPath(tool)
@@ -431,9 +431,9 @@ func Unregister(tool Tool) error {
 	return UnregisterPath(path)
 }
 
-// UnregisterPath removes ONLY the archigraph entry from an arbitrary config
+// UnregisterPath removes ONLY the grafel entry from an arbitrary config
 // file, preserving every other key and sibling server. Used by the multi-dir
-// uninstall loop. If removing archigraph leaves mcpServers empty, the empty
+// uninstall loop. If removing grafel leaves mcpServers empty, the empty
 // mcpServers object is dropped too so we never leave an orphan
 // `{"mcpServers":{}}`. Returns nil if the file or entry doesn't exist
 // (idempotent). It NEVER overwrites foreign servers or resets the file to `{}`.
@@ -464,12 +464,12 @@ func UnregisterPath(path string) error {
 // backupOnce. This is the rollback/de-register entry point that MUST be used
 // instead of writing `{}`:
 //
-//   - If archigraph CREATED the file (sentinel backup), the file is DELETED so
+//   - If grafel CREATED the file (sentinel backup), the file is DELETED so
 //     no orphan `{}` / `{"mcpServers":{}}` is left behind.
 //   - If a real original was backed up, the file is restored byte-for-byte,
 //     bringing back every foreign server and unrelated key exactly.
 //   - If no backup exists (e.g. registration never ran), fall back to the
-//     surgical UnregisterPath so we still only remove archigraph's own entry.
+//     surgical UnregisterPath so we still only remove grafel's own entry.
 //
 // The sidecar backup is removed after a successful restore.
 func RestorePath(path string) error {
@@ -485,7 +485,7 @@ func RestorePath(path string) error {
 	}
 
 	if string(b) == backupSentinelAbsent {
-		// Original did not exist; remove archigraph's file entirely.
+		// Original did not exist; remove grafel's file entirely.
 		if rmErr := os.Remove(path); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
 			return rmErr
 		}
@@ -503,7 +503,7 @@ func RestorePath(path string) error {
 
 // ClearBackup discards the pristine sidecar backup for a path. Call this after
 // a SUCCESSFUL install so the next install can take a fresh snapshot (and so a
-// future uninstall does not "restore" stale archigraph-containing content).
+// future uninstall does not "restore" stale grafel-containing content).
 // Idempotent: missing backups are ignored.
 func ClearBackup(path string) {
 	_ = os.Remove(sidecarBackupPath(path))

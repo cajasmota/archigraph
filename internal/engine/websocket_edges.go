@@ -74,7 +74,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // channelEventKind is the engine-layer entity kind used for WebSocket

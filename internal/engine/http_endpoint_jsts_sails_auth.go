@@ -45,7 +45,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // SailsAuthStats reports counters from the corpus-wide Sails policy pass.

@@ -8,7 +8,7 @@ import (
 )
 
 // resolvePlatformPaths fills in SocketPath and LogDir for Unix platforms
-// using ~/.archigraph as the base directory.
+// using ~/.grafel as the base directory.
 func resolvePlatformPaths(opts *Options) error {
 	if opts.SocketPath != "" && opts.LogDir != "" {
 		return nil
@@ -18,10 +18,10 @@ func resolvePlatformPaths(opts *Options) error {
 		return fmt.Errorf("os.UserHomeDir: %w", err)
 	}
 	if opts.SocketPath == "" {
-		opts.SocketPath = home + "/.archigraph/sockets/daemon.sock"
+		opts.SocketPath = home + "/.grafel/sockets/daemon.sock"
 	}
 	if opts.LogDir == "" {
-		opts.LogDir = home + "/.archigraph/logs"
+		opts.LogDir = home + "/.grafel/logs"
 	}
 	return nil
 }

@@ -8,7 +8,7 @@
 // Design notes
 //   - We reuse walk.ParseIgnoreFile so the watcher honours exactly the
 //     same gitignore semantics as the indexer (no duplicate parser).
-//   - Per-repo override: <repo>/.archigraph/watch.json with optional
+//   - Per-repo override: <repo>/.grafel/watch.json with optional
 //     include/exclude lists (see RepoWatchConfig).
 //   - The cache is keyed by repo absolute path and is safe for concurrent
 //     reads after the initial population in AddRepo.
@@ -21,11 +21,11 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/daemon/walk"
+	"github.com/cajasmota/grafel/internal/daemon/walk"
 )
 
 // RepoWatchConfig is the optional per-repo override stored at
-// <repo>/.archigraph/watch.json. All fields are optional; the zero
+// <repo>/.grafel/watch.json. All fields are optional; the zero
 // value means "no overrides".
 type RepoWatchConfig struct {
 	// ExcludeDirs lists additional directory basenames (beyond the global
@@ -57,7 +57,7 @@ var repoIgnoreCache = &gitignoreCache{
 	repos: make(map[string]*repoIgnoreState),
 }
 
-// loadRepoIgnoreState parses <repo>/.gitignore and <repo>/.archigraph/watch.json
+// loadRepoIgnoreState parses <repo>/.gitignore and <repo>/.grafel/watch.json
 // (both optional), caches the result, and returns the state. If repoPath was
 // already cached the cached value is returned directly.
 func loadRepoIgnoreState(repoPath string) *repoIgnoreState {
@@ -77,7 +77,7 @@ func loadRepoIgnoreState(repoPath string) *repoIgnoreState {
 
 	// Parse per-repo watch.json override (non-fatal if absent).
 	var cfg RepoWatchConfig
-	cfgPath := filepath.Join(repoPath, ".archigraph", "watch.json")
+	cfgPath := filepath.Join(repoPath, ".grafel", "watch.json")
 	if data, err := os.ReadFile(cfgPath); err == nil {
 		_ = json.Unmarshal(data, &cfg)
 	}

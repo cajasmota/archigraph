@@ -15,7 +15,7 @@
 package fbreader
 
 import (
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
 )
 
 // EntityIterator is a pull-style wrapper around IterateEntities for

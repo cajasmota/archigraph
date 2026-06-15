@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // sampleDRFViewsetFile is a minimal DRF ViewSet file that reproduces the

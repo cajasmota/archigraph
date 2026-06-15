@@ -1,12 +1,12 @@
 // Benchmarks for Phase-D MCP query latency. These compare the cache-
 // backed FlatBuffers path (this package) to the legacy graph.json
 // re-parse path. The fixture file is configurable via the env var
-// ARCHIGRAPH_BENCH_FIXTURE_FB (a path to a graph.fb). When unset the
+// GRAFEL_BENCH_FIXTURE_FB (a path to a graph.fb). When unset the
 // bench skips so `go test ./...` stays green in CI.
 //
 // Run with:
 //
-//	ARCHIGRAPH_BENCH_FIXTURE_FB=/path/to/graph.fb \
+//	GRAFEL_BENCH_FIXTURE_FB=/path/to/graph.fb \
 //	  go test ./internal/daemon/mcp/ -bench=. -benchmem -run=^$ -count=3
 //
 // The companion script scripts/bench-mcp-latency.sh materializes a
@@ -20,13 +20,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func benchFB(tb testing.TB) string {
-	p := os.Getenv("ARCHIGRAPH_BENCH_FIXTURE_FB")
+	p := os.Getenv("GRAFEL_BENCH_FIXTURE_FB")
 	if p == "" {
-		tb.Skip("ARCHIGRAPH_BENCH_FIXTURE_FB not set")
+		tb.Skip("GRAFEL_BENCH_FIXTURE_FB not set")
 	}
 	if _, err := os.Stat(p); err != nil {
 		tb.Skipf("fixture %s missing: %v", p, err)
@@ -85,12 +85,12 @@ func BenchmarkFindReferences_FBCache(b *testing.B) {
 }
 
 // BenchmarkReadEntity_JSONReparse models today's MCP path: re-read +
-// re-unmarshal graph.json per call. Requires ARCHIGRAPH_BENCH_FIXTURE
+// re-unmarshal graph.json per call. Requires GRAFEL_BENCH_FIXTURE
 // (the matching graph.json sibling). Skips otherwise.
 func BenchmarkReadEntity_JSONReparse(b *testing.B) {
-	jsonPath := os.Getenv("ARCHIGRAPH_BENCH_FIXTURE")
+	jsonPath := os.Getenv("GRAFEL_BENCH_FIXTURE")
 	if jsonPath == "" {
-		b.Skip("ARCHIGRAPH_BENCH_FIXTURE not set")
+		b.Skip("GRAFEL_BENCH_FIXTURE not set")
 	}
 	if _, err := os.Stat(jsonPath); err != nil {
 		b.Skipf("fixture %s missing: %v", jsonPath, err)

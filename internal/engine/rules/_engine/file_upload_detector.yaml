@@ -15,6 +15,6 @@ description: >-
   Detect file upload handling patterns and emit SCOPE.Pattern entities with
   kind=file_upload. Covers 15+ frameworks across JavaScript/TypeScript, Python,
   Java, Kotlin, Go, C#, Ruby, PHP, Rust, and Elixir.
-module: archigraph.engine.rules.pattern_detectors.file_upload_detector
+module: grafel.engine.rules.pattern_detectors.file_upload_detector
 function: detect
 applies_to_function: applies_to

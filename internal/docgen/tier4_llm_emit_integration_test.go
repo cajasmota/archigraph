@@ -2,15 +2,15 @@
 //
 // This test was missing before #1828: #1825 added LLMMode propagation through
 // Tier 2/3/4RunOpts but the existing TestRunTier4_EmitMode_ProducesBundleFiles
-// always SKIPped because its fixture wrote graph.json to repoPath/.archigraph/
+// always SKIPped because its fixture wrote graph.json to repoPath/.grafel/
 // while daemon.StateDirForRepo (called by findGroupGraphDirs) resolves to
-// $ARCHIGRAPH_HOME/store/<slug>-<hash>/ — a different path.  The mismatch
+// $GRAFEL_HOME/store/<slug>-<hash>/ — a different path.  The mismatch
 // meant zero pages were ever rendered in that test and the propagation bug
 // could not be detected.
 //
 // This file adds TestTier4_LLMModeEmit_ProducesPerPageBundles, which:
-//  1. Uses ARCHIGRAPH_DAEMON_ROOT to route state dirs to a temp root (matching
-//     daemon.StateDirForRepo's ARCHIGRAPH_DAEMON_ROOT branch exactly).
+//  1. Uses GRAFEL_DAEMON_ROOT to route state dirs to a temp root (matching
+//     daemon.StateDirForRepo's GRAFEL_DAEMON_ROOT branch exactly).
 //  2. Writes graphs into those state dirs so findGroupGraphDirs finds them.
 //  3. Runs RunTier4 with LLMMode="emit".
 //  4. Asserts score.TotalPageCount > 0 (no skip — pages MUST render).
@@ -24,13 +24,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
-// buildGroupForTier4EmitTest creates a minimal ARCHIGRAPH_HOME fixture with
+// buildGroupForTier4EmitTest creates a minimal GRAFEL_HOME fixture with
 // two repos, each containing one page-worthy service entity.  It sets
-// ARCHIGRAPH_DAEMON_ROOT so daemon.StateDirForRepo routes to a controlled temp
+// GRAFEL_DAEMON_ROOT so daemon.StateDirForRepo routes to a controlled temp
 // directory, then writes graph.json files into the correct state dirs.
 //
 // Returns (archHome, group, slugs) where slugs are the two repo slugs.
@@ -40,15 +40,15 @@ func buildGroupForTier4EmitTest(t *testing.T) (archHome, group string, slugs []s
 	group = "tier4-emit-int-group"
 	slugs = []string{"svc-alpha", "svc-beta"}
 
-	// Set ARCHIGRAPH_HOME and ARCHIGRAPH_DAEMON_ROOT.
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
+	// Set GRAFEL_HOME and GRAFEL_DAEMON_ROOT.
+	t.Setenv("GRAFEL_HOME", archHome)
 	daemonRoot := filepath.Join(archHome, "daemon-root")
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", daemonRoot)
+	t.Setenv("GRAFEL_DAEMON_ROOT", daemonRoot)
 
 	// Set XDG_CONFIG_HOME so registry.ConfigPathFor resolves to our temp dir.
 	xdgConfigHome := filepath.Join(archHome, "xdg-config")
 	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
-	cfgDir := filepath.Join(xdgConfigHome, "archigraph")
+	cfgDir := filepath.Join(xdgConfigHome, "grafel")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatalf("mkdir cfgDir: %v", err)
 	}
@@ -148,13 +148,13 @@ func buildGroupForTier4EmitTestWithDatastore(t *testing.T) (archHome, group, rep
 	group = "tier4-emit-datastore-group"
 	repoSlug = "mixed-repo"
 
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
+	t.Setenv("GRAFEL_HOME", archHome)
 	daemonRoot := filepath.Join(archHome, "daemon-root")
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", daemonRoot)
+	t.Setenv("GRAFEL_DAEMON_ROOT", daemonRoot)
 
 	xdgConfigHome := filepath.Join(archHome, "xdg-config")
 	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
-	cfgDir := filepath.Join(xdgConfigHome, "archigraph")
+	cfgDir := filepath.Join(xdgConfigHome, "grafel")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatalf("mkdir cfgDir: %v", err)
 	}
@@ -301,8 +301,8 @@ func TestRunTier1_EmitMode_PageAndBundleAlwaysCoexist(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()

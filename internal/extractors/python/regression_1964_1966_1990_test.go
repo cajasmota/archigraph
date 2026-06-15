@@ -15,7 +15,7 @@
 //	#1990 — admin.site.register(...) walks EVERY call in the file, not just
 //	        the first. W6R4 saw 1 edge for 8 register calls.
 //
-// Fixture-name convention (memory feedback_archigraph_competitor_name_scrub):
+// Fixture-name convention (memory feedback_grafel_competitor_name_scrub):
 // `client_fixture_a`, never a real client.
 package python
 
@@ -24,8 +24,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractPy12 runs the Python extractor on the given source + path. Helper

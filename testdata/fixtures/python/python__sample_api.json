@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/python/sample_api.py",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/python/sample_api.py",
   "language": "python",
   "entities": [
     {

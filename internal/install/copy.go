@@ -1,18 +1,18 @@
-// copy.go implements the COPY mode install transaction for `archigraph install`.
+// copy.go implements the COPY mode install transaction for `grafel install`.
 //
 // The install proceeds as an atomic 6-step transaction; if any step fails
 // the completed steps are rolled back in reverse order (best-effort). The
-// state file (~/.archigraph/install.json) is always written to reflect the
+// state file (~/.grafel/install.json) is always written to reflect the
 // true final state — either a complete install or a partial state with
 // RollbackFromStep set.
 //
 // Steps:
 //  1. CLI binary identification (SHA-256 of the running binary).
 //  2. Skills copy: copy skills/<name>/ → ~/.claude/skills/<name>/ (no symlinks).
-//  3. MCP registration: write archigraph entry into all detected .claude.json files.
+//  3. MCP registration: write grafel entry into all detected .claude.json files.
 //  4. Daemon restart: graceful stop + start, wait for /healthz.
-//  5. .gitignore integration: append /.archigraph/ if inside a git repo.
-//  6. Persist ~/.archigraph/install.json.
+//  5. .gitignore integration: append /.grafel/ if inside a git repo.
+//  6. Persist ~/.grafel/install.json.
 //
 // DEV/symlink mode (issue #2212) is NOT implemented here; see TODO below.
 package install
@@ -28,10 +28,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/service"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
 )
 
 // defaultDaemonRestart is the production daemon restart implementation.
@@ -66,7 +66,7 @@ type DaemonRestartFunc func(binPath string, healthzPort int, timeout time.Durati
 // CopyOptions is the input to RunCopy. All fields have sensible defaults;
 // callers only need to set overrides.
 type CopyOptions struct {
-	// BinPath is the running archigraph binary.  Defaults to os.Executable().
+	// BinPath is the running grafel binary.  Defaults to os.Executable().
 	BinPath string
 
 	// SkillsSourceDir overrides skills discovery (from --skills-source-dir).
@@ -134,7 +134,7 @@ type CopyResult struct {
 }
 
 // RunCopy executes the COPY-mode install transaction.
-// It is the implementation behind `archigraph install` (no --dev flag).
+// It is the implementation behind `grafel install` (no --dev flag).
 //
 // TODO(#2212): DEV mode (symlinks) is a separate issue; add a RunDev
 // wrapper that calls this with a different mode flag when that issue lands.
@@ -146,7 +146,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 
 	// ── guard: refuse to run over a corrupt install, auto-recover a partial ──
 	// A previous install may have rolled back and left PartialInstall=true.
-	// #4461: re-running `archigraph install` must just work — the transaction
+	// #4461: re-running `grafel install` must just work — the transaction
 	// below is fully idempotent (skills/MCP are re-applied, daemon re-started),
 	// so a stale partial state is treated as "resume/redo" with a warning rather
 	// than a hard error that forces --force or uninstall. We still hard-fail on
@@ -219,7 +219,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 		// path actually probed instead of the misleading cwd.
 		state.SkillsSkipped = true
 		fmt.Fprintf(os.Stderr,
-			"archigraph install: step 2 warning – no skills/ directory found; skipping skills copy (daemon + MCP will still be installed).\n")
+			"grafel install: step 2 warning – no skills/ directory found; skipping skills copy (daemon + MCP will still be installed).\n")
 		if len(attemptedSkillPaths) > 0 {
 			fmt.Fprintf(os.Stderr, "  Paths checked:\n")
 			for _, p := range attemptedSkillPaths {
@@ -227,7 +227,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 			}
 		}
 		fmt.Fprintf(os.Stderr,
-			"  To install skills, pass --skills-source-dir <path-to-archigraph-repo>/skills or set ARCHIGRAPH_SKILLS_DIR.\n")
+			"  To install skills, pass --skills-source-dir <path-to-grafel-repo>/skills or set GRAFEL_SKILLS_DIR.\n")
 
 	case len(claudeDirs) == 0:
 		// A skills source exists but there is nowhere to copy it. This is a real
@@ -235,7 +235,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 		// graceful, informative phrasing rather than a rollback-and-die.
 		state.SkillsSkipped = true
 		fmt.Fprintf(os.Stderr,
-			"archigraph install: step 2 warning – no Claude Code config directories detected; skipping skills copy.\n")
+			"grafel install: step 2 warning – no Claude Code config directories detected; skipping skills copy.\n")
 
 	default:
 		// Copy skills into EVERY detected Claude config dir's skills/ subdir so
@@ -248,7 +248,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 			skillsDestDir := skilllink.ClaudeSkillsDirForConfig(cfgPath)
 			if skillsDestDir == "" {
 				fmt.Fprintf(os.Stderr,
-					"archigraph install: cannot derive skills dir for %s; skipping\n",
+					"grafel install: cannot derive skills dir for %s; skipping\n",
 					cfgPath)
 				continue
 			}
@@ -312,7 +312,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 	result.MCPPaths = registeredPaths
 	// Step 3 succeeded for every target: discard the pristine backups so the
 	// next install snapshots fresh and a later uninstall won't restore stale
-	// archigraph-containing content. (Rollback only fires on FAILURE, before
+	// grafel-containing content. (Rollback only fires on FAILURE, before
 	// this point.)
 	if !opts.DryRun {
 		for _, cfgPath := range registeredPaths {
@@ -346,7 +346,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 		if !opts.DryRun {
 			if _, err := EnsureGitignore(repoRoot); err != nil {
 				// .gitignore failure is non-fatal; warn but continue.
-				fmt.Fprintf(os.Stderr, "archigraph install: step 5 warning – .gitignore: %v\n", err)
+				fmt.Fprintf(os.Stderr, "grafel install: step 5 warning – .gitignore: %v\n", err)
 			} else {
 				state.Gitignore = GitignoreRecord{Repos: []string{repoRoot}}
 				result.GitignoreRepo = repoRoot
@@ -355,7 +355,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 			result.GitignoreRepo = repoRoot
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "archigraph install: step 5 – not inside a git repo; skipping .gitignore update\n")
+		fmt.Fprintf(os.Stderr, "grafel install: step 5 – not inside a git repo; skipping .gitignore update\n")
 	}
 	completedSteps = append(completedSteps, 5)
 
@@ -366,7 +366,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 		if err := WriteState(opts.StatePath, state); err != nil {
 			// This is non-fatal for the install but important for future doctor
 			// runs, so warn loudly.
-			fmt.Fprintf(os.Stderr, "archigraph install: step 6 warning – persist state: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel install: step 6 warning – persist state: %v\n", err)
 		}
 	}
 	result.StatePath = opts.StatePath
@@ -385,7 +385,7 @@ func RunCopy(opts CopyOptions) (*CopyResult, error) {
 		}
 		if err := InstallGitHooks(hookOpts); err != nil {
 			// Non-fatal: hooks are a convenience; don't abort a successful install.
-			fmt.Fprintf(os.Stderr, "archigraph install: step 7 warning – git hooks: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel install: step 7 warning – git hooks: %v\n", err)
 		}
 	}
 
@@ -442,7 +442,7 @@ func guardPartialInstall(statePath string) error {
 	if err != nil {
 		// Unreadable state file — treat as corrupt; require --force.
 		return fmt.Errorf(
-			"install.json at %s is unreadable (%v); run `archigraph install --force` or `archigraph uninstall && archigraph install` to recover",
+			"install.json at %s is unreadable (%v); run `grafel install --force` or `grafel uninstall && grafel install` to recover",
 			statePath, err)
 	}
 	if st == nil {
@@ -453,7 +453,7 @@ func guardPartialInstall(statePath string) error {
 		// Auto-recover: warn and proceed. The idempotent transaction below will
 		// re-apply every step and persist a clean (non-partial) state on success.
 		fmt.Fprintf(os.Stderr,
-			"archigraph install: recovering from a previous partial install (rolled back from step %d); retrying automatically.\n",
+			"grafel install: recovering from a previous partial install (rolled back from step %d); retrying automatically.\n",
 			st.RollbackFromStep)
 		return nil
 	}
@@ -506,7 +506,7 @@ func copySkills(srcDir, destDir string, dryRun bool) (map[string]SkillRecord, []
 		if _, err := os.Stat(skillSrc); err != nil {
 			// Source skill dir missing — skip with warning rather than fail the
 			// entire install. This allows partial skill sets in development.
-			fmt.Fprintf(os.Stderr, "archigraph install: skill %s not found at %s; skipping\n", skillName, skillSrc)
+			fmt.Fprintf(os.Stderr, "grafel install: skill %s not found at %s; skipping\n", skillName, skillSrc)
 			continue
 		}
 
@@ -653,7 +653,7 @@ func waitForHealthz(port int, timeout time.Duration) (string, error) {
 		}
 		time.Sleep(pollInterval)
 	}
-	return "", fmt.Errorf("daemon did not respond on %s within %s; run 'archigraph start' and retry", url, timeout)
+	return "", fmt.Errorf("daemon did not respond on %s within %s; run 'grafel start' and retry", url, timeout)
 }
 
 // ── rollback helpers ──────────────────────────────────────────────────────────
@@ -678,9 +678,9 @@ func rollbackSkillsCopy(opts CopyOptions, state *State) {
 }
 
 // rollbackMCPRegistration reverses step 3 by RESTORING each touched config
-// file from the pristine backup taken before archigraph's first write. This
+// file from the pristine backup taken before grafel's first write. This
 // brings back any foreign mcpServers entries verbatim and deletes files
-// archigraph created — it NEVER resets a shared config to `{}` (see #4829).
+// grafel created — it NEVER resets a shared config to `{}` (see #4829).
 func rollbackMCPRegistration(_ CopyOptions, state *State) {
 	for _, cfgPath := range state.MCP.RegisteredPaths {
 		_ = mcpreg.RestorePath(cfgPath)

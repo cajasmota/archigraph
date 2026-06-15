@@ -1,4 +1,4 @@
-// Package proto defines the wire types exchanged between the archigraph
+// Package proto defines the wire types exchanged between the grafel
 // CLI client and the long-running daemon over the Unix-domain socket.
 //
 // Per ADR-0017 the transport is net/rpc with the jsonrpc codec. Service
@@ -108,7 +108,7 @@ type StatusReply struct {
 	//
 	// RebuildConcurrencyCap is the current parallel-repo cap for Rebuild RPCs
 	// (#2127). Auto-tuned from system memory (floor=2, cap=8); overrideable
-	// via ARCHIGRAPH_REBUILD_CONCURRENCY or --max-concurrent-groups.
+	// via GRAFEL_REBUILD_CONCURRENCY or --max-concurrent-groups.
 	RebuildGroupsActive   int `json:"rebuild_groups_active,omitempty"`
 	RebuildInFlight       int `json:"rebuild_in_flight,omitempty"`
 	RebuildConcurrencyCap int `json:"rebuild_concurrency_cap,omitempty"`
@@ -154,7 +154,7 @@ type SchedLogEntry struct {
 }
 
 // IndexArgs requests a one-shot index of a single repository. Mirrors the
-// flags of the old `archigraph index <repo>` subcommand.
+// flags of the old `grafel index <repo>` subcommand.
 type IndexArgs struct {
 	RepoPath    string   `json:"repo_path"`
 	OutPath     string   `json:"out_path,omitempty"`
@@ -180,7 +180,7 @@ type IndexArgs struct {
 	// reindex, and so concurrent worktrees + commit bursts coalesce into a
 	// single per-repo reindex instead of stampeding the daemon (#3366).
 	// When false (default) the RPC keeps its synchronous behaviour, used by
-	// `rebuild` and manual `archigraph index`.
+	// `rebuild` and manual `grafel index`.
 	Async bool `json:"async,omitempty"`
 }
 
@@ -308,7 +308,7 @@ type StopReply struct{}
 
 // RemoveRepoArgs requests the daemon unregister a single repo from a group.
 // The watcher is stopped, the git hook block is removed, and the per-repo
-// .archigraph/ cache is deleted (unless KeepCache is true). The repo entry
+// .grafel/ cache is deleted (unless KeepCache is true). The repo entry
 // is removed from the fleet config and the fleet is persisted.
 type RemoveRepoArgs struct {
 	Group     string `json:"group"`
@@ -320,7 +320,7 @@ type RemoveRepoArgs struct {
 type RemoveRepoReply struct {
 	// RepoPath is the absolute on-disk path of the removed repo.
 	RepoPath string `json:"repo_path"`
-	// FreedBytes is the number of bytes reclaimed from .archigraph/. Zero
+	// FreedBytes is the number of bytes reclaimed from .grafel/. Zero
 	// when KeepCache was true or the directory did not exist.
 	FreedBytes int64 `json:"freed_bytes"`
 }

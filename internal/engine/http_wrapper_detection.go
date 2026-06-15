@@ -13,10 +13,10 @@
 //	does not start with `/`, and the raw resource name is normalized to a
 //	canonical absolute path.
 //
-// Option B — per-repo `.archigraph/wrappers.json` config:
+// Option B — per-repo `.grafel/wrappers.json` config:
 //
 //	Projects with unusual wrapper signatures can list their wrappers in
-//	.archigraph/wrappers.json. Declared wrappers are treated as
+//	.grafel/wrappers.json. Declared wrappers are treated as
 //	HTTP-aware regardless of Option A's heuristics and can specify which
 //	argument position or object-literal key holds the path.
 //
@@ -107,11 +107,11 @@ func normalizeBareName(raw string) string {
 }
 
 // ---------------------------------------------------------------------------
-// Option B — per-repo .archigraph/wrappers.json config
+// Option B — per-repo .grafel/wrappers.json config
 // ---------------------------------------------------------------------------
 
 // WrapperConfig describes a single custom HTTP wrapper function declared
-// in the per-repo .archigraph/wrappers.json file.
+// in the per-repo .grafel/wrappers.json file.
 //
 // JSON schema:
 //
@@ -142,12 +142,12 @@ type wrapperConfigFile struct {
 	Wrappers []WrapperConfig `json:"wrappers"`
 }
 
-// LoadWrapperConfigs reads .archigraph/wrappers.json from the given repo
+// LoadWrapperConfigs reads .grafel/wrappers.json from the given repo
 // root directory and returns the list of declared wrapper configs.
 // Returns nil (no error) if the file doesn't exist — a missing config is
 // normal for repos that rely on heuristic detection only.
 func LoadWrapperConfigs(repoRoot string) ([]WrapperConfig, error) {
-	path := filepath.Join(repoRoot, ".archigraph", "wrappers.json")
+	path := filepath.Join(repoRoot, ".grafel", "wrappers.json")
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		return nil, nil

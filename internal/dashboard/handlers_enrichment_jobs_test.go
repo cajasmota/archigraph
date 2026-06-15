@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/jobs"
+	"github.com/cajasmota/grafel/internal/jobs"
 )
 
 // newJobsServer builds a minimal dashboard Server with a live job queue.

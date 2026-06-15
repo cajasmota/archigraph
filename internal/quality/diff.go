@@ -3,7 +3,7 @@ package quality
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // EntityResult records the outcome of evaluating one ExpectedEntity.

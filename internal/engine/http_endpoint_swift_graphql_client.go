@@ -41,7 +41,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // swiftApolloOpRe matches an Apollo-iOS client operation call and captures the

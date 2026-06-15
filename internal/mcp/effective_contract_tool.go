@@ -1,6 +1,6 @@
 package mcp
 
-// effective_contract_tool.go — archigraph_effective_contract MCP tool (epic
+// effective_contract_tool.go — grafel_effective_contract MCP tool (epic
 // #3829, ticket #3836 — T6).
 //
 // This is the thin SERVING / GROUPING layer over T5's computation
@@ -43,13 +43,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/frameworks/baseknowledge"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/frameworks/baseknowledge"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
 // effectiveContractGroup is the per-ViewSet wire shape returned by
-// archigraph_effective_contract: the owning class, its framework, and the
+// grafel_effective_contract: the owning class, its framework, and the
 // per-verb effective contracts of its router-expanded routes.
 type effectiveContractGroup struct {
 	// Class is the owning ViewSet/controller leaf name (the grouping key).
@@ -103,7 +103,7 @@ func viewSetNameForRoute(e *graph.Entity) string {
 //     standalone entity, e.g. when only the routes carry it).
 //
 // The arg is matched both as given and with any "<repo>::" prefix stripped, so
-// a fully-prefixed entity_id (the form archigraph_effective_contract is
+// a fully-prefixed entity_id (the form grafel_effective_contract is
 // normally called with) resolves to its local entity — the LabelIndex is keyed
 // by LOCAL id (#4243).
 //
@@ -144,7 +144,7 @@ func resolveEffectiveContractTarget(lg *LoadedGroup, arg string) (string, *graph
 	return strings.ToLower(leafAfterDot(arg)), nil
 }
 
-// handleEffectiveContract serves archigraph_effective_contract. It resolves the
+// handleEffectiveContract serves grafel_effective_contract. It resolves the
 // target ViewSet, gathers its router-expanded routes across the group, projects
 // each into a per-verb effective contract, and groups them by owning ViewSet.
 func (s *Server) handleEffectiveContract(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {

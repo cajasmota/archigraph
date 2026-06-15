@@ -14,9 +14,9 @@ description: >-
   Architectural patterns (MVC, MVVM) are detected via regex heuristics
   on class names and file structure.
   Emits SCOPE.Pattern entities with kind=pattern_taxonomy and taxonomy metadata.
-module: archigraph.engine.rules.pattern_detectors.pattern_taxonomy_enricher
+module: grafel.engine.rules.pattern_detectors.pattern_taxonomy_enricher
 class: PatternTaxonomyEnricher
-registration: archigraph/engine/rules/pattern_detectors/__init__.py
+registration: grafel/engine/rules/pattern_detectors/__init__.py
 
 taxonomy:
   gof:

@@ -46,7 +46,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // angularGuardArrayKeys are the route-config keys whose value is an array of

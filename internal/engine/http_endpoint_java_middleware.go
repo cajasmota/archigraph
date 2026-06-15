@@ -29,7 +29,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // javaMWScope* name the Spring middleware scopes, outermost-first.

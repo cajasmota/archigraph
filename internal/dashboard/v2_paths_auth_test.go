@@ -6,7 +6,7 @@ package dashboard
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/engine"
+	"github.com/cajasmota/grafel/internal/engine"
 )
 
 func TestResolveAuthChip_RolesHighConfidence(t *testing.T) {

@@ -54,7 +54,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // applyIaCTopologyChannels is the entry point. It runs near the end of the

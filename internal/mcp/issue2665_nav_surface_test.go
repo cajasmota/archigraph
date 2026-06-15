@@ -1,11 +1,11 @@
 // issue2665_nav_surface_test.go — integration tests for the navigation
-// surface added to archigraph_endpoints and archigraph_find_callers (#2665).
+// surface added to grafel_endpoints and grafel_find_callers (#2665).
 //
 // Covers:
-//   - archigraph_endpoints(kind=navigation) returns aggregated NAVIGATES_TO routes
-//   - archigraph_endpoints(action=definitions, include_navigation=true) adds the
+//   - grafel_endpoints(kind=navigation) returns aggregated NAVIGATES_TO routes
+//   - grafel_endpoints(action=definitions, include_navigation=true) adds the
 //     "navigation_routes" key alongside HTTP definitions
-//   - archigraph_find_callers("/route/path") resolves a route literal via
+//   - grafel_find_callers("/route/path") resolves a route literal via
 //     reverse NAVIGATES_TO traversal and returns call-site entities with
 //     file:line + params_keys
 package mcp
@@ -14,7 +14,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -164,7 +164,7 @@ func TestEndpoints_IncludeNavigation(t *testing.T) {
 }
 
 // TestFindCallers_RouteLiteralResolves verifies that passing a route literal
-// (string starting with "/") to archigraph_find_callers resolves it via the
+// (string starting with "/") to grafel_find_callers resolves it via the
 // NAVIGATES_TO reverse traversal and returns push-site callers carrying
 // file:line + params_keys. #2665.
 func TestFindCallers_RouteLiteralResolves(t *testing.T) {

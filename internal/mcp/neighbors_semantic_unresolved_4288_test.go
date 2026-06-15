@@ -1,6 +1,6 @@
 package mcp
 
-// neighbors_semantic_unresolved_4288_test.go — #4288: archigraph_neighbors must
+// neighbors_semantic_unresolved_4288_test.go — #4288: grafel_neighbors must
 // surface semantic edges (JOINS_COLLECTION etc.) that inspect's semantic_edges
 // section already shows, INCLUDING when the far-side target is not a backing
 // indexed entity (the real upvate-core case: a DataAccess node JOINS_COLLECTION
@@ -14,7 +14,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makeJoinsCollectionUnresolvedDoc models the upvate case: a DataAccess node

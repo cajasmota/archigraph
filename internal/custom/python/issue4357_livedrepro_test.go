@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // Issue #4357 LIVE-REPRO — Python test (pytest + unittest) orphan collapse +

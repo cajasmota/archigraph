@@ -23,7 +23,7 @@ package python
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // hasCallTo reports whether any CALLS relationship in rels targets toID.

@@ -1,4 +1,4 @@
-// Package yaml implements the tree-sitter-based YAML AST extractor for archigraph.
+// Package yaml implements the tree-sitter-based YAML AST extractor for grafel.
 //
 // It detects the YAML "flavor" from content heuristics (GitHub Actions, GitLab CI,
 // Docker Compose, Kubernetes manifest, Ansible playbook, or generic YAML) and applies
@@ -59,8 +59,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -1497,7 +1497,7 @@ func extractK8sCRD(pairs []*sitter.Node, crdName, refPrefix string, file extract
 }
 
 // k8sKnownCRDInstanceType maps a recognised CRD instance Kind to a meaningful
-// (archigraph Kind, Subtype) pair so common operator resources are typed
+// (grafel Kind, Subtype) pair so common operator resources are typed
 // instead of landing as a generic Component. Returns ("","") for unknown kinds
 // (caller keeps the default Component/k8s_resource typing). Covers ArgoCD,
 // Argo Rollouts, cert-manager, and Prometheus Operator (#3551).

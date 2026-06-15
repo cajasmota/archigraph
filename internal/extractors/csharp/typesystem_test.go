@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 func TestCSharpExtractor_EnumDeclaration(t *testing.T) {

@@ -1,6 +1,6 @@
 // cmd/bench-mcp benchmarks MCP handler latency against the live registry.
 //
-// It boots an in-process *mcp.Server (which reads ~/.archigraph/registry.json),
+// It boots an in-process *mcp.Server (which reads ~/.grafel/registry.json),
 // looks up each tool's handler by name via the underlying *mcpsrv.MCPServer,
 // and runs a fixed set of representative queries N times each, reporting
 // per-tool median / p95 elapsed_ms.
@@ -21,7 +21,7 @@ import (
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 type query struct {
@@ -66,62 +66,62 @@ func main() {
 	queries := []query{
 		{
 			Name: "find: authentication middleware",
-			Tool: "archigraph_find",
+			Tool: "grafel_find",
 			Args: map[string]any{"question": "authentication middleware", "group": g, "depth": 3.0, "token_budget": 800.0},
 		},
 		{
 			Name: "inspect: TokenAuthenticationMiddleware",
-			Tool: "archigraph_inspect",
+			Tool: "grafel_inspect",
 			Args: map[string]any{"label_or_id": "TokenAuthenticationMiddleware", "group": g},
 		},
 		{
 			Name: "get_source: TokenAuthenticationMiddleware.process_request",
-			Tool: "archigraph_get_source",
+			Tool: "grafel_get_source",
 			Args: map[string]any{"node_id": "TokenAuthenticationMiddleware.process_request", "group": g, "context_lines": 20.0},
 		},
 		{
 			Name: "find_callers: TokenAuthenticationMiddleware (label-resolve)",
-			Tool: "archigraph_find_callers",
+			Tool: "grafel_find_callers",
 			Args: map[string]any{"entity_id": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
 		},
 		{
 			Name: "find_callers: depth=3 (heavier BFS)",
-			Tool: "archigraph_find_callers",
+			Tool: "grafel_find_callers",
 			Args: map[string]any{"entity_id": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 3.0},
 		},
 		{
 			Name: "traces: list",
-			Tool: "archigraph_traces",
+			Tool: "grafel_traces",
 			Args: map[string]any{"action": "list", "group": g, "limit": 25.0},
 		},
 		{
 			Name: "traces: follow (deep BFS)",
-			Tool: "archigraph_traces",
+			Tool: "grafel_traces",
 			Args: map[string]any{"action": "follow", "group": g, "entry_point_id": "upvate-core::14d45f8830972c90", "max_depth": 8.0, "branching_factor": 3.0},
 		},
 		{
 			Name: "expand: depth=2 (neighbors)",
-			Tool: "archigraph_expand",
+			Tool: "grafel_expand",
 			Args: map[string]any{"node": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
 		},
 		{
 			Name: "impact_radius: depth=2",
-			Tool: "archigraph_impact_radius",
+			Tool: "grafel_impact_radius",
 			Args: map[string]any{"entity_id": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
 		},
 		{
 			Name: "endpoints: definitions path=proposal",
-			Tool: "archigraph_endpoints",
+			Tool: "grafel_endpoints",
 			Args: map[string]any{"action": "definitions", "group": g, "path_contains": "proposal", "limit": 50.0},
 		},
 		{
 			Name: "endpoints: definitions all",
-			Tool: "archigraph_endpoints",
+			Tool: "grafel_endpoints",
 			Args: map[string]any{"action": "definitions", "group": g, "limit": 200.0},
 		},
 		{
 			Name: "stats: corpus",
-			Tool: "archigraph_stats",
+			Tool: "grafel_stats",
 			Args: map[string]any{"group": g},
 		},
 	}

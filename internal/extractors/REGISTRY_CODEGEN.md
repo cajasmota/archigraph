@@ -16,7 +16,7 @@ When creating a new language extractor in `internal/extractors/<lang>/`:
 
 2. **Add a blank import** to `registry_gen.go`:
    ```go
-   _ "github.com/cajasmota/archigraph/internal/extractors/<lang>"
+   _ "github.com/cajasmota/grafel/internal/extractors/<lang>"
    ```
 
 3. **Keep imports in alphabetical order** (enforced by CI via `gofmt -w`).

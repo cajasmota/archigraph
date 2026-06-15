@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/zig"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/zig"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runZig runs the extractor on raw source and returns entity records.

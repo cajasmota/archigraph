@@ -1,10 +1,10 @@
 // reachability_tools.go — MCP tool for static test-reachability (#5060).
 //
-// Tool: archigraph_test_reachability
+// Tool: grafel_test_reachability
 //
 //	Surfaces the static test-reachability signal computed by #5037 and stamped
 //	onto production entities at index time by the #5061 enrichment pass. Unlike
-//	archigraph_test_coverage (which only checks for a *direct* inbound TESTS
+//	grafel_test_coverage (which only checks for a *direct* inbound TESTS
 //	edge), this tool reflects transitive reachability over TESTS+CALLS edges:
 //	"is there ANY test path that reaches this function/endpoint?" — with the
 //	reaching tests and minimum hop depth.
@@ -26,9 +26,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -48,7 +48,7 @@ type reachRow struct {
 	crossSignal coverage.CrossSignalVerdict
 }
 
-// handleTestReachability implements archigraph_test_reachability.
+// handleTestReachability implements grafel_test_reachability.
 func (s *Server) handleTestReachability(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, toolErr := s.resolveAndGroup(req)
 	if toolErr != nil {

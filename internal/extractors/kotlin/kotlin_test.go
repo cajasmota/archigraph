@@ -8,8 +8,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tskotlin "github.com/smacker/go-tree-sitter/kotlin"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/kotlin"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/kotlin"
 )
 
 // parseForTest parses Kotlin source using the real grammar.

@@ -41,7 +41,7 @@ package extractor
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TranslationKeySourceFile is the synthetic, constant SourceFile assigned to

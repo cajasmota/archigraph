@@ -26,17 +26,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// setupRefTestEnv sets up a minimal archigraph home with one group and one
+// setupRefTestEnv sets up a minimal grafel home with one group and one
 // repo. It optionally creates a per-ref state directory so knownRefNames()
 // can discover it.
 func setupRefTestEnv(t *testing.T, refs ...string) (home, repoPath string) {
 	t.Helper()
 	home = t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	repoPath = t.TempDir()
@@ -243,7 +243,7 @@ func TestDoctor_Ref_Default(t *testing.T) {
 	root.SetOut(&buf)
 	root.SetErr(&buf)
 	root.SetArgs([]string{"doctor"})
-	// Doctor may fail if no real archigraph binary — we only care it
+	// Doctor may fail if no real grafel binary — we only care it
 	// doesn't error on the --ref flag parsing. Ignore the runDoctor error.
 	_ = root.Execute()
 	if strings.Contains(buf.String(), "Note:") {
@@ -341,15 +341,15 @@ func TestResolveRef_UnknownRefRejected(t *testing.T) {
 
 func TestResolveRef_EmptyStoreReturnsError(t *testing.T) {
 	// When the store is empty (no refs indexed yet) a named ref returns a
-	// clean error telling the user to run 'archigraph index'.
+	// clean error telling the user to run 'grafel index'.
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	// Empty registry → knownRefNames returns nil.
 	_, _, err := resolveRef("some-branch", false)
 	if err == nil {
 		t.Error("with empty store, a named ref should return a clean error")
 	}
-	if !strings.Contains(err.Error(), "archigraph index") {
-		t.Errorf("error should mention 'archigraph index', got: %v", err)
+	if !strings.Contains(err.Error(), "grafel index") {
+		t.Errorf("error should mention 'grafel index', got: %v", err)
 	}
 }

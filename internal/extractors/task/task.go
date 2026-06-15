@@ -39,7 +39,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"gopkg.in/yaml.v3"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // maxTaskfileBytes caps the bytes read from any single Taskfile.

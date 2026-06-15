@@ -61,7 +61,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoFuncBuilderFactoryRe matches the FUNCTIONAL factory entry points of the

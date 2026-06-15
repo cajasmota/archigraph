@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -51,7 +51,7 @@ var (
 )
 
 func (e *objectionExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/javascript")
+	tracer := otel.Tracer("grafel/custom/javascript")
 	_, span := tracer.Start(ctx, "indexer.objection_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

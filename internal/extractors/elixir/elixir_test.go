@@ -8,9 +8,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tselixir "github.com/smacker/go-tree-sitter/elixir"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/elixir"
-	"github.com/cajasmota/archigraph/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/elixir"
+	"github.com/cajasmota/grafel/internal/treesitter"
 )
 
 func parseForTest(t *testing.T, src string) *sitter.Tree {

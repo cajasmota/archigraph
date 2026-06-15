@@ -2,7 +2,7 @@ package mcp
 
 // dashboard_api.go — exported, request-envelope-free entry points that let the
 // dashboard backend reuse the EXACT posture + effective-contract computation the
-// archigraph_endpoint_posture and archigraph_effective_contract MCP tools run
+// grafel_endpoint_posture and grafel_effective_contract MCP tools run
 // (#4254, epic #4249).
 //
 // Both surfaces (the MCP tool and the dashboard Paths detail pane) MUST agree
@@ -19,11 +19,11 @@ package mcp
 // aliases of the internal wire structs, so the dashboard serialises the IDENTICAL
 // JSON shape the MCP tools emit — no re-derivation, no drift.
 
-import "github.com/cajasmota/archigraph/internal/graph"
+import "github.com/cajasmota/grafel/internal/graph"
 
 // PosturePayload is the exported per-endpoint posture shape (error_flow / THROWS,
 // rate_limit, deprecation, feature_gates, auth). Identical to what
-// archigraph_endpoint_posture returns per entity.
+// grafel_endpoint_posture returns per entity.
 type PosturePayload = posturePayload
 
 // ErrorFlow is the exported THROWS/CATCHES facet.
@@ -57,7 +57,7 @@ func loadedGroupFromDocs(group string, docs map[string]*graph.Document) *LoadedG
 // EndpointPostureForEntity computes the full posture (error_flow, rate_limit,
 // deprecation, feature_gates, auth) for a single endpoint entity in repo `slug`
 // of the supplied in-memory document set, reusing buildPosturePayload — the same
-// assembly archigraph_endpoint_posture runs. Returns (payload, true) when the
+// assembly grafel_endpoint_posture runs. Returns (payload, true) when the
 // entity is found, (zero, false) otherwise. The HasPosture field reports whether
 // any facet is non-empty (the honest-empty signal the dashboard renders as
 // "none").
@@ -78,7 +78,7 @@ func EndpointPostureForEntity(group string, docs map[string]*graph.Document, slu
 // EffectiveContractForTarget resolves `target` (a ViewSet/controller entity_id,
 // prefixed id, or bare class name) to its grouped per-verb effective contract
 // across the supplied document set, reusing computeEffectiveContract — the same
-// MRO/baseknowledge-pack-aware resolution archigraph_effective_contract runs.
+// MRO/baseknowledge-pack-aware resolution grafel_effective_contract runs.
 // When nothing resolves the result's Groups is empty and Note explains why
 // (honest-partial — never a fabricated contract).
 func EffectiveContractForTarget(group string, docs map[string]*graph.Document, target string) EffectiveContractResult {

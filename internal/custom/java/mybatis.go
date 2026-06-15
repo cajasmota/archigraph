@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // MyBatis. Unlike JPA ORMs, MyBatis maps SQL to interface methods. Two modes
@@ -17,7 +17,7 @@ import (
 //     result-map declarations.
 //   - XML mapper mode: a *.xml file whose root is <mapper namespace="..."> with
 //     <select>/<insert>/<update>/<delete>/<resultMap> child elements. The XML is
-//     classified by archigraph as language "xml"; this extractor parses it too.
+//     classified by grafel as language "xml"; this extractor parses it too.
 //
 // Each mapped statement becomes a SCOPE.Operation "query" entity carrying its
 // CRUD verb and (where present) the inline SQL or statement id. Result maps

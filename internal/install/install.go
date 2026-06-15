@@ -1,4 +1,4 @@
-// Package install applies an archigraph group config: registers the MCP
+// Package install applies an grafel group config: registers the MCP
 // entry, installs git hooks, generates watcher units, and writes the
 // per-group config + state directories.
 //
@@ -13,19 +13,19 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/install/agenthooks"
-	"github.com/cajasmota/archigraph/internal/install/hooks"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/install/rulesfiles"
-	"github.com/cajasmota/archigraph/internal/install/watchers"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/install/agenthooks"
+	"github.com/cajasmota/grafel/internal/install/hooks"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/install/rulesfiles"
+	"github.com/cajasmota/grafel/internal/install/watchers"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // Options is the input to Apply.
 type Options struct {
 	Group   string
 	Config  *registry.GroupConfig
-	BinPath string // archigraph binary
+	BinPath string // grafel binary
 	// DryRun keeps every action in memory; nothing is written.
 	DryRun bool
 	// SkipHooks/SkipWatchers/SkipMCP gate the corresponding install steps.
@@ -79,7 +79,7 @@ func Apply(opts Options) (*Result, error) {
 	if opts.BinPath == "" {
 		bp, err := os.Executable()
 		if err != nil {
-			return nil, fmt.Errorf("resolving archigraph binary: %w", err)
+			return nil, fmt.Errorf("resolving grafel binary: %w", err)
 		}
 		opts.BinPath = bp
 	}

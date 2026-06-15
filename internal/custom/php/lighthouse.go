@@ -62,8 +62,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -232,7 +232,7 @@ func lhReturnTypeName(line string) string {
 }
 
 func (e *lighthouseExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.lighthouse_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -321,7 +321,7 @@ func (e *lighthouseExtractor) Extract(ctx context.Context, file extractor.FileIn
 			// the field on a policy ability. Either makes the operation
 			// auth-protected. Stamp the canonical auth contract (auth_required /
 			// auth_method / auth_confidence / auth_permissions) shared with the
-			// JS/TS + Java resolvers so archigraph_auth_coverage answers "is this
+			// JS/TS + Java resolvers so grafel_auth_coverage answers "is this
 			// resolver protected, and by what?".
 			lhStampAuth(&ent, line)
 

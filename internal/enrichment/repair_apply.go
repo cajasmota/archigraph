@@ -5,13 +5,13 @@ package enrichment
 // side (#544).
 //
 // Lifecycle:
-//   1. ReadRepairs(<repo>/.archigraph/repair.json) → []Repair
+//   1. ReadRepairs(<repo>/.grafel/repair.json) → []Repair
 //   2. ApplyRepairs(doc, repairs, opts) BEFORE the indexer's final
 //      ClassifyEndpoints reclassify pass. Mutates doc.Relationships in
 //      place: rewrites ToID for binds/reclassifies, drops abandons,
 //      tags affected edges with resolved_by="agent-repair" and
 //      repair_reasoning=<verbatim text>.
-//   3. WriteRepairStats(<repo>/.archigraph/repair_stats.json, stats) so the
+//   3. WriteRepairStats(<repo>/.grafel/repair_stats.json, stats) so the
 //      operator can audit which repairs landed and which were dropped.
 //
 // Trust model (R1-R7) matches docs/specs/repair-trust-model.md. Every
@@ -31,7 +31,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // RepairResolutionKind is the on-disk allowlist. Adding to this set requires
@@ -108,7 +108,7 @@ type RepairStaleRecord struct {
 }
 
 // RepairStats is the on-disk stats sidecar shape. Emitted to
-// <repo>/.archigraph/repair_stats.json on every index run that read a
+// <repo>/.grafel/repair_stats.json on every index run that read a
 // repair.json — even if no repairs applied.
 type RepairStats struct {
 	SchemaVersion int                   `json:"schema_version"`
@@ -121,21 +121,21 @@ type RepairStats struct {
 }
 
 // repairPath returns the on-disk path for repair.json.
-func repairPath(archigraphDir string) string {
-	return filepath.Join(archigraphDir, "repair.json")
+func repairPath(grafelDir string) string {
+	return filepath.Join(grafelDir, "repair.json")
 }
 
 // repairStatsPath returns the on-disk path for repair_stats.json.
-func repairStatsPath(archigraphDir string) string {
-	return filepath.Join(archigraphDir, "repair_stats.json")
+func repairStatsPath(grafelDir string) string {
+	return filepath.Join(grafelDir, "repair_stats.json")
 }
 
-// ReadRepairs reads repair.json from the archigraph dir. Returns nil if
+// ReadRepairs reads repair.json from the grafel dir. Returns nil if
 // the file is absent. Tolerates an empty/whitespace file. Unmarshalling
 // errors are returned so the caller can surface them; the indexer logs
 // and continues with zero repairs.
-func ReadRepairs(archigraphDir string) ([]Repair, error) {
-	data, err := os.ReadFile(repairPath(archigraphDir))
+func ReadRepairs(grafelDir string) ([]Repair, error) {
+	data, err := os.ReadFile(repairPath(grafelDir))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -453,11 +453,11 @@ func buildContainsParents(doc *graph.Document) map[string]map[string]bool {
 	return out
 }
 
-// ReadRepairStats reads repair_stats.json from the archigraph dir. Returns
+// ReadRepairStats reads repair_stats.json from the grafel dir. Returns
 // a zero-value RepairStats (with nil slices) if the file is absent — callers
 // can distinguish "no stats yet" from "zero stale" via the zero-value check.
-func ReadRepairStats(archigraphDir string) (RepairStats, error) {
-	data, err := os.ReadFile(repairStatsPath(archigraphDir))
+func ReadRepairStats(grafelDir string) (RepairStats, error) {
+	data, err := os.ReadFile(repairStatsPath(grafelDir))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return RepairStats{}, nil
@@ -471,12 +471,12 @@ func ReadRepairStats(archigraphDir string) (RepairStats, error) {
 	return s, nil
 }
 
-// WriteRepairStats writes repair_stats.json to the archigraph dir.
+// WriteRepairStats writes repair_stats.json to the grafel dir.
 // Always-emit-on-read so audit history is preserved even when no repairs
 // applied. The on-disk bytes are stable across runs of the same input
 // (see sort.SliceStable above + the schema_version pin).
-func WriteRepairStats(archigraphDir string, stats RepairStats) error {
-	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
+func WriteRepairStats(grafelDir string, stats RepairStats) error {
+	if err := os.MkdirAll(grafelDir, 0o755); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(stats, "", "  ")
@@ -484,7 +484,7 @@ func WriteRepairStats(archigraphDir string, stats RepairStats) error {
 		return err
 	}
 	data = append(data, '\n')
-	return os.WriteFile(repairStatsPath(archigraphDir), data, 0o644)
+	return os.WriteFile(repairStatsPath(grafelDir), data, 0o644)
 }
 
 // RepairEdgeID exposes the writer-side hash for callers that need to

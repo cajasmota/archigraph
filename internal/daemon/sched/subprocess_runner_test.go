@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// TestSubprocessIndexEnabledEnv verifies that the ARCHIGRAPH_SUBPROCESS_INDEXER
+// TestSubprocessIndexEnabledEnv verifies that the GRAFEL_SUBPROCESS_INDEXER
 // env var correctly governs SubprocessIndexEnabled(). We cannot mutate the
 // process env and re-run init(), so this test calls the atomic directly after
 // resetting it to match the env.
@@ -42,7 +42,7 @@ func TestSubprocessIndexEnabledEnv(t *testing.T) {
 // TestRunSubprocessIndexMissingBinary ensures RunSubprocessIndex returns an
 // error when the target binary does not exist (simulates a broken install).
 func TestRunSubprocessIndexMissingBinary(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_SUBPROCESS_INDEXER", "1")
+	t.Setenv("GRAFEL_SUBPROCESS_INDEXER", "1")
 
 	// Patch os.Executable to return a non-existent path. We do this by running
 	// a helper binary name that does not exist — we can't easily override
@@ -101,10 +101,10 @@ func TestRunSubprocessIndexCancellation(t *testing.T) {
 }
 
 // TestSubprocessIndexDefaultOff verifies that a fresh process with no
-// ARCHIGRAPH_SUBPROCESS_INDEXER env has the feature off. We test via the
+// GRAFEL_SUBPROCESS_INDEXER env has the feature off. We test via the
 // init() gate logic mirrored inline.
 func TestSubprocessIndexDefaultOff(t *testing.T) {
-	v := strings.TrimSpace(os.Getenv("ARCHIGRAPH_SUBPROCESS_INDEXER"))
+	v := strings.TrimSpace(os.Getenv("GRAFEL_SUBPROCESS_INDEXER"))
 	want := v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
 	// Regardless of what the test environment sets, the logic must match.
 	if SubprocessIndexEnabled() != want {

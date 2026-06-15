@@ -27,8 +27,8 @@ package mcp
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // noiseKind enumerates the de-noise buckets. noiseNone means the entity is a
@@ -65,9 +65,9 @@ const (
 	// function/method body (#1748). Examples: `const { counts } = someData`
 	// or `const [a, b] = arr` inside a React component. These are kept in
 	// the graph so the resolver can bind REFERENCES/CALLS edges, but they
-	// are never independently inspectable via archigraph_inspect (the name
+	// are never independently inspectable via grafel_inspect (the name
 	// is not addressable as "Component.counts") so surfacing them in
-	// archigraph_find wastes tokens and violates "everything you see is
+	// grafel_find wastes tokens and violates "everything you see is
 	// queryable". Identified by Properties["local_scope"]=="true".
 	noiseLocalScope
 )

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/audit"
+	"github.com/cajasmota/grafel/internal/audit"
 )
 
 // setupAuditServer returns a test server with a temp audit log and broker wired in.
@@ -203,8 +203,8 @@ func TestAuditorCalledOnMaintenance(t *testing.T) {
 
 	// Ensure the auditor writes to logPath by checking the log after a settings_reset.
 	tmp := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmp)
-	defer os.Unsetenv("ARCHIGRAPH_HOME")
+	t.Setenv("GRAFEL_HOME", tmp)
+	defer os.Unsetenv("GRAFEL_HOME")
 
 	req := httptest.NewRequest(http.MethodPost, "/api/settings/reset", nil)
 	w := httptest.NewRecorder()

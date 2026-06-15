@@ -20,9 +20,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractFixture parses and extracts a testdata file with the TypeScript grammar.

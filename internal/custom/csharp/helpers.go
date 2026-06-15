@@ -5,7 +5,7 @@ package csharp
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func lineOf(source string, offset int) int {

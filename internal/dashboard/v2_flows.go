@@ -21,7 +21,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // v2FlowsProcessItem is the wire shape of one row in the Flows v2 list. It is

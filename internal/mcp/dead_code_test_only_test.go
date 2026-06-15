@@ -12,7 +12,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // buildTestOnlyDoc models the validation corpus from the #3657 spec.

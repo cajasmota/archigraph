@@ -6,7 +6,7 @@ import (
 
 	// Register the C# integration-e2e extractor so the test_suite (carrying
 	// e2e_route_calls) comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/csharp"
+	_ "github.com/cajasmota/grafel/internal/custom/csharp"
 )
 
 // Issue #4685 LIVE-REPRO (resolve side, full in-pipeline) — ASP.NET Core.

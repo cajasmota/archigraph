@@ -9,7 +9,7 @@ package python_test
 //     parent_package="core", dottedName="core.views".
 //  3. Plain .py file (core/tasks.py): Module with is_package="false".
 //  4. Empty __init__.py (namespace / PEP 420 style): still emits Module entity.
-//  5. Ignored paths (site-packages, vendor, .archigraph): no Module emitted.
+//  5. Ignored paths (site-packages, vendor, .grafel): no Module emitted.
 //  6. Django migration __init__.py: no Module emitted (pruned).
 
 import (
@@ -19,8 +19,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findModuleEntities returns all Kind="Module" / Subtype="package" entities.
@@ -238,7 +238,7 @@ func TestPackageModule_EmptyInitPy(t *testing.T) {
 }
 
 // TestPackageModule_IgnoredPaths verifies that paths inside known ignored
-// directories (site-packages, vendor, .archigraph) do NOT emit Module entities.
+// directories (site-packages, vendor, .grafel) do NOT emit Module entities.
 func TestPackageModule_IgnoredPaths(t *testing.T) {
 	ext, ok := extractor.Get("python")
 	if !ok {
@@ -248,7 +248,7 @@ func TestPackageModule_IgnoredPaths(t *testing.T) {
 	ignoredPaths := []string{
 		"site-packages/requests/__init__.py",
 		"vendor/django/__init__.py",
-		".archigraph/store/something/__init__.py",
+		".grafel/store/something/__init__.py",
 		".venv/lib/python3.11/site-packages/foo/__init__.py",
 	}
 

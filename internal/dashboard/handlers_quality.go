@@ -2,7 +2,7 @@ package dashboard
 
 // handlers_quality.go — Quality surface HTTP handlers.
 //
-// Ports the two `archigraph quality` CLI subcommands to a REST API so the
+// Ports the two `grafel quality` CLI subcommands to a REST API so the
 // web Quality page can surface "is my graph good?" without a terminal.
 //
 // Routes registered in server.go:
@@ -25,9 +25,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/quality"
-	"github.com/cajasmota/archigraph/internal/quality/audit"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/quality"
+	"github.com/cajasmota/grafel/internal/quality/audit"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ type OrphanAuditReply struct {
 }
 
 // UnresolvedReferences is the Fidelity story: of all the import/reference edges
-// archigraph extracted, how many it resolved to a real target and — for the
+// grafel extracted, how many it resolved to a real target and — for the
 // rest — the reason it could not. This is the PRIMARY quality view because the
 // orphan audit reads "perfect" (0 orphans) on graphs whose Fidelity is held
 // down entirely by unresolved references.
@@ -377,7 +377,7 @@ func buildOrphanAuditReply(group string, repos []*audit.RepoReport) OrphanAuditR
 //
 // Resolved = hex (linked to a real entity id) + ext_qualified (linked to a
 // named symbol in an external module). Everything else is unresolved, bucketed
-// by the reason archigraph could not pin it to a target:
+// by the reason grafel could not pin it to a target:
 //
 //	ext_bare    → external_library  (a third-party package, no specific symbol)
 //	path_string → unresolved_import (a relative/absolute path the resolver did
@@ -403,9 +403,9 @@ func buildUnresolvedReferences(total, resolved int, formats map[audit.ImportForm
 	}
 	specs := []spec{
 		{audit.ImportFormatExtBare, "external_library", "External library",
-			"Points at a third-party package archigraph does not index, so there is no target inside your code to link to."},
+			"Points at a third-party package grafel does not index, so there is no target inside your code to link to."},
 		{audit.ImportFormatPathString, "unresolved_import", "Unresolved import",
-			"References a file by path that archigraph could not match to an extracted file — often a build alias, generated file, or a path outside the indexed repos."},
+			"References a file by path that grafel could not match to an extracted file — often a build alias, generated file, or a path outside the indexed repos."},
 		{audit.ImportFormatOther, "extraction_gap", "Dynamic or not-yet-extracted",
 			"A bare reference with no resolvable target — dynamically-loaded code, runtime dispatch, or a gap in extraction for that language."},
 	}
@@ -438,7 +438,7 @@ func buildUnresolvedReferences(total, resolved int, formats map[audit.ImportForm
 
 // handleQualityFixtures lists the available golden fixtures bundled with the
 // binary. We locate them relative to the binary's source tree (development)
-// or via the ARCHIGRAPH_FIXTURES_DIR env override.
+// or via the GRAFEL_FIXTURES_DIR env override.
 func (s *Server) handleQualityFixtures(w http.ResponseWriter, _ *http.Request) {
 	dir, err := goldenFixturesDir()
 	if err != nil {
@@ -606,18 +606,18 @@ func repoPathsForGroup(groupName string) ([]repoRef, error) {
 
 // GoldenFixturesDir returns the absolute path to the bundled golden fixture
 // directory. Resolution order:
-//  1. ARCHIGRAPH_FIXTURES_DIR env override (useful in tests)
+//  1. GRAFEL_FIXTURES_DIR env override (useful in tests)
 //  2. Source-relative path from the current file (works in `go run` + tests)
 //  3. Sibling of the binary at install time
 //
-// Exported so cmd/archigraph can call it when building the recall runner
+// Exported so cmd/grafel can call it when building the recall runner
 // without duplicating the resolution logic.
 func GoldenFixturesDir() (string, error) {
 	return goldenFixturesDir()
 }
 
 func goldenFixturesDir() (string, error) {
-	if override := os.Getenv("ARCHIGRAPH_FIXTURES_DIR"); override != "" {
+	if override := os.Getenv("GRAFEL_FIXTURES_DIR"); override != "" {
 		return override, nil
 	}
 	// Source-relative: works when running from the repo.
@@ -639,7 +639,7 @@ func goldenFixturesDir() (string, error) {
 	if fi, err := os.Stat(candidate); err == nil && fi.IsDir() {
 		return candidate, nil
 	}
-	return "", fmt.Errorf("could not locate golden fixtures directory (set ARCHIGRAPH_FIXTURES_DIR)")
+	return "", fmt.Errorf("could not locate golden fixtures directory (set GRAFEL_FIXTURES_DIR)")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

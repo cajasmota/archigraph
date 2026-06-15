@@ -35,7 +35,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // MermaidBudgetPerSection is the maximum mermaid blocks allowed in a single
@@ -48,14 +48,14 @@ const MermaidBudgetPage = 9
 
 // Tier1RunOpts contains the resolved inputs for a Tier 1 run.
 type Tier1RunOpts struct {
-	// Group is the archigraph group name.
+	// Group is the grafel group name.
 	Group string
 	// SeedEntityID is the entity ID (or prefix) to render the page for.
 	SeedEntityID string
 	// PageID is an optional override for the output filename stem. Defaults to
 	// a sanitised form of SeedEntityID.
 	PageID string
-	// OutputDir overrides the default ~/.archigraph/docs/<group>/.tier1-<ts>/
+	// OutputDir overrides the default ~/.grafel/docs/<group>/.tier1-<ts>/
 	// location. Useful in tests.
 	OutputDir string
 	// ConcurrencyLimit controls the goroutine pool size for parallel section
@@ -75,7 +75,7 @@ type Tier1RunOpts struct {
 	// external orchestrator.  Required when LLMMode == "apply".
 	ResultFile string
 	// CacheDir overrides the default section-level LLM cache directory:
-	//   ~/.archigraph/docs/<group>/.llm-cache/
+	//   ~/.grafel/docs/<group>/.llm-cache/
 	// Ignored when NoCache is true.
 	CacheDir string
 	// NoCache disables both cache reads and writes (useful for benchmark /
@@ -542,7 +542,7 @@ func CountDuplicatedFlows(sectionMap map[string]string) int {
 // Path helpers
 // ---------------------------------------------------------------------------
 
-// defaultTier1OutDir returns ~/.archigraph/docs/<group>/.tier1-<ts>/.
+// defaultTier1OutDir returns ~/.grafel/docs/<group>/.tier1-<ts>/.
 func defaultTier1OutDir(group string) (string, error) {
 	home, err := tier1HomeDir()
 	if err != nil {
@@ -553,17 +553,17 @@ func defaultTier1OutDir(group string) (string, error) {
 	return filepath.Join(home, "docs", group, ".tier1-"+ts), nil
 }
 
-// tier1HomeDir returns the archigraph home directory honouring
-// ARCHIGRAPH_HOME override exactly as registry.HomeDir does.
+// tier1HomeDir returns the grafel home directory honouring
+// GRAFEL_HOME override exactly as registry.HomeDir does.
 // We replicate the tiny logic here to keep tier1 self-contained; registry is
 // already imported by tier0.go in the same compilation unit.
 func tier1HomeDir() (string, error) {
-	if h := os.Getenv("ARCHIGRAPH_HOME"); h != "" {
+	if h := os.Getenv("GRAFEL_HOME"); h != "" {
 		return h, nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("home dir: %w", err)
 	}
-	return filepath.Join(home, ".archigraph"), nil
+	return filepath.Join(home, ".grafel"), nil
 }

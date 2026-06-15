@@ -3,7 +3,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // Inline copy of the PRE-#2285 linear-scan implementation, for benchmark

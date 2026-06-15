@@ -38,7 +38,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // expressContractResolver composes effective contracts for Express/Fastify/Koa/

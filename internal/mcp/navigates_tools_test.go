@@ -1,21 +1,21 @@
-// navigates_tools_test.go — tests for archigraph_navigates (#2658).
+// navigates_tools_test.go — tests for grafel_navigates (#2658).
 //
 // Three tests:
-//   - TestArchigraphNavigates_FiltersByRoute   — route filter returns only matching edges
-//   - TestArchigraphNavigates_FiltersByParam   — with_param filter returns edges carrying that param
-//   - TestArchigraphNavigates_FlowMode         — mode=flow multi-hop BFS traverses chains
+//   - TestGrafelNavigates_FiltersByRoute   — route filter returns only matching edges
+//   - TestGrafelNavigates_FiltersByParam   — with_param filter returns edges carrying that param
+//   - TestGrafelNavigates_FlowMode         — mode=flow multi-hop BFS traverses chains
 package mcp
 
 import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
 // buildNavDoc constructs a minimal graph.Document populated with NAVIGATES_TO
-// relationship records suitable for archigraph_navigates handler tests.
+// relationship records suitable for grafel_navigates handler tests.
 //
 // Navigation topology used across all three tests:
 //
@@ -98,10 +98,10 @@ func edgesFromResult(t *testing.T, result map[string]any) []map[string]any {
 	return out
 }
 
-// TestArchigraphNavigates_FiltersByRoute verifies that passing route="/foo"
+// TestGrafelNavigates_FiltersByRoute verifies that passing route="/foo"
 // returns only the two edges whose route property contains "/foo", and not
 // edges for "/bar" or "/baz". Issue #2658.
-func TestArchigraphNavigates_FiltersByRoute(t *testing.T) {
+func TestGrafelNavigates_FiltersByRoute(t *testing.T) {
 	srv := newTestServer(t, buildNavDoc())
 	result := callNavTool(t, srv, map[string]any{
 		"route":     "/foo",
@@ -129,9 +129,9 @@ func TestArchigraphNavigates_FiltersByRoute(t *testing.T) {
 	}
 }
 
-// TestArchigraphNavigates_FiltersByParam verifies that with_param="id" returns
+// TestGrafelNavigates_FiltersByParam verifies that with_param="id" returns
 // only edges whose params list contains "id". Issue #2658.
-func TestArchigraphNavigates_FiltersByParam(t *testing.T) {
+func TestGrafelNavigates_FiltersByParam(t *testing.T) {
 	srv := newTestServer(t, buildNavDoc())
 	result := callNavTool(t, srv, map[string]any{
 		"with_param": "id",
@@ -164,14 +164,14 @@ func TestArchigraphNavigates_FiltersByParam(t *testing.T) {
 	}
 }
 
-// TestArchigraphNavigates_FlowMode verifies that mode=flow performs multi-hop
+// TestGrafelNavigates_FlowMode verifies that mode=flow performs multi-hop
 // BFS, annotating edges with a "hop" counter. The fixture has:
 //
 //	entityC --hop0--> entityA --hop1--> route:/foo and route:/bar
 //
 // Starting from entityC with mode=flow should yield hop=0 for C→A, and
 // hop=1 for A→/foo and A→/bar. Issue #2658.
-func TestArchigraphNavigates_FlowMode(t *testing.T) {
+func TestGrafelNavigates_FlowMode(t *testing.T) {
 	srv := newTestServer(t, buildNavDoc())
 
 	// prefixedID format is "repo::id" (see internal/mcp/render.go prefixedID).

@@ -2,7 +2,7 @@ package mcp
 
 // call_contexts_4832_test.go — end-to-end test for the #4832 control-flow
 // follow-up: stamping conditional/condition/in_loop on outbound CALLS edges,
-// surfaced via archigraph_inspect include="call_contexts" (opt-in, default
+// surfaced via grafel_inspect include="call_contexts" (opt-in, default
 // payload unchanged per #2828). Runs the REAL handleGetNode handler against
 // small Python + Go fixtures in testdata/call_contexts_4832/. Mirrors part (a)'s
 // effect_contexts_4821_test.go: it reuses the same enclosing-block classifier,
@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 

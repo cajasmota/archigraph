@@ -23,9 +23,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ReachabilitySummary is the wire shape for the static test-reachability signal

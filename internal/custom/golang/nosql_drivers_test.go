@@ -3,7 +3,7 @@ package golang_test
 import (
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // ---------------------------------------------------------------------------

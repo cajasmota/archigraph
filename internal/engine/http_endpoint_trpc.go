@@ -62,7 +62,7 @@ var trpcVerbRe = regexp.MustCompile(`\.\s*(query|mutation|subscription)\s*\(`)
 // reference (value of a property is just another router variable name).
 var trpcIdentRe = regexp.MustCompile(`^[A-Za-z_$][\w$]*$`)
 
-// trpcVerbFor maps a tRPC builder method name to the canonical archigraph
+// trpcVerbFor maps a tRPC builder method name to the canonical grafel
 // HTTP verb used in the synthetic ID. The `.subscription` case maps to
 // `SUBSCRIBE` rather than reusing an HTTP verb, mirroring the convention
 // used for WebSocket-style transports elsewhere in the synthesis layer.

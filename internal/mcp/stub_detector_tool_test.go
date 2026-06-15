@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -20,7 +20,7 @@ import (
 // an entry (empty Effects, source "pure") so the closure reads as resolved.
 func writeEffectsSidecar(t *testing.T, group string, entries map[string][]string) {
 	t.Helper()
-	dir := filepath.Join(os.Getenv("HOME"), ".archigraph", "groups")
+	dir := filepath.Join(os.Getenv("HOME"), ".grafel", "groups")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir sidecar dir: %v", err)
 	}
@@ -108,7 +108,7 @@ func stubTwoGroupServer(t *testing.T, v3 *graph.Document, oracle *graph.Document
 func callStubDetector(t *testing.T, s *Server, args map[string]any) map[string]any {
 	t.Helper()
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_stub_detector"
+	req.Params.Name = "grafel_stub_detector"
 	req.Params.Arguments = args
 	res, err := s.handleStubDetector(context.Background(), req)
 	if err != nil {
@@ -343,7 +343,7 @@ func TestStubDetector_E2E_EndpointFilter(t *testing.T) {
 func TestStubDetector_E2E_MissingArgs(t *testing.T) {
 	s := stubTwoGroupServer(t, &graph.Document{Repo: "r"}, &graph.Document{Repo: "r"})
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_stub_detector"
+	req.Params.Name = "grafel_stub_detector"
 	req.Params.Arguments = map[string]any{"group_v3": "v3"}
 	res, err := s.handleStubDetector(context.Background(), req)
 	if err != nil {

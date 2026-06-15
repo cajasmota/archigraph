@@ -1,4 +1,4 @@
-# Contributing to archigraph
+# Contributing to grafel
 
 ## CI overview
 

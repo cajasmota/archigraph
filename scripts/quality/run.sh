@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Extraction-quality benchmark runner. Iterates over every fixture under
-# internal/quality/golden/ and runs `archigraph quality` against each,
+# internal/quality/golden/ and runs `grafel quality` against each,
 # writing one JSON report per fixture into reports/quality/.
 #
 # Exit status:
@@ -21,7 +21,7 @@
 #              fixtures).
 #
 # Env vars:
-#   ARCHIGRAPH_BIN   path to archigraph binary (default: auto-built)
+#   GRAFEL_BIN   path to grafel binary (default: auto-built)
 #   QUALITY_OUT_DIR  directory to write per-fixture JSON reports into
 #                    (default: reports/quality relative to repo root)
 set -euo pipefail
@@ -57,11 +57,11 @@ if ! [[ "$RUNS" =~ ^[0-9]+$ ]] || [[ "$RUNS" -lt 1 ]]; then
   exit 1
 fi
 
-BIN="${ARCHIGRAPH_BIN:-$ROOT/build/archigraph}"
+BIN="${GRAFEL_BIN:-$ROOT/build/grafel}"
 if [[ ! -x "$BIN" ]]; then
-  echo "build/archigraph not found — building..." >&2
+  echo "build/grafel not found — building..." >&2
   mkdir -p build
-  go build -o build/archigraph ./cmd/archigraph
+  go build -o build/grafel ./cmd/grafel
 fi
 
 OUT="${QUALITY_OUT_DIR:-$ROOT/reports/quality}"
@@ -83,7 +83,7 @@ for fix in "$ROOT"/internal/quality/golden/*/ ; do
   run_idx=0
   while [[ $run_idx -lt $RUNS ]]; do
     rjson="$tmpdir/run${run_idx}.json"
-    # `archigraph quality` exits 2 on regression but still writes the JSON.
+    # `grafel quality` exits 2 on regression but still writes the JSON.
     # We capture both outcomes — the median aggregator decides pass/fail.
     "$BIN" quality --json "$rjson" "$fix" 2>/dev/null || true
 

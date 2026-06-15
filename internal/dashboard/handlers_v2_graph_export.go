@@ -25,7 +25,7 @@
 //   1. unpacks the archive into a temp dir,
 //   2. validates the manifest + required layout,
 //   3. relocates each store payload into the local daemon's store dir
-//      (`$ARCHIGRAPH_HOME/store/<slug>-<hash>`), keyed by repo path,
+//      (`$GRAFEL_HOME/store/<slug>-<hash>`), keyed by repo path,
 //   4. writes the fleet config to its canonical path,
 //   5. registers the group with the registry,
 //   6. (optionally) copies generated docs into the docs store.
@@ -53,8 +53,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // exportManifestVersion is the current archive format version. Bump when
@@ -447,7 +447,7 @@ func readImportBody(r *http.Request) (*sizedReaderAt, func(), error) {
 			return nil, noop, fmt.Errorf("missing 'file' form field: %w", err)
 		}
 		defer file.Close()
-		tmp, err := os.CreateTemp("", "archigraph-import-*.zip")
+		tmp, err := os.CreateTemp("", "grafel-import-*.zip")
 		if err != nil {
 			return nil, noop, err
 		}
@@ -471,7 +471,7 @@ func readImportBody(r *http.Request) (*sizedReaderAt, func(), error) {
 
 	// Default path: treat the body as raw zip bytes.
 	r.Body = http.MaxBytesReader(nil, r.Body, maxImportArchiveBytes)
-	tmp, err := os.CreateTemp("", "archigraph-import-*.zip")
+	tmp, err := os.CreateTemp("", "grafel-import-*.zip")
 	if err != nil {
 		return nil, noop, err
 	}

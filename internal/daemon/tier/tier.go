@@ -18,7 +18,7 @@
 //
 // P0.3 (#2141): pressure-driven eviction. When total heap allocation (tracked
 // via runtime.MemStats.HeapInuse) exceeds a configurable fraction of system
-// memory (default 60%, tunable via ARCHIGRAPH_HEAP_MAX_PCT), the scanner
+// memory (default 60%, tunable via GRAFEL_HEAP_MAX_PCT), the scanner
 // immediately evicts the oldest-touched HOT/WARM slots to COLD, independent
 // of their TTL. Pinned-main slots are exempt from pressure eviction; they
 // degrade to WARM instead.
@@ -35,12 +35,12 @@
 //
 // # Env-tunable TTLs
 //
-//	ARCHIGRAPH_TIER_HOT_MINUTES           default 5
-//	ARCHIGRAPH_TIER_COLD_MINUTES          default 60
-//	ARCHIGRAPH_TIER_COLD_MINUTES_WORKTREE default 30
-//	ARCHIGRAPH_TIER_EXPIRED_DAYS          default 7  (feature branches)
-//	ARCHIGRAPH_TIER_EXPIRED_DAYS_WORKTREE default 2
-//	ARCHIGRAPH_HEAP_MAX_PCT               default 60  (P0.3 pressure threshold)
+//	GRAFEL_TIER_HOT_MINUTES           default 5
+//	GRAFEL_TIER_COLD_MINUTES          default 60
+//	GRAFEL_TIER_COLD_MINUTES_WORKTREE default 30
+//	GRAFEL_TIER_EXPIRED_DAYS          default 7  (feature branches)
+//	GRAFEL_TIER_EXPIRED_DAYS_WORKTREE default 2
+//	GRAFEL_HEAP_MAX_PCT               default 60  (P0.3 pressure threshold)
 package tier
 
 import (
@@ -54,7 +54,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // ---------------------------------------------------------------------------
@@ -176,22 +176,22 @@ func DefaultTTLConfig() TTLConfig {
 // EnvTTLConfig reads env-var overrides on top of DefaultTTLConfig.
 func EnvTTLConfig() TTLConfig {
 	cfg := DefaultTTLConfig()
-	if v := envMinutes("ARCHIGRAPH_TIER_HOT_MINUTES"); v > 0 {
+	if v := envMinutes("GRAFEL_TIER_HOT_MINUTES"); v > 0 {
 		cfg.HotWindow = v
 	}
-	if v := envMinutes("ARCHIGRAPH_TIER_COLD_MINUTES"); v > 0 {
+	if v := envMinutes("GRAFEL_TIER_COLD_MINUTES"); v > 0 {
 		cfg.ColdWindow = v
 	}
-	if v := envMinutes("ARCHIGRAPH_TIER_COLD_MINUTES_WORKTREE"); v > 0 {
+	if v := envMinutes("GRAFEL_TIER_COLD_MINUTES_WORKTREE"); v > 0 {
 		cfg.ColdWindowWorktree = v
 	}
-	if v := envDays("ARCHIGRAPH_TIER_EXPIRED_DAYS"); v > 0 {
+	if v := envDays("GRAFEL_TIER_EXPIRED_DAYS"); v > 0 {
 		cfg.ExpiredWindow = v
 	}
-	if v := envDays("ARCHIGRAPH_TIER_EXPIRED_DAYS_WORKTREE"); v > 0 {
+	if v := envDays("GRAFEL_TIER_EXPIRED_DAYS_WORKTREE"); v > 0 {
 		cfg.ExpiredWindowWorktree = v
 	}
-	if v := envInt("ARCHIGRAPH_HEAP_MAX_PCT"); v > 0 {
+	if v := envInt("GRAFEL_HEAP_MAX_PCT"); v > 0 {
 		cfg.HeapMaxPct = v
 	}
 	return cfg
@@ -732,7 +732,7 @@ func readHeapInuse() uint64 {
 // readSysMemBytes returns total physical memory in bytes. Uses
 // runtime.MemStats.Sys as a conservative lower-bound when the OS-level
 // total is unavailable (no syscall needed; always present).
-// For production accuracy, cmd/archigraph may override via TTLConfig.SystemMemoryBytes.
+// For production accuracy, cmd/grafel may override via TTLConfig.SystemMemoryBytes.
 func readSysMemBytes() uint64 {
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)

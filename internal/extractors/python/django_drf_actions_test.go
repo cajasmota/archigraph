@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func findDRFOp(entities []types.EntityRecord, file, name string) *types.EntityRecord {

@@ -1,4 +1,4 @@
-// Package cli — `archigraph patterns` subcommand surface (ADR-0018, PR δ).
+// Package cli — `grafel patterns` subcommand surface (ADR-0018, PR δ).
 //
 // All verbs operate directly on the per-group patterns.json store. The
 // daemon owns mutation under high contention (the MCP tool's record /
@@ -21,8 +21,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // newPatternsCmd is the entrypoint surfaced from root.go.
@@ -34,8 +34,8 @@ func newPatternsCmd() *cobra.Command {
 
 Patterns are first-class graph entities that store codebase-specific
 recipes learned by agents over time. They live at
-<group>/.archigraph/patterns.json and are written by the MCP
-archigraph_patterns tool.`,
+<group>/.grafel/patterns.json and are written by the MCP
+grafel_patterns tool.`,
 	}
 
 	root.AddCommand(
@@ -55,7 +55,7 @@ archigraph_patterns tool.`,
 // shared helpers
 // ---------------------------------------------------------------------------
 
-// resolvePatternsDir returns the per-group .archigraph/ dir. Mirrors the
+// resolvePatternsDir returns the per-group .grafel/ dir. Mirrors the
 // MCP server's patternsDir() logic (memory_dir override → default).
 func resolvePatternsDir(groupName string) (string, error) {
 	if groupName == "" {
@@ -64,7 +64,7 @@ func resolvePatternsDir(groupName string) (string, error) {
 			return "", err
 		}
 		if len(groups) == 0 {
-			return "", errors.New("no groups registered; pass --group or run `archigraph wizard`")
+			return "", errors.New("no groups registered; pass --group or run `grafel wizard`")
 		}
 		if len(groups) > 1 {
 			return "", errors.New("multiple groups registered; pass --group <name>")
@@ -239,7 +239,7 @@ func newPatternsEditCmd() *cobra.Command {
 			if editor == "" {
 				editor = "vi"
 			}
-			tmp, err := os.CreateTemp("", "archigraph-pattern-*.json")
+			tmp, err := os.CreateTemp("", "grafel-pattern-*.json")
 			if err != nil {
 				return err
 			}

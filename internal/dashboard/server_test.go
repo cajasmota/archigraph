@@ -16,13 +16,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/registry"
-	"github.com/cajasmota/archigraph/internal/testsupport"
+	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/testsupport"
 )
 
 // TestMain fail-closes the dashboard package: when
-// ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
-// user home and no ARCHIGRAPH_DAEMON_ROOT isolation is in effect. Dashboard
+// GRAFEL_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
+// user home and no GRAFEL_DAEMON_ROOT isolation is in effect. Dashboard
 // tests resolve registry/docs paths from the environment and some default to
 // listing the home directory.
 func TestMain(m *testing.M) {
@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 }
 
 // fakeStore is an in-memory RegistryStore. It removes the dependency on
-// ~/.archigraph for tests so they stay hermetic and parallel-safe.
+// ~/.grafel for tests so they stay hermetic and parallel-safe.
 type fakeStore struct {
 	mu        sync.Mutex
 	groups    map[string]GroupSummary

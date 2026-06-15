@@ -1,7 +1,7 @@
 package dashboard
 
 // handlers_action_test.go — unit tests for POST /api/{enrichments|repairs}/{group}/action
-// (#1016). Uses a temp-dir-backed repo so reads/writes land in <t.TempDir()>/.archigraph/.
+// (#1016). Uses a temp-dir-backed repo so reads/writes land in <t.TempDir()>/.grafel/.
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // ---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ import (
 
 // newActionServer creates a test HTTP server with a DashGroup whose "svc"
 // repo points to repoPath.  The caller is responsible for creating the
-// .archigraph directory and seeding any candidate files before calling
+// .grafel directory and seeding any candidate files before calling
 // this helper.
 func newActionServer(t *testing.T, repoPath string) *httptest.Server {
 	t.Helper()
@@ -59,12 +59,12 @@ func newActionServer(t *testing.T, repoPath string) *httptest.Server {
 }
 
 // seedEnrichmentCandidates writes an enrichment-candidates.json with the
-// given candidates under <repoPath>/.archigraph/.
+// given candidates under <repoPath>/.grafel/.
 func seedEnrichmentCandidates(t *testing.T, repoPath string, cs []candidateRaw) {
 	t.Helper()
 	// #1626: per-repo state lives in the external store, not in-repo.
-	if os.Getenv("ARCHIGRAPH_DAEMON_ROOT") == "" {
-		t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	if os.Getenv("GRAFEL_DAEMON_ROOT") == "" {
+		t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 	}
 	archDir := daemon.StateDirForRepo(repoPath)
 	if err := os.MkdirAll(archDir, 0o755); err != nil {

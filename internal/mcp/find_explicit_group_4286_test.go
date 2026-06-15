@@ -1,4 +1,4 @@
-// find_explicit_group_4286_test.go — tests for #4286: archigraph_find honors an
+// find_explicit_group_4286_test.go — tests for #4286: grafel_find honors an
 // explicit `group=` even when the caller's cwd is inside a repo of a DIFFERENT
 // group. Before the fix, find pinned the cwd-resolved repo slug as a repo_filter
 // regardless of which group it belonged to; since that slug does not exist in
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // newTestServerTwoGroups builds a Server whose registry+state contain two

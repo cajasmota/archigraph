@@ -19,7 +19,7 @@ package mcp
 // even though the ViewSet body is empty.
 //
 // T5 owns the COMPUTATION + STAMPING (engine) and this projection helper. T6
-// (#3836, archigraph_effective_contract) owns the user-facing MCP tool that
+// (#3836, grafel_effective_contract) owns the user-facing MCP tool that
 // groups these per-class and returns them; it consumes projectEffectiveContract
 // per backing route entity. Keeping the projection here lets T6 be a thin
 // grouping/serving layer over a tested computation.
@@ -31,7 +31,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // effectiveContract is the structured per-verb contract projected from a single

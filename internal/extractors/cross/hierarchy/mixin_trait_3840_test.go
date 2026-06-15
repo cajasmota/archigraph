@@ -12,7 +12,7 @@ package hierarchy
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findImplements returns the first IMPLEMENTS edge whose base_name matches.

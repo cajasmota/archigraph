@@ -1,4 +1,4 @@
-// Package mcp implements the archigraph MCP server (clean-room, per ADR-0002).
+// Package mcp implements the grafel MCP server (clean-room, per ADR-0002).
 //
 // Layout in this package:
 //
@@ -27,10 +27,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/embed"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/embed"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
 )
 
 // Registry is the on-disk registry.json describing groups and their repos.
@@ -45,7 +45,7 @@ import (
 //	      "repos": {
 //	        "<repo>": {
 //	          "path":        "/abs/path/to/repo",
-//	          "graph_file":  "/abs/path/.archigraph/graph.json"  // optional explicit
+//	          "graph_file":  "/abs/path/.grafel/graph.json"  // optional explicit
 //	        }
 //	      }
 //	    }
@@ -266,7 +266,7 @@ type LoadedRepo struct {
 	BM25       *BM25Index
 	Semantic   *embed.Store // per-repo vector index (nil when no embeddings.bin)
 	// TestsEdgeCount is a cheap O(R) count of TESTS-kind relationships, computed
-	// eagerly at reload so archigraph_whoami returns it in O(1) (#3325). Kept
+	// eagerly at reload so grafel_whoami returns it in O(1) (#3325). Kept
 	// eager because it is O(R) with no allocation — far cheaper than the derived
 	// indexes below and read by the hot whoami path.
 	TestsEdgeCount int
@@ -503,7 +503,7 @@ type State struct {
 }
 
 // SetWorktreeLookup wires the PH3 ephemeral worktree registry.  Call from
-// cmd/archigraph after the worktree.Store is loaded.
+// cmd/grafel after the worktree.Store is loaded.
 func (s *State) SetWorktreeLookup(wl WorktreeLookup) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -528,7 +528,7 @@ func NewState(reg *Registry) *State {
 // Returns the number of cache entries evicted (0 when none were cached for
 // this repo+ref pair, which is the common case on single-ref installations).
 //
-// This is the hook wired from cmd/archigraph's BranchSwitchSink into the MCP
+// This is the hook wired from cmd/grafel's BranchSwitchSink into the MCP
 // server to close the stale-cache bug tracked in issue #2224.
 func (s *State) NotifyRefSwitch(repo, oldRef string) int {
 	return s.CrossLinkCache.InvalidateRepo(repo, oldRef)
@@ -744,7 +744,7 @@ func (s *State) reloadLocked() (int, bool, error) {
 					// is built on first use by its getter and cached until the next
 					// reload re-arms the Once here (#3367, #3377).
 					lr.resetIndexes()
-					// TESTS-edge count cached once per reload so archigraph_whoami can
+					// TESTS-edge count cached once per reload so grafel_whoami can
 					// return it in O(1) without rescanning all relationships. This is a
 					// cheap O(R) count with no allocation, so it stays eager (#3325).
 					testsCount := 0
@@ -1012,7 +1012,7 @@ func defaultLinksFile(group string) string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-links.json")
+	return filepath.Join(home, ".grafel", "groups", group+"-links.json")
 }
 
 // defaultMemoryDir is the conventional path for save_finding outputs.
@@ -1021,7 +1021,7 @@ func defaultMemoryDir(group string) string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-memory")
+	return filepath.Join(home, ".grafel", "groups", group+"-memory")
 }
 
 // defaultLinkCandidatesFile is the on-disk file for pending link candidates.
@@ -1030,14 +1030,14 @@ func defaultLinkCandidatesFile(group string) string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-link-candidates.json")
+	return filepath.Join(home, ".grafel", "groups", group+"-link-candidates.json")
 }
 
-// defaultRegistryPath is "~/.archigraph/registry.json".
+// defaultRegistryPath is "~/.grafel/registry.json".
 func defaultRegistryPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "registry.json"
 	}
-	return filepath.Join(home, ".archigraph", "registry.json")
+	return filepath.Join(home, ".grafel", "registry.json")
 }

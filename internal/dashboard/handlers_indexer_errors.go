@@ -5,7 +5,7 @@ package dashboard
 // Returns recent typed indexer errors from the audit log, enriched with
 // the canonical remediation hint and docs URL from the errors registry.
 // This powers the /diagnostics page's "Indexer Errors" section and can
-// be polled by the CLI's `archigraph doctor` output.
+// be polled by the CLI's `grafel doctor` output.
 //
 // Route registered in server.go:
 //
@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/audit"
-	idxerrors "github.com/cajasmota/archigraph/internal/errors"
+	"github.com/cajasmota/grafel/internal/audit"
+	idxerrors "github.com/cajasmota/grafel/internal/errors"
 )
 
 // IndexerErrorReply is the JSON envelope for GET /api/indexer-errors.

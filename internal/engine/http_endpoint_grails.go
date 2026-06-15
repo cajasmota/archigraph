@@ -79,7 +79,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // ratpackRouteRe matches a Ratpack verb-DSL handler with a leading

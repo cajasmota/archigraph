@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -184,7 +184,7 @@ func TestInspect_IncludesMetadata(t *testing.T) {
 	}
 
 	// #2780: indexed_ref and indexed_sha are session-stable provenance fields
-	// owned exclusively by archigraph_whoami. inspect's metadata block carries
+	// owned exclusively by grafel_whoami. inspect's metadata block carries
 	// only the staleness signal (indexed_at/age_seconds), so these keys must NOT
 	// be present here — see TestNoSessionMetaInNonWhoamiHandlers.
 	if _, ok := meta["indexed_ref"]; ok {

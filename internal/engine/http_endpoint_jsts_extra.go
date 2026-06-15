@@ -22,7 +22,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ func synthesizeNextAPIRoute(filePath, content string, emit emitFn) {
 }
 
 // nextNormalizePath rewrites Next.js dynamic segments to the
-// archigraph-canonical `{name}` form so the cross-repo linker can match
+// grafel-canonical `{name}` form so the cross-repo linker can match
 // frontend calls.
 //
 //	[id]         → {id}

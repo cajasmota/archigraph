@@ -17,8 +17,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/mcp"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 const (
@@ -975,16 +975,16 @@ func extractEndpointDocsEnriched(group, pathHash string, docgenState *mcp.Docgen
 }
 
 // getDocFilePath constructs the full file path to a generated documentation file.
-// Docs are stored in ~/.archigraph/groups/<group>/docs/<docPath>.
+// Docs are stored in ~/.grafel/groups/<group>/docs/<docPath>.
 //
 // Home-dir resolution priority (mirrors mcp.defaultDocstateDir):
-//  1. $ARCHIGRAPH_HOME — explicit override used in tests and custom installs.
+//  1. $GRAFEL_HOME — explicit override used in tests and custom installs.
 //  2. $HOME — honored explicitly so tests using t.Setenv("HOME", tmpDir) work
 //     on all platforms including Windows, where os.UserHomeDir() reads
 //     USERPROFILE and ignores HOME.
 //  3. os.UserHomeDir() fallback (production path).
 func getDocFilePath(group string, docPath string) string {
-	base := os.Getenv("ARCHIGRAPH_HOME")
+	base := os.Getenv("GRAFEL_HOME")
 	if base == "" {
 		home := os.Getenv("HOME")
 		if home == "" {
@@ -994,7 +994,7 @@ func getDocFilePath(group string, docPath string) string {
 				return ""
 			}
 		}
-		base = filepath.Join(home, ".archigraph")
+		base = filepath.Join(home, ".grafel")
 	}
 	// Remove leading "./" if present.
 	docPath = strings.TrimPrefix(docPath, "./")

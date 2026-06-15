@@ -67,7 +67,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // gqlOpType maps a parsed GraphQL operation keyword to the server root-type

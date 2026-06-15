@@ -39,7 +39,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // swiftURLStringRe matches a `URL(string: "...")` / `URL(string: "...")!`

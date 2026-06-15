@@ -10,9 +10,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsyaml "github.com/smacker/go-tree-sitter/yaml"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/yaml" // trigger init()
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/yaml" // trigger init()
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

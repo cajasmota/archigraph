@@ -11,7 +11,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 func runExtract(t *testing.T, ext extractor.Extractor, path, src string) []propEnt {

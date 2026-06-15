@@ -11,7 +11,7 @@
 package dashboard
 
 import (
-	"github.com/cajasmota/archigraph/internal/engine"
+	"github.com/cajasmota/grafel/internal/engine"
 )
 
 // authChipTone is the visual tone the frontend should use for an auth chip.

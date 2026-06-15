@@ -207,7 +207,7 @@ func TestLoadWrapperConfigs_Missing(t *testing.T) {
 // parsed into the correct WrapperConfig structs.
 func TestLoadWrapperConfigs_ValidFile(t *testing.T) {
 	dir := t.TempDir()
-	archDir := filepath.Join(dir, ".archigraph")
+	archDir := filepath.Join(dir, ".grafel")
 	if err := os.MkdirAll(archDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -308,7 +308,7 @@ export function useUsers() {
 // fabricate an endpoint, while the REAL call in the same queryFn/mutationFn
 // must still be extracted.
 //
-// Before the fix, archigraph emitted phantom calls GET /scoped-permissions and
+// Before the fix, grafel emitted phantom calls GET /scoped-permissions and
 // POST /role-permissions (the cache keys). The cache keys are logical labels;
 // the real endpoint is the literal URL passed to fetch/axios. This proves both
 // halves: (a) no phantom from the key array, (b) the real URL survives.

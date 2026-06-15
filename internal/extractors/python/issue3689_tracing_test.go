@@ -7,7 +7,7 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // spanEdge returns the first INSTRUMENTS edge on the named entity whose ToID

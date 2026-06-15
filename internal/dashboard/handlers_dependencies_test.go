@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/extractors/cross/deplinker"
+	"github.com/cajasmota/grafel/internal/extractors/cross/deplinker"
 )
 
 // ---------------------------------------------------------------------------

@@ -1,11 +1,11 @@
-// secrets_tools.go — MCP handler for archigraph_secrets (#1322).
+// secrets_tools.go — MCP handler for grafel_secrets (#1322).
 //
 // Walks source files in every loaded repo and flags hardcoded credentials:
 // API keys, passwords, JWT tokens, AWS credentials, private keys.
 //
 // Suppression rules:
 //   - Files in test directories (/test/, /tests/, /testdata/, *.test.*, etc.)
-//   - Lines with the opt-out comment: // archigraph: ignore-secret
+//   - Lines with the opt-out comment: // grafel: ignore-secret
 //   - Values that match common placeholder patterns (example, REPLACE_ME, etc.)
 //
 // Findings are severity-graded (critical → high → medium → low) and include a
@@ -17,11 +17,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/secrets"
+	"github.com/cajasmota/grafel/internal/secrets"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handleSecrets is the MCP handler for archigraph_secrets.
+// handleSecrets is the MCP handler for grafel_secrets.
 func (s *Server) handleSecrets(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
@@ -164,6 +164,6 @@ func (s *Server) handleSecrets(_ context.Context, req mcpapi.CallToolRequest) (*
 		"truncated":      total > len(allFindings),
 		"by_severity":    bySeverity,
 		"files":          rollups,
-		"tip":            "Add '// archigraph: ignore-secret' to suppress a specific line. Replace hardcoded values with the suggested env var.",
+		"tip":            "Add '// grafel: ignore-secret' to suppress a specific line. Replace hardcoded values with the suggested env var.",
 	}), nil
 }

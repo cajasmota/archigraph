@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
 )
 
 // Issue #4370 LIVE-REPRO (extractor side).

@@ -20,7 +20,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makeSemanticEdgeDoc builds a graph exercising a representative spread of the

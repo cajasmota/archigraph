@@ -2,7 +2,7 @@
 //
 // The Go extractor stamps Properties["go_module_root"] on every IMPORTS edge
 // so the resolver's in-tree import pass can strip the module prefix from an
-// import path like "github.com/cajasmota/archigraph/internal/types" and
+// import path like "github.com/cajasmota/grafel/internal/types" and
 // derive the package directory "internal/types". Without this stamp the
 // resolver has no way to distinguish an in-tree import (which should resolve
 // to a file entity) from an external import (which resolves to an ext: node).
@@ -10,7 +10,7 @@
 // Reading go.mod on every file extraction would be wasteful. This package
 // caches the result per repo-root so the I/O cost is paid once per repo per
 // process lifetime. The cache is populated lazily on first access and never
-// invalidated — archigraph daemon instances are short-lived enough that a
+// invalidated — grafel daemon instances are short-lived enough that a
 // go.mod change always triggers a full re-index.
 //
 // When RepoRoot is empty or go.mod is absent/unreadable the reader returns ""

@@ -1,27 +1,27 @@
 package mcp
 
 // security_finding_promotion_test.go — proves the Phase-2 promotion pipeline
-// for the archigraph-security-audit skill (#2810).
+// for the grafel-security-audit skill (#2810).
 //
 // The skill's Phase 2 confirms a taint finding and then PROMOTES it into the
 // group memory store as a first-class, queryable record via
-// archigraph_save_finding(type="security_finding", nodes=[entity_id], ...).
+// grafel_save_finding(type="security_finding", nodes=[entity_id], ...).
 // This test injects a SYNTHETIC confirmed finding (request.body -> os.remove
 // path-traversal), saves it through the real handler, and then verifies it is
-// queryable in isolation via archigraph_list_findings(type="security_finding")
+// queryable in isolation via grafel_list_findings(type="security_finding")
 // — without dragging along co-resident note findings.
 //
 // It is the unit-test stand-in for the manual "inject a real taint into a
 // scratch fixture" check: it exercises save -> list -> type-filter end to end
 // against the live handlers, with the memory dir pointed at a t.TempDir() so
-// nothing touches the user's ~/.archigraph store.
+// nothing touches the user's ~/.grafel store.
 
 import (
 	"context"
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -52,7 +52,7 @@ func TestSecurityFindingPromotionRoundtrip(t *testing.T) {
 	}, nil)
 	srv := newTestServer(t, doc)
 
-	// Point the memory store at a temp dir so we never touch ~/.archigraph.
+	// Point the memory store at a temp dir so we never touch ~/.grafel.
 	memDir := t.TempDir()
 	srv.State.Group("test").MemoryDir = memDir
 
@@ -104,7 +104,7 @@ func TestSecurityFindingPromotionRoundtrip(t *testing.T) {
 		t.Errorf("promoted finding question: got %v", got["question"])
 	}
 	// The entity reference must survive the roundtrip so the finding is
-	// graph-queryable by entity (archigraph_list_findings entity_id=...).
+	// graph-queryable by entity (grafel_list_findings entity_id=...).
 	nodes, ok := got["nodes"].([]any)
 	if !ok || len(nodes) != 1 || nodes[0] != "ent_send_proposals" {
 		t.Errorf("promoted finding nodes: got %v, want [ent_send_proposals]", got["nodes"])
@@ -122,7 +122,7 @@ func TestSecurityFindingPromotionRoundtrip(t *testing.T) {
 	}
 
 	// 5) The promoted finding is also reachable by entity_id — the acceptance
-	//    criterion "queryable via archigraph_list_findings".
+	//    criterion "queryable via grafel_list_findings".
 	byEntOut := callRawTool(t, srv.handleListFindings, map[string]any{
 		"group":     "test",
 		"entity_id": "ent_send_proposals",

@@ -16,8 +16,8 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // ddbFI builds a FileInput for DynamoDB tests.

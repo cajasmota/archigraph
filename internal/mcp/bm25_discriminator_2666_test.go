@@ -8,7 +8,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestBM25_DiscriminatorBoost_VarNameSurfacesEntity verifies that querying for

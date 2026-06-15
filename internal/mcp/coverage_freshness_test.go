@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // fixtureGroup builds a one-repo LoadedGroup whose document was indexed at

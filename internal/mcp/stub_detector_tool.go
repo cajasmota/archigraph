@@ -1,4 +1,4 @@
-// archigraph_stub_detector MCP tool (#4425, epic #4419 capability F).
+// grafel_stub_detector MCP tool (#4425, epic #4419 capability F).
 //
 // Detects v3-rewrite endpoints that LOOK implemented (right path, right DTO,
 // green shape-tests) but return hardcoded / empty values where the behavioral
@@ -64,8 +64,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/stubdetector"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/stubdetector"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -94,7 +94,7 @@ const (
 // stripped, path-params → {*}) lives in endpoint_join.go and is SHARED with
 // auth_posture_diff so the two tools join identically (#4550).
 
-// handleStubDetector implements archigraph_stub_detector.
+// handleStubDetector implements grafel_stub_detector.
 func (s *Server) handleStubDetector(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	v3Group := argString(req, "group_v3", "")
 	oracleGroup := argString(req, "group_oracle", "")

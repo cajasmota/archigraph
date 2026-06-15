@@ -35,15 +35,15 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitMigrationEntitiesEnv controls whether Django migration files emit
 // Migration entities. Defaults to false (migrations are pruned). Set to "1"
 // or "true" to include migration entities in the output. This follows the
-// conservative-prune policy pattern (e.g., ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL).
-const emitMigrationEntitiesEnv = "ARCHIGRAPH_EMIT_MIGRATION_ENTITIES"
+// conservative-prune policy pattern (e.g., GRAFEL_EMIT_DESTRUCTURE_DETAIL).
+const emitMigrationEntitiesEnv = "GRAFEL_EMIT_MIGRATION_ENTITIES"
 
 func init() {
 	extractor.Register("python", &Extractor{})
@@ -141,7 +141,7 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	// as separate graph nodes.
 	//
 	// Issue #2548: Django migration files are now pruned by default (zero
-	// domain logic, pure ORM scaffolding). Opt-in via ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1
+	// domain logic, pure ORM scaffolding). Opt-in via GRAFEL_EMIT_MIGRATION_ENTITIES=1
 	// for backward compatibility or when migration analysis is needed.
 	//
 	// Issue #2587: Ensure the file-level check actually skips semantic entity
@@ -759,7 +759,7 @@ func walkNode(
 				emitPythonFieldValidations(body, file, childParent, classIdx, before, after, out)
 				// Issue #2816 — stamp the DRF class-level authorisation surface
 				// (permission_classes attribute + get_permissions override) onto
-				// the ViewSet/APIView entity so archigraph_auth_coverage can
+				// the ViewSet/APIView entity so grafel_auth_coverage can
 				// recognise class-level auth, not just per-method decorators.
 				applyDRFPermissionProperties(&(*out)[classIdx], body, file.Content)
 			}

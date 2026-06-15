@@ -6,7 +6,7 @@ package mcp
 //
 // #1773: on macOS the daemon holds fsnotify/fsevents watchers on every indexed
 // source tree. A raw os.Open on a path in such a tree can block indefinitely
-// inside the kernel, causing archigraph_get_source to always time out at
+// inside the kernel, causing grafel_get_source to always time out at
 // exactly 5.000s. The fix applies the same three-layer defense used in
 // internal/daemon/walk/gitignore.go (post-#1729):
 //

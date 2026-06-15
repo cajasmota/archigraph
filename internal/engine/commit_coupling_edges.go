@@ -91,8 +91,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/module"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/module"
 )
 
 // KindCommitCoupled is the relationship kind emitted by this pass.
@@ -347,7 +347,7 @@ func withDefaults(cfg CommitCouplingConfig) CommitCouplingConfig {
 //
 // Condition 2 prevents the commit-coupling pass from mining the surrounding
 // repo's git history when repoPath is a subdirectory of a larger git repo
-// (e.g. a test fixture nested inside the archigraph repo itself). In that
+// (e.g. a test fixture nested inside the grafel repo itself). In that
 // case git -C <subdir> walks up to the parent repo root, and the resulting
 // 1000+ commit history from the wrong repo would flood the document with
 // synthetic File entities for every file that has EVER appeared in the parent
@@ -404,7 +404,7 @@ func scanCommitHistory(repoPath string, cfg CommitCouplingConfig) ([]commitRecor
 	// ever decide to include them; for now it stays 0 by construction.
 	cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "log",
 		"--no-merges",
-		"--pretty=format:__archigraph_commit__:%H",
+		"--pretty=format:__grafel_commit__:%H",
 		"--name-only",
 	)
 	var stderr bytes.Buffer
@@ -435,16 +435,16 @@ func scanCommitHistory(repoPath string, cfg CommitCouplingConfig) ([]commitRecor
 // parseGitLog streams a `git log --name-only` formatted stream and groups
 // lines into commitRecord values. The format is:
 //
-//	__archigraph_commit__:<HASH>
+//	__grafel_commit__:<HASH>
 //	path/one
 //	path/two
 //	<blank line>
-//	__archigraph_commit__:<NEXT-HASH>
+//	__grafel_commit__:<NEXT-HASH>
 //	...
 //
 // Commits exceeding maxFiles are dropped and counted in stats.
 func parseGitLog(r io.Reader, maxFiles int, stats *CommitCouplingStats) ([]commitRecord, error) {
-	const marker = "__archigraph_commit__:"
+	const marker = "__grafel_commit__:"
 	sc := bufio.NewScanner(r)
 	// git log can produce long file lines and very long commit lists; raise
 	// the line buffer to 1 MiB so we never hit ErrTooLong on realistic repos.

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // TestDetect_TRPCClientCodegen proves client_codegen (#2865): the shipped

@@ -42,8 +42,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -110,7 +110,7 @@ var (
 )
 
 func (e *kotlinJPAMigrationExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_jpa_migration.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -318,7 +318,7 @@ var (
 )
 
 func (e *composeContextExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_compose_context.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -481,7 +481,7 @@ var (
 )
 
 func (e *composeDeepLinkExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_compose_deeplink.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -633,7 +633,7 @@ var (
 )
 
 func (e *kotlinNativeImportsExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_native_imports.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -823,7 +823,7 @@ func normalizeCond(s string) string {
 }
 
 func (e *kotlinBranchCondExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_branch_conditions.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

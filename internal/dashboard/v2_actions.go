@@ -13,7 +13,7 @@
 //	GET   /api/v2/jobs/{id}                               → job status/progress
 //	GET   /api/v2/jobs/{id}/stream                        → job SSE feed
 //	POST  /api/v2/maintenance/cleanup                     → preview/execute cleanup
-//	POST  /api/v2/update/apply                            → run `archigraph update`
+//	POST  /api/v2/update/apply                            → run `grafel update`
 //	POST  /api/v2/patterns/{group}/export                 → export approved patterns
 //	POST  /api/v2/patterns/{group}/gc                     → gc candidate patterns
 //
@@ -41,10 +41,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ func (s *Server) dispatchV2Rebuild(w http.ResponseWriter, group, repo string, wi
 		probe, err := client.Dial()
 		if err != nil {
 			writeV2Err(w, http.StatusServiceUnavailable, "unavailable",
-				"daemon not reachable — run 'archigraph start' first")
+				"daemon not reachable — run 'grafel start' first")
 			return
 		}
 		probe.Close()
@@ -200,14 +200,14 @@ func (s *Server) handleV2ResetRepoAsync(w http.ResponseWriter, r *http.Request) 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Maintenance cleanup — wraps `archigraph cleanup`
+// Maintenance cleanup — wraps `grafel cleanup`
 // ─────────────────────────────────────────────────────────────────────────────
 
 // handleV2Cleanup — POST /api/v2/maintenance/cleanup
 //
 // Body: { "dry_run": true } previews orphaned registry entries (default);
 // { "dry_run": false } removes them. Wraps the same registry scan the v1
-// /api/cleanup handler and the `archigraph cleanup` command perform.
+// /api/cleanup handler and the `grafel cleanup` command perform.
 func (s *Server) handleV2Cleanup(w http.ResponseWriter, r *http.Request) {
 	req := struct {
 		DryRun bool `json:"dry_run"`
@@ -262,10 +262,10 @@ func (s *Server) handleV2Cleanup(w http.ResponseWriter, r *http.Request) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Update apply — wraps `archigraph update`
+// Update apply — wraps `grafel update`
 // ─────────────────────────────────────────────────────────────────────────────
 
-// v2UpdateApplyReply is the result of running `archigraph update`.
+// v2UpdateApplyReply is the result of running `grafel update`.
 type v2UpdateApplyReply struct {
 	ExitCode int      `json:"exit_code"`
 	Output   []string `json:"output"`
@@ -274,7 +274,7 @@ type v2UpdateApplyReply struct {
 
 // handleV2UpdateApply — POST /api/v2/update/apply
 //
-// Runs `archigraph update` as a subprocess (so this daemon is not replaced
+// Runs `grafel update` as a subprocess (so this daemon is not replaced
 // mid-request) via the SAME defaultUpdateRunner the v1 SSE handler uses, and
 // returns the captured output in one JSON envelope. The version check is
 // already live at GET /api/updates/check.
@@ -292,7 +292,7 @@ func (s *Server) handleV2UpdateApply(w http.ResponseWriter, r *http.Request) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Patterns export / gc — wraps `archigraph patterns export|gc`
+// Patterns export / gc — wraps `grafel patterns export|gc`
 // ─────────────────────────────────────────────────────────────────────────────
 
 // handleV2PatternExport — POST /api/v2/patterns/{group}/export

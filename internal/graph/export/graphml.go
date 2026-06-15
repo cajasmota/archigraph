@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // graphmlKeys declares the <key> elements (the GraphML attribute schema) once

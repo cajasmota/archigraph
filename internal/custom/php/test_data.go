@@ -19,8 +19,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -60,7 +60,7 @@ var (
 )
 
 func (e *behatTestExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_behat_test.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),
@@ -184,7 +184,7 @@ var (
 )
 
 func (e *codeceptionTestExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_codeception_test.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),
@@ -306,7 +306,7 @@ var (
 )
 
 func (e *pestTestExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_pest_test.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),

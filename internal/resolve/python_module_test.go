@@ -3,7 +3,7 @@ package resolve
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestResolvePythonModuleImport_Basic(t *testing.T) {

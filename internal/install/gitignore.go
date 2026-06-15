@@ -10,11 +10,11 @@ import (
 	"strings"
 )
 
-// archigraphGitignoreEntry is the line we append to .gitignore when the
-// user runs `archigraph install` inside a git repo (issue #2207).
-const archigraphGitignoreEntry = "/.archigraph/"
+// grafelGitignoreEntry is the line we append to .gitignore when the
+// user runs `grafel install` inside a git repo (issue #2207).
+const grafelGitignoreEntry = "/.grafel/"
 
-// EnsureGitignore appends archigraphGitignoreEntry to the .gitignore at
+// EnsureGitignore appends grafelGitignoreEntry to the .gitignore at
 // repoRoot if it is not already present. It is idempotent: if the exact
 // entry already appears on any line of the file (modulo leading/trailing
 // whitespace), the file is not modified.
@@ -32,7 +32,7 @@ func EnsureGitignore(repoRoot string) (string, error) {
 	}
 
 	// Check whether the entry is already present.
-	if hasGitignoreEntry(existing, archigraphGitignoreEntry) {
+	if hasGitignoreEntry(existing, grafelGitignoreEntry) {
 		return gitignorePath, nil
 	}
 
@@ -43,7 +43,7 @@ func EnsureGitignore(repoRoot string) (string, error) {
 	if len(existing) > 0 && existing[len(existing)-1] != '\n' {
 		buf.WriteByte('\n')
 	}
-	buf.WriteString(archigraphGitignoreEntry)
+	buf.WriteString(grafelGitignoreEntry)
 	buf.WriteByte('\n')
 
 	if err := os.WriteFile(gitignorePath, buf.Bytes(), 0o644); err != nil {

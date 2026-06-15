@@ -22,5 +22,5 @@ description: >-
   Detects column-level ORM annotations/declarations and emits SCOPE.Schema
   entities with properties["columns"] containing name, type, nullable, unique,
   primary_key, and default per column. Covers 7 ORM frameworks.
-module: archigraph.engine.rules.pattern_detectors.column_schema_extractor
+module: grafel.engine.rules.pattern_detectors.column_schema_extractor
 class: ColumnSchemaExtractor

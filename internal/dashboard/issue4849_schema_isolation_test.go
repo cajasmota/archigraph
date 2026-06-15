@@ -37,7 +37,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // graphResp is a parsed /api/graph payload for assertion convenience.

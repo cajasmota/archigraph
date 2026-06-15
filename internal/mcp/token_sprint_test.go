@@ -4,11 +4,11 @@ package mcp
 // #1807 #1921). Covers:
 //
 //   - #1741 — fields= selection arg strips non-listed fields from records.
-//   - #1753 — archigraph_neighbors registered + direction=in|out|both works.
+//   - #1753 — grafel_neighbors registered + direction=in|out|both works.
 //   - #1753 — find_callers / find_callees remain registered as deprecated
 //     aliases (one-release grace per #2003 / #1765 policy).
 //   - #1807 / #1921 — min_score floored at 0.15; max_results capped at 200.
-//   - #1770 — `query` is canonical on archigraph_find; legacy "question" still
+//   - #1770 — `query` is canonical on grafel_find; legacy "question" still
 //     accepted but logs deprecation (test already exists in param_rename_test.go).
 //   - #1772 — registry mutation flips the surface signature and Reload reports
 //     surfaceChanged=true.
@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-// (#1753) archigraph_neighbors is registered with the canonical schema and
+// (#1753) grafel_neighbors is registered with the canonical schema and
 // direction param defaults to "both".
 func TestNeighborsToolRegistered(t *testing.T) {
 	dir := t.TempDir()
@@ -35,11 +35,11 @@ func TestNeighborsToolRegistered(t *testing.T) {
 		t.Fatal(err)
 	}
 	tools := srv.MCP.ListTools()
-	if _, ok := tools["archigraph_neighbors"]; !ok {
-		t.Fatal("archigraph_neighbors not registered")
+	if _, ok := tools["grafel_neighbors"]; !ok {
+		t.Fatal("grafel_neighbors not registered")
 	}
 	// find_callers + find_callees stay as deprecated aliases for one release.
-	for _, n := range []string{"archigraph_find_callers", "archigraph_find_callees"} {
+	for _, n := range []string{"grafel_find_callers", "grafel_find_callees"} {
 		if _, ok := tools[n]; !ok {
 			t.Errorf("deprecated alias %q must remain registered (one-release grace)", n)
 		}
@@ -52,7 +52,7 @@ func TestNeighborsDirection(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	// direction=in (callers)
-	res := callTool(t, srv, "archigraph_neighbors", map[string]any{
+	res := callTool(t, srv, "grafel_neighbors", map[string]any{
 		"group":     "g",
 		"entity_id": "r1::a2",
 		"direction": "in",
@@ -63,7 +63,7 @@ func TestNeighborsDirection(t *testing.T) {
 	}
 
 	// direction=out (callees)
-	res = callTool(t, srv, "archigraph_neighbors", map[string]any{
+	res = callTool(t, srv, "grafel_neighbors", map[string]any{
 		"group":     "g",
 		"entity_id": "r1::a2",
 		"direction": "out",
@@ -74,7 +74,7 @@ func TestNeighborsDirection(t *testing.T) {
 	}
 
 	// direction=both merges both
-	res = callTool(t, srv, "archigraph_neighbors", map[string]any{
+	res = callTool(t, srv, "grafel_neighbors", map[string]any{
 		"group":     "g",
 		"entity_id": "r1::a2",
 		"direction": "both",
@@ -90,7 +90,7 @@ func TestNeighborsDirection(t *testing.T) {
 func TestNeighborsDeprecatedAliasesStillWork(t *testing.T) {
 	srv := newSmokeSrv(t)
 
-	res := callTool(t, srv, "archigraph_find_callers", map[string]any{
+	res := callTool(t, srv, "grafel_find_callers", map[string]any{
 		"group":     "g",
 		"entity_id": "r1::a2",
 	})
@@ -101,7 +101,7 @@ func TestNeighborsDeprecatedAliasesStillWork(t *testing.T) {
 		t.Errorf("find_callers alias missing 'callers' key: %s", resultText(res))
 	}
 
-	res = callTool(t, srv, "archigraph_find_callees", map[string]any{
+	res = callTool(t, srv, "grafel_find_callees", map[string]any{
 		"group":     "g",
 		"entity_id": "r1::a2",
 	})
@@ -119,7 +119,7 @@ func TestFieldsSelectionStripsUnlistedKeys(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	// Baseline: no fields= → full record shape.
-	res := callTool(t, srv, "archigraph_search_entities", map[string]any{
+	res := callTool(t, srv, "grafel_search_entities", map[string]any{
 		"group": "g",
 		"query": "a",
 	})
@@ -129,7 +129,7 @@ func TestFieldsSelectionStripsUnlistedKeys(t *testing.T) {
 	}
 
 	// With fields=[name,entity_id] only.
-	res = callTool(t, srv, "archigraph_search_entities", map[string]any{
+	res = callTool(t, srv, "grafel_search_entities", map[string]any{
 		"group":  "g",
 		"query":  "a",
 		"fields": []any{"name", "entity_id"},
@@ -166,14 +166,14 @@ func TestFieldsSelectionStripsUnlistedKeys(t *testing.T) {
 	}
 }
 
-// (#1921) max_results hard ceiling on archigraph_find — even when the caller
+// (#1921) max_results hard ceiling on grafel_find — even when the caller
 // asks for more than 200, the response is capped. We can't easily construct a
 // 3,000-row fixture here, but we can verify the schema accepts max_results and
 // the call shape doesn't error.
 func TestFindAcceptsMaxResultsArg(t *testing.T) {
 	srv := newSmokeSrv(t)
 
-	res := callTool(t, srv, "archigraph_find", map[string]any{
+	res := callTool(t, srv, "grafel_find", map[string]any{
 		"group":       "g",
 		"query":       "a",
 		"max_results": 5,
@@ -183,7 +183,7 @@ func TestFindAcceptsMaxResultsArg(t *testing.T) {
 		t.Errorf("find with max_results=5 returned IsError: %s", resultText(res))
 	}
 	// Asking for 500 must be silently capped to 200 (no error).
-	res = callTool(t, srv, "archigraph_find", map[string]any{
+	res = callTool(t, srv, "grafel_find", map[string]any{
 		"group":       "g",
 		"query":       "a",
 		"max_results": 500,
@@ -200,7 +200,7 @@ func TestFindAcceptsMaxResultsArg(t *testing.T) {
 func TestFindMinScoreFloor(t *testing.T) {
 	srv := newSmokeSrv(t)
 
-	res := callTool(t, srv, "archigraph_find", map[string]any{
+	res := callTool(t, srv, "grafel_find", map[string]any{
 		"group":     "g",
 		"query":     "a",
 		"min_score": 0.01, // below floor — silently raised to 0.15

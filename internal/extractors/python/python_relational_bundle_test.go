@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // runPy is a small helper that runs the Python extractor on a snippet

@@ -18,8 +18,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ type phpTypeSystemExtractor struct{}
 func (e *phpTypeSystemExtractor) Language() string { return "custom_php_typesystem" }
 
 func (e *phpTypeSystemExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.php_typesystem_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -158,7 +158,7 @@ type phpObservabilityExtractor struct{}
 func (e *phpObservabilityExtractor) Language() string { return "custom_php_observability" }
 
 func (e *phpObservabilityExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.php_observability_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -240,7 +240,7 @@ var (
 )
 
 func (e *cakephpExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.cakephp_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -335,7 +335,7 @@ var (
 )
 
 func (e *codeigniterExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.codeigniter_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -418,7 +418,7 @@ var (
 )
 
 func (e *drupalExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.drupal_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -501,7 +501,7 @@ var (
 )
 
 func (e *laminasExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.laminas_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -593,7 +593,7 @@ var (
 )
 
 func (e *lumenExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.lumen_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -688,7 +688,7 @@ var (
 )
 
 func (e *magentoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.magento_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -781,7 +781,7 @@ var (
 )
 
 func (e *phalconExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.phalcon_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -876,7 +876,7 @@ var (
 )
 
 func (e *slimExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.slim_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -973,7 +973,7 @@ var (
 )
 
 func (e *wordpressExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.wordpress_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -1092,7 +1092,7 @@ var (
 )
 
 func (e *yiiExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.yii_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

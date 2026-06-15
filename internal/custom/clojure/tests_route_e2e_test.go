@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // #4749 — the Clojure route-hit extractor emits one test_suite per clojure.test

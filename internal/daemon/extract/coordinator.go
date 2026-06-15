@@ -16,13 +16,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/classifier"
-	"github.com/cajasmota/archigraph/internal/daemon/caps"
-	"github.com/cajasmota/archigraph/internal/engine"
-	bazelextract "github.com/cajasmota/archigraph/internal/extractors/bazel"
-	configextract "github.com/cajasmota/archigraph/internal/extractors/config"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/classifier"
+	"github.com/cajasmota/grafel/internal/daemon/caps"
+	"github.com/cajasmota/grafel/internal/engine"
+	bazelextract "github.com/cajasmota/grafel/internal/extractors/bazel"
+	configextract "github.com/cajasmota/grafel/internal/extractors/config"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // CoordinatorConfig governs subprocess fan-out. Defaults are tuned to
@@ -33,7 +33,7 @@ import (
 //
 // All fields zero-valued fall back to defaults.
 type CoordinatorConfig struct {
-	// BinaryPath is the absolute path of the archigraph binary the
+	// BinaryPath is the absolute path of the grafel binary the
 	// daemon should fork-exec to. When empty the coordinator uses
 	// os.Executable(), which on Linux/macOS resolves to the same binary
 	// the daemon process is running from.
@@ -58,23 +58,23 @@ type CoordinatorConfig struct {
 	Stderr io.Writer
 
 	// Interactive marks this extraction as an explicit, user-triggered
-	// foreground rebuild (e.g. `archigraph rebuild` / `archigraph index`)
+	// foreground rebuild (e.g. `grafel rebuild` / `grafel index`)
 	// rather than a background watch/churn-triggered reindex (#5135).
 	//
 	// The #5134 CPU cap (a low per-subprocess GOMAXPROCS, default 2) exists
 	// to stop continuous background reindexes from saturating a shared host.
 	// But applying that same low cap to an EXPLICIT rebuild makes the thing
 	// the user is actively waiting on needlessly slow. When Interactive is
-	// true the coordinator uses the higher ARCHIGRAPH_REBUILD_GOMAXPROCS cap
+	// true the coordinator uses the higher GRAFEL_REBUILD_GOMAXPROCS cap
 	// (default = host core count) and the rebuild fan-out concurrency, so the
 	// foreground rebuild runs fast; only the throttled background path keeps
-	// the conservative ARCHIGRAPH_EXTRACT_GOMAXPROCS=2 default.
+	// the conservative GRAFEL_EXTRACT_GOMAXPROCS=2 default.
 	Interactive bool
 }
 
 // runtimeCaps is the process-wide runtime-reloadable cap store (#5137). The
 // daemon installs a real *caps.Store at startup (NewStore(layout.Root/cpu.json));
-// when nil — non-daemon callers, plain `archigraph index` subprocesses, tests —
+// when nil — non-daemon callers, plain `grafel index` subprocesses, tests —
 // the config-file tier is simply skipped and resolution falls through to
 // env → default exactly as before #5137. Guarded by runtimeCapsMu so the
 // SIGHUP handler and the scheduler worker pool can touch it concurrently.
@@ -112,7 +112,7 @@ func (c CoordinatorConfig) concurrency() int {
 		return c.Concurrency
 	}
 	// Emergency runtime override (no redeploy needed once this build ships):
-	// ARCHIGRAPH_EXTRACT_CONCURRENCY caps the number of concurrent extract
+	// GRAFEL_EXTRACT_CONCURRENCY caps the number of concurrent extract
 	// subprocesses. Used to throttle the daemon on shared/contended machines
 	// where a high-churn repo (merge-every-few-minutes) would otherwise drive
 	// continuous full-reindex fan-out (#3648). It applies to BOTH paths — an
@@ -122,7 +122,7 @@ func (c CoordinatorConfig) concurrency() int {
 	// #5137: env wins over the runtime-reloadable cpu.json, which wins over the
 	// auto-tuned default. Editing cpu.json takes effect on the NEXT reindex with
 	// no daemon restart.
-	if n := envPositiveInt("ARCHIGRAPH_EXTRACT_CONCURRENCY"); n > 0 {
+	if n := envPositiveInt("GRAFEL_EXTRACT_CONCURRENCY"); n > 0 {
 		return n
 	}
 	if n := loadRuntimeCaps().ExtractConcurrencyValue(); n > 0 {
@@ -148,7 +148,7 @@ func (c CoordinatorConfig) concurrency() int {
 }
 
 // extractGOMAXPROCS returns the per-subprocess GOMAXPROCS cap. Each extract
-// subprocess is a full archigraph process; without this it inherits the
+// subprocess is a full grafel process; without this it inherits the
 // daemon's GOMAXPROCS (= host core count) and the Go runtime spins one OS
 // thread per core. With concurrency() subprocesses running in parallel the
 // effective CPU draw becomes concurrency × hostCores, which is the observed
@@ -157,15 +157,15 @@ func (c CoordinatorConfig) concurrency() int {
 // Bounding each child to a small GOMAXPROCS keeps total extract CPU at roughly
 // concurrency × cap cores, leaving headroom for the consuming repo's CI.
 //
-//	ARCHIGRAPH_EXTRACT_GOMAXPROCS overrides the per-child value.
+//	GRAFEL_EXTRACT_GOMAXPROCS overrides the per-child value.
 //	Default: 2 (so 4 children × 2 = ~8 worker threads worst-case, vs the
 //	         previous unbounded 4 × hostCores).
 //
 // #5135: this is the BACKGROUND (watch/churn-triggered) cap. Explicit
 // foreground rebuilds use childGOMAXPROCS() with Interactive=true, which
-// resolves the higher ARCHIGRAPH_REBUILD_GOMAXPROCS instead.
+// resolves the higher GRAFEL_REBUILD_GOMAXPROCS instead.
 func extractGOMAXPROCS() int {
-	if n := envPositiveInt("ARCHIGRAPH_EXTRACT_GOMAXPROCS"); n > 0 {
+	if n := envPositiveInt("GRAFEL_EXTRACT_GOMAXPROCS"); n > 0 {
 		return n
 	}
 	// #5137: runtime-reloadable cpu.json override (env > file > default).
@@ -180,10 +180,10 @@ func extractGOMAXPROCS() int {
 // these, so they should run at host speed — only background churn reindexes
 // are throttled by the conservative extractGOMAXPROCS() default.
 //
-//	ARCHIGRAPH_REBUILD_GOMAXPROCS overrides the per-child value.
+//	GRAFEL_REBUILD_GOMAXPROCS overrides the per-child value.
 //	Default: host core count (runtime.NumCPU()), i.e. effectively uncapped.
 func rebuildGOMAXPROCS() int {
-	if n := envPositiveInt("ARCHIGRAPH_REBUILD_GOMAXPROCS"); n > 0 {
+	if n := envPositiveInt("GRAFEL_REBUILD_GOMAXPROCS"); n > 0 {
 		return n
 	}
 	// #5137: runtime-reloadable cpu.json override (env > file > default).
@@ -267,7 +267,7 @@ type Result struct {
 //  2. Classifies each file to determine the per-language bucket.
 //  3. Partitions files into batches of cfg.BatchSize.
 //  4. Spawns up to cfg.Concurrency subprocesses, each running the
-//     `archigraph extract` subcommand against one batch.
+//     `grafel extract` subcommand against one batch.
 //  5. Streams JSONL envelopes from every subprocess's stdout and folds
 //     them into a single Result.
 //
@@ -282,7 +282,7 @@ func Coordinate(ctx context.Context, repoRoot string, files []string, cfg Coordi
 	if bin == "" {
 		exe, err := os.Executable()
 		if err != nil {
-			return nil, fmt.Errorf("resolve archigraph binary: %w", err)
+			return nil, fmt.Errorf("resolve grafel binary: %w", err)
 		}
 		bin = exe
 	}
@@ -298,7 +298,7 @@ func Coordinate(ctx context.Context, repoRoot string, files []string, cfg Coordi
 	if tmpDir == "" {
 		tmpDir = os.TempDir()
 	}
-	batchDir, err := os.MkdirTemp(tmpDir, "archigraph-extract-")
+	batchDir, err := os.MkdirTemp(tmpDir, "grafel-extract-")
 	if err != nil {
 		return nil, fmt.Errorf("create batch dir: %w", err)
 	}
@@ -745,7 +745,7 @@ func decodeStream(r io.Reader) ([]types.EntityRecord, []types.RelationshipRecord
 }
 
 // sortEntityRecords / sortRelationshipRecords mirror the helpers in
-// cmd/archigraph/index.go so the merged record set is byte-identical to
+// cmd/grafel/index.go so the merged record set is byte-identical to
 // the in-process pipeline's. Kept in this package (rather than imported)
 // so the coordinator does not introduce an internal/daemon → cmd cycle.
 func sortEntityRecords(s []types.EntityRecord) {

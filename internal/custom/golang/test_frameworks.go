@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // test_frameworks.go — custom extractors for Go test-framework constructs that
@@ -307,7 +307,7 @@ var (
 )
 
 func (e *testifyExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/golang")
+	tracer := otel.Tracer("grafel/custom/golang")
 	_, span := tracer.Start(ctx, "indexer.testify_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -405,7 +405,7 @@ var (
 )
 
 func (e *ginkgoExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/golang")
+	tracer := otel.Tracer("grafel/custom/golang")
 	_, span := tracer.Start(ctx, "indexer.ginkgo_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -477,7 +477,7 @@ var (
 )
 
 func (e *gomegaExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/golang")
+	tracer := otel.Tracer("grafel/custom/golang")
 	_, span := tracer.Start(ctx, "indexer.gomega_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

@@ -1,4 +1,4 @@
-// archigraph_contract_test_effectiveness MCP tool (#4893, epic #4419).
+// grafel_contract_test_effectiveness MCP tool (#4893, epic #4419).
 //
 // Flags test/spec entities whose assertions are ORACLE-BLIND / tautological and
 // therefore FALSE-GREEN the parity gate: a green spec is taken as a witness that
@@ -60,9 +60,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/substrate"
-	"github.com/cajasmota/archigraph/internal/tautology"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/substrate"
+	"github.com/cajasmota/grafel/internal/tautology"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -71,7 +71,7 @@ import (
 // pathological entity span can never become a whole-file dump.
 const tautologyMaxSpecSourceLines = 600
 
-// handleContractTestEffectiveness implements archigraph_contract_test_effectiveness.
+// handleContractTestEffectiveness implements grafel_contract_test_effectiveness.
 func (s *Server) handleContractTestEffectiveness(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {

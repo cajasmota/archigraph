@@ -9,8 +9,8 @@ import (
 
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/cajasmota/archigraph/internal/classifier"
-	"github.com/cajasmota/archigraph/internal/extractors"
+	"github.com/cajasmota/grafel/internal/classifier"
+	"github.com/cajasmota/grafel/internal/extractors"
 )
 
 // newTestClassifier creates a Classifier backed by the in-repo hermetic YAML
@@ -336,7 +336,7 @@ func TestClassify_EmptyFilename_HandledGracefully(t *testing.T) {
 
 // hermeticYAMLDir returns the path to the in-repo YAML fixture shipped under
 // testdata/yaml. It is the hermetic replacement for the Python reference clone
-// at /tmp/archigraph-ref and contains the minimal skip_patterns.yaml
+// at /tmp/grafel-ref and contains the minimal skip_patterns.yaml
 // files needed to exercise glob-skip behaviour.
 func hermeticYAMLDir(t *testing.T) string {
 	t.Helper()

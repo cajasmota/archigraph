@@ -1,4 +1,4 @@
-// archigraph_security_findings MCP tool (#2772 Phase 2B substrate).
+// grafel_security_findings MCP tool (#2772 Phase 2B substrate).
 //
 // Returns the SecurityFinding records produced by the taint-flow pass
 // (internal/links/taint_flow.go), ranked by confidence. Filters by
@@ -44,19 +44,19 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/links"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/links"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
 // defaultMinFindingConfidence is the floor applied when the caller does
-// not specify min_confidence. Chosen to match the archigraph-security-
+// not specify min_confidence. Chosen to match the grafel-security-
 // audit skill's auto-submit threshold so findings surfaced here are the
 // same set the skill would auto-confirm.
 const defaultMinFindingConfidence = 0.7
 
-// handleSecurityFindings implements archigraph_security_findings. Args:
+// handleSecurityFindings implements grafel_security_findings. Args:
 //   - category        (optional): filter to one of the TaintCategory* keys
 //   - min_confidence  (optional, default 0.7): lower bound, in [0, 1]
 //   - limit           (optional, default 50): cap on returned findings

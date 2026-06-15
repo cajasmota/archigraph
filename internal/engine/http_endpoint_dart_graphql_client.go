@@ -49,7 +49,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // dartGqlDocRe matches a `gql(<string-literal>)` call in Dart and captures the

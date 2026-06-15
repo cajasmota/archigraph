@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/jobs"
+	"github.com/cajasmota/grafel/internal/jobs"
 )
 
 // TestHandleEnrichmentProgress_noQueue returns 200 with empty tiers when no

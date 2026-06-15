@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/install"
+	"github.com/cajasmota/grafel/internal/install"
 )
 
 // TestInstallPrePushHook_HappyPath verifies that the pre-push hook is written
@@ -52,7 +52,7 @@ func TestInstallPrePushHook_Idempotent(t *testing.T) {
 	content := string(data)
 
 	// Count occurrences of the managed block marker.
-	count := strings.Count(content, "# >>> archigraph pre-push >>>")
+	count := strings.Count(content, "# >>> grafel pre-push >>>")
 	if count != 1 {
 		t.Errorf("expected exactly 1 managed block, found %d\ncontent: %q", count, content)
 	}
@@ -92,7 +92,7 @@ func TestInstallPrePushHook_PreservesExistingContent(t *testing.T) {
 	}
 
 	// Managed block must also be present.
-	if !strings.Contains(content, "# >>> archigraph pre-push >>>") {
+	if !strings.Contains(content, "# >>> grafel pre-push >>>") {
 		t.Errorf("managed block not found; got: %q", content)
 	}
 }
@@ -186,10 +186,10 @@ func TestInstallGitHooks_Idempotent(t *testing.T) {
 
 	hooksDir := filepath.Join(repoDir, ".git", "hooks")
 	for hookName, marker := range map[string]string{
-		"pre-push":      "# >>> archigraph pre-push >>>",
-		"post-checkout": "# >>> archigraph post-checkout >>>",
-		"post-merge":    "# >>> archigraph post-merge >>>",
-		"post-rewrite":  "# >>> archigraph post-rewrite >>>",
+		"pre-push":      "# >>> grafel pre-push >>>",
+		"post-checkout": "# >>> grafel post-checkout >>>",
+		"post-merge":    "# >>> grafel post-merge >>>",
+		"post-rewrite":  "# >>> grafel post-rewrite >>>",
 	} {
 		hookPath := filepath.Join(hooksDir, hookName)
 		data, err := os.ReadFile(hookPath)
@@ -204,7 +204,7 @@ func TestInstallGitHooks_Idempotent(t *testing.T) {
 }
 
 // TestInstallGitHooks_PreservesExistingContent verifies that pre-existing hook
-// content is preserved and the archigraph block is appended.
+// content is preserved and the grafel block is appended.
 func TestInstallGitHooks_PreservesExistingContent(t *testing.T) {
 	repoDir := makeGitRepo(t)
 
@@ -334,7 +334,7 @@ func TestInstallGitHooks_DoesNotBreakPrePush(t *testing.T) {
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 // assertHookExists checks that a hook file exists, is executable, and contains
-// the archigraph managed block markers.
+// the grafel managed block markers.
 func assertHookExists(t *testing.T, hookName, hookPath string) {
 	t.Helper()
 
@@ -357,8 +357,8 @@ func assertHookExists(t *testing.T, hookName, hookPath string) {
 		t.Errorf("%s hook does not start with shebang", hookName)
 	}
 
-	beginMarker := "# >>> archigraph " + hookName + " >>>"
-	endMarker := "# <<< archigraph " + hookName + " <<<"
+	beginMarker := "# >>> grafel " + hookName + " >>>"
+	endMarker := "# <<< grafel " + hookName + " <<<"
 	if !strings.Contains(content, beginMarker) {
 		t.Errorf("%s hook missing begin marker %q; content: %q", hookName, beginMarker, content)
 	}
@@ -389,7 +389,7 @@ func makeGitRepo(t *testing.T) string {
 }
 
 // assertPrePushHookExists checks that the hook file exists, is executable,
-// and contains the archigraph managed block.
+// and contains the grafel managed block.
 func assertPrePushHookExists(t *testing.T, hookPath string) {
 	t.Helper()
 
@@ -415,15 +415,15 @@ func assertPrePushHookExists(t *testing.T, hookPath string) {
 	}
 
 	// Must contain managed block markers.
-	if !strings.Contains(content, "# >>> archigraph pre-push >>>") {
+	if !strings.Contains(content, "# >>> grafel pre-push >>>") {
 		t.Errorf("pre-push hook missing begin marker; content: %q", content)
 	}
-	if !strings.Contains(content, "# <<< archigraph pre-push <<<") {
+	if !strings.Contains(content, "# <<< grafel pre-push <<<") {
 		t.Errorf("pre-push hook missing end marker; content: %q", content)
 	}
 
-	// Must reference archigraph doctor.
-	if !strings.Contains(content, "archigraph doctor") {
-		t.Errorf("pre-push hook does not call archigraph doctor; content: %q", content)
+	// Must reference grafel doctor.
+	if !strings.Contains(content, "grafel doctor") {
+		t.Errorf("pre-push hook does not call grafel doctor; content: %q", content)
 	}
 }

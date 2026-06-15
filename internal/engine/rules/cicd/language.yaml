@@ -32,7 +32,7 @@ meta:
     a single .gitlab-ci.yml at repo root; CircleCI uses .circleci/config.yml; Bitbucket
     uses bitbucket-pipelines.yml; Azure uses azure-pipelines.yml; Travis uses .travis.yml;
     Buildkite uses .buildkite/pipeline.yml. Entities extracted from these files map
-    to archigraph SCOPE: Pipeline → Service, Job → Operation, Workflow → Component. Jenkinsfile
+    to grafel SCOPE: Pipeline → Service, Job → Operation, Workflow → Component. Jenkinsfile
     (Groovy) is covered (excluded from this research).
 
     '

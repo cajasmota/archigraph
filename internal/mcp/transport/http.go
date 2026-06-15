@@ -21,7 +21,7 @@ import (
 // This transport's SECURITY MODEL IS UNRATIFIED. Enabling it in production
 // requires maintainer/security sign-off (ADR-0022 "Decisions for the
 // maintainer"). The shipped authenticator is a stub.
-const EnvHTTPMCP = "ARCHIGRAPH_HTTP_MCP"
+const EnvHTTPMCP = "GRAFEL_HTTP_MCP"
 
 // HTTPEnabled reports whether the HTTP MCP transport feature flag is switched
 // on. Default OFF: only "1", "true", "on", "yes" (case-insensitive) enable it.
@@ -65,7 +65,7 @@ type HTTPConfig struct {
 
 // HTTPTransport is a feature-flagged, OFF-BY-DEFAULT Streamable-HTTP MCP
 // transport (ADR-0022, #4296). It wraps mcp-go's StreamableHTTPServer (an
-// http.Handler) behind an authentication middleware, on archigraph's own
+// http.Handler) behind an authentication middleware, on grafel's own
 // *http.Server so the auth choke point is in front of every MCP request.
 //
 // It is NOT wired into the default daemon path. Construction is gated by the

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // EmbeddingTextVersion is bumped whenever the embed-text construction below

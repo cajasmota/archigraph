@@ -50,7 +50,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // pyInstrHit captures one non-OTel instrumentation site (span or metric).

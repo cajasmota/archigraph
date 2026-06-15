@@ -23,8 +23,8 @@ package dashboard
 import (
 	"net/http"
 
-	"github.com/cajasmota/archigraph/internal/enrichment"
-	"github.com/cajasmota/archigraph/internal/jobs"
+	"github.com/cajasmota/grafel/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/jobs"
 )
 
 // estimateTier is the per-band breakdown in the estimate response.

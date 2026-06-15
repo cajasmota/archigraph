@@ -1,5 +1,5 @@
 // Package patterns implements language-agnostic pattern detectors for the
-// archigraph pipeline.  Each detector is a pure regex-based scanner
+// grafel pipeline.  Each detector is a pure regex-based scanner
 // that runs on every file regardless of language (the extractor.Extractor
 // interface covers language-specific AST extraction; this package covers
 // cross-cutting semantic signals).
@@ -9,7 +9,7 @@
 //
 // Usage:
 //
-//	import _ "github.com/cajasmota/archigraph/internal/patterns"
+//	import _ "github.com/cajasmota/grafel/internal/patterns"
 //
 //	detectors := patterns.All()
 //	for _, d := range detectors {

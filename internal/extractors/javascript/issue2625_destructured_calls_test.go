@@ -20,7 +20,7 @@ import (
 //	const handler = () => { softLogout(); };
 //
 // Must emit CALLS handler → softLogout with Properties["via"] = "zustand_store".
-// Issue #2625: real failure — archigraph_neighbors(handleLogout) returned 0 callees.
+// Issue #2625: real failure — grafel_neighbors(handleLogout) returned 0 callees.
 func TestTSExtractor_DestructuredZustandSelector_EmitsCallsEdge(t *testing.T) {
 	src := `
 import { create } from 'zustand';

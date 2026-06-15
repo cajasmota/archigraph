@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -15,16 +15,16 @@ import (
 // docstate unit tests
 // ---------------------------------------------------------------------------
 
-// setTestHome sets both HOME and ARCHIGRAPH_HOME so that docstate functions
+// setTestHome sets both HOME and GRAFEL_HOME so that docstate functions
 // write to the test's temporary directory on all platforms.
 //
 // On Windows, os.UserHomeDir() reads USERPROFILE (not HOME), so setting only
-// HOME is insufficient. ARCHIGRAPH_HOME is checked first by defaultDocstateDir
+// HOME is insufficient. GRAFEL_HOME is checked first by defaultDocstateDir
 // and sidesteps the platform difference entirely.
 func setTestHome(t *testing.T, dir string) {
 	t.Helper()
 	t.Setenv("HOME", dir)
-	t.Setenv("ARCHIGRAPH_HOME", filepath.Join(dir, ".archigraph"))
+	t.Setenv("GRAFEL_HOME", filepath.Join(dir, ".grafel"))
 }
 
 func TestLoadDocgenState_absent(t *testing.T) {
@@ -78,7 +78,7 @@ func TestComputeDocState_neverGenerated(t *testing.T) {
 	if res.DocumentationState != "never_generated" {
 		t.Errorf("state: got %q want never_generated", res.DocumentationState)
 	}
-	if res.SuggestedAction != "run /archigraph-tech-docs" {
+	if res.SuggestedAction != "run /grafel-tech-docs" {
 		t.Errorf("action: got %q", res.SuggestedAction)
 	}
 	if res.LastDocgenAt != nil {
@@ -166,7 +166,7 @@ func TestComposeSuggestedAction_transitions(t *testing.T) {
 		{
 			name:          "never_generated",
 			docState:      DocStateResult{DocumentationState: "never_generated"},
-			wantSubstring: "run /archigraph-tech-docs",
+			wantSubstring: "run /grafel-tech-docs",
 		},
 		{
 			name:          "stale",
@@ -215,13 +215,13 @@ func TestComposeSuggestedAction_transitions(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Integration: archigraph_whoami returns enriched response
+// Integration: grafel_whoami returns enriched response
 // ---------------------------------------------------------------------------
 
 func TestHandleWhoami_enrichedResponse_neverGenerated(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "") // ensure nudge enabled
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "") // ensure nudge enabled
 
 	repoDir := filepath.Join(tmp, "repo-a")
 	doc := fixtureDoc("repo-a")
@@ -249,13 +249,13 @@ func TestHandleWhoami_enrichedResponse_neverGenerated(t *testing.T) {
 	out := extractResultJSON(t, res)
 
 	checkField(t, out, "documentation_state", "never_generated")
-	checkField(t, out, "suggested_action", "run /archigraph-tech-docs")
+	checkField(t, out, "suggested_action", "run /grafel-tech-docs")
 }
 
 func TestHandleWhoami_enrichedResponse_afterDocgen_fresh(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "")
 
 	repoDir := filepath.Join(tmp, "repo-a")
 	doc := fixtureDoc("repo-a")
@@ -293,7 +293,7 @@ func TestHandleWhoami_enrichedResponse_afterDocgen_fresh(t *testing.T) {
 func TestHandleWhoami_enrichedResponse_stale(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "")
 
 	// Write a source file to the repo dir.
 	repoDir := filepath.Join(tmp, "repo-a")
@@ -348,7 +348,7 @@ func TestHandleWhoami_enrichedResponse_stale(t *testing.T) {
 func TestHandleWhoami_quietMode(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "quiet")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "quiet")
 
 	repoDir := filepath.Join(tmp, "repo-a")
 	doc := fixtureDoc("repo-a")
@@ -384,7 +384,7 @@ func TestHandleWhoami_quietMode(t *testing.T) {
 // wire_version field
 // ---------------------------------------------------------------------------
 
-// TestHandleWhoami_wireVersion asserts that archigraph_whoami always returns
+// TestHandleWhoami_wireVersion asserts that grafel_whoami always returns
 // a non-empty wire_version field, both in normal mode and in quiet mode.
 func TestHandleWhoami_wireVersion(t *testing.T) {
 	for _, quiet := range []string{"", "quiet"} {
@@ -396,7 +396,7 @@ func TestHandleWhoami_wireVersion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			tmp := t.TempDir()
 			setTestHome(t, tmp)
-			t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", quiet)
+			t.Setenv("GRAFEL_WHOAMI_NUDGE", quiet)
 
 			repoDir := filepath.Join(tmp, "repo-a")
 			doc := fixtureDoc("repo-a")
@@ -450,13 +450,13 @@ func checkField(t *testing.T, m map[string]any, key, want string) {
 // Fix #1 — whoami docgen-trap: entity/relationship/tests_edges counts
 // ---------------------------------------------------------------------------
 
-// TestHandleWhoami_indexCounts asserts that archigraph_whoami always returns
+// TestHandleWhoami_indexCounts asserts that grafel_whoami always returns
 // entity_count, relationship_count, and an index{} block even when no docgen
 // has ever been run — so a fully-indexed group is never mistaken for empty.
 func TestHandleWhoami_indexCounts(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "") // normal mode
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "") // normal mode
 
 	// Build a graph with 4 entities, 3 edges (2 CALLS + 1 TESTS).
 	repoDir := filepath.Join(tmp, "repo-a")
@@ -537,11 +537,11 @@ func TestHandleWhoami_indexCounts(t *testing.T) {
 }
 
 // TestHandleWhoami_indexCounts_multiRepo asserts that entity/relationship counts
-// aggregate across all repos in the group, matching archigraph_stats behaviour.
+// aggregate across all repos in the group, matching grafel_stats behaviour.
 func TestHandleWhoami_indexCounts_multiRepo(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "")
 
 	repoADir := filepath.Join(tmp, "repo-a")
 	repoBDir := filepath.Join(tmp, "repo-b")
@@ -602,11 +602,11 @@ func TestHandleWhoami_indexCounts_multiRepo(t *testing.T) {
 }
 
 // TestHandleWhoami_indexCounts_quietMode asserts that index counts are NOT
-// present when ARCHIGRAPH_WHOAMI_NUDGE=quiet (early return path).
+// present when GRAFEL_WHOAMI_NUDGE=quiet (early return path).
 func TestHandleWhoami_indexCounts_quietMode(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "quiet")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "quiet")
 
 	repoDir := filepath.Join(tmp, "repo-a")
 	doc := fixtureDoc("repo-a")
@@ -642,7 +642,7 @@ func TestHandleWhoami_indexCounts_quietMode(t *testing.T) {
 func TestLoadedRepo_testsEdgeCachePopulated(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "")
 
 	repoDir := filepath.Join(tmp, "repo-cache")
 	doc := &graph.Document{
@@ -724,7 +724,7 @@ func TestLoadedRepo_testsEdgeCachePopulated(t *testing.T) {
 func TestHandleWhoami_explicitGroup_indexState(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "")
 
 	// Two groups, each with a different repo and entity count.
 	repoAlphaDir := filepath.Join(tmp, "repo-alpha")
@@ -811,7 +811,7 @@ func TestHandleWhoami_explicitGroup_indexState(t *testing.T) {
 func TestHandleWhoami_indexedSHAFromGraph(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "")
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "")
 
 	const wantSHA = "cafebabe1234"
 	const wantRef = "feat/perf-fix-3372"

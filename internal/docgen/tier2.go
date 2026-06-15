@@ -6,7 +6,7 @@
 //
 // CLI usage:
 //
-//	archigraph docgen --tier=2 \
+//	grafel docgen --tier=2 \
 //	  --group=<g> \
 //	  --seed-entity=<capability-id> \
 //	  --max-pages=5
@@ -21,7 +21,7 @@
 //
 // Output layout:
 //
-//	~/.archigraph/docs/<group>/.tier2-<RFC3339>/
+//	~/.grafel/docs/<group>/.tier2-<RFC3339>/
 //	    <entity-id>-page.md   — one per page in the slice
 //	    score.json            — slice-level Tier 2 score
 //
@@ -43,7 +43,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // MermaidBudgetSlice is the maximum total mermaid blocks allowed across the
@@ -62,7 +62,7 @@ var OutboundRelKinds = map[string]bool{
 
 // Tier2RunOpts contains the resolved inputs for a Tier 2 run.
 type Tier2RunOpts struct {
-	// Group is the archigraph group name.
+	// Group is the grafel group name.
 	Group string
 	// SeedEntityID is the capability entity to use as the slice seed.
 	SeedEntityID string
@@ -71,7 +71,7 @@ type Tier2RunOpts struct {
 	MaxPages int
 	// MermaidBudget overrides MermaidBudgetSlice for the run.
 	MermaidBudget int
-	// OutputDir overrides the default ~/.archigraph/docs/<group>/.tier2-<ts>/
+	// OutputDir overrides the default ~/.grafel/docs/<group>/.tier2-<ts>/
 	// location. Useful in tests.
 	OutputDir string
 	// ConcurrencyLimit controls the goroutine pool used per Tier 1 page render.
@@ -343,7 +343,7 @@ func pickSliceEntities(group, seedID string, maxPages int) ([]string, error) {
 // resolveEntity finds an entity by exact ID, then by prefix/suffix.
 // It normalises seedID via normalizeSeedEntityID so callers can pass either
 // the raw hex ("7a349f6cd77984c9") or the prefixed form returned by
-// archigraph_find ("archigraph::7a349f6cd77984c9", "upvate-core::7a349f6cd77984c9").
+// grafel_find ("grafel::7a349f6cd77984c9", "upvate-core::7a349f6cd77984c9").
 func resolveEntity(byID map[string]*graph.Entity, seedID string) *graph.Entity {
 	// Strip optional <group>:: prefix — ignore error, fall through to raw lookup.
 	if norm, err := normalizeSeedEntityID(seedID); err == nil {
@@ -497,7 +497,7 @@ func violationStrings(vs []Violation) []string {
 // Path helpers
 // ---------------------------------------------------------------------------
 
-// defaultTier2OutDir returns ~/.archigraph/docs/<group>/.tier2-<ts>/.
+// defaultTier2OutDir returns ~/.grafel/docs/<group>/.tier2-<ts>/.
 func defaultTier2OutDir(group string) (string, error) {
 	home, err := tier1HomeDir() // reuse tier1's homeDir resolution
 	if err != nil {

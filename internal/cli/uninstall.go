@@ -6,13 +6,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/service"
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
 )
 
-// unregisterMCPFromClaudeConfigs removes the archigraph MCP entry from all
+// unregisterMCPFromClaudeConfigs removes the grafel MCP entry from all
 // detected Claude Code config directories. It's extracted into a separate
 // function so it can be tested independently of service.Uninstall, which
 // requires OS permissions.
@@ -38,7 +38,7 @@ func unregisterMCPFromClaudeConfigs(out io.Writer, claudeConfigDirs []string) []
 	return removed
 }
 
-// removeSkillsFromClaudeConfigs removes the symlinked archigraph skills from
+// removeSkillsFromClaudeConfigs removes the symlinked grafel skills from
 // every detected Claude Code config directory. It's extracted into a separate
 // function so it can be tested independently of service.Uninstall.
 //
@@ -49,12 +49,12 @@ func removeSkillsFromClaudeConfigs(out io.Writer, claudeConfigDirs []string) []s
 	return skilllink.RemoveSkillsFromClaudeConfigs(out, claudeDirs)
 }
 
-// newUninstallCmd returns the `archigraph uninstall` subcommand.
+// newUninstallCmd returns the `grafel uninstall` subcommand.
 //
 // Per ADR-0017 Phase C the old "remove from a group" semantic is
-// REMOVED. `archigraph uninstall` now stops and deregisters the
+// REMOVED. `grafel uninstall` now stops and deregisters the
 // daemon OS service (launchd plist / systemd unit) and removes the
-// archigraph MCP entry from every detected Claude config dir.
+// grafel MCP entry from every detected Claude config dir.
 // Idempotent: if the service is not installed the command succeeds silently.
 //
 // When install.json is present (new COPY/DEV install path, #2213), the
@@ -71,23 +71,23 @@ func newUninstallCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "uninstall",
-		Short: "Remove the archigraph install (daemon, MCP, skills)",
-		Long: `Uninstall tears down the archigraph install:
+		Short: "Remove the grafel install (daemon, MCP, skills)",
+		Long: `Uninstall tears down the grafel install:
 
   - Removes copied/linked skills from ~/.claude/skills/ (only those in install.json)
-  - Deregisters the archigraph MCP entry from all detected .claude.json files
+  - Deregisters the grafel MCP entry from all detected .claude.json files
   - Stops the daemon and removes its OS service unit (launchd/systemd/schtasks),
     socket, and pidfile
 
 Default: leaves the installed CLI binary in place so a subsequent
-'archigraph install'/'archigraph start' works without re-downloading or
+'grafel install'/'grafel start' works without re-downloading or
 rebuilding it. Use --remove-binary to also delete the binary (with
 confirmation unless --yes).
 
-Default: leaves ~/.archigraph/store/ (your graphs) intact.
+Default: leaves ~/.grafel/store/ (your graphs) intact.
 Use --purge to also remove store/ and docs/.
 
-Idempotent: if archigraph is not installed the command exits 0.`,
+Idempotent: if grafel is not installed the command exits 0.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
 
@@ -128,7 +128,7 @@ Idempotent: if archigraph is not installed the command exits 0.`,
 				if result.DocsRemoved {
 					fmt.Fprintln(out, "  docs/ removed")
 				}
-				fmt.Fprintln(out, "✓ archigraph uninstalled")
+				fmt.Fprintln(out, "✓ grafel uninstalled")
 				return nil
 			}
 
@@ -136,7 +136,7 @@ Idempotent: if archigraph is not installed the command exits 0.`,
 			if err := service.Uninstall(service.Options{}); err != nil {
 				return err
 			}
-			fmt.Fprintln(out, "✓ archigraph daemon removed")
+			fmt.Fprintln(out, "✓ grafel daemon removed")
 
 			// Remove MCP registrations from every detected Claude config dir.
 			unregisterMCPFromClaudeConfigs(out, claudeConfigDirs)
@@ -154,7 +154,7 @@ Idempotent: if archigraph is not installed the command exits 0.`,
 	cmd.Flags().BoolVar(&skipSkillUnlink, "skip-skill-unlink", false,
 		"skip removing skills from Claude Code's skills/ directories")
 	cmd.Flags().BoolVar(&purge, "purge", false,
-		"also remove ~/.archigraph/store/ and ~/.archigraph/docs/ (user graphs and docs)")
+		"also remove ~/.grafel/store/ and ~/.grafel/docs/ (user graphs and docs)")
 	cmd.Flags().BoolVar(&removeBinary, "remove-binary", false,
 		"also delete the installed CLI binary (default: keep it so a reinstall/start needs no re-download)")
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false,

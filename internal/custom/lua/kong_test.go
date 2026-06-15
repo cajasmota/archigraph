@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // recView is a thin read-only view over an emitted EntityRecord used by the

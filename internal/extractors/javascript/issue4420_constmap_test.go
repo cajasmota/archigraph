@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4420 — TS/JS module-level constant COLLECTIONS (`const X = {...} as

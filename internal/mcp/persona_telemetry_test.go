@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// TestPersonaEventInputValidation verifies that archigraph_persona_event
+// TestPersonaEventInputValidation verifies that grafel_persona_event
 // rejects malformed calls without panicking or writing to disk.
 func TestPersonaEventInputValidation(t *testing.T) {
 	dir := t.TempDir()
@@ -51,7 +51,7 @@ func TestPersonaEventInputValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := callTool(t, srv, "archigraph_persona_event", tc.args)
+			res := callTool(t, srv, "grafel_persona_event", tc.args)
 			if res == nil {
 				t.Fatal("expected non-nil result")
 			}
@@ -79,7 +79,7 @@ func TestPersonaEventInputValidation(t *testing.T) {
 	}
 }
 
-// TestPersonaEventJSONLAppend verifies that a valid archigraph_persona_event
+// TestPersonaEventJSONLAppend verifies that a valid grafel_persona_event
 // call appends a well-formed JSON line to the daily JSONL file.
 func TestPersonaEventJSONLAppend(t *testing.T) {
 	// Override HOME so the JSONL file lands in a temp dir.
@@ -101,7 +101,7 @@ func TestPersonaEventJSONLAppend(t *testing.T) {
 	before := time.Now().UTC().Truncate(time.Second)
 
 	// Emit an invoke event.
-	res := callTool(t, srv, "archigraph_persona_event", map[string]any{
+	res := callTool(t, srv, "grafel_persona_event", map[string]any{
 		"persona":    "architect",
 		"event_type": "invoke",
 	})
@@ -126,7 +126,7 @@ func TestPersonaEventJSONLAppend(t *testing.T) {
 	}
 
 	// Emit a consult_out event with depth and chain.
-	res2 := callTool(t, srv, "archigraph_persona_event", map[string]any{
+	res2 := callTool(t, srv, "grafel_persona_event", map[string]any{
 		"persona":        "architect",
 		"event_type":     "consult_out",
 		"target_persona": "performance-reviewer",
@@ -139,7 +139,7 @@ func TestPersonaEventJSONLAppend(t *testing.T) {
 
 	// Verify the JSONL file has exactly 2 lines and both are valid JSON.
 	date := time.Now().UTC().Format("2006-01-02")
-	evtPath := filepath.Join(tmpHome, ".archigraph", "events", "persona-events-"+date+".jsonl")
+	evtPath := filepath.Join(tmpHome, ".grafel", "events", "persona-events-"+date+".jsonl")
 	f, err := os.Open(evtPath)
 	if err != nil {
 		t.Fatalf("expected JSONL file at %s: %v", evtPath, err)

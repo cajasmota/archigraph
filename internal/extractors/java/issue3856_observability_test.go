@@ -7,7 +7,7 @@ package java_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // javaObsEdge returns the first INSTRUMENTS edge on the named method matching

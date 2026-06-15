@@ -55,8 +55,8 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // testSuiteKind is the canonical test_suite marker. The Jest extractor and the
@@ -139,7 +139,7 @@ func linkE2ERouteTestsToEndpoints(
 //
 // When a repoTag is available we sidestep the name index entirely: each
 // definition's deterministic entity ID (graph.EntityID over Kind+Name+
-// SourceFile, the SAME formula cmd/archigraph stampEntityIDs uses) is unique per
+// SourceFile, the SAME formula cmd/grafel stampEntityIDs uses) is unique per
 // SOURCE FILE even when the Name collides across modules. Emitting the hex ID
 // directly makes resolve.rewriteOne short-circuit on its isHexID fast path,
 // crediting the CORRECT per-file endpoint as covered. With no repoTag (engine

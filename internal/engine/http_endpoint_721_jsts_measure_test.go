@@ -8,30 +8,30 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // TestJSTSFetches_Measurement is a corpus-measurement harness for #721.
 // It walks the developer-local JS/TS frontend fixtures and reports the
 // number of consumer-side http_endpoint entities and FETCHES edges the
-// detector emits per fixture. It only runs when ARCHIGRAPH_721_MEASURE=1
+// detector emits per fixture. It only runs when GRAFEL_721_MEASURE=1
 // is set in the environment so the regular CI run is unaffected.
 //
 // Outputs to stderr in a stable, grep-friendly format:
 //
 //	[721-measure] fixture=client-fixture-b lang=javascript/typescript endpoints=N fetches=M
 func TestJSTSFetches_Measurement(t *testing.T) {
-	if os.Getenv("ARCHIGRAPH_721_MEASURE") != "1" {
-		t.Skip("set ARCHIGRAPH_721_MEASURE=1 to run #721 corpus measurement")
+	if os.Getenv("GRAFEL_721_MEASURE") != "1" {
+		t.Skip("set GRAFEL_721_MEASURE=1 to run #721 corpus measurement")
 	}
 	home, _ := os.UserHomeDir()
 	cases := []struct {
 		fixture string
 		root    string
 	}{
-		{"client-fixture-b", filepath.Join(home, "private/archigraph-fixtures/client-fixture-b")},
-		{"client-fixture-c", filepath.Join(home, "private/archigraph-fixtures/client-fixture-c")},
-		{"client-fixture-e", filepath.Join(home, "private/archigraph-fixtures/client-fixture-e")},
+		{"client-fixture-b", filepath.Join(home, "private/grafel-fixtures/client-fixture-b")},
+		{"client-fixture-c", filepath.Join(home, "private/grafel-fixtures/client-fixture-c")},
+		{"client-fixture-e", filepath.Join(home, "private/grafel-fixtures/client-fixture-e")},
 	}
 	rules, err := LoadAllRules()
 	if err != nil {

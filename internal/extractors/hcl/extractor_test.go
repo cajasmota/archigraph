@@ -8,9 +8,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tshcl "github.com/smacker/go-tree-sitter/hcl"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/hcl" // trigger init()
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/hcl" // trigger init()
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ----------------------------------------------------------------
@@ -178,17 +178,17 @@ terraform {
 
 func TestExtractResource(t *testing.T) {
 	src := `
-resource "aws_lambda_function" "archigraph_demo" {
-  function_name = "archigraph_demo"
+resource "aws_lambda_function" "grafel_demo" {
+  function_name = "grafel_demo"
 }
 `
 	records, err := extractHCL(src, "main.tf")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	r := findBySubtypeAndName(records, "resource", "archigraph_demo")
+	r := findBySubtypeAndName(records, "resource", "grafel_demo")
 	if r == nil {
-		t.Fatalf("expected resource 'archigraph_demo' not found in %v", records)
+		t.Fatalf("expected resource 'grafel_demo' not found in %v", records)
 	}
 	if r.Kind != "SCOPE.Component" {
 		t.Errorf("expected Kind=SCOPE.Component, got %s", r.Kind)
@@ -196,7 +196,7 @@ resource "aws_lambda_function" "archigraph_demo" {
 	if r.Language != "hcl" {
 		t.Errorf("expected Language=hcl, got %s", r.Language)
 	}
-	if r.QualifiedName != "resource.aws_lambda_function.archigraph_demo" {
+	if r.QualifiedName != "resource.aws_lambda_function.grafel_demo" {
 		t.Errorf("unexpected QualifiedName: %s", r.QualifiedName)
 	}
 }
@@ -256,7 +256,7 @@ resource "aws_lambda_function" "fn" {
 
 func TestExtractDataSource(t *testing.T) {
 	src := `
-data "aws_iam_policy_document" "archigraph_role" {
+data "aws_iam_policy_document" "grafel_role" {
   statement {
     actions = ["sts:AssumeRole"]
   }
@@ -266,14 +266,14 @@ data "aws_iam_policy_document" "archigraph_role" {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	r := findBySubtypeAndName(records, "data_source", "archigraph_role")
+	r := findBySubtypeAndName(records, "data_source", "grafel_role")
 	if r == nil {
-		t.Fatalf("expected data_source 'archigraph_role' not found in %v", records)
+		t.Fatalf("expected data_source 'grafel_role' not found in %v", records)
 	}
 	if r.Kind != "SCOPE.Component" {
 		t.Errorf("expected Kind=SCOPE.Component, got %s", r.Kind)
 	}
-	if r.QualifiedName != "data.aws_iam_policy_document.archigraph_role" {
+	if r.QualifiedName != "data.aws_iam_policy_document.grafel_role" {
 		t.Errorf("unexpected QualifiedName: %s", r.QualifiedName)
 	}
 }
@@ -339,7 +339,7 @@ variable "memory" { type = number }
 func TestExtractOutput(t *testing.T) {
 	src := `
 output "lambda_arn" {
-  value = aws_lambda_function.archigraph_demo.arn
+  value = aws_lambda_function.grafel_demo.arn
 }
 `
 	records, err := extractHCL(src, "main.tf")
@@ -478,7 +478,7 @@ provider "aws" {
 func TestExtractLocals(t *testing.T) {
 	src := `
 locals {
-  prefix = "archigraph"
+  prefix = "grafel"
   region = "us-east-1"
 }
 `
@@ -551,7 +551,7 @@ func TestDependsOnMultiple(t *testing.T) {
 resource "aws_lambda_function" "fn" {
   depends_on = [
     aws_iam_role.lambda_role,
-    aws_ecr_repository.archigraph_demo,
+    aws_ecr_repository.grafel_demo,
   ]
 }
 `
@@ -682,7 +682,7 @@ variable "env" { type = string }
 output "fn_arn" { value = aws_lambda_function.fn.arn }
 module "vpc" { source = "registry/vpc/aws" }
 provider "aws" { region = "us-east-1" }
-locals { prefix = "archigraph" }
+locals { prefix = "grafel" }
 `
 	records, err := extractHCL(src, "invariants.tf")
 	if err != nil {

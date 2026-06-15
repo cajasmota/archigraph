@@ -13,7 +13,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -225,7 +225,7 @@ def register_user(user):
 
 func TestCeleryPubSub_NoPhantomNodes_UnknownTaskVar(t *testing.T) {
 	// The file only has a .delay() call but no @shared_task/@app.task definition
-	// for 'external_task'. Archigraph should NOT emit a PUBLISHES_TO edge here
+	// for 'external_task'. Grafel should NOT emit a PUBLISHES_TO edge here
 	// because it would create a dangling reference to an unknown entity.
 	src := `def trigger_something():
     external_task.delay(42)

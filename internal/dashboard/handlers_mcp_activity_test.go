@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // newTestServerWithActivityBroker wires an MCPActivityBroker into a minimal
@@ -88,7 +88,7 @@ func TestMCPActivityStreamEventDelivery(t *testing.T) {
 	go func() {
 		time.Sleep(50 * time.Millisecond)
 		broker.Publish(mcp.MCPActivityEvent{
-			ToolName:        "archigraph_search_entities",
+			ToolName:        "grafel_search_entities",
 			ReturnedNodeIDs: []string{"svc:auth", "svc:billing"},
 		})
 	}()
@@ -96,7 +96,7 @@ func TestMCPActivityStreamEventDelivery(t *testing.T) {
 	lines := readSSELines(t, r, 2, 2*time.Second)
 	found := false
 	for _, l := range lines {
-		if strings.Contains(l, "archigraph_search_entities") {
+		if strings.Contains(l, "grafel_search_entities") {
 			found = true
 			break
 		}
@@ -132,13 +132,13 @@ func TestMCPActivityStreamMultipleSubscribers(t *testing.T) {
 	defer close2()
 
 	time.Sleep(30 * time.Millisecond)
-	broker.Publish(mcp.MCPActivityEvent{ToolName: "archigraph_find"})
+	broker.Publish(mcp.MCPActivityEvent{ToolName: "grafel_find"})
 
 	for i, r := range []*bufio.Reader{r1, r2} {
 		lines := readSSELines(t, r, 2, 2*time.Second)
 		found := false
 		for _, l := range lines {
-			if strings.Contains(l, "archigraph_find") {
+			if strings.Contains(l, "grafel_find") {
 				found = true
 				break
 			}
@@ -187,8 +187,8 @@ func TestMCPActivityHistory(t *testing.T) {
 	dir := t.TempDir()
 	logPath := filepath.Join(dir, "mcp-activity.jsonl")
 	events := []mcp.MCPActivityEvent{
-		{ToolName: "archigraph_find", Timestamp: 1000},
-		{ToolName: "archigraph_inspect", Timestamp: 2000},
+		{ToolName: "grafel_find", Timestamp: 1000},
+		{ToolName: "grafel_inspect", Timestamp: 2000},
 	}
 	f, _ := os.Create(logPath)
 	enc := json.NewEncoder(f)
@@ -223,7 +223,7 @@ func TestMCPActivityHistory(t *testing.T) {
 	if len(body.Events) < 2 {
 		t.Fatalf("events len = %d; want 2", len(body.Events))
 	}
-	if body.Events[0].ToolName != "archigraph_find" {
-		t.Errorf("events[0].ToolName = %q; want archigraph_find", body.Events[0].ToolName)
+	if body.Events[0].ToolName != "grafel_find" {
+		t.Errorf("events[0].ToolName = %q; want grafel_find", body.Events[0].ToolName)
 	}
 }

@@ -43,7 +43,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // paginationVerdict is the resolved pagination posture for one endpoint.

@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
 )
 
 // start/stop/restart now drive the per-machine daemon (ADR-0017). The
@@ -29,15 +29,15 @@ func newStartCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start the daemon (manages MCP, indexer, dashboard, and watchers)",
-		Long: `Start the archigraph daemon.
+		Long: `Start the grafel daemon.
 
 The daemon is a single long-running process that owns:
   - MCP server (AI assistant tools)
   - Indexer + file-watcher (reactive re-index on save)
   - Dashboard HTTP server (default http://127.0.0.1:47274/)
 
-Use 'archigraph stop' to stop all of the above at once.
-Use 'archigraph dashboard' to open the dashboard in your browser.`,
+Use 'grafel stop' to stop all of the above at once.
+Use 'grafel dashboard' to open the dashboard in your browser.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runDaemonStartOpts(cmd.OutOrStdout(), maxRSSBudget, noAutoCleanup)
 		},
@@ -53,14 +53,14 @@ func newStopCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the daemon and all managed services",
-		Long: `Stop the archigraph daemon.
+		Long: `Stop the grafel daemon.
 
 Stopping the daemon also stops all services it manages:
   - MCP server
   - Indexer + file-watcher
   - Dashboard HTTP server
 
-Use 'archigraph start' to bring everything back up.`,
+Use 'grafel start' to bring everything back up.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runDaemonStop(cmd.OutOrStdout())
 		},
@@ -71,7 +71,7 @@ func newRestartCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "restart",
 		Short: "Restart the daemon (MCP, indexer, dashboard, watchers)",
-		Long: `Restart the archigraph daemon as a single idempotent operation.
+		Long: `Restart the grafel daemon as a single idempotent operation.
 
 restart stops the running daemon gracefully, verifies the process is actually
 dead (escalating to SIGKILL if needed), clears any stale pidfile/socket left by
@@ -124,7 +124,7 @@ func runDaemonRestart(out io.Writer) error {
 	}
 
 	// Clear stale on-disk artifacts so start cannot see a phantom owner. Only
-	// remove the pidfile if it no longer names a live archigraph daemon — we
+	// remove the pidfile if it no longer names a live grafel daemon — we
 	// must never delete a pidfile owned by a daemon a concurrent caller just
 	// started.
 	cleanStaleArtifacts(out, layout)
@@ -161,7 +161,7 @@ func forceKill(pid int) error {
 
 // cleanStaleArtifacts removes a stale pidfile and socket left by a crashed or
 // hard-killed daemon. It is conservative: the pidfile is only removed if it no
-// longer names a live archigraph process (so a concurrently-started daemon is
+// longer names a live grafel process (so a concurrently-started daemon is
 // never disturbed). The socket file is removed unconditionally on unix — a
 // fresh daemon re-creates it on listen, and a live daemon holding the same
 // path keeps its open fd regardless of the directory entry. On Windows the
@@ -222,7 +222,7 @@ func runDaemonStartOpts(out io.Writer, maxRSSBudgetMB int64, noAutoCleanup bool)
 		if statusErr == nil && st.BinaryPath != "" && currentBin != "" &&
 			filepath.Clean(st.BinaryPath) != filepath.Clean(currentBin) {
 			return fmt.Errorf("stale daemon running from %s (you are %s)\n"+
-				"Run: archigraph doctor --kill-stale && archigraph start",
+				"Run: grafel doctor --kill-stale && grafel start",
 				st.BinaryPath, currentBin)
 		}
 		fmt.Fprintln(out, "daemon already running")
@@ -293,19 +293,19 @@ func runDaemonStartOpts(out io.Writer, maxRSSBudgetMB int64, noAutoCleanup bool)
 	return fmt.Errorf("daemon failed to become ready within %s (check %s)", budget, layout.LogPath)
 }
 
-// startupReadinessDefault is the time `archigraph start` waits for the daemon
+// startupReadinessDefault is the time `grafel start` waits for the daemon
 // socket to appear. It must cover the daemon's first startup index pass, which
 // on large stores runs well past a minute (issue #4549 observed ~82 s before
 // the socket was ready). It is deliberately generous: a slow-but-healthy start
 // must NOT be reported as a failure.
 const startupReadinessDefault = 120 * time.Second
 
-// startupReadinessBudget returns the readiness budget for `archigraph start`,
-// overridable via ARCHIGRAPH_START_READINESS (a Go duration, e.g. "180s" or
+// startupReadinessBudget returns the readiness budget for `grafel start`,
+// overridable via GRAFEL_START_READINESS (a Go duration, e.g. "180s" or
 // "3m") so operators on very large stores can extend it without a rebuild.
 // Invalid or non-positive values fall back to the default.
 func startupReadinessBudget() time.Duration {
-	if v := os.Getenv("ARCHIGRAPH_START_READINESS"); v != "" {
+	if v := os.Getenv("GRAFEL_START_READINESS"); v != "" {
 		if d, err := time.ParseDuration(v); err == nil && d > 0 {
 			return d
 		}

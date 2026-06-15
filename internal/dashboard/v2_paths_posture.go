@@ -12,11 +12,11 @@
 //
 //   - posture: per endpoint entity — deprecation/api_version, rate-limit,
 //     THROWS/error-flow exception list, feature-gates, and (gRPC/tRPC-aware)
-//     auth — assembled by the SAME code archigraph_endpoint_posture runs
+//     auth — assembled by the SAME code grafel_endpoint_posture runs
 //     (internal/mcp.EndpointPostureForEntity → buildPosturePayload).
 //   - effective_contract: per-verb status codes, serializer, permissions, and an
 //     MRO-inherited flag for handlers resolved through a mixin EXTENDS chain —
-//     resolved by the SAME code archigraph_effective_contract runs
+//     resolved by the SAME code grafel_effective_contract runs
 //     (internal/mcp.EffectiveContractForTarget → computeEffectiveContract).
 //
 // HONESTY: posture facets are frequently empty (a route with no throws / no rate
@@ -33,9 +33,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/mcp"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/mcp"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

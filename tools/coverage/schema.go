@@ -198,10 +198,10 @@ type Registry struct {
 // Record is a single coverage row keyed by Record.ID.
 //
 // Language is a short language slug ("python", "go", "java", ...). The
-// canonical slug for the JavaScript family is "jsts": archigraph's
+// canonical slug for the JavaScript family is "jsts": grafel's
 // JS/TS extractor is shared across .js, .ts, .jsx, .tsx, .mjs and .cjs
 // sources, so a single tag covers them all. The canonical slug for the
-// C-family is "c-cpp": archigraph's C/C++ extractor handles both .c and
+// C-family is "c-cpp": grafel's C/C++ extractor handles both .c and
 // .cpp/.cc/.cxx sources from a single internal/extractors/cpp/ tree
 // (see #2732). Records that span multiple language ecosystems (build
 // systems, observability vendors, infra resources) use "multi" and

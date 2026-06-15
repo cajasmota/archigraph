@@ -26,6 +26,6 @@ description: >-
   metadata. For Elixir Ecto, also detect changeset validation rules and emit
   SCOPE.Pattern(kind=changeset_validation) with validation_rules,
   required_fields, and constraint_names.
-module: archigraph.engine.rules.pattern_detectors.transaction_changeset_enricher
+module: grafel.engine.rules.pattern_detectors.transaction_changeset_enricher
 function: detect
 applies_to_function: applies_to

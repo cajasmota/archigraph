@@ -10,7 +10,7 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // drfPermClass looks up a class entity by name (reusing the shared

@@ -526,7 +526,7 @@ domain_root_conventions:
       \ pipeline-deploy.yml      # triggered via trigger: step\n    └── pipeline-notification.yml\n"
 vera_scope_mapping:
   pipeline_to_service:
-    description: 'A CI/CD pipeline (the complete configuration file) maps to archigraph
+    description: 'A CI/CD pipeline (the complete configuration file) maps to grafel
       SCOPE.Service. The pipeline is the top-level abstraction: a collection of jobs/stages
       that perform build, test, and deploy tasks. It is logically equivalent to a
       service that transforms input (code commit) to output (built artifact, deployed
@@ -544,7 +544,7 @@ vera_scope_mapping:
 
       '
   job_to_operation:
-    description: 'A job (or job-equivalent in each platform) maps to archigraph SCOPE.Operation.
+    description: 'A job (or job-equivalent in each platform) maps to grafel SCOPE.Operation.
       A job is the executable unit: it performs a specific task (test, build, deploy).
       Each job has inputs (code, artifacts) and outputs (artifacts, logs).
 
@@ -561,7 +561,7 @@ vera_scope_mapping:
       '
   workflow_to_component:
     description: 'A workflow (GitHub Actions specific) or orchestration unit maps
-      to archigraph SCOPE.Component. In GitHub Actions, a workflow (.yml file) is the component.
+      to grafel SCOPE.Component. In GitHub Actions, a workflow (.yml file) is the component.
       In other platforms, a stage or job group is the component.
 
       '

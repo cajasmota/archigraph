@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Ebean ORM. Ebean uses JPA-style mapping annotations (@Entity, @Table,

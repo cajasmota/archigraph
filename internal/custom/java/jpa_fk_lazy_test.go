@@ -10,7 +10,7 @@ package java_test
 import (
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
 )
 
 // ---------------------------------------------------------------------------

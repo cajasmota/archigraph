@@ -8,8 +8,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsphp "github.com/smacker/go-tree-sitter/php"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/php"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/php"
 )
 
 // parseForTest parses PHP source using the real grammar.

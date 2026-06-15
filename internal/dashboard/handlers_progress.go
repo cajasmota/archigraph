@@ -32,7 +32,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/progress"
+	"github.com/cajasmota/grafel/internal/progress"
 )
 
 const (

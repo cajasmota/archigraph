@@ -25,7 +25,7 @@
 //
 // On upvate-core this left TESTS coverage at ~0.6%: every TESTS edge originated
 // from a SCOPE.Pattern coverage wrapper (not the test-function entity itself)
-// and pointed at a handful of mis-resolved targets, so archigraph_test_coverage
+// and pointed at a handful of mis-resolved targets, so grafel_test_coverage
 // reported almost no covered production entities.
 //
 // # Fix
@@ -63,7 +63,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

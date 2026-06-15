@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
 )
 
 // TestDelete_JSONOutputShape verifies the --json flag produces the expected
@@ -15,7 +15,7 @@ import (
 func TestDelete_JSONOutputShape(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "bigcorp", "svc-a", "svc-b", "svc-c")
@@ -70,7 +70,7 @@ func TestDelete_JSONOutputShape(t *testing.T) {
 func TestDelete_UnknownGroupReturnsClearError(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	svc := &mockLifecycleService{}
@@ -89,7 +89,7 @@ func TestDelete_UnknownGroupReturnsClearError(t *testing.T) {
 func TestDelete_KeepCachesPropagatedToDaemon(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "preserve", "r1", "r2")
@@ -114,7 +114,7 @@ func TestDelete_KeepCachesPropagatedToDaemon(t *testing.T) {
 func TestDelete_JSONRemovedReposNotNull(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "empty-group", "only")
@@ -148,7 +148,7 @@ func TestDelete_JSONRemovedReposNotNull(t *testing.T) {
 func TestDelete_HumanOutputFormat(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "myteam", "api", "frontend")

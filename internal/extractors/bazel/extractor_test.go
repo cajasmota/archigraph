@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractors/bazel"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractors/bazel"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // fixtureRoot returns the absolute path of the test workspace fixture.
@@ -229,7 +229,7 @@ func TestDiscover_RuleKinds(t *testing.T) {
 }
 
 // TestDiscover_EntityFields verifies that emitted entities carry the required
-// archigraph fields (ID, Kind, Subtype, SourceFile, Language, Properties).
+// grafel fields (ID, Kind, Subtype, SourceFile, Language, Properties).
 func TestDiscover_EntityFields(t *testing.T) {
 	root := fixtureRoot(t)
 	files := walkFixture(t, root)

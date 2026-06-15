@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/engine"
-	"github.com/cajasmota/archigraph/internal/graph"
-	fbwriter "github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/engine"
+	"github.com/cajasmota/grafel/internal/graph"
+	fbwriter "github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 func TestCommitCoupling_FlatBufferRoundTrip(t *testing.T) {

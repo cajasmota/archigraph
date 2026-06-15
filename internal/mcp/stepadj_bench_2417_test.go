@@ -1,6 +1,6 @@
 // stepadj_bench_2417_test.go — microbenchmarks for the StepAdj cache (#2417).
 //
-// Parallel to PR #2285's BenchmarkArchigraphAgentResolvedEdges / baseline pair.
+// Parallel to PR #2285's BenchmarkGrafelAgentResolvedEdges / baseline pair.
 // Two benches:
 //
 //   - BenchmarkBuildProcessSteps_Baseline: inline copy of the pre-#2417
@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // buildStepBenchDoc returns a Document with nProcs process entities, each

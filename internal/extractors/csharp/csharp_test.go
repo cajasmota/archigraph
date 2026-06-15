@@ -9,9 +9,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tscsharp "github.com/smacker/go-tree-sitter/csharp"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/csharp"
-	"github.com/cajasmota/archigraph/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/csharp"
+	"github.com/cajasmota/grafel/internal/treesitter"
 )
 
 // parseForTest parses C# source using the real grammar.

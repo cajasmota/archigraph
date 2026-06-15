@@ -11,7 +11,7 @@ package extractors
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestIsDjangoMigrationFile(t *testing.T) {
@@ -81,7 +81,7 @@ func TestPruneMigrationEntities_DropsAllContainerKinds(t *testing.T) {
 		},
 	}
 
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "") // ensure prune is active
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "") // ensure prune is active
 
 	ePruned, rPruned := PruneMigrationEntities(doc)
 
@@ -135,7 +135,7 @@ func TestPruneMigrationEntities_OptInBypass(t *testing.T) {
 		},
 	}
 
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	ePruned, rPruned := PruneMigrationEntities(doc)
 	if ePruned != 0 || rPruned != 0 {
@@ -153,7 +153,7 @@ func TestPruneMigrationEntities_Idempotent(t *testing.T) {
 			{ID: "b1", Name: "User", Kind: "SCOPE.Component", SourceFile: "core/models.py"},
 		},
 	}
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 
 	e1, _ := PruneMigrationEntities(doc)
 	e2, r2 := PruneMigrationEntities(doc) // second call must be a no-op
@@ -166,7 +166,7 @@ func TestPruneMigrationEntities_Idempotent(t *testing.T) {
 }
 
 func TestPruneMigrationEntities_NilSafe(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 	e, r := PruneMigrationEntities(nil)
 	if e != 0 || r != 0 {
 		t.Errorf("nil doc: pruned = (%d,%d), want (0,0)", e, r)
@@ -197,7 +197,7 @@ func TestPruneMigrationEntities_PrunesControllerKind(t *testing.T) {
 		},
 	}
 
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 
 	ePruned, rPruned := PruneMigrationEntities(doc)
 

@@ -1,4 +1,4 @@
-// Package daemon implements the long-running archigraph process per
+// Package daemon implements the long-running grafel process per
 // ADR-0017. It exposes a JSON-RPC service over a platform-appropriate IPC
 // transport (Unix-domain socket on Linux/macOS, named pipe on Windows) and
 // owns indexing, cross-repo linking, and (in later phases) fsnotify
@@ -16,24 +16,24 @@ const (
 )
 
 // Layout is the on-disk footprint of a daemon: socket path, pid file,
-// log directory. Everything lives under ~/.archigraph/ so the daemon
+// log directory. Everything lives under ~/.grafel/ so the daemon
 // shares state with the existing registry and group configs.
 //
 // On Windows, SocketPath holds the named-pipe path instead of a filesystem
-// path (e.g. \\.\pipe\archigraph-daemon-<user>), and SocketDir is empty
+// path (e.g. \\.\pipe\grafel-daemon-<user>), and SocketDir is empty
 // because named pipes are not filesystem objects that require a directory.
 type Layout struct {
-	Root       string // ~/.archigraph (or %APPDATA%\archigraph on Windows)
-	SocketDir  string // ~/.archigraph/sockets (empty on Windows)
-	SocketPath string // ~/.archigraph/sockets/daemon.sock  OR  \\.\pipe\archigraph-daemon-<user>
-	PIDPath    string // ~/.archigraph/daemon.pid
-	LogDir     string // ~/.archigraph/logs
-	LogPath    string // ~/.archigraph/logs/daemon.log
+	Root       string // ~/.grafel (or %APPDATA%\grafel on Windows)
+	SocketDir  string // ~/.grafel/sockets (empty on Windows)
+	SocketPath string // ~/.grafel/sockets/daemon.sock  OR  \\.\pipe\grafel-daemon-<user>
+	PIDPath    string // ~/.grafel/daemon.pid
+	LogDir     string // ~/.grafel/logs
+	LogPath    string // ~/.grafel/logs/daemon.log
 }
 
 // EnvRoot is honoured by DefaultLayout when set; lets tests point a
-// freshly-built daemon at a tempdir without touching the real ~/.archigraph.
-const EnvRoot = "ARCHIGRAPH_DAEMON_ROOT"
+// freshly-built daemon at a tempdir without touching the real ~/.grafel.
+const EnvRoot = "GRAFEL_DAEMON_ROOT"
 
 // EnsureLayout creates the directories the daemon writes to. The socket
 // path itself is not created here — the listener does that. Permissions
@@ -59,7 +59,7 @@ func EnsureLayout(l Layout) error {
 }
 
 // layoutFromRoot builds a Layout rooted at root. Used by DefaultLayout
-// on all platforms when ARCHIGRAPH_DAEMON_ROOT is set.
+// on all platforms when GRAFEL_DAEMON_ROOT is set.
 func layoutFromRoot(root, socketPath string) Layout {
 	socketDir := ""
 	if socketPath != "" && !isWindowsPipePath(socketPath) {
@@ -68,7 +68,7 @@ func layoutFromRoot(root, socketPath string) Layout {
 	logDir := filepath.Join(root, "logs")
 	// No-rotation contract (issue #2300):
 	// daemon.log grows monotonically by design. The bench harness
-	// (skills/archigraph-graph-quality/prompts/03-with-mcp-run.md) uses
+	// (skills/grafel-graph-quality/prompts/03-with-mcp-run.md) uses
 	// byte offsets into daemon.log and assumes the file is append-only and
 	// never truncated or renamed. If log rotation is ever added, the bench
 	// skill will need a sidecar offset-translation strategy to remain

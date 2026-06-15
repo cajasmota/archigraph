@@ -15,9 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // mockLifecycleService is a minimal net/rpc handler that accepts RemoveRepo
@@ -102,7 +102,7 @@ func stubPipeSeq(_ *testing.T) int64 {
 }
 
 // makeTestRegistryGroup writes a minimal group config and registry entry under
-// the given ARCHIGRAPH_HOME so test commands can look up the group.
+// the given GRAFEL_HOME so test commands can look up the group.
 func makeTestRegistryGroup(t *testing.T, home, group string, slugs ...string) {
 	t.Helper()
 	cfgDir := filepath.Join(home, "config")
@@ -136,7 +136,7 @@ func newTestCmd(buf *bytes.Buffer) *cobra.Command {
 func TestRemove_JSONOutputShape(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "acme", "core", "extras")
@@ -189,7 +189,7 @@ func TestRemove_JSONOutputShape(t *testing.T) {
 func TestRemove_LastRepoBlockedWhenForced(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "solo", "only-repo")
@@ -214,7 +214,7 @@ func TestRemove_LastRepoBlockedWhenForced(t *testing.T) {
 func TestRemove_UnknownGroupReturnsClearError(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	svc := &mockLifecycleService{}
@@ -233,7 +233,7 @@ func TestRemove_UnknownGroupReturnsClearError(t *testing.T) {
 func TestRemove_KeepCachePropagatedToDaemon(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "duo", "alpha", "beta")
@@ -259,7 +259,7 @@ func TestRemove_KeepCachePropagatedToDaemon(t *testing.T) {
 func TestRemove_HumanOutputContainsFreedBytes(t *testing.T) {
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
 
 	makeTestRegistryGroup(t, home, "org", "repo-a", "repo-b")

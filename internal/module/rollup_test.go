@@ -3,7 +3,7 @@ package module_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/module"
+	"github.com/cajasmota/grafel/internal/module"
 )
 
 // ─── Derive ──────────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ func TestDerive_DefaultDepthFallback(t *testing.T) {
 		{"core/views/accounts.py", "core/views"},
 		{"core/models/user.py", "core/models"},
 		{"internal/graph/graph.go", "internal/graph"},
-		{"cmd/archigraph/index.go", "cmd/archigraph"},
+		{"cmd/grafel/index.go", "cmd/grafel"},
 		{"a/b/c/d/e/f.go", "a/b"},
 		// Single-segment directory
 		{"pkg/foo.go", "pkg"},
@@ -111,7 +111,7 @@ func TestDerive_MarkerBoundaryGo(t *testing.T) {
 		{"internal/graph/coverage.go", "internal/graph"},
 		// no nested go.mod deeper than 2 → DefaultDepth
 		{"internal/extractor/extractor.go", "internal/extractor"},
-		{"cmd/archigraph/index.go", "cmd/archigraph"},
+		{"cmd/grafel/index.go", "cmd/grafel"},
 	}
 	for _, tc := range cases {
 		got := module.Derive(tc.sf, ms)
@@ -281,7 +281,7 @@ func TestDerive_NeverEmpty(t *testing.T) {
 		"src/features/auth/login.ts",
 		"src/features/auth/components/Button.tsx",
 		"internal/graph/coverage.go",
-		"cmd/archigraph/index.go",
+		"cmd/grafel/index.go",
 		"a/b/c/d/e/f/g.go",
 	}
 	ms := module.BuildMarkerSet([]string{

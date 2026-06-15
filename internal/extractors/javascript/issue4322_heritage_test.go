@@ -16,8 +16,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractHeritageTS(t *testing.T, path string, content []byte) []types.EntityRecord {

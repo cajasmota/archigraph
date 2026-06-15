@@ -5,7 +5,7 @@
 #
 # Inputs:
 #   FIXTURE_REPO    repo to index (default: testdata/fixtures/real-world/go)
-#   BIN             archigraph binary (default: build/archigraph)
+#   BIN             grafel binary (default: build/grafel)
 #
 # Outputs:
 #   /tmp/bench-mcp-latency/<run>/  — go test bench output (text + json)
@@ -23,7 +23,7 @@
 #   ReadEntity_JSONReparse:  baseline (no target — informational)
 set -euo pipefail
 
-BIN="${BIN:-./build/archigraph}"
+BIN="${BIN:-./build/grafel}"
 FIXTURE_REPO="${FIXTURE_REPO:-testdata/fixtures/real-world/go}"
 
 RUN_ID="$(date +%Y%m%d-%H%M%S)"
@@ -32,7 +32,7 @@ mkdir -p "$OUT"
 
 if [ ! -x "$BIN" ]; then
   echo "building $BIN"
-  go build -o "$BIN" ./cmd/archigraph
+  go build -o "$BIN" ./cmd/grafel
 fi
 
 # Materialise graph.json + graph.fb for the fixture in a tempdir copy
@@ -43,8 +43,8 @@ trap 'rm -rf "$WORK"' EXIT
 cp -R "$FIXTURE_REPO" "$WORK/repo"
 "$BIN" index --export-fb "$WORK/repo" >"$OUT/index.log" 2>&1
 
-FB="$WORK/repo/.archigraph/graph.fb"
-JSON="$WORK/repo/.archigraph/graph.json"
+FB="$WORK/repo/.grafel/graph.fb"
+JSON="$WORK/repo/.grafel/graph.json"
 
 if [ ! -f "$FB" ]; then
   echo "FAIL: graph.fb not produced; see $OUT/index.log"
@@ -55,8 +55,8 @@ echo "graph.fb   $(wc -c <"$FB") bytes"
 echo "graph.json $(wc -c <"$JSON") bytes"
 
 # Run the Go benchmarks.
-ARCHIGRAPH_BENCH_FIXTURE_FB="$FB" \
-ARCHIGRAPH_BENCH_FIXTURE="$JSON" \
+GRAFEL_BENCH_FIXTURE_FB="$FB" \
+GRAFEL_BENCH_FIXTURE="$JSON" \
 go test ./internal/daemon/mcp/ \
   -run=^$ \
   -bench='Benchmark(ReadEntity|FindReferences)' \

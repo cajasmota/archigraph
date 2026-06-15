@@ -5,7 +5,7 @@
 //
 //   - a debounced cross-repo link recompute per group (10s),
 //   - optionally, a debounced graph-algorithm pass per repo (30s) — only
-//     when ARCHIGRAPH_EAGER_ALGO=true (S2 of #2149). By default the algo
+//     when GRAFEL_EAGER_ALGO=true (S2 of #2149). By default the algo
 //     pass is suppressed here; rank-sensitive MCP tools trigger it on-demand
 //     via the algo.Cache path instead.
 //
@@ -48,7 +48,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // IndexFn re-indexes a single repo at a specific git ref. The scheduler
@@ -112,7 +112,7 @@ type IncrementalResult struct {
 }
 
 // IncrementalFn attempts the S3 incremental file-level reindex optimisation.
-// Called by the scheduler worker when ARCHIGRAPH_INCREMENTAL_REINDEX=1 is set.
+// Called by the scheduler worker when GRAFEL_INCREMENTAL_REINDEX=1 is set.
 // Returns done=true when the patch succeeded; done=false causes the scheduler
 // to fall through to IndexFn (full reindex fallback).
 type IncrementalFn func(ctx context.Context, repoPath string, ref string) IncrementalResult
@@ -184,7 +184,7 @@ type Config struct {
 	// ExtractorConfig, when non-nil, is consulted by the scheduler to
 	// determine whether the incremental reindex path is active (issue #2397).
 	// IsIncrementalEnabled() on this config replaces the private
-	// incrementalEnabled() helper that read ARCHIGRAPH_INCREMENTAL_REINDEX
+	// incrementalEnabled() helper that read GRAFEL_INCREMENTAL_REINDEX
 	// directly, establishing a single source of truth.
 	//
 	// When nil the scheduler falls back to env-var reads via a nil-safe
@@ -890,7 +890,7 @@ func (s *Scheduler) runIndex(tok jobToken) {
 	//
 	// Issue #2397: consult s.cfg.ExtractorConfig.IsIncrementalEnabled()
 	// (single source of truth) instead of the private incrementalEnabled()
-	// helper that read ARCHIGRAPH_INCREMENTAL_REINDEX directly. The nil-
+	// helper that read GRAFEL_INCREMENTAL_REINDEX directly. The nil-
 	// receiver method falls through to the env-var for backward compat.
 	//
 	// On success (res.Done=true) we skip the full reindex.
@@ -1039,9 +1039,9 @@ func (s *Scheduler) runLinks(ctx context.Context, group string) {
 
 // eagerAlgoEnabled reports whether the post-reindex automatic algorithm pass
 // is enabled. By default (S2 of #2149) the pass is suppressed; set
-// ARCHIGRAPH_EAGER_ALGO=true to restore pre-S2 behaviour.
+// GRAFEL_EAGER_ALGO=true to restore pre-S2 behaviour.
 func eagerAlgoEnabled() bool {
-	v := os.Getenv("ARCHIGRAPH_EAGER_ALGO")
+	v := os.Getenv("GRAFEL_EAGER_ALGO")
 	return v == "1" || v == "true" || v == "yes"
 }
 
@@ -1049,7 +1049,7 @@ func eagerAlgoEnabled() bool {
 // pass is cancelled first; a new pass starts the 30s window over.
 //
 // S2 (#2152): the automatic post-reindex pass is suppressed unless
-// ARCHIGRAPH_EAGER_ALGO=true. Rank-sensitive MCP tools trigger the pass
+// GRAFEL_EAGER_ALGO=true. Rank-sensitive MCP tools trigger the pass
 // on-demand via the algo.Cache path so the post-reindex CPU cost is zero.
 func (s *Scheduler) scheduleAlgo(repoPath string) {
 	if s.cfg.Algorithms == nil {
@@ -1228,7 +1228,7 @@ func (s *Scheduler) Snapshot() Snapshot {
 }
 
 // MarkIndexed lets the daemon record a non-watcher-driven index (e.g.
-// an explicit `archigraph index` RPC) so Status reflects reality.
+// an explicit `grafel index` RPC) so Status reflects reality.
 func (s *Scheduler) MarkIndexed(repoPath string, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

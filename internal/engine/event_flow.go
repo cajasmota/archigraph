@@ -33,7 +33,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // EntityKindEventFlow identifies an EventFlow entity — a linearised

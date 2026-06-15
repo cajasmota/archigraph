@@ -4,7 +4,7 @@ package enrichers
 // Port of Python architecture_classifier_enricher.py.
 // LLM path not ported — deterministic fast-path only.
 
-import "github.com/cajasmota/archigraph/internal/types"
+import "github.com/cajasmota/grafel/internal/types"
 
 // ArchClassificationInput holds signals for architecture classification.
 type ArchClassificationInput struct {

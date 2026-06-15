@@ -37,7 +37,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractErrorHandlingPatterns walks the AST and returns one EntityRecord
@@ -140,7 +140,7 @@ func isErrNotNilIf(ifNode *sitter.Node, src []byte) bool {
 //     uppercase-leading names are typically sentinel errors, not local
 //     error variables — we only match a trailing "err"/"Err").
 //
-// This matches the Python archigraph behaviour which walks the same
+// This matches the Python grafel behaviour which walks the same
 // set of local-error naming conventions.
 func isErrorIdent(n *sitter.Node, src []byte) bool {
 	if n == nil || n.Type() != "identifier" {

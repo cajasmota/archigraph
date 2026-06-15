@@ -2,13 +2,13 @@
 // response shapes for all tools that gained per-tool field elision in #1739.
 //
 // Narrow mode (verbose=false, default):
-//   - archigraph_find (full=true): id, name, file, line, score, kind — NO qualified_name/repo
-//   - archigraph_inspect: id, name, qualified_name, file, line, kind — NO end_line/language/repo/pagerank/community_id/properties
-//   - archigraph_find_callers: per-item id, name, file, line, hop_count — NO kind/repo
-//   - archigraph_find_callees: per-item id, name, file, line, hop_count — NO kind/repo
-//   - archigraph_traces (get): step fields: step_index, node_id, name, file, line — NO kind
-//   - archigraph_traces (follow): step fields: step_index, node_id, name, file, line — NO kind
-//   - archigraph_topology (topic_detail): participant entity_id, entity_name, kind — NO source_file/repo
+//   - grafel_find (full=true): id, name, file, line, score, kind — NO qualified_name/repo
+//   - grafel_inspect: id, name, qualified_name, file, line, kind — NO end_line/language/repo/pagerank/community_id/properties
+//   - grafel_find_callers: per-item id, name, file, line, hop_count — NO kind/repo
+//   - grafel_find_callees: per-item id, name, file, line, hop_count — NO kind/repo
+//   - grafel_traces (get): step fields: step_index, node_id, name, file, line — NO kind
+//   - grafel_traces (follow): step fields: step_index, node_id, name, file, line — NO kind
+//   - grafel_topology (topic_detail): participant entity_id, entity_name, kind — NO source_file/repo
 //
 // Wide mode (verbose=true):
 //   - All elided fields are restored.
@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -104,7 +104,7 @@ func callToolArgs(t *testing.T, fn func(context.Context, mcpapi.CallToolRequest)
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find (full=true) — narrow vs wide
+// grafel_find (full=true) — narrow vs wide
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_Find_NarrowOmitsQualifiedNameAndRepo(t *testing.T) {
@@ -165,7 +165,7 @@ func TestFieldElision_Find_VerboseRestoresQualifiedNameAndRepo(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_inspect — narrow vs wide
+// grafel_inspect — narrow vs wide
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_Inspect_NarrowShape(t *testing.T) {
@@ -191,7 +191,7 @@ func TestFieldElision_Inspect_NarrowShape(t *testing.T) {
 
 // TestFieldElision_Inspect_DropsEnvelopeMeta_2290 asserts the inspect response
 // no longer embeds graph_meta, cwd_ref_meta, or an empty findings:[] key.
-// These session-stable fields are surfaced by archigraph_whoami instead. See #2290.
+// These session-stable fields are surfaced by grafel_whoami instead. See #2290.
 func TestFieldElision_Inspect_DropsEnvelopeMeta_2290(t *testing.T) {
 	srv := newElisionServer(t)
 	// Default narrow.
@@ -201,7 +201,7 @@ func TestFieldElision_Inspect_DropsEnvelopeMeta_2290(t *testing.T) {
 	})
 	for _, banned := range []string{"graph_meta", "cwd_ref_meta", "findings"} {
 		if _, has := res[banned]; has {
-			t.Errorf("#2290: inspect should NOT include %q (no findings exist for fn_a; envelope meta moved to archigraph_whoami): got %v", banned, res)
+			t.Errorf("#2290: inspect should NOT include %q (no findings exist for fn_a; envelope meta moved to grafel_whoami): got %v", banned, res)
 		}
 	}
 	// Verbose path: still no envelope meta or empty findings.
@@ -234,7 +234,7 @@ func TestFieldElision_Inspect_VerboseRestoresAllFields(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_callers — narrow vs wide
+// grafel_find_callers — narrow vs wide
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_FindCallers_NarrowOmitsKindAndRepo(t *testing.T) {
@@ -289,7 +289,7 @@ func TestFieldElision_FindCallers_VerboseRestoresKindAndRepo(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_callees — narrow vs wide
+// grafel_find_callees — narrow vs wide
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_FindCallees_NarrowOmitsKindAndRepo(t *testing.T) {
@@ -342,7 +342,7 @@ func TestFieldElision_FindCallees_VerboseRestoresKindAndRepo(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_traces (get) — narrow vs wide steps
+// grafel_traces (get) — narrow vs wide steps
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_TracesGet_NarrowOmitsKindFromSteps(t *testing.T) {
@@ -397,7 +397,7 @@ func TestFieldElision_TracesGet_VerboseRestoresKindOnSteps(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_traces (follow) — narrow vs wide steps
+// grafel_traces (follow) — narrow vs wide steps
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_TracesFollow_NarrowOmitsKindFromSteps(t *testing.T) {
@@ -447,7 +447,7 @@ func TestFieldElision_TracesFollow_VerboseRestoresKindOnSteps(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_topology (topic_detail) — narrow vs wide
+// grafel_topology (topic_detail) — narrow vs wide
 // ---------------------------------------------------------------------------
 
 func TestFieldElision_TopologyTopicDetail_NarrowOmitsSourceFileAndRepo(t *testing.T) {

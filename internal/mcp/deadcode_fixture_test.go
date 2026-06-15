@@ -4,7 +4,7 @@ package mcp
 // dead-code detection pass (issue #1500).
 //
 // This test is gated behind the AG_DEADCODE_FIXTURE env var, which must point
-// at a graphs directory produced by `archigraph xrepo-verify` (each
+// at a graphs directory produced by `grafel xrepo-verify` (each
 // <slug>/graph.json). It is skipped by default so CI does not require the
 // external polyglot-platform fixture. Run with:
 //
@@ -17,7 +17,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestFindDeadCode_RealFixturePrecision(t *testing.T) {

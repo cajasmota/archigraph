@@ -1,8 +1,8 @@
 // Package install — doctor.go
 //
-// RunDoctor and its helpers implement `archigraph doctor` (#2211).
+// RunDoctor and its helpers implement `grafel doctor` (#2211).
 //
-// Doctor reads ~/.archigraph/install.json as ground truth and compares it
+// Doctor reads ~/.grafel/install.json as ground truth and compares it
 // against live state across five surfaces:
 //
 //   - CLI binary SHA-256 (Critical)
@@ -10,7 +10,7 @@
 //   - Skills per-file SHA manifests (Critical)
 //   - MCP registration in detected .claude.json files (Critical)
 //   - Conventions per-file SHA manifests (Warning)
-//   - .gitignore contains /.archigraph/ in tracked repos (Warning)
+//   - .gitignore contains /.grafel/ in tracked repos (Warning)
 //   - Stale staging directories older than 7 days (Info)
 //
 // JSON schema is pinned at schema_version=1.  Bump SchemaVersion when
@@ -32,10 +32,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/install/rulesfiles"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/install/rulesfiles"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // DoctorSchemaVersion is the JSON schema version for DoctorReport.
@@ -149,7 +149,7 @@ func RunDoctor(opts DoctorOptions) (*DoctorReport, error) {
 			Severity: SeverityCritical,
 			Drift:    []string{fmt.Sprintf("cannot read install.json at %s: %v", opts.StatePath, err)},
 		}}
-		report.Remediation = "Run: archigraph install"
+		report.Remediation = "Run: grafel install"
 		return report, nil
 	}
 
@@ -159,9 +159,9 @@ func RunDoctor(opts DoctorOptions) (*DoctorReport, error) {
 			Surface:  "install.json",
 			OK:       false,
 			Severity: SeverityCritical,
-			Drift:    []string{fmt.Sprintf("install.json not found at %s — archigraph has not been installed", opts.StatePath)},
+			Drift:    []string{fmt.Sprintf("install.json not found at %s — grafel has not been installed", opts.StatePath)},
 		}}
-		report.Remediation = "Run: archigraph install"
+		report.Remediation = "Run: grafel install"
 		return report, nil
 	}
 
@@ -218,7 +218,7 @@ func RunDoctor(opts DoctorOptions) (*DoctorReport, error) {
 	}
 	report.OK = !hasCriticalFailure
 	if !report.OK {
-		report.Remediation = "Run: archigraph install"
+		report.Remediation = "Run: grafel install"
 	}
 
 	return report, nil
@@ -244,7 +244,7 @@ func checkCLI(state *State) CheckResult {
 	if isInGitWorktree() {
 		cr.OK = true
 		cr.Severity = SeverityInfo
-		cr.Drift = []string{"running from git worktree; binary-SHA check skipped. To update: run 'go install ./cmd/archigraph' from the repo root."}
+		cr.Drift = []string{"running from git worktree; binary-SHA check skipped. To update: run 'go install ./cmd/grafel' from the repo root."}
 		return cr
 	}
 
@@ -265,7 +265,7 @@ func checkCLI(state *State) CheckResult {
 		// Critical for unreadable/missing install.json and unhashable binaries.
 		cr.OK = false
 		cr.Severity = SeverityWarning
-		cr.Drift = []string{fmt.Sprintf("sha256 mismatch: binary=%s install=%s (daemon still usable; re-run 'archigraph install' to refresh)", actual[:16], state.CLI.SHA256[:16])}
+		cr.Drift = []string{fmt.Sprintf("sha256 mismatch: binary=%s install=%s (daemon still usable; re-run 'grafel install' to refresh)", actual[:16], state.CLI.SHA256[:16])}
 	}
 	return cr
 }
@@ -438,7 +438,7 @@ func checkSkillDev(skillName string, record SkillRecord, skillsDir string) Check
 	// Must be a symlink.
 	if info.Mode()&os.ModeSymlink == 0 {
 		cr.OK = false
-		cr.Drift = []string{fmt.Sprintf("%s is not a symlink (replaced with a copy?); run `archigraph install --dev --force` to restore", skillDst)}
+		cr.Drift = []string{fmt.Sprintf("%s is not a symlink (replaced with a copy?); run `grafel install --dev --force` to restore", skillDst)}
 		return cr
 	}
 
@@ -480,7 +480,7 @@ func checkSkillDev(skillName string, record SkillRecord, skillsDir string) Check
 	return cr
 }
 
-// checkMCP verifies that the archigraph MCP entry is present in every
+// checkMCP verifies that the grafel MCP entry is present in every
 // registered .claude.json path.
 func checkMCP(state *State, claudeDirs []string) CheckResult {
 	cr := CheckResult{Surface: "mcp", OK: true, Severity: SeverityCritical}
@@ -519,7 +519,7 @@ func checkMCP(state *State, claudeDirs []string) CheckResult {
 			// It's in auto-detected dirs but not registered — warn.
 			cr.OK = false
 			cr.Severity = SeverityWarning
-			cr.Drift = append(cr.Drift, fmt.Sprintf("%s: archigraph entry absent (not in install record)", cfgPath))
+			cr.Drift = append(cr.Drift, fmt.Sprintf("%s: grafel entry absent (not in install record)", cfgPath))
 		}
 	}
 
@@ -529,7 +529,7 @@ func checkMCP(state *State, claudeDirs []string) CheckResult {
 	return cr
 }
 
-// mcpEntryDrift returns (missing=true, "") when the archigraph entry is absent,
+// mcpEntryDrift returns (missing=true, "") when the grafel entry is absent,
 // or (false, drift) when the entry is present but has changed.
 func mcpEntryDrift(cfgPath string) (missing bool, drift string) {
 	data, err := os.ReadFile(cfgPath)
@@ -551,7 +551,7 @@ func mcpEntryDrift(cfgPath string) (missing bool, drift string) {
 	return false, ""
 }
 
-// checkGitignore verifies that the .gitignore in repoRoot contains /.archigraph/.
+// checkGitignore verifies that the .gitignore in repoRoot contains /.grafel/.
 func checkGitignore(repoRoot string) CheckResult {
 	cr := CheckResult{Surface: "gitignore/" + filepath.Base(repoRoot), OK: true, Severity: SeverityWarning}
 
@@ -568,22 +568,22 @@ func checkGitignore(repoRoot string) CheckResult {
 		return cr
 	}
 
-	if !hasGitignoreEntry(data, archigraphGitignoreEntry) {
+	if !hasGitignoreEntry(data, grafelGitignoreEntry) {
 		cr.OK = false
-		cr.Drift = []string{fmt.Sprintf("/.archigraph/ missing from %s", gitignorePath)}
+		cr.Drift = []string{fmt.Sprintf("/.grafel/ missing from %s", gitignorePath)}
 	}
 	return cr
 }
 
-// checkRulesFiles scans every registered repo (across every archigraph
+// checkRulesFiles scans every registered repo (across every grafel
 // group) for the per-IDE rules files defined in the rulesfiles package
 // (AGENTS.md, CLAUDE.md, .windsurfrules, .cursorrules,
 // .codeium/instructions.md, .github/copilot-instructions.md).
 //
 // Per repo, one CheckResult is emitted. The check is OK when every
-// target file contains the current archigraph block; otherwise it lists
+// target file contains the current grafel block; otherwise it lists
 // each non-OK file by status (MISSING/STALE/OUTDATED). Severity is
-// Warning — a missing rules block doesn't break archigraph, but it does
+// Warning — a missing rules block doesn't break grafel, but it does
 // mean the corresponding IDE agent won't reach for the MCP first.
 //
 // Failures of the registry read are returned as a single Info-severity
@@ -646,12 +646,12 @@ func scanRulesFilesForRepo(group, repoPath string) CheckResult {
 	return cr
 }
 
-// checkStaleStagingDirs looks for .archigraph/staging/<run_id>/ directories
-// older than 7 days under the archigraph state root.
+// checkStaleStagingDirs looks for .grafel/staging/<run_id>/ directories
+// older than 7 days under the grafel state root.
 // Returns nil when no stale dirs exist (avoids adding a check with no content).
 func checkStaleStagingDirs(statePath string) *CheckResult {
-	archigraphDir := filepath.Dir(statePath)
-	stagingDir := filepath.Join(archigraphDir, "staging")
+	grafelDir := filepath.Dir(statePath)
+	stagingDir := filepath.Join(grafelDir, "staging")
 
 	entries, err := os.ReadDir(stagingDir)
 	if err != nil {
@@ -778,7 +778,7 @@ func RunQuickDoctor(opts QuickOptions) error {
 	}
 
 	if len(warnings) > 0 {
-		fmt.Fprintf(opts.Out, "archigraph doctor: %s — run 'archigraph doctor' for details\n",
+		fmt.Fprintf(opts.Out, "grafel doctor: %s — run 'grafel doctor' for details\n",
 			strings.Join(warnings, "; "))
 	}
 
@@ -830,7 +830,7 @@ func RenderReport(w io.Writer, report *DoctorReport) {
 	}
 
 	if !report.OK {
-		fmt.Fprintf(w, "\n%s\n", colorize(ansiRed, "Run `archigraph install` to fix."))
+		fmt.Fprintf(w, "\n%s\n", colorize(ansiRed, "Run `grafel install` to fix."))
 	} else {
 		// Check for warnings.
 		hasWarn := false
@@ -841,7 +841,7 @@ func RenderReport(w io.Writer, report *DoctorReport) {
 			}
 		}
 		if hasWarn {
-			fmt.Fprintf(w, "\n%s\n", colorize(ansiYellow, "Warnings detected. Run `archigraph doctor` for details."))
+			fmt.Fprintf(w, "\n%s\n", colorize(ansiYellow, "Warnings detected. Run `grafel doctor` for details."))
 		} else {
 			fmt.Fprintf(w, "\n%s\n", colorize(ansiGreen, "All checks passed."))
 		}

@@ -17,7 +17,7 @@
 // `SCOPE.Operation/endpoint` carrying the controller#action handler ref and the
 // #3696 flat contract. The route extractor's routes.rb op and this controller
 // op share the same `controller#action` handler key, so the security dashboard
-// and archigraph_auth_coverage resolve the same posture from either side.
+// and grafel_auth_coverage resolve the same posture from either side.
 //
 // Recognised guards:
 //
@@ -50,8 +50,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -123,7 +123,7 @@ type caControllerLevelAuth struct {
 }
 
 func (e *railsControllerAuthExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/ruby")
+	tracer := otel.Tracer("grafel/custom/ruby")
 	_, span := tracer.Start(ctx, "indexer.rails_controller_auth.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -231,7 +231,7 @@ func (p caActionPosture) stamp(props map[string]string) {
 		props["auth_guard"] = p.guard
 	}
 	// #authz — the specific authorization action required, so
-	// archigraph_auth_coverage answers "what permission does this route require?".
+	// grafel_auth_coverage answers "what permission does this route require?".
 	if p.permission != "" {
 		props["auth_permissions"] = p.permission
 	}

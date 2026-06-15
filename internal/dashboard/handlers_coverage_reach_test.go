@@ -3,8 +3,8 @@ package dashboard
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func ep(id, name string, reachable string) graph.Entity {

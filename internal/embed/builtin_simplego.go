@@ -19,7 +19,7 @@ import (
 //
 // Model weights are NOT compiled into the binary: hugot v0.7.3 fetches the
 // ONNX model from HuggingFace on first use into a local cache directory
-// (~/.archigraph/models). This is a one-time ~23MB download. After that the
+// (~/.grafel/models). This is a one-time ~23MB download. After that the
 // backend is fully offline. (This is the one deviation from the original
 // "bundle weights as Go bytes" plan — see ADR-0019 / the #461 PR notes.)
 type builtinBackend struct {
@@ -63,7 +63,7 @@ func newBuiltinBackend(ctx context.Context) (Backend, error) {
 
 	cfg := hugot.FeatureExtractionConfig{
 		ModelPath:    modelPath,
-		Name:         "archigraph-minilm",
+		Name:         "grafel-minilm",
 		OnnxFilename: filepath.Base(onnxFile),
 	}
 	pl, err := hugot.NewPipeline(sess, cfg)

@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // RegistryStore is the small surface the HTTP handlers need. Splitting it
 // out lets tests inject an in-memory implementation without touching
-// ~/.archigraph on disk.
+// ~/.grafel on disk.
 type RegistryStore interface {
 	ListGroups() ([]GroupSummary, error)
 	GroupGraph(group string) ([]byte, error)
@@ -27,7 +27,7 @@ type RegistryStore interface {
 
 // GroupSummary is the registry list shape returned by GET /api/registry.
 // entity_count, last_indexed are aggregated from per-repo graph-stats.json
-// sidecars (written by `archigraph index`). The aggregation is cached in
+// sidecars (written by `grafel index`). The aggregation is cached in
 // registryStatsCache and refreshed at most once every 30 s.
 type GroupSummary struct {
 	Name        string   `json:"name"`
@@ -113,7 +113,7 @@ func aggregateGroupStats(groupName string, repos []registry.Repo) (entityCount i
 }
 
 // liveStore is the production RegistryStore: it reads from the on-disk
-// registry under ~/.archigraph and from each repo's .archigraph/graph.json.
+// registry under ~/.grafel and from each repo's .grafel/graph.json.
 type liveStore struct{}
 
 // NewLiveStore returns the production RegistryStore.

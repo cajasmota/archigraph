@@ -2,7 +2,7 @@ package mcp
 
 // get_source_resolution_4272_test.go — regression coverage for #4272.
 //
-// THE BUG (root cause of the ~8% archigraph_get_source error rate, the busiest
+// THE BUG (root cause of the ~8% grafel_get_source error rate, the busiest
 // MCP tool): handleGetNodeSource resolved a "<repo>::<localid>" prefixed
 // entity_id ONLY via r.LabelIndex.ByID[localid]. When the prefixed arg pointed
 // at an entity that resolves by qualified_name or label (not by its raw id) — or
@@ -34,7 +34,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 

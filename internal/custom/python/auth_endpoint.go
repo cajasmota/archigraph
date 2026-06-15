@@ -10,7 +10,7 @@
 // This file resolves a per-endpoint auth posture from static route-level signals
 // and stamps it onto the route endpoint entity using the same flat property
 // contract the Java (java_auth_policy.go) and JS/TS (http_endpoint_jsts_auth.go)
-// resolvers already write, so archigraph_auth_coverage and the security
+// resolvers already write, so grafel_auth_coverage and the security
 // dashboard light up uniformly:
 //
 //	auth_required   — "true" | "false"

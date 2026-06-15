@@ -3,8 +3,8 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #4244 RE-FIX — a file with SEVERAL `coll.aggregate(...)` calls on the SAME
@@ -53,7 +53,7 @@ class InspectionService:
 		func(r types.RelationshipRecord) {},
 	)
 
-	// Stamp IDs exactly as production does (cmd/archigraph stampEntityIDs).
+	// Stamp IDs exactly as production does (cmd/grafel stampEntityIDs).
 	for i := range ents {
 		if ents[i].Name == "" {
 			continue

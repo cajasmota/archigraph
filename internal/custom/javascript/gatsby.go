@@ -11,8 +11,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // gatsby.go — Gatsby meta-framework extractor (issue #2857).
@@ -80,7 +80,7 @@ func normalizeGatsbyPath(fp string) string {
 }
 
 func (e *gatsbyExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/javascript")
+	tracer := otel.Tracer("grafel/custom/javascript")
 	_, span := tracer.Start(ctx, "indexer.gatsby_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

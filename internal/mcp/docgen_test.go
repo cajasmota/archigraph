@@ -1,6 +1,6 @@
 package mcp
 
-// docgen_test.go — integration tests for the 6 archigraph_docgen_* MCP tools.
+// docgen_test.go — integration tests for the 6 grafel_docgen_* MCP tools.
 //
 // Coverage:
 //   TestDocgenStartRun_New          — fresh start_run creates staging dir
@@ -155,7 +155,7 @@ func callWithCWD(args map[string]any, cwd string) map[string]any {
 func TestDocgenStartRun_New(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 
@@ -184,13 +184,13 @@ func TestDocgenStartRun_New(t *testing.T) {
 func TestDocgenStartRun_ResumeTrue(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	first := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	first := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	firstRunID := first["run_id"].(string)
 
 	// Second call with resume=true (default).
-	second := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	second := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group":  "mygroup",
 		"resume": true,
 	}, tmpDir))
@@ -210,12 +210,12 @@ func TestDocgenStartRun_ResumeTrue(t *testing.T) {
 func TestDocgenStartRun_ResumeFalse(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	_ = callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	_ = callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 
 	// Second call with resume=false should error.
-	callDocgenToolExpectError(t, srv, "archigraph_docgen_start_run",
+	callDocgenToolExpectError(t, srv, "grafel_docgen_start_run",
 		callWithCWD(map[string]any{
 			"group":  "mygroup",
 			"resume": false,
@@ -231,7 +231,7 @@ func TestDocgenStartRun_ResumeFalse(t *testing.T) {
 func TestDocgenStatus(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -245,7 +245,7 @@ func TestDocgenStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_status", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_status", callWithCWD(map[string]any{
 		"run_id": runID,
 	}, tmpDir))
 
@@ -272,7 +272,7 @@ func TestDocgenStatus(t *testing.T) {
 func TestDocgenValidate_OK(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -288,7 +288,7 @@ func TestDocgenValidate_OK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_validate", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_validate", callWithCWD(map[string]any{
 		"run_id": runID,
 	}, tmpDir))
 
@@ -308,7 +308,7 @@ func TestDocgenValidate_OK(t *testing.T) {
 func TestDocgenValidate_FrontmatterError(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -320,7 +320,7 @@ func TestDocgenValidate_FrontmatterError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_validate", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_validate", callWithCWD(map[string]any{
 		"run_id": runID,
 	}, tmpDir))
 
@@ -340,7 +340,7 @@ func TestDocgenValidate_FrontmatterError(t *testing.T) {
 func TestDocgenValidate_BrokenLink(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -352,7 +352,7 @@ func TestDocgenValidate_BrokenLink(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_validate", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_validate", callWithCWD(map[string]any{
 		"run_id": runID,
 	}, tmpDir))
 
@@ -372,7 +372,7 @@ func TestDocgenValidate_BrokenLink(t *testing.T) {
 func TestDocgenValidate_PathTraversal(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -384,7 +384,7 @@ func TestDocgenValidate_PathTraversal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_validate", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_validate", callWithCWD(map[string]any{
 		"run_id": runID,
 	}, tmpDir))
 
@@ -427,7 +427,7 @@ func TestDocgenPromote_SSGGuard(t *testing.T) {
 		t.Run(sig, func(t *testing.T) {
 			srv, tmpDir := newDocgenServer(t)
 
-			start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+			start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 				"group": "mygroup",
 			}, tmpDir))
 			runID := start["run_id"].(string)
@@ -442,7 +442,7 @@ func TestDocgenPromote_SSGGuard(t *testing.T) {
 				}
 			}
 
-			callDocgenToolExpectError(t, srv, "archigraph_docgen_promote",
+			callDocgenToolExpectError(t, srv, "grafel_docgen_promote",
 				callWithCWD(map[string]any{
 					"run_id": runID,
 					"group":  "mygroup",
@@ -463,7 +463,7 @@ func TestDocgenPromote_Atomic(t *testing.T) {
 
 	// Create initial canonical content to simulate "previous".
 	homeDir := os.Getenv("HOME")
-	canonicalPath := filepath.Join(homeDir, ".archigraph", "docs", "mygroup")
+	canonicalPath := filepath.Join(homeDir, ".grafel", "docs", "mygroup")
 	if err := os.MkdirAll(canonicalPath, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -472,7 +472,7 @@ func TestDocgenPromote_Atomic(t *testing.T) {
 	}
 
 	// Start a run and write a file.
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -482,7 +482,7 @@ func TestDocgenPromote_Atomic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_promote", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_promote", callWithCWD(map[string]any{
 		"run_id": runID,
 		"group":  "mygroup",
 		"force":  true,
@@ -526,7 +526,7 @@ func TestDocgenPromote_Atomic(t *testing.T) {
 func TestDocgenAbort(t *testing.T) {
 	srv, tmpDir := newDocgenServer(t)
 
-	start := callDocgenTool(t, srv, "archigraph_docgen_start_run", callWithCWD(map[string]any{
+	start := callDocgenTool(t, srv, "grafel_docgen_start_run", callWithCWD(map[string]any{
 		"group": "mygroup",
 	}, tmpDir))
 	runID := start["run_id"].(string)
@@ -537,7 +537,7 @@ func TestDocgenAbort(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_abort", callWithCWD(map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_abort", callWithCWD(map[string]any{
 		"run_id": runID,
 		"group":  "mygroup",
 	}, tmpDir))
@@ -570,7 +570,7 @@ func TestDocgenList(t *testing.T) {
 
 	// Plant canonical docs.
 	homeDir := os.Getenv("HOME")
-	canonicalPath := filepath.Join(homeDir, ".archigraph", "docs", "mygroup")
+	canonicalPath := filepath.Join(homeDir, ".grafel", "docs", "mygroup")
 	if err := os.MkdirAll(canonicalPath, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -584,7 +584,7 @@ func TestDocgenList(t *testing.T) {
 		}
 	}
 
-	res := callDocgenTool(t, srv, "archigraph_docgen_list", map[string]any{
+	res := callDocgenTool(t, srv, "grafel_docgen_list", map[string]any{
 		"group": "mygroup",
 	})
 
@@ -620,7 +620,7 @@ func TestDocgenFullHappyPath(t *testing.T) {
 	cwdArgs := map[string]any{"cwd": tmpDir, "no_git": true}
 
 	// 1. Start run.
-	startRes := callDocgenTool(t, srv, "archigraph_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
+	startRes := callDocgenTool(t, srv, "grafel_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
 		"group": "happy",
 	}))
 	runID := startRes["run_id"].(string)
@@ -631,7 +631,7 @@ func TestDocgenFullHappyPath(t *testing.T) {
 	writeDocgenFile(t, stagingPath, "api.md", "---\ntitle: API\n---\n\n# API Reference\n")
 
 	// 3. Status check.
-	statusRes := callDocgenTool(t, srv, "archigraph_docgen_status", mergeMaps(cwdArgs, map[string]any{
+	statusRes := callDocgenTool(t, srv, "grafel_docgen_status", mergeMaps(cwdArgs, map[string]any{
 		"run_id": runID,
 	}))
 	fileCount, _ := statusRes["file_count"].(float64)
@@ -640,7 +640,7 @@ func TestDocgenFullHappyPath(t *testing.T) {
 	}
 
 	// 4. Validate.
-	valRes := callDocgenTool(t, srv, "archigraph_docgen_validate", mergeMaps(cwdArgs, map[string]any{
+	valRes := callDocgenTool(t, srv, "grafel_docgen_validate", mergeMaps(cwdArgs, map[string]any{
 		"run_id": runID,
 	}))
 	if valRes["has_errors"] != false {
@@ -648,7 +648,7 @@ func TestDocgenFullHappyPath(t *testing.T) {
 	}
 
 	// 5. Promote.
-	promRes := callDocgenTool(t, srv, "archigraph_docgen_promote", mergeMaps(cwdArgs, map[string]any{
+	promRes := callDocgenTool(t, srv, "grafel_docgen_promote", mergeMaps(cwdArgs, map[string]any{
 		"run_id": runID,
 		"group":  "happy",
 		"force":  false,
@@ -664,7 +664,7 @@ func TestDocgenFullHappyPath(t *testing.T) {
 	}
 
 	// 6. List.
-	listRes := callDocgenTool(t, srv, "archigraph_docgen_list", map[string]any{
+	listRes := callDocgenTool(t, srv, "grafel_docgen_list", map[string]any{
 		"group": "happy",
 	})
 	listCount, _ := listRes["file_count"].(float64)
@@ -682,7 +682,7 @@ func TestDocgenSandboxedAgentSim(t *testing.T) {
 	cwdArgs := map[string]any{"cwd": tmpDir, "no_git": true}
 
 	// Agent A starts a run.
-	resA := callDocgenTool(t, srv, "archigraph_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
+	resA := callDocgenTool(t, srv, "grafel_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
 		"group":  "shared",
 		"resume": true,
 	}))
@@ -692,7 +692,7 @@ func TestDocgenSandboxedAgentSim(t *testing.T) {
 	}
 
 	// Agent B also calls start_run for the same group — must get the same run.
-	resB := callDocgenTool(t, srv, "archigraph_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
+	resB := callDocgenTool(t, srv, "grafel_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
 		"group":  "shared",
 		"resume": true,
 	}))
@@ -704,7 +704,7 @@ func TestDocgenSandboxedAgentSim(t *testing.T) {
 	}
 
 	// Agent C with resume=false must get an error.
-	callDocgenToolExpectError(t, srv, "archigraph_docgen_start_run",
+	callDocgenToolExpectError(t, srv, "grafel_docgen_start_run",
 		mergeMaps(cwdArgs, map[string]any{
 			"group":  "shared",
 			"resume": false,
@@ -713,13 +713,13 @@ func TestDocgenSandboxedAgentSim(t *testing.T) {
 	)
 
 	// Abort the run.
-	_ = callDocgenTool(t, srv, "archigraph_docgen_abort", mergeMaps(cwdArgs, map[string]any{
+	_ = callDocgenTool(t, srv, "grafel_docgen_abort", mergeMaps(cwdArgs, map[string]any{
 		"run_id": runIDA,
 		"group":  "shared",
 	}))
 
 	// Now a new start_run should succeed (lock released).
-	resNew := callDocgenTool(t, srv, "archigraph_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
+	resNew := callDocgenTool(t, srv, "grafel_docgen_start_run", mergeMaps(cwdArgs, map[string]any{
 		"group":  "shared",
 		"resume": false,
 	}))
@@ -768,12 +768,12 @@ func TestDocgenToolsRegistered(t *testing.T) {
 	srv, _ := newDocgenServer(t)
 
 	want := []string{
-		"archigraph_docgen_start_run",
-		"archigraph_docgen_status",
-		"archigraph_docgen_validate",
-		"archigraph_docgen_promote",
-		"archigraph_docgen_abort",
-		"archigraph_docgen_list",
+		"grafel_docgen_start_run",
+		"grafel_docgen_status",
+		"grafel_docgen_validate",
+		"grafel_docgen_promote",
+		"grafel_docgen_abort",
+		"grafel_docgen_list",
 	}
 
 	toolMap := srv.MCP.ListTools()

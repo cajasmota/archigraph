@@ -3,7 +3,7 @@ package sql_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // hasFK returns true when there is a column entity (table, col) with a

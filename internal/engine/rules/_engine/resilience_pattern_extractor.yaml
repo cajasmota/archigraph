@@ -13,6 +13,6 @@ description: >-
   @Retry/@CircuitBreaker/@Bulkhead/@TimeLimiter (Java/Kotlin), Hystrix
   @HystrixCommand (Java/Kotlin), Polly fluent API (C#/.NET), sony/gobreaker
   and afex/hystrix-go (Go).
-module: archigraph.engine.rules.pattern_detectors.resilience_pattern_extractor
+module: grafel.engine.rules.pattern_detectors.resilience_pattern_extractor
 function: detect
 applies_to_function: applies_to

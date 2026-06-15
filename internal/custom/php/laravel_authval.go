@@ -17,8 +17,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ type lrAuthExtractor struct{}
 func (e *lrAuthExtractor) Language() string { return "custom_php_laravel_auth" }
 
 func (e *lrAuthExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.laravel_auth_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -429,7 +429,7 @@ type lrValExtractor struct{}
 func (e *lrValExtractor) Language() string { return "custom_php_laravel_validation" }
 
 func (e *lrValExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.laravel_validation_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -703,7 +703,7 @@ type lrMwExtractor struct{}
 func (e *lrMwExtractor) Language() string { return "custom_php_laravel_middleware" }
 
 func (e *lrMwExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.laravel_middleware_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

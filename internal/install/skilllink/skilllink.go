@@ -1,13 +1,13 @@
-// Package skilllink handles symlinking archigraph skills into Claude Code's
+// Package skilllink handles symlinking grafel skills into Claude Code's
 // discovery directories.
 //
-// The archigraph skills are distributed with the binary and must be
+// The grafel skills are distributed with the binary and must be
 // symlinked into ~/.claude/skills/, ~/.claude-*/skills/, etc. so that
 // Claude Code's skill discovery mechanism can find them.
 //
 // This supports both shipped binaries (where skills live in a known
 // location relative to the binary) and local dev environments (where skills
-// live in the archigraph repo).
+// live in the grafel repo).
 package skilllink
 
 import (
@@ -18,22 +18,22 @@ import (
 	"strings"
 )
 
-// SkillNames lists the 8 archigraph skills in canonical order.
+// SkillNames lists the 8 grafel skills in canonical order.
 var SkillNames = []string{
-	"archigraph-aware-review",
-	"archigraph-business-docs",
-	"archigraph-consult",
-	"archigraph-graph-enrich",
-	"archigraph-graph-quality",
-	"archigraph-help",
-	"archigraph-patterns-discover",
-	"archigraph-patterns-sync",
-	"archigraph-resolve",
-	"archigraph-security-audit",
-	"archigraph-tech-docs",
-	"archigraph-test-page",
+	"grafel-aware-review",
+	"grafel-business-docs",
+	"grafel-consult",
+	"grafel-graph-enrich",
+	"grafel-graph-quality",
+	"grafel-help",
+	"grafel-patterns-discover",
+	"grafel-patterns-sync",
+	"grafel-resolve",
+	"grafel-security-audit",
+	"grafel-tech-docs",
+	"grafel-test-page",
 	"extend-convention",
-	"using-archigraph",
+	"using-grafel",
 }
 
 // ClaudeSkillsDirForConfig derives the skills directory associated with a
@@ -116,20 +116,20 @@ func PruneOrphanSkillSymlinks(out io.Writer, skillsSubdir string) {
 	}
 }
 
-// DiscoverSkillsDir finds the source directory containing the archigraph
+// DiscoverSkillsDir finds the source directory containing the grafel
 // skills. It tries these locations in order:
 //
 //  1. If skillsSourceDir is non-empty, use it as-is (caller-validated override)
 //  2. Check $(dirname binPath)/skills — sibling layout produced by
-//     `go build ./cmd/archigraph` in the repo root (e.g. repo/archigraph +
+//     `go build ./cmd/grafel` in the repo root (e.g. repo/grafel +
 //     repo/skills)
 //  3. Check $(dirname binPath)/../skills — one-up layout used by shipped
-//     binaries installed under a bin/ subdirectory (e.g. prefix/bin/archigraph +
+//     binaries installed under a bin/ subdirectory (e.g. prefix/bin/grafel +
 //     prefix/skills)
-//  4. Check $ARCHIGRAPH_SKILLS_DIR env var if set
+//  4. Check $GRAFEL_SKILLS_DIR env var if set
 //  5. Walk up ancestor directories from dirname(binPath) up to 5 levels,
 //     checking <ancestor>/skills at each level — handles arbitrary repo layouts
-//     such as repo/build/archigraph + repo/skills
+//     such as repo/build/grafel + repo/skills
 //
 // Returns "" if none of the locations exist, which signals the caller to
 // error or skip the step.
@@ -188,14 +188,14 @@ func DiscoverSkillsDirVerbose(binPath, skillsSourceDir string) (string, []string
 	}
 
 	// Try env var override (useful in CI or special deployments).
-	if envPath := os.Getenv("ARCHIGRAPH_SKILLS_DIR"); envPath != "" {
-		if p, ok := check("ARCHIGRAPH_SKILLS_DIR", envPath); ok {
+	if envPath := os.Getenv("GRAFEL_SKILLS_DIR"); envPath != "" {
+		if p, ok := check("GRAFEL_SKILLS_DIR", envPath); ok {
 			return p, attempted
 		}
 	}
 
 	// Walk up ancestors of binPath (up to 5 levels) looking for a skills/
-	// subdirectory.  This handles layouts like repo/build/archigraph + repo/skills
+	// subdirectory.  This handles layouts like repo/build/grafel + repo/skills
 	// without encoding any machine-specific path.
 	if binPath != "" {
 		dir := filepath.Dir(binPath)
@@ -215,12 +215,12 @@ func DiscoverSkillsDirVerbose(binPath, skillsSourceDir string) (string, []string
 	return "", attempted
 }
 
-// InstallSkillsInClaudeConfigs symlinks the archigraph skills into every
+// InstallSkillsInClaudeConfigs symlinks the grafel skills into every
 // detected Claude Code config directory's skills/ subdirectory.
 //
 // claudeConfigDirs: list of ~/.claude.json paths (typically from mcpreg.DetectClaudeConfigDirs)
 // skillsSourceDir: explicit override of skills location (from --skills-source-dir flag)
-// binPath: path to the archigraph binary (used to infer skills location)
+// binPath: path to the grafel binary (used to infer skills location)
 //
 // Returns the list of directories where skills were successfully installed,
 // and prints status to out. Errors are soft — we report them but don't abort
@@ -300,7 +300,7 @@ func InstallSkillsInClaudeConfigs(out io.Writer, binPath, skillsSourceDir string
 	return installed
 }
 
-// RemoveSkillsFromClaudeConfigs removes the symlinked archigraph skills from
+// RemoveSkillsFromClaudeConfigs removes the symlinked grafel skills from
 // every detected Claude Code config directory's skills/ subdirectory.
 //
 // Only removes symlinks; if a skill exists as a regular directory (user manual

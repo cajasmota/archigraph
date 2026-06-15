@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // embedBatchSize bounds how many texts are sent to the backend per call.

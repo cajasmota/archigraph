@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/csharp"
+	_ "github.com/cajasmota/grafel/internal/custom/csharp"
 )
 
 // dotnet_di_test.go — value-asserting tests for the .NET DI GRAPH extractor

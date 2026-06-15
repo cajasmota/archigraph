@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // TestEmitGenericDecoratorProperties_2016 asserts that the generic decorator

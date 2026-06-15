@@ -1,9 +1,9 @@
-// Package cli — `archigraph docgen` subcommand (Tier 0–4, issue #1760).
+// Package cli — `grafel docgen` subcommand (Tier 0–4, issue #1760).
 //
 // Tier 0 produces ONE markdown section for ONE seed entity with a <30 s
 // feedback loop. It is designed for rapid prompt-quality iteration:
 //
-//	archigraph docgen --tier=0 \
+//	grafel docgen --tier=0 \
 //	  --group=mygroup \
 //	  --seed-entity=abc123def456 \
 //	  --section=capabilities
@@ -13,7 +13,7 @@
 // stability, mermaid budget) and is the acceptance gate before full-group
 // rendering (Tier 2–4):
 //
-//	archigraph docgen --tier=1 \
+//	grafel docgen --tier=1 \
 //	  --group=mygroup \
 //	  --seed-entity=abc123def456
 //
@@ -21,7 +21,7 @@
 // highest-priority dependents — and validates CROSS-PAGE contracts. Wall-time
 // target: <10 minutes:
 //
-//	archigraph docgen --tier=2 \
+//	grafel docgen --tier=2 \
 //	  --group=mygroup \
 //	  --seed-entity=abc123def456 \
 //	  --max-pages=5
@@ -29,7 +29,7 @@
 // Tier 3 produces a FULL DOC SET for ONE repo within a multi-repo group.
 // Wall-time target: <20 minutes:
 //
-//	archigraph docgen --tier=3 \
+//	grafel docgen --tier=3 \
 //	  --group=mygroup \
 //	  --repo=core
 //
@@ -37,36 +37,36 @@
 // enforces CROSS-REPO coherence contracts. Wall-time target: <60 seconds
 // (deterministic stubs; repo Tier 3 runs are concurrent):
 //
-//	archigraph docgen --tier=4 --group=mygroup
+//	grafel docgen --tier=4 --group=mygroup
 //
 // Output (Tier 0):
 //
-//	~/.archigraph/docs/<group>/.tier0-<RFC3339>/<entity-id>-<section>.md
-//	~/.archigraph/docs/<group>/.tier0-<RFC3339>/score.json
+//	~/.grafel/docs/<group>/.tier0-<RFC3339>/<entity-id>-<section>.md
+//	~/.grafel/docs/<group>/.tier0-<RFC3339>/score.json
 //
 // Output (Tier 1):
 //
-//	~/.archigraph/docs/<group>/.tier1-<RFC3339>/<entity-id>-page.md
-//	~/.archigraph/docs/<group>/.tier1-<RFC3339>/score.json
+//	~/.grafel/docs/<group>/.tier1-<RFC3339>/<entity-id>-page.md
+//	~/.grafel/docs/<group>/.tier1-<RFC3339>/score.json
 //
 // Output (Tier 2):
 //
-//	~/.archigraph/docs/<group>/.tier2-<RFC3339>/<entity-id>-page.md  (N pages)
-//	~/.archigraph/docs/<group>/.tier2-<RFC3339>/score.json
+//	~/.grafel/docs/<group>/.tier2-<RFC3339>/<entity-id>-page.md  (N pages)
+//	~/.grafel/docs/<group>/.tier2-<RFC3339>/score.json
 //
 // Output (Tier 3):
 //
-//	~/.archigraph/docs/<group>/.tier3-<RFC3339>/<repo>/index.md
-//	~/.archigraph/docs/<group>/.tier3-<RFC3339>/<repo>/<entity-id>-page.md
-//	~/.archigraph/docs/<group>/.tier3-<RFC3339>/<repo>/score.json
+//	~/.grafel/docs/<group>/.tier3-<RFC3339>/<repo>/index.md
+//	~/.grafel/docs/<group>/.tier3-<RFC3339>/<repo>/<entity-id>-page.md
+//	~/.grafel/docs/<group>/.tier3-<RFC3339>/<repo>/score.json
 //
 // Output (Tier 4):
 //
-//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/index.md
-//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/score.json
-//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/<repo>/index.md
-//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/<repo>/<entity-id>-page.md
-//	~/.archigraph/docs/<group>/.tier4-<RFC3339>/<repo>/score.json
+//	~/.grafel/docs/<group>/.tier4-<RFC3339>/index.md
+//	~/.grafel/docs/<group>/.tier4-<RFC3339>/score.json
+//	~/.grafel/docs/<group>/.tier4-<RFC3339>/<repo>/index.md
+//	~/.grafel/docs/<group>/.tier4-<RFC3339>/<repo>/<entity-id>-page.md
+//	~/.grafel/docs/<group>/.tier4-<RFC3339>/<repo>/score.json
 package cli
 
 import (
@@ -82,11 +82,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/docgen"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// newDocgenCmd returns the `archigraph docgen` cobra command.
+// newDocgenCmd returns the `grafel docgen` cobra command.
 func newDocgenCmd() *cobra.Command {
 	var (
 		tier          int
@@ -109,7 +109,7 @@ func newDocgenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "docgen [flags]",
 		Short: "Generate documentation for a group or a single section (Tier 0–4)",
-		Long: `Generate documentation for a registered archigraph group.
+		Long: `Generate documentation for a registered grafel group.
 
 TIER 0 (--tier=0) — fast single-section snippet path:
   Renders ONE markdown section for ONE seed entity. Completes in <30 seconds.
@@ -117,11 +117,11 @@ TIER 0 (--tier=0) — fast single-section snippet path:
   linking, no module grouping. Pure local graph context.
 
   Output:
-    ~/.archigraph/docs/<group>/.tier0-<timestamp>/<entity-id>-<section>.md
-    ~/.archigraph/docs/<group>/.tier0-<timestamp>/score.json
+    ~/.grafel/docs/<group>/.tier0-<timestamp>/<entity-id>-<section>.md
+    ~/.grafel/docs/<group>/.tier0-<timestamp>/score.json
 
   Example:
-    archigraph docgen --tier=0 --group=mygroup \
+    grafel docgen --tier=0 --group=mygroup \
       --seed-entity=abc123def456 --section=capabilities
 
 TIER 1 (--tier=1) — single complete page path (<120 s):
@@ -131,11 +131,11 @@ TIER 1 (--tier=1) — single complete page path (<120 s):
   contract violations — fix them before advancing to full-group Tier 2+.
 
   Output:
-    ~/.archigraph/docs/<group>/.tier1-<timestamp>/<entity-id>-page.md
-    ~/.archigraph/docs/<group>/.tier1-<timestamp>/score.json
+    ~/.grafel/docs/<group>/.tier1-<timestamp>/<entity-id>-page.md
+    ~/.grafel/docs/<group>/.tier1-<timestamp>/score.json
 
   Example:
-    archigraph docgen --tier=1 --group=mygroup \
+    grafel docgen --tier=1 --group=mygroup \
       --seed-entity=abc123def456
 
 TIER 2 (--tier=2) — coherent slice path (<10 min):
@@ -148,11 +148,11 @@ TIER 2 (--tier=2) — coherent slice path (<10 min):
     • Slice-wide mermaid count within budget (default 15).
 
   Output:
-    ~/.archigraph/docs/<group>/.tier2-<timestamp>/<entity-id>-page.md  (N pages)
-    ~/.archigraph/docs/<group>/.tier2-<timestamp>/score.json
+    ~/.grafel/docs/<group>/.tier2-<timestamp>/<entity-id>-page.md  (N pages)
+    ~/.grafel/docs/<group>/.tier2-<timestamp>/score.json
 
   Example:
-    archigraph docgen --tier=2 --group=mygroup \
+    grafel docgen --tier=2 --group=mygroup \
       --seed-entity=abc123def456 --max-pages=5
 
 TIER 3 (--tier=3) — full repo doc set (<20 min):
@@ -166,12 +166,12 @@ TIER 3 (--tier=3) — full repo doc set (<20 min):
   Requires --repo <slug> (the repo slug from the group config).
 
   Output:
-    ~/.archigraph/docs/<group>/.tier3-<timestamp>/<repo>/index.md
-    ~/.archigraph/docs/<group>/.tier3-<timestamp>/<repo>/<entity-id>-page.md
-    ~/.archigraph/docs/<group>/.tier3-<timestamp>/<repo>/score.json
+    ~/.grafel/docs/<group>/.tier3-<timestamp>/<repo>/index.md
+    ~/.grafel/docs/<group>/.tier3-<timestamp>/<repo>/<entity-id>-page.md
+    ~/.grafel/docs/<group>/.tier3-<timestamp>/<repo>/score.json
 
   Example:
-    archigraph docgen --tier=3 --group=mygroup --repo=core
+    grafel docgen --tier=3 --group=mygroup --repo=core
 
 TIER 4 (--tier=4) — full group doc set with cross-repo coherence (<60 s):
   Runs Tier 3 for every repo in the group CONCURRENTLY (pool size 3) and
@@ -181,14 +181,14 @@ TIER 4 (--tier=4) — full group doc set with cross-repo coherence (<60 s):
     • No mermaid flow block appears in pages of 2+ different repos (cross-repo-flow-dedup).
 
   Output:
-    ~/.archigraph/docs/<group>/.tier4-<timestamp>/index.md        (group-level)
-    ~/.archigraph/docs/<group>/.tier4-<timestamp>/score.json      (group-level rollup)
-    ~/.archigraph/docs/<group>/.tier4-<timestamp>/<repo>/index.md
-    ~/.archigraph/docs/<group>/.tier4-<timestamp>/<repo>/score.json
-    ~/.archigraph/docs/<group>/.tier4-<timestamp>/<repo>/<entity-id>-page.md
+    ~/.grafel/docs/<group>/.tier4-<timestamp>/index.md        (group-level)
+    ~/.grafel/docs/<group>/.tier4-<timestamp>/score.json      (group-level rollup)
+    ~/.grafel/docs/<group>/.tier4-<timestamp>/<repo>/index.md
+    ~/.grafel/docs/<group>/.tier4-<timestamp>/<repo>/score.json
+    ~/.grafel/docs/<group>/.tier4-<timestamp>/<repo>/<entity-id>-page.md
 
   Example:
-    archigraph docgen --tier=4 --group=mygroup
+    grafel docgen --tier=4 --group=mygroup
 
 Available sections (--section, used by --tier=0 only):
   ` + strings.Join(docgen.KnownSections, ", "),
@@ -227,14 +227,14 @@ Available sections (--section, used by --tier=0 only):
 		"group name (defaults to sole registered group)")
 	cmd.Flags().StringVar(&seedEntity, "seed-entity", "",
 		"entity ID to render (required for all tiers). Accepts both raw hex (e.g. 7a349f6cd77984c9) "+
-			"and the prefixed form returned by archigraph_find (e.g. archigraph::7a349f6cd77984c9 "+
+			"and the prefixed form returned by grafel_find (e.g. grafel::7a349f6cd77984c9 "+
 			"or upvate-core::7a349f6cd77984c9). The <group>:: prefix is stripped automatically.")
 	cmd.Flags().StringVar(&section, "section", "",
 		fmt.Sprintf("section type to render (required for --tier=0); one of: %s", strings.Join(docgen.KnownSections, ", ")))
 	cmd.Flags().StringVar(&pageID, "page-id", "",
 		"override output filename stem for --tier=1 (default: sanitised entity ID)")
 	cmd.Flags().StringVar(&outputDir, "output-dir", "",
-		"override output directory (default: ~/.archigraph/docs/<group>/.tier{N}-<timestamp>/)")
+		"override output directory (default: ~/.grafel/docs/<group>/.tier{N}-<timestamp>/)")
 	cmd.Flags().StringVar(&repoSlug, "repo", "",
 		"repo slug within the group (required for --tier=3); see group config for available slugs")
 	cmd.Flags().BoolVar(&listSecs, "list-sections", false,
@@ -246,7 +246,7 @@ Available sections (--section, used by --tier=0 only):
 	cmd.Flags().StringVar(&resultFile, "result-file", "",
 		"path to the LLMRunResult JSON file written by the orchestrator (required when --llm-mode=apply at Tier 0/1)")
 	cmd.Flags().StringVar(&cacheDir, "cache-dir", "",
-		"override the section-level LLM cache directory (default: ~/.archigraph/docs/<group>/.llm-cache/); applies to all tiers")
+		"override the section-level LLM cache directory (default: ~/.grafel/docs/<group>/.llm-cache/); applies to all tiers")
 	cmd.Flags().BoolVar(&noCache, "no-cache", false,
 		"disable section-level LLM cache reads and writes for this run; applies to all tiers")
 
@@ -270,7 +270,7 @@ func runDocgenTier0(cmd *cobra.Command, group, seedEntity, section, outputDir, l
 
 	// Validate required flags.
 	if seedEntity == "" {
-		return errors.New("--seed-entity is required for --tier=0\n\nHint: run `archigraph status` to list entity IDs, or use the MCP archigraph_find tool")
+		return errors.New("--seed-entity is required for --tier=0\n\nHint: run `grafel status` to list entity IDs, or use the MCP grafel_find tool")
 	}
 	if section == "" {
 		return fmt.Errorf("--section is required for --tier=0\n\nValid sections: %s", strings.Join(docgen.KnownSections, ", "))
@@ -339,7 +339,7 @@ func runDocgenTier1(cmd *cobra.Command, group, seedEntity, pageID, outputDir, ll
 	}
 
 	if seedEntity == "" {
-		return errors.New("--seed-entity is required for --tier=1\n\nHint: run `archigraph status` to list entity IDs, or use the MCP archigraph_find tool")
+		return errors.New("--seed-entity is required for --tier=1\n\nHint: run `grafel status` to list entity IDs, or use the MCP grafel_find tool")
 	}
 
 	opts := docgen.Tier1RunOpts{
@@ -461,7 +461,7 @@ func runDocgenTier2(cmd *cobra.Command, group, seedEntity, outputDir, llmMode, c
 	}
 
 	if seedEntity == "" {
-		return errors.New("--seed-entity is required for --tier=2\n\nHint: run `archigraph status` to list entity IDs, or use the MCP archigraph_find tool")
+		return errors.New("--seed-entity is required for --tier=2\n\nHint: run `grafel status` to list entity IDs, or use the MCP grafel_find tool")
 	}
 
 	opts := docgen.Tier2RunOpts{
@@ -642,7 +642,7 @@ func resolveGroup(group string) (string, error) {
 		return "", fmt.Errorf("read registry: %w", err)
 	}
 	if len(groups) == 0 {
-		return "", errors.New("no groups registered; run `archigraph wizard` first")
+		return "", errors.New("no groups registered; run `grafel wizard` first")
 	}
 	if len(groups) == 1 {
 		return groups[0].Name, nil
@@ -676,7 +676,7 @@ func resolveGroupConfig(group string) (map[string]interface{}, error) {
 // Storage-discipline helpers (#2190)
 // ---------------------------------------------------------------------------
 
-// docgenHeuristics are file names that indicate a directory is archigraph
+// docgenHeuristics are file names that indicate a directory is grafel
 // docgen output (as opposed to hand-written docs). The heuristic is
 // conservative: all three markers come from the generate-docs skill pipeline.
 var docgenHeuristics = []string{
@@ -685,7 +685,7 @@ var docgenHeuristics = []string{
 	".metadata.json",
 }
 
-// isDocgenOutput reports whether dir looks like archigraph docgen output by
+// isDocgenOutput reports whether dir looks like grafel docgen output by
 // checking for any of the heuristic marker files.
 func isDocgenOutput(dir string) bool {
 	for _, name := range docgenHeuristics {
@@ -698,7 +698,7 @@ func isDocgenOutput(dir string) bool {
 
 // findInRepoDocgenDirs walks every repo in cfg and returns the list of
 // docs/ (or doc/) directories that appear to be docgen output.
-// It does NOT walk into ~/.archigraph/ to avoid false positives.
+// It does NOT walk into ~/.grafel/ to avoid false positives.
 func findInRepoDocgenDirs(cfg *registry.GroupConfig) []string {
 	var found []string
 	for _, r := range cfg.Repos {
@@ -719,7 +719,7 @@ func findInRepoDocgenDirs(cfg *registry.GroupConfig) []string {
 	return found
 }
 
-// newDocgenMigrateInRepoCmd returns the `archigraph docgen migrate-in-repo`
+// newDocgenMigrateInRepoCmd returns the `grafel docgen migrate-in-repo`
 // subcommand (#2190, extended in #2216 to cover staging-dir layout).
 func newDocgenMigrateInRepoCmd() *cobra.Command {
 	var group string
@@ -727,15 +727,15 @@ func newDocgenMigrateInRepoCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "migrate-in-repo [--group <name>] [--yes]",
-		Short: "Move in-repo docgen output and orphaned staging runs to the archigraph store",
+		Short: "Move in-repo docgen output and orphaned staging runs to the grafel store",
 		Long: `Walks every repo registered in the group and looks for:
 
-  1. docs/ (or doc/) directories that appear to be archigraph docgen output
+  1. docs/ (or doc/) directories that appear to be grafel docgen output
      (heuristic: presence of .plan.md, .inventory.json, or .metadata.json).
 
-  2. <project>/.archigraph/staging/<run_id>/ directories that were never
+  2. <project>/.grafel/staging/<run_id>/ directories that were never
      promoted (e.g. aborted runs). These are moved to the canonical store
-     under ~/.archigraph/docs/<group>/.staging-recovered/<run_id>/.
+     under ~/.grafel/docs/<group>/.staging-recovered/<run_id>/.
 
 For each match the user is asked to confirm before the directory is moved.
 Existing canonical docs are backed up to <canonical>.previous-<timestamp>/
@@ -747,7 +747,7 @@ that repo with a warning rather than overwriting existing store content.
 Use --yes to skip confirmation prompts (non-interactive / CI).
 
 After migration, the source directory inside the repo working tree is removed.
-Run ` + "`archigraph docgen audit`" + ` first to inspect what would be moved without
+Run ` + "`grafel docgen audit`" + ` first to inspect what would be moved without
 making any changes.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			resolvedGroup, err := resolveGroup(group)
@@ -762,7 +762,7 @@ making any changes.`,
 
 			homeDir, err := registry.HomeDir()
 			if err != nil {
-				return fmt.Errorf("resolve archigraph home: %w", err)
+				return fmt.Errorf("resolve grafel home: %w", err)
 			}
 
 			w := cmd.OutOrStdout()
@@ -772,7 +772,7 @@ making any changes.`,
 			// ── Phase 1: in-repo docs/ directories ───────────────────────
 			dirs := findInRepoDocgenDirs(cfg)
 			for _, srcDir := range dirs {
-				// Determine target path: ~/.archigraph/docs/<group>/<repo-slug>/
+				// Determine target path: ~/.grafel/docs/<group>/<repo-slug>/
 				repoSlug := ""
 				for _, r := range cfg.Repos {
 					if r.Path != "" && strings.HasPrefix(srcDir, r.Path) {
@@ -880,7 +880,7 @@ making any changes.`,
 	return cmd
 }
 
-// newDocgenAuditCmd returns the `archigraph docgen audit` subcommand (#2190).
+// newDocgenAuditCmd returns the `grafel docgen audit` subcommand (#2190).
 // It reports in-repo docgen output without moving anything.
 func newDocgenAuditCmd() *cobra.Command {
 	var group string
@@ -889,10 +889,10 @@ func newDocgenAuditCmd() *cobra.Command {
 		Use:   "audit [--group <name>]",
 		Short: "Detect in-repo docgen output (read-only; does not move anything)",
 		Long: `Walks every repo registered in the group and reports docs/ (or doc/)
-directories that appear to contain archigraph docgen output (heuristic: presence
+directories that appear to contain grafel docgen output (heuristic: presence
 of .plan.md, .inventory.json, or .metadata.json).
 
-Nothing is moved or deleted. Use this before ` + "`archigraph docgen migrate-in-repo`" + `
+Nothing is moved or deleted. Use this before ` + "`grafel docgen migrate-in-repo`" + `
 to inspect what would be migrated.
 
 Exit codes:
@@ -929,7 +929,7 @@ Exit codes:
 				}
 				fmt.Fprintf(w, "  %s  (markers: %s)\n", d, strings.Join(markers, ", "))
 			}
-			fmt.Fprintln(w, "\nRun `archigraph docgen migrate-in-repo` to move these to the archigraph store.")
+			fmt.Fprintln(w, "\nRun `grafel docgen migrate-in-repo` to move these to the grafel store.")
 
 			// Return a sentinel error so the shell exit code is 1.
 			return &docgenAuditError{count: len(dirs)}
@@ -940,12 +940,12 @@ Exit codes:
 	return cmd
 }
 
-// newDocgenCleanupScaffoldingCmd returns the `archigraph docgen cleanup-scaffolding`
+// newDocgenCleanupScaffoldingCmd returns the `grafel docgen cleanup-scaffolding`
 // subcommand (#2194 — OUTPUT DISCIPLINE).
 //
 // It walks:
 //   - Every registered repo's docs/ (and doc/) directory
-//   - ~/.archigraph/docs/<group>/
+//   - ~/.grafel/docs/<group>/
 //
 // …looking for SSG-scaffolding artifacts (VitePress, Docusaurus, Sphinx,
 // mkdocs, package.json, config.ts/config.js) that a misbehaving agent may
@@ -959,7 +959,7 @@ func newDocgenCleanupScaffoldingCmd() *cobra.Command {
 		Use:   "cleanup-scaffolding [--group <name>] [--yes]",
 		Short: "Remove SSG-scaffolding artifacts written by a misbehaving agent",
 		Long: `Walks every repo registered in the group (docs/ and doc/) AND the
-archigraph-managed store (~/.archigraph/docs/<group>/) looking for
+grafel-managed store (~/.grafel/docs/<group>/) looking for
 SSG-scaffolding artifacts that the generate-docs skill must never produce:
 
   .vitepress/    VitePress config directory
@@ -989,7 +989,7 @@ Closes #2194. Parallel to migrate-in-repo (#2190) for storage discipline.`,
 
 			homeDir, err := registry.HomeDir()
 			if err != nil {
-				return fmt.Errorf("resolve archigraph home: %w", err)
+				return fmt.Errorf("resolve grafel home: %w", err)
 			}
 
 			// Collect all directories to scan.
@@ -1008,7 +1008,7 @@ Closes #2194. Parallel to migrate-in-repo (#2190) for storage discipline.`,
 				}
 			}
 
-			// 2. Archigraph-managed store for this group.
+			// 2. Grafel-managed store for this group.
 			storeDir := filepath.Join(homeDir, "docs", resolvedGroup)
 			if info, statErr := os.Stat(storeDir); statErr == nil && info.IsDir() {
 				scanRoots = append(scanRoots, storeDir)
@@ -1120,7 +1120,7 @@ func ssgArtifactReason(name string, isDir bool) string {
 	return ""
 }
 
-// newDocgenCleanupCmd returns the `archigraph docgen cleanup` subcommand (#2216).
+// newDocgenCleanupCmd returns the `grafel docgen cleanup` subcommand (#2216).
 //
 // Removes stale staging runs and .previous-* backups from the docgen store.
 // Safe by design: canonical docs are never touched.
@@ -1132,19 +1132,19 @@ func newDocgenCleanupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cleanup [--group <name>] [--max-age 7d] [--dry-run]",
 		Short: "Remove stale staging runs and .previous-* backups from the docgen store",
-		Long: `Walks the staging directory (<project>/.archigraph/staging/) and the
-backup directories (~/.archigraph/docs/<group>.previous-*/) and removes any
+		Long: `Walks the staging directory (<project>/.grafel/staging/) and the
+backup directories (~/.grafel/docs/<group>.previous-*/) and removes any
 entry whose creation time is older than --max-age (default: 7 days).
 
-Canonical docs (~/.archigraph/docs/<group>/) are NEVER touched.
+Canonical docs (~/.grafel/docs/<group>/) are NEVER touched.
 The operation is idempotent: running it on an already-clean tree is a no-op.
 
 Use --dry-run to report what would be removed without making any changes.
 Use --group to scope cleanup to a single group (default: all groups).
 
 Examples:
-  archigraph docgen cleanup
-  archigraph docgen cleanup --group mygroup --max-age 3d --dry-run`,
+  grafel docgen cleanup
+  grafel docgen cleanup --group mygroup --max-age 3d --dry-run`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			age, err := parseMaxAge(maxAge)
 			if err != nil {
@@ -1272,7 +1272,7 @@ func formatBytes(n int64) string {
 }
 
 // loadGroupConfigFromRegistry looks up the group's config path from the
-// registry (which respects ARCHIGRAPH_HOME) and loads it. This is the
+// registry (which respects GRAFEL_HOME) and loads it. This is the
 // correct way to load group config when the caller only has a group name —
 // it avoids hardcoding the XDG config path.
 func loadGroupConfigFromRegistry(groupName string) (*registry.GroupConfig, error) {
@@ -1289,7 +1289,7 @@ func loadGroupConfigFromRegistry(groupName string) (*registry.GroupConfig, error
 			return cfg, nil
 		}
 	}
-	return nil, fmt.Errorf("group %q not found in registry; run `archigraph wizard` to register it", groupName)
+	return nil, fmt.Errorf("group %q not found in registry; run `grafel wizard` to register it", groupName)
 }
 
 // docgenAuditError is a sentinel returned by the audit command when in-repo
@@ -1298,11 +1298,11 @@ func loadGroupConfigFromRegistry(groupName string) (*registry.GroupConfig, error
 type docgenAuditError struct{ count int }
 
 func (e *docgenAuditError) Error() string {
-	return fmt.Sprintf("%d in-repo docgen director(ies) detected; run `archigraph docgen migrate-in-repo` to fix", e.count)
+	return fmt.Sprintf("%d in-repo docgen director(ies) detected; run `grafel docgen migrate-in-repo` to fix", e.count)
 }
 
-// auditDocgenForGroup is the shared logic used by both `archigraph docgen
-// audit` and the `--audit-docs` flag on `archigraph doctor`. It returns the
+// auditDocgenForGroup is the shared logic used by both `grafel docgen
+// audit` and the `--audit-docs` flag on `grafel doctor`. It returns the
 // list of offending directories (nil == clean). The w parameter is unused
 // in this function but kept for interface consistency with callers that also
 // write supplementary output — see runDoctorAuditDocs.
@@ -1315,7 +1315,7 @@ func auditDocgenForGroup(w interface{ Write([]byte) (int, error) }, groupName st
 	return dirs, nil
 }
 
-// DocsDirFor is a package-level helper that returns ~/.archigraph/docs/<group>/
+// DocsDirFor is a package-level helper that returns ~/.grafel/docs/<group>/
 // using the canonical HomeDir logic from the registry package. Exported so
 // the doctor command and tests can reference the expected path.
 func DocsDirFor(group string) (string, error) {
@@ -1328,7 +1328,7 @@ func DocsDirFor(group string) (string, error) {
 
 // looksLikeGitWorkdir reports true when dir (or any ancestor up to depth 3)
 // contains a .git entry — a cheap guard used by the audit to avoid flagging
-// the archigraph store itself if it happens to live inside a git repo.
+// the grafel store itself if it happens to live inside a git repo.
 func looksLikeGitWorkdir(dir string) bool {
 	p := dir
 	for range [3]struct{}{} {

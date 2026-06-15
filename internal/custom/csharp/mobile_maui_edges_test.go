@@ -13,7 +13,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mauiEdgeOwner returns the first entity carrying an edge {toID, kind}, or nil.

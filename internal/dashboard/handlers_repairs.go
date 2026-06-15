@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/enrichment"
 )
 
 // repairKinds is the closed set of candidate kinds surfaced on the "Repair
@@ -511,7 +511,7 @@ func (s *Server) handleListFindings(w http.ResponseWriter, r *http.Request) {
 // groupMemoryDir returns the memory directory for a group.
 func groupMemoryDir(group string) string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".archigraph", "groups", group+"-memory")
+	return filepath.Join(home, ".grafel", "groups", group+"-memory")
 }
 
 // readFindingFiles reads all *.json finding files from a directory.
@@ -699,7 +699,7 @@ func (s *Server) handleCandidateAction(w http.ResponseWriter, r *http.Request, r
 		return
 	}
 
-	archigraphDir := daemon.StateDirForRepo(match.repoPath)
+	grafelDir := daemon.StateDirForRepo(match.repoPath)
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	switch req.Action {
@@ -726,11 +726,11 @@ func (s *Server) handleCandidateAction(w http.ResponseWriter, r *http.Request, r
 			Reason:     req.Reason,
 			ResolvedAt: now,
 		}
-		if err := enrichment.AppendResolution(archigraphDir, res); err != nil {
+		if err := enrichment.AppendResolution(grafelDir, res); err != nil {
 			writeErr(w, http.StatusInternalServerError, "write resolution: "+err.Error())
 			return
 		}
-		if err := enrichment.RemoveCandidateByID(archigraphDir, match.candidate.ID); err != nil {
+		if err := enrichment.RemoveCandidateByID(grafelDir, match.candidate.ID); err != nil {
 			// Non-fatal: the candidate list will be rebuilt on the next index
 			// run, and the resolution is already written. Log and continue.
 			_ = err
@@ -750,11 +750,11 @@ func (s *Server) handleCandidateAction(w http.ResponseWriter, r *http.Request, r
 		if reason == "" {
 			reason = "rejected via dashboard"
 		}
-		if err := enrichment.AppendRejection(archigraphDir, match.candidate.ID, subjectID, match.candidate.Kind, reason); err != nil {
+		if err := enrichment.AppendRejection(grafelDir, match.candidate.ID, subjectID, match.candidate.Kind, reason); err != nil {
 			writeErr(w, http.StatusInternalServerError, "write rejection: "+err.Error())
 			return
 		}
-		if err := enrichment.RemoveCandidateByID(archigraphDir, match.candidate.ID); err != nil {
+		if err := enrichment.RemoveCandidateByID(grafelDir, match.candidate.ID); err != nil {
 			_ = err
 		}
 		writeJSON(w, http.StatusOK, candidateActionResp{

@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/rust"
+	_ "github.com/cajasmota/grafel/internal/custom/rust"
 )
 
 // extractRecords returns the raw EntityRecords (with Relationships) for a

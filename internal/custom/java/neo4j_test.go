@@ -11,9 +11,9 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

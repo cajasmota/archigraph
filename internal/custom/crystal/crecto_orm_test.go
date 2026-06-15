@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/crystal"
+	_ "github.com/cajasmota/grafel/internal/custom/crystal"
 )
 
 // rfi builds a Crecto-test FileInput.

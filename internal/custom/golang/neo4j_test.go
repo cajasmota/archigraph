@@ -15,9 +15,9 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/golang"
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/custom/golang"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractNeo4jRaw runs the custom_go_neo4j extractor and returns the raw

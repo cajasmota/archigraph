@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: archigraph-prod
+  name: grafel-prod
   labels:
     environment: production
 
@@ -13,7 +13,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sample-server-config
-  namespace: archigraph-prod
+  namespace: grafel-prod
 data:
   LOG_LEVEL: "info"
   GRPC_PORT: "50051"
@@ -25,7 +25,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sample-server
-  namespace: archigraph-prod
+  namespace: grafel-prod
   labels:
     app: sample-server
     version: "1.0.0"
@@ -117,7 +117,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sample-server
-  namespace: archigraph-prod
+  namespace: grafel-prod
   labels:
     app: sample-server
 spec:
@@ -139,7 +139,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: sample-server-hpa
-  namespace: archigraph-prod
+  namespace: grafel-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -166,7 +166,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sample-server-ingress
-  namespace: archigraph-prod
+  namespace: grafel-prod
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
@@ -175,10 +175,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.archigraph.example.com
-      secretName: archigraph-tls
+        - api.grafel.example.com
+      secretName: grafel-tls
   rules:
-    - host: api.archigraph.example.com
+    - host: api.grafel.example.com
       http:
         paths:
           - path: /

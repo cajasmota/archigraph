@@ -47,7 +47,7 @@ var CursorHooksRelPath = filepath.Join(".cursor", "hooks.json")
 // CursorNudgeScriptRelPath is where the advisory nudge script is written for
 // Cursor. It is a separate copy from the Claude Code script so each host owns
 // its sidecar and uninstalling one host never deletes another's script.
-var CursorNudgeScriptRelPath = filepath.Join(".cursor", "archigraph-grep-nudge.sh")
+var CursorNudgeScriptRelPath = filepath.Join(".cursor", "grafel-grep-nudge.sh")
 
 // CursorHookEvent is the Cursor Agent Hooks lifecycle event we attach to:
 // it fires before the agent executes a shell command (the surface where a

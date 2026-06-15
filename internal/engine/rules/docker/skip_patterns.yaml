@@ -48,7 +48,7 @@ skip_patterns:
   - '*.test.Dockerfile'
   - '*.ci.Dockerfile'
   recommendation: 'Index but tag with scope=dev or scope=test. Do not include in production
-    topology analysis. This mirrors the archigraph test file handling policy (AST-only,
+    topology analysis. This mirrors the grafel test file handling policy (AST-only,
     no LLM enrichment for test-scoped files).
 
     '

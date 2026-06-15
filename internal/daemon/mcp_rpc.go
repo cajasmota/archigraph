@@ -5,19 +5,19 @@ package daemon
 // Daemon.MCPToolList and Daemon.MCPToolCall are the two RPC methods the
 // mcp-bridge subcommand (internal/cli/mcp_bridge.go, PR #831) calls over
 // the daemon's Unix-domain socket. Together they expose the full 14-tool
-// archigraph catalog to Claude Code without re-spawning a standalone MCP
+// grafel catalog to Claude Code without re-spawning a standalone MCP
 // server process.
 //
 // Design:
 //   - To avoid an import cycle (internal/mcp → internal/daemon → internal/mcp),
 //     the daemon receives the MCP dispatch surface as two injected function
-//     values on Config (MCPListTools, MCPCallTool). cmd/archigraph wires
+//     values on Config (MCPListTools, MCPCallTool). cmd/grafel wires
 //     these from a lazily-initialised *mcp.Server.
 //   - The dispatcher routes through the *actual* handlers registered on the
 //     mcp.Server so existing business logic — BM25 scoring, lazy graph reload,
 //     telemetry, ADR-0008 CWD routing — is exercised without duplication.
 //   - Telemetry counters are incremented via mcp.Server's wrap() middleware,
-//     so archigraph_get_telemetry sees the same numbers regardless of whether
+//     so grafel_get_telemetry sees the same numbers regardless of whether
 //     the call arrived via the old stdio path or the new bridge path.
 
 import (
@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/perf"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/perf"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ── JSON-lines log constants (issue #2299) ────────────────────────────────────
@@ -37,8 +37,8 @@ import (
 // Handler selection happens at construction time in newService — no runtime
 // flag check is needed at call sites (slog cannot be misconfigured this way).
 //
-//	ARCHIGRAPH_DAEMON_LOG_JSON=1  →  {"time":"…","level":"INFO","msg":"mcp_rpc","tool":"…","elapsed_ms":…,"repo":"…"}
-const EnvDaemonLogJSON = "ARCHIGRAPH_DAEMON_LOG_JSON"
+//	GRAFEL_DAEMON_LOG_JSON=1  →  {"time":"…","level":"INFO","msg":"mcp_rpc","tool":"…","elapsed_ms":…,"repo":"…"}
+const EnvDaemonLogJSON = "GRAFEL_DAEMON_LOG_JSON"
 
 // Log event and field-name constants for the mcp_rpc structured log lines.
 // Centralised here so future consumers (log shippers, tests, dashboards)
@@ -109,12 +109,12 @@ type MCPCallResult struct {
 // When cwd is empty the function falls back to singleton/explicit-group mode.
 // The function returns either the full catalog (cwd matches a registered group)
 // or a single sentinel entry (cwd is outside all registered groups).
-// Injected from cmd/archigraph; nil means "not configured" (bridge returns empty list).
+// Injected from cmd/grafel; nil means "not configured" (bridge returns empty list).
 type MCPListToolsFunc func(cwd string) ([]MCPToolEntry, error)
 
 // MCPCallToolFunc dispatches a single tool call. name is the tool name,
 // args are the caller's arguments, cwd is the caller's working directory
-// (may be empty). Injected from cmd/archigraph.
+// (may be empty). Injected from cmd/grafel.
 type MCPCallToolFunc func(name string, args map[string]any, cwd string) (MCPCallResult, error)
 
 // ── Wire types ────────────────────────────────────────────────────────────────
@@ -161,10 +161,10 @@ type MCPToolCallReply struct {
 // MCPToolList returns the tool list gated by the caller's cwd (#1769).
 // When cwd is inside a registered group the full catalog is returned.
 // When cwd is outside all registered groups only the sentinel tool
-// (archigraph_status) is returned, saving ~2,319 handshake tokens per session.
+// (grafel_status) is returned, saving ~2,319 handshake tokens per session.
 //
 // The list is derived from the injected MCPListTools function (wired from
-// *mcp.Server in cmd/archigraph), so registerTools() remains the source of
+// *mcp.Server in cmd/grafel), so registerTools() remains the source of
 // truth — no duplication.
 func (s *Service) MCPToolList(args *MCPToolListArgs, reply *MCPToolListReply) error {
 	if s.mcpListTools == nil {
@@ -225,7 +225,7 @@ func (s *Service) MCPToolCall(args *MCPToolCallArgs, reply *MCPToolCallReply) er
 	if s.mcpCallTool == nil {
 		reply.IsError = true
 		reply.Content = []map[string]any{
-			{"type": "text", "text": "archigraph daemon: MCP tool dispatch not configured — ensure daemon was started via 'archigraph install'"},
+			{"type": "text", "text": "grafel daemon: MCP tool dispatch not configured — ensure daemon was started via 'grafel install'"},
 		}
 		return nil
 	}

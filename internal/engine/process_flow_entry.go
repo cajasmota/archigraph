@@ -32,7 +32,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // entryCandidate carries the scoring breakdown alongside the entity id.

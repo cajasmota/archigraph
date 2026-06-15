@@ -33,7 +33,7 @@
 //
 // Each `field :<name>` declared on a root type is a GraphQL operation. We map it
 // to the canonical operation-endpoint shape shared with every other GraphQL
-// server archigraph indexes — the JS/TS Apollo server (synthesizeGraphQLResolvers),
+// server grafel indexes — the JS/TS Apollo server (synthesizeGraphQLResolvers),
 // the Python Strawberry server (synthesizeStrawberry), the Go gqlgen server
 // (synthesizeGqlgen), the C# HotChocolate server (synthesizeHotChocolate) and
 // the Elixir Absinthe server:
@@ -69,7 +69,7 @@ package engine
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // ---------------------------------------------------------------------------

@@ -12,13 +12,13 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register BOTH the Rust and the JS/TS Tauri extractors.
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
-	_ "github.com/cajasmota/archigraph/internal/custom/rust"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/rust"
 )
 
 func runExtractor(t *testing.T, name, path, lang, src string) []types.EntityRecord {

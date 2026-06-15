@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestCompactJSON_Minified verifies the output has no indentation whitespace
@@ -389,7 +389,7 @@ func TestRenderCompact_TOONTokenSavings(t *testing.T) {
 	t.Setenv("MCP_WIRE_FORMAT", "")
 	t.Setenv("MCP_FIND_FORMAT", "")
 
-	// Realistic varied names/paths that mirror actual archigraph_find output.
+	// Realistic varied names/paths that mirror actual grafel_find output.
 	fixtures := []struct {
 		name, kind, file string
 		line             int

@@ -46,7 +46,7 @@ package java
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // javaKnownExternalRoots is the set of dotted prefixes that the

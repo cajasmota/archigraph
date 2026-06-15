@@ -13,10 +13,10 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/ruby"
+	_ "github.com/cajasmota/grafel/internal/custom/ruby"
 )
 
 // valExtractRaw extracts raw EntityRecord values from the ruby_validation extractor.

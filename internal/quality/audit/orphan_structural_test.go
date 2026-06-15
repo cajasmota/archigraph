@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestAudit_StructuralOnlyCountsAsOrphan (Issue #1597) verifies that an entity
@@ -18,7 +18,7 @@ func TestAudit_StructuralOnlyCountsAsOrphan(t *testing.T) {
 	dir := t.TempDir()
 	// #1626: per-repo state lives in the external store; pin DAEMON_ROOT so
 	// the store is test-local and seed via daemon.StateDirForRepo.
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 	stateDir := daemon.StateDirForRepo(dir)
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		t.Fatal(err)

@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runKafkaDetect is a lightweight in-process driver — kafka_edges.go is an

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/clojure"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/clojure"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extract is a small helper to invoke the registered clojure extractor.

@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // b1Docs builds the B1 shape: a frontend caller that both FETCHES a

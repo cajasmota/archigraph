@@ -9,11 +9,11 @@ import (
 )
 
 // TestS2AlgoNotFiredByDefault verifies that a post-reindex algo pass does NOT
-// fire when ARCHIGRAPH_EAGER_ALGO is unset (the S2 default). The goroutine
+// fire when GRAFEL_EAGER_ALGO is unset (the S2 default). The goroutine
 // counter for Algorithms must remain zero after the index completes.
 func TestS2AlgoNotFiredByDefault(t *testing.T) {
 	// Ensure the env var is not set for this test.
-	os.Unsetenv("ARCHIGRAPH_EAGER_ALGO") //nolint:errcheck
+	os.Unsetenv("GRAFEL_EAGER_ALGO") //nolint:errcheck
 
 	indexed := make(chan struct{})
 	var algoCalls atomic.Int32
@@ -44,15 +44,15 @@ func TestS2AlgoNotFiredByDefault(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	if n := algoCalls.Load(); n != 0 {
-		t.Errorf("S2: expected 0 algo calls with ARCHIGRAPH_EAGER_ALGO unset, got %d", n)
+		t.Errorf("S2: expected 0 algo calls with GRAFEL_EAGER_ALGO unset, got %d", n)
 	}
 }
 
 // TestS2EagerAlgoEnvRestoresPreS2Behavior verifies that setting
-// ARCHIGRAPH_EAGER_ALGO=true causes the automatic post-reindex algo pass to
+// GRAFEL_EAGER_ALGO=true causes the automatic post-reindex algo pass to
 // fire, matching pre-S2 behaviour.
 func TestS2EagerAlgoEnvRestoresPreS2Behavior(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EAGER_ALGO", "true")
+	t.Setenv("GRAFEL_EAGER_ALGO", "true")
 
 	indexed := make(chan struct{}, 1)
 	algoDone := make(chan struct{})
@@ -86,11 +86,11 @@ func TestS2EagerAlgoEnvRestoresPreS2Behavior(t *testing.T) {
 	case <-algoDone:
 		// pass
 	case <-time.After(5 * time.Second):
-		t.Fatal("algo pass did not fire with ARCHIGRAPH_EAGER_ALGO=true")
+		t.Fatal("algo pass did not fire with GRAFEL_EAGER_ALGO=true")
 	}
 
 	if n := algoCalls.Load(); n < 1 {
-		t.Errorf("expected ≥1 algo call with ARCHIGRAPH_EAGER_ALGO=true, got %d", n)
+		t.Errorf("expected ≥1 algo call with GRAFEL_EAGER_ALGO=true, got %d", n)
 	}
 }
 
@@ -112,9 +112,9 @@ func TestEagerAlgoEnabled(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.val, func(t *testing.T) {
 			if tc.val == "" {
-				os.Unsetenv("ARCHIGRAPH_EAGER_ALGO") //nolint:errcheck
+				os.Unsetenv("GRAFEL_EAGER_ALGO") //nolint:errcheck
 			} else {
-				t.Setenv("ARCHIGRAPH_EAGER_ALGO", tc.val)
+				t.Setenv("GRAFEL_EAGER_ALGO", tc.val)
 			}
 			if got := eagerAlgoEnabled(); got != tc.want {
 				t.Errorf("eagerAlgoEnabled() with %q = %v, want %v", tc.val, got, tc.want)

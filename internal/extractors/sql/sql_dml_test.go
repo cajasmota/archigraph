@@ -3,7 +3,7 @@ package sql_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #389 (PORT-RELS-SQL): DML emission.

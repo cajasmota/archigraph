@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // buildModuleCycleFixture wires three modules into a directed dependency

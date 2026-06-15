@@ -55,8 +55,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 const langName = "markdown"
@@ -73,8 +73,8 @@ const langName = "markdown"
 //
 // Issue #2320: the preferred path is FileInput.Config.EmitHeadings(); the env
 // var remains as a backward-compatible fallback so existing scripts that set
-// ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS=1 continue to work unchanged.
-const emitHeadingsEnv = "ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS"
+// GRAFEL_MARKDOWN_EMIT_HEADINGS=1 continue to work unchanged.
+const emitHeadingsEnv = "GRAFEL_MARKDOWN_EMIT_HEADINGS"
 
 // emitHeadingsEnabled reports whether SCOPE.Heading entities (and their
 // associated CONTAINS / REFERENCES relationships) should be emitted for the

@@ -3,8 +3,8 @@ package resolve
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractors/bazel"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractors/bazel"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // makeTarget creates a minimal bazel_target entity for test fixtures.

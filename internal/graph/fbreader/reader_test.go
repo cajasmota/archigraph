@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	fbgraph "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	fbgraph "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func writeAndOpen(t *testing.T, doc *graph.Document) *fbreader.Reader {

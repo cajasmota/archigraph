@@ -2,14 +2,14 @@
 // emitted in the narrow default field set for all locate tools (#1744).
 //
 // Covered tools:
-//   - archigraph_find  (serializeHits JSON path and hitsToTOON TOON path)
-//   - archigraph_expand
-//   - archigraph_traces (get and follow)
-//   - archigraph_find_callers
-//   - archigraph_find_callees
+//   - grafel_find  (serializeHits JSON path and hitsToTOON TOON path)
+//   - grafel_expand
+//   - grafel_traces (get and follow)
+//   - grafel_find_callers
+//   - grafel_find_callees
 //
 // The `id` field carries the full "<repo>::<localID>" format (ADR-0009) which
-// can be passed directly to archigraph_get_source, eliminating the round-trip
+// can be passed directly to grafel_get_source, eliminating the round-trip
 // inspect call that previously ~25% of upvate sessions needed.
 package mcp
 
@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -113,11 +113,11 @@ func assertPrefixedID(t *testing.T, label, idStr string) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find — TOON path (hitsToTOON schema)
+// grafel_find — TOON path (hitsToTOON schema)
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_Find_TOONSchemaFirstColumnIsID verifies that the TOON schema
-// for archigraph_find starts with "id" as the first column, for both single-
+// for grafel_find starts with "id" as the first column, for both single-
 // and multi-repo modes.
 func TestIDsInLocate_Find_TOONSchemaFirstColumnIsID(t *testing.T) {
 	// Ensure TOON wire format is active (default).
@@ -171,11 +171,11 @@ func TestIDsInLocate_Find_TOONRowContainsID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find — JSON path (serializeHits)
+// grafel_find — JSON path (serializeHits)
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_Find_JSONPathIncludesID verifies that the JSON-mode
-// archigraph_find response (full=true) includes "id" in each match row.
+// grafel_find response (full=true) includes "id" in each match row.
 func TestIDsInLocate_Find_JSONPathIncludesID(t *testing.T) {
 	srv := newTestServer(t, buildLocateDoc())
 	res := callToolArgs(t, srv.handleQueryGraph, map[string]any{
@@ -201,7 +201,7 @@ func TestIDsInLocate_Find_JSONPathIncludesID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_expand
+// grafel_expand
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_Expand_NeighborRowsIncludeID verifies that each neighbor
@@ -236,11 +236,11 @@ func TestIDsInLocate_Expand_NeighborRowsIncludeID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_traces (get) — steps include id
+// grafel_traces (get) — steps include id
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_TracesGet_StepsIncludeID verifies that each step in
-// archigraph_traces action=get carries a prefixed "id" field alongside the
+// grafel_traces action=get carries a prefixed "id" field alongside the
 // existing "node_id" (kept for backward compatibility).
 func TestIDsInLocate_TracesGet_StepsIncludeID(t *testing.T) {
 	srv := newTestServer(t, buildLocateDoc())
@@ -272,11 +272,11 @@ func TestIDsInLocate_TracesGet_StepsIncludeID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_traces (follow) — steps include id
+// grafel_traces (follow) — steps include id
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_TracesFollow_StepsIncludeID verifies that each step in
-// archigraph_traces action=follow carries a prefixed "id" field.
+// grafel_traces action=follow carries a prefixed "id" field.
 func TestIDsInLocate_TracesFollow_StepsIncludeID(t *testing.T) {
 	srv := newTestServer(t, buildLocateDoc())
 	res := callToolArgs(t, srv.handleTracesFollow, map[string]any{
@@ -308,7 +308,7 @@ func TestIDsInLocate_TracesFollow_StepsIncludeID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_callers — narrow mode includes id
+// grafel_find_callers — narrow mode includes id
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_FindCallers_NarrowIncludesID verifies that each caller row
@@ -336,7 +336,7 @@ func TestIDsInLocate_FindCallers_NarrowIncludesID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_callees — narrow mode includes id
+// grafel_find_callees — narrow mode includes id
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_FindCallees_NarrowIncludesID verifies that each callee row
@@ -368,14 +368,14 @@ func TestIDsInLocate_FindCallees_NarrowIncludesID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// archigraph_find multi-repo path — TOON rows include id (#1848)
+// grafel_find multi-repo path — TOON rows include id (#1848)
 // ---------------------------------------------------------------------------
 
 // TestIDsInLocate_Find_MultiRepo_TOONHasIDs verifies that the smart-scoping
 // "per-repo top hits" code path (triggered when no repo_filter is given and the
 // group contains more than one repo) emits TOON rows with a prefixed id in the
-// first column, enabling callers to chain into archigraph_docgen /
-// archigraph_get_source without a repo_filter round-trip.
+// first column, enabling callers to chain into grafel_docgen /
+// grafel_get_source without a repo_filter round-trip.
 //
 // Before #1848 the multi-repo path rendered plain markdown:
 //

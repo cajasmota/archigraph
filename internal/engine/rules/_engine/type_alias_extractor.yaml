@@ -19,6 +19,6 @@ description: >-
   (typealias), Scala (type X = Y), Rust (type X = Y;), Go (type X = Y /
   type X Y), Swift (typealias), and Dart (typedef). Emits SCOPE.Schema entities
   with kind=type_alias.
-module: archigraph.engine.rules.pattern_detectors.type_alias_extractor
+module: grafel.engine.rules.pattern_detectors.type_alias_extractor
 function: detect
 applies_to_function: applies_to

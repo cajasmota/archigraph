@@ -8,10 +8,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
 )
 
 func pyExtract(t *testing.T, name, src string) []types.EntityRecord {

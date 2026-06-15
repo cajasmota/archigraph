@@ -19,6 +19,6 @@ description: >-
   Enrich test entities with uses_real_db, testcontainers_found, mock_count,
   real_call_count, and mock_ratio. Set dual_coverage on endpoint entities
   linked via TESTS edges to both unit and integration test entities.
-module: archigraph.engine.rules.pattern_detectors.test_quality_enricher
+module: grafel.engine.rules.pattern_detectors.test_quality_enricher
 function: detect
 applies_to_function: applies_to

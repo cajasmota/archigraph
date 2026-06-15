@@ -12,7 +12,7 @@ package java
 //	auth_required    "true" | "false"          (string)
 //	auth_method      "annotation" | "middleware" | "directive" | ...
 //	auth_confidence  "high" | "medium" | "low"
-//	auth_guard       framework-specific guard name (read by archigraph_auth_coverage)
+//	auth_guard       framework-specific guard name (read by grafel_auth_coverage)
 //	auth_roles       comma-joined role names      (sorted, deterministic)
 //	auth_scopes      comma-joined OAuth2 scopes    (sorted)
 //	auth_permissions comma-joined fine-grained permissions (sorted)
@@ -37,7 +37,7 @@ import (
 
 // authStamp is the resolved, framework-agnostic auth posture for one route.
 // It is the trailing-framework analogue of engine.AuthPolicy, reduced to the
-// flat fields the dashboard and archigraph_auth_coverage actually read.
+// flat fields the dashboard and grafel_auth_coverage actually read.
 type authStamp struct {
 	required    bool
 	method      string // "annotation" | "middleware" | "directive" | "config"
@@ -68,7 +68,7 @@ func (a authStamp) stamp(props map[string]any) {
 	if a.confidence != "" {
 		props["auth_confidence"] = a.confidence
 	}
-	// auth_guard is the key archigraph_auth_coverage reads to count an endpoint
+	// auth_guard is the key grafel_auth_coverage reads to count an endpoint
 	// as covered (see internal/mcp/auth_coverage.go authPropertyKeys). Only set
 	// it for protected endpoints — a public endpoint is NOT covered.
 	if a.required && a.guard != "" {

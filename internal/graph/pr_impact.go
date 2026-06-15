@@ -3,7 +3,7 @@
 //
 // This file is pure-Go and MCP-free, mirroring AnalyzeOrientation (#4290): the
 // thin MCP handler loads the per-ref graphs and supplies the changed-entity set
-// (reusing the same DiffDocs machinery that backs archigraph_diff_refs), then
+// (reusing the same DiffDocs machinery that backs grafel_diff_refs), then
 // calls into these functions. Keeping the analysis pure makes it unit-testable
 // on an in-memory graph with no daemon, no registry, and no git.
 //
@@ -15,7 +15,7 @@
 //     Pass-4 algorithm pass) and walks the INBOUND dependency graph to find the
 //     downstream blast radius — every entity that transitively depends on a
 //     changed entity. This is the same inbound-BFS reachability used by
-//     archigraph_impact_radius, generalised to a *set* of seeds.
+//     grafel_impact_radius, generalised to a *set* of seeds.
 //
 //  2. AnalyzeMergeRisk — multiple changes. Given each change's impacted-
 //     community set, it intersects them pairwise; any two changes whose

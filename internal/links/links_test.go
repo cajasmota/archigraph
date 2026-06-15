@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 // fixtureGraph is a minimal helper to write a per-repo graph.json that
@@ -21,7 +21,7 @@ type fixtureGraph struct {
 
 func writeFixture(t *testing.T, root string, fg fixtureGraph) string {
 	t.Helper()
-	dir := filepath.Join(root, fg.Repo, ".archigraph")
+	dir := filepath.Join(root, fg.Repo, ".grafel")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -796,7 +796,7 @@ func TestRunAllPasses_SlugCanonicalisation(t *testing.T) {
 	home := filepath.Join(root, "ag-home")
 
 	// Write two repos in staged-layout (flat dir named after slug, no
-	// .archigraph subdir) with doc.Repo in the underscore form.
+	// .grafel subdir) with doc.Repo in the underscore form.
 	writeFlat := func(slug, docRepo string) {
 		t.Helper()
 		dir := filepath.Join(root, slug)

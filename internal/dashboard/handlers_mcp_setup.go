@@ -4,8 +4,8 @@ package dashboard
 //
 // Endpoints:
 //   GET  /api/mcp-setup/hosts             — detect installed hosts + current config state
-//   POST /api/mcp-setup/install?host=X    — idempotent merge of archigraph entry
-//   POST /api/mcp-setup/uninstall?host=X  — remove archigraph entry
+//   POST /api/mcp-setup/install?host=X    — idempotent merge of grafel entry
+//   POST /api/mcp-setup/uninstall?host=X  — remove grafel entry
 //   POST /api/mcp-setup/verify?host=X     — test-query against the local MCP server
 //
 // Supported hosts: claude, cursor, windsurf
@@ -38,7 +38,7 @@ const (
 	HostWindsurf MCPHostID = "windsurf"
 )
 
-// MCPInstallState describes the current installation state of the archigraph
+// MCPInstallState describes the current installation state of the grafel
 // MCP server entry within a host's configuration file.
 type MCPInstallState string
 
@@ -64,7 +64,7 @@ type MCPHostInfo struct {
 type mcpHostsReply struct {
 	Hosts     []MCPHostInfo `json:"hosts"`
 	MCPPort   int           `json:"mcp_port"`
-	ServerArg string        `json:"server_arg"` // "archigraph" — for display
+	ServerArg string        `json:"server_arg"` // "grafel" — for display
 }
 
 // mcpActionReply is returned by install / uninstall / verify.
@@ -237,13 +237,13 @@ func mcpServersMap(cfg map[string]any) (servers map[string]any, commit func()) {
 }
 
 // detectState inspects a loaded config map (nil = file not found) and returns
-// the installation state for the archigraph entry together with any current args.
+// the installation state for the grafel entry together with any current args.
 func detectState(cfg map[string]any) (MCPInstallState, []string) {
 	if cfg == nil {
 		return StateHostAbsent, nil
 	}
 	servers, _ := mcpServersMap(cfg)
-	raw, ok := servers["archigraph"]
+	raw, ok := servers["grafel"]
 	if !ok {
 		return StateNotInstalled, nil
 	}
@@ -253,7 +253,7 @@ func detectState(cfg map[string]any) (MCPInstallState, []string) {
 	if err := json.Unmarshal(b, &entry); err != nil {
 		return StatePartial, nil
 	}
-	if entry.Command != "archigraph" {
+	if entry.Command != "grafel" {
 		return StatePartial, entry.Args
 	}
 	// Check that "mcp" is among the args.
@@ -320,7 +320,7 @@ func (s *Server) handleMCPSetupHosts(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, mcpHostsReply{
 		Hosts:     infos,
 		MCPPort:   port,
-		ServerArg: "archigraph",
+		ServerArg: "grafel",
 	})
 }
 
@@ -347,8 +347,8 @@ func (s *Server) handleMCPSetupInstall(w http.ResponseWriter, r *http.Request) {
 	}
 
 	servers, commit := mcpServersMap(cfg)
-	servers["archigraph"] = mcpServerEntry{
-		Command: "archigraph",
+	servers["grafel"] = mcpServerEntry{
+		Command: "grafel",
 		Args:    []string{"mcp"},
 	}
 	commit()
@@ -359,7 +359,7 @@ func (s *Server) handleMCPSetupInstall(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, mcpActionReply{
 		OK:      true,
-		Message: fmt.Sprintf("archigraph MCP entry installed in %s", path),
+		Message: fmt.Sprintf("grafel MCP entry installed in %s", path),
 	})
 }
 
@@ -388,11 +388,11 @@ func (s *Server) handleMCPSetupUninstall(w http.ResponseWriter, r *http.Request)
 	}
 
 	servers, commit := mcpServersMap(cfg)
-	if _, exists := servers["archigraph"]; !exists {
-		writeJSON(w, http.StatusOK, mcpActionReply{OK: true, Message: "archigraph entry not present"})
+	if _, exists := servers["grafel"]; !exists {
+		writeJSON(w, http.StatusOK, mcpActionReply{OK: true, Message: "grafel entry not present"})
 		return
 	}
-	delete(servers, "archigraph")
+	delete(servers, "grafel")
 	commit()
 
 	if err := writeMCPConfig(path, cfg); err != nil {
@@ -401,7 +401,7 @@ func (s *Server) handleMCPSetupUninstall(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, mcpActionReply{
 		OK:      true,
-		Message: fmt.Sprintf("archigraph MCP entry removed from %s", path),
+		Message: fmt.Sprintf("grafel MCP entry removed from %s", path),
 	})
 }
 
@@ -428,7 +428,7 @@ func (s *Server) handleMCPSetupVerify(w http.ResponseWriter, r *http.Request) {
 		"params": map[string]any{
 			"protocolVersion": "2024-11-05",
 			"capabilities":    map[string]any{},
-			"clientInfo":      map[string]any{"name": "archigraph-setup-wizard", "version": "1"},
+			"clientInfo":      map[string]any{"name": "grafel-setup-wizard", "version": "1"},
 		},
 	}
 	body, _ := json.Marshal(probe)

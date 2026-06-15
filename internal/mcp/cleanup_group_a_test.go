@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -274,7 +274,7 @@ func TestSessionMetaHelperWorktree(t *testing.T) {
 }
 
 // TestNoSessionMetaInNonWhoamiHandlers asserts that no handler other than
-// archigraph_whoami embeds the session-stable fields indexed_sha / indexed_ref
+// grafel_whoami embeds the session-stable fields indexed_sha / indexed_ref
 // / cwd_ref in its JSON response. These fields were erroneously embedded in
 // several handlers before #2335 stripped them; this test prevents regression.
 //

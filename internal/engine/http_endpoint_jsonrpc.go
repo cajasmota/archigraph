@@ -44,7 +44,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // jsonRPCVerb is the synthetic HTTP verb shared by the JSON-RPC producer and

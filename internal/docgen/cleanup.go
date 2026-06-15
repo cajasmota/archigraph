@@ -1,18 +1,18 @@
-// cleanup.go — archigraph docgen cleanup (issue #2216, epic #2207).
+// cleanup.go — grafel docgen cleanup (issue #2216, epic #2207).
 //
 // Removes stale staging runs and .previous-* backups from the docgen store.
 //
 // Staging layout (per-project):
 //
-//	<project_root>/.archigraph/staging/<run_id>/
+//	<project_root>/.grafel/staging/<run_id>/
 //
 // Canonical layout:
 //
-//	~/.archigraph/docs/<group>/
+//	~/.grafel/docs/<group>/
 //
 // Backup layout created by promote:
 //
-//	~/.archigraph/docs/<group>.previous-<timestamp>/
+//	~/.grafel/docs/<group>.previous-<timestamp>/
 //
 // The run_id encodes its creation date as the first 10 characters
 // (e.g. "2026-05-25-a3b4c5d6"). When parsing fails we fall back to
@@ -64,7 +64,7 @@ type CleanupResult struct {
 // RunDocgenCleanup removes stale staging runs and .previous-* backups.
 //
 // Stale = created more than opts.MaxAge ago (default 7 days).
-// Canonical docs (~/.archigraph/docs/<group>/) are never touched.
+// Canonical docs (~/.grafel/docs/<group>/) are never touched.
 func RunDocgenCleanup(opts CleanupOptions) (*CleanupResult, error) {
 	if opts.MaxAge <= 0 {
 		opts.MaxAge = 7 * 24 * time.Hour
@@ -78,8 +78,8 @@ func RunDocgenCleanup(opts CleanupOptions) (*CleanupResult, error) {
 	result := &CleanupResult{}
 	cutoff := time.Now().Add(-opts.MaxAge)
 
-	// ── 1. Clean .previous-* backups under ~/.archigraph/docs/ ───────────────
-	// homeDir is already the archigraph home (resolveHomeDir guarantees this).
+	// ── 1. Clean .previous-* backups under ~/.grafel/docs/ ───────────────
+	// homeDir is already the grafel home (resolveHomeDir guarantees this).
 	docsRoot := filepath.Join(homeDir, "docs")
 	if err := cleanPreviousBackups(docsRoot, opts.Group, cutoff, opts.DryRun, result); err != nil {
 		// Non-fatal: record and continue.
@@ -95,7 +95,7 @@ func RunDocgenCleanup(opts CleanupOptions) (*CleanupResult, error) {
 	}
 
 	for _, root := range roots {
-		stagingBase := filepath.Join(root, ".archigraph", "staging")
+		stagingBase := filepath.Join(root, ".grafel", "staging")
 		if err := cleanStagingRuns(stagingBase, opts.Group, cutoff, opts.DryRun, result); err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("scan %s: %v", stagingBase, err))
 		}
@@ -153,7 +153,7 @@ func cleanPreviousBackups(docsRoot, group string, cutoff time.Time, dryRun bool,
 		size := dirSize(fullPath)
 
 		if dryRun {
-			fmt.Fprintf(os.Stderr, "archigraph docgen cleanup (dry-run): would remove %s (%s)\n",
+			fmt.Fprintf(os.Stderr, "grafel docgen cleanup (dry-run): would remove %s (%s)\n",
 				fullPath, humanBytes(size))
 			result.RemovedPaths = append(result.RemovedPaths, fullPath)
 			result.TotalBytes += size
@@ -164,7 +164,7 @@ func cleanPreviousBackups(docsRoot, group string, cutoff time.Time, dryRun bool,
 			result.Errors = append(result.Errors, fmt.Sprintf("remove %s: %v", fullPath, err))
 			continue
 		}
-		fmt.Fprintf(os.Stderr, "archigraph docgen cleanup: removed %s (%s)\n",
+		fmt.Fprintf(os.Stderr, "grafel docgen cleanup: removed %s (%s)\n",
 			fullPath, humanBytes(size))
 		result.RemovedPaths = append(result.RemovedPaths, fullPath)
 		result.TotalBytes += size
@@ -227,7 +227,7 @@ func cleanStagingRuns(stagingBase, group string, cutoff time.Time, dryRun bool, 
 		size := dirSize(fullPath)
 
 		if dryRun {
-			fmt.Fprintf(os.Stderr, "archigraph docgen cleanup (dry-run): would remove staging %s (%s)\n",
+			fmt.Fprintf(os.Stderr, "grafel docgen cleanup (dry-run): would remove staging %s (%s)\n",
 				fullPath, humanBytes(size))
 			result.RemovedPaths = append(result.RemovedPaths, fullPath)
 			result.TotalBytes += size
@@ -238,7 +238,7 @@ func cleanStagingRuns(stagingBase, group string, cutoff time.Time, dryRun bool, 
 			result.Errors = append(result.Errors, fmt.Sprintf("remove staging %s: %v", fullPath, err))
 			continue
 		}
-		fmt.Fprintf(os.Stderr, "archigraph docgen cleanup: removed staging %s (%s)\n",
+		fmt.Fprintf(os.Stderr, "grafel docgen cleanup: removed staging %s (%s)\n",
 			fullPath, humanBytes(size))
 		result.RemovedPaths = append(result.RemovedPaths, fullPath)
 		result.TotalBytes += size
@@ -246,7 +246,7 @@ func cleanStagingRuns(stagingBase, group string, cutoff time.Time, dryRun bool, 
 	return nil
 }
 
-// readRunGroupMarker reads ~/.archigraph/staging/<run_id>/.group if present.
+// readRunGroupMarker reads ~/.grafel/staging/<run_id>/.group if present.
 // Returns "" when the file does not exist or cannot be read.
 func readRunGroupMarker(runDir string) string {
 	data, err := os.ReadFile(filepath.Join(runDir, ".group"))
@@ -271,27 +271,27 @@ func parseRunIDDate(runID string) time.Time {
 
 // discoverProjectRoots attempts to enumerate project roots that may have
 // staging dirs. This is a best-effort heuristic: we look for any
-// ".archigraph/staging" dir under the user's home directory, capped to
+// ".grafel/staging" dir under the user's home directory, capped to
 // avoid runaway traversal.
 //
 // In practice, the daemon knows the registered project roots; this fallback
 // is used by the standalone CLI cleanup command when no roots are injected.
 func discoverProjectRoots(docsRoot string) []string {
-	// Derive the archigraph home from docsRoot (parent of docs/).
-	archigraphHome := filepath.Dir(docsRoot)
-	if archigraphHome == "." || archigraphHome == "" {
+	// Derive the grafel home from docsRoot (parent of docs/).
+	grafelHome := filepath.Dir(docsRoot)
+	if grafelHome == "." || grafelHome == "" {
 		return nil
 	}
 
-	// Walk one level up to find project-level .archigraph/staging dirs.
-	// We limit to the parent of archigraphHome (usually ~/) as a safety cap.
-	homeDir := filepath.Dir(archigraphHome)
+	// Walk one level up to find project-level .grafel/staging dirs.
+	// We limit to the parent of grafelHome (usually ~/) as a safety cap.
+	homeDir := filepath.Dir(grafelHome)
 	if homeDir == "." || homeDir == "" {
 		return nil
 	}
 
 	var roots []string
-	// Walk up to 3 levels below homeDir, looking for .archigraph/staging.
+	// Walk up to 3 levels below homeDir, looking for .grafel/staging.
 	_ = filepath.WalkDir(homeDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return filepath.SkipDir
@@ -299,8 +299,8 @@ func discoverProjectRoots(docsRoot string) []string {
 		if !d.IsDir() {
 			return nil
 		}
-		// Avoid descending into the archigraph home itself (not a project).
-		if path == archigraphHome {
+		// Avoid descending into the grafel home itself (not a project).
+		if path == grafelHome {
 			return filepath.SkipDir
 		}
 		// Cap depth: count path separators relative to homeDir.
@@ -312,8 +312,8 @@ func discoverProjectRoots(docsRoot string) []string {
 		if depth > 4 {
 			return filepath.SkipDir
 		}
-		// Check for .archigraph/staging.
-		staging := filepath.Join(path, ".archigraph", "staging")
+		// Check for .grafel/staging.
+		staging := filepath.Join(path, ".grafel", "staging")
 		if info, statErr := os.Stat(staging); statErr == nil && info.IsDir() {
 			roots = append(roots, path)
 			return filepath.SkipDir // don't recurse into the project
@@ -354,24 +354,24 @@ func humanBytes(n int64) string {
 	}
 }
 
-// resolveHomeDir returns the archigraph home directory using the same
+// resolveHomeDir returns the grafel home directory using the same
 // convention as registry.HomeDir:
 //   - override if explicitly provided (used by tests and the daemon)
-//   - $ARCHIGRAPH_HOME if the environment variable is set
-//   - ~/.archigraph otherwise
+//   - $GRAFEL_HOME if the environment variable is set
+//   - ~/.grafel otherwise
 //
-// The returned path IS the archigraph home (e.g. ~/.archigraph), NOT the raw
-// OS home directory, so callers must NOT append an extra ".archigraph" segment.
+// The returned path IS the grafel home (e.g. ~/.grafel), NOT the raw
+// OS home directory, so callers must NOT append an extra ".grafel" segment.
 func resolveHomeDir(override string) (string, error) {
 	if override != "" {
 		return override, nil
 	}
-	if env := os.Getenv("ARCHIGRAPH_HOME"); env != "" {
+	if env := os.Getenv("GRAFEL_HOME"); env != "" {
 		return env, nil
 	}
 	h, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(h, ".archigraph"), nil
+	return filepath.Join(h, ".grafel"), nil
 }

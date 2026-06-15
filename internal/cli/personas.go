@@ -1,10 +1,10 @@
 package cli
 
-// personas.go wires the `archigraph personas` subcommand family.
+// personas.go wires the `grafel personas` subcommand family.
 //
 // Currently exposes one verb:
 //
-//	archigraph personas render --target <target> [--output <dir>] [--personas-dir <dir>]
+//	grafel personas render --target <target> [--output <dir>] [--personas-dir <dir>]
 //
 // Targets: claude-code, windsurf, cursor, codex  (issue #2476).
 
@@ -15,17 +15,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/personas/renderer"
+	"github.com/cajasmota/grafel/internal/personas/renderer"
 )
 
-// newPersonasCmd returns the `archigraph personas` parent command.
+// newPersonasCmd returns the `grafel personas` parent command.
 func newPersonasCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "personas",
-		Short: "Manage archigraph consultant personas",
-		Long: `Commands for working with the archigraph consultant personas.
+		Short: "Manage grafel consultant personas",
+		Long: `Commands for working with the grafel consultant personas.
 
-Personas live in skills/archigraph-consult/personas/*.md as canonical
+Personas live in skills/grafel-consult/personas/*.md as canonical
 Claude Code subagent files. The render subcommand emits platform-specific
 wrappers from those canonical files without modifying the originals.`,
 	}
@@ -33,7 +33,7 @@ wrappers from those canonical files without modifying the originals.`,
 	return root
 }
 
-// newPersonasRenderCmd returns the `archigraph personas render` subcommand.
+// newPersonasRenderCmd returns the `grafel personas render` subcommand.
 func newPersonasRenderCmd() *cobra.Command {
 	var (
 		target      string
@@ -60,14 +60,14 @@ The command is idempotent: re-running overwrites previous output.
 Examples:
 
   # Render Windsurf workflows into the current project root
-  archigraph personas render --target windsurf --output .
+  grafel personas render --target windsurf --output .
 
   # Render Cursor commands into a specific directory
-  archigraph personas render --target cursor --output ~/my-project
+  grafel personas render --target cursor --output ~/my-project
 
   # Use an explicit personas source directory
-  archigraph personas render --target windsurf \
-      --personas-dir /path/to/archigraph/skills/archigraph-consult/personas \
+  grafel personas render --target windsurf \
+      --personas-dir /path/to/grafel/skills/grafel-consult/personas \
       --output .`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runPersonasRender(cmd, target, outputDir, personasDir, quiet)
@@ -97,7 +97,7 @@ func runPersonasRender(cmd *cobra.Command, targetStr, outputDir, personasDir str
 		}
 		personasDir, err = renderer.DiscoverPersonasDir(cwd, 6)
 		if err != nil {
-			return fmt.Errorf("personas render: %w\n\nHint: run from the archigraph repo root, or pass --personas-dir explicitly", err)
+			return fmt.Errorf("personas render: %w\n\nHint: run from the grafel repo root, or pass --personas-dir explicitly", err)
 		}
 	}
 
@@ -111,7 +111,7 @@ func runPersonasRender(cmd *cobra.Command, targetStr, outputDir, personasDir str
 	}
 
 	if !quiet {
-		fmt.Fprintf(cmd.OutOrStdout(), "archigraph personas render\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "grafel personas render\n")
 		fmt.Fprintf(cmd.OutOrStdout(), "  source : %s\n", personasDir)
 		fmt.Fprintf(cmd.OutOrStdout(), "  target : %s\n", targetStr)
 		fmt.Fprintf(cmd.OutOrStdout(), "  output : %s\n\n", outputDir)

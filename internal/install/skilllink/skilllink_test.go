@@ -14,9 +14,9 @@ import (
 func toSlash(p string) string { return filepath.ToSlash(p) }
 
 func TestDiscoverSkillsDir(t *testing.T) {
-	// Clear ARCHIGRAPH_SKILLS_DIR for the whole test so env-based discovery
+	// Clear GRAFEL_SKILLS_DIR for the whole test so env-based discovery
 	// does not interfere with layout-based cases.
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", "")
+	t.Setenv("GRAFEL_SKILLS_DIR", "")
 
 	t.Run("explicit skillsSourceDir takes precedence", func(t *testing.T) {
 		dir := t.TempDir()
@@ -37,21 +37,21 @@ func TestDiscoverSkillsDir(t *testing.T) {
 		}
 	})
 
-	t.Run("sibling layout: binary at repo/archigraph, skills at repo/skills", func(t *testing.T) {
-		// Simulates `go build ./cmd/archigraph` run in the repo root.
+	t.Run("sibling layout: binary at repo/grafel, skills at repo/skills", func(t *testing.T) {
+		// Simulates `go build ./cmd/grafel` run in the repo root.
 		dir := t.TempDir()
 		skillsDir := filepath.Join(dir, "skills")
 		if err := os.MkdirAll(skillsDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		binPath := filepath.Join(dir, "archigraph")
+		binPath := filepath.Join(dir, "grafel")
 		result := DiscoverSkillsDir(binPath, "")
 		if result != skillsDir {
 			t.Errorf("sibling layout: expected %q, got %q", skillsDir, result)
 		}
 	})
 
-	t.Run("one-up layout: binary at repo/bin/archigraph, skills at repo/skills", func(t *testing.T) {
+	t.Run("one-up layout: binary at repo/bin/grafel, skills at repo/skills", func(t *testing.T) {
 		// Simulates a bin/ subdirectory install.
 		dir := t.TempDir()
 		skillsDir := filepath.Join(dir, "skills")
@@ -62,14 +62,14 @@ func TestDiscoverSkillsDir(t *testing.T) {
 		if err := os.MkdirAll(binDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		binPath := filepath.Join(binDir, "archigraph")
+		binPath := filepath.Join(binDir, "grafel")
 		result := DiscoverSkillsDir(binPath, "")
 		if result != skillsDir {
 			t.Errorf("one-up layout: expected %q, got %q", skillsDir, result)
 		}
 	})
 
-	t.Run("walk-up layout: binary at repo/build/archigraph, skills at repo/skills", func(t *testing.T) {
+	t.Run("walk-up layout: binary at repo/build/grafel, skills at repo/skills", func(t *testing.T) {
 		// Simulates a nested build directory (e.g. cmake-style build/).
 		dir := t.TempDir()
 		skillsDir := filepath.Join(dir, "skills")
@@ -80,7 +80,7 @@ func TestDiscoverSkillsDir(t *testing.T) {
 		if err := os.MkdirAll(buildDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		binPath := filepath.Join(buildDir, "archigraph")
+		binPath := filepath.Join(buildDir, "grafel")
 		result := DiscoverSkillsDir(binPath, "")
 		if result != skillsDir {
 			t.Errorf("walk-up layout: expected %q, got %q", skillsDir, result)
@@ -93,9 +93,9 @@ func TestDiscoverSkillsDir(t *testing.T) {
 		if err := os.MkdirAll(skillsDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		t.Setenv("ARCHIGRAPH_SKILLS_DIR", skillsDir)
+		t.Setenv("GRAFEL_SKILLS_DIR", skillsDir)
 		// Use a binPath that has no skills/ around it.
-		result := DiscoverSkillsDir(filepath.Join(dir, "archigraph"), "")
+		result := DiscoverSkillsDir(filepath.Join(dir, "grafel"), "")
 		if result != skillsDir {
 			t.Errorf("env var: expected %q, got %q", skillsDir, result)
 		}
@@ -104,7 +104,7 @@ func TestDiscoverSkillsDir(t *testing.T) {
 	t.Run("no skills anywhere on path returns empty", func(t *testing.T) {
 		dir := t.TempDir()
 		// Do NOT create a skills/ directory anywhere.
-		binPath := filepath.Join(dir, "archigraph")
+		binPath := filepath.Join(dir, "grafel")
 		result := DiscoverSkillsDir(binPath, "")
 		if result != "" {
 			t.Errorf("expected empty result when no skills/ exists, got %q", result)
@@ -117,7 +117,7 @@ func TestDiscoverSkillsDir(t *testing.T) {
 		emptyHome := t.TempDir()
 		t.Setenv("HOME", emptyHome)
 		dir := t.TempDir()
-		result := DiscoverSkillsDir(filepath.Join(dir, "archigraph"), "")
+		result := DiscoverSkillsDir(filepath.Join(dir, "grafel"), "")
 		if result != "" {
 			t.Errorf("should return empty with empty HOME + no skills layout; got %q", result)
 		}
@@ -131,7 +131,7 @@ func TestDiscoverSkillsDir(t *testing.T) {
 		if err := os.MkdirAll(skillsDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		binPath := filepath.Join(dir, "archigraph")
+		binPath := filepath.Join(dir, "grafel")
 		result := DiscoverSkillsDir(binPath, "/nonexistent/typo/skills")
 		if result != skillsDir {
 			t.Errorf("expected fall-through to sibling %q, got %q", skillsDir, result)
@@ -146,10 +146,10 @@ func TestDiscoverSkillsDir(t *testing.T) {
 // blaming the cwd.
 func TestDiscoverSkillsDirVerbose_ReportsAllAttemptedPaths(t *testing.T) {
 	envSkills := "/nonexistent/env/skills"
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", envSkills)
+	t.Setenv("GRAFEL_SKILLS_DIR", envSkills)
 
 	dir := t.TempDir()
-	binPath := filepath.Join(dir, "deep", "build", "archigraph")
+	binPath := filepath.Join(dir, "deep", "build", "grafel")
 	explicit := "/nonexistent/flag/skills"
 
 	result, attempted := DiscoverSkillsDirVerbose(binPath, explicit)
@@ -163,7 +163,7 @@ func TestDiscoverSkillsDirVerbose_ReportsAllAttemptedPaths(t *testing.T) {
 		explicit,
 		"sibling",
 		"one-up",
-		"ARCHIGRAPH_SKILLS_DIR",
+		"GRAFEL_SKILLS_DIR",
 		envSkills,
 		"ancestor",
 	} {
@@ -340,7 +340,7 @@ func TestInstallSkillsInClaudeConfigs_PrunesOrphans(t *testing.T) {
 	if err := os.MkdirAll(skillsSubdir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	stale := []string{"archigraph-quality-check", "archigraph-repair", "generate-docs"}
+	stale := []string{"grafel-quality-check", "grafel-repair", "generate-docs"}
 	dummyTarget := filepath.Join(dir, "dummy-target")
 	if err := os.MkdirAll(dummyTarget, 0o755); err != nil {
 		t.Fatal(err)

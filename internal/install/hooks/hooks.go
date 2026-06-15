@@ -1,4 +1,4 @@
-// Package hooks installs and uninstalls archigraph git hooks.
+// Package hooks installs and uninstalls grafel git hooks.
 //
 // All managed regions are wrapped in marker comments so that pre-existing
 // hook scripts written by the user are preserved across install/upgrade
@@ -16,21 +16,21 @@ import (
 )
 
 const (
-	// MarkerBegin and MarkerEnd delimit the archigraph-managed block in
+	// MarkerBegin and MarkerEnd delimit the grafel-managed block in
 	// any hook file we install into. The strings are deliberately
 	// distinct so a stray `>>>` in user code won't confuse the matcher.
-	MarkerBegin = "# >>> archigraph managed >>>"
-	MarkerEnd   = "# <<< archigraph managed <<<"
+	MarkerBegin = "# >>> grafel managed >>>"
+	MarkerEnd   = "# <<< grafel managed <<<"
 )
 
-// HookNames are the hooks archigraph installs into.
+// HookNames are the hooks grafel installs into.
 var HookNames = []string{"post-commit", "post-merge", "post-checkout"}
 
-// Install writes archigraph hook blocks into <repo>/.git/hooks for every
-// name in HookNames. binPath is the absolute path to the archigraph
+// Install writes grafel hook blocks into <repo>/.git/hooks for every
+// name in HookNames. binPath is the absolute path to the grafel
 // binary that the hook should invoke. When group is non-empty, the
 // post-commit hook also refreshes the group's cross-repo links file by
-// invoking `archigraph links pass <group>` after re-indexing.
+// invoking `grafel links pass <group>` after re-indexing.
 func Install(repo, binPath string, group ...string) error {
 	hooksDir, err := hooksDir(repo)
 	if err != nil {
@@ -52,7 +52,7 @@ func Install(repo, binPath string, group ...string) error {
 	return nil
 }
 
-// Uninstall removes the archigraph block from every hook in HookNames.
+// Uninstall removes the grafel block from every hook in HookNames.
 // Hooks that become empty (just a shebang) are left in place; we never
 // delete files we did not create.
 func Uninstall(repo string) error {
@@ -94,7 +94,7 @@ func Uninstall(repo string) error {
 // reindexed by the post-checkout/post-merge that completes the rebase, or
 // by the next ordinary commit.
 //
-// Cross-repo links: `archigraph links pass <group>` is run ONLY by the
+// Cross-repo links: `grafel links pass <group>` is run ONLY by the
 // post-merge hook (and only when group is non-empty). A merge is the point
 // at which cross-repo wiring can change; post-commit/post-checkout skip it
 // to keep ordinary writes cheap.
@@ -114,7 +114,7 @@ func BlockFor(hookName, binPath, repo string, group ...string) string {
 		linksLine = fmt.Sprintf("  %q links pass %q >/dev/null 2>&1 || true\n", binPath, g)
 	}
 	return fmt.Sprintf(`%s
-# archigraph %s — enqueue a debounced async reindex of the repo (or worktree).
+# grafel %s — enqueue a debounced async reindex of the repo (or worktree).
 # Skipped mid-rebase so replaying N commits doesn't fire N reindexes (#3366).
 _ag_repo="$(git rev-parse --show-toplevel 2>/dev/null)"
 _ag_rbm="$(git rev-parse --git-path rebase-merge 2>/dev/null)"

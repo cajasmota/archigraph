@@ -15,7 +15,7 @@ description: >-
   tests/common/mod.rs, test/support/*.ex, etc.) for 16 languages.
   Enriches entity properties with is_shared_test_helper, shared_test_helper_type
   ("convention" | "high_usage" | None), and import_count_from_tests.
-module: archigraph.engine.rules.pattern_detectors.shared_test_helper_detector
+module: grafel.engine.rules.pattern_detectors.shared_test_helper_detector
 function: detect
 applies_to_function: applies_to
 otel_span: indexer.shared_test_helper_detector

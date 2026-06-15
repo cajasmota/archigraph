@@ -13,7 +13,7 @@ package testmap
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestFSharpExpecto_SubjectLinkage proves an Expecto `testList "User"` container

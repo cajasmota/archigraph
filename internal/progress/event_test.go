@@ -3,7 +3,7 @@ package progress_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/progress"
+	"github.com/cajasmota/grafel/internal/progress"
 )
 
 // TestSliceCollector verifies that SliceCollector accumulates events.

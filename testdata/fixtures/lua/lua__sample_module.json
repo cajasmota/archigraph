@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/lua/sample_module.lua",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/lua/sample_module.lua",
   "language": "lua",
   "entities": [
     {
@@ -123,8 +123,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/lua/sample_module.lua",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/lua/sample_module.lua",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/lua/sample_module.lua",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/lua/sample_module.lua",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -139,7 +139,7 @@
         "convention": "snake_case",
         "dominant_percentage": 55.55555555555556,
         "sample_count": 9,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/lua/sample_module.lua"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/lua/sample_module.lua"
       }
     }
   ],

@@ -139,7 +139,7 @@ func Lookup(framework, action string) (VerbContract, bool) {
 }
 
 // Property keys stamped onto a synthesized route's Properties map. They mirror
-// the DRF effective-contract namespace (#3835) so the archigraph_effective_contract
+// the DRF effective-contract namespace (#3835) so the grafel_effective_contract
 // MCP query (T6 #3836) surfaces convention-framework routes with the SAME shape
 // as DRF: `provenance` + `effective_kind` + `effective_status` + the rest.
 const (

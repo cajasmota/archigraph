@@ -8,7 +8,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // htmlNode / htmlEdge are the trimmed shapes embedded as JSON in the HTML
@@ -173,7 +173,7 @@ const htmlHead1 = `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>archigraph export — `
+<title>grafel export — `
 
 const htmlHead2 = `</title>
 <style>
@@ -199,7 +199,7 @@ const htmlHead2 = `</title>
 </head>
 <body>
 <header>
-  <h1>archigraph export — `
+  <h1>grafel export — `
 
 const htmlHead3 = `</h1>
   <div class="meta">`
@@ -223,7 +223,7 @@ const htmlMid = `  </section>
     </div>
   </section>
 </main>
-<footer>Self-contained archigraph graph export. No network or server required.</footer>
+<footer>Self-contained grafel graph export. No network or server required.</footer>
 `
 
 const htmlScript = `<script>

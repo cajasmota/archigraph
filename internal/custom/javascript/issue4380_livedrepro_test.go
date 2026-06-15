@@ -3,10 +3,10 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
 )
 
 // Issue #4380 LIVE-REPRO (Express/Koa side).

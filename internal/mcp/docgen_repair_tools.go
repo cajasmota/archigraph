@@ -1,6 +1,6 @@
 package mcp
 
-// archigraph_apply_docgen_repairs — MCP tool for the docgen→graph repair
+// grafel_apply_docgen_repairs — MCP tool for the docgen→graph repair
 // feedback loop (#1659).
 //
 // The tool reads docgen-repairs.jsonl from each repo in the resolved group,
@@ -8,7 +8,7 @@ package mcp
 // and returns a per-repo summary with fidelity before/after.
 //
 // This is the apply-path companion to the skill-side emission described in
-// skills/archigraph-tech-docs/SKILL.md § "Docgen Repair Feedback Contract".
+// skills/grafel-tech-docs/SKILL.md § "Docgen Repair Feedback Contract".
 
 import (
 	"context"
@@ -16,13 +16,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/enrichment"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handleApplyDocgenRepairs implements archigraph_apply_docgen_repairs.
+// handleApplyDocgenRepairs implements grafel_apply_docgen_repairs.
 //
 // Parameters (all optional):
 //
@@ -137,7 +137,7 @@ func (s *Server) handleApplyDocgenRepairs(ctx context.Context, req mcpapi.CallTo
 // appendRebuildHistory to compute health-history.bug_rate, which ensures that
 // post-resolver improvements (e.g. ResolveGoInTreeImports rewriting in-tree
 // Go package paths to hex entity IDs) are immediately visible in
-// archigraph_stats.fidelity. The previous wider scope (CALLS + IMPORTS +
+// grafel_stats.fidelity. The previous wider scope (CALLS + IMPORTS +
 // REFERENCES) masked resolver progress because the much larger CALLS and
 // REFERENCES universes diluted the per-improvement signal.
 //
@@ -217,7 +217,7 @@ func countEdgeRepairsFromCandidates(repairs []enrichment.DocgenRepairCandidate) 
 // ---------------------------------------------------------------------------
 
 // UnresolvedBreakdown holds the three supplementary fields returned when
-// breakdown="unresolved_imports" is requested on archigraph_stats.
+// breakdown="unresolved_imports" is requested on grafel_stats.
 type UnresolvedBreakdown struct {
 	ByDisposition map[string]int    `json:"unresolved_imports_by_disposition"`
 	ByLanguage    map[string]int    `json:"unresolved_imports_by_language"`

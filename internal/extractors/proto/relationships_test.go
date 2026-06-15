@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/proto"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/proto"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extract is a small helper that parses src and runs the proto extractor.

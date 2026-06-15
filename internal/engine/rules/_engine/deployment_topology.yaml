@@ -12,6 +12,6 @@ description: >-
   orchestrator (K8s Ingress/Service), and API gateway (Traefik, Kong,
   AWS Serverless) configs. Emits SCOPE.Pattern and SCOPE.Service entities
   with DEPENDS_ON edges forming a request-flow graph.
-module: archigraph.engine.rules.languages._engine.deployment_topology_extractor
+module: grafel.engine.rules.languages._engine.deployment_topology_extractor
 function: extract
 applies_to_function: applies_to

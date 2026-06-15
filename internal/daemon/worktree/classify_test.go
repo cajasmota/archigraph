@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/worktree"
+	"github.com/cajasmota/grafel/internal/daemon/worktree"
 )
 
 // TestClassifyRoot_standalone asserts a real standalone repo (.git is a DIR)

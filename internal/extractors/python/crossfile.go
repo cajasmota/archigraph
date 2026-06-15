@@ -38,7 +38,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ type pythonClassRegistryEntry struct {
 }
 
 // PythonClassRegistry maps class simple-name → set of source files declaring it.
-// Exported so cmd/archigraph/index.go and the daemon subprocess path can populate it.
+// Exported so cmd/grafel/index.go and the daemon subprocess path can populate it.
 type PythonClassRegistry map[string]*pythonClassRegistryEntry
 
 var (

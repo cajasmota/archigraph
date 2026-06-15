@@ -3,7 +3,7 @@ package patterns
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // observabilityJSTSExtractor detects JS/TS observability instrumentation —

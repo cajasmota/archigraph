@@ -89,7 +89,7 @@ func TestSkipDirsExtended(t *testing.T) {
 		".vite":    true,
 		".esbuild": true,
 		// pre-existing
-		".archigraph":   true,
+		".grafel":       true,
 		"node_modules":  true,
 		"__pycache__":   true,
 		".pytest_cache": true,
@@ -110,21 +110,21 @@ func TestSkipDirsExtended(t *testing.T) {
 	}
 }
 
-// TestShouldSkipPath_ArchigraphSelfWrites is the #5140 regression guard:
+// TestShouldSkipPath_GrafelSelfWrites is the #5140 regression guard:
 // the daemon writes its own outputs (graph.json, graph.fb, logs/*) under
-// <repo>/.archigraph/. A watch event on any of those MUST be dropped by
+// <repo>/.grafel/. A watch event on any of those MUST be dropped by
 // ShouldSkipPath so writing the index output never reads back as a repo
 // source change and re-triggers a reindex (the self-reinforcing loop).
 // A real source file under the repo MUST still pass through.
-func TestShouldSkipPath_ArchigraphSelfWrites(t *testing.T) {
+func TestShouldSkipPath_GrafelSelfWrites(t *testing.T) {
 	cases := map[string]bool{
 		// daemon self-writes — must be skipped
-		"/repo/.archigraph/graph.json":           true,
-		"/repo/.archigraph/graph.fb":             true,
-		"/repo/.archigraph/logs/watcher.err.log": true,
-		"/repo/.archigraph/logs/index.log":       true,
-		".archigraph/graph.json":                 true,
-		"nested/pkg/.archigraph/graph.json":      true,
+		"/repo/.grafel/graph.json":           true,
+		"/repo/.grafel/graph.fb":             true,
+		"/repo/.grafel/logs/watcher.err.log": true,
+		"/repo/.grafel/logs/index.log":       true,
+		".grafel/graph.json":                 true,
+		"nested/pkg/.grafel/graph.json":      true,
 		// real source — must NOT be skipped
 		"/repo/src/x.ts":          false,
 		"/repo/internal/cli/a.go": false,
@@ -163,7 +163,7 @@ func TestGitignoreRespected(t *testing.T) {
 // TestPerRepoWatchJSON verifies exclude_dirs and include_only_dirs.
 func TestPerRepoWatchJSON(t *testing.T) {
 	dir := t.TempDir()
-	archDir := filepath.Join(dir, ".archigraph")
+	archDir := filepath.Join(dir, ".grafel")
 	if err := os.MkdirAll(archDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

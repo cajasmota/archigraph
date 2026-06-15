@@ -6,7 +6,7 @@ package dashboard
 //   - scanAgentsMD: detection, preview lines, marker injection flag, editor URI
 //   - detectLanguages: multi-stack detection
 //   - scanDependencyManifests: known file enumeration
-//   - scanArchigraphState: absent directory returns empty slice
+//   - scanGrafelState: absent directory returns empty slice
 //   - computeQuality: score and signals
 //   - buildManifest: smoke test on a temp directory
 //   - hasLockFile: identifies known lock files
@@ -37,7 +37,7 @@ func TestScanAgentsMD_NoFile(t *testing.T) {
 func TestScanAgentsMD_AgentsMD(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	content := "# Agents\n\nThis repo is indexed by archigraph.\n\nMore text here.\n"
+	content := "# Agents\n\nThis repo is indexed by grafel.\n\nMore text here.\n"
 	if err := os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -48,8 +48,8 @@ func TestScanAgentsMD_AgentsMD(t *testing.T) {
 	if info.Filename != "AGENTS.md" {
 		t.Errorf("want Filename=AGENTS.md, got %q", info.Filename)
 	}
-	if !info.InjectedByArchigraph {
-		t.Errorf("want InjectedByArchigraph=true (marker present in content)")
+	if !info.InjectedByGrafel {
+		t.Errorf("want InjectedByGrafel=true (marker present in content)")
 	}
 	if len(info.PreviewLines) == 0 {
 		t.Errorf("want non-empty PreviewLines")
@@ -73,8 +73,8 @@ func TestScanAgentsMD_ClaudeMD_NoMarker(t *testing.T) {
 	if info.Filename != "CLAUDE.md" {
 		t.Errorf("want Filename=CLAUDE.md, got %q", info.Filename)
 	}
-	if info.InjectedByArchigraph {
-		t.Errorf("want InjectedByArchigraph=false (no marker)")
+	if info.InjectedByGrafel {
+		t.Errorf("want InjectedByGrafel=false (no marker)")
 	}
 }
 
@@ -184,31 +184,31 @@ func TestScanDependencyManifests_KnownFiles(t *testing.T) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// scanArchigraphState
+// scanGrafelState
 // ─────────────────────────────────────────────────────────────────────────────
 
-func TestScanArchigraphState_AbsentDir(t *testing.T) {
+func TestScanGrafelState_AbsentDir(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	// Use a non-existent path so StateDirForRepo won't find anything.
-	got := scanArchigraphState(dir)
+	got := scanGrafelState(dir)
 	// Must return a non-nil slice (possibly empty).
 	if got == nil {
 		t.Errorf("want non-nil slice, got nil")
 	}
 }
 
-func TestScanArchigraphState_InRepoDir(t *testing.T) {
+func TestScanGrafelState_InRepoDir(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	archDir := filepath.Join(dir, ".archigraph")
+	archDir := filepath.Join(dir, ".grafel")
 	if err := os.MkdirAll(archDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(archDir, "group.json"), []byte(`{"group":"test"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	got := scanArchigraphState(dir)
+	got := scanGrafelState(dir)
 	if !sliceContains(got, "group.json") && !containsStrPrefix(got, "group.json") {
 		t.Errorf("want group.json in state, got %v", got)
 	}
@@ -224,10 +224,10 @@ func TestComputeQuality_FullRepo(t *testing.T) {
 		Stack:     "go",
 		Languages: []string{"go"},
 		AgentsMD: AgentsMDInfo{
-			Exists:               true,
-			InjectedByArchigraph: true,
+			Exists:           true,
+			InjectedByGrafel: true,
 		},
-		ArchigraphState:     []string{"graph.json"},
+		GrafelState:         []string{"graph.json"},
 		DependencyManifests: []string{"go.mod", "go.sum"},
 	}
 	signals, score := computeQuality(r)
@@ -297,7 +297,7 @@ func TestBuildManifest_Smoke(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "go.sum"), []byte(""), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte("# Agents\nindexed by archigraph\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte("# Agents\nindexed by grafel\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/notifications"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/notifications"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// AppSettings is the on-disk shape of ~/.archigraph/settings.json.
+// AppSettings is the on-disk shape of ~/.grafel/settings.json.
 // It owns all user preferences that survive daemon restarts.
 // Zero-value fields fall back to the defaults returned by DefaultAppSettings().
 type AppSettings struct {
@@ -72,7 +72,7 @@ func DefaultAppSettings() AppSettings {
 	}
 }
 
-// settingsPath returns ~/.archigraph/settings.json.
+// settingsPath returns ~/.grafel/settings.json.
 func settingsPath() (string, error) {
 	h, err := registry.HomeDir()
 	if err != nil {

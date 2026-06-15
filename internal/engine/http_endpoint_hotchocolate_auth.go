@@ -13,7 +13,7 @@
 //     identical attribute set). A resolver method (or its enclosing resolver
 //     class) carrying `[Authorize]` is auth-protected; the matched policy is
 //     stamped onto its endpoint via the shared stampAuthPolicy contract so the
-//     MCP archigraph_auth_coverage tool's signal-1 property check fires
+//     MCP grafel_auth_coverage tool's signal-1 property check fires
 //     (auth_decorator) AND auth_required/auth_roles/auth_policy carry the
 //     fine-grained verdict. `[AllowAnonymous]` proves the resolver is public.
 //
@@ -33,7 +33,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // The hcAuthorize* regexes match a HotChocolate/ASP.NET `[Authorize]` attribute
@@ -218,7 +218,7 @@ func applyHotChocolateAuthShapes(content, path string, entities []types.EntityRe
 
 // stampHCAuth writes the verdict onto an endpoint's Properties using the shared
 // auth contract (stampAuthPolicy) plus the signal-1 `auth_decorator` key so the
-// MCP archigraph_auth_coverage cheap property check fires. `[AllowAnonymous]`
+// MCP grafel_auth_coverage cheap property check fires. `[AllowAnonymous]`
 // stamps auth_required=false (explicit public) without a guard symbol.
 func stampHCAuth(props map[string]string, v hcAuthVerdict) {
 	if !v.decided {

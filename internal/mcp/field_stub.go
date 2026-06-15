@@ -19,9 +19,9 @@ package mcp
 import (
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/stubdetector"
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/stubdetector"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // partialStubFieldsForEndpoint computes the partial-stub fields for a v3

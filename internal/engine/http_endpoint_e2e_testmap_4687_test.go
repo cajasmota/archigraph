@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the Kotlin route-hit extractor so the test_suite (carrying
 	// e2e_route_calls) comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/kotlin"
+	_ "github.com/cajasmota/grafel/internal/custom/kotlin"
 )
 
 // Issue #4687 LIVE-REPRO (resolve side) — Kotlin Spring MockMvc + Ktor tests.

@@ -24,8 +24,8 @@
 // Stamping (rather than synthesising duplicate class nodes) keeps the entity
 // graph deduplicated: the primary walk already emitted exactly one
 // SCOPE.Component/class per Protocol/Enum/TypedDict/dataclass; this pass only
-// adds queryable Properties so archigraph_inspect can surface the type
-// contract and archigraph_find can rank type names. Type aliases are the one
+// adds queryable Properties so grafel_inspect can surface the type
+// contract and grafel_find can rank type names. Type aliases are the one
 // shape with no pre-existing entity, so they are emitted fresh as SCOPE.Schema.
 package python
 
@@ -35,8 +35,8 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // enumBaseNames are the stdlib enum base classes whose presence in a class's

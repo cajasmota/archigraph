@@ -7,22 +7,22 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/export"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/export"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// newExportCmd returns the `archigraph export` subcommand (issue #4291).
+// newExportCmd returns the `grafel export` subcommand (issue #4291).
 //
 // It loads a group's indexed graph (the same load path used by feedback,
 // doctor and links: per-repo StateDir → graph.LoadGraphFromDir) and writes a
 // static interchange file. Four formats are supported:
 //
-//	archigraph export graphml [--group g --ref r --out file.graphml]
-//	archigraph export cypher  [--group g --ref r --out file.cypher]
-//	archigraph export svg     [--group g --ref r --out file.svg  --top-N 500]
-//	archigraph export html    [--group g --ref r --out file.html --top-N 500]
+//	grafel export graphml [--group g --ref r --out file.graphml]
+//	grafel export cypher  [--group g --ref r --out file.cypher]
+//	grafel export svg     [--group g --ref r --out file.svg  --top-N 500]
+//	grafel export html    [--group g --ref r --out file.html --top-N 500]
 //
 // The merged document is sorted into a canonical node/edge order before
 // serialization so every format is reproducible (same input → identical bytes).
@@ -50,7 +50,7 @@ For svg/html, --top-N caps the rendering to the N highest-degree nodes
 (default 500) so huge graphs stay legible; pass --top-N 0 to disable the cap.
 
 The graph is loaded from the indexed store for the resolved group and ref;
-run 'archigraph index' first if no graph exists.`,
+run 'grafel index' first if no graph exists.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format := args[0]
@@ -120,7 +120,7 @@ run 'archigraph index' first if no graph exists.`,
 // sortDocumentForExport sorts a merged document into a canonical, stable order
 // so every export format produces byte-identical output for the same input.
 // Entities are sorted by id; relationships by (from, to, kind). It mutates doc
-// in place. This mirrors cmd/archigraph's sortDocumentForEmission but lives in
+// in place. This mirrors cmd/grafel's sortDocumentForEmission but lives in
 // the cli package to keep the export command self-contained.
 func sortDocumentForExport(doc *graph.Document) {
 	sort.SliceStable(doc.Entities, func(i, j int) bool {
@@ -188,7 +188,7 @@ func loadGroupGraphForExport(cmd *cobra.Command, group, ref string) (*graph.Docu
 	}
 
 	if loadedRepos == 0 {
-		return nil, fmt.Errorf("export: no indexed graphs found for group %q — run `archigraph index` first", group)
+		return nil, fmt.Errorf("export: no indexed graphs found for group %q — run `grafel index` first", group)
 	}
 
 	merged.Stats = graph.Stats{

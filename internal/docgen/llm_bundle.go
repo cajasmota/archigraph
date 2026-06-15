@@ -34,8 +34,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // LLMBundleVersion is the schema version embedded in every bundle.
@@ -53,7 +53,7 @@ type LLMPromptBundle struct {
 	Version string `json:"version"`
 	// Tier is 0 (section) or 1 (full page).
 	Tier int `json:"tier"`
-	// Group is the archigraph group name.
+	// Group is the grafel group name.
 	Group string `json:"group"`
 	// SeedEntityID is the entity ID used to build this bundle.
 	SeedEntityID string `json:"seed_entity_id"`
@@ -536,7 +536,7 @@ type LLMRunResult struct {
 	PromptHash string `json:"prompt_hash"`
 	// Tier is 0 or 1 (matches the bundle).
 	Tier int `json:"tier"`
-	// Group is the archigraph group name.
+	// Group is the grafel group name.
 	Group string `json:"group"`
 	// SeedEntityID is the seed entity ID (matches the bundle).
 	SeedEntityID string `json:"seed_entity_id"`

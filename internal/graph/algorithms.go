@@ -78,8 +78,8 @@ type CommunityOptions struct {
 	// CommunityResult slice. This eliminates singleton and micro-community
 	// noise without affecting the graph structure or any other algorithm pass.
 	//
-	// Default: 5  (configurable via ~/.archigraph/algorithms.json or
-	// the ARCHIGRAPH_COMMUNITY_MIN_SIZE environment variable).
+	// Default: 5  (configurable via ~/.grafel/algorithms.json or
+	// the GRAFEL_COMMUNITY_MIN_SIZE environment variable).
 	//
 	// Set to 1 to disable denoising (all communities emitted, matching the
 	// pre-#1382 behaviour).
@@ -94,7 +94,7 @@ func DefaultCommunityOptions() CommunityOptions {
 }
 
 // AlgorithmStats are the corpus-level metrics exposed both inside graph.json
-// and inside the .archigraph/graph-stats.json sidecar.
+// and inside the .grafel/graph-stats.json sidecar.
 type AlgorithmStats struct {
 	LouvainModularity  float64 `json:"louvain_modularity"`
 	NumCommunities     int     `json:"num_communities"`

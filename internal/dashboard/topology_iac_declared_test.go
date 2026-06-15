@@ -14,7 +14,7 @@ package dashboard
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestCollectTopology_IaCDeclaredQueuesSurface(t *testing.T) {

@@ -35,14 +35,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/frameworks/baseknowledge"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/frameworks/baseknowledge"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // drfDbgEnabled gates the diagnostic stderr tracing for the DRF ghost-path
-// investigation. Set ARCHIGRAPH_DRF_DBG=1 to enable.
-var drfDbgEnabled = os.Getenv("ARCHIGRAPH_DRF_DBG") == "1"
+// investigation. Set GRAFEL_DRF_DBG=1 to enable.
+var drfDbgEnabled = os.Getenv("GRAFEL_DRF_DBG") == "1"
 
 // drfRouterRegisterDetailedRe captures the (routerVar, prefix, ViewSet identifier)
 // triple of every `router.register(r"prefix", ViewSetClass, ...)` call in a
@@ -379,7 +379,7 @@ type drfPosture struct {
 	// (e.g. `CustomPagePermissionCheck(PERMISSION_PAGES["JURISDICTIONS"])`),
 	// captured as ["JURISDICTIONS"] (#3972). These are the real per-action
 	// authorisation identity for custom page/action guards; the DRF expansion
-	// pass stamps them as the route's `auth_permissions` so archigraph_auth_coverage
+	// pass stamps them as the route's `auth_permissions` so grafel_auth_coverage
 	// can answer "what page-permission does this route require?". Empty when no
 	// page-key argument was resolvable (honest-partial — never fabricated).
 	permissionPages []string
@@ -674,7 +674,7 @@ func ApplyDjangoDRFRoutes(
 
 			// #2677 — endpoint source attribution: when the ViewSet class was
 			// resolved successfully, emit entities pointing at the ViewSet's
-			// file (and method's def line) so `archigraph_inspect` on the
+			// file (and method's def line) so `grafel_inspect` on the
 			// endpoint surfaces the real handler, not the empty routers.py
 			// registration line. When resolution fails, fall back to relPath
 			// so the entity still has a valid source_file.
@@ -1537,7 +1537,7 @@ func stampDRFEndpointPosture(props map[string]string, posture drfPosture) {
 	// custom page/action guard (e.g. CustomPagePermissionCheck(PERMISSION_PAGES["JURISDICTIONS"])),
 	// surface those constant keys as `auth_permissions` — the established
 	// cross-language fine-grained-permission property (http_endpoint_jsts_auth.go)
-	// so archigraph_auth_coverage answers "what page-permission does this route
+	// so grafel_auth_coverage answers "what page-permission does this route
 	// require?". A custom guard with a page-key always requires auth.
 	if len(posture.permissionPages) > 0 {
 		props["auth_permissions"] = strings.Join(uniqueSorted(posture.permissionPages), ",")
@@ -1556,7 +1556,7 @@ func stampDRFEndpointPosture(props map[string]string, posture drfPosture) {
 // stampDRFEffectiveContract (#3835, T5). They are the per-verb EFFECTIVE
 // CONTRACT — the merge of route provenance (#3831) + ViewSet posture (#3864) +
 // the baseknowledge pack's per-verb defaults (#3832) — that T6 (#3836) surfaces
-// via archigraph_effective_contract. They are deliberately namespaced
+// via grafel_effective_contract. They are deliberately namespaced
 // `effective_*` (plus serializer_class) so they never collide with the raw
 // posture / provenance props already on the entity.
 const (

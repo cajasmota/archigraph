@@ -1,19 +1,19 @@
 // Per-repo state path resolution for issue #745.
 //
-// Background: ADR-0007 co-locates per-repo state in `<repo>/.archigraph/`.
+// Background: ADR-0007 co-locates per-repo state in `<repo>/.grafel/`.
 // That default is preserved for ordinary user installs. When multiple
-// agents run with isolated daemons via ARCHIGRAPH_DAEMON_ROOT, the
+// agents run with isolated daemons via GRAFEL_DAEMON_ROOT, the
 // daemon socket and registry are already isolated, but the per-repo
 // state directory is shared — two agents indexing the same fixture
-// race on `<repo>/.archigraph/graph.json` and corrupt each other's
+// race on `<repo>/.grafel/graph.json` and corrupt each other's
 // results.
 //
-// When ARCHIGRAPH_DAEMON_ROOT is set, StateDirForRepo returns a
+// When GRAFEL_DAEMON_ROOT is set, StateDirForRepo returns a
 // daemon-private state directory at
 //
-//	$ARCHIGRAPH_DAEMON_ROOT/state/<sha256(abs_repo_path)[:16]>/
+//	$GRAFEL_DAEMON_ROOT/state/<sha256(abs_repo_path)[:16]>/
 //
-// instead of `<repo>/.archigraph/`. The fixture's own `.archigraph/`
+// instead of `<repo>/.grafel/`. The fixture's own `.grafel/`
 // directory is never touched by the daemon under this mode, so a
 // pristine read-only corpus stays pristine even across many parallel
 // agents.
@@ -28,7 +28,7 @@
 //
 // Group-level config that lives co-located by design (group.json
 // manifests written by the wizard) is NOT routed through this helper —
-// it stays at `<repo>/.archigraph/group.json` so it can be discovered
+// it stays at `<repo>/.grafel/group.json` so it can be discovered
 // by walking up from a CWD regardless of which daemon is running.
 //
 // Per-ref layout (PH1a of epic #2087 / issue #2089):
@@ -55,7 +55,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // canonicalCache caches (inputPath → canonicalPath) resolutions so that
@@ -170,27 +170,27 @@ func repoStateHash(absRepoPath string) string {
 	return hex.EncodeToString(sum[:8]) // 16 hex chars
 }
 
-// homeDir resolves the archigraph home directory, honouring the
-// ARCHIGRAPH_HOME override (matching registry.HomeDir) and falling
-// back to ~/.archigraph. Kept dependency-light so this hot-path
+// homeDir resolves the grafel home directory, honouring the
+// GRAFEL_HOME override (matching registry.HomeDir) and falling
+// back to ~/.grafel. Kept dependency-light so this hot-path
 // helper does not pull in the registry package.
 func homeDir() string {
-	if override := os.Getenv("ARCHIGRAPH_HOME"); override != "" {
+	if override := os.Getenv("GRAFEL_HOME"); override != "" {
 		return override
 	}
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		// Last-ditch fallback so we never write into a repo by accident.
-		return filepath.Join(os.TempDir(), ".archigraph")
+		return filepath.Join(os.TempDir(), ".grafel")
 	}
-	return filepath.Join(home, ".archigraph")
+	return filepath.Join(home, ".grafel")
 }
 
 // StoreDir returns the root of the daemon's external graph store —
 // the single source of truth for where generated graph artifacts live
-// when no isolated ARCHIGRAPH_DAEMON_ROOT is in effect.
+// when no isolated GRAFEL_DAEMON_ROOT is in effect.
 //
-//	$ARCHIGRAPH_HOME (or ~/.archigraph)/store
+//	$GRAFEL_HOME (or ~/.grafel)/store
 //
 // Issue #1626: graph artifacts (graph.fb, graph.json, enrichments,
 // links, metadata) are NEVER written into the repo working tree any
@@ -286,11 +286,11 @@ func StateDirForRepoRef(repoPath, ref string) string {
 // Resolution (issue #1626 + PH1a #2089):
 //   - The current HEAD ref is captured via gitmeta.Capture so the path
 //     resolves to the per-branch sub-directory introduced by PH1a.
-//   - When ARCHIGRAPH_DAEMON_ROOT is set (isolated daemons, parallel
-//     agents, tests): `$ARCHIGRAPH_DAEMON_ROOT/state/<hash>/refs/<ref>/`.
-//   - Otherwise: `$ARCHIGRAPH_HOME (or ~/.archigraph)/store/<slug>-<hash>/refs/<ref>/`.
+//   - When GRAFEL_DAEMON_ROOT is set (isolated daemons, parallel
+//     agents, tests): `$GRAFEL_DAEMON_ROOT/state/<hash>/refs/<ref>/`.
+//   - Otherwise: `$GRAFEL_HOME (or ~/.grafel)/store/<slug>-<hash>/refs/<ref>/`.
 //
-// Graph artifacts are NO LONGER written into `<repo>/.archigraph/`.
+// Graph artifacts are NO LONGER written into `<repo>/.grafel/`.
 // Pre-existing in-repo state is relocated transparently by
 // MigrateInRepoState (called from the load path). Pre-PH1a flat stores
 // are relocated into the per-ref sub-directory by MigrateToRefStore
@@ -307,13 +307,13 @@ func StateDirForRepo(repoPath string) string {
 }
 
 // LegacyInRepoStateDir returns the historical co-located state directory
-// `<repo>/.archigraph/`. Used only by the migration path to find and
+// `<repo>/.grafel/`. Used only by the migration path to find and
 // relocate pre-#1626 artifacts. New code MUST use StateDirForRepo.
 func LegacyInRepoStateDir(repoPath string) string {
 	if repoPath == "" {
 		return ""
 	}
-	return filepath.Join(repoPath, ".archigraph")
+	return filepath.Join(repoPath, ".grafel")
 }
 
 // GraphPathForRepo is a convenience wrapper that returns the
@@ -433,7 +433,7 @@ func FindGraphFileAnyRef(repoPath string) (path string, modtime int64) {
 // (stale-dir, canonical-dir) pairs so the caller can log a warning.
 //
 // The function does NOT auto-merge or delete the stale dirs — that
-// is reserved for `archigraph cleanup --case-merge`. Manual cleanup:
+// is reserved for `grafel cleanup --case-merge`. Manual cleanup:
 // rm -rf the stale dir and let the daemon reindex.
 //
 // Returns nil when storeDir is empty, doesn't exist, or no collisions

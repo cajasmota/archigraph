@@ -16,6 +16,6 @@ description: >-
   (C#, algorithm=fixed_window), Go rate.NewLimiter
   (Go, algorithm=token_bucket), Flask-Limiter decorator and constructor
   (Python, algorithm=sliding_window).
-module: archigraph.engine.rules.pattern_detectors.rate_limit_extractor
+module: grafel.engine.rules.pattern_detectors.rate_limit_extractor
 function: detect
 applies_to_function: applies_to

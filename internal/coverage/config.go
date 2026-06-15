@@ -1,7 +1,7 @@
 package coverage
 
 // Config is the per-group coverage-ingestion setting. It mirrors SonarQube's
-// `sonar.<lang>.lcov.reportPaths` / `sonar.coverageReportPaths`: archigraph does
+// `sonar.<lang>.lcov.reportPaths` / `sonar.coverageReportPaths`: grafel does
 // not run tests, it ingests the report CI already emits.
 //
 // Intended shape in a group config (YAML/JSON), e.g.:

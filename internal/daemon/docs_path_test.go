@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestDocsDir_HonoursArchigraphHome(t *testing.T) {
+func TestDocsDir_HonoursGrafelHome(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	want := filepath.Join(home, "docs")
 	if got := DocsDir(); got != want {
@@ -24,7 +24,7 @@ func TestDocsDir_HonoursArchigraphHome(t *testing.T) {
 
 func TestMigrateInRepoDocs_MovesSkillOutputToStore(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repo := t.TempDir()
 	docs := filepath.Join(repo, "docs")
@@ -58,7 +58,7 @@ func TestMigrateInRepoDocs_MovesSkillOutputToStore(t *testing.T) {
 
 func TestMigrateInRepoDocs_SkipsHandAuthoredDocs(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repo := t.TempDir()
 	docs := filepath.Join(repo, "docs")
@@ -82,7 +82,7 @@ func TestMigrateInRepoDocs_SkipsHandAuthoredDocs(t *testing.T) {
 
 func TestMigrateInRepoDocs_SkipsWhenStoreHasContent(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repo := t.TempDir()
 	docs := filepath.Join(repo, "docs")

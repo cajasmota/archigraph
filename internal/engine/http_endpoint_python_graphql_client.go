@@ -31,7 +31,7 @@
 // (query/mutation/subscription) and ROOT FIELD(s) via the shared
 // gqlRootFieldsFromDoc parser, and emits one synthetic http_endpoint_call per
 // (operation, root field) keyed to EXACTLY match the GraphQL server endpoint
-// shape produced by every archigraph GraphQL server synthesizer
+// shape produced by every grafel GraphQL server synthesizer
 // (http_endpoint_synthesis.go, the Strawberry / Graphene / Ariadne / gqlgen /
 // graphql-ruby / HotChocolate / Spring-GraphQL / caliban / async-graphql / …
 // passes):
@@ -60,7 +60,7 @@ package engine
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // pyGqlDocRe matches a `gql(<string-literal>)` call in Python and captures the

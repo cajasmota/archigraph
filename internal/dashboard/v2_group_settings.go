@@ -42,9 +42,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -476,7 +476,7 @@ func (s *Server) handleV2RemoveRepo(w http.ResponseWriter, r *http.Request) {
 			keepCache := r.URL.Query().Get("keepCache") == "true"
 			if !keepCache {
 				stateDir := daemon.StateDirForRepo(rep.Path)
-				// Best-effort removal of the .archigraph state dir for this repo.
+				// Best-effort removal of the .grafel state dir for this repo.
 				_ = os.RemoveAll(stateDir)
 			}
 		} else {
@@ -585,7 +585,7 @@ func buildDoctorChecks(cfg *registry.GroupConfig) []v2DoctorCheck {
 	// We are inside the daemon, so it is by definition reachable.
 	checks = append(checks, v2DoctorCheck{
 		ID:     "daemon",
-		Label:  "archigraph daemon",
+		Label:  "grafel daemon",
 		Status: "ok",
 		Detail: "Running",
 	})

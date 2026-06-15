@@ -15,12 +15,12 @@ func TestSessionMetricsCounters(t *testing.T) {
 
 	// Record 10 calls with ascending latencies 10ms … 100ms, no errors.
 	for i := 1; i <= 10; i++ {
-		m.Record("archigraph_find", time.Duration(i*10)*time.Millisecond, false)
+		m.Record("grafel_find", time.Duration(i*10)*time.Millisecond, false)
 	}
 	// Record 3 calls, 2 of them errors.
-	m.Record("archigraph_inspect", 5*time.Millisecond, false)
-	m.Record("archigraph_inspect", 50*time.Millisecond, true)
-	m.Record("archigraph_inspect", 200*time.Millisecond, true)
+	m.Record("grafel_inspect", 5*time.Millisecond, false)
+	m.Record("grafel_inspect", 50*time.Millisecond, true)
+	m.Record("grafel_inspect", 200*time.Millisecond, true)
 
 	snap := m.Snapshot()
 
@@ -40,9 +40,9 @@ func TestSessionMetricsCounters(t *testing.T) {
 		toolStats[ts.Tool] = ts
 	}
 
-	findStat, ok := toolStats["archigraph_find"]
+	findStat, ok := toolStats["grafel_find"]
 	if !ok {
-		t.Fatal("missing archigraph_find in snapshot")
+		t.Fatal("missing grafel_find in snapshot")
 	}
 	if findStat.Calls != 10 {
 		t.Errorf("find calls: got %d, want 10", findStat.Calls)
@@ -59,9 +59,9 @@ func TestSessionMetricsCounters(t *testing.T) {
 		t.Errorf("find p95_ms: got %d, want ~100", findStat.P95MS)
 	}
 
-	inspectStat, ok := toolStats["archigraph_inspect"]
+	inspectStat, ok := toolStats["grafel_inspect"]
 	if !ok {
-		t.Fatal("missing archigraph_inspect in snapshot")
+		t.Fatal("missing grafel_inspect in snapshot")
 	}
 	if inspectStat.Calls != 3 {
 		t.Errorf("inspect calls: got %d, want 3", inspectStat.Calls)
@@ -94,9 +94,9 @@ func TestRollupSerializationRoundTrip(t *testing.T) {
 	m := NewSessionMetrics("roundtrip-session", dir)
 
 	// Record some calls.
-	m.Record("archigraph_find", 15*time.Millisecond, false)
-	m.Record("archigraph_find", 25*time.Millisecond, false)
-	m.Record("archigraph_clusters", 300*time.Millisecond, true)
+	m.Record("grafel_find", 15*time.Millisecond, false)
+	m.Record("grafel_find", 25*time.Millisecond, false)
+	m.Record("grafel_clusters", 300*time.Millisecond, true)
 
 	m.FlushRollup()
 
@@ -114,9 +114,9 @@ func TestRollupSerializationRoundTrip(t *testing.T) {
 		byTool[r.Tool] = r
 	}
 
-	findRec, ok := byTool["archigraph_find"]
+	findRec, ok := byTool["grafel_find"]
 	if !ok {
-		t.Fatal("missing archigraph_find in rollup records")
+		t.Fatal("missing grafel_find in rollup records")
 	}
 	if findRec.SessionID != "roundtrip-session" {
 		t.Errorf("session_id: got %q, want %q", findRec.SessionID, "roundtrip-session")
@@ -131,9 +131,9 @@ func TestRollupSerializationRoundTrip(t *testing.T) {
 		t.Errorf("find p50_ms: got %d, want ~15..25", findRec.P50MS)
 	}
 
-	clustersRec, ok := byTool["archigraph_clusters"]
+	clustersRec, ok := byTool["grafel_clusters"]
 	if !ok {
-		t.Fatal("missing archigraph_clusters in rollup records")
+		t.Fatal("missing grafel_clusters in rollup records")
 	}
 	if clustersRec.Errors != 1 {
 		t.Errorf("clusters errors: got %d, want 1", clustersRec.Errors)
@@ -161,7 +161,7 @@ func TestRollupSerializationRoundTrip(t *testing.T) {
 // TestRollupNoPersistDir verifies FlushRollup is a no-op when metricsDir is "".
 func TestRollupNoPersistDir(t *testing.T) {
 	m := NewSessionMetrics("no-dir-session", "")
-	m.Record("archigraph_find", 10*time.Millisecond, false)
+	m.Record("grafel_find", 10*time.Millisecond, false)
 	// Must not panic or write anything.
 	m.FlushRollup()
 }
@@ -175,7 +175,7 @@ func TestReadRollupsMultipleDays(t *testing.T) {
 	rec := RollupRecord{
 		Date:      twoDaysAgo,
 		SessionID: "old-session",
-		Tool:      "archigraph_stats",
+		Tool:      "grafel_stats",
 		Calls:     5,
 		FlushAt:   time.Now().UTC(),
 	}
@@ -212,7 +212,7 @@ func TestReadRollupsMultipleDays(t *testing.T) {
 	}
 }
 
-// TestMCPMetricsToolShape verifies the archigraph_mcp_metrics tool is registered
+// TestMCPMetricsToolShape verifies the grafel_mcp_metrics tool is registered
 // and returns a sensible JSON shape (session + rollup_records keys present).
 func TestMCPMetricsToolShape(t *testing.T) {
 	dir := t.TempDir()
@@ -225,18 +225,18 @@ func TestMCPMetricsToolShape(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Override SessMet's metricsDir to use the temp dir so no disk writes land
-	// in ~/.archigraph during tests.
+	// in ~/.grafel during tests.
 	srv.SessMet = NewSessionMetrics("test-shape", dir)
 
 	// Simulate a few calls.
-	srv.SessMet.Record("archigraph_find", 12*time.Millisecond, false)
-	srv.SessMet.Record("archigraph_find", 24*time.Millisecond, false)
-	srv.SessMet.Record("archigraph_inspect", 5*time.Millisecond, true)
+	srv.SessMet.Record("grafel_find", 12*time.Millisecond, false)
+	srv.SessMet.Record("grafel_find", 24*time.Millisecond, false)
+	srv.SessMet.Record("grafel_inspect", 5*time.Millisecond, true)
 
 	// Call the handler directly.
-	result := callTool(t, srv, "archigraph_mcp_metrics", map[string]any{"days": float64(1)})
+	result := callTool(t, srv, "grafel_mcp_metrics", map[string]any{"days": float64(1)})
 	if result == nil {
-		t.Fatal("nil result from archigraph_mcp_metrics")
+		t.Fatal("nil result from grafel_mcp_metrics")
 	}
 	if result.IsError {
 		t.Fatalf("tool returned error: %v", result.Content)
@@ -246,7 +246,7 @@ func TestMCPMetricsToolShape(t *testing.T) {
 	// trailer after the JSON object; use findJSON to trim it.
 	raw := resultText(result)
 	if raw == "" {
-		t.Fatal("empty result text from archigraph_mcp_metrics")
+		t.Fatal("empty result text from grafel_mcp_metrics")
 	}
 	end := findJSON(raw)
 	if end < 0 {
@@ -258,10 +258,10 @@ func TestMCPMetricsToolShape(t *testing.T) {
 	}
 
 	if _, ok := payload["session"]; !ok {
-		t.Error("missing 'session' key in archigraph_mcp_metrics response")
+		t.Error("missing 'session' key in grafel_mcp_metrics response")
 	}
 	if _, ok := payload["rollup_records"]; !ok {
-		t.Error("missing 'rollup_records' key in archigraph_mcp_metrics response")
+		t.Error("missing 'rollup_records' key in grafel_mcp_metrics response")
 	}
 
 	// Verify session has tools array.
@@ -298,9 +298,9 @@ func TestServerShutdownFlushed(t *testing.T) {
 	srv.SessMet = NewSessionMetrics("shutdown-test-session", dir)
 
 	// Record some tool calls.
-	srv.SessMet.Record("archigraph_find", 10*time.Millisecond, false)
-	srv.SessMet.Record("archigraph_find", 20*time.Millisecond, false)
-	srv.SessMet.Record("archigraph_inspect", 50*time.Millisecond, true)
+	srv.SessMet.Record("grafel_find", 10*time.Millisecond, false)
+	srv.SessMet.Record("grafel_find", 20*time.Millisecond, false)
+	srv.SessMet.Record("grafel_inspect", 50*time.Millisecond, true)
 
 	// Call Stop() to simulate shutdown (should flush metrics).
 	srv.Stop()
@@ -326,11 +326,11 @@ func TestServerShutdownFlushed(t *testing.T) {
 		byTool[r.Tool] = r
 	}
 
-	if _, ok := byTool["archigraph_find"]; !ok {
-		t.Error("archigraph_find not in rollup after Stop()")
+	if _, ok := byTool["grafel_find"]; !ok {
+		t.Error("grafel_find not in rollup after Stop()")
 	}
-	if _, ok := byTool["archigraph_inspect"]; !ok {
-		t.Error("archigraph_inspect not in rollup after Stop()")
+	if _, ok := byTool["grafel_inspect"]; !ok {
+		t.Error("grafel_inspect not in rollup after Stop()")
 	}
 }
 

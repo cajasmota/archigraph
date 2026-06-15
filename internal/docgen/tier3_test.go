@@ -7,17 +7,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/docgen"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-// buildMinimalGroupForTier3 creates a minimal ARCHIGRAPH_HOME fixture with one
+// buildMinimalGroupForTier3 creates a minimal GRAFEL_HOME fixture with one
 // group, two repos (slug: "core" and "sidecar"), and a graph.json in each.
-// It sets both ARCHIGRAPH_HOME and XDG_CONFIG_HOME so that registry.ConfigPathFor
+// It sets both GRAFEL_HOME and XDG_CONFIG_HOME so that registry.ConfigPathFor
 // resolves to the temp directory.
 func buildMinimalGroupForTier3(t *testing.T) (archHome, group, coreSlug string) {
 	t.Helper()
@@ -25,15 +25,15 @@ func buildMinimalGroupForTier3(t *testing.T) (archHome, group, coreSlug string) 
 	group = "tier3-test-group"
 	coreSlug = "core"
 
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
+	t.Setenv("GRAFEL_HOME", archHome)
 
-	// ConfigPathFor uses XDG_CONFIG_HOME/archigraph/<name>.fleet.json when
+	// ConfigPathFor uses XDG_CONFIG_HOME/grafel/<name>.fleet.json when
 	// XDG_CONFIG_HOME is set. Override it so the test config is discovered.
 	xdgConfigHome := filepath.Join(archHome, "xdg-config")
 	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
 
-	// Config dir: XDG_CONFIG_HOME/archigraph/<group>.fleet.json
-	cfgDir := filepath.Join(xdgConfigHome, "archigraph")
+	// Config dir: XDG_CONFIG_HOME/grafel/<group>.fleet.json
+	cfgDir := filepath.Join(xdgConfigHome, "grafel")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatalf("mkdir cfgDir: %v", err)
 	}
@@ -95,10 +95,10 @@ func buildMinimalGroupForTier3(t *testing.T) (archHome, group, coreSlug string) 
 	}
 	graphBytes, _ := json.Marshal(graphDoc)
 
-	// Write graph.json into the repo's .archigraph/ directory (fallback location
+	// Write graph.json into the repo's .grafel/ directory (fallback location
 	// that daemon.StateDirForRepo resolves to in test environments without
-	// ARCHIGRAPH_DAEMON_ROOT set).
-	coreArchDir := filepath.Join(coreRepoPath, ".archigraph")
+	// GRAFEL_DAEMON_ROOT set).
+	coreArchDir := filepath.Join(coreRepoPath, ".grafel")
 	if err := os.MkdirAll(coreArchDir, 0o755); err != nil {
 		t.Fatalf("mkdir coreArchDir: %v", err)
 	}
@@ -107,7 +107,7 @@ func buildMinimalGroupForTier3(t *testing.T) (archHome, group, coreSlug string) 
 	}
 
 	// Write an empty graph for sidecar so group config parses cleanly.
-	sidecarArchDir := filepath.Join(sidecarRepoPath, ".archigraph")
+	sidecarArchDir := filepath.Join(sidecarRepoPath, ".grafel")
 	if err := os.MkdirAll(sidecarArchDir, 0o755); err != nil {
 		t.Fatalf("mkdir sidecarArchDir: %v", err)
 	}

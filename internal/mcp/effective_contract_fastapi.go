@@ -41,7 +41,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // fastAPIContractResolver composes effective contracts for FastAPI path-ops.

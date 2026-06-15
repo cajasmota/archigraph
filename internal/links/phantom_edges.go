@@ -45,7 +45,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // phantomEdgeMethods lists the Link.Method values that are promoted to

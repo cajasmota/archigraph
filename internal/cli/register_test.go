@@ -23,7 +23,7 @@ func TestRegisterWriteAgentsMD(t *testing.T) {
 			group: "test-group",
 			wantContains: []string{
 				agentsMDStartMarker,
-				"archigraph",
+				"grafel",
 				"test-group",
 				"MCP",
 				agentsMDEndMarker,
@@ -134,7 +134,7 @@ func TestRegisterStubContent(t *testing.T) {
 
 	// Verify key phrases are present
 	keywords := []string{
-		"archigraph",
+		"grafel",
 		"test-group",
 		"MCP",
 		"group",

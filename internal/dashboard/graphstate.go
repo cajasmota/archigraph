@@ -23,11 +23,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/registry"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -650,7 +650,7 @@ func attachAlgorithmResults(doc *graph.Document) {
 // defaultLinksFile mirrors mcp.defaultLinksFile.
 func defaultLinksFile(group string) string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".archigraph", "groups", group+"-links.json")
+	return filepath.Join(home, ".grafel", "groups", group+"-links.json")
 }
 
 // readCrossRepoLinks parses cross-repo links from raw JSON.

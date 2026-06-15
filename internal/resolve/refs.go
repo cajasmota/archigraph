@@ -24,7 +24,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Stub-format constants. The resolver speaks a small grammar of "stub"
@@ -157,7 +157,7 @@ const (
 	// scope:dataaccess:<file>#<orm>:<op>:<table> stub identifying SQL
 	// surface area (issue #531). Distinct from ExternalKnown so that
 	// SQL surface area is counted separately in disposition_counts output
-	// and is queryable via archigraph doctor as its own metric bucket.
+	// and is queryable via grafel doctor as its own metric bucket.
 	DispositionExternalSQL
 	// DispositionDynamic — the stub matches a pattern that is intrinsically
 	// static-unresolvable (reflection, dynamic import, env-driven names,
@@ -546,7 +546,7 @@ type LocationKindIndex map[string]map[string]map[string]string
 
 // Stats reports how many relationship endpoints the resolver rewrote and how
 // many it left as stubs because of ambiguity / missing matches. Surfaced via
-// the log line in cmd/archigraph/index.go for instrumentation.
+// the log line in cmd/grafel/index.go for instrumentation.
 //
 // Rewritten/Ambiguous/Unmatched are aggregate counters covering every endpoint
 // the resolver inspected (FromID + ToID combined). PORT-2-FIX-4 added the

@@ -25,14 +25,14 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Blank imports trigger init() registration of both the base javascript
 	// AST extractor and every custom_js_* framework extractor.
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
-	_ "github.com/cajasmota/archigraph/internal/extractors/javascript"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
+	_ "github.com/cajasmota/grafel/internal/extractors/javascript"
 )
 
 const angularDedupFixture = `import { Component, Injectable, NgModule, Directive, Pipe, Input, Output, EventEmitter } from '@angular/core';

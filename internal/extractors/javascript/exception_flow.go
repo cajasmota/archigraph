@@ -27,7 +27,7 @@ package javascript
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // emitExceptionFlowEdges scans the AST for typed throw / instanceof-catch

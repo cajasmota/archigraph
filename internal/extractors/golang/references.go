@@ -91,8 +91,8 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // goReservedNames is the conservative allowlist of Go builtins,
@@ -148,7 +148,7 @@ type goFrame struct {
 	// selector's operand is a bare identifier that isn't the receiver
 	// var and isn't a PascalCase type/import — i.e. the dominant
 	// `<localVar>.<field>` shape that drove same_package_unqualified
-	// on the archigraph corpus.
+	// on the grafel corpus.
 	varTypes goVarTypes
 }
 

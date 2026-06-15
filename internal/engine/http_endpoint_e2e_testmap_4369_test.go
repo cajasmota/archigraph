@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the pytest extractor so the suite (with e2e_route_calls) comes
 	// from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
 )
 
 // Issue #4369 LIVE-REPRO (resolve side, full in-pipeline).

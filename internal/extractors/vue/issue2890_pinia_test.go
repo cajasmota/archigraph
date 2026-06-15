@@ -3,7 +3,7 @@ package vue_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #2890 — Vue Internals / pinia_store: promote from `partial` to `full`

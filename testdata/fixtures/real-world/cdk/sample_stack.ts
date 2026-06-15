@@ -33,14 +33,14 @@ export class VeraIndexerStack extends cdk.Stack {
     const appSecrets = secretsmanager.Secret.fromSecretNameV2(
       this,
       'AppSecrets',
-      `${environment}/archigraph-indexer`
+      `${environment}/grafel-indexer`
     );
 
     // ============================================================
     // Dead Letter Queue
     // ============================================================
     this.dlq = new sqs.Queue(this, 'IndexerDLQ', {
-      queueName: `archigraph-indexer-dlq-${environment}`,
+      queueName: `grafel-indexer-dlq-${environment}`,
       retentionPeriod: cdk.Duration.days(14),
       encryption: sqs.QueueEncryption.SQS_MANAGED,
     });
@@ -49,7 +49,7 @@ export class VeraIndexerStack extends cdk.Stack {
     // Main Queue
     // ============================================================
     this.indexQueue = new sqs.Queue(this, 'IndexerQueue', {
-      queueName: `archigraph-indexer-${environment}`,
+      queueName: `grafel-indexer-${environment}`,
       visibilityTimeout: cdk.Duration.seconds(300),
       retentionPeriod: cdk.Duration.days(4),
       encryption: sqs.QueueEncryption.SQS_MANAGED,
@@ -79,7 +79,7 @@ export class VeraIndexerStack extends cdk.Stack {
     // Lambda Function
     // ============================================================
     this.indexerFunction = new lambda.DockerImageFunction(this, 'IndexerFunction', {
-      functionName: `archigraph-indexer-${environment}`,
+      functionName: `grafel-indexer-${environment}`,
       code: lambda.DockerImageCode.fromEcr(ecrRepository, {
         tagOrDigest: imageTag,
       }),
@@ -91,7 +91,7 @@ export class VeraIndexerStack extends cdk.Stack {
         LOG_LEVEL: isProd ? 'warn' : 'debug',
         SECRET_ARN: appSecrets.secretArn,
         QUEUE_URL: this.indexQueue.queueUrl,
-        POWERTOOLS_SERVICE_NAME: 'archigraph-indexer',
+        POWERTOOLS_SERVICE_NAME: 'grafel-indexer',
         POWERTOOLS_LOG_LEVEL: isProd ? 'WARN' : 'DEBUG',
       },
       logRetention: isProd
@@ -119,10 +119,10 @@ export class VeraIndexerStack extends cdk.Stack {
       const dlqAlarm = this.dlq
         .metricNumberOfMessagesSent()
         .createAlarm(this, 'DLQAlarm', {
-          alarmName: `archigraph-indexer-dlq-messages-${environment}`,
+          alarmName: `grafel-indexer-dlq-messages-${environment}`,
           threshold: 1,
           evaluationPeriods: 1,
-          alarmDescription: 'Messages landing in archigraph-indexer DLQ',
+          alarmDescription: 'Messages landing in grafel-indexer DLQ',
         });
     }
 
@@ -131,12 +131,12 @@ export class VeraIndexerStack extends cdk.Stack {
     // ============================================================
     new cdk.CfnOutput(this, 'IndexQueueUrl', {
       value: this.indexQueue.queueUrl,
-      exportName: `archigraph-indexer-queue-url-${environment}`,
+      exportName: `grafel-indexer-queue-url-${environment}`,
     });
 
     new cdk.CfnOutput(this, 'IndexerFunctionArn', {
       value: this.indexerFunction.functionArn,
-      exportName: `archigraph-indexer-function-arn-${environment}`,
+      exportName: `grafel-indexer-function-arn-${environment}`,
     });
   }
 }

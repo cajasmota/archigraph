@@ -4,11 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // TestFindByName_FindsSelf verifies that FindByName can locate the test
-// process itself by looking for "archigraph" or the test runner name.
+// process itself by looking for "grafel" or the test runner name.
 // On unsupported platforms the call returns an error, which we skip.
 func TestFindByName_FindsSelf(t *testing.T) {
 	myPID := os.Getpid()

@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/sql/sample_schema.sql",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/sql/sample_schema.sql",
   "language": "sql",
   "entities": [
     {
@@ -104,7 +104,7 @@
     },
     {
       "name": "idx_posts_user_id",
-      "qualified_name": "scope:schema:database_index:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/sql/sample_schema.sql:posts:user_id",
+      "qualified_name": "scope:schema:database_index:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/sql/sample_schema.sql:posts:user_id",
       "kind": "SCOPE.Schema",
       "start_line": null,
       "end_line": null,
@@ -126,7 +126,7 @@
     },
     {
       "name": "idx_users_email",
-      "qualified_name": "scope:schema:database_index:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/sql/sample_schema.sql:users:email",
+      "qualified_name": "scope:schema:database_index:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/sql/sample_schema.sql:users:email",
       "kind": "SCOPE.Schema",
       "start_line": null,
       "end_line": null,
@@ -147,8 +147,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/sql/sample_schema.sql",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/sql/sample_schema.sql",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/sql/sample_schema.sql",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/sql/sample_schema.sql",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -163,7 +163,7 @@
         "convention": "snake_case",
         "dominant_percentage": 56.25,
         "sample_count": 16,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/sql/sample_schema.sql"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/sql/sample_schema.sql"
       }
     }
   ],

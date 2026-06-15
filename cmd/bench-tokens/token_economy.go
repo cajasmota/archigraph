@@ -12,7 +12,7 @@ import (
 type questionCost struct {
 	Question string
 	// GraphTokens is the estimated token cost of the graph-scoped answer (the
-	// archigraph_find payload — the minimal subgraph that answers the question).
+	// grafel_find payload — the minimal subgraph that answers the question).
 	GraphTokens int
 	// FileReadTokens is the estimated token cost of the naive baseline: reading
 	// every distinct source file the answer touches, in full.
@@ -108,7 +108,7 @@ const perFileFallbackTokens = 3000
 func renderMarkdown(group string, rows []questionCost) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Token-economy benchmark — %s\n\n", group)
-	b.WriteString("Graph-scoped answer (minimal subgraph via `archigraph_find`) vs the naive ")
+	b.WriteString("Graph-scoped answer (minimal subgraph via `grafel_find`) vs the naive ")
 	b.WriteString("\"read the relevant files\" baseline. Tokens estimated at char/4. ")
 	b.WriteString("Ratio = file-read tokens ÷ graph tokens (higher = more saved by the graph).\n\n")
 

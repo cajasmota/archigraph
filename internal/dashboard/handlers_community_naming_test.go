@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // newCommunityNamingServer creates a minimal Server with one repo whose
@@ -27,9 +27,9 @@ func newCommunityNamingServer(t *testing.T) (*Server, string) {
 		t.Fatalf("NewServer: %v", err)
 	}
 
-	// Create a temporary repo directory with an archigraph state dir.
+	// Create a temporary repo directory with an grafel state dir.
 	// #1626: per-repo state lives in the external store, not in-repo.
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 	repoDir := t.TempDir()
 	stateDir := daemon.StateDirForRepo(repoDir)
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {

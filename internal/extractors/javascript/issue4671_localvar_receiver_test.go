@@ -24,8 +24,8 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
 )
 
 // hasStructuralCallTo reports whether ANY extracted entity carries a CALLS

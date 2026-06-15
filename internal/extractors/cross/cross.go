@@ -9,20 +9,20 @@
 package cross
 
 import (
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/abibridge"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/consumes_api"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/dbmap"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/deprecation"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/endpoint"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/hierarchy"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/httpclient"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/imports"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/manifest"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/ormlink"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/react_props"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/testmap"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/abibridge"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/consumes_api"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/dbmap"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/deprecation"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/endpoint"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/hierarchy"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/httpclient"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/imports"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/manifest"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/ormlink"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/react_props"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/testmap"
 )
 
 // Entry pairs a stable short name with a registered cross-language extractor.

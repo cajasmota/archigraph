@@ -1,10 +1,10 @@
-# Sample Terraform file for archigraph HCL extractor fixture.
+# Sample Terraform file for grafel HCL extractor fixture.
 # Covers: resource, data, module, variable, output, provider, locals, depends_on.
 
 terraform {
   required_version = ">= 1.0"
   backend "s3" {
-    bucket = "archigraph-tfstate"
+    bucket = "grafel-tfstate"
     key    = "prod/terraform.tfstate"
     region = "us-east-1"
   }
@@ -51,11 +51,11 @@ variable "enable_tracing" {
 # ---- Locals ----
 
 locals {
-  prefix         = "archigraph"
+  prefix         = "grafel"
   function_name  = "${local.prefix}-extract-${var.env}"
   ecr_image_uri  = "${aws_ecr_repository.data_extract.repository_url}:latest"
   common_tags = {
-    Project = "archigraph"
+    Project = "grafel"
     Env     = var.env
     ManagedBy = "terraform"
   }
@@ -228,12 +228,12 @@ module "alb" {
 # ---- Outputs ----
 
 output "lambda_arn" {
-  description = "ARN of the archigraph Extract Lambda function"
+  description = "ARN of the grafel Extract Lambda function"
   value       = aws_lambda_function.data_extract.arn
 }
 
 output "lambda_function_name" {
-  description = "Name of the archigraph Extract Lambda function"
+  description = "Name of the grafel Extract Lambda function"
   value       = aws_lambda_function.data_extract.function_name
 }
 
@@ -243,7 +243,7 @@ output "sqs_queue_url" {
 }
 
 output "ecr_repository_url" {
-  description = "ECR repository URL for archigraph extract image"
+  description = "ECR repository URL for grafel extract image"
   value       = aws_ecr_repository.data_extract.repository_url
 }
 

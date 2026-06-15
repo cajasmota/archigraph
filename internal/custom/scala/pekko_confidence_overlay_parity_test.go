@@ -3,7 +3,7 @@ package scala_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestScalaPekko_ConfidenceOverlay proves the confidence_overlay capability

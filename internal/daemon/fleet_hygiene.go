@@ -8,7 +8,7 @@
 // Issue #2085: Each content-hash change creates a new store slot but never
 // removes the previous one. PruneStaleGenerations sweeps old generations —
 // keeping the most recent N (default 2, configurable via
-// ARCHIGRAPH_STORE_KEEP_GENERATIONS) — after a successful index.
+// GRAFEL_STORE_KEEP_GENERATIONS) — after a successful index.
 package daemon
 
 import (
@@ -22,13 +22,13 @@ import (
 
 // defaultKeepGenerations is the number of store generations to retain per
 // repo (current + one previous). Users can override via the env var
-// ARCHIGRAPH_STORE_KEEP_GENERATIONS.
+// GRAFEL_STORE_KEEP_GENERATIONS.
 const defaultKeepGenerations = 2
 
 // KeepGenerations returns the configured number of store generations to keep.
-// It reads ARCHIGRAPH_STORE_KEEP_GENERATIONS and falls back to defaultKeepGenerations.
+// It reads GRAFEL_STORE_KEEP_GENERATIONS and falls back to defaultKeepGenerations.
 func KeepGenerations() int {
-	if v := os.Getenv("ARCHIGRAPH_STORE_KEEP_GENERATIONS"); v != "" {
+	if v := os.Getenv("GRAFEL_STORE_KEEP_GENERATIONS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n >= 1 {
 			return n
 		}

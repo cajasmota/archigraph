@@ -18,8 +18,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runMethodValueExtract runs the Go extractor on src with the given path and
@@ -115,7 +115,7 @@ func findEntityByName(ents []types.EntityRecord, name string) *types.EntityRecor
 // ---- Test 1: s.wrap("name", s.Method) registration pattern -----------------
 //
 // This is the concrete dogfood case from issue #1789:
-//   s.wrap("archigraph_find", s.handleQueryGraph)
+//   s.wrap("grafel_find", s.handleQueryGraph)
 // The inner s.handleQueryGraph is a method-value reference; it should emit
 // a CALLS edge with via_value=true and receiver_type=Server so the resolver
 // can bind the bare name "handleQueryGraph" to the entity Server.handleQueryGraph.
@@ -130,7 +130,7 @@ func (s *Server) handleQueryGraph() {}
 func (s *Server) wrap(name string, fn func()) {}
 
 func (s *Server) registerTools() {
-	s.wrap("archigraph_find", s.handleQueryGraph)
+	s.wrap("grafel_find", s.handleQueryGraph)
 }
 `
 	ents := runMethodValueExtract(t, src, "server.go")

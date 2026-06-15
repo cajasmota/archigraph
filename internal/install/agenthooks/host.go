@@ -12,7 +12,7 @@ package agenthooks
 // context.
 //
 // This package adds the ACTIVE reinforcement: a pre-tool hook that fires the
-// moment a structural grep is about to run and nudges toward the archigraph
+// moment a structural grep is about to run and nudges toward the grafel
 // MCP. A pre-tool hook is only possible on hosts that expose a programmable
 // pre-tool / pre-shell lifecycle surface. Most agent hosts do NOT. Rather than
 // fabricate a hook API for a host that lacks one, each host honestly declares

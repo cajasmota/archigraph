@@ -42,7 +42,7 @@
 // real; its absence reads as "unknown", not "first_party".
 package engine
 
-import "github.com/cajasmota/archigraph/internal/graph"
+import "github.com/cajasmota/grafel/internal/graph"
 
 // boundaryProp is the edge/entity property key carrying the dependency-boundary
 // classification. Kept in one place so queries and tests agree on the name.

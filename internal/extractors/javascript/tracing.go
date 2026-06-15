@@ -28,7 +28,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // jsSpanHit captures one OpenTelemetry span-creation site in a JS/TS body.

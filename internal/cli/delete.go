@@ -10,9 +10,9 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newDeleteCmd() *cobra.Command {
@@ -29,7 +29,7 @@ func newDeleteCmd() *cobra.Command {
 registry entirely.
 
 For each repo: the watcher is stopped, the git hook block is removed, and
-the per-repo .archigraph/ cache is deleted (use --keep-caches to skip cache
+the per-repo .grafel/ cache is deleted (use --keep-caches to skip cache
 deletion). The fleet config file and the per-group state directory are
 deleted last.
 
@@ -47,7 +47,7 @@ The daemon must be running.`,
 	cmd.Flags().BoolVar(&force, "force", false,
 		"skip the confirmation prompt (dangerous)")
 	cmd.Flags().BoolVar(&keepCaches, "keep-caches", false,
-		"leave per-repo .archigraph/ directories on disk")
+		"leave per-repo .grafel/ directories on disk")
 	cmd.Flags().BoolVar(&jsonOut, "json", false,
 		"emit machine-readable JSON result")
 	return cmd

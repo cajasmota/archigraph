@@ -9,7 +9,7 @@ package dashboard
 //	GET  /api/quality/orphans/{group}  reads the last result back (or never-run).
 //
 // Results are stored one JSON file per group under
-// ~/.archigraph/orphan-audits/<group>.json. This keeps the "Last audited"
+// ~/.grafel/orphan-audits/<group>.json. This keeps the "Last audited"
 // timestamp and the real per-kind / orphan numbers stable across reloads, so
 // the client can distinguish a real measurement from an un-run default.
 

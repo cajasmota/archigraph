@@ -3,8 +3,8 @@ package dashboard
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ent builds a graph.Entity carrying the stamped ingested-line-coverage props

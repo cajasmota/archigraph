@@ -7,7 +7,7 @@ import (
 
 // Backend produces dense vector embeddings for text. Implementations must be
 // safe for sequential use; the indexer and MCP query path call Embed with
-// batches. All backends in archigraph return L2-normalized vectors so that a
+// batches. All backends in grafel return L2-normalized vectors so that a
 // dot product equals cosine similarity.
 type Backend interface {
 	// Embed returns one vector per input text, each of length Dims().

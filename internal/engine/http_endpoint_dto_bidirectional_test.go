@@ -11,7 +11,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestResolveHTTPEndpointHandlers_DTOHandlerBidirectional_RequestBody(t *testing.T) {

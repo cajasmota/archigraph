@@ -1,5 +1,5 @@
 // Package transport provides platform-specific IPC transport for the
-// archigraph daemon. On Unix systems (Linux, macOS) it uses Unix-domain
+// grafel daemon. On Unix systems (Linux, macOS) it uses Unix-domain
 // sockets; on Windows it uses named pipes via github.com/Microsoft/go-winio.
 //
 // The package exposes a single abstraction — Transport — that maps cleanly
@@ -71,8 +71,8 @@ var DefaultRetryPolicy = RetryPolicy{
 
 // Listen creates a platform-appropriate listener on addr.
 //
-//   - Unix/macOS:  addr is a filesystem path (e.g. ~/.archigraph/sockets/daemon.sock)
-//   - Windows:     addr is a named-pipe path (e.g. \\.\pipe\archigraph-daemon-<user>)
+//   - Unix/macOS:  addr is a filesystem path (e.g. ~/.grafel/sockets/daemon.sock)
+//   - Windows:     addr is a named-pipe path (e.g. \\.\pipe\grafel-daemon-<user>)
 //
 // The returned net.Listener yields net.Conn values whose byte-transfer
 // stats are tracked internally. Use ConnStatsFrom to retrieve them.

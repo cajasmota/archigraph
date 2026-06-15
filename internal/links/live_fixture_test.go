@@ -10,22 +10,22 @@ import (
 
 // TestLiveFixture is a smoke test against a hand-built 2-repo fixture.
 // Useful as the "live" sign-off check called for in the task brief.
-// It runs only when ARCHIGRAPH_LIVE_FIXTURE=1.
+// It runs only when GRAFEL_LIVE_FIXTURE=1.
 func TestLiveFixture(t *testing.T) {
-	if os.Getenv("ARCHIGRAPH_LIVE_FIXTURE") != "1" {
-		t.Skip("set ARCHIGRAPH_LIVE_FIXTURE=1 to run")
+	if os.Getenv("GRAFEL_LIVE_FIXTURE") != "1" {
+		t.Skip("set GRAFEL_LIVE_FIXTURE=1 to run")
 	}
-	root := os.Getenv("ARCHIGRAPH_LIVE_ROOT")
-	home := os.Getenv("ARCHIGRAPH_LIVE_HOME")
+	root := os.Getenv("GRAFEL_LIVE_ROOT")
+	home := os.Getenv("GRAFEL_LIVE_HOME")
 	if root == "" || home == "" {
-		t.Skip("requires ARCHIGRAPH_LIVE_ROOT + ARCHIGRAPH_LIVE_HOME")
+		t.Skip("requires GRAFEL_LIVE_ROOT + GRAFEL_LIVE_HOME")
 	}
 	tmp, err := os.MkdirTemp("", "ag-stage-")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, repo := range []string{"alpha", "beta"} {
-		src := filepath.Join(root, repo, ".archigraph", "graph.json")
+		src := filepath.Join(root, repo, ".grafel", "graph.json")
 		dst := filepath.Join(tmp, repo, "graph.json")
 		_ = os.MkdirAll(filepath.Dir(dst), 0o755)
 		if err := os.Symlink(src, dst); err != nil {

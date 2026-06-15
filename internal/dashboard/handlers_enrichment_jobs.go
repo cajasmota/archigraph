@@ -14,7 +14,7 @@ package dashboard
 import (
 	"net/http"
 
-	"github.com/cajasmota/archigraph/internal/jobs"
+	"github.com/cajasmota/grafel/internal/jobs"
 )
 
 // handleEnrichmentTrigger — POST /api/enrichments/{group}/trigger

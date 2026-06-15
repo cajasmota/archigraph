@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -91,7 +91,7 @@ func TestTraces_ListReturnsAllProcesses(t *testing.T) {
 	srv := setupTracesServer(t)
 	// min_steps=0 disables the short-flow filter (#1639) — these fixtures
 	// have 3-step chains and the test asserts list completeness, not filtering.
-	res := callTool(t, srv, "archigraph_traces", map[string]any{"action": "list", "min_steps": 0})
+	res := callTool(t, srv, "grafel_traces", map[string]any{"action": "list", "min_steps": 0})
 	txt := resultText(res)
 	if !strings.Contains(txt, "\"count\":2") {
 		t.Errorf("expected count=2, got: %s", txt)
@@ -103,7 +103,7 @@ func TestTraces_ListReturnsAllProcesses(t *testing.T) {
 
 func TestTraces_ListCrossStackOnly(t *testing.T) {
 	srv := setupTracesServer(t)
-	res := callTool(t, srv, "archigraph_traces", map[string]any{
+	res := callTool(t, srv, "grafel_traces", map[string]any{
 		"action":           "list",
 		"cross_stack_only": true,
 		"min_steps":        0,
@@ -119,7 +119,7 @@ func TestTraces_ListCrossStackOnly(t *testing.T) {
 
 func TestTraces_GetReturnsFullChain(t *testing.T) {
 	srv := setupTracesServer(t)
-	res := callTool(t, srv, "archigraph_traces", map[string]any{
+	res := callTool(t, srv, "grafel_traces", map[string]any{
 		"action":     "get",
 		"process_id": "p1",
 	})
@@ -134,7 +134,7 @@ func TestTraces_GetReturnsFullChain(t *testing.T) {
 
 func TestTraces_FollowAdHocBFS(t *testing.T) {
 	srv := setupTracesServer(t)
-	res := callTool(t, srv, "archigraph_traces", map[string]any{
+	res := callTool(t, srv, "grafel_traces", map[string]any{
 		"action":         "follow",
 		"entry_point_id": "f1",
 		"max_depth":      5,
@@ -151,18 +151,18 @@ func TestTraces_FollowAdHocBFS(t *testing.T) {
 
 func TestTraces_InvalidActionReturnsError(t *testing.T) {
 	srv := setupTracesServer(t)
-	res := callTool(t, srv, "archigraph_traces", map[string]any{"action": "bogus"})
+	res := callTool(t, srv, "grafel_traces", map[string]any{"action": "bogus"})
 	if res == nil || !res.IsError {
 		t.Errorf("expected tool error for bogus action")
 	}
 }
 
 // TestTraces_NoActionDefaultsList verifies that omitting the action argument
-// defaults to "list" instead of returning a hard error (#archigraph_traces).
+// defaults to "list" instead of returning a hard error (#grafel_traces).
 func TestTraces_NoActionDefaultsList(t *testing.T) {
 	srv := setupTracesServer(t)
 	// min_steps=0 so the short-flow filter doesn't hide the fixture processes.
-	res := callTool(t, srv, "archigraph_traces", map[string]any{"min_steps": 0})
+	res := callTool(t, srv, "grafel_traces", map[string]any{"min_steps": 0})
 	if res == nil {
 		t.Fatal("nil result when action is omitted")
 	}
@@ -305,7 +305,7 @@ func buildCrossRepoFlowFixture() (frontend, backend *graph.Document) {
 }
 
 // TestTracesGet_BridgeStepMetadata_1905 asserts that when a cross-repo Process
-// is fetched via archigraph_traces action=get, the bridge step (whose entity
+// is fetched via grafel_traces action=get, the bridge step (whose entity
 // lives in the companion repo) is enriched with name, file, line, and repo,
 // and its id carries the companion repo prefix — not the seed repo prefix.
 func TestTracesGet_BridgeStepMetadata_1905(t *testing.T) {

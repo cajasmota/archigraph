@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -241,7 +241,7 @@ func itoa(i int) string {
 	return string(b[n:])
 }
 
-func BenchmarkArchigraphAgentResolvedEdges(b *testing.B) {
+func BenchmarkGrafelAgentResolvedEdges(b *testing.B) {
 	doc := benchDoc(10000)
 	lr := &LoadedRepo{
 		Repo:       "repo1",

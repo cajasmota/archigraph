@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/daemon/service"
 )
 
 // resolvedOpts returns an Options struct with all fields filled in so
@@ -12,9 +12,9 @@ import (
 // user home directory.
 func resolvedOpts() service.Options {
 	return service.Options{
-		BinPath:    "/usr/local/bin/archigraph",
-		SocketPath: "/home/testuser/.archigraph/sockets/daemon.sock",
-		LogDir:     "/home/testuser/.archigraph/logs",
+		BinPath:    "/usr/local/bin/grafel",
+		SocketPath: "/home/testuser/.grafel/sockets/daemon.sock",
+		LogDir:     "/home/testuser/.grafel/logs",
 	}
 }
 
@@ -25,8 +25,8 @@ func resolvedOpts() service.Options {
 func TestGeneratePlist_ContainsLabel(t *testing.T) {
 	t.Helper()
 	plist := renderPlist(t)
-	if !strings.Contains(plist, "com.archigraph.daemon") {
-		t.Errorf("plist missing label com.archigraph.daemon:\n%s", plist)
+	if !strings.Contains(plist, "com.grafel.daemon") {
+		t.Errorf("plist missing label com.grafel.daemon:\n%s", plist)
 	}
 }
 
@@ -34,13 +34,13 @@ func TestGeneratePlist_ContainsLabel(t *testing.T) {
 // appears in the ProgramArguments array.
 func TestGeneratePlist_BinPath(t *testing.T) {
 	plist := renderPlist(t)
-	if !strings.Contains(plist, "/usr/local/bin/archigraph") {
+	if !strings.Contains(plist, "/usr/local/bin/grafel") {
 		t.Errorf("plist missing BinPath:\n%s", plist)
 	}
 }
 
 // TestGeneratePlist_DaemonSubcmd verifies the plist invokes
-// `archigraph daemon` — the hidden long-running mode. launchd owns
+// `grafel daemon` — the hidden long-running mode. launchd owns
 // the process lifecycle, so no `start` sub-subcommand is needed.
 func TestGeneratePlist_DaemonSubcmd(t *testing.T) {
 	plist := renderPlist(t)
@@ -51,7 +51,7 @@ func TestGeneratePlist_DaemonSubcmd(t *testing.T) {
 	// watcher_ctl start command forks the binary with its own
 	// already-running check that would exit 0 under launchd.
 	if strings.Contains(plist, "<string>start</string>") {
-		t.Errorf("plist must not contain 'start' argument (use 'archigraph daemon' directly):\n%s", plist)
+		t.Errorf("plist must not contain 'start' argument (use 'grafel daemon' directly):\n%s", plist)
 	}
 }
 
@@ -89,10 +89,10 @@ func TestGeneratePlist_RunAtLoad(t *testing.T) {
 // redirected to the configured log directory.
 func TestGeneratePlist_LogPaths(t *testing.T) {
 	plist := renderPlist(t)
-	if !strings.Contains(plist, "/home/testuser/.archigraph/logs/daemon.log") {
+	if !strings.Contains(plist, "/home/testuser/.grafel/logs/daemon.log") {
 		t.Errorf("plist missing stdout log path:\n%s", plist)
 	}
-	if !strings.Contains(plist, "/home/testuser/.archigraph/logs/daemon.err") {
+	if !strings.Contains(plist, "/home/testuser/.grafel/logs/daemon.err") {
 		t.Errorf("plist missing stderr log path:\n%s", plist)
 	}
 }
@@ -112,11 +112,11 @@ func TestGeneratePlist_ValidXML(t *testing.T) {
 // --- Linux systemd unit tests --------------------------------------------
 
 // TestGenerateUnit_ExecStart verifies the ExecStart line invokes
-// `archigraph daemon` — the hidden long-running mode. systemd owns
+// `grafel daemon` — the hidden long-running mode. systemd owns
 // the process lifecycle; no sub-subcommand is required.
 func TestGenerateUnit_ExecStart(t *testing.T) {
 	unit := renderUnit(t)
-	if !strings.Contains(unit, "ExecStart=/usr/local/bin/archigraph daemon") {
+	if !strings.Contains(unit, "ExecStart=/usr/local/bin/grafel daemon") {
 		t.Errorf("unit missing ExecStart:\n%s", unit)
 	}
 }

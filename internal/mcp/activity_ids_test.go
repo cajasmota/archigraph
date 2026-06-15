@@ -17,7 +17,7 @@ func sortedCopy(in []string) []string {
 
 // TestExtractIDsBareID verifies that a JSON result whose entity id field is the
 // plain "id" key (as produced by serializeEntity) yields a node id. Before the
-// fix, extractIDs only looked at "entity_id"/"node_id", so archigraph_inspect
+// fix, extractIDs only looked at "entity_id"/"node_id", so grafel_inspect
 // results glowed nothing.
 func TestExtractIDsBareID(t *testing.T) {
 	res := mcpapi.NewToolResultText(`{"id":"upvate-core::abc123","label":"Foo","kind":"function"}`)
@@ -81,7 +81,7 @@ func TestIDsFromArgs(t *testing.T) {
 	}
 }
 
-// TestMarkdownToolIDsReachEvent simulates the wire path of archigraph_find:
+// TestMarkdownToolIDsReachEvent simulates the wire path of grafel_find:
 // a handler that returns markdown (no ids in the body) records its touched
 // ids via the collector; emitActivity then publishes them. Before the fix,
 // such events arrived with empty returned_node_ids → no WebUI glow.
@@ -98,10 +98,10 @@ func TestMarkdownToolIDsReachEvent(t *testing.T) {
 	res := mcpapi.NewToolResultText("# group: upvate — per-repo top hits\n")
 
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_find"
+	req.Params.Name = "grafel_find"
 	req.Params.Arguments = map[string]any{"question": "auth"}
 
-	s.emitActivity(ctx, "archigraph_find", req, res, collector)
+	s.emitActivity(ctx, "grafel_find", req, res, collector)
 
 	select {
 	case ev := <-ch:
@@ -110,7 +110,7 @@ func TestMarkdownToolIDsReachEvent(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("event node ids = %v, want %v", got, want)
 		}
-		if ev.ToolName != "archigraph_find" {
+		if ev.ToolName != "grafel_find" {
 			t.Fatalf("tool name = %q", ev.ToolName)
 		}
 	default:
@@ -131,12 +131,12 @@ func TestEmitActivityMergesSources(t *testing.T) {
 	recordNodeIDs(ctx, "r::fromCollector")
 
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_inspect"
+	req.Params.Name = "grafel_inspect"
 	req.Params.Arguments = map[string]any{"node_id": "r::fromArgs"}
 
 	res := mcpapi.NewToolResultText(`{"id":"r::fromJSON"}`)
 
-	s.emitActivity(ctx, "archigraph_inspect", req, res, collector)
+	s.emitActivity(ctx, "grafel_inspect", req, res, collector)
 
 	select {
 	case ev := <-ch:

@@ -1,4 +1,4 @@
-// archigraph_literal_parity MCP tool (#4421, epic #4419 P0).
+// grafel_literal_parity MCP tool (#4421, epic #4419 P0).
 //
 // Diffs a SCOPE.Enum / ConstantSet value-set in an ORACLE group against its
 // mirror in a V3-rewrite group, answering the rewrite-parity question for ANY
@@ -61,9 +61,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/literalparity"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/literalparity"
+	"github.com/cajasmota/grafel/internal/types"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -77,7 +77,7 @@ var setAliasCandidates = map[string][]string{
 	"status_strings":   {"STATUS_STRINGS", "STATUSES", "Status", "StatusString", "StatusStrings"},
 }
 
-// handleLiteralParity implements archigraph_literal_parity.
+// handleLiteralParity implements grafel_literal_parity.
 func (s *Server) handleLiteralParity(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	oracleGroup := argString(req, "group_oracle", "")
 	v3Group := argString(req, "group_v3", "")

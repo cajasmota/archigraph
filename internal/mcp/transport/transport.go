@@ -1,9 +1,9 @@
-// Package transport defines the MCP server transport seam for archigraph.
+// Package transport defines the MCP server transport seam for grafel.
 //
-// archigraph's MCP server (internal/mcp.Server) wraps a transport-agnostic
+// grafel's MCP server (internal/mcp.Server) wraps a transport-agnostic
 // mark3labs/mcp-go *MCPServer. Historically there has been exactly one way to
 // drive it for agents — stdio (see ADR-0004): the per-machine daemon is
-// reached through the `archigraph mcp-bridge` stdio process, which proxies to
+// reached through the `grafel mcp-bridge` stdio process, which proxies to
 // the daemon's Unix-socket / named-pipe RPC surface. The OS permissions on
 // that socket are the entire trust boundary; there is no authentication,
 // because every caller is the same local user.
@@ -26,7 +26,7 @@ import "context"
 // their wire (stdio pipes, an HTTP listener, …) and block in Serve until the
 // connection closes or Shutdown is called.
 //
-// The interface is deliberately small: archigraph's mcp.Server already holds
+// The interface is deliberately small: grafel's mcp.Server already holds
 // the *MCPServer and all tool registration. A Transport only decides how bytes
 // reach it.
 type Transport interface {

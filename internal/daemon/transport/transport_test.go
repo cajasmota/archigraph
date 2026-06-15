@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // tempSocketPath returns a Unix-domain socket path under t.TempDir().

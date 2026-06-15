@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // memLimitEnv overrides the Go soft memory limit (GOMEMLIMIT) the daemon
@@ -14,7 +14,7 @@ import (
 // "0" disables the daemon-applied limit entirely (the Go runtime default —
 // effectively unlimited — is left in place, or whatever a real GOMEMLIMIT
 // env already set). Added for #3648.
-const memLimitEnv = "ARCHIGRAPH_DAEMON_MEMLIMIT_MB"
+const memLimitEnv = "GRAFEL_DAEMON_MEMLIMIT_MB"
 
 // memLimitFraction is the fraction of total system RAM used as the default
 // soft limit when the operator has not pinned a value via memLimitEnv. 0.75
@@ -38,7 +38,7 @@ const memLimitFloorMB int64 = 2048
 // Precedence:
 //  1. If the standard GOMEMLIMIT env var is already set, the Go runtime has
 //     already honored it — we do nothing and log that we deferred to it.
-//  2. ARCHIGRAPH_DAEMON_MEMLIMIT_MB (MB; "off"/"0"/negative disables).
+//  2. GRAFEL_DAEMON_MEMLIMIT_MB (MB; "off"/"0"/negative disables).
 //  3. Default: memLimitFraction of total system RAM, floored at
 //     memLimitFloorMB. If total RAM is unknown (0), we fall back to the
 //     floor.

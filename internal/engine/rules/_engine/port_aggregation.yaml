@@ -12,6 +12,6 @@ description: >-
   ports mappings, Spring server.port config, Express/Node app.listen and
   process.env.PORT, and Go :NNNN address string literals.
   Emits SCOPE.Pattern entities with kind=listening_port.
-module: archigraph.engine.rules.pattern_detectors.port_aggregation_extractor
+module: grafel.engine.rules.pattern_detectors.port_aggregation_extractor
 function: detect
 applies_to_function: applies_to

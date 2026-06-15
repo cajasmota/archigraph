@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-var sample = Unit{Group: "demo", Repo: "/tmp/test/core", BinPath: "/usr/local/bin/archigraph"}
+var sample = Unit{Group: "demo", Repo: "/tmp/test/core", BinPath: "/usr/local/bin/grafel"}
 
 func TestLabelStable(t *testing.T) {
-	if got := sample.Label(); got != "com.archigraph.watcher.demo.core" {
+	if got := sample.Label(); got != "com.grafel.watcher.demo.core" {
 		t.Fatalf("label: %q", got)
 	}
 }
@@ -17,8 +17,8 @@ func TestLaunchdPlist(t *testing.T) {
 	body := LaunchdPlist(sample)
 	for _, want := range []string{
 		`<key>Label</key>`,
-		`<string>com.archigraph.watcher.demo.core</string>`,
-		`<string>/usr/local/bin/archigraph</string>`,
+		`<string>com.grafel.watcher.demo.core</string>`,
+		`<string>/usr/local/bin/grafel</string>`,
 		`<string>watch</string>`,
 		`<string>/tmp/test/core</string>`,
 		`<key>RunAtLoad</key><true/>`,
@@ -33,8 +33,8 @@ func TestLaunchdPlist(t *testing.T) {
 func TestSystemdUnit(t *testing.T) {
 	body := SystemdUnit(sample)
 	for _, want := range []string{
-		"Description=archigraph watcher (demo/core)",
-		`ExecStart="/usr/local/bin/archigraph" watch "/tmp/test/core"`,
+		"Description=grafel watcher (demo/core)",
+		`ExecStart="/usr/local/bin/grafel" watch "/tmp/test/core"`,
 		"WorkingDirectory=/tmp/test/core",
 		"Restart=on-failure",
 	} {
@@ -47,7 +47,7 @@ func TestSystemdUnit(t *testing.T) {
 func TestSchtasksXML(t *testing.T) {
 	body := SchtasksXML(sample)
 	for _, want := range []string{
-		"<Command>/usr/local/bin/archigraph</Command>",
+		"<Command>/usr/local/bin/grafel</Command>",
 		`<Arguments>watch "/tmp/test/core"</Arguments>`,
 		"<LogonTrigger>",
 	} {

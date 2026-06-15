@@ -1,6 +1,6 @@
 package cli
 
-// repair_broker.go — broker-backed progress rendering for `archigraph rebuild`.
+// repair_broker.go — broker-backed progress rendering for `grafel rebuild`.
 //
 // When the daemon's embedded dashboard is running, the CLI opens an HTTP SSE
 // connection to /api/index-progress/{group} and renders progress.Event values
@@ -30,7 +30,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/progress"
+	"github.com/cajasmota/grafel/internal/progress"
 )
 
 const (

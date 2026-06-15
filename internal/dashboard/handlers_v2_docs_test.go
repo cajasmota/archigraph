@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // daemonBusinessDocsDir returns (and creates) the post-#1624 group-level
@@ -40,7 +40,7 @@ func buildV2DocsTestServer(t *testing.T) *Server {
 	t.Helper()
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repoPath := t.TempDir()
 	docsDir := filepath.Join(repoPath, "docs")
@@ -152,7 +152,7 @@ func TestHandleV2DocsTree(t *testing.T) {
 // duplicated in the technical per-repo tree. See #1622/#1623.
 func TestHandleV2DocsTreeBusiness(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	repoPath := t.TempDir()
 	docsDir := filepath.Join(repoPath, "docs")
@@ -372,7 +372,7 @@ func TestHandleV2DocsExport_BusinessKindOnly(t *testing.T) {
 
 // TestHandleV2DocsTree_MigratesLegacyInRepoDocs verifies the post-#1624
 // migration: a pre-existing `<repo>/docs/` set produced by the skill is moved
-// into ~/.archigraph/docs/<group>/<repoSlug>/ on first read.
+// into ~/.grafel/docs/<group>/<repoSlug>/ on first read.
 func TestHandleV2DocsTree_MigratesLegacyInRepoDocs(t *testing.T) {
 	srv := buildV2DocsTestServer(t)
 	// buildV2DocsTestServer seeds <repo>/docs/ — invoking the tree handler

@@ -1,6 +1,6 @@
 package mcp
 
-// control_flow_4822_test.go — end-to-end test for the #4822 archigraph_control_flow
+// control_flow_4822_test.go — end-to-end test for the #4822 grafel_control_flow
 // tool (control-flow epic #4820 part b): an on-demand, not-persisted per-function
 // CFG (nodes + edges + conditions + effects) for the flowchart view (#4819).
 // Reuses the same small Python (Django-shaped) and TS (NestJS-shaped) fixtures as

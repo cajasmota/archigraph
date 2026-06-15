@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// #1626: when no isolated ARCHIGRAPH_DAEMON_ROOT is set, the state
-// directory now lives in the EXTERNAL store under ARCHIGRAPH_HOME/store,
+// #1626: when no isolated GRAFEL_DAEMON_ROOT is set, the state
+// directory now lives in the EXTERNAL store under GRAFEL_HOME/store,
 // NOT inside the repo working tree. This is the change that keeps repos
 // clean and breaks the fb-vs-json reindex loop.
 //
@@ -21,7 +21,7 @@ import (
 func TestStateDirForRepo_DefaultStore(t *testing.T) {
 	t.Setenv(EnvRoot, "")
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	got := StateDirForRepo("/some/repo")
 
@@ -47,7 +47,7 @@ func TestStateDirForRepo_DefaultStore(t *testing.T) {
 
 func TestLegacyInRepoStateDir(t *testing.T) {
 	got := LegacyInRepoStateDir("/some/repo")
-	want := filepath.Join("/some/repo", ".archigraph")
+	want := filepath.Join("/some/repo", ".grafel")
 	if got != want {
 		t.Fatalf("legacy dir: got %q want %q", got, want)
 	}
@@ -130,7 +130,7 @@ func TestStateDirForRepo_EmptyInput(t *testing.T) {
 }
 
 // TestStateDirForRepo_TwoDaemonRootsSameRepoIsolated is the regression
-// test for issue #745: two daemons with different ARCHIGRAPH_DAEMON_ROOTs
+// test for issue #745: two daemons with different GRAFEL_DAEMON_ROOTs
 // indexing the same fixture path must resolve to DIFFERENT state
 // directories (so they cannot race) while sharing the SAME hash segment
 // (so the mapping is deterministic per repo).

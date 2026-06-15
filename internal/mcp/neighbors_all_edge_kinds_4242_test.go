@@ -3,7 +3,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // neighbors4242Doc builds the fixture that reproduces the live deploy-10 bug

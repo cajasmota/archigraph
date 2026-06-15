@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/testsupport"
+	"github.com/cajasmota/grafel/internal/testsupport"
 )
 
-// TestMain fail-closes the package: when ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1
+// TestMain fail-closes the package: when GRAFEL_TEST_REQUIRE_ISOLATED_HOME=1
 // it refuses to run if HOME is the real user home (these tests write
 // ~/.claude.json and must never touch the developer's live MCP config).
 func TestMain(m *testing.M) {
@@ -29,7 +29,7 @@ func withHome(t *testing.T) string {
 
 func TestRegisterCreatesEntry(t *testing.T) {
 	withHome(t)
-	path, err := Register(ClaudeCode, "/bin/archigraph", "/r/registry.json")
+	path, err := Register(ClaudeCode, "/bin/grafel", "/r/registry.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestRegisterCreatesEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := doc.McpServers[ServerName]
-	if got.Command != "/bin/archigraph" {
+	if got.Command != "/bin/grafel" {
 		t.Fatalf("command: %q", got.Command)
 	}
 	// New behaviour: args = ["mcp-bridge"], type = "stdio"
@@ -66,7 +66,7 @@ func TestRegisterPreservesOtherEntries(t *testing.T) {
 	if err := os.WriteFile(path, []byte(pre), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Register(ClaudeCode, "/bin/archigraph", "/r.json"); err != nil {
+	if _, err := Register(ClaudeCode, "/bin/grafel", "/r.json"); err != nil {
 		t.Fatal(err)
 	}
 	b, _ := os.ReadFile(path)
@@ -80,7 +80,7 @@ func TestRegisterPreservesOtherEntries(t *testing.T) {
 		t.Fatalf("lost sibling entry: %s", b)
 	}
 	if _, ok := servers[ServerName]; !ok {
-		t.Fatalf("missing archigraph entry: %s", b)
+		t.Fatalf("missing grafel entry: %s", b)
 	}
 }
 
@@ -89,7 +89,7 @@ func TestUnregisterIdempotent(t *testing.T) {
 	if err := Unregister(ClaudeCode); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Register(ClaudeCode, "/bin/archigraph", "/r.json"); err != nil {
+	if _, err := Register(ClaudeCode, "/bin/grafel", "/r.json"); err != nil {
 		t.Fatal(err)
 	}
 	if err := Unregister(ClaudeCode); err != nil {
@@ -128,10 +128,10 @@ func TestRegisterPathIdempotent(t *testing.T) {
 	path := filepath.Join(home, ".claude.json")
 
 	// Register twice — should produce exactly one entry.
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -148,10 +148,10 @@ func TestRegisterPathUpdatesCommand(t *testing.T) {
 	home := withHome(t)
 	path := filepath.Join(home, ".claude.json")
 
-	if _, err := RegisterPath(path, "/old/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/old/grafel"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := RegisterPath(path, "/new/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/new/grafel"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -161,7 +161,7 @@ func TestRegisterPathUpdatesCommand(t *testing.T) {
 	}
 	_ = json.Unmarshal(b, &doc)
 	got := doc.McpServers[ServerName]
-	if got.Command != "/new/archigraph" {
+	if got.Command != "/new/grafel" {
 		t.Fatalf("command not updated: %q", got.Command)
 	}
 }
@@ -211,7 +211,7 @@ func TestUnregisterPath(t *testing.T) {
 	home := withHome(t)
 	path := filepath.Join(home, ".claude.json")
 
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	if err := UnregisterPath(path); err != nil {
@@ -223,7 +223,7 @@ func TestUnregisterPath(t *testing.T) {
 	_ = json.Unmarshal(b, &doc)
 	servers, _ := doc["mcpServers"].(map[string]any)
 	if _, ok := servers[ServerName]; ok {
-		t.Fatalf("archigraph entry still present after Unregister: %s", b)
+		t.Fatalf("grafel entry still present after Unregister: %s", b)
 	}
 }
 
@@ -231,7 +231,7 @@ func TestUnregisterPath(t *testing.T) {
 
 // TestInstallRegistersWindsurfDesktop: fakeHome with the Windsurf desktop
 // parent dir present → DetectWindsurfPaths includes the desktop path and
-// RegisterPath populates the archigraph entry.
+// RegisterPath populates the grafel entry.
 func TestInstallRegistersWindsurfDesktop(t *testing.T) {
 	home := withHome(t)
 
@@ -255,7 +255,7 @@ func TestInstallRegistersWindsurfDesktop(t *testing.T) {
 	}
 
 	// Register and verify the entry is correct.
-	if _, err := RegisterPath(desktopConfig, "/usr/local/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(desktopConfig, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(desktopConfig)
@@ -269,8 +269,8 @@ func TestInstallRegistersWindsurfDesktop(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := doc.McpServers[ServerName]
-	if got.Command != "/usr/local/bin/archigraph" {
-		t.Fatalf("desktop: command = %q, want /usr/local/bin/archigraph", got.Command)
+	if got.Command != "/usr/local/bin/grafel" {
+		t.Fatalf("desktop: command = %q, want /usr/local/bin/grafel", got.Command)
 	}
 	if len(got.Args) != 1 || got.Args[0] != "mcp-bridge" {
 		t.Fatalf("desktop: args = %v, want [mcp-bridge]", got.Args)
@@ -282,7 +282,7 @@ func TestInstallRegistersWindsurfDesktop(t *testing.T) {
 
 // TestInstallRegistersWindsurfJetBrains: fakeHome with the JetBrains plugin
 // parent dir present → DetectWindsurfPaths includes the JetBrains path and
-// RegisterPath populates the archigraph entry.
+// RegisterPath populates the grafel entry.
 func TestInstallRegistersWindsurfJetBrains(t *testing.T) {
 	home := withHome(t)
 
@@ -315,7 +315,7 @@ func TestInstallRegistersWindsurfJetBrains(t *testing.T) {
 	}
 
 	// Register and verify the entry is correct.
-	if _, err := RegisterPath(jbConfig, "/usr/local/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(jbConfig, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(jbConfig)
@@ -329,8 +329,8 @@ func TestInstallRegistersWindsurfJetBrains(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := doc.McpServers[ServerName]
-	if got.Command != "/usr/local/bin/archigraph" {
-		t.Fatalf("jetbrains: command = %q, want /usr/local/bin/archigraph", got.Command)
+	if got.Command != "/usr/local/bin/grafel" {
+		t.Fatalf("jetbrains: command = %q, want /usr/local/bin/grafel", got.Command)
 	}
 }
 
@@ -403,10 +403,10 @@ func TestWindsurfRegistrationUpdatesPath(t *testing.T) {
 	}
 	cfgPath := filepath.Join(desktopDir, "mcp_config.json")
 
-	if _, err := RegisterPath(cfgPath, "/old/archigraph"); err != nil {
+	if _, err := RegisterPath(cfgPath, "/old/grafel"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := RegisterPath(cfgPath, "/new/archigraph"); err != nil {
+	if _, err := RegisterPath(cfgPath, "/new/grafel"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -416,7 +416,7 @@ func TestWindsurfRegistrationUpdatesPath(t *testing.T) {
 	}
 	_ = json.Unmarshal(b, &doc)
 	got := doc.McpServers[ServerName]
-	if got.Command != "/new/archigraph" {
+	if got.Command != "/new/grafel" {
 		t.Fatalf("Windsurf desktop: command not updated on re-register: %q", got.Command)
 	}
 }
@@ -424,7 +424,7 @@ func TestWindsurfRegistrationUpdatesPath(t *testing.T) {
 // ── Cursor tests ──────────────────────────────────────────────────────────────
 
 // TestInstall_RegistersCursor: ~/.cursor/ present → DetectCursorPaths returns
-// the mcp.json path and RegisterPath writes the archigraph entry.
+// the mcp.json path and RegisterPath writes the grafel entry.
 func TestInstall_RegistersCursor(t *testing.T) {
 	home := withHome(t)
 
@@ -443,7 +443,7 @@ func TestInstall_RegistersCursor(t *testing.T) {
 		t.Fatalf("Cursor shape: got %v, want ShapeFlat", targets[0].Shape)
 	}
 
-	if _, err := RegisterPath(wantPath, "/usr/local/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(wantPath, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(wantPath)
@@ -457,8 +457,8 @@ func TestInstall_RegistersCursor(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := doc.McpServers[ServerName]
-	if got.Command != "/usr/local/bin/archigraph" {
-		t.Fatalf("cursor: command = %q, want /usr/local/bin/archigraph", got.Command)
+	if got.Command != "/usr/local/bin/grafel" {
+		t.Fatalf("cursor: command = %q, want /usr/local/bin/grafel", got.Command)
 	}
 	if len(got.Args) != 1 || got.Args[0] != "mcp-bridge" {
 		t.Fatalf("cursor: args = %v, want [mcp-bridge]", got.Args)
@@ -480,7 +480,7 @@ func TestInstall_SkipsAbsentCursor(t *testing.T) {
 // ── Codex tests ───────────────────────────────────────────────────────────────
 
 // TestInstall_RegistersCodex: ~/.codex/ present → DetectCodexPaths returns
-// config.json path and RegisterPath writes the archigraph entry.
+// config.json path and RegisterPath writes the grafel entry.
 func TestInstall_RegistersCodex(t *testing.T) {
 	home := withHome(t)
 
@@ -499,7 +499,7 @@ func TestInstall_RegistersCodex(t *testing.T) {
 		t.Fatalf("Codex shape: got %v, want ShapeFlat", targets[0].Shape)
 	}
 
-	if _, err := RegisterPath(wantPath, "/usr/local/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(wantPath, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(wantPath)
@@ -513,8 +513,8 @@ func TestInstall_RegistersCodex(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := doc.McpServers[ServerName]
-	if got.Command != "/usr/local/bin/archigraph" {
-		t.Fatalf("codex: command = %q, want /usr/local/bin/archigraph", got.Command)
+	if got.Command != "/usr/local/bin/grafel" {
+		t.Fatalf("codex: command = %q, want /usr/local/bin/grafel", got.Command)
 	}
 }
 
@@ -555,7 +555,7 @@ func TestInstall_RegistersContinueDev(t *testing.T) {
 		t.Fatalf("Continue.dev shape: got %v, want ShapeNested", targets[0].Shape)
 	}
 
-	if _, err := RegisterPath(cfgPath, "/usr/local/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(cfgPath, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(cfgPath)
@@ -577,13 +577,13 @@ func TestInstall_RegistersContinueDev(t *testing.T) {
 	if _, ok := servers["other-tool"]; !ok {
 		t.Fatalf("Continue.dev: pre-existing mcpServer 'other-tool' was clobbered: %s", b)
 	}
-	// archigraph entry must be present.
+	// grafel entry must be present.
 	arch, _ := servers[ServerName].(map[string]any)
 	if arch == nil {
-		t.Fatalf("Continue.dev: archigraph entry missing: %s", b)
+		t.Fatalf("Continue.dev: grafel entry missing: %s", b)
 	}
-	if arch["command"] != "/usr/local/bin/archigraph" {
-		t.Fatalf("Continue.dev: command = %v, want /usr/local/bin/archigraph", arch["command"])
+	if arch["command"] != "/usr/local/bin/grafel" {
+		t.Fatalf("Continue.dev: command = %v, want /usr/local/bin/grafel", arch["command"])
 	}
 }
 
@@ -624,7 +624,7 @@ func TestInstall_RegistersZed(t *testing.T) {
 		t.Fatalf("Zed shape: got %v, want ShapeBroadSettings", targets[0].Shape)
 	}
 
-	if _, err := RegisterPath(cfgPath, "/usr/local/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(cfgPath, "/usr/local/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(cfgPath)
@@ -652,13 +652,13 @@ func TestInstall_RegistersZed(t *testing.T) {
 	if _, ok := servers["existing-tool"]; !ok {
 		t.Fatalf("Zed: pre-existing mcpServer 'existing-tool' was clobbered: %s", b)
 	}
-	// archigraph entry must be present.
+	// grafel entry must be present.
 	arch, _ := servers[ServerName].(map[string]any)
 	if arch == nil {
-		t.Fatalf("Zed: archigraph entry missing: %s", b)
+		t.Fatalf("Zed: grafel entry missing: %s", b)
 	}
-	if arch["command"] != "/usr/local/bin/archigraph" {
-		t.Fatalf("Zed: command = %v, want /usr/local/bin/archigraph", arch["command"])
+	if arch["command"] != "/usr/local/bin/grafel" {
+		t.Fatalf("Zed: command = %v, want /usr/local/bin/grafel", arch["command"])
 	}
 }
 
@@ -674,7 +674,7 @@ func TestInstall_SkipsAbsentZed(t *testing.T) {
 // ── #4829: surgical de-register + backup/restore (no shared-config wipe) ──────
 
 // TestRegisterPreservesForeignServer: registering into a config that already
-// holds a FOREIGN server must add archigraph AND leave the foreign server
+// holds a FOREIGN server must add grafel AND leave the foreign server
 // untouched.
 func TestRegisterPreservesForeignServer(t *testing.T) {
 	home := withHome(t)
@@ -687,7 +687,7 @@ func TestRegisterPreservesForeignServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -701,7 +701,7 @@ func TestRegisterPreservesForeignServer(t *testing.T) {
 		t.Fatalf("foreign 'playwright' server was wiped: %s", b)
 	}
 	if _, ok := servers[ServerName]; !ok {
-		t.Fatalf("archigraph entry missing: %s", b)
+		t.Fatalf("grafel entry missing: %s", b)
 	}
 }
 
@@ -719,7 +719,7 @@ func TestRestorePreservesForeignServerOnRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	if err := RestorePath(path); err != nil {
@@ -748,7 +748,7 @@ func TestRestorePreservesForeignServerOnRollback(t *testing.T) {
 	}
 }
 
-// TestRestoreNewFileRemovesOrphan: when archigraph creates a brand-new config
+// TestRestoreNewFileRemovesOrphan: when grafel creates a brand-new config
 // file, rollback must DELETE it — never leave an orphan `{}` /
 // `{"mcpServers":{}}`.
 func TestRestoreNewFileRemovesOrphan(t *testing.T) {
@@ -758,7 +758,7 @@ func TestRestoreNewFileRemovesOrphan(t *testing.T) {
 	if _, err := os.Stat(path); err == nil {
 		t.Fatalf("precondition: file should not exist yet")
 	}
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(path); err != nil {
@@ -774,14 +774,14 @@ func TestRestoreNewFileRemovesOrphan(t *testing.T) {
 	}
 }
 
-// TestUnregisterDropsEmptyMcpServers: unregistering the sole archigraph entry
-// from a file archigraph created leaves neither an orphan `{"mcpServers":{}}`
+// TestUnregisterDropsEmptyMcpServers: unregistering the sole grafel entry
+// from a file grafel created leaves neither an orphan `{"mcpServers":{}}`
 // nor reintroduces foreign keys.
 func TestUnregisterDropsEmptyMcpServers(t *testing.T) {
 	home := withHome(t)
 	path := filepath.Join(home, ".claude.json")
 
-	if _, err := RegisterPath(path, "/bin/archigraph"); err != nil {
+	if _, err := RegisterPath(path, "/bin/grafel"); err != nil {
 		t.Fatal(err)
 	}
 	if err := UnregisterPath(path); err != nil {
@@ -795,12 +795,12 @@ func TestUnregisterDropsEmptyMcpServers(t *testing.T) {
 	}
 }
 
-// TestUnregisterKeepsForeignServers: unregistering archigraph from a file with
+// TestUnregisterKeepsForeignServers: unregistering grafel from a file with
 // a foreign sibling server keeps mcpServers and the sibling intact.
 func TestUnregisterKeepsForeignServers(t *testing.T) {
 	home := withHome(t)
 	path := filepath.Join(home, ".claude.json")
-	pre := `{"mcpServers":{"playwright":{"command":"/bin/pw"},"archigraph":{"command":"/old"}}}`
+	pre := `{"mcpServers":{"playwright":{"command":"/bin/pw"},"grafel":{"command":"/old"}}}`
 	if err := os.WriteFile(path, []byte(pre), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -815,7 +815,7 @@ func TestUnregisterKeepsForeignServers(t *testing.T) {
 		t.Fatalf("foreign server lost on unregister: %s", b)
 	}
 	if _, ok := servers[ServerName]; ok {
-		t.Fatalf("archigraph entry still present: %s", b)
+		t.Fatalf("grafel entry still present: %s", b)
 	}
 }
 
@@ -850,11 +850,11 @@ func TestDetectWindsurfPaths_BothCodeiumTargets(t *testing.T) {
 }
 
 // TestRestoreFallsBackToSurgicalWhenNoBackup: if no sidecar backup exists,
-// RestorePath must still remove only archigraph (never wipe foreign servers).
+// RestorePath must still remove only grafel (never wipe foreign servers).
 func TestRestoreFallsBackToSurgicalWhenNoBackup(t *testing.T) {
 	home := withHome(t)
 	path := filepath.Join(home, ".claude.json")
-	pre := `{"mcpServers":{"playwright":{"command":"/bin/pw"},"archigraph":{"command":"/old"}}}`
+	pre := `{"mcpServers":{"playwright":{"command":"/bin/pw"},"grafel":{"command":"/old"}}}`
 	if err := os.WriteFile(path, []byte(pre), 0o644); err != nil {
 		t.Fatal(err)
 	}

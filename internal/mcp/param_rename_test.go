@@ -3,12 +3,12 @@ package mcp
 // Tests for #1790: param-name standardization (query/entity_id) with compat aliases.
 //
 // Six cases:
-//   (a) new name "query"     works for archigraph_find
-//   (b) old name "question"  works for archigraph_find + deprecation log fires
-//   (c) new name "entity_id" works for archigraph_get_source
-//   (d) old name "node_id"   works for archigraph_get_source + deprecation log fires
-//   (e) new name "entity_id" works for archigraph_inspect
-//   (f) old name "label_or_id" works for archigraph_inspect + deprecation log fires
+//   (a) new name "query"     works for grafel_find
+//   (b) old name "question"  works for grafel_find + deprecation log fires
+//   (c) new name "entity_id" works for grafel_get_source
+//   (d) old name "node_id"   works for grafel_get_source + deprecation log fires
+//   (e) new name "entity_id" works for grafel_inspect
+//   (f) old name "label_or_id" works for grafel_inspect + deprecation log fires
 
 import (
 	"bytes"
@@ -50,13 +50,13 @@ func newSmokeSrv(t *testing.T) *Server {
 	return srv
 }
 
-// (a) new name "query" works for archigraph_find — no deprecation warning.
+// (a) new name "query" works for grafel_find — no deprecation warning.
 func TestFindNewParamQuery(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var sawHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_find", map[string]any{
+		r := callTool(t, srv, "grafel_find", map[string]any{
 			"query": "rareUniqueWidget",
 			"group": "g",
 		})
@@ -73,18 +73,18 @@ func TestFindNewParamQuery(t *testing.T) {
 	if sawHardError {
 		t.Error("new param 'query' should be accepted, got missing-arg error")
 	}
-	if strings.Contains(stderr, "[archigraph deprecation]") {
+	if strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("new param 'query' should NOT emit a deprecation warning, got stderr: %s", stderr)
 	}
 }
 
-// (b) old name "question" works for archigraph_find AND deprecation log fires.
+// (b) old name "question" works for grafel_find AND deprecation log fires.
 func TestFindOldParamQuestion_DeprecationFires(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_find", map[string]any{
+		r := callTool(t, srv, "grafel_find", map[string]any{
 			"question": "rareUniqueWidget",
 			"group":    "g",
 		})
@@ -99,21 +99,21 @@ func TestFindOldParamQuestion_DeprecationFires(t *testing.T) {
 	if resultIsHardError {
 		t.Error("legacy param 'question' should still work (compat alias), got missing-arg error")
 	}
-	if !strings.Contains(stderr, "[archigraph deprecation]") {
+	if !strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("expected deprecation warning on stderr for legacy param 'question', got: %q", stderr)
 	}
-	if !strings.Contains(stderr, "archigraph_find") {
+	if !strings.Contains(stderr, "grafel_find") {
 		t.Errorf("deprecation message should name the tool, got: %q", stderr)
 	}
 }
 
-// (c) new name "entity_id" works for archigraph_get_source — no deprecation warning.
+// (c) new name "entity_id" works for grafel_get_source — no deprecation warning.
 func TestGetSourceNewParamEntityID(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_get_source", map[string]any{
+		r := callTool(t, srv, "grafel_get_source", map[string]any{
 			"entity_id": "DashboardScreen",
 			"group":     "g",
 		})
@@ -128,18 +128,18 @@ func TestGetSourceNewParamEntityID(t *testing.T) {
 	if resultIsHardError {
 		t.Error("new param 'entity_id' should be accepted, got missing-arg error")
 	}
-	if strings.Contains(stderr, "[archigraph deprecation]") {
+	if strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("new param 'entity_id' should NOT emit a deprecation warning, got stderr: %s", stderr)
 	}
 }
 
-// (d) old name "node_id" works for archigraph_get_source AND deprecation log fires.
+// (d) old name "node_id" works for grafel_get_source AND deprecation log fires.
 func TestGetSourceOldParamNodeID_DeprecationFires(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_get_source", map[string]any{
+		r := callTool(t, srv, "grafel_get_source", map[string]any{
 			"node_id": "DashboardScreen",
 			"group":   "g",
 		})
@@ -154,21 +154,21 @@ func TestGetSourceOldParamNodeID_DeprecationFires(t *testing.T) {
 	if resultIsHardError {
 		t.Error("legacy param 'node_id' should still work (compat alias), got missing-arg error")
 	}
-	if !strings.Contains(stderr, "[archigraph deprecation]") {
+	if !strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("expected deprecation warning on stderr for legacy param 'node_id', got: %q", stderr)
 	}
-	if !strings.Contains(stderr, "archigraph_get_source") {
+	if !strings.Contains(stderr, "grafel_get_source") {
 		t.Errorf("deprecation message should name the tool, got: %q", stderr)
 	}
 }
 
-// (e) new name "entity_id" works for archigraph_inspect — no deprecation warning.
+// (e) new name "entity_id" works for grafel_inspect — no deprecation warning.
 func TestInspectNewParamEntityID(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_inspect", map[string]any{
+		r := callTool(t, srv, "grafel_inspect", map[string]any{
 			"entity_id": "DashboardScreen",
 			"group":     "g",
 		})
@@ -183,18 +183,18 @@ func TestInspectNewParamEntityID(t *testing.T) {
 	if resultIsHardError {
 		t.Error("new param 'entity_id' should be accepted, got missing-arg error")
 	}
-	if strings.Contains(stderr, "[archigraph deprecation]") {
+	if strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("new param 'entity_id' should NOT emit a deprecation warning, got stderr: %s", stderr)
 	}
 }
 
-// (g) new name "entity_id" works for archigraph_expand — no deprecation warning (#1916).
+// (g) new name "entity_id" works for grafel_expand — no deprecation warning (#1916).
 func TestExpandNewParamEntityID(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_expand", map[string]any{
+		r := callTool(t, srv, "grafel_expand", map[string]any{
 			"entity_id": "DashboardScreen",
 			"group":     "g",
 		})
@@ -207,20 +207,20 @@ func TestExpandNewParamEntityID(t *testing.T) {
 	})
 
 	if resultIsHardError {
-		t.Error("new param 'entity_id' should be accepted by archigraph_expand, got missing-arg error")
+		t.Error("new param 'entity_id' should be accepted by grafel_expand, got missing-arg error")
 	}
-	if strings.Contains(stderr, "[archigraph deprecation]") {
+	if strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("new param 'entity_id' should NOT emit a deprecation warning, got stderr: %s", stderr)
 	}
 }
 
-// (h) old name "node" works for archigraph_expand AND deprecation log fires (#1916).
+// (h) old name "node" works for grafel_expand AND deprecation log fires (#1916).
 func TestExpandOldParamNode_DeprecationFires(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_expand", map[string]any{
+		r := callTool(t, srv, "grafel_expand", map[string]any{
 			"node":  "DashboardScreen",
 			"group": "g",
 		})
@@ -235,21 +235,21 @@ func TestExpandOldParamNode_DeprecationFires(t *testing.T) {
 	if resultIsHardError {
 		t.Error("legacy param 'node' should still work (compat alias), got missing-arg error")
 	}
-	if !strings.Contains(stderr, "[archigraph deprecation]") {
+	if !strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("expected deprecation warning on stderr for legacy param 'node', got: %q", stderr)
 	}
-	if !strings.Contains(stderr, "archigraph_expand") {
+	if !strings.Contains(stderr, "grafel_expand") {
 		t.Errorf("deprecation message should name the tool, got: %q", stderr)
 	}
 }
 
-// (f) old name "label_or_id" works for archigraph_inspect AND deprecation log fires.
+// (f) old name "label_or_id" works for grafel_inspect AND deprecation log fires.
 func TestInspectOldParamLabelOrID_DeprecationFires(t *testing.T) {
 	srv := newSmokeSrv(t)
 
 	var resultIsHardError bool
 	stderr := captureStderr(func() {
-		r := callTool(t, srv, "archigraph_inspect", map[string]any{
+		r := callTool(t, srv, "grafel_inspect", map[string]any{
 			"label_or_id": "DashboardScreen",
 			"group":       "g",
 		})
@@ -264,10 +264,10 @@ func TestInspectOldParamLabelOrID_DeprecationFires(t *testing.T) {
 	if resultIsHardError {
 		t.Error("legacy param 'label_or_id' should still work (compat alias), got missing-arg error")
 	}
-	if !strings.Contains(stderr, "[archigraph deprecation]") {
+	if !strings.Contains(stderr, "[grafel deprecation]") {
 		t.Errorf("expected deprecation warning on stderr for legacy param 'label_or_id', got: %q", stderr)
 	}
-	if !strings.Contains(stderr, "archigraph_inspect") {
+	if !strings.Contains(stderr, "grafel_inspect") {
 		t.Errorf("deprecation message should name the tool, got: %q", stderr)
 	}
 }

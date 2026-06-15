@@ -3,7 +3,7 @@ package ruby
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4398 — RSpec TESTS→subject affinity edge + Minitest test-suite collapse

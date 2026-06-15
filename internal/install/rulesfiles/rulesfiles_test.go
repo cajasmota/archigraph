@@ -35,14 +35,14 @@ func TestWriteAll_FreshRepo(t *testing.T) {
 		if !bytes.Contains(data, []byte(EndMarker)) {
 			t.Errorf("%s: end marker not found", target)
 		}
-		if !bytes.Contains(data, []byte("archigraph MCP")) {
+		if !bytes.Contains(data, []byte("grafel MCP")) {
 			t.Errorf("%s: block payload not found", target)
 		}
 		if !bytes.Contains(data, []byte("**demo**")) {
 			t.Errorf("%s: group name not embedded", target)
 		}
 		// The imperative STANDING DIRECTIVE (#3648) must be present in
-		// every target so agents keep using archigraph for the whole
+		// every target so agents keep using grafel for the whole
 		// session instead of drifting back to grep. Assert the key phrases
 		// so this guard can't silently rot if the block is reworded.
 		if !bytes.Contains(data, []byte("STANDING DIRECTIVE")) {
@@ -54,8 +54,8 @@ func TestWriteAll_FreshRepo(t *testing.T) {
 		if !bytes.Contains(data, []byte("not** `grep`")) {
 			t.Errorf("%s: directive does not push back against grep", target)
 		}
-		if !bytes.Contains(data, []byte("archigraph_find")) {
-			t.Errorf("%s: directive does not name archigraph_find", target)
+		if !bytes.Contains(data, []byte("grafel_find")) {
+			t.Errorf("%s: directive does not name grafel_find", target)
 		}
 		if !bytes.Contains(data, []byte("WHOLE session")) {
 			t.Errorf("%s: directive does not assert whole-session scope", target)
@@ -91,7 +91,7 @@ func TestWriteAll_Idempotent(t *testing.T) {
 // older version marker is replaced in-place.
 func TestWriteAll_ReplacesOlderVersionBlock(t *testing.T) {
 	repo := t.TempDir()
-	oldBlock := "<!-- archigraph:mcp-usage:start v=0 -->\nstale\n<!-- archigraph:mcp-usage:end -->\n"
+	oldBlock := "<!-- grafel:mcp-usage:start v=0 -->\nstale\n<!-- grafel:mcp-usage:end -->\n"
 	if err := os.WriteFile(filepath.Join(repo, ".windsurfrules"), []byte(oldBlock), 0o644); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
@@ -113,7 +113,7 @@ func TestWriteAll_ReplacesOlderVersionBlock(t *testing.T) {
 }
 
 // TestWriteAll_PreservesUnrelatedContent ensures that pre-existing
-// content with no archigraph block and no predecessor refs is preserved
+// content with no grafel block and no predecessor refs is preserved
 // and the block is appended.
 func TestWriteAll_PreservesUnrelatedContent(t *testing.T) {
 	repo := t.TempDir()
@@ -207,7 +207,7 @@ func TestScan_StatusesAcrossFileShapes(t *testing.T) {
 	}
 
 	// CLAUDE.md → OUTDATED (older version).
-	old := "<!-- archigraph:mcp-usage:start v=0 -->\nbody\n<!-- archigraph:mcp-usage:end -->\n"
+	old := "<!-- grafel:mcp-usage:start v=0 -->\nbody\n<!-- grafel:mcp-usage:end -->\n"
 	if err := os.WriteFile(filepath.Join(repo, "CLAUDE.md"), []byte(old), 0o644); err != nil {
 		t.Fatalf("seed CLAUDE.md: %v", err)
 	}

@@ -26,8 +26,8 @@ package kotlin
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitEnumValueSet builds the value-carrying SCOPE.Enum node for a Kotlin

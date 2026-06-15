@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------

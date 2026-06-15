@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/sql"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/sql"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #141: SQL schema CONTAINS / REFERENCES edges previously emitted bare

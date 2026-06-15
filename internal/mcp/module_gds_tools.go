@@ -8,8 +8,8 @@
 //
 // Outputs mirror the entity-level surfaces:
 //
-//   - cycles      ↔ archigraph_quality_cycles (entity-level IMPORTS SCC)
-//   - centrality  ↔ inline PageRank/centrality in archigraph_stats
+//   - cycles      ↔ grafel_quality_cycles (entity-level IMPORTS SCC)
+//   - centrality  ↔ inline PageRank/centrality in grafel_stats
 //   - all         returns both in one envelope (default; useful for the
 //     dashboard / docgen consumer).
 package mcp
@@ -18,7 +18,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -289,7 +289,7 @@ func (s *Server) handleModuleCycles(_ context.Context, req mcpapi.CallToolReques
 	}), nil
 }
 
-// handleModuleCentrality is the MCP handler for archigraph_module_centrality.
+// handleModuleCentrality is the MCP handler for grafel_module_centrality.
 // Returns top-N modules by PageRank and top-N by betweenness, per repo.
 func (s *Server) handleModuleCentrality(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)

@@ -6,7 +6,7 @@ package rust_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestTauri_IPCCommand(t *testing.T) {

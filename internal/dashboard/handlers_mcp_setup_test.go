@@ -54,8 +54,8 @@ func TestDetectState_NoEntry(t *testing.T) {
 func TestDetectState_ValidEntry(t *testing.T) {
 	cfg := map[string]any{
 		"mcpServers": map[string]any{
-			"archigraph": map[string]any{
-				"command": "archigraph",
+			"grafel": map[string]any{
+				"command": "grafel",
 				"args":    []any{"mcp"},
 			},
 		},
@@ -72,7 +72,7 @@ func TestDetectState_ValidEntry(t *testing.T) {
 func TestDetectState_WrongCommand(t *testing.T) {
 	cfg := map[string]any{
 		"mcpServers": map[string]any{
-			"archigraph": map[string]any{
+			"grafel": map[string]any{
 				"command": "wrong",
 				"args":    []any{"mcp"},
 			},
@@ -87,8 +87,8 @@ func TestDetectState_WrongCommand(t *testing.T) {
 func TestDetectState_MissingMCPArg(t *testing.T) {
 	cfg := map[string]any{
 		"mcpServers": map[string]any{
-			"archigraph": map[string]any{
-				"command": "archigraph",
+			"grafel": map[string]any{
+				"command": "grafel",
 				"args":    []any{"serve"},
 			},
 		},
@@ -107,7 +107,7 @@ func TestWriteReadRoundTrip(t *testing.T) {
 
 	in := map[string]any{
 		"mcpServers": map[string]any{
-			"archigraph": map[string]any{"command": "archigraph", "args": []any{"mcp"}},
+			"grafel": map[string]any{"command": "grafel", "args": []any{"mcp"}},
 		},
 	}
 	if err := writeMCPConfig(path, in); err != nil {
@@ -132,7 +132,7 @@ func TestWriteCreatesBackup(t *testing.T) {
 	if err := writeMCPConfig(path, original); err != nil {
 		t.Fatal(err)
 	}
-	updated := map[string]any{"mcpServers": map[string]any{"archigraph": "x"}}
+	updated := map[string]any{"mcpServers": map[string]any{"grafel": "x"}}
 	if err := writeMCPConfig(path, updated); err != nil {
 		t.Fatal(err)
 	}
@@ -160,8 +160,8 @@ func TestHandleMCPSetupHosts(t *testing.T) {
 	if len(reply.Hosts) != 3 {
 		t.Errorf("expected 3 hosts, got %d", len(reply.Hosts))
 	}
-	if reply.ServerArg != "archigraph" {
-		t.Errorf("expected server_arg=archigraph, got %q", reply.ServerArg)
+	if reply.ServerArg != "grafel" {
+		t.Errorf("expected server_arg=grafel, got %q", reply.ServerArg)
 	}
 }
 
@@ -206,11 +206,11 @@ func TestMCPServersMapClaudeShape(t *testing.T) {
 		"mcpServers": map[string]any{"x": 1},
 	}
 	m, commit := mcpServersMap(cfg)
-	m["archigraph"] = "new"
+	m["grafel"] = "new"
 	commit()
 	servers := cfg["mcpServers"].(map[string]any)
-	if _, ok := servers["archigraph"]; !ok {
-		t.Error("archigraph key not committed to mcpServers")
+	if _, ok := servers["grafel"]; !ok {
+		t.Error("grafel key not committed to mcpServers")
 	}
 }
 
@@ -221,26 +221,26 @@ func TestMCPServersMapCursorShape(t *testing.T) {
 		},
 	}
 	m, commit := mcpServersMap(cfg)
-	m["archigraph"] = "new"
+	m["grafel"] = "new"
 	commit()
 	mcp := cfg["mcp"].(map[string]any)
 	servers := mcp["servers"].(map[string]any)
-	if _, ok := servers["archigraph"]; !ok {
-		t.Error("archigraph key not committed to mcp.servers")
+	if _, ok := servers["grafel"]; !ok {
+		t.Error("grafel key not committed to mcp.servers")
 	}
 }
 
 func TestMCPServersMapEmpty(t *testing.T) {
 	cfg := map[string]any{}
 	m, commit := mcpServersMap(cfg)
-	m["archigraph"] = "new"
+	m["grafel"] = "new"
 	commit()
 	servers, ok := cfg["mcpServers"]
 	if !ok {
 		t.Fatal("mcpServers not created")
 	}
 	sm := servers.(map[string]any)
-	if _, ok := sm["archigraph"]; !ok {
-		t.Error("archigraph not present after commit")
+	if _, ok := sm["grafel"]; !ok {
+		t.Error("grafel not present after commit")
 	}
 }

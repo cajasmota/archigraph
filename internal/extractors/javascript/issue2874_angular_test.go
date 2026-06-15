@@ -20,8 +20,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractAngularFixture(t *testing.T) []types.EntityRecord {

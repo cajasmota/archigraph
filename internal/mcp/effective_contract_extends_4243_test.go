@@ -2,7 +2,7 @@ package mcp
 
 // effective_contract_extends_4243_test.go — regression coverage for #4243.
 //
-// THE BUG (verified live on upvate-core): archigraph_effective_contract is
+// THE BUG (verified live on upvate-core): grafel_effective_contract is
 // normally called with an entity_id. When that entity_id resolved to a DRF
 // ViewSet that the Python extractor emits as Kind="View" with an EMPTY subtype
 // (so isClassEntity is false for it), resolveEffectiveContractTarget matched
@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // drfViewKindViewSetDoc mirrors the live upvate-core shape: a JurisdictionViewSet

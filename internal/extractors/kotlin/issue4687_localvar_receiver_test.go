@@ -16,7 +16,7 @@
 // anonymous-lambda owner (gap 3) were RED.
 //
 // These tests drive the REAL extraction + resolver passes (the same sequence
-// cmd/archigraph/index.go runs) on a faithful multi-package project that
+// cmd/grafel/index.go runs) on a faithful multi-package project that
 // reproduces a cross-file SUT call WITH a same-named method collision in two
 // packages — so a globally-unique name cannot false-pass through the bare-name
 // fallback.

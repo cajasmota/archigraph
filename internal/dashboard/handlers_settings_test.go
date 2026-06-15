@@ -10,13 +10,13 @@ import (
 	"testing"
 )
 
-// setupSettingsServer returns a test server with a temp ~/.archigraph directory.
+// setupSettingsServer returns a test server with a temp ~/.grafel directory.
 func setupSettingsServer(t *testing.T) (*Server, func()) {
 	t.Helper()
 	tmp := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmp)
+	t.Setenv("GRAFEL_HOME", tmp)
 	srv, _ := NewServer(DefaultConfig(), newFakeStore())
-	cleanup := func() { os.Unsetenv("ARCHIGRAPH_HOME") }
+	cleanup := func() { os.Unsetenv("GRAFEL_HOME") }
 	return srv, cleanup
 }
 
@@ -146,7 +146,7 @@ func TestHandlePutSettings_persistsAcrossLoad(t *testing.T) {
 	srv.handlePutSettings(httptest.NewRecorder(), req)
 
 	// Verify the file was actually written.
-	tmp := os.Getenv("ARCHIGRAPH_HOME")
+	tmp := os.Getenv("GRAFEL_HOME")
 	p := filepath.Join(tmp, "settings.json")
 	b, err := os.ReadFile(p)
 	if err != nil {

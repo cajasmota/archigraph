@@ -134,10 +134,10 @@ func TestPruneStaleGenerations_NoPruneWhenFewSlots(t *testing.T) {
 	}
 }
 
-// TestKeepGenerations_EnvOverride verifies that ARCHIGRAPH_STORE_KEEP_GENERATIONS
+// TestKeepGenerations_EnvOverride verifies that GRAFEL_STORE_KEEP_GENERATIONS
 // overrides the default.
 func TestKeepGenerations_EnvOverride(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_STORE_KEEP_GENERATIONS", "5")
+	t.Setenv("GRAFEL_STORE_KEEP_GENERATIONS", "5")
 	if got := KeepGenerations(); got != 5 {
 		t.Fatalf("expected 5, got %d", got)
 	}
@@ -145,7 +145,7 @@ func TestKeepGenerations_EnvOverride(t *testing.T) {
 
 // TestKeepGenerations_Default verifies the default value when no env var is set.
 func TestKeepGenerations_Default(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_STORE_KEEP_GENERATIONS", "")
+	t.Setenv("GRAFEL_STORE_KEEP_GENERATIONS", "")
 	if got := KeepGenerations(); got != defaultKeepGenerations {
 		t.Fatalf("expected %d (defaultKeepGenerations), got %d", defaultKeepGenerations, got)
 	}

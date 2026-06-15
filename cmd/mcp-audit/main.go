@@ -32,8 +32,8 @@ import (
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 	mcpsrv "github.com/mark3labs/mcp-go/server"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/mcp"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // defaultCeiling is the maximum allowed handshake token count.
@@ -236,7 +236,7 @@ const initEnvelopeBytes = 1519
 
 // printHuman writes a human-readable table to stdout.
 func printHuman(r AuditReport) {
-	fmt.Printf("archigraph mcp-audit  version=%s  date=%s\n\n", r.Version, r.GeneratedAt)
+	fmt.Printf("grafel mcp-audit  version=%s  date=%s\n\n", r.Version, r.GeneratedAt)
 	fmt.Printf("tools: %d    handshake: %d tokens    ceiling: %d\n",
 		r.ToolCount, r.HandshakeTokens, r.Ceiling)
 

@@ -23,7 +23,7 @@ import (
 // fast path used by first-paint endpoints: on a cold cache it must return
 // (nil,false) right away rather than triggering a synchronous load.
 func TestGetGroupCached_ColdReturnsImmediately(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir()) // empty registry → load would fail fast
+	t.Setenv("GRAFEL_HOME", t.TempDir()) // empty registry → load would fail fast
 
 	c := NewGraphCache(60 * time.Second)
 

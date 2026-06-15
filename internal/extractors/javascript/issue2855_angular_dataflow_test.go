@@ -10,7 +10,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestIssue2855_AngularDataFlow(t *testing.T) {

@@ -2,9 +2,9 @@ package javascript_test
 
 // TestClassArrow_Measurement — corpus measurement for issue #771.
 // Counts SCOPE.Operation entities emitted from class-field arrow methods
-// across private fixtures. Only runs when ARCHIGRAPH_771_MEASURE=1.
+// across private fixtures. Only runs when GRAFEL_771_MEASURE=1.
 //
-//	ARCHIGRAPH_771_MEASURE=1 go test ./internal/extractors/javascript/... -run TestClassArrow_Measurement -v
+//	GRAFEL_771_MEASURE=1 go test ./internal/extractors/javascript/... -run TestClassArrow_Measurement -v
 
 import (
 	"context"
@@ -18,16 +18,16 @@ import (
 	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
 )
 
 // findClientFixture searches for a client fixture directory.
-// Checks environment variable ARCHIGRAPH_FIXTURES first, then common developer paths.
+// Checks environment variable GRAFEL_FIXTURES first, then common developer paths.
 // Returns "" if not found.
 func findClientFixture(fixtureName string) string {
 	// Check environment variable first.
-	if env := os.Getenv("ARCHIGRAPH_FIXTURES"); env != "" {
+	if env := os.Getenv("GRAFEL_FIXTURES"); env != "" {
 		path := filepath.Join(env, fixtureName)
 		if _, err := os.Stat(path); err == nil {
 			return path
@@ -37,9 +37,9 @@ func findClientFixture(fixtureName string) string {
 	// Check common developer paths.
 	home, _ := os.UserHomeDir()
 	candidates := []string{
-		filepath.Join(home, "private/archigraph-fixtures", fixtureName),
-		filepath.Join(home, "Documents/Projects/archigraph-fixtures", fixtureName),
-		"/tmp/archigraph-fixtures/" + fixtureName,
+		filepath.Join(home, "private/grafel-fixtures", fixtureName),
+		filepath.Join(home, "Documents/Projects/grafel-fixtures", fixtureName),
+		"/tmp/grafel-fixtures/" + fixtureName,
 	}
 
 	for _, path := range candidates {
@@ -52,8 +52,8 @@ func findClientFixture(fixtureName string) string {
 }
 
 func TestClassArrow_Measurement(t *testing.T) {
-	if os.Getenv("ARCHIGRAPH_771_MEASURE") != "1" {
-		t.Skip("set ARCHIGRAPH_771_MEASURE=1 to run #771 corpus measurement")
+	if os.Getenv("GRAFEL_771_MEASURE") != "1" {
+		t.Skip("set GRAFEL_771_MEASURE=1 to run #771 corpus measurement")
 	}
 	cases := []struct {
 		fixture string

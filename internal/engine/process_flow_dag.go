@@ -30,7 +30,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ChainStep is one node in a process-flow DAG. Linear chains have

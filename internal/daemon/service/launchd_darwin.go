@@ -14,12 +14,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 const (
 	// launchLabel is the launchd service label / plist basename.
-	launchLabel = "com.archigraph.daemon"
+	launchLabel = "com.grafel.daemon"
 )
 
 // plistTemplate is the LaunchAgent property list. The daemon runs as
@@ -67,7 +67,7 @@ type plistVars struct {
 	Home    string
 }
 
-// plistPath returns ~/Library/LaunchAgents/com.archigraph.daemon.plist.
+// plistPath returns ~/Library/LaunchAgents/com.grafel.daemon.plist.
 func plistPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -238,7 +238,7 @@ func status(opts Options) (StatusInfo, error) {
 	}
 	info.Installed = true
 
-	// launchctl list com.archigraph.daemon prints a tab-separated line:
+	// launchctl list com.grafel.daemon prints a tab-separated line:
 	// <pid | -> <last-exit-status> <label>
 	out, err := exec.Command("launchctl", "list", launchLabel).Output()
 	if err != nil {

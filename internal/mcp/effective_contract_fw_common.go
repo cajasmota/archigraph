@@ -38,9 +38,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/authposture"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/authposture"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // frameworkHandlerEntity resolves the handler method backing an endpoint

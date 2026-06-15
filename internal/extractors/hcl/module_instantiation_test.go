@@ -3,8 +3,8 @@ package hcl_test
 import (
 	"testing"
 
-	hcl "github.com/cajasmota/archigraph/internal/extractors/hcl"
-	"github.com/cajasmota/archigraph/internal/types"
+	hcl "github.com/cajasmota/grafel/internal/extractors/hcl"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findModuleInstance returns the module entity with the given label, or nil.

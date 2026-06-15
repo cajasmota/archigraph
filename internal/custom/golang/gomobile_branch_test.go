@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/golang"
+	_ "github.com/cajasmota/grafel/internal/custom/golang"
 )
 
 // Tests for the gomobile Data Flow.branch_conditions surface (#3255): platform

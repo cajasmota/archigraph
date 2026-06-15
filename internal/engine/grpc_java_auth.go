@@ -40,7 +40,7 @@
 // adds or removes entities.
 //
 // Output keys mirror the HTTP Java auth stamping (java_annotation_routes.go) so
-// archigraph_auth_coverage signal-1 + the security dashboard light up:
+// grafel_auth_coverage signal-1 + the security dashboard light up:
 //
 //	auth_required   — "true"
 //	auth_method     — "grpc_interceptor" (path 1) | "annotation" (path 2)

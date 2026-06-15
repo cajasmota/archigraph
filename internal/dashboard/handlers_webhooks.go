@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/notifications"
+	"github.com/cajasmota/grafel/internal/notifications"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ func (s *Server) handleTestWebhookByID(w http.ResponseWriter, r *http.Request) {
 			Group:       "test",
 			HealthScore: 100,
 		},
-		Details: map[string]any{"message": "archigraph test ping"},
+		Details: map[string]any{"message": "grafel test ping"},
 	}
 
 	var deliveryErr error
@@ -265,7 +265,7 @@ func (s *Server) handleTestWebhookAdhoc(w http.ResponseWriter, r *http.Request) 
 			Group:       "test",
 			HealthScore: 100,
 		},
-		Details: map[string]any{"message": "archigraph test ping"},
+		Details: map[string]any{"message": "grafel test ping"},
 	}
 
 	statusCode, deliveryErr := s.webhookDispatcher.PostOnceForTest(cfg, pingPayload)

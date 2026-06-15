@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // writeTree creates a tiny go source tree the subprocess can extract

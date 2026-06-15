@@ -12,7 +12,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestIssue2856_AngularNavigation(t *testing.T) {

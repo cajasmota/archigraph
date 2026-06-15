@@ -2,9 +2,9 @@ package cli
 
 // rebuild_summary.go — client-side post-rebuild summary computation and rendering.
 //
-// After `archigraph rebuild` completes the daemon has written a fresh graph.fb
+// After `grafel rebuild` completes the daemon has written a fresh graph.fb
 // (and optional graph.json) plus enrichment-candidates.json into each repo's
-// .archigraph/ directory and a <group>-links.json under ~/.archigraph/groups/.
+// .grafel/ directory and a <group>-links.json under ~/.grafel/groups/.
 // This file reads those artefacts to build the rich summary table requested in
 // issue #989, without requiring any daemon protocol changes.
 
@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // RebuildSummary is the aggregated post-rebuild statistics across all repos
@@ -270,7 +270,7 @@ func loadCandidateCounts(stateDir string) (enrichSubjects, enrichActions int, en
 // loadCrossRepoEdgeCount reads the group-links.json and returns the number of
 // confirmed cross-repo edges. Returns 0 on any error.
 func loadCrossRepoEdgeCount(group string) int {
-	// Locate via daemon layout so ARCHIGRAPH_DAEMON_ROOT test overrides are
+	// Locate via daemon layout so GRAFEL_DAEMON_ROOT test overrides are
 	// respected.
 	layout, err := daemon.DefaultLayout()
 	if err != nil {

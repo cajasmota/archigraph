@@ -3,9 +3,9 @@ package ruby_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/ruby"
+	_ "github.com/cajasmota/grafel/internal/custom/ruby"
 )
 
 // findEntity locates a record by kind+name so ActiveJob queue/job_class

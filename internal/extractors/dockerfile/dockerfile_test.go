@@ -8,9 +8,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsdockerfile "github.com/smacker/go-tree-sitter/dockerfile"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/dockerfile"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/dockerfile"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func parseForTest(t *testing.T, src string) *sitter.Tree {

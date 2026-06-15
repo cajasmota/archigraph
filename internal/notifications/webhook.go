@@ -67,14 +67,14 @@ type WebhookConfig struct {
 	// URL is the webhook endpoint. Must be https in production.
 	URL string `json:"url"`
 	// Secret, when non-empty, is used to sign the request body with HMAC-SHA256.
-	// The signature is sent as X-Archigraph-Signature: sha256=<hex>.
+	// The signature is sent as X-Grafel-Signature: sha256=<hex>.
 	Secret string `json:"secret,omitempty"`
 	// Flavor determines the JSON shape. Defaults to FlavorGeneric when empty.
 	Flavor WebhookFlavor `json:"flavor,omitempty"`
 	// Events is the set of events that trigger this webhook. An empty slice
 	// means "fire on every event".
 	Events []EventType `json:"events,omitempty"`
-	// Group, when set, limits delivery to a specific archigraph group.
+	// Group, when set, limits delivery to a specific grafel group.
 	// Empty means "all groups".
 	Group string `json:"group,omitempty"`
 	// Mute defines a daily quiet window. Nil means always deliver.
@@ -277,10 +277,10 @@ func (d *Dispatcher) postOnce(cfg WebhookConfig, body []byte) (int, error) {
 		return 0, fmt.Errorf("build request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "archigraph-webhook/1.0")
+	req.Header.Set("User-Agent", "grafel-webhook/1.0")
 	if cfg.Secret != "" {
 		sig := signPayload(body, cfg.Secret)
-		req.Header.Set("X-Archigraph-Signature", "sha256="+sig)
+		req.Header.Set("X-Grafel-Signature", "sha256="+sig)
 	}
 
 	resp, err := d.client.Do(req)
@@ -336,7 +336,7 @@ func marshalSlack(p WebhookPayload) ([]byte, error) {
 			{
 				"color":  color,
 				"fields": fields,
-				"footer": "archigraph",
+				"footer": "grafel",
 				"ts":     p.Timestamp.Unix(),
 			},
 		},
@@ -370,7 +370,7 @@ func marshalDiscord(p WebhookPayload) ([]byte, error) {
 				"title":     text,
 				"color":     color,
 				"fields":    fields,
-				"footer":    map[string]any{"text": "archigraph"},
+				"footer":    map[string]any{"text": "grafel"},
 				"timestamp": p.Timestamp.Format(time.RFC3339),
 			},
 		},
@@ -381,19 +381,19 @@ func marshalDiscord(p WebhookPayload) ([]byte, error) {
 func summaryText(p WebhookPayload) string {
 	switch p.Event {
 	case EventRebuildComplete:
-		return fmt.Sprintf("[archigraph] Rebuild complete — %s (health %.1f)", p.Quality.Group, p.Quality.HealthScore)
+		return fmt.Sprintf("[grafel] Rebuild complete — %s (health %.1f)", p.Quality.Group, p.Quality.HealthScore)
 	case EventQualityRegressed:
-		return fmt.Sprintf("[archigraph] Quality regression detected — %s (health %.1f)", p.Quality.Group, p.Quality.HealthScore)
+		return fmt.Sprintf("[grafel] Quality regression detected — %s (health %.1f)", p.Quality.Group, p.Quality.HealthScore)
 	case EventBudgetExceeded:
-		return fmt.Sprintf("[archigraph] Quality budget exceeded — %s", p.Quality.Group)
+		return fmt.Sprintf("[grafel] Quality budget exceeded — %s", p.Quality.Group)
 	case EventSecretFound:
 		sCount := 0
 		if p.Quality.Secrets != nil {
 			sCount = *p.Quality.Secrets
 		}
-		return fmt.Sprintf("[archigraph] Secret scan: %d finding(s) — %s", sCount, p.Quality.Group)
+		return fmt.Sprintf("[grafel] Secret scan: %d finding(s) — %s", sCount, p.Quality.Group)
 	default:
-		return fmt.Sprintf("[archigraph] Event: %s — %s", p.Event, p.Quality.Group)
+		return fmt.Sprintf("[grafel] Event: %s — %s", p.Event, p.Quality.Group)
 	}
 }
 

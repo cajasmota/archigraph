@@ -25,6 +25,6 @@ description: >-
   Upgrade validation_confidence from "inferred" to "proven" on endpoint
   entities that have both a DEPENDS_ON(kind=import) edge to a validation
   schema file and the schema class name present in the endpoint's raw_content.
-module: archigraph.engine.rules.pattern_detectors.validation_confidence_enricher
+module: grafel.engine.rules.pattern_detectors.validation_confidence_enricher
 function: detect
 applies_to_function: applies_to

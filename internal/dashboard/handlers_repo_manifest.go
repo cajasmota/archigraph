@@ -2,7 +2,7 @@ package dashboard
 
 // handlers_repo_manifest.go — Repo Manifest viewer (#1351)
 //
-// Surfaces per-repo metadata: languages, AGENTS.md status, .archigraph/
+// Surfaces per-repo metadata: languages, AGENTS.md status, .grafel/
 // state files, and dependency manifest files. Also provides a lightweight
 // re-scan endpoint that refreshes manifest data without a full rebuild.
 //
@@ -19,9 +19,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/install/detect"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,8 +46,8 @@ type RepoManifestReply struct {
 	// AgentsMD describes the AGENTS.md (or CLAUDE.md / GEMINI.md) file found.
 	AgentsMD AgentsMDInfo `json:"agents_md"`
 
-	// ArchigraphState lists the files present under <repo>/.archigraph/.
-	ArchigraphState []string `json:"archigraph_state"`
+	// GrafelState lists the files present under <repo>/.grafel/.
+	GrafelState []string `json:"grafel_state"`
 
 	// DependencyManifests lists the dependency manifest files found at the root.
 	DependencyManifests []string `json:"dependency_manifests"`
@@ -65,8 +65,8 @@ type AgentsMDInfo struct {
 	Exists bool `json:"exists"`
 	// Filename is the base name of the found file ("AGENTS.md", "CLAUDE.md", …).
 	Filename string `json:"filename,omitempty"`
-	// InjectedByArchigraph is true when the file contains the archigraph marker block.
-	InjectedByArchigraph bool `json:"injected_by_archigraph"`
+	// InjectedByGrafel is true when the file contains the grafel marker block.
+	InjectedByGrafel bool `json:"injected_by_grafel"`
 	// PreviewLines holds up to 50 lines from the beginning of the file.
 	PreviewLines []string `json:"preview_lines,omitempty"`
 	// EditorURI is a "file://…" URI that desktop editors can open directly.
@@ -148,7 +148,7 @@ func buildManifest(group, repo, repoPath string) RepoManifestReply {
 
 	reply.Languages = detectLanguages(repoPath)
 	reply.AgentsMD = scanAgentsMD(repoPath)
-	reply.ArchigraphState = scanArchigraphState(repoPath)
+	reply.GrafelState = scanGrafelState(repoPath)
 	reply.DependencyManifests = scanDependencyManifests(repoPath)
 	reply.QualitySignals, reply.QualityScore = computeQuality(reply)
 
@@ -208,9 +208,9 @@ func detectLanguages(repoPath string) []string {
 }
 
 // scanAgentsMD probes for AGENTS.md, CLAUDE.md, and GEMINI.md in the repo root.
-// It reads up to 50 lines for preview and checks for the archigraph marker.
+// It reads up to 50 lines for preview and checks for the grafel marker.
 func scanAgentsMD(repoPath string) AgentsMDInfo {
-	const markerSubstring = "archigraph"
+	const markerSubstring = "grafel"
 	candidates := []string{"AGENTS.md", "CLAUDE.md", "GEMINI.md"}
 	for _, name := range candidates {
 		full := filepath.Join(repoPath, name)
@@ -243,20 +243,20 @@ func scanAgentsMD(repoPath string) AgentsMDInfo {
 			}
 		}
 		info.PreviewLines = lines
-		info.InjectedByArchigraph = injected
+		info.InjectedByGrafel = injected
 		return info
 	}
 	return AgentsMDInfo{}
 }
 
-// scanArchigraphState lists file names present under <repo>/.archigraph/.
+// scanGrafelState lists file names present under <repo>/.grafel/.
 // Returns an empty slice (never nil) when the directory is absent.
-func scanArchigraphState(repoPath string) []string {
+func scanGrafelState(repoPath string) []string {
 	stateDir := daemon.StateDirForRepo(repoPath)
 	entries, err := os.ReadDir(stateDir)
 	if err != nil {
-		// Also probe the in-repo .archigraph directory for committed manifests.
-		inRepoDir := filepath.Join(repoPath, ".archigraph")
+		// Also probe the in-repo .grafel directory for committed manifests.
+		inRepoDir := filepath.Join(repoPath, ".grafel")
 		entries2, err2 := os.ReadDir(inRepoDir)
 		if err2 != nil {
 			return []string{}
@@ -275,8 +275,8 @@ func scanArchigraphState(repoPath string) []string {
 			names = append(names, e.Name())
 		}
 	}
-	// Merge in-repo .archigraph committed files (e.g. group.json).
-	inRepoDir := filepath.Join(repoPath, ".archigraph")
+	// Merge in-repo .grafel committed files (e.g. group.json).
+	inRepoDir := filepath.Join(repoPath, ".grafel")
 	if entries2, err2 := os.ReadDir(inRepoDir); err2 == nil {
 		seen := map[string]struct{}{}
 		for _, n := range names {
@@ -332,8 +332,8 @@ func computeQuality(r RepoManifestReply) ([]QualitySignal, int) {
 	signals := []QualitySignal{
 		{Name: "stack detected", OK: r.Stack != "" && r.Stack != "unknown", Points: 10},
 		{Name: "AGENTS.md / CLAUDE.md present", OK: r.AgentsMD.Exists, Points: 20},
-		{Name: "archigraph marker in agents file", OK: r.AgentsMD.InjectedByArchigraph, Points: 20},
-		{Name: ".archigraph state files present", OK: len(r.ArchigraphState) > 0, Points: 20},
+		{Name: "grafel marker in agents file", OK: r.AgentsMD.InjectedByGrafel, Points: 20},
+		{Name: ".grafel state files present", OK: len(r.GrafelState) > 0, Points: 20},
 		{Name: "dependency manifests present", OK: len(r.DependencyManifests) > 0, Points: 15},
 		{Name: "multiple languages detected", OK: len(r.Languages) >= 1, Points: 10},
 		{Name: "lock file present", OK: hasLockFile(r.DependencyManifests), Points: 5},

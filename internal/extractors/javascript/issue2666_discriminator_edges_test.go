@@ -3,8 +3,8 @@
 //
 // Issue #2659 introduced the discriminator pattern detection but only stamped
 // the comma-separated pair string on Properties["discriminators"]. #2666
-// promotes the data into proper DISCRIMINATES_ON edges so archigraph_inspect
-// can render a line-precise comparison table and archigraph_find can mix the
+// promotes the data into proper DISCRIMINATES_ON edges so grafel_inspect
+// can render a line-precise comparison table and grafel_find can mix the
 // literal values into the BM25 doc terms.
 package javascript_test
 

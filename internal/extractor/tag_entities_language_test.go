@@ -3,7 +3,7 @@ package extractor
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestTagEntitiesLanguage verifies the parallel-to-TagRelationshipsLanguage

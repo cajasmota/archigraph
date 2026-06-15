@@ -1,4 +1,4 @@
-// archigraph_control_flow MCP tool — #4822, control-flow epic #4820 part (b).
+// grafel_control_flow MCP tool — #4822, control-flow epic #4820 part (b).
 //
 // Returns an ON-DEMAND, NOT-PERSISTED per-function control-flow graph (CFG): the
 // function's basic blocks (start / decision / loop / process / return / throw /
@@ -32,8 +32,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/substrate"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -63,9 +63,9 @@ func parseCFGDetail(s string) cfgDetail {
 	}
 }
 
-// handleControlFlow implements archigraph_control_flow. It resolves a function
+// handleControlFlow implements grafel_control_flow. It resolves a function
 // entity (by id / qualified name / label / cross-repo prefixed id, mirroring
-// archigraph_effects), reads its source window, builds the on-demand CFG, and
+// grafel_effects), reads its source window, builds the on-demand CFG, and
 // serialises it at the requested detail level.
 func (s *Server) handleControlFlow(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	key := argString(req, "entity_id", "")
@@ -131,7 +131,7 @@ func resolveFunctionEntity(lg *LoadedGroup, repos []*LoadedRepo, key string) (*L
 			"ambiguous":     true,
 			"entity_id":     key,
 			"matches":       list,
-			"how_to_choose": "Re-call archigraph_control_flow with the prefixed id field (e.g. \"repo:1234abcd\").",
+			"how_to_choose": "Re-call grafel_control_flow with the prefixed id field (e.g. \"repo:1234abcd\").",
 		}, false
 	default:
 		return matches[0].repo, matches[0].ent, nil, true

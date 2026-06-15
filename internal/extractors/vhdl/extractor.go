@@ -1,6 +1,6 @@
 // Package vhdl implements a regex-based extractor for VHDL source files.
 //
-// VHDL is the second hardware-description language supported by archigraph,
+// VHDL is the second hardware-description language supported by grafel,
 // alongside Verilog/SystemVerilog (internal/extractors/verilog).
 //
 // Extracted entities:
@@ -35,8 +35,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {

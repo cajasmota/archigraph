@@ -13,7 +13,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func ecoEntity(t *testing.T, ents []types.EntityRecord, name, wantSubtype string) *types.EntityRecord {

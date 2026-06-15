@@ -1,17 +1,17 @@
 // auth_coverage_posture_conflict_test.go — reconcile regression for the
 // contradictory auth-posture dual badge (#auth-posture-conflict).
 //
-// archigraph_auth_coverage's determineAuthCoverage must honor the engine's
+// grafel_auth_coverage's determineAuthCoverage must honor the engine's
 // authoritative reconciled posture (auth_required=true): a route gated only by
 // an INHERITED controller/global guard carries no own decorator, so the raw
 // signal-1 keys are absent, yet it IS authenticated and must not be flagged
-// NO-AUTH while archigraph_endpoint_posture shows it authenticated.
+// NO-AUTH while grafel_endpoint_posture shows it authenticated.
 package mcp
 
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestDetermineAuthCoverage_InheritedGuardPosture(t *testing.T) {

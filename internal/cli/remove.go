@@ -9,9 +9,9 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newRemoveCmd() *cobra.Command {
@@ -25,10 +25,10 @@ func newRemoveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove <group> <slug>",
 		Short: "Remove a single repo from a group",
-		Long: `Remove unregisters a repository from an archigraph group.
+		Long: `Remove unregisters a repository from an grafel group.
 
 The watcher is stopped, the git hook block is removed from the repo's
-.git/hooks/* files, and the per-repo .archigraph/ cache is deleted (use
+.git/hooks/* files, and the per-repo .grafel/ cache is deleted (use
 --keep-cache to leave it on disk). The repo entry is removed from the
 group's fleet config and the change is persisted.
 
@@ -56,7 +56,7 @@ The daemon must be running. Use --json for machine-readable output.
 	}
 
 	cmd.Flags().BoolVar(&keepCache, "keep-cache", false,
-		"leave <repo>/.archigraph/ on disk (do not delete the cache)")
+		"leave <repo>/.grafel/ on disk (do not delete the cache)")
 	cmd.Flags().BoolVar(&force, "force", false,
 		"skip confirmation prompt")
 	cmd.Flags().BoolVar(&jsonOut, "json", false,
@@ -125,7 +125,7 @@ func runRemoveImpl(cmd *cobra.Command, group, slug string, keepCache, force, jso
 	isLastRepo := len(cfg.Repos) == 1
 	if isLastRepo && (force || jsonOut) {
 		return fmt.Errorf(
-			"group %q has only one repo (%s); use 'archigraph delete %s' to remove the whole group",
+			"group %q has only one repo (%s); use 'grafel delete %s' to remove the whole group",
 			group, slug, group,
 		)
 	}

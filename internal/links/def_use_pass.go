@@ -18,7 +18,7 @@
 //	def_use_count     "<n>"
 //
 // The full chain list is also persisted in <group>-links-def-use.json
-// for archigraph_def_use to surface unbounded.
+// for grafel_def_use to surface unbounded.
 package links
 
 import (
@@ -29,7 +29,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // MethodDefUse identifies sidecar artefacts from this pass.

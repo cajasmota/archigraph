@@ -16,8 +16,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
@@ -78,8 +78,8 @@ func TestLLMMode_DefaultNoBundleFile(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -115,8 +115,8 @@ func TestLLMMode_DefaultNoBundleFileTier1(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -151,8 +151,8 @@ func TestLLMMode_EmitTier0_WritesBothFiles(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -230,8 +230,8 @@ func TestLLMMode_EmitTier0_BundleJSON_AllRequiredKeys(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -282,8 +282,8 @@ func TestLLMMode_EmitTier1_WritesBundleWithTier1(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -352,8 +352,8 @@ func TestLLMMode_EmitTier1_ScoreHasLLMMode(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -460,7 +460,7 @@ func TestTier1Score_LLMModeField_EmitPresent(t *testing.T) {
 // Test helpers
 // ---------------------------------------------------------------------------
 
-// buildMinimalGroupForEmitTests creates a temp archigraph home, a group config,
+// buildMinimalGroupForEmitTests creates a temp grafel home, a group config,
 // and a fake repo directory. It returns archHome, groupName, entityID, and
 // repoPath. Callers must then call writeGraphForEmitTest to place the graph.json
 // in the canonical daemon state dir.
@@ -469,8 +469,8 @@ func TestTier1Score_LLMModeField_EmitPresent(t *testing.T) {
 // registry.ConfigPathFor resolves it without touching the real user config.
 // Tests using this helper must call:
 //
-//	t.Setenv("ARCHIGRAPH_HOME", archHome)
-//	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+//	t.Setenv("GRAFEL_HOME", archHome)
+//	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 //	t.Setenv("XDG_CONFIG_HOME", filepath.Join(archHome, "xdg-config"))
 func buildMinimalGroupForEmitTests(t *testing.T) (archHome, group, entityID, repoPath string) {
 	t.Helper()
@@ -478,8 +478,8 @@ func buildMinimalGroupForEmitTests(t *testing.T) (archHome, group, entityID, rep
 	group = "emit-test-group"
 	entityID = "emitentity0001aa"
 
-	// XDG_CONFIG_HOME-based config dir: <archHome>/xdg-config/archigraph/
-	xdgCfgDir := filepath.Join(archHome, "xdg-config", "archigraph")
+	// XDG_CONFIG_HOME-based config dir: <archHome>/xdg-config/grafel/
+	xdgCfgDir := filepath.Join(archHome, "xdg-config", "grafel")
 	if err := os.MkdirAll(xdgCfgDir, 0o755); err != nil {
 		t.Fatalf("mkdir xdgCfgDir: %v", err)
 	}
@@ -503,14 +503,14 @@ func buildMinimalGroupForEmitTests(t *testing.T) (archHome, group, entityID, rep
 }
 
 // writeGraphForEmitTest writes a minimal graph.json into the canonical
-// ARCHIGRAPH_DAEMON_ROOT state dir so findGroupGraphDirs can discover it.
+// GRAFEL_DAEMON_ROOT state dir so findGroupGraphDirs can discover it.
 //
 // PH1a (#2089): uses daemon.StateDirForRepo directly so the path always
 // matches what the loader resolves — no manual hash duplication.
 func writeGraphForEmitTest(t *testing.T, archHome, repoPath, entityID string) {
 	t.Helper()
 
-	// daemon.StateDirForRepo honours ARCHIGRAPH_DAEMON_ROOT (set by the caller)
+	// daemon.StateDirForRepo honours GRAFEL_DAEMON_ROOT (set by the caller)
 	// and appends the per-ref sub-directory (PH1a). Writing here ensures
 	// the file is always found at exactly the path the loader will look.
 	stateDir := daemon.StateDirForRepo(repoPath)

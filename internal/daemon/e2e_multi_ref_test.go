@@ -27,10 +27,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/dashboard"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/dashboard"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ── fixture ─────────────────────────────────────────────────────────────────
@@ -172,7 +172,7 @@ func writeFixtureEntities(t *testing.T, dir string, names ...string) {
 }
 
 // buildRefGraphFiles writes per-ref graph.json + graph-stats.json files into
-// the daemon store for repoPath, simulating what `archigraph index` would
+// the daemon store for repoPath, simulating what `grafel index` would
 // produce. This lets the three E2E tests exercise the store + dashboard
 // without needing a real extractor.
 //
@@ -216,7 +216,7 @@ func buildRefGraphFiles(t *testing.T, repoPath string, entityMap map[string][]st
 	}
 }
 
-// buildGroupFixture sets up the ARCHIGRAPH_HOME on-disk layout (registry.json
+// buildGroupFixture sets up the GRAFEL_HOME on-disk layout (registry.json
 // + group fleet config) for the given repoPath and returns the group name and
 // repo slug that can be used to query the dashboard.
 func buildGroupFixture(t *testing.T, home, repoPath string) (groupName, repoSlug string) {
@@ -264,7 +264,7 @@ func buildGroupFixture(t *testing.T, home, repoPath string) (groupName, repoSlug
 // inside the daemon store, confirming the per-branch isolation guarantee.
 func TestE2E_MultiRef_DaemonReindexesPerRef(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	storeRoot := filepath.Join(home, "store")
 	t.Setenv(daemon.EnvRoot, storeRoot)
 
@@ -347,7 +347,7 @@ func TestE2E_MultiRef_DaemonReindexesPerRef(t *testing.T) {
 // All three hot dirs must be distinct.
 func TestE2E_MultiRef_WorktreeSwitchesActiveRef(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	storeRoot := filepath.Join(home, "store")
 	t.Setenv(daemon.EnvRoot, storeRoot)
 
@@ -489,7 +489,7 @@ func startDashboardForTest(t *testing.T) (baseURL string, stop func()) {
 //   - feature/foo and feature/bar have is_canonical: false.
 func TestE2E_MultiRef_DashboardSurfacesRefList(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	storeRoot := filepath.Join(home, "store")
 	t.Setenv(daemon.EnvRoot, storeRoot)
 

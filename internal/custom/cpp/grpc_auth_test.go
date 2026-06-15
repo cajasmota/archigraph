@@ -76,7 +76,7 @@ func TestGrpcInterceptorAuth(t *testing.T) {
 		if got := ep.Props["auth_method"]; got != "grpc_interceptor" {
 			t.Errorf("%s auth_method = %q, want grpc_interceptor", methodPath, got)
 		}
-		// auth_middleware is the MCP archigraph_auth_coverage signal-1 key — it
+		// auth_middleware is the MCP grafel_auth_coverage signal-1 key — it
 		// must carry the concrete enforcer class name, not a placeholder.
 		if got := ep.Props["auth_middleware"]; got != "JwtAuth" {
 			t.Errorf("%s auth_middleware = %q, want JwtAuth", methodPath, got)

@@ -41,7 +41,7 @@ func Test2809VerifyClassifyDrift(t *testing.T) {
 
 // Test2809LiveSidecar checks the real upvate sidecar if present.
 func Test2809LiveSidecar(t *testing.T) {
-	sidecarPath := filepath.Join(os.Getenv("HOME"), ".archigraph", "groups", "upvate-links-payload-drift.json")
+	sidecarPath := filepath.Join(os.Getenv("HOME"), ".grafel", "groups", "upvate-links-payload-drift.json")
 	buf, err := os.ReadFile(sidecarPath)
 	if err != nil {
 		t.Skipf("upvate sidecar not found (%v) — skipping live check", err)

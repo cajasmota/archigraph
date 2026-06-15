@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Caliban is a code-first / functional GraphQL server library for Scala
@@ -274,7 +274,7 @@ func calibanRootName(arg string) string {
 }
 
 func (e *calibanExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.scala_caliban.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -375,7 +375,7 @@ func (e *calibanExtractor) Extract(ctx context.Context, file extractor.FileInput
 				// HasRole(...) directive on the resolver field gates the
 				// synthesised GraphQL endpoint. Stamp the flat shared auth
 				// contract (auth_required/auth_method/auth_guard/auth_roles)
-				// so archigraph_auth_coverage counts the field as covered.
+				// so grafel_auth_coverage counts the field as covered.
 				calibanStampFieldAuth(&ent, field.auth)
 				add(ent)
 			}
@@ -442,7 +442,7 @@ func (e *calibanExtractor) Extract(ctx context.Context, file extractor.FileInput
 //	auth_method     "directive"
 //	auth_confidence "high"      (statically-visible @GQLDirective on the field)
 //	auth_directive  directive name (Authenticated / HasRole / ...)
-//	auth_guard      directive name — the key archigraph_auth_coverage counts
+//	auth_guard      directive name — the key grafel_auth_coverage counts
 //	auth_roles      comma-joined, sorted role/permission names (when present)
 //
 // HONEST PARTIAL: for a custom role directive whose role tokens are NOT quoted

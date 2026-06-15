@@ -10,7 +10,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func javaGRPCMethodEntity(ents []types.EntityRecord, service, method string) *types.EntityRecord {

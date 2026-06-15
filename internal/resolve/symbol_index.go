@@ -30,7 +30,7 @@
 //     them in one pass rather than paying per-edge lookup cost.
 //
 // PRODUCTION STATUS (#4331): M5 is now WIRED BEHIND A DEFAULT-OFF FLAG
-// (ARCHIGRAPH_RESOLVE_MODULE_INDEX=1). cmd/archigraph/index.go still calls
+// (GRAFEL_RESOLVE_MODULE_INDEX=1). cmd/grafel/index.go still calls
 // BuildIndex by default; when the flag is set it routes through
 // BuildIndexFromModulesOrdered instead. Default = old path = zero behaviour
 // change, so merging is safe.
@@ -70,7 +70,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // defaultBatchSize is the number of modules merged per batch when callers do

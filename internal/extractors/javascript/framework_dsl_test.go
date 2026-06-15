@@ -18,9 +18,9 @@ import (
 	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/javascript"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/javascript"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // parseJSDSL parses JS source with the JS grammar.

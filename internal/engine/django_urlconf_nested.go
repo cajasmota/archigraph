@@ -39,8 +39,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // djangoIncludeStringRe matches `path("prefix", include("module.path"))` or
@@ -375,7 +375,7 @@ func isPythonIdentifier(s string) bool {
 //
 // We use path.Join (from "path", not "path/filepath") so the result always
 // uses forward slashes. Repo-relative paths are always forward-slash-separated
-// in the archigraph entity store and file-reader callbacks — using
+// in the grafel entity store and file-reader callbacks — using
 // filepath.Join here would produce backslash paths on Windows, breaking
 // fileReader lookups and causing all nested-include route composition to
 // silently produce zero entities on that platform (P6 of #2196).

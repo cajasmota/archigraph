@@ -51,13 +51,13 @@ func TestExtractSourceFiles(t *testing.T) {
 	payload := strings.Join([]string{
 		"# nodes (3 matched)",
 		"TokenAuthMiddleware  internal/mcp/render.go:52",
-		"OrderService.place  cmd/archigraph/index.go:140",
+		"OrderService.place  cmd/grafel/index.go:140",
 		"dup-hit  internal/mcp/render.go:88", // same file -> dedup
 		"# edges-summary: available=2",
 		"a → b  [CALLS]", // not a location, must not match
 	}, "\n")
 	got := extractSourceFiles(payload)
-	want := []string{"cmd/archigraph/index.go", "internal/mcp/render.go"}
+	want := []string{"cmd/grafel/index.go", "internal/mcp/render.go"}
 	if len(got) != len(want) {
 		t.Fatalf("extractSourceFiles=%v want %v", got, want)
 	}

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 // writeFixtureGraph emits a tiny but valid graph.fb under dir and
@@ -180,7 +180,7 @@ func TestCacheClosedRejects(t *testing.T) {
 // root-cause D). The _unknown artifact should stay on disk but never be loaded
 // into heap through the ref-aware entry point.
 func TestGetForRepoRef_UnknownRefRefused(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	// Calling with ref="" causes StateDirForRepoRef to return …/refs/_unknown/
 	c := NewCache(4)
 	defer c.Close()
@@ -195,7 +195,7 @@ func TestGetForRepoRef_UnknownRefRefused(t *testing.T) {
 // proceeds to the normal Get path (returns ErrCacheMiss / open error rather
 // than ErrUnknownRef). This ensures the guard does not block legitimate refs.
 func TestGetForRepoRef_KnownRefLoads(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	c := NewCache(4)
 	defer c.Close()
 

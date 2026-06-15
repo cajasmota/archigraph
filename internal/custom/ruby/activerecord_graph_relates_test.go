@@ -7,7 +7,7 @@ package ruby_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func arGraphRelates(ents []types.EntityRecord, from, to string) *types.RelationshipRecord {

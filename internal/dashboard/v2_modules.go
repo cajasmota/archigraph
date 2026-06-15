@@ -43,7 +43,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // handleV2ModulesAnalysis — GET /api/v2/groups/{group}/modules/analysis

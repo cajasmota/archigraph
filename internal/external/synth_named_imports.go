@@ -3,8 +3,8 @@ package external
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // synth_named_imports.go — per-symbol external node synthesis for NAMED

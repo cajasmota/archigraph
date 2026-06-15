@@ -1,6 +1,6 @@
 package mcp
 
-// patterns.go — MCP handler for archigraph_patterns (ADR-0018, PR γ).
+// patterns.go — MCP handler for grafel_patterns (ADR-0018, PR γ).
 //
 // Implements action=query, action=record (PR β), and the γ lifecycle actions:
 // refine, apply, reject, promote.
@@ -10,8 +10,8 @@ package mcp
 import (
 	"context"
 	"fmt"
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/types"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 	"math"
 	"os"
@@ -85,10 +85,10 @@ func (s *Server) handlePatterns(ctx context.Context, req mcpapi.CallToolRequest)
 // patternsDir — per-group storage directory
 // ---------------------------------------------------------------------------
 
-// patternsDir returns the <group>/.archigraph/ directory for pattern storage.
+// patternsDir returns the <group>/.grafel/ directory for pattern storage.
 // We follow the same convention as enrichment-resolutions.json: groups store
-// their side-car files inside the group's first repo's .archigraph dir, OR we
-// use the group-level default path under ~/.archigraph/groups/.
+// their side-car files inside the group's first repo's .grafel dir, OR we
+// use the group-level default path under ~/.grafel/groups/.
 //
 // For β we resolve the path the same way save_finding resolves memory_dir:
 // registry MemoryDir is the group-scoped dir; absent that, default path.
@@ -101,7 +101,7 @@ func patternsDir(groupName string, lg *LoadedGroup) string {
 	return defaultPatternsDir(groupName)
 }
 
-// defaultPatternsDir returns ~/.archigraph/groups/<group>-patterns/.
+// defaultPatternsDir returns ~/.grafel/groups/<group>-patterns/.
 func defaultPatternsDir(group string) string {
 	// Prefer $HOME so tests using t.Setenv("HOME", tmpDir) work on Windows
 	// where os.UserHomeDir() reads USERPROFILE and ignores HOME.
@@ -113,7 +113,7 @@ func defaultPatternsDir(group string) string {
 			return ""
 		}
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-patterns")
+	return filepath.Join(home, ".grafel", "groups", group+"-patterns")
 }
 
 // ---------------------------------------------------------------------------

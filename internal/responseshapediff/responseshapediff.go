@@ -1,5 +1,5 @@
 // Package responseshapediff is the cross-graph, branch-aware RESPONSE-contract
-// differ behind the archigraph_response_shape_diff MCP tool (#4424, epic #4419
+// differ behind the grafel_response_shape_diff MCP tool (#4424, epic #4419
 // capability E — the LAST of the four parity diff tools).
 //
 // The rewrite-parity question it answers: for a joined oracle↔v3 endpoint pair,
@@ -44,7 +44,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/literalparity"
+	"github.com/cajasmota/grafel/internal/literalparity"
 )
 
 // Field is one response field on one side, as the MCP layer resolved it from a

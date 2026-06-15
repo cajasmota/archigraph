@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj",
   "language": "clojure",
   "entities": [
     {
@@ -123,8 +123,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -139,12 +139,12 @@
         "convention": "kebab-case",
         "dominant_percentage": 87.5,
         "sample_count": 8,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj"
       }
     },
     {
       "name": "onboarding_entry:find-all:order=1",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj:find-all",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj:find-all",
       "kind": "SCOPE.Pattern",
       "start_line": 7,
       "end_line": 9,
@@ -156,16 +156,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj::find-all",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj::find-all",
         "reading_order": 1,
         "entry_point_type": "high_dependency",
         "inbound_dependency_count": 5,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj"
       }
     },
     {
       "name": "onboarding_entry:create-user:order=2",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj:create-user",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj:create-user",
       "kind": "SCOPE.Pattern",
       "start_line": 13,
       "end_line": 19,
@@ -177,16 +177,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj::create-user",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj::create-user",
         "reading_order": 2,
         "entry_point_type": "high_dependency",
         "inbound_dependency_count": 5,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj"
       }
     },
     {
       "name": "onboarding_entry:validate-email:order=3",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj:validate-email",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj:validate-email",
       "kind": "SCOPE.Pattern",
       "start_line": 25,
       "end_line": 27,
@@ -198,16 +198,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj::validate-email",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj::validate-email",
         "reading_order": 3,
         "entry_point_type": "high_dependency",
         "inbound_dependency_count": 5,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj"
       }
     },
     {
       "name": "onboarding_entry:find-by-id:order=4",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj:find-by-id",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj:find-by-id",
       "kind": "SCOPE.Pattern",
       "start_line": 10,
       "end_line": 12,
@@ -219,16 +219,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj::find-by-id",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj::find-by-id",
         "reading_order": 4,
         "entry_point_type": "high_dependency",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj"
       }
     },
     {
       "name": "onboarding_entry:delete-user:order=5",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj:delete-user",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj:delete-user",
       "kind": "SCOPE.Pattern",
       "start_line": 20,
       "end_line": 24,
@@ -240,16 +240,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj::delete-user",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj::delete-user",
         "reading_order": 5,
         "entry_point_type": "high_dependency",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj"
       }
     },
     {
       "name": "pattern_taxonomy:enterprise:dto",
-      "qualified_name": "scope:pattern:taxonomy:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/clojure/sample_handler.clj:handle-request",
+      "qualified_name": "scope:pattern:taxonomy:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/clojure/sample_handler.clj:handle-request",
       "kind": "SCOPE.Pattern",
       "start_line": 28,
       "end_line": 44,

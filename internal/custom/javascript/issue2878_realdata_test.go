@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the base .astro SFC extractor used for the Astro corpus file.
-	_ "github.com/cajasmota/archigraph/internal/extractors/astro"
+	_ "github.com/cajasmota/grafel/internal/extractors/astro"
 )
 
 // issue2878_realdata_test.go — real-data verification for the meta-framework

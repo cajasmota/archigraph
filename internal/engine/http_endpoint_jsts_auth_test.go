@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // authProps runs detection on a JS/TS fixture and returns the synthetic
@@ -50,7 +50,7 @@ func requireProtected(t *testing.T, eps map[string]types.EntityRecord, key, want
 	if wantMethod != "" && e.Properties["auth_method"] != wantMethod {
 		t.Errorf("%s: auth_method=%q, want %q", key, e.Properties["auth_method"], wantMethod)
 	}
-	// The MCP signal-1 key must be present so archigraph_auth_coverage fires.
+	// The MCP signal-1 key must be present so grafel_auth_coverage fires.
 	if e.Properties["auth_middleware"] == "" && e.Properties["auth_guard"] == "" {
 		t.Errorf("%s: neither auth_middleware nor auth_guard stamped (props: %v)", key, e.Properties)
 	}

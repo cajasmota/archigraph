@@ -1,6 +1,6 @@
 package mcp
 
-// get_source_2828_test.go — #2828 token-cost controls for archigraph_get_source
+// get_source_2828_test.go — #2828 token-cost controls for grafel_get_source
 // (the single busiest MCP tool, ~45% of live tool-call token spend).
 //
 // Coverage:
@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -78,7 +78,7 @@ func TestGetSource_2828_DefaultLargeEntityTruncatesWithSignal(t *testing.T) {
 		t.Fatalf("emitted %d source lines, exceeds hard cap %d", srcLines, getSourceHardMaxLines)
 	}
 	// Visible truncation marker with a precise continuation hint.
-	if !strings.Contains(out, "archigraph: truncated") {
+	if !strings.Contains(out, "grafel: truncated") {
 		t.Fatalf("missing truncation marker:\n%s", tail(out))
 	}
 	if !strings.Contains(out, "from_line=") || !strings.Contains(out, "to_line=") {
@@ -104,7 +104,7 @@ func TestGetSource_2828_ExplicitRangeExactAndSmaller(t *testing.T) {
 	if strings.Contains(ranged, "statement_9 ") || strings.Contains(ranged, "statement_15 ") {
 		t.Errorf("explicit range leaked lines outside [10,14]:\n%s", ranged)
 	}
-	if strings.Contains(ranged, "archigraph: truncated") {
+	if strings.Contains(ranged, "grafel: truncated") {
 		t.Errorf("explicit range should not be marked truncated:\n%s", ranged)
 	}
 	if len(ranged) >= len(full) {
@@ -126,7 +126,7 @@ func TestGetSource_2828_MaxLinesHeadsAndSignals(t *testing.T) {
 	if srcLines > 14 {
 		t.Fatalf("max_lines=12 emitted ~%d source lines", srcLines)
 	}
-	if !strings.Contains(out, "archigraph: truncated") {
+	if !strings.Contains(out, "grafel: truncated") {
 		t.Fatalf("max_lines truncation not signaled:\n%s", tail(out))
 	}
 }
@@ -216,7 +216,7 @@ func TestGetSource_4891_ExplicitWindowBypassesHardCap(t *testing.T) {
 	if strings.Contains(wide, "statement_249 ") || strings.Contains(wide, "statement_550 ") {
 		t.Errorf("explicit window leaked lines outside [250,549]:\n%s", tail(wide))
 	}
-	if strings.Contains(wide, "archigraph: truncated") {
+	if strings.Contains(wide, "grafel: truncated") {
 		t.Errorf("explicit window honoured verbatim must NOT be marked truncated:\n%s", tail(wide))
 	}
 
@@ -244,7 +244,7 @@ func TestGetSource_4891_ExplicitWindowBypassesHardCap(t *testing.T) {
 
 	// (d) NO-REGRESSION: a default call (no window) is still hard-capped + signalled.
 	def := callGetSource(t, s, map[string]any{"group": "test", "entity_id": "big", "context_lines": 0})
-	if !strings.Contains(def, "archigraph: truncated") {
+	if !strings.Contains(def, "grafel: truncated") {
 		t.Errorf("default call must still signal the symbol-anchored hard cap:\n%s", tail(def))
 	}
 }

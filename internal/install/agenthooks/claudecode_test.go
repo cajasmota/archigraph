@@ -180,7 +180,7 @@ func TestInstall_ReplacesExistingManaged(t *testing.T) {
 	hooks2 := doc2["hooks"].(map[string]any)
 	pre2 := hooks2["PreToolUse"].([]any)
 	cmd := pre2[0].(map[string]any)["hooks"].([]any)[0].(map[string]any)["command"].(string)
-	if want := NudgeScriptRelPath; !containsSub(cmd, "archigraph-grep-nudge.sh") {
+	if want := NudgeScriptRelPath; !containsSub(cmd, "grafel-grep-nudge.sh") {
 		t.Fatalf("command not refreshed to current script (%s): %q", want, cmd)
 	}
 	if containsSub(cmd, "/old/stale/path.sh") {

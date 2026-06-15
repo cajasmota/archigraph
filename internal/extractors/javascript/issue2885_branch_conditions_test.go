@@ -12,7 +12,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // branchConditions returns the stamped branch_conditions property for entity

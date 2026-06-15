@@ -14,6 +14,6 @@ description: >-
   kind=logging_config. Supported frameworks: Go slog / standard log, Python
   logging module, Node.js winston / pino, .NET NLog / Serilog, log4j.xml /
   logback.xml config files.
-module: archigraph.engine.rules.pattern_detectors.logging_config_extractor
+module: grafel.engine.rules.pattern_detectors.logging_config_extractor
 function: detect
 applies_to_function: applies_to

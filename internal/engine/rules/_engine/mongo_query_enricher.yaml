@@ -12,6 +12,6 @@ description: >-
   SCOPE.Operation/aggregation entities and emits SCOPE.Pattern(type=mongo-query)
   with collection name, stage analysis, index recommendations, and performance
   notes. Uses model_heavy for LLM calls. Max 5 calls per invocation.
-module: archigraph.engine.rules.pattern_detectors.mongo_query_enricher
+module: grafel.engine.rules.pattern_detectors.mongo_query_enricher
 function: detect
 applies_to_function: applies_to

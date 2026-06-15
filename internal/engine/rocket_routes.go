@@ -31,7 +31,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // rocketRouteAttrRe matches a Rocket HTTP verb attribute and the function

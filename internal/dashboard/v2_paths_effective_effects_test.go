@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // thinControllerFixture: a POST create endpoint whose handler delegates the DB
@@ -69,7 +69,7 @@ func writeEffectsSidecar(t *testing.T, group string, entries map[string][]string
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	dir := filepath.Join(home, ".archigraph", "groups")
+	dir := filepath.Join(home, ".grafel", "groups")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir sidecar dir: %v", err)
 	}

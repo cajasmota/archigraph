@@ -3,8 +3,8 @@ package algorithms_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/algorithms"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/algorithms"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ─── helpers ────────────────────────────────────────────────────────────────

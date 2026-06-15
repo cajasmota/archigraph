@@ -81,7 +81,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // grpcServiceKind is the entity kind for a gRPC service implementation.

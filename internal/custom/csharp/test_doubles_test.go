@@ -8,7 +8,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // relOf returns the first relationship of the given kind whose ToID matches.

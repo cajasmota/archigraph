@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // trpcDefByPath returns the tRPC http_endpoint_definition whose `path`

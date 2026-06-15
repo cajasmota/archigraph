@@ -24,8 +24,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -85,7 +85,7 @@ var redisCommandFromMethod = map[string]string{
 }
 
 func (e *redisQueryExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/cpp")
+	tracer := otel.Tracer("grafel/custom/cpp")
 	_, span := tracer.Start(ctx, "indexer.redis_query_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

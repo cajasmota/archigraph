@@ -3,8 +3,8 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #4384 — Spring WebFlux / WebMvc.fn FUNCTIONAL routing

@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/embed"
+	"github.com/cajasmota/grafel/internal/embed"
 )
 
 // queryEmbedder lazily initialises a process-wide embedding backend used to
@@ -35,7 +35,7 @@ func embedQuery(ctx context.Context, q string) ([]float32, bool) {
 	vecs, err := be.Embed(ctx, []string{q})
 	if err != nil || len(vecs) == 0 {
 		// Log once-ish to stderr for visibility; do not fail the call.
-		fmt.Fprintf(os.Stderr, "archigraph: query embed failed (%v); falling back to BM25-only\n", err)
+		fmt.Fprintf(os.Stderr, "grafel: query embed failed (%v); falling back to BM25-only\n", err)
 		return nil, false
 	}
 	return vecs[0], true
@@ -45,7 +45,7 @@ func (qe *queryEmbedder) get(ctx context.Context) (embed.Backend, bool) {
 	qe.once.Do(func() {
 		cfg, err := embed.LoadConfig()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph: embedding config: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel: embedding config: %v\n", err)
 		}
 		if cfg.Backend == embed.BackendDisabled {
 			qe.disable = true
@@ -58,7 +58,7 @@ func (qe *queryEmbedder) get(ctx context.Context) (embed.Backend, bool) {
 				return
 			}
 			qe.initErr = berr
-			fmt.Fprintf(os.Stderr, "archigraph: embedding backend init failed: %v (falling back to BM25-only)\n", berr)
+			fmt.Fprintf(os.Stderr, "grafel: embedding backend init failed: %v (falling back to BM25-only)\n", berr)
 			return
 		}
 		qe.backend = be

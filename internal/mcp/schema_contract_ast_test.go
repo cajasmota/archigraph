@@ -57,164 +57,164 @@ type intentionalGap struct {
 // Adding a new entry means the omission is intentional and documented.
 // Removing an entry means the param has been added to the schema — also fine.
 var intentionalGaps = []intentionalGap{
-	// archigraph_find: verbose, min_score, max_results — read from the request
+	// grafel_find: verbose, min_score, max_results — read from the request
 	// map but not declared to stay under the token-ceiling (#1639 / #1921 / #1807).
-	{"archigraph_find", "verbose", "#1639 token ceiling pattern (#1921/#1807)"},
-	{"archigraph_find", "min_score", "#1639 token ceiling pattern (#1921/#1807)"},
-	{"archigraph_find", "max_results", "#1639 token ceiling pattern (#1921/#1807)"},
-	// archigraph_find: legacy param alias — accepted but deprecated, intentionally invisible.
-	{"archigraph_find", "question", "#2318 deprecated alias for query, intentionally undeclared"},
+	{"grafel_find", "verbose", "#1639 token ceiling pattern (#1921/#1807)"},
+	{"grafel_find", "min_score", "#1639 token ceiling pattern (#1921/#1807)"},
+	{"grafel_find", "max_results", "#1639 token ceiling pattern (#1921/#1807)"},
+	// grafel_find: legacy param alias — accepted but deprecated, intentionally invisible.
+	{"grafel_find", "question", "#2318 deprecated alias for query, intentionally undeclared"},
 
-	// archigraph_inspect: verbose — #1639 token ceiling pattern.
-	{"archigraph_inspect", "verbose", "#1639 token ceiling pattern"},
-	// archigraph_inspect: legacy alias, intentionally invisible.
-	{"archigraph_inspect", "label_or_id", "#2318 deprecated alias for entity_id, intentionally undeclared"},
+	// grafel_inspect: verbose — #1639 token ceiling pattern.
+	{"grafel_inspect", "verbose", "#1639 token ceiling pattern"},
+	// grafel_inspect: legacy alias, intentionally invisible.
+	{"grafel_inspect", "label_or_id", "#2318 deprecated alias for entity_id, intentionally undeclared"},
 
-	// archigraph_expand: legacy param alias — deprecated alias for entity_id (#1916).
-	{"archigraph_expand", "node", "deprecated alias accepted but intentionally undeclared (#1916)"},
+	// grafel_expand: legacy param alias — deprecated alias for entity_id (#1916).
+	{"grafel_expand", "node", "deprecated alias accepted but intentionally undeclared (#1916)"},
 
-	// archigraph_traces: min_steps, cross_stack_only, verbose — #1639 pattern.
-	{"archigraph_traces", "min_steps", "#1639 token ceiling pattern"},
-	{"archigraph_traces", "cross_stack_only", "#1639 token ceiling pattern"},
-	{"archigraph_traces", "verbose", "#1639 token ceiling pattern"},
+	// grafel_traces: min_steps, cross_stack_only, verbose — #1639 pattern.
+	{"grafel_traces", "min_steps", "#1639 token ceiling pattern"},
+	{"grafel_traces", "cross_stack_only", "#1639 token ceiling pattern"},
+	{"grafel_traces", "verbose", "#1639 token ceiling pattern"},
 
-	// archigraph_find_callers / archigraph_find_callees: verbose — #1639 pattern.
-	{"archigraph_find_callers", "verbose", "#1639 token ceiling pattern"},
-	{"archigraph_find_callees", "verbose", "#1639 token ceiling pattern"},
+	// grafel_find_callers / grafel_find_callees: verbose — #1639 pattern.
+	{"grafel_find_callers", "verbose", "#1639 token ceiling pattern"},
+	{"grafel_find_callees", "verbose", "#1639 token ceiling pattern"},
 
-	// archigraph_neighbors: verbose — shared with find_callers/find_callees
+	// grafel_neighbors: verbose — shared with find_callers/find_callees
 	// structured helper; verbose is intentionally undeclared for token ceiling (#1639).
-	{"archigraph_neighbors", "verbose", "#1639 token ceiling pattern (shared via findCallersStructured)"},
+	{"grafel_neighbors", "verbose", "#1639 token ceiling pattern (shared via findCallersStructured)"},
 
-	// archigraph_module_analysis: top_n, limit, min_size — #1639 pattern.
-	{"archigraph_module_analysis", "top_n", "#1639 token ceiling pattern"},
-	{"archigraph_module_analysis", "limit", "#1639 token ceiling pattern"},
-	{"archigraph_module_analysis", "min_size", "#1639 token ceiling pattern"},
+	// grafel_module_analysis: top_n, limit, min_size — #1639 pattern.
+	{"grafel_module_analysis", "top_n", "#1639 token ceiling pattern"},
+	{"grafel_module_analysis", "limit", "#1639 token ceiling pattern"},
+	{"grafel_module_analysis", "min_size", "#1639 token ceiling pattern"},
 
-	// archigraph_repairs: submit-only args read from the bundle but undeclared
+	// grafel_repairs: submit-only args read from the bundle but undeclared
 	// to keep the handshake token budget under its ceiling (#1756 / #1639 pattern).
-	{"archigraph_repairs", "residual_id", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "resolution", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "confidence", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "reasoning", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "target_entity_id", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "module", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "new_target", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "dynamic_reason", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "abandon_reason", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "source", "#1756 token ceiling pattern — submit-only arg"},
-	{"archigraph_repairs", "repo", "#1756 token ceiling pattern — submit-only arg (override when residual_id is ambiguous)"},
+	{"grafel_repairs", "residual_id", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "resolution", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "confidence", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "reasoning", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "target_entity_id", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "module", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "new_target", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "dynamic_reason", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "abandon_reason", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "source", "#1756 token ceiling pattern — submit-only arg"},
+	{"grafel_repairs", "repo", "#1756 token ceiling pattern — submit-only arg (override when residual_id is ambiguous)"},
 
-	// archigraph_topology: verbose read in handleTopologyTopicDetail for token-ceiling
+	// grafel_topology: verbose read in handleTopologyTopicDetail for token-ceiling
 	// suppression but not declared in schema (#1639 pattern).
-	{"archigraph_topology", "verbose", "#1639 token ceiling pattern"},
+	{"grafel_topology", "verbose", "#1639 token ceiling pattern"},
 
-	// archigraph_get_source: legacy alias node_id — deprecated, intentionally undeclared.
-	{"archigraph_get_source", "node_id", "deprecated alias for entity_id, intentionally undeclared"},
-	// archigraph_get_source: #2828 opt-in precise-slicing controls. The canonical
+	// grafel_get_source: legacy alias node_id — deprecated, intentionally undeclared.
+	{"grafel_get_source", "node_id", "deprecated alias for entity_id, intentionally undeclared"},
+	// grafel_get_source: #2828 opt-in precise-slicing controls. The canonical
 	// explicit-window params from_line/to_line ARE declared in the schema (#4891 —
 	// discoverable in the handshake so callers reach for the window instead of a
 	// grep fallback). start_line/end_line remain accepted as legacy aliases and
 	// max_lines is the #2828 head cap; all three stay undeclared per the #1639
 	// token-ceiling pattern. All optional; absence = legacy entity-span behaviour.
-	{"archigraph_get_source", "start_line", "#2828 / #1639 token-ceiling: legacy alias of from_line, undeclared"},
-	{"archigraph_get_source", "end_line", "#2828 / #1639 token-ceiling: legacy alias of to_line, undeclared"},
-	{"archigraph_get_source", "max_lines", "#2828 / #1639 token-ceiling: opt-in head cap, undeclared"},
+	{"grafel_get_source", "start_line", "#2828 / #1639 token-ceiling: legacy alias of from_line, undeclared"},
+	{"grafel_get_source", "end_line", "#2828 / #1639 token-ceiling: legacy alias of to_line, undeclared"},
+	{"grafel_get_source", "max_lines", "#2828 / #1639 token-ceiling: opt-in head cap, undeclared"},
 
-	// archigraph_patterns: action-specific args for sub-actions (query, record, get,
+	// grafel_patterns: action-specific args for sub-actions (query, record, get,
 	// reject, promote) that are undeclared in the schema to stay under the token-ceiling
 	// (#1639 pattern). The top-level schema only declares the shared args (action, text,
 	// category, limit, steps, exemplars, group, cwd).
-	{"archigraph_patterns", "include_candidates", "#1639 token ceiling pattern — query-only arg"},
-	{"archigraph_patterns", "include_private", "#1639 token ceiling pattern — query/get-only arg"},
-	{"archigraph_patterns", "as_candidate", "#1639 token ceiling pattern — record-only arg"},
-	{"archigraph_patterns", "proposer_subagent", "#1639 token ceiling pattern — record-only arg"},
-	{"archigraph_patterns", "documentation_url", "#1639 token ceiling pattern — record-only arg"},
-	{"archigraph_patterns", "set_to_zero", "#1639 token ceiling pattern — reject-only arg"},
-	{"archigraph_patterns", "approval_note", "#1639 token ceiling pattern — promote-only arg"},
+	{"grafel_patterns", "include_candidates", "#1639 token ceiling pattern — query-only arg"},
+	{"grafel_patterns", "include_private", "#1639 token ceiling pattern — query/get-only arg"},
+	{"grafel_patterns", "as_candidate", "#1639 token ceiling pattern — record-only arg"},
+	{"grafel_patterns", "proposer_subagent", "#1639 token ceiling pattern — record-only arg"},
+	{"grafel_patterns", "documentation_url", "#1639 token ceiling pattern — record-only arg"},
+	{"grafel_patterns", "set_to_zero", "#1639 token ceiling pattern — reject-only arg"},
+	{"grafel_patterns", "approval_note", "#1639 token ceiling pattern — promote-only arg"},
 
-	// archigraph_enrichments: link-candidate sub-action args (channel, method, override_target)
+	// grafel_enrichments: link-candidate sub-action args (channel, method, override_target)
 	// undeclared in the schema to keep the handshake token budget under the ceiling (#1639).
-	{"archigraph_enrichments", "channel", "#1639 token ceiling pattern — list link candidates filter"},
-	{"archigraph_enrichments", "method", "#1639 token ceiling pattern — list link candidates filter"},
-	{"archigraph_enrichments", "override_target", "#1639 token ceiling pattern — resolve link candidate arg"},
+	{"grafel_enrichments", "channel", "#1639 token ceiling pattern — list link candidates filter"},
+	{"grafel_enrichments", "method", "#1639 token ceiling pattern — list link candidates filter"},
+	{"grafel_enrichments", "override_target", "#1639 token ceiling pattern — resolve link candidate arg"},
 
-	// archigraph_repairs: include_stale — list-only filter arg, undeclared for token budget (#1639).
-	{"archigraph_repairs", "include_stale", "#1639 token ceiling pattern — list-stale filter arg"},
+	// grafel_repairs: include_stale — list-only filter arg, undeclared for token budget (#1639).
+	{"grafel_repairs", "include_stale", "#1639 token ceiling pattern — list-stale filter arg"},
 
-	// archigraph_traces: branching_factor — follow-action-only arg, undeclared for token budget (#1639).
-	{"archigraph_traces", "branching_factor", "#1639 token ceiling pattern — follow-only arg"},
+	// grafel_traces: branching_factor — follow-action-only arg, undeclared for token budget (#1639).
+	{"grafel_traces", "branching_factor", "#1639 token ceiling pattern — follow-only arg"},
 
-	// archigraph_save_finding: optional args undeclared for token budget (#2426 / #1639 pattern).
-	{"archigraph_save_finding", "type", "#2426 token ceiling pattern — optional note type"},
-	{"archigraph_save_finding", "nodes", "#2426 token ceiling pattern — optional node list"},
-	{"archigraph_save_finding", "repo_filter", "#2426 token ceiling pattern — optional repo filter"},
+	// grafel_save_finding: optional args undeclared for token budget (#2426 / #1639 pattern).
+	{"grafel_save_finding", "type", "#2426 token ceiling pattern — optional note type"},
+	{"grafel_save_finding", "nodes", "#2426 token ceiling pattern — optional node list"},
+	{"grafel_save_finding", "repo_filter", "#2426 token ceiling pattern — optional repo filter"},
 
-	// archigraph_list_findings: optional args undeclared for token budget (#2426 / #1639 pattern).
-	{"archigraph_list_findings", "since", "#2426 token ceiling pattern — optional RFC3339 filter"},
-	{"archigraph_list_findings", "entity_id", "#2426 token ceiling pattern — optional entity filter"},
-	{"archigraph_list_findings", "limit", "#2426 token ceiling pattern — optional result limit"},
-	{"archigraph_list_findings", "type", "#2810 token ceiling pattern — optional finding-type filter (e.g. security_finding)"},
+	// grafel_list_findings: optional args undeclared for token budget (#2426 / #1639 pattern).
+	{"grafel_list_findings", "since", "#2426 token ceiling pattern — optional RFC3339 filter"},
+	{"grafel_list_findings", "entity_id", "#2426 token ceiling pattern — optional entity filter"},
+	{"grafel_list_findings", "limit", "#2426 token ceiling pattern — optional result limit"},
+	{"grafel_list_findings", "type", "#2810 token ceiling pattern — optional finding-type filter (e.g. security_finding)"},
 
-	// archigraph_cross_links: per-action args undeclared for token budget (#2424 / #1639 pattern).
-	{"archigraph_cross_links", "channel", "#2424 token ceiling pattern — list filter"},
-	{"archigraph_cross_links", "method", "#2424 token ceiling pattern — list filter"},
-	{"archigraph_cross_links", "limit", "#2424 token ceiling pattern — list limit"},
-	{"archigraph_cross_links", "repo_filter", "#2424 token ceiling pattern — list filter"},
-	{"archigraph_cross_links", "candidate_id", "#2424 token ceiling pattern — accept/reject arg"},
-	{"archigraph_cross_links", "override_target", "#2424 token ceiling pattern — accept override"},
-	{"archigraph_cross_links", "reason", "#2424 token ceiling pattern — reject reason"},
+	// grafel_cross_links: per-action args undeclared for token budget (#2424 / #1639 pattern).
+	{"grafel_cross_links", "channel", "#2424 token ceiling pattern — list filter"},
+	{"grafel_cross_links", "method", "#2424 token ceiling pattern — list filter"},
+	{"grafel_cross_links", "limit", "#2424 token ceiling pattern — list limit"},
+	{"grafel_cross_links", "repo_filter", "#2424 token ceiling pattern — list filter"},
+	{"grafel_cross_links", "candidate_id", "#2424 token ceiling pattern — accept/reject arg"},
+	{"grafel_cross_links", "override_target", "#2424 token ceiling pattern — accept override"},
+	{"grafel_cross_links", "reason", "#2424 token ceiling pattern — reject reason"},
 
-	// archigraph_license_audit: optional args undeclared for token budget (#2427 / #1639 pattern).
-	{"archigraph_license_audit", "include_transitive", "#2427 token ceiling pattern — optional transitive flag"},
-	{"archigraph_license_audit", "severity", "#2427 token ceiling pattern — optional severity filter"},
-	{"archigraph_license_audit", "limit", "#2427 token ceiling pattern — optional result limit"},
+	// grafel_license_audit: optional args undeclared for token budget (#2427 / #1639 pattern).
+	{"grafel_license_audit", "include_transitive", "#2427 token ceiling pattern — optional transitive flag"},
+	{"grafel_license_audit", "severity", "#2427 token ceiling pattern — optional severity filter"},
+	{"grafel_license_audit", "limit", "#2427 token ceiling pattern — optional result limit"},
 
-	// archigraph_payload_drift: optional filter args undeclared for token budget (#2770 / #1639 pattern).
-	{"archigraph_payload_drift", "severity", "#2770 token ceiling pattern — optional severity floor"},
-	{"archigraph_payload_drift", "endpoint", "#2770 token ceiling pattern — optional endpoint substring filter"},
-	{"archigraph_payload_drift", "repo", "#2770 token ceiling pattern — optional repo substring filter"},
-	{"archigraph_payload_drift", "limit", "#2770 token ceiling pattern — optional result limit"},
+	// grafel_payload_drift: optional filter args undeclared for token budget (#2770 / #1639 pattern).
+	{"grafel_payload_drift", "severity", "#2770 token ceiling pattern — optional severity floor"},
+	{"grafel_payload_drift", "endpoint", "#2770 token ceiling pattern — optional endpoint substring filter"},
+	{"grafel_payload_drift", "repo", "#2770 token ceiling pattern — optional repo substring filter"},
+	{"grafel_payload_drift", "limit", "#2770 token ceiling pattern — optional result limit"},
 
-	// archigraph_literal_parity: optional entity-pin args undeclared for token
+	// grafel_literal_parity: optional entity-pin args undeclared for token
 	// budget (#4421 / #1639 pattern). The three required args (group_oracle,
 	// group_v3, set) ARE declared; *_source pin the value-sets when auto-locate
 	// is insufficient.
-	{"archigraph_literal_parity", "oracle_source", "#4421 token ceiling pattern — optional oracle value-set entity pin"},
-	{"archigraph_literal_parity", "v3_source", "#4421 token ceiling pattern — optional v3 value-set entity pin"},
-	{"archigraph_literal_parity", "oracle_derive", "#4665 token ceiling pattern — optional oracle derivation resolver (e.g. drf_action_codenames)"},
-	{"archigraph_literal_parity", "v3_derive", "#4665 token ceiling pattern — optional v3 derivation resolver"},
-	{"archigraph_literal_parity", "viewset", "#4665 token ceiling pattern — optional ViewSet scope for a derivation"},
+	{"grafel_literal_parity", "oracle_source", "#4421 token ceiling pattern — optional oracle value-set entity pin"},
+	{"grafel_literal_parity", "v3_source", "#4421 token ceiling pattern — optional v3 value-set entity pin"},
+	{"grafel_literal_parity", "oracle_derive", "#4665 token ceiling pattern — optional oracle derivation resolver (e.g. drf_action_codenames)"},
+	{"grafel_literal_parity", "v3_derive", "#4665 token ceiling pattern — optional v3 derivation resolver"},
+	{"grafel_literal_parity", "viewset", "#4665 token ceiling pattern — optional ViewSet scope for a derivation"},
 
-	// archigraph_auth_posture_diff: optional narrowing args undeclared for token
+	// grafel_auth_posture_diff: optional narrowing args undeclared for token
 	// budget (#4422 / #1639 pattern). The two required args (group_oracle,
 	// group_v3) ARE declared; endpoint narrows to one endpoint, format toggles
 	// terse|full per-side provenance.
-	{"archigraph_auth_posture_diff", "endpoint", "#4422 token ceiling pattern — optional endpoint substring filter"},
-	{"archigraph_auth_posture_diff", "format", "#4422 token ceiling pattern — optional terse|full output"},
+	{"grafel_auth_posture_diff", "endpoint", "#4422 token ceiling pattern — optional endpoint substring filter"},
+	{"grafel_auth_posture_diff", "format", "#4422 token ceiling pattern — optional terse|full output"},
 
-	// archigraph_response_shape_diff: optional narrowing args undeclared for token
+	// grafel_response_shape_diff: optional narrowing args undeclared for token
 	// budget (#4424 / #1639 pattern). The two required args (group_oracle,
 	// group_v3) ARE declared; endpoint narrows to one "VERB /path", format toggles
 	// terse|full output.
-	{"archigraph_response_shape_diff", "endpoint", "#4424 token ceiling pattern — optional single-endpoint filter"},
-	{"archigraph_response_shape_diff", "format", "#4424 token ceiling pattern — optional terse|full output"},
+	{"grafel_response_shape_diff", "endpoint", "#4424 token ceiling pattern — optional single-endpoint filter"},
+	{"grafel_response_shape_diff", "format", "#4424 token ceiling pattern — optional terse|full output"},
 
-	// archigraph_stub_detector: optional single-endpoint filter undeclared for
+	// grafel_stub_detector: optional single-endpoint filter undeclared for
 	// token budget (#4425 / #1639 pattern). The two required args (group_v3,
 	// group_oracle) ARE declared; endpoint narrows to one "VERB /path".
-	{"archigraph_stub_detector", "endpoint", "#4425 token ceiling pattern — optional single-endpoint filter"},
+	{"grafel_stub_detector", "endpoint", "#4425 token ceiling pattern — optional single-endpoint filter"},
 
-	// archigraph_contract_test_effectiveness: optional narrowing args undeclared
+	// grafel_contract_test_effectiveness: optional narrowing args undeclared
 	// for token budget (#4893 / #1639 pattern). entity_id pins one spec;
 	// only_ineffective (default true) omits effective specs from the result.
-	{"archigraph_contract_test_effectiveness", "entity_id", "#4893 token ceiling pattern — optional single-spec filter"},
-	{"archigraph_contract_test_effectiveness", "only_ineffective", "#4893 token ceiling pattern — optional verdict filter (default true)"},
+	{"grafel_contract_test_effectiveness", "entity_id", "#4893 token ceiling pattern — optional single-spec filter"},
+	{"grafel_contract_test_effectiveness", "only_ineffective", "#4893 token ceiling pattern — optional verdict filter (default true)"},
 
-	// archigraph_endpoint_posture: scan-mode pagination undeclared for token
+	// grafel_endpoint_posture: scan-mode pagination undeclared for token
 	// budget (#1639 pattern). entity_id/facet/path_contains/method ARE declared.
-	{"archigraph_endpoint_posture", "limit", "#1639 token ceiling pattern — scan-mode result limit"},
-	{"archigraph_endpoint_posture", "offset", "#1639 token ceiling pattern — scan-mode pagination offset"},
+	{"grafel_endpoint_posture", "limit", "#1639 token ceiling pattern — scan-mode result limit"},
+	{"grafel_endpoint_posture", "offset", "#1639 token ceiling pattern — scan-mode pagination offset"},
 }
 
 // handlerToTool and dispatchTree have been REMOVED.
@@ -248,8 +248,8 @@ var sharedHelpers = map[string]bool{
 	"FromRequest":            true, // PaginationOpts.FromRequest — all its keys are declared
 	"emitActivity":           true,
 	"argMinConfidence":       true, // #2769 Phase 1C — shared min_confidence reader
-	"includeWants":           true, // #4423 — shared opt-in facet reader (include declared on archigraph_effects)
-	"readSourceWindowOpts":   true, // #2828 — get_source slicing reader; start_line/end_line/max_lines allow-listed under archigraph_get_source
+	"includeWants":           true, // #4423 — shared opt-in facet reader (include declared on grafel_effects)
+	"readSourceWindowOpts":   true, // #2828 — get_source slicing reader; start_line/end_line/max_lines allow-listed under grafel_get_source
 }
 
 // argFuncNames is the set of arg-reader function names to match in the AST.
@@ -343,7 +343,7 @@ func TestSchemaContract_AllHandlerArgsDeclared(t *testing.T) {
 			if !reportedUnregistered[u.funcName] {
 				reportedUnregistered[u.funcName] = true
 				t.Errorf("%s:%d: handler %q reads arg %q but has no registered tool — "+
-					"add s.wrap(\"archigraph_xxx\", s.%s) in registerTools, or "+
+					"add s.wrap(\"grafel_xxx\", s.%s) in registerTools, or "+
 					"add %q to sharedHelpers if it is a shared utility (not a direct handler), "+
 					"or add %q to orphanedHandlers if its tool was deliberately dropped",
 					u.file, u.line, u.funcName, u.argKey, u.funcName, u.funcName, u.funcName)

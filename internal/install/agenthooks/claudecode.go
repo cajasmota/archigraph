@@ -18,7 +18,7 @@
 //
 //   - ADVISORY ONLY, NEVER BLOCKING. The hook exits 0 and prints a one-line
 //     nudge to stderr. It never denies a tool call. A grep the agent wants
-//     to run still runs; we only suggest archigraph might be faster.
+//     to run still runs; we only suggest grafel might be faster.
 //   - PRECISE heuristic, not "every grep". The nudge fires only on grep/rg
 //     invocations that look like STRUCTURAL queries (symbol hunts,
 //     definition lookups, who-calls patterns) — not TODO/string sweeps,
@@ -64,7 +64,7 @@ func (claudeCodeHost) IsHookInstalled(repoRoot string) bool {
 // command so install/update/uninstall can find exactly our entry among any
 // other user-authored hooks. Bumping the trailing version causes an older
 // managed entry to be recognised and replaced in place.
-const Marker = "archigraph:grep-interceptor:v1"
+const Marker = "grafel:grep-interceptor:v1"
 
 // MatcherTools is the Claude Code tool-matcher the hook fires on. Claude
 // Code's structural code search runs through the Bash tool (grep/rg), and
@@ -80,7 +80,7 @@ var SettingsRelPath = filepath.Join(".claude", "settings.json")
 // NudgeScriptRelPath is the project-relative path the advisory nudge script
 // is written to. Keeping it on disk (rather than a giant inline command)
 // keeps the settings.json entry small and lets users read/audit it.
-var NudgeScriptRelPath = filepath.Join(".claude", "archigraph-grep-nudge.sh")
+var NudgeScriptRelPath = filepath.Join(".claude", "grafel-grep-nudge.sh")
 
 // installClaudeCode upserts the marker-identified PreToolUse nudge hook into
 // the project's .claude/settings.json (creating the file and the nudge script

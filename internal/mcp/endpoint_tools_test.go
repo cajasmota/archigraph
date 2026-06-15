@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -281,7 +281,7 @@ func TestClassifyEndpointKind_AllVariants(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoint_definitions tests
+// grafel_endpoint_definitions tests
 // ---------------------------------------------------------------------------
 
 func TestEndpointDefinitions_ReturnsDefinitionsOnly(t *testing.T) {
@@ -316,7 +316,7 @@ func TestEndpointDefinitions_SurfacesEffects(t *testing.T) {
 	// Redirect HOME so effectsSidecarPath resolves into the temp dir.
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	dir := filepath.Join(home, ".archigraph", "groups")
+	dir := filepath.Join(home, ".grafel", "groups")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -503,7 +503,7 @@ func hasSuffixKey(m map[string]bool, suffix string) bool {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoint_calls tests
+// grafel_endpoint_calls tests
 // ---------------------------------------------------------------------------
 
 func TestEndpointCalls_ReturnsCallsOnly(t *testing.T) {
@@ -616,7 +616,7 @@ func TestEndpointCalls_NoteFieldAbsent(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoint_stats tests
+// grafel_endpoint_stats tests
 // ---------------------------------------------------------------------------
 
 func TestEndpointStats_TotalsCorrect(t *testing.T) {
@@ -855,7 +855,7 @@ func TestSearchEntities_LegacyKindFilterExpands(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoints dispatch (#1281)
+// grafel_endpoints dispatch (#1281)
 // ---------------------------------------------------------------------------
 
 func TestHandleEndpoints_Definitions(t *testing.T) {

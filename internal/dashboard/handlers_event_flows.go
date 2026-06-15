@@ -22,7 +22,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // eventFlowEntityKind is the engine-emitted kind for event-flow chains.

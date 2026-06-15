@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // PatternDetector is the interface all pattern detectors must implement.

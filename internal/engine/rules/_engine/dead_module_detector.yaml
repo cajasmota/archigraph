@@ -10,7 +10,7 @@ description: >-
   that have zero inbound DEPENDS_ON edges (excluding self-references).
   Flags them with is_unused=True and emits SCOPE.Pattern(kind=dead_module).
   Closes New-Q44 (which first-party modules are unused?).
-module: archigraph.engine.rules.pattern_detectors.dead_module_detector
+module: grafel.engine.rules.pattern_detectors.dead_module_detector
 function: detect
 applies_to_function: applies_to
 otel_span: indexer.dead_module_detector

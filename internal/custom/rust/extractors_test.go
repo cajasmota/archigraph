@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/rust"
+	_ "github.com/cajasmota/grafel/internal/custom/rust"
 )
 
 func fi(path, lang, src string) extreg.FileInput {

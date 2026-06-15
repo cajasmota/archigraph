@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
 )
 
 // ---------------------------------------------------------------------------

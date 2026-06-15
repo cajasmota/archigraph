@@ -2,7 +2,7 @@
 //
 // # Why this exists
 //
-// archigraph_auth_coverage previously detected auth only via per-method /
+// grafel_auth_coverage previously detected auth only via per-method /
 // per-decorator signals (e.g. `@permission_classes(...)`, `@login_required`).
 // Real DRF apps overwhelmingly declare authorisation at the *class* level:
 //
@@ -47,7 +47,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // applyDRFPermissionProperties inspects classBody for a class-level

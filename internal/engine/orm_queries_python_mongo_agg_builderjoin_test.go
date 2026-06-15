@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Deploy-8 item-2 parity fix: Mongo `$lookup` → JOINS_COLLECTION for a builder

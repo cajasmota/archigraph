@@ -9,13 +9,13 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsc "github.com/smacker/go-tree-sitter/c"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/assembly" // register "assembly"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cpp"      // register "c"/"cpp"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cross/abibridge"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/assembly" // register "assembly"
+	_ "github.com/cajasmota/grafel/internal/extractors/cpp"      // register "c"/"cpp"
+	_ "github.com/cajasmota/grafel/internal/extractors/cross/abibridge"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

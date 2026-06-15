@@ -222,7 +222,7 @@ func (w *Watcher) AddRepo(repoPath string) (int, error) {
 // Three-layer skip check (S4 #2154):
 //  1. Hard-coded SkipDirs / walk.IsHardcodedSkip (ShouldSkipDir)
 //  2. Per-instance ExcludeDirs (extraSkip)
-//  3. .gitignore + .archigraph/watch.json (ShouldSkipDirGitignore)
+//  3. .gitignore + .grafel/watch.json (ShouldSkipDirGitignore)
 func (w *Watcher) subscribeRepo(abs string) (int, error) {
 	added := 0
 	walkErr := filepath.WalkDir(abs, func(p string, d os.DirEntry, err error) error {

@@ -58,7 +58,7 @@ extraction_targets:
 
 detector:
   class: DatabaseIndexExtractor
-  module: archigraph.engine.rules.pattern_detectors.database_index_extractor
+  module: grafel.engine.rules.pattern_detectors.database_index_extractor
   category: database_index
   otel_span: indexer.database_index_extract
   otel_attributes:

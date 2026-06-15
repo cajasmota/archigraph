@@ -13,7 +13,7 @@ import (
 // must live in the external store rather than inside the repo working
 // tree (issue #1626). The committed teammate manifest `group.json` is
 // deliberately NOT in this list — it stays co-located in
-// `<repo>/.archigraph/group.json` so it can be discovered by walking up
+// `<repo>/.grafel/group.json` so it can be discovered by walking up
 // from a CWD and is meant to be checked into the repo.
 var graphArtifactNames = []string{
 	"graph.fb",
@@ -37,9 +37,9 @@ var graphArtifactDirs = []string{
 }
 
 // MigrateInRepoState relocates any pre-#1626 generated graph artifacts
-// found in the legacy `<repo>/.archigraph/` directory into the external
+// found in the legacy `<repo>/.grafel/` directory into the external
 // store (StateDirForRepo). It is a no-op when:
-//   - an isolated ARCHIGRAPH_DAEMON_ROOT is in effect (the legacy
+//   - an isolated GRAFEL_DAEMON_ROOT is in effect (the legacy
 //     co-located dir was never the source of truth in that mode), or
 //   - the legacy directory does not exist, or
 //   - the store already holds a graph (already migrated / freshly indexed).
@@ -121,7 +121,7 @@ func legacyHasGraph(legacy string) bool {
 	return false
 }
 
-// cleanupLegacyDir removes the legacy `.archigraph` dir when it is empty
+// cleanupLegacyDir removes the legacy `.grafel` dir when it is empty
 // or holds only the committed group.json manifest (which is kept).
 func cleanupLegacyDir(legacy string) {
 	entries, err := os.ReadDir(legacy)

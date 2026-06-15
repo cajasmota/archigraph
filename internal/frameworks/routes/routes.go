@@ -12,7 +12,7 @@
 // / update / destroy (and the form-view new/edit for the non-API variants) —
 // each with a well-known DEFAULT STATUS the framework returns (create → 201,
 // destroy → 204, index/show/update → 200) without any of it appearing in the
-// user's source. archigraph already SYNTHESIZES these routes as canonical
+// user's source. grafel already SYNTHESIZES these routes as canonical
 // `http:<VERB>:<path>` http_endpoint synthetics (the Rails/Laravel producers),
 // but until T10 they carried NO route PROVENANCE and NO per-verb default
 // status — so a consumer could not tell a framework-generated route from a

@@ -11,7 +11,7 @@ import (
 func withHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", dir)
+	t.Setenv("GRAFEL_HOME", dir)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, "xdg"))
 	return dir
 }
@@ -29,7 +29,7 @@ func TestLoadEmpty(t *testing.T) {
 
 func TestAddGroupValidatesConfigExists(t *testing.T) {
 	home := withHome(t)
-	cfgPath := filepath.Join(home, "xdg", "archigraph", "missing.fleet.json")
+	cfgPath := filepath.Join(home, "xdg", "grafel", "missing.fleet.json")
 
 	// Try to add a group with a non-existent config file.
 	err := AddGroup("missing", cfgPath)
@@ -64,7 +64,7 @@ func TestAddRemoveGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	betaCfgPath := filepath.Join(home, "xdg", "archigraph", "beta.fleet.json")
+	betaCfgPath := filepath.Join(home, "xdg", "grafel", "beta.fleet.json")
 	os.MkdirAll(filepath.Dir(betaCfgPath), 0o755)
 	if err := os.WriteFile(betaCfgPath, []byte(`{"name":"beta"}`), 0o644); err != nil {
 		t.Fatal(err)
@@ -123,11 +123,11 @@ func TestSaveLoadGroupConfig(t *testing.T) {
 
 func TestLoadManifest(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, ".archigraph"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".grafel"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	body := `{"group":"demo","repos":[{"slug":"core","clone_url":"git@x:y.git"}]}`
-	if err := os.WriteFile(filepath.Join(dir, ".archigraph", "group.json"), []byte(body), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ".grafel", "group.json"), []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	m, err := LoadManifest(dir)
@@ -163,7 +163,7 @@ func TestStackList_UnmarshalJSON_String(t *testing.T) {
 }
 
 func TestStackList_UnmarshalJSON_Array(t *testing.T) {
-	// New shape: array of strings (e.g. what archigraph.fleet.json now has).
+	// New shape: array of strings (e.g. what grafel.fleet.json now has).
 	input := `{"slug":"repo","path":"/tmp","stack":["go","typescript"]}`
 	var r Repo
 	if err := json.Unmarshal([]byte(input), &r); err != nil {
@@ -233,18 +233,18 @@ func TestStackList_MarshalJSON_AlwaysArray(t *testing.T) {
 }
 
 func TestStackList_RoundTrip_OldConfigShape(t *testing.T) {
-	// Simulate loading the archigraph.fleet.json that caused the original crash:
+	// Simulate loading the grafel.fleet.json that caused the original crash:
 	//   "stack": ["go", "typescript"]
 	// Verify it round-trips through LoadGroupConfig + SaveGroupConfig.
 	dir := withHome(t)
 	oldShape := `{
-  "name": "archigraph",
+  "name": "grafel",
   "repos": [
-    {"slug": "archigraph", "path": "/tmp/archigraph", "stack": ["go", "typescript"]}
+    {"slug": "grafel", "path": "/tmp/grafel", "stack": ["go", "typescript"]}
   ],
   "features": {}
 }`
-	p := filepath.Join(dir, "archigraph.fleet.json")
+	p := filepath.Join(dir, "grafel.fleet.json")
 	if err := os.WriteFile(p, []byte(oldShape), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -260,7 +260,7 @@ func TestStackList_RoundTrip_OldConfigShape(t *testing.T) {
 		t.Fatalf("stack parse: want [go typescript], got %v", r.Stack)
 	}
 	// Save and reload — should still be correct.
-	p2 := filepath.Join(dir, "archigraph2.fleet.json")
+	p2 := filepath.Join(dir, "grafel2.fleet.json")
 	if err := SaveGroupConfig(p2, cfg); err != nil {
 		t.Fatalf("SaveGroupConfig: %v", err)
 	}

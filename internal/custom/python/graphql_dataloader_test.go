@@ -8,9 +8,9 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func runPyDataLoader(t *testing.T, src string) []types.EntityRecord {

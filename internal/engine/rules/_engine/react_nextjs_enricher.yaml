@@ -12,6 +12,6 @@ description: >-
   Tier-2 enrichment for React/Next.js files. Emits SCOPE.Pattern entities
   with hooks_used, prop_types, is_server_component, is_client_component,
   and event_handlers metadata.
-module: archigraph.engine.rules.pattern_detectors.react_nextjs_enricher
+module: grafel.engine.rules.pattern_detectors.react_nextjs_enricher
 function: detect
 applies_to_function: applies_to

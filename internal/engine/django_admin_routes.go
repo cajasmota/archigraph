@@ -2,7 +2,7 @@
 //
 // The Django admin (mounted via `path('admin/', admin.site.urls)`) registers
 // a family of real HTTP routes per ModelAdmin registration plus a set of
-// site-level routes. Archigraph previously extracted zero of these.
+// site-level routes. Grafel previously extracted zero of these.
 //
 // This pass synthesizes the standard admin route family by detecting three
 // registration patterns in Python source files:
@@ -63,8 +63,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------

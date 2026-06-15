@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // seedCandidates writes a minimal enrichment-candidates.json under the
-// per-repo state dir determined by ARCHIGRAPH_DAEMON_ROOT, using the same
+// per-repo state dir determined by GRAFEL_DAEMON_ROOT, using the same
 // path logic as StateDirForRepo so readAllCandidates picks them up.
 func seedCandidates(t *testing.T, repoPath string, candidates []map[string]any) {
 	t.Helper()
@@ -34,7 +34,7 @@ func seedCandidates(t *testing.T, repoPath string, candidates []map[string]any) 
 }
 
 // newEstimateServer creates a test server with group "g1" and a repo at repoPath.
-// ARCHIGRAPH_DAEMON_ROOT must be set before calling so StateDirForRepo is hermetic.
+// GRAFEL_DAEMON_ROOT must be set before calling so StateDirForRepo is hermetic.
 func newEstimateServer(t *testing.T, repoPath string) *Server {
 	t.Helper()
 	cfg := DefaultConfig()

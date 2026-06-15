@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func TestFormatGitRef(t *testing.T) {
@@ -39,7 +39,7 @@ func TestComputeStatusSummary(t *testing.T) {
 	// Create temporary directory structure for testing.
 	tmpDir := t.TempDir()
 
-	// When ARCHIGRAPH_DAEMON_ROOT is set, StateDirForRepo uses a hashed state directory.
+	// When GRAFEL_DAEMON_ROOT is set, StateDirForRepo uses a hashed state directory.
 	// So we need to create files in the right places.
 	t.Setenv(daemon.EnvRoot, tmpDir)
 
@@ -256,7 +256,7 @@ func TestFmtIntWithCommas(t *testing.T) {
 
 func TestLoadCandidateCountsArray(t *testing.T) {
 	tmpDir := t.TempDir()
-	stateDir := filepath.Join(tmpDir, ".archigraph")
+	stateDir := filepath.Join(tmpDir, ".grafel")
 	os.MkdirAll(stateDir, 0o755)
 
 	// Write enrichment-candidates.json as a bare array with distinct subject IDs.
@@ -366,7 +366,7 @@ func TestComputeStatusSummary_ColdRefs(t *testing.T) {
 
 func TestLoadCandidateCountsMissing(t *testing.T) {
 	tmpDir := t.TempDir()
-	stateDir := filepath.Join(tmpDir, ".archigraph")
+	stateDir := filepath.Join(tmpDir, ".grafel")
 	os.MkdirAll(stateDir, 0o755)
 
 	// No enrichment-candidates.json file.

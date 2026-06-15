@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // buildRefsTestDir creates an on-disk directory layout that mimics
@@ -19,16 +19,16 @@ import (
 //	<storeBase>/<slug-hash>/refs/<refSafe>/graph.fb
 //	<storeBase>/<slug-hash>/refs/<refSafe>/graph-stats.json  (optional)
 //
-// It writes a real archigraph group config + registry so that
+// It writes a real grafel group config + registry so that
 // handleV2GroupRefs can load them.
 //
 // Returns:
-//   - archigraphHome: path to set as ARCHIGRAPH_HOME
+//   - grafelHome: path to set as GRAFEL_HOME
 //   - groupConfigPath: path written to the registry
 func buildRefsTestDir(t *testing.T, groupName string, repos []registry.Repo, refSlots map[string][]string) string {
 	t.Helper()
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	// Write group config.
 	cfg := &registry.GroupConfig{
@@ -64,7 +64,7 @@ func buildRefsTestDir(t *testing.T, groupName string, repos []registry.Repo, ref
 	// here — we just create the structure that the handler reads via
 	// daemon.StateDirForRepoRef and filepath.Dir.
 	//
-	// We rely on ARCHIGRAPH_HOME being set so StateDirForRepoRef produces paths
+	// We rely on GRAFEL_HOME being set so StateDirForRepoRef produces paths
 	// under home/store/. We pre-compute those paths by calling the helper
 	// through the daemon package: instead we write them manually using the
 	// same hash-based naming.
@@ -72,13 +72,13 @@ func buildRefsTestDir(t *testing.T, groupName string, repos []registry.Repo, ref
 	// Simpler: the handler calls daemon.StateDirForRepo(r.Path) to get the hot
 	// stateDir and then does filepath.Dir(stateDir) to get refs/. So we need
 	// to match that exact path. We can compute it in the test via the exported
-	// function from the daemon package (which respects ARCHIGRAPH_HOME).
+	// function from the daemon package (which respects GRAFEL_HOME).
 	//
 	// Import daemon here would create a cycle (dashboard ← daemon). So instead
 	// we just trust the path contract and write files using the same logic via
-	// a helper in the test binary that also sets ARCHIGRAPH_HOME.
+	// a helper in the test binary that also sets GRAFEL_HOME.
 	//
-	// Since we already set ARCHIGRAPH_HOME above, we trigger daemon.StateDirForRepo
+	// Since we already set GRAFEL_HOME above, we trigger daemon.StateDirForRepo
 	// indirectly by importing it from a test helper. Rather than doing that,
 	// we instead write a known fixed store path that we can also pass to the
 	// handler through a stubbed registry.
@@ -86,7 +86,7 @@ func buildRefsTestDir(t *testing.T, groupName string, repos []registry.Repo, ref
 	// The simplest correct approach: write files to a temp dir per-repo and set
 	// the repo.Path in the config to that dir; then the handler will compute
 	// StateDirForRepo(repoPath) which == our pre-built directory because
-	// ARCHIGRAPH_HOME is set.
+	// GRAFEL_HOME is set.
 	//
 	// We do this in refSlots: keys are "<repoPath>:<refSafe>" → entityCount.
 	for key, refs := range refSlots {
@@ -123,7 +123,7 @@ func buildRefsTestDir(t *testing.T, groupName string, repos []registry.Repo, ref
 // returns HTTP 404 with the expected error payload.
 func TestHandleV2GroupRefs_NotFound(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	// Write an empty registry (no groups).
 	reg := map[string]any{"version": 1, "groups": []any{}}
@@ -170,10 +170,10 @@ func TestHandleV2GroupRefs_NotFound(t *testing.T) {
 // repo with no store directory returns an empty refs array (not an error).
 func TestHandleV2GroupRefs_EmptyRefsWhenNeverIndexed(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	// Use a predictable store root so there are no leftover files.
 	storeRoot := filepath.Join(home, "store")
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", storeRoot)
+	t.Setenv("GRAFEL_DAEMON_ROOT", storeRoot)
 
 	groupName := "mygroup"
 	repoPath := filepath.Join(home, "nonexistent-repo") // intentionally not created

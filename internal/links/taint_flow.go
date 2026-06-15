@@ -30,7 +30,7 @@
 //     by hopDecay. Findings below the confidenceFloor are dropped.
 //
 //  5. Write findings to a sidecar <group>-links-taint.json document
-//     for the MCP archigraph_security_findings tool to read.
+//     for the MCP grafel_security_findings tool to read.
 //
 // Storage model: same as the effect pass — no new entity kind. The
 // SecurityFinding records are persisted as the sidecar JSON only; the
@@ -49,7 +49,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // MethodTaintFlow identifies sidecar artefacts produced by the Phase

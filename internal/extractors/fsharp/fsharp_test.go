@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/fsharp"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/fsharp"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // runFSharp runs the extractor on raw source and returns entity records.

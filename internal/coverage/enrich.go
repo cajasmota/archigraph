@@ -26,8 +26,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Stats summarizes one Enrich run for the indexer's verbose log line.

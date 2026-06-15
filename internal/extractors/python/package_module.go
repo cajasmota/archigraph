@@ -50,7 +50,7 @@
 //
 // The pass skips paths that the walker already ignores:
 //   - site-packages / vendor / node_modules directories
-//   - .archigraph/store paths
+//   - .grafel/store paths
 //   - Django migrations packages (isDjangoMigrationFile covers their __init__.py)
 //
 // Tests/ packages ARE emitted (they are real navigable package boundaries).
@@ -60,8 +60,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // packageIgnoreDirs is the set of directory-name segments that should never
@@ -70,7 +70,7 @@ var packageIgnoreDirs = map[string]bool{
 	"site-packages": true,
 	"vendor":        true,
 	"node_modules":  true,
-	".archigraph":   true,
+	".grafel":       true,
 	// Python virtual environment directories — common names:
 	".venv":          true,
 	"venv":           true,

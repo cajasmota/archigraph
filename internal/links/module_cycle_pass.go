@@ -10,7 +10,7 @@
 // in a cycle with the property `module_cycle_id` (the index of the
 // cycle in the sidecar). The persistent <group>-links-module-cycles.json
 // sidecar surfaces the full cycle members + size for the MCP
-// archigraph_module_cycles tool.
+// grafel_module_cycles tool.
 package links
 
 import (

@@ -2,7 +2,7 @@
 // extraction post-pass (#1977 / #1978 / #1989).
 //
 // Test fixtures use the `client-fixture-a` naming convention per the
-// standing rule (memory: feedback_archigraph_competitor_name_scrub) — no
+// standing rule (memory: feedback_grafel_competitor_name_scrub) — no
 // real client model names appear in these tests.
 
 package python_test
@@ -12,11 +12,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Trigger registration init.
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // findFieldEntity returns the first SCOPE.Schema/field entity whose Name

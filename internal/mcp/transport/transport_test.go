@@ -15,7 +15,7 @@ import (
 // Streamable-HTTP handler has something to dispatch to.
 func newTestMCP(t *testing.T) *mcpsrv.MCPServer {
 	t.Helper()
-	srv := mcpsrv.NewMCPServer("archigraph-test", "0.0.0", mcpsrv.WithToolCapabilities(true))
+	srv := mcpsrv.NewMCPServer("grafel-test", "0.0.0", mcpsrv.WithToolCapabilities(true))
 	srv.AddTool(
 		mcpapi.NewTool("ping", mcpapi.WithDescription("returns pong")),
 		func(ctx context.Context, _ mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {

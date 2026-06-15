@@ -4,7 +4,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestIsPascalCaseIdentifier(t *testing.T) {

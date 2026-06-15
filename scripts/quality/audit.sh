@@ -10,16 +10,16 @@
 #   OUT_DIR  override the report destination (default: ./reports/quality)
 set -euo pipefail
 
-CORPUS_DIR="${1:-$HOME/Documents/Projects/archigraph-corpora}"
+CORPUS_DIR="${1:-$HOME/Documents/Projects/grafel-corpora}"
 OUT_DIR="${OUT_DIR:-./reports/quality}"
 DATE="$(date +%Y-%m-%d)"
 
 mkdir -p "$OUT_DIR"
 
-BIN="./build/archigraph"
+BIN="./build/grafel"
 if [[ ! -x "$BIN" ]]; then
   echo "audit.sh: building $BIN" >&2
-  go build -o "$BIN" ./cmd/archigraph
+  go build -o "$BIN" ./cmd/grafel
 fi
 
 "$BIN" quality audit-orphans --corpus "$CORPUS_DIR" --json   --output "$OUT_DIR/orphan-audit-$DATE.json"

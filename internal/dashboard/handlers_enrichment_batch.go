@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/jobs"
+	"github.com/cajasmota/grafel/internal/jobs"
 )
 
 // maxBatchSize is the hard cap on candidates per batch-enrich request.

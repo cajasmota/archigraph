@@ -3,9 +3,9 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/csharp"
+	_ "github.com/cajasmota/grafel/internal/custom/csharp"
 )
 
 // findBySubtype returns the first entity with the given subtype, or nil.

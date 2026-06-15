@@ -16,7 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // bridgeCWD returns the best available working-directory hint for the bridge
@@ -28,7 +28,7 @@ func bridgeCWD() string {
 	return cwd
 }
 
-// newMCPBridgeCmd returns the hidden `archigraph mcp-bridge` subcommand.
+// newMCPBridgeCmd returns the hidden `grafel mcp-bridge` subcommand.
 //
 // The bridge is a short-lived stdio process (one per Claude Code session)
 // that translates JSON-RPC 2.0 requests from Claude's MCP protocol into
@@ -58,13 +58,13 @@ func newMCPBridgeCmd() *cobra.Command {
 		Hidden: true,
 		Short:  "stdio↔socket bridge: translate MCP JSON-RPC 2.0 to daemon JSON-RPC 1.0",
 		Long: `mcp-bridge reads MCP (JSON-RPC 2.0) from stdin and forwards each request
-to the archigraph daemon via its Unix-domain socket (JSON-RPC 1.0).
+to the grafel daemon via its Unix-domain socket (JSON-RPC 1.0).
 Responses are translated back and written to stdout.
 
 This command is invoked automatically by Claude Code via the mcpServers
-entry written by 'archigraph install'. It should not be run directly.`,
+entry written by 'grafel install'. It should not be run directly.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			logger := log.New(os.Stderr, "archigraph-mcp-bridge: ", log.LstdFlags)
+			logger := log.New(os.Stderr, "grafel-mcp-bridge: ", log.LstdFlags)
 			b := &bridge{
 				logger:     logger,
 				socketPath: socketPath,
@@ -74,7 +74,7 @@ entry written by 'archigraph install'. It should not be run directly.`,
 		},
 	}
 	cmd.Flags().StringVar(&socketPath, "socket", "",
-		"override daemon socket path (default: ~/.archigraph/sockets/daemon.sock)")
+		"override daemon socket path (default: ~/.grafel/sockets/daemon.sock)")
 	return cmd
 }
 
@@ -343,7 +343,7 @@ func (b *bridge) handleInitialize(req rpc2Request) *rpc2Response {
 			"tools": map[string]any{},
 		},
 		ServerInfo: map[string]string{
-			"name":    "archigraph",
+			"name":    "grafel",
 			"version": "1.0",
 		},
 	}
@@ -358,7 +358,7 @@ func (b *bridge) handleInitialize(req rpc2Request) *rpc2Response {
 // handleToolsList proxies the tools/list call to the daemon.
 // The bridge's startup cwd is forwarded so the daemon can gate the tool list
 // to the cwd-covered group (#1769): sessions outside all registered groups
-// receive only the sentinel tool (archigraph_status) instead of the full list.
+// receive only the sentinel tool (grafel_status) instead of the full list.
 // Falls back to a static minimal tool catalog when the daemon is unreachable
 // so Claude Code always sees _some_ tools and can display a useful error.
 func (b *bridge) handleToolsList(req rpc2Request) *rpc2Response {
@@ -427,7 +427,7 @@ func (b *bridge) handleToolsCall(req rpc2Request) *rpc2Response {
 	rpcClient, err := b.getRPCClient()
 	if err != nil {
 		b.log("daemon not reachable (%v)", err)
-		return b.daemonError(req.ID, "archigraph daemon is not running — run 'archigraph start' or 'archigraph install'")
+		return b.daemonError(req.ID, "grafel daemon is not running — run 'grafel start' or 'grafel install'")
 	}
 
 	args := MCPToolCallArgs{
@@ -445,7 +445,7 @@ func (b *bridge) handleToolsCall(req rpc2Request) *rpc2Response {
 		toolErr := mcpToolCallResult{
 			IsError: true,
 			Content: []map[string]any{
-				{"type": "text", "text": "archigraph daemon error: " + err.Error()},
+				{"type": "text", "text": "grafel daemon error: " + err.Error()},
 			},
 		}
 		raw, _ := json.Marshal(toolErr)
@@ -472,14 +472,14 @@ func (b *bridge) handleToolsCall(req rpc2Request) *rpc2Response {
 }
 
 // offlineToolList returns a static minimal catalog for when the daemon is
-// not running. The tool list tells Claude Code that archigraph is installed
-// but the daemon is offline — users can call archigraph_whoami to get the
+// not running. The tool list tells Claude Code that grafel is installed
+// but the daemon is offline — users can call grafel_whoami to get the
 // actionable error.
 func (b *bridge) offlineToolList(id any) *rpc2Response {
 	stub := []mcpToolInfo{
 		{
-			Name:        "archigraph_whoami",
-			Description: "Return archigraph status. NOTE: daemon is currently offline — run 'archigraph start'.",
+			Name:        "grafel_whoami",
+			Description: "Return grafel status. NOTE: daemon is currently offline — run 'grafel start'.",
 		},
 	}
 	result := map[string]any{"tools": stub}

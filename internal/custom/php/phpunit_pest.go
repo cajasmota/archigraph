@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -80,7 +80,7 @@ var (
 )
 
 func (e *phpunitPestExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "indexer.phpunit_pest_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

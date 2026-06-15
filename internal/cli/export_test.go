@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // setupExportGroup writes a minimal registry group config plus an indexed
@@ -22,7 +22,7 @@ func setupExportGroup(t *testing.T) string {
 	home := t.TempDir()
 	xdg := t.TempDir()
 	root := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", xdg)
 	t.Setenv(daemon.EnvRoot, root)
 

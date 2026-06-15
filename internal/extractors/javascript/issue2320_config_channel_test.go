@@ -15,8 +15,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
 )
 
 // parseJSForConfig is a local parse helper so this file is self-contained.
@@ -78,7 +78,7 @@ const { mutate: createFoo } = useCreateFoo();
 // ---------------------------------------------------------------------------
 
 func TestDestructureConfig_ConfigOnly_On(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "") // env off
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "") // env off
 	on := true
 	cfg := &extreg.ExtractorConfig{JSEmitDestructureDetail: &on}
 
@@ -95,7 +95,7 @@ func TestDestructureConfig_ConfigOnly_On(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestDestructureConfig_ConfigOnly_Off(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "") // env also off
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "") // env also off
 	off := false
 	cfg := &extreg.ExtractorConfig{JSEmitDestructureDetail: &off}
 
@@ -113,7 +113,7 @@ func TestDestructureConfig_ConfigOnly_Off(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestDestructureConfig_EnvOnly(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "1") // env on
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "1") // env on
 	// nil Config → pure env-var path
 	ents := extractWithCfg(t, []byte(destructureSrc2320), nil)
 
@@ -125,7 +125,7 @@ func TestDestructureConfig_EnvOnly(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("env-only: expected const_destructure* subtype with ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL=1 and nil Config; none found")
+		t.Error("env-only: expected const_destructure* subtype with GRAFEL_EMIT_DESTRUCTURE_DETAIL=1 and nil Config; none found")
 	}
 }
 
@@ -134,7 +134,7 @@ func TestDestructureConfig_EnvOnly(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestDestructureConfig_ConfigWins(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "1") // env says on
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "1") // env says on
 	off := false
 	cfg := &extreg.ExtractorConfig{JSEmitDestructureDetail: &off} // Config says off
 
@@ -152,7 +152,7 @@ func TestDestructureConfig_ConfigWins(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestDestructureConfig_NilConfig_EnvUnset(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "")
 	ents := extractWithCfg(t, []byte(destructureSrc2320), nil)
 
 	for _, e := range ents {

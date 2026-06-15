@@ -5,13 +5,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/install"
+	"github.com/cajasmota/grafel/internal/install"
 )
 
-// newInstallHooksCmd returns the `archigraph install-hooks` subcommand.
+// newInstallHooksCmd returns the `grafel install-hooks` subcommand.
 //
 // It installs 4 git hooks into the current (or specified) repo's .git/hooks/:
-//   - pre-push        — runs `archigraph doctor --quick` before every push
+//   - pre-push        — runs `grafel doctor --quick` before every push
 //   - post-checkout   — signals daemon on branch switch
 //   - post-merge      — signals daemon after merge
 //   - post-rewrite    — signals daemon after rebase/amend
@@ -28,10 +28,10 @@ func newInstallHooksCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "install-hooks",
-		Short: "Install archigraph git hooks into the current repo (pre-push, post-checkout, post-merge, post-rewrite)",
-		Long: `Install 4 archigraph-managed git hooks into the repo's .git/hooks/:
+		Short: "Install grafel git hooks into the current repo (pre-push, post-checkout, post-merge, post-rewrite)",
+		Long: `Install 4 grafel-managed git hooks into the repo's .git/hooks/:
 
-  pre-push        Runs 'archigraph doctor --quick' before every push.
+  pre-push        Runs 'grafel doctor --quick' before every push.
                   Warns on drift but never blocks the push.
   post-checkout   Signals the daemon to mark the new ref as HOT when
                   switching branches.
@@ -60,8 +60,8 @@ instructions for adding the hooks via those tools instead.`,
 			}
 
 			if !dryRun {
-				fmt.Fprintln(out, "✓ archigraph git hooks installed (pre-push, post-checkout, post-merge, post-rewrite)")
-				fmt.Fprintln(out, "  pre-push:      runs 'archigraph doctor --quick' before every push")
+				fmt.Fprintln(out, "✓ grafel git hooks installed (pre-push, post-checkout, post-merge, post-rewrite)")
+				fmt.Fprintln(out, "  pre-push:      runs 'grafel doctor --quick' before every push")
 				fmt.Fprintln(out, "  post-checkout: signals daemon on branch switch")
 				fmt.Fprintln(out, "  post-merge:    signals daemon after merge")
 				fmt.Fprintln(out, "  post-rewrite:  signals daemon after rebase/amend")

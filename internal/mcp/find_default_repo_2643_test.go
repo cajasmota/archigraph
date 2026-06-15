@@ -1,4 +1,4 @@
-// find_default_repo_2643_test.go — tests for #2643: archigraph_find defaults
+// find_default_repo_2643_test.go — tests for #2643: grafel_find defaults
 // to the cwd-resolved repo rather than searching all repos in the group.
 package mcp
 
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // newTestServerWithPaths is like newTestServer but returns the per-repo

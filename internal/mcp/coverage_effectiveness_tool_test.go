@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
 // buildEffectivenessDoc builds entities stamped with both #5037 reachability
 // and #5036 LCOV line coverage (as #5061's enrichment pass would), exercising
-// every cross-product quadrant the archigraph_coverage_effectiveness tool
+// every cross-product quadrant the grafel_coverage_effectiveness tool
 // classifies. The tool reads these directly — it never recomputes.
 //
 //	fn_ineffective  reachable=true  coverage_pct=0   → reachable_no_lines (headline)

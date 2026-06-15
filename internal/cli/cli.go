@@ -1,9 +1,9 @@
-// Package cli implements the archigraph command-line surface.
+// Package cli implements the grafel command-line surface.
 //
 // Commands are registered onto a single cobra root in root.go; each
 // command lives in its own file in this package. Top-level help is
 // trimmed to a small primary surface (install-and-forget); the full
-// surface is reachable via `archigraph help advanced`.
+// surface is reachable via `grafel help advanced`.
 package cli
 
 import (
@@ -12,36 +12,36 @@ import (
 )
 
 // Hooks lets package main inject implementations of subcommands that
-// must live in cmd/archigraph (because they pull in heavy internal
+// must live in cmd/grafel (because they pull in heavy internal
 // packages that should not be visible from the CLI surface).
 type Hooks struct {
-	// RunDaemon runs the long-running daemon (the `archigraph daemon`
+	// RunDaemon runs the long-running daemon (the `grafel daemon`
 	// hidden subcommand). It blocks until the daemon exits. Wired from
-	// cmd/archigraph because the daemon imports the extractor stack.
+	// cmd/grafel because the daemon imports the extractor stack.
 	RunDaemon    func(argv []string) error
 	RunDashboard func(argv []string) error
 	RunQuality   func(argv []string) error
 	// RunLinks runs the cross-repo link passes for a group. Wired up
-	// from cmd/archigraph so the daemon (Phase B) can re-trigger link
+	// from cmd/grafel so the daemon (Phase B) can re-trigger link
 	// passes whenever a registered repo's graph.json changes.
 	// May be nil; callers must check.
 	RunLinks func(group string) error
 
 	// RunExtract is the Phase F subprocess entrypoint. Wired up from
-	// cmd/archigraph so the extract subcommand can run the per-file
+	// cmd/grafel so the extract subcommand can run the per-file
 	// extractor pipeline (Pass 1 + 2.5 + 3) on a bounded batch and
 	// stream JSONL records to stdout. Invoked by the daemon-side
 	// extract coordinator via fork-exec of the same binary.
 	RunExtract func(argv []string) error
 
-	// RunBenchCapture is the entrypoint for `archigraph bench-capture`.
-	// Wired from cmd/archigraph/bench_capture.go; reads a daemon log
+	// RunBenchCapture is the entrypoint for `grafel bench-capture`.
+	// Wired from cmd/grafel/bench_capture.go; reads a daemon log
 	// slice between byte offsets, parses [mcp-rpc] elapsed= lines, and
 	// emits JSON to stdout. See #2298.
 	RunBenchCapture func(argv []string) error
 }
 
-// Execute is the entrypoint called from cmd/archigraph/main.go.
+// Execute is the entrypoint called from cmd/grafel/main.go.
 // It returns once cobra has dispatched (or printed an error).
 func Execute(hooks Hooks) {
 	activeHooks = hooks

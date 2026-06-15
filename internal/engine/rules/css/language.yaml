@@ -17,7 +17,7 @@ meta:
   - bun.lockb
   vera_scope_type: Stylesheet
   notes: 'CSS and its preprocessors/frameworks are indexed as Stylesheet entities
-    in archigraph. Entity types are structural: selectors, mixins, variables/custom properties,
+    in grafel. Entity types are structural: selectors, mixins, variables/custom properties,
     keyframes, media queries, and @import chains. There is no ORM analog for CSS —
     this section is replaced by entity_types which describes the indexable constructs
     within stylesheet files.

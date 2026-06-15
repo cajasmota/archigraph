@@ -384,7 +384,7 @@ public class AdminResource {
 	r := ExtractDropwizard(PatternContext{Source: source, Language: "java", Framework: "dropwizard", FilePath: "AdminResource.java"})
 
 	// @RolesAllowed("ADMIN") auth entity carries auth_required + auth_roles +
-	// auth_guard (the signal archigraph_auth_coverage reads).
+	// auth_guard (the signal grafel_auth_coverage reads).
 	var rolesEnt, authEnt *SecondaryEntity
 	for i := range r.Entities {
 		switch propStr(&r.Entities[i], "auth_annotation") {

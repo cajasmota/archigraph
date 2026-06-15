@@ -36,14 +36,14 @@
         "Auth": {
           "auth_coverage": {
             "status": "partial",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2940",
+            "issue": "https://github.com/cajasmota/grafel/issues/2940",
             "verified_at": "2026-05-27"
           }
         },
         "Validation": {
           "request_validation": {
             "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2940"
+            "issue": "https://github.com/cajasmota/grafel/issues/2940"
           }
         },
         "Schema": {
@@ -64,11 +64,11 @@
         "NestJS Internals": {
           "dependency_injection": {
             "status": "missing",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2940"
+            "issue": "https://github.com/cajasmota/grafel/issues/2940"
           },
           "module_graph": {
             "status": "partial",
-            "issue": "https://github.com/cajasmota/archigraph/issues/2940"
+            "issue": "https://github.com/cajasmota/grafel/issues/2940"
           }
         }
       }
@@ -82,7 +82,7 @@
         "auth_coverage": {
           "status": "partial",
           "cites": ["internal/engine/django_drf_actions.go"],
-          "issue": "https://github.com/cajasmota/archigraph/issues/1942",
+          "issue": "https://github.com/cajasmota/grafel/issues/1942",
           "verified_at": "2026-05-27"
         },
         "endpoint_synthesis": {

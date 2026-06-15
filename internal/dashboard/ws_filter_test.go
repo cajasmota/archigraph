@@ -26,7 +26,7 @@ func TestWSFilter_Nil_IsFirehose(t *testing.T) {
 
 	cases := []WSEvent{
 		{Group: "upvate", Ref: "main"},
-		{Group: "archigraph", Ref: "feature/foo"},
+		{Group: "grafel", Ref: "feature/foo"},
 		{Group: "", Ref: ""},
 	}
 	for _, evt := range cases {
@@ -42,8 +42,8 @@ func TestWSFilter_GroupFilter(t *testing.T) {
 	if !f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
 		t.Error("expected upvate/main to pass group filter")
 	}
-	if f.Matches(WSEvent{Group: "archigraph", Ref: "main"}) {
-		t.Error("expected archigraph/main to be blocked by group filter")
+	if f.Matches(WSEvent{Group: "grafel", Ref: "main"}) {
+		t.Error("expected grafel/main to be blocked by group filter")
 	}
 	if !f.Matches(WSEvent{Group: "upvate", Ref: "feature/foo"}) {
 		t.Error("expected upvate/feature/foo to pass group filter")
@@ -62,14 +62,14 @@ func TestWSFilter_RefFilter(t *testing.T) {
 }
 
 func TestWSFilter_GroupAndRefFilter(t *testing.T) {
-	f := newWSFilter([]string{"upvate", "archigraph"}, []string{"main", "feature/foo"})
+	f := newWSFilter([]string{"upvate", "grafel"}, []string{"main", "feature/foo"})
 
 	// Both group and ref match → pass.
 	if !f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
 		t.Error("upvate/main should pass")
 	}
-	if !f.Matches(WSEvent{Group: "archigraph", Ref: "feature/foo"}) {
-		t.Error("archigraph/feature/foo should pass")
+	if !f.Matches(WSEvent{Group: "grafel", Ref: "feature/foo"}) {
+		t.Error("grafel/feature/foo should pass")
 	}
 
 	// Right group, wrong ref → block.
@@ -115,9 +115,9 @@ func TestWSFilter_SubscribeReplacesPriorFilter(t *testing.T) {
 	c.sub = newWSFilter([]string{"upvate"}, []string{"main"})
 	c.subMu.Unlock()
 
-	// Second subscription replaces: only archigraph/feature/foo.
+	// Second subscription replaces: only grafel/feature/foo.
 	c.subMu.Lock()
-	c.sub = newWSFilter([]string{"archigraph"}, []string{"feature/foo"})
+	c.sub = newWSFilter([]string{"grafel"}, []string{"feature/foo"})
 	c.subMu.Unlock()
 
 	c.subMu.Lock()
@@ -127,8 +127,8 @@ func TestWSFilter_SubscribeReplacesPriorFilter(t *testing.T) {
 	if f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
 		t.Error("old filter must have been replaced — upvate/main should now be blocked")
 	}
-	if !f.Matches(WSEvent{Group: "archigraph", Ref: "feature/foo"}) {
-		t.Error("new filter should pass archigraph/feature/foo")
+	if !f.Matches(WSEvent{Group: "grafel", Ref: "feature/foo"}) {
+		t.Error("new filter should pass grafel/feature/foo")
 	}
 }
 

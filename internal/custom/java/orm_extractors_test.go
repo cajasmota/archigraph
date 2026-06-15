@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 
 	// Blank import to trigger init() registrations for custom_java_* extractors.
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
 )
 
 // ormFI builds a FileInput with the given source.

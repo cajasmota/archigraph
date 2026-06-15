@@ -42,9 +42,9 @@ import (
 
 // EnvEmbeddingTTLDays is the environment variable controlling how long an
 // unused cache entry survives before Sweep removes it.
-const EnvEmbeddingTTLDays = "ARCHIGRAPH_EMBEDDING_TTL_DAYS"
+const EnvEmbeddingTTLDays = "GRAFEL_EMBEDDING_TTL_DAYS"
 
-// defaultTTLDays is the TTL used when ARCHIGRAPH_EMBEDDING_TTL_DAYS is unset.
+// defaultTTLDays is the TTL used when GRAFEL_EMBEDDING_TTL_DAYS is unset.
 const defaultTTLDays = 30
 
 // Cache is a file-backed, content-hash keyed vector store shared across all
@@ -52,11 +52,11 @@ const defaultTTLDays = 30
 // goroutines may call Get/Put simultaneously; concurrent writers for the same
 // hash are harmless because all compute identical vectors.
 type Cache struct {
-	rootDir string // e.g. ~/.archigraph/embeddings
+	rootDir string // e.g. ~/.grafel/embeddings
 }
 
 // NewCache creates (if necessary) and returns a Cache rooted at rootDir.
-// rootDir is typically ~/.archigraph/embeddings, derived from embed.homeDir().
+// rootDir is typically ~/.grafel/embeddings, derived from embed.homeDir().
 func NewCache(rootDir string) (*Cache, error) {
 	if err := os.MkdirAll(rootDir, 0o755); err != nil {
 		return nil, fmt.Errorf("embed cache: mkdir %s: %w", rootDir, err)
@@ -65,7 +65,7 @@ func NewCache(rootDir string) (*Cache, error) {
 }
 
 // DefaultCache returns a Cache rooted at the canonical location
-// (<ARCHIGRAPH_HOME or ~/.archigraph>/embeddings).
+// (<GRAFEL_HOME or ~/.grafel>/embeddings).
 func DefaultCache() (*Cache, error) {
 	return NewCache(filepath.Join(homeDir(), "embeddings"))
 }
@@ -142,7 +142,7 @@ func (c *Cache) Put(bodyHash string, vec []float32) error {
 }
 
 // Sweep removes .vec files whose hash is NOT in activeHashes and whose mtime
-// is older than ttlDays days (0 means use ARCHIGRAPH_EMBEDDING_TTL_DAYS or
+// is older than ttlDays days (0 means use GRAFEL_EMBEDDING_TTL_DAYS or
 // defaultTTLDays).
 //
 // It returns the number of files removed and the first non-permission error
@@ -234,7 +234,7 @@ func decodeVec(data []byte) ([]float32, error) {
 	return vec, nil
 }
 
-// resolveTTLDays reads ARCHIGRAPH_EMBEDDING_TTL_DAYS or returns defaultTTLDays.
+// resolveTTLDays reads GRAFEL_EMBEDDING_TTL_DAYS or returns defaultTTLDays.
 func resolveTTLDays() int {
 	if v := os.Getenv(EnvEmbeddingTTLDays); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {

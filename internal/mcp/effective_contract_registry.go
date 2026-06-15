@@ -3,7 +3,7 @@ package mcp
 // effective_contract_registry.go — the framework-PLUGGABLE effective-contract
 // resolver registry (#4601).
 //
-// archigraph_effective_contract was DRF-only: computeEffectiveContract found a
+// grafel_effective_contract was DRF-only: computeEffectiveContract found a
 // ViewSet's drf_router_expanded routes and projected the engine-stamped
 // effective_* props (effective_contract.go / effective_contract_tool.go). For
 // any non-DRF stack — notably the NestJS upvate-v3 rewrite — it returned an
@@ -27,7 +27,7 @@ package mcp
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // contractResolver composes the per-endpoint effective contract for ONE

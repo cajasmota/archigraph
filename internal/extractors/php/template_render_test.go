@@ -7,8 +7,8 @@ package php_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func phpTplEdge(recs []types.EntityRecord, fromName, name string) bool {

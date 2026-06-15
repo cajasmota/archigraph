@@ -15,17 +15,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/notifications"
-	"github.com/cajasmota/archigraph/internal/quality"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/notifications"
+	"github.com/cajasmota/grafel/internal/quality"
 )
 
 // rebuild and reset both forward to the daemon's Rebuild RPC; reset
-// additionally requests the daemon wipe each repo's .archigraph/ before
+// additionally requests the daemon wipe each repo's .grafel/ before
 // indexing. The deprecated remerge alias was removed in ADR-0017 —
-// callers must use `archigraph rebuild [group]` now.
+// callers must use `grafel rebuild [group]` now.
 
 func newRebuildCmd() *cobra.Command {
 	var quiet bool
@@ -77,7 +77,7 @@ func newResetCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "reset [group] [slug]",
-		Short: "Wipe .archigraph/ and rebuild via the daemon",
+		Short: "Wipe .grafel/ and rebuild via the daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			resolvedRef, _, err := resolveRef(refFlag, false /* @all NOT ok — destructive */)
 			if err != nil {
@@ -572,7 +572,7 @@ func emitJSONProgressState(w io.Writer, token string, r proto.RepoProgressState)
 	})
 }
 
-// recordHealthHistory appends a HealthEntry to ~/.archigraph/health-history.jsonl
+// recordHealthHistory appends a HealthEntry to ~/.grafel/health-history.jsonl
 // after a successful rebuild and fires configured webhook notifications.
 // Errors are silently ignored so a storage failure never disrupts the CLI output.
 func recordHealthHistory(group string, sum *RebuildSummary) {

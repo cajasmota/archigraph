@@ -7,7 +7,7 @@ package install_test
 //   - CLI SHA tamper: rename binary → CLI check fails
 //   - Skill tamper: modify a skill file → skills check reports drift
 //   - Daemon offline: no daemon running → daemon check fails cleanly (no panic)
-//   - MCP drift: remove archigraph entry → MCP check fails
+//   - MCP drift: remove grafel entry → MCP check fails
 //   - Gitignore missing entry → gitignore check warns
 //   - Stale staging dirs → staging check reports info
 //   - Quick mode: tampered state → exits silently with warning (doesn't block)
@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/install"
+	"github.com/cajasmota/grafel/internal/install"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ func newDoctorTestEnv(t *testing.T) *doctorTestEnv {
 	t.Setenv("HOME", tmp)
 
 	// Fake binary.
-	fakeBin := filepath.Join(tmp, "archigraph-fake")
+	fakeBin := filepath.Join(tmp, "grafel-fake")
 	if err := os.WriteFile(fakeBin, []byte("#!/bin/sh\necho fake-doctor-test"), 0o755); err != nil {
 		t.Fatalf("create fake bin: %v", err)
 	}
@@ -61,12 +61,12 @@ func newDoctorTestEnv(t *testing.T) *doctorTestEnv {
 
 	// Skills dir.
 	skillsDir := filepath.Join(claudeDir, "skills")
-	skillName := "archigraph-quality-check"
+	skillName := "grafel-quality-check"
 	skillDir := filepath.Join(skillsDir, skillName)
 	if err := os.MkdirAll(skillDir, 0o755); err != nil {
 		t.Fatalf("mkdir skill dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(skillDir, "SKILL.md"), []byte("# archigraph-quality-check"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(skillDir, "SKILL.md"), []byte("# grafel-quality-check"), 0o644); err != nil {
 		t.Fatalf("write SKILL.md: %v", err)
 	}
 
@@ -90,14 +90,14 @@ func newDoctorTestEnv(t *testing.T) *doctorTestEnv {
 	if err := os.WriteFile(filepath.Join(gitRepo, ".git", "HEAD"), []byte("ref: refs/heads/main\n"), 0o644); err != nil {
 		t.Fatalf("write .git/HEAD: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(gitRepo, ".gitignore"), []byte("/.archigraph/\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(gitRepo, ".gitignore"), []byte("/.grafel/\n"), 0o644); err != nil {
 		t.Fatalf("write .gitignore: %v", err)
 	}
 
 	// MCP registration in .claude.json.
 	mcpDoc := map[string]any{
 		"mcpServers": map[string]any{
-			"archigraph": map[string]any{
+			"grafel": map[string]any{
 				"command": fakeBin,
 				"args":    []string{"mcp-bridge"},
 				"type":    "stdio",
@@ -116,13 +116,13 @@ func newDoctorTestEnv(t *testing.T) *doctorTestEnv {
 		skillName: {Files: manifest},
 	}
 	state.MCP = install.MCPRecord{
-		Name:            "archigraph",
+		Name:            "grafel",
 		RegisteredPaths: []string{claudeJSON},
 	}
 	state.DaemonVersion = "v1.0.0-test"
 	state.Gitignore = install.GitignoreRecord{Repos: []string{gitRepo}}
 
-	stateDir := filepath.Join(tmp, ".archigraph")
+	stateDir := filepath.Join(tmp, ".grafel")
 	if err := os.MkdirAll(stateDir, 0o700); err != nil {
 		t.Fatalf("mkdir state dir: %v", err)
 	}
@@ -376,11 +376,11 @@ func TestDoctorDaemonOffline(t *testing.T) {
 	// The key invariant is no panic.
 }
 
-// TestDoctorMCPDrift: remove the archigraph entry from .claude.json → MCP check fails.
+// TestDoctorMCPDrift: remove the grafel entry from .claude.json → MCP check fails.
 func TestDoctorMCPDrift(t *testing.T) {
 	env := newDoctorTestEnv(t)
 
-	// Overwrite .claude.json without the archigraph MCP entry.
+	// Overwrite .claude.json without the grafel MCP entry.
 	noMCP := map[string]any{"mcpServers": map[string]any{}}
 	b, _ := json.MarshalIndent(noMCP, "", "  ")
 	if err := os.WriteFile(env.claudeJSON, b, 0o644); err != nil {
@@ -398,11 +398,11 @@ func TestDoctorMCPDrift(t *testing.T) {
 	}
 }
 
-// TestDoctorGitignoreMissing: remove /.archigraph/ from .gitignore → warning.
+// TestDoctorGitignoreMissing: remove /.grafel/ from .gitignore → warning.
 func TestDoctorGitignoreMissing(t *testing.T) {
 	env := newDoctorTestEnv(t)
 
-	// Overwrite .gitignore without the archigraph entry.
+	// Overwrite .gitignore without the grafel entry.
 	if err := os.WriteFile(filepath.Join(env.gitRepo, ".gitignore"), []byte("node_modules/\n"), 0o644); err != nil {
 		t.Fatalf("overwrite .gitignore: %v", err)
 	}
@@ -427,7 +427,7 @@ func TestDoctorStaleStagingDirs(t *testing.T) {
 	env := newDoctorTestEnv(t)
 
 	// Create a staging dir that is older than 7 days.
-	stagingDir := filepath.Join(env.home, ".archigraph", "staging", "run-old")
+	stagingDir := filepath.Join(env.home, ".grafel", "staging", "run-old")
 	if err := os.MkdirAll(stagingDir, 0o755); err != nil {
 		t.Fatalf("mkdir staging: %v", err)
 	}
@@ -460,7 +460,7 @@ func TestDoctorMissingInstallJSON(t *testing.T) {
 	t.Setenv("HOME", tmp)
 
 	opts := install.DoctorOptions{
-		StatePath:     filepath.Join(tmp, ".archigraph", "install.json"),
+		StatePath:     filepath.Join(tmp, ".grafel", "install.json"),
 		DaemonPort:    1,
 		DaemonTimeout: 100 * time.Millisecond,
 	}
@@ -587,7 +587,7 @@ func TestDoctorQuickMode_NoInstall(t *testing.T) {
 
 	var buf bytes.Buffer
 	opts := install.QuickOptions{
-		StatePath:     filepath.Join(tmp, ".archigraph", "install.json"),
+		StatePath:     filepath.Join(tmp, ".grafel", "install.json"),
 		DaemonPort:    1,
 		DaemonTimeout: 100 * time.Millisecond,
 		Out:           &buf,
@@ -613,7 +613,7 @@ func TestDoctorRenderReport_Coloured(t *testing.T) {
 			{Surface: "cli", OK: true},
 			{Surface: "daemon", OK: false, Severity: install.SeverityCritical, Drift: []string{"unreachable"}},
 		},
-		Remediation: "Run: archigraph install",
+		Remediation: "Run: grafel install",
 	}
 
 	var buf bytes.Buffer
@@ -629,7 +629,7 @@ func TestDoctorRenderReport_Coloured(t *testing.T) {
 	if !containsStr(output, "unreachable") {
 		t.Error("output missing drift text")
 	}
-	if !containsStr(output, "archigraph install") {
+	if !containsStr(output, "grafel install") {
 		t.Error("output missing remediation hint")
 	}
 }

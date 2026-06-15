@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -89,7 +89,7 @@ var railsCRUDRoutes = []struct{ method, suffix string }{
 }
 
 func (e *railsExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/ruby")
+	tracer := otel.Tracer("grafel/custom/ruby")
 	_, span := tracer.Start(ctx, "indexer.rails_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

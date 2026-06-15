@@ -44,7 +44,7 @@ package css
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // buildImportRel constructs the IMPORTS RelationshipRecord attached to an

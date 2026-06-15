@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
 )
 
 // isBugEdgeToID mirrors internal/mcp.isBugEdgeToID for #4699 fixtures: a

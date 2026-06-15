@@ -3,9 +3,9 @@ package dockerfile_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/dockerfile"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/dockerfile"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // collectRelsByKind returns all relationships across all entities matching kind.

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // TestDialTimeout_FailsFastWhenNoPipe is the regression test for issue #4304:
@@ -14,7 +14,7 @@ import (
 // supplied timeout instead of hanging (which previously tripped the 15-minute
 // go test timeout on Windows CI via TestDelete_UnknownGroupReturnsClearError).
 func TestDialTimeout_FailsFastWhenNoPipe(t *testing.T) {
-	const addr = `\\.\pipe\archigraph-test-nonexistent-4304`
+	const addr = `\\.\pipe\grafel-test-nonexistent-4304`
 	const timeout = time.Second
 
 	start := time.Now()
@@ -36,7 +36,7 @@ func TestDialTimeout_FailsFastWhenNoPipe(t *testing.T) {
 // hang and does not silently inherit go-winio's 2 s default in an unbounded
 // way — it must still fail fast against a missing pipe.
 func TestDialTimeout_ClampsNonPositiveTimeout(t *testing.T) {
-	const addr = `\\.\pipe\archigraph-test-nonexistent-4304-zero`
+	const addr = `\\.\pipe\grafel-test-nonexistent-4304-zero`
 
 	start := time.Now()
 	conn, err := transport.DialTimeout(addr, 0)

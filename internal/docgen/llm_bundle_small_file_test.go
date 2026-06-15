@@ -27,10 +27,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/docgen"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/docgen"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -66,7 +66,7 @@ func smallFileHarness(
 		}
 	}
 
-	t.Setenv("ARCHIGRAPH_HOME", homeDir)
+	t.Setenv("GRAFEL_HOME", homeDir)
 	t.Setenv("XDG_CONFIG_HOME", xdgDir)
 	t.Setenv(daemon.EnvRoot, daemonRoot)
 
@@ -261,7 +261,7 @@ func TestSmallFile_ModelWholeBodyNotAffected(t *testing.T) {
 			t.Fatalf("mkdir %s: %v", d, err)
 		}
 	}
-	t.Setenv("ARCHIGRAPH_HOME", homeDir)
+	t.Setenv("GRAFEL_HOME", homeDir)
 	t.Setenv("XDG_CONFIG_HOME", xdgDir)
 	t.Setenv(daemon.EnvRoot, daemonRoot)
 

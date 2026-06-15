@@ -15,9 +15,9 @@ const (
 )
 
 // bufferSize returns the effective per-subscriber channel capacity. It can be
-// overridden at process startup via the ARCHIGRAPH_PROGRESS_BUFFER env var.
+// overridden at process startup via the GRAFEL_PROGRESS_BUFFER env var.
 func bufferSize() int {
-	if v := os.Getenv("ARCHIGRAPH_PROGRESS_BUFFER"); v != "" {
+	if v := os.Getenv("GRAFEL_PROGRESS_BUFFER"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
 		}

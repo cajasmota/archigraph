@@ -1,6 +1,6 @@
-// navigates_tools.go — MCP handler for the archigraph_navigates tool (#2658).
+// navigates_tools.go — MCP handler for the grafel_navigates tool (#2658).
 //
-// archigraph_navigates traverses NAVIGATES_TO edges in the loaded graph,
+// grafel_navigates traverses NAVIGATES_TO edges in the loaded graph,
 // supporting filter-by-route, filter-by-param, direction, and a multi-hop
 // flow mode.
 //
@@ -60,7 +60,7 @@ type navigatesEntityMeta struct {
 }
 
 // navigatesEdgeItem is the wire shape for a single NAVIGATES_TO edge returned
-// by archigraph_navigates.
+// by grafel_navigates.
 type navigatesEdgeItem struct {
 	FromID     string `json:"from_id"`
 	FromName   string `json:"from_name,omitempty"`
@@ -73,7 +73,7 @@ type navigatesEdgeItem struct {
 	Hop        int    `json:"hop,omitempty"` // flow mode only
 }
 
-// handleNavigates is the handler for the archigraph_navigates MCP tool (#2658).
+// handleNavigates is the handler for the grafel_navigates MCP tool (#2658).
 // It queries NAVIGATES_TO edges with optional route / param / direction filters.
 // When mode=flow it performs a multi-hop BFS following NAVIGATES_TO chains.
 func (s *Server) handleNavigates(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {

@@ -14,11 +14,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 const (
-	unitName = "archigraph-daemon"
+	unitName = "grafel-daemon"
 )
 
 // unitTemplate is the systemd user unit file. Type=simple is correct
@@ -27,8 +27,8 @@ const (
 // lingering is enabled (or when a user session starts on standard
 // desktop systems).
 const unitTemplate = `[Unit]
-Description=archigraph knowledge-graph daemon
-Documentation=https://github.com/cajasmota/archigraph
+Description=grafel knowledge-graph daemon
+Documentation=https://github.com/cajasmota/grafel
 After=network.target
 
 [Service]
@@ -47,7 +47,7 @@ type unitVars struct {
 	Home    string
 }
 
-// unitPath returns ~/.config/systemd/user/archigraph-daemon.service.
+// unitPath returns ~/.config/systemd/user/grafel-daemon.service.
 func unitPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {

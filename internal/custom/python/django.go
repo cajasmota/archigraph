@@ -9,9 +9,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/lifecycle"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/lifecycle"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -725,7 +725,7 @@ func (e *DjangoExtractor) Extract(ctx context.Context, file extractor.FileInput)
 				"decorator":    "permission_required",
 				"permission":   permission,
 				// #authz — the specific required permission on the cross-language
-				// flat contract so archigraph_auth_coverage answers
+				// flat contract so grafel_auth_coverage answers
 				// "what permission does this route require?" uniformly.
 				"auth_permissions": permission,
 				"auth_method":      "decorator",

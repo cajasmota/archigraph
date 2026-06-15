@@ -1,7 +1,7 @@
 // Package links implements the cross-repo link passes (P1/P2/P3) that run
-// after per-repo indexing has produced <repo>/.archigraph/graph.json for
+// after per-repo indexing has produced <repo>/.grafel/graph.json for
 // every repo in a group. The output is a shared
-// ~/.archigraph/groups/<group>-links.json document plus a
+// ~/.grafel/groups/<group>-links.json document plus a
 // candidates.json sidecar for mid-confidence matches and a
 // rejections.json file used to suppress already-rejected candidates.
 //
@@ -34,7 +34,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // SchemaVersion is the integer version of the links file shape.
@@ -185,7 +185,7 @@ type PassResult struct {
 	// #2813 dynamic-baseurl static-suffix matcher surfaced for consumers it
 	// could NOT auto-link (ambiguous: multiple candidates, or a too-generic
 	// suffix). These consumers stay orphaned (counted under the
-	// "dynamic_baseurl" miss reason) and are exposed to archigraph-resolve via
+	// "dynamic_baseurl" miss reason) and are exposed to grafel-resolve via
 	// the per-repo dynamic_baseurl_endpoint enrichment candidate; this counter
 	// reports how much candidate signal the suffix matcher found for them. (#2813)
 	ResidualCandidates int
@@ -246,29 +246,29 @@ type Paths struct {
 	ScanCache  string
 	// LinkPassStats is the JSON file where RunAllPasses writes the
 	// PassResult counter snapshot at the end of every run. Picked up by
-	// archigraph_stats so MCP callers can read the resolve-strategy
+	// grafel_stats so MCP callers can read the resolve-strategy
 	// telemetry (#2669) without re-running the pass pipeline.
 	LinkPassStats string
 }
 
-// PathsFor returns the canonical paths under archigraphHome ("" → ~/.archigraph)
+// PathsFor returns the canonical paths under grafelHome ("" → ~/.grafel)
 // for the given group.
-func PathsFor(archigraphHome, group string) (Paths, error) {
+func PathsFor(grafelHome, group string) (Paths, error) {
 	if group == "" {
 		return Paths{}, errors.New("group name required")
 	}
-	if archigraphHome == "" {
+	if grafelHome == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return Paths{}, err
 		}
-		archigraphHome = filepath.Join(home, ".archigraph")
+		grafelHome = filepath.Join(home, ".grafel")
 	}
-	groupsDir := filepath.Join(archigraphHome, "groups")
-	cacheDir := filepath.Join(archigraphHome+"-cache", group, "string-scan")
-	if !strings.HasSuffix(archigraphHome, ".archigraph") {
-		// Use sibling cache dir under archigraphHome for tests.
-		cacheDir = filepath.Join(archigraphHome, "cache", group, "string-scan")
+	groupsDir := filepath.Join(grafelHome, "groups")
+	cacheDir := filepath.Join(grafelHome+"-cache", group, "string-scan")
+	if !strings.HasSuffix(grafelHome, ".grafel") {
+		// Use sibling cache dir under grafelHome for tests.
+		cacheDir = filepath.Join(grafelHome, "cache", group, "string-scan")
 	}
 	return Paths{
 		Links:         filepath.Join(groupsDir, group+"-links.json"),
@@ -281,10 +281,10 @@ func PathsFor(archigraphHome, group string) (Paths, error) {
 
 // RunAllPasses runs P1, P2, then P3 against the per-repo graph documents
 // found under graphsDir. graphsDir is expected to contain one
-// <slug>/graph.json per repo. archigraphHome (use "" for default) is
+// <slug>/graph.json per repo. grafelHome (use "" for default) is
 // where the output JSON files land.
-func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
-	paths, err := PathsFor(archigraphHome, group)
+func RunAllPasses(group, graphsDir, grafelHome string) (*RunResult, error) {
+	paths, err := PathsFor(grafelHome, group)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	// before the label / string / HTTP passes so downstream queries
 	// reading entity.Properties see the effect annotation. Mutates
 	// entity.Properties in-memory; emits a <group>-links-effects.json
-	// sidecar for the MCP archigraph_effects tool.
+	// sidecar for the MCP grafel_effects tool.
 	pEP, err := runEffectPropagationPass(graphs, paths, rejects)
 	if err != nil {
 		return nil, fmt.Errorf("effect propagation pass: %w", err)
@@ -351,7 +351,7 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	// downstream queries reading entity.Properties see the taint_role
 	// annotation. Mutates entity.Properties in-memory and emits the
 	// <group>-links-taint.json sidecar consumed by the MCP
-	// archigraph_security_findings tool.
+	// grafel_security_findings tool.
 	pTF, err := runTaintFlowPass(graphs, paths, rejects)
 	if err != nil {
 		return nil, fmt.Errorf("taint flow pass: %w", err)
@@ -433,7 +433,7 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	// reads them back from disk and joins them to the per-language
 	// payload-shape facts emitted by the substrate sniffers. Findings
 	// land in a sidecar JSON document read by the
-	// archigraph_payload_drift MCP tool.
+	// grafel_payload_drift MCP tool.
 	pDrift, err := runPayloadDriftPass(group, graphs, paths)
 	if err != nil {
 		return nil, fmt.Errorf("payload drift pass: %w", err)
@@ -454,7 +454,7 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	// #2774 / #2775 — Phase 3B module-cycle detection via Tarjan SCC
 	// over IMPORTS edges. Language-agnostic; stamps `module_cycle_id`
 	// on every cycle participant and emits a sidecar with full SCC
-	// membership for the archigraph_import_cycles MCP tool.
+	// membership for the grafel_import_cycles MCP tool.
 	pCycle, err := runModuleCyclePass(graphs, paths)
 	if err != nil {
 		return nil, fmt.Errorf("module-cycle pass: %w", err)
@@ -465,7 +465,7 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	// language sniffer lifts defs and uses, the pass composes reaching-
 	// definitions (last-write-wins), stamps a compact summary on the
 	// owning function entity, and persists the full chain set in a
-	// sidecar for the archigraph_def_use MCP tool.
+	// sidecar for the grafel_def_use MCP tool.
 	pDU, err := runDefUsePass(graphs, paths)
 	if err != nil {
 		return nil, fmt.Errorf("def-use pass: %w", err)
@@ -475,7 +475,7 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	// #2774 / #2775 — Phase 3D template-pattern catalog (i18n / log-
 	// format / SQL templates). Per-language sniffer lifts every recog-
 	// nised template literal; the pass persists them in a sidecar for
-	// the archigraph_template_patterns MCP tool.
+	// the grafel_template_patterns MCP tool.
 	pTP, err := runTemplatePatternPass(graphs, paths)
 	if err != nil {
 		return nil, fmt.Errorf("template-pattern pass: %w", err)
@@ -512,13 +512,13 @@ func RunAllPasses(group, graphsDir, archigraphHome string) (*RunResult, error) {
 	}
 
 	// #2669: persist the resolve-strategy telemetry to a small sidecar JSON.
-	// MCP's archigraph_stats reads this file so callers see the counters
+	// MCP's grafel_stats reads this file so callers see the counters
 	// without re-running the link pipeline. Write failure is non-fatal — the
 	// link emission itself succeeded and the stats file is purely advisory.
 	if err := writeLinkPassStats(paths.LinkPassStats, res); err != nil {
 		// Surface as a warning but do not fail the whole run; downstream
 		// consumers gracefully degrade to absent telemetry.
-		fmt.Fprintf(os.Stderr, "archigraph: warning: write link pass stats: %v\n", err)
+		fmt.Fprintf(os.Stderr, "grafel: warning: write link pass stats: %v\n", err)
 	}
 	return res, nil
 }
@@ -627,7 +627,7 @@ type repoGraph struct {
 	Path     string
 	Entities []entityNode
 	Edges    []edgeRef
-	// fileRoot is the absolute directory of the repo (parent of .archigraph).
+	// fileRoot is the absolute directory of the repo (parent of .grafel).
 	FileRoot string
 }
 
@@ -727,14 +727,14 @@ func loadAllGraphs(graphsDir string) ([]repoGraph, error) {
 		// the underscore form. Fixes #1701.
 		//
 		// Special case: when the graph file lives in a hidden subdirectory
-		// (e.g. <repo>/.archigraph/graph.json in test fixtures and legacy
-		// on-disk layouts), the immediate basename is ".archigraph" — not
+		// (e.g. <repo>/.grafel/graph.json in test fixtures and legacy
+		// on-disk layouts), the immediate basename is ".grafel" — not
 		// a useful slug. In that case fall up one level to the repo directory
 		// name, which agrees with doc.Repo. If that is also unhelpful, fall
 		// back to doc.Repo.
 		dirBase := filepath.Base(dir)
 		if strings.HasPrefix(dirBase, ".") {
-			// Hidden sub-dir (e.g. .archigraph): use parent directory name.
+			// Hidden sub-dir (e.g. .grafel): use parent directory name.
 			dirBase = filepath.Base(filepath.Dir(dir))
 		}
 		repoName := dirBase

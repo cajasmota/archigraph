@@ -1,4 +1,4 @@
-// Package mode defines the three operational modes of the archigraph daemon
+// Package mode defines the three operational modes of the grafel daemon
 // (S7 of #2149). Each mode is a preset of env-var defaults that controls
 // memory usage, background activity, and feature activation.
 //
@@ -8,8 +8,8 @@
 //  2. Mode defaults applied by ApplyDefaults
 //  3. Compiled-in Go defaults
 //
-// The active mode name is persisted in ~/.archigraph/daemon.config.json
-// so `archigraph status` can surface it without querying the live process.
+// The active mode name is persisted in ~/.grafel/daemon.config.json
+// so `grafel status` can surface it without querying the live process.
 package mode
 
 import (
@@ -60,22 +60,22 @@ func ModeDefaults(m Mode) Defaults {
 	switch m {
 	case Background:
 		return Defaults{
-			"ARCHIGRAPH_EAGER_ALGO":    "false",
-			"ARCHIGRAPH_EMBEDDING_URL": "",
-			"ARCHIGRAPH_HEAP_MAX_PCT":  "60",
+			"GRAFEL_EAGER_ALGO":    "false",
+			"GRAFEL_EMBEDDING_URL": "",
+			"GRAFEL_HEAP_MAX_PCT":  "60",
 		}
 	case Workstation:
 		// Restore current production defaults; don't force-set EMBEDDING_URL
 		// so the operator can configure their own endpoint freely.
 		return Defaults{
-			"ARCHIGRAPH_EAGER_ALGO":   "true",
-			"ARCHIGRAPH_HEAP_MAX_PCT": "80",
+			"GRAFEL_EAGER_ALGO":   "true",
+			"GRAFEL_HEAP_MAX_PCT": "80",
 		}
 	case Readonly:
 		return Defaults{
-			"ARCHIGRAPH_DISABLE_WATCHER": "true",
-			"ARCHIGRAPH_DISABLE_REBUILD": "true",
-			"ARCHIGRAPH_DISABLE_ALGO":    "true",
+			"GRAFEL_DISABLE_WATCHER": "true",
+			"GRAFEL_DISABLE_REBUILD": "true",
+			"GRAFEL_DISABLE_ALGO":    "true",
 		}
 	default:
 		return Defaults{}
@@ -93,9 +93,9 @@ func ApplyDefaults(m Mode) {
 	}
 }
 
-// Config is the on-disk schema for ~/.archigraph/daemon.config.json.
+// Config is the on-disk schema for ~/.grafel/daemon.config.json.
 // It persists the active mode plus any operator-supplied env overrides
-// (written by `archigraph mode <m>`).
+// (written by `grafel mode <m>`).
 type Config struct {
 	// Mode is the active operational mode.
 	Mode Mode `json:"mode"`
@@ -106,7 +106,7 @@ type Config struct {
 }
 
 // DefaultConfigPath returns the canonical path for daemon.config.json,
-// rooted under root (typically ~/.archigraph).
+// rooted under root (typically ~/.grafel).
 func DefaultConfigPath(root string) string {
 	return filepath.Join(root, "daemon.config.json")
 }

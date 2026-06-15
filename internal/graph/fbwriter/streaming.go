@@ -47,8 +47,8 @@ import (
 
 	flatbuffers "github.com/google/flatbuffers/go"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
 )
 
 // GraphMetadata carries the scalar and string fields for the top-level

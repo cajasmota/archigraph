@@ -34,7 +34,7 @@ package sresolver
 import (
 	"log"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ScopedResult is the output of ResolveScoped.

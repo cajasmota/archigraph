@@ -9,7 +9,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // gqlgenSDL is a representative gqlgen schema.graphqls: code-first models are

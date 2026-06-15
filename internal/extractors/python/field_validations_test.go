@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // fieldValidations4871 returns the comma-split validations chips stamped on the

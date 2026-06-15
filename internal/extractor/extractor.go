@@ -15,13 +15,13 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ExtractorConfig carries per-extractor feature toggles that were previously
 // communicated exclusively via ad-hoc environment variables. The Config channel
 // is the primary source; env vars remain as a backward-compatible fallback so
-// that existing scripts (e.g. ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS=1) continue
+// that existing scripts (e.g. GRAFEL_MARKDOWN_EMIT_HEADINGS=1) continue
 // to work unchanged.
 //
 // Priority: Config field (if non-nil and the relevant field is set) wins over
@@ -34,21 +34,21 @@ import (
 // accessor methods (EmitHeadings, EmitDestructureDetail, etc.) which implement
 // the Config-first / env-fallback logic in one place.
 type ExtractorConfig struct {
-	// Incremental reindex toggles (ARCHIGRAPH_INCREMENTAL_REINDEX,
-	// ARCHIGRAPH_INCREMENTAL_MAX_FILES). Non-pointer so the zero value
+	// Incremental reindex toggles (GRAFEL_INCREMENTAL_REINDEX,
+	// GRAFEL_INCREMENTAL_MAX_FILES). Non-pointer so the zero value
 	// is the documented default (disabled / auto-limit).
 	IncrementalReindex  bool
 	IncrementalMaxFiles int // 0 means "auto" (gitmeta-based heuristic)
 
 	// MarkdownEmitHeadings controls SCOPE.Heading entity emission.
-	// Corresponds to ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS. Tri-state:
+	// Corresponds to GRAFEL_MARKDOWN_EMIT_HEADINGS. Tri-state:
 	//   nil  — not set in Config; fall through to env var
 	//   &true — emit headings (overrides env)
 	//   &false — suppress headings (overrides env)
 	MarkdownEmitHeadings *bool
 
 	// JSEmitDestructureDetail controls const_destructure / const_destructure_call
-	// subtype emission. Corresponds to ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL.
+	// subtype emission. Corresponds to GRAFEL_EMIT_DESTRUCTURE_DETAIL.
 	// Tri-state: nil means "not set in Config; fall through to env var".
 	JSEmitDestructureDetail *bool
 
@@ -83,23 +83,23 @@ func ConfigFromEnv() ExtractorConfig {
 	cfg := ExtractorConfig{}
 
 	// Incremental reindex.
-	if v, ok := boolFromEnv("ARCHIGRAPH_INCREMENTAL_REINDEX"); ok {
+	if v, ok := boolFromEnv("GRAFEL_INCREMENTAL_REINDEX"); ok {
 		cfg.IncrementalReindex = v
 		cfg.IncrementalReindexSet = true
 	}
-	if raw := os.Getenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES"); raw != "" {
+	if raw := os.Getenv("GRAFEL_INCREMENTAL_MAX_FILES"); raw != "" {
 		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
 			cfg.IncrementalMaxFiles = n
 		}
 	}
 
 	// Markdown heading emission.
-	if v, ok := boolFromEnv("ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS"); ok {
+	if v, ok := boolFromEnv("GRAFEL_MARKDOWN_EMIT_HEADINGS"); ok {
 		cfg.MarkdownEmitHeadings = &v
 	}
 
 	// JS destructure-detail emission.
-	if v, ok := boolFromEnv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL"); ok {
+	if v, ok := boolFromEnv("GRAFEL_EMIT_DESTRUCTURE_DETAIL"); ok {
 		cfg.JSEmitDestructureDetail = &v
 	}
 
@@ -112,7 +112,7 @@ func (c *ExtractorConfig) EmitHeadings() bool {
 	if c != nil && c.MarkdownEmitHeadings != nil {
 		return *c.MarkdownEmitHeadings
 	}
-	v, _ := boolFromEnv("ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS")
+	v, _ := boolFromEnv("GRAFEL_MARKDOWN_EMIT_HEADINGS")
 	return v
 }
 
@@ -123,7 +123,7 @@ func (c *ExtractorConfig) EmitDestructureDetail() bool {
 	if c != nil && c.JSEmitDestructureDetail != nil {
 		return *c.JSEmitDestructureDetail
 	}
-	v, _ := boolFromEnv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL")
+	v, _ := boolFromEnv("GRAFEL_EMIT_DESTRUCTURE_DETAIL")
 	return v
 }
 
@@ -134,7 +134,7 @@ func (c *ExtractorConfig) IsIncrementalEnabled() bool {
 	if c != nil && c.IncrementalReindexSet {
 		return c.IncrementalReindex
 	}
-	v, _ := boolFromEnv("ARCHIGRAPH_INCREMENTAL_REINDEX")
+	v, _ := boolFromEnv("GRAFEL_INCREMENTAL_REINDEX")
 	return v
 }
 
@@ -146,7 +146,7 @@ func (c *ExtractorConfig) EffectiveIncrementalMaxFiles() int {
 	if c != nil && c.IncrementalMaxFiles > 0 {
 		return c.IncrementalMaxFiles
 	}
-	if raw := os.Getenv("ARCHIGRAPH_INCREMENTAL_MAX_FILES"); raw != "" {
+	if raw := os.Getenv("GRAFEL_INCREMENTAL_MAX_FILES"); raw != "" {
 		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
 			return n
 		}
@@ -207,7 +207,7 @@ type FileInput struct {
 	// calls `User.objects.filter(cognito_id=…)`).
 	//
 	// The closure is built ONCE per indexing run by the coordinator
-	// (in-process: cmd/archigraph/index.go runPass25FrameworkRules;
+	// (in-process: cmd/grafel/index.go runPass25FrameworkRules;
 	// subprocess: internal/daemon/extract/subproc.go) from the union of
 	// SCOPE.Schema(subtype=field) records across ALL files in the
 	// indexed scope (or the batch, in the subprocess case). It is then

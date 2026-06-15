@@ -12,9 +12,9 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/javascript"
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/custom/javascript"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findNeogmaGraphRelates returns the GRAPH_RELATES edge from the node entity

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/responseshapediff"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/responseshapediff"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -118,7 +118,7 @@ func TestResponseShapeDiff_Handler_EmptyJoin(t *testing.T) {
 		[]graph.Entity{endpointEntity("v1", "GET", "/orders", nil)},
 	)
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_response_shape_diff"
+	req.Params.Name = "grafel_response_shape_diff"
 	req.Params.Arguments = map[string]any{"group_oracle": "oracle", "group_v3": "v3"}
 	res, err := s.handleResponseShapeDiff(context.Background(), req)
 	if err != nil {

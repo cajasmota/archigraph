@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/audit"
-	idxerrors "github.com/cajasmota/archigraph/internal/errors"
+	"github.com/cajasmota/grafel/internal/audit"
+	idxerrors "github.com/cajasmota/grafel/internal/errors"
 )
 
 // setupIndexerErrServer returns a test Server with a temp audit log wired in.
@@ -177,7 +177,7 @@ func TestHandleIndexerErrors_HintAndDocsPresent(t *testing.T) {
 	if rec.Hint == "" {
 		t.Error("Hint should be non-empty for IDX-005")
 	}
-	if rec.DocsURL != "https://archigraph.dev/docs/errors/IDX-005" {
+	if rec.DocsURL != "https://grafel.dev/docs/errors/IDX-005" {
 		t.Errorf("DocsURL = %q; unexpected value", rec.DocsURL)
 	}
 }

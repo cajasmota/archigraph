@@ -1,7 +1,7 @@
 package mcp
 
 // inspect_line_precision_2634_test.go — line-precise CALLS / called_by edges
-// on archigraph_inspect (#2634).
+// on grafel_inspect (#2634).
 //
 // Four test cases:
 //  1. TestInspect_IncludesLinePrecision_OutboundCalls   — calls[].line
@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 

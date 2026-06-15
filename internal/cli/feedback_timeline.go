@@ -1,9 +1,9 @@
 package cli
 
-// feedback_timeline.go — `archigraph feedback timeline` (#3206).
+// feedback_timeline.go — `grafel feedback timeline` (#3206).
 //
 // Stitches the internal rewrite-test signals into a chronological STORY of how
-// archigraph helped migrate a backend to a new language with 1:1 parity:
+// grafel helped migrate a backend to a new language with 1:1 parity:
 //
 //   - feedback-events JSONL (#3204): outcome + phase + capability + library
 //   - persona-events JSONL (optional)
@@ -99,7 +99,7 @@ type parityPoint struct {
 	Pct       float64 `json:"pct"`
 }
 
-// newFeedbackTimelineCmd returns `archigraph feedback timeline` (#3206).
+// newFeedbackTimelineCmd returns `grafel feedback timeline` (#3206).
 func newFeedbackTimelineCmd() *cobra.Command {
 	var (
 		since        string
@@ -116,9 +116,9 @@ func newFeedbackTimelineCmd() *cobra.Command {
 		Use:   "timeline",
 		Short: "Reconstruct a phase-segmented narrative of a migration from feedback + rpc + git (internal test harness)",
 		Long: `timeline stitches the internal rewrite-test signals into a chronological
-story of how archigraph helped migrate a backend with 1:1 parity:
+story of how grafel helped migrate a backend with 1:1 parity:
 
-  - feedback-events JSONL (archigraph_feedback_event): outcome + phase
+  - feedback-events JSONL (grafel_feedback_event): outcome + phase
   - persona-events JSONL (optional)
   - the mcp_rpc daemon log: per-call query timeline + token cost
   - git history of the new repo(s): ported code landing over time
@@ -126,7 +126,7 @@ story of how archigraph helped migrate a backend with 1:1 parity:
 Events are merged chronologically, segmented by phase (a phase literally named
 "planning" sorts first), and emitted as timeline.json + timeline.md.
 
-Commit→phase correlation: a commit carrying an "Archigraph-Phase: <phase>"
+Commit→phase correlation: a commit carrying an "Grafel-Phase: <phase>"
 git trailer is matched exactly; otherwise it (and each rpc query) falls into
 the time window of the nearest preceding feedback phase checkpoint.
 
@@ -146,11 +146,11 @@ All data is local; no network calls.`,
 		},
 	}
 	cmd.Flags().StringVar(&since, "since", "", "only include events on/after this UTC date (YYYY-MM-DD); default: all")
-	cmd.Flags().StringVar(&outDir, "out", "", "output directory (default: ~/.archigraph/feedback/timeline-<timestamp>)")
-	cmd.Flags().StringVar(&eventsDir, "events-dir", "", "events directory (default: ~/.archigraph/events)")
-	cmd.Flags().StringVar(&rpcLog, "rpc-log", "", "daemon log path for mcp_rpc query timeline (default: ~/.archigraph/logs/daemon.log; skipped if absent)")
+	cmd.Flags().StringVar(&outDir, "out", "", "output directory (default: ~/.grafel/feedback/timeline-<timestamp>)")
+	cmd.Flags().StringVar(&eventsDir, "events-dir", "", "events directory (default: ~/.grafel/events)")
+	cmd.Flags().StringVar(&rpcLog, "rpc-log", "", "daemon log path for mcp_rpc query timeline (default: ~/.grafel/logs/daemon.log; skipped if absent)")
 	cmd.Flags().StringArrayVar(&repos, "repo", nil, "path to a new repo whose git log supplies commit milestones (repeatable)")
-	cmd.Flags().StringVar(&phaseTrailer, "phase-trailer", "Archigraph-Phase", "git trailer key used for exact commit→phase correlation")
+	cmd.Flags().StringVar(&phaseTrailer, "phase-trailer", "Grafel-Phase", "git trailer key used for exact commit→phase correlation")
 	cmd.Flags().StringVar(&parityFile, "parity-file", "", "JSON of periodic endpoint-count snapshots → 1:1 parity convergence section")
 	cmd.Flags().StringVar(&oldGroup, "old-group", "legacy-backend", "group name for the old/source surface (parity denominator)")
 	cmd.Flags().StringVar(&newGroup, "new-group", "new-backend", "group name for the new/target surface (parity numerator)")
@@ -178,17 +178,17 @@ func runFeedbackTimeline(cmd *cobra.Command, opts timelineOpts) error {
 		return fmt.Errorf("feedback timeline: resolve home: %w", err)
 	}
 	if opts.eventsDir == "" {
-		opts.eventsDir = filepath.Join(home, ".archigraph", "events")
+		opts.eventsDir = filepath.Join(home, ".grafel", "events")
 	}
 	if opts.outDir == "" {
-		opts.outDir = filepath.Join(home, ".archigraph", "feedback",
+		opts.outDir = filepath.Join(home, ".grafel", "feedback",
 			"timeline-"+time.Now().UTC().Format("20060102-150405"))
 	}
 	if opts.rpcLog == "" {
-		opts.rpcLog = filepath.Join(home, ".archigraph", "logs", "daemon.log")
+		opts.rpcLog = filepath.Join(home, ".grafel", "logs", "daemon.log")
 	}
 	if opts.phaseTrailer == "" {
-		opts.phaseTrailer = "Archigraph-Phase"
+		opts.phaseTrailer = "Grafel-Phase"
 	}
 
 	// 1. Feedback events (reuse the rollup loader). These carry phase directly
@@ -467,10 +467,10 @@ func loadPersonaTimelineEvents(dir, since string) ([]timelineEntry, error) {
 // ---- mcp_rpc daemon log ----------------------------------------------------
 
 // rpcDoneLineRe mirrors the daemon's slog-format mcp_rpc phase=done line. The
-// real format (confirmed against cmd/archigraph/bench_capture.go) is, with a
+// real format (confirmed against cmd/grafel/bench_capture.go) is, with a
 // leading slog "time=" field carrying a per-line timestamp:
 //
-//	time=2026-05-27T05:33:46.256+05:45 level=INFO msg=mcp_rpc phase=done tool=archigraph_whoami elapsed_ms=1008 wire_bytes=B payload_token_estimate=T repo=/path
+//	time=2026-05-27T05:33:46.256+05:45 level=INFO msg=mcp_rpc phase=done tool=grafel_whoami elapsed_ms=1008 wire_bytes=B payload_token_estimate=T repo=/path
 //
 // We capture the timestamp (for the timeline), the tool, and (optionally) the
 // payload_token_estimate + repo for per-query cost. wire_bytes/token fields are
@@ -561,7 +561,7 @@ func loadRPCTimelineEvents(logPath, since string) ([]timelineEntry, error) {
 const gitLogSep = "\x1f"
 
 // loadGitTimelineEvents reads `git -C <repo> log` and emits one commit entry per
-// commit in the window. The phase trailer (e.g. "Archigraph-Phase: planning")
+// commit in the window. The phase trailer (e.g. "Grafel-Phase: planning")
 // gives an EXACT commit→phase correlation when present; otherwise Phase is left
 // empty and the caller's time-window fallback assigns it.
 //
@@ -743,7 +743,7 @@ func renderParitySection(b *strings.Builder, p *parityReport) {
 
 func renderTimelineMarkdown(doc timelineDoc) string {
 	var b strings.Builder
-	b.WriteString("# archigraph migration timeline\n\n")
+	b.WriteString("# grafel migration timeline\n\n")
 	if doc.Since != "" {
 		fmt.Fprintf(&b, "Events since **%s**. ", doc.Since)
 	}

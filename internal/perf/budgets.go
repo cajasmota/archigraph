@@ -1,8 +1,8 @@
 package perf
 
-// budgets.go — performance budget tracking for archigraph (#1319)
+// budgets.go — performance budget tracking for grafel (#1319)
 //
-// Records timed metric samples to ~/.archigraph/perf-history.jsonl and
+// Records timed metric samples to ~/.grafel/perf-history.jsonl and
 // evaluates them against configurable budgets loaded from settings.json.
 //
 // Metric keys:
@@ -50,7 +50,7 @@ type Sample struct {
 	RecordedAt string `json:"recorded_at"`
 	// Metric is the metric key (see package comment for the canonical list).
 	Metric string `json:"metric"`
-	// Group is the archigraph group slug when the metric is per-group.
+	// Group is the grafel group slug when the metric is per-group.
 	// Empty for daemon-wide metrics (daemon_rss_mb, cache_hit_rate).
 	Group string `json:"group,omitempty"`
 	// Value is the raw measured value.

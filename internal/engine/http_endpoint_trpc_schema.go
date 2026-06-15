@@ -20,7 +20,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // applyTRPCSchemaBinding stamps input-schema properties on the tRPC

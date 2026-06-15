@@ -160,10 +160,10 @@ func TestStateDirForRepoRef_SameRefDifferentReposDifferentDirs(t *testing.T) {
 }
 
 func TestStateDirForRepoRef_DefaultStore(t *testing.T) {
-	// Without ARCHIGRAPH_DAEMON_ROOT, the path must be under ARCHIGRAPH_HOME/store.
+	// Without GRAFEL_DAEMON_ROOT, the path must be under GRAFEL_HOME/store.
 	t.Setenv(EnvRoot, "")
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	got := StateDirForRepoRef("/some/repo", "main")
 	storePrefix := filepath.Join(home, "store") + string(filepath.Separator)

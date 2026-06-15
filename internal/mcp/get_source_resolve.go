@@ -1,6 +1,6 @@
 package mcp
 
-// get_source_resolve.go — entity resolution for archigraph_get_source (#4272).
+// get_source_resolve.go — entity resolution for grafel_get_source (#4272).
 //
 // get_source is the busiest MCP tool; its ~8% live error rate was dominated by
 // resolution failures on WELL-FORMED args, not by genuinely-missing entities.
@@ -25,7 +25,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // sourceResolution is the outcome of resolveSourceEntity. Exactly one of

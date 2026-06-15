@@ -7,7 +7,7 @@
 // GET  /api/v2/daemon/mode  — returns the current mode + env defaults
 // POST /api/v2/daemon/mode  — writes daemon.config.json and restarts the
 //
-//	daemon (same code path as `archigraph mode <m>`)
+//	daemon (same code path as `grafel mode <m>`)
 //
 // Both handlers are registered in server.go. No authentication is required
 // beyond what the dashboard's existing withAuth middleware provides — the
@@ -22,9 +22,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/mode"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/mode"
 )
 
 // ---------------------------------------------------------------------------
@@ -43,7 +43,7 @@ type v2DaemonModeReply struct {
 	Description string `json:"description"`
 	// EnvDefaults are the env-var defaults the effective mode applies on boot.
 	// Only vars that the mode actually sets are included; the keys are the
-	// ARCHIGRAPH_* var names, values are the would-be defaults.
+	// GRAFEL_* var names, values are the would-be defaults.
 	EnvDefaults map[string]string `json:"env_defaults"`
 	// AllModes lists all three available modes with name + description for the
 	// UI to render the mode-selection cards without hard-coding strings.
@@ -147,7 +147,7 @@ func (s *Server) handleV2GetDaemonMode(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------
 
 // handleV2SetDaemonMode writes the requested mode to daemon.config.json and
-// triggers a daemon restart (same path as `archigraph mode <m>`).
+// triggers a daemon restart (same path as `grafel mode <m>`).
 func (s *Server) handleV2SetDaemonMode(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(io.LimitReader(r.Body, 512))
 	if err != nil {
@@ -168,7 +168,7 @@ func (s *Server) handleV2SetDaemonMode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Resolve the config path via daemonRoot() so tests can inject a temp dir
-	// via Server.historyRoot without touching the real ~/.archigraph.
+	// via Server.historyRoot without touching the real ~/.grafel.
 	root := s.daemonRoot()
 	if root == "" {
 		// Fall back to the canonical daemon layout when historyRoot is not set.

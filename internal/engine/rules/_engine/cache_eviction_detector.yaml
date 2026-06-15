@@ -16,6 +16,6 @@ description: >-
   EXPIRE), node-cache, lru-cache, ioredis, cachetools (TTLCache/LRUCache/LFUCache),
   Django CACHES TIMEOUT, Flask-Caching, groupcache, bigcache, ristretto,
   .NET MemoryCache/IDistributedCache, Rails.cache, Dalli.
-module: archigraph.engine.rules.pattern_detectors.cache_eviction_detector
+module: grafel.engine.rules.pattern_detectors.cache_eviction_detector
 function: detect
 applies_to_function: applies_to

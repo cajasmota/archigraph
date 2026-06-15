@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/sql"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/sql"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // loadSQLFixture reads a fixture from internal/extractors/sql/testdata.

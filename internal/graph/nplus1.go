@@ -1,6 +1,6 @@
 // Package graph — nplus1.go implements the N+1 query anti-pattern detector.
 //
-// The detector walks the entity+relationship graph produced by archigraph index
+// The detector walks the entity+relationship graph produced by grafel index
 // and flags function/method entities that contain ORM query calls inside an
 // apparent loop body. It operates entirely on the on-disk graph.Document, so
 // it runs after indexing without re-parsing source files.
@@ -25,7 +25,7 @@
 //
 // Queries inside prefetch/eager-load calls are excluded via an ORM-safe-method
 // allowlist. Developers may also annotate a call site with the comment
-// "archigraph:nplus1-safe" in the source (recorded as
+// "grafel:nplus1-safe" in the source (recorded as
 // Properties["nplus1_safe"]="true" by the ORM extractor) to opt out.
 //
 // # Output

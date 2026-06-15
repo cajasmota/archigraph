@@ -8,10 +8,10 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #4319 LIVE REPRO + LONG-TERM-FIX gate.

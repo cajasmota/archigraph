@@ -3,18 +3,18 @@ package mcp
 // docgen.go — 6 MCP tools for docgen-via-local-staging (epic #2207, issue #2214).
 //
 // Tools:
-//   archigraph_docgen_start_run  — create/resume a staging run for a group
-//   archigraph_docgen_status     — inspect an in-flight staging run
-//   archigraph_docgen_validate   — lint frontmatter + links (read-only)
-//   archigraph_docgen_promote    — atomic promote staging → canonical
-//   archigraph_docgen_abort      — cancel and delete a staging run
-//   archigraph_docgen_list       — enumerate canonical doc files for a group
+//   grafel_docgen_start_run  — create/resume a staging run for a group
+//   grafel_docgen_status     — inspect an in-flight staging run
+//   grafel_docgen_validate   — lint frontmatter + links (read-only)
+//   grafel_docgen_promote    — atomic promote staging → canonical
+//   grafel_docgen_abort      — cancel and delete a staging run
+//   grafel_docgen_list       — enumerate canonical doc files for a group
 //
 // Staging layout:
-//   <project_root>/.archigraph/staging/<run_id>/
+//   <project_root>/.grafel/staging/<run_id>/
 //
 // Canonical layout:
-//   ~/.archigraph/docs/<group>/
+//   ~/.grafel/docs/<group>/
 
 import (
 	"bufio"
@@ -30,7 +30,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -95,12 +95,12 @@ func projectRootFromCWD(cwd string, noGit bool) (string, error) {
 // Helper: staging directory path
 // ---------------------------------------------------------------------------
 
-// stagingDirPath returns <project_root>/.archigraph/staging/<run_id>.
+// stagingDirPath returns <project_root>/.grafel/staging/<run_id>.
 func stagingDirPath(projectRoot, runID string) string {
-	return filepath.Join(projectRoot, ".archigraph", "staging", runID)
+	return filepath.Join(projectRoot, ".grafel", "staging", runID)
 }
 
-// canonicalDocsPath returns ~/.archigraph/docs/<group>.
+// canonicalDocsPath returns ~/.grafel/docs/<group>.
 func canonicalDocsPath(group string) (string, error) {
 	home := os.Getenv("HOME")
 	if home == "" {
@@ -110,7 +110,7 @@ func canonicalDocsPath(group string) (string, error) {
 			return "", fmt.Errorf("cannot determine home directory: %w", err)
 		}
 	}
-	return filepath.Join(home, ".archigraph", "docs", group), nil
+	return filepath.Join(home, ".grafel", "docs", group), nil
 }
 
 // ---------------------------------------------------------------------------
@@ -166,10 +166,10 @@ func fileSHA256(path string) (string, error) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_docgen_start_run
+// grafel_docgen_start_run
 // ---------------------------------------------------------------------------
 
-// handleDocgenStartRun implements archigraph_docgen_start_run.
+// handleDocgenStartRun implements grafel_docgen_start_run.
 //
 // Parameters:
 //
@@ -180,7 +180,7 @@ func fileSHA256(path string) (string, error) {
 func (s *Server) handleDocgenStartRun(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	group := argString(req, "group", "")
 	if group == "" {
-		return mcpapi.NewToolResultError("group is required for archigraph_docgen_start_run"), nil
+		return mcpapi.NewToolResultError("group is required for grafel_docgen_start_run"), nil
 	}
 	resume := argBool(req, "resume", true) // default: resume if in-flight
 	noGit := argBool(req, "no_git", false)
@@ -232,10 +232,10 @@ func (s *Server) handleDocgenStartRun(_ context.Context, req mcpapi.CallToolRequ
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_docgen_status
+// grafel_docgen_status
 // ---------------------------------------------------------------------------
 
-// handleDocgenStatus implements archigraph_docgen_status.
+// handleDocgenStatus implements grafel_docgen_status.
 //
 // Parameters:
 //
@@ -243,7 +243,7 @@ func (s *Server) handleDocgenStartRun(_ context.Context, req mcpapi.CallToolRequ
 func (s *Server) handleDocgenStatus(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	runID := argString(req, "run_id", "")
 	if runID == "" {
-		return mcpapi.NewToolResultError("run_id is required for archigraph_docgen_status"), nil
+		return mcpapi.NewToolResultError("run_id is required for grafel_docgen_status"), nil
 	}
 
 	// Locate the run info. We check in-memory registry first for the staging
@@ -332,7 +332,7 @@ func resolveStagingPath(s *Server, req mcpapi.CallToolRequest, runID string) (st
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_docgen_validate
+// grafel_docgen_validate
 // ---------------------------------------------------------------------------
 
 // FrontmatterError describes a YAML frontmatter parsing problem in a staging file.
@@ -349,7 +349,7 @@ type CrossLinkError struct {
 	Reason string `json:"reason"`
 }
 
-// handleDocgenValidate implements archigraph_docgen_validate.
+// handleDocgenValidate implements grafel_docgen_validate.
 // This is read-only; it never modifies files.
 //
 // Parameters:
@@ -358,7 +358,7 @@ type CrossLinkError struct {
 func (s *Server) handleDocgenValidate(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	runID := argString(req, "run_id", "")
 	if runID == "" {
-		return mcpapi.NewToolResultError("run_id is required for archigraph_docgen_validate"), nil
+		return mcpapi.NewToolResultError("run_id is required for grafel_docgen_validate"), nil
 	}
 
 	stagingPath, err := resolveStagingPath(s, req, runID)
@@ -615,10 +615,10 @@ func checkRelativeLink(target, fromRelSlash, stagingPath string, knownFiles map[
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_docgen_promote
+// grafel_docgen_promote
 // ---------------------------------------------------------------------------
 
-// handleDocgenPromote implements archigraph_docgen_promote.
+// handleDocgenPromote implements grafel_docgen_promote.
 // Atomic two-step rename: existing canonical → .previous-<timestamp>,
 // staging → canonical. SSG scaffolding is blocked.
 //
@@ -629,7 +629,7 @@ func checkRelativeLink(target, fromRelSlash, stagingPath string, knownFiles map[
 func (s *Server) handleDocgenPromote(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	runID := argString(req, "run_id", "")
 	if runID == "" {
-		return mcpapi.NewToolResultError("run_id is required for archigraph_docgen_promote"), nil
+		return mcpapi.NewToolResultError("run_id is required for grafel_docgen_promote"), nil
 	}
 	force := argBool(req, "force", false)
 
@@ -774,10 +774,10 @@ func cleanupOldPrevious(docsParentDir, group string, maxAge time.Duration) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_docgen_abort
+// grafel_docgen_abort
 // ---------------------------------------------------------------------------
 
-// handleDocgenAbort implements archigraph_docgen_abort.
+// handleDocgenAbort implements grafel_docgen_abort.
 // Deletes the staging directory and releases the per-group lock.
 //
 // Parameters:
@@ -786,7 +786,7 @@ func cleanupOldPrevious(docsParentDir, group string, maxAge time.Duration) {
 func (s *Server) handleDocgenAbort(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	runID := argString(req, "run_id", "")
 	if runID == "" {
-		return mcpapi.NewToolResultError("run_id is required for archigraph_docgen_abort"), nil
+		return mcpapi.NewToolResultError("run_id is required for grafel_docgen_abort"), nil
 	}
 
 	docgenMu.Lock()
@@ -848,11 +848,11 @@ func (s *Server) handleDocgenAbort(_ context.Context, req mcpapi.CallToolRequest
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_docgen_list
+// grafel_docgen_list
 // ---------------------------------------------------------------------------
 
-// handleDocgenList implements archigraph_docgen_list.
-// Read-only enumeration of ~/.archigraph/docs/<group>/.
+// handleDocgenList implements grafel_docgen_list.
+// Read-only enumeration of ~/.grafel/docs/<group>/.
 //
 // Parameters:
 //
@@ -860,7 +860,7 @@ func (s *Server) handleDocgenAbort(_ context.Context, req mcpapi.CallToolRequest
 func (s *Server) handleDocgenList(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	group := argString(req, "group", "")
 	if group == "" {
-		return mcpapi.NewToolResultError("group is required for archigraph_docgen_list"), nil
+		return mcpapi.NewToolResultError("group is required for grafel_docgen_list"), nil
 	}
 
 	canonicalPath, err := canonicalDocsPath(group)

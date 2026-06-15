@@ -20,7 +20,7 @@ description: >-
   edge count. Emits at most 10 SCOPE.Pattern(kind=onboarding_entry) patterns per
   detection run, or at most 5 high_dependency fallback patterns when no
   language-specific entry points are found.
-module: archigraph.engine.rules.pattern_detectors.onboarding_entry_enricher
+module: grafel.engine.rules.pattern_detectors.onboarding_entry_enricher
 function: detect
 applies_to_function: applies_to
 otel_span: indexer.onboarding_enricher

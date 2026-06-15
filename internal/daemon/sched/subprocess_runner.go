@@ -18,17 +18,17 @@ import (
 // of calling the Index function in-process.
 //
 // Default logic (gradual rollout):
-//   - ARCHIGRAPH_SUBPROCESS_INDEXER=true/1  → always ON
-//   - ARCHIGRAPH_SUBPROCESS_INDEXER=false/0 → always OFF
+//   - GRAFEL_SUBPROCESS_INDEXER=true/1  → always ON
+//   - GRAFEL_SUBPROCESS_INDEXER=false/0 → always OFF
 //   - unset                                 → OFF (existing installs keep old behaviour;
-//     new installs set it to "true" during `archigraph install`)
+//     new installs set it to "true" during `grafel install`)
 //
 // The env var is read once at program start via init() to avoid per-call
 // os.Getenv overhead in the hot admission loop.
 var subprocessIndexerEnabled atomic.Bool
 
 func init() {
-	v := strings.TrimSpace(os.Getenv("ARCHIGRAPH_SUBPROCESS_INDEXER"))
+	v := strings.TrimSpace(os.Getenv("GRAFEL_SUBPROCESS_INDEXER"))
 	on := v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
 	subprocessIndexerEnabled.Store(on)
 }
@@ -47,7 +47,7 @@ type ipcEvent struct {
 	Error string `json:"error,omitempty"`
 }
 
-// RunSubprocessIndex forks `archigraph index --internal` for a single
+// RunSubprocessIndex forks `grafel index --internal` for a single
 // reindex job and waits for it to exit. The daemon stays at ~5MB extra
 // overhead per in-flight reindex (IPC reader goroutine + wait state).
 //
@@ -82,8 +82,8 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 	}
 
 	cmd := exec.CommandContext(ctx, binary, args...)
-	// Daemon's state dirs are inherited via the env (ARCHIGRAPH_DAEMON_ROOT,
-	// ARCHIGRAPH_HOME). Do NOT set cmd.Env explicitly so the child inherits
+	// Daemon's state dirs are inherited via the env (GRAFEL_DAEMON_ROOT,
+	// GRAFEL_HOME). Do NOT set cmd.Env explicitly so the child inherits
 	// the daemon's full environment.
 	cmd.Env = os.Environ()
 

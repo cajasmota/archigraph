@@ -10,14 +10,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
 )
 
 // newIndexCmd is the thin RPC client for one-shot indexing. Per ADR-0017
 // there is no in-process fallback — if the daemon isn't running the
 // command returns the canonical error. The flag surface mirrors what
-// the old standalone `archigraph index` accepted so muscle memory and
+// the old standalone `grafel index` accepted so muscle memory and
 // scripts keep working.
 func newIndexCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -38,8 +38,8 @@ func newIndexCmd() *cobra.Command {
 
 func runIndexClient(cmd *cobra.Command, argv []string) error {
 	// Reorder argv so flags appear before positional arguments.
-	// This allows both: archigraph index <repo> --export-fb
-	//              and: archigraph index --export-fb <repo>
+	// This allows both: grafel index <repo> --export-fb
+	//              and: grafel index --export-fb <repo>
 	var flags []string
 	var positionals []string
 	for _, arg := range argv {
@@ -52,7 +52,7 @@ func runIndexClient(cmd *cobra.Command, argv []string) error {
 	reorderedArgv := append(flags, positionals...)
 
 	fs := flag.NewFlagSet("index", flag.ContinueOnError)
-	out := fs.String("out", "", "output path for graph.json (default: <repo>/.archigraph/graph.json)")
+	out := fs.String("out", "", "output path for graph.json (default: <repo>/.grafel/graph.json)")
 	repoTag := fs.String("repo-tag", "", "repository tag stored on entities")
 	skip := fs.String("skip-pass", "", "comma-separated list of passes to skip")
 	pretty := fs.Bool("pretty", false, "emit indented JSON")
@@ -191,7 +191,7 @@ done:
 
 // newMCPCmd is retained as a stub that returns a helpful error pointing
 // users at the daemon-served MCP endpoint (Phase D). It is intentionally
-// not hidden so `archigraph mcp serve` still prints something useful
+// not hidden so `grafel mcp serve` still prints something useful
 // rather than "unknown command".
 func newMCPCmd() *cobra.Command {
 	return &cobra.Command{
@@ -199,10 +199,10 @@ func newMCPCmd() *cobra.Command {
 		Short: "(removed) MCP serving moved into the daemon",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return errors.New(
-				"`archigraph mcp serve` was removed in ADR-0017. " +
+				"`grafel mcp serve` was removed in ADR-0017. " +
 					"The daemon registers itself as the MCP endpoint during " +
-					"`archigraph install` (Phase C+D). " +
-					"For now run `archigraph start` and use the socket-backed proxy.",
+					"`grafel install` (Phase C+D). " +
+					"For now run `grafel start` and use the socket-backed proxy.",
 			)
 		},
 	}
@@ -212,16 +212,16 @@ func newMCPCmd() *cobra.Command {
 // subcommand returns when the daemon isn't reachable. Defined here so
 // every callsite uses the identical wording (see ADR-0017).
 var errDaemonNotRunning = errors.New(
-	"daemon not running; run 'archigraph start' or reinstall via 'archigraph install'",
+	"daemon not running; run 'grafel start' or reinstall via 'grafel install'",
 )
 
 // newDaemonCmd exposes the long-running daemon mode. It is hidden from
-// the primary surface — users normally reach it through `archigraph start`,
+// the primary surface — users normally reach it through `grafel start`,
 // which forks the binary in this mode with stdio detached.
 func newDaemonCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "daemon",
-		Short:              "Run the archigraph daemon (used by start/launchd/systemd)",
+		Short:              "Run the grafel daemon (used by start/launchd/systemd)",
 		Hidden:             true,
 		DisableFlagParsing: true,
 		RunE: func(_ *cobra.Command, args []string) error {

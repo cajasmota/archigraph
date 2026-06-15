@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -50,7 +50,7 @@ func twoGroupEndpointServer(t *testing.T, oracleEnts, v3Ents []graph.Entity) *Se
 func callAuthPostureDiff(t *testing.T, s *Server, args map[string]any) map[string]any {
 	t.Helper()
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_auth_posture_diff"
+	req.Params.Name = "grafel_auth_posture_diff"
 	req.Params.Arguments = args
 	res, err := s.handleAuthPostureDiff(context.Background(), req)
 	if err != nil {
@@ -157,7 +157,7 @@ func TestAuthPostureDiff_E2E_KindMismatch_ElseIsAction(t *testing.T) {
 func TestAuthPostureDiff_E2E_MissingArgs(t *testing.T) {
 	s := twoGroupEndpointServer(t, nil, nil)
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_auth_posture_diff"
+	req.Params.Name = "grafel_auth_posture_diff"
 	req.Params.Arguments = map[string]any{"group_oracle": "oracle"}
 	res, err := s.handleAuthPostureDiff(context.Background(), req)
 	if err != nil {

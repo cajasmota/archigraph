@@ -1,4 +1,4 @@
-// update.go implements `archigraph update` (issue #2213).
+// update.go implements `grafel update` (issue #2213).
 //
 // Update downloads the latest (or a pinned) release artifact from GitHub,
 // replaces the CLI binary atomically, and re-runs the install transaction
@@ -26,7 +26,7 @@ import (
 
 const (
 	// githubReleasesAPI is the GitHub API endpoint for release lookup.
-	githubReleasesAPI = "https://api.github.com/repos/cajasmota/archigraph/releases"
+	githubReleasesAPI = "https://api.github.com/repos/cajasmota/grafel/releases"
 
 	// defaultUpdateTimeout is the HTTP timeout for GitHub API calls.
 	defaultUpdateTimeout = 60 * time.Second
@@ -42,7 +42,7 @@ type UpdateOptions struct {
 	// Only used when Tag is empty.
 	Pre bool
 
-	// BinPath is the path of the current archigraph binary.
+	// BinPath is the path of the current grafel binary.
 	// Defaults to os.Executable().
 	BinPath string
 
@@ -198,7 +198,7 @@ func RunUpdate(opts UpdateOptions) (*UpdateResult, error) {
 			return
 		}
 		if err := os.Rename(stashPath, opts.BinPath); err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph update: rollback failed — could not restore %s from %s: %v\n",
+			fmt.Fprintf(os.Stderr, "grafel update: rollback failed — could not restore %s from %s: %v\n",
 				opts.BinPath, stashPath, err)
 			fmt.Fprintf(os.Stderr, "  Manual recovery: mv %s %s\n", stashPath, opts.BinPath)
 		}
@@ -312,21 +312,21 @@ func extractJSONStringField(json, field string) string {
 	return rest[1 : end+1]
 }
 
-// downloadReleaseBinary fetches the archigraph binary for the given tag/os/arch
+// downloadReleaseBinary fetches the grafel binary for the given tag/os/arch
 // from the GitHub release assets and writes it to destPath.
 //
 // The asset naming convention is:
 //
-//	archigraph-<goos>-<goarch>[.exe]
+//	grafel-<goos>-<goarch>[.exe]
 //
 // e.g.:
 //
-//	archigraph-darwin-amd64
-//	archigraph-darwin-arm64
-//	archigraph-linux-amd64
-//	archigraph-windows-amd64.exe
+//	grafel-darwin-amd64
+//	grafel-darwin-arm64
+//	grafel-linux-amd64
+//	grafel-windows-amd64.exe
 func downloadReleaseBinary(client *http.Client, tag, goos, goarch, destPath string) error {
-	assetName := fmt.Sprintf("archigraph-%s-%s", goos, goarch)
+	assetName := fmt.Sprintf("grafel-%s-%s", goos, goarch)
 	if goos == "windows" {
 		assetName += ".exe"
 	}
@@ -399,7 +399,7 @@ func findAssetDownloadURL(json, assetName string) (string, error) {
 	//   "assets": [ { "name": "...", "browser_download_url": "..." }, ... ]
 	// We scan for the name match, then find the download URL nearby.
 	nameKey := `"name":"` + assetName + `"`
-	// Also accept with spaces: "name": "archigraph-..."
+	// Also accept with spaces: "name": "grafel-..."
 	if !strings.Contains(json, `"name":"`+assetName+`"`) &&
 		!strings.Contains(json, `"name": "`+assetName+`"`) {
 		return "", fmt.Errorf("asset %q not found in release", assetName)

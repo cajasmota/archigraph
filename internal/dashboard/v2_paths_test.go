@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // makePathsTestGroup builds a minimal DashGroup for Paths v2 handler tests.

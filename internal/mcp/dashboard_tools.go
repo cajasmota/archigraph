@@ -17,12 +17,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
 // ---------------------------------------------------------------------------
-// archigraph_topology — action-dispatch bundle (#1281)
+// grafel_topology — action-dispatch bundle (#1281)
 // Replaces: topology_orphan_publishers, topology_orphan_subscribers,
 //           topology_topic_detail
 // ---------------------------------------------------------------------------
@@ -48,7 +48,7 @@ func (s *Server) handleTopology(ctx context.Context, req mcpapi.CallToolRequest)
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_flows — action-dispatch bundle (#1281)
+// grafel_flows — action-dispatch bundle (#1281)
 // Replaces: flow_dead_ends, flow_truncated, flow_detail
 // ---------------------------------------------------------------------------
 
@@ -73,9 +73,9 @@ func (s *Server) handleFlows(ctx context.Context, req mcpapi.CallToolRequest) (*
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_graph_patterns — action-dispatch bundle (#1281)
+// grafel_graph_patterns — action-dispatch bundle (#1281)
 // Replaces: patterns_list, patterns_get (renamed to disambiguate from
-// archigraph_patterns agent-learned store)
+// grafel_patterns agent-learned store)
 // ---------------------------------------------------------------------------
 
 // handleGraphPatterns dispatches on action= to the appropriate graph-indexed
@@ -568,7 +568,7 @@ func (s *Server) handleDiagnostics(_ context.Context, req mcpapi.CallToolRequest
 // ---------------------------------------------------------------------------
 
 // handlePatternsListGraph returns SCOPE.Pattern entities from the loaded
-// graph. This is distinct from archigraph_patterns (which uses the
+// graph. This is distinct from grafel_patterns (which uses the
 // agentpatterns store). Use this to see patterns extracted by the indexer.
 func (s *Server) handlePatternsListGraph(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)

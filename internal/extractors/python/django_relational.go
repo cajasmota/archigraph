@@ -12,7 +12,7 @@
 //     downstream type-hint inference.
 //   - #1989 — `objects = SomeManager()` and other Manager attachments on
 //     Django Model class bodies were invisible: no REFERENCES edge linked
-//     the Model to its Manager, so archigraph_expand(Model) didn't list
+//     the Model to its Manager, so grafel_expand(Model) didn't list
 //     the Manager as a neighbour.
 //   - #2049 — `ForeignKey('Building', ...)` (string reference) produced a
 //     Constraint/External placeholder entity instead of resolving to the
@@ -60,8 +60,8 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // djangoFieldTypes is the set of model-field constructor names that the

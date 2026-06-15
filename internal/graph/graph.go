@@ -1,4 +1,4 @@
-// Package graph defines the public on-disk schema produced by `archigraph index`.
+// Package graph defines the public on-disk schema produced by `grafel index`.
 // The schema is stable and versioned; downstream tools (graph loaders,
 // MCP servers, viewers) consume graph.json files written by this package.
 package graph
@@ -17,7 +17,7 @@ import (
 // Bump when making a backwards-incompatible change.
 const SchemaVersion = 1
 
-// Document is the top-level structure written to <repo>/.archigraph/graph.json.
+// Document is the top-level structure written to <repo>/.grafel/graph.json.
 type Document struct {
 	Version        int               `json:"version"`
 	GeneratedAt    time.Time         `json:"generated_at"`
@@ -132,7 +132,7 @@ func RelationshipID(fromID, toID, kind string) string {
 }
 
 // GraphStatsSidecar is the corpus-level summary written to
-// <repo>/.archigraph/graph-stats.json. Consumed by `archigraph doctor` and the
+// <repo>/.grafel/graph-stats.json. Consumed by `grafel doctor` and the
 // future MCP `graph_stats` tool.
 type GraphStatsSidecar struct {
 	Version            int       `json:"version"`

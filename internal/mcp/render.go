@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // nodeWithRepo carries an entity together with the repo it lives in. Edges
@@ -139,7 +139,7 @@ func renderCompact(r renderResult, tokenBudget int) string {
 	// right tool. Never claim a "shown" count that doesn't reflect actual rendered
 	// lines.
 	if totalEdges > 0 {
-		b.WriteString(fmt.Sprintf("\n# edges-summary: available=%d (call archigraph_expand to see relationships)\n", totalEdges))
+		b.WriteString(fmt.Sprintf("\n# edges-summary: available=%d (call grafel_expand to see relationships)\n", totalEdges))
 		for _, e := range visibleEdges {
 			line := fmt.Sprintf("%s → %s  [%s]\n", e.From, e.To, e.Kind)
 			if tokenBudget > 0 && estimateTokens(b.String()+line) > tokenBudget {
@@ -229,7 +229,7 @@ func toonWireEnabled() bool {
 }
 
 // findFormatMarkdown returns true when the caller has opted out of TOON
-// encoding for archigraph_find ranked-hits via MCP_FIND_FORMAT=markdown.
+// encoding for grafel_find ranked-hits via MCP_FIND_FORMAT=markdown.
 // By default (env unset or "toon") TOON encoding is active.
 func findFormatMarkdown() bool {
 	v := strings.ToLower(strings.TrimSpace(os.Getenv("MCP_FIND_FORMAT")))

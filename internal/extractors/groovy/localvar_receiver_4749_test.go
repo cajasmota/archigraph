@@ -17,7 +17,7 @@ package groovy_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // hasCall reports whether e carries a CALLS edge to toID. When recv is non-empty

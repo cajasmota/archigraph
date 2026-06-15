@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findLink returns the first link matching the predicate, or nil.
@@ -32,7 +32,7 @@ func runDataFlowForTest(t *testing.T, file, content string, entities []entityNod
 	// paths.Links == "" → no sidecar write, but we still need the links;
 	// re-run the internal builder by invoking the pass and reading the
 	// sidecar. Simpler: give a temp links path and read it back.
-	linksPath := root + "/.archigraph/links.json"
+	linksPath := root + "/.grafel/links.json"
 	res, err := runDataFlowPass(graphs, Paths{Links: linksPath}, nil)
 	if err != nil {
 		t.Fatalf("pass error: %v", err)
@@ -88,7 +88,7 @@ function createUser(req, res) {
 		FileRoot: root,
 		Entities: []entityNode{{ID: "h1", Name: "createUser", Kind: "function", SourceFile: file}},
 	}}
-	linksPath := root + "/.archigraph/links.json"
+	linksPath := root + "/.grafel/links.json"
 	if _, err := runDataFlowPass(graphs, Paths{Links: linksPath}, nil); err != nil {
 		t.Fatalf("pass error: %v", err)
 	}
@@ -129,14 +129,14 @@ function createUser(req, res) {
 }
 `
 	writeFile(t, root, file, content)
-	linksPath := root + "/.archigraph/links.json"
+	linksPath := root + "/.grafel/links.json"
 	// Seed the main document with a pre-existing import edge owned by another
 	// pass.
 	seed := Link{
 		ID: "seedimp1", Source: "repo-a::x", Target: "repo-b::y",
 		Relation: RelationImports, Method: MethodImport, Confidence: 1,
 	}
-	if err := os.MkdirAll(root+"/.archigraph", 0o755); err != nil {
+	if err := os.MkdirAll(root+"/.grafel", 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := writeDoc(linksPath, &Document{Version: SchemaVersion, Links: []Link{seed}}); err != nil {
@@ -333,7 +333,7 @@ func runDataFlowMultiFile(t *testing.T, files map[string]string, entities []enti
 		Entities: entities,
 		Edges:    edges,
 	}}
-	linksPath := root + "/.archigraph/links.json"
+	linksPath := root + "/.grafel/links.json"
 	if _, err := runDataFlowPass(graphs, Paths{Links: linksPath}, nil); err != nil {
 		t.Fatalf("pass error: %v", err)
 	}

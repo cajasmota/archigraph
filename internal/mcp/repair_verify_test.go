@@ -6,8 +6,8 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/enrichment"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // baseRepair returns a valid bind_to_entity repair for tests to mutate.

@@ -1,10 +1,10 @@
 package cli
 
-// branches_test.go covers the `archigraph branches` CLI surface introduced by
+// branches_test.go covers the `grafel branches` CLI surface introduced by
 // PH6 of epic #2087 (issue #2094).
 //
-// Tests use a temporary archigraph home (ARCHIGRAPH_HOME env var) and a tiny
-// synthetic store layout so they do not touch the real ~/.archigraph.
+// Tests use a temporary grafel home (GRAFEL_HOME env var) and a tiny
+// synthetic store layout so they do not touch the real ~/.grafel.
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // ---------------------------------------------------------------------------

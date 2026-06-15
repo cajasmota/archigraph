@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/quality"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/quality"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -378,8 +378,8 @@ func TestV2DeleteGroup_CleansRepoState(t *testing.T) {
 	// and parallel-safe.
 	archHome := t.TempDir()
 	daemonRoot := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", daemonRoot)
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", daemonRoot)
 
 	// Write a minimal fleet config with two repos.
 	configDir := filepath.Join(archHome, "configs")
@@ -406,8 +406,8 @@ func TestV2DeleteGroup_CleansRepoState(t *testing.T) {
 	}
 
 	// Create synthetic per-repo state dirs with a marker file inside each.
-	// With ARCHIGRAPH_DAEMON_ROOT set, daemon.StateDirForRepo returns
-	// $ARCHIGRAPH_DAEMON_ROOT/state/<hash>/. We use the same helper the
+	// With GRAFEL_DAEMON_ROOT set, daemon.StateDirForRepo returns
+	// $GRAFEL_DAEMON_ROOT/state/<hash>/. We use the same helper the
 	// handler uses so the paths are guaranteed to match.
 	repoPaths := []string{"/repos/alpha", "/repos/beta"}
 	for _, rp := range repoPaths {

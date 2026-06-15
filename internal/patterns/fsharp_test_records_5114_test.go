@@ -3,7 +3,7 @@ package patterns
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #5114 — F# property-test (FsCheck / Hedgehog) and assertion-library

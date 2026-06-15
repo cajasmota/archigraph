@@ -3,7 +3,7 @@
 // Analog of #642 (JS/TS), #650 (Python), and #670 (Java) for Go. The
 // Go extractor emits IMPORTS edges whose ToID is the full module path
 // exactly as it appears in the import statement (`"fmt"`,
-// `"github.com/go-chi/chi/v5"`, `"github.com/cajasmota/archigraph/internal/types"`).
+// `"github.com/go-chi/chi/v5"`, `"github.com/cajasmota/grafel/internal/types"`).
 // None of those carry the `ext:<package>` prefix the resolver's
 // external-disposition gate (refs.go: stubPrefixExternal) keys on, so
 // every imported leaf from a known external Go package — stdlib
@@ -23,7 +23,7 @@
 //	    → ToID = "ext:github.com/go-chi/chi"
 //	import "github.com/go-chi/chi/v5/middleware"
 //	    → ToID = "ext:github.com/go-chi/chi"
-//	import "github.com/cajasmota/archigraph/internal/types"
+//	import "github.com/cajasmota/grafel/internal/types"
 //	    → untouched (not on the external allowlist; in-tree path)
 //
 // Go's module-path convention requires special handling versus Python
@@ -55,7 +55,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // buildGoInTreeQualifiers returns a map from the package qualifier used in

@@ -3,10 +3,10 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // Issue #4403 LIVE-REPRO — Django global wiring, remaining settings shapes.

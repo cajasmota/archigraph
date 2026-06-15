@@ -1,9 +1,9 @@
-// Package watchreg is the daemon-owned registry of standalone `archigraph watch`
+// Package watchreg is the daemon-owned registry of standalone `grafel watch`
 // child processes (issue #5142, follow-up to #5140/#5141).
 //
 // # Problem
 //
-// Pre-Phase-B, `archigraph watch <repo>` runs as a standalone launchd/systemd
+// Pre-Phase-B, `grafel watch <repo>` runs as a standalone launchd/systemd
 // process. If its owning daemon dies/restarts, the watcher is orphaned. #5141
 // gave the watcher a self-reap (exit after N consecutive daemon-unreachable
 // failures), but that is best-effort and slow: a watcher that is wedged, paused,
@@ -13,7 +13,7 @@
 // # Design
 //
 // Each standalone watcher writes a tiny JSON entry into a shared registry file
-// under the daemon root (`~/.archigraph/watchers.json`) at startup and removes
+// under the daemon root (`~/.grafel/watchers.json`) at startup and removes
 // its own entry on clean exit. The daemon's reaper periodically:
 //
 //  1. drops entries whose PID is no longer alive (signal-0 probe), and
@@ -39,7 +39,7 @@ import (
 // FileName is the basename of the watcher registry under the daemon root.
 const FileName = "watchers.json"
 
-// Entry records one standalone `archigraph watch` process.
+// Entry records one standalone `grafel watch` process.
 type Entry struct {
 	// PID is the watcher process id.
 	PID int `json:"pid"`

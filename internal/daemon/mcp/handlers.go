@@ -1,7 +1,7 @@
 // Phase-D MCP query handlers that operate against the lazy-mmap graph
 // cache instead of re-parsing graph.json. These are the building blocks
 // the daemon will expose over its RPC surface in the follow-up wiring
-// PR (the standalone `archigraph mcp serve` is deleted per ADR-0017).
+// PR (the standalone `grafel mcp serve` is deleted per ADR-0017).
 //
 // The four handlers covered here map onto the canonical MCP tools
 // listed in the Phase-D plan:
@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"hash/fnv"
 
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
 )
 
 // EntityView is a flat, copy-once projection of an Entity decoded from
@@ -144,7 +144,7 @@ type ResidualEdge struct {
 // the resolver in pass 4 of the indexer; see ADR-0015).
 //
 // limit/offset bound the returned slice (pagination — same semantics as
-// the standalone MCP tool's archigraph_list_residuals).
+// the standalone MCP tool's grafel_list_residuals).
 func (q *QueryService) ListResiduals(fbPath string, limit, offset int) ([]ResidualEdge, error) {
 	if limit <= 0 {
 		limit = 20
@@ -186,7 +186,7 @@ func (q *QueryService) ListResiduals(fbPath string, limit, offset int) ([]Residu
 }
 
 // RepairResolution is the agent's proposal payload for SubmitRepair.
-// Matches the wire shape of archigraph_submit_repair but with the
+// Matches the wire shape of grafel_submit_repair but with the
 // existence checks promoted to the call boundary.
 type RepairResolution struct {
 	EdgeID         string

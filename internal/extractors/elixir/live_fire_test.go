@@ -6,9 +6,9 @@ import (
 
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/treesitter"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestLiveFireEx drives the FULL production path: ParserFactory.Parse for a

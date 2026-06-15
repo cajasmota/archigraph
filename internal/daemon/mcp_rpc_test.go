@@ -38,8 +38,8 @@ func TestMCPToolList_NilFunc_ReturnsEmpty(t *testing.T) {
 
 func TestMCPToolList_ReturnsCatalog(t *testing.T) {
 	wantTools := []MCPToolEntry{
-		{Name: "archigraph_find", Description: "BM25 search", InputSchema: stubSchema},
-		{Name: "archigraph_stats", Description: "Corpus metrics", InputSchema: stubSchema},
+		{Name: "grafel_find", Description: "BM25 search", InputSchema: stubSchema},
+		{Name: "grafel_stats", Description: "Corpus metrics", InputSchema: stubSchema},
 	}
 	svc := testService(func(_ string) ([]MCPToolEntry, error) {
 		return wantTools, nil
@@ -52,10 +52,10 @@ func TestMCPToolList_ReturnsCatalog(t *testing.T) {
 	if len(reply.Tools) != 2 {
 		t.Fatalf("expected 2 tools, got %d", len(reply.Tools))
 	}
-	if reply.Tools[0].Name != "archigraph_find" {
+	if reply.Tools[0].Name != "grafel_find" {
 		t.Errorf("first tool name: %q", reply.Tools[0].Name)
 	}
-	if reply.Tools[1].Name != "archigraph_stats" {
+	if reply.Tools[1].Name != "grafel_stats" {
 		t.Errorf("second tool name: %q", reply.Tools[1].Name)
 	}
 }
@@ -76,7 +76,7 @@ func TestMCPToolList_InputSchemaIncluded(t *testing.T) {
 	schema := json.RawMessage(`{"type":"object","properties":{"question":{"type":"string"}}}`)
 	svc := testService(func(_ string) ([]MCPToolEntry, error) {
 		return []MCPToolEntry{
-			{Name: "archigraph_find", Description: "BM25 search", InputSchema: schema},
+			{Name: "grafel_find", Description: "BM25 search", InputSchema: schema},
 		}, nil
 	}, nil)
 
@@ -101,7 +101,7 @@ func TestMCPToolList_InputSchemaIncluded(t *testing.T) {
 func TestMCPToolCall_NilFunc_ReturnsErrorBlock(t *testing.T) {
 	svc := testService(nil, nil)
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_stats"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_stats"}, &reply); err != nil {
 		t.Fatalf("unexpected protocol error: %v", err)
 	}
 	if !reply.IsError {
@@ -134,7 +134,7 @@ func TestMCPToolCall_DispatchesToHandler(t *testing.T) {
 	called := false
 	svc := testService(nil, func(name string, args map[string]any, cwd string) (MCPCallResult, error) {
 		called = true
-		if name != "archigraph_stats" {
+		if name != "grafel_stats" {
 			t.Errorf("unexpected tool name: %q", name)
 		}
 		return MCPCallResult{
@@ -145,7 +145,7 @@ func TestMCPToolCall_DispatchesToHandler(t *testing.T) {
 	})
 
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_stats"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_stats"}, &reply); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !called {
@@ -173,7 +173,7 @@ func TestMCPToolCall_ForwardsCWD(t *testing.T) {
 	const wantCWD = "/home/user/myproject"
 	var reply MCPToolCallReply
 	if err := svc.MCPToolCall(&MCPToolCallArgs{
-		Name: "archigraph_find",
+		Name: "grafel_find",
 		CWD:  wantCWD,
 	}, &reply); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -189,7 +189,7 @@ func TestMCPToolCall_HandlerError_ReturnsErrorBlock(t *testing.T) {
 	})
 
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_find"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_find"}, &reply); err != nil {
 		t.Fatalf("unexpected protocol error: %v", err)
 	}
 	if !reply.IsError {
@@ -206,7 +206,7 @@ func TestMCPToolCall_EmptyContent_NormalisedToEmptySlice(t *testing.T) {
 	})
 
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_stats"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_stats"}, &reply); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if reply.Content == nil {
@@ -222,7 +222,7 @@ func TestMCPToolList_ForwardsCWD_ToListFunc(t *testing.T) {
 	var receivedCWD string
 	svc := testService(func(cwd string) ([]MCPToolEntry, error) {
 		receivedCWD = cwd
-		return []MCPToolEntry{{Name: "archigraph_find"}}, nil
+		return []MCPToolEntry{{Name: "grafel_find"}}, nil
 	}, nil)
 
 	const wantCWD = "/home/user/myproject"
@@ -241,7 +241,7 @@ func TestMCPToolList_NilArgs_EmptyCWD(t *testing.T) {
 	var receivedCWD string
 	svc := testService(func(cwd string) ([]MCPToolEntry, error) {
 		receivedCWD = cwd
-		return []MCPToolEntry{{Name: "archigraph_find"}}, nil
+		return []MCPToolEntry{{Name: "grafel_find"}}, nil
 	}, nil)
 
 	var reply MCPToolListReply
@@ -257,8 +257,8 @@ func TestMCPToolList_NilArgs_EmptyCWD(t *testing.T) {
 // only the sentinel, the reply contains exactly one tool.
 func TestMCPToolList_SentinelReturned(t *testing.T) {
 	sentinel := MCPToolEntry{
-		Name:        "archigraph_status",
-		Description: "Archigraph: no indexed group covers this directory.",
+		Name:        "grafel_status",
+		Description: "Grafel: no indexed group covers this directory.",
 	}
 	svc := testService(func(_ string) ([]MCPToolEntry, error) {
 		return []MCPToolEntry{sentinel}, nil
@@ -271,7 +271,7 @@ func TestMCPToolList_SentinelReturned(t *testing.T) {
 	if len(reply.Tools) != 1 {
 		t.Fatalf("expected 1 sentinel tool, got %d", len(reply.Tools))
 	}
-	if reply.Tools[0].Name != "archigraph_status" {
+	if reply.Tools[0].Name != "grafel_status" {
 		t.Errorf("unexpected sentinel name: %q", reply.Tools[0].Name)
 	}
 }
@@ -279,9 +279,9 @@ func TestMCPToolList_SentinelReturned(t *testing.T) {
 // ── JSON-lines log mode tests (issue #2299, updated for slog in #2375) ───────
 //
 // After the log/slog migration the logging shape changes:
-//   - Text mode (ARCHIGRAPH_DAEMON_LOG_JSON unset): slog.NewTextHandler emits
+//   - Text mode (GRAFEL_DAEMON_LOG_JSON unset): slog.NewTextHandler emits
 //     logfmt lines like: time=... level=INFO msg=mcp_rpc tool=... repo=...
-//   - JSON mode (ARCHIGRAPH_DAEMON_LOG_JSON=1|true): slog.NewJSONHandler emits
+//   - JSON mode (GRAFEL_DAEMON_LOG_JSON=1|true): slog.NewJSONHandler emits
 //     JSON objects: {"time":"...","level":"INFO","msg":"mcp_rpc","tool":"...","repo":"..."}
 //
 // The mcpRPCLogEntry struct and daemonLogJSON() helper were deleted; handler
@@ -321,17 +321,17 @@ func TestMCPToolCall_DefaultLog_TextFormat(t *testing.T) {
 	})
 
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_find", CWD: "/repo/myproject"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_find", CWD: "/repo/myproject"}, &reply); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	out := buf.String()
-	// slog text handler emits logfmt: msg=mcp_rpc tool=archigraph_find ...
+	// slog text handler emits logfmt: msg=mcp_rpc tool=grafel_find ...
 	if !strings.Contains(out, "msg="+LogEventMCPRPC) {
 		t.Errorf("expected msg=%s in text log, got: %q", LogEventMCPRPC, out)
 	}
-	if !strings.Contains(out, LogFieldTool+"=archigraph_find") {
-		t.Errorf("expected %s=archigraph_find in text log, got: %q", LogFieldTool, out)
+	if !strings.Contains(out, LogFieldTool+"=grafel_find") {
+		t.Errorf("expected %s=grafel_find in text log, got: %q", LogFieldTool, out)
 	}
 	if !strings.Contains(out, LogFieldElapsedMS+"=") {
 		t.Errorf("expected %s= field in text log, got: %q", LogFieldElapsedMS, out)
@@ -350,14 +350,14 @@ func TestMCPToolCall_DefaultLog_TextFormat(t *testing.T) {
 
 // TestMCPToolCall_JSONLog_ParseableJSON verifies that in JSON mode every log
 // line is valid JSON containing the expected structured fields. This replaces
-// the old ARCHIGRAPH_DAEMON_LOG_JSON env-var test: handler selection now
+// the old GRAFEL_DAEMON_LOG_JSON env-var test: handler selection now
 // happens at construction time so no env var check is needed at call sites.
 func TestMCPToolCall_JSONLog_ParseableJSON(t *testing.T) {
 	svc, buf := testServiceWithJSONLogger(func(name string, _ map[string]any, _ string) (MCPCallResult, error) {
 		return MCPCallResult{Content: []map[string]any{{"type": "text", "text": "ok"}}}, nil
 	})
 
-	const wantTool = "archigraph_find"
+	const wantTool = "grafel_find"
 	const wantRepo = "/repo/myproject"
 	var reply MCPToolCallReply
 	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: wantTool, CWD: wantRepo}, &reply); err != nil {
@@ -425,7 +425,7 @@ func TestMCPToolCall_DoneLine_HasWireBytes(t *testing.T) {
 	})
 
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_find", CWD: "/r"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_find", CWD: "/r"}, &reply); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -447,7 +447,7 @@ func TestMCPToolCall_DoneLine_HasWireBytes(t *testing.T) {
 }
 
 // TestMCPToolCall_JSONLog_TrueVariant verifies that a JSON-handler slog logger
-// produces parseable JSON lines (mirrors the old ARCHIGRAPH_DAEMON_LOG_JSON=true
+// produces parseable JSON lines (mirrors the old GRAFEL_DAEMON_LOG_JSON=true
 // variant; handler selection is now at construction time).
 func TestMCPToolCall_JSONLog_TrueVariant(t *testing.T) {
 	svc, buf := testServiceWithJSONLogger(func(_ string, _ map[string]any, _ string) (MCPCallResult, error) {
@@ -455,7 +455,7 @@ func TestMCPToolCall_JSONLog_TrueVariant(t *testing.T) {
 	})
 
 	var reply MCPToolCallReply
-	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "archigraph_stats"}, &reply); err != nil {
+	if err := svc.MCPToolCall(&MCPToolCallArgs{Name: "grafel_stats"}, &reply); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 

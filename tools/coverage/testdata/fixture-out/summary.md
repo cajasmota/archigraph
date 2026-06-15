@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
-# archigraph capabilities
+# grafel capabilities
 
 **Languages**: 2 (2 active · 0 placeholder) · **Frameworks**: 6 · **ORMs**: 0 · **Tools**: 0 · **Other**: 1
 

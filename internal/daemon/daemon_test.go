@@ -12,15 +12,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/testsupport"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/testsupport"
 )
 
 // TestMain fail-closes the daemon package: when
-// ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
-// user home and no ARCHIGRAPH_DAEMON_ROOT isolation is in effect — these tests
+// GRAFEL_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
+// user home and no GRAFEL_DAEMON_ROOT isolation is in effect — these tests
 // start an in-process daemon and dial its socket, and must never displace or
 // dial the developer's live daemon.
 func TestMain(m *testing.M) {
@@ -86,7 +86,7 @@ func isolateDaemonEnv(t *testing.T) string {
 	root := shortTempRoot(t)
 	// Safety: the isolated daemon root must never resolve under the real user
 	// home — otherwise EnsureLayout/Run would write the socket/pid/log into the
-	// developer's live ~/.archigraph and a Dial() could hit the live daemon.
+	// developer's live ~/.grafel and a Dial() could hit the live daemon.
 	if rh := testsupport.RealUserHome(); rh != "" {
 		if rel, err := filepath.Rel(rh, root); err == nil && !strings.HasPrefix(rel, "..") && rel != "." {
 			t.Fatalf("isolateDaemonEnv: temp daemon root %q is under the real user home %q — refusing", root, rh)
@@ -170,7 +170,7 @@ func TestDaemon_IndexRPC(t *testing.T) {
 		if args.RepoPath == "" {
 			return "", "", errors.New("empty repo")
 		}
-		return filepath.Join(args.RepoPath, ".archigraph", "graph.json"),
+		return filepath.Join(args.RepoPath, ".grafel", "graph.json"),
 			`{"repo":"` + args.RepoPath + `","files":42}`, nil
 	}
 	layout := runDaemonForTest(t, idx, nil)
@@ -184,7 +184,7 @@ func TestDaemon_IndexRPC(t *testing.T) {
 	if err != nil {
 		t.Fatalf("index: %v", err)
 	}
-	wantGraphPath := filepath.Join(repoPath, ".archigraph", "graph.json")
+	wantGraphPath := filepath.Join(repoPath, ".grafel", "graph.json")
 	if reply.GraphPath != wantGraphPath {
 		t.Fatalf("graph path: got %q want %q", reply.GraphPath, wantGraphPath)
 	}
@@ -236,7 +236,7 @@ func TestDaemon_ClientReportsNotRunning(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		// Named pipes that are not listening return ErrDaemonNotRunning.
 		// Use a test-specific pipe name that will never be listening.
-		addr = `\\.\pipe\archigraph-test-notrunning-` + t.Name()
+		addr = `\\.\pipe\grafel-test-notrunning-` + t.Name()
 	} else {
 		addr = filepath.Join(shortTempRoot(t), "nope.sock")
 	}

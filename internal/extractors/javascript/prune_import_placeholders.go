@@ -56,7 +56,7 @@
 package javascript
 
 import (
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // attachImportRelationshipsJS moves the IMPORTS relationships from standalone

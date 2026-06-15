@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/quality"
+	"github.com/cajasmota/grafel/internal/quality"
 )
 
 // TestBuildTrendsReply_empty verifies that an empty entry slice yields

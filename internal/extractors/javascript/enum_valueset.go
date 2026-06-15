@@ -20,7 +20,7 @@ package javascript
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // emitTSEnumValueSet builds the value-carrying SCOPE.Enum node for a TS

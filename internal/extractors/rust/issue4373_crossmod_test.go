@@ -11,7 +11,7 @@
 // Go cross-package qualifier-drop fixed in #4332.
 //
 // These tests drive the REAL extraction + resolver passes — the same sequence
-// cmd/archigraph/index.go runs (extract per file → stamp deterministic IDs →
+// cmd/grafel/index.go runs (extract per file → stamp deterministic IDs →
 // BuildIndex → ResolveRustCrossModuleCalls → ReferencesEmbedded) — on a
 // faithful multi-module crate (src/lib.rs + src/services/order.rs + …) that
 // reproduces a cross-module call WITH a same-named symbol collision in two
@@ -26,11 +26,11 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsrust "github.com/smacker/go-tree-sitter/rust"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/rust"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/rust"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractRustCrateForTest extracts every (relPath, src) file with the real

@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/enrichment"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // submitVerifyModuleRe is the R5 module-identifier regex from repair-trust-model.md.

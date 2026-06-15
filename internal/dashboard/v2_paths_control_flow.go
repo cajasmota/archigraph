@@ -10,7 +10,7 @@
 // function — the flowchart the Downstream-flow modal renders when the user
 // flips the View toggle from Tree to Flowchart.
 //
-// It is the dashboard sibling of the archigraph_control_flow MCP tool
+// It is the dashboard sibling of the grafel_control_flow MCP tool
 // (internal/mcp/control_flow_tool.go): both REUSE the one CFG builder in
 // internal/substrate (BuildControlFlowGraphCached) — no basic-block entities are
 // ever written to the graph (the graph stays lean, per #4822). The CFG is built
@@ -41,8 +41,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // ---------------------------------------------------------------------------

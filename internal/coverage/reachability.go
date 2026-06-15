@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Static test-reachability (#5037).
@@ -458,7 +458,7 @@ func moduleKey(src string) string {
 
 // CrossSignalVerdict classifies an entity by combining static reachability
 // (this ticket, #5037) with #5036's dynamic LCOV line coverage. It is the
-// documented seam toward archigraph_contract_test_effectiveness (#4893): an
+// documented seam toward grafel_contract_test_effectiveness (#4893): an
 // entity that is statically reachable from a test but has 0% measured line
 // coverage is a candidate ineffective / tautological test (a test path exists
 // in the graph, yet no production line of the entity actually executed).

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/external"
+	"github.com/cajasmota/grafel/internal/external"
 )
 
 // lineNumberSuffix matches labels ending in `:<digits>` (e.g.

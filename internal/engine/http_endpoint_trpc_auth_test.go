@@ -28,7 +28,7 @@ func TestTRPCAuth_MiddlewareAndProtectedProcedure(t *testing.T) {
 	if getUser.Properties["auth_confidence"] != "high" {
 		t.Errorf("getUser auth_confidence=%q want high (builder resolved in-file)", getUser.Properties["auth_confidence"])
 	}
-	// MCP signal-1 key must be present so archigraph_auth_coverage credits it.
+	// MCP signal-1 key must be present so grafel_auth_coverage credits it.
 	if getUser.Properties["auth_middleware"] == "" {
 		t.Errorf("getUser auth_middleware property must be set for MCP signal-1, got empty")
 	}

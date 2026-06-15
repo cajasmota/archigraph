@@ -19,8 +19,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -73,7 +73,7 @@ var ktSpringVerbMap = map[string]string{
 }
 
 func (e *kotlinSpringRoutesExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_spring_routes.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -171,7 +171,7 @@ var ktMnVerbMap = map[string]string{
 }
 
 func (e *kotlinMicronautRoutesExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_micronaut_routes.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -276,7 +276,7 @@ var (
 )
 
 func (e *kotlinQuarkusRoutesExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_quarkus_routes.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -436,7 +436,7 @@ var (
 )
 
 func (e *kotlinHttp4kRoutesExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_http4k_routes.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

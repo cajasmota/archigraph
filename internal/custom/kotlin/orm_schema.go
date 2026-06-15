@@ -27,8 +27,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -82,7 +82,7 @@ var (
 )
 
 func (e *kotlinExposedSchemaExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_exposed_schema.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -202,7 +202,7 @@ var (
 )
 
 func (e *kotlinKtormSchemaExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_ktorm_schema.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -326,7 +326,7 @@ var (
 )
 
 func (e *kotlinRoomSchemaExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_room_schema.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -484,7 +484,7 @@ func isSQLDelightFile(file extractor.FileInput) bool {
 }
 
 func (e *kotlinSQLDelightSchemaExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/kotlin")
+	tracer := otel.Tracer("grafel/custom/kotlin")
 	_, span := tracer.Start(ctx, "indexer.kotlin_sqldelight_schema.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

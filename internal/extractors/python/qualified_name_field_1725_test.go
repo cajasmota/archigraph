@@ -10,9 +10,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tspython "github.com/smacker/go-tree-sitter/python"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestExtract_SchemaFieldQualifiedName_1725(t *testing.T) {

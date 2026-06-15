@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // mwExtractRaw returns raw EntityRecord values so tests can inspect Properties.

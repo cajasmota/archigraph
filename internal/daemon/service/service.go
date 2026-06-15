@@ -1,7 +1,7 @@
-// Package service handles registration and removal of the archigraph
+// Package service handles registration and removal of the grafel
 // daemon as an OS-level user service (launchd on macOS, systemd on
-// Linux). It is the implementation layer for the `archigraph install`
-// and `archigraph uninstall` commands introduced in ADR-0017 Phase C.
+// Linux). It is the implementation layer for the `grafel install`
+// and `grafel uninstall` commands introduced in ADR-0017 Phase C.
 //
 // The package is platform-agnostic at this level; build-tag'd files
 // supply the platform implementations:
@@ -20,24 +20,24 @@ import (
 	"os"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // Options carries install-time parameters. All fields that are empty
 // strings are resolved to defaults by Install.
 type Options struct {
-	// BinPath is the absolute path to the archigraph binary. When
+	// BinPath is the absolute path to the grafel binary. When
 	// empty, Install resolves it via os.Executable().
 	BinPath string
 
 	// SocketPath is the IPC transport address the daemon listens on.
-	// On Unix this is a filesystem path (defaults to ~/.archigraph/sockets/daemon.sock).
-	// On Windows this is a named-pipe path (\\.\pipe\archigraph-daemon-<user>).
+	// On Unix this is a filesystem path (defaults to ~/.grafel/sockets/daemon.sock).
+	// On Windows this is a named-pipe path (\\.\pipe\grafel-daemon-<user>).
 	// When empty, resolveOptions fills it from daemon.DefaultLayout.
 	SocketPath string
 
 	// LogDir is the directory for stdout/stderr logs. When empty it
-	// defaults to ~/.archigraph/logs.
+	// defaults to ~/.grafel/logs.
 	LogDir string
 }
 
@@ -50,14 +50,14 @@ type StatusInfo struct {
 	UnitFile  string // path of the plist / unit file
 }
 
-// Install registers the archigraph daemon as a user-level OS service
+// Install registers the grafel daemon as a user-level OS service
 // and starts it. Idempotent: if the service is already installed it
 // returns the current status without modifying anything.
 //
-// On macOS it writes ~/Library/LaunchAgents/com.archigraph.daemon.plist
+// On macOS it writes ~/Library/LaunchAgents/com.grafel.daemon.plist
 // and calls `launchctl bootstrap gui/$UID`.
 //
-// On Linux it writes ~/.config/systemd/user/archigraph-daemon.service
+// On Linux it writes ~/.config/systemd/user/grafel-daemon.service
 // and calls `systemctl --user enable --now`.
 //
 // After loading, Install polls the daemon socket for up to ~60 s (the

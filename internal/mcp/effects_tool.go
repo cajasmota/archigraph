@@ -1,4 +1,4 @@
-// archigraph_effects MCP tool (#2764 Phase 1A substrate).
+// grafel_effects MCP tool (#2764 Phase 1A substrate).
 //
 // Returns the effect classification for a given entity. Schema:
 //
@@ -36,9 +36,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/links"
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/links"
+	"github.com/cajasmota/grafel/internal/substrate"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -75,7 +75,7 @@ func effectsSidecarPath(group string) string {
 			return ""
 		}
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-links-effects.json")
+	return filepath.Join(home, ".grafel", "groups", group+"-links-effects.json")
 }
 
 // loadEffectsSidecar reads + parses the sidecar into a map keyed by the
@@ -102,9 +102,9 @@ func loadEffectsSidecar(group string) (map[string]effectsSidecarEntry, bool) {
 	return idx, true
 }
 
-// handleEffects implements archigraph_effects. The entity_id parameter
+// handleEffects implements grafel_effects. The entity_id parameter
 // accepts an id, qualified name, label, or cross-repo prefixed id
-// ("<repo>:<id>"), mirroring archigraph_inspect's resolver semantics.
+// ("<repo>:<id>"), mirroring grafel_inspect's resolver semantics.
 func (s *Server) handleEffects(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	key := argString(req, "entity_id", "")
 	if key == "" {
@@ -168,7 +168,7 @@ func (s *Server) handleEffects(_ context.Context, req mcpapi.CallToolRequest) (*
 			"ambiguous":     true,
 			"entity_id":     key,
 			"matches":       out,
-			"how_to_choose": "Re-call archigraph_effects with the prefixed id field (e.g. \"repo:1234abcd\").",
+			"how_to_choose": "Re-call grafel_effects with the prefixed id field (e.g. \"repo:1234abcd\").",
 		}), nil
 	}
 	out := buildEffectsPayload(matches[0].repo.Repo, matches[0].ent, sidecar)

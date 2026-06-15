@@ -22,7 +22,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/extractors/cross/deplinker"
+	"github.com/cajasmota/grafel/internal/extractors/cross/deplinker"
 )
 
 // ---------------------------------------------------------------------------

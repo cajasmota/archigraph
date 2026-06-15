@@ -12,7 +12,7 @@ import (
 )
 
 // feedbackOutcomes is the allowed set of outcome values for
-// archigraph_feedback_event. These map to the rollup's quality buckets.
+// grafel_feedback_event. These map to the rollup's quality buckets.
 var feedbackOutcomes = map[string]bool{
 	"helped":             true, // the graph answered well / saved work
 	"partial":            true, // answered but incomplete
@@ -26,7 +26,7 @@ var feedbackOutcomes = map[string]bool{
 }
 
 // feedbackEventsFile returns the path for today's feedback-events JSONL file.
-// It shares the persona events directory (~/.archigraph/events) and rotates by
+// It shares the persona events directory (~/.grafel/events) and rotates by
 // calendar date. LOCAL ONLY — same privacy promise as persona telemetry.
 func feedbackEventsFile() (string, error) {
 	dir, err := personaEventsDir()
@@ -38,7 +38,7 @@ func feedbackEventsFile() (string, error) {
 }
 
 // FeedbackEvent is one agent-experience datum captured during a test run
-// (e.g. an internal backend rewrite). It records how a real archigraph
+// (e.g. an internal backend rewrite). It records how a real grafel
 // interaction went, tagged so a later rollup can compare groups (old vs new)
 // and map shortfalls to fixable extractor lanes.
 //
@@ -46,7 +46,7 @@ func feedbackEventsFile() (string, error) {
 type FeedbackEvent struct {
 	// Timestamp is the UTC ISO-8601 instant the event was recorded.
 	Timestamp string `json:"ts"`
-	// Group is the archigraph group the interaction was about (enables
+	// Group is the grafel group the interaction was about (enables
 	// old-vs-new comparison). Optional but strongly recommended.
 	Group string `json:"group,omitempty"`
 	// Phase is a free-form label for the work in progress, e.g.
@@ -93,24 +93,24 @@ func appendFeedbackEvent(evt FeedbackEvent) (string, error) {
 	return path, nil
 }
 
-// handleFeedbackEvent is the handler for archigraph_feedback_event (#3204).
+// handleFeedbackEvent is the handler for grafel_feedback_event (#3204).
 //
-// Agents call this opportunistically during a test run — when an archigraph
+// Agents call this opportunistically during a test run — when an grafel
 // answer was wrong/incomplete or a library wasn't recognized — and at phase
 // checkpoints. Events append to:
 //
-//	~/.archigraph/events/feedback-events-YYYY-MM-DD.jsonl
+//	~/.grafel/events/feedback-events-YYYY-MM-DD.jsonl
 //
 // Privacy guarantee: LOCAL ONLY. No remote emission. Recording failures never
 // block the agent — the tool returns a non-error result with a warning.
 func (s *Server) handleFeedbackEvent(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	outcome, err := req.RequireString("outcome")
 	if err != nil {
-		return mcpapi.NewToolResultError("archigraph_feedback_event: outcome (string, required): " + err.Error()), nil
+		return mcpapi.NewToolResultError("grafel_feedback_event: outcome (string, required): " + err.Error()), nil
 	}
 	if !feedbackOutcomes[outcome] {
 		return mcpapi.NewToolResultError(
-			fmt.Sprintf("archigraph_feedback_event: outcome must be one of helped|partial|wrong|missing_capability|milestone; got %q", outcome),
+			fmt.Sprintf("grafel_feedback_event: outcome must be one of helped|partial|wrong|missing_capability|milestone; got %q", outcome),
 		), nil
 	}
 

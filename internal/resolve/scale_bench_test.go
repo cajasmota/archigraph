@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // timeNow is a thin wrapper around time.Now used by nanoTime so tests can

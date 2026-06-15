@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/graphql/sample_schema.graphql",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/graphql/sample_schema.graphql",
   "language": "graphql",
   "entities": [
     {
@@ -203,8 +203,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/graphql/sample_schema.graphql",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/graphql/sample_schema.graphql",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/graphql/sample_schema.graphql",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/graphql/sample_schema.graphql",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -219,7 +219,7 @@
         "convention": "PascalCase",
         "dominant_percentage": 48.80952380952381,
         "sample_count": 84,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/graphql/sample_schema.graphql"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/graphql/sample_schema.graphql"
       }
     }
   ],

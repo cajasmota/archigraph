@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ── test fixture builder ─────────────────────────────────────────────────────
@@ -39,10 +39,10 @@ func buildRefEndpointFixture(t *testing.T) (ts *httptest.Server, groupName, repo
 	t.Helper()
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	// Use daemon-root for deterministic store paths.
 	storeRoot := filepath.Join(home, "store")
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", storeRoot)
+	t.Setenv("GRAFEL_DAEMON_ROOT", storeRoot)
 
 	groupName = "testgroup"
 	repoSlug = "testrepo"
@@ -167,7 +167,7 @@ func TestHandleGroupRefs_OK(t *testing.T) {
 
 func TestHandleGroupRefs_NotFound(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	reg := map[string]any{"version": 1, "groups": []any{}}
 	raw, _ := json.Marshal(reg)
 	_ = os.WriteFile(filepath.Join(home, "registry.json"), raw, 0o644)

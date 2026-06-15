@@ -3,7 +3,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // dotnet_di_siblings_test.go — VERIFY-FIRST probe for #3959.

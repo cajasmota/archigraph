@@ -15,7 +15,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // gitAvailableCLI returns true when git is on PATH.
@@ -50,7 +50,7 @@ func initGitRepoForMigrate(t *testing.T, dir string) {
 }
 
 // writeTestGroupConfig writes a minimal fleet config + registry in a temp dir
-// and sets ARCHIGRAPH_HOME + XDG_CONFIG_HOME environment overrides so the
+// and sets GRAFEL_HOME + XDG_CONFIG_HOME environment overrides so the
 // production registry functions read from the temp dir.
 func writeTestGroupConfig(t *testing.T, tmp, groupName string, repos []registry.Repo) (configPath string) {
 	t.Helper()
@@ -63,11 +63,11 @@ func writeTestGroupConfig(t *testing.T, tmp, groupName string, repos []registry.
 		t.Fatalf("SaveGroupConfig: %v", err)
 	}
 	// Write registry.json pointing at our fleet config.
-	archigraphHome := filepath.Join(tmp, ".archigraph")
-	if err := os.MkdirAll(archigraphHome, 0o755); err != nil {
+	grafelHome := filepath.Join(tmp, ".grafel")
+	if err := os.MkdirAll(grafelHome, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("ARCHIGRAPH_HOME", archigraphHome)
+	t.Setenv("GRAFEL_HOME", grafelHome)
 	// Also set XDG_CONFIG_HOME so ConfigPathFor writes to tmp.
 	t.Setenv("XDG_CONFIG_HOME", tmp)
 	if err := registry.AddGroup(groupName, configPath); err != nil {

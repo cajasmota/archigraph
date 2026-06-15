@@ -11,7 +11,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // prodRecords is a minimal set of entity records standing in for the production

@@ -18,9 +18,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // KindExternal is the entity kind stamped on every synthesised
@@ -883,7 +883,7 @@ func classifyExternal(stub, relKind, lang, fromFile string, fromImports map[stri
 	//
 	// Format A: scope:<kind>:<subtype>:<lang>:<file_path>:<name>
 	// We pull the trailing segment after the last ':' (file paths in
-	// archigraph entity refs are normalised to forward slashes, so the
+	// grafel entity refs are normalised to forward slashes, so the
 	// last ':' is the kind/name separator, not part of the path).
 	if strings.HasPrefix(stub, "scope:") {
 		if idx := strings.LastIndexByte(stub, ':'); idx >= 0 && idx < len(stub)-1 {
@@ -2020,7 +2020,7 @@ func isPascalStart(s string) bool {
 
 // isLowerStart reports whether s begins with a lowercase ASCII letter
 // (Java/Kotlin package-segment convention). Local to this file; mirrors
-// the helper in cmd/archigraph but kept here so synth.go has no
+// the helper in cmd/grafel but kept here so synth.go has no
 // cross-package dependency for the wildcard-import fallback.
 func isLowerStart(s string) bool {
 	if s == "" {
@@ -2372,7 +2372,7 @@ func pythonFileRoot(path string) string {
 	if s == "" {
 		return ""
 	}
-	// Normalise to forward slashes (archigraph entity refs already do this,
+	// Normalise to forward slashes (grafel entity refs already do this,
 	// but be defensive for Windows-shaped inputs).
 	s = strings.ReplaceAll(s, "\\", "/")
 	// Strip well-known source-root prefixes (mirrors filePathToModule /
@@ -7810,7 +7810,7 @@ var kotlinBareNames = map[string]struct{}{
 
 	// Issue #456: residual ktor-samples bug-extractor patterns. After
 	// #122 + #106 + #435 the ktor-samples bug-rate sat at 31.66%; a
-	// VERIFY-2 bug-extractor sample dump (ARCHIGRAPH_BUG_EXTRACTOR_SAMPLES
+	// VERIFY-2 bug-extractor sample dump (GRAFEL_BUG_EXTRACTOR_SAMPLES
 	// against the ktor-samples corpus) identified four cohorts of
 	// receiver-stripped names dominating the residue:
 	//

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -38,7 +38,7 @@ func minDoc(entities []graph.Entity, rels []graph.Relationship) *graph.Document 
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_topology_orphan_publishers
+// grafel_topology_orphan_publishers
 // ---------------------------------------------------------------------------
 
 func TestHandleTopologyOrphanPublishers(t *testing.T) {
@@ -69,7 +69,7 @@ func TestHandleTopologyOrphanPublishers(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_topology_orphan_subscribers
+// grafel_topology_orphan_subscribers
 // ---------------------------------------------------------------------------
 
 func TestHandleTopologyOrphanSubscribers(t *testing.T) {
@@ -97,7 +97,7 @@ func TestHandleTopologyOrphanSubscribers(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_topology_topic_detail
+// grafel_topology_topic_detail
 // ---------------------------------------------------------------------------
 
 func TestHandleTopologyTopicDetail(t *testing.T) {
@@ -353,7 +353,7 @@ func TestSearchEntities_TopicKindAlias(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_flow_dead_ends
+// grafel_flow_dead_ends
 // ---------------------------------------------------------------------------
 
 func TestHandleFlowDeadEnds(t *testing.T) {
@@ -378,7 +378,7 @@ func TestHandleFlowDeadEnds(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_flow_truncated
+// grafel_flow_truncated
 // ---------------------------------------------------------------------------
 
 func TestHandleFlowTruncated(t *testing.T) {
@@ -406,7 +406,7 @@ func TestHandleFlowTruncated(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_flow_detail
+// grafel_flow_detail
 // ---------------------------------------------------------------------------
 
 func TestHandleFlowDetail(t *testing.T) {
@@ -444,7 +444,7 @@ func TestHandleFlowDetail(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_diagnostics
+// grafel_diagnostics
 // ---------------------------------------------------------------------------
 
 func TestHandleDiagnostics(t *testing.T) {
@@ -468,7 +468,7 @@ func TestHandleDiagnostics(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_search_entities
+// grafel_search_entities
 // ---------------------------------------------------------------------------
 
 func TestHandleSearchEntities(t *testing.T) {
@@ -506,7 +506,7 @@ func TestHandleSearchEntities_KindFilter(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_find_paths
+// grafel_find_paths
 // ---------------------------------------------------------------------------
 
 func TestHandleFindPaths(t *testing.T) {
@@ -573,7 +573,7 @@ func TestParseSimpleFloat(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_topology dispatch (#1281)
+// grafel_topology dispatch (#1281)
 // ---------------------------------------------------------------------------
 
 func TestHandleTopology_OrphanPublishers(t *testing.T) {
@@ -644,7 +644,7 @@ func TestHandleTopology_UnknownAction(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_flows dispatch (#1281)
+// grafel_flows dispatch (#1281)
 // ---------------------------------------------------------------------------
 
 func TestHandleFlows_DeadEnds(t *testing.T) {
@@ -694,7 +694,7 @@ func TestHandleFlows_UnknownAction(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_graph_patterns dispatch (#1281)
+// grafel_graph_patterns dispatch (#1281)
 // ---------------------------------------------------------------------------
 
 func TestHandleGraphPatterns_List(t *testing.T) {

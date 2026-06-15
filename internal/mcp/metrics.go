@@ -7,7 +7,7 @@ package mcp
 //	SessionMetrics wraps Telemetry and adds:
 //	  - Per-tool latency sample reservoir (capped at 1000 samples) for p50/p95.
 //	  - Session-level tracking: session ID, start/end time, per-tool error rate.
-//	  - Daily rollup serialised to ~/.archigraph/metrics/mcp-YYYY-MM-DD.jsonl.
+//	  - Daily rollup serialised to ~/.grafel/metrics/mcp-YYYY-MM-DD.jsonl.
 //
 // Integration:
 //	  - server.go creates a SessionMetrics alongside Telemetry (or replaces it).
@@ -16,7 +16,7 @@ package mcp
 //
 // Rollup file format (JSON-lines, one object per call batch written at flush):
 //
-//	{"date":"2026-05-27","session_id":"...","tool":"archigraph_find","calls":42,
+//	{"date":"2026-05-27","session_id":"...","tool":"grafel_find","calls":42,
 //	 "errors":1,"p50_ms":12,"p95_ms":87,"flushed_at":"2026-05-27T..."}
 //
 // Persistence is best-effort: write failures are silently ignored so a
@@ -93,7 +93,7 @@ type SessionMetrics struct {
 	sessionID  string
 	startedAt  time.Time
 	tools      map[string]*sessionMetricsTool
-	metricsDir string // path to ~/.archigraph/metrics/; empty = no rollup
+	metricsDir string // path to ~/.grafel/metrics/; empty = no rollup
 }
 
 // NewSessionMetrics creates a SessionMetrics. metricsDir is the directory for
@@ -191,7 +191,7 @@ type RollupRecord struct {
 }
 
 // FlushRollup writes per-tool rollup records for the current session to the
-// daily JSONL file (~/.archigraph/metrics/mcp-YYYY-MM-DD.jsonl). It is
+// daily JSONL file (~/.grafel/metrics/mcp-YYYY-MM-DD.jsonl). It is
 // best-effort: any I/O error is silently ignored.
 func (m *SessionMetrics) FlushRollup() {
 	if m.metricsDir == "" {

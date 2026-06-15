@@ -303,7 +303,7 @@ func TestRenderIssue(t *testing.T) {
 		// empty → em-dash
 		{"", "—"},
 		// https URL → link
-		{"https://github.com/cajasmota/archigraph/issues/2953", "[link](https://github.com/cajasmota/archigraph/issues/2953)"},
+		{"https://github.com/cajasmota/grafel/issues/2953", "[link](https://github.com/cajasmota/grafel/issues/2953)"},
 		// http URL → link
 		{"http://example.com/issues/1", "[link](http://example.com/issues/1)"},
 		// bare #NNNN → link
@@ -368,7 +368,7 @@ func TestGenBackfillIssueRendersAsPlainText(t *testing.T) {
 				Language: "python",
 				Label:    "Flask",
 				Capabilities: map[string]Capability{
-					"endpoint_synthesis": {Status: StatusPartial, Issue: "https://github.com/cajasmota/archigraph/issues/2953"},
+					"endpoint_synthesis": {Status: StatusPartial, Issue: "https://github.com/cajasmota/grafel/issues/2953"},
 				},
 			},
 		},
@@ -382,7 +382,7 @@ func TestGenBackfillIssueRendersAsPlainText(t *testing.T) {
 		t.Fatalf("read detail2: %v", err)
 	}
 	body2 := string(data2)
-	if !strings.Contains(body2, "[link](https://github.com/cajasmota/archigraph/issues/2953)") {
+	if !strings.Contains(body2, "[link](https://github.com/cajasmota/grafel/issues/2953)") {
 		t.Errorf("real issue URL not rendered as link:\n%s", body2)
 	}
 }

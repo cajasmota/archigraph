@@ -18,7 +18,7 @@
 //     that Phase 1A has already stamped).
 //
 // The sidecar <group>-links-pure-functions.json is written for the MCP
-// archigraph_pure_functions tool.
+// grafel_pure_functions tool.
 package links
 
 import (

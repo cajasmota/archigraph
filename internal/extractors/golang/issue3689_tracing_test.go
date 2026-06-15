@@ -6,7 +6,7 @@ package golang_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findGoEnt returns the EntityRecord with the given Name from a []interface{}

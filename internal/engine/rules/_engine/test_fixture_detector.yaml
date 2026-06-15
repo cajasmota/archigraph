@@ -14,6 +14,6 @@ description: >-
   with kind=test_fixture. Supported frameworks: pytest (Python), factory_bot /
   FactoryGirl (Ruby), Jest setupFiles + lifecycle hooks (JS/TS), Spring
   @TestConfiguration (Java), JUnit @BeforeAll/@BeforeEach (Java/Kotlin).
-module: archigraph.engine.rules.pattern_detectors.test_fixture_detector
+module: grafel.engine.rules.pattern_detectors.test_fixture_detector
 function: detect
 applies_to_function: applies_to

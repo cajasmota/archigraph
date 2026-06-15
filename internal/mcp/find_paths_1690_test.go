@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // scenario (a) — link's Target prefix uses the on-disk dir name with

@@ -4,12 +4,12 @@
 # VERIFY-2 (Refs #58, #88, #482) — bug-rate / resolution-rate measurement harness.
 #
 # Clones a small set of public OSS repositories into
-# $ARCHIGRAPH_CORPORA_DIR (default: $HOME/Documents/Projects/archigraph-corpora)
-# and runs `archigraph index --json-stats` over each. Aggregates the
+# $GRAFEL_CORPORA_DIR (default: $HOME/Documents/Projects/grafel-corpora)
+# and runs `grafel index --json-stats` over each. Aggregates the
 # per-disposition counts and writes a Markdown report into
-# $ARCHIGRAPH_CORPORA_DIR/_reports/<ISO-timestamp>.md.
+# $GRAFEL_CORPORA_DIR/_reports/<ISO-timestamp>.md.
 #
-# This script never writes inside the archigraph repo. The corpora and
+# This script never writes inside the grafel repo. The corpora and
 # reports live entirely outside it so we don't blow up the worktree with
 # vendored third-party source.
 #
@@ -26,19 +26,19 @@
 #              the full 5x cost on stable repos.
 #
 # Env vars:
-#   ARCHIGRAPH_CORPORA_DIR   target dir for clones + reports
-#                            (default: $HOME/Documents/Projects/archigraph-corpora)
-#   ARCHIGRAPH_BIN           path to archigraph binary (default: ./archigraph
+#   GRAFEL_CORPORA_DIR   target dir for clones + reports
+#                            (default: $HOME/Documents/Projects/grafel-corpora)
+#   GRAFEL_BIN           path to grafel binary (default: ./grafel
 #                            built ad-hoc into the corpora dir)
-#   ARCHIGRAPH_VERBOSE       set to 1 to forward verbose stderr from indexer
-#   ARCHIGRAPH_VERIFY2_RUNS  number of indexer runs per repo (default: 5;
+#   GRAFEL_VERBOSE       set to 1 to forward verbose stderr from indexer
+#   GRAFEL_VERIFY2_RUNS  number of indexer runs per repo (default: 5;
 #                            overridden by --runs flag)
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Parse --runs flag; all other args are ignored.
 # ---------------------------------------------------------------------------
-RUNS="${ARCHIGRAPH_VERIFY2_RUNS:-5}"
+RUNS="${GRAFEL_VERIFY2_RUNS:-5}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --runs)    RUNS="${2:?--runs requires an integer value}"; shift 2 ;;
@@ -51,7 +51,7 @@ if ! [[ "$RUNS" =~ ^[0-9]+$ ]] || [[ "$RUNS" -lt 1 ]]; then
   exit 1
 fi
 
-CORPORA_DIR="${ARCHIGRAPH_CORPORA_DIR:-$HOME/Documents/Projects/archigraph-corpora}"
+CORPORA_DIR="${GRAFEL_CORPORA_DIR:-$HOME/Documents/Projects/grafel-corpora}"
 REPORTS_DIR="$CORPORA_DIR/_reports"
 mkdir -p "$CORPORA_DIR" "$REPORTS_DIR"
 
@@ -193,22 +193,22 @@ REPOS=(
   # "vue-realworld|https://github.com/gothinkster/vue-realworld-example-app.git|master|javascript"
 )
 
-# Locate or build the archigraph binary. We build into the corpora dir
+# Locate or build the grafel binary. We build into the corpora dir
 # (outside the repo) so this script is safe to run from any worktree.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-if [[ -n "${ARCHIGRAPH_BIN:-}" ]]; then
-  BIN="$ARCHIGRAPH_BIN"
+if [[ -n "${GRAFEL_BIN:-}" ]]; then
+  BIN="$GRAFEL_BIN"
 else
-  BIN="$CORPORA_DIR/_bin/archigraph"
+  BIN="$CORPORA_DIR/_bin/grafel"
   mkdir -p "$(dirname "$BIN")"
-  echo "==> building archigraph -> $BIN" >&2
-  ( cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/archigraph )
+  echo "==> building grafel -> $BIN" >&2
+  ( cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/grafel )
 fi
 
 if [[ ! -x "$BIN" ]]; then
-  echo "archigraph binary not executable: $BIN" >&2
+  echo "grafel binary not executable: $BIN" >&2
   exit 1
 fi
 
@@ -224,10 +224,10 @@ TMPDIR_AGG="$REPORTS_DIR/${TIMESTAMP}-partial"
 mkdir -p "$TMPDIR_AGG"
 trap '[[ -f "$TMPDIR_AGG/.complete" ]] && rm -rf "$TMPDIR_AGG"' EXIT
 
-# Optional per-repo wall-clock cap (seconds). Set ARCHIGRAPH_VERIFY2_TIMEOUT=0
+# Optional per-repo wall-clock cap (seconds). Set GRAFEL_VERIFY2_TIMEOUT=0
 # to disable. Uses gtimeout (coreutils) if available, then timeout, then
 # silently skips capping on systems with neither.
-PER_REPO_TIMEOUT="${ARCHIGRAPH_VERIFY2_TIMEOUT:-600}"
+PER_REPO_TIMEOUT="${GRAFEL_VERIFY2_TIMEOUT:-600}"
 TIMEOUT_BIN=""
 if command -v gtimeout >/dev/null 2>&1; then
   TIMEOUT_BIN="gtimeout"
@@ -249,7 +249,7 @@ done
   echo
   echo "- generated_at: \`$TIMESTAMP\`"
   echo "- corpora_dir: \`$CORPORA_DIR\`"
-  echo "- archigraph_bin: \`$BIN\`"
+  echo "- grafel_bin: \`$BIN\`"
   echo "- runs_per_repo: \`$RUNS\`"
   echo
   echo "## Per-repo results"

@@ -1,4 +1,4 @@
-// archigraph_payload_drift MCP tool (#2770 Phase 2A substrate).
+// grafel_payload_drift MCP tool (#2770 Phase 2A substrate).
 //
 // Returns schema-drift findings produced by the generic drift
 // detector at internal/links/payload_drift.go. Schema:
@@ -50,18 +50,18 @@ import (
 	"context"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/links"
+	"github.com/cajasmota/grafel/internal/links"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handlePayloadDrift implements archigraph_payload_drift.
+// handlePayloadDrift implements grafel_payload_drift.
 func (s *Server) handlePayloadDrift(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	group, _, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
 		return errRes, nil
 	}
-	// archigraphHome resolves to ~/.archigraph when empty (production
+	// grafelHome resolves to ~/.grafel when empty (production
 	// path) — same convention every other tool that reads sidecar
 	// JSONs uses.
 	paths, err := links.PathsFor("", group)

@@ -14,8 +14,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // compiledSourcePattern is a SourcePattern with its regex pre-compiled.
@@ -112,7 +112,7 @@ type Detector struct {
 func New(rules map[string][]FrameworkRule) *Detector {
 	return &Detector{
 		rules:  rules,
-		tracer: otel.Tracer("archigraph/engine"),
+		tracer: otel.Tracer("grafel/engine"),
 	}
 }
 

@@ -1,7 +1,7 @@
 // algo_demand.go — on-demand algorithm-result provider for rank-sensitive MCP
 // tools (S2 of Silent Daemon, #2152).
 //
-// When ARCHIGRAPH_EAGER_ALGO is not set (the default), the daemon skips the
+// When GRAFEL_EAGER_ALGO is not set (the default), the daemon skips the
 // post-reindex algorithm pass so the watcher is CPU-silent after a file save.
 // This file provides ensureAlgoResults, which rank-sensitive tool handlers
 // call before they need PageRank / community / articulation data:
@@ -19,10 +19,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/algo"
-	"github.com/cajasmota/archigraph/internal/gitmeta"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/algo"
+	"github.com/cajasmota/grafel/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // globalAlgoCache is the process-wide on-demand algo cache. It is

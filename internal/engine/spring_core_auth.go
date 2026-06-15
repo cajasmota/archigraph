@@ -27,7 +27,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // springHandlerAuth is one handler's annotation context, keyed by composed route

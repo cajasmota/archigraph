@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // wsCallEntity finds the http_endpoint_call with the given ID, or nil.

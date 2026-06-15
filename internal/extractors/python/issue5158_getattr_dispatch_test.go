@@ -3,8 +3,8 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #5158 — `getattr(self, name)()` reflective dispatch where `name` is a

@@ -8,14 +8,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/mode"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/mode"
 )
 
-// newModeCmd returns the `archigraph mode <m>` subcommand.
+// newModeCmd returns the `grafel mode <m>` subcommand.
 //
-// It writes the chosen mode to ~/.archigraph/daemon.config.json and then
+// It writes the chosen mode to ~/.grafel/daemon.config.json and then
 // kicks (stop + start) the daemon so the new defaults take effect
 // immediately. No-op when the daemon is not running.
 func newModeCmd() *cobra.Command {
@@ -36,8 +36,8 @@ Modes:
                watcher, no algo passes. Useful when you want fast read-only
                access without background CPU/memory work.
 
-The chosen mode is persisted in ~/.archigraph/daemon.config.json and read
-by the daemon on every boot. Env vars (e.g. ARCHIGRAPH_EAGER_ALGO) always
+The chosen mode is persisted in ~/.grafel/daemon.config.json and read
+by the daemon on every boot. Env vars (e.g. GRAFEL_EAGER_ALGO) always
 take precedence over the mode defaults.`,
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: []string{"background", "workstation", "readonly"},
@@ -50,7 +50,7 @@ take precedence over the mode defaults.`,
 			}
 
 			// Resolve the config path via the daemon layout so it respects
-			// ARCHIGRAPH_DAEMON_ROOT overrides used in tests.
+			// GRAFEL_DAEMON_ROOT overrides used in tests.
 			layout, err := daemon.DefaultLayout()
 			if err != nil {
 				return fmt.Errorf("resolve daemon layout: %w", err)
@@ -75,7 +75,7 @@ take precedence over the mode defaults.`,
 			fmt.Fprintln(out, "restarting daemon…")
 			if err := runModeRestart(out); err != nil {
 				fmt.Fprintf(out, "  ⚠ restart: %v\n", err)
-				fmt.Fprintf(out, "  Run 'archigraph start' to launch the daemon in %s mode.\n", m)
+				fmt.Fprintf(out, "  Run 'grafel start' to launch the daemon in %s mode.\n", m)
 			} else {
 				fmt.Fprintf(out, "daemon restarted in %s mode\n", m)
 			}

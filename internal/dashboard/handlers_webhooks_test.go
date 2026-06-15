@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/notifications"
+	"github.com/cajasmota/grafel/internal/notifications"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,7 +19,7 @@ import (
 func testWebhookServer(t *testing.T) (*Server, func()) {
 	t.Helper()
 	tmp := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmp)
+	t.Setenv("GRAFEL_HOME", tmp)
 	srv, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)

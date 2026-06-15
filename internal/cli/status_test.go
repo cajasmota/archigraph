@@ -6,24 +6,24 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func TestStatusMissingFleetConfig(t *testing.T) {
-	// Create a temporary archigraph home.
+	// Create a temporary grafel home.
 	tmpHome := t.TempDir()
-	origHome := os.Getenv("ARCHIGRAPH_HOME")
+	origHome := os.Getenv("GRAFEL_HOME")
 	defer func() {
 		if origHome != "" {
-			os.Setenv("ARCHIGRAPH_HOME", origHome)
+			os.Setenv("GRAFEL_HOME", origHome)
 		} else {
-			os.Unsetenv("ARCHIGRAPH_HOME")
+			os.Unsetenv("GRAFEL_HOME")
 		}
 	}()
-	os.Setenv("ARCHIGRAPH_HOME", tmpHome)
+	os.Setenv("GRAFEL_HOME", tmpHome)
 
 	// Create a registry entry with a missing config file.
-	configDir := filepath.Join(tmpHome, ".config", "archigraph")
+	configDir := filepath.Join(tmpHome, ".config", "grafel")
 	os.MkdirAll(configDir, 0o755)
 	missingConfig := filepath.Join(configDir, "missing.fleet.json")
 
@@ -45,26 +45,26 @@ func TestStatusMissingFleetConfig(t *testing.T) {
 	if !bytes.Contains([]byte(output), []byte("config not found")) {
 		t.Errorf("Expected 'config not found' in output, got: %s", output)
 	}
-	if !bytes.Contains([]byte(output), []byte("archigraph cleanup")) {
-		t.Errorf("Expected 'archigraph cleanup' suggestion in output, got: %s", output)
+	if !bytes.Contains([]byte(output), []byte("grafel cleanup")) {
+		t.Errorf("Expected 'grafel cleanup' suggestion in output, got: %s", output)
 	}
 }
 
 func TestStatusExistingFleetConfig(t *testing.T) {
-	// Create a temporary archigraph home.
+	// Create a temporary grafel home.
 	tmpHome := t.TempDir()
-	origHome := os.Getenv("ARCHIGRAPH_HOME")
+	origHome := os.Getenv("GRAFEL_HOME")
 	defer func() {
 		if origHome != "" {
-			os.Setenv("ARCHIGRAPH_HOME", origHome)
+			os.Setenv("GRAFEL_HOME", origHome)
 		} else {
-			os.Unsetenv("ARCHIGRAPH_HOME")
+			os.Unsetenv("GRAFEL_HOME")
 		}
 	}()
-	os.Setenv("ARCHIGRAPH_HOME", tmpHome)
+	os.Setenv("GRAFEL_HOME", tmpHome)
 
 	// Create a valid config file.
-	configDir := filepath.Join(tmpHome, ".config", "archigraph")
+	configDir := filepath.Join(tmpHome, ".config", "grafel")
 	os.MkdirAll(configDir, 0o755)
 	validConfig := filepath.Join(configDir, "valid.fleet.json")
 	os.WriteFile(validConfig, []byte(`{

@@ -57,7 +57,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // eventBusEventKind is the SCOPE kind for synthetic managed event-bus events.

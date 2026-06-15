@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // buildTwoRepoFixture creates the on-disk home / store environment for two
@@ -24,13 +24,13 @@ import (
 // files — callers should call writeRepoGraph for each (repo, ref) combination
 // they want to exercise.
 //
-// The helper sets ARCHIGRAPH_HOME and daemon.EnvRoot environment variables
+// The helper sets GRAFEL_HOME and daemon.EnvRoot environment variables
 // (via t.Setenv so they are restored on test exit).
 func buildTwoRepoFixture(t *testing.T) (repoAPath, repoBPath string) {
 	t.Helper()
 
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	storeRoot := filepath.Join(home, "store")
 	t.Setenv(daemon.EnvRoot, storeRoot)
 
@@ -265,7 +265,7 @@ func TestCrossLinkCache_RefSwitchInvalidatesStaleData(t *testing.T) {
 //   - State.CrossLinkCache is not nil after NewState.
 func TestCrossLinkCache_StateNotifyRefSwitch(t *testing.T) {
 	repoAPath, repoBPath := buildTwoRepoFixture(t)
-	home := os.Getenv("ARCHIGRAPH_HOME")
+	home := os.Getenv("GRAFEL_HOME")
 
 	regPath := buildGroupRegistryForCacheTest(t, home, "cache-notify-test-group", repoAPath, repoBPath)
 
@@ -340,7 +340,7 @@ func TestCrossLinkCache_StateNotifyRefSwitch(t *testing.T) {
 //  6. repoB-sourced links are NOT in repoA's cache entry (separate caching).
 func TestCrossLinkCache_QueryPathWireIn(t *testing.T) {
 	repoAPath, repoBPath := buildTwoRepoFixture(t)
-	home := os.Getenv("ARCHIGRAPH_HOME")
+	home := os.Getenv("GRAFEL_HOME")
 
 	regPath := buildGroupRegistryForCacheTest(t, home, "wire-in-test-group", repoAPath, repoBPath)
 

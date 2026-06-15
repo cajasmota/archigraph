@@ -29,9 +29,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/literalparity"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/literalparity"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // knownDerivations is the registry of supported `*_derive` values.

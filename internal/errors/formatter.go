@@ -39,9 +39,9 @@ func isTTY(w io.Writer) bool {
 //
 //	hint:
 //	  This file exceeds the 10 MiB single-file limit. Add it to
-//	  .archigraphignore to skip it, or split the file.
+//	  .grafelignore to skip it, or split the file.
 //
-//	see: https://archigraph.dev/docs/errors/IDX-002
+//	see: https://grafel.dev/docs/errors/IDX-002
 func Format(w io.Writer, ie *IndexerError) {
 	if ie == nil {
 		return

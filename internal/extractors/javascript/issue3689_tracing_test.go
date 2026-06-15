@@ -6,7 +6,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // jsSpanEdge returns the first INSTRUMENTS edge on the named entity matching

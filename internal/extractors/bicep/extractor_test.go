@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/bicep" // trigger init()
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/bicep" // trigger init()
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractBicep(t *testing.T, src, path string) []types.EntityRecord {

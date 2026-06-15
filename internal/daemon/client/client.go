@@ -1,4 +1,4 @@
-// Package client dials the archigraph daemon over a platform-appropriate
+// Package client dials the grafel daemon over a platform-appropriate
 // IPC transport (Unix-domain socket on Linux/macOS, named pipe on Windows)
 // and exposes typed wrappers around each RPC method declared in the proto
 // package.
@@ -7,7 +7,7 @@
 // endpoint is missing or unconnectable. Callers print the canonical message
 // from ADR-0017:
 //
-//	daemon not running; run 'archigraph start' or reinstall via 'archigraph install'
+//	daemon not running; run 'grafel start' or reinstall via 'grafel install'
 //
 // We do not embed that text inside this package because cmd output is
 // the CLI's responsibility — the client just reports the condition.
@@ -23,9 +23,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // ErrDaemonNotRunning indicates the daemon socket could not be reached.
@@ -107,7 +107,7 @@ func (c *Client) SocketPath() string {
 	return c.socketPath
 }
 
-// Ping returns the daemon's reported version. Used by `archigraph status`
+// Ping returns the daemon's reported version. Used by `grafel status`
 // as a liveness probe before calling Status (which is allowed to fail
 // in informative ways).
 func (c *Client) Ping() (proto.PingReply, error) {
@@ -115,7 +115,7 @@ func (c *Client) Ping() (proto.PingReply, error) {
 	if err := c.rpc.Call(proto.ServiceName+".Ping", proto.PingArgs{}, &reply); err != nil {
 		// Wrap transient connection errors with a hint to retry.
 		if isTransientRPCError(err) {
-			return proto.PingReply{}, fmt.Errorf("daemon connection unavailable (likely restarting) — retry in 1-2s. If persistent, run 'archigraph status': %w", err)
+			return proto.PingReply{}, fmt.Errorf("daemon connection unavailable (likely restarting) — retry in 1-2s. If persistent, run 'grafel status': %w", err)
 		}
 		return proto.PingReply{}, err
 	}
@@ -130,7 +130,7 @@ func (c *Client) Status() (proto.StatusReply, error) {
 	if err := c.rpc.Call(proto.ServiceName+".Status", proto.StatusArgs{}, &reply); err != nil {
 		// Wrap transient connection errors with a hint to retry.
 		if isTransientRPCError(err) {
-			return proto.StatusReply{}, fmt.Errorf("daemon connection unavailable (likely restarting) — retry in 1-2s. If persistent, run 'archigraph status': %w", err)
+			return proto.StatusReply{}, fmt.Errorf("daemon connection unavailable (likely restarting) — retry in 1-2s. If persistent, run 'grafel status': %w", err)
 		}
 		return proto.StatusReply{}, err
 	}
@@ -201,7 +201,7 @@ func DialProgress(socketPath string) (*Client, error) {
 
 // RemoveRepo asks the daemon to unregister a single repo from a group,
 // stop its watcher, remove the git hook block, and (optionally) delete
-// the per-repo .archigraph/ cache.
+// the per-repo .grafel/ cache.
 func (c *Client) RemoveRepo(args proto.RemoveRepoArgs) (proto.RemoveRepoReply, error) {
 	var reply proto.RemoveRepoReply
 	if err := c.rpc.Call(proto.ServiceName+".RemoveRepo", args, &reply); err != nil {

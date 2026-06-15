@@ -36,8 +36,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -238,7 +238,7 @@ func scalaParseEnumCases(body string) []string {
 // ---------------------------------------------------------------------------
 
 func (e *scalaTypeSystemExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/scala")
+	tracer := otel.Tracer("grafel/custom/scala")
 	_, span := tracer.Start(ctx, "indexer.scala_type_system.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

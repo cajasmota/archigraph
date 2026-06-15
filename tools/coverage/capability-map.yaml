@@ -1,4 +1,4 @@
-# Capability-mapping file for the archigraph coverage registry.
+# Capability-mapping file for the grafel coverage registry.
 #
 # Maps each registry capability cell to the code that implements it:
 #   - symbols.file        the source file
@@ -27,7 +27,7 @@ records:
         # over the assembled graph.Document and persists usage_status=
         # used|unused onto each external_dependency entity + its DEPENDS_ON
         # edge. Promotes the previously dashboard-only deplinker signal into
-        # the graph (issue #3640, epic #3625). Invoked from cmd/archigraph/
+        # the graph (issue #3640, epic #3625). Invoked from cmd/grafel/
         # index.go gated on --skip-pass=dep-hygiene.
         status: full
         symbols:

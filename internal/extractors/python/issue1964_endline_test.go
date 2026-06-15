@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // Issue #1964 — every Operation, Method, and Class entity emitted by the

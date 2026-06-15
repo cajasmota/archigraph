@@ -3,7 +3,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // AutoMapper / Mapster object-mapping topology coverage (#5074). Value-

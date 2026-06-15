@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // adjacency is a per-repo precomputed neighbor map.

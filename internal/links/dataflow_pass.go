@@ -16,7 +16,7 @@
 // the MCP overlays) via method-segregated overwrite — exactly as the sibling
 // structural passes (import/label/string/http) do — AND mirrored to the
 // <group>-links-data-flow.json sidecar (#3867). The sidecar is the canonical
-// source for the dedicated archigraph_data_flows MCP tool, which surfaces the
+// source for the dedicated grafel_data_flows MCP tool, which surfaces the
 // per-flow field / sink_kind / hop_path provenance a plain edge-kind
 // projection cannot carry. A compact summary is also stamped onto the handler
 // entity:
@@ -36,8 +36,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/substrate"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // MethodDataFlow identifies sidecar artefacts from this pass.
@@ -195,7 +195,7 @@ func runDataFlowPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (
 	res.Skipped += skipped
 
 	// Keep the sidecar too: it carries the same DATA_FLOWS_TO rows and is the
-	// canonical source for the dedicated archigraph_data_flows MCP tool (which
+	// canonical source for the dedicated grafel_data_flows MCP tool (which
 	// surfaces the per-flow field / sink_kind / hop_path provenance that a
 	// plain edge-kind projection cannot). The links list was already filtered
 	// through the rejection set by replaceByMethod above, so the sidecar and

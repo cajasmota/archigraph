@@ -26,7 +26,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // v2ShapeRow is one row in a ShapeTree response. Each row corresponds to

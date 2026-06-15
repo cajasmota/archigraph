@@ -1,4 +1,4 @@
-module github.com/cajasmota/archigraph
+module github.com/cajasmota/grafel
 
 go 1.26.0
 

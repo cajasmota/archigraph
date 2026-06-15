@@ -6,7 +6,7 @@
 //
 // Output layout:
 //
-//	~/.archigraph/docs/<group>/.tier0-<RFC3339>/
+//	~/.grafel/docs/<group>/.tier0-<RFC3339>/
 //	    <entity-id>-<section>.md   — the rendered section
 //	    score.json                 — machine-readable quality metrics
 //
@@ -35,9 +35,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ValidLLMModes lists the accepted values for the --llm-mode flag.
@@ -93,13 +93,13 @@ type Score struct {
 
 // RunOpts contains the resolved inputs for a Tier 0 run.
 type RunOpts struct {
-	// Group is the archigraph group name (resolved from --group or sole group).
+	// Group is the grafel group name (resolved from --group or sole group).
 	Group string
 	// SeedEntityID is the entity ID to render the section for.
 	SeedEntityID string
 	// Section is one of KnownSections.
 	Section string
-	// OutputDir overrides the default ~/.archigraph/docs/<group>/.tier0-<ts>/
+	// OutputDir overrides the default ~/.grafel/docs/<group>/.tier0-<ts>/
 	// location. Useful in tests.
 	OutputDir string
 	// LLMMode controls the LLM integration mode. Valid values:
@@ -109,7 +109,7 @@ type RunOpts struct {
 	// Any other value is an error.
 	LLMMode string
 	// CacheDir overrides the default section-level LLM cache directory:
-	//   ~/.archigraph/docs/<group>/.llm-cache/
+	//   ~/.grafel/docs/<group>/.llm-cache/
 	// Ignored when NoCache is true.
 	CacheDir string
 	// NoCache disables both cache reads and writes (useful for benchmark /
@@ -239,13 +239,13 @@ func defaultOutDir(group string) (string, error) {
 
 // NormalizeSeedEntityID strips an optional <group>:: or <repo>:: prefix from
 // a seed entity ID and returns the raw 16-char hex. This lets users pass the
-// prefixed form returned by archigraph_find (e.g. "archigraph::7a349f6cd77984c9"
+// prefixed form returned by grafel_find (e.g. "grafel::7a349f6cd77984c9"
 // or "upvate-core::7a349f6cd77984c9") directly to --seed-entity without having
 // to manually trim the prefix.
 //
 // Accepted forms (all resolve to the same raw hex):
 //   - "7a349f6cd77984c9"               — raw hex (unchanged)
-//   - "archigraph::7a349f6cd77984c9"   — group-prefixed
+//   - "grafel::7a349f6cd77984c9"   — group-prefixed
 //   - "upvate-core::7a349f6cd77984c9"  — repo-prefixed
 //
 // Returns an error when the input contains "::" but the RHS is empty.
@@ -301,7 +301,7 @@ func loadEntityContext(group, seedID string) (doc *graph.Document, seed *graph.E
 	//
 	// We use the fleet config's absRepoPath rather than Document.Repo because
 	// Document.Repo stores the indexer's repoTag (a short slug such as
-	// "archigraph"), not an absolute filesystem path.
+	// "grafel"), not an absolute filesystem path.
 	//
 	// Backward-compat note: if Document.Repo is already absolute (as in test
 	// harnesses that write the full path), we prefer it so existing tests keep
@@ -334,7 +334,7 @@ func loadEntityContext(group, seedID string) (doc *graph.Document, seed *graph.E
 	}
 
 	if len(byID) == 0 {
-		err = fmt.Errorf("no indexed repos found for group %q — run `archigraph index` first", group)
+		err = fmt.Errorf("no indexed repos found for group %q — run `grafel index` first", group)
 		return
 	}
 
@@ -620,7 +620,7 @@ func findGroupRepoEntries(group string) ([]repoEntry, error) {
 	}
 	data, err := os.ReadFile(cfgPath)
 	if err != nil {
-		return nil, fmt.Errorf("group config not found for %q (run `archigraph wizard`): %w", group, err)
+		return nil, fmt.Errorf("group config not found for %q (run `grafel wizard`): %w", group, err)
 	}
 
 	var cfg struct {
@@ -677,7 +677,7 @@ func renderSection(section string, seed *graph.Entity, neighbours []graph.Entity
 	b.WriteString("## Seed Entity\n\n")
 	if seed == nil {
 		b.WriteString("> **Warning:** seed entity not found in any indexed repo for this group.\n")
-		b.WriteString("> Run `archigraph index` and retry with a valid entity ID.\n\n")
+		b.WriteString("> Run `grafel index` and retry with a valid entity ID.\n\n")
 	} else {
 		b.WriteString(fmt.Sprintf("- **ID:** `%s`\n", seed.ID))
 		b.WriteString(fmt.Sprintf("- **Name:** `%s`\n", seed.Name))

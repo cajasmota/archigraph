@@ -1,10 +1,10 @@
 // Package javascript — unit tests for issue #2338: gate const_destructure /
-// const_destructure_call subtype emission behind ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL.
+// const_destructure_call subtype emission behind GRAFEL_EMIT_DESTRUCTURE_DETAIL.
 //
 // Three invariants are tested:
 //
 //  1. Default-off: 0 entities with subtype const_destructure or const_destructure_call.
-//  2. Opt-in (ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL=1): entities ARE emitted with
+//  2. Opt-in (GRAFEL_EMIT_DESTRUCTURE_DETAIL=1): entities ARE emitted with
 //     those subtypes.
 //  3. Bindings-always: individual bindings (data, isLoading, createFoo, …) are
 //     emitted regardless of the flag — the non-negotiable correctness invariant
@@ -35,10 +35,10 @@ const [count, setCount] = useState(0);
 // 1. Default-off: no const_destructure* subtypes
 // ---------------------------------------------------------------------------
 
-// TestDestructureGate_DefaultOff verifies that with ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL
+// TestDestructureGate_DefaultOff verifies that with GRAFEL_EMIT_DESTRUCTURE_DETAIL
 // unset, no entity has subtype "const_destructure" or "const_destructure_call".
 func TestDestructureGate_DefaultOff(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "")
 
 	src := []byte(multiDestructureSrc)
 	tree := parseJS(t, src)
@@ -46,7 +46,7 @@ func TestDestructureGate_DefaultOff(t *testing.T) {
 
 	for _, e := range entities {
 		if e.Subtype == "const_destructure" || e.Subtype == "const_destructure_call" {
-			t.Errorf("default-off: entity %q has forbidden subtype %q; ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL must be set to emit these",
+			t.Errorf("default-off: entity %q has forbidden subtype %q; GRAFEL_EMIT_DESTRUCTURE_DETAIL must be set to emit these",
 				e.Name, e.Subtype)
 		}
 	}
@@ -56,11 +56,11 @@ func TestDestructureGate_DefaultOff(t *testing.T) {
 // 2. Opt-in: const_destructure* subtypes ARE emitted
 // ---------------------------------------------------------------------------
 
-// TestDestructureGate_OptIn verifies that with ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL=1
+// TestDestructureGate_OptIn verifies that with GRAFEL_EMIT_DESTRUCTURE_DETAIL=1
 // at least one entity with subtype const_destructure or const_destructure_call
 // is emitted.
 func TestDestructureGate_OptIn(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "1")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "1")
 
 	src := []byte(multiDestructureSrc)
 	tree := parseJS(t, src)
@@ -79,9 +79,9 @@ func TestDestructureGate_OptIn(t *testing.T) {
 }
 
 // TestDestructureGate_OptIn_TrueValue verifies "true" is also accepted as
-// a truthy flag value (mirrors the ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS pattern).
+// a truthy flag value (mirrors the GRAFEL_MARKDOWN_EMIT_HEADINGS pattern).
 func TestDestructureGate_OptIn_TrueValue(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "true")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "true")
 
 	src := []byte(multiDestructureSrc)
 	tree := parseJS(t, src)
@@ -109,7 +109,7 @@ func TestDestructureGate_OptIn_TrueValue(t *testing.T) {
 // "state_setter") but the entities themselves must exist so the resolver can
 // bind same-file REFERENCES / CALLS edges.
 func TestDestructureGate_BindingsAlways_DefaultOff(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "")
 
 	src := []byte(multiDestructureSrc)
 	tree := parseJS(t, src)
@@ -155,7 +155,7 @@ func TestDestructureGate_BindingsAlways_DefaultOff(t *testing.T) {
 // TestDestructureGate_BindingsAlways_OptIn asserts that with the flag on the
 // same bindings are present and carry the expected const_destructure* subtypes.
 func TestDestructureGate_BindingsAlways_OptIn(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "1")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "1")
 
 	src := []byte(multiDestructureSrc)
 	tree := parseJS(t, src)
@@ -194,7 +194,7 @@ func TestDestructureGate_BindingsAlways_OptIn(t *testing.T) {
 // binding stays SCOPE.Operation in default-off mode. The kind must not degrade
 // to SCOPE.Component; only the subtype label is suppressed.
 func TestDestructureGate_MutationHookOp_DefaultOff(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "")
 
 	src := []byte(`const { mutate: createFoo } = useCreateFoo();`)
 	tree := parseJS(t, src)
@@ -215,7 +215,7 @@ func TestDestructureGate_MutationHookOp_DefaultOff(t *testing.T) {
 // TestDestructureGate_MutationHookOp_OptIn verifies the same binding gets
 // the const_destructure_call subtype when the flag is on.
 func TestDestructureGate_MutationHookOp_OptIn(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "1")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "1")
 
 	src := []byte(`const { mutate: createFoo } = useCreateFoo();`)
 	tree := parseJS(t, src)
@@ -240,7 +240,7 @@ func TestDestructureGate_MutationHookOp_OptIn(t *testing.T) {
 // TestDestructureGate_TypeScript_DefaultOff verifies default-off behavior
 // when the TypeScript grammar is used.
 func TestDestructureGate_TypeScript_DefaultOff(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL", "")
+	t.Setenv("GRAFEL_EMIT_DESTRUCTURE_DETAIL", "")
 
 	src := []byte(`const { data, isLoading }: QueryResult = useQuery<Data>("key");`)
 	tree := parseTS(t, src)

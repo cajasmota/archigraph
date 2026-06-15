@@ -197,7 +197,7 @@ func TestScanPath_SuppressesIgnoreComment(t *testing.T) {
 	dir := t.TempDir()
 	writeTempFile(t, dir, "config.go", `package main
 
-const awsKey = "AKIAIOSFODNN7REAL0000" // archigraph: ignore-secret
+const awsKey = "AKIAIOSFODNN7REAL0000" // grafel: ignore-secret
 `)
 	findings, err := ScanPath(dir, 0)
 	if err != nil {

@@ -26,7 +26,7 @@
 //   - HTTP status — `ResponseEntity.status(NNN)` / `HttpStatus.NAME` (enum→code),
 //     `response.setStatus(NNN)` / `sendError(NNN)`.
 //
-// Same opt-in contract: this runs only when archigraph_effects is called with
+// Same opt-in contract: this runs only when grafel_effects is called with
 // include="branches", so the default effects payload is byte-for-byte unchanged.
 // Classification stays conservative — a branch is surfaced only when it provably
 // alters control flow (returns / throws / redirects / writes an HTTP error

@@ -1,4 +1,4 @@
-// archigraph_auth_posture_diff MCP tool (#4422, epic #4419 P0 — the BLOCKING
+// grafel_auth_posture_diff MCP tool (#4422, epic #4419 P0 — the BLOCKING
 // RBAC-drift class).
 //
 // Per linked HTTP endpoint, it resolves the ORACLE side's auth posture (e.g. a
@@ -39,8 +39,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/authposture"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/authposture"
+	"github.com/cajasmota/grafel/internal/graph"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -122,7 +122,7 @@ type authPostureRecord struct {
 	V3Stack        authposture.Posture `json:"v3_stack"`
 }
 
-// handleAuthPostureDiff implements archigraph_auth_posture_diff.
+// handleAuthPostureDiff implements grafel_auth_posture_diff.
 func (s *Server) handleAuthPostureDiff(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	oracleGroup := argString(req, "group_oracle", "")
 	v3Group := argString(req, "group_v3", "")

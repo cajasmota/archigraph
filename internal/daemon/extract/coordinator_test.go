@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func TestWriteBatches_PartitionsByLanguageAndSize(t *testing.T) {
@@ -88,7 +88,7 @@ func TestSortEntityRecords_Deterministic(t *testing.T) {
 	}
 }
 
-// TestCoordinate_EndToEnd builds the archigraph binary, writes a tiny
+// TestCoordinate_EndToEnd builds the grafel binary, writes a tiny
 // repo, then runs Coordinate against it. The subprocess path must
 // produce at least one entity for the demo.go file. Skipped under
 // `go test -short`.
@@ -96,7 +96,7 @@ func TestCoordinate_EndToEnd(t *testing.T) {
 	if testing.Short() {
 		t.Skip("integration test — skipped in -short mode")
 	}
-	bin := buildArchigraph(t)
+	bin := buildGrafel(t)
 
 	repo := t.TempDir()
 	src := `package demo
@@ -134,7 +134,7 @@ func TestCoordinate_EmitsConfigEntities(t *testing.T) {
 	if testing.Short() {
 		t.Skip("integration test — skipped in -short mode")
 	}
-	bin := buildArchigraph(t)
+	bin := buildGrafel(t)
 
 	repo := t.TempDir()
 	must := func(name, content string) {
@@ -200,7 +200,7 @@ func TestCoordinate_CrossBatchORMFieldLookup(t *testing.T) {
 	if testing.Short() {
 		t.Skip("integration test — skipped in -short mode")
 	}
-	bin := buildArchigraph(t)
+	bin := buildGrafel(t)
 
 	repo := t.TempDir()
 	must := func(name, content string) {
@@ -270,19 +270,19 @@ def get_user_by_cognito(request, uid):
 	}
 }
 
-func buildArchigraph(t *testing.T) string {
+func buildGrafel(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	name := "archigraph"
+	name := "grafel"
 	if runtime.GOOS == "windows" {
-		name = "archigraph.exe"
+		name = "grafel.exe"
 	}
 	out := filepath.Join(dir, name)
-	cmd := exec.Command("go", "build", "-o", out, "github.com/cajasmota/archigraph/cmd/archigraph")
+	cmd := exec.Command("go", "build", "-o", out, "github.com/cajasmota/grafel/cmd/grafel")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		t.Fatalf("build archigraph: %v", err)
+		t.Fatalf("build grafel: %v", err)
 	}
 	return out
 }
@@ -302,7 +302,7 @@ func TestCoordinate_Pass1EntitiesEquivalence(t *testing.T) {
 	if testing.Short() {
 		t.Skip("integration test — skipped in -short mode")
 	}
-	bin := buildArchigraph(t)
+	bin := buildGrafel(t)
 
 	// Fixture: single Python file with Django model definition + ORM query
 	// accessing the model's own fields (intra-file resolution, Phase A scope).

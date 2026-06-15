@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Finding mirrors the JSON body written by archigraph_save_finding.
+// Finding mirrors the JSON body written by grafel_save_finding.
 //
 // Path is the absolute file path on disk. SavedAtFile is the file's mtime,
 // used as a fallback ordering key when SavedAt is missing/unparseable.
@@ -25,7 +25,7 @@ type Finding struct {
 }
 
 // findingsMemDir resolves the on-disk memory dir for a group: registry override
-// or the conventional ~/.archigraph/groups/<group>-memory.
+// or the conventional ~/.grafel/groups/<group>-memory.
 func findingsMemDir(groupName string, lg *LoadedGroup) string {
 	if lg != nil && lg.MemoryDir != "" {
 		return lg.MemoryDir

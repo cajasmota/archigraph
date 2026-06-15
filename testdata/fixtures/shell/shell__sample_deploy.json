@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh",
   "language": "shell",
   "entities": [
     {
@@ -123,8 +123,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -139,12 +139,12 @@
         "convention": "snake_case",
         "dominant_percentage": 50.0,
         "sample_count": 10,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     },
     {
       "name": "onboarding_entry:main:order=1",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh:main",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh:main",
       "kind": "SCOPE.Pattern",
       "start_line": 53,
       "end_line": 59,
@@ -156,16 +156,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh::main",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh::main",
         "reading_order": 1,
         "entry_point_type": "shell_entrypoint",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     },
     {
       "name": "onboarding_entry:run_smoke_tests:order=2",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh:run_smoke_tests",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh:run_smoke_tests",
       "kind": "SCOPE.Pattern",
       "start_line": 42,
       "end_line": 51,
@@ -177,16 +177,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh::run_smoke_tests",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh::run_smoke_tests",
         "reading_order": 2,
         "entry_point_type": "shell_entrypoint",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     },
     {
       "name": "onboarding_entry:deploy_to_k8s:order=3",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh:deploy_to_k8s",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh:deploy_to_k8s",
       "kind": "SCOPE.Pattern",
       "start_line": 31,
       "end_line": 40,
@@ -198,16 +198,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh::deploy_to_k8s",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh::deploy_to_k8s",
         "reading_order": 3,
         "entry_point_type": "shell_entrypoint",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     },
     {
       "name": "onboarding_entry:build_image:order=4",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh:build_image",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh:build_image",
       "kind": "SCOPE.Pattern",
       "start_line": 24,
       "end_line": 29,
@@ -219,16 +219,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh::build_image",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh::build_image",
         "reading_order": 4,
         "entry_point_type": "shell_entrypoint",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     },
     {
       "name": "onboarding_entry:check_prerequisites:order=5",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh:check_prerequisites",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh:check_prerequisites",
       "kind": "SCOPE.Pattern",
       "start_line": 15,
       "end_line": 22,
@@ -240,16 +240,16 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh::check_prerequisites",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh::check_prerequisites",
         "reading_order": 5,
         "entry_point_type": "shell_entrypoint",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     },
     {
       "name": "onboarding_entry:log:order=6",
-      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh:log",
+      "qualified_name": "scope:pattern:onboarding_entry:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh:log",
       "kind": "SCOPE.Pattern",
       "start_line": 11,
       "end_line": 13,
@@ -261,11 +261,11 @@
         "provenance": "INFERRED_FROM_ONBOARDING_ENTRY",
         "source": "",
         "kind": "onboarding_entry",
-        "entity_id": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh::log",
+        "entity_id": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh::log",
         "reading_order": 6,
         "entry_point_type": "shell_entrypoint",
         "inbound_dependency_count": 0,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/shell/sample_deploy.sh"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/shell/sample_deploy.sh"
       }
     }
   ],

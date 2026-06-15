@@ -1,4 +1,4 @@
-// Package javascript implements the JS/TS language extractor for archigraph.
+// Package javascript implements the JS/TS language extractor for grafel.
 //
 // A single JSExtractor handles both "javascript" and "typescript" because the
 // TypeScript grammar is a strict superset of JavaScript. The OTel span name is
@@ -38,9 +38,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/txscope"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/txscope"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitDestructureDetailEnv is the env var that opts const_destructure /
@@ -60,7 +60,7 @@ import (
 //
 // Issue #2320: the preferred path is FileInput.Config.EmitDestructureDetail();
 // this env var remains as a backward-compatible fallback.
-const emitDestructureDetailEnv = "ARCHIGRAPH_EMIT_DESTRUCTURE_DETAIL"
+const emitDestructureDetailEnv = "GRAFEL_EMIT_DESTRUCTURE_DETAIL"
 
 // New returns a new JSExtractor. Use this in tests or explicit registrations.
 func New() *JSExtractor {
@@ -243,7 +243,7 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 	x.zustand = x.buildZustandTracker(root)
 	// Issue #2626 — emit each store action as a standalone SCOPE.Operation
 	// entity so that the graph's CALLS adjacency has outgoing edges FROM the
-	// action, allowing archigraph_traces BFS to enter the closure body.
+	// action, allowing grafel_traces BFS to enter the closure body.
 	// Without this, traces terminated at useAuthStore ("no_outgoing_calls").
 	x.zustand.emitStoreActionEntities(x)
 
@@ -749,7 +749,7 @@ func (x *extractor) emitWithRels(name, kind string, n *sitter.Node, subtype stri
 // appended to x.entities at index >= from. Called after emitting entities that
 // were discovered inside a function/method body (funcDepth > 0) to mark them
 // as non-addressable locals. The serving layer (denoise.go) uses this flag to
-// hide these entities from archigraph_find results while still allowing the
+// hide these entities from grafel_find results while still allowing the
 // resolver to use them for REFERENCES/CALLS binding (#1748).
 func (x *extractor) tagLocalScope(from int) {
 	for i := from; i < len(x.entities); i++ {
@@ -1719,7 +1719,7 @@ func (x *extractor) handleVariableDeclarator(n *sitter.Node, parentClass string,
 		stateHook := nameNode.Type() == "array_pattern" && isStateHookCall(x, valueNode)
 		// Issue #1748 — inside a function body (funcDepth > 0) and not a
 		// hook-result binding, tag newly emitted entities as local_scope=true
-		// so the serving layer can filter them from archigraph_find results.
+		// so the serving layer can filter them from grafel_find results.
 		// We still emit the entities so the resolver can bind same-file
 		// REFERENCES/CALLS edges.
 		before := len(x.entities)

@@ -25,7 +25,7 @@ import "regexp"
 // Cross-language collision risks that motivate this gate:
 //   - "init", "start", "stop", "get", "put", "delete" are common in many langs.
 //   - "map", "filter", "lists:map", "maps:get" look like qualified forms
-//     that no other archigraph language emits.
+//     that no other grafel language emits.
 var erlangDynamicPatterns = []*regexp.Regexp{
 	// ── OTP gen_server BIFs ────────────────────────────────────────────────
 	// Qualified gen_server:* calls emitted as "gen_server:<fn>".
@@ -247,7 +247,7 @@ var erlangDynamicPatterns = []*regexp.Regexp{
 	// ── Bare stdlib BIFs (non-qualified) ─────────────────────────────────
 	// These BIFs are auto-imported into every Erlang module — they arrive
 	// as bare CALLS targets. All are safe to mark dynamic because they
-	// share no name with user-defined archigraph entities in other langs
+	// share no name with user-defined grafel entities in other langs
 	// after the erlang language gate is applied.
 	regexp.MustCompile(`^self$`),
 	regexp.MustCompile(`^spawn$`),

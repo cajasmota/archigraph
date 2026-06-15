@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/install"
+	"github.com/cajasmota/grafel/internal/install"
 )
 
 // TestEnsureGitignore_CreatesFile verifies that .gitignore is created if it
-// does not exist, with the archigraph entry and a comment.
+// does not exist, with the grafel entry and a comment.
 func TestEnsureGitignore_CreatesFile(t *testing.T) {
 	repoRoot := t.TempDir()
 
@@ -30,8 +30,8 @@ func TestEnsureGitignore_CreatesFile(t *testing.T) {
 	}
 
 	content := string(data)
-	if !bytes.Contains(data, []byte("/.archigraph/")) {
-		t.Errorf(".gitignore does not contain /.archigraph/; content: %q", content)
+	if !bytes.Contains(data, []byte("/.grafel/")) {
+		t.Errorf(".gitignore does not contain /.grafel/; content: %q", content)
 	}
 }
 
@@ -52,7 +52,7 @@ func TestEnsureGitignore_Idempotent(t *testing.T) {
 	}
 
 	// Count occurrences of the entry in the first version.
-	count1 := bytes.Count(data1, []byte("/.archigraph/"))
+	count1 := bytes.Count(data1, []byte("/.grafel/"))
 	if count1 != 1 {
 		t.Errorf("after first call, entry appears %d times, want 1", count1)
 	}
@@ -73,7 +73,7 @@ func TestEnsureGitignore_Idempotent(t *testing.T) {
 	}
 
 	// Entry should still appear exactly once.
-	count2 := bytes.Count(data2, []byte("/.archigraph/"))
+	count2 := bytes.Count(data2, []byte("/.grafel/"))
 	if count2 != 1 {
 		t.Errorf("after second call, entry appears %d times, want 1", count2)
 	}
@@ -91,7 +91,7 @@ func TestEnsureGitignore_ExistingEntry(t *testing.T) {
 	gitignorePath := filepath.Join(repoRoot, ".gitignore")
 
 	// Create a .gitignore with the entry already present (with leading/trailing space).
-	existingContent := "node_modules/\n  /.archigraph/  \nfoo/\n"
+	existingContent := "node_modules/\n  /.grafel/  \nfoo/\n"
 	if err := os.WriteFile(gitignorePath, []byte(existingContent), 0o644); err != nil {
 		t.Fatalf("write existing .gitignore: %v", err)
 	}
@@ -107,10 +107,10 @@ func TestEnsureGitignore_ExistingEntry(t *testing.T) {
 	}
 
 	// Entry should appear exactly once (trimmed version should match).
-	if !bytes.Contains(data, []byte("/.archigraph/")) {
+	if !bytes.Contains(data, []byte("/.grafel/")) {
 		t.Error("entry not found in .gitignore")
 	}
-	count := bytes.Count(data, []byte("/.archigraph/"))
+	count := bytes.Count(data, []byte("/.grafel/"))
 	if count != 1 {
 		t.Errorf("entry appears %d times, want 1; content:\n%s", count, string(data))
 	}
@@ -148,8 +148,8 @@ func TestEnsureGitignore_PreservesExistingContent(t *testing.T) {
 	}
 
 	// Check that the new entry was added.
-	if !bytes.Contains(data, []byte("/.archigraph/")) {
-		t.Error("/.archigraph/ was not added")
+	if !bytes.Contains(data, []byte("/.grafel/")) {
+		t.Error("/.grafel/ was not added")
 	}
 
 	// Verify the structure: existing content, then new entry.
@@ -183,7 +183,7 @@ func TestEnsureGitignore_NoNewlineAtEnd(t *testing.T) {
 	content := string(data)
 
 	// Check structure: original line, newline, new entry, newline.
-	expected := "node_modules/\n/.archigraph/\n"
+	expected := "node_modules/\n/.grafel/\n"
 	if content != expected {
 		t.Errorf("content mismatch:\ngot:      %q\nexpected: %q", content, expected)
 	}
@@ -213,7 +213,7 @@ func TestEnsureGitignore_EmptyFile(t *testing.T) {
 	content := string(data)
 
 	// Should be just the entry with a trailing newline, no leading newline.
-	expected := "/.archigraph/\n"
+	expected := "/.grafel/\n"
 	if content != expected {
 		t.Errorf("content mismatch:\ngot:      %q\nexpected: %q", content, expected)
 	}
@@ -298,7 +298,7 @@ func TestIntegration_RunCopy_GitignoreIdempotent(t *testing.T) {
 	}
 
 	// Count the entry in the first version.
-	count1 := bytes.Count(data1, []byte("/.archigraph/"))
+	count1 := bytes.Count(data1, []byte("/.grafel/"))
 	if count1 != 1 {
 		t.Errorf("after first install, entry appears %d times, want 1", count1)
 	}
@@ -317,7 +317,7 @@ func TestIntegration_RunCopy_GitignoreIdempotent(t *testing.T) {
 	}
 
 	// Entry should still appear exactly once.
-	count2 := bytes.Count(data2, []byte("/.archigraph/"))
+	count2 := bytes.Count(data2, []byte("/.grafel/"))
 	if count2 != 1 {
 		t.Errorf("after second install, entry appears %d times, want 1", count2)
 	}

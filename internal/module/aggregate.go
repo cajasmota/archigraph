@@ -51,7 +51,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // KindModule is the entity Kind used for synthetic module container nodes.

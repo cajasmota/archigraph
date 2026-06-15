@@ -3,7 +3,7 @@ package java_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4410 LIVE-REPRO — Spring Security global filter-chain wiring.

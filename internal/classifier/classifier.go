@@ -88,14 +88,14 @@ type globSkip struct {
 
 // New constructs a Classifier by loading skip patterns from yamlDataDir.
 // yamlDataDir should point to the languages/_data directory (e.g. the one
-// inside the archigraph Python repo that is bundled with the Lambda).
+// inside the grafel Python repo that is bundled with the Lambda).
 //
 // If yamlDataDir does not exist or is not a directory, New returns an error.
 // Malformed YAML files produce a warning log and are skipped — they do not
 // abort startup.
 func New(yamlDataDir string, tracer trace.Tracer) (*Classifier, error) {
 	if tracer == nil {
-		tracer = otel.Tracer("archigraph/classifier")
+		tracer = otel.Tracer("grafel/classifier")
 	}
 	c := &Classifier{
 		yamlDataDir: yamlDataDir,
@@ -539,7 +539,7 @@ var extensionLanguageMap = map[string]string{
 	// extractor exists; the file still reaches the Pass 2.5 detector (where the
 	// deployment-topology pass parses upstream/proxy_pass request-flow), because
 	// classified files are added to the Pass 2.5 set even when extraction is a
-	// no-op (cmd/archigraph/index.go).
+	// no-op (cmd/grafel/index.go).
 	".nginx": "nginx",
 	// GraphQL
 	".graphql": "graphql",

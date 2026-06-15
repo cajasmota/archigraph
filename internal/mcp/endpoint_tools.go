@@ -18,9 +18,9 @@
 //     and handleSearchEntities. It calls expandKindAlias so those tools gain
 //     alias support without further changes.
 //   - Three new focused tools:
-//     archigraph_endpoint_definitions — list definition-side entities only
-//     archigraph_endpoint_calls       — list call-site entities only
-//     archigraph_endpoint_stats       — counts of each kind + orphan summary
+//     grafel_endpoint_definitions — list definition-side entities only
+//     grafel_endpoint_calls       — list call-site entities only
+//     grafel_endpoint_stats       — counts of each kind + orphan summary
 //
 // # #1745 additions (on top of #1650 + #1751)
 //   - Triple-path dedupe: Properties["path"] and Properties["verb"] are hoisted
@@ -48,7 +48,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -429,7 +429,7 @@ func respondPaginated[T any](
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoints — action-dispatch bundle (#1281)
+// grafel_endpoints — action-dispatch bundle (#1281)
 // Replaces: endpoint_definitions, endpoint_calls, endpoint_stats
 // ---------------------------------------------------------------------------
 
@@ -438,7 +438,7 @@ func respondPaginated[T any](
 // #2665: when kind="navigation" (or include_navigation=true on action=definitions),
 // the handler also/only returns in-app navigation routes derived from
 // NAVIGATES_TO edges rather than http_endpoint_definition entities. This folds
-// the dedicated archigraph_navigates surface into the discoverable endpoints
+// the dedicated grafel_navigates surface into the discoverable endpoints
 // tool.
 func (s *Server) handleEndpoints(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	action, err := req.RequireString("action")
@@ -470,11 +470,11 @@ func (s *Server) handleEndpoints(ctx context.Context, req mcpapi.CallToolRequest
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoints — navigation route surface (#2665)
+// grafel_endpoints — navigation route surface (#2665)
 // ---------------------------------------------------------------------------
 
 // navigationRouteItem is the wire shape for a single in-app navigation route
-// surfaced via archigraph_endpoints with kind=navigation or
+// surfaced via grafel_endpoints with kind=navigation or
 // include_navigation=true.
 type navigationRouteItem struct {
 	Kind         string `json:"kind"`           // always "navigation"
@@ -594,7 +594,7 @@ func collectNavigationRoutes(repos []*LoadedRepo, pathContains string) []navigat
 	return out
 }
 
-// handleEndpointNavigation handles archigraph_endpoints when kind=navigation:
+// handleEndpointNavigation handles grafel_endpoints when kind=navigation:
 // returns only in-app navigation routes (NAVIGATES_TO edges aggregated by
 // destination). #2665.
 func (s *Server) handleEndpointNavigation(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
@@ -671,7 +671,7 @@ func (s *Server) handleEndpointDefinitionsWithNavigation(ctx context.Context, re
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoint_definitions
+// grafel_endpoint_definitions
 // ---------------------------------------------------------------------------
 
 // handleEndpointDefinitions lists http_endpoint_definition entities (and the
@@ -687,7 +687,7 @@ func (s *Server) handleEndpointDefinitionsWithNavigation(ctx context.Context, re
 // #1745: format="terse"|"full" explicit param; triple-path dedupe.
 // #2288: terse mode emits lines only (no definitions struct array duplication).
 //
-// Tool name: archigraph_endpoint_definitions
+// Tool name: grafel_endpoint_definitions
 func (s *Server) handleEndpointDefinitions(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	groupName, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
@@ -985,7 +985,7 @@ func formatLabel(verbose bool) string {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoint_calls
+// grafel_endpoint_calls
 // ---------------------------------------------------------------------------
 
 // handleEndpointCalls lists http_endpoint_call entities — call-sites that
@@ -998,7 +998,7 @@ func formatLabel(verbose bool) string {
 // for handleEndpointDefinitions. The `calls` struct array is only present when
 // format=full or verbose=true.
 //
-// Tool name: archigraph_endpoint_calls
+// Tool name: grafel_endpoint_calls
 func (s *Server) handleEndpointCalls(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
@@ -1265,7 +1265,7 @@ type frameworkStat struct {
 }
 
 // ---------------------------------------------------------------------------
-// archigraph_endpoint_stats
+// grafel_endpoint_stats
 // ---------------------------------------------------------------------------
 
 // handleEndpointStats returns a count breakdown of each HTTP-endpoint kind
@@ -1278,7 +1278,7 @@ type frameworkStat struct {
 // (exact) or regex-based (heuristic) and worth cross-checking. The existing
 // totals (definitions/calls/orphan_calls/…) are UNCHANGED — this is additive.
 //
-// Tool name: archigraph_endpoint_stats
+// Tool name: grafel_endpoint_stats
 func (s *Server) handleEndpointStats(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {

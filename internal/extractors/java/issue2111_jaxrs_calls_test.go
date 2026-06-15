@@ -27,8 +27,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/java"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/java"
 )
 
 // TestJAXRS_MethodBody_EmitsCALLS_SameLeafName is the primary regression

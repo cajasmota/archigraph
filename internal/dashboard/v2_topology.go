@@ -17,7 +17,7 @@ package dashboard
 import (
 	"net/http"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // handleV2Topology — GET /api/v2/topology/{group}

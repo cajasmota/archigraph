@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/install"
+	"github.com/cajasmota/grafel/internal/install"
 )
 
 // TestRunUpdate_HappyPath verifies a full update cycle:
@@ -20,8 +20,8 @@ func TestRunUpdate_HappyPath(t *testing.T) {
 	env := newTestEnv(t)
 
 	// Write a "new" binary content (different from fakeBin) to download.
-	newContent := []byte("#!/bin/sh\necho new-archigraph")
-	newBinPath := filepath.Join(t.TempDir(), "new-archigraph")
+	newContent := []byte("#!/bin/sh\necho new-grafel")
+	newBinPath := filepath.Join(t.TempDir(), "new-grafel")
 	if err := os.WriteFile(newBinPath, newContent, 0o755); err != nil {
 		t.Fatalf("write new binary: %v", err)
 	}

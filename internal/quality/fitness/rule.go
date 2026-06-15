@@ -1,5 +1,5 @@
 // Package fitness implements architectural fitness functions: user-defined
-// rules loaded from .archigraph/fitness.yaml that are evaluated against a
+// rules loaded from .grafel/fitness.yaml that are evaluated against a
 // live graph and can gate CI builds.
 //
 // # Rule grammar
@@ -40,14 +40,14 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Config types (parsed from .archigraph/fitness.yaml)
+// Config types (parsed from .grafel/fitness.yaml)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Config is the root structure of .archigraph/fitness.yaml.
+// Config is the root structure of .grafel/fitness.yaml.
 type Config struct {
 	Rules []RuleConfig `yaml:"rules"`
 }
@@ -156,8 +156,8 @@ func (r *EvalResult) HasFailures() bool {
 // DefaultConfigName is the conventional config file name.
 const DefaultConfigName = "fitness.yaml"
 
-// LoadConfig reads .archigraph/fitness.yaml from stateDir (the
-// <repo>/.archigraph directory) and returns the parsed Config.
+// LoadConfig reads .grafel/fitness.yaml from stateDir (the
+// <repo>/.grafel directory) and returns the parsed Config.
 // Returns an empty Config (no rules) when the file does not exist.
 func LoadConfig(stateDir string) (*Config, error) {
 	path := stateDir + "/" + DefaultConfigName

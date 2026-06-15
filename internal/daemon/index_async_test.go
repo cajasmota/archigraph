@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/daemon/sched"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/sched"
 )
 
 // newAsyncTestService wires a Service to a started Scheduler whose Index hook

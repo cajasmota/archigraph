@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/groovy/SampleController.groovy",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/groovy/SampleController.groovy",
   "language": "groovy",
   "entities": [
     {
@@ -143,8 +143,8 @@
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/groovy/SampleController.groovy",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/groovy/SampleController.groovy",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/groovy/SampleController.groovy",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/groovy/SampleController.groovy",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -159,12 +159,12 @@
         "convention": "PascalCase",
         "dominant_percentage": 22.22222222222222,
         "sample_count": 9,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/groovy/SampleController.groovy"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/groovy/SampleController.groovy"
       }
     },
     {
       "name": "pattern_taxonomy:enterprise:dto",
-      "qualified_name": "scope:pattern:taxonomy:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/groovy/SampleController.groovy:handleRequest",
+      "qualified_name": "scope:pattern:taxonomy:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/groovy/SampleController.groovy:handleRequest",
       "kind": "SCOPE.Pattern",
       "start_line": 40,
       "end_line": 49,

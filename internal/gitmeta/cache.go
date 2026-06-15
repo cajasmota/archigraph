@@ -14,7 +14,7 @@ import (
 // therefore key the cache on (repoPath, HEAD-pointer mtime): a cache hit is
 // valid as long as HEAD has not been rewritten since the entry was captured.
 //
-// This is the hot path for archigraph_whoami / ResolveCWD (#3325, epic #3648):
+// This is the hot path for grafel_whoami / ResolveCWD (#3325, epic #3648):
 // before this cache every whoami call shelled out to git 5–10× (~0.5–2s under
 // indexer contention); after it the steady-state call is a single os.Stat.
 //

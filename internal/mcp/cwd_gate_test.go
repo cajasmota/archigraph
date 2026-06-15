@@ -9,7 +9,7 @@ package mcp
 //   - cwd inside one group                                  → full list (minus sentinel).
 //   - cwd inside multiple groups (ambiguous)                → full list.
 //   - cwd inside group with 0 repos (empty group)           → only sentinel + hint.
-//   - archigraph_status call from no-match cwd              → expected guidance text.
+//   - grafel_status call from no-match cwd              → expected guidance text.
 
 import (
 	"encoding/json"
@@ -29,7 +29,7 @@ import (
 func makeTestServer(t *testing.T, groups map[string]map[string]string) *Server {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", dir)
+	t.Setenv("GRAFEL_DAEMON_ROOT", dir)
 	regPath := makeRegistry(t, dir, groups)
 	srv, err := NewServer(Config{RegistryPath: regPath})
 	if err != nil {
@@ -146,7 +146,7 @@ func TestListToolsForCWD_CWDInsideGroupSubdir(t *testing.T) {
 func TestListToolsForCWD_EmptyGroup(t *testing.T) {
 	// makeRegistry with a group that has no repos.
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", dir)
+	t.Setenv("GRAFEL_DAEMON_ROOT", dir)
 	// Use makeRegistry helper which writes proper JSON.
 	// Since makeRegistry expects map[string]map[string]string, pass empty inner map.
 	regPath := makeRegistry(t, dir, map[string]map[string]string{
@@ -242,7 +242,7 @@ func TestListToolsForCWD_SingleGroup_RootCwd_FullList(t *testing.T) {
 	}
 }
 
-// TestListToolsForCWD_SentinelCallable — archigraph_status handler returns guidance text.
+// TestListToolsForCWD_SentinelCallable — grafel_status handler returns guidance text.
 func TestListToolsForCWD_SentinelCallable(t *testing.T) {
 	repoDir := t.TempDir()
 	srv := makeTestServer(t, map[string]map[string]string{
@@ -264,8 +264,8 @@ func TestListToolsForCWD_SentinelCallable(t *testing.T) {
 	// Extract text content.
 	text := extractResultText(t, result)
 	// Should mention the cwd or registered groups.
-	if !strings.Contains(text, "Archigraph") {
-		t.Errorf("guidance text should mention Archigraph: %q", text)
+	if !strings.Contains(text, "Grafel") {
+		t.Errorf("guidance text should mention Grafel: %q", text)
 	}
 }
 

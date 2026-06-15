@@ -5,8 +5,8 @@ package dashboard
 // Routes registered in server.go:
 //
 //	GET  /api/updates/check        — poll latest GitHub release, compare to current build
-//	POST /api/updates/apply        — run `archigraph update`, stream progress via SSE
-//	POST /api/updates/refresh-rules — run `archigraph update --refresh-rules-lite`, SSE
+//	POST /api/updates/apply        — run `grafel update`, stream progress via SSE
+//	POST /api/updates/refresh-rules — run `grafel update --refresh-rules-lite`, SSE
 
 import (
 	"bufio"
@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ type ghRelease struct {
 // GET /api/updates/check
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ghReleasesURL = "https://api.github.com/repos/cajasmota/archigraph/releases/latest"
+const ghReleasesURL = "https://api.github.com/repos/cajasmota/grafel/releases/latest"
 
 func (s *Server) handleUpdatesCheck(w http.ResponseWriter, r *http.Request) {
 	reply := UpdateCheckReply{
@@ -136,8 +136,8 @@ func isNewerVersion(latest, current string) bool {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/updates/apply — run `archigraph update`, stream via SSE
-// POST /api/updates/refresh-rules — run `archigraph update --refresh-rules-lite`
+// POST /api/updates/apply — run `grafel update`, stream via SSE
+// POST /api/updates/refresh-rules — run `grafel update --refresh-rules-lite`
 // ─────────────────────────────────────────────────────────────────────────────
 
 func (s *Server) handleUpdatesApply(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,7 @@ func defaultUpdateRunner(ctx context.Context, args []string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// streamUpdate runs `archigraph update [--refresh-rules-lite]` and streams
+// streamUpdate runs `grafel update [--refresh-rules-lite]` and streams
 // stdout/stderr via SSE. The update binary is run as a subprocess so this
 // dashboard process itself is not replaced mid-stream.
 //

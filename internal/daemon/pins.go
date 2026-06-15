@@ -4,7 +4,7 @@
 // explicitly wants to keep indefinitely on disk. They complement the automatic
 // isPinnedMain flag (for default branches) by letting users pin arbitrary refs.
 //
-// On-disk format: ~/.archigraph/pins.json
+// On-disk format: ~/.grafel/pins.json
 //
 //	{
 //	  "version": 1,
@@ -37,7 +37,7 @@ type pinsFile struct {
 	Pins    []PinRecord `json:"pins"`
 }
 
-// PinStore manages persistent pin state for the archigraph home directory.
+// PinStore manages persistent pin state for the grafel home directory.
 // Safe for concurrent use.
 type PinStore struct {
 	mu   sync.Mutex
@@ -50,7 +50,7 @@ func NewPinStore(path string) *PinStore {
 	return &PinStore{path: path}
 }
 
-// DefaultPinStore returns a PinStore rooted at the default archigraph home.
+// DefaultPinStore returns a PinStore rooted at the default grafel home.
 func DefaultPinStore() (*PinStore, error) {
 	home := homeDir()
 	return NewPinStore(filepath.Join(home, "pins.json")), nil

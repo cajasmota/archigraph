@@ -26,24 +26,24 @@ func touchFile(path string, mtime time.Time) error {
 }
 
 // whoami_perf_3648_test.go — perf + correctness regression tests for the
-// archigraph_whoami latency fix (epic #3648, root #3325).
+// grafel_whoami latency fix (epic #3648, root #3325).
 //
 // The fix has two prongs, each tested here:
-//   1. whoami's index counts must equal archigraph_stats' counts (correctness:
+//   1. whoami's index counts must equal grafel_stats' counts (correctness:
 //      no response-shape change, both read the same cached LoadedRepo fields).
 //   2. ComputeDocState — the per-call os.Stat walk over every unique source
 //      file (the dominant cost on a 62K-entity graph) — must be memoized and
 //      served from cache on the steady-state path, while still invalidating on
 //      a reindex (graph mtime change) and on a new docgen run.
 
-// TestWhoami_CountsMatchStats asserts archigraph_whoami's entity/relationship
-// counts agree exactly with archigraph_stats. They are load-bearing for the
+// TestWhoami_CountsMatchStats asserts grafel_whoami's entity/relationship
+// counts agree exactly with grafel_stats. They are load-bearing for the
 // rewrite agent's empty-graph-trap detection (#3325) and must read the same
 // cached source.
 func TestWhoami_CountsMatchStats(t *testing.T) {
 	tmp := t.TempDir()
 	setTestHome(t, tmp)
-	t.Setenv("ARCHIGRAPH_WHOAMI_NUDGE", "") // enrichment on: entity_count/index block populated
+	t.Setenv("GRAFEL_WHOAMI_NUDGE", "") // enrichment on: entity_count/index block populated
 
 	repoDir := filepath.Join(tmp, "repo-a")
 	writeGraph(t, repoDir, fixtureDoc("repo-a"))

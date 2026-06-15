@@ -14,28 +14,28 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 const (
 	// taskName is the Windows Task Scheduler task name.
-	taskName = `com.archigraph.daemon`
+	taskName = `com.grafel.daemon`
 )
 
 // daemonTaskXMLTemplate is the Windows Task Scheduler XML definition for
-// the archigraph daemon. The task runs at logon for the registering user,
+// the grafel daemon. The task runs at logon for the registering user,
 // restarts on failure (up to 3 times with a 1-minute interval), and is
 // hidden from the Task Scheduler UI so it doesn't clutter the user's view.
 //
 // Key semantics that mirror the macOS LaunchAgent and Linux systemd unit:
 //   - LogonTrigger — starts at user login (equivalent to RunAtLoad + KeepAlive)
 //   - RestartOnFailure — crash-restart (equivalent to KeepAlive)
-//   - Hidden — keeps the UI tidy; the task is managed via archigraph commands
+//   - Hidden — keeps the UI tidy; the task is managed via grafel commands
 //   - RunLevel LeastPrivilege — no UAC elevation required (user-level service)
 const daemonTaskXMLTemplate = `<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>archigraph knowledge-graph daemon — managed by archigraph install/uninstall</Description>
+    <Description>grafel knowledge-graph daemon — managed by grafel install/uninstall</Description>
     <URI>\{{.TaskName}}</URI>
   </RegistrationInfo>
   <Triggers>
@@ -79,7 +79,7 @@ type daemonTaskVars struct {
 }
 
 // taskXMLPath returns the path where the task XML is staged before being
-// imported by schtasks. We use %LOCALAPPDATA%\archigraph\tasks\ which is
+// imported by schtasks. We use %LOCALAPPDATA%\grafel\tasks\ which is
 // user-private and does not require elevation.
 func taskXMLPath() (string, error) {
 	localAppData := os.Getenv("LOCALAPPDATA")
@@ -90,7 +90,7 @@ func taskXMLPath() (string, error) {
 		}
 		localAppData = filepath.Join(home, "AppData", "Local")
 	}
-	return filepath.Join(localAppData, "archigraph", "tasks", taskName+".xml"), nil
+	return filepath.Join(localAppData, "grafel", "tasks", taskName+".xml"), nil
 }
 
 // currentUserSID returns the SID string for the running user.
@@ -248,7 +248,7 @@ func uninstall(opts Options) error {
 //
 // It queries Task Scheduler via:
 //
-//	schtasks /query /tn com.archigraph.daemon /fo csv /v
+//	schtasks /query /tn com.grafel.daemon /fo csv /v
 //
 // The CSV output includes a "Status" column and a "PID" column. We parse
 // the header row to find column indices so we are not fragile against

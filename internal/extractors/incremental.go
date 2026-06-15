@@ -8,13 +8,13 @@
 // changed, we want ~200 ms: parse that file, swap its entities in the graph,
 // and atomically re-emit graph.fb without touching anything else.
 //
-// Correctness guarantee: the opt-in flag (ARCHIGRAPH_INCREMENTAL_REINDEX=1)
+// Correctness guarantee: the opt-in flag (GRAFEL_INCREMENTAL_REINDEX=1)
 // is NOT set by default. Four safety valves are applied before attempting a
 // partial reindex (#2170 adds env-override limit + main-branch hot-path):
 //
 //  1. Trigger limit: if more than the effective limit files changed in the
 //     debounced batch we fall back to full reindex. The effective limit is:
-//     - ARCHIGRAPH_INCREMENTAL_MAX_FILES env var (if set to a valid int)
+//     - GRAFEL_INCREMENTAL_MAX_FILES env var (if set to a valid int)
 //     - 50 when the active ref is the repo's default (main) branch
 //     - 20 otherwise (feature branches)
 //     The #2167 conservative default of 5 is still the hard floor when the
@@ -55,14 +55,14 @@ import (
 	"sort"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/classifier"
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/sresolver"
-	"github.com/cajasmota/archigraph/internal/gitmeta"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
-	"github.com/cajasmota/archigraph/internal/indexer/diff"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/classifier"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/sresolver"
+	"github.com/cajasmota/grafel/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/indexer/diff"
+	"github.com/cajasmota/grafel/internal/types"
 	sitter "github.com/smacker/go-tree-sitter"
 )
 
@@ -81,7 +81,7 @@ const mainBranchIncrementalFiles = 50
 //
 // Priority (issue #2320):
 //  1. cfg.IncrementalMaxFiles (when cfg is non-nil and > 0) — Config channel.
-//  2. ARCHIGRAPH_INCREMENTAL_MAX_FILES env var (backward-compat fallback).
+//  2. GRAFEL_INCREMENTAL_MAX_FILES env var (backward-compat fallback).
 //  3. mainBranchIncrementalFiles when the active ref is the repo's default branch.
 //  4. defaultIncrementalFiles (20) for feature branches.
 func effectiveLimit(repoPath string, cfg *extractor.ExtractorConfig) int {
@@ -95,7 +95,7 @@ func effectiveLimit(repoPath string, cfg *extractor.ExtractorConfig) int {
 }
 
 // IncrementalEnabled reports whether S3 incremental reindex is opt-in active.
-// Reads ARCHIGRAPH_INCREMENTAL_REINDEX once per call — cheap, no caching needed
+// Reads GRAFEL_INCREMENTAL_REINDEX once per call — cheap, no caching needed
 // at this level (the scheduler gate is the hot path).
 //
 // Issue #2320: callers that have an ExtractorConfig should call
@@ -502,7 +502,7 @@ func walkSourceFiles(absRepo string) ([]string, error) {
 		name := d.Name()
 		if d.IsDir() {
 			switch name {
-			case ".git", "node_modules", "vendor", ".archigraph",
+			case ".git", "node_modules", "vendor", ".grafel",
 				"dist", "build", "__pycache__", ".mypy_cache":
 				return filepath.SkipDir
 			}
@@ -521,7 +521,7 @@ func walkSourceFiles(absRepo string) ([]string, error) {
 }
 
 // entityRecordToGraphEntity converts a types.EntityRecord produced by an
-// extractor into a graph.Entity. Mirrors the buildDocument pass in cmd/archigraph/index.go
+// extractor into a graph.Entity. Mirrors the buildDocument pass in cmd/grafel/index.go
 // without importing that package (avoids a cmd → internal cycle).
 func entityRecordToGraphEntity(r types.EntityRecord, repoTag string) graph.Entity {
 	id := r.ID
@@ -560,7 +560,7 @@ func relRecordToGraphRel(r types.RelationshipRecord) graph.Relationship {
 }
 
 // sortGraphDocumentForEmission sorts entities and relationships in the same
-// canonical order used by cmd/archigraph/index.go (sortDocumentForEmission).
+// canonical order used by cmd/grafel/index.go (sortDocumentForEmission).
 // Kept here to avoid a cmd → internal import cycle.
 func sortGraphDocumentForEmission(doc *graph.Document) {
 	sort.SliceStable(doc.Entities, func(a, b int) bool {

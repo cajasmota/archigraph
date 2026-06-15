@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // ErrAlreadyRunning is returned by AcquirePIDFile when another daemon
@@ -41,7 +41,7 @@ func AcquirePIDFile(path string) (release func(), err error) {
 }
 
 // ReadPIDFile returns the pid recorded in path, or 0 if the file is
-// missing/empty/unreadable. Clients use this for `archigraph status`.
+// missing/empty/unreadable. Clients use this for `grafel status`.
 func ReadPIDFile(path string) int {
 	pid, _ := readPID(path)
 	return pid
@@ -74,7 +74,7 @@ func readPID(path string) (int, bool) {
 // daemon. We therefore require two conditions:
 //
 //  1. The pid is alive (kill(pid,0) succeeds), AND
-//  2. The live pid is actually an archigraph process (name match), which
+//  2. The live pid is actually an grafel process (name match), which
 //     defeats pid reuse.
 //
 // On platforms where process enumeration is unavailable (process.ErrUnsupported,
@@ -86,14 +86,14 @@ func pidIsLiveDaemon(pid int) bool {
 	if !pidAlive(pid) {
 		return false
 	}
-	isArchigraph, err := process.PidIsArchigraph(pid)
+	isGrafel, err := process.PidIsGrafel(pid)
 	if err != nil {
 		// Cannot determine the process name (unsupported platform or a
 		// transient enumeration failure). The pid is alive, so honor it as
 		// the owner — the same conservative behavior as before this fix.
 		return true
 	}
-	return isArchigraph
+	return isGrafel
 }
 
 // pidAlive returns true when a process with the given pid exists and

@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/graph/fbversion"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/graph/fbversion"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 func TestRoundtripSmallGraph(t *testing.T) {
@@ -439,7 +439,7 @@ func TestLanguageSlotInRawFB(t *testing.T) {
 
 // TestLoaderRejectsOldFormatVersion verifies that the loader fails loudly with
 // the reindex-required error when graph.fb carries an older FormatVersion
-// (#2370). archigraph is pre-1.0; there is no compat path.
+// (#2370). grafel is pre-1.0; there is no compat path.
 func TestLoaderRejectsOldFormatVersion(t *testing.T) {
 	// Build a minimal graph.fb in-memory with Version=2 (the pre-#2370 format).
 	doc := &graph.Document{
@@ -472,11 +472,11 @@ func TestLoaderRejectsOldFormatVersion(t *testing.T) {
 	}
 	msg := loadErr.Error()
 	// Spot-check the operative phrases — verbatim error string is part of the
-	// loader contract and must point the user at `archigraph index`.
+	// loader contract and must point the user at `grafel index`.
 	for _, want := range []string{
 		fmt.Sprintf("graph.fb format version 2 is older than required version %d", fbversion.Version),
 		"please reindex",
-		"archigraph index <repo>",
+		"grafel index <repo>",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("error message missing %q\nfull message: %s", want, msg)

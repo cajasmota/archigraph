@@ -768,7 +768,7 @@ kustomize:
     - overlays that contain their own overlays/ subdirectory
     - kustomization.yaml referencing a URL base (remote base composition)
 entity_extraction:
-  description: 'Maps Kubernetes resource kinds to archigraph entity types. Extraction targets
+  description: 'Maps Kubernetes resource kinds to grafel entity types. Extraction targets
     and SCOPE entity type mappings for the indexing pipeline.
 
     '
@@ -849,7 +849,7 @@ entity_extraction:
       '
     notes: 'Flag wide-permission patterns: apiGroups: ["*"], resources: ["*"], verbs:
       ["*"], cluster-admin ClusterRoleBinding. These are security findings worth surfacing
-      in archigraph search results.
+      in grafel search results.
 
       '
   helm_extraction:

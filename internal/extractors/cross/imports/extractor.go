@@ -33,9 +33,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	jsaliases "github.com/cajasmota/archigraph/internal/extractors/javascript"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	jsaliases "github.com/cajasmota/grafel/internal/extractors/javascript"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -463,7 +463,7 @@ func buildEntitiesAndRels(filePath string, imports []importRecord) []types.Entit
 
 		// Embed the DEPENDS_ON relationship on the SCOPE.Component for this
 		// module rather than emitting a synthetic relationship-kind entity.
-		// The downstream pipeline (cmd/archigraph/index.go) walks every
+		// The downstream pipeline (cmd/grafel/index.go) walks every
 		// EntityRecord.Relationships, so the edge still reaches the document.
 		out[idx].Relationships = append(out[idx].Relationships, types.RelationshipRecord{
 			FromID: fRef,

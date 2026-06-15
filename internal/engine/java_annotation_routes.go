@@ -61,8 +61,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // JavaAnnotationFileReader returns the source bytes for a repo-relative
@@ -71,7 +71,7 @@ type JavaAnnotationFileReader func(relPath string) []byte
 
 // javaClassDeclRe matches a Java class declaration and captures the class
 // name. We do not anchor on visibility because the parsed Java sources we
-// emit synthetics for in archigraph use both `public class` and bare
+// emit synthetics for in grafel use both `public class` and bare
 // `class` declarations.
 var javaClassDeclRe = regexp.MustCompile(`(?m)^\s*(?:public\s+|abstract\s+|final\s+|static\s+)*class\s+(\w+)`)
 

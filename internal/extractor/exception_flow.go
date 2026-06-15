@@ -3,7 +3,7 @@ package extractor
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // exception_flow.go — shared cross-language helpers for the error-flow

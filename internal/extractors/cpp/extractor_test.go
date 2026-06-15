@@ -9,9 +9,9 @@ import (
 	tsc "github.com/smacker/go-tree-sitter/c"
 	tscpp "github.com/smacker/go-tree-sitter/cpp"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/cpp" // trigger init()
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/cpp" // trigger init()
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ----------------------------------------------------------------

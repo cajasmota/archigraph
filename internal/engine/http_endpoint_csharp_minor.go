@@ -48,14 +48,14 @@
 // file-signal so the synthesizer no-ops on plain ASP.NET Core / gRPC / Blazor
 // C# files (which synthesizeASPNetCore / synthesizeHotChocolate already own).
 //
-// Refs #3962 (epic #3872, audit #3882). archigraph-csharp-parity.md §1a.
+// Refs #3962 (epic #3872, audit #3882). grafel-csharp-parity.md §1a.
 package engine
 
 import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
 )
 
 // ---------------------------------------------------------------------------

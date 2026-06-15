@@ -9,9 +9,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsswift "github.com/smacker/go-tree-sitter/swift"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/swift"
-	"github.com/cajasmota/archigraph/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/swift"
+	"github.com/cajasmota/grafel/internal/treesitter"
 )
 
 func parseForTest(t *testing.T, src string) *sitter.Tree {

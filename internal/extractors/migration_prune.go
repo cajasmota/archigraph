@@ -6,7 +6,7 @@
 // Auto-generated Django migration files (`<app>/migrations/0NNN_*.py`) are
 // pure ORM scaffolding with zero architectural signal. PRs #2551, #2602
 // and #2616 layered per-extractor prunes (Python AST walk, cross-language
-// hierarchy extractor) gated by the ARCHIGRAPH_EMIT_MIGRATION_ENTITIES
+// hierarchy extractor) gated by the GRAFEL_EMIT_MIGRATION_ENTITIES
 // env-var opt-in.
 //
 // Bench iter 8 (2026-05-27) found 43 SCOPE.Component entities for
@@ -31,11 +31,11 @@
 // migration representation.
 //
 // All relationships referencing a removed entity ID on either end are
-// dropped. Opt-in via ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1|true bypasses
+// dropped. Opt-in via GRAFEL_EMIT_MIGRATION_ENTITIES=1|true bypasses
 // the prune entirely so analysts who need full migration extraction can
 // still get it.
 //
-// Both the full-rebuild path (cmd/archigraph/index.go::Indexer.Run, after
+// Both the full-rebuild path (cmd/grafel/index.go::Indexer.Run, after
 // buildDocument) and the incremental path (this package's
 // TryIncremental, after the re-extraction merge) call PruneMigrationEntities
 // so neither route can silently let migrations slip back into the graph.
@@ -47,13 +47,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // migrationEmitEnv mirrors the env-var name used by
 // internal/extractors/python/extractor.go and
 // internal/extractors/cross/hierarchy/extractor.go. Keep in sync.
-const migrationEmitEnv = "ARCHIGRAPH_EMIT_MIGRATION_ENTITIES"
+const migrationEmitEnv = "GRAFEL_EMIT_MIGRATION_ENTITIES"
 
 // prunedMigrationKinds is the set of entity kinds we drop when anchored
 // to a Django migration file. "Migration" is intentionally absent: that
@@ -94,7 +94,7 @@ func IsDjangoMigrationFile(path string) bool {
 }
 
 // MigrationEmitEnabled returns true when the operator has opted into full
-// migration extraction by setting ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1|true.
+// migration extraction by setting GRAFEL_EMIT_MIGRATION_ENTITIES=1|true.
 // Default is off — migrations are pruned.
 func MigrationEmitEnabled() bool {
 	v := os.Getenv(migrationEmitEnv)

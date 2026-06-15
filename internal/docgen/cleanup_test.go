@@ -9,7 +9,7 @@ import (
 )
 
 // setupFakeHome creates a temporary home dir with the canonical docgen layout.
-// Returns: homeDir, archigraphRoot (= homeDir/.archigraph), and a cleanup func.
+// Returns: homeDir, grafelRoot (= homeDir/.grafel), and a cleanup func.
 func setupFakeHome(t *testing.T) (home string) {
 	t.Helper()
 	home = t.TempDir()
@@ -183,7 +183,7 @@ func TestCleanupStagingRuns(t *testing.T) {
 
 	// Create a fake project root with a staging dir.
 	projectRoot := t.TempDir()
-	stagingBase := filepath.Join(projectRoot, ".archigraph", "staging")
+	stagingBase := filepath.Join(projectRoot, ".grafel", "staging")
 
 	// Stale run: run_id date is 10+ days ago.
 	staleRunID := "2020-01-01-aabbccdd"

@@ -8,18 +8,18 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func TestCleanupDryRun(t *testing.T) {
-	// Create a temporary archigraph home.
+	// Create a temporary grafel home.
 	tmpHome := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmpHome)
+	t.Setenv("GRAFEL_HOME", tmpHome)
 	configDir := filepath.Join(tmpHome, "config")
 	t.Setenv("XDG_CONFIG_HOME", configDir)
 
 	// Create config files.
-	configArchDir := filepath.Join(configDir, "archigraph")
+	configArchDir := filepath.Join(configDir, "grafel")
 	os.MkdirAll(configArchDir, 0o755)
 	existingConfig := filepath.Join(configArchDir, "existing.fleet.json")
 	os.WriteFile(existingConfig, []byte(`{"name":"existing"}`), 0o644)
@@ -66,15 +66,15 @@ func TestCleanupDryRun(t *testing.T) {
 }
 
 func TestCleanupRemove(t *testing.T) {
-	// Create a temporary archigraph home.
+	// Create a temporary grafel home.
 	tmpHome := t.TempDir()
-	origHome := os.Getenv("ARCHIGRAPH_HOME")
+	origHome := os.Getenv("GRAFEL_HOME")
 	origXDG := os.Getenv("XDG_CONFIG_HOME")
 	defer func() {
 		if origHome != "" {
-			os.Setenv("ARCHIGRAPH_HOME", origHome)
+			os.Setenv("GRAFEL_HOME", origHome)
 		} else {
-			os.Unsetenv("ARCHIGRAPH_HOME")
+			os.Unsetenv("GRAFEL_HOME")
 		}
 		if origXDG != "" {
 			os.Setenv("XDG_CONFIG_HOME", origXDG)
@@ -82,12 +82,12 @@ func TestCleanupRemove(t *testing.T) {
 			os.Unsetenv("XDG_CONFIG_HOME")
 		}
 	}()
-	os.Setenv("ARCHIGRAPH_HOME", tmpHome)
+	os.Setenv("GRAFEL_HOME", tmpHome)
 	configDir := filepath.Join(tmpHome, "config")
 	os.Setenv("XDG_CONFIG_HOME", configDir)
 
 	// Create an existing config file.
-	configArchDir := filepath.Join(configDir, "archigraph")
+	configArchDir := filepath.Join(configDir, "grafel")
 	os.MkdirAll(configArchDir, 0o755)
 	existingConfig := filepath.Join(configArchDir, "existing.fleet.json")
 	os.WriteFile(existingConfig, []byte(`{"name":"existing"}`), 0o644)
@@ -124,15 +124,15 @@ func TestCleanupRemove(t *testing.T) {
 }
 
 func TestCleanupNoOrphans(t *testing.T) {
-	// Create a temporary archigraph home.
+	// Create a temporary grafel home.
 	tmpHome := t.TempDir()
-	origHome := os.Getenv("ARCHIGRAPH_HOME")
+	origHome := os.Getenv("GRAFEL_HOME")
 	origXDG := os.Getenv("XDG_CONFIG_HOME")
 	defer func() {
 		if origHome != "" {
-			os.Setenv("ARCHIGRAPH_HOME", origHome)
+			os.Setenv("GRAFEL_HOME", origHome)
 		} else {
-			os.Unsetenv("ARCHIGRAPH_HOME")
+			os.Unsetenv("GRAFEL_HOME")
 		}
 		if origXDG != "" {
 			os.Setenv("XDG_CONFIG_HOME", origXDG)
@@ -140,12 +140,12 @@ func TestCleanupNoOrphans(t *testing.T) {
 			os.Unsetenv("XDG_CONFIG_HOME")
 		}
 	}()
-	os.Setenv("ARCHIGRAPH_HOME", tmpHome)
+	os.Setenv("GRAFEL_HOME", tmpHome)
 	configDir := filepath.Join(tmpHome, "config")
 	os.Setenv("XDG_CONFIG_HOME", configDir)
 
 	// Create an existing config file.
-	configArchDir := filepath.Join(configDir, "archigraph")
+	configArchDir := filepath.Join(configDir, "grafel")
 	os.MkdirAll(configArchDir, 0o755)
 	existingConfig := filepath.Join(configArchDir, "existing.fleet.json")
 	os.WriteFile(existingConfig, []byte(`{"name":"existing"}`), 0o644)

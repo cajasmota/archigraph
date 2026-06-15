@@ -1,7 +1,7 @@
-// find_anyref_3648_test.go reproduces and guards the #3648 fix: archigraph_find
+// find_anyref_3648_test.go reproduces and guards the #3648 fix: grafel_find
 // (and every other repo-scoped tool) must work on a group whose graph was
 // indexed at a ref that is no longer HEAD — the failure mode for groups
-// registered via `archigraph group add --index` with watchers off, which index
+// registered via `grafel group add --index` with watchers off, which index
 // once at the then-HEAD ref and never reindex when HEAD subsequently moves.
 package mcp
 
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // writeGraphAtRef writes doc into the per-ref state dir for (repoDir, ref),
@@ -37,7 +37,7 @@ func writeGraphAtRef(t *testing.T, repoDir, ref string, doc *struct{ raw []byte 
 // "# no repos loaded for this group" sentinel.
 func TestFind_AnyRefFallback_NoReposLoadedRegression(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 
 	repoPath := filepath.Join(dir, "scriptable-repo")
 	if err := os.MkdirAll(repoPath, 0o755); err != nil {
@@ -66,7 +66,7 @@ func TestFind_AnyRefFallback_NoReposLoadedRegression(t *testing.T) {
 		t.Fatalf("NewServer: %v", err)
 	}
 
-	res := callTool(t, srv, "archigraph_find", map[string]any{
+	res := callTool(t, srv, "grafel_find", map[string]any{
 		"group": "scriptable",
 		"query": "rareUniqueWidget",
 	})

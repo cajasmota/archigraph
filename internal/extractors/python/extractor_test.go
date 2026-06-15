@@ -11,10 +11,10 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tspython "github.com/smacker/go-tree-sitter/python"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 	// Blank import to trigger init() registration.
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // parse is a test helper that parses Python source with tree-sitter.
@@ -1771,7 +1771,7 @@ func entityNames(entities []types.EntityRecord) []string {
 // content is fully extracted.
 func TestExtract_MigrationFilePruned(t *testing.T) {
 	// Issue #2548: opt-in to migration entity emission for this test.
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	src := `from django.db import migrations, models
 
@@ -1848,7 +1848,7 @@ class Migration(migrations.Migration):
 //     at least Device class + two methods emitted.
 func TestExtract_DjangoMigrationFixtures(t *testing.T) {
 	// Issue #2548: opt-in to migration entity emission for this test.
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	ext, ok := extractor.Get("python")
 	if !ok {
@@ -1954,7 +1954,7 @@ func TestExtract_DjangoMigrationFixtures(t *testing.T) {
 // import resolution). Operations are preserved in entity properties.
 func TestExtract_DjangoMigration_OneEntityPerFile(t *testing.T) {
 	// Issue #2548: opt-in to migration entity emission for this test.
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	src := `from django.db import migrations, models
 

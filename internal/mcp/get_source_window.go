@@ -1,6 +1,6 @@
 package mcp
 
-// get_source_window.go — #2828 token-cost policy for archigraph_get_source.
+// get_source_window.go — #2828 token-cost policy for grafel_get_source.
 //
 // get_source is the single busiest MCP tool (~45% of live tool-call token
 // spend). Two cost levers, both ESSENTIAL-data-preserving (less-by-default,
@@ -28,7 +28,7 @@ import (
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 const (
@@ -161,7 +161,7 @@ func (sp sourceSpan) truncationMarker(entityID string) string {
 	}
 	nextStart := sp.end + 1
 	return fmt.Sprintf(
-		"\n# archigraph: truncated — emitted lines %d-%d of %d-%d. "+
+		"\n# grafel: truncated — emitted lines %d-%d of %d-%d. "+
 			"Request the rest with get_source(entity_id=%q, from_line=%d, to_line=%d).\n",
 		sp.start, sp.end, sp.start, sp.fullEnd, entityID, nextStart, sp.fullEnd,
 	)

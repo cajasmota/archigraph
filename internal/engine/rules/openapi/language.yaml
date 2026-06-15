@@ -50,7 +50,7 @@ relationships:
 
 detector:
   class: OpenApiExtractor
-  module: archigraph.engine.rules.pattern_detectors.openapi_extractor
+  module: grafel.engine.rules.pattern_detectors.openapi_extractor
   category: openapi
   otel_span: indexer.openapi_extractor.extract
   otel_attributes:

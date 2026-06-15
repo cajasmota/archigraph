@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -188,7 +188,7 @@ func TestInspect_NoDIEdges_OmitsSection(t *testing.T) {
 	}
 }
 
-// TestNeighbors_AnnotatesInjectedIntoEdge asserts that archigraph_expand on the
+// TestNeighbors_AnnotatesInjectedIntoEdge asserts that grafel_expand on the
 // consumer annotates the provider neighbour with di_kind=INJECTED_INTO and
 // di_direction=inbound — distinguishing it from a plain CALLS neighbour, which
 // it previously could NOT do (the edge kind was dropped from neighbour rows).

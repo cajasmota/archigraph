@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 func extract(t *testing.T, lang, source string) []entitySummary {

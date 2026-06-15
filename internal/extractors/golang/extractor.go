@@ -1,4 +1,4 @@
-// Package golang implements the Go language extractor for archigraph.
+// Package golang implements the Go language extractor for grafel.
 //
 // It extracts functions, methods (with receiver), structs, and interfaces from
 // Go source files using the smacker/go-tree-sitter grammar. The extractor
@@ -40,9 +40,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/txscope"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/txscope"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {

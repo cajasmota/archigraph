@@ -1,7 +1,7 @@
 package mcp
 
 // effective_contract_tool_test.go — value-asserting coverage for the
-// archigraph_effective_contract MCP tool (#3836, epic #3829 MRO T6).
+// grafel_effective_contract MCP tool (#3836, epic #3829 MRO T6).
 //
 // These assert the STRUCTURED per-verb contract grouped under the ViewSet, not
 // len>0:
@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 

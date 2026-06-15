@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ent (entgo.io/ent) is a schema-as-code ORM. A schema is a Go struct that
@@ -72,7 +72,7 @@ var (
 )
 
 func (e *entExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/golang")
+	tracer := otel.Tracer("grafel/custom/golang")
 	_, span := tracer.Start(ctx, "indexer.ent_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

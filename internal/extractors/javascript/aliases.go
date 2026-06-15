@@ -4,7 +4,7 @@
 // `../../../../../config/query-client` form. Build-tool and editor
 // configurations declare short aliases — `@/components/Button` resolving
 // to `src/components/Button` — and every import in the codebase uses
-// those instead. archigraph's JS extractor previously treated any
+// those instead. grafel's JS extractor previously treated any
 // non-relative spec as an external (npm) package, which left thousands of
 // project-internal IMPORTS edges bound to a bare `@/...` string that no
 // resolver index could match.

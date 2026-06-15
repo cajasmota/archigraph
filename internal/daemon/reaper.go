@@ -2,13 +2,13 @@
 //
 // # Problem
 //
-// archigraph dogfoods itself, so the daemon's watcher catches every
+// grafel dogfoods itself, so the daemon's watcher catches every
 // `git worktree add` and (pre-#3680) cold-indexes the worktree as a SEPARATE
 // repo with its OWN ~100MB full graph store under hash(worktreePath). When the
 // rewrite agent later deletes those worktrees, the directories vanish from disk
 // but the daemon keeps tracking them: the tier Manager still holds their slots
 // (counting toward memory pressure and attempting cold-wakes) and the on-disk
-// store dir is never deleted. The live daemon's `~/.archigraph/store/` grew to
+// store dir is never deleted. The live daemon's `~/.grafel/store/` grew to
 // 7.2GB dominated by ~25 such orphaned worktree stores, with the tier Manager
 // logging `stat repo: ... no such file or directory`.
 //
@@ -35,8 +35,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/daemon/watchreg"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // TierForgetter is the narrow slice of tier.Manager the reaper needs: drop all
@@ -70,7 +70,7 @@ type ReaperConfig struct {
 	// poller, fsnotify subscription). Invoked after the store is removed.
 	Untrack func(repoPath string)
 
-	// WatchRegistry, when non-nil, is the daemon-owned `archigraph watch` PID
+	// WatchRegistry, when non-nil, is the daemon-owned `grafel watch` PID
 	// registry (#5142). On every sweep the reaper reconciles it: entries whose
 	// process is dead are dropped, and live-but-orphaned watchers (owned by a
 	// previous daemon generation) are SIGTERM'd and dropped. nil disables
@@ -98,7 +98,7 @@ type ReapResult struct {
 	SlotsForgotten int
 	// FreedBytes is the total bytes reclaimed from deleted store dirs.
 	FreedBytes int64
-	// WatchersReaped is the number of stale/orphaned `archigraph watch` PID
+	// WatchersReaped is the number of stale/orphaned `grafel watch` PID
 	// registry entries reaped this sweep (#5142).
 	WatchersReaped int
 }
@@ -150,7 +150,7 @@ func (r *Reaper) Start(stopCh <-chan struct{}) {
 // Safe to call directly from tests.
 func (r *Reaper) Sweep() ReapResult {
 	var res ReapResult
-	// #5142: reap stale/orphaned `archigraph watch` PIDs. Independent of the
+	// #5142: reap stale/orphaned `grafel watch` PIDs. Independent of the
 	// vanished-repo GC below, so it runs even in configs without TrackedRepos.
 	res.WatchersReaped = r.sweepWatchers()
 	if r.cfg.TrackedRepos == nil {
@@ -200,7 +200,7 @@ func (r *Reaper) Sweep() ReapResult {
 	return res
 }
 
-// sweepWatchers reconciles the daemon-owned `archigraph watch` PID registry
+// sweepWatchers reconciles the daemon-owned `grafel watch` PID registry
 // (#5142): it drops entries whose process is dead and SIGTERMs + drops
 // live-but-orphaned watchers (owned by a previous daemon generation). Returns
 // the number of entries reaped. A nil WatchRegistry disables the sweep.
@@ -226,7 +226,7 @@ func (r *Reaper) sweepWatchers() int {
 		return 0
 	}
 	if res.Reaped() > 0 {
-		r.logger.Info("reaper: reaped stale archigraph-watch PIDs",
+		r.logger.Info("reaper: reaped stale grafel-watch PIDs",
 			"dead", res.Dead, "orphaned", res.Orphaned, "kill_errors", len(res.KillErrors))
 	}
 	return res.Reaped()

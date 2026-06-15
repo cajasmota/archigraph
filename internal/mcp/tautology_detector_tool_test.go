@@ -1,7 +1,7 @@
 package mcp
 
 // tautology_detector_tool_test.go — end-to-end test for the #4893
-// archigraph_contract_test_effectiveness tool. Runs the REAL handler against a
+// grafel_contract_test_effectiveness tool. Runs the REAL handler against a
 // small Jest/NestJS-shaped spec fixture in testdata/tautology_4893/ that holds
 // one tautological `it(...)` (self-compare / constant-true / same-literal) and
 // one real `it(...)`. The tautological spec must be flagged ineffective; the
@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func tautologyTestServer(t *testing.T) *Server {

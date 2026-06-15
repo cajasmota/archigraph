@@ -1,7 +1,7 @@
 entity_type_mapping:
   scope_primary_type: Component
   description: 'All HTML template engine constructs that define a named, reusable
-    UI unit map to the archigraph SCOPE Component entity type. The following sub-concepts
+    UI unit map to the grafel SCOPE Component entity type. The following sub-concepts
     are all captured as Component entities with distinguishing metadata.
 
     '

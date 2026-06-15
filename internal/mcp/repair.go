@@ -5,7 +5,7 @@ package mcp
 // list_residuals reads enrichment-candidates.json and surfaces the
 // repair_edge entries (kind == "repair_edge") emitted by the indexer
 // (internal/enrichment/repair_edge.go). submit_repair appends a Repair
-// record to <repo>/.archigraph/repair.json, validating the resolution
+// record to <repo>/.grafel/repair.json, validating the resolution
 // against the ADR-0015 allowlist and writing atomically via tempfile +
 // rename so a crashed agent can never leave a half-written file.
 
@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/enrichment"
 )
 
 // repairSchemaVersion matches docs/specs/repair-v1.schema.json.
@@ -46,7 +46,7 @@ var allowedRepairResolutions = map[string]bool{
 
 // readRepairEdgeCandidates returns the repair_edge AND dynamic_baseurl_endpoint
 // entries from a repo's enrichment-candidates.json. Both kinds surface in
-// archigraph_repairs action=list — repair_edge for structurally ambiguous
+// grafel_repairs action=list — repair_edge for structurally ambiguous
 // symbol edges (ADR-0015 phase-1) and dynamic_baseurl_endpoint for
 // consumer-side HTTP calls whose baseURL is runtime-determined (#708).
 //

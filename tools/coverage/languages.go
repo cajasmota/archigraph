@@ -1,4 +1,4 @@
-// languages.go surfaces the canonical list of languages archigraph has
+// languages.go surfaces the canonical list of languages grafel has
 // extractor support for, derived from internal/extractors/<lang>/ directories.
 // This list is the source of truth for the coverage summary's pivot rows —
 // languages with zero ecosystem records still appear so the matrix reflects
@@ -54,7 +54,7 @@ var extractorNonLanguageFormats = map[string]bool{
 // language slug used by the registry. JavaScript and TypeScript collapse
 // to "jsts" because the registry tags both under a single slug; "golang"
 // is the extractor dirname but the registry uses "go"; "cpp" expands to
-// "c-cpp" because archigraph's C/C++ extractor is shared across .c and
+// "c-cpp" because grafel's C/C++ extractor is shared across .c and
 // .cpp sources (mirrors the JS/TS collapse — see #2732).
 //
 // Vue (.vue), Svelte (.svelte) and Astro (.astro) are JS/TS frameworks
@@ -95,7 +95,7 @@ var languageDisplayOverrides = map[string]string{
 }
 
 // SupportedLanguages returns the canonical, sorted, deduplicated list of
-// language slugs archigraph has extractor support for. The source of
+// language slugs grafel has extractor support for. The source of
 // truth is internal/extractors/<lang>/ directories under repoRoot;
 // utility-only directories and non-language format extractors are
 // excluded, and aliases are applied so the slugs align with the

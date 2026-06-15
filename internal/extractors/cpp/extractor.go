@@ -1,4 +1,4 @@
-// Package cpp implements the C and C++ language extractor for archigraph.
+// Package cpp implements the C and C++ language extractor for grafel.
 //
 // It extracts functions, structs/classes/unions, namespaces, templates, enums,
 // #include directives, and #define macros from C and C++ source files using
@@ -44,8 +44,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {

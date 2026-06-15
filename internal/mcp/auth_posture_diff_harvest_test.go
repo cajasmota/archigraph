@@ -18,8 +18,8 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/authposture"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/authposture"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // resolvedV3Posture runs the full harvest → resolver path on a single v3

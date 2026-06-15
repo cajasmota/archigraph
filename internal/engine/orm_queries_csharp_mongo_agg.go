@@ -61,7 +61,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoAggCSharpGateRe gates the scan to files that plausibly use the

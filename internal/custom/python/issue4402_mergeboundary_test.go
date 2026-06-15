@@ -5,17 +5,17 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the regex framework extractors (Django model/middleware).
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
 	// Register the tree-sitter base Python extractor so the base class node
 	// carries its real module-qualified QualifiedName + the #526 class→field
 	// CONTAINS membership edges that MergeWithCustom used to drop.
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // Issue #4402 — MERGE-BOUNDARY ROOT-FIX PROOF.

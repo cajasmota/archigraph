@@ -17,7 +17,7 @@ import (
 // - canonical binary with different path than self → stale (daemon)
 // - same binary → not stale
 func TestStaleProcessClassification(t *testing.T) {
-	selfExe := "/usr/local/bin/archigraph"
+	selfExe := "/usr/local/bin/grafel"
 
 	cases := []struct {
 		name      string
@@ -26,7 +26,7 @@ func TestStaleProcessClassification(t *testing.T) {
 	}{
 		{
 			name: "orphan /tmp daemon",
-			proc: staleProcess{PID: 1, PPID: 1, Exe: "/tmp/arch-test/archigraph",
+			proc: staleProcess{PID: 1, PPID: 1, Exe: "/tmp/arch-test/grafel",
 				IsOrphan: true, IsTmp: true},
 			wantStale: true,
 		},
@@ -34,7 +34,7 @@ func TestStaleProcessClassification(t *testing.T) {
 			// A daemon binary path that differs from self AND has "daemon" in
 			// the exe name (as would appear in ps comm column for the daemon process).
 			name: "different canonical daemon binary",
-			proc: staleProcess{PID: 2, PPID: 100, Exe: "/usr/local/bin/archigraph-daemon-old",
+			proc: staleProcess{PID: 2, PPID: 100, Exe: "/usr/local/bin/grafel-daemon-old",
 				IsOrphan: false, IsTmp: false},
 			wantStale: true,
 		},
@@ -46,7 +46,7 @@ func TestStaleProcessClassification(t *testing.T) {
 		},
 		{
 			name: "non-/tmp, PPID=1 but not daemon in name",
-			proc: staleProcess{PID: 4, PPID: 1, Exe: "/usr/local/bin/archigraph",
+			proc: staleProcess{PID: 4, PPID: 1, Exe: "/usr/local/bin/grafel",
 				IsOrphan: true, IsTmp: false},
 			// PPID=1 without IsTmp doesn't trigger criterion 1.
 			// Exe == selfExe so criterion 2 is false.
@@ -83,7 +83,7 @@ func isStaleProc(p staleProcess, selfExe string) bool {
 // runDoctorStaleDaemons function returns a clean "none found" message when
 // no stale processes exist. We call it with kill=false (dry-run default).
 //
-// Note: this test can only run cleanly on a machine with no stale archigraph
+// Note: this test can only run cleanly on a machine with no stale grafel
 // daemons. On a developer machine with a real daemon it may log stale entries —
 // that's correct behaviour, not a test failure.
 func TestRunDoctorStaleDaemons_DryRunOutputsNoneWhenClean(t *testing.T) {

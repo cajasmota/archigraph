@@ -69,7 +69,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoAggPatternType tags every entity/edge this pass emits.
@@ -596,7 +596,7 @@ func mongoAggJoinEdge(fromColl string, lk mongoAggLookup, stageName string) type
 // mongoAggStageJoinTargetsKey is the stage-entity Property under which the
 // node-anchored JOINS_COLLECTION twin targets are recorded (comma-separated
 // `from` collection names, in emission order, deduplicated). A later post-stamp
-// pass (buildMongoAggStageJoinRels in cmd/archigraph/index.go) reads this — plus
+// pass (buildMongoAggStageJoinRels in cmd/grafel/index.go) reads this — plus
 // the single top-level `from` — to emit the node-anchored twin edges with a
 // FIRST-CLASS, already-resolved FromID equal to the stage entity's own graph id.
 //
@@ -618,7 +618,7 @@ func mongoAggJoinEdge(fromColl string, lk mongoAggLookup, stageName string) type
 const mongoAggStageJoinTargetsKey = "join_targets"
 
 // MongoAggStageJoinTargetsKey exports mongoAggStageJoinTargetsKey for the
-// post-stamp pass in cmd/archigraph/index.go (buildMongoAggStageJoinRels).
+// post-stamp pass in cmd/grafel/index.go (buildMongoAggStageJoinRels).
 const MongoAggStageJoinTargetsKey = mongoAggStageJoinTargetsKey
 
 // MongoAggPatternType exports mongoAggPatternType for the post-stamp pass; it

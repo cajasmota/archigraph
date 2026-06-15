@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
@@ -169,7 +169,7 @@ func TestRunTier1_MissingGroup(t *testing.T) {
 // RunTier1 — output files are created when group has an indexed graph
 // ---------------------------------------------------------------------------
 
-// buildMinimalGroupForTier1 sets up a minimal ARCHIGRAPH_HOME with a group
+// buildMinimalGroupForTier1 sets up a minimal GRAFEL_HOME with a group
 // config and a single indexed repo so RunTier1 can load entity context.
 func buildMinimalGroupForTier1(t *testing.T) (archHome string, group string, entityID string) {
 	t.Helper()
@@ -198,15 +198,15 @@ func buildMinimalGroupForTier1(t *testing.T) (archHome string, group string, ent
 	}
 
 	// Create the state dir and a minimal graph.json.
-	// daemon.StateDirForRepo(repoPath) returns <ARCHIGRAPH_DAEMON_ROOT>/<hash>/
+	// daemon.StateDirForRepo(repoPath) returns <GRAFEL_DAEMON_ROOT>/<hash>/
 	// but in tests we can skip the daemon path and instead create a graph.json
-	// in the repo's .archigraph/ subdir — which is the fallback LoadGraphFromDir
+	// in the repo's .grafel/ subdir — which is the fallback LoadGraphFromDir
 	// looks for.
 	//
 	// Actually the canonical path since #1626 is via daemon.StateDirForRepo.
-	// In tests that call RunTier1 with an ARCHIGRAPH_HOME override, the daemon
-	// root will follow ARCHIGRAPH_HOME as well.  The graph dir is:
-	//   <ARCHIGRAPH_HOME>/state/<repo-hash>/graph.json
+	// In tests that call RunTier1 with an GRAFEL_HOME override, the daemon
+	// root will follow GRAFEL_HOME as well.  The graph dir is:
+	//   <GRAFEL_HOME>/state/<repo-hash>/graph.json
 	// We calculate the same hash that daemon.StateDirForRepo uses.
 	entityID = "abc123def456"
 	entity := map[string]interface{}{
@@ -227,12 +227,12 @@ func buildMinimalGroupForTier1(t *testing.T) (archHome string, group string, ent
 	graphBytes, _ := json.Marshal(graphDoc)
 
 	// daemon.StateDirForRepo hashes the repo path. We replicate the path
-	// construction here: <ARCHIGRAPH_DAEMON_ROOT>/state/<sha256(repoPath)[:16]>/
-	// The daemon root defaults to ARCHIGRAPH_HOME when ARCHIGRAPH_DAEMON_ROOT
-	// is not set.  We set ARCHIGRAPH_DAEMON_ROOT = archHome for the test.
+	// construction here: <GRAFEL_DAEMON_ROOT>/state/<sha256(repoPath)[:16]>/
+	// The daemon root defaults to GRAFEL_HOME when GRAFEL_DAEMON_ROOT
+	// is not set.  We set GRAFEL_DAEMON_ROOT = archHome for the test.
 	//
 	// Since we can't predict the exact hash without re-implementing daemon pkg,
-	// we write the graph.json into the repo's local .archigraph/ directory which
+	// we write the graph.json into the repo's local .grafel/ directory which
 	// serves as a fallback discovery path for graph.LoadGraphFromDir when the
 	// daemon state dir is absent.
 	//

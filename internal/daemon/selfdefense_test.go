@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // TestSelfDefenseCheck_AllowsCanonicalBinary verifies that SelfDefenseCheck
@@ -51,7 +51,7 @@ func TestSelfDefenseCheck_AllowsCanonicalBinary(t *testing.T) {
 }
 
 // TestSelfDefenseCheck_RunRefusesWhenCalledFromTmpBinary verifies Layer 1 end-to-end
-// by compiling the full archigraph binary under /tmp (using `go test -c` output)
+// by compiling the full grafel binary under /tmp (using `go test -c` output)
 // and confirming that daemon.Run returns an error when a canonical daemon is present.
 //
 // The test is skipped when there is no canonical daemon on the machine (CI/clean env),
@@ -90,34 +90,34 @@ func TestSelfDefenseCheck_RunRefusesWhenCalledFromTmpBinary(t *testing.T) {
 		}
 	}
 
-	// Build the full archigraph binary under /tmp using go test -c then go build.
+	// Build the full grafel binary under /tmp using go test -c then go build.
 	modRoot, err := findModuleRoot()
 	if err != nil {
 		t.Fatalf("find module root: %v", err)
 	}
 
-	tmpDir, err := os.MkdirTemp("/tmp", "archigraph-sdef-e2e-")
+	tmpDir, err := os.MkdirTemp("/tmp", "grafel-sdef-e2e-")
 	if err != nil {
 		t.Fatalf("mkdirtemp: %v", err)
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(tmpDir) })
 
-	helperBin := filepath.Join(tmpDir, "archigraph")
-	buildCmd := exec.Command("go", "build", "-o", helperBin, "./cmd/archigraph")
+	helperBin := filepath.Join(tmpDir, "grafel")
+	buildCmd := exec.Command("go", "build", "-o", helperBin, "./cmd/grafel")
 	buildCmd.Dir = modRoot
 	if out, berr := buildCmd.CombinedOutput(); berr != nil {
-		t.Fatalf("build archigraph binary: %v\n%s", berr, out)
+		t.Fatalf("build grafel binary: %v\n%s", berr, out)
 	}
 
-	// Use a fresh temp root for ARCHIGRAPH_DAEMON_ROOT so this daemon doesn't
+	// Use a fresh temp root for GRAFEL_DAEMON_ROOT so this daemon doesn't
 	// conflict with any real daemon running on the machine.
-	daemonRoot, err := os.MkdirTemp("/tmp", "archigraph-sdef-root-")
+	daemonRoot, err := os.MkdirTemp("/tmp", "grafel-sdef-root-")
 	if err != nil {
 		t.Fatalf("mkdirtemp daemon root: %v", err)
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(daemonRoot) })
 
-	// Run the binary as `archigraph daemon` from /tmp with ARCHIGRAPH_DAEMON_ROOT set.
+	// Run the binary as `grafel daemon` from /tmp with GRAFEL_DAEMON_ROOT set.
 	// Two outcomes:
 	//   - Canonical daemon present: SelfDefenseCheck exits immediately with code 1.
 	//   - No canonical daemon: the daemon starts successfully and runs as a server forever.
@@ -133,7 +133,7 @@ func TestSelfDefenseCheck_RunRefusesWhenCalledFromTmpBinary(t *testing.T) {
 
 	var stderrBuf strings.Builder
 	cmd := exec.CommandContext(ctx, helperBin, "daemon")
-	cmd.Env = append(os.Environ(), "ARCHIGRAPH_DAEMON_ROOT="+daemonRoot)
+	cmd.Env = append(os.Environ(), "GRAFEL_DAEMON_ROOT="+daemonRoot)
 	cmd.Stderr = &stderrBuf
 
 	waitErr := cmd.Run()
@@ -146,7 +146,7 @@ func TestSelfDefenseCheck_RunRefusesWhenCalledFromTmpBinary(t *testing.T) {
 	if cmd.ProcessState != nil {
 		exitCode = cmd.ProcessState.ExitCode()
 	}
-	t.Logf("archigraph daemon exit=%d timedOut=%v waitErr=%v stderr=%s",
+	t.Logf("grafel daemon exit=%d timedOut=%v waitErr=%v stderr=%s",
 		exitCode, timedOut, waitErr, combined)
 
 	// Key regression assertion: if a canonical daemon exists (detected by ps),
@@ -179,7 +179,7 @@ func TestSelfDefenseCheck_RunRefusesWhenCalledFromTmpBinary(t *testing.T) {
 // TestFindCanonicalDaemon_SkipsTmpProcesses verifies the parsing logic by
 // ensuring that a process with a /tmp binary path is not classified as canonical.
 // We test this indirectly by confirming SelfDefenseCheck does NOT refuse to start
-// when the only other archigraph-like process (this test process itself) is also
+// when the only other grafel-like process (this test process itself) is also
 // under a non-canonical path.
 //
 // This is primarily a smoke test; the core invariant is: if findCanonicalDaemon()
@@ -212,14 +212,14 @@ func TestFindCanonicalDaemon_SkipsTmpProcesses(t *testing.T) {
 
 // TestFindCanonicalDaemon_EsbuildFalsePositive is a regression test for #1719.
 //
-// Background: when tests run inside a worktree whose path contains "archigraph"
-// (e.g. /Users/.../archigraph-worktrees/fix-selfdefense/webui-v2/node_modules/
+// Background: when tests run inside a worktree whose path contains "grafel"
+// (e.g. /Users/.../grafel-worktrees/fix-selfdefense/webui-v2/node_modules/
 // @esbuild/darwin-arm64/bin/esbuild), the old strings.Contains check on the full
-// executable path would classify esbuild as a canonical archigraph daemon and
+// executable path would classify esbuild as a canonical grafel daemon and
 // refuse to start a /tmp daemon.
 //
 // The fix uses filepath.Base() so only the binary's own name is tested against
-// the allowlist — a directory component containing "archigraph" is irrelevant.
+// the allowlist — a directory component containing "grafel" is irrelevant.
 func TestFindCanonicalDaemon_EsbuildFalsePositive(t *testing.T) {
 	// We can't inject a synthetic process into FindByName, so we verify the
 	// underlying classification logic directly via FindCanonicalDaemon's
@@ -231,33 +231,33 @@ func TestFindCanonicalDaemon_EsbuildFalsePositive(t *testing.T) {
 	// reproducing the basename check in-test.
 
 	falsePositivePaths := []string{
-		// The exact path from the bug report (project root named "archigraph").
-		"/Users/user/Projects/archigraph/webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild",
+		// The exact path from the bug report (project root named "grafel").
+		"/Users/user/Projects/grafel/webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild",
 		// Generic worktree layout.
-		"/tmp/archigraph-worktrees/fix-selfdefense/node_modules/.bin/esbuild",
+		"/tmp/grafel-worktrees/fix-selfdefense/node_modules/.bin/esbuild",
 		// Another tool in a directory named after the project.
-		"/home/ci/archigraph/scripts/build-helper.sh",
-		// vite binary in an archigraph project.
-		"/home/user/archigraph/node_modules/.bin/vite",
+		"/home/ci/grafel/scripts/build-helper.sh",
+		// vite binary in an grafel project.
+		"/home/user/grafel/node_modules/.bin/vite",
 	}
 
 	for _, path := range falsePositivePaths {
 		base := strings.ToLower(filepath.Base(path))
-		isCanonical := base == "archigraph"
+		isCanonical := base == "grafel"
 		if isCanonical {
 			t.Errorf("false-positive: path %q has basename %q which incorrectly matches canonical set", path, base)
 		}
 	}
 
-	// Sanity: real archigraph binaries must still match.
+	// Sanity: real grafel binaries must still match.
 	truePaths := []string{
-		"/usr/local/bin/archigraph",
-		"/home/user/go/bin/archigraph",
-		"/opt/archigraph/bin/archigraph",
+		"/usr/local/bin/grafel",
+		"/home/user/go/bin/grafel",
+		"/opt/grafel/bin/grafel",
 	}
 	for _, path := range truePaths {
 		base := strings.ToLower(filepath.Base(path))
-		isCanonical := base == "archigraph"
+		isCanonical := base == "grafel"
 		if !isCanonical {
 			t.Errorf("true-negative: path %q with basename %q should match canonical set but does not", path, base)
 		}

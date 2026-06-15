@@ -24,7 +24,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // viewSuffixes lists the Django CBV / DRF ViewSet base-class name

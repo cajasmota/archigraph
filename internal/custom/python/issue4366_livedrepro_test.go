@@ -6,17 +6,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the regex framework extractors under test (Django / SQLAlchemy /
 	// Pydantic / the ORM-schema family).
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
 	// Register the tree-sitter base Python extractor so we run the REAL merged
 	// pipeline (base #526 field-membership CONTAINS + custom field nodes).
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // Issue #4366 LIVE-REPRO — Python ORM/validation field membership.

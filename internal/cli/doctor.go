@@ -10,12 +10,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/process"
-	"github.com/cajasmota/archigraph/internal/registry"
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/process"
+	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 const (
@@ -97,13 +97,13 @@ health report. Exits non-zero when any Critical check fails.
 
 			// Exit non-zero when any Critical install check failed.
 			if installReport != nil && !installReport.OK {
-				return fmt.Errorf("critical drift detected — run 'archigraph install' to fix")
+				return fmt.Errorf("critical drift detected — run 'grafel install' to fix")
 			}
 			return nil
 		},
 	}
 	cmd.Flags().BoolVar(&killStale, "kill-stale", false,
-		"kill stale archigraph daemons (default: dry-run list only)")
+		"kill stale grafel daemons (default: dry-run list only)")
 	cmd.Flags().BoolVar(&auditDocs, "audit-docs", false,
 		"detect in-repo docgen output (storage discipline #2190); reports without moving anything")
 	cmd.Flags().StringVar(&refFlag, "ref", "", refFlagUsage)
@@ -130,7 +130,7 @@ func emitDoctorJSON(w io.Writer, report *install.DoctorReport) error {
 	}
 	fmt.Fprintf(w, "%s\n", b)
 	if !report.OK {
-		return fmt.Errorf("critical drift detected — run 'archigraph install' to fix")
+		return fmt.Errorf("critical drift detected — run 'grafel install' to fix")
 	}
 	return nil
 }
@@ -171,7 +171,7 @@ func runDoctorAuditDocs(w io.Writer) error {
 	}
 
 	if totalOffenders > 0 {
-		fmt.Fprintf(w, "\nRun 'archigraph docgen migrate-in-repo' per group to move output to the archigraph store.\n")
+		fmt.Fprintf(w, "\nRun 'grafel docgen migrate-in-repo' per group to move output to the grafel store.\n")
 	}
 	return nil
 }
@@ -179,13 +179,13 @@ func runDoctorAuditDocs(w io.Writer) error {
 // runDoctor runs every health check and reports to w. It returns nil
 // even when checks fail — the report itself is the user signal.
 func runDoctor(w io.Writer) error {
-	fmt.Fprintf(w, "%s archigraph %s\n", statusOK, version.String())
+	fmt.Fprintf(w, "%s grafel %s\n", statusOK, version.String())
 
 	bin, err := os.Executable()
 	if err != nil {
-		fmt.Fprintf(w, "%s archigraph binary: %v\n", statusWarn, err)
+		fmt.Fprintf(w, "%s grafel binary: %v\n", statusWarn, err)
 	} else {
-		fmt.Fprintf(w, "%s archigraph binary: %s\n", statusOK, bin)
+		fmt.Fprintf(w, "%s grafel binary: %s\n", statusOK, bin)
 	}
 
 	regPath, _ := registry.RegistryPath()
@@ -234,7 +234,7 @@ func runDoctor(w io.Writer) error {
 	return nil
 }
 
-// staleProcess describes an archigraph process that is a candidate for cleanup.
+// staleProcess describes an grafel process that is a candidate for cleanup.
 type staleProcess struct {
 	PID      int
 	PPID     int
@@ -248,12 +248,12 @@ type staleProcess struct {
 func killGuidance() string {
 	// runtime.GOOS check is intentionally inline so the compiler sees a
 	// constant string per platform — no import of "runtime" needed in this file.
-	return `archigraph doctor --kill-stale`
+	return `grafel doctor --kill-stale`
 }
 
-// runDoctorStaleDaemons scans running processes for stale archigraph daemons:
-//   - any archigraph process with PPID=1 AND binary path under /tmp
-//   - any archigraph daemon process running from a different binary than self
+// runDoctorStaleDaemons scans running processes for stale grafel daemons:
+//   - any grafel process with PPID=1 AND binary path under /tmp
+//   - any grafel daemon process running from a different binary than self
 //
 // In dry-run mode (kill=false) it lists them. With kill=true it sends SIGTERM.
 func runDoctorStaleDaemons(w io.Writer, kill bool) error {
@@ -265,7 +265,7 @@ func runDoctorStaleDaemons(w io.Writer, kill bool) error {
 		return nil
 	}
 
-	procs, err := scanArchigraphProcs(myPID)
+	procs, err := scanGrafelProcs(myPID)
 	if err != nil {
 		fmt.Fprintf(w, "%s stale-daemon scan: %v\n", statusWarn, err)
 		return nil
@@ -296,7 +296,7 @@ func runDoctorStaleDaemons(w io.Writer, kill bool) error {
 	if kill {
 		action = "killing"
 	}
-	fmt.Fprintf(w, "\nStale archigraph processes (%s):\n", action)
+	fmt.Fprintf(w, "\nStale grafel processes (%s):\n", action)
 	for _, p := range stale {
 		orphanNote := ""
 		if p.IsOrphan {
@@ -317,15 +317,15 @@ func runDoctorStaleDaemons(w io.Writer, kill bool) error {
 	}
 
 	if !kill {
-		fmt.Fprintf(w, "\nRun 'archigraph doctor --kill-stale' to terminate these processes.\n")
+		fmt.Fprintf(w, "\nRun 'grafel doctor --kill-stale' to terminate these processes.\n")
 	}
 	return nil
 }
 
-// scanArchigraphProcs uses the cross-platform process package to find all
-// running archigraph processes except myPID.
-func scanArchigraphProcs(myPID int) ([]staleProcess, error) {
-	infos, err := process.FindByName("archigraph")
+// scanGrafelProcs uses the cross-platform process package to find all
+// running grafel processes except myPID.
+func scanGrafelProcs(myPID int) ([]staleProcess, error) {
+	infos, err := process.FindByName("grafel")
 	if err != nil {
 		return nil, fmt.Errorf("process scan: %w", err)
 	}
@@ -372,8 +372,8 @@ func checkRepo(w io.Writer, r registry.Repo) {
 	case hasJSON:
 		// ADR-0016 flip-day (#808): old install with only graph.json.
 		// Suggest a re-index so graph.fb is written.
-		fmt.Fprintf(w, "         graph.json present (graph.fb missing — run 'archigraph index' to generate the binary graph)\n")
+		fmt.Fprintf(w, "         graph.json present (graph.fb missing — run 'grafel index' to generate the binary graph)\n")
 	default:
-		fmt.Fprintf(w, "         no graph found — run 'archigraph index %s' to build\n", r.Path)
+		fmt.Fprintf(w, "         no graph found — run 'grafel index %s' to build\n", r.Path)
 	}
 }

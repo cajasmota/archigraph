@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // goEmbeddingDoc models `type Service struct { *BaseService }` where

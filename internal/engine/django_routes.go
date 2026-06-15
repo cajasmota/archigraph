@@ -36,16 +36,16 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/treesitter"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // drfDbgEnabled in django_routes.go mirrors the one in django_drf_actions.go.
-// Both are gated on the same ARCHIGRAPH_DRF_DBG env var. Since Go evaluates
+// Both are gated on the same GRAFEL_DRF_DBG env var. Since Go evaluates
 // package-level vars at init time, the value is fixed for the process lifetime.
 // Use "var" (not "const") so the linker can dead-code-eliminate the blocks when
 // the env var is absent in production.
-var drfRoutesDbgEnabled = os.Getenv("ARCHIGRAPH_DRF_DBG") == "1"
+var drfRoutesDbgEnabled = os.Getenv("GRAFEL_DRF_DBG") == "1"
 
 // ---------------------------------------------------------------------------
 // Cross-file DRF register-name registry (#1278)

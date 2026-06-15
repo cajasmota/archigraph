@@ -9,7 +9,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // grpcGoMethodEntity returns the SCOPE.GrpcMethod entity for grpc:Service/Method,

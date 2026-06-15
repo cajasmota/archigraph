@@ -3,7 +3,7 @@ package rust_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #4783 — Rust IMPORTS edges must stamp imported_name/local_name (and wildcard)

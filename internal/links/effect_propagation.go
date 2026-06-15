@@ -24,7 +24,7 @@
 //  4. Stamp results onto entity.Properties under stable keys (see
 //     EffectPropertyKey*). The on-disk graph.fb / graph.json files are
 //     not rewritten — Phase 1A keeps the result in-memory; the MCP
-//     archigraph_effects tool reads off the loaded properties and a
+//     grafel_effects tool reads off the loaded properties and a
 //     sidecar <group>-links-effects.json file.
 //
 // Confidence model:
@@ -44,7 +44,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
+	"github.com/cajasmota/grafel/internal/substrate"
 )
 
 // MethodEffectPropagation identifies sidecar artefacts produced by the

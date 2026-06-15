@@ -3,7 +3,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // MassTransit cross-process message-bus coverage (#4967). Value-asserting:

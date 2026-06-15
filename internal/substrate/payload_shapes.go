@@ -22,7 +22,7 @@
 // sidecar JSON document keyed by (repo, file, function, direction),
 // and the drift findings live in their own sidecar
 // <group>-links-payload-drift.json read by the new MCP tool
-// archigraph_payload_drift.
+// grafel_payload_drift.
 //
 // Adding a new language: implement a PayloadShapeSniffFn, register it
 // via RegisterPayloadShapeSniffer("<lang>", fn) in init() in the

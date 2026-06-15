@@ -1,5 +1,5 @@
 # services/auth BUILD — auth service targets.
-# Used by archigraph M6 (issue #2183) Bazel extractor tests.
+# Used by grafel M6 (issue #2183) Bazel extractor tests.
 
 py_library(
     name = "auth_lib",

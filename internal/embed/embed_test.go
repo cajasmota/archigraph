@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // fakeBackend is a deterministic, dim-N embedding backend for tests. The
@@ -39,7 +39,7 @@ func (f *fakeBackend) Embed(_ context.Context, texts []string) ([][]float32, err
 }
 
 func TestConfig_EnvOverride(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	t.Setenv(EnvBackend, "http")
 	t.Setenv(EnvURL, "http://example.test/v1")
 	t.Setenv(EnvModel, "fake-model")
@@ -55,7 +55,7 @@ func TestConfig_EnvOverride(t *testing.T) {
 // TestConfig_DefaultIsBuiltin verifies that a fresh install with no config
 // file and no env vars defaults to bundled MiniLM mode (S6 / #2156).
 func TestConfig_DefaultIsBuiltin(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	for _, e := range []string{EnvBackend, EnvURL, EnvModel, EnvAPIKey, EnvDims, EnvDisable} {
 		t.Setenv(e, "")
 	}
@@ -65,10 +65,10 @@ func TestConfig_DefaultIsBuiltin(t *testing.T) {
 	}
 }
 
-// TestConfig_DisableEnvOverrides verifies that ARCHIGRAPH_EMBEDDING_DISABLE
+// TestConfig_DisableEnvOverrides verifies that GRAFEL_EMBEDDING_DISABLE
 // overrides any other settings and forces BM25-only mode.
 func TestConfig_DisableEnvOverrides(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	t.Setenv(EnvDisable, "true")
 	t.Setenv(EnvBackend, "builtin")
 	t.Setenv(EnvURL, "http://example.test/v1")
@@ -196,7 +196,7 @@ func TestFakeBackend_SemanticOrdering(t *testing.T) {
 	}
 }
 
-// TestHTTPBackend_OptIn verifies that setting ARCHIGRAPH_EMBEDDING_URL routes
+// TestHTTPBackend_OptIn verifies that setting GRAFEL_EMBEDDING_URL routes
 // through the HTTP backend and fetches+caches embeddings (S6 / #2156).
 func TestHTTPBackend_OptIn(t *testing.T) {
 	const dims = 4
@@ -227,7 +227,7 @@ func TestHTTPBackend_OptIn(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	t.Setenv(EnvURL, srv.URL+"/v1")
 	t.Setenv(EnvDims, "4")
 	// Clear other env vars to test URL-only opt-in.
@@ -292,10 +292,10 @@ func TestHTTPBackend_OptIn(t *testing.T) {
 	}
 }
 
-// TestConfig_URLOnlyOptin verifies that ARCHIGRAPH_EMBEDDING_URL alone (no
-// ARCHIGRAPH_EMBEDDING_BACKEND) is sufficient to activate HTTP mode.
+// TestConfig_URLOnlyOptin verifies that GRAFEL_EMBEDDING_URL alone (no
+// GRAFEL_EMBEDDING_BACKEND) is sufficient to activate HTTP mode.
 func TestConfig_URLOnlyOptin(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	t.Setenv(EnvURL, "http://localhost:11434/v1")
 	for _, e := range []string{EnvBackend, EnvModel, EnvAPIKey, EnvDims} {
 		t.Setenv(e, "")

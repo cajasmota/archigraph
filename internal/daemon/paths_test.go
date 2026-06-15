@@ -17,7 +17,7 @@ func TestSelectSocketPath_PreferXDGWhenSet(t *testing.T) {
 		t.Fatalf("selectSocketPath: %v", err)
 	}
 
-	expected := "/run/user/1000/archigraph/daemon.sock"
+	expected := "/run/user/1000/grafel/daemon.sock"
 	if path != expected {
 		t.Fatalf("expected %q, got %q", expected, path)
 	}
@@ -29,7 +29,7 @@ func TestSelectSocketPath_PreferXDGWhenSet(t *testing.T) {
 
 func TestSelectSocketPath_FallbackToHomeWhenXDGTooLong(t *testing.T) {
 	// Simulate XDG path exceeding limit
-	t.Setenv("XDG_RUNTIME_DIR", "/very/long/path/that/would/exceed/the/socket/limit/when/combined/with/archigraph/daemon/sock")
+	t.Setenv("XDG_RUNTIME_DIR", "/very/long/path/that/would/exceed/the/socket/limit/when/combined/with/grafel/daemon/sock")
 	t.Setenv("HOME", "/home/user")
 
 	path, err := selectSocketPath()
@@ -37,7 +37,7 @@ func TestSelectSocketPath_FallbackToHomeWhenXDGTooLong(t *testing.T) {
 		t.Fatalf("selectSocketPath: %v", err)
 	}
 
-	expected := "/home/user/.archigraph/sockets/daemon.sock"
+	expected := "/home/user/.grafel/sockets/daemon.sock"
 	if path != expected {
 		t.Fatalf("expected fallback to home %q, got %q", expected, path)
 	}
@@ -52,7 +52,7 @@ func TestSelectSocketPath_UseHomeWhenXDGNotSet(t *testing.T) {
 		t.Fatalf("selectSocketPath: %v", err)
 	}
 
-	expected := "/home/user/.archigraph/sockets/daemon.sock"
+	expected := "/home/user/.grafel/sockets/daemon.sock"
 	if path != expected {
 		t.Fatalf("expected %q, got %q", expected, path)
 	}
@@ -64,8 +64,8 @@ func TestSelectSocketPath_UseHomeWhenXDGNotSet(t *testing.T) {
 
 func TestSelectSocketPath_ErrorWhenBothTooLong(t *testing.T) {
 	// Both XDG and home paths exceed 104 char limit
-	// Use a realistic but long path: /very/long/directory/path/that/when/combined/with/archigraph/daemon/sock/exceeds/limit
-	longPath := "/very/long/directory/path/that/when/combined/with/archigraph/daemon/sock/exceeds/the/limit/constraint"
+	// Use a realistic but long path: /very/long/directory/path/that/when/combined/with/grafel/daemon/sock/exceeds/limit
+	longPath := "/very/long/directory/path/that/when/combined/with/grafel/daemon/sock/exceeds/the/limit/constraint"
 	t.Setenv("XDG_RUNTIME_DIR", longPath)
 	t.Setenv("HOME", longPath)
 
@@ -89,8 +89,8 @@ func TestDefaultLayout_XDGPathWhenAvailable(t *testing.T) {
 		t.Fatalf("socket path exceeds limit: %d > %d", len(layout.SocketPath), UnixSocketPathMax)
 	}
 
-	// Home-based paths should still work (PID, logs under ~/.archigraph)
-	if !filepath.HasPrefix(layout.LogDir, "/home/user/.archigraph") {
+	// Home-based paths should still work (PID, logs under ~/.grafel)
+	if !filepath.HasPrefix(layout.LogDir, "/home/user/.grafel") {
 		t.Fatalf("expected log dir under home, got %q", layout.LogDir)
 	}
 }
@@ -98,7 +98,7 @@ func TestDefaultLayout_XDGPathWhenAvailable(t *testing.T) {
 func TestDefaultLayout_DaemonRootEnvOverridesXDG(t *testing.T) {
 	tmpRoot := t.TempDir()
 
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", tmpRoot)
+	t.Setenv("GRAFEL_DAEMON_ROOT", tmpRoot)
 	t.Setenv("XDG_RUNTIME_DIR", "/run/user/1000")
 	t.Setenv("HOME", "/home/user")
 
@@ -107,12 +107,12 @@ func TestDefaultLayout_DaemonRootEnvOverridesXDG(t *testing.T) {
 		t.Fatalf("DefaultLayout: %v", err)
 	}
 
-	// When ARCHIGRAPH_DAEMON_ROOT is set, it overrides all paths
+	// When GRAFEL_DAEMON_ROOT is set, it overrides all paths
 	if !filepath.HasPrefix(layout.SocketPath, tmpRoot) {
-		t.Fatalf("expected socket under ARCHIGRAPH_DAEMON_ROOT %q, got %q", tmpRoot, layout.SocketPath)
+		t.Fatalf("expected socket under GRAFEL_DAEMON_ROOT %q, got %q", tmpRoot, layout.SocketPath)
 	}
 	if !filepath.HasPrefix(layout.LogDir, tmpRoot) {
-		t.Fatalf("expected log dir under ARCHIGRAPH_DAEMON_ROOT %q, got %q", tmpRoot, layout.LogDir)
+		t.Fatalf("expected log dir under GRAFEL_DAEMON_ROOT %q, got %q", tmpRoot, layout.LogDir)
 	}
 }
 
@@ -147,8 +147,8 @@ func TestEnsureLayout_HandlesSeparateSocketDir(t *testing.T) {
 
 	layout := Layout{
 		Root:       tmpRoot,
-		SocketDir:  filepath.Join(tmpXDG, "archigraph"),
-		SocketPath: filepath.Join(tmpXDG, "archigraph", "daemon.sock"),
+		SocketDir:  filepath.Join(tmpXDG, "grafel"),
+		SocketPath: filepath.Join(tmpXDG, "grafel", "daemon.sock"),
 		PIDPath:    filepath.Join(tmpRoot, "daemon.pid"),
 		LogDir:     filepath.Join(tmpRoot, "logs"),
 		LogPath:    filepath.Join(tmpRoot, "logs", "daemon.log"),

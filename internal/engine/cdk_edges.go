@@ -66,7 +66,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // cdkResourceKind is the entity kind for every CDK construct resource. We use

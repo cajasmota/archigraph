@@ -1,7 +1,7 @@
 // Package testsupport provides safety-critical test isolation helpers.
 //
 // These tests have, in the past, corrupted a developer's live MCP config
-// (~/.claude.json) and killed their live archigraph daemon, because they
+// (~/.claude.json) and killed their live grafel daemon, because they
 // resolved config/state paths via $HOME and dialed the default daemon socket
 // while running against the real user home.
 //
@@ -24,15 +24,15 @@ import (
 	"testing"
 )
 
-// Environment variables that steer archigraph config/state/socket resolution.
+// Environment variables that steer grafel config/state/socket resolution.
 // Kept as literals to avoid importing internal/daemon (import-cycle safe).
 const (
-	envHome           = "HOME"
-	envUserProfile    = "USERPROFILE" // Windows home
-	envXDGConfigHome  = "XDG_CONFIG_HOME"
-	envXDGRuntimeDir  = "XDG_RUNTIME_DIR"
-	envDaemonRoot     = "ARCHIGRAPH_DAEMON_ROOT"
-	envArchigraphHome = "ARCHIGRAPH_HOME"
+	envHome          = "HOME"
+	envUserProfile   = "USERPROFILE" // Windows home
+	envXDGConfigHome = "XDG_CONFIG_HOME"
+	envXDGRuntimeDir = "XDG_RUNTIME_DIR"
+	envDaemonRoot    = "GRAFEL_DAEMON_ROOT"
+	envGrafelHome    = "GRAFEL_HOME"
 )
 
 // realUserHome is captured once, at process start, BEFORE any test has had a
@@ -57,12 +57,12 @@ func RealUserHome() string { return realUserHome }
 // took effect. After this call:
 //
 //   - $HOME / %USERPROFILE% point at <tmp> (so ~/.claude.json, ~/.codeium,
-//     ~/.archigraph all resolve under <tmp>),
+//     ~/.grafel all resolve under <tmp>),
 //   - $XDG_CONFIG_HOME points at <tmp>/cfg,
 //   - $XDG_RUNTIME_DIR points at <tmp>/run,
-//   - $ARCHIGRAPH_DAEMON_ROOT points at <tmp>/.archigraph (isolated daemon
+//   - $GRAFEL_DAEMON_ROOT points at <tmp>/.grafel (isolated daemon
 //     socket/pid/log), and
-//   - $ARCHIGRAPH_HOME points at <tmp>/.archigraph.
+//   - $GRAFEL_HOME points at <tmp>/.grafel.
 //
 // It returns the temp home root. The guard (see GuardRealHome) is wired in via
 // t.Cleanup so a test that somehow re-points HOME back at the real home is
@@ -71,7 +71,7 @@ func IsolateHome(t *testing.T) string {
 	t.Helper()
 	tmp := t.TempDir()
 
-	archRoot := filepath.Join(tmp, ".archigraph")
+	archRoot := filepath.Join(tmp, ".grafel")
 	if err := os.MkdirAll(archRoot, 0o700); err != nil {
 		t.Fatalf("testsupport: create isolated daemon root: %v", err)
 	}
@@ -81,7 +81,7 @@ func IsolateHome(t *testing.T) string {
 	t.Setenv(envXDGConfigHome, filepath.Join(tmp, "cfg"))
 	t.Setenv(envXDGRuntimeDir, filepath.Join(tmp, "run"))
 	t.Setenv(envDaemonRoot, archRoot)
-	t.Setenv(envArchigraphHome, archRoot)
+	t.Setenv(envGrafelHome, archRoot)
 
 	// Verify the redirect actually took effect and did not land on the real
 	// user home. This is the safety net the whole issue is about.
@@ -107,7 +107,7 @@ func GuardRealHome(t *testing.T) {
 		t.Fatalf(
 			"testsupport: SANDBOX ESCAPE — effective HOME (%q) is the real user home; "+
 				"this test would read/write the developer's live ~/.claude.json / ~/.codeium / "+
-				"~/.archigraph or dial the live daemon socket. Call testsupport.IsolateHome(t) first.",
+				"~/.grafel or dial the live daemon socket. Call testsupport.IsolateHome(t) first.",
 			eff,
 		)
 	}

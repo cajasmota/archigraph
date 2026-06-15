@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -260,7 +260,7 @@ func TestUX1687_WrapInjectsElapsedMSOnError(t *testing.T) {
 	})
 	// handleFindCallers requires entity_id; call with the wrong key so it
 	// returns IsError=true immediately (before any graph lookup).
-	wrapped := srv.wrap("archigraph_find_callers", srv.handleFindCallers)
+	wrapped := srv.wrap("grafel_find_callers", srv.handleFindCallers)
 	req := mcpapi.CallToolRequest{}
 	req.Params.Arguments = map[string]any{"group": "test", "node_id": "x"} // wrong key
 	res, err := wrapped(context.Background(), req)

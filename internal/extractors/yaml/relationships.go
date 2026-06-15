@@ -26,7 +26,7 @@ package yaml
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // composeVolumeSource extracts the source segment from a compose volume

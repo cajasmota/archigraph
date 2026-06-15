@@ -3,7 +3,7 @@ package audit
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestClassifyOrphan_ImportPlaceholder(t *testing.T) {

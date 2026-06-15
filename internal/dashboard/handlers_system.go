@@ -25,8 +25,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ func (s *Server) handleSystemRestart(w http.ResponseWriter, r *http.Request) {
 // handleSystemStop — POST /api/system/stop
 //
 // Danger-zone: SIGTERMs the daemon. Unlike restart, the daemon will NOT
-// automatically come back unless the user manually runs `archigraph start`.
+// automatically come back unless the user manually runs `grafel start`.
 // The frontend should show a red confirm modal before calling this.
 func (s *Server) handleSystemStop(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -131,7 +131,7 @@ func (s *Server) handleSystemStop(w http.ResponseWriter, r *http.Request) {
 	pid := os.Getpid()
 	writeJSON(w, http.StatusOK, SystemActionReply{
 		OK:      true,
-		Message: fmt.Sprintf("Sending SIGTERM to daemon (pid %d) — restart via 'archigraph start'.", pid),
+		Message: fmt.Sprintf("Sending SIGTERM to daemon (pid %d) — restart via 'grafel start'.", pid),
 	})
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
@@ -286,7 +286,7 @@ func (s *Server) buildSystemReply() SystemReply {
 
 	// RSS budget from env (mirrors daemon startup logic)
 	budgetMB := int64(500)
-	if v := os.Getenv("ARCHIGRAPH_MAX_RSS_BUDGET_MB"); v != "" {
+	if v := os.Getenv("GRAFEL_MAX_RSS_BUDGET_MB"); v != "" {
 		if parsed, err := strconv.ParseInt(v, 10, 64); err == nil && parsed >= 0 {
 			budgetMB = parsed
 		}
@@ -360,7 +360,7 @@ func matchesFilter(line, q, sev string) bool {
 }
 
 // classifySeverity returns a simple severity string based on common log
-// keywords. Matches archigraph-daemon log format (stdlib log + custom prefixes).
+// keywords. Matches grafel-daemon log format (stdlib log + custom prefixes).
 func classifySeverity(line string) string {
 	lower := strings.ToLower(line)
 	switch {
@@ -382,8 +382,8 @@ func classifySeverity(line string) string {
 func restartViaBinary() {
 	switch runtime.GOOS {
 	case "darwin":
-		_ = exec.Command("launchctl", "kickstart", "-k", "gui/"+strconv.Itoa(os.Getuid())+"/com.archigraph.daemon").Run()
+		_ = exec.Command("launchctl", "kickstart", "-k", "gui/"+strconv.Itoa(os.Getuid())+"/com.grafel.daemon").Run()
 	case "linux":
-		_ = exec.Command("systemctl", "--user", "restart", "archigraph").Run()
+		_ = exec.Command("systemctl", "--user", "restart", "grafel").Run()
 	}
 }

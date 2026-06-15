@@ -3,7 +3,7 @@ package mcp
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // LabelIndex is an inverted index for O(1) lookups by:

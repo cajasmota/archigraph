@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/indexer/diff"
+	"github.com/cajasmota/grafel/internal/indexer/diff"
 )
 
 // writeFile creates a file in dir with the given content. Returns the

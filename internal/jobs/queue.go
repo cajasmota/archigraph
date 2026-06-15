@@ -4,7 +4,7 @@
 // Design constraints (issue #1244):
 //   - Stdlib-only, no external dependencies.
 //   - Worker pool with configurable concurrency (default 2).
-//   - Jobs persist to ~/.archigraph/jobs.jsonl for history across restarts.
+//   - Jobs persist to ~/.grafel/jobs.jsonl for history across restarts.
 //   - MCP agent invocation is stubbed: logs "would call agent X with prompt Y".
 //     Real integration is a follow-up.
 //   - Cancel and per-job timeout (default 5 min) are supported.

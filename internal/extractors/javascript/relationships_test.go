@@ -8,10 +8,10 @@ import (
 	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 	// Blank import to trigger init() registration.
-	_ "github.com/cajasmota/archigraph/internal/extractors/javascript"
+	_ "github.com/cajasmota/grafel/internal/extractors/javascript"
 )
 
 // parseJSRel parses JS source for relationship tests.

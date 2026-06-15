@@ -55,7 +55,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // ReindexHint classifies how much source changed between two commits,

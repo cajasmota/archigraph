@@ -19,7 +19,7 @@ package mcp_test
 //      current architecture; a BFS handles deeper nesting if it ever arises).
 //
 // Registration patterns handled:
-//   - s.wrap("archigraph_xxx", s.handleXxx)          — string literal tool name  [line ~282]
+//   - s.wrap("grafel_xxx", s.handleXxx)          — string literal tool name  [line ~282]
 //   - s.wrap(sentinelToolName, s.handleStatus)        — const-ident tool name     [line ~725]
 //
 // Heterogeneous patterns that would require a STOP:
@@ -57,7 +57,7 @@ func buildFuncToToolFromAST(t *testing.T, mcpDir string) map[string]string {
 	}
 
 	// Step 2: collect package-level const declarations for identifier resolution.
-	// e.g. sentinelToolName = "archigraph_status"
+	// e.g. sentinelToolName = "grafel_status"
 	constValues := extractPackageConsts(f)
 
 	// Step 3: extract direct handler→tool from registerTools wrap() calls.
@@ -106,7 +106,7 @@ func buildFuncToToolFromAST(t *testing.T, mcpDir string) map[string]string {
 
 // extractPackageConsts returns a map of const-name → string-value for all
 // package-level const declarations in the given file that have string literal values.
-// This handles the sentinelToolName = "archigraph_status" pattern.
+// This handles the sentinelToolName = "grafel_status" pattern.
 func extractPackageConsts(f *ast.File) map[string]string {
 	out := make(map[string]string)
 	for _, decl := range f.Decls {
@@ -135,7 +135,7 @@ func extractPackageConsts(f *ast.File) map[string]string {
 // every s.wrap(<toolName>, s.handleXxx) call, returning handler-name → tool-name.
 //
 // Supported tool-name forms:
-//   - string literal:   s.wrap("archigraph_xxx", s.handleXxx)
+//   - string literal:   s.wrap("grafel_xxx", s.handleXxx)
 //   - const identifier: s.wrap(sentinelToolName, s.handleXxx)
 //
 // Returns an error if wrap() is called in a loop, or if the tool-name cannot be

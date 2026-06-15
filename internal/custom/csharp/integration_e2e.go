@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // integration_e2e.go — link ASP.NET Core integration-test route-by-string calls
@@ -113,7 +113,7 @@ var (
 )
 
 func (e *csharpIntegrationE2EExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/csharp")
+	tracer := otel.Tracer("grafel/custom/csharp")
 	_, span := tracer.Start(ctx, "indexer.csharp_integration_e2e_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

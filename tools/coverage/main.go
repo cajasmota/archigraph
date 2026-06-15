@@ -1,4 +1,4 @@
-// Command coverage maintains the archigraph capabilities registry at
+// Command coverage maintains the grafel capabilities registry at
 // docs/coverage/registry.json. It is a standalone dev tool with zero
 // imports from internal/ packages; pure file I/O only.
 //

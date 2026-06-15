@@ -48,8 +48,8 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitRustConstValueSets is a supplemental pass (mirroring emitExceptionFlowEdges)

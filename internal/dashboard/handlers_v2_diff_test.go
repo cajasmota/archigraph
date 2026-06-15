@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -25,7 +25,7 @@ import (
 func setupDiffTest(t *testing.T, groupName, repoSlug string, docA, docB *graph.Document, refA, refB string) string {
 	t.Helper()
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	// Fake repo directory — StateDirForRepoRef uses its absolute path.
 	repoDir := filepath.Join(home, "fakerepo")
@@ -207,7 +207,7 @@ func TestHandleV2RepoDiff_SameRef(t *testing.T) {
 // returns HTTP 400.
 func TestHandleV2RepoDiff_MissingParams(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	regRaw, _ := json.Marshal(map[string]any{"version": 1, "groups": []any{}})
 	os.WriteFile(filepath.Join(home, "registry.json"), regRaw, 0o644)
 
@@ -232,7 +232,7 @@ func TestHandleV2RepoDiff_MissingParams(t *testing.T) {
 // TestHandleV2RepoDiff_UnknownGroup verifies HTTP 404 for an unknown group.
 func TestHandleV2RepoDiff_UnknownGroup(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	regRaw, _ := json.Marshal(map[string]any{"version": 1, "groups": []any{}})
 	os.WriteFile(filepath.Join(home, "registry.json"), regRaw, 0o644)
 

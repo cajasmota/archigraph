@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // countConfigEdgesFrom returns the DEPENDS_ON_CONFIG edges emitted by the

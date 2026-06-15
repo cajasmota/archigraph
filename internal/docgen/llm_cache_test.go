@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
@@ -160,8 +160,8 @@ func TestCache_NoCacheDisablesRead(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	// Determine the default cache dir and pre-populate it with a fake entry
@@ -388,8 +388,8 @@ func TestCacheHit_AbsentWhenNoCache(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -435,8 +435,8 @@ func TestBundle_PerSectionPromptHashPopulated(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -481,8 +481,8 @@ func TestApplyResult_WritesCacheEntries(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -598,8 +598,8 @@ func TestEmitAfterApply_CacheHits(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()
@@ -720,8 +720,8 @@ func TestApplyResult_NoCacheSuppressesWrites(t *testing.T) {
 	}
 
 	archHome, group, entityID, repoPath := buildMinimalGroupForEmitTests(t)
-	t.Setenv("ARCHIGRAPH_HOME", archHome)
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
+	t.Setenv("GRAFEL_HOME", archHome)
+	t.Setenv("GRAFEL_DAEMON_ROOT", filepath.Join(archHome, "daemon-root"))
 	writeGraphForEmitTest(t, archHome, repoPath, entityID)
 
 	outDir := t.TempDir()

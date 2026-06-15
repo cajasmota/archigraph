@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	idxerr "github.com/cajasmota/archigraph/internal/errors"
+	idxerr "github.com/cajasmota/grafel/internal/errors"
 )
 
 func TestAllCodesHaveHints(t *testing.T) {

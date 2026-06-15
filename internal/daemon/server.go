@@ -17,23 +17,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/daemon/sched"
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
-	"github.com/cajasmota/archigraph/internal/daemon/watch"
-	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
-	"github.com/cajasmota/archigraph/internal/daemon/worktree"
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/sched"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon/watch"
+	"github.com/cajasmota/grafel/internal/daemon/watchreg"
+	"github.com/cajasmota/grafel/internal/daemon/worktree"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // Config configures Run. Fields are required unless documented otherwise.
 type Config struct {
 	Layout       Layout           // on-disk paths (see DefaultLayout)
-	Index        IndexFunc        // injected from cmd/archigraph
-	Rebuild      RebuildFunc      // injected from cmd/archigraph
-	QualityAudit QualityAuditFunc // injected from cmd/archigraph (Phase E)
+	Index        IndexFunc        // injected from cmd/grafel
+	Rebuild      RebuildFunc      // injected from cmd/grafel
+	QualityAudit QualityAuditFunc // injected from cmd/grafel (Phase E)
 	// Logger is the *slog.Logger used by daemon-internal code and all sub-packages.
 	// When nil, Run constructs a default stderr slog.Logger.
 	Logger *slog.Logger
@@ -51,7 +51,7 @@ type Config struct {
 	// worktree tracking enabled (features.track_worktrees / watchers). The
 	// daemon starts a worktree.Watcher that:
 	//   - discovers each parent's linked worktrees and persists them to
-	//     ~/.archigraph/worktrees.json,
+	//     ~/.grafel/worktrees.json,
 	//   - subscribes each worktree's WORKING TREE to the fsnotify watcher so
 	//     uncommitted edits trigger a reindex of that worktree's ref tier,
 	//   - watches each parent's .git/worktrees/ dir (event-driven onboarding)
@@ -71,7 +71,7 @@ type Config struct {
 
 	// ExtractorConfig, when non-nil, is passed to the scheduler so it can
 	// consult IsIncrementalEnabled() instead of reading
-	// ARCHIGRAPH_INCREMENTAL_REINDEX from the process env directly (issue
+	// GRAFEL_INCREMENTAL_REINDEX from the process env directly (issue
 	// #2397). When nil the scheduler falls back to the env-var path, which
 	// preserves backward compatibility.
 	ExtractorConfig *extractor.ExtractorConfig
@@ -79,7 +79,7 @@ type Config struct {
 	// MaxRSSBudgetMB caps the total predicted RSS of concurrently
 	// running index jobs. 0 disables admission control (legacy
 	// behaviour). The CLI sets this via --max-rss-budget on the
-	// daemon subcommand or the ARCHIGRAPH_MAX_RSS_BUDGET_MB env var.
+	// daemon subcommand or the GRAFEL_MAX_RSS_BUDGET_MB env var.
 	MaxRSSBudgetMB int64
 
 	// RSSHistoryPath is where the scheduler persists per-repo observed
@@ -93,13 +93,13 @@ type Config struct {
 
 	// PatternGroupDirs is a function that returns a map of group-name →
 	// patterns directory (the dir that contains patterns.json). When nil,
-	// the decay scheduler is not started. Populated by cmd/archigraph.
+	// the decay scheduler is not started. Populated by cmd/grafel.
 	PatternGroupDirs func() map[string]string
 
 	// Phase D — MCP RPC surface (ADR-0017 #832).
 	// Both fields are optional; when nil, MCPToolList returns an empty
 	// catalog and MCPToolCall returns a "not configured" error block.
-	// Injected from cmd/archigraph (which imports internal/mcp) to avoid
+	// Injected from cmd/grafel (which imports internal/mcp) to avoid
 	// the import cycle that would arise from importing internal/mcp here.
 	MCPListTools MCPListToolsFunc
 	MCPCallTool  MCPCallToolFunc
@@ -109,7 +109,7 @@ type Config struct {
 	// Run calls it in a goroutine with the daemon's context so the
 	// dashboard shuts down when the daemon shuts down.
 	//
-	// The hook is injected from cmd/archigraph (which imports both
+	// The hook is injected from cmd/grafel (which imports both
 	// internal/daemon and internal/dashboard). Keeping it here as a
 	// function value avoids the import cycle that would arise if
 	// internal/daemon imported internal/dashboard directly.
@@ -120,8 +120,8 @@ type Config struct {
 
 	// DashboardPort is the TCP port for the embedded dashboard HTTP server
 	// (#929/#931). When 0 the dashboard is disabled. Default production
-	// value is 47274. Configurable via ARCHIGRAPH_DASHBOARD_PORT env or
-	// ~/.config/archigraph/daemon.toml.
+	// value is 47274. Configurable via GRAFEL_DASHBOARD_PORT env or
+	// ~/.config/grafel/daemon.toml.
 	DashboardPort int
 
 	// DashboardBind is the bind address for the dashboard TCP listener.
@@ -136,12 +136,12 @@ type Config struct {
 
 	// OnWatcherReady is called with the live watcher after it is
 	// successfully created and repos are subscribed. Allows callers
-	// (e.g. cmd/archigraph) to wire the watcher into the dashboard
+	// (e.g. cmd/grafel) to wire the watcher into the dashboard
 	// without creating an import cycle. Added in #1270.
 	OnWatcherReady func(w *watch.Watcher)
 
 	// WatcherMgrStats, when non-nil, is queried by the Status RPC to report
-	// PH2a watcher pause/resume slot counts. Set by cmd/archigraph after
+	// PH2a watcher pause/resume slot counts. Set by cmd/grafel after
 	// onWatcherReady creates the DefaultManager. PH2a #2096.
 	WatcherMgrStats watcherMgrStatsIface
 
@@ -149,20 +149,20 @@ type Config struct {
 	// parallel during a Rebuild RPC (cold start or forced rebuild).
 	// 0 or 1 → serial (legacy behaviour). Default when unset: 2.
 	// Configurable via --max-concurrent-groups on the daemon subcommand
-	// or ARCHIGRAPH_MAX_CONCURRENT_GROUPS env var. Added in #1276.
+	// or GRAFEL_MAX_CONCURRENT_GROUPS env var. Added in #1276.
 	MaxConcurrentGroups int
 
 	// DaemonMode is the operational mode the daemon was booted in (S7 #2157).
 	// One of "background", "workstation", "readonly". Empty string means
 	// the caller did not specify a mode (treated as background).
-	// Surfaced in Status RPC so `archigraph status` can display it.
+	// Surfaced in Status RPC so `grafel status` can display it.
 	DaemonMode string
 
 	// DocgenSweep, when non-nil, starts the background docgen cleanup
 	// goroutine (issue #2216). The goroutine runs at startup and every 24 h,
 	// removing stale staging runs and .previous-* backups older than MaxAge.
 	// Set to nil (default) to disable. Disabled via --no-auto-cleanup on
-	// `archigraph start`.
+	// `grafel start`.
 	DocgenSweep *DocgenSweeperConfig
 
 	// BranchSwitchSink, when non-nil, is called by the daemon's .git/HEAD
@@ -171,14 +171,14 @@ type Config struct {
 	// watch.BranchSwitchEvent. The hook is called synchronously inside the
 	// poller callback, before the scheduler enqueues the new ref.
 	//
-	// Injected from cmd/archigraph to call mcp.State.NotifyRefSwitch, which
+	// Injected from cmd/grafel to call mcp.State.NotifyRefSwitch, which
 	// invalidates stale CrossLinkCache entries keyed to (repo, oldRef) — this
 	// closes the stale-cache bug tracked in issue #2224.
 	BranchSwitchSink func(repoPath, oldRef string)
 
 	// ShutdownCleanup, when non-nil, is called during graceful shutdown to
 	// perform cleanup operations (e.g. flushing metrics). Best-effort: errors
-	// are logged but do not block shutdown. Injected from cmd/archigraph to call
+	// are logged but do not block shutdown. Injected from cmd/grafel to call
 	// the MCP server's Stop method (issue #2530).
 	ShutdownCleanup func()
 }
@@ -189,11 +189,11 @@ type Config struct {
 //   - the listener errors fatally.
 //
 // On exit it removes the socket file and pid file. The function is the
-// daemon's entire public surface — cmd/archigraph just imports daemon
+// daemon's entire public surface — cmd/grafel just imports daemon
 // and calls Run.
 func Run(ctx context.Context, cfg Config) error {
 	// slogger is the structured logger used by the daemon itself (Run + Service)
-	// and all sub-packages. Handler selection is based on ARCHIGRAPH_DAEMON_LOG_JSON
+	// and all sub-packages. Handler selection is based on GRAFEL_DAEMON_LOG_JSON
 	// at startup — this encodes the choice in the handler so call sites never check
 	// the env var.
 	slogger := cfg.Logger
@@ -235,7 +235,7 @@ func Run(ctx context.Context, cfg Config) error {
 			logger.Info("startup: MigrateToRefStore complete", "store", storeDir)
 		}
 
-		// #2085: prune old repo-hash generations so ~/.archigraph/store/ does not
+		// #2085: prune old repo-hash generations so ~/.grafel/store/ does not
 		// grow unboundedly. Runs after MigrateToRefStore so the layout is
 		// normalised before we inspect mtime order. Non-fatal.
 		keepN := KeepGenerations()
@@ -397,7 +397,7 @@ func Run(ctx context.Context, cfg Config) error {
 					if capturedStore != "" {
 						if dups := WarnCaseCollisions(capturedStore, repos); len(dups) > 0 {
 							for _, pair := range dups {
-								logger.Warn("store: detected case-collision dup — remove stale dir to avoid confusion (archigraph cleanup --case-merge)",
+								logger.Warn("store: detected case-collision dup — remove stale dir to avoid confusion (grafel cleanup --case-merge)",
 									"stale", pair[0], "canonical", pair[1])
 							}
 						}
@@ -445,21 +445,21 @@ func Run(ctx context.Context, cfg Config) error {
 				go wtWatcher.Start(wtCtx)
 				defer wtCancel()
 				logger.Info("worktree: discovery started",
-					"store", wtStorePath, "reconcile_env", "ARCHIGRAPH_WORKTREE_POLL_SECONDS")
+					"store", wtStorePath, "reconcile_env", "GRAFEL_WORKTREE_POLL_SECONDS")
 			}
 
 			// #3680: vanished-repo store reaper. Tracked repos (registered +
 			// active worktree children) whose directory no longer exists on
 			// disk have their store dir deleted and their fsnotify
 			// subscription dropped, reclaiming the orphaned ~100MB worktree
-			// stores that accumulated under ~/.archigraph/store/.
+			// stores that accumulated under ~/.grafel/store/.
 			reaper := NewReaper(ReaperConfig{
 				TrackedRepos:    makeReaperTrackedRepos(cfg.ReposToWatch, wtStore),
 				StoreDirForRepo: repoBaseDir,
 				Untrack: func(repoPath string) {
 					watcher.RemoveRepo(repoPath)
 				},
-				// #5142: also reap stale/orphaned `archigraph watch` PIDs that
+				// #5142: also reap stale/orphaned `grafel watch` PIDs that
 				// registered in the daemon-owned registry under the daemon root.
 				WatchRegistry: watchreg.New(watchreg.DefaultPath(cfg.Layout.Root)),
 				Logger:        logger,
@@ -504,7 +504,7 @@ func Run(ctx context.Context, cfg Config) error {
 
 	// Dashboard HTTP server — started in a goroutine so it does not
 	// block the RPC socket. Shuts down when the daemon context is done.
-	// The DashboardServe hook is injected from cmd/archigraph to avoid
+	// The DashboardServe hook is injected from cmd/grafel to avoid
 	// the import cycle that would arise from importing internal/dashboard here.
 	if cfg.DashboardServe != nil && cfg.DashboardPort > 0 {
 		bind := cfg.DashboardBind
@@ -711,7 +711,7 @@ func buildPatternDecayJob(groupDirs func() map[string]string, logger *slog.Logge
 }
 
 // buildSlogLogger constructs a *slog.Logger whose handler is selected by the
-// ARCHIGRAPH_DAEMON_LOG_JSON env var:
+// GRAFEL_DAEMON_LOG_JSON env var:
 //   - "1" or "true" → slog.NewJSONHandler (structured JSON lines, compatible
 //     with log shippers)
 //   - anything else → slog.NewTextHandler (human-readable logfmt)

@@ -4,7 +4,7 @@ import (
 	"runtime/debug"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // TestResolveMemLimitMB_EnvOverride asserts the env override wins and is

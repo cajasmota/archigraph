@@ -10,7 +10,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/authposture"
+	"github.com/cajasmota/grafel/internal/authposture"
 )
 
 // resolveEndpointProps runs an endpoint's stamped props through the authposture

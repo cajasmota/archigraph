@@ -6,7 +6,7 @@
 // column/association entity shape.
 package crystal
 
-import "github.com/cajasmota/archigraph/internal/types"
+import "github.com/cajasmota/grafel/internal/types"
 
 // newCrystalSchema builds a SCOPE.Schema entity with the given framework +
 // provenance stamp. The grain (subtype) is model/table/column/association.

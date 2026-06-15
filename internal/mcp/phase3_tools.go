@@ -3,10 +3,10 @@
 // Four new tools, each reading the sidecar JSON written by the
 // corresponding link pass in internal/links/:
 //
-//   - archigraph_pure_functions      ← <group>-links-pure-functions.json
-//   - archigraph_module_cycles       ← <group>-links-module-cycles.json
-//   - archigraph_def_use             ← <group>-links-def-use.json
-//   - archigraph_template_patterns   ← <group>-links-template-patterns.json
+//   - grafel_pure_functions      ← <group>-links-pure-functions.json
+//   - grafel_module_cycles       ← <group>-links-module-cycles.json
+//   - grafel_def_use             ← <group>-links-def-use.json
+//   - grafel_template_patterns   ← <group>-links-template-patterns.json
 //
 // All four handlers share the same shape: load the sidecar for the
 // resolved group, project into the wire format, apply optional filters,
@@ -25,7 +25,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -46,7 +46,7 @@ func sidecarPath(group, suffix string) string {
 			return ""
 		}
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-links-"+suffix+".json")
+	return filepath.Join(home, ".grafel", "groups", group+"-links-"+suffix+".json")
 }
 
 // loadSidecar reads + json-decodes the sidecar at path into v; ok=false
@@ -63,7 +63,7 @@ func loadSidecar(path string, v any) bool {
 }
 
 // ---------------------------------------------------------------------
-// 3A — archigraph_pure_functions
+// 3A — grafel_pure_functions
 // ---------------------------------------------------------------------
 
 type pureSidecarEntry struct {
@@ -134,7 +134,7 @@ func (s *Server) handlePureFunctions(_ context.Context, req mcpapi.CallToolReque
 }
 
 // ---------------------------------------------------------------------
-// 3B — archigraph_module_cycles
+// 3B — grafel_module_cycles
 // ---------------------------------------------------------------------
 
 type moduleCycleSidecarMember struct {
@@ -161,7 +161,7 @@ type moduleCycleSidecarDoc struct {
 
 // handleModuleCyclesSidecar is the Phase 3B SCC reader. The pre-existing
 // handleModuleCycles in module_gds_tools.go computes SCCs on demand from
-// the in-memory graph and is bundled under archigraph_module_analysis;
+// the in-memory graph and is bundled under grafel_module_analysis;
 // this handler reads the persistent sidecar emitted by the new Phase 3B
 // link pass, so callers get the same SCC view without paying the
 // recompute cost on each call and entities carry a stamped
@@ -234,7 +234,7 @@ func (s *Server) handleModuleCyclesSidecar(_ context.Context, req mcpapi.CallToo
 }
 
 // ---------------------------------------------------------------------
-// 3C — archigraph_def_use
+// 3C — grafel_def_use
 // ---------------------------------------------------------------------
 
 type defUseChainSidecar struct {
@@ -352,7 +352,7 @@ func (s *Server) handleDefUse(_ context.Context, req mcpapi.CallToolRequest) (*m
 }
 
 // ---------------------------------------------------------------------
-// #3867 — archigraph_data_flows
+// #3867 — grafel_data_flows
 // ---------------------------------------------------------------------
 //
 // Surfaces the request-input → sink DATA_FLOWS_TO edges computed by the
@@ -604,7 +604,7 @@ func (s *Server) handleDataFlows(_ context.Context, req mcpapi.CallToolRequest) 
 }
 
 // ---------------------------------------------------------------------
-// 3D — archigraph_template_patterns
+// 3D — grafel_template_patterns
 // ---------------------------------------------------------------------
 
 type templatePatternSidecarEntry struct {

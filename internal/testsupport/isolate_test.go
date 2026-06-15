@@ -16,7 +16,7 @@ func TestIsolateHomeRedirectsAllEnv(t *testing.T) {
 	if home == RealUserHome() {
 		t.Fatalf("isolated home %q equals real user home — isolation failed", home)
 	}
-	for _, ev := range []string{"ARCHIGRAPH_DAEMON_ROOT", "ARCHIGRAPH_HOME", "XDG_CONFIG_HOME", "XDG_RUNTIME_DIR"} {
+	for _, ev := range []string{"GRAFEL_DAEMON_ROOT", "GRAFEL_HOME", "XDG_CONFIG_HOME", "XDG_RUNTIME_DIR"} {
 		v := os.Getenv(ev)
 		if v == "" {
 			t.Errorf("%s not set", ev)

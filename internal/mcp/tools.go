@@ -15,13 +15,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/enrichment"
-	"github.com/cajasmota/archigraph/internal/gitmeta"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/links"
-	"github.com/cajasmota/archigraph/internal/substrate"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/links"
+	"github.com/cajasmota/grafel/internal/substrate"
+	"github.com/cajasmota/grafel/internal/types"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -149,7 +149,7 @@ func (s *Server) resolveAndGroup(req mcpapi.CallToolRequest) (string, *LoadedGro
 // resolveAndGroupWithRef resolves the group and additionally returns the
 // CWDResolution (which carries the inferred ref, SHA, and worktree flag)
 // for the caller. This is the PH1c entry-point for tools that expose ref
-// context to agents (archigraph_whoami, archigraph_inspect, etc.).
+// context to agents (grafel_whoami, grafel_inspect, etc.).
 func (s *Server) resolveAndGroupWithRef(req mcpapi.CallToolRequest) (string, *LoadedGroup, CWDResolution, *mcpapi.CallToolResult) {
 	cwd := s.inferCWD(req)
 	cwdRes := ResolveCWD(s.State, cwd)
@@ -243,13 +243,13 @@ func jsonResult(v any) *mcpapi.CallToolResult {
 // whoami
 // ---------------------------------------------------------------------------
 
-// mcpWireVersion is the MCP API version advertised by archigraph_whoami.
+// mcpWireVersion is the MCP API version advertised by grafel_whoami.
 // Bump this on every MINOR release. Agents can use it to detect
 // incompatible daemon versions without inspecting the binary.
 const mcpWireVersion = "0.1.0"
 
 // sessionMeta returns the session-stable ref/sha/worktree fields for a given
-// CWD resolution. These fields are exclusive to archigraph_whoami (#2335,
+// CWD resolution. These fields are exclusive to grafel_whoami (#2335,
 // #2337) — no other handler should embed them.
 //
 // lr is optional; passing nil is safe (the function degrades gracefully).
@@ -345,8 +345,8 @@ func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (
 		resp["tier"] = "hot"
 	}
 
-	// Nudge suppression: ARCHIGRAPH_WHOAMI_NUDGE=quiet disables doc-state fields.
-	if os.Getenv("ARCHIGRAPH_WHOAMI_NUDGE") == "quiet" {
+	// Nudge suppression: GRAFEL_WHOAMI_NUDGE=quiet disables doc-state fields.
+	if os.Getenv("GRAFEL_WHOAMI_NUDGE") == "quiet" {
 		return jsonResult(resp), nil
 	}
 
@@ -362,7 +362,7 @@ func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (
 	// agents to fall back to grep (the "docgen-trap").
 	//
 	// entity_count and relationship_count mirror the totals reported by
-	// archigraph_stats so the two tools always agree. tests_edges is the count
+	// grafel_stats so the two tools always agree. tests_edges is the count
 	// of TESTS-kind relationships aggregated across all loaded repos.
 	totalE, totalR, totalTests := groupIndexCounts(lg)
 	resp["entity_count"] = totalE       // top-level for immediate visibility
@@ -399,8 +399,8 @@ func (s *Server) handleWhoami(ctx context.Context, req mcpapi.CallToolRequest) (
 
 // groupIndexCounts returns the total entity count, relationship count, and
 // TESTS-edge count aggregated across all loaded repos in the group. These
-// values are computed the same way archigraph_stats does so the two tools
-// always agree (Fix #1, the "docgen-trap" in archigraph_whoami).
+// values are computed the same way grafel_stats does so the two tools
+// always agree (Fix #1, the "docgen-trap" in grafel_whoami).
 //
 // All three counts are read from pre-computed fields on LoadedRepo that are
 // populated once at graph-load time (on mtime change). This makes whoami O(1)
@@ -561,7 +561,7 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 	if question == "" {
 		question = argString(req, "question", "")
 		if question != "" {
-			fmt.Fprintln(os.Stderr, "[archigraph deprecation] archigraph_find: param 'question' is deprecated, use 'query'")
+			fmt.Fprintln(os.Stderr, "[grafel deprecation] grafel_find: param 'question' is deprecated, use 'query'")
 		}
 	}
 	if question == "" {
@@ -1003,7 +1003,7 @@ func serializeHits(all []scored, verbose bool) []map[string]any {
 // renderPerRepoSummary is the smart-scoping default for unfiltered, multi-repo queries.
 //
 // #1848 — TOON path (default): emits {id,repo,name,kind,file,line,score} rows so
-// callers can chain directly into archigraph_docgen/archigraph_get_source without
+// callers can chain directly into grafel_docgen/grafel_get_source without
 // adding a repo_filter first. Falls back to legacy markdown when
 // MCP_FIND_FORMAT=markdown is set.
 func renderPerRepoSummary(all []scored, lg *LoadedGroup) string {
@@ -1068,14 +1068,14 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 	if key == "" {
 		key = argString(req, "label_or_id", "")
 		if key != "" {
-			fmt.Fprintln(os.Stderr, "[archigraph deprecation] archigraph_inspect: param 'label_or_id' is deprecated, use 'entity_id'")
+			fmt.Fprintln(os.Stderr, "[grafel deprecation] grafel_inspect: param 'label_or_id' is deprecated, use 'entity_id'")
 		}
 	}
 	if key == "" {
 		return mcpapi.NewToolResultError("missing required argument: entity_id"), nil
 	}
 	// #2290: inspect envelope no longer embeds graph_meta or cwd_ref_meta.
-	// Those session-stable fields are surfaced by archigraph_whoami
+	// Those session-stable fields are surfaced by grafel_whoami
 	// (indexed_ref, indexed_sha, is_worktree, parent_repo, cwd_resolved_to).
 	// Inspect dominates cross-stack chains; trimming this per-call saves
 	// ~5-7% tokens and compounds in inspect-heavy sessions.
@@ -1214,8 +1214,8 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 }
 
 // graphMetaForInspect / cwdRefMetaForInspect helpers removed in #2290.
-// These embedded session-stable git metadata in every archigraph_inspect
-// response. They are now sourced from archigraph_whoami (indexed_ref,
+// These embedded session-stable git metadata in every grafel_inspect
+// response. They are now sourced from grafel_whoami (indexed_ref,
 // indexed_sha, is_worktree, parent_repo, cwd_resolved_to) which is the
 // canonical session-meta tool.
 
@@ -1263,7 +1263,7 @@ func agentResolvedEdgesForEntity(lr *LoadedRepo, entityID string, scopeIsOne boo
 }
 
 // ---------------------------------------------------------------------------
-// #2634 — line-precise CALLS / called_by edges for archigraph_inspect
+// #2634 — line-precise CALLS / called_by edges for grafel_inspect
 // ---------------------------------------------------------------------------
 
 // isUnresolvedCallEdge reports whether an outbound CALLS edge should be
@@ -1708,7 +1708,7 @@ func inspectDIEdges(lr *LoadedRepo, e *graph.Entity, scopeIsOne bool) []map[stri
 }
 
 // semanticNeighbor describes the semantic edge connecting a start node to one of
-// its direct neighbours (used to annotate archigraph_expand rows). (#3897)
+// its direct neighbours (used to annotate grafel_expand rows). (#3897)
 type semanticNeighbor struct {
 	kind      string // on-graph relationship casing (e.g. "JOINS_COLLECTION")
 	direction string // "outbound" (start is FromID) or "inbound" (start is ToID)
@@ -1752,7 +1752,7 @@ func directDIEdges(adj *adjacency, startID string) map[string]diNeighbor {
 // data might be stale. (#2642)
 //
 // #2780: indexed_ref and indexed_sha are deliberately NOT included here. Those
-// session-stable provenance fields are the exclusive domain of archigraph_whoami
+// session-stable provenance fields are the exclusive domain of grafel_whoami
 // (per the #2290/#2335 cleanup). Re-embedding them in inspect — a per-call,
 // inspect-heavy handler — both wastes tokens and violates the single-source
 // contract enforced by TestNoSessionMetaInNonWhoamiHandlers. The staleness
@@ -1836,7 +1836,7 @@ func (s *Server) handleGetNeighbors(ctx context.Context, req mcpapi.CallToolRequ
 	if key == "" {
 		key = argString(req, "node", "")
 		if key != "" {
-			fmt.Fprintln(os.Stderr, "[archigraph deprecation] archigraph_expand: param 'node' is deprecated, use 'entity_id'")
+			fmt.Fprintln(os.Stderr, "[grafel deprecation] grafel_expand: param 'node' is deprecated, use 'entity_id'")
 		}
 	}
 	if key == "" {
@@ -2304,7 +2304,7 @@ func (s *Server) handleGetNodeSource(ctx context.Context, req mcpapi.CallToolReq
 	if nodeID == "" {
 		nodeID = argString(req, "node_id", "")
 		if nodeID != "" {
-			fmt.Fprintln(os.Stderr, "[archigraph deprecation] archigraph_get_source: param 'node_id' is deprecated, use 'entity_id'")
+			fmt.Fprintln(os.Stderr, "[grafel deprecation] grafel_get_source: param 'node_id' is deprecated, use 'entity_id'")
 		}
 	}
 	if nodeID == "" {
@@ -2355,7 +2355,7 @@ func (s *Server) handleGetNodeSource(ctx context.Context, req mcpapi.CallToolReq
 				// Read the base's real body; prepend an explicit provenance
 				// header so the caller knows it is the inherited definition.
 				header := fmt.Sprintf(
-					"# archigraph: %s.%s is INHERITED — body defined by %s (resolved via EXTENDS)\n",
+					"# grafel: %s.%s is INHERITED — body defined by %s (resolved via EXTENDS)\n",
 					res.OwningClass, res.Member, res.DefiningClass,
 				)
 				e = res.DefiningEntity
@@ -2878,7 +2878,7 @@ func (s *Server) handleListStaleRepairs(repos []*LoadedRepo, limit, offset int) 
 // Bundle dispatchers (#668)
 // ---------------------------------------------------------------------------
 
-// handleEnrichments dispatches archigraph_enrichments based on action=list|submit|reject.
+// handleEnrichments dispatches grafel_enrichments based on action=list|submit|reject.
 func (s *Server) handleEnrichments(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	action, err := req.RequireString("action")
 	if err != nil {
@@ -2896,7 +2896,7 @@ func (s *Server) handleEnrichments(ctx context.Context, req mcpapi.CallToolReque
 	}
 }
 
-// handleCrossLinks dispatches archigraph_cross_links based on action=list|accept|reject.
+// handleCrossLinks dispatches grafel_cross_links based on action=list|accept|reject.
 func (s *Server) handleCrossLinks(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	action, err := req.RequireString("action")
 	if err != nil {
@@ -2962,7 +2962,7 @@ func (s *Server) handleResolveLinkCandidateAction(ctx context.Context, req mcpap
 	return jsonResult(map[string]any{"candidate_id": cid, "decision": decision}), nil
 }
 
-// handleRepairs dispatches archigraph_repairs based on action=list|submit.
+// handleRepairs dispatches grafel_repairs based on action=list|submit.
 // The submit action reads residual_id as the edge identifier (alias for edge_id).
 func (s *Server) handleRepairs(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	action, err := req.RequireString("action")
@@ -2987,7 +2987,7 @@ func (s *Server) handleRepairs(ctx context.Context, req mcpapi.CallToolRequest) 
 }
 
 // handleSubmitRepairFromBundle is handleSubmitRepair adapted for the bundled
-// archigraph_repairs tool where the edge identifier comes in as residual_id.
+// grafel_repairs tool where the edge identifier comes in as residual_id.
 // Trust-model rules R1-R7 (ADR-0015 / repair-trust-model.md) are enforced
 // before the repair is written so the agent gets immediate feedback rather
 // than discovering a rejection only on the next index run (#546).

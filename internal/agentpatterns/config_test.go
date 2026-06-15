@@ -22,7 +22,7 @@ func TestDefaultConfig_thresholds(t *testing.T) {
 }
 
 func TestLoadSave_roundtrip(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".archigraph")
+	dir := filepath.Join(t.TempDir(), ".grafel")
 	cfg := DefaultConfig()
 	cfg.PerSubagentThreshold = 5
 	cfg.SilentApplyThreshold["code"] = 0.9

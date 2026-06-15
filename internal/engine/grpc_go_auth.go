@@ -63,7 +63,7 @@
 //     stamps when every server construction in the file enforces auth, so a
 //     mixed file leaves the records UNSTAMPED (honest: "not proven").
 //
-// Output (mirrors stampTRPCAuth so archigraph_auth_coverage signal-1 +
+// Output (mirrors stampTRPCAuth so grafel_auth_coverage signal-1 +
 // the security dashboard light up):
 //
 //	auth_required   — "true"
@@ -277,7 +277,7 @@ func skipGoQuoted(s string, i int) int {
 
 // grpcGoAuthProps returns the property map to merge onto a gRPC-Go service /
 // method entity that an auth interceptor protects. Mirrors stampTRPCAuth's key
-// set: the bare auth_middleware key credits the entity for archigraph_auth_coverage
+// set: the bare auth_middleware key credits the entity for grafel_auth_coverage
 // signal-1; auth_policy carries the dashboard source chain.
 func grpcGoAuthProps(symbol string) map[string]string {
 	props := map[string]string{

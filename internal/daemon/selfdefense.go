@@ -5,12 +5,12 @@ package daemon
 // Two protection layers:
 //
 //  Layer 1 — startup conflict check:
-//    If this binary lives under /tmp AND another archigraph daemon is running
+//    If this binary lives under /tmp AND another grafel daemon is running
 //    from a non-/tmp canonical path, refuse to start. Agents in isolated
 //    /tmp worktrees should not displace the user's permanent daemon.
 //
 //  Layer 2 — CPU watchdog:
-//    If ARCHIGRAPH_DAEMON_ROOT is set AND the binary is under /tmp (i.e., the
+//    If GRAFEL_DAEMON_ROOT is set AND the binary is under /tmp (i.e., the
 //    daemon is an ephemeral test/agent instance), install a background goroutine
 //    that self-terminates after 5 minutes of sustained >500% CPU with no
 //    inflight work. This is the last-resort safety net for the hot-loop scenario
@@ -27,13 +27,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/process"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // EnvDisableSelfDefense, when set to a truthy value ("1", "true"), disables the
 // Layer-1 startup conflict check in SelfDefenseCheck. It exists solely so the
 // daemon integration tests can boot a fully-isolated daemon (its own
-// ARCHIGRAPH_DAEMON_ROOT + per-test socket) on a machine where a real canonical
+// GRAFEL_DAEMON_ROOT + per-test socket) on a machine where a real canonical
 // daemon is already running.
 //
 // Without this seam, every in-test daemon whose test binary lives under /tmp
@@ -43,18 +43,18 @@ import (
 // never touch the canonical socket (they use isolated roots/sockets), so the
 // anti-displacement protection the check provides is not needed for them.
 //
-// This is NEVER set in production: cmd/archigraph does not set it, and the
+// This is NEVER set in production: cmd/grafel does not set it, and the
 // canonical daemon installed via launchd/systemd runs from a non-/tmp path so
 // the check is a no-op for it regardless.
-const EnvDisableSelfDefense = "ARCHIGRAPH_DISABLE_SELFDEFENSE"
+const EnvDisableSelfDefense = "GRAFEL_DISABLE_SELFDEFENSE"
 
 // canonicalBasenames is the set of binary base-names that identify a genuine
-// archigraph daemon process. A process whose executable base-name is NOT in
+// grafel daemon process. A process whose executable base-name is NOT in
 // this set is never treated as canonical, even if the full path contains the
-// substring "archigraph" (e.g. node_modules paths like
+// substring "grafel" (e.g. node_modules paths like
 // "webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild" — see #1719).
 var canonicalBasenames = map[string]bool{
-	"archigraph": true,
+	"grafel": true,
 }
 
 // isTmpPath reports whether path starts with /tmp (a hard-coded exclusion zone
@@ -65,7 +65,7 @@ func isTmpPath(path string) bool {
 
 // SelfDefenseCheck performs the Layer 1 startup conflict check. It should be
 // called once at daemon startup, before the listener is opened. If this binary
-// lives under /tmp AND a canonical (non-/tmp) archigraph daemon is already
+// lives under /tmp AND a canonical (non-/tmp) grafel daemon is already
 // running, the function returns a descriptive error and the caller must exit.
 //
 // logger may be nil; a default stderr logger will be used.
@@ -98,7 +98,7 @@ func SelfDefenseCheck(logger *slog.Logger) error {
 		return fmt.Errorf(
 			"daemon refusing to start: another daemon (pid %d) is running on the canonical socket "+
 				"from %s; this binary at %s is under /tmp and should not displace it. "+
-				"Run 'archigraph doctor --kill-stale' to clean up stale processes.",
+				"Run 'grafel doctor --kill-stale' to clean up stale processes.",
 			canonPID, canonExe, self)
 	}
 	return nil
@@ -111,7 +111,7 @@ func SelfDefenseCheck(logger *slog.Logger) error {
 //
 // The watchdog is only active when:
 //  1. The binary path is under /tmp, AND
-//  2. ARCHIGRAPH_DAEMON_ROOT is set (agent isolation pattern)
+//  2. GRAFEL_DAEMON_ROOT is set (agent isolation pattern)
 //
 // Both conditions must hold to avoid killing legitimate short-lived binaries
 // that happen to live under /tmp.
@@ -139,14 +139,14 @@ func StartCPUWatchdog(inflightCounter *int64, logger *slog.Logger) {
 }
 
 // FindCanonicalDaemon is the exported counterpart of findCanonicalDaemon,
-// exposed for testing and for archigraph doctor's process scan. It returns
-// the pid and executable path of the first running archigraph daemon whose
+// exposed for testing and for grafel doctor's process scan. It returns
+// the pid and executable path of the first running grafel daemon whose
 // binary is NOT under /tmp, or (0, "") if none is found.
 func FindCanonicalDaemon() (pid int, exe string) {
 	return findCanonicalDaemon()
 }
 
-// findCanonicalDaemon scans running processes for another archigraph daemon
+// findCanonicalDaemon scans running processes for another grafel daemon
 // whose binary path is NOT under /tmp. It returns the pid and executable path
 // of the first match, or (0, "") if none is found.
 //
@@ -155,7 +155,7 @@ func FindCanonicalDaemon() (pid int, exe string) {
 func findCanonicalDaemon() (pid int, exe string) {
 	myPID := os.Getpid()
 
-	procs, err := process.FindByName("archigraph")
+	procs, err := process.FindByName("grafel")
 	if err != nil {
 		return 0, ""
 	}
@@ -173,9 +173,9 @@ func findCanonicalDaemon() (pid int, exe string) {
 		}
 		// Use an exact basename match rather than a substring search on the
 		// full path. A full-path substring check false-positives on executables
-		// whose *directory* contains "archigraph" — the classic example is an
+		// whose *directory* contains "grafel" — the classic example is an
 		// esbuild binary at webui-v2/node_modules/@esbuild/darwin-arm64/bin/esbuild
-		// when the project root is named "archigraph" (fixes #1719).
+		// when the project root is named "grafel" (fixes #1719).
 		if canonicalBasenames[strings.ToLower(filepath.Base(cmdBin))] {
 			return p.PID, cmdBin
 		}
@@ -258,7 +258,7 @@ func dumpGoroutineProfile(logger *slog.Logger) {
 		return
 	}
 
-	f, err := os.CreateTemp("", "archigraph-hotloop-*.pprof.txt")
+	f, err := os.CreateTemp("", "grafel-hotloop-*.pprof.txt")
 	if err != nil {
 		logger.Info("selfdefense: goroutine dump (inline)", "dump", buf.String())
 		return

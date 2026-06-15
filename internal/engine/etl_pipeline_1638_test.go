@@ -15,7 +15,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 var etlFixtureDir = func() string {

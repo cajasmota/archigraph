@@ -13,7 +13,7 @@
 //   - GET  /api/v2/jobs/{id}/stream is the SSE feed of status transitions.
 //
 // The actual indexing is NOT performed in this process. We dial the daemon
-// and fire the existing `Rebuild` RPC (the same path the CLI `archigraph
+// and fire the existing `Rebuild` RPC (the same path the CLI `grafel
 // rebuild` command and the v1 /api/groups/{group}/rebuild handler use). The
 // goroutine simply tracks the RPC lifecycle so the job surfaces a clean
 // status. Live indexing progress is still available via the existing

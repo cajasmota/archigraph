@@ -2,7 +2,7 @@
 //
 // ScanPath walks every file under root and flags lines that appear to contain
 // hardcoded credentials.  A line is suppressed when:
-//   - it carries an opt-out comment:  // archigraph: ignore-secret
+//   - it carries an opt-out comment:  // grafel: ignore-secret
 //   - the file lives under a test directory (/test/, /tests/, /testdata/, *.test.*)
 //
 // Severity grades
@@ -357,7 +357,7 @@ func suggestEnvVar(line, hint string) string {
 // Suppression constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ignoreComment = "archigraph: ignore-secret"
+const ignoreComment = "grafel: ignore-secret"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Scanner

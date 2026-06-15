@@ -54,7 +54,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // pulumiResourceKind is the entity kind for every Pulumi resource — the same

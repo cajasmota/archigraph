@@ -1,4 +1,4 @@
-// Package rulesfiles writes the canonical "how to use the archigraph MCP"
+// Package rulesfiles writes the canonical "how to use the grafel MCP"
 // rules block into every per-repo IDE rules file convention.
 //
 // Different IDE coding agents read different per-repo files for their
@@ -11,21 +11,21 @@
 //   - Codeium          → .codeium/instructions.md
 //   - GitHub Copilot   → .github/copilot-instructions.md
 //
-// `archigraph install` historically only wrote the rules block into
+// `grafel install` historically only wrote the rules block into
 // AGENTS.md, which meant Cascade and Cursor sessions did not learn that
-// the archigraph MCP exists (issue #2683). This package generalises that
+// the grafel MCP exists (issue #2683). This package generalises that
 // writer so the same idempotent, marker-wrapped block is written to every
 // known convention.
 //
 // All writes are idempotent: the block is bounded by
-// <!-- archigraph:mcp-usage:start v=1 --> ... <!-- archigraph:mcp-usage:end -->
+// <!-- grafel:mcp-usage:start v=1 --> ... <!-- grafel:mcp-usage:end -->
 // and an existing block is replaced in-place. Files that already contain
-// content unrelated to archigraph are preserved byte-for-byte outside the
+// content unrelated to grafel are preserved byte-for-byte outside the
 // markers.
 //
 // "Stale predecessor" handling: the older `graphify` tool wrote its own
 // guidance into the same rules files. When we encounter a file that
-// references graphify but has no archigraph block, we either overwrite
+// references graphify but has no grafel block, we either overwrite
 // (if the file is entirely about graphify — heuristic: short + every
 // non-blank line references graphify or is markdown structure) or leave
 // it and emit a warning so the user can migrate manually.
@@ -43,10 +43,10 @@ import (
 
 // BlockVersion is the version embedded in the start marker. Bumping the
 // version causes doctor to flag any file whose block uses an older
-// version as OUTDATED so the next `archigraph install` rewrites it.
+// version as OUTDATED so the next `grafel install` rewrites it.
 //
 // v2 (#3648): added the imperative STANDING DIRECTIVE near the top of the
-// block so agents keep reaching for archigraph on structural questions for
+// block so agents keep reaching for grafel on structural questions for
 // the whole session instead of drifting back to grep after a few calls.
 const BlockVersion = 2
 
@@ -54,20 +54,20 @@ const BlockVersion = 2
 // file. Keep this stable across releases — bumping the marker syntax
 // breaks idempotent updates of files written by older binaries.
 var (
-	StartMarker = fmt.Sprintf("<!-- archigraph:mcp-usage:start v=%d -->", BlockVersion)
-	EndMarker   = "<!-- archigraph:mcp-usage:end -->"
+	StartMarker = fmt.Sprintf("<!-- grafel:mcp-usage:start v=%d -->", BlockVersion)
+	EndMarker   = "<!-- grafel:mcp-usage:end -->"
 )
 
-// startMarkerAnyVersion matches an existing archigraph block regardless
+// startMarkerAnyVersion matches an existing grafel block regardless
 // of its embedded version number, so we can replace older blocks in
 // place. The end marker is unversioned and a literal string.
-var startMarkerAnyVersion = regexp.MustCompile(`<!-- archigraph:mcp-usage:start v=\d+ -->`)
+var startMarkerAnyVersion = regexp.MustCompile(`<!-- grafel:mcp-usage:start v=\d+ -->`)
 
 // blockRegexAnyVersion captures the entire marker-wrapped region (start
 // + content + end), with DOTALL so newlines inside the block are
 // consumed.
 var blockRegexAnyVersion = regexp.MustCompile(
-	`(?s)<!-- archigraph:mcp-usage:start v=\d+ -->.*?` +
+	`(?s)<!-- grafel:mcp-usage:start v=\d+ -->.*?` +
 		regexp.QuoteMeta(EndMarker))
 
 // PredecessorTokens are the names of older tools whose guidance, if
@@ -98,15 +98,15 @@ var Targets = []string{
 type Status string
 
 const (
-	// StatusOK means the file contains the current archigraph block.
+	// StatusOK means the file contains the current grafel block.
 	StatusOK Status = "ok"
 	// StatusMissing means the file does not exist at all.
 	StatusMissing Status = "missing"
 	// StatusStale means the file references a predecessor tool but has
-	// no archigraph block — install would either overwrite (short, pure
+	// no grafel block — install would either overwrite (short, pure
 	// stale content) or warn (mixed content).
 	StatusStale Status = "stale"
-	// StatusOutdated means the file has an archigraph block but its
+	// StatusOutdated means the file has an grafel block but its
 	// version marker is older than BlockVersion.
 	StatusOutdated Status = "outdated"
 )
@@ -125,7 +125,7 @@ type FileStatus struct {
 
 // WriteOptions tunes per-repo write behaviour.
 type WriteOptions struct {
-	// GroupName is the archigraph group this repo belongs to. Embedded
+	// GroupName is the grafel group this repo belongs to. Embedded
 	// in the rendered block when non-empty.
 	GroupName string
 	// Logger receives info/warning lines; defaults to os.Stderr.
@@ -137,11 +137,11 @@ type WriteResult struct {
 	// Written lists the rules files that were created or updated.
 	Written []string
 	// SkippedMixedStale lists files left untouched because they mix
-	// archigraph-unrelated content with predecessor references. The
+	// grafel-unrelated content with predecessor references. The
 	// installer warns the user to migrate these manually.
 	SkippedMixedStale []string
 	// ReplacedStale lists files that were entirely predecessor content
-	// and got overwritten with the canonical archigraph block.
+	// and got overwritten with the canonical grafel block.
 	ReplacedStale []string
 }
 
@@ -173,18 +173,18 @@ func WriteAll(repoRoot string, opts WriteOptions) (*WriteResult, error) {
 			res.Written = append(res.Written, target)
 			res.ReplacedStale = append(res.ReplacedStale, target)
 			fmt.Fprintf(opts.Logger,
-				"archigraph install: replaced stale graphify content in %s\n", abs)
+				"grafel install: replaced stale graphify content in %s\n", abs)
 		case actionSkippedMixedStale:
 			res.SkippedMixedStale = append(res.SkippedMixedStale, target)
 			fmt.Fprintf(opts.Logger,
-				"archigraph install: file %s contains stale graphify content; please migrate manually or remove\n", abs)
+				"grafel install: file %s contains stale graphify content; please migrate manually or remove\n", abs)
 		}
 	}
 	return res, nil
 }
 
 // Scan returns the FileStatus for every Target under repoRoot without
-// writing anything. Used by `archigraph doctor`.
+// writing anything. Used by `grafel doctor`.
 func Scan(repoRoot string) []FileStatus {
 	out := make([]FileStatus, 0, len(Targets))
 	for _, target := range Targets {
@@ -209,29 +209,29 @@ func RenderBlock(groupName string) string {
 
 	fmt.Fprintln(&b, StartMarker)
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "## archigraph MCP")
+	fmt.Fprintln(&b, "## grafel MCP")
 	fmt.Fprintln(&b)
-	fmt.Fprintf(&b, "This repo is part of archigraph group **%s**. archigraph is an "+
+	fmt.Fprintf(&b, "This repo is part of grafel group **%s**. grafel is an "+
 		"architecture knowledge graph available via MCP. When you (an AI coding "+
 		"agent) need to understand how this codebase fits together, prefer the "+
-		"archigraph MCP tools over `grep` + reading files.\n", groupName)
+		"grafel MCP tools over `grep` + reading files.\n", groupName)
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "### STANDING DIRECTIVE — query the graph, don't grep your way around it")
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "- **Default to archigraph for STRUCTURAL questions**: where is `X` defined, who calls/uses `Y`, how does a request flow end-to-end, what is the blast radius of a change, what are the modules. Reach for `archigraph_find` / `archigraph_inspect` / `archigraph_neighbors` / `archigraph_traces` / `archigraph_impact_radius` for these — **not** `grep` + reading files.")
+	fmt.Fprintln(&b, "- **Default to grafel for STRUCTURAL questions**: where is `X` defined, who calls/uses `Y`, how does a request flow end-to-end, what is the blast radius of a change, what are the modules. Reach for `grafel_find` / `grafel_inspect` / `grafel_neighbors` / `grafel_traces` / `grafel_impact_radius` for these — **not** `grep` + reading files.")
 	fmt.Fprintln(&b, "- **This holds for the WHOLE session, not just your first few calls.** If you notice you have been grepping or opening files to answer a structural question, stop and query the graph instead — it is faster and more accurate, and it stays that way on call 50 as much as on call 1.")
 	fmt.Fprintln(&b, "- **`grep` is still right for**: raw string / substring / TODO / FIXME sweeps, and content that is not in the graph (comments, config values, log strings).")
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "### When to use archigraph instead of grep")
+	fmt.Fprintln(&b, "### When to use grafel instead of grep")
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "| Question shape | Prefer |")
 	fmt.Fprintln(&b, "|---|---|")
-	fmt.Fprintln(&b, "| \"Where is `X` defined?\" | `archigraph_find` |")
-	fmt.Fprintln(&b, "| \"What does `X` look like + its neighbors?\" | `archigraph_inspect` |")
-	fmt.Fprintln(&b, "| \"Who calls `X`?\" | `archigraph_expand` / `archigraph_find_callers` |")
-	fmt.Fprintln(&b, "| \"End-to-end flow when user does X?\" | `archigraph_traces` |")
-	fmt.Fprintln(&b, "| \"How does the frontend talk to the backend?\" | `archigraph_cross_links` |")
-	fmt.Fprintln(&b, "| \"Show me the source of `X`\" | `archigraph_get_source` |")
+	fmt.Fprintln(&b, "| \"Where is `X` defined?\" | `grafel_find` |")
+	fmt.Fprintln(&b, "| \"What does `X` look like + its neighbors?\" | `grafel_inspect` |")
+	fmt.Fprintln(&b, "| \"Who calls `X`?\" | `grafel_expand` / `grafel_find_callers` |")
+	fmt.Fprintln(&b, "| \"End-to-end flow when user does X?\" | `grafel_traces` |")
+	fmt.Fprintln(&b, "| \"How does the frontend talk to the backend?\" | `grafel_cross_links` |")
+	fmt.Fprintln(&b, "| \"Show me the source of `X`\" | `grafel_get_source` |")
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "### When grep IS still better")
 	fmt.Fprintln(&b)
@@ -240,13 +240,13 @@ func RenderBlock(groupName string) string {
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "### Anti-patterns")
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "- Don't read an entire file to find one function — `archigraph_inspect` returns it directly.")
-	fmt.Fprintln(&b, "- Don't glob for a class name across the repo — `archigraph_find` indexes it.")
-	fmt.Fprintln(&b, "- Don't traverse imports manually — `archigraph_expand` does it via the IMPORTS edge.")
+	fmt.Fprintln(&b, "- Don't read an entire file to find one function — `grafel_inspect` returns it directly.")
+	fmt.Fprintln(&b, "- Don't glob for a class name across the repo — `grafel_find` indexes it.")
+	fmt.Fprintln(&b, "- Don't traverse imports manually — `grafel_expand` does it via the IMPORTS edge.")
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "The full agent guide is delivered automatically in the MCP `instructions` handshake when you connect.")
 	fmt.Fprintln(&b)
-	fmt.Fprintln(&b, "_Do not edit between the markers — this block is auto-updated by `archigraph install`._")
+	fmt.Fprintln(&b, "_Do not edit between the markers — this block is auto-updated by `grafel install`._")
 	fmt.Fprintln(&b)
 	fmt.Fprint(&b, EndMarker)
 	return b.String()
@@ -282,7 +282,7 @@ func upsert(path, block string) (action, error) {
 		return actionWroteFresh, nil
 
 	case blockRegexAnyVersion.Match(existing):
-		// Existing archigraph block — replace in-place. This also covers
+		// Existing grafel block — replace in-place. This also covers
 		// the OUTDATED case (block exists with older version marker).
 		out := blockRegexAnyVersion.ReplaceAll(existing, []byte(strings.TrimRight(block, "\n")))
 		if err := atomicWrite(path, out); err != nil {
@@ -291,7 +291,7 @@ func upsert(path, block string) (action, error) {
 		return actionReplacedBlock, nil
 
 	case hasPredecessorRef(existing):
-		// File has no archigraph block but references a predecessor.
+		// File has no grafel block but references a predecessor.
 		// Decide between full-overwrite (pure stale) and skip-with-warning
 		// (mixed content).
 		if isPureStaleFile(existing) {
@@ -338,7 +338,7 @@ func classify(abs string) FileStatus {
 		return FileStatus{
 			Path:   abs,
 			Status: StatusOutdated,
-			Detail: fmt.Sprintf("archigraph block v=%d, current v=%d", v, BlockVersion),
+			Detail: fmt.Sprintf("grafel block v=%d, current v=%d", v, BlockVersion),
 		}
 	}
 
@@ -348,18 +348,18 @@ func classify(abs string) FileStatus {
 		if mixed {
 			detail += " mixed with unrelated content; manual migration recommended"
 		} else {
-			detail += "; next `archigraph install` will overwrite"
+			detail += "; next `grafel install` will overwrite"
 		}
 		return FileStatus{Path: abs, Status: StatusStale, Detail: detail}
 	}
 
-	// File exists but has no archigraph block and no stale refs. From
+	// File exists but has no grafel block and no stale refs. From
 	// the doctor's point of view this is still a problem — the rules
 	// block is missing.
 	return FileStatus{
 		Path:   abs,
 		Status: StatusMissing,
-		Detail: "file exists but has no archigraph block; run `archigraph install`",
+		Detail: "file exists but has no grafel block; run `grafel install`",
 	}
 }
 

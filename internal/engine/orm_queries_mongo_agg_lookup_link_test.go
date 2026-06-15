@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #4244 (third fix) — the per-stage `$lookup` SCOPE.DataAccess node a consumer
@@ -21,11 +21,11 @@ import (
 // This fix abandons the stub+resolver entirely: the extract pass RECORDS join
 // targets on the stage entity (props["from"] for the primary lookup,
 // props["join_targets"] for the Python correlated nested froms) and a post-stamp
-// pass (buildMongoAggStageJoinRels in cmd/archigraph) emits the twin edge with
+// pass (buildMongoAggStageJoinRels in cmd/grafel) emits the twin edge with
 // FromID = the stage node's already-stamped graph id. The two assertions below
 // are unit-level guards on the engine-side contract that pass relies on; the
 // FromID==node-id end-to-end assertion lives in
-// cmd/archigraph/index_mongoagg_4244_test.go.
+// cmd/grafel/index_mongoagg_4244_test.go.
 
 // TestMongoAggPy_StageRecordsJoinTargetsOnEntity asserts the extract pass NO
 // LONGER emits a stub-FromID node-anchored twin, and instead records the join

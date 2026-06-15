@@ -3,8 +3,8 @@ package java_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func javaExcEdge(recs []types.EntityRecord, fromName, kind, typeName string) bool {

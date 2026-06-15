@@ -1,5 +1,5 @@
 {
-  "input_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs",
+  "input_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs",
   "language": "rust",
   "entities": [
     {
@@ -183,8 +183,8 @@
       }
     },
     {
-      "name": "derive@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:6",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:derive:6",
+      "name": "derive@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:6",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:derive:6",
       "kind": "SCOPE.Pattern",
       "start_line": 6,
       "end_line": 6,
@@ -207,8 +207,8 @@
       }
     },
     {
-      "name": "derive@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:13",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:derive:13",
+      "name": "derive@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:13",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:derive:13",
       "kind": "SCOPE.Pattern",
       "start_line": 13,
       "end_line": 13,
@@ -229,8 +229,8 @@
       }
     },
     {
-      "name": "get@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:24",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:get:24",
+      "name": "get@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:24",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:get:24",
       "kind": "SCOPE.Pattern",
       "start_line": 24,
       "end_line": 24,
@@ -251,8 +251,8 @@
       }
     },
     {
-      "name": "get@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:29",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:get:29",
+      "name": "get@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:29",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:get:29",
       "kind": "SCOPE.Pattern",
       "start_line": 29,
       "end_line": 29,
@@ -273,8 +273,8 @@
       }
     },
     {
-      "name": "get@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:35",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:get:35",
+      "name": "get@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:35",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:get:35",
       "kind": "SCOPE.Pattern",
       "start_line": 35,
       "end_line": 35,
@@ -295,8 +295,8 @@
       }
     },
     {
-      "name": "post@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:45",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:post:45",
+      "name": "post@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:45",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:post:45",
       "kind": "SCOPE.Pattern",
       "start_line": 45,
       "end_line": 45,
@@ -317,8 +317,8 @@
       }
     },
     {
-      "name": "delete@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:62",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:delete:62",
+      "name": "delete@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:62",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:delete:62",
       "kind": "SCOPE.Pattern",
       "start_line": 62,
       "end_line": 62,
@@ -339,8 +339,8 @@
       }
     },
     {
-      "name": "actix_web::main@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:75",
-      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:actix_web::main:75",
+      "name": "actix_web::main@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:75",
+      "qualified_name": "scope:pattern:decorator:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:actix_web::main:75",
       "kind": "SCOPE.Pattern",
       "start_line": 75,
       "end_line": 75,
@@ -359,7 +359,7 @@
     },
     {
       "name": "error_handling:rust_question_mark:95",
-      "qualified_name": "scope:pattern:error_handling:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs:rust_question_mark:95",
+      "qualified_name": "scope:pattern:error_handling:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs:rust_question_mark:95",
       "kind": "SCOPE.Pattern",
       "start_line": 95,
       "end_line": 95,
@@ -373,12 +373,12 @@
         "kind": "error_handling",
         "style": "rust_question_mark",
         "line_number": 95,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs"
       }
     },
     {
-      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs",
-      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs",
+      "name": "naming_convention@/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs",
+      "qualified_name": "scope:pattern:naming_convention:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs",
       "kind": "SCOPE.Pattern",
       "start_line": null,
       "end_line": null,
@@ -393,7 +393,7 @@
         "convention": "snake_case",
         "dominant_percentage": 29.411764705882355,
         "sample_count": 17,
-        "source_file": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs"
+        "source_file": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs"
       }
     },
     {
@@ -449,7 +449,7 @@
     },
     {
       "name": "list_users",
-      "qualified_name": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs::Operation::list_users",
+      "qualified_name": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs::Operation::list_users",
       "kind": "SCOPE.Operation",
       "start_line": null,
       "end_line": null,
@@ -464,7 +464,7 @@
     },
     {
       "name": "get_user",
-      "qualified_name": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs::Operation::get_user",
+      "qualified_name": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs::Operation::get_user",
       "kind": "SCOPE.Operation",
       "start_line": null,
       "end_line": null,
@@ -479,7 +479,7 @@
     },
     {
       "name": "create_user",
-      "qualified_name": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs::Operation::create_user",
+      "qualified_name": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs::Operation::create_user",
       "kind": "SCOPE.Operation",
       "start_line": null,
       "end_line": null,
@@ -494,7 +494,7 @@
     },
     {
       "name": "delete_user",
-      "qualified_name": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs::Operation::delete_user",
+      "qualified_name": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs::Operation::delete_user",
       "kind": "SCOPE.Operation",
       "start_line": null,
       "end_line": null,
@@ -509,7 +509,7 @@
     },
     {
       "name": "AppState",
-      "qualified_name": "/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs::Dependency::AppState",
+      "qualified_name": "/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs::Dependency::AppState",
       "kind": "SCOPE.Dependency",
       "start_line": null,
       "end_line": null,
@@ -524,7 +524,7 @@
     },
     {
       "name": "main",
-      "qualified_name": "scope:service:actix_main:/Users/jorgecajas/Documents/Projects/archigraph/fixtures/sources/rust/sample_actix.rs",
+      "qualified_name": "scope:service:actix_main:/Users/jorgecajas/Documents/Projects/grafel/fixtures/sources/rust/sample_actix.rs",
       "kind": "SCOPE.Service",
       "start_line": 75,
       "end_line": 75,

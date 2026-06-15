@@ -33,7 +33,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // goSpanHit captures one OpenTelemetry span-creation site in a Go function body.

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // newTestServer builds a minimal Server with one group ("test") loaded from

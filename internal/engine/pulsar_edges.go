@@ -46,7 +46,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // pulsarTopicEntityKind is the Kind used for synthetic Pulsar topic entities.

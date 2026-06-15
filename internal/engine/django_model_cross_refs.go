@@ -40,7 +40,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -260,7 +260,7 @@ func ApplyReceiverSenderEdges(
 			// (django.go) which registers signal handler functions as
 			// SCOPE.Operation entities. The resolver rewrites "SCOPE.Operation:name"
 			// stubs to the corresponding hex entity ID in the graph, so the
-			// HANDLES_SIGNAL edge is queryable via find_callers / archigraph_expand.
+			// HANDLES_SIGNAL edge is queryable via find_callers / grafel_expand.
 			//
 			// Previously this used "Function:" which the resolver classifies as
 			// DispositionDynamic and does NOT rewrite to a hex ID, leaving the

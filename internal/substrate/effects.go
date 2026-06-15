@@ -20,7 +20,7 @@
 //
 // Storage model: same as constant propagation — no new entity kind.
 // Effects are stamped as properties on existing Function/Operation
-// entities by the propagation pass; the MCP surface (archigraph_effects)
+// entities by the propagation pass; the MCP surface (grafel_effects)
 // reads them off the properties map.
 package substrate
 
@@ -91,7 +91,7 @@ type EffectMatch struct {
 	Effect Effect
 	// Sink is a short tag identifying which primitive matched
 	// (e.g. "fetch", "axios.get", "requests.post", "open()",
-	// "os.Open", "EntityManager.find"). Used by archigraph_effects
+	// "os.Open", "EntityManager.find"). Used by grafel_effects
 	// to explain why a function has a given effect.
 	Sink string
 	// Confidence is the per-match confidence in [0, 1]. Direct
@@ -149,7 +149,7 @@ type EffectSet struct {
 	// 100 → 1.00 max). Index aligns with bits.
 	confidence [effectSlots]uint8
 	// sinks lists short sink-tag strings ("fetch", "requests.get", ...)
-	// per effect; surfaced by archigraph_effects so the agent can see
+	// per effect; surfaced by grafel_effects so the agent can see
 	// which primitive triggered each effect. Bounded to a few entries
 	// per effect — see addSink for the cap.
 	sinks [effectSlots][]string

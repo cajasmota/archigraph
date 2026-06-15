@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the Crystal route-hit extractor so the test_suite (carrying
 	// e2e_route_calls) comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/crystal"
+	_ "github.com/cajasmota/grafel/internal/custom/crystal"
 )
 
 // Issue #4749 LIVE-REPRO (resolve side) — Crystal spec-kemal route-hit tests.

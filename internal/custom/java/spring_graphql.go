@@ -5,7 +5,7 @@
 // becomes a root field of the Query / Mutation / Subscription operation when it
 // carries the framework's mapping annotation. This extractor recognises those
 // annotations and emits, for each resolver method, ONE synthetic GraphQL
-// endpoint in the canonical archigraph shape
+// endpoint in the canonical grafel shape
 //
 //	SCOPE.Operation  name "GRAPHQL /graphql/<Operation>/<field>"
 //	                 route_path "/graphql/<Operation>/<field>"  verb GRAPHQL

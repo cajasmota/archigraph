@@ -10,16 +10,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// withTempHome points ARCHIGRAPH_HOME at a fresh tmpdir and registers a
+// withTempHome points GRAFEL_HOME at a fresh tmpdir and registers a
 // single group so resolvePatternsDir() succeeds without flags.
 func withTempHome(t *testing.T) (homeDir, patternsDir string) {
 	t.Helper()
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "xdg"))
 
 	// Register a group via registry.AddGroup (writes registry.json +

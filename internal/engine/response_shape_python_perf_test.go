@@ -32,7 +32,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // resetPyIndexCache drops the memoized per-source index so a benchmark or a

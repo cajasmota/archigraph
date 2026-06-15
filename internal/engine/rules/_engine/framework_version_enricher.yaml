@@ -13,6 +13,6 @@ description: >-
   Also detects hexagonal architecture from ports/adapters/domain/infrastructure
   directory structure and @Port/@Adapter annotations, emitting
   SCOPE.Pattern(kind=architecture_pattern, architecture_style=hexagonal).
-module: archigraph.engine.rules.pattern_detectors.framework_version_enricher
+module: grafel.engine.rules.pattern_detectors.framework_version_enricher
 function: detect
 applies_to_function: applies_to

@@ -16,7 +16,7 @@ package yaml_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findRels returns every embedded relationship across the given entity slice

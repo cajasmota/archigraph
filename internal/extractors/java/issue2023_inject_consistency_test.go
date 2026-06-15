@@ -28,8 +28,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/java"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/java"
 )
 
 func TestIssue2023_Inject_Consistency_AcrossControllerShapes(t *testing.T) {

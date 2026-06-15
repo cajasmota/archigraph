@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon/walk"
+	"github.com/cajasmota/grafel/internal/daemon/walk"
 )
 
 // SkipDirs is the static list of directory basenames the watcher never
@@ -26,10 +26,10 @@ import (
 // build artifacts and prior-tool outputs (issue #805).
 var SkipDirs = map[string]struct{}{
 	// VCS
-	".archigraph": {},
-	".git":        {},
-	".hg":         {},
-	".svn":        {},
+	".grafel": {},
+	".git":    {},
+	".hg":     {},
+	".svn":    {},
 	// Agent scratch / linked git worktrees (#3648). Tools like Claude Code
 	// keep ephemeral checkouts under .claude/worktrees/, each a full repo
 	// tree with its own ~500MB node_modules. These are high-churn (a fresh
@@ -76,9 +76,9 @@ var SkipDirs = map[string]struct{}{
 	"Builds":   {},
 	"Releases": {},
 	// Prior-tool outputs
-	"graphify-out":    {},
-	"gfleet-out":      {},
-	".archigraph-out": {},
+	"graphify-out": {},
+	"gfleet-out":   {},
+	".grafel-out":  {},
 	// IDE
 	".idea":   {},
 	".vscode": {},

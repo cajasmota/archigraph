@@ -22,7 +22,7 @@ import "time"
 // user-visible pipeline stages rather than the internal pass numbers so the
 // SSE endpoint and the frontend speak the same vocabulary.
 const (
-	// PhaseScan is the file-discovery walk — archigraph is counting files.
+	// PhaseScan is the file-discovery walk — grafel is counting files.
 	PhaseScan = "scanning"
 
 	// PhaseExtractAST is the per-language AST extraction pass (Pass 1 /

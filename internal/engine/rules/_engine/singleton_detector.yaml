@@ -16,6 +16,6 @@ description: >-
   Detect singleton and shared-state patterns across Java (@Singleton, getInstance()),
   Python (module-level mutable state), Go (sync.Once), C# (static class), and Ruby
   (class variables). Emits SCOPE.Pattern entities with kind=singleton.
-module: archigraph.engine.rules.pattern_detectors.singleton_detector
+module: grafel.engine.rules.pattern_detectors.singleton_detector
 function: detect
 applies_to_function: applies_to

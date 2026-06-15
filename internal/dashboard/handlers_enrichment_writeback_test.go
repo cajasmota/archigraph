@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ func newWritebackServer(t *testing.T) (*Server, *graph.Entity, string) {
 
 	tmp := t.TempDir()
 	// #1626: per-repo graph artifacts live in the external store.
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", t.TempDir())
+	t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())
 
 	// Build a minimal graph with one entity.
 	entityID := "aabbccddeeff0011"

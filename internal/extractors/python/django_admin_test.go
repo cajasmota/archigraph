@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // countAdminRefsFrom returns REFERENCES edges with pattern_type=admin_register

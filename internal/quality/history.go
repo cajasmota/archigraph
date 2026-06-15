@@ -1,7 +1,7 @@
 // Package quality — health-score history storage.
 //
 // After every rebuild, a single JSONL line is appended to
-// ~/.archigraph/health-history.jsonl so users can see whether graph
+// ~/.grafel/health-history.jsonl so users can see whether graph
 // quality is improving or degrading over time.
 //
 // File format: one JSON object per line, newest entries at the end.
@@ -21,7 +21,7 @@ import (
 type HealthEntry struct {
 	// Timestamp is when the rebuild completed (RFC 3339).
 	Timestamp time.Time `json:"timestamp"`
-	// Group is the archigraph group name.
+	// Group is the grafel group name.
 	Group string `json:"group"`
 	// TotalEntities is the total entity count across all repos in the group.
 	TotalEntities int `json:"total_entities"`
@@ -68,20 +68,20 @@ func ComputeHealthScore(orphanRate, bugRate float64) float64 {
 }
 
 // historyFilename returns the path to the JSONL history file for the given
-// daemon root. If root is empty the default ~/.archigraph directory is used.
+// daemon root. If root is empty the default ~/.grafel directory is used.
 func historyFilename(root string) (string, error) {
 	if root == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return "", fmt.Errorf("quality/history: cannot locate home dir: %w", err)
 		}
-		root = filepath.Join(home, ".archigraph")
+		root = filepath.Join(home, ".grafel")
 	}
 	return filepath.Join(root, "health-history.jsonl"), nil
 }
 
 // AppendEntry appends a single HealthEntry to the history JSONL file stored
-// under root (typically the value of daemon.Layout.Root, i.e. ~/.archigraph).
+// under root (typically the value of daemon.Layout.Root, i.e. ~/.grafel).
 // The directory is created when it does not exist. A newline is always written
 // after the JSON so the file remains valid JSONL.
 func AppendEntry(root string, e HealthEntry) error {

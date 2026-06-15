@@ -19,7 +19,7 @@ import (
 // Per-call ID collector (epic #1157)
 // ---------------------------------------------------------------------------
 //
-// Many archigraph tools render their results as markdown (archigraph_find's
+// Many grafel tools render their results as markdown (grafel_find's
 // per-repo summary, the compact node/edge view) or as JSON whose id field is
 // just "id" rather than "entity_id". In both cases the post-hoc extractIDs
 // text-parser cannot recover the entity ids the call actually touched, so the
@@ -95,7 +95,7 @@ func (c *idCollector) drain() (nodes, edges []string) {
 // MCPActivityEvent describes one MCP tool call and the graph objects it touched.
 // All fields are JSON-serialisable so the SSE endpoint can forward verbatim.
 type MCPActivityEvent struct {
-	// ToolName is the MCP tool that was invoked (e.g. "archigraph_search_entities").
+	// ToolName is the MCP tool that was invoked (e.g. "grafel_search_entities").
 	ToolName string `json:"tool_name"`
 
 	// QueryArgs is a shallow copy of the tool arguments that drove the call.
@@ -128,7 +128,7 @@ const (
 )
 
 func activityBufferSize() int {
-	if v := os.Getenv("ARCHIGRAPH_ACTIVITY_BUFFER"); v != "" {
+	if v := os.Getenv("GRAFEL_ACTIVITY_BUFFER"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
 		}

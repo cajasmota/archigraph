@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newDashboardCmd is the cobra shim for `archigraph dashboard ...`. The
-// real implementation lives in cmd/archigraph/dashboard.go and is wired
+// newDashboardCmd is the cobra shim for `grafel dashboard ...`. The
+// real implementation lives in cmd/grafel/dashboard.go and is wired
 // in via activeHooks.RunDashboard.
 //
 // With no arguments (or `open`), opens the daemon's dashboard in the

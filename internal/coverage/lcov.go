@@ -1,10 +1,10 @@
-// Package coverage ingests coverage reports (SonarQube model: archigraph does
+// Package coverage ingests coverage reports (SonarQube model: grafel does
 // NOT execute tests — it parses the report CI already emits) and attaches real
 // line-coverage to structural graph entities by source-span overlap.
 //
 // #5036 ships the LCOV, Cobertura and JaCoCo parsers + entity attribution as
 // pure, table-tested transformations behind a shared ingestion entry point
-// (ParseReport, parse.go). The dashboard overlay and the archigraph_coverage
+// (ParseReport, parse.go). The dashboard overlay and the grafel_coverage
 // MCP query are deferred to follow-ups.
 package coverage
 

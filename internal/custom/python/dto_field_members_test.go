@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
-	"github.com/cajasmota/archigraph/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // findFieldChild locates a SCOPE.Schema/field child entity by qualified name.

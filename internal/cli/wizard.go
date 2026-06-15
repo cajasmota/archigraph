@@ -12,9 +12,9 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/detect"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newWizardCmd() *cobra.Command {
@@ -55,7 +55,7 @@ func newWizardCmd() *cobra.Command {
 	cmd.Flags().StringVar(&groupDocs, "group-docs", "", "optional path to shared group docs")
 	cmd.Flags().BoolVar(&watchers, "watchers", true, "enable watchers")
 	cmd.Flags().BoolVar(&gitHooks, "git-hooks", true, "enable git hooks")
-	cmd.Flags().BoolVar(&agentHooks, "agent-hooks", false, "opt-in: install the Claude Code PreToolUse grep-interceptor hook that nudges toward archigraph on structural greps (advisory-only, never blocks; Claude Code only)")
+	cmd.Flags().BoolVar(&agentHooks, "agent-hooks", false, "opt-in: install the Claude Code PreToolUse grep-interceptor hook that nudges toward grafel on structural greps (advisory-only, never blocks; Claude Code only)")
 	cmd.Flags().BoolVar(&runInstall, "install", true, "run install at the end")
 	return cmd
 }
@@ -253,8 +253,8 @@ func discoverCandidates(opts wizardOptions) ([]string, error) {
 	return out, nil
 }
 
-// writeManifests writes <repo>/.archigraph/group.json into each repo so
-// teammates can `archigraph onboard` without needing extra context.
+// writeManifests writes <repo>/.grafel/group.json into each repo so
+// teammates can `grafel onboard` without needing extra context.
 func writeManifests(cfg *registry.GroupConfig) error {
 	m := registry.Manifest{Group: cfg.Name}
 	for _, r := range cfg.Repos {
@@ -265,7 +265,7 @@ func writeManifests(cfg *registry.GroupConfig) error {
 		}{Slug: r.Slug, CloneURL: r.CloneURL, Stack: r.Stack.Primary()})
 	}
 	for _, r := range cfg.Repos {
-		dir := filepath.Join(r.Path, ".archigraph")
+		dir := filepath.Join(r.Path, ".grafel")
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}

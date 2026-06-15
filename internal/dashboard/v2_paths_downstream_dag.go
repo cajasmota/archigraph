@@ -52,8 +52,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -670,7 +670,7 @@ func loadDAGEffectsSidecar(group string) map[string][]string {
 			return nil
 		}
 	}
-	path := filepath.Join(home, ".archigraph", "groups", group+"-links-effects.json")
+	path := filepath.Join(home, ".grafel", "groups", group+"-links-effects.json")
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil

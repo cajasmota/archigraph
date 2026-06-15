@@ -1,4 +1,4 @@
-// Package audit implements the `archigraph quality audit-orphans` workflow:
+// Package audit implements the `grafel quality audit-orphans` workflow:
 // load one (or many) graph.json documents and produce a report describing
 // orphan rate, IMPORTS edge hygiene, REFERENCES density, root-cause-classified
 // orphan breakdowns and a composite risk score per language.
@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ImportFormat classifies the shape of an IMPORTS edge's to_id. The bucket
@@ -151,7 +151,7 @@ type Recommendation struct {
 }
 
 // AuditPath dispatches based on whether path is a single repo (contains
-// .archigraph/graph.json) or a directory holding many such repos.
+// .grafel/graph.json) or a directory holding many such repos.
 //
 // corpus=true forces directory mode regardless of layout, which matches the
 // --corpus flag wired by the CLI.
@@ -182,7 +182,7 @@ func AuditPath(path string, corpus bool) (*Report, error) {
 			return nil, err
 		}
 		if len(paths) == 0 {
-			return nil, fmt.Errorf("no .archigraph/graph.json found under %s", abs)
+			return nil, fmt.Errorf("no .grafel/graph.json found under %s", abs)
 		}
 		rep.Repos = auditMany(paths)
 	}
@@ -192,7 +192,7 @@ func AuditPath(path string, corpus bool) (*Report, error) {
 }
 
 // HasGraph returns true if dir has any indexable graph (graph.fb or
-// graph.json) in its .archigraph state directory. Exported so corpus
+// graph.json) in its .grafel state directory. Exported so corpus
 // scanners (e.g. the bug-rate-corpus command) can test directories without
 // calling the full AuditPath pipeline.
 func HasGraph(dir string) bool {
@@ -200,7 +200,7 @@ func HasGraph(dir string) bool {
 }
 
 // hasGraph returns true if dir has any indexable graph (graph.fb or
-// graph.json) in its .archigraph state directory.
+// graph.json) in its .grafel state directory.
 // Renamed from hasGraphJSON for ADR-0016 flip-day (#808).
 func hasGraphJSON(dir string) bool {
 	stateDir := daemon.StateDirForRepo(dir)
@@ -214,7 +214,7 @@ func hasGraphJSON(dir string) bool {
 }
 
 // findRepos walks one directory level deep looking for subdirectories that
-// each contain .archigraph/graph.json. We deliberately do NOT recurse beyond
+// each contain .grafel/graph.json. We deliberately do NOT recurse beyond
 // depth 1 — corpora are flat by convention and recursive walks on huge
 // fixture trees are wasteful.
 func findRepos(root string) ([]string, error) {

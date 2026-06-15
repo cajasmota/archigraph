@@ -46,7 +46,7 @@ func runTimeline(t *testing.T, opts timelineOpts) (*bytes.Buffer, *bytes.Buffer)
 
 // TestTimeline_MergeOrderingAndTrailerCorrelation builds feedback events + a
 // fake rpc-log + a temp git repo with two commits (one carrying an
-// Archigraph-Phase trailer) and asserts chronological merge order and exact
+// Grafel-Phase trailer) and asserts chronological merge order and exact
 // trailer correlation.
 func TestTimeline_MergeOrderingAndTrailerCorrelation(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
@@ -63,7 +63,7 @@ func TestTimeline_MergeOrderingAndTrailerCorrelation(t *testing.T) {
 	})
 
 	// Fake rpc-log: one done line at 09:00 (within planning window), doubled.
-	rpcLine := `time=2026-05-30T09:00:00Z level=INFO msg=mcp_rpc phase=done tool=archigraph_find elapsed_ms=12 wire_bytes=400 payload_token_estimate=100 repo=/x/new-backend`
+	rpcLine := `time=2026-05-30T09:00:00Z level=INFO msg=mcp_rpc phase=done tool=grafel_find elapsed_ms=12 wire_bytes=400 payload_token_estimate=100 repo=/x/new-backend`
 	rpcPath := filepath.Join(tmp, "daemon.log")
 	if err := os.WriteFile(rpcPath, []byte(rpcLine+"\n"+rpcLine+"\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -72,8 +72,8 @@ func TestTimeline_MergeOrderingAndTrailerCorrelation(t *testing.T) {
 	// Temp git repo with two commits: one with the trailer (force phase), one
 	// without (falls into nearest-preceding feedback phase window).
 	repo := newTestRepo(t, tmp)
-	// Commit A at 10:00Z with explicit Archigraph-Phase: planning trailer.
-	gitCommit(t, repo, "2026-05-30T10:00:00+00:00", "scaffold project", "Archigraph-Phase: planning")
+	// Commit A at 10:00Z with explicit Grafel-Phase: planning trailer.
+	gitCommit(t, repo, "2026-05-30T10:00:00+00:00", "scaffold project", "Grafel-Phase: planning")
 	// Commit B at 13:00Z with NO trailer → should fall into port:auth window
 	// (nearest preceding feedback checkpoint at 12:00Z).
 	gitCommit(t, repo, "2026-05-30T13:00:00+00:00", "implement login", "")

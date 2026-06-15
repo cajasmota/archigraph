@@ -1,5 +1,5 @@
 // Package types defines core entity, relationship, and batch types
-// for the archigraph pipeline.
+// for the grafel pipeline.
 package types
 
 import (
@@ -24,7 +24,7 @@ type EntityRecord struct {
 	OrgID       string `json:"org_id"`
 	ProjectID   string `json:"project_id"`
 	ProjectSlug string `json:"project_slug"`
-	// RepoID is the GitHub repository full name (e.g. "cajasmota/archigraph").
+	// RepoID is the GitHub repository full name (e.g. "cajasmota/grafel").
 	// Sourced from the ExtractTriggerMessage.RepoURL in the Extract Lambda.
 	// Required by the Typesense entity_embeddings schema for tenant isolation.
 	RepoID        string   `json:"repo_id,omitempty"`

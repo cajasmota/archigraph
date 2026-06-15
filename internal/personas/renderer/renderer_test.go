@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/personas/renderer"
+	"github.com/cajasmota/grafel/internal/personas/renderer"
 )
 
 // buildPersonaDir creates a temporary directory with a handful of fake persona
@@ -26,10 +26,10 @@ func buildPersonaDir(t *testing.T, personas map[string]string) string {
 // samplePersona returns a minimal but realistic canonical persona document.
 func samplePersona(name, description string) string {
 	return `---
-name: archigraph-` + name + `
+name: grafel-` + name + `
 description: >
   ` + description + `
-tools: Read, Glob, mcp__archigraph__*
+tools: Read, Glob, mcp__grafel__*
 model: sonnet
 ---
 
@@ -39,7 +39,7 @@ You are the ` + name + ` persona.
 
 ## Steps
 
-1. Call ` + "`archigraph_whoami`" + `.
+1. Call ` + "`grafel_whoami`" + `.
 2. Analyse the graph.
 `
 }
@@ -83,7 +83,7 @@ func TestRenderWindsurf_OutputStructure(t *testing.T) {
 			t.Fatalf("reading windsurf output %s: %v", r.Dest, err)
 		}
 		content := string(data)
-		if !strings.Contains(content, "archigraph personas render --target windsurf") {
+		if !strings.Contains(content, "grafel personas render --target windsurf") {
 			t.Errorf("windsurf %s missing generator comment", r.Name)
 		}
 		if !strings.Contains(content, "description:") {
@@ -162,7 +162,7 @@ func TestRenderCursor_OutputStructure(t *testing.T) {
 			t.Fatalf("reading cursor output %s: %v", r.Dest, err)
 		}
 		content := string(data)
-		if !strings.Contains(content, "archigraph personas render --target cursor") {
+		if !strings.Contains(content, "grafel personas render --target cursor") {
 			t.Errorf("cursor %s missing generator comment", r.Name)
 		}
 		if !strings.Contains(content, "description:") {
@@ -287,7 +287,7 @@ func extractFrontmatter(s string) (fm, body string) {
 
 func TestDiscoverPersonasDir_Found(t *testing.T) {
 	root := t.TempDir()
-	target := filepath.Join(root, "skills", "archigraph-consult", "personas")
+	target := filepath.Join(root, "skills", "grafel-consult", "personas")
 	if err := os.MkdirAll(target, 0o755); err != nil {
 		t.Fatal(err)
 	}

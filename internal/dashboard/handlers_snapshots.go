@@ -14,7 +14,7 @@ package dashboard
 //
 // On-disk layout:
 //
-//	~/.archigraph/snapshots/<group>/<id>/
+//	~/.grafel/snapshots/<group>/<id>/
 //	  meta.json         — SnapshotMeta
 //	  <repo-slug>.json  — raw graph.json bytes for that repo at snapshot time
 //
@@ -31,8 +31,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -87,7 +87,7 @@ type DiffEdge struct {
 // Directory helpers
 // ---------------------------------------------------------------------------
 
-// snapshotRootDir returns ~/.archigraph/snapshots (or $ARCHIGRAPH_DAEMON_ROOT/snapshots).
+// snapshotRootDir returns ~/.grafel/snapshots (or $GRAFEL_DAEMON_ROOT/snapshots).
 func snapshotRootDir() (string, error) {
 	h, err := registry.HomeDir()
 	if err != nil {
@@ -134,7 +134,7 @@ type saveSnapshotReq struct {
 // Body: {"name": "before-refactor", "description": "optional"}
 //
 // Reads graph.json for every repo in the group and writes it to
-// ~/.archigraph/snapshots/<group>/<id>/<slug>.json alongside meta.json.
+// ~/.grafel/snapshots/<group>/<id>/<slug>.json alongside meta.json.
 func (s *Server) handleSaveSnapshot(w http.ResponseWriter, r *http.Request) {
 	group := r.PathValue("group")
 	if group == "" {

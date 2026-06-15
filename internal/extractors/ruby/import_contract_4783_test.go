@@ -3,7 +3,7 @@ package ruby_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #4783 — Ruby IMPORTS edges must stamp imported_name/local_name (where

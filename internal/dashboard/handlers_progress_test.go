@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/progress"
+	"github.com/cajasmota/grafel/internal/progress"
 )
 
 // newTestServerWithBroker builds a minimal *Server wired to the given broker

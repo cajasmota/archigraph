@@ -9,7 +9,7 @@
 // `@Public()` is the explicit opt-out (legacy AllowAny).
 //
 // The pre-existing #2852 resolver only recognised `@UseGuards`, so on such an
-// app EVERY endpoint resolved to method="unknown" and archigraph_auth_coverage
+// app EVERY endpoint resolved to method="unknown" and grafel_auth_coverage
 // reported `covered: 0` for genuinely-protected routes (the deploy-9 finding on
 // core-backend-v2 / upvate-v2: 0 / 305).
 //

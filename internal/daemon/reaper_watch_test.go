@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/watchreg"
+	"github.com/cajasmota/grafel/internal/daemon/watchreg"
 )
 
 // TestReaper_sweepsWatchRegistry verifies the #5142 wiring: Reaper.Sweep drops

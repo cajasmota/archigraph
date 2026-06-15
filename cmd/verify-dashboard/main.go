@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/dashboard"
+	"github.com/cajasmota/grafel/internal/dashboard"
 )
 
 func main() {

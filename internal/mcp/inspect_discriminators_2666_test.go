@@ -7,12 +7,12 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestInspect_RendersDiscriminatorsSection seeds an entity that participates
 // in two DISCRIMINATES_ON edges (checklistType=2 on line 17 and type=periodic
-// on line 23) and verifies that archigraph_inspect surfaces a discriminators[]
+// on line 23) and verifies that grafel_inspect surfaces a discriminators[]
 // array with both rows correctly populated.
 func TestInspect_RendersDiscriminatorsSection(t *testing.T) {
 	doc := &graph.Document{

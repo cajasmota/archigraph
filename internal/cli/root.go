@@ -3,11 +3,11 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
-// primarySurface is the small command list shown by `archigraph --help`.
-// Power commands live under `archigraph help advanced`.
+// primarySurface is the small command list shown by `grafel --help`.
+// Power commands live under `grafel help advanced`.
 var primarySurface = map[string]bool{
 	"wizard":    true,
 	"onboard":   true,
@@ -25,7 +25,7 @@ var primarySurface = map[string]bool{
 // hermetic — they can build a fresh tree per case.
 func newRoot() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "archigraph",
+		Use:           "grafel",
 		Short:         "multi-repo code knowledge graphs for AI agents",
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -81,10 +81,10 @@ func newRoot() *cobra.Command {
 	return root
 }
 
-const primaryHelpTemplate = `archigraph — multi-repo code knowledge graphs for AI agents
+const primaryHelpTemplate = `grafel — multi-repo code knowledge graphs for AI agents
 
 Usage:
-  archigraph <command> [flags]
+  grafel <command> [flags]
 
 First-time setup:
   install       Register the daemon as a system service and start it
@@ -95,7 +95,7 @@ Setup (advanced):
   onboard       Join a teammate's existing group
 
 Operate:
-  update        Update archigraph
+  update        Update grafel
   doctor        Run health checks across all groups
   status        Show daemon + index status
   list          List registered groups (alias: ls)
@@ -107,10 +107,10 @@ Help:
 
 Flags:
 {{.LocalFlags.FlagUsages}}
-Run 'archigraph help advanced' to see uninstall, rebuild, monorepo, etc.
+Run 'grafel help advanced' to see uninstall, rebuild, monorepo, etc.
 `
 
-const advancedHelpText = `archigraph — full command surface
+const advancedHelpText = `grafel — full command surface
 
 First-time setup:
   install [--foreground]          Register daemon as OS service + start it
@@ -121,14 +121,14 @@ Setup (advanced):
   onboard [path]                  Join a teammate's existing group
 
 Operate:
-  update [--refresh-rules-lite]   Update archigraph
+  update [--refresh-rules-lite]   Update grafel
   doctor [--kill-stale] [--ref <ref>]  Run health checks; --kill-stale terminates orphaned /tmp daemons
   status [group] [--ref <ref>]         Show daemon health + per-repo state
   list [--ref <ref>]                   List registered groups (alias: ls)
 
 Repair:
   rebuild [group] [slug] [--ref <ref>]  Force AST rebuild (no cache, daemon RPC)
-  reset [group] [slug]                  Wipe .archigraph/ and rebuild via daemon
+  reset [group] [slug]                  Wipe .grafel/ and rebuild via daemon
 
 Daemon modes (S7):
   mode <background|workstation|readonly>
@@ -187,7 +187,7 @@ Quality:
   quality <fixture-dir>                       Measure extraction recall vs a golden fixture
   quality audit-orphans [--corpus] <path>     Audit orphan rate + edge hygiene; emits md or JSON
   quality bug-rate-corpus [flags] <dir>       Composite health score across a corpus of indexed groups
-  quality check [--strict] <group|path>       Evaluate architectural fitness rules (.archigraph/fitness.yaml)
+  quality check [--strict] <group|path>       Evaluate architectural fitness rules (.grafel/fitness.yaml)
 
 Documentation generation:
   docgen --tier=0 --seed-entity=<id> --section=<name>

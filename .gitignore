@@ -12,8 +12,8 @@
 *.dll
 *.so
 *.dylib
-/archigraph
-/archigraph-*
+/grafel
+/grafel-*
 
 # Test
 *.test
@@ -49,14 +49,14 @@ SCRATCH.md
 # MinGW on Windows CI (CGO_ENABLED=1) makes the patch unnecessary — dropped in #2230.
 /vendor/
 
-# archigraph index output
-.archigraph/
+# grafel index output
+.grafel/
 graph.json
 graph.fb
 graph-stats.json
 
 # Exception: golden fixtures need committed group.json manifests for smoke tests
-!/internal/quality/golden/**/.archigraph/group.json
+!/internal/quality/golden/**/.grafel/group.json
 
 # Root-level images — PR review screenshots accidentally committed (#cleanup)
 # Legitimate design assets go under docs/mockups/ or docs/screenshots/.
@@ -77,5 +77,5 @@ graph-stats.json
 /~/
 
 # External worktrees should be siblings of the repo, not nested inside it
-/archigraph-worktrees/
-/.archigraph/
+/grafel-worktrees/
+/.grafel/

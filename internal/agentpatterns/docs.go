@@ -32,7 +32,7 @@ type RelatedPattern struct {
 // itself: the exemplar entities resolved to (file, line-range) tuples and
 // the related patterns derived from outgoing graph edges. Both are
 // populated by the /generate-docs coordinator using the existing MCP
-// surface (archigraph_describe / archigraph_related) and passed in here.
+// surface (grafel_describe / grafel_related) and passed in here.
 type MarkdownInput struct {
 	Pattern         Pattern
 	ExemplarRefs    []ExemplarRef

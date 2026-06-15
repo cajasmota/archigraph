@@ -3,7 +3,7 @@ package javascript
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // metafw_server.go — shared server / hydration / data-loader / static-generation

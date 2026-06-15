@@ -3,8 +3,8 @@ package java_test
 import (
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/java"
-	"github.com/cajasmota/archigraph/internal/types"
+	_ "github.com/cajasmota/grafel/internal/custom/java"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4390 LIVE-REPRO — SUT disambiguation through the REAL registered Java

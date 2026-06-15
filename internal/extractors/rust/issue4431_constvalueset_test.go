@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4431 — Rust const/static constant COLLECTIONS (const slice maps,

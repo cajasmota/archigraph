@@ -1,4 +1,4 @@
-// archigraph_response_shape_diff MCP tool (#4424, epic #4419 capability E — the
+// grafel_response_shape_diff MCP tool (#4424, epic #4419 capability E — the
 // LAST of the four cross-graph parity diff tools).
 //
 // Per joined oracle↔v3 endpoint pair, it diffs the RESPONSE contract
@@ -52,8 +52,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/responseshapediff"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/responseshapediff"
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -65,7 +65,7 @@ type responseShapeRecord struct {
 	Result   responseshapediff.Result  `json:"result"`
 }
 
-// handleResponseShapeDiff implements archigraph_response_shape_diff.
+// handleResponseShapeDiff implements grafel_response_shape_diff.
 func (s *Server) handleResponseShapeDiff(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	oracleGroup := argString(req, "group_oracle", "")
 	v3Group := argString(req, "group_v3", "")

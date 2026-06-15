@@ -1,4 +1,4 @@
-// dead_code.go — MCP handler for archigraph_dead_code (#2766 Phase 1B).
+// dead_code.go — MCP handler for grafel_dead_code (#2766 Phase 1B).
 //
 // Returns entities marked unreachable by the reachability pass in
 // internal/links/reachability.go. The pass writes a sidecar
@@ -14,7 +14,7 @@
 //     graph so callers do not need to re-index.
 //
 // When the sidecar is missing (group never had link passes run, or
-// archigraph version is older than #2766), the handler falls back to a
+// grafel version is older than #2766), the handler falls back to a
 // live-recompute from the in-memory graph using the same edge-kind set
 // the pass uses on disk — so the answer is always correct, just
 // slower.
@@ -28,7 +28,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -58,7 +58,7 @@ type reachabilitySidecarDoc struct {
 	Entries       []reachabilitySidecarEntry `json:"entries"`
 }
 
-// handleDeadCode is the MCP handler for archigraph_dead_code.
+// handleDeadCode is the MCP handler for grafel_dead_code.
 func (s *Server) handleDeadCode(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	groupName, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {
@@ -146,7 +146,7 @@ func reachabilitySidecarPath(group string) string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-links-reachability.json")
+	return filepath.Join(home, ".grafel", "groups", group+"-links-reachability.json")
 }
 
 // loadReachabilitySidecar reads + parses the sidecar; ok=false on any

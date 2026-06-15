@@ -39,9 +39,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/install/detect"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ type v2ScanInspectReply struct {
 	ChildrenKind string `json:"childrenKind"`
 	// HasAgentsMD is true when AGENTS.md / CLAUDE.md / GEMINI.md exists at the root.
 	HasAgentsMD bool `json:"hasAgentsMd"`
-	// AlreadyRegistered is the existing group name if .archigraph/group.json exists.
+	// AlreadyRegistered is the existing group name if .grafel/group.json exists.
 	AlreadyRegistered string `json:"alreadyRegistered,omitempty"`
 	// Error is a human-readable reason when Valid is false.
 	Error string `json:"error,omitempty"`
@@ -209,8 +209,8 @@ func (s *Server) handleV2ScanInspect(w http.ResponseWriter, r *http.Request) {
 		ChildrenKind:   childrenKind,
 		HasAgentsMD:    fileExists(abs, "AGENTS.md") || fileExists(abs, "CLAUDE.md") || fileExists(abs, "GEMINI.md"),
 	}
-	if fileExists(abs, ".archigraph/group.json") {
-		reply.AlreadyRegistered = readManifestGroup(filepath.Join(abs, ".archigraph", "group.json"))
+	if fileExists(abs, ".grafel/group.json") {
+		reply.AlreadyRegistered = readManifestGroup(filepath.Join(abs, ".grafel", "group.json"))
 	}
 	writeV2JSON(w, http.StatusOK, v2OK(reply))
 }

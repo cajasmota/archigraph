@@ -29,8 +29,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -143,7 +143,7 @@ var (
 )
 
 func (e *doctrineORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_doctrine_orm_data.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),
@@ -418,7 +418,7 @@ func elqConventionalFK(methodName string) string {
 }
 
 func (e *eloquentORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_eloquent_orm_data.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),
@@ -687,7 +687,7 @@ var (
 )
 
 func (e *cycleORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_cycleorm_data.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),
@@ -827,7 +827,7 @@ var (
 )
 
 func (e *propelORMDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_propel_orm_data.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),
@@ -946,7 +946,7 @@ var (
 )
 
 func (e *redBeanPHPDataExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/php")
+	tracer := otel.Tracer("grafel/custom/php")
 	_, span := tracer.Start(ctx, "php_redbeanphp_data.extract",
 		trace.WithAttributes(
 			attribute.String("file", file.Path),

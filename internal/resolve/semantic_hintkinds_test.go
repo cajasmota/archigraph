@@ -3,7 +3,7 @@ package resolve
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // #3930 (epic #3929): the rewrite agent's #1 regression — NestJS/Spring/

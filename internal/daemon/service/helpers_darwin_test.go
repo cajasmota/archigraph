@@ -5,7 +5,7 @@ package service_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/service"
+	"github.com/cajasmota/grafel/internal/daemon/service"
 )
 
 // renderPlist renders a LaunchAgent plist using test-fixture options

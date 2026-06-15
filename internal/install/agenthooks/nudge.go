@@ -6,7 +6,7 @@ import (
 )
 
 // NudgeScript is the POSIX-sh advisory hook body. It is written to
-// .claude/archigraph-grep-nudge.sh by Install and invoked by the managed
+// .claude/grafel-grep-nudge.sh by Install and invoked by the managed
 // PreToolUse entry.
 //
 // Contract with Claude Code's PreToolUse mechanism:
@@ -25,8 +25,8 @@ import (
 // The structural heuristic intentionally mirrors classifyStructural below so
 // the Go table-test is an accurate proxy for the shell behaviour.
 const NudgeScript = `#!/bin/sh
-# archigraph grep-interceptor (` + Marker + `)
-# ADVISORY ONLY — nudges toward archigraph MCP on STRUCTURAL greps.
+# grafel grep-interceptor (` + Marker + `)
+# ADVISORY ONLY — nudges toward grafel MCP on STRUCTURAL greps.
 # Never blocks: always exits 0. Claude Code ONLY (no other host has PreToolUse).
 
 # Read the PreToolUse payload (JSON) from stdin.
@@ -66,13 +66,13 @@ esac
 sess="${CLAUDE_SESSION_ID:-${TMPDIR:-/tmp}}"
 # Reduce the session id to a filesystem-safe token.
 token="$(printf '%s' "$sess" | tr -c 'A-Za-z0-9_.-' '_')"
-marker="${TMPDIR:-/tmp}/archigraph-grep-nudge.${token}"
+marker="${TMPDIR:-/tmp}/grafel-grep-nudge.${token}"
 if [ -e "$marker" ]; then
   exit 0
 fi
 : > "$marker" 2>/dev/null || true
 
-echo "archigraph: structural query — archigraph_find/inspect/neighbors is faster + more accurate than grep here (advisory; this grep still runs)." 1>&2
+echo "grafel: structural query — grafel_find/inspect/neighbors is faster + more accurate than grep here (advisory; this grep still runs)." 1>&2
 exit 0
 `
 

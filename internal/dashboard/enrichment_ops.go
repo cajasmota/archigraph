@@ -26,7 +26,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // EnrichmentOps is an indexed, per-group view of LLM enrichment operations.

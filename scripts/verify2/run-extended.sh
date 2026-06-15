@@ -29,14 +29,14 @@
 #   --runs N   Index each repo N times and report median bug_rate + min/max
 #              range (Refs #482).  Default: 5.  N=1 = single-shot.
 #
-# Env vars: same as run.sh (ARCHIGRAPH_CORPORA_DIR, ARCHIGRAPH_BIN,
-# ARCHIGRAPH_VERIFY2_TIMEOUT, ARCHIGRAPH_VERBOSE, ARCHIGRAPH_VERIFY2_RUNS).
+# Env vars: same as run.sh (GRAFEL_CORPORA_DIR, GRAFEL_BIN,
+# GRAFEL_VERIFY2_TIMEOUT, GRAFEL_VERBOSE, GRAFEL_VERIFY2_RUNS).
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Parse --runs flag; all other args are ignored.
 # ---------------------------------------------------------------------------
-RUNS="${ARCHIGRAPH_VERIFY2_RUNS:-5}"
+RUNS="${GRAFEL_VERIFY2_RUNS:-5}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --runs)    RUNS="${2:?--runs requires an integer value}"; shift 2 ;;
@@ -49,7 +49,7 @@ if ! [[ "$RUNS" =~ ^[0-9]+$ ]] || [[ "$RUNS" -lt 1 ]]; then
   exit 1
 fi
 
-CORPORA_DIR="${ARCHIGRAPH_CORPORA_DIR:-$HOME/Documents/Projects/archigraph-corpora}"
+CORPORA_DIR="${GRAFEL_CORPORA_DIR:-$HOME/Documents/Projects/grafel-corpora}"
 REPORTS_DIR="$CORPORA_DIR/_reports"
 mkdir -p "$CORPORA_DIR" "$REPORTS_DIR"
 
@@ -418,22 +418,22 @@ REPOS=(
   "javalin-samples|https://github.com/javalin/javalin-samples.git|main|kotlin"                                # Javalin app.get/post lambdas, route handlers, Jackson DTOs (#285) SHA 3064bf479c58
 )
 
-# Locate or build the archigraph binary. We build into the corpora dir
+# Locate or build the grafel binary. We build into the corpora dir
 # (outside the repo) so this script is safe to run from any worktree.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-if [[ -n "${ARCHIGRAPH_BIN:-}" ]]; then
-  BIN="$ARCHIGRAPH_BIN"
+if [[ -n "${GRAFEL_BIN:-}" ]]; then
+  BIN="$GRAFEL_BIN"
 else
-  BIN="$CORPORA_DIR/_bin/archigraph"
+  BIN="$CORPORA_DIR/_bin/grafel"
   mkdir -p "$(dirname "$BIN")"
-  echo "==> building archigraph -> $BIN" >&2
-  ( cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/archigraph )
+  echo "==> building grafel -> $BIN" >&2
+  ( cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/grafel )
 fi
 
 if [[ ! -x "$BIN" ]]; then
-  echo "archigraph binary not executable: $BIN" >&2
+  echo "grafel binary not executable: $BIN" >&2
   exit 1
 fi
 
@@ -449,10 +449,10 @@ TMPDIR_AGG="$REPORTS_DIR/${TIMESTAMP}-partial"
 mkdir -p "$TMPDIR_AGG"
 trap '[[ -f "$TMPDIR_AGG/.complete" ]] && rm -rf "$TMPDIR_AGG"' EXIT
 
-# Optional per-repo wall-clock cap (seconds). Set ARCHIGRAPH_VERIFY2_TIMEOUT=0
+# Optional per-repo wall-clock cap (seconds). Set GRAFEL_VERIFY2_TIMEOUT=0
 # to disable. Uses gtimeout (coreutils) if available, then timeout, then
 # silently skips capping on systems with neither.
-PER_REPO_TIMEOUT="${ARCHIGRAPH_VERIFY2_TIMEOUT:-600}"
+PER_REPO_TIMEOUT="${GRAFEL_VERIFY2_TIMEOUT:-600}"
 TIMEOUT_BIN=""
 if command -v gtimeout >/dev/null 2>&1; then
   TIMEOUT_BIN="gtimeout"
@@ -474,7 +474,7 @@ done
   echo
   echo "- generated_at: \`$TIMESTAMP\`"
   echo "- corpora_dir: \`$CORPORA_DIR\`"
-  echo "- archigraph_bin: \`$BIN\`"
+  echo "- grafel_bin: \`$BIN\`"
   echo "- runs_per_repo: \`$RUNS\`"
   echo
   echo "## Per-repo results"

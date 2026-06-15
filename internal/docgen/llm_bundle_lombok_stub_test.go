@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 func TestBuildLombokSynthStub_DataGetter(t *testing.T) {

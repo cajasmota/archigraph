@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 // EnrichmentResolution is one resolved enrichment entry stored under a repo's
-// .archigraph/enrichment-resolutions.json. Keys here align with the candidate
+// .grafel/enrichment-resolutions.json. Keys here align with the candidate
 // pipeline output.
 type EnrichmentResolution struct {
 	CandidateID string  `json:"candidate_id"`

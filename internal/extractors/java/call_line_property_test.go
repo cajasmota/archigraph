@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/java"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/java"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractJavaForLine(t *testing.T, src string) []types.EntityRecord {

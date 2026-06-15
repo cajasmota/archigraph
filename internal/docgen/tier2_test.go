@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
@@ -342,7 +342,7 @@ func TestRunTier2_OutputDirCreated(t *testing.T) {
 // RunTier2 — with a minimal synthetic graph
 // ---------------------------------------------------------------------------
 
-// buildMinimalGroupForTier2 sets up a minimal ARCHIGRAPH_HOME with a group
+// buildMinimalGroupForTier2 sets up a minimal GRAFEL_HOME with a group
 // config, a fake repo, and a graph.json containing seed + 2 dependent entities.
 func buildMinimalGroupForTier2(t *testing.T) (archHome, group, seedID string) {
 	t.Helper()
@@ -407,12 +407,12 @@ func buildMinimalGroupForTier2(t *testing.T) (archHome, group, seedID string) {
 	graphBytes, _ := json.Marshal(graphDoc)
 
 	// Write graph.json in a location findGroupGraphDirs can discover.
-	// daemon.StateDirForRepo is used; we write into the repo .archigraph/ fallback.
-	archigraphDir := filepath.Join(repoPath, ".archigraph")
-	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
-		t.Fatalf("mkdir archigraphDir: %v", err)
+	// daemon.StateDirForRepo is used; we write into the repo .grafel/ fallback.
+	grafelDir := filepath.Join(repoPath, ".grafel")
+	if err := os.MkdirAll(grafelDir, 0o755); err != nil {
+		t.Fatalf("mkdir grafelDir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(archigraphDir, "graph.json"), graphBytes, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(grafelDir, "graph.json"), graphBytes, 0o644); err != nil {
 		t.Fatalf("write graph.json: %v", err)
 	}
 

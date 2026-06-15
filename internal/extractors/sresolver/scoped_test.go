@@ -3,8 +3,8 @@ package sresolver_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractors/sresolver"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/extractors/sresolver"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

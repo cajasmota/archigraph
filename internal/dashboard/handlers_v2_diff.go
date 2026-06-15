@@ -29,8 +29,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -160,7 +160,7 @@ func (s *Server) handleV2RepoDiff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Cache lookup keyed by (group, repo, refA, refB). We use the logical ref
-	// names as keys (not SHAs) because archigraph's state dir is keyed the
+	// names as keys (not SHAs) because grafel's state dir is keyed the
 	// same way. A re-index of either ref will not invalidate this cache, which
 	// is acceptable for the beta — add SHA-based invalidation in a follow-up.
 	cacheKey := diffCacheKey{group: group, repo: repo, refA: refA, refB: refB}

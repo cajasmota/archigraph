@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // ---------------------------------------------------------------------------
@@ -481,10 +481,10 @@ func TestTopicDetail_ArrayFieldsNeverNull(t *testing.T) {
 
 func TestTopicDetail_EnrichmentFromFrontmatter(t *testing.T) {
 	// Write a YAML frontmatter doc into a temp dir that mimics the
-	// ~/.archigraph/groups/<group>/docs/ layout used by getDocFilePath.
+	// ~/.grafel/groups/<group>/docs/ layout used by getDocFilePath.
 	tmp := t.TempDir()
 	groupName := "enrichtest"
-	docDir := filepath.Join(tmp, ".archigraph", "groups", groupName, "docs")
+	docDir := filepath.Join(tmp, ".grafel", "groups", groupName, "docs")
 	if err := os.MkdirAll(docDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -512,7 +512,7 @@ Order created event.
 	}
 
 	// Inject a docgen-state.json that references the doc file.
-	stateDir := filepath.Join(tmp, ".archigraph", "groups", groupName)
+	stateDir := filepath.Join(tmp, ".grafel", "groups", groupName)
 	now := time.Now()
 	st := mcp.DocgenState{
 		LastDocgenAt:   &now,

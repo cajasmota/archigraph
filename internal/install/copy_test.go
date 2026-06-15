@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
-	"github.com/cajasmota/archigraph/internal/testsupport"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/testsupport"
 )
 
 // TestMain fail-closes the install package: when
-// ARCHIGRAPH_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
+// GRAFEL_TEST_REQUIRE_ISOLATED_HOME=1 it refuses to run if HOME is the real
 // user home. These tests install/uninstall and (de)register MCP, so they must
 // never operate against the developer's live config.
 func TestMain(m *testing.M) {
@@ -145,12 +145,12 @@ func TestRunCopy_Idempotent(t *testing.T) {
 		}
 		count := 0
 		for _, line := range splitLines(string(data)) {
-			if line == "/.archigraph/" {
+			if line == "/.grafel/" {
 				count++
 			}
 		}
 		if count != 1 {
-			t.Errorf(".gitignore: expected exactly 1 /.archigraph/ entry, got %d (content: %q)", count, string(data))
+			t.Errorf(".gitignore: expected exactly 1 /.grafel/ entry, got %d (content: %q)", count, string(data))
 		}
 	}
 }
@@ -297,7 +297,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	tmp := t.TempDir()
 
 	// Create a fake binary (just a file with some bytes).
-	fakeBin := filepath.Join(tmp, "archigraph-fake")
+	fakeBin := filepath.Join(tmp, "grafel-fake")
 	if err := os.WriteFile(fakeBin, []byte("#!/bin/sh\necho fake"), 0o755); err != nil {
 		t.Fatalf("create fake bin: %v", err)
 	}
@@ -326,7 +326,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 
 	// install.json path.
-	stateDir := filepath.Join(tmp, ".archigraph")
+	stateDir := filepath.Join(tmp, ".grafel")
 	if err := os.MkdirAll(stateDir, 0o700); err != nil {
 		t.Fatalf("create state dir: %v", err)
 	}
@@ -364,8 +364,8 @@ func newTestEnv(t *testing.T) *testEnv {
 	t.Setenv("HOME", tmp)
 	t.Setenv("USERPROFILE", tmp)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "cfg"))
-	t.Setenv("ARCHIGRAPH_DAEMON_ROOT", stateDir)
-	t.Setenv("ARCHIGRAPH_HOME", stateDir)
+	t.Setenv("GRAFEL_DAEMON_ROOT", stateDir)
+	t.Setenv("GRAFEL_HOME", stateDir)
 	testsupport.GuardRealHome(t)
 
 	return &testEnv{
@@ -408,18 +408,18 @@ func assertMCPRegistered(t *testing.T, claudeJSON, binPath string) {
 		t.Error(".claude.json: mcpServers not found")
 		return
 	}
-	entry, ok := servers["archigraph"]
+	entry, ok := servers["grafel"]
 	if !ok {
-		t.Error(".claude.json: archigraph entry not found in mcpServers")
+		t.Error(".claude.json: grafel entry not found in mcpServers")
 		return
 	}
 	entryMap, _ := entry.(map[string]any)
 	if entryMap == nil {
-		t.Error(".claude.json: archigraph entry is not an object")
+		t.Error(".claude.json: grafel entry is not an object")
 		return
 	}
 	if cmd, _ := entryMap["command"].(string); cmd != binPath {
-		t.Errorf(".claude.json: archigraph.command = %q, want %q", cmd, binPath)
+		t.Errorf(".claude.json: grafel.command = %q, want %q", cmd, binPath)
 	}
 }
 
@@ -430,11 +430,11 @@ func assertGitignoreEntry(t *testing.T, repoRoot string) {
 		t.Fatalf("read .gitignore: %v", err)
 	}
 	for _, line := range splitLines(string(data)) {
-		if line == "/.archigraph/" {
+		if line == "/.grafel/" {
 			return
 		}
 	}
-	t.Errorf(".gitignore does not contain /.archigraph/; content: %q", string(data))
+	t.Errorf(".gitignore does not contain /.grafel/; content: %q", string(data))
 }
 
 // TestRunCopy_MissingSkillsDirectory_GracefulDegrade verifies that when the
@@ -446,7 +446,7 @@ func TestRunCopy_MissingSkillsDirectory_GracefulDegrade(t *testing.T) {
 	env := newTestEnv(t)
 
 	// Ensure the env-var discovery path can't accidentally satisfy discovery.
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", "")
+	t.Setenv("GRAFEL_SKILLS_DIR", "")
 
 	// Place the binary in an isolated dir with NO skills/ anywhere on its
 	// sibling/one-up/ancestor path, so discovery genuinely fails (a brand-new
@@ -456,7 +456,7 @@ func TestRunCopy_MissingSkillsDirectory_GracefulDegrade(t *testing.T) {
 	if err := os.MkdirAll(isoBinDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	isoBin := filepath.Join(isoBinDir, "archigraph")
+	isoBin := filepath.Join(isoBinDir, "grafel")
 	if err := os.WriteFile(isoBin, []byte("#!/bin/sh\necho iso"), 0o755); err != nil {
 		t.Fatal(err)
 	}

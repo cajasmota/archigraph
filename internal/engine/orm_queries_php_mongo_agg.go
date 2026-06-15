@@ -73,7 +73,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoAggPHPGateRe gates the scan to files that plausibly use a PHP Mongo ODM

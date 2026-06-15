@@ -59,7 +59,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // mongoAggPyGate signals whether a pymongo/motor surface is plausible in the

@@ -10,6 +10,6 @@ description: >-
   Count JOIN keyword occurrences per SQL string literal found in source and
   emit SCOPE.Operation entities with join_count and has_complex_joins properties.
   Supports complex JOIN detection for memory_search queries (closes New-Q68).
-module: archigraph.engine.rules.pattern_detectors.sql_join_count_extractor
+module: grafel.engine.rules.pattern_detectors.sql_join_count_extractor
 function: detect
 applies_to_function: applies_to

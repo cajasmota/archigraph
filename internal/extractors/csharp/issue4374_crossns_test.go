@@ -15,7 +15,7 @@
 // Go cross-package (#4332) and Rust cross-module (#4373) qualifier drops.
 //
 // These tests drive the REAL extraction + resolver passes — the same sequence
-// cmd/archigraph/index.go runs (extract per file → stamp deterministic IDs →
+// cmd/grafel/index.go runs (extract per file → stamp deterministic IDs →
 // BuildIndex → ResolveCSharpCrossNamespaceCalls → ReferencesEmbedded) — on a
 // faithful multi-namespace project that reproduces a cross-namespace call WITH
 // a same-named type/method collision in two namespaces. The collision is
@@ -30,11 +30,11 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tscsharp "github.com/smacker/go-tree-sitter/csharp"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/csharp"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/csharp"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func extractCSharpProjectForTest(t *testing.T, files map[string]string) []types.EntityRecord {

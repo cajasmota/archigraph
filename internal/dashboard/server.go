@@ -18,13 +18,13 @@ import (
 
 	"sync"
 
-	"github.com/cajasmota/archigraph/internal/audit"
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/jobs"
-	"github.com/cajasmota/archigraph/internal/mcp"
-	"github.com/cajasmota/archigraph/internal/notifications"
-	"github.com/cajasmota/archigraph/internal/perf"
-	"github.com/cajasmota/archigraph/internal/progress"
+	"github.com/cajasmota/grafel/internal/audit"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/jobs"
+	"github.com/cajasmota/grafel/internal/mcp"
+	"github.com/cajasmota/grafel/internal/notifications"
+	"github.com/cajasmota/grafel/internal/perf"
+	"github.com/cajasmota/grafel/internal/progress"
 )
 
 // Server is an embedded HTTP dashboard. It is intentionally small: it
@@ -58,7 +58,7 @@ type Server struct {
 	// Empty string disables the /api/mcp-activity/history endpoint.
 	mcpActivityLog string
 
-	// recallRunner is the function injected by cmd/archigraph that runs the
+	// recallRunner is the function injected by cmd/grafel that runs the
 	// full indexer against a named golden fixture and returns the
 	// quality.JSONReport as a JSON byte slice. Optional: when nil the
 	// POST /api/quality/recall endpoint returns 503.
@@ -186,7 +186,7 @@ func (s *Server) daemonRoot() string {
 }
 
 // SetDaemonStartedAt records when the parent daemon process started so
-// the /api/info endpoint can report uptime. Call this from cmd/archigraph
+// the /api/info endpoint can report uptime. Call this from cmd/grafel
 // after the daemon's embedded server is wired up.
 func (s *Server) SetDaemonStartedAt(t time.Time) {
 	s.daemonStartedAt = t
@@ -194,7 +194,7 @@ func (s *Server) SetDaemonStartedAt(t time.Time) {
 
 // SetProgressBroker wires the shared indexer progress broker into the server
 // so that /api/index-progress endpoints can stream live events. Call this from
-// cmd/archigraph (or any daemon entrypoint) before Serve.
+// cmd/grafel (or any daemon entrypoint) before Serve.
 func (s *Server) SetProgressBroker(b *progress.Broker) {
 	s.progressBroker = b
 }
@@ -214,7 +214,7 @@ func (s *Server) SetMCPActivityLog(path string) {
 
 // SetRecallRunner wires the quality recall function into the server so that
 // POST /api/quality/recall can run the full indexer against a golden fixture.
-// Call this from cmd/archigraph before Serve.
+// Call this from cmd/grafel before Serve.
 func (s *Server) SetRecallRunner(fn func(fixtureName string) ([]byte, error)) {
 	s.recallRunner = fn
 }
@@ -222,7 +222,7 @@ func (s *Server) SetRecallRunner(fn func(fixtureName string) ([]byte, error)) {
 // SetJobQueue wires the enrichment job queue into the dashboard server so
 // that POST /api/enrichments/{group}/trigger dispatches real jobs and
 // GET /api/enrichments/{group}/jobs returns live status.
-// Call this from cmd/archigraph (or any daemon entrypoint) before Serve.
+// Call this from cmd/grafel (or any daemon entrypoint) before Serve.
 func (s *Server) SetJobQueue(q *jobs.Queue) {
 	s.jobQueue = q
 }
@@ -400,7 +400,7 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/admin/groups", s.handleCreateGroup)
 	mux.HandleFunc("POST /api/admin/groups/{group}/repos", s.handleAddRepo)
 
-	// Repo Manifest viewer (#1351) — surface AGENTS.md + .archigraph/ state per repo.
+	// Repo Manifest viewer (#1351) — surface AGENTS.md + .grafel/ state per repo.
 	// NOTE: the /manifest literal segment must be registered before the /graph wildcard
 	// so Go 1.22 ServeMux prefers the more-specific path.
 	mux.HandleFunc("GET /api/groups/{group}/repos/{repo}/manifest", s.handleRepoManifest)
@@ -763,7 +763,7 @@ func (s *Server) routes() http.Handler {
 	// betweenness over the aggregated module graph.
 	mux.HandleFunc("GET /api/v2/groups/{group}/modules/analysis", s.handleV2ModulesAnalysis)
 	// S7a (#2169): daemon mode switcher — read + write the active mode without
-	// the user needing a terminal (`archigraph mode <m>` equivalent).
+	// the user needing a terminal (`grafel mode <m>` equivalent).
 	mux.HandleFunc("GET /api/v2/daemon/mode", s.handleV2GetDaemonMode)
 	mux.HandleFunc("POST /api/v2/daemon/mode", s.handleV2SetDaemonMode)
 

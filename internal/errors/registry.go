@@ -54,30 +54,30 @@ func hint(c Code) string {
 	case CodePermissionDenied:
 		return "Check that the current user can read the repository path: `ls -la <repo>`. " +
 			"If the directory is owned by another user, adjust permissions with `chmod`/`chown` " +
-			"or re-run archigraph as the owner."
+			"or re-run grafel as the owner."
 	case CodeFileTooLarge:
-		return "This file exceeds the 10 MiB single-file limit. Add it to .archigraphignore " +
+		return "This file exceeds the 10 MiB single-file limit. Add it to .grafelignore " +
 			"to skip it, or split the file into smaller modules."
 	case CodeUnsupportedEncoding:
 		return "The file is not valid UTF-8. Convert it with `iconv -f <encoding> -t UTF-8` " +
-			"or add it to .archigraphignore."
+			"or add it to .grafelignore."
 	case CodeParserTimeout:
 		return "The parser timed out — the file may be minified or machine-generated. " +
-			"Add it to .archigraphignore to exclude it from indexing."
+			"Add it to .grafelignore to exclude it from indexing."
 	case CodeOutOfMemory:
 		return "The indexer exceeded its memory budget. Try indexing fewer repos at once, " +
-			"or add large generated directories (vendor/, node_modules/) to .archigraphignore."
+			"or add large generated directories (vendor/, node_modules/) to .grafelignore."
 	case CodeSymlinkLoop:
-		return "A symlink loop was detected. Break the cycle or add the looping path to .archigraphignore."
+		return "A symlink loop was detected. Break the cycle or add the looping path to .grafelignore."
 	case CodeMissingManifest:
 		return "No package manifest (pyproject.toml, package.json, go.mod, …) was found. " +
-			"Ensure the repo root contains a recognised manifest, or use `archigraph index --skip-pass manifest`."
+			"Ensure the repo root contains a recognised manifest, or use `grafel index --skip-pass manifest`."
 	case CodeASTExtractionFailed:
 		return "AST extraction failed for this file. If the file uses experimental syntax, " +
-			"add it to .archigraphignore. File a bug report with the file path if this is unexpected."
+			"add it to .grafelignore. File a bug report with the file path if this is unexpected."
 	case CodeCrossRepoUnresolved:
 		return "A cross-repo reference could not be resolved. Ensure all referenced repos are " +
-			"registered (`archigraph list`) and have been indexed (`archigraph index`)."
+			"registered (`grafel list`) and have been indexed (`grafel index`)."
 	default:
 		return ""
 	}
@@ -85,7 +85,7 @@ func hint(c Code) string {
 
 // docsURL returns the canonical documentation URL for each code.
 func docsURL(c Code) string {
-	return "https://archigraph.dev/docs/errors/" + string(c)
+	return "https://grafel.dev/docs/errors/" + string(c)
 }
 
 // IndexerError is a structured indexer error with a stable code, plain-language

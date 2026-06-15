@@ -8,12 +8,12 @@ import (
 // TestWatcherStatusString_NotInstalled verifies the String() representation
 // for a unit that has never been installed.
 func TestWatcherStatusString_NotInstalled(t *testing.T) {
-	ws := WatcherStatus{TaskName: "com.archigraph.watcher.demo.core"}
+	ws := WatcherStatus{TaskName: "com.grafel.watcher.demo.core"}
 	s := ws.String()
 	if !strings.Contains(s, "not installed") {
 		t.Errorf("expected 'not installed' in %q", s)
 	}
-	if !strings.Contains(s, "com.archigraph.watcher.demo.core") {
+	if !strings.Contains(s, "com.grafel.watcher.demo.core") {
 		t.Errorf("expected task name in %q", s)
 	}
 }
@@ -22,7 +22,7 @@ func TestWatcherStatusString_NotInstalled(t *testing.T) {
 // running unit includes the PID when available.
 func TestWatcherStatusString_Running(t *testing.T) {
 	ws := WatcherStatus{
-		TaskName:  "com.archigraph.watcher.demo.core",
+		TaskName:  "com.grafel.watcher.demo.core",
 		Installed: true,
 		Running:   true,
 		PID:       1234,
@@ -40,7 +40,7 @@ func TestWatcherStatusString_Running(t *testing.T) {
 // installed but not-yet-started unit.
 func TestWatcherStatusString_InstalledNotRunning(t *testing.T) {
 	ws := WatcherStatus{
-		TaskName:  "com.archigraph.watcher.demo.core",
+		TaskName:  "com.grafel.watcher.demo.core",
 		Installed: true,
 		Running:   false,
 	}

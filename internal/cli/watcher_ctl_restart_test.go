@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon"
 )
 
 func deadPID(t *testing.T) int {
@@ -77,9 +77,9 @@ func TestForceKill_TerminatesProcess(t *testing.T) {
 
 func TestIsUnixSocketPath(t *testing.T) {
 	cases := map[string]bool{
-		"/home/u/.archigraph/sockets/daemon.sock": true,
+		"/home/u/.grafel/sockets/daemon.sock": true,
 		"/tmp/x.sock":                              true,
-		`\\.\pipe\archigraph-daemon-user`:          false,
+		`\\.\pipe\grafel-daemon-user`:          false,
 	}
 	for path, want := range cases {
 		if got := isUnixSocketPath(path); got != want {
@@ -89,12 +89,12 @@ func TestIsUnixSocketPath(t *testing.T) {
 }
 
 func TestStartupReadinessBudget(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_START_READINESS", "")
+	t.Setenv("GRAFEL_START_READINESS", "")
 	if got := startupReadinessBudget(); got != startupReadinessDefault {
 		t.Fatalf("default budget = %v, want %v", got, startupReadinessDefault)
 	}
 
-	t.Setenv("ARCHIGRAPH_START_READINESS", "180s")
+	t.Setenv("GRAFEL_START_READINESS", "180s")
 	if got := startupReadinessBudget(); got != 180*time.Second {
 		t.Fatalf("override budget = %v, want 180s", got)
 	}
@@ -105,12 +105,12 @@ func TestStartupReadinessBudget(t *testing.T) {
 		t.Fatalf("default readiness %v must exceed the observed ~82s index time", startupReadinessDefault)
 	}
 
-	t.Setenv("ARCHIGRAPH_START_READINESS", "garbage")
+	t.Setenv("GRAFEL_START_READINESS", "garbage")
 	if got := startupReadinessBudget(); got != startupReadinessDefault {
 		t.Fatalf("invalid override should fall back to default, got %v", got)
 	}
 
-	t.Setenv("ARCHIGRAPH_START_READINESS", "-5s")
+	t.Setenv("GRAFEL_START_READINESS", "-5s")
 	if got := startupReadinessBudget(); got != startupReadinessDefault {
 		t.Fatalf("negative override should fall back to default, got %v", got)
 	}
@@ -147,7 +147,7 @@ func TestCleanStaleArtifacts_KeepsLivePidfile(t *testing.T) {
 	dir := t.TempDir()
 	pidPath := filepath.Join(dir, "daemon.pid")
 	// Our own pid is alive — cleanStaleArtifacts must NOT delete a live owner's
-	// pidfile (it does not know it isn't archigraph; conservatively keep it).
+	// pidfile (it does not know it isn't grafel; conservatively keep it).
 	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(os.Getpid())+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}

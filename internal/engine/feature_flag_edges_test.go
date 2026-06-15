@@ -10,7 +10,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // gateEdge is the minimal projection of a GATED_BY edge for assertions.

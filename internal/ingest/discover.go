@@ -15,7 +15,7 @@ var excludedDirSegments = map[string]bool{
 	"dist":         true,
 	"build":        true,
 	".git":         true,
-	".archigraph":  true,
+	".grafel":      true,
 }
 
 // DiscoverMarkdown filters relPaths (repo-relative slash paths, e.g. the

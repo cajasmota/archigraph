@@ -44,7 +44,7 @@ func TestValidate(t *testing.T) {
 func TestLoadConfig_MissingReturnsDefaults(t *testing.T) {
 	// Point HomeDir at a tmp dir with no dashboard.json.
 	tmp := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmp)
+	t.Setenv("GRAFEL_HOME", tmp)
 	c, err := LoadConfig()
 	if err != nil {
 		t.Fatalf("LoadConfig: %v", err)
@@ -56,7 +56,7 @@ func TestLoadConfig_MissingReturnsDefaults(t *testing.T) {
 
 func TestLoadConfig_PartialMerge(t *testing.T) {
 	tmp := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmp)
+	t.Setenv("GRAFEL_HOME", tmp)
 	if err := os.WriteFile(filepath.Join(tmp, "dashboard.json"),
 		[]byte(`{"bind":"0.0.0.0"}`), 0o644); err != nil {
 		t.Fatalf("write: %v", err)

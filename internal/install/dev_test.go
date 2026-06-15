@@ -3,13 +3,13 @@ package install_test
 // dev_test.go — integration tests for RunDev (issue #2212).
 //
 // Acceptance criteria covered:
-//  1. `archigraph install --dev` symlinks all skills cross-platform
+//  1. `grafel install --dev` symlinks all skills cross-platform
 //     → TestRunDev_HappyPath
 //  2. Windows fallback to COPY with clear warning (simulated via stub)
 //     → TestRunDev_FallbackCopy (stub: replace Symlink with error-returning path)
 //  3. `install_mode = "dev"` recorded in install.json
 //     → TestRunDev_HappyPath (asserts state.InstallMode == ModeDev)
-//  4. `archigraph doctor` correctly handles dev mode (no SHA mismatch panic)
+//  4. `grafel doctor` correctly handles dev mode (no SHA mismatch panic)
 //     → TestDoctorDevMode_HappyPath, TestDoctorDevMode_SymlinkDrift
 //  5. Switching modes: COPY → DEV warns (no hard error), DEV install proceeds
 //     → TestRunDev_ModeSwitchFromCopy
@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/install"
+	"github.com/cajasmota/grafel/internal/install"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ func TestRunDev_HappyPath(t *testing.T) {
 	}
 }
 
-// TestRunDev_Idempotent verifies that running `archigraph install --dev` twice
+// TestRunDev_Idempotent verifies that running `grafel install --dev` twice
 // leaves the system in a consistent state and does not error on the second run.
 func TestRunDev_Idempotent(t *testing.T) {
 	env := newDevTestEnv(t)
@@ -176,7 +176,7 @@ func TestRunDev_Idempotent(t *testing.T) {
 	}
 }
 
-// TestRunDev_PartialInstallAutoRecovers verifies that running `archigraph install --dev`
+// TestRunDev_PartialInstallAutoRecovers verifies that running `grafel install --dev`
 // when a partial install is recorded auto-recovers (idempotent retry) WITHOUT
 // requiring --force (#4461 — the partial-install guard is shared with COPY mode).
 func TestRunDev_PartialInstallAutoRecovers(t *testing.T) {
@@ -207,7 +207,7 @@ func TestRunDev_PartialInstallAutoRecovers(t *testing.T) {
 	}
 }
 
-// TestRunDev_ModeSwitchFromCopy verifies that running `archigraph install --dev`
+// TestRunDev_ModeSwitchFromCopy verifies that running `grafel install --dev`
 // on top of an existing COPY install:
 //  1. Does NOT return an error (mode switch proceeds).
 //  2. Replaces COPY skills with symlinks.
@@ -322,19 +322,19 @@ func newDevDoctorEnv(t *testing.T) *devDoctorEnv {
 	t.Setenv("HOME", tmp)
 
 	// Fake binary.
-	fakeBin := filepath.Join(tmp, "archigraph-fake")
+	fakeBin := filepath.Join(tmp, "grafel-fake")
 	if err := os.WriteFile(fakeBin, []byte("#!/bin/sh\necho fake-dev-doctor"), 0o755); err != nil {
 		t.Fatalf("create fake bin: %v", err)
 	}
 
 	// Skills source (simulate repo working tree).
 	srcDir := filepath.Join(tmp, "repo", "skills")
-	skillName := "archigraph-quality-check"
+	skillName := "grafel-quality-check"
 	srcSkillDir := filepath.Join(srcDir, skillName)
 	if err := os.MkdirAll(srcSkillDir, 0o755); err != nil {
 		t.Fatalf("mkdir src skill: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(srcSkillDir, "SKILL.md"), []byte("# archigraph-quality-check"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(srcSkillDir, "SKILL.md"), []byte("# grafel-quality-check"), 0o644); err != nil {
 		t.Fatalf("write src SKILL.md: %v", err)
 	}
 
@@ -344,7 +344,7 @@ func newDevDoctorEnv(t *testing.T) *devDoctorEnv {
 		t.Fatalf("mkdir claude dir: %v", err)
 	}
 	claudeJSON := filepath.Join(claudeDir, ".claude.json")
-	if err := os.WriteFile(claudeJSON, []byte(`{"mcpServers":{"archigraph":{"command":"`+fakeBin+`","args":["mcp-bridge"],"type":"stdio"}}}`), 0o644); err != nil {
+	if err := os.WriteFile(claudeJSON, []byte(`{"mcpServers":{"grafel":{"command":"`+fakeBin+`","args":["mcp-bridge"],"type":"stdio"}}}`), 0o644); err != nil {
 		t.Fatalf("write .claude.json: %v", err)
 	}
 
@@ -366,7 +366,7 @@ func newDevDoctorEnv(t *testing.T) *devDoctorEnv {
 	}
 
 	// Write install.json in DEV mode.
-	stateDir := filepath.Join(tmp, ".archigraph")
+	stateDir := filepath.Join(tmp, ".grafel")
 	if err := os.MkdirAll(stateDir, 0o700); err != nil {
 		t.Fatalf("mkdir state: %v", err)
 	}
@@ -378,7 +378,7 @@ func newDevDoctorEnv(t *testing.T) *devDoctorEnv {
 		skillName: {DevTarget: absSrc},
 	}
 	state.MCP = install.MCPRecord{
-		Name:            "archigraph",
+		Name:            "grafel",
 		RegisteredPaths: []string{claudeJSON},
 	}
 	if err := install.WriteState(statePath, state); err != nil {
@@ -610,7 +610,7 @@ func TestRunDev_MultipleConfigsAndOrphanPruning(t *testing.T) {
 	if err := os.MkdirAll(dummyTarget, 0o755); err != nil {
 		t.Fatalf("mkdir dummy target: %v", err)
 	}
-	stale := []string{"archigraph-quality-check", "archigraph-repair", "generate-docs"}
+	stale := []string{"grafel-quality-check", "grafel-repair", "generate-docs"}
 	for _, name := range stale {
 		if err := os.Symlink(dummyTarget, filepath.Join(primarySkillsDir, name)); err != nil {
 			t.Fatalf("seed orphan %s: %v", name, err)

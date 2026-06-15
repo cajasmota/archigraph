@@ -28,8 +28,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tskotlin "github.com/smacker/go-tree-sitter/kotlin"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {

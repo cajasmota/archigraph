@@ -3,7 +3,7 @@ package resolve
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func ent(id, kind, name string) types.EntityRecord {

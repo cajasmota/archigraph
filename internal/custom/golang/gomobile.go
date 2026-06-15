@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // gomobile.go — a heuristic extractor for gomobile (golang.org/x/mobile),
@@ -153,7 +153,7 @@ func hasMobilePlatformToken(expr string) bool {
 }
 
 func (e *gomobileExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/golang")
+	tracer := otel.Tracer("grafel/custom/golang")
 	_, span := tracer.Start(ctx, "indexer.gomobile_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

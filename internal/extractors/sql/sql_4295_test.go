@@ -3,7 +3,7 @@ package sql_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findColumn returns the column entity for table.col, or nil.

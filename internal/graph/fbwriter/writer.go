@@ -1,5 +1,5 @@
 // Package fbwriter serializes the in-memory graph.Document into the
-// archigraph v2 FlatBuffers on-disk format described in
+// grafel v2 FlatBuffers on-disk format described in
 // internal/graph/schema/graph.fbs and ADR-0016.
 //
 // The primary write path is StreamingWriter (streaming.go), which serializes
@@ -17,9 +17,9 @@ import (
 
 	flatbuffers "github.com/google/flatbuffers/go"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbversion"
+	"github.com/cajasmota/grafel/internal/graph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbversion"
 )
 
 // FormatVersion is the FlatBuffers schema version this writer emits.
@@ -29,7 +29,7 @@ const FormatVersion = fbversion.Version
 
 // WriteAtomic serializes doc to a FlatBuffers buffer and writes it to
 // outPath atomically via a sibling .tmp + rename. The on-disk file is
-// the canonical archigraph v2 binary graph.
+// the canonical grafel v2 binary graph.
 //
 // This is a thin wrapper around StreamingWriter for backward compatibility.
 // Callers that already hold a complete *graph.Document continue to work

@@ -1,6 +1,6 @@
 package cli
 
-// branches.go implements the `archigraph branches` command (PH6 of epic
+// branches.go implements the `grafel branches` command (PH6 of epic
 // #2087 / issue #2094).
 //
 // The command surfaces per-ref graph lifecycle state: tier (HOT/WARM/COLD/
@@ -27,9 +27,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/tier"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/tier"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 func newBranchesCmd() *cobra.Command {
@@ -54,14 +54,14 @@ func newBranchesCmd() *cobra.Command {
 on-disk size, and pin status.
 
 Examples:
-  archigraph branches                       list all refs across groups
-  archigraph branches mygroup               filter to one group
-  archigraph branches --prune-stale         delete EXPIRED graphs (7d default)
-  archigraph branches --prune-stale 14d     custom TTL override (one-time)
-  archigraph branches --pin myrepo main     mark a ref as pinned (never expires)
-  archigraph branches --unpin myrepo main   un-pin
-  archigraph branches --keep-last 3 myrepo  keep only 3 newest feature branches
-  archigraph branches --json                machine-readable output`,
+  grafel branches                       list all refs across groups
+  grafel branches mygroup               filter to one group
+  grafel branches --prune-stale         delete EXPIRED graphs (7d default)
+  grafel branches --prune-stale 14d     custom TTL override (one-time)
+  grafel branches --pin myrepo main     mark a ref as pinned (never expires)
+  grafel branches --unpin myrepo main   un-pin
+  grafel branches --keep-last 3 myrepo  keep only 3 newest feature branches
+  grafel branches --json                machine-readable output`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			groupFilter := ""
@@ -306,7 +306,7 @@ func runBranchesList(w io.Writer, pins *daemon.PinStore, groupFilter string, jso
 	}
 
 	if len(rows) == 0 {
-		fmt.Fprintln(w, "No graph refs found. Run `archigraph index` to build graphs.")
+		fmt.Fprintln(w, "No graph refs found. Run `grafel index` to build graphs.")
 		return nil
 	}
 

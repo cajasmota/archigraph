@@ -2,7 +2,7 @@ package dashboard
 
 // handlers_diagnostics.go — GET /api/diagnostics and POST /api/diagnostics/kill-stale
 //
-// Ports the `archigraph doctor` CLI output to a JSON REST surface so the web
+// Ports the `grafel doctor` CLI output to a JSON REST surface so the web
 // Diagnostics page can render daemon + per-group health without a terminal.
 //
 // Routes registered in server.go:
@@ -18,11 +18,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/cli"
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/process"
-	"github.com/cajasmota/archigraph/internal/registry"
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/cli"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/process"
+	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ type KilledProcess struct {
 
 // handleDiagnostics — GET /api/diagnostics
 //
-// Runs the same health-check logic as `archigraph doctor` and returns it as
+// Runs the same health-check logic as `grafel doctor` and returns it as
 // structured JSON. Designed to be cheap enough to poll every 30 s.
 func (s *Server) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
 	reply := DiagnosticsReply{
@@ -166,7 +166,7 @@ func (s *Server) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
 
 // handleDiagnosticsKillStale — POST /api/diagnostics/kill-stale
 //
-// Terminates stale archigraph daemon processes (PPID=1 + /tmp binary, or a
+// Terminates stale grafel daemon processes (PPID=1 + /tmp binary, or a
 // daemon binary different from the currently-running one). Pass
 // ?dry_run=true to list without killing.
 func (s *Server) handleDiagnosticsKillStale(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +179,7 @@ func (s *Server) handleDiagnosticsKillStale(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	procs, err := process.FindByName("archigraph")
+	procs, err := process.FindByName("grafel")
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "process scan: "+err.Error())
 		return
@@ -280,7 +280,7 @@ func (s *Server) buildDaemonDiagnostics() DaemonDiagnostics {
 	// Workspace writable
 	homeDir, _ := registry.HomeDir()
 	if homeDir != "" {
-		testFile := homeDir + "/.archigraph_write_test"
+		testFile := homeDir + "/.grafel_write_test"
 		if f, err := os.Create(testFile); err == nil {
 			f.Close()
 			os.Remove(testFile)
@@ -296,7 +296,7 @@ func (s *Server) buildDaemonDiagnostics() DaemonDiagnostics {
 
 	// LaunchAgent (macOS only)
 	if runtime.GOOS == "darwin" {
-		laPath := os.Getenv("HOME") + "/Library/LaunchAgents/com.archigraph.daemon.plist"
+		laPath := os.Getenv("HOME") + "/Library/LaunchAgents/com.grafel.daemon.plist"
 		if _, err := os.Stat(laPath); err == nil {
 			d.LaunchAgentInstalled = true
 		}
@@ -397,13 +397,13 @@ func isNominal(r DiagnosticsReply) bool {
 func remediationHint(description string) string {
 	switch {
 	case containsLower(description, "hasn't been indexed in"):
-		return "Run 'archigraph index' or use the Rebuild button to re-index this repo."
+		return "Run 'grafel index' or use the Rebuild button to re-index this repo."
 	case containsLower(description, "missing .git"):
 		return "Ensure the repository path is a valid git checkout."
 	case containsLower(description, "no graph found"):
-		return "Run 'archigraph index <repo-path>' to build the initial graph."
+		return "Run 'grafel index <repo-path>' to build the initial graph."
 	case containsLower(description, "graph.json present") && containsLower(description, "graph.fb missing"):
-		return "Run 'archigraph index' to generate the binary graph format."
+		return "Run 'grafel index' to generate the binary graph format."
 	default:
 		return ""
 	}

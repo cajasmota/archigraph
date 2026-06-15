@@ -3,7 +3,7 @@ package extractor
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // external_service.go — shared, cross-language helpers for the third-party

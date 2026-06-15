@@ -1,4 +1,4 @@
-// endpoint_posture.go — archigraph_endpoint_posture MCP tool (deploy-9 caps
+// endpoint_posture.go — grafel_endpoint_posture MCP tool (deploy-9 caps
 // surfacing).
 //
 // # Background
@@ -38,8 +38,8 @@
 //
 // # Modes
 //
-//   - entity_id set  → per-entity posture (resolver mirrors archigraph_effects /
-//     archigraph_inspect: prefixed id, label, qualified name; ambiguity returns
+//   - entity_id set  → per-entity posture (resolver mirrors grafel_effects /
+//     grafel_inspect: prefixed id, label, qualified name; ambiguity returns
 //     a chooser).
 //   - entity_id unset → repo-wide scan: every endpoint/callable that carries a
 //     NON-EMPTY posture facet (a throw/catch, a feature gate, a rate limit, a
@@ -54,7 +54,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -114,7 +114,7 @@ type posturePayload struct {
 	HasPosture bool `json:"has_posture"`
 }
 
-// handleEndpointPosture implements archigraph_endpoint_posture. With entity_id
+// handleEndpointPosture implements grafel_endpoint_posture. With entity_id
 // it returns the single entity's posture; without it, the repo-wide scan.
 func (s *Server) handleEndpointPosture(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
@@ -169,7 +169,7 @@ func (s *Server) handleEndpointPosture(_ context.Context, req mcpapi.CallToolReq
 			"ambiguous":     true,
 			"entity_id":     key,
 			"matches":       out,
-			"how_to_choose": "Re-call archigraph_endpoint_posture with the prefixed id field (e.g. \"repo::1234abcd\").",
+			"how_to_choose": "Re-call grafel_endpoint_posture with the prefixed id field (e.g. \"repo::1234abcd\").",
 		}), nil
 	}
 	return jsonResult(buildPosturePayload(matches[0].repo, matches[0].ent)), nil

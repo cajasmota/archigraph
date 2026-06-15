@@ -5,12 +5,12 @@
 //
 // #5135 (PR #5136) made the CPU/concurrency knobs env-driven, but env vars are
 // captured at process start and cannot be changed in a running daemon — every
-// tweak required `archigraph restart`. The original #5135 ask was to let the
+// tweak required `grafel restart`. The original #5135 ask was to let the
 // operator change the caps "at any time".
 //
 // # Design
 //
-// caps adds a small JSON config file, `~/.archigraph/cpu.json`, that the daemon
+// caps adds a small JSON config file, `~/.grafel/cpu.json`, that the daemon
 // re-reads cheaply on demand. The precedence the daemon resolves each cap by is:
 //
 //	explicit flag/field  >  env var  >  config file  >  built-in default
@@ -46,16 +46,16 @@ const FileName = "cpu.json"
 // daemon can distinguish "unset" (fall through to env/default) from an explicit
 // zero. A non-positive value is treated as unset by the resolvers.
 type Config struct {
-	// ExtractGOMAXPROCS overrides ARCHIGRAPH_EXTRACT_GOMAXPROCS — the
+	// ExtractGOMAXPROCS overrides GRAFEL_EXTRACT_GOMAXPROCS — the
 	// per-subprocess GOMAXPROCS cap for BACKGROUND (watch/churn) reindexes.
 	ExtractGOMAXPROCS *int `json:"extract_gomaxprocs,omitempty"`
-	// RebuildGOMAXPROCS overrides ARCHIGRAPH_REBUILD_GOMAXPROCS — the
+	// RebuildGOMAXPROCS overrides GRAFEL_REBUILD_GOMAXPROCS — the
 	// per-subprocess cap for EXPLICIT foreground rebuilds.
 	RebuildGOMAXPROCS *int `json:"rebuild_gomaxprocs,omitempty"`
-	// ExtractConcurrency overrides ARCHIGRAPH_EXTRACT_CONCURRENCY — the number
+	// ExtractConcurrency overrides GRAFEL_EXTRACT_CONCURRENCY — the number
 	// of concurrent extract subprocesses.
 	ExtractConcurrency *int `json:"extract_concurrency,omitempty"`
-	// DaemonGOMAXPROCS overrides ARCHIGRAPH_DAEMON_GOMAXPROCS — the daemon's
+	// DaemonGOMAXPROCS overrides GRAFEL_DAEMON_GOMAXPROCS — the daemon's
 	// own in-process Go-runtime parallelism. Applied live via runtime.GOMAXPROCS
 	// on SIGHUP.
 	DaemonGOMAXPROCS *int `json:"daemon_gomaxprocs,omitempty"`

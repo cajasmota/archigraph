@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // lazyTestDoc builds a small graph with CALLS / STEP_IN_PROCESS edges and
@@ -194,35 +194,35 @@ func TestLazyIndexes_ConcurrentGettersBuildOnce(t *testing.T) {
 // TestResolveReloadDebounce covers the env-override precedence and default.
 func TestResolveReloadDebounce(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
-		t.Setenv("ARCHIGRAPH_MCP_RELOAD_DEBOUNCE_MS", "")
-		t.Setenv("ARCHIGRAPH_RELOAD_DEBOUNCE_MS", "")
+		t.Setenv("GRAFEL_MCP_RELOAD_DEBOUNCE_MS", "")
+		t.Setenv("GRAFEL_RELOAD_DEBOUNCE_MS", "")
 		if got := resolveReloadDebounce(); got != defaultReloadDebounceMS*time.Millisecond {
 			t.Errorf("default = %v; want %v", got, defaultReloadDebounceMS*time.Millisecond)
 		}
 	})
 	t.Run("primary env", func(t *testing.T) {
-		t.Setenv("ARCHIGRAPH_MCP_RELOAD_DEBOUNCE_MS", "5000")
-		t.Setenv("ARCHIGRAPH_RELOAD_DEBOUNCE_MS", "200")
+		t.Setenv("GRAFEL_MCP_RELOAD_DEBOUNCE_MS", "5000")
+		t.Setenv("GRAFEL_RELOAD_DEBOUNCE_MS", "200")
 		if got := resolveReloadDebounce(); got != 5000*time.Millisecond {
 			t.Errorf("got %v; want 5s (primary env wins)", got)
 		}
 	})
 	t.Run("legacy env fallback", func(t *testing.T) {
-		t.Setenv("ARCHIGRAPH_MCP_RELOAD_DEBOUNCE_MS", "")
-		t.Setenv("ARCHIGRAPH_RELOAD_DEBOUNCE_MS", "750")
+		t.Setenv("GRAFEL_MCP_RELOAD_DEBOUNCE_MS", "")
+		t.Setenv("GRAFEL_RELOAD_DEBOUNCE_MS", "750")
 		if got := resolveReloadDebounce(); got != 750*time.Millisecond {
 			t.Errorf("got %v; want 750ms (legacy env)", got)
 		}
 	})
 	t.Run("zero disables", func(t *testing.T) {
-		t.Setenv("ARCHIGRAPH_MCP_RELOAD_DEBOUNCE_MS", "0")
+		t.Setenv("GRAFEL_MCP_RELOAD_DEBOUNCE_MS", "0")
 		if got := resolveReloadDebounce(); got != 0 {
 			t.Errorf("got %v; want 0 (disabled)", got)
 		}
 	})
 	t.Run("malformed falls back to default", func(t *testing.T) {
-		t.Setenv("ARCHIGRAPH_MCP_RELOAD_DEBOUNCE_MS", "not-a-number")
-		t.Setenv("ARCHIGRAPH_RELOAD_DEBOUNCE_MS", "")
+		t.Setenv("GRAFEL_MCP_RELOAD_DEBOUNCE_MS", "not-a-number")
+		t.Setenv("GRAFEL_RELOAD_DEBOUNCE_MS", "")
 		if got := resolveReloadDebounce(); got != defaultReloadDebounceMS*time.Millisecond {
 			t.Errorf("got %v; want default on malformed input", got)
 		}

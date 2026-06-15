@@ -35,7 +35,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Validator library identifiers used as the VALIDATES edge target stub and the

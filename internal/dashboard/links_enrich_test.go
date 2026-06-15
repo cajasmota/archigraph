@@ -12,7 +12,7 @@ package dashboard
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestEnrichLinkEndpoints_PopulatesNameAndFile asserts that a link whose source

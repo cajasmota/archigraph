@@ -1,5 +1,5 @@
 // discover.go implements the `discover` subcommand: walk the repo and
-// catalog archigraph capabilities from structural signals (YAML rules,
+// catalog grafel capabilities from structural signals (YAML rules,
 // synthesizer functions, extractor directories, test fixtures, engine
 // pattern files). Emits a proposal of records that SHOULD exist based on
 // code evidence, plus orphan + cite-drift reports against the existing
@@ -453,10 +453,10 @@ func extractorDirLister(repoRoot string, cands map[string]*Candidate) {
 	}
 }
 
-// fixtureLister walks cmd/archigraph/testdata/audit*/ and adds evidence
+// fixtureLister walks cmd/grafel/testdata/audit*/ and adds evidence
 // to candidates whose slugged framework name matches a subdir.
 func fixtureLister(repoRoot string, cands map[string]*Candidate) {
-	root := filepath.Join(repoRoot, "cmd", "archigraph", "testdata")
+	root := filepath.Join(repoRoot, "cmd", "grafel", "testdata")
 	entries, err := os.ReadDir(root)
 	if err != nil {
 		return
@@ -492,7 +492,7 @@ func fixtureLister(repoRoot string, cands map[string]*Candidate) {
 			}
 			slug := slugifyFramework(name)
 			ids := indexBySlug[slug]
-			rel := filepath.Join("cmd", "archigraph", "testdata", e.Name(), sub.Name())
+			rel := filepath.Join("cmd", "grafel", "testdata", e.Name(), sub.Name())
 			for _, id := range ids {
 				addEvidence(cands[id], "test_fixture", rel, "")
 			}

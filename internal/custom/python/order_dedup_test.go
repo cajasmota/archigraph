@@ -26,10 +26,10 @@ import (
 	"runtime"
 	"testing"
 
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/graphql"
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/graphql"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 var testdataDir = func() string {

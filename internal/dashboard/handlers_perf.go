@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/perf"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/perf"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ func (s *Server) handlePerfRecord(w http.ResponseWriter, r *http.Request) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // perfComponents lazily constructs (or returns cached) perf.Recorder and
-// perf.Evaluator wired to the archigraph home directory's history file.
+// perf.Evaluator wired to the grafel home directory's history file.
 // It reads the current settings to pick up any configured perf_budgets.
 func (s *Server) perfComponents() (*perf.Recorder, *perf.Evaluator, string) {
 	homeDir, _ := registry.HomeDir()

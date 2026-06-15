@@ -3,7 +3,7 @@ package engine
 // Regression tests for the NestJS HTTP-endpoint UNDERCOUNT + mis-attribution
 // bug reported by the upvate-v2 Django→NestJS migration (the parity oracle).
 //
-// Report: core-backend-v2/.migration/plans/archigraph-endpoint-undercount-report.md
+// Report: core-backend-v2/.migration/plans/grafel-endpoint-undercount-report.md
 //
 // Three defects in synthesizeNestJS / applyHTTPEndpointSynthesis:
 //
@@ -26,7 +26,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // sourceFileForID returns the SourceFile of the first endpoint-definition

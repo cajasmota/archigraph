@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/version"
+	"github.com/cajasmota/grafel/internal/version"
 )
 
 // infoReply is the wire shape for GET /api/info.

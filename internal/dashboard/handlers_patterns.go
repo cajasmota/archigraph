@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/agentpatterns"
+	"github.com/cajasmota/grafel/internal/agentpatterns"
 )
 
 // ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ import (
 // groupPatternsDir returns the directory where patterns.json is stored for a group.
 func groupPatternsDir(groupName string) string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".archigraph", "groups", groupName+"-patterns")
+	return filepath.Join(home, ".grafel", "groups", groupName+"-patterns")
 }
 
 // loadAgentPatterns reads the strongly-typed Pattern slice via the

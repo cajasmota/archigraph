@@ -40,14 +40,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/substrate"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/substrate"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // repoSourcePathOverrides lets the cli layer attach the on-disk source
 // directory for each repo slug before runConstantPropagationPass runs.
 // loadAllGraphs derives FileRoot from the staged graph directory, which
-// resolves to the .archigraph store path — not the source repo. The
+// resolves to the .grafel store path — not the source repo. The
 // substrate sniffer needs the source repo path to read .ts / .py / .java
 // / .go files; this map is the bridge.
 //

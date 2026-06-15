@@ -7,7 +7,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func findCSharpEnum(recs []types.EntityRecord, name string) *types.EntityRecord {

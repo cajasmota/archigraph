@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the Rust route-hit extractor so the test_suite (carrying
 	// e2e_route_calls) comes from the REAL extractor, not a hand-built fixture.
-	_ "github.com/cajasmota/archigraph/internal/custom/rust"
+	_ "github.com/cajasmota/grafel/internal/custom/rust"
 )
 
 // Issue #4749 LIVE-REPRO (resolve side) — Rust Actix / Axum / Rocket route-hit

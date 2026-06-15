@@ -43,8 +43,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -98,7 +98,7 @@ var (
 )
 
 func (e *cppGrpcExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/cpp")
+	tracer := otel.Tracer("grafel/custom/cpp")
 	_, span := tracer.Start(ctx, "indexer.cpp_grpc.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),
@@ -178,7 +178,7 @@ func (e *cppGrpcExtractor) Extract(ctx context.Context, file extractor.FileInput
 			}
 			// Auth: when the file wires an auth-enforcing interceptor /
 			// metadata-processor, the registered service methods are guarded.
-			// Stamp auth_middleware (the MCP archigraph_auth_coverage signal-1
+			// Stamp auth_middleware (the MCP grafel_auth_coverage signal-1
 			// key) + auth_required/auth_method/auth_confidence on the method.
 			if auth.enforced {
 				setProps(&ent,

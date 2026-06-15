@@ -36,13 +36,13 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // emitMigrationEntitiesEnv mirrors the constant in
 // internal/extractors/python/extractor.go.  Both must stay in sync.
-const emitMigrationEntitiesEnv = "ARCHIGRAPH_EMIT_MIGRATION_ENTITIES"
+const emitMigrationEntitiesEnv = "GRAFEL_EMIT_MIGRATION_ENTITIES"
 
 // isDjangoMigrationFile returns true for Python files that live inside a
 // Django migrations/ package (e.g. core/migrations/0019_*.py).  Mirrors the
@@ -57,7 +57,7 @@ func isDjangoMigrationFile(path string) bool {
 }
 
 // shouldSkipMigrationFile returns true when the given file is an
-// auto-generated Django migration AND the ARCHIGRAPH_EMIT_MIGRATION_ENTITIES
+// auto-generated Django migration AND the GRAFEL_EMIT_MIGRATION_ENTITIES
 // opt-in env var is NOT set.  When this returns true the hierarchy extractor
 // should emit no class entities for the file (issue #2603).
 func shouldSkipMigrationFile(path string) bool {

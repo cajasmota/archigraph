@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/docgen"
+	"github.com/cajasmota/grafel/internal/docgen"
 )
 
 // ---------------------------------------------------------------------------
@@ -37,8 +37,8 @@ func sampleBundle() docgen.LLMPromptBundle {
 		GraphContext: docgen.LLMGraphContext{
 			EntityName:    "loadEntityContext",
 			EntityKind:    "function",
-			QualifiedName: "github.com/cajasmota/archigraph/internal/docgen.loadEntityContext",
-			Repo:          "/Users/user/archigraph",
+			QualifiedName: "github.com/cajasmota/grafel/internal/docgen.loadEntityContext",
+			Repo:          "/Users/user/grafel",
 			SourceFile:    "internal/docgen/tier0.go",
 			NeighbourBriefs: []docgen.NeighbourBrief{
 				{EntityID: "nb001", Name: "findGroupGraphDirs", Kind: "function", Relationship: "CALLS"},
@@ -152,7 +152,7 @@ func TestRoundTrip_LLMGraphContext(t *testing.T) {
 	orig := docgen.LLMGraphContext{
 		EntityName:    "Run",
 		EntityKind:    "function",
-		QualifiedName: "github.com/cajasmota/archigraph/internal/docgen.Run",
+		QualifiedName: "github.com/cajasmota/grafel/internal/docgen.Run",
 		Repo:          "/repo",
 		SourceFile:    "internal/docgen/tier0.go",
 		NeighbourBriefs: []docgen.NeighbourBrief{

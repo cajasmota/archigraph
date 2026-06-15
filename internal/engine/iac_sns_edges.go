@@ -43,7 +43,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // iacSNSTopicName extracts the bare topic name from a topic name or ARN,

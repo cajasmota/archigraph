@@ -41,7 +41,7 @@ package python
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // pythonKnownExternalRoots is the set of top-level Python package names

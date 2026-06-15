@@ -2,7 +2,7 @@
 //
 // # Why
 //
-// archigraph dogfoods itself: the `archigraph` repo is an indexed group, so
+// grafel dogfoods itself: the `grafel` repo is an indexed group, so
 // the daemon's fsnotify watcher catches every `git worktree add` and would
 // cold-index the new worktree as a SEPARATE repo, keyed under
 // hash(worktreePath) with its OWN ~100MB full graph store. The rewrite agent

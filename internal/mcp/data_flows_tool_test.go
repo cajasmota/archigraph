@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // writeDataFlowSidecar writes a data-flow sidecar for group "test" under a
@@ -15,7 +15,7 @@ func writeDataFlowSidecar(t *testing.T, doc dataFlowSidecarDoc) {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	dir := filepath.Join(home, ".archigraph", "groups")
+	dir := filepath.Join(home, ".grafel", "groups")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func writeDataFlowSidecar(t *testing.T, doc dataFlowSidecarDoc) {
 }
 
 // TestDataFlowsTool_ProjectsEdge is the #3867 MCP-projection value assertion:
-// the archigraph_data_flows tool surfaces the SPECIFIC DATA_FLOWS_TO edge from
+// the grafel_data_flows tool surfaces the SPECIFIC DATA_FLOWS_TO edge from
 // the sidecar — with its field / sink_kind / sink provenance — so the rewrite
 // agent can query payload-shape flows. Before #3867 no tool projected it.
 func TestDataFlowsTool_ProjectsEdge(t *testing.T) {

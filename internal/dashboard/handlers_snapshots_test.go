@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -170,7 +170,7 @@ func TestSnapshotID_Format(t *testing.T) {
 
 // setupSnapshotEnv sets up a minimal filesystem that lets the snapshot
 // handlers find a group "testgroup" with one repo "repo1", honoring
-// ARCHIGRAPH_HOME so all state stays inside t.TempDir().
+// GRAFEL_HOME so all state stays inside t.TempDir().
 //
 // It returns:
 //   - the Server under test
@@ -178,12 +178,12 @@ func TestSnapshotID_Format(t *testing.T) {
 func setupSnapshotEnv(t *testing.T) (*Server, string) {
 	t.Helper()
 	tmp := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", tmp)
+	t.Setenv("GRAFEL_HOME", tmp)
 
 	// Create the fake repo directory with a graph.json.
 	repoDir := filepath.Join(tmp, "repos", "repo1")
-	archigraphDir := daemon.StateDirForRepo(repoDir)
-	if err := os.MkdirAll(archigraphDir, 0o755); err != nil {
+	grafelDir := daemon.StateDirForRepo(repoDir)
+	if err := os.MkdirAll(grafelDir, 0o755); err != nil {
 		t.Fatalf("mkdir repo: %v", err)
 	}
 	doc := graph.Document{
@@ -199,7 +199,7 @@ func setupSnapshotEnv(t *testing.T) (*Server, string) {
 		Stats: graph.Stats{Entities: 2, Relationships: 1},
 	}
 	graphBytes, _ := json.Marshal(doc)
-	if err := os.WriteFile(filepath.Join(archigraphDir, "graph.json"), graphBytes, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(grafelDir, "graph.json"), graphBytes, 0o644); err != nil {
 		t.Fatalf("write graph.json: %v", err)
 	}
 
@@ -424,7 +424,7 @@ func TestSnapshotDiff_DetectsNewEntity(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// 2. Add a third entity to the live graph.
-	archigraphDir := daemon.StateDirForRepo(repoDir)
+	grafelDir := daemon.StateDirForRepo(repoDir)
 	doc := graph.Document{
 		Version: 1,
 		Repo:    "repo1",
@@ -436,7 +436,7 @@ func TestSnapshotDiff_DetectsNewEntity(t *testing.T) {
 		Stats: graph.Stats{Entities: 3},
 	}
 	b, _ := json.Marshal(doc)
-	if err := os.WriteFile(filepath.Join(archigraphDir, "graph.json"), b, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(grafelDir, "graph.json"), b, 0o644); err != nil {
 		t.Fatalf("update graph.json: %v", err)
 	}
 

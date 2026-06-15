@@ -10,8 +10,8 @@ package graphql_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findGraphRelates returns the first GRAPH_RELATES edge from `owner` whose ToID

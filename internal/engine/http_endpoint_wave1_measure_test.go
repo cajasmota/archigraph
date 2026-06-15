@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // TestWave1Measurement_PythonJavaConsumerCounts is a measurement harness
 // rather than an assertion test: it walks the developer-local Python and
 // Java fixtures and reports the number of consumer-side http_endpoint
 // entities and FETCHES edges the detector emits per-language. It only
-// runs when ARCHIGRAPH_W1_MEASURE=1 is set in the environment so the
+// runs when GRAFEL_W1_MEASURE=1 is set in the environment so the
 // regular CI run is unaffected.
 //
 // Why a test instead of a binary: the engine.Detect API is package-private
@@ -28,8 +28,8 @@ import (
 //	[wave1-measure] lang=python repo=client-fixture-a endpoints=N fetches=M
 //	[wave1-measure] lang=java repo=client-fixture-d endpoints=N fetches=M
 func TestWave1Measurement_PythonJavaConsumerCounts(t *testing.T) {
-	if os.Getenv("ARCHIGRAPH_W1_MEASURE") != "1" {
-		t.Skip("set ARCHIGRAPH_W1_MEASURE=1 to run wave-1 corpus measurement")
+	if os.Getenv("GRAFEL_W1_MEASURE") != "1" {
+		t.Skip("set GRAFEL_W1_MEASURE=1 to run wave-1 corpus measurement")
 	}
 	home, _ := os.UserHomeDir()
 	cases := []struct {
@@ -37,8 +37,8 @@ func TestWave1Measurement_PythonJavaConsumerCounts(t *testing.T) {
 		exts []string
 		root string
 	}{
-		{"python", []string{".py"}, filepath.Join(home, "private/archigraph-fixtures/client-fixture-a")},
-		{"java", []string{".java"}, filepath.Join(home, "private/archigraph-fixtures/client-fixture-d")},
+		{"python", []string{".py"}, filepath.Join(home, "private/grafel-fixtures/client-fixture-a")},
+		{"java", []string{".java"}, filepath.Join(home, "private/grafel-fixtures/client-fixture-d")},
 	}
 	rules, err := LoadAllRules()
 	if err != nil {

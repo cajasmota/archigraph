@@ -1,6 +1,6 @@
-// Package personas contains structural validation tests for archigraph persona files.
+// Package personas contains structural validation tests for grafel persona files.
 //
-// Each persona lives in skills/archigraph-consult/personas/*.md and must satisfy the
+// Each persona lives in skills/grafel-consult/personas/*.md and must satisfy the
 // invariants defined here. These tests act as a CI gate preventing template drift.
 package personas
 
@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// personaDir returns the absolute path to skills/archigraph-consult/personas/
+// personaDir returns the absolute path to skills/grafel-consult/personas/
 // relative to this test file's source location (two levels up from internal/personas/).
 func personaDir(t *testing.T) string {
 	t.Helper()
@@ -26,7 +26,7 @@ func personaDir(t *testing.T) string {
 	// thisFile = .../internal/personas/validate_test.go
 	// repo root = two directories up
 	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
-	dir := filepath.Join(repoRoot, "skills", "archigraph-consult", "personas")
+	dir := filepath.Join(repoRoot, "skills", "grafel-consult", "personas")
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		t.Fatalf("cannot resolve persona dir: %v", err)
@@ -73,14 +73,14 @@ var requiredSectionsLimited = []string{
 
 // sharedSkillReadRef is the exact substring that must appear in the READ Protocol body
 // of primary (non-limited) personas.
-const sharedSkillReadRef = "archigraph-graph-read"
+const sharedSkillReadRef = "grafel-graph-read"
 
 // sharedSkillWriteRef is the exact substring that must appear in the save section body
 // of primary personas.
-const sharedSkillWriteRef = "archigraph-graph-write"
+const sharedSkillWriteRef = "grafel-graph-write"
 
 // telemetryCall is the MCP tool that must appear in every persona's Lifecycle telemetry section.
-const telemetryCall = "archigraph_persona_event"
+const telemetryCall = "grafel_persona_event"
 
 // frontmatter holds the parsed YAML frontmatter of a persona file.
 type frontmatter struct {
@@ -226,7 +226,7 @@ func TestPersonaStructuralInvariants(t *testing.T) {
 				}
 			}
 
-			// ── 5. Lifecycle telemetry calls archigraph_persona_event ─────────────
+			// ── 5. Lifecycle telemetry calls grafel_persona_event ─────────────
 			telemetryBody := sectionBody(body, "## Lifecycle telemetry")
 			if telemetryBody == "" {
 				t.Errorf("## Lifecycle telemetry section is empty or missing")

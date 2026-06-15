@@ -22,5 +22,5 @@ func newBuiltinBackend(_ context.Context) (Backend, error) {
 }
 
 // BuiltinCompiledIn reports whether the pure-Go MiniLM backend is available
-// in this build. Used for diagnostics (e.g. `archigraph doctor`).
+// in this build. Used for diagnostics (e.g. `grafel doctor`).
 func BuiltinCompiledIn() bool { return false }

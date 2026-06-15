@@ -45,7 +45,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // RelKindRenamedFrom is the edge kind emitted by the rename-detection pass.

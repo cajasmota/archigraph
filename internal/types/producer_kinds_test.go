@@ -1,6 +1,6 @@
 package types_test
 
-// This test scans the archigraph producer codebase for hard-coded `Kind: "..."`
+// This test scans the grafel producer codebase for hard-coded `Kind: "..."`
 // string literals on Entity / Relationship / EntityRecord / RelationshipRecord
 // composite literals and asserts that every distinct literal value is covered
 // by IsValidEntityKind or IsValidRelationshipKind respectively.
@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // looksLikeRelationshipKind reports whether s matches the UPPER_SNAKE shape
@@ -222,7 +222,7 @@ func TestProducerKindLiterals_AreValid(t *testing.T) {
 
 	// Aggregate bad literals so the failure message lists every offender.
 	//
-	// Scoping note: archigraph has two coexisting entity-kind taxonomies:
+	// Scoping note: grafel has two coexisting entity-kind taxonomies:
 	//   1. The SCOPE.* taxonomy emitted by tree-sitter extractors and covered
 	//      by IsValidEntityKind / AllEntityKinds.
 	//   2. An older YAML-driven detector taxonomy in internal/engine/ that

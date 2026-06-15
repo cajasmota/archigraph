@@ -3,7 +3,7 @@ package enrichers
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func makeEntity(id, kind, subtype, sourceFile, name string) types.EntityRecord {

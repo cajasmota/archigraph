@@ -3,7 +3,7 @@ package patterns
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // testFixtureDetector detects test fixture and setup patterns.

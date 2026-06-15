@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/walk"
+	"github.com/cajasmota/grafel/internal/daemon/walk"
 )
 
 // PredictRSS returns a predicted peak RSS contribution (in MB) for
 // indexing repoPath. It walks the repo, sums source-file bytes, and
-// applies a rough multiplier that matches measured archigraph behaviour
+// applies a rough multiplier that matches measured grafel behaviour
 // on the real-fixture benchmark (post-#639): peak RSS ≈ 50–80× source
 // bytes. We use 70× for the cheap predictor; per-repo history (when
 // available) overrides this.
@@ -64,7 +64,7 @@ func PredictRSS(repoPath string) int64 {
 }
 
 // RSSHistory is the on-disk record of per-repo measured peak RSS.
-// Persisted at ~/.archigraph/repo-rss-history.json (or wherever the
+// Persisted at ~/.grafel/repo-rss-history.json (or wherever the
 // daemon layout points). Atomically replaced on update.
 type RSSHistory struct {
 	path string

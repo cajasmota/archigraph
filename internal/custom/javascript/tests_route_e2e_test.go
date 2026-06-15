@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // Issue #4399 (extractor side). The browser-e2e route extractor must capture

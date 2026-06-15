@@ -29,7 +29,7 @@
 // recogniser greens all twelve framework families.
 //
 // Output: the same property contract the Java resolver writes, so the
-// archigraph_auth_coverage MCP tool (auth_coverage.go signal 1) and the
+// grafel_auth_coverage MCP tool (auth_coverage.go signal 1) and the
 // security dashboard light up uniformly across languages:
 //
 //	auth_policy     — JSON-encoded AuthPolicy (source chain for the dashboard)
@@ -47,8 +47,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/engine/httproutes"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/engine/httproutes"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // jsAuthMiddlewareNames is the cross-framework vocabulary of auth/authz
@@ -586,7 +586,7 @@ func stampAuthPolicy(props map[string]string, policy AuthPolicy) {
 		props["auth_roles"] = strings.Join(policy.Roles, ",")
 	}
 	// #authz — the specific fine-grained permission / scope required by the
-	// endpoint (Nest @RequirePermissions / @Scopes), so archigraph_auth_coverage
+	// endpoint (Nest @RequirePermissions / @Scopes), so grafel_auth_coverage
 	// answers "what permission does this route require?".
 	if len(policy.Permissions) > 0 {
 		perms := append([]string(nil), policy.Permissions...)
@@ -611,7 +611,7 @@ func stampAuthPolicy(props map[string]string, policy AuthPolicy) {
 		}
 	}
 	// #deploy-9 — surface the NestJS metadata-decorator permission page(s) under
-	// a dedicated key so archigraph_auth_coverage answers "what page does this
+	// a dedicated key so grafel_auth_coverage answers "what page does this
 	// route require?" without re-deriving it from auth_permissions.
 	if policy.Required && len(policy.Permissions) > 0 {
 		pages := append([]string(nil), policy.Permissions...)

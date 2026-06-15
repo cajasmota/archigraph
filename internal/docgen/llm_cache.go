@@ -3,7 +3,7 @@
 //
 // The cache stores per-section LLM results at:
 //
-//	~/.archigraph/docs/<group>/.llm-cache/<prompt_hash>.json
+//	~/.grafel/docs/<group>/.llm-cache/<prompt_hash>.json
 //
 // Design:
 //   - Key   = per-section prompt_hash (sha256 of version+section+entity+nodeHash+guidance).
@@ -122,9 +122,9 @@ func CacheStats(cacheDir string) (entries int, totalBytes int64, err error) {
 
 // DefaultCacheDir returns the default cache directory for a group:
 //
-//	~/.archigraph/docs/<group>/.llm-cache/
+//	~/.grafel/docs/<group>/.llm-cache/
 //
-// Respects ARCHIGRAPH_HOME override (same as tier0/tier1 helpers).
+// Respects GRAFEL_HOME override (same as tier0/tier1 helpers).
 func DefaultCacheDir(group string) (string, error) {
 	home, err := tier1HomeDir() // reuse the existing home-dir resolver
 	if err != nil {

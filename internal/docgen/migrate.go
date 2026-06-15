@@ -1,10 +1,10 @@
-// migrate.go — archigraph docgen migrate-in-repo (issue #2216, epic #2207).
+// migrate.go — grafel docgen migrate-in-repo (issue #2216, epic #2207).
 //
 // Extends the existing #2193-era migrate-in-repo concept to be aware of the
 // staging-dir layout introduced in #2214/#2215:
 //
-//   - Walks every registered repo's docs/ and <project>/.archigraph/staging/ dirs
-//   - Moves in-repo docs to ~/.archigraph/docs/<group>/
+//   - Walks every registered repo's docs/ and <project>/.grafel/staging/ dirs
+//   - Moves in-repo docs to ~/.grafel/docs/<group>/
 //   - Backs up any existing canonical before overwriting (to <canonical>.previous-<ts>/)
 //   - Idempotent: already-migrated dirs are skipped
 package docgen
@@ -80,7 +80,7 @@ type MigratePair struct {
 }
 
 // RunMigrateInRepo migrates in-repo docs and staging dirs into the canonical
-// ~/.archigraph/docs/<group>/ layout.
+// ~/.grafel/docs/<group>/ layout.
 func RunMigrateInRepo(opts MigrateOptions) (*MigrateResult, error) {
 	if opts.GroupConfigLoader == nil {
 		return nil, fmt.Errorf("MigrateOptions.GroupConfigLoader must be set")
@@ -119,8 +119,8 @@ func RunMigrateInRepo(opts MigrateOptions) (*MigrateResult, error) {
 			continue
 		}
 
-		// homeDir is already the archigraph home (resolveHomeDir guarantees
-		// this convention) — do NOT append ".archigraph".
+		// homeDir is already the grafel home (resolveHomeDir guarantees
+		// this convention) — do NOT append ".grafel".
 		canonicalBase := filepath.Join(homeDir, "docs", group)
 
 		for _, repo := range repos {
@@ -152,11 +152,11 @@ func RunMigrateInRepo(opts MigrateOptions) (*MigrateResult, error) {
 				}
 			}
 
-			// ── B. In-repo .archigraph/staging/ runs ──────────────────────
+			// ── B. In-repo .grafel/staging/ runs ──────────────────────
 			// Any staging run under the project root that was never promoted
 			// (e.g. aborted runs) is moved to a timestamped subdir under the
 			// canonical docs path so nothing is silently lost.
-			stagingBase := filepath.Join(repo.Path, ".archigraph", "staging")
+			stagingBase := filepath.Join(repo.Path, ".grafel", "staging")
 			stagingInfo, statErr := os.Stat(stagingBase)
 			if statErr == nil && stagingInfo.IsDir() {
 				entries, readErr := os.ReadDir(stagingBase)
@@ -197,7 +197,7 @@ func migrateDir(src, dst string, dryRun bool, confirm func(string) bool, result 
 	}
 
 	if dryRun {
-		fmt.Fprintf(os.Stderr, "archigraph docgen migrate-in-repo (dry-run): would move %s → %s\n", src, dst)
+		fmt.Fprintf(os.Stderr, "grafel docgen migrate-in-repo (dry-run): would move %s → %s\n", src, dst)
 		result.Migrated = append(result.Migrated, MigratePair{Src: src, Dst: dst})
 		return nil
 	}
@@ -227,12 +227,12 @@ func migrateDir(src, dst string, dryRun bool, confirm func(string) bool, result 
 		return fmt.Errorf("move %s → %s: %w", src, dst, err)
 	}
 
-	fmt.Fprintf(os.Stderr, "archigraph docgen migrate-in-repo: moved %s → %s\n", src, dst)
+	fmt.Fprintf(os.Stderr, "grafel docgen migrate-in-repo: moved %s → %s\n", src, dst)
 	result.Migrated = append(result.Migrated, MigratePair{Src: src, Dst: dst, Backup: backup})
 	return nil
 }
 
-// looksLikeDocgenOutput checks whether dir contains known archigraph docgen
+// looksLikeDocgenOutput checks whether dir contains known grafel docgen
 // marker files (same heuristic as internal/cli.isDocgenOutput, duplicated here
 // to avoid an import cycle).
 func looksLikeDocgenOutput(dir string) bool {

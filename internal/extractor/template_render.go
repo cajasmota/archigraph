@@ -3,7 +3,7 @@ package extractor
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // template_render.go — shared cross-language helpers for the server-side

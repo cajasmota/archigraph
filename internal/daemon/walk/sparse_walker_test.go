@@ -16,8 +16,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/walk"
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/daemon/walk"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // mkTree creates the fixture file tree and returns the root.

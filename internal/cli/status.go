@@ -11,9 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cajasmota/archigraph/internal/daemon/client"
-	"github.com/cajasmota/archigraph/internal/daemon/worktree"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/daemon/worktree"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // newStatusCmd reports both daemon health and per-group index state.
@@ -77,7 +77,7 @@ func runStatus(w io.Writer, filter string, ref string, showAll bool) error {
 				fmt.Fprintf(w, "Daemon: running (binary mismatch)\n")
 				fmt.Fprintf(w, "  ⚠️ DAEMON MISMATCH: status shows a daemon from %s, but you ran %s.\n",
 					st.BinaryPath, currentBin)
-				fmt.Fprintf(w, "  The %s binary is likely stale. Run: archigraph doctor --kill-stale && archigraph start\n",
+				fmt.Fprintf(w, "  The %s binary is likely stale. Run: grafel doctor --kill-stale && grafel start\n",
 					st.BinaryPath)
 				fmt.Fprintf(w, "  version: %s (from %s)\n", st.Version, st.BinaryPath)
 				fmt.Fprintf(w, "  socket:  %s\n", st.SocketPath)
@@ -204,7 +204,7 @@ func runStatus(w io.Writer, filter string, ref string, showAll bool) error {
 		if statErr != nil && os.IsNotExist(statErr) {
 			fmt.Fprintf(w, "\nGroup: %s\n", g.Name)
 			fmt.Fprintf(w, "  ⚠️ config not found: %s\n", g.ConfigPath)
-			fmt.Fprintf(w, "  Run 'archigraph cleanup' to remove this orphaned entry\n")
+			fmt.Fprintf(w, "  Run 'grafel cleanup' to remove this orphaned entry\n")
 			continue
 		}
 
@@ -229,7 +229,7 @@ func runStatus(w io.Writer, filter string, ref string, showAll bool) error {
 
 // printWorktreeChildren prints the ephemeral worktree-child entries for the
 // given group, indented under their parent repo slug. Reads the worktrees.json
-// store from the archigraph home directory. Silently skips when the file does
+// store from the grafel home directory. Silently skips when the file does
 // not exist (no worktrees discovered yet).
 func printWorktreeChildren(w io.Writer, groupName string) {
 	h, err := registry.HomeDir()

@@ -1,7 +1,7 @@
 // type_table.go — per-function local-variable type tracking for the
 // Go references pass (#1840).
 //
-// Background. Issue #1839's disposition breakdown on archigraph showed
+// Background. Issue #1839's disposition breakdown on grafel showed
 // `same_package_unqualified` is the dominant remaining bucket — 24,697
 // edges, 67% of all unresolved Go edges. The top-10 unresolved roots
 // (Relationships, ToID, Properties, Get, Subtype, ID, Contains, Name,

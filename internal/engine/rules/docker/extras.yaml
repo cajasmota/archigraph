@@ -95,7 +95,7 @@ detection:
       '
     line_format: '^[a-zA-Z0-9_-]+: .+'
     notes: 'Procfile defines named process types for PaaS-based container deployments.
-      Each process type is a archigraph Service entity. The `web:` type maps to the primary
+      Each process type is a grafel Service entity. The `web:` type maps to the primary
       HTTP entrypoint. `worker:` and `celery:` signal background job processors. `release:`
       signals a migration / pre-deploy hook. Procfile detection should be combined
       with presence of requirements.txt, Gemfile, package.json, or similar to confirm
@@ -342,7 +342,7 @@ entity_types:
   - simple: 'depends_on: [db, redis]'
   - condition_form: "depends_on:\n  db:\n    condition: service_healthy\n  redis:\n\
       \    condition: service_started\n"
-  notes: 'Each entry under `services:` is a distinct archigraph Service entity. Extract
+  notes: 'Each entry under `services:` is a distinct grafel Service entity. Extract
     edges for depends_on relationships — these form the service dependency graph.
     Port mappings reveal the external interface surface. Volume declarations with
     named volumes (db-data:) signal stateful services. Networks membership signals

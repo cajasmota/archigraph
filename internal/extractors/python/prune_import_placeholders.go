@@ -53,7 +53,7 @@
 package python
 
 import (
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // attachImportRelationships moves the IMPORTS relationships from standalone

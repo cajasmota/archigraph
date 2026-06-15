@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // buildNoisyFindDoc builds a document with a small cluster of high-signal hits
@@ -108,7 +108,7 @@ func TestMinScore_ZeroDisablesCutoff(t *testing.T) {
 
 // TestEdgesFooter_HonestWording verifies the new edges-summary footer wording.
 // The footer must not claim a "shown: N" count; instead it must say
-// "edges-summary: available=N (call archigraph_expand to see relationships)".
+// "edges-summary: available=N (call grafel_expand to see relationships)".
 func TestEdgesFooter_HonestWording(t *testing.T) {
 	rr := renderResult{
 		MatchedTotal: 2,
@@ -136,8 +136,8 @@ func TestEdgesFooter_HonestWording(t *testing.T) {
 	if !strings.Contains(out, "edges-summary: available=") {
 		t.Errorf("expected 'edges-summary: available=N' footer; got:\n%s", out)
 	}
-	if !strings.Contains(out, "archigraph_expand") {
-		t.Errorf("edges footer must point to archigraph_expand; got:\n%s", out)
+	if !strings.Contains(out, "grafel_expand") {
+		t.Errorf("edges footer must point to grafel_expand; got:\n%s", out)
 	}
 
 	// The available count should be 2 (1 CALLS + 1 USES).

@@ -33,7 +33,7 @@ func TestFeedbackEventValidation(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := callTool(t, srv, "archigraph_feedback_event", tc.args)
+			res := callTool(t, srv, "grafel_feedback_event", tc.args)
 			if res == nil || !res.IsError {
 				t.Fatalf("expected error result for %q", tc.name)
 			}
@@ -52,7 +52,7 @@ func TestFeedbackEventMilestoneAccepted(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpHome, ".config"))
 
 	srv := newFeedbackTestServer(t)
-	res := callTool(t, srv, "archigraph_feedback_event", map[string]any{
+	res := callTool(t, srv, "grafel_feedback_event", map[string]any{
 		"outcome": "milestone",
 		"phase":   "port:inspections",
 		"note":    "inspections module reaches parity",
@@ -71,7 +71,7 @@ func TestFeedbackEventJSONLAppend(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpHome, ".config"))
 
 	srv := newFeedbackTestServer(t)
-	res := callTool(t, srv, "archigraph_feedback_event", map[string]any{
+	res := callTool(t, srv, "grafel_feedback_event", map[string]any{
 		"outcome":    "missing_capability",
 		"group":      "upvate-core",
 		"phase":      "port:inspections",

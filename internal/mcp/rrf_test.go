@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/embed"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/embed"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // fakeBE is a deterministic token-bag backend used by the RRF integration

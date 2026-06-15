@@ -1,7 +1,7 @@
 // Package javascript — unit tests for issue #1748: non-addressable local
 // const bindings inside function/component bodies are tagged with
 // Properties["local_scope"]="true" so the serving layer (denoise.go) can
-// hide them from archigraph_find results while keeping them emitted for
+// hide them from grafel_find results while keeping them emitted for
 // resolver use (REFERENCES/CALLS binding still works).
 package javascript_test
 

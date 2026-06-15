@@ -1,4 +1,4 @@
-// pr_impact_tools.go — MCP tool: archigraph_pr_impact (issue #4292).
+// pr_impact_tools.go — MCP tool: grafel_pr_impact (issue #4292).
 //
 // Diff/PR-scoped impact analysis with cross-change merge-risk detection. Two
 // modes, selected by the arguments supplied:
@@ -12,7 +12,7 @@
 // see internal/graph/pr_impact.go). This handler is the thin shell that loads
 // the per-ref graphs (the same StateDirForRepoRef path diff_refs uses) and feeds
 // the diff-derived change set in. The change set itself is computed by
-// graph.DiffDocs — the exact engine behind archigraph_diff_refs — so the git
+// graph.DiffDocs — the exact engine behind grafel_diff_refs — so the git
 // diff logic is reused, not duplicated.
 package mcp
 
@@ -20,12 +20,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handlePRImpact implements archigraph_pr_impact.
+// handlePRImpact implements grafel_pr_impact.
 //
 // Arguments:
 //   - group (string, optional) — inferred from cwd / registry when omitted
@@ -165,7 +165,7 @@ func loadRefGraph(repoPath, ref string) (*graph.Document, error) {
 	dir := daemon.StateDirForRepoRef(repoPath, ref)
 	doc, err := graph.LoadGraphFromDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("could not load graph for ref %q: %v (run `archigraph index` on that branch first)", ref, err)
+		return nil, fmt.Errorf("could not load graph for ref %q: %v (run `grafel index` on that branch first)", ref, err)
 	}
 	return doc, nil
 }

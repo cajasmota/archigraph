@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
 // buildLargeDoc builds a synthetic graph with nEnts entities and nRels

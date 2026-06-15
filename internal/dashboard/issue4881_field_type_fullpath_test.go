@@ -9,10 +9,10 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #4881 — FULL-PATH regression: extractor → entity → shape.

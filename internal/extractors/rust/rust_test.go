@@ -8,9 +8,9 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tsrust "github.com/smacker/go-tree-sitter/rust"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	_ "github.com/cajasmota/archigraph/internal/extractors/rust"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	_ "github.com/cajasmota/grafel/internal/extractors/rust"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // parseForTest parses Rust source using the real grammar.

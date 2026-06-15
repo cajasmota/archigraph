@@ -293,7 +293,7 @@ func TestUpdateFullAutoClearsIssue(t *testing.T) {
 		t.Fatalf("get: %v", err)
 	}
 	// The issue should have been cleared automatically.
-	if strings.Contains(out, "https://github.com/cajasmota/archigraph/issues/1942") {
+	if strings.Contains(out, "https://github.com/cajasmota/grafel/issues/1942") {
 		t.Errorf("expected issue to be auto-cleared on flip to full, but it persists:\n%s", out)
 	}
 }
@@ -311,7 +311,7 @@ func TestUpdateNotApplicableAutoClearsIssue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
-	if strings.Contains(out, "https://github.com/cajasmota/archigraph/issues/1942") {
+	if strings.Contains(out, "https://github.com/cajasmota/grafel/issues/1942") {
 		t.Errorf("expected issue to be auto-cleared on flip to not_applicable, but it persists:\n%s", out)
 	}
 }
@@ -354,7 +354,7 @@ func TestUpdatePartialKeepsIssue(t *testing.T) {
 		t.Fatalf("get: %v", err)
 	}
 	// Issue should remain — the cell is still a gap.
-	if !strings.Contains(out, "https://github.com/cajasmota/archigraph/issues/1942") {
+	if !strings.Contains(out, "https://github.com/cajasmota/grafel/issues/1942") {
 		t.Errorf("expected issue to be preserved on partial→missing flip, got:\n%s", out)
 	}
 }
@@ -395,7 +395,7 @@ func TestUpdateClearIssueFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
-	if strings.Contains(out, "https://github.com/cajasmota/archigraph/issues/1942") {
+	if strings.Contains(out, "https://github.com/cajasmota/grafel/issues/1942") {
 		t.Errorf("expected --clear-issue to remove issue on partial cell, but it persists:\n%s", out)
 	}
 }

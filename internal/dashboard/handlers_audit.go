@@ -8,7 +8,7 @@ package dashboard
 //	GET /api/audit/stream      — SSE tail; real-time entries as they are written
 //	GET /api/audit/export      — download full log as JSON or CSV
 //
-// The backend writes ~/.archigraph/audit.jsonl; this handler reads it back.
+// The backend writes ~/.grafel/audit.jsonl; this handler reads it back.
 
 import (
 	"encoding/csv"
@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/audit"
+	"github.com/cajasmota/grafel/internal/audit"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -28,7 +28,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // OrphanCallerRow is one unresolved call site returned by the endpoint.

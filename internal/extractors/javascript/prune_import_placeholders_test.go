@@ -18,8 +18,8 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // importPlaceholders returns every SCOPE.Component entity with

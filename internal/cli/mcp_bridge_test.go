@@ -24,7 +24,7 @@ type mockDaemonService struct {
 
 func (m *mockDaemonService) MCPToolList(_ *MCPToolListArgs, reply *MCPToolListReply) error {
 	reply.Tools = []mcpToolInfo{
-		{Name: "archigraph_whoami", Description: "test tool"},
+		{Name: "grafel_whoami", Description: "test tool"},
 	}
 	return nil
 }
@@ -137,7 +137,7 @@ func TestBridge_Initialize(t *testing.T) {
 	if _, ok := result.Capabilities["tools"]; !ok {
 		t.Fatal("tools capability missing from initialize response")
 	}
-	if result.ServerInfo["name"] != "archigraph" {
+	if result.ServerInfo["name"] != "grafel" {
 		t.Fatalf("server name: %q", result.ServerInfo["name"])
 	}
 }
@@ -160,7 +160,7 @@ func TestBridge_ToolsList(t *testing.T) {
 	if len(result.Tools) == 0 {
 		t.Fatal("expected at least one tool in tools/list response")
 	}
-	if result.Tools[0].Name != "archigraph_whoami" {
+	if result.Tools[0].Name != "grafel_whoami" {
 		t.Fatalf("first tool name: %q", result.Tools[0].Name)
 	}
 }
@@ -170,7 +170,7 @@ func TestBridge_ToolsCall(t *testing.T) {
 	defer stop()
 
 	resp := roundTrip(t, socketPath, "tools/call", map[string]any{
-		"name":      "archigraph_whoami",
+		"name":      "grafel_whoami",
 		"arguments": map[string]any{"cwd": "/tmp"},
 	}, "")
 
@@ -185,7 +185,7 @@ func TestBridge_ToolsCall(t *testing.T) {
 		t.Fatal("expected content in tools/call response")
 	}
 	text, _ := result.Content[0]["text"].(string)
-	if !strings.Contains(text, "archigraph_whoami") {
+	if !strings.Contains(text, "grafel_whoami") {
 		t.Fatalf("unexpected tool call content: %q", text)
 	}
 }
@@ -211,7 +211,7 @@ func TestBridge_DaemonNotRunning_ToolsList(t *testing.T) {
 
 func TestBridge_DaemonNotRunning_ToolsCall(t *testing.T) {
 	b := &bridge{socketPath: "/nonexistent/daemon.sock"}
-	params, _ := json.Marshal(map[string]any{"name": "archigraph_whoami"})
+	params, _ := json.Marshal(map[string]any{"name": "grafel_whoami"})
 	req := rpc2Request{JSONRPC: "2.0", ID: 1, Method: "tools/call", Params: params}
 	resp := b.handle(req)
 	// Should return a JSON-RPC error.
@@ -281,7 +281,7 @@ func TestBridge_ToolsCall_CWDFromMetaHint(t *testing.T) {
 
 	const wantCWD = "/home/user/myproject"
 	resp := roundTrip(t, socketPath, "tools/call", map[string]any{
-		"name":      "archigraph_whoami",
+		"name":      "grafel_whoami",
 		"arguments": map[string]any{},
 		"_meta":     map[string]any{"cwd": wantCWD},
 	}, "/other/dir") // startupCWD should be ignored when _meta.cwd is present
@@ -302,7 +302,7 @@ func TestBridge_ToolsCall_CWDFromStartup(t *testing.T) {
 
 	const wantCWD = "/home/user/projects/myrepo"
 	resp := roundTrip(t, socketPath, "tools/call", map[string]any{
-		"name":      "archigraph_whoami",
+		"name":      "grafel_whoami",
 		"arguments": map[string]any{},
 	}, wantCWD)
 
@@ -322,7 +322,7 @@ func TestBridge_ToolsCall_CWDEmpty(t *testing.T) {
 	defer stop()
 
 	resp := roundTrip(t, socketPath, "tools/call", map[string]any{
-		"name": "archigraph_whoami",
+		"name": "grafel_whoami",
 	}, "") // no startupCWD and no _meta.cwd
 
 	if resp.Error != nil {

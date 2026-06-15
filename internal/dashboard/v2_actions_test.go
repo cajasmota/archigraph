@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
-// newActionTestServer builds a Server with an isolated ARCHIGRAPH_HOME, an
+// newActionTestServer builds a Server with an isolated GRAFEL_HOME, an
 // injected rebuildRunner, and a registered group "demo" with one repo. It
 // returns the wired *httptest.Server.
 func newActionTestServer(t *testing.T, runner rebuildRunner) (*httptest.Server, *Server) {
 	t.Helper()
 	home := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", home)
+	t.Setenv("GRAFEL_HOME", home)
 
 	// Persist a group config + register it so groupConfigPath finds it.
 	cfgPath := filepath.Join(home, "demo.fleet.json")

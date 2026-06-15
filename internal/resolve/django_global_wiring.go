@@ -34,7 +34,7 @@ package resolve
 import (
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // uniqueID returns the single distinct entity ID present in ids, or "" when ids

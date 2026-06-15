@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 func TestMigrationMeta_DjangoStyle(t *testing.T) {

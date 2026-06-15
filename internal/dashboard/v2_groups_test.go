@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/quality"
+	"github.com/cajasmota/grafel/internal/quality"
 )
 
 // decodeV2Group is the wire shape returned by the v2 group endpoints.

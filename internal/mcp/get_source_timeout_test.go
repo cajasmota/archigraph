@@ -2,7 +2,7 @@
 
 // get_source_timeout_test.go — #1678 / #1773 regression coverage.
 //
-// Background: real MCP calls to archigraph_get_source against the live daemon
+// Background: real MCP calls to grafel_get_source against the live daemon
 // were observed to hang indefinitely. SIGQUIT goroutine dumps showed multiple
 // in-flight calls all stuck inside os.Open at internal/mcp/tools.go (the
 // open(2) syscall blocked in kernel for source-file paths that opened fine
@@ -35,7 +35,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/fsnotify/fsnotify"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
@@ -195,7 +195,7 @@ func TestReadSourceWindow_MissingFile(t *testing.T) {
 
 // TestGetSource_FsnotifyWatcher_CompletesQuickly — #1773 regression test.
 //
-// This is the EXACT bug class that caused archigraph_get_source to always
+// This is the EXACT bug class that caused grafel_get_source to always
 // time out at 5.000s in the iter5 quality bench (Q10, Q11). The daemon holds
 // an fsnotify watcher on every indexed source tree. On macOS, a raw os.Open
 // on a path inside a watched tree can block indefinitely in the kernel

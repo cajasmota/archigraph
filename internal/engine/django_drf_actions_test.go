@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // idsFromRecords returns the slice of entity IDs from a record slice.
@@ -2086,7 +2086,7 @@ class CompaniesViewSet(ModelViewSet):
 
 	// Nested router routes must be present.
 	// The lookup="group" param produces {group} in the path. DRF's drf-nested-routers
-	// library uses {group_pk} at runtime, but the {*} path-normalizer in archigraph
+	// library uses {group_pk} at runtime, but the {*} path-normalizer in grafel
 	// canonicalises all placeholders to {*} at match-time, so {group} resolves
 	// against any client-side placeholder variant.
 	assertHasAllIDs(t, got, []string{

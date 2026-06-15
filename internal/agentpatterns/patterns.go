@@ -3,7 +3,7 @@
 // codebase-specific recipes, link to real code exemplars, and improve as agents
 // apply and correct them.
 //
-// Storage is per-group JSON at <group>/.archigraph/patterns.json (matching the
+// Storage is per-group JSON at <group>/.grafel/patterns.json (matching the
 // convention of enrichment-resolutions.json and repair.json). FlatBuffers
 // migration is deferred to v1.1.
 package agentpatterns
@@ -151,17 +151,17 @@ type patternsEnvelope struct {
 }
 
 // patternsPath returns the canonical path for the group's patterns.json file.
-// groupArchigraphDir is the <group>/.archigraph/ directory, matching the
+// groupGrafelDir is the <group>/.grafel/ directory, matching the
 // convention used by enrichment-resolutions.json.
-func patternsPath(groupArchigraphDir string) string {
-	return filepath.Join(groupArchigraphDir, "patterns.json")
+func patternsPath(groupGrafelDir string) string {
+	return filepath.Join(groupGrafelDir, "patterns.json")
 }
 
-// Save atomically writes the pattern slice to <groupArchigraphDir>/patterns.json.
+// Save atomically writes the pattern slice to <groupGrafelDir>/patterns.json.
 // Patterns are sorted by ID before writing to ensure stable, diffable output.
-func Save(groupArchigraphDir string, patterns []Pattern) error {
-	if err := os.MkdirAll(groupArchigraphDir, 0o755); err != nil {
-		return fmt.Errorf("agentpatterns: mkdir %s: %w", groupArchigraphDir, err)
+func Save(groupGrafelDir string, patterns []Pattern) error {
+	if err := os.MkdirAll(groupGrafelDir, 0o755); err != nil {
+		return fmt.Errorf("agentpatterns: mkdir %s: %w", groupGrafelDir, err)
 	}
 
 	// Stable sort by ID so consecutive saves are byte-identical when no data
@@ -181,7 +181,7 @@ func Save(groupArchigraphDir string, patterns []Pattern) error {
 		return fmt.Errorf("agentpatterns: marshal: %w", err)
 	}
 
-	path := patternsPath(groupArchigraphDir)
+	path := patternsPath(groupGrafelDir)
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return fmt.Errorf("agentpatterns: write tmp: %w", err)
@@ -193,11 +193,11 @@ func Save(groupArchigraphDir string, patterns []Pattern) error {
 	return nil
 }
 
-// Load reads <groupArchigraphDir>/patterns.json and returns the pattern slice.
+// Load reads <groupGrafelDir>/patterns.json and returns the pattern slice.
 // Returns an empty slice (not nil) if the file does not exist, matching the
 // convention of enrichment.ReadResolutions.
-func Load(groupArchigraphDir string) ([]Pattern, error) {
-	data, err := os.ReadFile(patternsPath(groupArchigraphDir))
+func Load(groupGrafelDir string) ([]Pattern, error) {
+	data, err := os.ReadFile(patternsPath(groupGrafelDir))
 	if os.IsNotExist(err) {
 		return []Pattern{}, nil
 	}

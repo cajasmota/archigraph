@@ -1,7 +1,7 @@
 // coverage_effectiveness_tool.go — MCP tool for the reachability × line-coverage
 // cross-product report (#5063).
 //
-// Tool: archigraph_coverage_effectiveness
+// Tool: grafel_coverage_effectiveness
 //
 //	Crosses #5037 static test-reachability with #5036 ingested LCOV line
 //	coverage — both stamped on entity Properties at index time by #5061 — and
@@ -19,7 +19,7 @@
 //	the dashboard surfacing is owned by #5062 / #5067.
 //
 // This tool does NOT recompute anything — it reads the stamped Properties off
-// the loaded graph (the same way archigraph_test_reachability does) and runs
+// the loaded graph (the same way grafel_test_reachability does) and runs
 // the pure coverage.ComputeEffectivenessReport over them. HONEST degradation:
 // when a group/module has reachability but NO ingested line coverage, it says
 // the line-coverage cross is unavailable rather than fabricating verdicts; when
@@ -31,8 +31,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/coverage"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/types"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -48,7 +48,7 @@ type effEntity struct {
 	row        coverage.EffectivenessRow
 }
 
-// handleCoverageEffectiveness implements archigraph_coverage_effectiveness.
+// handleCoverageEffectiveness implements grafel_coverage_effectiveness.
 func (s *Server) handleCoverageEffectiveness(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, toolErr := s.resolveAndGroup(req)
 	if toolErr != nil {
@@ -194,7 +194,7 @@ func renderEffectiveness(group string, rep coverage.EffectivenessReport, meta ma
 	} else {
 		out += "> A static test path reaches each of these, yet 0% of its lines ran — " +
 			"likely an ineffective / tautological test. Cross-check with " +
-			"`archigraph_contract_test_effectiveness` (#4893).\n\n"
+			"`grafel_contract_test_effectiveness` (#4893).\n\n"
 		shown := rep.Ineffective
 		if len(shown) > limit {
 			shown = shown[:limit]

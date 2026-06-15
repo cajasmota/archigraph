@@ -1,7 +1,7 @@
 package mcp
 
-// mro.go — MRO-aware member resolution for archigraph_get_source /
-// archigraph_inspect (epic #3829, ticket #3833 — PR A3).
+// mro.go — MRO-aware member resolution for grafel_get_source /
+// grafel_inspect (epic #3829, ticket #3833 — PR A3).
 //
 // Problem (the rewrite agent's G2): when a class inherits a member it never
 // declares — a DRF `RoleViewSet(ModelViewSet)` inherits `retrieve` from
@@ -39,8 +39,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/frameworks/baseknowledge"
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/frameworks/baseknowledge"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // memberProvenance classifies how resolveMember tied a member to its body.
@@ -592,7 +592,7 @@ func canonicalBaseFQN(reg *baseknowledge.Registry, name string) string {
 func synthesizeExternalBody(r memberResolution) string {
 	m := r.Contract
 	var b strings.Builder
-	fmt.Fprintf(&b, "# archigraph: synthesized inherited-member contract (NOT subclass source)\n")
+	fmt.Fprintf(&b, "# grafel: synthesized inherited-member contract (NOT subclass source)\n")
 	fmt.Fprintf(&b, "# %s.%s is INHERITED — defined by %s\n", r.OwningClass, r.Member, r.DefiningClass)
 	fmt.Fprintf(&b, "# resolved via EXTENDS -> baseknowledge pack (external library base)\n")
 	if m != nil {
@@ -623,7 +623,7 @@ func synthesizeExternalBody(r memberResolution) string {
 	return b.String()
 }
 
-// inspectInheritance builds the archigraph_inspect "inheritance" section for an
+// inspectInheritance builds the grafel_inspect "inheritance" section for an
 // entity, surfacing the MRO resolution so the consumer knows the member is
 // inherited and from where (#3833). Returns nil when the entity is not an
 // inherited member (explicit bodies and non-members get no section, keeping the

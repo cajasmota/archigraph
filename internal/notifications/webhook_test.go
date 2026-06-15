@@ -157,7 +157,7 @@ func TestDispatch_RetryOnFailure(t *testing.T) {
 func TestDispatch_SignatureHeader(t *testing.T) {
 	var gotSig string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotSig = r.Header.Get("X-Archigraph-Signature")
+		gotSig = r.Header.Get("X-Grafel-Signature")
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer srv.Close()
@@ -167,7 +167,7 @@ func TestDispatch_SignatureHeader(t *testing.T) {
 	d.Dispatch(cfg, payload(EventRebuildComplete, goodSnap("g")))
 
 	if gotSig == "" {
-		t.Fatal("expected X-Archigraph-Signature header to be set")
+		t.Fatal("expected X-Grafel-Signature header to be set")
 	}
 	if len(gotSig) < 7 || gotSig[:7] != "sha256=" {
 		t.Errorf("expected signature to start with sha256=, got %s", gotSig)

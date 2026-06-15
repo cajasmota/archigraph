@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cajasmota/archigraph/internal/secrets"
+	"github.com/cajasmota/grafel/internal/secrets"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

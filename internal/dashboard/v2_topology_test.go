@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // newV2TopologyTestServer creates a test httptest.Server pre-loaded with a

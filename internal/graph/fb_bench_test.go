@@ -1,6 +1,6 @@
 // Microbenchmarks for ADR-0016: JSON vs FlatBuffers on a real graph.
 //
-// The fixture path is configurable via the ARCHIGRAPH_BENCH_FIXTURE env
+// The fixture path is configurable via the GRAFEL_BENCH_FIXTURE env
 // var so the bench is reproducible on any machine. When unset, falls
 // back to the developer's standard local fixture. If neither exists,
 // the bench is skipped (so `go test ./...` stays green on CI).
@@ -17,18 +17,18 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/graph/fbwriter"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
 
-const defaultFixture = "/tmp/archigraph-bench-fixture.json"
+const defaultFixture = "/tmp/grafel-bench-fixture.json"
 
 // fixturePaths returns (jsonPath, fbPath) and skips if the fixture
 // isn't present. The fb sidecar is materialized once next to the json.
 func fixturePaths(tb testing.TB) (string, string) {
 	tb.Helper()
-	p := os.Getenv("ARCHIGRAPH_BENCH_FIXTURE")
+	p := os.Getenv("GRAFEL_BENCH_FIXTURE")
 	if p == "" {
 		p = defaultFixture
 	}

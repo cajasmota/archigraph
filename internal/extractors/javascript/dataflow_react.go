@@ -20,7 +20,7 @@
 //
 // Each prop becomes a SCOPE.Operation entity subtype="component_prop" and the
 // component entity gains a CONTAINS edge to it (reusing existing Kinds — no new
-// entity/edge Kind, so internal/types/ stays green). archigraph_find can then
+// entity/edge Kind, so internal/types/ stays green). grafel_find can then
 // filter `subtype:component_prop` to enumerate a component's prop surface, and
 // the Data-Flow/prop_extraction cell is honestly backed by AST extraction
 // rather than the navigation-only special case.
@@ -31,7 +31,7 @@ import (
 
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractComponentProps inspects a React component's parameter list and returns

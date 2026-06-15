@@ -3,7 +3,7 @@ package javascript
 import (
 	"fmt"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // react_shared.go — shared React component + hook recognition used by the

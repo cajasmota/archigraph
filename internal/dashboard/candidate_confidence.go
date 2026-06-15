@@ -17,15 +17,15 @@
 //     to disqualify; a non-zero explicit rank (ops) always wins over the
 //     floor — so explicit human/LLM signal overrides the heuristic.
 //
-// Toggle. Set ARCHIGRAPH_CONFIDENCE_FLOOR=off (or "0", "false") to disable
+// Toggle. Set GRAFEL_CONFIDENCE_FLOOR=off (or "0", "false") to disable
 // filtering entirely; the score is still computed and surfaced so the UI can
 // show "would-be-rejected" candidates in dev mode without losing them.
 //
 // Per-surface env overrides:
 //
-//	ARCHIGRAPH_CONFIDENCE_FLOOR_FLOWS    (default 0.35)
-//	ARCHIGRAPH_CONFIDENCE_FLOOR_TOPOLOGY (default 0.45)
-//	ARCHIGRAPH_CONFIDENCE_FLOOR_PATHS    (default 0.30)
+//	GRAFEL_CONFIDENCE_FLOOR_FLOWS    (default 0.35)
+//	GRAFEL_CONFIDENCE_FLOOR_TOPOLOGY (default 0.45)
+//	GRAFEL_CONFIDENCE_FLOOR_PATHS    (default 0.30)
 
 package dashboard
 
@@ -65,7 +65,7 @@ var defaultFloors = map[Surface]float64{
 
 // FloorFor returns the active confidence floor for a surface. The order of
 // resolution is: per-surface env override → master toggle → built-in default.
-// When the master toggle ARCHIGRAPH_CONFIDENCE_FLOOR is "off"/"0"/"false",
+// When the master toggle GRAFEL_CONFIDENCE_FLOOR is "off"/"0"/"false",
 // the returned floor is 0 (every candidate is kept in the default list).
 func FloorFor(s Surface) float64 {
 	if isFloorDisabled() {
@@ -74,11 +74,11 @@ func FloorFor(s Surface) float64 {
 	var envKey string
 	switch s {
 	case SurfaceFlows:
-		envKey = "ARCHIGRAPH_CONFIDENCE_FLOOR_FLOWS"
+		envKey = "GRAFEL_CONFIDENCE_FLOOR_FLOWS"
 	case SurfaceTopology:
-		envKey = "ARCHIGRAPH_CONFIDENCE_FLOOR_TOPOLOGY"
+		envKey = "GRAFEL_CONFIDENCE_FLOOR_TOPOLOGY"
 	case SurfacePaths:
-		envKey = "ARCHIGRAPH_CONFIDENCE_FLOOR_PATHS"
+		envKey = "GRAFEL_CONFIDENCE_FLOOR_PATHS"
 	}
 	if envKey != "" {
 		if v := strings.TrimSpace(os.Getenv(envKey)); v != "" {
@@ -99,7 +99,7 @@ func FloorFor(s Surface) float64 {
 // isFloorDisabled returns true when the master toggle is off. Accepts
 // "off", "0", "false" (case-insensitive). Default behaviour (unset) is ON.
 func isFloorDisabled() bool {
-	v := strings.ToLower(strings.TrimSpace(os.Getenv("ARCHIGRAPH_CONFIDENCE_FLOOR")))
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("GRAFEL_CONFIDENCE_FLOOR")))
 	return v == "off" || v == "0" || v == "false" || v == "no"
 }
 

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // newAdj builds a callsAdjacency from a flat list of (from, to) pairs.

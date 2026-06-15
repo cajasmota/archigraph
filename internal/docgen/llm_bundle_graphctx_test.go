@@ -6,8 +6,8 @@ package docgen_test
 //   - repo            (Document.Repo for the entity's document)
 //   - source_window   (N lines around entity.StartLine from entity.SourceFile)
 //
-// The tests set up an isolated in-memory group (via ARCHIGRAPH_HOME,
-// XDG_CONFIG_HOME, ARCHIGRAPH_DAEMON_ROOT env overrides), write a minimal
+// The tests set up an isolated in-memory group (via GRAFEL_HOME,
+// XDG_CONFIG_HOME, GRAFEL_DAEMON_ROOT env overrides), write a minimal
 // graph.json, and assert that BuildBundle populates all three fields.
 
 import (
@@ -18,10 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/docgen"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/docgen"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ func graphCtxTestHarness(t *testing.T) (groupName, entityID string) {
 
 	tmp := t.TempDir()
 
-	// Isolate the archigraph home and XDG config directories.
+	// Isolate the grafel home and XDG config directories.
 	homeDir := filepath.Join(tmp, "home")
 	xdgDir := filepath.Join(tmp, "xdg")
 	daemonRoot := filepath.Join(tmp, "daemon")
@@ -50,7 +50,7 @@ func graphCtxTestHarness(t *testing.T) (groupName, entityID string) {
 		}
 	}
 
-	t.Setenv("ARCHIGRAPH_HOME", homeDir)
+	t.Setenv("GRAFEL_HOME", homeDir)
 	t.Setenv("XDG_CONFIG_HOME", xdgDir)
 	t.Setenv(daemon.EnvRoot, daemonRoot)
 
@@ -277,7 +277,7 @@ func TestBuildBundle_GraphContext_SourceWindowGracefulMissing(t *testing.T) {
 		}
 	}
 
-	t.Setenv("ARCHIGRAPH_HOME", homeDir)
+	t.Setenv("GRAFEL_HOME", homeDir)
 	t.Setenv("XDG_CONFIG_HOME", xdgDir)
 	t.Setenv(daemon.EnvRoot, daemonRoot)
 
@@ -381,7 +381,7 @@ func TestBuildBundle_SourceWindow_CWDInside(t *testing.T) {
 	// by resolving the fleet config (use t.TempDir trick via graphCtxTestHarness).
 	// However graphCtxTestHarness does not expose repoPath. We work around this
 	// by temporarily changing cwd to the system temp dir sub-dir created by the
-	// harness. Since ARCHIGRAPH_HOME is set via t.Setenv, just call BuildBundle.
+	// harness. Since GRAFEL_HOME is set via t.Setenv, just call BuildBundle.
 	//
 	// The important assertion: source_window is non-empty, proving that BuildBundle
 	// resolved the source file against the fleet config's absRepoPath, not cwd.
@@ -413,7 +413,7 @@ func TestBuildBundle_SourceWindow_CWDInside(t *testing.T) {
 // outside the indexed repo root. This is the regression guard for #1834.
 //
 // Before the fix: BuildBundle called filepath.Join(seedRepo, sourceFile)
-// where seedRepo was a bare slug (e.g. "archigraph"). That produced a
+// where seedRepo was a bare slug (e.g. "grafel"). That produced a
 // relative path resolved from cwd, which failed with "not a directory"
 // when cwd was /tmp.
 //

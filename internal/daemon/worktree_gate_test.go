@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon/worktree"
+	"github.com/cajasmota/grafel/internal/daemon/worktree"
 )
 
 func gitInit(t *testing.T, dir string) {

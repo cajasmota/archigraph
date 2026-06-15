@@ -3,7 +3,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // docWithJoinEdge builds a one-repo Document whose DataAccess node reaches a

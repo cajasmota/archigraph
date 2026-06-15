@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
-	_ "github.com/cajasmota/archigraph/internal/extractors/php"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
+	_ "github.com/cajasmota/grafel/internal/extractors/php"
 )
 
 // extractPHP4686 parses + extracts a PHP source file through the registered

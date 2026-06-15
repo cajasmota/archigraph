@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // drfRoleFixture mirrors the upvate shape: a synthetic http_endpoint_definition

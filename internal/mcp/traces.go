@@ -1,4 +1,4 @@
-// archigraph_traces tool — process-flow query surface (#724).
+// grafel_traces tool — process-flow query surface (#724).
 //
 // Sub-actions:
 //
@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -37,7 +37,7 @@ const (
 	defaultFlowMinSteps = 4
 )
 
-// handleTraces dispatches archigraph_traces to one of its sub-actions.
+// handleTraces dispatches grafel_traces to one of its sub-actions.
 //
 // action is optional; omitting it defaults to "list" for discoverability.
 // Valid values: list (ranked process flows), get (full step chain for a
@@ -363,8 +363,8 @@ func buildGroupCrossRepoLookup(lg *LoadedGroup, seedRepo string) crossRepoLookup
 // Verbose (verbose=true): also includes kind.
 //
 // The id field carries the full ADR-0009 prefixed entity ID ("<repo>::<hex>")
-// so callers can pass it directly to archigraph_get_source without a separate
-// archigraph_inspect round-trip (#1744). node_id (local ID) is preserved for
+// so callers can pass it directly to grafel_get_source without a separate
+// grafel_inspect round-trip (#1744). node_id (local ID) is preserved for
 // backward compatibility.
 //
 // crossRepo, when non-nil, is consulted for step entity IDs not found in r.ByID.

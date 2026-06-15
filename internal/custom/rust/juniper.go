@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // juniper is a code-first GraphQL server library for Rust (#4964). It is the
@@ -98,7 +98,7 @@ var (
 )
 
 func (e *juniperExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.juniper_extractor.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

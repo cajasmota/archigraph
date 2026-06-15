@@ -1,8 +1,8 @@
-// Package audit — append-only audit log for Archigraph state-changing operations.
+// Package audit — append-only audit log for Grafel state-changing operations.
 //
 // Every mutation that changes daemon or registry state (rebuild, reset, settings
 // update, pattern edit, group create/delete, enrichment trigger…) appends one
-// JSON line to ~/.archigraph/audit.jsonl.
+// JSON line to ~/.grafel/audit.jsonl.
 //
 // Schema of each line:
 //
@@ -32,7 +32,7 @@ const (
 	// maxLogBytes is the rotation threshold.
 	maxLogBytes = 10 * 1024 * 1024 // 10 MiB
 
-	// auditLogFile is the base file name inside ~/.archigraph/.
+	// auditLogFile is the base file name inside ~/.grafel/.
 	auditLogFile = "audit.jsonl"
 
 	// logQueueDepth is the channel buffer size. Overflow events are dropped
@@ -74,7 +74,7 @@ func New(path string) *Log {
 	}
 }
 
-// DefaultLogPath returns ~/.archigraph/audit.jsonl.
+// DefaultLogPath returns ~/.grafel/audit.jsonl.
 // Returns an empty string when the home directory cannot be determined;
 // callers should treat that as "disk logging disabled".
 func DefaultLogPath() string {
@@ -82,7 +82,7 @@ func DefaultLogPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".archigraph", auditLogFile)
+	return filepath.Join(home, ".grafel", auditLogFile)
 }
 
 // Append enqueues e for disk write.  Returns immediately; never blocks.

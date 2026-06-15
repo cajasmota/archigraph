@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/install"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/install"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
 )
 
 // TestRunUninstall_HappyPath verifies the full uninstall flow:
@@ -137,9 +137,9 @@ func TestRunUninstall_Purge(t *testing.T) {
 	}
 
 	// Create fake store/ and docs/ directories.
-	archigraphDir := filepath.Dir(env.statePath)
-	storePath := filepath.Join(archigraphDir, "store")
-	docsPath := filepath.Join(archigraphDir, "docs")
+	grafelDir := filepath.Dir(env.statePath)
+	storePath := filepath.Join(grafelDir, "store")
+	docsPath := filepath.Join(grafelDir, "docs")
 	for _, p := range []string{storePath, docsPath} {
 		if err := os.MkdirAll(p, 0o755); err != nil {
 			t.Fatalf("create %s: %v", p, err)
@@ -307,7 +307,7 @@ func TestRunUninstall_KeepsBinaryByDefault(t *testing.T) {
 	// so the unit test stands them up as plain files and removes them here to
 	// model the desired post-uninstall state: artifacts gone, binary present.
 	svcDir := t.TempDir()
-	unitFile := filepath.Join(svcDir, "com.archigraph.daemon.plist")
+	unitFile := filepath.Join(svcDir, "com.grafel.daemon.plist")
 	socketFile := filepath.Join(svcDir, "daemon.sock")
 	pidFile := filepath.Join(svcDir, "daemon.pid")
 	for _, p := range []string{unitFile, socketFile, pidFile} {
@@ -490,7 +490,7 @@ func assertMCPDeregistered(t *testing.T, claudeJSON string) {
 	if servers == nil {
 		return // no mcpServers key — already gone
 	}
-	if _, ok := servers["archigraph"]; ok {
-		t.Error(".claude.json: archigraph entry still present after MCP deregistration")
+	if _, ok := servers["grafel"]; ok {
+		t.Error(".claude.json: grafel entry still present after MCP deregistration")
 	}
 }

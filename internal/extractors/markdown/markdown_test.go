@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // TestMain opts the suite into heading emission. Issue #2284 made heading
@@ -402,7 +402,7 @@ func TestRegistration(t *testing.T) {
 }
 
 // TestHeadings_DisabledByDefault verifies the issue #2284 fix: when the
-// ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS gate is unset (the default), the
+// GRAFEL_MARKDOWN_EMIT_HEADINGS gate is unset (the default), the
 // extractor emits NO SCOPE.Heading entities and NO Document→Heading
 // CONTAINS edges. Code blocks must still appear, attached to the Document.
 func TestHeadings_DisabledByDefault(t *testing.T) {
@@ -443,7 +443,7 @@ func TestHeadings_DisabledByDefault(t *testing.T) {
 }
 
 // TestHeadings_OptInRestoresLegacy verifies that explicitly enabling
-// ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS produces the legacy heading-rich
+// GRAFEL_MARKDOWN_EMIT_HEADINGS produces the legacy heading-rich
 // graph: Document→Heading CONTAINS, heading hierarchy, and Heading→CodeBlock
 // parent attachment all return.
 func TestHeadings_OptInRestoresLegacy(t *testing.T) {
@@ -477,7 +477,7 @@ func TestHeadings_OptInRestoresLegacy(t *testing.T) {
 
 // extractWithConfig is a test helper that runs the markdown extractor with an
 // explicit *extractor.ExtractorConfig injected into FileInput. The env var for
-// ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS is cleared so it does not interfere unless
+// GRAFEL_MARKDOWN_EMIT_HEADINGS is cleared so it does not interfere unless
 // the test explicitly sets it.
 func extractWithConfig(t *testing.T, name string, cfg *extractor.ExtractorConfig) []types.EntityRecord {
 	t.Helper()
@@ -544,7 +544,7 @@ func TestHeadingsConfig_EnvOnly(t *testing.T) {
 		t.Fatalf("extract: %v", extractErr)
 	}
 	if c := countByKind(out, "SCOPE.Heading"); c == 0 {
-		t.Error("env-only: expected SCOPE.Heading entities from ARCHIGRAPH_MARKDOWN_EMIT_HEADINGS=1; none found")
+		t.Error("env-only: expected SCOPE.Heading entities from GRAFEL_MARKDOWN_EMIT_HEADINGS=1; none found")
 	}
 }
 

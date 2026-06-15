@@ -31,7 +31,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 // handleMCPActivityStream streams real-time MCP tool call events over SSE.

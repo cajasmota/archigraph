@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/progress"
+	"github.com/cajasmota/grafel/internal/progress"
 )
 
 // ---------------------------------------------------------------------------

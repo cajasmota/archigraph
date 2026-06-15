@@ -10,5 +10,5 @@ description: >-
   Supports Rails (YYYYMMDDHHMMSS_name.rb), Django (NNNN_name.py),
   Flyway (V{major}.{minor}__{desc}.sql), golang-migrate (NNNNNN_name.up/down.sql),
   and Alembic ({revision_hash}_name.py) filename conventions.
-module: archigraph.engine.rules.languages._engine.migration_sequence_enricher
+module: grafel.engine.rules.languages._engine.migration_sequence_enricher
 function: annotate_migration_sequences

@@ -17,10 +17,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

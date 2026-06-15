@@ -11,7 +11,7 @@ description: >-
   Emit CONSUMES_API edges from http_client_extractor results to matching
   endpoint entities in the same org. URL matching is path-only (scheme + host
   stripped). Method must match exactly or the endpoint must use the "*" wildcard.
-module: archigraph.engine.rules.languages._engine.consumes_api_enricher
+module: grafel.engine.rules.languages._engine.consumes_api_enricher
 function: enrich
 config:
   # No configurable flags — matching behaviour is fully spec-defined.

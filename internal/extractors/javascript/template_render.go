@@ -26,7 +26,7 @@ package javascript
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
 )
 
 // emitTemplateRenderEdges scans the AST for Express/Koa `<res>.render('view')`

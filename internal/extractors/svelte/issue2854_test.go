@@ -3,7 +3,7 @@ package svelte_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Issue #2854 — Svelte Structure/context_extraction: setContext/getContext.

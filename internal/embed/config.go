@@ -1,5 +1,5 @@
 // Package embed provides the semantic-search embedding pipeline for
-// archigraph: a pluggable embedding backend (builtin MiniLM via hugot with
+// grafel: a pluggable embedding backend (builtin MiniLM via hugot with
 // -tags simplego, an OpenAI-compatible HTTP backend, or disabled), AST-aware
 // chunking, a per-repo on-disk vector sidecar (embeddings.bin), and
 // brute-force cosine search used by the MCP server for RRF fusion with BM25
@@ -8,9 +8,9 @@
 // Default mode (S6 / #2156): embeddings use bundled MiniLM (via -tags simplego
 // builds). BM25 search works without any configuration; semantic search is
 // automatic. Power users can opt into an HTTP endpoint via
-// ARCHIGRAPH_EMBEDDING_URL=http://localhost:11434/v1 (Ollama / LM Studio /
+// GRAFEL_EMBEDDING_URL=http://localhost:11434/v1 (Ollama / LM Studio /
 // any OpenAI-compatible endpoint), or opt out entirely with
-// ARCHIGRAPH_EMBEDDING_DISABLE=true.
+// GRAFEL_EMBEDDING_DISABLE=true.
 package embed
 
 import (
@@ -31,12 +31,12 @@ const (
 
 // Env override variables (ADR-0019). Env always wins over the config file.
 const (
-	EnvBackend = "ARCHIGRAPH_EMBEDDING_BACKEND"
-	EnvURL     = "ARCHIGRAPH_EMBEDDING_URL"
-	EnvModel   = "ARCHIGRAPH_EMBEDDING_MODEL"
-	EnvAPIKey  = "ARCHIGRAPH_EMBEDDING_API_KEY"
-	EnvDims    = "ARCHIGRAPH_EMBEDDING_DIMS"
-	EnvDisable = "ARCHIGRAPH_EMBEDDING_DISABLE"
+	EnvBackend = "GRAFEL_EMBEDDING_BACKEND"
+	EnvURL     = "GRAFEL_EMBEDDING_URL"
+	EnvModel   = "GRAFEL_EMBEDDING_MODEL"
+	EnvAPIKey  = "GRAFEL_EMBEDDING_API_KEY"
+	EnvDims    = "GRAFEL_EMBEDDING_DIMS"
+	EnvDisable = "GRAFEL_EMBEDDING_DISABLE"
 )
 
 // DefaultBuiltinModel is the bundled-by-download MiniLM model. hugot fetches
@@ -60,24 +60,24 @@ type Config struct {
 	HTTP    HTTPConfig `json:"http,omitempty"`
 }
 
-// configFileName is the per-user config file under ~/.archigraph.
+// configFileName is the per-user config file under ~/.grafel.
 const configFileName = "embeddings.json"
 
 // ConfigPath returns the resolved path to embeddings.json. It honours
-// ARCHIGRAPH_HOME for test/agent isolation, falling back to ~/.archigraph.
+// GRAFEL_HOME for test/agent isolation, falling back to ~/.grafel.
 func ConfigPath() string {
 	return filepath.Join(homeDir(), configFileName)
 }
 
 func homeDir() string {
-	if h := os.Getenv("ARCHIGRAPH_HOME"); h != "" {
+	if h := os.Getenv("GRAFEL_HOME"); h != "" {
 		return h
 	}
 	h, err := os.UserHomeDir()
 	if err != nil {
-		return ".archigraph"
+		return ".grafel"
 	}
-	return filepath.Join(h, ".archigraph")
+	return filepath.Join(h, ".grafel")
 }
 
 // LoadConfig reads embeddings.json (if present) and applies env overrides.
@@ -85,9 +85,9 @@ func homeDir() string {
 // (builtin — bundled MiniLM). An unparseable file falls back to the default too,
 // surfacing the parse error to the caller for logging.
 //
-// To opt in to an HTTP backend set ARCHIGRAPH_EMBEDDING_URL or write
-// {"backend":"http","http":{"url":"..."}} to ~/.archigraph/embeddings.json.
-// To opt out entirely set ARCHIGRAPH_EMBEDDING_DISABLE=true.
+// To opt in to an HTTP backend set GRAFEL_EMBEDDING_URL or write
+// {"backend":"http","http":{"url":"..."}} to ~/.grafel/embeddings.json.
+// To opt out entirely set GRAFEL_EMBEDDING_DISABLE=true.
 func LoadConfig() (Config, error) {
 	cfg := Config{Backend: BackendBuiltin}
 	var parseErr error
@@ -115,7 +115,7 @@ func LoadConfig() (Config, error) {
 }
 
 func applyEnvOverrides(cfg *Config) {
-	// ARCHIGRAPH_EMBEDDING_DISABLE overrides everything: if set to true/1, force disabled.
+	// GRAFEL_EMBEDDING_DISABLE overrides everything: if set to true/1, force disabled.
 	if v := os.Getenv(EnvDisable); v != "" && (v == "true" || v == "1" || v == "yes") {
 		cfg.Backend = BackendDisabled
 		return
@@ -126,7 +126,7 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	// If a URL is supplied via env but no backend was explicitly chosen as
 	// builtin/disabled, route through HTTP — this is the documented power-user
-	// path (ARCHIGRAPH_EMBEDDING_URL=... just works).
+	// path (GRAFEL_EMBEDDING_URL=... just works).
 	if v := os.Getenv(EnvURL); v != "" {
 		cfg.HTTP.URL = v
 		if os.Getenv(EnvBackend) == "" {

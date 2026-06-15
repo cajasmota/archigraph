@@ -7,7 +7,7 @@ package golang_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // obsEdges returns every INSTRUMENTS edge on the operation entity whose bare

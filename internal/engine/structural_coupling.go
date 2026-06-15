@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // StructuralCoupling is the engine pass that annotates synthetic Module nodes

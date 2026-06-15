@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // rubyMixinDoc models `module Greet; def hello; ...; end; end` in greet.rb and

@@ -10,7 +10,7 @@ package graphql_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findSchemaEntity returns the SCOPE.Schema entity named name, or nil.

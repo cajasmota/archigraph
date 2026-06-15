@@ -98,7 +98,7 @@ func TestStampConfidence_Relationship(t *testing.T) {
 
 // TestEntityJSONOmitsEmptyConfidence guarantees zero-confidence records keep
 // byte-identical JSON output to the pre-#2769 schema. This protects
-// cmd/archigraph/determinism_test.go from breaking when extractors do not
+// cmd/grafel/determinism_test.go from breaking when extractors do not
 // stamp confidence (the issue's "default if not specified" semantics).
 func TestEntityJSONOmitsEmptyConfidence(t *testing.T) {
 	e := EntityRecord{Kind: "function", Name: "f", SourceFile: "a.go"}

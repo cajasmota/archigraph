@@ -3,8 +3,8 @@ package fitness_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/quality/fitness"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/quality/fitness"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

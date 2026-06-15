@@ -2,16 +2,16 @@
 
 GO ?= go
 NPM ?= npm
-BINARY := archigraph
+BINARY := grafel
 LDFLAGS := -s -w \
-  -X github.com/cajasmota/archigraph/internal/version.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) \
-  -X github.com/cajasmota/archigraph/internal/version.Commit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) \
-  -X github.com/cajasmota/archigraph/internal/version.Date=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+  -X github.com/cajasmota/grafel/internal/version.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) \
+  -X github.com/cajasmota/grafel/internal/version.Commit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) \
+  -X github.com/cajasmota/grafel/internal/version.Date=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # dashboard-build: compile the webui-v2 React SPA and copy the output into
 # internal/dashboard/dist/ so the Go embed directive picks it up. webui-v2 is
 # the one and only dashboard — it is served EMBEDDED by the daemon at
-# http://127.0.0.1:47274, so `archigraph install` ships the full UI with no
+# http://127.0.0.1:47274, so `grafel install` ships the full UI with no
 # separate dev server. (Run `cd webui-v2 && npm run dev` only for dev iteration.)
 # Must run before `go build` or the embed will fail (no dist/ dir).
 # We use `vite build` directly instead of `npm run build` (which calls
@@ -37,12 +37,12 @@ verify-dashboard:
 # so `make build` always produces a self-contained binary. dashboard-build
 # now also runs verify-dashboard, so a stale embed fails the build.
 build: dashboard-build
-	$(GO) build -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/archigraph
+	$(GO) build -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/grafel
 
 # build-go-only: skip the npm step (for CI environments that have already
 # pre-built the SPA or for fast Go-only iteration when the SPA is unchanged).
 build-go-only:
-	$(GO) build -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/archigraph
+	$(GO) build -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/grafel
 
 test:
 	$(GO) test -race -count=1 ./...
@@ -62,17 +62,17 @@ clean:
 # Regenerate the Go bindings for the v2 binary graph schema
 # (internal/graph/schema/graph.fbs → internal/graph/fbgraph/*.go).
 # Requires `flatc` (brew install flatbuffers). The generated package
-# name is rewritten from `archigraph` → `fbgraph` to avoid clashing
+# name is rewritten from `grafel` → `fbgraph` to avoid clashing
 # with the module name. See ADR-0016.
 fbgen:
 	@command -v flatc >/dev/null || { echo "flatc not found: brew install flatbuffers"; exit 1; }
 	rm -f internal/graph/fbgraph/*.go
 	flatc --go -o internal/graph/fbgraph internal/graph/schema/graph.fbs
-	@if [ -d internal/graph/fbgraph/archigraph ]; then \
-	  mv internal/graph/fbgraph/archigraph/*.go internal/graph/fbgraph/ && \
-	  rmdir internal/graph/fbgraph/archigraph; \
+	@if [ -d internal/graph/fbgraph/grafel ]; then \
+	  mv internal/graph/fbgraph/grafel/*.go internal/graph/fbgraph/ && \
+	  rmdir internal/graph/fbgraph/grafel; \
 	fi
-	@sed -i.bak 's/^package archigraph$$/package fbgraph/' internal/graph/fbgraph/*.go && \
+	@sed -i.bak 's/^package grafel$$/package fbgraph/' internal/graph/fbgraph/*.go && \
 	  rm -f internal/graph/fbgraph/*.bak
 
 # mcp-audit: measure handshake token budget and validate tool descriptions.
@@ -84,7 +84,7 @@ mcp-audit:
 	$(GO) run ./cmd/mcp-audit
 
 # Run the ADR-0016 microbenchmarks against the configured fixture.
-# Override the fixture with: ARCHIGRAPH_BENCH_FIXTURE=/path/to/graph.json
+# Override the fixture with: GRAFEL_BENCH_FIXTURE=/path/to/graph.json
 fb-bench:
 	$(GO) test ./internal/graph/ -bench=. -benchmem -run=^$$ -count=3 -benchtime=2s
 

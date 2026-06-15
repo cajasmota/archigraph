@@ -1,7 +1,7 @@
 // cmd/bench-tokens is a user-facing token-economy benchmark (#4293).
 //
 // For each seed question it builds the minimal subgraph that answers the
-// question (reusing the in-process MCP server's archigraph_find handler, which
+// question (reusing the in-process MCP server's grafel_find handler, which
 // runs the same ranked-BFS subgraph extraction the live tools use) and
 // estimates its token cost. It then estimates the token cost of the naive
 // "just read the relevant files" baseline — reading every distinct source file
@@ -37,14 +37,14 @@ import (
 
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/cajasmota/archigraph/internal/mcp"
+	"github.com/cajasmota/grafel/internal/mcp"
 )
 
 func main() {
 	group := flag.String("group", "upvate", "group name to bench against")
 	questionsPath := flag.String("questions", "", "path to a newline-delimited seed-questions file (default: built-in seed set)")
-	depth := flag.Int("depth", 3, "subgraph depth passed to archigraph_find")
-	tokenBudget := flag.Int("token-budget", 1200, "token_budget passed to archigraph_find (graph-scoped payload cap)")
+	depth := flag.Int("depth", 3, "subgraph depth passed to grafel_find")
+	tokenBudget := flag.Int("token-budget", 1200, "token_budget passed to grafel_find (graph-scoped payload cap)")
 	out := flag.String("out", "", "output markdown path (default: stdout)")
 	flag.Parse()
 
@@ -119,20 +119,20 @@ func loadQuestions(path string) ([]string, error) {
 	return qs, nil
 }
 
-// measureQuestion runs archigraph_find for one seed question (the graph-scoped
+// measureQuestion runs grafel_find for one seed question (the graph-scoped
 // answer), then computes the naive file-read baseline from the matched
 // entities' distinct source files. It reuses the live find handler so the
 // graph-scoped payload is byte-identical to what the MCP tool would return.
 func measureQuestion(srv *mcp.Server, group, question string, depth, tokenBudget int) questionCost {
 	row := questionCost{Question: question}
 
-	tool := srv.MCP.GetTool("archigraph_find")
+	tool := srv.MCP.GetTool("grafel_find")
 	if tool == nil {
-		row.Note = "archigraph_find not registered"
+		row.Note = "grafel_find not registered"
 		return row
 	}
 	req := mcpapi.CallToolRequest{}
-	req.Params.Name = "archigraph_find"
+	req.Params.Name = "grafel_find"
 	req.Params.Arguments = map[string]any{
 		"question":     question,
 		"group":        group,

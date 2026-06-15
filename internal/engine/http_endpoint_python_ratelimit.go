@@ -48,7 +48,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // pyRLPosture is the resolved throttle posture for one endpoint.

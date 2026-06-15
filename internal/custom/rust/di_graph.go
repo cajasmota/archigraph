@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // Package rust DI graph extractor — #4963 (follow-up to #4921).
@@ -162,7 +162,7 @@ func rustDIScope(mech string) string {
 }
 
 func (e *rustDIExtractor) Extract(ctx context.Context, file extractor.FileInput) ([]types.EntityRecord, error) {
-	tracer := otel.Tracer("archigraph/custom/rust")
+	tracer := otel.Tracer("grafel/custom/rust")
 	_, span := tracer.Start(ctx, "indexer.rust_di_graph.extract",
 		trace.WithAttributes(
 			attribute.String("language", file.Language),

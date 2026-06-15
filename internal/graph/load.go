@@ -19,9 +19,9 @@ import (
 	"path/filepath"
 	"time"
 
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
-	"github.com/cajasmota/archigraph/internal/graph/fbversion"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/graph/fbversion"
 )
 
 // minSupportedFBFormatVersion is the lowest graph.fb FormatVersion the loader
@@ -30,7 +30,7 @@ import (
 const minSupportedFBFormatVersion = fbversion.Version
 
 // LoadGraphFromDir loads a graph.Document from dir, where dir is the
-// .archigraph state directory for a repo (the directory that contains
+// .grafel state directory for a repo (the directory that contains
 // graph.fb / graph.json).
 //
 // Strategy (ADR-0016 flip-day, #808):
@@ -87,13 +87,13 @@ func loadFBDocument(path string) (*Document, error) {
 	}
 	defer r.Close()
 
-	// #2370 — refuse to read old-format graph.fb files. archigraph is
+	// #2370 — refuse to read old-format graph.fb files. grafel is
 	// pre-1.0; there is no on-disk compat path. The user is expected to
-	// rerun `archigraph index <repo>` to regenerate graph.fb against the
+	// rerun `grafel index <repo>` to regenerate graph.fb against the
 	// current schema.
 	if v := r.Version(); v < minSupportedFBFormatVersion {
 		return nil, fmt.Errorf(
-			"graph.loadFBDocument: graph.fb format version %d is older than required version %d — please reindex (run: archigraph index <repo>)",
+			"graph.loadFBDocument: graph.fb format version %d is older than required version %d — please reindex (run: grafel index <repo>)",
 			v, minSupportedFBFormatVersion,
 		)
 	}

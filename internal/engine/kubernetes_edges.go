@@ -52,7 +52,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 	"gopkg.in/yaml.v3"
 )
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/worktree"
+	"github.com/cajasmota/grafel/internal/daemon/worktree"
 )
 
 // ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@ func TestWatcher_cap_15_worktrees_keeps_10(t *testing.T) {
 		t.Fatal(err)
 	}
 	initGitRepo(t, repoDir)
-	t.Setenv("ARCHIGRAPH_MAX_WORKTREES_PER_REPO", "10")
+	t.Setenv("GRAFEL_MAX_WORKTREES_PER_REPO", "10")
 
 	for i := 0; i < 15; i++ {
 		wtDir := filepath.Join(tmp, "wt", string(rune('a'+i)))
@@ -554,8 +554,8 @@ func TestWatcher_Sync_discovers_and_persists(t *testing.T) {
 // precedence and that the default is the demoted 60s reconciliation cadence.
 func TestPollInterval_seconds_env(t *testing.T) {
 	// Default (no env) → 60s.
-	t.Setenv("ARCHIGRAPH_WORKTREE_POLL_SECONDS", "")
-	t.Setenv("ARCHIGRAPH_WORKTREE_POLL_MINUTES", "")
+	t.Setenv("GRAFEL_WORKTREE_POLL_SECONDS", "")
+	t.Setenv("GRAFEL_WORKTREE_POLL_MINUTES", "")
 	store := worktree.NewStore(filepath.Join(t.TempDir(), "wt.json"))
 	parents := func() []worktree.ParentRepo { return nil }
 	if got := worktree.NewWatcher(store, parents, nil).IntervalForTest(); got != 60*time.Second {
@@ -563,19 +563,19 @@ func TestPollInterval_seconds_env(t *testing.T) {
 	}
 
 	// SECONDS override wins.
-	t.Setenv("ARCHIGRAPH_WORKTREE_POLL_SECONDS", "5")
+	t.Setenv("GRAFEL_WORKTREE_POLL_SECONDS", "5")
 	if got := worktree.NewWatcher(store, parents, nil).IntervalForTest(); got != 5*time.Second {
 		t.Errorf("SECONDS interval = %v, want 5s", got)
 	}
 
 	// SECONDS takes precedence over MINUTES.
-	t.Setenv("ARCHIGRAPH_WORKTREE_POLL_MINUTES", "10")
+	t.Setenv("GRAFEL_WORKTREE_POLL_MINUTES", "10")
 	if got := worktree.NewWatcher(store, parents, nil).IntervalForTest(); got != 5*time.Second {
 		t.Errorf("SECONDS should win over MINUTES, got %v", got)
 	}
 
 	// MINUTES still honoured for back-compat when SECONDS unset.
-	t.Setenv("ARCHIGRAPH_WORKTREE_POLL_SECONDS", "")
+	t.Setenv("GRAFEL_WORKTREE_POLL_SECONDS", "")
 	if got := worktree.NewWatcher(store, parents, nil).IntervalForTest(); got != 10*time.Minute {
 		t.Errorf("MINUTES back-compat = %v, want 10m", got)
 	}

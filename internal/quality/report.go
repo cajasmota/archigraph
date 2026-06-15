@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// JSONReport is the machine-readable shape emitted by `archigraph quality
+// JSONReport is the machine-readable shape emitted by `grafel quality
 // --json`. It is intentionally flat so CI dashboards / regression diff
 // scripts can aggregate without depending on the in-process Report type.
 type JSONReport struct {

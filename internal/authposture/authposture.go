@@ -28,7 +28,7 @@
 package authposture
 
 import (
-	"github.com/cajasmota/archigraph/internal/literalparity"
+	"github.com/cajasmota/grafel/internal/literalparity"
 )
 
 // Kind is the shared auth-posture vocabulary. Every framework resolver

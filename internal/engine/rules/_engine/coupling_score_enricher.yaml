@@ -12,7 +12,7 @@ description: >-
   I=Ce/(Ca+Ce) for every SCOPE.Component entity. Reads DEPENDS_ON and CALLS
   relationships to count inbound (Ca) and outbound (Ce) dependencies. Sets
   properties ca, ce, instability, and coupling_computed on each component.
-module: archigraph.engine.rules.languages._engine.coupling_score_enricher
+module: grafel.engine.rules.languages._engine.coupling_score_enricher
 function: compute_coupling
 otel_span: indexer.coupling_score
 otel_attributes:

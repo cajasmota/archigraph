@@ -1,11 +1,11 @@
 // Package python — unit tests for issue #2548: gate Django migration entity
-// emission behind ARCHIGRAPH_EMIT_MIGRATION_ENTITIES.
+// emission behind GRAFEL_EMIT_MIGRATION_ENTITIES.
 //
 // Three invariants are tested:
 //
 //  1. Default-off: Django migration files (.py files in migrations/ directories)
 //     emit zero Migration entities by default.
-//  2. Opt-in (ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1): Migration entities ARE emitted.
+//  2. Opt-in (GRAFEL_EMIT_MIGRATION_ENTITIES=1): Migration entities ARE emitted.
 //  3. Non-migration files are unaffected by the flag.
 package python
 
@@ -13,8 +13,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 	sitter "github.com/smacker/go-tree-sitter"
 	tspython "github.com/smacker/go-tree-sitter/python"
 )
@@ -107,7 +107,7 @@ class User(models.Model):
 // Django migration files in migrations/ directories emit no entities (beyond
 // infrastructure entities like the file-level SCOPE.Component).
 func TestPythonExtractor_PrunesMigrationFiles(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 
 	src := []byte(migrationFileSrc)
 	tree := parsePython(t, src)
@@ -117,7 +117,7 @@ func TestPythonExtractor_PrunesMigrationFiles(t *testing.T) {
 	semanticEntities := stripFileEntity(entities)
 
 	if len(semanticEntities) > 0 {
-		t.Errorf("default-off: migration file emitted %d semantic entities, expected 0; env var ARCHIGRAPH_EMIT_MIGRATION_ENTITIES must be set to emit",
+		t.Errorf("default-off: migration file emitted %d semantic entities, expected 0; env var GRAFEL_EMIT_MIGRATION_ENTITIES must be set to emit",
 			len(semanticEntities))
 		for _, e := range semanticEntities {
 			t.Logf("  - %s (%s/%s)", e.Name, e.Kind, e.Subtype)
@@ -126,13 +126,13 @@ func TestPythonExtractor_PrunesMigrationFiles(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Opt-in: ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1 emits Migration entities
+// 2. Opt-in: GRAFEL_EMIT_MIGRATION_ENTITIES=1 emits Migration entities
 // ---------------------------------------------------------------------------
 
 // TestPythonExtractor_EmitsMigrationsOptIn verifies that with
-// ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1, Migration entities ARE emitted.
+// GRAFEL_EMIT_MIGRATION_ENTITIES=1, Migration entities ARE emitted.
 func TestPythonExtractor_EmitsMigrationsOptIn(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	src := []byte(migrationFileSrc)
 	tree := parsePython(t, src)
@@ -157,9 +157,9 @@ func TestPythonExtractor_EmitsMigrationsOptIn(t *testing.T) {
 }
 
 // TestPythonExtractor_EmitsMigrationsOptInTrue verifies that
-// ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=true also works (truthy variant).
+// GRAFEL_EMIT_MIGRATION_ENTITIES=true also works (truthy variant).
 func TestPythonExtractor_EmitsMigrationsOptInTrue(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "true")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "true")
 
 	src := []byte(migrationFileSrc)
 	tree := parsePython(t, src)
@@ -179,7 +179,7 @@ func TestPythonExtractor_EmitsMigrationsOptInTrue(t *testing.T) {
 // TestPythonExtractor_NonMigrationUnaffected verifies that non-migration files
 // continue to extract entities regardless of the migration flag.
 func TestPythonExtractor_NonMigrationUnaffected(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 
 	src := []byte(nonMigrationFileSrc)
 	tree := parsePython(t, src)
@@ -208,10 +208,10 @@ func TestPythonExtractor_NonMigrationUnaffected(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // TestPythonExtractor_MigrationEntitiesHaveCorrectKind verifies that when
-// ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1, emitted entities have kind="Migration"
+// GRAFEL_EMIT_MIGRATION_ENTITIES=1, emitted entities have kind="Migration"
 // (not "SCOPE.Component"), so that kind-based filters work correctly.
 func TestPythonExtractor_MigrationEntitiesHaveCorrectKind(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "1")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "1")
 
 	src := []byte(migrationFileSrc)
 	tree := parsePython(t, src)
@@ -220,7 +220,7 @@ func TestPythonExtractor_MigrationEntitiesHaveCorrectKind(t *testing.T) {
 	semanticEntities := stripFileEntity(entities)
 
 	if len(semanticEntities) == 0 {
-		t.Fatal("no semantic entities emitted with ARCHIGRAPH_EMIT_MIGRATION_ENTITIES=1")
+		t.Fatal("no semantic entities emitted with GRAFEL_EMIT_MIGRATION_ENTITIES=1")
 	}
 
 	// Verify exactly one entity with kind="Migration"
@@ -246,7 +246,7 @@ func TestPythonExtractor_MigrationEntitiesHaveCorrectKind(t *testing.T) {
 // multiple migration files, zero Migration class entities escape when the
 // emission flag is off.
 func TestPythonExtractor_MigrationFileEmitZeroByDefault(t *testing.T) {
-	t.Setenv("ARCHIGRAPH_EMIT_MIGRATION_ENTITIES", "")
+	t.Setenv("GRAFEL_EMIT_MIGRATION_ENTITIES", "")
 
 	// Multiple migration files
 	migrations := []struct {

@@ -1,4 +1,4 @@
-// diff_tools.go — MCP tool: archigraph_diff_refs (PH5 of #2087 / #2093).
+// diff_tools.go — MCP tool: grafel_diff_refs (PH5 of #2087 / #2093).
 //
 // Enables agents to compare two indexed git refs for a single repo without
 // going through the HTTP API. The diff computation is the same pure-Go
@@ -6,7 +6,7 @@
 //
 // Usage:
 //
-//	archigraph_diff_refs(group="mygroup", repo="myrepo", ref_a="main", ref_b="feat/x")
+//	grafel_diff_refs(group="mygroup", repo="myrepo", ref_a="main", ref_b="feat/x")
 //
 // Returns a JSON blob matching the dashboard wire format:
 //
@@ -18,13 +18,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/registry"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handleDiffRefs implements the archigraph_diff_refs MCP tool.
+// handleDiffRefs implements the grafel_diff_refs MCP tool.
 //
 // Arguments:
 //   - group   (string, required)
@@ -79,7 +79,7 @@ func (s *Server) handleDiffRefs(ctx context.Context, req mcpapi.CallToolRequest)
 	docA, err := graph.LoadGraphFromDir(dirA)
 	if err != nil {
 		return mcpapi.NewToolResultError(
-			fmt.Sprintf("could not load graph for %s@%s: %v (run `archigraph index` on that branch first)", repoSlug, refA, err),
+			fmt.Sprintf("could not load graph for %s@%s: %v (run `grafel index` on that branch first)", repoSlug, refA, err),
 		), nil
 	}
 
@@ -88,7 +88,7 @@ func (s *Server) handleDiffRefs(ctx context.Context, req mcpapi.CallToolRequest)
 	docB, err := graph.LoadGraphFromDir(dirB)
 	if err != nil {
 		return mcpapi.NewToolResultError(
-			fmt.Sprintf("could not load graph for %s@%s: %v (run `archigraph index` on that branch first)", repoSlug, refB, err),
+			fmt.Sprintf("could not load graph for %s@%s: %v (run `grafel index` on that branch first)", repoSlug, refB, err),
 		), nil
 	}
 

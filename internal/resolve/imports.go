@@ -35,7 +35,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // importRelKind is the relationship kind emitted by the Python (and any
@@ -2205,7 +2205,7 @@ func ResolveImports(records []types.EntityRecord, tbl ImportTable) ImportResolve
 }
 
 // ResolveGoInTreeImports rewrites Go IMPORTS edges whose ToID is an in-tree
-// package import path (e.g. "github.com/cajasmota/archigraph/internal/types")
+// package import path (e.g. "github.com/cajasmota/grafel/internal/types")
 // to the hex entity ID of a representative file in the imported package
 // directory. This resolves the dominant unresolved-import pattern for Go-heavy
 // corpora: the extractor emits raw module paths as ToIDs, but the resolver's

@@ -12,6 +12,6 @@ description: >-
   Detect MongoDB .aggregate([...]) pipeline calls across 12 languages and emit
   SCOPE.Operation entities with kind=aggregate_pipeline, stages list, stage_count,
   collection_name, and is_dynamic_pipeline flag.
-module: archigraph.engine.rules.pattern_detectors.mongodb_aggregate_extractor
+module: grafel.engine.rules.pattern_detectors.mongodb_aggregate_extractor
 function: detect
 applies_to_function: applies_to

@@ -90,21 +90,21 @@ type SkillUninstallRequest struct {
 // In a future version this would be fetched from a remote registry.
 var marketplaceCatalog = []CatalogSkill{
 	{
-		Slug:   "using-archigraph",
-		Source: "archigraph-bundled",
+		Slug:   "using-grafel",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "using-archigraph",
-			Description: "Teaches an AI agent how to use archigraph MCP tools effectively when working on a registered codebase.",
+			Name:        "using-grafel",
+			Description: "Teaches an AI agent how to use grafel MCP tools effectively when working on a registered codebase.",
 			Type:        "behavior",
-			WhenToUse:   "Invoke when opening a codebase that has archigraph indexed.",
+			WhenToUse:   "Invoke when opening a codebase that has grafel indexed.",
 			Version:     "bundled",
 		},
 	},
 	{
-		Slug:   "archigraph-aware-review",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-aware-review",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-aware-review",
+			Name:        "grafel-aware-review",
 			Description: "Reviews a pull request with structural awareness: callers, flows, topology impact.",
 			Type:        "action",
 			WhenToUse:   "Before merging a PR that touches core business logic.",
@@ -112,50 +112,50 @@ var marketplaceCatalog = []CatalogSkill{
 		},
 	},
 	{
-		Slug:   "archigraph-help",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-help",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-help",
-			Description: "Overview of the archigraph skill family: lists all skills, canonical execution chains, and which skill to start with based on your goal. Purely informational — does not run any analysis.",
+			Name:        "grafel-help",
+			Description: "Overview of the grafel skill family: lists all skills, canonical execution chains, and which skill to start with based on your goal. Purely informational — does not run any analysis.",
 			Type:        "reference",
 			WhenToUse:   "When orienting to the skill family, onboarding a new team member, or deciding which skill to run next.",
 		},
 	},
 	{
-		Slug:   "archigraph-business-docs",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-business-docs",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-business-docs",
+			Name:        "grafel-business-docs",
 			Description: "Generates PM-facing group documentation: capabilities, domain glossary, user journeys, business rules, and overview. Graph-only fallback built in — does not require tech docs.",
 			Type:        "action",
-			WhenToUse:   "When non-engineers need to understand the product, or when producing stakeholder-facing documentation. Run after /archigraph-resolve; /archigraph-tech-docs optional but improves fidelity.",
+			WhenToUse:   "When non-engineers need to understand the product, or when producing stakeholder-facing documentation. Run after /grafel-resolve; /grafel-tech-docs optional but improves fidelity.",
 		},
 	},
 	{
-		Slug:   "archigraph-consult",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-consult",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-consult",
+			Name:        "grafel-consult",
 			Description: "Runs a panel of specialist personas (architect, security auditor, business analyst, performance reviewer, refactor critic) against the group's docs and graph. Produces per-persona reports, a synthesised finding list, and graph entities. Resumable sessions.",
 			Type:        "action",
-			WhenToUse:   "After generating tech docs with /archigraph-tech-docs. Use --persona <name> for a single perspective or --all for the full panel.",
+			WhenToUse:   "After generating tech docs with /grafel-tech-docs. Use --persona <name> for a single perspective or --all for the full panel.",
 		},
 	},
 	{
-		Slug:   "archigraph-graph-enrich",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-graph-enrich",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-graph-enrich",
+			Name:        "grafel-graph-enrich",
 			Description: "Annotates the graph with structured YAML frontmatter for http_endpoint, process_flow, and message_topic entities so the dashboard panels (Paths, Flows, Topology) display rich data.",
 			Type:        "action",
 			WhenToUse:   "When dashboard panels are blank or after indexing new entities to populate Paths, Flows, and Topology with summaries, ranks, and gap analysis.",
 		},
 	},
 	{
-		Slug:   "archigraph-graph-quality",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-graph-quality",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-graph-quality",
+			Name:        "grafel-graph-quality",
 			Description: "Runs a quality audit against a group: orphan detection, N+1 patterns, dead-ends.",
 			Type:        "action",
 			WhenToUse:   "Periodically or before a release.",
@@ -163,10 +163,10 @@ var marketplaceCatalog = []CatalogSkill{
 		},
 	},
 	{
-		Slug:   "archigraph-resolve",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-resolve",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-resolve",
+			Name:        "grafel-resolve",
 			Description: "Applies pending repair candidates from the graph — renames, merges, deletes.",
 			Type:        "action",
 			WhenToUse:   "When the pending queue is non-empty and repairs have been reviewed.",
@@ -174,23 +174,23 @@ var marketplaceCatalog = []CatalogSkill{
 		},
 	},
 	{
-		Slug:   "archigraph-security-audit",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-security-audit",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-security-audit",
+			Name:        "grafel-security-audit",
 			Description: "Two-phase security audit: deterministic static analysis (Phase 1, free) followed by LLM semantic confirmation and ranking (Phase 2, interactive). Adds SecurityFinding entities to the graph and writes a security/ doc tier.",
 			Type:        "action",
-			WhenToUse:   "Before a release, after adding new endpoints, or any time you want to check auth coverage and PII exposure. Run after /archigraph-resolve for best results.",
+			WhenToUse:   "Before a release, after adding new endpoints, or any time you want to check auth coverage and PII exposure. Run after /grafel-resolve for best results.",
 		},
 	},
 	{
-		Slug:   "archigraph-tech-docs",
-		Source: "archigraph-bundled",
+		Slug:   "grafel-tech-docs",
+		Source: "grafel-bundled",
 		SkillMeta: SkillMeta{
-			Name:        "archigraph-tech-docs",
+			Name:        "grafel-tech-docs",
 			Description: "Generates the complete technical documentation set for a registered group: per-module READMEs, API reference, cross-cutting concerns, group synthesis, cross-repo links, and pattern library.",
 			Type:        "action",
-			WhenToUse:   "When documenting a repo or group for engineers. Run after /archigraph-resolve and optionally /archigraph-graph-quality to confirm graph health before spending tokens.",
+			WhenToUse:   "When documenting a repo or group for engineers. Run after /grafel-resolve and optionally /grafel-graph-quality to confirm graph health before spending tokens.",
 		},
 	},
 	// Third-party stub entries — demo marketplace entries
@@ -199,36 +199,36 @@ var marketplaceCatalog = []CatalogSkill{
 		Source: "community",
 		SkillMeta: SkillMeta{
 			Name:        "openapi-diff",
-			Description: "Compares two OpenAPI specs and highlights breaking changes using archigraph path data.",
+			Description: "Compares two OpenAPI specs and highlights breaking changes using grafel path data.",
 			Type:        "action",
 			WhenToUse:   "When upgrading a downstream API version.",
 			Version:     "0.2.1",
 		},
-		InstallURL: "https://skills.archigraph.dev/community/openapi-diff",
+		InstallURL: "https://skills.grafel.dev/community/openapi-diff",
 	},
 	{
 		Slug:   "changelog-generator",
 		Source: "community",
 		SkillMeta: SkillMeta{
 			Name:        "changelog-generator",
-			Description: "Produces a human-readable CHANGELOG from git history cross-referenced with archigraph flow data.",
+			Description: "Produces a human-readable CHANGELOG from git history cross-referenced with grafel flow data.",
 			Type:        "action",
 			WhenToUse:   "Before a release tag.",
 			Version:     "1.0.0",
 		},
-		InstallURL: "https://skills.archigraph.dev/community/changelog-generator",
+		InstallURL: "https://skills.grafel.dev/community/changelog-generator",
 	},
 	{
 		Slug:   "security-audit",
 		Source: "community",
 		SkillMeta: SkillMeta{
 			Name:        "security-audit",
-			Description: "Deep security audit combining archigraph auth-coverage data with OWASP checklist.",
+			Description: "Deep security audit combining grafel auth-coverage data with OWASP checklist.",
 			Type:        "action",
 			WhenToUse:   "Before a public API launch or compliance review.",
 			Version:     "0.1.3",
 		},
-		InstallURL: "https://skills.archigraph.dev/community/security-audit",
+		InstallURL: "https://skills.grafel.dev/community/security-audit",
 	},
 }
 
@@ -237,9 +237,9 @@ var marketplaceCatalog = []CatalogSkill{
 // ─────────────────────────────────────────────────────────────────────────────
 
 // skillsDir returns the path to the skills/ directory relative to the binary's
-// working directory.  The env var ARCHIGRAPH_SKILLS_DIR overrides the default.
+// working directory.  The env var GRAFEL_SKILLS_DIR overrides the default.
 func skillsDir() string {
-	if v := os.Getenv("ARCHIGRAPH_SKILLS_DIR"); v != "" {
+	if v := os.Getenv("GRAFEL_SKILLS_DIR"); v != "" {
 		return v
 	}
 	return "skills"

@@ -1,11 +1,11 @@
-// Package registry manages the global archigraph registry.
+// Package registry manages the global grafel registry.
 //
-// The registry lives at ~/.archigraph/registry.json and lists every
+// The registry lives at ~/.grafel/registry.json and lists every
 // installed group along with the path to its per-group config. Per
 // ADR-0004 + ADR-0008 the registry is the single source of truth for
 // the MCP router and the CLI; per-group config files live under XDG
-// (~/.config/archigraph/<group>.fleet.json) when XDG_CONFIG_HOME is
-// available, else under ~/.archigraph/groups/<group>/config.json.
+// (~/.config/grafel/<group>.fleet.json) when XDG_CONFIG_HOME is
+// available, else under ~/.grafel/groups/<group>/config.json.
 package registry
 
 import (
@@ -95,7 +95,7 @@ func (s StackList) IsEmpty() bool { return len(s) == 0 }
 
 // GroupRef is a registered group: a name and the absolute path to its
 // per-group config file. The group's state directory is colocated with
-// the registry under ~/.archigraph/groups/<name>/.
+// the registry under ~/.grafel/groups/<name>/.
 type GroupRef struct {
 	Name        string `json:"name"`
 	ConfigPath  string `json:"config_path"`
@@ -125,7 +125,7 @@ type GroupConfig struct {
 	Features  struct {
 		Watchers bool `json:"watchers"`
 		GitHooks bool `json:"git_hooks"`
-		// AutoInjectAgentsMD, when true, causes archigraph to append (or
+		// AutoInjectAgentsMD, when true, causes grafel to append (or
 		// update) an "Architecture Map" marker block in each repo's AGENTS.md
 		// (or CLAUDE.md / GEMINI.md) after every rebuild. The block tells AI
 		// coding agents that the repo is indexed, where the dashboard is, and
@@ -142,7 +142,7 @@ type GroupConfig struct {
 		// AgentHooks, when true, installs the OPT-IN Claude Code PreToolUse
 		// grep-interceptor hook into each repo's .claude/settings.json. The
 		// hook is advisory-only (never blocks) and nudges the agent toward
-		// archigraph MCP tools when it is about to run a STRUCTURAL grep.
+		// grafel MCP tools when it is about to run a STRUCTURAL grep.
 		//
 		// This is CLAUDE CODE ONLY reinforcement — no other agent host
 		// exposes a PreToolUse surface — and it COMPLEMENTS, not replaces,
@@ -166,7 +166,7 @@ type GroupConfig struct {
 	ExtraStdlibFilter map[string][]string `json:"extra_stdlib_filter,omitempty"`
 }
 
-// Manifest is the committed teammate file: <repo>/.archigraph/group.json.
+// Manifest is the committed teammate file: <repo>/.grafel/group.json.
 type Manifest struct {
 	Group string `json:"group"`
 	Repos []struct {
@@ -178,16 +178,16 @@ type Manifest struct {
 
 var mu sync.Mutex
 
-// HomeDir returns the archigraph home (~/.archigraph) honoring overrides.
+// HomeDir returns the grafel home (~/.grafel) honoring overrides.
 func HomeDir() (string, error) {
-	if override := os.Getenv("ARCHIGRAPH_HOME"); override != "" {
+	if override := os.Getenv("GRAFEL_HOME"); override != "" {
 		return override, nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".archigraph"), nil
+	return filepath.Join(home, ".grafel"), nil
 }
 
 // RegistryPath is the canonical path to registry.json.
@@ -200,17 +200,17 @@ func RegistryPath() (string, error) {
 }
 
 // ConfigDir returns the XDG-friendly per-group config directory.
-// Falls back to ~/.archigraph/groups/<name>/ when XDG_CONFIG_HOME and
+// Falls back to ~/.grafel/groups/<name>/ when XDG_CONFIG_HOME and
 // the user home are unavailable in the same arrangement.
 func ConfigDir() (string, error) {
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, "archigraph"), nil
+		return filepath.Join(xdg, "grafel"), nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "archigraph"), nil
+	return filepath.Join(home, ".config", "grafel"), nil
 }
 
 // ConfigPathFor returns the standard config-path for a group name.
@@ -373,11 +373,11 @@ func SaveGroupConfig(path string, cfg *GroupConfig) error {
 }
 
 // LoadManifest reads a committed teammate manifest from
-// <repo>/.archigraph/group.json.
+// <repo>/.grafel/group.json.
 func LoadManifest(repoOrManifest string) (*Manifest, error) {
 	p := repoOrManifest
 	if fi, err := os.Stat(p); err == nil && fi.IsDir() {
-		p = filepath.Join(p, ".archigraph", "group.json")
+		p = filepath.Join(p, ".grafel", "group.json")
 	}
 	b, err := os.ReadFile(p)
 	if err != nil {

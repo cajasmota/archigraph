@@ -16,7 +16,7 @@ import (
 
 func TestHandleSkillsInstalled_Empty(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
@@ -42,7 +42,7 @@ func TestHandleSkillsInstalled_Empty(t *testing.T) {
 
 func TestHandleSkillsInstalled_WithSkills(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	// Create a skill directory with a SKILL.md
 	skillDir := filepath.Join(dir, "my-skill")
@@ -103,7 +103,7 @@ A test skill.
 
 func TestHandleSkillsAvailable_Shape(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
@@ -135,10 +135,10 @@ func TestHandleSkillsAvailable_Shape(t *testing.T) {
 
 func TestHandleSkillsAvailable_InstalledFlag(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	// Pre-install one of the bundled skills
-	skillDir := filepath.Join(dir, "using-archigraph")
+	skillDir := filepath.Join(dir, "using-grafel")
 	if err := os.MkdirAll(skillDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -158,14 +158,14 @@ func TestHandleSkillsAvailable_InstalledFlag(t *testing.T) {
 	}
 
 	for _, sk := range reply.Skills {
-		if sk.Slug == "using-archigraph" {
+		if sk.Slug == "using-grafel" {
 			if !sk.Installed {
-				t.Error("expected using-archigraph to be flagged installed=true")
+				t.Error("expected using-grafel to be flagged installed=true")
 			}
 			return
 		}
 	}
-	t.Error("using-archigraph not found in catalog")
+	t.Error("using-grafel not found in catalog")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,14 +174,14 @@ func TestHandleSkillsAvailable_InstalledFlag(t *testing.T) {
 
 func TestHandleSkillsInstall_OK(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}
 
-	body, _ := json.Marshal(map[string]string{"slug": "using-archigraph"})
+	body, _ := json.Marshal(map[string]string{"slug": "using-grafel"})
 	req := httptest.NewRequest(http.MethodPost, "/api/skills/install", bytes.NewReader(body))
 	w := httptest.NewRecorder()
 	s.handleSkillsInstall(w, req)
@@ -191,7 +191,7 @@ func TestHandleSkillsInstall_OK(t *testing.T) {
 	}
 
 	// SKILL.md should now exist
-	skillMD := filepath.Join(dir, "using-archigraph", "SKILL.md")
+	skillMD := filepath.Join(dir, "using-grafel", "SKILL.md")
 	if _, err := os.Stat(skillMD); os.IsNotExist(err) {
 		t.Error("SKILL.md was not created after install")
 	}
@@ -199,7 +199,7 @@ func TestHandleSkillsInstall_OK(t *testing.T) {
 
 func TestHandleSkillsInstall_UnknownSlug(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
@@ -218,7 +218,7 @@ func TestHandleSkillsInstall_UnknownSlug(t *testing.T) {
 
 func TestHandleSkillsInstall_EmptyBody(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
@@ -240,7 +240,7 @@ func TestHandleSkillsInstall_EmptyBody(t *testing.T) {
 
 func TestHandleSkillsUninstall_OK(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	// Pre-create a skill directory
 	skillDir := filepath.Join(dir, "my-skill")
@@ -270,7 +270,7 @@ func TestHandleSkillsUninstall_OK(t *testing.T) {
 
 func TestHandleSkillsUninstall_NotFound(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
@@ -289,7 +289,7 @@ func TestHandleSkillsUninstall_NotFound(t *testing.T) {
 
 func TestHandleSkillsUninstall_PathTraversal(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_SKILLS_DIR", dir)
+	t.Setenv("GRAFEL_SKILLS_DIR", dir)
 
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {

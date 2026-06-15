@@ -10,15 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/proto"
+	"github.com/cajasmota/grafel/internal/daemon/proto"
 )
 
-// newWizardTestServer builds a Server with an isolated ARCHIGRAPH_HOME, the
-// in-memory fakeStore (so CreateGroup/AddRepo don't touch ~/.archigraph), and
+// newWizardTestServer builds a Server with an isolated GRAFEL_HOME, the
+// in-memory fakeStore (so CreateGroup/AddRepo don't touch ~/.grafel), and
 // an injected rebuildRunner so the index job completes without a live daemon.
 func newWizardTestServer(t *testing.T, runner rebuildRunner) (*httptest.Server, *Server) {
 	t.Helper()
-	t.Setenv("ARCHIGRAPH_HOME", t.TempDir())
+	t.Setenv("GRAFEL_HOME", t.TempDir())
 	s, err := NewServer(DefaultConfig(), newFakeStore())
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
@@ -110,7 +110,7 @@ func TestV2ScanInspect_InvalidPath(t *testing.T) {
 	ts, _ := newWizardTestServer(t, func(proto.RebuildArgs) (proto.RebuildReply, error) {
 		return proto.RebuildReply{}, nil
 	})
-	body := `{"path":"/no/such/dir/archigraph-test-xyz"}`
+	body := `{"path":"/no/such/dir/grafel-test-xyz"}`
 	resp, err := http.Post(ts.URL+"/api/v2/scan/inspect", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("POST: %v", err)

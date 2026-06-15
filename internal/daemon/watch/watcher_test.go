@@ -17,7 +17,7 @@ func TestShouldSkipDir(t *testing.T) {
 		"target":       true,
 		"src":          false,
 		"internal":     false,
-		".archigraph":  true,
+		".grafel":      true,
 		"dist":         true,
 		".claude":      true, // #3648: agent scratch / linked worktrees
 	}
@@ -30,14 +30,14 @@ func TestShouldSkipDir(t *testing.T) {
 
 func TestShouldSkipPath(t *testing.T) {
 	cases := map[string]bool{
-		"/repo/src/main.go":                false,
-		"/repo/node_modules/foo/bar.js":    true,
-		"/repo/.git/HEAD":                  true,
-		"/repo/target/build.out":           true,
-		"/repo/src/.archigraph/graph.json": true,
-		"/repo/a.log":                      true,
-		"/repo/a.swp":                      true,
-		"/repo/cmd/foo/main_test.go":       false,
+		"/repo/src/main.go":             false,
+		"/repo/node_modules/foo/bar.js": true,
+		"/repo/.git/HEAD":               true,
+		"/repo/target/build.out":        true,
+		"/repo/src/.grafel/graph.json":  true,
+		"/repo/a.log":                   true,
+		"/repo/a.swp":                   true,
+		"/repo/cmd/foo/main_test.go":    false,
 		// #3648: agent worktrees under .claude/ must be dropped at any depth,
 		// including the high-churn node_modules nested inside each worktree.
 		"/repo/.claude/worktrees/agent-x/src/main.ts":               true,

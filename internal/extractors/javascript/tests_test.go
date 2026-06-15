@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // collectKindEdges returns the list of ToIDs for relationships of the

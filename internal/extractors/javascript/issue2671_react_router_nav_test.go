@@ -19,7 +19,7 @@ package javascript_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // findNavEdges returns every NAVIGATES_TO edge on entity `name`. Empty slice

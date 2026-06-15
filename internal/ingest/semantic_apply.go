@@ -9,7 +9,7 @@
 // and produces the SCOPE.DesignDecision nodes + CONTAINS/RATIONALE_FOR edges to
 // splice into the graph.
 //
-// archigraph makes NO LLM call here — it only validates and applies what the
+// grafel makes NO LLM call here — it only validates and applies what the
 // agent produced, exactly like docgen.ApplyResult and
 // enrichment.ApplyDocgenRepairsToResolutions.
 //
@@ -26,8 +26,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // SemanticRunResult is the envelope an external agent writes back after

@@ -8,7 +8,7 @@ package python_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // instrEdge returns the first INSTRUMENTS edge on entity entName whose ToID

@@ -50,7 +50,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // pluginEntityKind / pluginEdgeKind are aliased through the typed enum so

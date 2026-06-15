@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // minEntitiesForReport is the hard floor below which the report is suppressed
@@ -16,9 +16,9 @@ const minEntitiesForReport = 50
 
 // Opts controls report generation behaviour.
 type Opts struct {
-	// GroupName is the archigraph group name — used in the report header.
+	// GroupName is the grafel group name — used in the report header.
 	GroupName string
-	// Version is the archigraph binary version string — used in the header.
+	// Version is the grafel binary version string — used in the header.
 	Version string
 }
 

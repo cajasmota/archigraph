@@ -16,7 +16,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // djangoClassDeclRe locates Django model class declarations:
@@ -98,7 +98,7 @@ func BuildFieldIndex(src string) map[string]bool {
 // in that model) rather than O(all fields in the indexed scope).
 //
 // The closure is built ONCE per indexing run by the coordinator (the
-// in-process indexer in cmd/archigraph/index.go runPass25FrameworkRules
+// in-process indexer in cmd/grafel/index.go runPass25FrameworkRules
 // and the subprocess in internal/daemon/extract/subproc.go) from the
 // union of Pass-1 entities across every file in the indexed scope (or
 // the batch, in the subprocess case), then attached to every per-file

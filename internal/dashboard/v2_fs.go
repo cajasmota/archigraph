@@ -42,7 +42,7 @@ type v2FsEntry struct {
 	// IsDir is always true (we list directories only) but kept explicit so the
 	// shape is self-describing for the frontend.
 	IsDir bool `json:"isDir"`
-	// Hidden is true for dot-directories (.git, .archigraph, …).
+	// Hidden is true for dot-directories (.git, .grafel, …).
 	Hidden bool `json:"hidden"`
 }
 

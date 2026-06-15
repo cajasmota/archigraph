@@ -1,4 +1,4 @@
-// cycles_tools.go — MCP handler for archigraph_quality_cycles (#1312).
+// cycles_tools.go — MCP handler for grafel_quality_cycles (#1312).
 //
 // Exposes import-cycle detection via Tarjan SCC over IMPORTS edges. Each
 // reported cycle includes the participating files/entities, the weakest-link
@@ -10,11 +10,11 @@ import (
 	"context"
 	"sort"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
-// handleQualityCycles is the MCP handler for archigraph_quality_cycles.
+// handleQualityCycles is the MCP handler for grafel_quality_cycles.
 // It accepts an optional repo_filter and optional limit, runs Tarjan SCC
 // over the IMPORTS sub-graph of each loaded repo, and returns all detected
 // cycles sorted by descending size.

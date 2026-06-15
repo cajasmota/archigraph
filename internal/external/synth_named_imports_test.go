@@ -3,7 +3,7 @@ package external
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // #4515 — per-symbol external nodes for NAMED imports. A reference to a named-

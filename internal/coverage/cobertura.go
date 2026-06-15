@@ -7,7 +7,7 @@ import (
 )
 
 // Cobertura XML (coverage.py, generic) document model. Only the line-coverage
-// fields archigraph attributes from are mapped; everything else (rates,
+// fields grafel attributes from are mapped; everything else (rates,
 // conditions, methods, branch data) is parsed-tolerant and ignored.
 //
 // Shape:

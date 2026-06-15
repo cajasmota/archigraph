@@ -3,7 +3,7 @@
 //
 //   - Layer 1 (P0): .gitignore semantics (root + nested, lazily loaded)
 //   - Layer 2 (P1): extended hard-coded skip list
-//   - Layer 3 (P2): .archigraphignore overlay
+//   - Layer 3 (P2): .grafelignore overlay
 //   - Layer 4 (P3): .gitattributes linguist-generated=true wildcard
 //   - Layer 5 (P4): git sparse-checkout — files not present in the sparse
 //     pattern set are silently skipped; directories that have no matching
@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/gitmeta"
+	"github.com/cajasmota/grafel/internal/gitmeta"
 )
 
 // SkipEntry is one directory that was skipped during a walk.
@@ -32,7 +32,7 @@ type SkipEntry struct {
 	// AbsPath is the absolute path of the skipped directory.
 	AbsPath string
 	// Rule is a human-readable description of the matching rule, e.g.
-	// ".gitignore line 23", "hardcoded", ".archigraphignore line 5".
+	// ".gitignore line 23", "hardcoded", ".grafelignore line 5".
 	Rule string
 }
 
@@ -72,12 +72,12 @@ func WalkRepo(root string, opts *Options) ([]string, []SkipEntry, error) {
 	var files []string
 	var skipped []SkipEntry
 
-	// igStack tracks .gitignore/.archigraphignore files as we descend.
+	// igStack tracks .gitignore/.grafelignore files as we descend.
 	var igStack IgnoreStack
 
-	// Load the root-level .gitignore and .archigraphignore.
+	// Load the root-level .gitignore and .grafelignore.
 	rootGit, _ := ParseIgnoreFile("", filepath.Join(root, ".gitignore"), ".gitignore")
-	rootArchi, _ := ParseIgnoreFile("", filepath.Join(root, ".archigraphignore"), ".archigraphignore")
+	rootArchi, _ := ParseIgnoreFile("", filepath.Join(root, ".grafelignore"), ".grafelignore")
 	igStack.Push(rootGit)
 	igStack.Push(rootArchi)
 
@@ -153,14 +153,14 @@ func WalkRepo(root string, opts *Options) ([]string, []SkipEntry, error) {
 				return filepath.SkipDir
 			}
 
-			// Load nested .gitignore/.archigraphignore for this directory.
+			// Load nested .gitignore/.grafelignore for this directory.
 			pushed := 0
 			nestedGit, _ := ParseIgnoreFile(rel, filepath.Join(absPath, ".gitignore"), ".gitignore")
 			if nestedGit != nil && len(nestedGit.patterns) > 0 {
 				igStack.Push(nestedGit)
 				pushed++
 			}
-			nestedArchi, _ := ParseIgnoreFile(rel, filepath.Join(absPath, ".archigraphignore"), ".archigraphignore")
+			nestedArchi, _ := ParseIgnoreFile(rel, filepath.Join(absPath, ".grafelignore"), ".grafelignore")
 			if nestedArchi != nil && len(nestedArchi.patterns) > 0 {
 				igStack.Push(nestedArchi)
 				pushed++
@@ -318,10 +318,10 @@ var hardcodedSkipDirs = map[string]struct{}{
 	"Releases": {},
 
 	// Prior-tool outputs
-	"graphify-out":    {},
-	"gfleet-out":      {},
-	".archigraph-out": {},
-	".archigraph":     {},
+	"graphify-out": {},
+	"gfleet-out":   {},
+	".grafel-out":  {},
+	".grafel":      {},
 
 	// IDE / editor metadata
 	".vscode":  {},

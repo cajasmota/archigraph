@@ -19,7 +19,7 @@
 //     returns USES_HOOK edges (deduplicated).
 //
 // hook definitions are tagged via the subtype set in handleFunctionDeclaration /
-// handleVariableDeclarator (subtype="react_hook") so archigraph_find can filter
+// handleVariableDeclarator (subtype="react_hook") so grafel_find can filter
 // custom hooks, and the USES_HOOK edge wires the component→hook composition
 // graph that powers the Structure/hook_recognition cell.
 package javascript
@@ -27,7 +27,7 @@ package javascript
 import (
 	sitter "github.com/smacker/go-tree-sitter"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // isReactHookName reports whether name follows the React hook naming

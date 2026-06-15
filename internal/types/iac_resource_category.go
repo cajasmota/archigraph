@@ -3,7 +3,7 @@ package types
 import "strings"
 
 // IaC resource categorization — the ONE shared classifier used by every IaC
-// extractor/detector in archigraph (Terraform/HCL, AWS CDK TS+JS+Python,
+// extractor/detector in grafel (Terraform/HCL, AWS CDK TS+JS+Python,
 // Pulumi TS+JS+Python, CloudFormation/SAM, Serverless Framework, Kubernetes,
 // and Azure Bicep). #3549, #4885, epic #3512.
 //
@@ -88,7 +88,7 @@ type iacCategoryRule struct {
 // `datastore`, an IAM role is `security` not `network`, and a CloudWatch alarm
 // is `observability` not `compute`.
 //
-// Each rule's substrings span the IaC dialects archigraph extracts:
+// Each rule's substrings span the IaC dialects grafel extracts:
 //
 //   - Terraform / OpenTofu:  aws_db_instance, azurerm_storage_account, google_sql_database_instance
 //   - Azure Bicep:           Microsoft.Sql/servers, Microsoft.ServiceBus/namespaces/queues

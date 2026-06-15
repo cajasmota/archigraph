@@ -1,4 +1,4 @@
-// Package hcl implements the HCL/Terraform language extractor for archigraph.
+// Package hcl implements the HCL/Terraform language extractor for grafel.
 //
 // It extracts infrastructure entities from HCL files (Terraform .tf, .tfvars,
 // OpenTofu .tofu / .tofu.json, and generic .hcl) using the smacker/go-tree-sitter
@@ -35,8 +35,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 func init() {
@@ -613,7 +613,7 @@ func blockTypeIdent(block *sitter.Node, src []byte) string {
 }
 
 // blockLabels returns all string_lit label values for a block (after the type identifier).
-// For `resource "aws_lambda_function" "archigraph"` returns ["aws_lambda_function", "archigraph"].
+// For `resource "aws_lambda_function" "grafel"` returns ["aws_lambda_function", "grafel"].
 func blockLabels(block *sitter.Node, src []byte) []string {
 	if block == nil {
 		return nil

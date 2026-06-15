@@ -3,8 +3,8 @@ package cpp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // cppExcEdge asserts a THROWS / CATCHES edge from fromName to the shared

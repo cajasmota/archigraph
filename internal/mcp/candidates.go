@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/enrichment"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/enrichment"
 )
 
 // LinkCandidate is one row in <group>-link-candidates.json.
@@ -22,7 +22,7 @@ type LinkCandidate struct {
 	Reason     string  `json:"reason,omitempty"`
 }
 
-// EnrichmentCandidate is one row in <repo>/.archigraph/enrichment-candidates.json.
+// EnrichmentCandidate is one row in <repo>/.grafel/enrichment-candidates.json.
 type EnrichmentCandidate struct {
 	ID     string `json:"id"`
 	NodeID string `json:"node_id"`
@@ -136,8 +136,8 @@ func appendResolution(repoPath string, res EnrichmentResolution) error {
 	if repoPath == "" {
 		return fmt.Errorf("repo path is empty")
 	}
-	archigraphDir := daemon.StateDirForRepo(repoPath)
-	return enrichment.AppendResolution(archigraphDir, enrichment.Resolution{
+	grafelDir := daemon.StateDirForRepo(repoPath)
+	return enrichment.AppendResolution(grafelDir, enrichment.Resolution{
 		ID:         res.CandidateID,
 		SubjectID:  res.NodeID,
 		Kind:       res.Kind,
@@ -153,6 +153,6 @@ func appendRejection(repoPath string, candidateID, reason string) error {
 	if repoPath == "" {
 		return fmt.Errorf("repo path is empty")
 	}
-	archigraphDir := daemon.StateDirForRepo(repoPath)
-	return enrichment.AppendRejection(archigraphDir, candidateID, "", "", reason)
+	grafelDir := daemon.StateDirForRepo(repoPath)
+	return enrichment.AppendRejection(grafelDir, candidateID, "", "", reason)
 }

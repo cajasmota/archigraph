@@ -2,7 +2,7 @@ package mcp
 
 // auth_coverage_2828_test.go — #2828 token-cost optimisation tests.
 //
-// Live telemetry flagged archigraph_auth_coverage as the single biggest token
+// Live telemetry flagged grafel_auth_coverage as the single biggest token
 // hog (~7.5K tok/call). These tests prove the new format=terse default + the
 // lowered limit + the token_budget arg cut payload bytes substantially while
 // preserving the security-essential facts an agent acts on, and that the
@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 

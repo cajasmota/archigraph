@@ -10,6 +10,6 @@ description: >-
   .format(), %-formatting, string concatenation) and emit SCOPE.Pattern
   entities with kind=sql_injection_risk and risk_level=high or medium.
   Parameterized queries using the tuple form are not flagged.
-module: archigraph.engine.rules.pattern_detectors.sql_injection_detector
+module: grafel.engine.rules.pattern_detectors.sql_injection_detector
 function: detect
 applies_to_function: applies_to

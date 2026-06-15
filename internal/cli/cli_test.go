@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
-	"github.com/cajasmota/archigraph/internal/registry"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // withSandboxHome redirects every path the CLI might write to into a
@@ -18,7 +18,7 @@ import (
 func withSandboxHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("ARCHIGRAPH_HOME", filepath.Join(dir, ".archigraph"))
+	t.Setenv("GRAFEL_HOME", filepath.Join(dir, ".grafel"))
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
 	t.Setenv("HOME", dir)
 	return dir
@@ -77,7 +77,7 @@ func TestWizardNonInteractive(t *testing.T) {
 	}
 	// Manifest written into both repos.
 	for _, p := range []string{repoA, repoB} {
-		if _, err := os.Stat(filepath.Join(p, ".archigraph/group.json")); err != nil {
+		if _, err := os.Stat(filepath.Join(p, ".grafel/group.json")); err != nil {
 			t.Fatalf("manifest missing in %s", p)
 		}
 	}
@@ -155,8 +155,8 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	// #1626: per-repo state lives in the external store (resolved by
-	// daemon.StateDirForRepo under the sandbox ARCHIGRAPH_HOME), not in-repo.
-	archigraphDir := daemon.StateDirForRepo(repo)
+	// daemon.StateDirForRepo under the sandbox GRAFEL_HOME), not in-repo.
+	grafelDir := daemon.StateDirForRepo(repo)
 
 	// Test 1: No graph files exist
 	out := &bytes.Buffer{}
@@ -168,10 +168,10 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	// Test 2: Only graph.json exists
-	if err := os.MkdirAll(archigraphDir, 0755); err != nil {
+	if err := os.MkdirAll(grafelDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(archigraphDir, "graph.json"), []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(grafelDir, "graph.json"), []byte("{}"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -188,10 +188,10 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	// Test 3: graph.fb exists (the main #822 fix)
-	if err := os.Remove(filepath.Join(archigraphDir, "graph.json")); err != nil {
+	if err := os.Remove(filepath.Join(grafelDir, "graph.json")); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(archigraphDir, "graph.fb"), []byte("fb"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(grafelDir, "graph.fb"), []byte("fb"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -208,7 +208,7 @@ func TestStatusGraphFileDetection(t *testing.T) {
 	}
 
 	// Test 4: Both graph.fb and graph.json exist
-	if err := os.WriteFile(filepath.Join(archigraphDir, "graph.json"), []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(grafelDir, "graph.json"), []byte("{}"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -256,9 +256,9 @@ func TestHelpAdvancedListsEverything(t *testing.T) {
 }
 
 // TestRegisterMCPInClaudeConfigs verifies that registerMCPInClaudeConfigs
-// correctly writes archigraph MCP entries to detected Claude config files.
-// This tests the fix for issue #841: `archigraph install` must write
-// mcpServers.archigraph to ~/.claude.json (and any ~/.claude-*/.claude.json).
+// correctly writes grafel MCP entries to detected Claude config files.
+// This tests the fix for issue #841: `grafel install` must write
+// mcpServers.grafel to ~/.claude.json (and any ~/.claude-*/.claude.json).
 func TestRegisterMCPInClaudeConfigs(t *testing.T) {
 	home := withSandboxHome(t)
 
@@ -271,7 +271,7 @@ func TestRegisterMCPInClaudeConfigs(t *testing.T) {
 	claudePersonalJSON := filepath.Join(claudePersonalDir, ".claude.json")
 
 	// Create a fake binary path for testing.
-	binPath := "/usr/local/bin/archigraph"
+	binPath := "/usr/local/bin/grafel"
 
 	// Call the MCP registration function.
 	out := &bytes.Buffer{}
@@ -282,7 +282,7 @@ func TestRegisterMCPInClaudeConfigs(t *testing.T) {
 		t.Fatalf("expected 2 registered dirs, got %d: %v", len(registered), registered)
 	}
 
-	// Verify that the primary Claude config was created and contains the archigraph entry.
+	// Verify that the primary Claude config was created and contains the grafel entry.
 	primaryContent, err := os.ReadFile(claudeDir)
 	if err != nil {
 		t.Fatalf("failed to read primary config: %v", err)
@@ -293,29 +293,29 @@ func TestRegisterMCPInClaudeConfigs(t *testing.T) {
 		t.Fatalf("primary config not valid JSON: %v", err)
 	}
 
-	// Check for mcpServers.archigraph entry.
+	// Check for mcpServers.grafel entry.
 	servers, ok := primaryDoc["mcpServers"].(map[string]interface{})
 	if !ok {
 		t.Fatalf("mcpServers not found or not a map in primary config: %+v", primaryDoc)
 	}
 
-	archigraphEntry, ok := servers["archigraph"].(map[string]interface{})
+	grafelEntry, ok := servers["grafel"].(map[string]interface{})
 	if !ok {
-		t.Fatalf("archigraph MCP entry not found in primary config: %+v", servers)
+		t.Fatalf("grafel MCP entry not found in primary config: %+v", servers)
 	}
 
 	// Verify the entry structure: command, args:["mcp-bridge"], type:"stdio"
-	if archigraphEntry["command"] != binPath {
-		t.Fatalf("command not set correctly: got %q, want %q", archigraphEntry["command"], binPath)
+	if grafelEntry["command"] != binPath {
+		t.Fatalf("command not set correctly: got %q, want %q", grafelEntry["command"], binPath)
 	}
 
-	args, ok := archigraphEntry["args"].([]interface{})
+	args, ok := grafelEntry["args"].([]interface{})
 	if !ok || len(args) != 1 || args[0] != "mcp-bridge" {
-		t.Fatalf("args not set correctly (want [mcp-bridge]): %+v", archigraphEntry["args"])
+		t.Fatalf("args not set correctly (want [mcp-bridge]): %+v", grafelEntry["args"])
 	}
 
-	if archigraphEntry["type"] != "stdio" {
-		t.Fatalf("type not set to 'stdio': %+v", archigraphEntry["type"])
+	if grafelEntry["type"] != "stdio" {
+		t.Fatalf("type not set to 'stdio': %+v", grafelEntry["type"])
 	}
 
 	// Verify that the secondary Claude config was also updated.
@@ -334,8 +334,8 @@ func TestRegisterMCPInClaudeConfigs(t *testing.T) {
 		t.Fatalf("mcpServers not found in secondary config: %+v", secondaryDoc)
 	}
 
-	if _, ok := secondaryServers["archigraph"]; !ok {
-		t.Fatalf("archigraph entry not found in secondary config: %+v", secondaryServers)
+	if _, ok := secondaryServers["grafel"]; !ok {
+		t.Fatalf("grafel entry not found in secondary config: %+v", secondaryServers)
 	}
 
 	// Verify the output messages.
@@ -349,11 +349,11 @@ func TestRegisterMCPInClaudeConfigs(t *testing.T) {
 }
 
 // TestRegisterMCPInClaudeConfigsIdempotent verifies that calling
-// registerMCPInClaudeConfigs twice doesn't duplicate the archigraph entry.
+// registerMCPInClaudeConfigs twice doesn't duplicate the grafel entry.
 func TestRegisterMCPInClaudeConfigsIdempotent(t *testing.T) {
 	home := withSandboxHome(t)
 	claudeDir := filepath.Join(home, ".claude.json")
-	binPath := "/usr/local/bin/archigraph"
+	binPath := "/usr/local/bin/grafel"
 
 	// Register twice.
 	out1 := &bytes.Buffer{}
@@ -362,7 +362,7 @@ func TestRegisterMCPInClaudeConfigsIdempotent(t *testing.T) {
 	out2 := &bytes.Buffer{}
 	registerMCPInClaudeConfigs(out2, binPath, []string{claudeDir})
 
-	// Verify the config has exactly one archigraph entry.
+	// Verify the config has exactly one grafel entry.
 	content, err := os.ReadFile(claudeDir)
 	if err != nil {
 		t.Fatalf("failed to read config: %v", err)
@@ -378,13 +378,13 @@ func TestRegisterMCPInClaudeConfigsIdempotent(t *testing.T) {
 		t.Fatalf("expected exactly 1 MCP server entry after 2 registrations, got %d: %+v", len(servers), servers)
 	}
 
-	if _, ok := servers["archigraph"]; !ok {
-		t.Fatalf("archigraph entry missing after idempotent re-registration: %+v", servers)
+	if _, ok := servers["grafel"]; !ok {
+		t.Fatalf("grafel entry missing after idempotent re-registration: %+v", servers)
 	}
 }
 
 // TestUnregisterMCPFromClaudeConfigs verifies that unregisterMCPFromClaudeConfigs
-// correctly removes archigraph MCP entries from Claude config files.
+// correctly removes grafel MCP entries from Claude config files.
 func TestUnregisterMCPFromClaudeConfigs(t *testing.T) {
 	home := withSandboxHome(t)
 
@@ -396,8 +396,8 @@ func TestUnregisterMCPFromClaudeConfigs(t *testing.T) {
 	}
 	claudePersonalJSON := filepath.Join(claudePersonalDir, ".claude.json")
 
-	// Pre-populate configs with archigraph MCP entries.
-	binPath := "/usr/local/bin/archigraph"
+	// Pre-populate configs with grafel MCP entries.
+	binPath := "/usr/local/bin/grafel"
 	registerOut := &bytes.Buffer{}
 	registerMCPInClaudeConfigs(registerOut, binPath, []string{claudeDir, claudePersonalJSON})
 
@@ -406,8 +406,8 @@ func TestUnregisterMCPFromClaudeConfigs(t *testing.T) {
 	var doc map[string]interface{}
 	json.Unmarshal(content, &doc)
 	servers, _ := doc["mcpServers"].(map[string]interface{})
-	if _, ok := servers["archigraph"]; !ok {
-		t.Fatalf("archigraph entry not found before unregister")
+	if _, ok := servers["grafel"]; !ok {
+		t.Fatalf("grafel entry not found before unregister")
 	}
 
 	// Call unregister.
@@ -419,21 +419,21 @@ func TestUnregisterMCPFromClaudeConfigs(t *testing.T) {
 		t.Fatalf("expected 2 removed dirs, got %d: %v", len(removed), removed)
 	}
 
-	// Verify both configs no longer have the archigraph entry.
+	// Verify both configs no longer have the grafel entry.
 	primaryContent, _ := os.ReadFile(claudeDir)
 	var primaryDoc map[string]interface{}
 	json.Unmarshal(primaryContent, &primaryDoc)
 	primaryServers, _ := primaryDoc["mcpServers"].(map[string]interface{})
-	if _, ok := primaryServers["archigraph"]; ok {
-		t.Fatalf("archigraph entry still present in primary config after unregister")
+	if _, ok := primaryServers["grafel"]; ok {
+		t.Fatalf("grafel entry still present in primary config after unregister")
 	}
 
 	secondaryContent, _ := os.ReadFile(claudePersonalJSON)
 	var secondaryDoc map[string]interface{}
 	json.Unmarshal(secondaryContent, &secondaryDoc)
 	secondaryServers, _ := secondaryDoc["mcpServers"].(map[string]interface{})
-	if _, ok := secondaryServers["archigraph"]; ok {
-		t.Fatalf("archigraph entry still present in secondary config after unregister")
+	if _, ok := secondaryServers["grafel"]; ok {
+		t.Fatalf("grafel entry still present in secondary config after unregister")
 	}
 
 	// Verify the output messages.
@@ -451,15 +451,15 @@ func TestUnregisterMCPFromClaudeConfigsIdempotent(t *testing.T) {
 
 	// Register first, then unregister twice.
 	registerOut := &bytes.Buffer{}
-	registerMCPInClaudeConfigs(registerOut, "/usr/local/bin/archigraph", []string{claudeDir})
+	registerMCPInClaudeConfigs(registerOut, "/usr/local/bin/grafel", []string{claudeDir})
 
 	// Verify the entry exists.
 	content, _ := os.ReadFile(claudeDir)
 	var doc map[string]interface{}
 	json.Unmarshal(content, &doc)
 	servers, _ := doc["mcpServers"].(map[string]interface{})
-	if _, ok := servers["archigraph"]; !ok {
-		t.Fatalf("archigraph entry not found before unregister")
+	if _, ok := servers["grafel"]; !ok {
+		t.Fatalf("grafel entry not found before unregister")
 	}
 
 	// First unregister.
@@ -474,8 +474,8 @@ func TestUnregisterMCPFromClaudeConfigsIdempotent(t *testing.T) {
 	var doc2 map[string]interface{}
 	json.Unmarshal(content, &doc2)
 	servers2, _ := doc2["mcpServers"].(map[string]interface{})
-	if _, ok := servers2["archigraph"]; ok {
-		t.Fatalf("archigraph entry still present after first unregister")
+	if _, ok := servers2["grafel"]; ok {
+		t.Fatalf("grafel entry still present after first unregister")
 	}
 
 	// Second unregister on same config (file exists but no entry).
@@ -494,9 +494,9 @@ func TestUnregisterMCPFromClaudeConfigsIdempotent(t *testing.T) {
 }
 
 // TestInstallSkillsInClaudeConfigs verifies that installSkillsInClaudeConfigs
-// correctly symlinks the 6 archigraph skills into detected Claude config
+// correctly symlinks the 6 grafel skills into detected Claude config
 // directories' skills/ subdirectories. This tests the fix for issue #824:
-// after `archigraph install`, users should be able to invoke /archigraph-quality-check
+// after `grafel install`, users should be able to invoke /grafel-quality-check
 // and other skills directly in Claude Code.
 func TestInstallSkillsInClaudeConfigs(t *testing.T) {
 	home := withSandboxHome(t)
@@ -531,7 +531,7 @@ func TestInstallSkillsInClaudeConfigs(t *testing.T) {
 
 	// Call installSkillsInClaudeConfigs with explicit skillsSourceDir.
 	out := &bytes.Buffer{}
-	installed := installSkillsInClaudeConfigs(out, "/fake/bin/archigraph", skillsDir, []string{claudeDir, claudePersonalJSON})
+	installed := installSkillsInClaudeConfigs(out, "/fake/bin/grafel", skillsDir, []string{claudeDir, claudePersonalJSON})
 
 	// Verify both directories reported as installed.
 	if len(installed) != 2 {

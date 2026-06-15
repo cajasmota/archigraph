@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/tier"
+	"github.com/cajasmota/grafel/internal/daemon/tier"
 )
 
 // fakeWatcherHook records Pause/Resume calls for assertion.

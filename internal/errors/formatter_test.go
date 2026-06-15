@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	idxerr "github.com/cajasmota/archigraph/internal/errors"
+	idxerr "github.com/cajasmota/grafel/internal/errors"
 )
 
 func TestFormat_PlainOutput(t *testing.T) {
@@ -17,8 +17,8 @@ func TestFormat_PlainOutput(t *testing.T) {
 	requireContains(t, out, "IDX-002")
 	requireContains(t, out, "file is 42 MiB")
 	requireContains(t, out, "/repo/big.js")
-	requireContains(t, out, ".archigraphignore")
-	requireContains(t, out, "https://archigraph.dev/docs/errors/IDX-002")
+	requireContains(t, out, ".grafelignore")
+	requireContains(t, out, "https://grafel.dev/docs/errors/IDX-002")
 }
 
 func TestFormat_WithLine(t *testing.T) {

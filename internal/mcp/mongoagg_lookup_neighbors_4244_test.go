@@ -3,7 +3,7 @@ package mcp
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // TestMongoAggLookupNode_NeighborsSurfaceJoin_4244 drives the EXACT adjacency

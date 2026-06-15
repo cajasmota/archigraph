@@ -1,13 +1,13 @@
 // issue4332_crosspkg_test.go — end-to-end live-pipeline validation for #4332.
 //
-// Bug: Go cross-package import/call resolution drops edges. On archigraph's own
+// Bug: Go cross-package import/call resolution drops edges. On grafel's own
 // self-graph the internal/resolve package reported 0 importers though grep finds
 // 5+ packages importing it, and cross-package CALLS (`resolve.BuildIndex()`) were
 // collapsed to an ambiguity-prone bare name (`BuildIndex`) that dropped whenever
 // two packages defined a symbol of the same name.
 //
 // These tests drive the REAL extraction + resolver passes — exactly the
-// sequence cmd/archigraph/index.go runs — on faithful multi-package Go modules
+// sequence cmd/grafel/index.go runs — on faithful multi-package Go modules
 // that use a realistic `module github.com/...` path (the bug is module-path
 // keyed, so a toy bare module name would not reproduce it). Per-half unit tests
 // already pass; the drop only surfaces when real extractor output flows through
@@ -20,10 +20,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractGoModuleForTest extracts every (relPath, src) file with the real Go

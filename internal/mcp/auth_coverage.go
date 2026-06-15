@@ -1,4 +1,4 @@
-// auth_coverage.go — archigraph_auth_coverage MCP tool (#1314).
+// auth_coverage.go — grafel_auth_coverage MCP tool (#1314).
 //
 // # Purpose
 //
@@ -54,7 +54,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -321,7 +321,7 @@ func (r EndpointRecord) terse() string {
 // handleAuthCoverage — the MCP tool handler
 // ---------------------------------------------------------------------------
 
-// handleAuthCoverage implements the archigraph_auth_coverage tool.
+// handleAuthCoverage implements the grafel_auth_coverage tool.
 func (s *Server) handleAuthCoverage(_ context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
 	_, lg, errRes := s.resolveAndGroup(req)
 	if errRes != nil {

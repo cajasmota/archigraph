@@ -18,7 +18,7 @@ package dashboard
 //     function + bounded inter-procedural CALLS hops). Each edge carries the
 //     tainted request `field`, the `sink_kind`, the resolved `sink`, and the
 //     inter-procedural `hop_path`. The pass persists these to the data-flow
-//     sidecar (~/.archigraph/groups/<group>-links-data-flow.json). Precision-
+//     sidecar (~/.grafel/groups/<group>-links-data-flow.json). Precision-
 //     first: a flow the sniffer did not soundly follow is never fabricated.
 //
 //   - SecurityFinding records. The taint-flow pass (internal/links/taint_flow.go)
@@ -26,7 +26,7 @@ package dashboard
 //     category is active and unsanitised, emitting one ranked finding per
 //     (source, sink, category) with an aggregated confidence in [0,1] (per-hop
 //     decay × source/sink confidence). Persisted to the taint sidecar
-//     (~/.archigraph/groups/<group>-links-taint.json). The pass drops findings
+//     (~/.grafel/groups/<group>-links-taint.json). The pass drops findings
 //     below TaintFindingFloor() (0.5); this handler surfaces every finding the
 //     pass kept (the UI ranks + lets the user threshold), so the count is honest.
 //
@@ -52,10 +52,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/graph"
-	fb "github.com/cajasmota/archigraph/internal/graph/fbgraph"
-	"github.com/cajasmota/archigraph/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/graph"
+	fb "github.com/cajasmota/grafel/internal/graph/fbgraph"
+	"github.com/cajasmota/grafel/internal/graph/fbreader"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ func dataFlowSidecarPath(group string) string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".archigraph", "groups", group+"-links-data-flow.json")
+	return filepath.Join(home, ".grafel", "groups", group+"-links-data-flow.json")
 }
 
 // taintSidecarPath mirrors the MCP taint sidecar path: the group links file with

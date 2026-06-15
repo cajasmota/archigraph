@@ -6,17 +6,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 
 	// Register the regex framework extractors under test (Django global wiring).
-	_ "github.com/cajasmota/archigraph/internal/custom/python"
+	_ "github.com/cajasmota/grafel/internal/custom/python"
 	// Register the tree-sitter base Python extractor so the middleware/auth
 	// classes get their real module-qualified QualifiedName, which is what the
 	// settings dotted path resolves against.
-	_ "github.com/cajasmota/archigraph/internal/extractors/python"
+	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
 // Issue #4379 LIVE-REPRO — Django global cross-cutting wiring.

@@ -23,7 +23,7 @@ func baseStats(group string) Stats {
 		Queues:        3,
 		Topics:        1,
 		IndexedAt:     fixedTime(),
-		BinaryPath:    "/usr/local/bin/archigraph",
+		BinaryPath:    "/usr/local/bin/grafel",
 	}
 }
 
@@ -94,7 +94,7 @@ func TestRenderBlock_cursorHint(t *testing.T) {
 // TestRenderBlock_binaryPath verifies the binary path appears in the MCP snippet.
 func TestRenderBlock_binaryPath(t *testing.T) {
 	block := renderBlock(baseStats("g"), detectedTools{})
-	if !strings.Contains(block, "/usr/local/bin/archigraph") {
+	if !strings.Contains(block, "/usr/local/bin/grafel") {
 		t.Error("block missing binary path in MCP snippet")
 	}
 }

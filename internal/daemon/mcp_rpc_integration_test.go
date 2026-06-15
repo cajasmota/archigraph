@@ -6,9 +6,9 @@ package daemon_test
 //  1. Start a real daemon with stub MCP functions injected.
 //  2. Dial the socket with a net/rpc JSON-RPC 1.0 client.
 //  3. Call MCPToolList → assert 14+ tools returned.
-//  4. Call MCPToolCall(archigraph_stats) → assert non-error reply.
+//  4. Call MCPToolCall(grafel_stats) → assert non-error reply.
 //
-// A separate bridge-subprocess test would require the archigraph binary
+// A separate bridge-subprocess test would require the grafel binary
 // to be built first, which is out of scope for a package test. The bridge
 // itself is covered by internal/cli/mcp_bridge_test.go.
 
@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon"
-	"github.com/cajasmota/archigraph/internal/daemon/transport"
+	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // ── stub MCP functions ────────────────────────────────────────────────────────
@@ -31,20 +31,20 @@ import (
 // descriptions / schemas here are minimal stubs — we only test the RPC
 // plumbing, not the handler business logic.
 var stubToolCatalog = []daemon.MCPToolEntry{
-	{Name: "archigraph_find", Description: "BM25 search"},
-	{Name: "archigraph_inspect", Description: "entity lookup"},
-	{Name: "archigraph_expand", Description: "neighbor expansion"},
-	{Name: "archigraph_clusters", Description: "Louvain communities"},
-	{Name: "archigraph_stats", Description: "corpus metrics"},
-	{Name: "archigraph_traces", Description: "process-flow chains"},
-	{Name: "archigraph_cross_links", Description: "cross-repo links"},
-	{Name: "archigraph_get_source", Description: "source snippet"},
-	{Name: "archigraph_repairs", Description: "repair queue"},
-	{Name: "archigraph_patterns", Description: "pattern store"},
-	{Name: "archigraph_enrichments", Description: "enrichment candidates"},
-	{Name: "archigraph_save_finding", Description: "persist Q/A pair"},
-	{Name: "archigraph_recent_activity", Description: "recently changed entities"},
-	{Name: "archigraph_get_telemetry", Description: "server uptime + per-tool counters"},
+	{Name: "grafel_find", Description: "BM25 search"},
+	{Name: "grafel_inspect", Description: "entity lookup"},
+	{Name: "grafel_expand", Description: "neighbor expansion"},
+	{Name: "grafel_clusters", Description: "Louvain communities"},
+	{Name: "grafel_stats", Description: "corpus metrics"},
+	{Name: "grafel_traces", Description: "process-flow chains"},
+	{Name: "grafel_cross_links", Description: "cross-repo links"},
+	{Name: "grafel_get_source", Description: "source snippet"},
+	{Name: "grafel_repairs", Description: "repair queue"},
+	{Name: "grafel_patterns", Description: "pattern store"},
+	{Name: "grafel_enrichments", Description: "enrichment candidates"},
+	{Name: "grafel_save_finding", Description: "persist Q/A pair"},
+	{Name: "grafel_recent_activity", Description: "recently changed entities"},
+	{Name: "grafel_get_telemetry", Description: "server uptime + per-tool counters"},
 }
 
 func stubListTools(_ string) ([]daemon.MCPToolEntry, error) {
@@ -53,7 +53,7 @@ func stubListTools(_ string) ([]daemon.MCPToolEntry, error) {
 
 func stubCallTool(name string, args map[string]any, _ string) (daemon.MCPCallResult, error) {
 	switch name {
-	case "archigraph_stats":
+	case "grafel_stats":
 		// Minimal well-formed stats response.
 		payload, _ := json.Marshal(map[string]any{
 			"node_count": 0,
@@ -170,11 +170,11 @@ func TestMCPToolList_Integration_Returns14Tools(t *testing.T) {
 		byName[tool.Name] = struct{}{}
 	}
 	canonical := []string{
-		"archigraph_find", "archigraph_inspect", "archigraph_expand",
-		"archigraph_clusters", "archigraph_stats", "archigraph_traces",
-		"archigraph_cross_links", "archigraph_get_source", "archigraph_repairs",
-		"archigraph_patterns", "archigraph_enrichments", "archigraph_save_finding",
-		"archigraph_recent_activity", "archigraph_get_telemetry",
+		"grafel_find", "grafel_inspect", "grafel_expand",
+		"grafel_clusters", "grafel_stats", "grafel_traces",
+		"grafel_cross_links", "grafel_get_source", "grafel_repairs",
+		"grafel_patterns", "grafel_enrichments", "grafel_save_finding",
+		"grafel_recent_activity", "grafel_get_telemetry",
 	}
 	for _, name := range canonical {
 		if _, ok := byName[name]; !ok {
@@ -189,7 +189,7 @@ func TestMCPToolCall_Integration_StatsReturnsContent(t *testing.T) {
 	defer c.Close()
 
 	args := daemon.MCPToolCallArgs{
-		Name:      "archigraph_stats",
+		Name:      "grafel_stats",
 		Arguments: map[string]any{},
 		CWD:       "/tmp/test-project",
 	}
@@ -234,7 +234,7 @@ func TestMCPToolCall_Integration_NilCallTool_ReturnsErrorBlock(t *testing.T) {
 	c := dialRPC(t, layout.SocketPath)
 	defer c.Close()
 
-	args := daemon.MCPToolCallArgs{Name: "archigraph_find"}
+	args := daemon.MCPToolCallArgs{Name: "grafel_find"}
 	var reply daemon.MCPToolCallReply
 	if err := c.Call("Daemon.MCPToolCall", &args, &reply); err != nil {
 		t.Fatalf("Daemon.MCPToolCall: %v", err)

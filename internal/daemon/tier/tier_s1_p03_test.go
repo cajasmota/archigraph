@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/daemon/tier"
+	"github.com/cajasmota/grafel/internal/daemon/tier"
 )
 
 // ---------------------------------------------------------------------------

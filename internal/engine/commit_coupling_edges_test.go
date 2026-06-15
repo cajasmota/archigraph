@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/graph"
+	"github.com/cajasmota/grafel/internal/graph"
 )
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -26,11 +26,11 @@ import (
 
 func TestParseGitLog_ParsesMultipleCommits(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
-		"__archigraph_commit__:abc",
+		"__grafel_commit__:abc",
 		"a.go",
 		"b.go",
 		"",
-		"__archigraph_commit__:def",
+		"__grafel_commit__:def",
 		"a.go",
 		"c.go",
 		"",
@@ -57,7 +57,7 @@ func TestParseGitLog_DedupsFilesWithinCommit(t *testing.T) {
 	// A rename within a commit can produce the same path twice; we dedup
 	// so pair enumeration doesn't double-count.
 	input := strings.NewReader(strings.Join([]string{
-		"__archigraph_commit__:abc",
+		"__grafel_commit__:abc",
 		"a.go",
 		"a.go",
 		"b.go",
@@ -77,10 +77,10 @@ func TestParseGitLog_DedupsFilesWithinCommit(t *testing.T) {
 func TestParseGitLog_SkipsOversizeCommits(t *testing.T) {
 	// 3-file commit, then a 5-file commit, max=3 → second is dropped.
 	input := strings.NewReader(strings.Join([]string{
-		"__archigraph_commit__:abc",
+		"__grafel_commit__:abc",
 		"a", "b", "c",
 		"",
-		"__archigraph_commit__:def",
+		"__grafel_commit__:def",
 		"a", "b", "c", "d", "e",
 		"",
 	}, "\n"))
@@ -100,9 +100,9 @@ func TestParseGitLog_SkipsOversizeCommits(t *testing.T) {
 
 func TestParseGitLog_SkipsEmptyCommit(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
-		"__archigraph_commit__:abc",
+		"__grafel_commit__:abc",
 		"",
-		"__archigraph_commit__:def",
+		"__grafel_commit__:def",
 		"a.go",
 		"",
 	}, "\n"))

@@ -25,8 +25,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
 )
 
 // KindRepairEdge is the canonical kind string for ADR-0015 repair_edge
@@ -187,7 +187,7 @@ func CollectRepairEdgeCandidates(doc *graph.Document, opts RepairEdgeCandidateOp
 }
 
 // classifyEndpointDisposition asks the resolver to classify a single stub.
-// Mirrors classifyForDiag in cmd/archigraph/index.go without depending on it
+// Mirrors classifyForDiag in cmd/grafel/index.go without depending on it
 // (this package can't import cmd/).
 func classifyEndpointDisposition(idx resolve.Index, stub, lang string, allow resolve.ExternalAllowlist) resolve.Disposition {
 	stats := idx.ClassifyEndpoints([]resolve.EndpointPair{
@@ -347,7 +347,7 @@ func syntheticFromEntity(rawFromID string) *graph.Entity {
 }
 
 // isHexID is a local copy of the cmd-side helper. Inline to avoid a circular
-// import (cmd/archigraph already imports this package).
+// import (cmd/grafel already imports this package).
 func isHexID(s string) bool {
 	if len(s) != 16 {
 		return false

@@ -3,7 +3,7 @@ package csharp_test
 import (
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // MediatR in-process CQRS / mediator coverage (#4922). Value-asserting:

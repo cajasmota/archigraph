@@ -1,15 +1,15 @@
 package mcp
 
-// docstate.go — documentation-state tracking for archigraph_whoami (issue #734).
+// docstate.go — documentation-state tracking for grafel_whoami (issue #734).
 //
-// Reads <group>/.archigraph/docgen-state.json (written by /archigraph-tech-docs skill)
+// Reads <group>/.grafel/docgen-state.json (written by /grafel-tech-docs skill)
 // and computes:
 //
 //	documentation_state  "never_generated" | "stale" | "fresh"
 //	stale_count          count of source files modified after last_docgen_at
 //	suggested_action     human-readable next step for the agent to surface
 //
-// The file is also read by the MCP server to enrich the archigraph_whoami
+// The file is also read by the MCP server to enrich the grafel_whoami
 // response, enabling agents to proactively suggest documentation generation.
 
 import (
@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-// docStateCache memoizes ComputeDocState results to keep archigraph_whoami off
+// docStateCache memoizes ComputeDocState results to keep grafel_whoami off
 // the per-call os.Stat walk over every unique source file in the graph (on the
 // 62K-entity self-graph that is thousands of stat syscalls per call — the
 // dominant whoami cost after git subprocesses, #3325 / epic #3648).
@@ -30,7 +30,7 @@ import (
 // digest of every loaded repo's graph mtime. The graph mtime is the
 // index-completion signal — Reload() advances lr.mtime when a repo's graph.fb
 // is rewritten by the indexer — so a reindex always busts this cache, keeping
-// stale_count correct after re-indexing. A new /archigraph-tech-docs run
+// stale_count correct after re-indexing. A new /grafel-tech-docs run
 // rewrites docgen-state.json (mtime advances) and likewise busts it. Source
 // files only become graph-visible on the next reindex, so keying on graph mtime
 // is the correct freshness boundary for the stale-count semantics.
@@ -77,7 +77,7 @@ func resetDocStateCacheForTest() {
 }
 
 // DocgenState is the on-disk shape of docgen-state.json.
-// Written by the /archigraph-tech-docs skill after a successful run;
+// Written by the /grafel-tech-docs skill after a successful run;
 // read here by the MCP server and daemon helpers.
 type DocgenState struct {
 	// LastDocgenAt is the RFC3339 timestamp of the last /generate-docs run.
@@ -113,13 +113,13 @@ type DocStateResult struct {
 // defaultDocstateDir returns the per-group docstate directory.
 //
 // Priority order:
-//  1. $ARCHIGRAPH_HOME — explicit override used in tests and custom installs.
+//  1. $GRAFEL_HOME — explicit override used in tests and custom installs.
 //  2. $HOME — honored explicitly so tests using t.Setenv("HOME", tmpDir)
 //     work on all platforms including Windows where os.UserHomeDir() reads
 //     USERPROFILE and ignores HOME.
 //  3. os.UserHomeDir() fallback (production path, uses platform conventions).
 func defaultDocstateDir(group string) string {
-	base := os.Getenv("ARCHIGRAPH_HOME")
+	base := os.Getenv("GRAFEL_HOME")
 	if base == "" {
 		home := os.Getenv("HOME")
 		if home == "" {
@@ -129,7 +129,7 @@ func defaultDocstateDir(group string) string {
 				return ""
 			}
 		}
-		base = filepath.Join(home, ".archigraph")
+		base = filepath.Join(home, ".grafel")
 	}
 	return filepath.Join(base, "groups", group)
 }
@@ -158,7 +158,7 @@ func LoadDocgenState(group string) (*DocgenState, error) {
 }
 
 // SaveDocgenState writes docgen-state.json atomically (tmp + rename).
-// This is called by the /archigraph-tech-docs skill completion path.
+// This is called by the /grafel-tech-docs skill completion path.
 func SaveDocgenState(group string, st DocgenState) error {
 	dir := defaultDocstateDir(group)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -217,7 +217,7 @@ func computeDocStateUncached(groupName string, lg *LoadedGroup) DocStateResult {
 			DocumentationState: "never_generated",
 			LastDocgenAt:       nil,
 			StaleCount:         0,
-			SuggestedAction:    "run /archigraph-tech-docs",
+			SuggestedAction:    "run /grafel-tech-docs",
 		}
 	}
 
@@ -285,7 +285,7 @@ func computeDocStateUncached(groupName string, lg *LoadedGroup) DocStateResult {
 func composeSuggestedAction(docState DocStateResult, candidateCount, residualCount int) string {
 	// Docs-first: if never generated or stale, that dominates.
 	if docState.DocumentationState == "never_generated" {
-		return "run /archigraph-tech-docs"
+		return "run /grafel-tech-docs"
 	}
 	if docState.DocumentationState == "stale" {
 		return fmt.Sprintf("refresh docs — %d file(s) changed since last generation", docState.StaleCount)

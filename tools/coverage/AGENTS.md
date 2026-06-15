@@ -1,6 +1,6 @@
 # Coverage tooling — agent guide
 
-The `coverage` command maintains the archigraph capabilities registry at `docs/coverage/registry.json` and regenerates the per-language / per-category markdown views. It is the source of truth for "what does archigraph extract today?"
+The `coverage` command maintains the grafel capabilities registry at `docs/coverage/registry.json` and regenerates the per-language / per-category markdown views. It is the source of truth for "what does grafel extract today?"
 
 ## Hard rules
 
@@ -54,7 +54,7 @@ gate (`.github/workflows/coverage-docs.yml`) treats them differently:
   1. *"capability has no mapping entry"* (`validate_map.go`, the
      mapping-coverage nudge) — every registry cell with status `full`/`partial`
      ideally has a `capability-map.yaml` symbol/function mapping. The mapping
-     section only enumerates archigraph's own code-delivering records (~18); the
+     section only enumerates grafel's own code-delivering records (~18); the
      hundreds of framework/language records (e.g. `lang.jsts.framework.*`,
      `test.pytest`) are descriptive coverage entries served by *shared*
      extractors, so per-record symbol mappings are deliberately absent. Adding

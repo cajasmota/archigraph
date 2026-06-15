@@ -1,9 +1,9 @@
-// dev.go implements the DEV mode install transaction for `archigraph install --dev`.
+// dev.go implements the DEV mode install transaction for `grafel install --dev`.
 //
 // DEV mode is identical to COPY mode (copy.go) EXCEPT for step 2: instead of
 // copying skill directories into ~/.claude/skills/<name>/, it creates symlinks
 // (on macOS/Linux) or directory junctions (on Windows) that point directly into
-// the archigraph repository working tree.  This means edits to skills in the
+// the grafel repository working tree.  This means edits to skills in the
 // repo are instantly visible to Claude Code without re-running install.
 //
 // Steps (identical step numbers to COPY mode):
@@ -11,10 +11,10 @@
 //  2. Skills symlink: os.Symlink(repo/skills/<name>, ~/.claude/skills/<name>).
 //     On Windows, a junction is used. If junction creation fails (locked-down
 //     machine), this step falls back to COPY mode with a printed warning.
-//  3. MCP registration: write archigraph entry into all detected .claude.json files.
+//  3. MCP registration: write grafel entry into all detected .claude.json files.
 //  4. Daemon restart: graceful stop + start, wait for /healthz.
-//  5. .gitignore integration: append /.archigraph/ if inside a git repo.
-//  6. Persist ~/.archigraph/install.json with install_mode="dev".
+//  5. .gitignore integration: append /.grafel/ if inside a git repo.
+//  6. Persist ~/.grafel/install.json with install_mode="dev".
 //
 // Doctor behaviour in DEV mode:
 //   - Skips per-file SHA manifest check (files change constantly in dev).
@@ -29,14 +29,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cajasmota/archigraph/internal/install/mcpreg"
-	"github.com/cajasmota/archigraph/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/install/mcpreg"
+	"github.com/cajasmota/grafel/internal/install/skilllink"
 )
 
 // DevOptions is the input to RunDev. All fields have sensible defaults;
 // callers only need to set overrides.
 type DevOptions struct {
-	// BinPath is the running archigraph binary.  Defaults to os.Executable().
+	// BinPath is the running grafel binary.  Defaults to os.Executable().
 	BinPath string
 
 	// SkillsSourceDir overrides skills discovery (from --skills-source-dir).
@@ -108,7 +108,7 @@ type DevResult struct {
 }
 
 // RunDev executes the DEV-mode install transaction.
-// It is the implementation behind `archigraph install --dev`.
+// It is the implementation behind `grafel install --dev`.
 func RunDev(opts DevOptions) (*DevResult, error) {
 	// ── apply defaults ──────────────────────────────────────────────────────
 	if err := opts.applyDefaults(); err != nil {
@@ -128,8 +128,8 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 	if existing, err := ReadState(opts.StatePath); err == nil && existing != nil {
 		if existing.InstallMode == ModeCopy {
 			fmt.Fprintf(os.Stderr,
-				"archigraph install --dev: switching modes; previous COPY skills will be removed and replaced with symlinks\n"+
-					"  (run 'archigraph uninstall && archigraph install --dev' to start clean instead)\n")
+				"grafel install --dev: switching modes; previous COPY skills will be removed and replaced with symlinks\n"+
+					"  (run 'grafel uninstall && grafel install --dev' to start clean instead)\n")
 		}
 	}
 
@@ -178,7 +178,7 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 		if cwd == "" {
 			cwd, _ = os.Getwd()
 		}
-		return nil, fmt.Errorf("no skills/ directory found at %s; pass --skills-source-dir <path-to-archigraph-repo>/skills", cwd)
+		return nil, fmt.Errorf("no skills/ directory found at %s; pass --skills-source-dir <path-to-grafel-repo>/skills", cwd)
 	}
 
 	claudeDirs := mcpreg.DetectClaudeConfigDirs(opts.ClaudeConfigDirs)
@@ -199,7 +199,7 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 		skillsDestDir := skilllink.ClaudeSkillsDirForConfig(cfgPath)
 		if skillsDestDir == "" {
 			fmt.Fprintf(os.Stderr,
-				"archigraph install --dev: cannot derive skills dir for %s; skipping\n",
+				"grafel install --dev: cannot derive skills dir for %s; skipping\n",
 				cfgPath)
 			continue
 		}
@@ -281,7 +281,7 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 	if repoRoot, ok := DetectGitRepo(opts.WorkingDir); ok {
 		if !opts.DryRun {
 			if _, err := EnsureGitignore(repoRoot); err != nil {
-				fmt.Fprintf(os.Stderr, "archigraph install --dev: step 5 warning – .gitignore: %v\n", err)
+				fmt.Fprintf(os.Stderr, "grafel install --dev: step 5 warning – .gitignore: %v\n", err)
 			} else {
 				state.Gitignore = GitignoreRecord{Repos: []string{repoRoot}}
 				result.GitignoreRepo = repoRoot
@@ -290,7 +290,7 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 			result.GitignoreRepo = repoRoot
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "archigraph install --dev: step 5 – not inside a git repo; skipping .gitignore update\n")
+		fmt.Fprintf(os.Stderr, "grafel install --dev: step 5 – not inside a git repo; skipping .gitignore update\n")
 	}
 	completedSteps = append(completedSteps, 5)
 
@@ -299,7 +299,7 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 	// ─────────────────────────────────────────────────────────────────────────
 	if !opts.DryRun {
 		if err := WriteState(opts.StatePath, state); err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph install --dev: step 6 warning – persist state: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel install --dev: step 6 warning – persist state: %v\n", err)
 		}
 	}
 	result.StatePath = opts.StatePath
@@ -318,7 +318,7 @@ func RunDev(opts DevOptions) (*DevResult, error) {
 		}
 		if err := InstallGitHooks(hookOpts); err != nil {
 			// Non-fatal: hooks are a convenience; don't abort a successful install.
-			fmt.Fprintf(os.Stderr, "archigraph install --dev: step 7 warning – git hooks: %v\n", err)
+			fmt.Fprintf(os.Stderr, "grafel install --dev: step 7 warning – git hooks: %v\n", err)
 		}
 	}
 
@@ -389,7 +389,7 @@ func symlinkSkills(srcDir, destDir string, dryRun bool) (map[string]SkillRecord,
 		skillDst := filepath.Join(destDir, skillName)
 
 		if _, err := os.Stat(skillSrc); err != nil {
-			fmt.Fprintf(os.Stderr, "archigraph install --dev: skill %s not found at %s; skipping\n", skillName, skillSrc)
+			fmt.Fprintf(os.Stderr, "grafel install --dev: skill %s not found at %s; skipping\n", skillName, skillSrc)
 			continue
 		}
 
@@ -412,7 +412,7 @@ func symlinkSkills(srcDir, destDir string, dryRun bool) (map[string]SkillRecord,
 				// On Windows without the symbolic-link privilege, Symlink fails.
 				// Fall back to a directory copy and warn.
 				fmt.Fprintf(os.Stderr,
-					"archigraph install --dev: symlink %s failed (%v); falling back to COPY mode for this skill\n",
+					"grafel install --dev: symlink %s failed (%v); falling back to COPY mode for this skill\n",
 					skillName, symlinkErr)
 				if copyErr := copyDir(absSrc, skillDst); copyErr != nil {
 					return nil, nil, nil, fmt.Errorf("skill %s: copy fallback: %w", skillName, copyErr)

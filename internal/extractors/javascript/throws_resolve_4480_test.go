@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cajasmota/archigraph/internal/external"
-	extreg "github.com/cajasmota/archigraph/internal/extractor"
-	"github.com/cajasmota/archigraph/internal/extractors/javascript"
-	"github.com/cajasmota/archigraph/internal/graph"
-	"github.com/cajasmota/archigraph/internal/resolve"
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/external"
+	extreg "github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/extractors/javascript"
+	"github.com/cajasmota/grafel/internal/graph"
+	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // throws_resolve_4480_test.go — in-pipeline live-fire for #4480.
@@ -34,7 +34,7 @@ import (
 
 const repoTag4480 = "core-backend-v3"
 
-// stampGraphIDs mirrors cmd/archigraph.(*Indexer).stampEntityIDs: it assigns
+// stampGraphIDs mirrors cmd/grafel.(*Indexer).stampEntityIDs: it assigns
 // every record the deterministic graph.EntityID the resolver and buildDocument
 // rely on, so byQualifiedName binds THROWS edges to the synthetic node's real
 // graph id (matching production).

@@ -1,6 +1,6 @@
 package bicep
 
-import "github.com/cajasmota/archigraph/internal/types"
+import "github.com/cajasmota/grafel/internal/types"
 
 // bicepResourceCoarseScope returns the uniform IaC resource_category for an
 // Azure resource-provider type (e.g. "Microsoft.Storage/storageAccounts"). It

@@ -10,11 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// agentsMDMarkers for the archigraph discovery stub.
+// agentsMDMarkers for the grafel discovery stub.
 // Matches the pattern proposed in #658: marker-wrapped idempotent upsert.
 const (
-	agentsMDStartMarker = "<!-- archigraph:start v=1 -->"
-	agentsMDEndMarker   = "<!-- archigraph:end -->"
+	agentsMDStartMarker = "<!-- grafel:start v=1 -->"
+	agentsMDEndMarker   = "<!-- grafel:end -->"
 )
 
 // agentsMDBlockRegex matches the entire marker-wrapped region.
@@ -23,7 +23,7 @@ var agentsMDBlockRegex = regexp.MustCompile(`(?s)` +
 	`.*?` +
 	regexp.QuoteMeta(agentsMDEndMarker))
 
-// newRegisterCmd returns the `archigraph register` subcommand.
+// newRegisterCmd returns the `grafel register` subcommand.
 // It's a hidden command useful for repo setup automation and agent discovery.
 func newRegisterCmd() *cobra.Command {
 	var writeAgentsMD bool
@@ -33,11 +33,11 @@ func newRegisterCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "register [--write-agents-md]",
 		Hidden: true,
-		Short:  "Register archigraph in a repository",
-		Long: `register writes an archigraph discovery stub into a repository's
-AGENTS.md file so agents working in that repo know archigraph is available.
+		Short:  "Register grafel in a repository",
+		Long: `register writes an grafel discovery stub into a repository's
+AGENTS.md file so agents working in that repo know grafel is available.
 
-The stub is a tiny ~10-line block explaining that archigraph is available via MCP
+The stub is a tiny ~10-line block explaining that grafel is available via MCP
 and pointing agents to the MCP handshake for the full agent guide. It is
 intentionally minimal — the canonical documentation is delivered via the MCP
 instructions field at connection time, not per-repo.
@@ -50,7 +50,7 @@ The upsert is idempotent — re-running register replaces the block in-place.`,
 
 			if !writeAgentsMD {
 				fmt.Fprintln(out, "register: no action specified")
-				fmt.Fprintln(out, "try: archigraph register --write-agents-md")
+				fmt.Fprintln(out, "try: grafel register --write-agents-md")
 				return nil
 			}
 
@@ -76,7 +76,7 @@ The upsert is idempotent — re-running register replaces the block in-place.`,
 				return fmt.Errorf("upsert AGENTS.md: %w", err)
 			}
 
-			fmt.Fprintf(out, "✓ wrote archigraph discovery stub to %s\n", agentsMDPath)
+			fmt.Fprintf(out, "✓ wrote grafel discovery stub to %s\n", agentsMDPath)
 			if group != "" {
 				fmt.Fprintf(out, "  group: %s\n", group)
 			}
@@ -85,9 +85,9 @@ The upsert is idempotent — re-running register replaces the block in-place.`,
 	}
 
 	cmd.Flags().BoolVar(&writeAgentsMD, "write-agents-md", false,
-		"write archigraph discovery stub to AGENTS.md in the target repo")
+		"write grafel discovery stub to AGENTS.md in the target repo")
 	cmd.Flags().StringVar(&group, "group", "",
-		"optional archigraph group name (default: auto-detect from config)")
+		"optional grafel group name (default: auto-detect from config)")
 	cmd.Flags().StringVar(&repoPath, "repo", "",
 		"target repository path (default: current working directory)")
 
@@ -99,10 +99,10 @@ The upsert is idempotent — re-running register replaces the block in-place.`,
 func renderAgentsMDStub(groupName string) string {
 	return fmt.Sprintf(`%s
 
-## archigraph
+## grafel
 
-This repo is part of archigraph group **%s**. archigraph is available via MCP
-(%%mcpServers.archigraph%%) and indexes code entities and relationships across
+This repo is part of grafel group **%s**. grafel is available via MCP
+(%%mcpServers.grafel%%) and indexes code entities and relationships across
 every repo in the group.
 
 The full agent guide — cost model, tool reference, query patterns, routing rules —

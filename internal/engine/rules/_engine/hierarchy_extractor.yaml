@@ -13,6 +13,6 @@ description: >-
   families. Emits EXTENDS and IMPLEMENTS relationships. Every class entity
   carries is_abstract=True when the abstract modifier keyword is present
   (or when the entity is a Swift protocol).
-module: archigraph.engine.rules.extractors.hierarchy_extractor
+module: grafel.engine.rules.extractors.hierarchy_extractor
 function: detect
 applies_to_function: applies_to

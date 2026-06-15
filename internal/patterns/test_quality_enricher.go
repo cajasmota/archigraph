@@ -3,7 +3,7 @@ package patterns
 import (
 	"regexp"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // testQualityEnricher detects test quality signals (integration tests, real DB, etc).

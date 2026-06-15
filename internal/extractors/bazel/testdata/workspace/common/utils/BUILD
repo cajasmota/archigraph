@@ -1,5 +1,5 @@
 # common/utils BUILD — shared utility targets.
-# Used by archigraph M6 (issue #2183) Bazel extractor tests.
+# Used by grafel M6 (issue #2183) Bazel extractor tests.
 
 go_library(
     name = "string_utils",

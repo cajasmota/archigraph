@@ -40,7 +40,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // modelEventKind is the entity kind for a single model lifecycle event node.

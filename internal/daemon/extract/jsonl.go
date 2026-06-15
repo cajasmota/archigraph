@@ -5,7 +5,7 @@
 //
 // Phase F architecture:
 //
-//	[daemon] -- fork-exec self with `archigraph extract --batch=...`
+//	[daemon] -- fork-exec self with `grafel extract --batch=...`
 //	   |          (subprocess only loads grammars / extractors it needs)
 //	   |
 //	   <-- JSONL stdout: {"type":"entity",...} / {"type":"relationship",...}
@@ -21,7 +21,7 @@
 package extract
 
 import (
-	"github.com/cajasmota/archigraph/internal/types"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // EnvelopeKind tags each JSONL line so the decoder can route it.
