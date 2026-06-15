@@ -56,14 +56,14 @@ jobs:
         continue-on-error: true   # capture both vet + build signals independently
 
       - name: go build daemon
-        run: go build -v -o archigraph.exe ./cmd/archigraph
+        run: go build -v -o grafel.exe ./cmd/grafel
 
       - name: smoke test — start daemon, hit healthz, stop
         shell: powershell
         run: |
-          $env:ARCHIGRAPH_DAEMON_ROOT = "$env:RUNNER_TEMP\archigraph-test"
-          New-Item -ItemType Directory -Path $env:ARCHIGRAPH_DAEMON_ROOT -Force | Out-Null
-          $proc = Start-Process -FilePath ".\archigraph.exe" -ArgumentList "daemon" -PassThru -RedirectStandardOutput "daemon.log" -RedirectStandardError "daemon.err"
+          $env:GRAFEL_DAEMON_ROOT = "$env:RUNNER_TEMP\grafel-test"
+          New-Item -ItemType Directory -Path $env:GRAFEL_DAEMON_ROOT -Force | Out-Null
+          $proc = Start-Process -FilePath ".\grafel.exe" -ArgumentList "daemon" -PassThru -RedirectStandardOutput "daemon.log" -RedirectStandardError "daemon.err"
           Start-Sleep -Seconds 5
           $code = curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:47274/healthz
           Write-Host "healthz response code: $code"
@@ -79,8 +79,8 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: archigraph-windows-amd64
-          path: archigraph.exe
+          name: grafel-windows-amd64
+          path: grafel.exe
           retention-days: 7
 
       - name: Upload daemon log on failure

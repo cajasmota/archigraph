@@ -1,6 +1,6 @@
-name: Feedback Report (archigraph feedback)
+name: Feedback Report (grafel feedback)
 description: >
-  Auto-generated quality report from the `archigraph feedback` skill.
+  Auto-generated quality report from the `grafel feedback` skill.
   Covers extractor coverage, orphan rate, resolution disposition, and framework
   recognition. All identifiers are hashed; file paths are scrubbed.
 labels: ["feedback", "needs-triage"]
@@ -11,7 +11,7 @@ body:
       label: Anonymization verification
       description: >
         Please confirm you have reviewed the report for any un-scrubbed content before
-        submitting. The `archigraph feedback` command scrubs all identifiers and paths,
+        submitting. The `grafel feedback` command scrubs all identifiers and paths,
         but a final human review is the last line of defence.
       options:
         - label: >
@@ -20,7 +20,7 @@ body:
             all paths look like <go>/<seg-1>/<seg-2>.go).
           required: true
         - label: >
-            I generated this report with `archigraph feedback` v0.9+
+            I generated this report with `grafel feedback` v0.9+
           required: false
 
   - type: textarea
@@ -29,13 +29,13 @@ body:
       label: Feedback report
       description: >
         Paste the full contents of your `.md` file here.
-        The report was written to `~/.archigraph/feedback/<group>-<timestamp>.md`.
+        The report was written to `~/.grafel/feedback/<group>-<timestamp>.md`.
       render: markdown
       placeholder: |
-        # archigraph feedback report
+        # grafel feedback report
 
         Generated: ...
-        archigraph version: ...
+        grafel version: ...
         Group profile: ...
         Confidence: ...
 
@@ -55,9 +55,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: archigraph version
+      label: grafel version
       description: >
-        Shown in the report header as "archigraph version: vN.M.K".
+        Shown in the report header as "grafel version: vN.M.K".
       placeholder: "v1.2.3"
     validations:
       required: true

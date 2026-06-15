@@ -1,22 +1,22 @@
-# archigraph one-line installer for Windows.
+# grafel one-line installer for Windows.
 #
 # Usage:
-#   irm https://raw.githubusercontent.com/cajasmota/archigraph/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/cajasmota/grafel/main/install.ps1 | iex
 #
 # Environment variables:
-#   ARCHIGRAPH_VERSION   Release tag to install (default: latest, e.g. v0.1.0)
-#   ARCHIGRAPH_FORCE     If "1", overwrite an existing install without warning.
-#   ARCHIGRAPH_PREFIX    Install prefix (default: $env:USERPROFILE\.archigraph)
+#   GRAFEL_VERSION   Release tag to install (default: latest, e.g. v0.1.0)
+#   GRAFEL_FORCE     If "1", overwrite an existing install without warning.
+#   GRAFEL_PREFIX    Install prefix (default: $env:USERPROFILE\.grafel)
 
 #Requires -Version 5.1
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$Repo   = 'cajasmota/archigraph'
-$Prefix = if ($env:ARCHIGRAPH_PREFIX) { $env:ARCHIGRAPH_PREFIX } else { Join-Path $env:USERPROFILE '.archigraph' }
+$Repo   = 'cajasmota/grafel'
+$Prefix = if ($env:GRAFEL_PREFIX) { $env:GRAFEL_PREFIX } else { Join-Path $env:USERPROFILE '.grafel' }
 $BinDir = Join-Path $Prefix 'bin'
-$TmpDir = Join-Path $env:TEMP ("archigraph-install-" + [Guid]::NewGuid().ToString('N'))
+$TmpDir = Join-Path $env:TEMP ("grafel-install-" + [Guid]::NewGuid().ToString('N'))
 
 function Write-Info($msg) { Write-Host $msg }
 function Fail($msg) { Write-Error $msg; exit 1 }
@@ -36,8 +36,8 @@ function Get-Arch {
 }
 
 function Resolve-Version {
-    if ($env:ARCHIGRAPH_VERSION -and $env:ARCHIGRAPH_VERSION -ne 'latest') {
-        return $env:ARCHIGRAPH_VERSION
+    if ($env:GRAFEL_VERSION -and $env:GRAFEL_VERSION -ne 'latest') {
+        return $env:GRAFEL_VERSION
     }
     $url = "https://github.com/$Repo/releases/latest"
     try {
@@ -98,17 +98,17 @@ $arch    = Get-Arch
 $version = Resolve-Version
 $verNoV  = $version.TrimStart('v')
 
-$archiveName  = "archigraph_${verNoV}_windows_${arch}.zip"
+$archiveName  = "grafel_${verNoV}_windows_${arch}.zip"
 $archiveUrl   = "https://github.com/$Repo/releases/download/$version/$archiveName"
 $checksumsUrl = "https://github.com/$Repo/releases/download/$version/checksums.txt"
 
-Write-Info "archigraph installer"
+Write-Info "grafel installer"
 Write-Info "  version: $version"
 Write-Info "  target:  windows/$arch"
 Write-Info "  prefix:  $Prefix"
 
-$existing = Join-Path $BinDir 'archigraph.exe'
-if ((Test-Path $existing) -and $env:ARCHIGRAPH_FORCE -ne '1') {
+$existing = Join-Path $BinDir 'grafel.exe'
+if ((Test-Path $existing) -and $env:GRAFEL_FORCE -ne '1') {
     Write-Info "  upgrading existing install at $BinDir"
 }
 
@@ -133,8 +133,8 @@ try {
     New-Item -ItemType Directory -Force -Path $extractDir | Out-Null
     Expand-Archive -Path $archivePath -DestinationPath $extractDir -Force
 
-    $binSrc = Get-ChildItem -Path $extractDir -Recurse -Filter 'archigraph.exe' | Select-Object -First 1
-    if (-not $binSrc) { Fail "archive did not contain archigraph.exe" }
+    $binSrc = Get-ChildItem -Path $extractDir -Recurse -Filter 'grafel.exe' | Select-Object -First 1
+    if (-not $binSrc) { Fail "archive did not contain grafel.exe" }
 
     Copy-Item -Path $binSrc.FullName -Destination $existing -Force
 
@@ -148,7 +148,7 @@ try {
     }
 
     Write-Info ""
-    Write-Info "archigraph installed. Run `"archigraph wizard`" to set up your first group."
+    Write-Info "grafel installed. Run `"grafel wizard`" to set up your first group."
     Write-Info "(open a new terminal so PATH picks up $BinDir)"
 }
 finally {

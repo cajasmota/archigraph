@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# archigraph one-line installer for macOS and Linux.
+# grafel one-line installer for macOS and Linux.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/cajasmota/archigraph/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/cajasmota/grafel/main/install.sh | bash
 #
 # Environment variables:
-#   ARCHIGRAPH_VERSION   Release tag to install (default: latest, e.g. v0.1.0)
-#   ARCHIGRAPH_FORCE     If set to 1, overwrite an existing install without warning.
-#   ARCHIGRAPH_PREFIX    Install prefix (default: $HOME/.archigraph)
+#   GRAFEL_VERSION   Release tag to install (default: latest, e.g. v0.1.0)
+#   GRAFEL_FORCE     If set to 1, overwrite an existing install without warning.
+#   GRAFEL_PREFIX    Install prefix (default: $HOME/.grafel)
 
 set -eu
 
-REPO="cajasmota/archigraph"
-PREFIX="${ARCHIGRAPH_PREFIX:-$HOME/.archigraph}"
+REPO="cajasmota/grafel"
+PREFIX="${GRAFEL_PREFIX:-$HOME/.grafel}"
 BIN_DIR="$PREFIX/bin"
-TMP_DIR="${TMPDIR:-/tmp}/archigraph-install.$$"
+TMP_DIR="${TMPDIR:-/tmp}/grafel-install.$$"
 
 err() {
   printf 'error: %s\n' "$*" >&2
@@ -49,7 +49,7 @@ detect_arch() {
 }
 
 resolve_version() {
-  v="${ARCHIGRAPH_VERSION:-latest}"
+  v="${GRAFEL_VERSION:-latest}"
   if [ "$v" = "latest" ]; then
     # Follow the redirect from /releases/latest to /releases/tag/<version>
     redirect_url=$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
@@ -96,8 +96,8 @@ verify_checksum() {
 
 update_path_block() {
   rc_file=$1
-  marker_start="# archigraph PATH (auto-installed)"
-  marker_end="# end archigraph"
+  marker_start="# grafel PATH (auto-installed)"
+  marker_end="# end grafel"
 
   [ -f "$rc_file" ] || touch "$rc_file"
 
@@ -114,8 +114,8 @@ update_path_block() {
 
 update_path_fish() {
   rc_file=$1
-  marker_start="# archigraph PATH (auto-installed)"
-  marker_end="# end archigraph"
+  marker_start="# grafel PATH (auto-installed)"
+  marker_end="# end grafel"
 
   mkdir -p "$(dirname "$rc_file")"
   [ -f "$rc_file" ] || touch "$rc_file"
@@ -162,16 +162,16 @@ main() {
   version=$(resolve_version)
   version_no_v=${version#v}
 
-  archive_name="archigraph_${version_no_v}_${os}_${arch}.tar.gz"
+  archive_name="grafel_${version_no_v}_${os}_${arch}.tar.gz"
   archive_url="https://github.com/${REPO}/releases/download/${version}/${archive_name}"
   checksums_url="https://github.com/${REPO}/releases/download/${version}/checksums.txt"
 
-  info "archigraph installer"
+  info "grafel installer"
   info "  version: $version"
   info "  target:  ${os}/${arch}"
   info "  prefix:  $PREFIX"
 
-  if [ -x "$BIN_DIR/archigraph" ] && [ "${ARCHIGRAPH_FORCE:-0}" != "1" ]; then
+  if [ -x "$BIN_DIR/grafel" ] && [ "${GRAFEL_FORCE:-0}" != "1" ]; then
     info "  upgrading existing install at $BIN_DIR"
   fi
 
@@ -189,26 +189,26 @@ main() {
   info "extracting"
   tar -xzf "$TMP_DIR/$archive_name" -C "$TMP_DIR"
 
-  if [ ! -f "$TMP_DIR/archigraph" ]; then
-    err "archive did not contain an 'archigraph' binary"
+  if [ ! -f "$TMP_DIR/grafel" ]; then
+    err "archive did not contain an 'grafel' binary"
   fi
 
-  install -m 0755 "$TMP_DIR/archigraph" "$BIN_DIR/archigraph" 2>/dev/null || {
-    cp "$TMP_DIR/archigraph" "$BIN_DIR/archigraph"
-    chmod +x "$BIN_DIR/archigraph"
+  install -m 0755 "$TMP_DIR/grafel" "$BIN_DIR/grafel" 2>/dev/null || {
+    cp "$TMP_DIR/grafel" "$BIN_DIR/grafel"
+    chmod +x "$BIN_DIR/grafel"
   }
 
   configure_path
 
   info ""
-  if "$BIN_DIR/archigraph" doctor >/dev/null 2>&1; then
-    "$BIN_DIR/archigraph" doctor || true
+  if "$BIN_DIR/grafel" doctor >/dev/null 2>&1; then
+    "$BIN_DIR/grafel" doctor || true
   else
-    "$BIN_DIR/archigraph" --version 2>/dev/null || true
+    "$BIN_DIR/grafel" --version 2>/dev/null || true
   fi
 
   info ""
-  info "archigraph installed. Run \"archigraph wizard\" to set up your first group."
+  info "grafel installed. Run \"grafel wizard\" to set up your first group."
   info "(restart your shell or 'source' your rc file so PATH picks up $BIN_DIR)"
 }
 
