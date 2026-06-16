@@ -153,7 +153,7 @@ class ContractViewSet(ModelViewSet):
 
 // TestApplyDjangoDRFRoutes_CollectionActionDefaultGet verifies that
 // @action(detail=False) (no methods kwarg) defaults to GET and uses the
-// method name as the URL path.
+// HYPHENATED method name as the URL path (DRF replaces `_`→`-`). #5230.
 func TestApplyDjangoDRFRoutes_CollectionActionDefaultGet(t *testing.T) {
 	files := fileMap{
 		"urls.py": `
@@ -174,7 +174,10 @@ class ContractViewSet(ModelViewSet):
 `,
 	}
 	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
-	assertHasAllIDs(t, got, []string{"http:GET:/contracts/get_extras"})
+	// DRF default url_path for a method `get_extras` is `get-extras`, not the
+	// raw `get_extras` (#5230).
+	assertHasAllIDs(t, got, []string{"http:GET:/contracts/get-extras"})
+	assertHasNoneIDs(t, got, []string{"http:GET:/contracts/get_extras"})
 }
 
 // TestApplyDjangoDRFRoutes_ActionMultipleMethods verifies that an action
@@ -203,6 +206,168 @@ class ContractViewSet(ModelViewSet):
 		"http:GET:/contracts/{pk}/assigned_contacts",
 		"http:PUT:/contracts/{pk}/assigned_contacts",
 	})
+}
+
+// TestApplyDjangoDRFRoutes_ActionNestedURLPathParams verifies #5230: an
+// @action(url_path='contacts/(?P<contact_id>[^/.]+)/remove') emits the route at
+// the VERBATIM url_path value (not the method name), with the nested
+// `(?P<contact_id>…)` capture group surfaced as a `{contact_id}` path param.
+func TestApplyDjangoDRFRoutes_ActionNestedURLPathParams(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import BranchViewSet
+
+router = routers.DefaultRouter()
+router.register(r"branches", BranchViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+
+class BranchViewSet(ModelViewSet):
+    @action(detail=True, methods=["delete"], url_path='contacts/(?P<contact_id>[^/.]+)/remove')
+    def remove_contact(self, request, pk=None, contact_id=None):
+        pass
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+	// url_path used verbatim; (?P<contact_id>…) becomes {contact_id}; the method
+	// name `remove_contact` must NOT leak into the URL.
+	assertHasAllIDs(t, got, []string{
+		"http:DELETE:/branches/{pk}/contacts/{contact_id}/remove",
+	})
+	assertHasNoneIDs(t, got, []string{
+		"http:DELETE:/branches/{pk}/remove_contact",
+		"http:DELETE:/branches/{pk}/remove-contact",
+	})
+	// contact_id surfaces as a canonical path param in the emitted path.
+	if !strings.Contains(idsFromString(got, "http:DELETE:/branches/{pk}/contacts/{contact_id}/remove"), "{contact_id}") {
+		t.Errorf("expected {contact_id} path param in the action route path")
+	}
+}
+
+// TestApplyDjangoDRFRoutes_ActionDefaultHyphenatedSegment verifies #5230: an
+// @action with no url_path and a method name `do_thing` is routed at the
+// HYPHENATED `do-thing`, mirroring DRF's `_`→`-` default-url_path derivation.
+func TestApplyDjangoDRFRoutes_ActionDefaultHyphenatedSegment(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import WidgetViewSet
+
+router = routers.DefaultRouter()
+router.register(r"widgets", WidgetViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+
+class WidgetViewSet(ModelViewSet):
+    @action(detail=False)
+    def do_thing(self, request):
+        pass
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+	assertHasAllIDs(t, got, []string{"http:GET:/widgets/do-thing"})
+	assertHasNoneIDs(t, got, []string{"http:GET:/widgets/do_thing"})
+}
+
+// TestApplyDjangoDRFRoutes_NestedRouterActionParams verifies #5230 composes
+// correctly with a drf-nested-routers parent prefix: a nested router mounted at
+// `companies/(?P<company_pk>\d+)/branches` plus an @action with its own nested
+// url_path surfaces BOTH the parent `{company_pk}` and the action's
+// `{contact_id}` path params in the same route.
+func TestApplyDjangoDRFRoutes_NestedRouterActionParams(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from rest_framework_nested import routers as nested_routers
+from views import CompanyViewSet, BranchViewSet
+
+router = routers.DefaultRouter()
+router.register(r"companies", CompanyViewSet)
+
+companies_router = nested_routers.NestedSimpleRouter(router, r"companies", lookup="company")
+companies_router.register(r"branches", BranchViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+
+class CompanyViewSet(ModelViewSet):
+    pass
+
+class BranchViewSet(ModelViewSet):
+    @action(detail=True, methods=["delete"], url_path='contacts/(?P<contact_id>[^/.]+)/remove')
+    def remove_contact(self, request, company_pk=None, pk=None, contact_id=None):
+        pass
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+	// The nested router lookup="company" contributes the parent `{company}`
+	// placeholder; the action's url_path contributes `{contact_id}`. Both
+	// nested-prefix and action capture params survive into the same route (#5230).
+	assertHasAllIDs(t, got, []string{
+		"http:DELETE:/companies/{company}/branches/{pk}/contacts/{contact_id}/remove",
+	})
+}
+
+// TestApplyDjangoDRFRoutes_BranchViewSetRegression5230 is the #5230 regression
+// fixture: a BranchViewSet with three actions (a nested-url_path detail action,
+// a hyphenated-default detail action, and a hyphenated-default collection
+// action) must produce the exact expected URL set.
+func TestApplyDjangoDRFRoutes_BranchViewSetRegression5230(t *testing.T) {
+	files := fileMap{
+		"urls.py": `
+from rest_framework import routers
+from views import BranchViewSet
+
+router = routers.DefaultRouter()
+router.register(r"branches", BranchViewSet)
+`,
+		"views.py": `
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+
+class BranchViewSet(ModelViewSet):
+    @action(detail=True, methods=["delete"], url_path='contacts/(?P<contact_id>[^/.]+)/remove')
+    def remove_contact(self, request, pk=None, contact_id=None):
+        pass
+
+    @action(detail=True, methods=["post"])
+    def set_director(self, request, pk=None):
+        pass
+
+    @action(detail=True, methods=["post"])
+    def clear_director(self, request, pk=None):
+        pass
+`,
+	}
+	got := ApplyDjangoDRFRoutes([]string{"urls.py", "views.py"}, files.reader)
+	assertHasAllIDs(t, got, []string{
+		"http:DELETE:/branches/{pk}/contacts/{contact_id}/remove",
+		"http:POST:/branches/{pk}/set-director",
+		"http:POST:/branches/{pk}/clear-director",
+	})
+	// Raw underscore method names must NOT appear in any action URL.
+	assertHasNoneIDs(t, got, []string{
+		"http:DELETE:/branches/{pk}/remove_contact",
+		"http:POST:/branches/{pk}/set_director",
+		"http:POST:/branches/{pk}/clear_director",
+	})
+}
+
+// idsFromString returns the id from records that equals want, or "" if absent.
+// Helper for path-param substring assertions.
+func idsFromString(records []types.EntityRecord, want string) string {
+	for _, e := range records {
+		if e.ID == want {
+			return e.ID
+		}
+	}
+	return ""
 }
 
 // TestApplyDjangoDRFRoutes_LookupFieldOverride verifies that a ViewSet
