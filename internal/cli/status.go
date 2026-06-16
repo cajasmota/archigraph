@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cajasmota/grafel/internal/daemon"
 	"github.com/cajasmota/grafel/internal/daemon/client"
 	"github.com/cajasmota/grafel/internal/daemon/sched"
 	"github.com/cajasmota/grafel/internal/daemon/worktree"
@@ -102,6 +103,13 @@ func runStatus(w io.Writer, filter string, ref string, showAll bool) error {
 				var ecfg *extractor.ExtractorConfig // nil → reads env
 				fmt.Fprintf(w, "  indexing: incremental=%s subprocess=%s\n",
 					onOff(ecfg.IsIncrementalEnabled()), onOff(sched.SubprocessIndexEnabled()))
+				// Go soft memory limit (#5237): show the resolved limit +
+				// source so operators can see what's bounding daemon RSS.
+				if mb, src := daemon.MemLimitSummary(); mb > 0 {
+					fmt.Fprintf(w, "  mem_limit: %dMB (%s)\n", mb, src)
+				} else {
+					fmt.Fprintf(w, "  mem_limit: unbounded (%s)\n", src)
+				}
 			}
 			if st.WatcherRepos > 0 || st.WatcherEvents > 0 {
 				fmt.Fprintf(w, "  watcher: repos=%d dirs=%d events=%d dropped=%d",
