@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"runtime/debug"
+	"strings"
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/process"
@@ -30,25 +31,90 @@ func TestResolveMemLimitMB_Disabled(t *testing.T) {
 	}
 }
 
-// TestResolveMemLimitMB_DefaultFractionOrFloor asserts the default is a
-// fraction of system RAM, never below the floor.
-func TestResolveMemLimitMB_DefaultFractionOrFloor(t *testing.T) {
+// TestResolveMemLimitMB_DefaultClamped asserts the default is a fraction of
+// system RAM, clamped into [floor, ceiling]. The ceiling is what bounds
+// big-RAM hosts (#5237); the floor protects tiny hosts.
+func TestResolveMemLimitMB_DefaultClamped(t *testing.T) {
 	t.Setenv(memLimitEnv, "") // ensure no override
 	mb, src := resolveMemLimitMB()
 	if mb < memLimitFloorMB {
 		t.Errorf("default limit %d below floor %d (src=%s)", mb, memLimitFloorMB, src)
 	}
-	// If the host reports total RAM, the default must be ~fraction of it
-	// (and at least the floor).
+	if mb > memLimitCeilingMB {
+		t.Errorf("default limit %d above ceiling %d (src=%s)", mb, memLimitCeilingMB, src)
+	}
+	// The default must equal the fraction-of-RAM value clamped into the band.
 	if total := process.TotalMemoryMB(); total > 0 {
 		want := int64(float64(total) * memLimitFraction)
+		if want > memLimitCeilingMB {
+			want = memLimitCeilingMB
+		}
 		if want < memLimitFloorMB {
 			want = memLimitFloorMB
 		}
 		if mb != want {
-			t.Errorf("default limit: want %d (%.0f%% of %dMB, floored) got %d",
-				want, memLimitFraction*100, total, mb)
+			t.Errorf("default limit: want %d (%.0f%% of %dMB, clamped to [%d,%d]) got %d",
+				want, memLimitFraction*100, total, memLimitFloorMB, memLimitCeilingMB, mb)
 		}
+	}
+}
+
+// TestMemLimitClampBoundaries verifies the cap + floor formula directly for
+// representative host sizes (8GB, 64GB, and a tiny host) independent of the
+// machine the test runs on. Mirrors resolveMemLimitMB's clamp logic.
+func TestMemLimitClampBoundaries(t *testing.T) {
+	clamp := func(totalMB int64) int64 {
+		limit := int64(float64(totalMB) * memLimitFraction)
+		if limit > memLimitCeilingMB {
+			return memLimitCeilingMB
+		}
+		if limit < memLimitFloorMB {
+			return memLimitFloorMB
+		}
+		return limit
+	}
+	cases := []struct {
+		name    string
+		totalMB int64
+		want    int64
+	}{
+		// 0.40*8192 = 3276 → capped to ceiling 2560.
+		{"8GB host capped", 8192, memLimitCeilingMB},
+		// 0.40*65536 = 26214 → capped to ceiling 2560.
+		{"64GB host capped", 65536, memLimitCeilingMB},
+		// 0.40*4096 = 1638 → below floor → floor 2048.
+		{"4GB host floored", 4096, memLimitFloorMB},
+		// 0.40*6144 = 2457 → inside [2048,2560] band, untouched.
+		{"6GB host in band", 6144, 2457},
+	}
+	for _, tc := range cases {
+		if got := clamp(tc.totalMB); got != tc.want {
+			t.Errorf("%s: clamp(%dMB)=%d want %d", tc.name, tc.totalMB, got, tc.want)
+		}
+	}
+}
+
+// TestMemLimitSummary_GoMemLimitWins asserts an explicit GOMEMLIMIT is
+// reported with the runtime-env source and takes precedence over the default.
+func TestMemLimitSummary_GoMemLimitWins(t *testing.T) {
+	t.Setenv(memLimitEnv, "")
+	t.Setenv("GOMEMLIMIT", "4GiB")
+	mb, src := MemLimitSummary()
+	if mb != 0 {
+		t.Errorf("GOMEMLIMIT set: want mb=0 (unparsed) got %d", mb)
+	}
+	if !strings.Contains(src, "GOMEMLIMIT") || !strings.Contains(src, "4GiB") {
+		t.Errorf("source %q should mention GOMEMLIMIT=4GiB", src)
+	}
+}
+
+// TestMemLimitSummary_EnvOverrideThenDefault asserts the override and default
+// flow through MemLimitSummary when no GOMEMLIMIT is set.
+func TestMemLimitSummary_EnvOverrideThenDefault(t *testing.T) {
+	t.Setenv("GOMEMLIMIT", "")
+	t.Setenv(memLimitEnv, "1536")
+	if mb, src := MemLimitSummary(); mb != 1536 || src != memLimitEnv {
+		t.Errorf("override via summary: got mb=%d src=%q want 1536 / %q", mb, src, memLimitEnv)
 	}
 }
 
