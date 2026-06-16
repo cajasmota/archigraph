@@ -156,7 +156,10 @@ jobs:
           if [ "${{ matrix.goos }}" = "windows" ]; then
             EXTRA_LDFLAGS="-extldflags=-static"
           fi
-          go build -trimpath \
+          # -tags osusergo: pure-Go os/user so the daemon doesn't hang at startup
+          # under macOS launchd (cgo OpenDirectory open(); #5222). Coexists with
+          # CGO_ENABLED=1 (tree-sitter); harmless on linux/windows.
+          go build -trimpath -tags osusergo \
             -ldflags "-s -w ${EXTRA_LDFLAGS} -X github.com/cajasmota/grafel/internal/version.Version=${VERSION} -X github.com/cajasmota/grafel/internal/version.Commit=${SHORT_SHA} -X github.com/cajasmota/grafel/internal/version.Date=${BUILD_DATE}" \
             -o dist/${BIN} ./cmd/grafel
         shell: bash

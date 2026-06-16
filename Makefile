@@ -3,6 +3,11 @@
 GO ?= go
 NPM ?= npm
 BINARY := grafel
+# osusergo: force pure-Go os/user (read /etc/passwd + env) instead of the cgo
+# path that hangs the daemon at startup under macOS launchd (OpenDirectory
+# blocking open(); #5222). Harmless on Linux/Windows; coexists with CGO_ENABLED=1
+# (tree-sitter). Applied to every build so released binaries can't regress.
+TAGS := osusergo
 LDFLAGS := -s -w \
   -X github.com/cajasmota/grafel/internal/version.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) \
   -X github.com/cajasmota/grafel/internal/version.Commit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) \
@@ -37,12 +42,12 @@ verify-dashboard:
 # so `make build` always produces a self-contained binary. dashboard-build
 # now also runs verify-dashboard, so a stale embed fails the build.
 build: dashboard-build
-	$(GO) build -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/grafel
+	$(GO) build -tags '$(TAGS)' -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/grafel
 
 # build-go-only: skip the npm step (for CI environments that have already
 # pre-built the SPA or for fast Go-only iteration when the SPA is unchanged).
 build-go-only:
-	$(GO) build -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/grafel
+	$(GO) build -tags '$(TAGS)' -ldflags='$(LDFLAGS)' -o $(BINARY) ./cmd/grafel
 
 test:
 	$(GO) test -race -count=1 ./...
