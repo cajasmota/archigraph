@@ -58,17 +58,25 @@ var (
 	EndMarker   = "<!-- grafel:mcp-usage:end -->"
 )
 
-// startMarkerAnyVersion matches an existing grafel block regardless
-// of its embedded version number, so we can replace older blocks in
-// place. The end marker is unversioned and a literal string.
-var startMarkerAnyVersion = regexp.MustCompile(`<!-- grafel:mcp-usage:start v=\d+ -->`)
+// startMarkerAnyVersion matches an existing managed block regardless of
+// its embedded version number, so we can replace older blocks in place.
+// It matches BOTH the current `grafel:mcp-usage` marker and the legacy
+// `archigraph:mcp-usage` marker written by pre-rename binaries, so an
+// existing archigraph block is recognised and replaced in place instead
+// of having a second grafel block appended next to it (#5274). The end
+// marker may be versioned (current) or unversioned; both forms appear in
+// historical files.
+var startMarkerAnyVersion = regexp.MustCompile(`<!-- (?:grafel|archigraph):mcp-usage:start v=\d+ -->`)
 
 // blockRegexAnyVersion captures the entire marker-wrapped region (start
 // + content + end), with DOTALL so newlines inside the block are
-// consumed.
+// consumed. Like startMarkerAnyVersion it matches both the current
+// `grafel:mcp-usage` markers and the legacy `archigraph:mcp-usage`
+// markers, so a legacy block is replaced/removed cleanly rather than
+// duplicated (#5274).
 var blockRegexAnyVersion = regexp.MustCompile(
-	`(?s)<!-- grafel:mcp-usage:start v=\d+ -->.*?` +
-		regexp.QuoteMeta(EndMarker))
+	`(?s)<!-- (?:grafel|archigraph):mcp-usage:start v=\d+ -->.*?` +
+		`<!-- (?:grafel|archigraph):mcp-usage:end -->`)
 
 // PredecessorTokens are the names of older tools whose guidance, if
 // found in a rules file, indicates a stale file that probably misleads
@@ -77,6 +85,7 @@ var blockRegexAnyVersion = regexp.MustCompile(
 // adding generic words here risks false positives.
 var PredecessorTokens = []string{
 	"graphify",
+	"archigraph",
 }
 
 // Targets is the canonical list of per-repo rules-file paths the
@@ -194,6 +203,83 @@ func WriteTargets(repoRoot string, opts WriteOptions, targets []string) (*WriteR
 		}
 	}
 	return res, nil
+}
+
+// RemoveResult is the outcome of stripping the grafel block from a
+// repo's rules files on uninstall.
+type RemoveResult struct {
+	// Stripped lists files whose grafel block was removed while leaving
+	// surrounding user content intact.
+	Stripped []string
+	// Deleted lists files that were removed entirely because, after
+	// stripping the block, nothing but whitespace remained.
+	Deleted []string
+}
+
+// RemoveAll strips the grafel-managed block from every Target under
+// repoRoot. It is the symmetric inverse of WriteAll for uninstall: only
+// the marker-wrapped region is touched, all surrounding user content is
+// preserved byte-for-byte, and a file is deleted only when removing the
+// block leaves it empty (i.e. grafel was the sole author of that file).
+//
+// It is idempotent and best-effort: files that don't exist or don't
+// contain a grafel block are silently skipped. Errors are returned only
+// for genuine I/O problems.
+func RemoveAll(repoRoot string) (*RemoveResult, error) {
+	return RemoveTargets(repoRoot, Targets)
+}
+
+// RemoveTargets is RemoveAll restricted to an explicit subset of targets,
+// mirroring WriteTargets so the uninstall path can strip exactly the
+// files the install wrote.
+func RemoveTargets(repoRoot string, targets []string) (*RemoveResult, error) {
+	res := &RemoveResult{}
+	for _, target := range targets {
+		abs := filepath.Join(repoRoot, target)
+		existing, err := os.ReadFile(abs)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return res, fmt.Errorf("rulesfiles: read %s: %w", target, err)
+		}
+		if !blockRegexAnyVersion.Match(existing) {
+			// No grafel block — leave the file completely untouched.
+			continue
+		}
+		out := blockRegexAnyVersion.ReplaceAll(existing, nil)
+		// If only whitespace remains, grafel was the sole author of this
+		// file — delete it. Otherwise rewrite with the block removed,
+		// trimming any leftover blank-line gap at the seam.
+		if len(strings.TrimSpace(string(out))) == 0 {
+			if err := os.Remove(abs); err != nil && !os.IsNotExist(err) {
+				return res, fmt.Errorf("rulesfiles: remove %s: %w", target, err)
+			}
+			res.Deleted = append(res.Deleted, target)
+			continue
+		}
+		cleaned := tidySeam(out)
+		if err := atomicWrite(abs, cleaned); err != nil {
+			return res, fmt.Errorf("rulesfiles: rewrite %s: %w", target, err)
+		}
+		res.Stripped = append(res.Stripped, target)
+	}
+	return res, nil
+}
+
+// tidySeam collapses the run of blank lines left where the block used to
+// sit (install appends the block after a blank-line separator) into a
+// single trailing newline, so removing the block doesn't leave a growing
+// gap. User content above/below is otherwise preserved.
+func tidySeam(b []byte) []byte {
+	s := string(b)
+	// Collapse 3+ consecutive newlines (created by removing a block that
+	// was separated from prose by a blank line) into two.
+	for strings.Contains(s, "\n\n\n") {
+		s = strings.ReplaceAll(s, "\n\n\n", "\n\n")
+	}
+	s = strings.TrimRight(s, " \t\n") + "\n"
+	return []byte(s)
 }
 
 // Scan returns the FileStatus for every Target under repoRoot without

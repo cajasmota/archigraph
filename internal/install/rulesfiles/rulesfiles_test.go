@@ -267,3 +267,158 @@ func TestIsPureStaleFile(t *testing.T) {
 		})
 	}
 }
+
+// TestWriteAll_ReplacesLegacyArchigraphBlock covers #5274: a file holding
+// a legacy `archigraph:mcp-usage` block must be recognised and replaced
+// in place by the current grafel block — no duplicate block, no leftover
+// archigraph marker.
+func TestWriteAll_ReplacesLegacyArchigraphBlock(t *testing.T) {
+	repo := t.TempDir()
+	legacy := "# Notes\n\n<!-- archigraph:mcp-usage:start v=1 -->\n## archigraph MCP\nold guidance pointing at archigraph\n<!-- archigraph:mcp-usage:end -->\n"
+	path := filepath.Join(repo, "CLAUDE.md")
+	if err := os.WriteFile(path, []byte(legacy), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	if _, err := WriteAll(repo, WriteOptions{GroupName: "demo"}); err != nil {
+		t.Fatalf("WriteAll: %v", err)
+	}
+	data, _ := os.ReadFile(path)
+	s := string(data)
+	// Legacy markers must be gone entirely.
+	if strings.Contains(s, "archigraph:mcp-usage") {
+		t.Errorf("legacy archigraph marker still present:\n%s", s)
+	}
+	// Exactly one current grafel block (no duplicate appended).
+	if n := strings.Count(s, "grafel:mcp-usage:start"); n != 1 {
+		t.Errorf("expected exactly 1 grafel start marker, got %d:\n%s", n, s)
+	}
+	if !strings.Contains(s, StartMarker) {
+		t.Errorf("current grafel block missing:\n%s", s)
+	}
+	// Surrounding user content preserved.
+	if !strings.Contains(s, "# Notes") {
+		t.Errorf("surrounding user content lost:\n%s", s)
+	}
+}
+
+// TestWriteAll_LegacyArchigraphOnlyFile verifies a file that is ONLY a
+// legacy archigraph block is cleanly replaced (still one block, no dup).
+func TestWriteAll_LegacyArchigraphOnlyFile(t *testing.T) {
+	repo := t.TempDir()
+	legacy := "<!-- archigraph:mcp-usage:start v=2 -->\nguidance\n<!-- archigraph:mcp-usage:end -->\n"
+	path := filepath.Join(repo, ".cursorrules")
+	if err := os.WriteFile(path, []byte(legacy), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	if _, err := WriteAll(repo, WriteOptions{GroupName: "demo"}); err != nil {
+		t.Fatalf("WriteAll: %v", err)
+	}
+	s, _ := os.ReadFile(path)
+	if strings.Contains(string(s), "archigraph:mcp-usage") {
+		t.Errorf("legacy marker still present:\n%s", s)
+	}
+	if n := strings.Count(string(s), "grafel:mcp-usage:start"); n != 1 {
+		t.Errorf("expected 1 grafel block, got %d:\n%s", n, s)
+	}
+}
+
+// TestWriteAll_GraphifyStillHandled is a regression guard that the older
+// graphify pure-stale heuristic still works after the archigraph changes.
+func TestWriteAll_GraphifyStillHandled(t *testing.T) {
+	repo := t.TempDir()
+	stale := "# Graphify\n\n- Run `graphify update`\n"
+	path := filepath.Join(repo, ".windsurfrules")
+	if err := os.WriteFile(path, []byte(stale), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	res, err := WriteAll(repo, WriteOptions{GroupName: "demo"})
+	if err != nil {
+		t.Fatalf("WriteAll: %v", err)
+	}
+	if len(res.ReplacedStale) == 0 {
+		t.Fatalf("graphify pure-stale not replaced: %+v", res)
+	}
+	s, _ := os.ReadFile(path)
+	if strings.Contains(string(s), "graphify") {
+		t.Errorf("graphify content not removed:\n%s", s)
+	}
+}
+
+// TestRemoveAll_StripsBlockPreservesProse covers the uninstall side of
+// #5274: stripping the grafel block must leave surrounding user prose
+// intact, while a file that is ONLY the grafel block is deleted.
+func TestRemoveAll_StripsBlockPreservesProse(t *testing.T) {
+	repo := t.TempDir()
+
+	// File with prose + grafel block → block stripped, prose kept.
+	mixedPath := filepath.Join(repo, "CLAUDE.md")
+	prose := "# My Project\n\nImportant local instructions.\n"
+	if _, err := WriteAll(repo, WriteOptions{GroupName: "demo"}); err != nil {
+		t.Fatalf("WriteAll: %v", err)
+	}
+	// Overwrite CLAUDE.md with prose + block so we control the prose.
+	mixed := prose + "\n" + RenderBlock("demo") + "\n"
+	if err := os.WriteFile(mixedPath, []byte(mixed), 0o644); err != nil {
+		t.Fatalf("seed mixed: %v", err)
+	}
+
+	res, err := RemoveAll(repo)
+	if err != nil {
+		t.Fatalf("RemoveAll: %v", err)
+	}
+
+	// CLAUDE.md keeps prose, loses the block.
+	data, rerr := os.ReadFile(mixedPath)
+	if rerr != nil {
+		t.Fatalf("CLAUDE.md should still exist: %v", rerr)
+	}
+	if strings.Contains(string(data), "grafel:mcp-usage") {
+		t.Errorf("grafel block not stripped from mixed file:\n%s", data)
+	}
+	if !strings.Contains(string(data), "Important local instructions.") {
+		t.Errorf("user prose lost:\n%s", data)
+	}
+	if !contains(res.Stripped, "CLAUDE.md") {
+		t.Errorf("CLAUDE.md not reported stripped: %+v", res)
+	}
+
+	// Files that were ONLY the grafel block (every other Target, since
+	// WriteAll wrote a block-only file there) are deleted.
+	if _, err := os.Stat(filepath.Join(repo, ".windsurfrules")); !os.IsNotExist(err) {
+		t.Errorf(".windsurfrules (block-only) should have been deleted, err=%v", err)
+	}
+	if !contains(res.Deleted, ".windsurfrules") {
+		t.Errorf(".windsurfrules not reported deleted: %+v", res)
+	}
+}
+
+// TestRemoveAll_LeavesNonGrafelFilesUntouched ensures removal never
+// touches a file that has no grafel block.
+func TestRemoveAll_LeavesNonGrafelFilesUntouched(t *testing.T) {
+	repo := t.TempDir()
+	path := filepath.Join(repo, "CLAUDE.md")
+	original := "# Just my notes\n\nNo grafel here.\n"
+	if err := os.WriteFile(path, []byte(original), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	res, err := RemoveAll(repo)
+	if err != nil {
+		t.Fatalf("RemoveAll: %v", err)
+	}
+	data, _ := os.ReadFile(path)
+	if string(data) != original {
+		t.Errorf("non-grafel file modified:\nwant %q\ngot  %q", original, data)
+	}
+	if len(res.Stripped) != 0 || len(res.Deleted) != 0 {
+		t.Errorf("expected no-op, got %+v", res)
+	}
+}
+
+func contains(ss []string, want string) bool {
+	for _, s := range ss {
+		if s == want {
+			return true
+		}
+	}
+	return false
+}

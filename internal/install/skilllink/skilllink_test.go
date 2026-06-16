@@ -651,3 +651,38 @@ func TestValidateSkillSymlinks(t *testing.T) {
 func stringContains(s, substr string) bool {
 	return strings.Contains(s, substr)
 }
+
+// TestSkillNames_Reconciled guards the #5274 skills reconcile: the set is
+// the expected count, includes the user-facing grafel-feedback skill, and
+// deliberately EXCLUDES the persona-only shared protocols grafel-graph-read
+// and grafel-graph-write.
+func TestSkillNames_Reconciled(t *testing.T) {
+	const want = 15
+	if len(SkillNames) != want {
+		t.Errorf("SkillNames count = %d, want %d: %v", len(SkillNames), want, SkillNames)
+	}
+	has := func(name string) bool {
+		for _, s := range SkillNames {
+			if s == name {
+				return true
+			}
+		}
+		return false
+	}
+	if !has("grafel-feedback") {
+		t.Errorf("grafel-feedback (user-invocable) must be in SkillNames")
+	}
+	for _, excluded := range []string{"grafel-graph-read", "grafel-graph-write"} {
+		if has(excluded) {
+			t.Errorf("%s is a persona-only shared protocol and must NOT be in SkillNames", excluded)
+		}
+	}
+	// No duplicates.
+	seen := map[string]bool{}
+	for _, s := range SkillNames {
+		if seen[s] {
+			t.Errorf("duplicate skill: %s", s)
+		}
+		seen[s] = true
+	}
+}

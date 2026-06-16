@@ -42,7 +42,7 @@ func registerMCPInClaudeConfigs(out io.Writer, binPath string, claudeConfigDirs 
 	return registered
 }
 
-// installSkillsInClaudeConfigs symlinks the 6 grafel skills into every
+// installSkillsInClaudeConfigs symlinks the 15 grafel skills into every
 // detected Claude Code config directory. It's extracted into a separate
 // function so it can be tested independently of service.Install.
 //

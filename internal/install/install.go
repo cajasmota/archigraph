@@ -325,6 +325,13 @@ func Uninstall(group string, purge bool) error {
 		for _, r := range cfg.Repos {
 			_ = hooks.Uninstall(r.Path)
 			_ = agenthooks.Uninstall(r.Path)
+			// Strip the grafel rules block from this repo's rules files,
+			// mirroring the WriteTargets step in Apply. Only the
+			// marker-wrapped region is removed; surrounding user content is
+			// preserved, and a file is deleted only if grafel was its sole
+			// author (#5274). Best-effort: I/O errors are ignored so a
+			// single unwritable file never blocks the rest of uninstall.
+			_, _ = rulesfiles.RemoveAll(r.Path)
 			u := watchers.Unit{Group: group, Repo: r.Path, BinPath: bin}
 			// Deregister from the OS scheduler before removing the unit file so
 			// that the OS does not attempt to launch a missing binary.

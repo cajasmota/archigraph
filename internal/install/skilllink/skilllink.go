@@ -18,11 +18,23 @@ import (
 	"strings"
 )
 
-// SkillNames lists the 8 grafel skills in canonical order.
+// SkillNames lists the 15 user-invocable grafel skills in canonical order.
+//
+// Deliberately EXCLUDED from this list (#5274): `grafel-graph-read` and
+// `grafel-graph-write`. Those two are not standalone Claude skills — their
+// SKILL.md frontmatter describes them as "Shared grafel read/persistence
+// protocol — Compose into any persona", and they carry no `when-to-use`
+// (so Claude Code would never auto-trigger them). They are shared protocol
+// fragments composed into the consult/docs personas, not user-facing
+// commands, so symlinking them would surface two un-triggerable skills in
+// the user's skills directory. `grafel-feedback`, by contrast, IS a
+// directly user-invocable skill (it has a full `when-to-use` and a
+// /grafel-feedback entry point) and is included.
 var SkillNames = []string{
 	"grafel-aware-review",
 	"grafel-business-docs",
 	"grafel-consult",
+	"grafel-feedback",
 	"grafel-graph-enrich",
 	"grafel-graph-quality",
 	"grafel-help",
