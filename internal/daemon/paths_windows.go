@@ -22,11 +22,14 @@ func isWindowsPipePath(path string) bool {
 // because pipes are not filesystem objects.
 //
 // When GRAFEL_DAEMON_ROOT is set, that directory is used for all
-// filesystem paths (pid file, logs). The named-pipe path is always
-// user-scoped and does not change based on GRAFEL_DAEMON_ROOT.
+// filesystem paths (pid file, logs) AND the named-pipe path is scoped to
+// that root (via a hash of the root in the pipe name). This mirrors the
+// Unix transport, where the socket already lives under the root at
+// <root>/sockets/daemon.sock. Without root-scoping the pipe was a single
+// process-global object per user, so an isolated daemon (selftest, parallel
+// agent, or a second instance with a different root) collided on the shared
+// pipe and wedged at socket-listen (issue #5264).
 func DefaultLayout() (Layout, error) {
-	pipePath := transport.WindowsPipeName()
-
 	root := os.Getenv(EnvRoot)
 	if root == "" {
 		appData := os.Getenv("APPDATA")
@@ -39,6 +42,11 @@ func DefaultLayout() (Layout, error) {
 		}
 		root = filepath.Join(appData, "grafel")
 	}
+
+	// Derive the pipe name from the SAME root used for the filesystem paths
+	// so the listen side and the dial side (which both call DefaultLayout)
+	// agree on the pipe name.
+	pipePath := transport.WindowsPipeName(root)
 
 	logDir := filepath.Join(root, "logs")
 	// See no-rotation contract in layoutFromRoot (paths.go).

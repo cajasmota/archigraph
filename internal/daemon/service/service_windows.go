@@ -14,10 +14,12 @@ import (
 // %APPDATA%\grafel as the base directory and a named-pipe path for
 // SocketPath.
 func resolvePlatformPaths(opts *Options) error {
-	if opts.SocketPath == "" {
-		opts.SocketPath = transport.WindowsPipeName()
-	}
-	if opts.LogDir == "" {
+	// Resolve the daemon root the same way daemon.DefaultLayout does so the
+	// installed service's named pipe is scoped to the same root the daemon
+	// and client derive (issue #5264). Honour GRAFEL_DAEMON_ROOT first, then
+	// fall back to %APPDATA%\grafel (or the home dir when APPDATA is unset).
+	root := os.Getenv("GRAFEL_DAEMON_ROOT")
+	if root == "" {
 		appData := os.Getenv("APPDATA")
 		if appData == "" {
 			home, err := os.UserHomeDir()
@@ -26,7 +28,14 @@ func resolvePlatformPaths(opts *Options) error {
 			}
 			appData = home
 		}
-		opts.LogDir = filepath.Join(appData, "grafel", "logs")
+		root = filepath.Join(appData, "grafel")
+	}
+
+	if opts.SocketPath == "" {
+		opts.SocketPath = transport.WindowsPipeName(root)
+	}
+	if opts.LogDir == "" {
+		opts.LogDir = filepath.Join(root, "logs")
 	}
 	return nil
 }

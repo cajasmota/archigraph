@@ -6,7 +6,6 @@ import (
 	"context"
 	"net"
 	"os/user"
-	"strings"
 	"time"
 
 	"github.com/Microsoft/go-winio"
@@ -25,22 +24,44 @@ import (
 // is down, matching the Unix ENOENT-fast-fail behaviour. See issue #4304.
 const maxDialTimeout = 2 * time.Second
 
-// WindowsPipeName returns the canonical named-pipe path for the current user.
-// Form: \\.\pipe\grafel-daemon-<username>
-// The username is lower-cased and stripped of any domain prefix so that
-// "DOMAIN\User" → "user".
-func WindowsPipeName() string {
+// WindowsPipeName returns the named-pipe path for the daemon rooted at
+// root.
+//
+// Form: \\.\pipe\grafel-daemon-<username>-<rootHash>
+//
+// The pipe is scoped by BOTH the current username AND a hash of the daemon
+// root directory. The username keeps two different users on the same box from
+// colliding (each user can only open their own pipe via the SDDL ACL anyway).
+// The root hash is the critical part: it makes the pipe name unique per daemon
+// root, exactly mirroring the Unix transport, where the RPC socket lives at
+// <root>/sockets/daemon.sock and is therefore already root-scoped.
+//
+// Without the root hash the Windows pipe was a single process-global object
+// per user (`grafel-daemon-<user>`). An isolated daemon — the selftest, a
+// parallel agent, or simply a second `grafel` instance with a different
+// GRAFEL_DAEMON_ROOT — would collide on that one shared pipe: the isolated
+// listener wedged at socket-listen while a DIFFERENT daemon answered probes,
+// cascading into "MCP: no groups registered" / "cold index: graph.fb not
+// found" / "persistence: daemon not running" (issue #5264). Scoping the pipe
+// by root makes distinct roots truly independent, which both fixes the
+// selftest wedge and lets two real daemons coexist on one Windows host.
+//
+// The same root MUST be passed on both the listen side (paths_windows.go's
+// DefaultLayout) and the dial side (client, which also reads
+// DefaultLayout().SocketPath), so the derived name is identical and the two
+// sides connect. Production passes its default root (%APPDATA%\grafel or
+// $GRAFEL_DAEMON_ROOT); its pipe name changes from the old global one, which
+// is fine — it is still deterministic per root.
+//
+// An empty root degrades to the legacy user-only name so a degenerate caller
+// still produces a valid, stable pipe path.
+func WindowsPipeName(root string) string {
 	u, err := user.Current()
 	username := "daemon"
 	if err == nil {
 		username = u.Username
-		// Strip domain prefix (e.g. "DESKTOP-123\alice" → "alice").
-		if idx := strings.LastIndex(username, "\\"); idx >= 0 {
-			username = username[idx+1:]
-		}
-		username = strings.ToLower(username)
 	}
-	return `\\.\pipe\grafel-daemon-` + username
+	return buildWindowsPipeName(username, root)
 }
 
 // listen creates a Windows named-pipe listener at addr.
