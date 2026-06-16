@@ -47,7 +47,7 @@ your repos
 
 When an agent calls `grafel_find(query="payment processing")`, the daemon runs BM25 against entity labels and qualified names, then expands outward via BFS — returning a ranked, token-budgeted subgraph in one call. No files are read at query time.
 
-After `grafel install <group>`, the daemon registers itself as an MCP server in your Claude Code config automatically. No manual JSON editing.
+After `grafel install`, the daemon registers itself as an MCP server in your Claude Code config automatically. No manual JSON editing.
 
 ---
 
@@ -56,7 +56,7 @@ After `grafel install <group>`, the daemon registers itself as an MCP server in 
 > The binary must be built from source during the current preview phase — the installer script and GitHub Releases binaries are not yet published. See [docs/install.md](docs/install.md) for the full install matrix.
 
 ```sh
-# 1. Build (requires Go 1.25.5+, CGO, Node 20+)
+# 1. Build (requires Go 1.26+, CGO, Node 20+)
 git clone https://github.com/cajasmota/grafel.git
 cd grafel
 make build
@@ -65,10 +65,10 @@ make build
 ./grafel wizard
 
 # 3. Start the daemon + register MCP + install skills
-./grafel install <group>
+./grafel install
 
 # 4. Confirm everything is wired
-./grafel status <group>
+./grafel status
 
 # 5. Open the dashboard
 ./grafel dashboard

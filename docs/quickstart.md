@@ -6,7 +6,7 @@ This page gets you from zero to a running graph in five commands. For a full ins
 
 ## Prerequisites
 
-- **Go 1.25.5+** with CGO enabled. CGO is required because the tree-sitter extractor uses a C library.
+- **Go 1.26+** with CGO enabled. CGO is required because the tree-sitter extractor uses a C library.
   - macOS: `xcode-select --install` (Xcode Command Line Tools)
   - Debian/Ubuntu: `apt install build-essential`
 - **Node.js 20+** and npm (used to build the embedded dashboard)
@@ -52,7 +52,7 @@ You can also use the **Add group** button in the dashboard after step 3.
 ## 3. Start the daemon + register MCP
 
 ```sh
-./grafel install <group>
+./grafel install
 ```
 
 This starts the daemon as a background service, registers the MCP server in your AI agent's config (Claude Code's `~/.claude/claude.json`, or equivalent for other clients), and installs the skill family to `~/.claude/skills/`.
@@ -60,7 +60,7 @@ This starts the daemon as a background service, registers the MCP server in your
 To verify:
 
 ```sh
-./grafel status <group>
+./grafel status
 ```
 
 Output shows `MCP: connected` when the wiring is complete.

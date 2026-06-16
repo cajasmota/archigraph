@@ -84,7 +84,7 @@ Expected output: `Current model: claude-3-haiku-20240307`
 ### Recommended workflow for enrichment
 
 1. `claude --model claude-3-haiku-20240307` — start the session locked to Haiku.
-2. Run `grafel status <group>` to confirm the daemon is up and MCP is connected.
+2. Run `grafel status` to confirm the daemon is up and MCP is connected.
 3. Invoke `/grafel-graph-enrich` — the skill fetches the pending enrichment
    queue, then prints a cost estimate and asks for confirmation before
    dispatching batches. The non-critical batches go to Haiku; the skill will ask
@@ -267,7 +267,7 @@ per-task (set before starting the task).
 ### Wire up MCP (required for `grafel_*` tools)
 
 Cline reads MCP server config from its VS Code extension settings.
-`grafel install <group>` writes the server entry to `~/.claude/claude.json`,
+`grafel install` writes the server entry to `~/.claude/claude.json`,
 but Cline uses its own config file. Copy the server entry:
 
 ```sh
@@ -318,11 +318,11 @@ the fastest path to a working, cost-safe enrichment environment:
 curl -fsSL https://raw.githubusercontent.com/cajasmota/grafel/main/install.sh | bash
 
 # 2. Register your repos and start the daemon
-grafel wizard          # creates group config
-grafel install <group> # starts daemon, wires MCP, writes ~/.claude/claude.json
+grafel wizard   # creates group config
+grafel install  # starts daemon, wires MCP, writes ~/.claude/claude.json
 
 # 3. Confirm MCP is connected
-grafel status <group>  # should show "MCP: connected"
+grafel status   # should show "MCP: connected"
 
 # 4. Open Claude Code locked to Haiku
 claude --model claude-3-haiku-20240307

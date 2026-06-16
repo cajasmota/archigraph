@@ -12,12 +12,12 @@ This page is the orientation-level **index**: one row per tool grouped by catego
 
 ## Setup
 
-After `grafel install <group>`, the MCP server is registered automatically in your agent's config. The daemon registers one server per machine; multiple groups can be active simultaneously. The server uses stdio transport.
+After `grafel install`, the MCP server is registered automatically in your agent's config. The daemon registers one server per machine; multiple groups can be active simultaneously. The server uses stdio transport.
 
 To verify the wiring:
 
 ```sh
-grafel status <group>    # shows MCP: connected / disconnected
+grafel status    # shows MCP: connected / disconnected
 ```
 
 For per-agent config details see [agent-hosts.md](agent-hosts.md).

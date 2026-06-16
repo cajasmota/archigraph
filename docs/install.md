@@ -8,7 +8,7 @@ Full install matrix for grafel. For the five-command path see [quickstart.md](qu
 
 | Requirement | Notes |
 |-------------|-------|
-| Go 1.25.5+ | CGO must be enabled (tree-sitter uses a C library) |
+| Go 1.26+ | CGO must be enabled (tree-sitter uses a C library) |
 | C compiler | macOS: `xcode-select --install` / Debian-Ubuntu: `apt install build-essential` / Windows: MinGW via MSYS2 |
 | Node.js 20+ + npm | Dashboard build only — not needed at runtime after `make build` |
 | git | Required for indexing |
@@ -90,8 +90,8 @@ This creates symlinks in `~/.claude/skills/` pointing back to `skills/` in the s
 ```sh
 grafel doctor               # smoke-check install + tools
 grafel wizard               # create a group (interactive)
-grafel install <group>      # start daemon, register MCP, install skills
-grafel status <group>       # confirm MCP: connected
+grafel install              # start daemon, register MCP, install skills
+grafel status               # confirm MCP: connected
 ```
 
 ---

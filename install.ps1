@@ -26,7 +26,15 @@ function Get-Arch {
     if ($env:PROCESSOR_ARCHITEW6432) { $procArch = $env:PROCESSOR_ARCHITEW6432 }
     switch ($procArch) {
         'AMD64' { return 'x86_64' }
-        'ARM64' { return 'arm64' }
+        'ARM64' {
+            # No native windows/arm64 release artifact is published: the release
+            # build uses CGO (tree-sitter) and GitHub's x64 Windows runners have
+            # no windows-arm64 C cross-toolchain, so an arm64 leg is not buildable
+            # in CI. Windows on ARM64 runs x64 binaries transparently via
+            # emulation, so install the x86_64 archive instead (#5274).
+            Write-Info "  note: no native windows/arm64 build is published; installing the x86_64 build (runs under Windows ARM64 x64 emulation)."
+            return 'x86_64'
+        }
         'x86'   {
             if ([Environment]::Is64BitOperatingSystem) { return 'x86_64' }
             Fail "unsupported architecture: x86 (32-bit)"

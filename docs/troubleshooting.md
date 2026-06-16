@@ -29,8 +29,8 @@ The dashboard is embedded in the binary. If it shows a blank page:
 ### Agent shows "grafel MCP not found" or no `grafel_*` tools
 
 1. Confirm the daemon is running: `grafel status`
-2. Confirm the MCP entry exists: `grafel status <group>` should show `MCP: connected`
-3. If not connected, re-run: `grafel install <group>`
+2. Confirm the MCP entry exists: `grafel status` should show `MCP: connected`
+3. If not connected, re-run: `grafel install`
 4. Restart your agent session — MCP servers are loaded at session start
 
 ### Agent is in the wrong group or returns `source: "none"` from `grafel_whoami`
