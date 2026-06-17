@@ -5,7 +5,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/cajasmota/grafel/internal/daemon"
 	"github.com/cajasmota/grafel/internal/daemon/mode"
@@ -13,6 +15,8 @@ import (
 	"github.com/cajasmota/grafel/internal/install"
 	"github.com/cajasmota/grafel/internal/install/mcpreg"
 	"github.com/cajasmota/grafel/internal/install/skilllink"
+	"github.com/cajasmota/grafel/internal/install/tooladapter"
+	"github.com/cajasmota/grafel/internal/registry"
 )
 
 // registerMCPInClaudeConfigs registers the grafel MCP entry in all detected
@@ -84,6 +88,9 @@ func newInstallCmd() *cobra.Command {
 	var devMode bool
 	var force bool
 	var noHooks bool
+	var toolsCSV string
+	var noWizard bool
+	var assumeYes bool
 
 	cmd := &cobra.Command{
 		Use:   "install",
@@ -118,6 +125,23 @@ Install also copies or symlinks the grafel skills into every detected
 Claude Code config directory's skills/ subdirectory.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
+
+			// ── per-tool selection (#5256) ─────────────────────────────────
+			// Resolve the desired tool set and persist it to every registered
+			// group's GroupConfig.Tools. Precedence:
+			//   1. --tools a,b,c   → explicit, validated, NON-interactive.
+			//   2. interactive wizard → only when stdin is a TTY AND neither
+			//      --tools nor --yes/--no-wizard was given.
+			//   3. otherwise (no flag, no TTY, or --yes/--no-wizard) → leave
+			//      the existing selection untouched, i.e. today's behaviour
+			//      (EnabledTools falls back to all tools). CI is never blocked.
+			if sel, ok, err := resolveToolSelection(cmd, out, toolsCSV, noWizard, assumeYes); err != nil {
+				return err
+			} else if ok {
+				if err := persistToolSelection(out, sel); err != nil {
+					return err
+				}
+			}
 
 			if foreground {
 				// --foreground: skip service registration, just run the daemon
@@ -252,7 +276,126 @@ Claude Code config directory's skills/ subdirectory.`,
 	// #2222: git hooks opt-out.
 	cmd.Flags().BoolVar(&noHooks, "no-hooks", false,
 		"skip automatic git hook installation (post-checkout, post-merge, post-rewrite, pre-push)")
+	// #5256: per-tool selection.
+	cmd.Flags().StringVar(&toolsCSV, "tools", "",
+		"comma-separated AI coding tools to target (e.g. claude,cursor,windsurf); when set, selection is non-interactive. Run 'grafel tools list' for valid IDs")
+	cmd.Flags().BoolVar(&noWizard, "no-wizard", false,
+		"skip the interactive tool-selection wizard even on a TTY (keep the current/default tool set)")
+	cmd.Flags().BoolVar(&assumeYes, "yes", false,
+		"assume defaults for all prompts (alias for --no-wizard for tool selection); never blocks automation")
 	return cmd
+}
+
+// resolveToolSelection decides the per-tool selection for `grafel install`.
+//
+// Returns (selection, applied, err):
+//   - (ids, true, nil)  → caller should persist ids to GroupConfig.Tools.
+//   - (nil, false, nil) → no change requested (no flag, no TTY, or --yes/
+//     --no-wizard): leave the existing selection alone so back-compat /
+//     automation behaviour is preserved.
+//
+// --tools wins and is non-interactive. Otherwise the wizard runs ONLY when
+// stdin is an interactive terminal and the user did not pass --yes/--no-wizard.
+func resolveToolSelection(cmd *cobra.Command, out io.Writer, toolsCSV string, noWizard, assumeYes bool) ([]string, bool, error) {
+	if toolsCSV != "" {
+		ids, err := tooladapter.ParseToolsFlag(toolsCSV)
+		if err != nil {
+			return nil, false, err
+		}
+		return ids, true, nil
+	}
+	if noWizard || assumeYes {
+		return nil, false, nil
+	}
+	if !stdinIsTTY() {
+		// Non-interactive / piped / CI: never prompt.
+		return nil, false, nil
+	}
+	ids, err := runToolWizard(out)
+	if err != nil {
+		return nil, false, err
+	}
+	return ids, true, nil
+}
+
+// stdinIsTTY reports whether standard input is an interactive terminal. It is
+// a var so tests can stub it.
+var stdinIsTTY = func() bool {
+	return term.IsTerminal(int(os.Stdin.Fd()))
+}
+
+// runToolWizard presents the interactive multi-select checkbox of all
+// adapters, pre-checked by DetectInstalled(), and returns the chosen IDs.
+// The selection→IDs mapping is delegated to tooladapter.NormalizeSelection so
+// the pure logic is testable without a TTY.
+func runToolWizard(out io.Writer) ([]string, error) {
+	choices := tooladapter.WizardChoices(nil)
+	opts := make([]huh.Option[string], 0, len(choices))
+	var preselected []string
+	for _, c := range choices {
+		label := c.DisplayName
+		if c.Detected {
+			label += " (detected)"
+		}
+		opts = append(opts, huh.NewOption(label, c.ID).Selected(c.PreChecked))
+		if c.PreChecked {
+			preselected = append(preselected, c.ID)
+		}
+	}
+	selected := append([]string{}, preselected...)
+	if err := huh.NewMultiSelect[string]().
+		Title("AI coding tools to target").
+		Description("Pre-checked tools were detected on this machine. Toggle with space, confirm with enter.").
+		Options(opts...).
+		Value(&selected).
+		Run(); err != nil {
+		return nil, err
+	}
+	ids := tooladapter.NormalizeSelection(selected)
+	if len(ids) == 0 {
+		fmt.Fprintln(out, "  no tools selected — keeping the default (all supported tools)")
+		// Persist an empty explicit set would disable everything; instead we
+		// treat "selected nothing" as "use the default" to avoid a footgun.
+		return tooladapter.AllIDs(), nil
+	}
+	return ids, nil
+}
+
+// persistToolSelection writes the resolved tool IDs into GroupConfig.Tools for
+// every registered group and re-applies the per-tool artifact delta in-process
+// (no subprocess, no daemon restart). With no groups registered it is a no-op
+// (the daemon-service install still proceeds).
+func persistToolSelection(out io.Writer, ids []string) error {
+	groups, err := registry.Groups()
+	if err != nil {
+		return fmt.Errorf("read registry: %w", err)
+	}
+	if len(groups) == 0 {
+		fmt.Fprintf(out, "  tools:   %v (saved on first group registration)\n", ids)
+		return nil
+	}
+	bin, _ := os.Executable()
+	for _, g := range groups {
+		cfg, err := registry.LoadGroupConfig(g.ConfigPath)
+		if err != nil || cfg == nil {
+			fmt.Fprintf(out, "  ⚠ tools: load %s: %v\n", g.Name, err)
+			continue
+		}
+		prev := tooladapter.EnabledTools(cfg)
+		cfg.Tools = ids
+		if err := registry.SaveGroupConfig(g.ConfigPath, cfg); err != nil {
+			fmt.Fprintf(out, "  ⚠ tools: save %s: %v\n", g.Name, err)
+			continue
+		}
+		res, err := install.ApplyToolDelta(cfg, g.Name, bin, prev, ids, nil)
+		if err != nil {
+			fmt.Fprintf(out, "  ⚠ tools: apply %s: %v\n", g.Name, err)
+			continue
+		}
+		fmt.Fprintf(out, "  tools:   %s → %v (enabled %v, disabled %v)\n",
+			g.Name, ids, res.Enabled, res.Disabled)
+	}
+	return nil
 }
 
 // runInstallDev runs the DEV-mode install transaction (issue #2212) and
