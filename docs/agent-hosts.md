@@ -3,8 +3,15 @@
 The graph-enrichment pass (`/grafel-graph-enrich`) runs hundreds to
 thousands of LLM calls in batches. Using the wrong model (Sonnet or Opus)
 inflates cost by 10–20× without meaningfully improving enrichment quality for
-most entities. This page shows how to set `claude-3-haiku-20240307` as the
+most entities. This page shows how to set `claude-haiku-4-5` as the
 active model in each supported agent host **before** starting enrichment.
+
+**Current tiers** (Anthropic list pricing, per million tokens):
+
+| Tier | Model ID | Input | Output |
+|------|----------|------:|-------:|
+| Cheap (Haiku) | `claude-haiku-4-5` | $1.00 | $5.00 |
+| Mid (Sonnet) | `claude-sonnet-4-6` | $3.00 | $15.00 |
 
 > **Model selection rule** (from [`skills/grafel-graph-enrich/SKILL.md`](../skills/grafel-graph-enrich/SKILL.md)):
 > Haiku for `high`, `medium`, and `low` criticality bands (the vast majority
@@ -24,6 +31,11 @@ active model in each supported agent host **before** starting enrichment.
 | [Continue](#continue) | Yes — `config.json` or inline picker | Yes (via MCP JSON config) | No | Set `defaultModel` to Haiku in config |
 | [Aider](#aider) | Yes — `--model` CLI flag or `.aider.conf.yml` | No (no MCP client) | No | Run enrichment outside Aider; use Claude Code instead |
 | [Cline](#cline) | Yes — model picker in VS Code sidebar | Yes (via MCP JSON config) | No — one model per task | Switch to Haiku before starting the task |
+| [Codex](#newer-hosts) | Session model (Codex settings / `~/.codex/config.toml`) | Yes (TOML config) | No | grafel enrichment runs whatever the session model is |
+| [Kiro](#newer-hosts) | Session model (Kiro settings) | Yes (`~/.kiro/settings/mcp.json`) | No | grafel enrichment runs whatever the session model is |
+| [Antigravity](#newer-hosts) | Session model (Antigravity settings) | Yes (`~/.gemini/antigravity/mcp_config.json`) | No | grafel enrichment runs whatever the session model is |
+| [Copilot](#newer-hosts) | Session model (Copilot model picker) | No (rules-only) | No | Rules-only; no `grafel_*` MCP tools — run enrichment in Claude Code |
+| [Codeium](#newer-hosts) | Session model (Codeium settings) | No (rules-only) | No | Rules-only; no `grafel_*` MCP tools — run enrichment in Claude Code |
 
 ---
 
@@ -37,7 +49,7 @@ Sonnet fallback.
 ### Set model at session start (recommended)
 
 ```sh
-claude --model claude-3-haiku-20240307
+claude --model claude-haiku-4-5
 ```
 
 Then invoke:
@@ -54,7 +66,7 @@ prompt you before switching to Sonnet for the critical tier.
 In the Claude Code chat:
 
 ```
-/model claude-3-haiku-20240307
+/model claude-haiku-4-5
 ```
 
 ### Per-project default
@@ -64,7 +76,7 @@ for a machine-wide default):
 
 ```json
 {
-  "model": "claude-3-haiku-20240307"
+  "model": "claude-haiku-4-5"
 }
 ```
 
@@ -79,25 +91,25 @@ command output. You can also check at any time:
 /model
 ```
 
-Expected output: `Current model: claude-3-haiku-20240307`
+Expected output: `Current model: claude-haiku-4-5`
 
 ### Recommended workflow for enrichment
 
-1. `claude --model claude-3-haiku-20240307` — start the session locked to Haiku.
+1. `claude --model claude-haiku-4-5` — start the session locked to Haiku.
 2. Run `grafel status` to confirm the daemon is up and MCP is connected.
 3. Invoke `/grafel-graph-enrich` — the skill fetches the pending enrichment
    queue, then prints a cost estimate and asks for confirmation before
    dispatching batches. The non-critical batches go to Haiku; the skill will ask
    you to confirm the model switch to Sonnet for the critical tier before sending
    those batches.
-4. After enrichment completes, run `/model claude-3-5-sonnet-20241022` (or whichever
+4. After enrichment completes, run `/model claude-sonnet-4-6` (or whichever
    model you prefer for interactive coding) to restore your normal session model.
 
 ### Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Enrichment cost far higher than expected | Session model was Sonnet or Opus | Verify with `/model`; restart with `--model claude-3-haiku-20240307` and re-run |
+| Enrichment cost far higher than expected | Session model was Sonnet or Opus | Verify with `/model`; restart with `--model claude-haiku-4-5` and re-run |
 | `/model` command not found | Claude Code version too old | Upgrade: `npm i -g @anthropic-ai/claude-code@latest` |
 | Skill ignores `/model` change mid-run | Session model is advisory; the skill's per-batch override still applies | No action needed — the skill manages model selection per batch |
 | `settings.json` model ignored | Project file path wrong | Must be `.claude/settings.json` relative to the repo root you opened |
@@ -113,7 +125,7 @@ switching inside a single task.
 
 1. Open the AI panel: `Cmd+L` (macOS) / `Ctrl+L` (Linux/Windows).
 2. Click the **model selector** at the top of the panel.
-3. Choose **claude-3-haiku-20240307** (or the display name "Claude 3 Haiku").
+3. Choose **claude-haiku-4-5** (or the display name "Claude Haiku 4.5").
 
 ### Confirm the active model
 
@@ -136,7 +148,7 @@ Choose one of:
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| "Claude 3 Haiku" not in model list | Anthropic API key not set in Cursor settings | Add key under **Cursor → Settings → Models → Anthropic** |
+| "Claude Haiku 4.5" not in model list | Anthropic API key not set in Cursor settings | Add key under **Cursor → Settings → Models → Anthropic** |
 | Model resets after closing the panel | Expected — Cursor does not persist per-chat model | Re-select before each enrichment run |
 
 ---
@@ -151,7 +163,7 @@ and does not persist across sessions.
 1. Open Cascade: `Cmd+L` (macOS) / `Ctrl+L` (Linux/Windows).
 2. Click the **model picker** (usually a small label near the top-right of
    the Cascade panel).
-3. Select **Claude 3 Haiku** (maps to `claude-3-haiku-20240307`).
+3. Select **Claude Haiku 4.5** (maps to `claude-haiku-4-5`).
 
 ### Confirm the active model
 
@@ -168,7 +180,7 @@ tier runs at Haiku quality.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| "Claude 3 Haiku" missing from picker | Codeium account plan does not include Haiku | Check your Codeium plan; Claude models require Codeium Pro or API key mode |
+| "Claude Haiku 4.5" missing from picker | Codeium account plan does not include Haiku | Check your Codeium plan; Claude models require Codeium Pro or API key mode |
 | Cascade panel not opening | Windsurf extension needs restart | `Cmd+Shift+P` → "Reload Window" |
 
 ---
@@ -186,13 +198,13 @@ Edit `~/.continue/config.json`:
 {
   "models": [
     {
-      "title": "Claude 3 Haiku",
+      "title": "Claude Haiku 4.5",
       "provider": "anthropic",
-      "model": "claude-3-haiku-20240307",
+      "model": "claude-haiku-4-5",
       "apiKey": "<your-anthropic-api-key>"
     }
   ],
-  "defaultModel": "Claude 3 Haiku"
+  "defaultModel": "Claude Haiku 4.5"
 }
 ```
 
@@ -201,7 +213,7 @@ Reload the Continue extension after saving (`Cmd+Shift+P` → "Continue: Reload"
 ### Switch model inline
 
 Click the model label at the bottom of the Continue chat panel and choose
-**Claude 3 Haiku** from the dropdown.
+**Claude Haiku 4.5** from the dropdown.
 
 ### Confirm the active model
 
@@ -235,13 +247,13 @@ the recommended workflow is:
 If you do use Aider for any Claude work:
 
 ```sh
-aider --model claude-3-haiku-20240307
+aider --model claude-haiku-4-5
 ```
 
 Or add to `.aider.conf.yml`:
 
 ```yaml
-model: claude-3-haiku-20240307
+model: claude-haiku-4-5
 ```
 
 ### Troubleshooting
@@ -262,17 +274,17 @@ per-task (set before starting the task).
 
 1. Open the Cline sidebar in VS Code.
 2. Click the **model selector** (gear icon or model name label near the top).
-3. Choose **claude-3-haiku-20240307**.
+3. Choose **claude-haiku-4-5**.
 
 ### Wire up MCP (required for `grafel_*` tools)
 
 Cline reads MCP server config from its VS Code extension settings.
-`grafel install` writes the server entry to `~/.claude/claude.json`,
+`grafel install` writes the server entry to `~/.claude.json`,
 but Cline uses its own config file. Copy the server entry:
 
 ```sh
 # After grafel install, inspect the generated entry:
-cat ~/.claude/claude.json | grep -A 10 '"grafel"'
+cat ~/.claude.json | grep -A 10 '"grafel"'
 ```
 
 Then add the equivalent entry to the Cline MCP config (VS Code settings →
@@ -308,6 +320,32 @@ tier-aware enrichment.
 
 ---
 
+## Newer hosts
+
+grafel also installs into Codex, Kiro, Antigravity, GitHub Copilot, and
+Codeium (see [tools.md](tools.md) for the exact config/rules paths each one
+gets). None of these expose grafel's per-batch model selection the way Claude
+Code does, so the guidance is short:
+
+- **Codex / Kiro / Antigravity** — MCP-capable, so the `grafel_*` tools are
+  available. There is no per-task model override for enrichment: select your
+  model in the host's own settings and grafel enrichment runs whatever the
+  current session model is. Choose the Haiku tier (`claude-haiku-4-5`) before
+  invoking `/grafel-graph-enrich` if the host lets you, then restore your
+  normal coding model afterward. Codex stores its MCP entry as TOML at
+  `~/.codex/config.toml`; Kiro at `~/.kiro/settings/mcp.json`; Antigravity at
+  `~/.gemini/antigravity/mcp_config.json`.
+- **GitHub Copilot / Codeium** — rules-only. grafel writes a guidance file
+  (`.github/copilot-instructions.md` for Copilot, `.codeium/instructions.md`
+  for Codeium) but registers **no** MCP server, so the `grafel_*` tools are not
+  callable from these hosts. Run enrichment in Claude Code instead.
+
+Don't try to force a specific model in a host that doesn't surface the choice —
+configure the model in the host's own settings and accept that enrichment runs
+at the session model's rate.
+
+---
+
 ## Recommended minimal setup
 
 If you are onboarding to grafel enrichment for the first time, this is
@@ -319,13 +357,13 @@ curl -fsSL https://raw.githubusercontent.com/cajasmota/grafel/main/install.sh | 
 
 # 2. Register your repos and start the daemon
 grafel wizard   # creates group config
-grafel install  # starts daemon, wires MCP, writes ~/.claude/claude.json
+grafel install  # starts daemon, wires MCP, writes ~/.claude.json
 
 # 3. Confirm MCP is connected
 grafel status   # should show "MCP: connected"
 
 # 4. Open Claude Code locked to Haiku
-claude --model claude-3-haiku-20240307
+claude --model claude-haiku-4-5
 
 # 5. Run the enrichment pass
 /grafel-graph-enrich

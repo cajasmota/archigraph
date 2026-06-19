@@ -1,10 +1,18 @@
 # grafel
 
-> A local code-knowledge-graph daemon that gives AI agents structural navigation — call graphs, cross-repo dependency traces, HTTP surface maps, and process flows — across one or many repositories, exposed via 65 MCP tools.
+> ## Map your codebase, navigate any part.
+>
+> *Where grep gets lost, the Grafel shows the way.*
+
+**No cloud indexing, no account, no data sent anywhere.** Everything runs locally — the daemon indexes on your machine and never phones home.
 
 [![Build](https://github.com/cajasmota/grafel/actions/workflows/test.yml/badge.svg)](https://github.com/cajasmota/grafel/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: Preview v0.x](https://img.shields.io/badge/status-preview_v0.x-orange.svg)](CHANGELOG.md)
+
+grafel is a local code-knowledge-graph daemon that gives AI agents structural navigation — call graphs, cross-repo dependency traces, HTTP surface maps, and process flows — across one or many repositories, exposed via 65 MCP tools.
+
+**A companion to `grep`, not a replacement.** `grep` finds text; grafel maps structure — use them together. The standout value is **navigation**: where is `X` defined, who calls `Y`, how a request flows end-to-end, the blast radius of a change. Those are the questions grep can't answer and the graph can. (Fewer file reads also means fewer tokens — a nice side effect, not the point.)
 
 ---
 
@@ -14,7 +22,7 @@ AI coding agents are good at reading files. They are not good at navigating rela
 
 grafel pre-builds the relationship map. It indexes your codebase into an in-memory graph (entities, call edges, import edges, HTTP routes, message-bus topics) and keeps it fresh via file watchers. When an agent asks a structural question, it gets a precise answer in one round-trip instead of twenty file reads.
 
-The graph lives entirely on your machine. No cloud indexing, no account, no data sent anywhere. One binary, one daemon process, one port.
+The graph lives entirely on your machine — local-first by design, as called out above. One binary, one daemon process, one port.
 
 ---
 
@@ -120,10 +128,10 @@ For per-agent setup instructions see [docs/agent-hosts.md](docs/agent-hosts.md).
 | [docs/mcp-tools.md](docs/mcp-tools.md) | MCP tool catalogue and pointer to full schema |
 | [docs/install.md](docs/install.md) | Full install matrix (script, binary, source, dev mode) |
 | [docs/tools.md](docs/tools.md) | Supported AI coding tools matrix + per-tool enable/disable (CLI + web) |
+| [docs/setup-per-tool.md](docs/setup-per-tool.md) | Step-by-step "set up grafel in my tool" guide (Claude Code, Codex, Cursor, Windsurf, Kiro, Antigravity, Codeium, Copilot) |
 | [docs/agent-hosts.md](docs/agent-hosts.md) | Per-agent setup (Claude Code, Cursor, Windsurf, Continue, Aider, Cline) |
 | [skills/README.md](skills/README.md) | Skill family — chains, dependencies, install |
 | [internal/mcp/SCHEMA.md](internal/mcp/SCHEMA.md) | Full MCP tool schema (canonical) |
-| [docs/adrs/](docs/adrs/) | Architectural decision records (ADR-0001 through ADR-0022) |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and breaking changes |
 | [CLAUDE.md](CLAUDE.md) | When to use MCP vs grep (agent pairing guide) |
 
@@ -133,7 +141,26 @@ For per-agent setup instructions see [docs/agent-hosts.md](docs/agent-hosts.md).
 
 Core extractors for 50+ languages including Go, Python, TypeScript/JavaScript, Java, C#, C++, Rust, Ruby, PHP, Swift, Kotlin, Scala, Dart, Elixir, and more. Infrastructure: Terraform/HCL, Solidity, Verilog/SystemVerilog. Frontend: Vue SFC, Svelte, Astro. Cross-cutting: SQL, GraphQL, Protocol Buffers, Dockerfile.
 
-Each extractor emits language-specific edges (HTTP endpoints, ORM queries, dynamic dispatch, framework hooks). Full list in [AGENTS.md](AGENTS.md).
+Each extractor emits language-specific edges (HTTP endpoints, ORM queries, dynamic dispatch, framework hooks).
+
+### Coverage
+
+grafel tracks **39 languages (25 active), 255 frameworks, 176 ORMs, 129 tools, and 205 other** capabilities, plus cross-cutting infrastructure: databases, platform/k8s, message brokers, CI/CD, security, observability, protocols, and build systems.
+
+Top languages by framework support:
+
+| Language | Frameworks | ORMs | Tools |
+|----------|-----------:|-----:|------:|
+| JS/TS | 33 | 19 | 21 |
+| C/C++ | 25 | 10 | 16 |
+| python | 25 | 18 | 15 |
+| java | 23 | 15 | 10 |
+| go | 21 | 17 | 8 |
+| C# | 18 | 16 | 7 |
+| kotlin | 18 | 7 | 0 |
+| rust | 17 | 15 | 10 |
+
+See the [full coverage matrix](docs/coverage/summary.md) for every language and the complete cross-cutting infrastructure tables. Per-language detail lives in [docs/coverage/by-language/](docs/coverage/by-language/); per-category detail in [docs/coverage/by-category/](docs/coverage/by-category/).
 
 ---
 
