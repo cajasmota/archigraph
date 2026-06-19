@@ -709,10 +709,20 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 		return all[i].hit.Score > all[j].hit.Score
 	})
 
-	// min_score cutoff (#1747): drop ranked hits below the threshold after
-	// re-ranking so the tail is clean. Only applied when minScore > 0 and there
-	// is at least one hit above the bar (avoids blanking on noisy corpora).
-	// The "always-1" fallback below still fires if the cull leaves the list empty.
+	// min_score cutoff (#1747 / #5289): drop ranked hits below the threshold
+	// after re-ranking so the tail is clean. Applied honestly: when minScore > 0,
+	// every hit below the bar is removed — even if that empties the list.
+	//
+	// #5289: the prior implementation kept the ENTIRE sub-threshold list when the
+	// cull would leave it empty ("preserve at least one hit"). For a
+	// zero-selectivity query (terms that BM25-match weakly or not at all), every
+	// candidate scored below 0.15, so the guard preserved up to `limit` near-zero
+	// (displayed score=0.00) hits per repo. Those leaked seeds then drove an
+	// unbounded depth-3 BFS that dumped the whole repo (6915 nodes / 2.6M-edge
+	// summary / ~113s) — see the bounded-expansion logic below. We now let the
+	// cull empty the list; the scoped "always-1" fallback (a SINGLE node) handles
+	// the empty case, and a zero-selectivity result is surfaced honestly rather
+	// than expanded.
 	if minScore > 0 && len(all) > 0 {
 		// Keep hits whose BM25/RRF score clears the bar. Since re-rank tier sorts
 		// noiseNone first, the best real hit is all[0]; only trim from the tail.
@@ -722,10 +732,7 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 				culled = append(culled, sc)
 			}
 		}
-		// Preserve at least one hit so the caller always gets a result.
-		if len(culled) > 0 {
-			all = culled
-		}
+		all = culled
 	}
 
 	// #2769 Phase 1C: drop hits whose entity confidence falls below the
@@ -755,7 +762,13 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 	//  2. Otherwise use the repo with the most raw BM25 candidate hits
 	//     (highest textual overlap with the query terms) — never cross-repo.
 	//  3. Fall back to the first repo if all hit counts are zero.
+	// lowConfidence is set when the only result is the always-1 fallback (no hit
+	// cleared min_score). In that case we return the single fallback node WITHOUT
+	// BFS expansion and with a hint, instead of expanding a non-match into the
+	// whole repo (#5289).
+	lowConfidence := false
 	if len(all) == 0 {
+		lowConfidence = true
 		scopedRepos := scopeFallbackRepos(repos, repoFilter, bm25HitsByRepo)
 		fallback := pickFallback(scopedRepos)
 		if fallback != nil {
@@ -782,6 +795,10 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 				"capped at max_results=%d; %d additional hits omitted (pass max_results up to 200 or tighten query)",
 				maxResults, preCapTotal-maxResults,
 			)
+		}
+		if lowConfidence {
+			out["low_confidence"] = true
+			out["hint"] = noStrongMatchHint
 		}
 		return jsonResult(out), nil
 	}
@@ -813,6 +830,7 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 	visibleNodes := []nodeWithRepo{}
 	visibleEdges := []renderEdge{}
 	seen := map[string]bool{} // prefixed id
+	expandTruncated := false
 
 	add := func(repo string, e *graph.Entity, score float64) {
 		pid := prefixedID(repo, e.ID)
@@ -825,13 +843,36 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 	for _, sc := range keep {
 		add(sc.repo.Repo, sc.hit.Entity, sc.hit.Score)
 	}
-	if mode != "none" {
+	// #5289: never BFS-expand a low-confidence fallback. The always-1 fallback
+	// node is a poor textual match injected only so the caller sees *something*;
+	// expanding it depth-3 over a densely-connected repo is exactly the
+	// pathological whole-repo dump (6915 nodes / 2.6M edges / ~113s) we are
+	// fixing. Return just the single fallback node with a hint instead.
+	if mode != "none" && !lowConfidence {
 		for _, sc := range keep {
+			// #5289: stop once the visible set reaches the node budget so a
+			// borderline-selective seed (a low-but-above-floor hit that fans out
+			// to a hub) can't expand into the whole repo. Both the BFS work and
+			// the O(visited * out-degree) edge-carry below are bounded by this.
+			if len(visibleNodes) >= findMaxVisibleNodes {
+				expandTruncated = true
+				break
+			}
 			adj := sc.repo.getAdjacency() // built lazily, cached until reload (#3367)
-			vis := bfs(adj, sc.hit.Entity.ID, depth, contextFilter)
+			// bfsBounded caps the per-seed visited set; combined with the
+			// visibleNodes ceiling this keeps a non-selective query well under a
+			// second instead of the ~113s unbounded case.
+			vis, vt := bfsBounded(adj, sc.hit.Entity.ID, depth, contextFilter, findMaxBFSNodesPerSeed)
+			if vt {
+				expandTruncated = true
+			}
 			for nid, d := range vis {
 				if nid == sc.hit.Entity.ID {
 					continue
+				}
+				if len(visibleNodes) >= findMaxVisibleNodes {
+					expandTruncated = true
+					break
 				}
 				if e, ok := sc.repo.LabelIndex.ByID[nid]; ok {
 					add(sc.repo.Repo, e, sc.hit.Score/float64(d+1))
@@ -841,8 +882,12 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 			// iterate out-edges from each visited node instead of scanning the
 			// full Doc.Relationships list. Every edge naturally appears exactly
 			// once (as an out-edge of its source) so direction semantics match
-			// the prior linear scan.
+			// the prior linear scan. Bounded by findMaxVisibleEdges (#5289).
 			for nid := range vis {
+				if len(visibleEdges) >= findMaxVisibleEdges {
+					expandTruncated = true
+					break
+				}
 				from := sc.repo.LabelIndex.ByID[nid]
 				if from == nil {
 					continue
@@ -851,6 +896,10 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 					continue
 				}
 				for _, e := range adj.Outgoing(nid) {
+					if len(visibleEdges) >= findMaxVisibleEdges {
+						expandTruncated = true
+						break
+					}
 					if !seen[prefixedID(sc.repo.Repo, e.target)] {
 						continue
 					}
@@ -870,6 +919,15 @@ func (s *Server) handleQueryGraph(ctx context.Context, req mcpapi.CallToolReques
 		Nodes:        visibleNodes,
 		Edges:        visibleEdges,
 		OneRepo:      oneRepo,
+	}
+	switch {
+	case lowConfidence:
+		rr.TruncatedNote = noStrongMatchHint
+	case expandTruncated:
+		rr.TruncatedNote = fmt.Sprintf(
+			"expansion capped (>%d nodes / %d edges) — broad query; tighten `query=` or use grafel_neighbors/grafel_topology for full structure",
+			findMaxVisibleNodes, findMaxVisibleEdges,
+		)
 	}
 	// Record the prefixed ids of every visible node so the MCP-activity glow
 	// highlights the compact result set (the rendered markdown has no ids).
@@ -975,6 +1033,30 @@ type scored struct {
 	repo *LoadedRepo
 	hit  Hit
 }
+
+// #5289 expansion bounds. A zero-/low-selectivity grafel_find query used to
+// leak sub-min_score seeds (displayed score=0.00) into an unbounded depth-3 BFS
+// that visited the whole repo (6915 nodes) and emitted a multi-million-edge
+// summary, taking ~113s. These caps keep the compact BFS expansion + edge-carry
+// bounded so even a borderline-selective query returns in well under a second.
+// Selective queries are unaffected: real matches above min_score rarely touch
+// these ceilings, and the small-subgraph common case never does.
+const (
+	// findMaxVisibleNodes caps the total node set rendered in the compact path
+	// (seeds + BFS-expanded neighbours across all seeds).
+	findMaxVisibleNodes = 400
+	// findMaxBFSNodesPerSeed caps the per-seed visited set inside bfsBounded so a
+	// single high-degree hub can't fan out to thousands of nodes.
+	findMaxBFSNodesPerSeed = 200
+	// findMaxVisibleEdges caps the edge-summary computation (O(visited*out-deg)).
+	findMaxVisibleEdges = 1500
+)
+
+// noStrongMatchHint is surfaced when no entity cleared the min_score floor and
+// the result is only the always-1 fallback (#5289). Returned instead of a
+// whole-repo dump so the caller knows to retry rather than treating a
+// non-selective result as a real subgraph.
+const noStrongMatchHint = "no strong matches above min_score — the query terms don't match any entity names; try different/more specific terms, or use grafel_orient / grafel_topology to explore the repo"
 
 // serializeHits is the structured (full=true) shape.
 //
