@@ -10,9 +10,27 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: v0.x](https://img.shields.io/badge/status-v0.x-blue.svg)](CHANGELOG.md)
 
-grafel is a local code-knowledge-graph daemon that gives AI agents structural navigation — call graphs, cross-repo dependency traces, HTTP surface maps, and process flows — across one or many repositories, exposed via 65 MCP tools.
+**grafel** is a local code-knowledge-graph daemon that gives AI agents structural navigation across one or many repos — call graphs, cross-repo traces, HTTP surface maps, process flows — via 65 MCP tools.
 
-**A companion to `grep`, not a replacement.** `grep` finds text; grafel maps structure — use them together. The standout value is **navigation**: where is `X` defined, who calls `Y`, how a request flows end-to-end, the blast radius of a change. Those are the questions grep can't answer and the graph can. (Fewer file reads also means fewer tokens — a nice side effect, not the point.)
+**A companion to `grep`, not a replacement:** `grep` finds text, grafel maps structure. Its value is **navigation** — where `X` is defined, who calls `Y`, how a request flows end-to-end, the blast radius of a change — the questions grep can't answer. (Fewer file reads also means fewer tokens — a side effect, not the point.)
+
+---
+
+## grep finds text. grafel finds the answer.
+
+Three questions an AI agent actually gets asked — and where plain `grep` leaves it stranded (fictional projects; grafel works the same on yours):
+
+**1. "Where does `amountDue` on the invoice report come from — end to end?"**
+- **grep** matches `amountDue` in a React component, a controller, maybe a SQL string — but can't connect them or say which column backs it. The agent guesses.
+- **grafel** traces the whole lineage: `InvoiceReport.tsx` (web-app) → `GET /reports/invoices` (api-gateway) → `requirePermission('billing:read')` → `BillingController.getInvoiceReport` (billing-service) → `InvoiceRepository.computeAmountDue()` → `SELECT … FROM invoice_lines JOIN invoices` → the **`invoices.amount_due` column in Postgres**. Component → endpoint → permission → service → ORM → query → table.
+
+**2. "I'm renaming `Invoice.amountDue` → `Invoice.balance`. What breaks?"**
+- **grep** drowns in false positives, and can't see that `web-app` and `mobile-app` read the field off the JSON response — it crosses the wire, not an import.
+- **grafel** warns it breaks `billing-service` (model + 3 call sites + the `invoices.amount_due` mapping) **and** `web-app`'s `InvoiceCard` **and** `mobile-app`'s `InvoiceScreen` — it tracks the HTTP payload shape across repos. A "backend rename" is really a frontend + mobile change.
+
+**3. "We're renaming the `invoice-events` topic / moving the `reports` database — what's affected?"**
+- **grep** finds the name scattered across Terraform, Helm, and code — but can't tell you which services publish or consume it.
+- **grafel** links infra to code: the Kafka topic `invoice-events` is **published by** `billing-service`, **consumed by** `notifications-service` and `analytics-service`; the Terraform `aws_db_instance.reports` connection string flows (via a Kubernetes ConfigMap) into `billing-service` and `analytics-service`. The real blast radius across infra ↔ services ↔ code.
 
 ---
 
