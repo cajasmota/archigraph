@@ -60,8 +60,11 @@ The graph lives entirely on your machine — local-first by design, as called ou
 
 grafel ships a local web dashboard: an in-browser view of your code knowledge graph. It is served by the daemon at `http://127.0.0.1:47274/` and opened with `grafel dashboard` (which auto-starts the daemon if it isn't already running). Everything runs on your machine — the dashboard reads the same in-memory graph the MCP server does, with no cloud, no upload, and no account. Same local-first posture as the rest of grafel: your code never leaves your laptop.
 
-<!-- TODO: add screenshot — drop the PNG at docs/images/dashboard-graph.png -->
-![grafel dashboard — code graph](docs/images/dashboard-graph.png)
+| | | |
+|:---:|:---:|:---:|
+| ![Code graph](docs/images/dashboard-graph.png)<br>**Graph** — the whole knowledge graph | ![Paths](docs/images/dashboard-paths.png)<br>**Paths** — endpoint explorer | ![Control flow](docs/images/dashboard-flow.png)<br>**Control flow** — per-endpoint flowchart |
+| ![Infrastructure](docs/images/dashboard-infrastructure.png)<br>**Infrastructure** — IaC resource graph | ![Dependency injection](docs/images/dashboard-di.png)<br>**Dependency injection** — DI wiring | ![Source view](docs/images/dashboard-source.png)<br>**Source** — inline code view |
+| ![Quality](docs/images/dashboard-quality.png)<br>**Quality** — test coverage | ![Security](docs/images/dashboard-security.png)<br>**Security** — auth coverage | ![Error flow](docs/images/dashboard-error-flow.png)<br>**Error flow** — exception paths |
 
 ### Key views
 
@@ -79,14 +82,6 @@ The left rail switches between per-project screens:
 - **Operations** — daemon control, logs, learned-patterns store, and update checks.
 - **Pending** — residual-edge and repair suggestions awaiting review.
 - **Settings** — per-group management (repos, watchers/git-hooks, docs path, health check) and the **AI coding tools** panel: a checklist to pick which tools grafel installs its MCP entry and rules files into. Changes apply instantly, daemon-up, across every repo in the group.
-
-<!-- TODO: add screenshot — drop the PNG at docs/images/dashboard-flows.png -->
-![grafel dashboard — Flows panel](docs/images/dashboard-flows.png)
-
-<!-- TODO: add screenshot — drop the PNG at docs/images/dashboard-tools-settings.png -->
-![grafel dashboard — Settings: AI coding tools panel](docs/images/dashboard-tools-settings.png)
-
-> The screenshots above are placeholders. Drop the PNGs into [`docs/images/`](docs/images/) to make them render.
 
 ---
 
@@ -226,7 +221,21 @@ See [CHANGELOG.md](CHANGELOG.md) for breaking changes.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). If you're an AI agent contributing to grafel, see [AGENTS.md](AGENTS.md) for conventions.
+**grafel gets better the more real-world code it sees.** The single most useful thing you can do is point it at your *actual* codebase — and if an extractor misses an entity, mislabels a framework, or leaves edges unresolved, tell us **without sharing a single line of code**.
+
+### Report a quality issue — anonymized and offline
+
+`grafel feedback` generates a privacy-preserving quality report you can attach to a GitHub issue:
+
+```sh
+grafel feedback --group <your-group>
+```
+
+The report carries **only structural signal** — bucketed entity-kind counts, public framework-annotation names (`@GetMapping`, `@Inject`), orphan/resolution rates, and path *templates* with depth only (`<ts>/<seg>/<seg>.ts`). It contains **no source code, no real file paths, and no identifier names** — every name is hashed with an ephemeral per-report salt that's never stored. It's **fully offline**: no network calls, no telemetry, and nothing is shared automatically. The CLI shows you exactly what will and won't be collected, asks for confirmation, and writes a `.md` file you can read end-to-end before deciding to share.
+
+So: run grafel on your real corpus, and if something looks off, run `grafel feedback`, eyeball the report, and [open an issue](https://github.com/cajasmota/grafel/issues) with it attached. That's how extractor coverage improves across languages and frameworks — safe to do on proprietary code.
+
+For code contributions, see [CONTRIBUTING.md](CONTRIBUTING.md). If you're an AI agent contributing to grafel, see [AGENTS.md](AGENTS.md) for conventions.
 
 ---
 
