@@ -1,10 +1,18 @@
 # grafel
 
-> A local code-knowledge-graph daemon that gives AI agents structural navigation — call graphs, cross-repo dependency traces, HTTP surface maps, and process flows — across one or many repositories, exposed via 65 MCP tools.
+> ## Map your codebase, navigate any part.
+>
+> *Where grep gets lost, the Grafel shows the way.*
+
+**No cloud indexing, no account, no data sent anywhere.** Everything runs locally — the daemon indexes on your machine and never phones home.
 
 [![Build](https://github.com/cajasmota/grafel/actions/workflows/test.yml/badge.svg)](https://github.com/cajasmota/grafel/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: Preview v0.x](https://img.shields.io/badge/status-preview_v0.x-orange.svg)](CHANGELOG.md)
+
+grafel is a local code-knowledge-graph daemon that gives AI agents structural navigation — call graphs, cross-repo dependency traces, HTTP surface maps, and process flows — across one or many repositories, exposed via 65 MCP tools.
+
+**A companion to `grep`, not a replacement.** `grep` finds text; grafel maps structure — use them together. The standout value is **navigation**: where is `X` defined, who calls `Y`, how a request flows end-to-end, the blast radius of a change. Those are the questions grep can't answer and the graph can. (Fewer file reads also means fewer tokens — a nice side effect, not the point.)
 
 ---
 
@@ -14,7 +22,7 @@ AI coding agents are good at reading files. They are not good at navigating rela
 
 grafel pre-builds the relationship map. It indexes your codebase into an in-memory graph (entities, call edges, import edges, HTTP routes, message-bus topics) and keeps it fresh via file watchers. When an agent asks a structural question, it gets a precise answer in one round-trip instead of twenty file reads.
 
-The graph lives entirely on your machine. No cloud indexing, no account, no data sent anywhere. One binary, one daemon process, one port.
+The graph lives entirely on your machine — local-first by design, as called out above. One binary, one daemon process, one port.
 
 ---
 
