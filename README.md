@@ -8,7 +8,7 @@
 
 [![Build](https://github.com/cajasmota/grafel/actions/workflows/test.yml/badge.svg)](https://github.com/cajasmota/grafel/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: Preview v0.x](https://img.shields.io/badge/status-preview_v0.x-orange.svg)](CHANGELOG.md)
+[![Status: v0.x](https://img.shields.io/badge/status-v0.x-blue.svg)](CHANGELOG.md)
 
 grafel is a local code-knowledge-graph daemon that gives AI agents structural navigation — call graphs, cross-repo dependency traces, HTTP surface maps, and process flows — across one or many repositories, exposed via 65 MCP tools.
 
@@ -200,17 +200,9 @@ See the [full coverage matrix](docs/coverage/summary.md) for every language and 
 
 ## Status
 
-Preview (v0.x). Approaching v1.0. APIs, MCP tool names, and graph schema may change between minor versions. macOS is the primary supported platform; Linux is tested; Windows works via MinGW build.
+**v0.x — early release.** APIs, MCP tool names, and graph schema may still change between minor versions. macOS is the primary supported platform; Linux is tested; Windows is supported.
 
 See [CHANGELOG.md](CHANGELOG.md) for breaking changes.
-Track the v1.0 milestone: https://github.com/cajasmota/grafel/milestone/1
-
-### v1.0 ship-gate
-
-- [ ] Bug-rate below 10% on the full validation corpus
-- [ ] Daemon determinism (#481) resolved
-- [ ] HTTP overhaul — unified HTTP client/server pairing
-- [ ] Per-language quality pass (residual orphan elimination)
 
 ---
 
