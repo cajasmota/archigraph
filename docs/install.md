@@ -117,7 +117,9 @@ The same selection is editable from the dashboard under **Settings → AI coding
 tools**.
 
 See [tools.md](tools.md) for the full supported-tools matrix (exact MCP config
-paths and rules-file paths per tool) and the complete enable/disable reference.
+paths and rules-file paths per tool) and the complete enable/disable reference,
+and [setup-per-tool.md](setup-per-tool.md) for step-by-step setup + verification
+in each tool.
 
 ---
 
