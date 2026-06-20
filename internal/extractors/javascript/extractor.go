@@ -1535,6 +1535,7 @@ func (x *extractor) handleTypeAliasDeclaration(n *sitter.Node) {
 //   - index_signature (`[key: string]: any`) and call/construct signatures have
 //     no member name and are skipped (gracefully, no crash) — they describe the
 //     container, not an addressable field.
+//
 // schemaFieldSignature renders the canonical SCOPE.Schema/field signature
 // "name[?]: type" shared by every JS/TS field-emission path (class fields,
 // interface property signatures, object-type-alias members). Keeping a single

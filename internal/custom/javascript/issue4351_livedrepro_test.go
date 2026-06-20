@@ -75,11 +75,11 @@ func TestIssue4351_AuthGuardSpec_RouteCallsCaptured(t *testing.T) {
 		t.Fatal("no e2e_route_calls captured from auth-guard spec (#4351)")
 	}
 	want := map[string]bool{
-		"GET /probe/public":          false,
-		"GET /probe/buildings":       false,
-		"POST /probe/buildings":      false,
-		"GET /probe/devices-lite":    false,
-		"GET /probe/to-reschedule":   false,
+		"GET /probe/public":                false,
+		"GET /probe/buildings":             false,
+		"POST /probe/buildings":            false,
+		"GET /probe/devices-lite":          false,
+		"GET /probe/to-reschedule":         false,
 		"GET /probe/devices-lite-composed": false,
 	}
 	for _, c := range calls {

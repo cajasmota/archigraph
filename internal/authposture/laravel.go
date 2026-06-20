@@ -17,13 +17,13 @@
 //
 // SCOPE PRECEDENCE (most-specific wins — #4541):
 //
-//	1. PER-ROUTE / PER-ACTION — a route-level `->middleware('auth')` /
-//	   `->withoutMiddleware('auth')` or a controller-method `$this->authorize(...)`
-//	   Gate/Policy check. Applies to THIS route/action. A `->withoutMiddleware('auth')`
-//	   opens the route even when a group applied auth.
-//	2. GROUP / CONTROLLER-CONSTRUCTOR — a `Route::group(['middleware'=>['auth']])`
-//	   or `$this->middleware('auth')->only([...])`/->except([...]) applies to the
-//	   routes/actions it scopes without their own auth middleware.
+//  1. PER-ROUTE / PER-ACTION — a route-level `->middleware('auth')` /
+//     `->withoutMiddleware('auth')` or a controller-method `$this->authorize(...)`
+//     Gate/Policy check. Applies to THIS route/action. A `->withoutMiddleware('auth')`
+//     opens the route even when a group applied auth.
+//  2. GROUP / CONTROLLER-CONSTRUCTOR — a `Route::group(['middleware'=>['auth']])`
+//     or `$this->middleware('auth')->only([...])`/->except([...]) applies to the
+//     routes/actions it scopes without their own auth middleware.
 //
 // The engine reconciles route+group+constructor middleware (resolving only:/except:
 // scoping) into the per-route posture (auth_required/auth_middleware/auth_roles/

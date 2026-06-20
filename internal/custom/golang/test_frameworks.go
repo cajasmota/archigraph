@@ -113,9 +113,9 @@ var reGoIdentToken = regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`)
 // they name a concrete in-repo symbol the test exercises, which gates the
 // name-affinity match so we never link to a framework/util identifier.
 var (
-	reGoNewBuiltin = regexp.MustCompile(`\bnew\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
-	reGoAddrLit    = regexp.MustCompile(`&\s*([A-Z][A-Za-z0-9_]*)\s*\{`)
-	reGoCompLit    = regexp.MustCompile(`\b([A-Z][A-Za-z0-9_]*)\s*\{`)
+	reGoNewBuiltin  = regexp.MustCompile(`\bnew\s*\(\s*([A-Z][A-Za-z0-9_]*)\s*\)`)
+	reGoAddrLit     = regexp.MustCompile(`&\s*([A-Z][A-Za-z0-9_]*)\s*\{`)
+	reGoCompLit     = regexp.MustCompile(`\b([A-Z][A-Za-z0-9_]*)\s*\{`)
 	reGoConstructor = regexp.MustCompile(`\bNew([A-Z][A-Za-z0-9_]*)\s*\(`)
 )
 

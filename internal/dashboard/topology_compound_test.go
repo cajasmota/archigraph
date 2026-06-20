@@ -162,11 +162,11 @@ func TestCompoundTopology_TypedEdges(t *testing.T) {
 		got[e.Source+"->"+e.Target] = e.Type
 	}
 	checks := map[string]compoundEdgeType{
-		"api::ep1->api::svc1":    edgeInvokes,  // CALLS
-		"api::svc1->api::db1":    edgeWrites,   // WRITES_TO (reads also present)
-		"api::svc1->api::q1":     edgeConsumes, // PUBLISHES_TO
-		"api::ep1->api::guard1":  edgeDepends,  // USES
-		"worker::w1->api::q1":    edgeConsumes, // cross-repo SUBSCRIBES_TO
+		"api::ep1->api::svc1":   edgeInvokes,  // CALLS
+		"api::svc1->api::db1":   edgeWrites,   // WRITES_TO (reads also present)
+		"api::svc1->api::q1":    edgeConsumes, // PUBLISHES_TO
+		"api::ep1->api::guard1": edgeDepends,  // USES
+		"worker::w1->api::q1":   edgeConsumes, // cross-repo SUBSCRIBES_TO
 	}
 	for pair, typ := range checks {
 		if got[pair] != typ {

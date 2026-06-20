@@ -128,16 +128,16 @@ func emitRubyStructDefine(node *sitter.Node, file extractor.FileInput) []types.E
 func rubyFieldEntity(owner, field, source, filePath string, at *sitter.Node) types.EntityRecord {
 	dotted := owner + "." + field
 	return types.EntityRecord{
-		Name:               dotted,
-		QualifiedName:      dotted,
-		Kind:               "SCOPE.Schema",
-		Subtype:            "field",
-		SourceFile:         filePath,
-		StartLine:          int(at.StartPoint().Row) + 1,
-		EndLine:            int(at.EndPoint().Row) + 1,
-		Language:           "ruby",
-		Signature:          source + " " + field,
-		QualityScore:       1.0,
+		Name:          dotted,
+		QualifiedName: dotted,
+		Kind:          "SCOPE.Schema",
+		Subtype:       "field",
+		SourceFile:    filePath,
+		StartLine:     int(at.StartPoint().Row) + 1,
+		EndLine:       int(at.EndPoint().Row) + 1,
+		Language:      "ruby",
+		Signature:     source + " " + field,
+		QualityScore:  1.0,
 		Properties: map[string]string{
 			"field_name":   field,
 			"parent_class": owner,

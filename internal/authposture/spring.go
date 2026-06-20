@@ -18,29 +18,29 @@
 // EFFECTIVE PRECEDENCE (most-specific wins, mirroring how Spring Security itself
 // evaluates a request — #4674):
 //
-//	1. METHOD level — a @PreAuthorize/@PostAuthorize/@Secured/@RolesAllowed/
-//	   @PermitAll/@DenyAll annotation on the HANDLER method. Applies to THAT
-//	   endpoint only; siblings without their own annotation inherit the class
-//	   one. Read from the method-level props the engine stamps (auth_expression /
-//	   pre_authorize / secured / roles_allowed / auth_roles) or the engine's
-//	   already-resolved effective auth_guard stamp, with a handler-source
-//	   fallback.
-//	2. CLASS level — the same annotations on the @Controller/@RestController
-//	   class. Applies to handlers WITHOUT their own method annotation. Read from
-//	   the spring_class_* props the engine stamps from the controller annotation
-//	   block (spring_class_pre_authorize / spring_class_secured /
-//	   spring_class_roles_allowed).
-//	3. GLOBAL level — a Spring Security SecurityFilterChain / HttpSecurity
-//	   `authorizeHttpRequests` rule (`.requestMatchers("/path").hasRole(...) /
-//	   .authenticated() / .permitAll()`) or a legacy WebSecurityConfigurerAdapter
-//	   `antMatchers(...)` rule whose ant-pattern matches THIS route. Applies only
-//	   when NEITHER a method nor a class annotation covers the handler. The engine
-//	   matches the route's ant-pattern (where statically recoverable) and stamps
-//	   the winning rule's authorization expression into spring_global_authorization.
-//	   GLOBAL matching is best-effort: dynamically-built matchers, regex matchers,
-//	   and SpEL access() rules the engine cannot statically resolve are NOT
-//	   matched (documented gap) — the resolver then reports KindUnknown rather
-//	   than false-public.
+//  1. METHOD level — a @PreAuthorize/@PostAuthorize/@Secured/@RolesAllowed/
+//     @PermitAll/@DenyAll annotation on the HANDLER method. Applies to THAT
+//     endpoint only; siblings without their own annotation inherit the class
+//     one. Read from the method-level props the engine stamps (auth_expression /
+//     pre_authorize / secured / roles_allowed / auth_roles) or the engine's
+//     already-resolved effective auth_guard stamp, with a handler-source
+//     fallback.
+//  2. CLASS level — the same annotations on the @Controller/@RestController
+//     class. Applies to handlers WITHOUT their own method annotation. Read from
+//     the spring_class_* props the engine stamps from the controller annotation
+//     block (spring_class_pre_authorize / spring_class_secured /
+//     spring_class_roles_allowed).
+//  3. GLOBAL level — a Spring Security SecurityFilterChain / HttpSecurity
+//     `authorizeHttpRequests` rule (`.requestMatchers("/path").hasRole(...) /
+//     .authenticated() / .permitAll()`) or a legacy WebSecurityConfigurerAdapter
+//     `antMatchers(...)` rule whose ant-pattern matches THIS route. Applies only
+//     when NEITHER a method nor a class annotation covers the handler. The engine
+//     matches the route's ant-pattern (where statically recoverable) and stamps
+//     the winning rule's authorization expression into spring_global_authorization.
+//     GLOBAL matching is best-effort: dynamically-built matchers, regex matchers,
+//     and SpEL access() rules the engine cannot statically resolve are NOT
+//     matched (documented gap) — the resolver then reports KindUnknown rather
+//     than false-public.
 //
 // The annotation literal is read first from the reconciled props the engine
 // stamps and falls back to scanning the handler source. Output normalises into
@@ -65,8 +65,8 @@ var (
 	// Authenticated-only: the SpEL forms isAuthenticated()/isFullyAuthenticated()
 	// AND the HttpSecurity DSL form `.authenticated()` / `.fullyAuthenticated()`
 	// (the global filter-chain vocabulary, #4674).
-	springIsAuthRe = regexp.MustCompile(`\bis(?:Fully)?Authenticated\s*\(\s*\)|\.\s*(?:fully)?[aA]uthenticated\s*\(\s*\)`)
-	springAnonymousRe    = regexp.MustCompile(`\bisAnonymous\s*\(\s*\)|\bpermitAll\b`)
+	springIsAuthRe    = regexp.MustCompile(`\bis(?:Fully)?Authenticated\s*\(\s*\)|\.\s*(?:fully)?[aA]uthenticated\s*\(\s*\)`)
+	springAnonymousRe = regexp.MustCompile(`\bisAnonymous\s*\(\s*\)|\bpermitAll\b`)
 
 	// Annotation forms on raw source.
 	springPreAuthorizeRe = regexp.MustCompile(`@(?:Pre|Post)Authorize\s*\(\s*["']([^"']+)["']`)

@@ -24,14 +24,14 @@ func writeMinimalState(t *testing.T, dir string) string {
 // on a root mismatch or under an isolated sandbox home.
 func TestEvaluateDaemonStop_DecisionTable(t *testing.T) {
 	tests := []struct {
-		name        string
-		regRoot     string
-		regFound    bool
-		regErr      bool
-		targetRoot  string
-		isolated    bool
-		wantStop    bool
-		reasonHas   string
+		name       string
+		regRoot    string
+		regFound   bool
+		regErr     bool
+		targetRoot string
+		isolated   bool
+		wantStop   bool
+		reasonHas  string
 	}{
 		{
 			name:       "matching roots → stop",

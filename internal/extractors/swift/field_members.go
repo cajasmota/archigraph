@@ -65,16 +65,16 @@ func emitSwiftFieldMembers(
 				sig = typ + " " + name
 			}
 			fields = append(fields, types.EntityRecord{
-				Name:               dotted,
-				QualifiedName:      dotted,
-				Kind:               "SCOPE.Schema",
-				Subtype:            "field",
-				SourceFile:         filePath,
-				StartLine:          int(ch.StartPoint().Row) + 1,
-				EndLine:            int(ch.EndPoint().Row) + 1,
-				Language:           "swift",
-				Signature:          sig,
-				QualityScore:       1.0,
+				Name:          dotted,
+				QualifiedName: dotted,
+				Kind:          "SCOPE.Schema",
+				Subtype:       "field",
+				SourceFile:    filePath,
+				StartLine:     int(ch.StartPoint().Row) + 1,
+				EndLine:       int(ch.EndPoint().Row) + 1,
+				Language:      "swift",
+				Signature:     sig,
+				QualityScore:  1.0,
 				Properties: map[string]string{
 					"field_name":   name,
 					"field_type":   typ,

@@ -138,16 +138,16 @@ func rustFieldsFromList(
 			sig = typ + " " + wire
 		}
 		out = append(out, types.EntityRecord{
-			Name:               dotted,
-			QualifiedName:      dotted,
-			Kind:               "SCOPE.Schema",
-			Subtype:            "field",
-			SourceFile:         file.Path,
-			StartLine:          int(ch.StartPoint().Row) + 1,
-			EndLine:            int(ch.EndPoint().Row) + 1,
-			Language:           "rust",
-			Signature:          sig,
-			QualityScore:       1.0,
+			Name:          dotted,
+			QualifiedName: dotted,
+			Kind:          "SCOPE.Schema",
+			Subtype:       "field",
+			SourceFile:    file.Path,
+			StartLine:     int(ch.StartPoint().Row) + 1,
+			EndLine:       int(ch.EndPoint().Row) + 1,
+			Language:      "rust",
+			Signature:     sig,
+			QualityScore:  1.0,
 			Properties: map[string]string{
 				"field_name":   fname,
 				"field_type":   typ,

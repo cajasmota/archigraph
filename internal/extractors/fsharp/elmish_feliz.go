@@ -18,7 +18,7 @@
 //   - the `Model` type            → re-kinded SCOPE.Model, subtype elmish_model
 //   - the `Msg` discriminated union → re-kinded SCOPE.Event, subtype elmish_msg
 //     (its DU-case sub-entities are the individual messages, already emitted by
-//      #4942; they inherit the Msg's role via Properties)
+//     #4942; they inherit the Msg's role via Properties)
 //   - `init` / `update` / `view`   → Properties["elmish_role"] = init|update|view
 //   - the operation containing `Program.mkProgram` → Properties["elmish_program"]
 //   - Feliz component functions (body uses the `Html.`/`prop.`/`React.` DSL or

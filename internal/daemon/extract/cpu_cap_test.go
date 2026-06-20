@@ -60,15 +60,15 @@ func TestExtractGOMAXPROCS(t *testing.T) {
 
 func TestEnvPositiveInt(t *testing.T) {
 	cases := map[string]int{
-		"":          0,
-		"   ":       0,
-		"5":         5,
-		" 7 ":       7,
-		"0":         0,
-		"-3":        0,
-		"abc":       0,
-		"3.5":       0,
-		"1000000":   1000000,
+		"":        0,
+		"   ":     0,
+		"5":       5,
+		" 7 ":     7,
+		"0":       0,
+		"-3":      0,
+		"abc":     0,
+		"3.5":     0,
+		"1000000": 1000000,
 	}
 	for raw, want := range cases {
 		t.Setenv("AG_TEST_ENV_POSINT", raw)

@@ -11,10 +11,10 @@ import (
 // EntityRecord.Properties (string map) rather than introducing new entity
 // Kinds, per the prefer-Properties-over-Kinds rule.
 const (
-	PropCoveragePct    = "coverage_pct"     // "0".."100", one-decimal string
-	PropCoveredLines   = "covered_lines"    // integer string
-	PropTotalLines     = "total_lines"      // integer string
-	PropCoverageSource = "coverage_source"  // e.g. "lcov"
+	PropCoveragePct    = "coverage_pct"    // "0".."100", one-decimal string
+	PropCoveredLines   = "covered_lines"   // integer string
+	PropTotalLines     = "total_lines"     // integer string
+	PropCoverageSource = "coverage_source" // e.g. "lcov"
 	PropCoverageMeasAt = "coverage_measured_at"
 )
 

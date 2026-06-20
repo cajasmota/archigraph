@@ -55,16 +55,16 @@ func emitPhpFieldMembers(
 			sig = typ + " $" + name
 		}
 		fields = append(fields, types.EntityRecord{
-			Name:               dotted,
-			QualifiedName:      dotted,
-			Kind:               "SCOPE.Schema",
-			Subtype:            "field",
-			SourceFile:         filePath,
-			StartLine:          startLine,
-			EndLine:            endLine,
-			Language:           "php",
-			Signature:          sig,
-			QualityScore:       1.0,
+			Name:          dotted,
+			QualifiedName: dotted,
+			Kind:          "SCOPE.Schema",
+			Subtype:       "field",
+			SourceFile:    filePath,
+			StartLine:     startLine,
+			EndLine:       endLine,
+			Language:      "php",
+			Signature:     sig,
+			QualityScore:  1.0,
 			Properties: map[string]string{
 				"field_name":   name,
 				"field_type":   typ,

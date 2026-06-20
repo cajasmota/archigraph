@@ -63,8 +63,8 @@ var fsValidationMarkers = map[string]string{
 // scalar bound to the chip prefix it folds into (`[<MaxLength(120)>]` →
 // "MaxLength:120").
 var fsValidationScalar = map[string]string{
-	"MaxLength": "MaxLength",
-	"MinLength": "MinLength",
+	"MaxLength":    "MaxLength",
+	"MinLength":    "MinLength",
 	"StringLength": "MaxLength", // StringLength(max) → MaxLength:max
 }
 

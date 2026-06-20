@@ -16,15 +16,15 @@
 // EFFECTIVE PRECEDENCE (most-specific wins, mirroring ASP.NET Core's own
 // evaluation — #4542):
 //
-//	1. METHOD level — an [Authorize]/[AllowAnonymous] on the ACTION method. A
-//	   method [AllowAnonymous] ALWAYS wins (it short-circuits authorization for the
-//	   action even when the controller carries [Authorize]). A method [Authorize]
-//	   tightens beyond a class one.
-//	2. CLASS level — [Authorize]/[AllowAnonymous] on the controller class. Applies
-//	   to actions WITHOUT their own attribute.
-//	3. GLOBAL level — a configured `FallbackPolicy` (app.UseAuthorization with a
-//	   default policy / AddAuthorization(o => o.FallbackPolicy = ...)). Applies only
-//	   when NEITHER a method nor a class attribute covers the action.
+//  1. METHOD level — an [Authorize]/[AllowAnonymous] on the ACTION method. A
+//     method [AllowAnonymous] ALWAYS wins (it short-circuits authorization for the
+//     action even when the controller carries [Authorize]). A method [Authorize]
+//     tightens beyond a class one.
+//  2. CLASS level — [Authorize]/[AllowAnonymous] on the controller class. Applies
+//     to actions WITHOUT their own attribute.
+//  3. GLOBAL level — a configured `FallbackPolicy` (app.UseAuthorization with a
+//     default policy / AddAuthorization(o => o.FallbackPolicy = ...)). Applies only
+//     when NEITHER a method nor a class attribute covers the action.
 //
 // The attribute is read first from the reconciled props the engine stamps
 // (auth_required/auth_roles/auth_policy/auth_method + the aspnet_class_* class-level

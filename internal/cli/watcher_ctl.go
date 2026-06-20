@@ -87,9 +87,9 @@ daemon is currently up or down.`,
 // for issue #4549. It is correct from BOTH an up and a down starting state:
 //
 //   - Up:   request graceful stop, wait for the process to actually exit
-//           (polling the recorded pid), SIGKILL if it overstays, then start.
+//     (polling the recorded pid), SIGKILL if it overstays, then start.
 //   - Down: stop is a no-op (ErrDaemonNotRunning is swallowed), stale pidfile
-//           and socket are cleared, then start.
+//     and socket are cleared, then start.
 //
 // The critical bug it fixes: the previous restart did a blind 200 ms sleep and
 // relied on `start`'s dial probe, so a daemon that ignored SIGTERM, or a stale

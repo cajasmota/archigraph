@@ -1,6 +1,6 @@
 // Explicit infra↔code DEPLOYMENT edges — #4983 (Topology Model 2/3, epic #4810).
 //
-// Background
+// # Background
 //
 // Topology Model 2 (#4810) cross-links the Infra lens and the Code/Modules lens.
 // It backs the link with (1) shared node identity — the same id appearing in
@@ -19,7 +19,7 @@
 // resource to the CODE service/module it deploys. This pass fills exactly that
 // gap with a first-class DEPLOYS edge.
 //
-// What this pass does
+// # What this pass does
 //
 // For each infra compute resource it can name the code it runs, it emits:
 //
@@ -37,7 +37,7 @@
 //	    → DEPLOYS from the serverless `aws-lambda:<name>` node to the code
 //	    `service:<name>` node.
 //
-// Canonical collapse
+// # Canonical collapse
 //
 // The target is keyed `service:<name>` — the SAME convention
 // applyDeploymentTopologyEdges and applyAPIGatewayRoutingEdges use — so the
@@ -45,7 +45,7 @@
 // is a declared-but-unwired deploy target otherwise (the honest no-op-friendly
 // behaviour the surrounding IaC passes share).
 //
-// Honesty
+// # Honesty
 //
 // Public base images (registry library images: postgres, redis, nginx, node,
 // python, …) are NOT a code service the repo owns — they are filtered out so a
@@ -55,7 +55,7 @@
 // dashboard can style the deploy-time mapping distinctly (#4983 "deployed"
 // style) from identity (primary) and typed-usage (linked) cross-links.
 //
-// Scope guard
+// # Scope guard
 //
 // Append-only: never modifies or removes existing entities/edges, so it cannot
 // regress the surrounding pipeline. Fires only for K8s manifests, docker-compose

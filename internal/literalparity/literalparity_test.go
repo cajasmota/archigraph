@@ -26,14 +26,14 @@ func TestNormalizeKey(t *testing.T) {
 
 func TestCanonicalKey(t *testing.T) {
 	cases := map[string]string{
-		"CORE_ADMIN":   "core_admin",
-		"CoreAdmin":    "core_admin", // PascalCase splits to align with SCREAMING_SNAKE
-		"coreAdmin":    "core_admin",
-		"core-admin":   "core_admin",
-		"EmailTemplates": "email_templates",
-		"EMAIL_TEMPLATES": "email_templates",
-		"HTTPServer":   "http_server", // acronym/word boundary
-		"page2Slug":    "page_2_slug", // letter↔digit boundary
+		"CORE_ADMIN":       "core_admin",
+		"CoreAdmin":        "core_admin", // PascalCase splits to align with SCREAMING_SNAKE
+		"coreAdmin":        "core_admin",
+		"core-admin":       "core_admin",
+		"EmailTemplates":   "email_templates",
+		"EMAIL_TEMPLATES":  "email_templates",
+		"HTTPServer":       "http_server", // acronym/word boundary
+		"page2Slug":        "page_2_slug", // letter↔digit boundary
 		"PERMISSION_PAGES": "permission_pages",
 		"PermissionPage":   "permission_page",
 	}
@@ -54,9 +54,9 @@ func TestDiff_CrossFrameworkKeyAlignment(t *testing.T) {
 		{Key: "AOC_HARVEST", Value: "aoc-harvest"},
 	}
 	v3 := []Member{
-		{Key: "CoreAdmin", Value: "core_admin"},      // _ vs - drift, same canonical key
+		{Key: "CoreAdmin", Value: "core_admin"},           // _ vs - drift, same canonical key
 		{Key: "EmailTemplates", Value: "email-templates"}, // reconciled
-		{Key: "AocHarvest", Value: "aoc-harvest"},          // reconciled
+		{Key: "AocHarvest", Value: "aoc-harvest"},         // reconciled
 	}
 	res := Diff("page_slugs", oracle, v3)
 	if res.Verdict != VerdictDrift {
@@ -170,7 +170,7 @@ func TestDiff_IntraV3Inconsistency(t *testing.T) {
 		{Key: "WITNESS", Value: "witnessing_companies"},
 	}
 	v3 := []Member{
-		{Key: "EMAIL", Value: "email_templates"},      // snake
+		{Key: "EMAIL", Value: "email_templates"},        // snake
 		{Key: "WITNESS", Value: "witnessing-companies"}, // kebab — the outlier
 	}
 	res := Diff("page_slugs", oracle, v3)

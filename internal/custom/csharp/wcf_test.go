@@ -468,4 +468,3 @@ func TestWCFDeepeningNoMatchNoOp(t *testing.T) {
 		t.Errorf("expected no entities on non-WCF source, got %d", len(ents))
 	}
 }
-

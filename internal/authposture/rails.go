@@ -20,11 +20,11 @@
 // EFFECTIVE PRECEDENCE (most-specific wins, mirroring how Rails evaluates the
 // filter chain for a given action — #4538):
 //
-//	1. PER-ACTION override — a `skip_before_action :authenticate_user!` that names
-//	   THIS action (via only:) opens it (public), or a per-action Pundit/CanCanCan
-//	   `authorize`/`authorize!` grant. Applies to THAT action only.
-//	2. CLASS before_action — the controller-level `before_action :authenticate_user!`
-//	   (and :require_admin etc.), honoring its only:/except: action scoping.
+//  1. PER-ACTION override — a `skip_before_action :authenticate_user!` that names
+//     THIS action (via only:) opens it (public), or a per-action Pundit/CanCanCan
+//     `authorize`/`authorize!` grant. Applies to THAT action only.
+//  2. CLASS before_action — the controller-level `before_action :authenticate_user!`
+//     (and :require_admin etc.), honoring its only:/except: action scoping.
 //
 // Action scoping: a `before_action ..., only: [:create]` applies ONLY to create;
 // a `..., except: [:index]` applies to every action but index. The resolver
@@ -57,10 +57,10 @@ var (
 	// before_action :require_role_<x> / :require_<role>_role → role.
 	railsRoleBeforeRe = regexp.MustCompile(`(?m)^\s*before_action\s+:?\s*require_([a-z0-9_]+?)_?role\b`)
 	// Pundit: authorize @record  /  authorize @record, :update?  /  verify_authorized
-	railsPunditAuthorizeRe = regexp.MustCompile(`\bauthorize\s+@?[\w.]+(?:\s*,\s*:([\w?]+))?`)
+	railsPunditAuthorizeRe  = regexp.MustCompile(`\bauthorize\s+@?[\w.]+(?:\s*,\s*:([\w?]+))?`)
 	railsVerifyAuthorizedRe = regexp.MustCompile(`\bverify_authorized\b|\bpolicy_scope\b`)
 	// CanCanCan: authorize! :update, @x  /  load_and_authorize_resource  /  authorize_resource
-	railsCanCanBangRe = regexp.MustCompile(`\bauthorize!\s+:([\w?]+)`)
+	railsCanCanBangRe    = regexp.MustCompile(`\bauthorize!\s+:([\w?]+)`)
 	railsLoadAuthorizeRe = regexp.MustCompile(`\bload_and_authorize_resource\b|\bauthorize_resource\b`)
 )
 

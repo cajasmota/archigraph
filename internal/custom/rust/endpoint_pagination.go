@@ -37,13 +37,13 @@
 //
 // Two ways the param names are recovered:
 //
-//	1. A typed extractor `Query<Struct>` / `web::Query<Struct>` handler param —
-//	   the named struct's `#[derive(Deserialize)]` fields name the query params.
-//	   We resolve the struct definition elsewhere in the file and read its field
-//	   identifiers. (axum / actix idiom.)
-//	2. Direct query-string reads in the handler body — `params.get("limit")`,
-//	   `query.get("offset")`, `req.query::<Pagination>()` field access — collected
-//	   as string-literal param names.
+//  1. A typed extractor `Query<Struct>` / `web::Query<Struct>` handler param —
+//     the named struct's `#[derive(Deserialize)]` fields name the query params.
+//     We resolve the struct definition elsewhere in the file and read its field
+//     identifiers. (axum / actix idiom.)
+//  2. Direct query-string reads in the handler body — `params.get("limit")`,
+//     `query.get("offset")`, `req.query::<Pagination>()` field access — collected
+//     as string-literal param names.
 //
 // Three recognised Rust route surfaces (Names match the producer extractors so
 // the stamped op merges onto the plain route op by Name): axum

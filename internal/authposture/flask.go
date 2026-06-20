@@ -16,15 +16,15 @@
 //
 // SCOPE PRECEDENCE (most-specific wins — #4540):
 //
-//	1. VIEW DECORATOR — a @login_required/@roles_required/... on the view function.
-//	   Applies to THAT view only. Read from the engine-reconciled per-view posture
-//	   (auth_required/auth_roles/auth_permissions/auth_method) ▸ a view-source
-//	   decorator scan.
-//	2. BLUEPRINT / APP before_request — a `@bp.before_request`/`@app.before_request`
-//	   hook that enforces auth applies to EVERY view on that blueprint/app without
-//	   its own decorator. The engine stamps the resolved blueprint scope into
-//	   auth_required/auth_method=before_request; the resolver honours it when no
-//	   view decorator is present.
+//  1. VIEW DECORATOR — a @login_required/@roles_required/... on the view function.
+//     Applies to THAT view only. Read from the engine-reconciled per-view posture
+//     (auth_required/auth_roles/auth_permissions/auth_method) ▸ a view-source
+//     decorator scan.
+//  2. BLUEPRINT / APP before_request — a `@bp.before_request`/`@app.before_request`
+//     hook that enforces auth applies to EVERY view on that blueprint/app without
+//     its own decorator. The engine stamps the resolved blueprint scope into
+//     auth_required/auth_method=before_request; the resolver honours it when no
+//     view decorator is present.
 //
 // Output normalises into the shared {Kind, Literal} vocabulary so the diff core
 // compares a Flask posture against the Django oracle or a NestJS posture directly.

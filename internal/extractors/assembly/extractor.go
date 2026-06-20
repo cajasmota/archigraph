@@ -187,8 +187,8 @@ var (
 	//   NAME = value
 	//   %define NAME value   (NASM)
 	//   NAME EQU value       (MASM / NASM)
-	equDotRE   = regexp.MustCompile(`(?m)^\s*\.(?:equ|set)\s+([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(.+?)\s*$`)
-	equNasmRE  = regexp.MustCompile(`(?m)^\s*%define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(.+?)\s*$`)
+	equDotRE  = regexp.MustCompile(`(?m)^\s*\.(?:equ|set)\s+([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(.+?)\s*$`)
+	equNasmRE = regexp.MustCompile(`(?m)^\s*%define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(.+?)\s*$`)
 	// equMasmRE matches the column-1 EQU equate used by MASM/NASM and armasm:
 	//   NAME EQU value          |bar.sym| EQU value      (#5056 bar-delimited)
 	// Group 1 is the name (bars stripped), group 2 the value. armasm places the

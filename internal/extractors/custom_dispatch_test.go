@@ -392,8 +392,8 @@ func TestMergeWithCustomPreservesBaseQualifiedName(t *testing.T) {
 		{Name: "Order", Kind: "SCOPE.Component", QualifiedName: "app.models.Order"},
 	}
 	custom := []types.EntityRecord{
-		{Name: "Contract", Kind: "SCOPE.Schema", Subtype: "model"},                              // empty QName -> inherit
-		{Name: "Order", Kind: "SCOPE.Schema", Subtype: "model", QualifiedName: "custom.Order"},  // explicit QName -> keep
+		{Name: "Contract", Kind: "SCOPE.Schema", Subtype: "model"},                             // empty QName -> inherit
+		{Name: "Order", Kind: "SCOPE.Schema", Subtype: "model", QualifiedName: "custom.Order"}, // explicit QName -> keep
 	}
 	got := MergeWithCustom(base, custom)
 

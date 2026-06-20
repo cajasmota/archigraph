@@ -115,7 +115,7 @@ func TestModulePathFor(t *testing.T) {
 
 func TestModuleRootsByRepo(t *testing.T) {
 	repos := []repoRef{
-		{Slug: "api", Path: "/p/api", Modules: nil},                              // single-repo: omitted
+		{Slug: "api", Path: "/p/api", Modules: nil}, // single-repo: omitted
 		{Slug: "mono", Path: "/p/mono", Modules: []string{"packages/api", "packages/worker"}},
 	}
 	got := moduleRootsByRepo(repos)

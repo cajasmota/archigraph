@@ -10,14 +10,14 @@ import (
 
 func TestIsMediaLibraryBundle(t *testing.T) {
 	cases := map[string]bool{
-		"foo.musiclibrary":            true,
-		"My Library.photoslibrary":    true,
+		"foo.musiclibrary":             true,
+		"My Library.photoslibrary":     true,
 		"Photos Library.photoslibrary": true,
-		"recordings.tvlibrary":        true,
-		"Old.aplibrary":               true,
-		"node_modules":                false,
-		"src":                         false,
-		"music":                       false, // not a bundle suffix
+		"recordings.tvlibrary":         true,
+		"Old.aplibrary":                true,
+		"node_modules":                 false,
+		"src":                          false,
+		"music":                        false, // not a bundle suffix
 	}
 	for name, want := range cases {
 		if got := IsMediaLibraryBundle(name); got != want {

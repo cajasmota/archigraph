@@ -126,9 +126,9 @@ func TestGoReplacePkgDir(t *testing.T) {
 		{OldPath: "example.com/rootmod", LocalDir: ""}, // replace => .
 	}
 	cases := []struct {
-		in       string
-		wantDir  string
-		wantOK   bool
+		in      string
+		wantDir string
+		wantOK  bool
 	}{
 		{"example.com/x", "internal/x", true},
 		{"example.com/x/sub/pkg", "internal/x/sub/pkg", true},

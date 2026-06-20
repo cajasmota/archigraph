@@ -7,19 +7,19 @@
 // Polly is the de-facto .NET resilience library. It exposes two surfaces:
 //
 //   - v7 fluent policies —
-//       Policy.Handle<HttpRequestException>().Retry(3)
-//       Policy.Handle<T>().WaitAndRetryAsync(3, attempt => ...)
-//       Policy.Handle<T>().CircuitBreaker(2, TimeSpan.FromMinutes(1))
-//       Policy.Timeout(TimeSpan.FromSeconds(10))
-//       Policy.Bulkhead(maxParallelization: 12)
-//       Policy.Handle<T>().Fallback(fallbackValue)
+//     Policy.Handle<HttpRequestException>().Retry(3)
+//     Policy.Handle<T>().WaitAndRetryAsync(3, attempt => ...)
+//     Policy.Handle<T>().CircuitBreaker(2, TimeSpan.FromMinutes(1))
+//     Policy.Timeout(TimeSpan.FromSeconds(10))
+//     Policy.Bulkhead(maxParallelization: 12)
+//     Policy.Handle<T>().Fallback(fallbackValue)
 //
 //   - v8 ResiliencePipelineBuilder —
-//       new ResiliencePipelineBuilder()
-//           .AddRetry(new RetryStrategyOptions { MaxRetryAttempts = 3 })
-//           .AddCircuitBreaker(new CircuitBreakerStrategyOptions { ... })
-//           .AddTimeout(TimeSpan.FromSeconds(10))
-//           .Build();
+//     new ResiliencePipelineBuilder()
+//     .AddRetry(new RetryStrategyOptions { MaxRetryAttempts = 3 })
+//     .AddCircuitBreaker(new CircuitBreakerStrategyOptions { ... })
+//     .AddTimeout(TimeSpan.FromSeconds(10))
+//     .Build();
 //
 // Either surface may be attached to an HttpClient via the .NET HttpClientFactory
 // integration: services.AddHttpClient("x").AddPolicyHandler(policy) (v7) or
@@ -104,7 +104,7 @@ var (
 	// v8 ResiliencePipelineBuilder strategy calls.
 	//   new ResiliencePipelineBuilder<T>() ... .AddRetry(...) .AddCircuitBreaker(...)
 	//   .AddTimeout(...) .AddHedging(...) .AddRateLimiter(...) .AddConcurrencyLimiter(...)
-	pollyPipelineRe   = regexp.MustCompile(`\bResiliencePipelineBuilder\b`)
+	pollyPipelineRe    = regexp.MustCompile(`\bResiliencePipelineBuilder\b`)
 	pollyAddStrategyRe = regexp.MustCompile(
 		`\.\s*Add(Retry|CircuitBreaker|Timeout|Hedging|ConcurrencyLimiter|RateLimiter)\s*\(`)
 

@@ -60,7 +60,7 @@ var (
 	srrAnnotatedParamRE = regexp.MustCompile(`@(\w+)\b`)
 	// srrBareParamRE matches a `Type name` param with no annotation. Group 1 is
 	// the type (ignoring generic args), group 2 the identifier.
-	srrBareParamRE = regexp.MustCompile(`^([A-Z]\w*)(?:\s*<[^>]*>)?\s+(\w+)\s*$`)
+	srrBareParamRE      = regexp.MustCompile(`^([A-Z]\w*)(?:\s*<[^>]*>)?\s+(\w+)\s*$`)
 	srrResponseEntityRE = regexp.MustCompile(`ResponseEntity\s*<\s*([\w<>, ]+?)\s*>`)
 	srrGenericWrapperRE = regexp.MustCompile(`(?:Optional|Mono|Flux|Publisher)\s*<\s*([\w<>, ]+?)\s*>`)
 	srrBaseGenericRE    = regexp.MustCompile(`^(\w+)(?:\s*<([^>]+)>)?$`)

@@ -76,8 +76,8 @@ func TestResolveSourcePath_PinnedRepo(t *testing.T) {
 // hard ("file not found in any repo"); now it falls back to scanning every
 // repo root and resolves the file in its real repo.
 func TestResolveSourcePath_StaleRepoHintFallsBackToGroupScan(t *testing.T) {
-	rootEmpty := t.TempDir()       // an unrelated repo, first in iteration sometimes
-	rootBackend := t.TempDir()     // the repo that actually holds the file
+	rootEmpty := t.TempDir()   // an unrelated repo, first in iteration sometimes
+	rootBackend := t.TempDir() // the repo that actually holds the file
 	writeRepoFile(t, rootBackend, "src/app.controller.ts", "export class AppController {}\n")
 
 	grp := &DashGroup{Repos: map[string]*DashRepo{

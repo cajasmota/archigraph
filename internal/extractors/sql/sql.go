@@ -3,8 +3,8 @@
 // Extracted entities:
 //   - CREATE TABLE        → Kind="SCOPE.Datastore", Subtype="table"
 //   - column              → Kind="SCOPE.Schema",    Subtype="column" (one per column inside a CREATE TABLE)
-//                           Properties: col_type, nullable, is_primary_key,
-//                           is_unique, default (Issue #4295)
+//     Properties: col_type, nullable, is_primary_key,
+//     is_unique, default (Issue #4295)
 //   - CREATE VIEW         → Kind="SCOPE.Datastore", Subtype="view"
 //   - CREATE INDEX        → Kind="SCOPE.Datastore", Subtype="index"
 //   - CREATE FUNCTION     → Kind="SCOPE.Datastore", Subtype="function"

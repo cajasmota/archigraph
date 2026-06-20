@@ -197,6 +197,7 @@ func synthesisSupportsLanguage(lang string) bool {
 //   - dotted qualified names (`Class.method`) — the synthesis-time bridge is for
 //     the bare-method, same-file case; qualified cross-file shapes are handled by
 //     the resolve pass. (A dotted name would also not match byLocation[file][name].)
+//
 // inlineHandlerRefKind is the sentinel refKind a producer synthesizer passes to
 // emit() when it has detected an HTTP route whose handler is an ANONYMOUS /
 // INLINE function (arrow or function-expression) rather than a named handler

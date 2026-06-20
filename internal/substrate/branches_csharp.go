@@ -67,9 +67,9 @@ var (
 	csStatusCallRe = regexp.MustCompile(`\bStatusCode\s*(?:=\s*|\(\s*(?:statusCode\s*:\s*)?)(\d{3})\b`)
 	csProblemRe    = regexp.MustCompile(`\bProblem\s*\([^)]*?\bstatusCode\s*:\s*(\d{3})\b`)
 	// csStatusEnumRe — StatusCodes.Status409Conflict / HttpStatusCode.Conflict.
-	csStatusCodesRe   = regexp.MustCompile(`\bStatusCodes\s*\.\s*Status(\d{3})[A-Za-z]*`)
-	csHttpStatusEnum  = regexp.MustCompile(`\bHttpStatusCode\s*\.\s*([A-Za-z]+)`)
-	csProducesRespRe  = regexp.MustCompile(`\[ProducesResponseType\s*\([^)]*?\b(\d{3})\b`)
+	csStatusCodesRe  = regexp.MustCompile(`\bStatusCodes\s*\.\s*Status(\d{3})[A-Za-z]*`)
+	csHttpStatusEnum = regexp.MustCompile(`\bHttpStatusCode\s*\.\s*([A-Za-z]+)`)
+	csProducesRespRe = regexp.MustCompile(`\[ProducesResponseType\s*\([^)]*?\b(\d{3})\b`)
 	// csHelperStatusRe — ControllerBase result helpers mapped to their status.
 	csHelperStatusRe = regexp.MustCompile(`\b(BadRequest|NotFound|Conflict|Unauthorized|Forbid|NoContent|Created|CreatedAtAction|CreatedAtRoute|Accepted|UnprocessableEntity|Ok)\s*\(`)
 )

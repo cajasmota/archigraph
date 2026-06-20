@@ -1000,9 +1000,9 @@ func inferImplicitLocalType(declarator *sitter.Node, src []byte) string {
 // it is sound; non-DI generic calls don't match the method-name allow-list and
 // stay bare.
 var diServiceTypeArgMethods = map[string]bool{
-	"GetRequiredService": true,
-	"GetService":         true,
-	"GetServices":        true,
+	"GetRequiredService":      true,
+	"GetService":              true,
+	"GetServices":             true,
 	"GetKeyedService":         true,
 	"GetRequiredKeyedService": true,
 }

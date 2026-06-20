@@ -92,8 +92,8 @@ func TestIssue4487_LabelRoutesInDescribeAndIt(t *testing.T) {
 	got := e2eRouteCalls(t, "test/contract/clients/client-list.contract.spec.ts", src)
 	lines := splitNonEmpty(got)
 	wantSet := map[string]bool{
-		"GET /api/v1/clients":                              false,
-		"POST /api/v1/clients/:clientId/create_contact":    false,
+		"GET /api/v1/clients":                           false,
+		"POST /api/v1/clients/:clientId/create_contact": false,
 	}
 	for _, ln := range lines {
 		if _, ok := wantSet[ln]; ok {

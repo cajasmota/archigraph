@@ -97,7 +97,7 @@ func segmentFromSSA(ssa string) string {
 		return ""
 	}
 	// Must look like a COBOL/IMS name (letter-led).
-	if !((seg[0] >= 'A' && seg[0] <= 'Z')) {
+	if !(seg[0] >= 'A' && seg[0] <= 'Z') {
 		return ""
 	}
 	return seg
