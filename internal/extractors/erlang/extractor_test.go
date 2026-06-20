@@ -811,7 +811,7 @@ func TestErlangExtractor_MessageTagDispatch(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	wantTags := map[string]string{
-		"handle_call": "get",            // {get, Key} → get; catch-all skipped
+		"handle_call": "get",              // {get, Key} → get; catch-all skipped
 		"handle_cast": "put,delete,flush", // {put,..},{delete,..},flush in clause order
 	}
 	seen := map[string]bool{}

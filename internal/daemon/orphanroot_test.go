@@ -61,7 +61,7 @@ func dirExists(p string) bool {
 func TestOrphanRoot_AttributionAndPrune(t *testing.T) {
 	f := newOrphanFixture(t)
 
-	old := f.now.Add(-72 * time.Hour) // outside grace
+	old := f.now.Add(-72 * time.Hour)  // outside grace
 	fresh := f.now.Add(-1 * time.Hour) // inside grace
 
 	// (b) live-path root: source dir exists on disk.

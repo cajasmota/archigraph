@@ -6,21 +6,21 @@
 // EFFECTIVE PERMISSION PRECEDENCE (most-specific wins, mirroring how DRF itself
 // resolves a request's permissions — #4675):
 //
-//	1. METHOD/ACTION level — a `@action(detail=…, permission_classes=[X])`
-//	   decorator on a ViewSet extra-action, OR the per-action arm of a branchy
-//	   `get_permissions(self)` keyed on `self.action`. Applies to THAT action
-//	   only; siblings keep the class default. (DRF resolves `get_permissions`
-//	   per request, and the @action kwarg overrides the class attribute for that
-//	   route.) NOTE the framework asymmetry: an APIView `get`/`post` method
-//	   CANNOT carry its own `permission_classes` (APIView is class-scoped), so for
-//	   an APIView the class value is already the effective one — only ViewSet
-//	   @action carries a method-level override.
-//	2. CLASS level — the ViewSet/APIView `permission_classes = [...]` attribute
-//	   (or the else/default arm of `get_permissions`). Applies to actions without
-//	   their own override.
-//	3. GLOBAL default — REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"], harvested as
-//	   the `drf_default_permission_classes` Signal prop. Applies when NEITHER a
-//	   method nor a class permission is specified.
+//  1. METHOD/ACTION level — a `@action(detail=…, permission_classes=[X])`
+//     decorator on a ViewSet extra-action, OR the per-action arm of a branchy
+//     `get_permissions(self)` keyed on `self.action`. Applies to THAT action
+//     only; siblings keep the class default. (DRF resolves `get_permissions`
+//     per request, and the @action kwarg overrides the class attribute for that
+//     route.) NOTE the framework asymmetry: an APIView `get`/`post` method
+//     CANNOT carry its own `permission_classes` (APIView is class-scoped), so for
+//     an APIView the class value is already the effective one — only ViewSet
+//     @action carries a method-level override.
+//  2. CLASS level — the ViewSet/APIView `permission_classes = [...]` attribute
+//     (or the else/default arm of `get_permissions`). Applies to actions without
+//     their own override.
+//  3. GLOBAL default — REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"], harvested as
+//     the `drf_default_permission_classes` Signal prop. Applies when NEITHER a
+//     method nor a class permission is specified.
 //
 // The empty-vs-AllowAny distinction is load-bearing for the precedence:
 //   - `permission_classes=[AllowAny]` ▸ PUBLIC, overriding the global default.

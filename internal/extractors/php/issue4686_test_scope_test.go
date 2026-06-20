@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/extractor"
-	"github.com/cajasmota/grafel/internal/types"
 	_ "github.com/cajasmota/grafel/internal/extractors/php"
+	"github.com/cajasmota/grafel/internal/types"
 )
 
 // extractPHP4686 parses + extracts a PHP source file through the registered

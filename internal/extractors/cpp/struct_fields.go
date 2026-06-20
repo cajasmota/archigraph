@@ -80,16 +80,16 @@ func emitClassFieldMembers(
 				sig = typeText + " " + fname
 			}
 			fields = append(fields, types.EntityRecord{
-				Name:               dotted,
-				QualifiedName:      dotted,
-				Kind:               "SCOPE.Schema",
-				Subtype:            "field",
-				SourceFile:         filePath,
-				StartLine:          startLine,
-				EndLine:            endLine,
-				Language:           lang,
-				Signature:          sig,
-				QualityScore:       1.0,
+				Name:          dotted,
+				QualifiedName: dotted,
+				Kind:          "SCOPE.Schema",
+				Subtype:       "field",
+				SourceFile:    filePath,
+				StartLine:     startLine,
+				EndLine:       endLine,
+				Language:      lang,
+				Signature:     sig,
+				QualityScore:  1.0,
 				Properties: map[string]string{
 					"field_name":   fname,
 					"field_type":   typeText,

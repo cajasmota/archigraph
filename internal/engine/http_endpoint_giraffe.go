@@ -247,9 +247,9 @@ func giraffeHasRoute(content string) bool {
 // giraffeMount is a resolved subRoute/forward mount: a string-literal prefix
 // and the [open,close) byte span of its parenthesised sub-app body (#4940).
 type giraffeMount struct {
-	prefix     string
-	open       int // byte offset just after the opening `(`
-	close      int // byte offset of the matching `)`
+	prefix string
+	open   int // byte offset just after the opening `(`
+	close  int // byte offset of the matching `)`
 }
 
 // collectGiraffeMounts finds every subRoute/forward mount with a literal prefix

@@ -118,8 +118,8 @@ var (
 
 	// schema().drop(IDENT) / table(IDENT) — non-literal (bare identifier) forms
 	// whose name must be resolved from a const/let/var string-literal binding.
-	nimAlloDropIdentRe   = regexp.MustCompile(`\bschema\s*\(\s*\)\s*\.\s*drop\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)`)
-	nimAlloTableIdentRe  = regexp.MustCompile(`\btable\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)`)
+	nimAlloDropIdentRe  = regexp.MustCompile(`\bschema\s*\(\s*\)\s*\.\s*drop\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)`)
+	nimAlloTableIdentRe = regexp.MustCompile(`\btable\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)`)
 	// const/let/var binding of an identifier to a string literal: `const x = "users"`.
 	nimAlloStrBindingRe = regexp.MustCompile(`\b(?:const|let|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::[^\n=]+)?=\s*"([^"]+)"`)
 )

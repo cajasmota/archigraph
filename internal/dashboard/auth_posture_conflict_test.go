@@ -21,12 +21,12 @@ func TestHasAuthProperty_InheritedGuardPosture(t *testing.T) {
 	// only by the inherited controller-level @RequirePage guard — no own
 	// decorator, so none of the legacy raw signal keys are present.
 	e := &graph.Entity{Properties: map[string]string{
-		"auth_required": "true",
-		"auth_method":   "guard",
-		"auth_guard":    "@RequirePage(PermissionPage.Checklists)",
+		"auth_required":   "true",
+		"auth_method":     "guard",
+		"auth_guard":      "@RequirePage(PermissionPage.Checklists)",
 		"auth_confidence": "medium",
-		"verb":          "DELETE",
-		"path":          "/v1/checklists/{checklistId}",
+		"verb":            "DELETE",
+		"path":            "/v1/checklists/{checklistId}",
 	}}
 	has, ev := hasAuthProperty(e)
 	if !has {

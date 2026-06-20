@@ -166,10 +166,10 @@ func TestIaCTopologyChannels_CrossCloud(t *testing.T) {
 	res := applyIaCTopologyChannels(DetectorPassArgs{Lang: "hcl", Entities: ents})
 
 	wantBrokers := map[string]string{
-		"sns:events":          "sns",
-		"pubsub:jobs":         "pubsub",
-		"servicebus:orders":   "servicebus",
-		"kafka:EventStream":   "kafka",
+		"sns:events":        "sns",
+		"pubsub:jobs":       "pubsub",
+		"servicebus:orders": "servicebus",
+		"kafka:EventStream": "kafka",
 	}
 	got := map[string]string{}
 	for i := range res.Entities {
@@ -193,7 +193,7 @@ func TestIaCTopologyChannels_DedupesCodeSide(t *testing.T) {
 		{Name: sqsQueueID("orders"), Kind: queueEntityKind, Properties: map[string]string{"broker": "sqs"}},
 		// IaC declaration of the SAME queue.
 		{Name: "aws_sqs_queue.orders", Kind: "SCOPE.Component", Subtype: "resource",
-			Metadata: map[string]interface{}{"resource_type": "aws_sqs_queue", "resource_category": types.IaCCategoryQueue, "label": "orders"},
+			Metadata:   map[string]interface{}{"resource_type": "aws_sqs_queue", "resource_category": types.IaCCategoryQueue, "label": "orders"},
 			Properties: map[string]string{"name": "orders"}},
 	}
 	res := applyIaCTopologyChannels(DetectorPassArgs{Lang: "hcl", Entities: ents})

@@ -78,7 +78,7 @@ var fsharpSubjectIdentRE = regexp.MustCompile(`^[A-Za-z_][\w']*(?:[.][A-Za-z_][\
 // fsharpAttrTestRE matches an attribute-decorated F# test binding. F# allows the
 // attribute and the `let` on separate lines, so this is anchored at the `let`
 // and we confirm a preceding test attribute by a cheap look-back (see detector).
-// It matches both the double-backtick name form (`` `name with spaces` ``) and a
+// It matches both the double-backtick name form (“ `name with spaces` “) and a
 // plain identifier name.
 //
 //	let ``returns 200`` () =

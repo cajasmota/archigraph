@@ -78,8 +78,8 @@ func TestForceKill_TerminatesProcess(t *testing.T) {
 func TestIsUnixSocketPath(t *testing.T) {
 	cases := map[string]bool{
 		"/home/u/.grafel/sockets/daemon.sock": true,
-		"/tmp/x.sock":                              true,
-		`\\.\pipe\grafel-daemon-user`:          false,
+		"/tmp/x.sock":                         true,
+		`\\.\pipe\grafel-daemon-user`:         false,
 	}
 	for path, want := range cases {
 		if got := isUnixSocketPath(path); got != want {

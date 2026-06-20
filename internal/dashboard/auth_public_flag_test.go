@@ -74,8 +74,8 @@ func TestResolveEndpointPublic_ForgottenGuardIsNotPublic(t *testing.T) {
 	// symbol — just no posture. MUST NOT be flagged public (this is the forgotten
 	// guard the dashboard should alarm on).
 	cases := []map[string]string{
-		{},                                  // bare route, no posture at all
-		{"verb": "POST", "path": "/orders"}, // route metadata but no auth signal
+		{},                                    // bare route, no posture at all
+		{"verb": "POST", "path": "/orders"},   // route metadata but no auth signal
 		{"middleware_names": "ThrottleClass"}, // non-auth middleware only
 	}
 	for _, props := range cases {

@@ -21,11 +21,11 @@
 //
 //   - Bind:   record name → literal (last-write-wins).
 //   - Taint:  a reassignment from a NON-literal expression clears the binding,
-//             so we never resolve to a stale literal.
+//     so we never resolve to a stale literal.
 //   - Scope:  Reset() drops all bindings at a scope boundary (new function,
-//             paragraph, block — the caller decides the granularity).
+//     paragraph, block — the caller decides the granularity).
 //   - Resolve: look up the literal currently bound to a name; ("", false) when
-//             unbound or tainted.
+//     unbound or tainted.
 //
 // The resolver is intentionally syntax-agnostic: callers feed it (name, value)
 // pairs they have already parsed from their own grammar (tree-sitter node,

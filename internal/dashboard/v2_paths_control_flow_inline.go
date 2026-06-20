@@ -85,9 +85,9 @@ type cfgInliner struct {
 // newCFGInliner indexes the endpoint repo's entities + CALLS adjacency once.
 func newCFGInliner(grp *DashGroup, repo *DashRepo, maxDepth int) *cfgInliner {
 	in := &cfgInliner{
-		grp:      grp,
-		repo:     repo,
-		maxDepth: maxDepth,
+		grp:         grp,
+		repo:        repo,
+		maxDepth:    maxDepth,
 		byID:        map[string]*graph.Entity{},
 		byName:      map[string][]*graph.Entity{},
 		callsOut:    map[string][]*graph.Entity{},

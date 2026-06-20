@@ -13,7 +13,7 @@
 //   - Serilog static API:   Log.Information/Warning/Error/Debug/Fatal/Verbose(...)
 //   - Serilog instance API:  logger.Information/Warning/Error/Debug/Fatal/Verbose(...)
 //   - Microsoft.Extensions.Logging (MEL):
-//       logger.LogInformation/LogWarning/LogError/LogDebug/LogTrace/LogCritical(...)
+//     logger.LogInformation/LogWarning/LogError/LogDebug/LogTrace/LogCritical(...)
 //   - F# console logging:    printfn / eprintfn / printf / eprintf "...".
 //
 // NOTE (honest-partial): we do not cross-file-bind an ILogger<T> to its concrete

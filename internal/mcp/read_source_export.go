@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"strings"
 )
+
 func ReadSourceWindow(path string, start, end int) (string, error) {
 	return readSourceWindow(path, start, end)
 }

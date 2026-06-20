@@ -131,8 +131,8 @@ func TestIssue4373_CrateAbsoluteCall_NameCollision(t *testing.T) {
 	// — only the path qualifier can pick the right one; the bare leaf is
 	// ambiguous across the two dirs.
 	files := map[string]string{
-		"src/lib.rs":          "pub mod services;\n",
-		"src/services/mod.rs": "pub mod order;\npub mod invoice;\n",
+		"src/lib.rs":                  "pub mod services;\n",
+		"src/services/mod.rs":         "pub mod order;\npub mod invoice;\n",
 		"src/services/order/mod.rs":   "pub fn place_order() -> i32 { 1 }\n",
 		"src/services/invoice/mod.rs": "pub fn place_order() -> i32 { 99 }\n",
 		"src/handlers.rs": "pub fn handle() -> i32 {\n" +
@@ -198,8 +198,8 @@ func TestIssue4373_SelfSuperAndAlias(t *testing.T) {
 	// disambiguator. `dispatch` is itself a directory module (dispatch/mod.rs)
 	// so self::inner names dispatch's own child module dispatch::inner.
 	files := map[string]string{
-		"src/lib.rs":     "pub mod app;\n",
-		"src/app/mod.rs": "pub mod order;\npub mod invoice;\npub mod dispatch;\n",
+		"src/lib.rs":             "pub mod app;\n",
+		"src/app/mod.rs":         "pub mod order;\npub mod invoice;\npub mod dispatch;\n",
 		"src/app/order/mod.rs":   "pub fn run() -> i32 { 1 }\n",  // collision A
 		"src/app/invoice/mod.rs": "pub fn run() -> i32 { 99 }\n", // collision B
 		"src/app/dispatch/mod.rs": "use crate::app::order as ord;\n" +
@@ -252,8 +252,8 @@ func TestIssue4373_NoFalseStampOnBareOrReceiverCall(t *testing.T) {
 			"impl R {\n" +
 			"  pub fn build(&self) -> i32 { 1 }\n" +
 			"  pub fn use_it(&self) -> i32 {\n" +
-			"    let x = helper();\n" +       // bare call
-			"    let y = self.build();\n" +    // receiver call
+			"    let x = helper();\n" + // bare call
+			"    let y = self.build();\n" + // receiver call
 			"    println!(\"{}\", x + y);\n" + // macro call
 			"    x + y\n" +
 			"  }\n" +
@@ -275,8 +275,8 @@ func TestIssue4373_NoFalseStampOnBareOrReceiverCall(t *testing.T) {
 // modules, with a same-named method collision on a different type.
 func TestIssue4373_TypeAssocCall(t *testing.T) {
 	files := map[string]string{
-		"src/lib.rs":       "pub mod svc;\n",
-		"src/svc/mod.rs":   "pub mod a;\npub mod b;\n",
+		"src/lib.rs":     "pub mod svc;\n",
+		"src/svc/mod.rs": "pub mod a;\npub mod b;\n",
 		// OrderService::new in module svc::a; a same-named `new` exists on a
 		// different type in svc::b — the collision that breaks bare-name bind.
 		"src/svc/a.rs": "pub struct OrderService;\n" +

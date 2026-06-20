@@ -11,11 +11,11 @@
 //     module-under-test resolved by the naming convention
 //     (foo_tests.erl → foo, foo_SUITE.erl → foo);
 //   - one test_case entity per discovered test function:
-//       eunit:        name_test/0   (a single assertion test)
-//                     name_test_/0  (a test-generator returning a fixture)
-//       common_test:  case(Config)  test-case functions named in all/0 (or in a
-//                     group), excluding the CT scaffolding callbacks
-//                     (all/0, groups/0, suite/0, init_per_*/end_per_*).
+//     eunit:        name_test/0   (a single assertion test)
+//     name_test_/0  (a test-generator returning a fixture)
+//     common_test:  case(Config)  test-case functions named in all/0 (or in a
+//     group), excluding the CT scaffolding callbacks
+//     (all/0, groups/0, suite/0, init_per_*/end_per_*).
 //
 // eunit is recognised by the `-include_lib("eunit/include/eunit.hrl")` include
 // or the *_test/*_test_ function-name convention; common_test by the

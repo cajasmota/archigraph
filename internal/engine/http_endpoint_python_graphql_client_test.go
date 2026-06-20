@@ -29,7 +29,7 @@ def load_user(client):
 }
 
 // TestPyGraphQLClient_InlineMutation covers an inline gql mutation passed
-// straight into session.execute(gql('''...''')), asserting the Mutation root
+// straight into session.execute(gql(”'...”')), asserting the Mutation root
 // field `createUser` → http:GRAPHQL:/graphql/Mutation/createUser, with the
 // FETCHES edge attributed to the enclosing async function.
 func TestPyGraphQLClient_InlineMutation(t *testing.T) {

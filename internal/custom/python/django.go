@@ -29,12 +29,12 @@ func (e *DjangoExtractor) Language() string { return "python_django" }
 var (
 	djangoPathCallRe = regexp.MustCompile(
 		`(?:re_)?path\s*\(\s*(?:r)?["']([^"']*)["']\s*,\s*([\w.]+)`)
-	djangoPathNameRe      = regexp.MustCompile(`name\s*=\s*["']([^"']+)["']`)
-	djangoIncludeRe       = regexp.MustCompile(`include\s*\(\s*["']([^"']+)["']`)
-	djangoCBVClassRe      = regexp.MustCompile(`(?m)^class\s+([A-Z][A-Za-z0-9_]*)\s*\(([^)]*(?:View|Mixin|APIView|ViewSet)[^)]*)\)\s*:`)
-	djangoCBVMethodRe     = regexp.MustCompile(`(?m)^\s{4,}def\s+(get|post|put|patch|delete|head|options|trace)\s*\(\s*self`)
-	djangoReceiverRe      = regexp.MustCompile(`(?m)@receiver\s*\(\s*([\w.]+)(?:\s*,\s*sender\s*=\s*(\w+))?[^)]*\)\s*\n\s*(?:async\s+)?def\s+(\w+)\s*\(`)
-	djangoReceiverOnlyRe  = regexp.MustCompile(`(?m)@receiver\s*\(\s*([\w.]+)(?:\s*,\s*sender\s*=\s*(\w+))?[^)]*\)`)
+	djangoPathNameRe     = regexp.MustCompile(`name\s*=\s*["']([^"']+)["']`)
+	djangoIncludeRe      = regexp.MustCompile(`include\s*\(\s*["']([^"']+)["']`)
+	djangoCBVClassRe     = regexp.MustCompile(`(?m)^class\s+([A-Z][A-Za-z0-9_]*)\s*\(([^)]*(?:View|Mixin|APIView|ViewSet)[^)]*)\)\s*:`)
+	djangoCBVMethodRe    = regexp.MustCompile(`(?m)^\s{4,}def\s+(get|post|put|patch|delete|head|options|trace)\s*\(\s*self`)
+	djangoReceiverRe     = regexp.MustCompile(`(?m)@receiver\s*\(\s*([\w.]+)(?:\s*,\s*sender\s*=\s*(\w+))?[^)]*\)\s*\n\s*(?:async\s+)?def\s+(\w+)\s*\(`)
+	djangoReceiverOnlyRe = regexp.MustCompile(`(?m)@receiver\s*\(\s*([\w.]+)(?:\s*,\s*sender\s*=\s*(\w+))?[^)]*\)`)
 	// #4789 — imperative signal wiring registered in AppConfig.ready() (or
 	// anywhere): `post_save.connect(my_receiver, sender=Foo)`, the dotted
 	// `signals.post_delete.connect(handler)` form, and the bare

@@ -72,7 +72,7 @@ func TestSharedTableCoupling_HappyPath(t *testing.T) {
 	if stats.ServicesMinted != 2 {
 		t.Errorf("services minted = %d, want 2", stats.ServicesMinted)
 	}
-	if !stHasEntity(doc,"service:acme/order-svc") || !stHasEntity(doc,"service:acme/billing-svc") {
+	if !stHasEntity(doc, "service:acme/order-svc") || !stHasEntity(doc, "service:acme/billing-svc") {
 		t.Errorf("expected both synthetic service nodes to exist")
 	}
 }

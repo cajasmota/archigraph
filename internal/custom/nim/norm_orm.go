@@ -297,6 +297,7 @@ func (e *nimNormORMExtractor) Extract(
 //     resolved via the `handles` map;
 //   - a raw-SQL query naming a table — `db.select(objs, sql"… FROM users …")` /
 //     `db.rawSelect(…)`, resolved via `tableToModel`.
+//
 // A handle/table that resolves to no known model is intentionally skipped.
 func collectNormQueries(
 	src string,

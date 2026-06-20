@@ -1,6 +1,6 @@
 // IaC-declared messaging infrastructure → messaging Topology channels — #4496.
 //
-// Background
+// # Background
 //
 // The messaging Topology view (handlers_topology.go) only renders CODE-level
 // channels — entities a publish/subscribe library produced (Kafka, RabbitMQ,
@@ -13,7 +13,7 @@
 // are declared in Terraform shows "No async channels indexed" in /topology even
 // though the IaC view lists the queues. (#4496, ref epic #4493.)
 //
-// What this pass does
+// # What this pass does
 //
 // For every already-extracted IaC resource entity whose cross-tool
 // `resource_category` is a messaging primitive (queue / topic / stream), it
@@ -32,7 +32,7 @@
 // declared-but-unwired channel — which is exactly the desired "show the queue
 // even with no detected producer/consumer" behaviour.
 //
-// Generality
+// # Generality
 //
 // The pass is tool-agnostic and cloud-agnostic: it reads the ONE shared
 // `resource_category` join key (types.IaCResourceCategory) and the resource
@@ -41,7 +41,7 @@
 // queues+topics, Event Hubs, Event Grid) uniformly, across Terraform, CDK,
 // Pulumi, CloudFormation, and Bicep — without a per-tool branch.
 //
-// Scope guard
+// # Scope guard
 //
 // Append-only — never modifies or removes existing entities/edges, and dedupes
 // against itself AND against the IDs the code-side / iac_sns passes already

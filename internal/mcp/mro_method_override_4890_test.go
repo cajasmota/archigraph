@@ -142,7 +142,7 @@ func trulyInheritedMethodDoc() *graph.Document {
 			// Bodyless synthetic: NO StartLine/EndLine span — truly inherited.
 			{ID: "op_create", Name: "ProductViewSet.create", QualifiedName: "ProductViewSet.create",
 				Kind: "SCOPE.Operation", Subtype: "method", SourceFile: "products.py",
-				Language: "python",
+				Language:  "python",
 				Signature: "def create(self, request, *args, **kwargs)",
 				Properties: map[string]string{
 					"pattern_type":      "drf_viewset_implicit_method",

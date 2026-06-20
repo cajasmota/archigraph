@@ -103,12 +103,12 @@ let lookup key =
 // TestGiraffe_CanonicalizeFormat unit-tests the routef `%fmt` → `{}` rewrite.
 func TestGiraffe_CanonicalizeFormat(t *testing.T) {
 	cases := map[string]string{
-		"/users/%i":          "/users/{}",
-		"/x/%s/%i":           "/x/{}/{}",
-		"/g/%O":              "/g/{}",
-		"/users":             "/users",
-		"/users/:id":         "/users/{id}",
-		"/pct/%%/done":       "/pct/%/done",
+		"/users/%i":    "/users/{}",
+		"/x/%s/%i":     "/x/{}/{}",
+		"/g/%O":        "/g/{}",
+		"/users":       "/users",
+		"/users/:id":   "/users/{id}",
+		"/pct/%%/done": "/pct/%/done",
 	}
 	for in, want := range cases {
 		got := httproutes.Canonicalize(httproutes.FrameworkGiraffe, in)

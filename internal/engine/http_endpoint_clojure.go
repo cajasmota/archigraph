@@ -25,13 +25,13 @@
 // Clojure is FUNCTIONAL — routes are data/macros, not OO controllers:
 //
 //   - Compojure macros:  (GET  "/users/:id" [] handler)
-//                        (POST "/users"     req (create req))
-//                        (defroutes app (GET "/todos" [] list-todos) ...)
+//     (POST "/users"     req (create req))
+//     (defroutes app (GET "/todos" [] list-todos) ...)
 //     The verb is the leading macro symbol (GET/POST/PUT/DELETE/PATCH/...),
 //     the path is the FIRST string literal, the handler is the trailing form.
 //
 //   - Reitit data routes: ["/users/:id" {:get  get-user
-//                                        :post create-user}]
+//     :post create-user}]
 //     A route is a vector whose FIRST element is a string-literal path and whose
 //     SECOND element is a map of `:verb handler` pairs.
 //

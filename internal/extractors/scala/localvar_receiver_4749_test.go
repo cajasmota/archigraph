@@ -39,7 +39,13 @@ object UserControllerSpec {
 	recv, ok := scalaCallRecv(ents, "test", "UserController.create")
 	if !ok {
 		t.Fatalf("expected CALLS test→UserController.create, rels=%+v",
-			func() interface{} { e := scalaFind(ents, "test", "SCOPE.Operation"); if e != nil { return e.Relationships }; return nil }())
+			func() interface{} {
+				e := scalaFind(ents, "test", "SCOPE.Operation")
+				if e != nil {
+					return e.Relationships
+				}
+				return nil
+			}())
 	}
 	if recv != "UserController" {
 		t.Fatalf("receiver_type=%q want UserController", recv)

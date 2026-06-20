@@ -305,6 +305,7 @@ func extractCallRelationships(body *sitter.Node, src []byte, callerName, ownerNa
 // Issue #616 — ownerName and paramTypes enable receiver-qualified targets:
 //   - "self.method()" inside impl Foo → "Foo.method"
 //   - "repo.find()" where repo: &dyn Repo → "Repo.find"
+//
 // The second return value (issue #4373) is the FULL `::`-separated path of a
 // scoped_identifier callee (e.g. ["crate","services","order","place_order"] or
 // ["OrderService","new"]), or nil for bare / receiver / macro calls. The

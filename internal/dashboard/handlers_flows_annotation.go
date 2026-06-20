@@ -262,13 +262,13 @@ type AnnotatedStep struct {
 	// Name is the entity's qualified name (e.g. "ReceivablesService.postSale").
 	// Emitted as both `name` (consumed by the WebUI v2 step nodes) and `label`
 	// for backward compatibility with the v1 frontend.
-	Name        string   `json:"name"`
-	Label       string   `json:"label"`
-	SourceFile  string   `json:"source_file"`
-	StartLine   int      `json:"start_line"`
-	Repo        string   `json:"repo"`
-	StepIndex int    `json:"step_index"`
-	EdgeKind  string `json:"edge_kind"`
+	Name       string `json:"name"`
+	Label      string `json:"label"`
+	SourceFile string `json:"source_file"`
+	StartLine  int    `json:"start_line"`
+	Repo       string `json:"repo"`
+	StepIndex  int    `json:"step_index"`
+	EdgeKind   string `json:"edge_kind"`
 	// EntityKind is the raw graph entity Kind of the step (e.g. "SCOPE.Operation").
 	// Carried through so the server-side FlowDag payload (#4363) can label node
 	// kinds from the resolved entity rather than re-deriving from step_kind.

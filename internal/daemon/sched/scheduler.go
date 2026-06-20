@@ -272,8 +272,8 @@ type Scheduler struct {
 	algoSem chan struct{}
 
 	mu           sync.Mutex
-	inflight     map[string]int64  // repo → predicted MB charged against the ledger
-	pendingIndex map[string]bool   // repos already enqueued but not yet running
+	inflight     map[string]int64 // repo → predicted MB charged against the ledger
+	pendingIndex map[string]bool  // repos already enqueued but not yet running
 	// dirty marks repos that received an enqueue WHILE a reindex for that
 	// same repo was already in-flight (#5138). Per-repo reindex coalescing:
 	// at most one reindex per repo runs at a time; any number of enqueues

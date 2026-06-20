@@ -194,7 +194,7 @@ func ExtractHibernate(ctx PatternContext) PatternResult {
 	// carry a REFERENCES edge to the embeddable type. These were not emitted at
 	// all before, so the entity's scalar columns had no structural membership.
 	for _, m := range hibColumnFieldRE.FindAllStringSubmatchIndex(source, -1) {
-		ann := source[m[2]:m[3]]      // Column | Embedded | Basic | Lob | Enumerated
+		ann := source[m[2]:m[3]]       // Column | Embedded | Basic | Lob | Enumerated
 		fieldType := source[m[4]:m[5]] // declared type (may be generic-wrapped)
 		fieldName := source[m[6]:m[7]]
 		ownerName, _ := findOwningEntity(m[0])

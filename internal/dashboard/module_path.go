@@ -49,9 +49,9 @@ func moduleRootsByRepo(repos []repoRef) map[string][]string {
 //
 //   - repo:           the record's repo slug.
 //   - sourceFile:     the record's repo-relative source path (forward slashes;
-//                     a leading "./" or "/" is tolerated).
+//     a leading "./" or "/" is tolerated).
 //   - modulesByRepo:  parent-repo slug → configured module roots (the same map
-//                     that populates Group.monorepos). nil / missing repo ⇒ "".
+//     that populates Group.monorepos). nil / missing repo ⇒ "".
 //
 // Matching rules:
 //   - Roots are normalised (slashes, trailing "/" stripped) before comparison.

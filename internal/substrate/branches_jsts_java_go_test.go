@@ -249,14 +249,14 @@ func TestAnalyzeBranchesJSTS_NestExceptionStatus(t *testing.T) {
 // TestNestExceptionStatus_Mapping spot-checks the NestJS exception → status map.
 func TestNestExceptionStatus_Mapping(t *testing.T) {
 	cases := map[string]string{
-		"BadRequestException":         "400",
-		"UnauthorizedException":       "401",
-		"ForbiddenException":          "403",
-		"NotFoundException":           "404",
-		"ConflictException":           "409",
+		"BadRequestException":          "400",
+		"UnauthorizedException":        "401",
+		"ForbiddenException":           "403",
+		"NotFoundException":            "404",
+		"ConflictException":            "409",
 		"UnprocessableEntityException": "422",
 		"InternalServerErrorException": "500",
-		"SomeUserDefinedException":    "",
+		"SomeUserDefinedException":     "",
 	}
 	for class, want := range cases {
 		if got := nestExceptionStatus(class); got != want {

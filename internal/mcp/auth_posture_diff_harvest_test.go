@@ -80,9 +80,9 @@ func TestHarvest_Rails_BeforeAction_Surfaces(t *testing.T) {
 func TestHarvest_Rails_PunditPolicy_Surfaces(t *testing.T) {
 	// pundit_policy/pundit_action literals (harvested for the first time here).
 	assertGuardedSurfaces(t, "rails", map[string]string{
-		"framework":      "rails",
-		"pundit_policy":  "PostPolicy",
-		"pundit_action":  "update",
+		"framework":     "rails",
+		"pundit_policy": "PostPolicy",
+		"pundit_action": "update",
 	}, authposture.KindAction)
 }
 
@@ -145,9 +145,9 @@ func TestHarvest_Aspnet_Authorize_Surfaces(t *testing.T) {
 
 func TestHarvest_Aspnet_ClassAuthorizeRoles_Surfaces(t *testing.T) {
 	assertGuardedSurfaces(t, "aspnet", map[string]string{
-		"framework":               "aspnet",
-		"aspnet_class_authorize":  "true",
-		"aspnet_class_roles":      "Admin",
+		"framework":              "aspnet",
+		"aspnet_class_authorize": "true",
+		"aspnet_class_roles":     "Admin",
 	}, authposture.KindRole)
 }
 

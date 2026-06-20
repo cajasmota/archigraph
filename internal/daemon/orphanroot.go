@@ -28,7 +28,7 @@
 //   - maps to a known path that STILL EXISTS  → KEEP (live).
 //   - maps to a known path that is GONE        → ORPHAN candidate (reapable).
 //   - maps to NO known path                    → source path UNDETERMINABLE →
-//                                                 KEEP (fail-closed).
+//     KEEP (fail-closed).
 //
 // # Guards (mirror the ref-GC safety model exactly — do not over-delete)
 //

@@ -1,19 +1,19 @@
 // validators.go — #5130 (follow-up #5049). The validation TAIL deferred from
 // #5049 / shipped-base #5127 (DataAnnotations field chips):
 //
-//   1. Validus validator pipelines — the `validate { ... }` / `validator { ... }`
-//      computation expression and the `Check.String.*` / `Check.Int.*` /
-//      `ValidatorGroup(...)` combinators (Validus, https://github.com/pimbrouwers/Validus).
-//   2. FsToolkit.ErrorHandling — the `validation { ... }` computation expression
-//      and `Result`/`Validation` applicative accumulation
-//      (FsToolkit.ErrorHandling, https://github.com/demystifyfp/FsToolkit.ErrorHandling).
-//   3. Custom DataAnnotations validators — `[<CustomValidation(typeof<...>, "Method")>]`
-//      on a record field, and a type that implements `IValidatableObject`
-//      (its `Validate` member is the custom validator).
-//   4. Nested-record validation — a record field whose annotated type is another
-//      record defined in the SAME file is treated as a nested validated object,
-//      materialising an owner→nested VALIDATES edge (via=nested_model), the F#
-//      analog of `[<ValidateComplexType>]` recursive DataAnnotations validation.
+//  1. Validus validator pipelines — the `validate { ... }` / `validator { ... }`
+//     computation expression and the `Check.String.*` / `Check.Int.*` /
+//     `ValidatorGroup(...)` combinators (Validus, https://github.com/pimbrouwers/Validus).
+//  2. FsToolkit.ErrorHandling — the `validation { ... }` computation expression
+//     and `Result`/`Validation` applicative accumulation
+//     (FsToolkit.ErrorHandling, https://github.com/demystifyfp/FsToolkit.ErrorHandling).
+//  3. Custom DataAnnotations validators — `[<CustomValidation(typeof<...>, "Method")>]`
+//     on a record field, and a type that implements `IValidatableObject`
+//     (its `Validate` member is the custom validator).
+//  4. Nested-record validation — a record field whose annotated type is another
+//     record defined in the SAME file is treated as a nested validated object,
+//     materialising an owner→nested VALIDATES edge (via=nested_model), the F#
+//     analog of `[<ValidateComplexType>]` recursive DataAnnotations validation.
 //
 // All four map onto the existing validation-rule shape used by the other
 // languages (JS class-validator / express-validator #2904, Java Bean-Validation

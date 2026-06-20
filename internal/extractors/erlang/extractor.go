@@ -264,7 +264,7 @@ type clauseMatch struct {
 // countArity returns the number of top-level arguments in a clause head's
 // parenthesised argument text "(...)". Nested tuples/lists/maps/binaries and
 // strings are respected so that, e.g., ({get, Key}, _From, State) is arity 3,
-// () is arity 0. Commas inside nested () {} [] <<>> "" '' do not split args.
+// () is arity 0. Commas inside nested () {} [] <<>> "" ” do not split args.
 func countArity(argText string) int {
 	inner := strings.TrimSpace(argText)
 	inner = strings.TrimPrefix(inner, "(")
@@ -470,8 +470,8 @@ func extractErlang(rawSrc, filePath string) []types.EntityRecord {
 	// Erlang exports are Name/Arity pairs (foo/1, foo/2). Track the precise
 	// pair so foo/1 can be exported while foo/2 is private; keep the bare-name
 	// set as a fallback for arity-less callers/lookups.
-	exported := make(map[string]bool)          // any arity of this name is exported
-	exportedAr := make(map[string]bool)        // "name/arity" exported
+	exported := make(map[string]bool)   // any arity of this name is exported
+	exportedAr := make(map[string]bool) // "name/arity" exported
 	for _, m := range exportRE.FindAllStringSubmatch(src, -1) {
 		list := m[1]
 		for _, em := range exportItemRE.FindAllStringSubmatch(list, -1) {
@@ -549,7 +549,7 @@ func extractErlang(rawSrc, filePath string) []types.EntityRecord {
 			EndLine:    endLine,
 			Signature:  "-" + kw + " " + name + params,
 			Properties: map[string]string{
-				"type_kind": kw,
+				"type_kind":  kw,
 				"type_arity": strconv.Itoa(countArity(params)),
 			},
 		})

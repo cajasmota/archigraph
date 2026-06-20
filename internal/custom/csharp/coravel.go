@@ -11,10 +11,10 @@
 //     of scheduled / queued work (the Coravel analogue of a Quartz IJob).
 //
 //   - Scheduling (producers) — inside app.Services.UseScheduler(scheduler => {...}):
-//       scheduler.Schedule<SendNewsletter>().EveryMinute();
-//       scheduler.Schedule<Cleanup>().DailyAt("13:00");
-//       scheduler.ScheduleAsync(async () => ...).Hourly();
-//       scheduler.Schedule<T>().Cron("*/5 * * * *");
+//     scheduler.Schedule<SendNewsletter>().EveryMinute();
+//     scheduler.Schedule<Cleanup>().DailyAt("13:00");
+//     scheduler.ScheduleAsync(async () => ...).Hourly();
+//     scheduler.Schedule<T>().Cron("*/5 * * * *");
 //     The fluent frequency call (EveryMinute / Daily / Hourly / Weekly / Monthly /
 //     Cron("...") / DailyAt("hh:mm") / Every*Minutes) is the schedule.
 //
@@ -94,11 +94,11 @@ var (
 	cvMailSendRe = regexp.MustCompile(`\.\s*Send(?:Async)?\s*\(\s*new\s+([\w.]+)`)
 
 	// Cron / named-frequency fluent tokens on a schedule chain.
-	cvCronRe       = regexp.MustCompile(`\.\s*Cron\s*\(\s*"([^"]+)"`)
-	cvDailyAtRe    = regexp.MustCompile(`\.\s*DailyAt\s*\(\s*"([^"]+)"`)
-	cvEveryNMinRe  = regexp.MustCompile(`\.\s*Every(\d+)Minutes\s*\(`)
-	cvEverySecRe   = regexp.MustCompile(`\.\s*EverySeconds\s*\(\s*(\d+)`)
-	cvFrequencyRe  = regexp.MustCompile(
+	cvCronRe      = regexp.MustCompile(`\.\s*Cron\s*\(\s*"([^"]+)"`)
+	cvDailyAtRe   = regexp.MustCompile(`\.\s*DailyAt\s*\(\s*"([^"]+)"`)
+	cvEveryNMinRe = regexp.MustCompile(`\.\s*Every(\d+)Minutes\s*\(`)
+	cvEverySecRe  = regexp.MustCompile(`\.\s*EverySeconds\s*\(\s*(\d+)`)
+	cvFrequencyRe = regexp.MustCompile(
 		`\.\s*(EveryMinute|EveryFiveMinutes|EveryTenMinutes|EveryFifteenMinutes|EveryThirtyMinutes|` +
 			`EverySecond|Hourly|HourlyAt|Daily|DailyAtHour|Weekly|Monthly)\s*\(`)
 )

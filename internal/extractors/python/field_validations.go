@@ -58,17 +58,17 @@ import (
 // "Prefix:value"). Kwargs absent from this map but present in
 // pydanticFieldMarkerKwarg render as a bare marker instead.
 var pydanticFieldKwargChip = map[string]string{
-	"max_length":  "MaxLength",
-	"min_length":  "MinLength",
-	"gt":          "Gt",
-	"ge":          "Ge",
-	"lt":          "Lt",
-	"le":          "Le",
-	"multiple_of": "MultipleOf",
-	"max_digits":  "MaxDigits",
+	"max_length":     "MaxLength",
+	"min_length":     "MinLength",
+	"gt":             "Gt",
+	"ge":             "Ge",
+	"lt":             "Lt",
+	"le":             "Le",
+	"multiple_of":    "MultipleOf",
+	"max_digits":     "MaxDigits",
 	"decimal_places": "DecimalPlaces",
-	"max_items":   "MaxItems",
-	"min_items":   "MinItems",
+	"max_items":      "MaxItems",
+	"min_items":      "MinItems",
 }
 
 // pydanticFieldMarkerKwarg maps kwargs whose presence (regardless of value, or
@@ -97,11 +97,11 @@ type drfBoolChip struct {
 }
 
 var drfFieldBoolKwarg = map[string]drfBoolChip{
-	"required":   {whenFalse: "Optional"},
-	"allow_null": {whenTrue: "AllowNull"},
+	"required":    {whenFalse: "Optional"},
+	"allow_null":  {whenTrue: "AllowNull"},
 	"allow_blank": {whenTrue: "AllowBlank"},
-	"read_only":  {whenTrue: "ReadOnly"},
-	"write_only": {whenTrue: "WriteOnly"},
+	"read_only":   {whenTrue: "ReadOnly"},
+	"write_only":  {whenTrue: "WriteOnly"},
 }
 
 // pydanticConstrainedTypes are the Pydantic constrained-type constructors that,

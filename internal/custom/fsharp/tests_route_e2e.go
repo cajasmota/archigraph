@@ -33,8 +33,9 @@
 // ------------------------
 // F# test DSLs use ANONYMOUS closure blocks for individual cases:
 //   - Expecto: `testCase "name" <| fun _ -> ...` (and `testList "..." [ ... ]`)
-//   - xUnit:   `[<Fact>] let ``test name`` () = ...` (named — but the route hit
+//   - xUnit:   `[<Fact>] let “test name“ () = ...` (named — but the route hit
 //     is still attributed at suite granularity to match the cross-language pass)
+//
 // The `testCase`/`testList` example body owns no named call-bearing entity (it
 // is a `fun _ -> ...` closure passed to a combinator), so — exactly like the
 // Ruby #4684 / JS #4680 / Crystal #4760 anonymous-block scope-owner — the

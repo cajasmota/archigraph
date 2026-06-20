@@ -128,9 +128,9 @@ func ApplySharedTableCouplingEdges(doc *graph.Document) SharedTableStats {
 
 	// Index SCOPE.DataAccess nodes by ID so ACCESSES_TABLE targets resolve to a
 	// table + operation, and record direct (service, table) access from each.
-	daTable := make(map[string]string)   // DataAccess ID -> normalised table
-	daWrite := make(map[string]bool)     // DataAccess ID -> is a write op
-	daRepo := make(map[string]string)    // DataAccess ID -> repo/service
+	daTable := make(map[string]string) // DataAccess ID -> normalised table
+	daWrite := make(map[string]bool)   // DataAccess ID -> is a write op
+	daRepo := make(map[string]string)  // DataAccess ID -> repo/service
 	for i := range doc.Entities {
 		e := &doc.Entities[i]
 		if e.Kind != sharedKindDataAccess {

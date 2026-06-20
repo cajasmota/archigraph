@@ -1222,13 +1222,14 @@ func TestNimAllographerQuery_WrongLanguageNoop(t *testing.T) {
 }
 
 // TestNimAllographerQuery_JoinsRawDynamicTxn proves the #5116 deepening:
-//   (a) join targets get a second QUERIES edge (join=true) against the joined table;
-//   (b) raw SQL via rdb().raw("...") attributes its FROM/JOIN/INTO/UPDATE table(s)
-//       (raw=true), op classified from the SQL verb;
-//   (c) a .table(ident) bound to a const/let/var string literal resolves to it,
-//       while an unbound identifier is skipped (no fabricated query);
-//   (d) a standalone SCOPE.Operation/transaction boundary entity is synthesised
-//       per rdb().transaction(...) block.
+//
+//	(a) join targets get a second QUERIES edge (join=true) against the joined table;
+//	(b) raw SQL via rdb().raw("...") attributes its FROM/JOIN/INTO/UPDATE table(s)
+//	    (raw=true), op classified from the SQL verb;
+//	(c) a .table(ident) bound to a const/let/var string literal resolves to it,
+//	    while an unbound identifier is skipped (no fabricated query);
+//	(d) a standalone SCOPE.Operation/transaction boundary entity is synthesised
+//	    per rdb().transaction(...) block.
 func TestNimAllographerQuery_JoinsRawDynamicTxn(t *testing.T) {
 	src := `
 import allographer/query_builder

@@ -163,11 +163,11 @@ func (e *rustJuniperTypeGraphExtractor) Extract(ctx context.Context, file extrac
 	}
 
 	type ownerBlock struct {
-		name    string // GraphQL-facing name (rename-honoured)
-		rust    string // Rust ident (for impl-for matching)
-		kind    string // "struct" | "resolver" | "interface"
-		line    int
-		body    string
+		name string // GraphQL-facing name (rename-honoured)
+		rust string // Rust ident (for impl-for matching)
+		kind string // "struct" | "resolver" | "interface"
+		line int
+		body string
 	}
 	var owners []ownerBlock
 	// known maps a target type's GraphQL name -> true (same-file declared object
