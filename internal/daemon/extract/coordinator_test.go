@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/types"
@@ -251,16 +253,36 @@ def get_user_by_cognito(request, uid):
 		}
 	}
 
-	t.Logf("cross-batch ORM test: READS_FIELD=%d subprocesses=%d stderr=%s",
-		readsField, res.Subprocesses, stderrBuf.String())
+	// Cross-platform diagnostics (refs: ubuntu/windows divergence). The
+	// cross-batch ORM resolution is pure-Go regex over byte-identical
+	// content, so a READS_FIELD=0 result off-macOS points at one of a few
+	// upstream gaps. Surface them all so a failing CI run is diagnosable
+	// without re-running: whether both .py files were classified+processed
+	// into >=2 subprocesses, whether the User model + its field entity were
+	// extracted at all, and any non-fatal subprocess errors.
+	var userModel, cognitoField bool
+	for _, e := range res.Entities {
+		if strings.Contains(e.Name, "User") {
+			userModel = true
+		}
+		if strings.Contains(e.Name, "cognito_id") {
+			cognitoField = true
+		}
+	}
+	diag := fmt.Sprintf(
+		"subprocesses=%d processed=%d failed=%d entities=%d rels=%d "+
+			"userModelEntity=%v cognitoFieldEntity=%v byLang=%v nonFatalErrors=%v\nstderr:\n%s",
+		res.Subprocesses, res.Processed, res.Failed, len(res.Entities), len(res.Relationships),
+		userModel, cognitoField, res.ByLang, res.NonFatalErrors, stderrBuf.String())
+
+	t.Logf("cross-batch ORM test: READS_FIELD=%d %s", readsField, diag)
 
 	// With the fix: at least one READS_FIELD edge must exist for
 	// User.cognito_id resolved from views.py across the batch boundary.
 	if readsField == 0 {
 		t.Errorf("expected at least one READS_FIELD edge for cross-batch ORM reference "+
 			"(views.py → User.cognito_id defined in models.py); got 0\n"+
-			"subprocesses=%d — confirm BatchSize=1 forced cross-batch split\n"+
-			"stderr:\n%s", res.Subprocesses, stderrBuf.String())
+			"confirm BatchSize=1 forced cross-batch split.\n%s", diag)
 	}
 
 	// Confirm the coordinator actually spawned multiple subprocesses (one
