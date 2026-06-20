@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cajasmota/grafel/internal/daemon"
 	"github.com/cajasmota/grafel/internal/daemon/client"
+	"github.com/cajasmota/grafel/internal/process"
 )
 
 // start/stop/restart now drive the per-machine daemon (ADR-0017). The
@@ -325,16 +325,11 @@ func isUnixSocketPath(path string) bool {
 
 // pidStillAlive reports whether the process with the given pid is still
 // running. Used by the start readiness loop to bail out early when the
-// spawned daemon dies instead of waiting out the whole budget.
+// spawned daemon dies instead of waiting out the whole budget. The
+// platform-specific liveness probe lives in internal/process (signal 0
+// on unix, OpenProcess + GetExitCodeProcess on windows).
 func pidStillAlive(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
-	p, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-	return p.Signal(syscall.Signal(0)) == nil
+	return process.IsAlive(pid)
 }
 
 func runDaemonStop(out io.Writer) error {

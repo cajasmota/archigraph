@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/cajasmota/grafel/internal/process"
 )
@@ -96,18 +95,10 @@ func pidIsLiveDaemon(pid int) bool {
 	return isGrafel
 }
 
-// pidAlive returns true when a process with the given pid exists and
-// the current user can signal it. signal 0 is the POSIX existence
-// probe; on darwin and linux it does not deliver a signal but does
-// validate the pid.
+// pidAlive returns true when a process with the given pid exists. The
+// platform-specific liveness probe lives in internal/process: signal 0
+// on unix, OpenProcess + GetExitCodeProcess on windows (where the unix
+// probe always reports the wrong answer).
 func pidAlive(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
-	p, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-	err = p.Signal(syscall.Signal(0))
-	return err == nil
+	return process.IsAlive(pid)
 }
