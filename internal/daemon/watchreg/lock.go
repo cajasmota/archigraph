@@ -2,6 +2,7 @@ package watchreg
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"time"
 )
@@ -30,6 +31,22 @@ func lockFile(path string) (func(), error) {
 			return func() { _ = os.Remove(path) }, nil
 		}
 		if !errors.Is(err, os.ErrExist) {
+			// On Windows the create can fail transiently even though the lock is not
+			// really held: when another holder has just called os.Remove(path), the
+			// file enters a "pending delete" state and any re-open of that exact name
+			// returns ERROR_ACCESS_DENIED / ERROR_SHARING_VIOLATION (both surface as
+			// fs.ErrPermission), NOT ErrExist. Treat those the SAME as "lock held":
+			// back off and retry until the delete drains, mirroring the bounded-retry
+			// pattern used for the watchers.json rename. On Unix these errors never
+			// occur, so the loop is unaffected. Any other error (e.g. a bad/unwritable
+			// directory) is a real failure and is returned.
+			if errors.Is(err, fs.ErrPermission) {
+				if time.Now().After(deadline) {
+					return nil, err
+				}
+				time.Sleep(pollEvery)
+				continue
+			}
 			return nil, err
 		}
 		// Lock held — reclaim it if it is stale, else wait.

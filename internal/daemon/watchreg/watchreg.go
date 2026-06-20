@@ -33,6 +33,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -55,9 +56,18 @@ type Entry struct {
 }
 
 // Registry is the on-disk watcher registry. It is safe for concurrent use
-// across processes via a sidecar lock file.
+// both WITHIN a process (an in-process mutex serializes the read-modify-write)
+// and ACROSS processes (a sidecar lock file).
 type Registry struct {
 	path string
+	// mu serializes the read-modify-write of watchers.json for goroutines in the
+	// SAME process. The sidecar lock file only coordinates SEPARATE processes; it
+	// is not re-entrant and, on Windows, a lock file pending deletion by one
+	// goroutine can race the O_CREATE|O_EXCL acquire of another (manifesting as
+	// "Access is denied"). Serializing in-process callers here makes concurrent
+	// Register/Deregister/Sweep deterministic and keeps each process to a single
+	// outstanding lock-file holder at a time.
+	mu sync.Mutex
 }
 
 // New returns a Registry backed by the watchers.json at path (typically
@@ -295,6 +305,15 @@ func renameReplace(src, dst string) error {
 // mutate runs fn under the registry lock against the current entries and writes
 // the result atomically. fn may reuse the input slice's backing array.
 func (r *Registry) mutate(fn func([]Entry) []Entry) error {
+	// Serialize same-process callers first: the cross-process lock file is not
+	// re-entrant and, on Windows, its acquire/release (O_CREATE|O_EXCL + Remove)
+	// races between goroutines. With this mutex held, exactly one goroutine per
+	// process contends for the lock file, eliminating the "Access is denied" race
+	// entirely for the in-process case and guaranteeing the read-modify-write is
+	// atomic w.r.t. other in-process mutators (no lost entries).
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	unlock, err := lockFile(r.path + ".lock")
 	if err != nil {
 		return err
