@@ -153,30 +153,27 @@ func (m *launchdManager) Unload() error {
 	// tears the service down.
 	stopRunningDaemon(m.opts.SocketPath)
 
-	// bootout unconditionally. launchctl returns err 3 ("No such process") when
-	// the service is not loaded — that is success-to-proceed, not a failure.
-	out, err := exec.Command("launchctl", "bootout", "gui/"+m.uid+"/"+launchLabel).CombinedOutput()
-	if err != nil {
-		s := string(out)
-		if strings.Contains(s, "No such process") || strings.Contains(s, "Boot-out failed: 3") ||
-			strings.Contains(s, "could not find") {
-			return nil // not loaded — desired state already reached
-		}
-		// Other bootout failures (e.g. transient I/O) are non-fatal: the
-		// subsequent Load + readiness poll is the real success signal.
-		return nil
-	}
+	// bootout unconditionally. launchctl exits non-zero when the service is not
+	// loaded (err 3 / "No such process") — that is success-to-proceed, not a
+	// failure. Every bootout outcome (not-loaded, transient I/O, success) is
+	// non-fatal here: the subsequent Load + readiness poll is the real success
+	// signal. So we ignore the result entirely rather than branching on the
+	// localized error text, which would break on non-English macOS.
+	_ = exec.Command("launchctl", "bootout", "gui/"+m.uid+"/"+launchLabel).Run()
 	return nil
 }
 
 func (m *launchdManager) Load() error {
 	out, err := exec.Command("launchctl", "bootstrap", "gui/"+m.uid, m.plistPath).CombinedOutput()
 	if err != nil {
-		s := string(out)
-		// "service already loaded" / err 5 means a previous bootout did not
-		// fully clear it. Converge: the service IS loaded, which is the goal.
-		if strings.Contains(s, "already loaded") || strings.Contains(s, "service already bootstrapped") {
-			return nil
+		// bootstrap exits non-zero (err 5 / "already bootstrapped") when a
+		// previous bootout did not fully clear the service. The goal is "loaded";
+		// confirm convergence via IsLoaded() (which uses the `launchctl list`
+		// exit code, locale-invariant) rather than matching the localized
+		// "already loaded" / "service already bootstrapped" text, which breaks
+		// on non-English macOS.
+		if loaded, _ := m.IsLoaded(); loaded {
+			return nil // already loaded — desired state reached
 		}
 		return fmt.Errorf("launchctl bootstrap: %w\n%s", err, out)
 	}

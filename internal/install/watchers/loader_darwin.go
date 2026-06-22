@@ -40,15 +40,25 @@ func (darwinLoader) Load(u Unit) error {
 
 // Unload bootouts the LaunchAgent for the given unit. Errors are suppressed
 // when the unit was never loaded.
+//
+// "Already gone" is detected via the exit code of `launchctl list <label>`
+// (locale-invariant) rather than by matching the localized bootout error text
+// ("No such process" etc.), which breaks on non-English macOS. If the service
+// is not listed there is nothing to bootout — the desired absent state is
+// already reached, so we report success without shelling out to bootout.
 func (darwinLoader) Unload(u Unit) error {
 	uid := strconv.Itoa(os.Getuid())
-	out, err := exec.Command("launchctl", "bootout", "gui/"+uid+"/"+u.Label()).CombinedOutput()
-	if err != nil {
-		s := string(out)
-		if strings.Contains(s, "No such process") ||
-			strings.Contains(s, "Could not find specified service") ||
-			strings.Contains(s, "No domain") {
-			return nil // already gone
+	// launchctl list <label> exits non-zero when the label is not loaded; that
+	// is the locale-invariant signal that the desired absent state already holds.
+	if err := exec.Command("launchctl", "list", u.Label()).Run(); err != nil {
+		return nil // not loaded — already gone
+	}
+	if out, err := exec.Command("launchctl", "bootout", "gui/"+uid+"/"+u.Label()).CombinedOutput(); err != nil {
+		// Race: the service was listed above but disappeared before bootout.
+		// Re-check via the exit code of `launchctl list`; if it is now gone,
+		// the desired state is reached. Never match the localized error text.
+		if lerr := exec.Command("launchctl", "list", u.Label()).Run(); lerr != nil {
+			return nil // gone now — success-to-proceed
 		}
 		return fmt.Errorf("launchctl bootout %s: %w\n%s", u.Label(), err, out)
 	}

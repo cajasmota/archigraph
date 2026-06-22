@@ -72,6 +72,14 @@ jobs:
 
       - run: go vet ./...
 
+      # Guard against the locale-bug class (#5317): control flow that matches a
+      # localized OS command output / error string (e.g.
+      # strings.Contains(out, "cannot find")) breaks on non-English locales.
+      # Run on Linux only — it is a static AST check, platform-independent.
+      - name: lint-localematch (locale-invariant command checks)
+        if: runner.os == 'Linux'
+        run: go run ./cmd/lint-localematch
+
       # gofmt check — only enforce on Linux to avoid CRLF noise from Windows
       # tooling. macOS and Linux share the same line endings in the repo so
       # running on ubuntu-latest is sufficient.
