@@ -28,15 +28,34 @@ export function rowKey(e: Pick<ProgressEvent, "repo_slug">): string {
   return e.repo_slug;
 }
 
-/** Monotonic phase order so a stale lower phase never overwrites a higher one. */
+/**
+ * Monotonic phase order so a stale lower phase never overwrites a higher one.
+ *
+ * #5334 — the graph-assembly tail is split into granular passes. The order
+ * mirrors the backend's real emission sequence so a later, finer phase never
+ * regresses to a coarse one:
+ *   buildDocument → materializing(coarse) → running_algorithms(coarse) →
+ *   building_communities → computing_centrality → computing_flows →
+ *   writing_graph → done.
+ * detecting_links is a GROUP-level pass that runs on its own row (keyed by the
+ * group slug) after every member repo is done; it only needs to precede that
+ * row's terminal `done`, so it slots just below writing_graph.
+ * The coarse phases (running_algorithms, materializing) are retained as
+ * fallback bands for any older event still keyed on them.
+ */
 const PHASE_ORDER: Record<ProgressRow["phase"], number> = {
   scanning: 0,
   extracting_ast: 1,
   resolving_refs: 2,
-  running_algorithms: 3,
-  materializing: 4,
-  done: 5,
-  error: 5,
+  materializing: 3,
+  running_algorithms: 4,
+  building_communities: 5,
+  computing_centrality: 6,
+  computing_flows: 7,
+  detecting_links: 8,
+  writing_graph: 9,
+  done: 10,
+  error: 10,
 };
 
 /**
@@ -122,25 +141,31 @@ export function rowsTerminal(rows: ProgressRow[], expectedRepos?: number): boole
    long, sub-progress-less "Materializing" phase.
    ------------------------------------------------------------------ */
 
-/** Number of bands the [0,100] bar is split into — one per non-terminal phase. */
-const PHASE_BANDS = 5;
+/**
+ * Number of bands the [0,100] bar is split into — one per non-terminal phase
+ * index (0..9), so each granular assembly pass advances the bar by ~10% as the
+ * repo crosses into it. Must equal the `done` PHASE_ORDER value so a repo at
+ * the last non-terminal phase reads <100% and only `done` pegs to 100% (#5334).
+ */
+const PHASE_BANDS = 10;
 
 /**
  * Phase-weighted completion fraction (0..1) for a single repo row.
  *
- *   base   = phaseIndex / 5     (each phase is a 20% band)
+ *   base   = phaseIndex / PHASE_BANDS   (each phase is one band)
  *   within `extracting_ast` we have real file granularity, so add the
  *          filesDone/filesTotal slice of that one band.
  *   done   = 1 (100%)
  *   error  = counts as 100% so a failed repo doesn't peg the average low.
  *
- * The other sub-progress-less phases (resolving_refs / running_algorithms /
- * materializing) still advance the bar via their phase band as the repo
- * crosses into them — that's what keeps "Materializing" from looking stuck.
+ * The sub-progress-less assembly phases (resolving_refs, running_algorithms,
+ * building_communities, computing_centrality, computing_flows, writing_graph)
+ * still advance the bar via their phase band as the repo crosses into them —
+ * that's what keeps the assembly tail from looking stuck (#5334).
  */
 export function rowFraction(row: Pick<ProgressRow, "phase" | "filesDone" | "filesTotal">): number {
   if (row.phase === "done" || row.phase === "error") return 1;
-  const idx = PHASE_ORDER[row.phase]; // 0..4 for non-terminal phases
+  const idx = PHASE_ORDER[row.phase]; // 0..9 for non-terminal phases
   const base = idx / PHASE_BANDS;
   if (row.phase === "extracting_ast" && row.filesTotal > 0) {
     const slice = Math.min(1, Math.max(0, row.filesDone / row.filesTotal));
@@ -181,6 +206,14 @@ const PHASE_LABEL: Record<ProgressRow["phase"], string> = {
   resolving_refs: "Resolving references…",
   running_algorithms: "Running algorithms…",
   materializing: "Materializing graph…",
+  // #5334 — granular graph-assembly labels, kept in lock-step with the CLI
+  // renderer (internal/cli/repair_broker.go) so both surfaces speak the same
+  // human phrase for the same phase.
+  building_communities: "Building communities…",
+  computing_centrality: "Computing centrality…",
+  detecting_links: "Detecting cross-repo links…",
+  computing_flows: "Computing flows…",
+  writing_graph: "Writing graph…",
   done: "Done",
   error: "Done",
 };

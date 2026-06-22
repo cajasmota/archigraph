@@ -1416,6 +1416,14 @@ export type ProgressPhase =
   | "resolving_refs"
   | "running_algorithms"
   | "materializing"
+  // #5334 — granular graph-assembly phases (split from the coarse
+  // running_algorithms / materializing). The coarse two are retained above as
+  // fallbacks for older events.
+  | "building_communities"
+  | "computing_centrality"
+  | "detecting_links"
+  | "computing_flows"
+  | "writing_graph"
   | "done"
   | "error";
 
