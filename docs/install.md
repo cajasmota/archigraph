@@ -9,7 +9,7 @@ Full install matrix for grafel. For the five-command path see [quickstart.md](qu
 | Requirement | Notes |
 |-------------|-------|
 | Go 1.26+ | CGO must be enabled (tree-sitter uses a C library) |
-| C compiler | macOS: `xcode-select --install` / Debian-Ubuntu: `apt install build-essential` / Windows: MinGW via MSYS2 |
+| C/C++ compiler | macOS: `xcode-select --install` / Debian-Ubuntu: `apt install build-essential` / Windows: MinGW-w64 (UCRT) via MSYS2 — set **both** `CC` (gcc) and `CXX` (g++): tree-sitter is C, its `yaml` grammar is C++. `CGO_ENABLED=0` → "build constraints exclude all Go files"; missing `CXX` → `exec: "g++": not found`. |
 | Node.js 20+ + npm | Dashboard build only — not needed at runtime after `make build` |
 | git | Required for indexing |
 

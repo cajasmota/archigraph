@@ -9,6 +9,7 @@ This page gets you from zero to a running graph in five commands. For a full ins
 - **Go 1.26+** with CGO enabled. CGO is required because the tree-sitter extractor uses a C library.
   - macOS: `xcode-select --install` (Xcode Command Line Tools)
   - Debian/Ubuntu: `apt install build-essential`
+  - Windows: install [MinGW-w64](https://www.mingw-w64.org/) (UCRT) and set **both** `CC` and `CXX`. tree-sitter is C (needs `CC`/gcc) and its `yaml` grammar is C++ (needs `CXX`/g++). With `CGO_ENABLED=0` the build fails with "build constraints exclude all Go files"; with `CXX` unset it fails with `exec: "g++": not found` after the C step. For example, in PowerShell: `$env:CGO_ENABLED="1"; $env:CC="gcc"; $env:CXX="g++"`.
 - **Node.js 20+** and npm (used to build the embedded dashboard)
 - **git**
 
