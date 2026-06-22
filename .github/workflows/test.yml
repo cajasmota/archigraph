@@ -1,15 +1,16 @@
 name: test
 
-# Default: CI is OFF for PRs. No auto-trigger on code changes.
-# Opt-in: add label `ci:full` to force full 3-platform testing on any PR.
-# Manual: `workflow_dispatch` from the Actions tab runs unconditionally.
-# Post-merge: push to main always runs as a sanity check.
+# Free-tier minute budget: macOS bills 10x, Windows 2x — one full 3-OS run ~195 billed min.
+# Default: NO auto-CI on routine pushes/PRs. Local `go test -race` is the routine backstop.
+# Milestone gate: full 3-platform matrix runs on version tags (push: tags 'v*') + manual workflow_dispatch.
+#   → batch the platform checks before shipping a milestone.
+# Opt-in: add label `ci:full` to force full 3-platform testing on a specific PR.
 
 on:
   workflow_dispatch:
 
   push:
-    branches: [main]
+    tags: ['v*']
 
   pull_request_target:
     types: [labeled]
