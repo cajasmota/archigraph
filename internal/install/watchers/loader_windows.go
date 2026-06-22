@@ -71,15 +71,24 @@ func (e errNonFatal) IsNonFatal() bool { return true }
 func (windowsLoader) Unload(u Unit) error {
 	tn := u.Label()
 
+	// "Already gone" is detected via the exit code of `schtasks /query`
+	// (locale-invariant) rather than by matching the localized /delete error
+	// text ("cannot find" etc.), which breaks on non-English Windows. If the
+	// task is not registered there is nothing to delete.
+	if err := exec.Command("schtasks", "/query", "/tn", tn).Run(); err != nil {
+		return nil // task doesn't exist — already gone
+	}
+
 	// Stop any running instance — ignore errors (may not be running).
 	_ = exec.Command("schtasks", "/end", "/tn", tn).Run()
 
 	out, err := exec.Command("schtasks", "/delete", "/tn", tn, "/f").CombinedOutput()
 	if err != nil {
-		s := string(out)
-		if strings.Contains(s, "cannot find") ||
-			strings.Contains(s, "does not exist") {
-			return nil // already gone — treat as success
+		// Race: the task was registered above but disappeared before /delete.
+		// Re-check via the /query exit code; if it is gone now, the desired
+		// absent state is reached. Never match the localized error text.
+		if qerr := exec.Command("schtasks", "/query", "/tn", tn).Run(); qerr != nil {
+			return nil // gone now — success-to-proceed
 		}
 		return fmt.Errorf("schtasks /delete %s: %w\n%s", tn, err, out)
 	}

@@ -194,7 +194,11 @@ func (m *schtasksManager) Unload() error {
 	out, err := exec.Command("schtasks", "/delete", "/tn", taskName, "/f").CombinedOutput()
 	if err != nil {
 		s := string(out)
-		if strings.Contains(s, "cannot find") || strings.Contains(s, "does not exist") {
+		// best-effort race fallback only; the PRIMARY, locale-invariant decision
+		// is the IsLoaded() exit-code check above (schtasks /query). This English
+		// text-match merely tolerates the task disappearing between IsLoaded() and
+		// /delete and is never the sole signal. See #5317.
+		if strings.Contains(s, "cannot find") || strings.Contains(s, "does not exist") { // nolint:localematch
 			return nil
 		}
 		return fmt.Errorf("schtasks /delete: %w\n%s", err, out)

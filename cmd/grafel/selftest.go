@@ -657,9 +657,11 @@ func selftestTeardown(env *selftestEnv, cancel context.CancelFunc, done chan err
 
 // isWindowsFileInUse reports whether err is the Windows "the process cannot
 // access the file because it is being used by another process" failure (sharing
-// violation). It checks both the typed permission error and the OS-specific
-// message text so it matches whether the error arrives wrapped by os.RemoveAll
-// or as a raw *os.PathError. Only consulted on Windows by the teardown backstop.
+// violation) or an access-denied. It relies on locale-invariant signals only:
+// the typed fs.ErrPermission and the underlying numeric syscall.Errno
+// (ERROR_SHARING_VIOLATION=32, ERROR_ACCESS_DENIED=5, ERROR_LOCK_VIOLATION=33),
+// never on the localized OS error message text, which breaks on non-English
+// Windows. Only consulted on Windows by the teardown backstop.
 func isWindowsFileInUse(err error) bool {
 	if err == nil {
 		return false
@@ -667,10 +669,7 @@ func isWindowsFileInUse(err error) bool {
 	if errors.Is(err, fs.ErrPermission) {
 		return true
 	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "being used by another process") ||
-		strings.Contains(msg, "sharing violation") ||
-		strings.Contains(msg, "access is denied")
+	return isWindowsFileInUseErrno(err)
 }
 
 // removeAllWithRetry is os.RemoveAll with a short bounded backoff. On Windows a

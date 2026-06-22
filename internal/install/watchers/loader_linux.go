@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 // linuxLoader implements Loader using systemctl --user for Linux systemd units.
@@ -42,17 +41,29 @@ func (linuxLoader) Load(u Unit) error {
 
 // Unload disables and stops the systemd user unit. Idempotent — if the unit
 // is already disabled/stopped the call succeeds.
+//
+// "Already gone" is detected by stat-ing the unit file on disk (locale- and
+// version-invariant) rather than by matching the localized `systemctl disable`
+// error text ("No such file" etc.), which breaks on non-English locales. If the
+// unit file is absent there is nothing to disable.
 func (linuxLoader) Unload(u Unit) error {
-	// --now stops the unit in addition to disabling it.
-	out, err := exec.Command("systemctl", "--user", "disable", "--now", u.Label()+".service").CombinedOutput()
+	path, err := UnitPath(u)
 	if err != nil {
-		s := string(out)
-		if strings.Contains(s, "No such file") ||
-			strings.Contains(s, "not found") ||
-			strings.Contains(s, "does not exist") {
-			return nil // already gone
+		return err
+	}
+	if _, serr := os.Stat(path); os.IsNotExist(serr) {
+		return nil // no unit file — already gone
+	}
+	// --now stops the unit in addition to disabling it.
+	out, derr := exec.Command("systemctl", "--user", "disable", "--now", u.Label()+".service").CombinedOutput()
+	if derr != nil {
+		// Race: the unit file vanished between the stat above and disable.
+		// Re-stat; if it is gone now, the desired absent state is reached.
+		// Never match the localized error text.
+		if _, serr := os.Stat(path); os.IsNotExist(serr) {
+			return nil // gone now — success-to-proceed
 		}
-		return fmt.Errorf("systemctl --user disable %s: %w\n%s", u.Label(), err, out)
+		return fmt.Errorf("systemctl --user disable %s: %w\n%s", u.Label(), derr, out)
 	}
 	return nil
 }
