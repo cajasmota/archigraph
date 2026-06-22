@@ -16,6 +16,7 @@ import (
 	"github.com/cajasmota/grafel/internal/daemon/sched"
 	"github.com/cajasmota/grafel/internal/daemon/watch"
 	"github.com/cajasmota/grafel/internal/install/hooks"
+	"github.com/cajasmota/grafel/internal/install/watchers"
 	"github.com/cajasmota/grafel/internal/perf"
 	"github.com/cajasmota/grafel/internal/process"
 	"github.com/cajasmota/grafel/internal/registry"
@@ -756,6 +757,10 @@ func (s *Service) RemoveRepo(args *proto.RemoveRepoArgs, reply *proto.RemoveRepo
 		s.watcher.RemoveRepo(repoPath)
 	}
 
+	// Tear down the OS-level watcher launchd/systemd/schtasks unit + plist so a
+	// later recreate does not fight stale state (#5338). Idempotent.
+	watchers.Cleanup(args.Group, repoPath, "")
+
 	// Remove git hooks.
 	if cfg.Features.GitHooks {
 		_ = hooks.Uninstall(repoPath)
@@ -822,6 +827,9 @@ func (s *Service) DeleteGroup(args *proto.DeleteGroupArgs, reply *proto.DeleteGr
 			if s.watcher != nil {
 				s.watcher.RemoveRepo(r.Path)
 			}
+			// Tear down the OS-level watcher unit + plist so a later recreate
+			// of this group does not fight stale launchd state (#5338).
+			watchers.Cleanup(args.Group, r.Path, "")
 			// Remove git hooks.
 			if cfg.Features.GitHooks {
 				_ = hooks.Uninstall(r.Path)

@@ -201,6 +201,23 @@ func Write(u Unit) (string, error) {
 	return path, nil
 }
 
+// Cleanup fully deactivates and removes the watcher unit for a single repo:
+// it Unloads the unit from the OS scheduler (launchctl bootout / systemctl
+// disable / schtasks delete) and then removes the on-disk unit file. Both
+// steps are idempotent — a not-loaded unit and a missing file are treated as
+// success — so Cleanup is safe to call when deleting a group whether or not a
+// watcher was ever activated. This prevents stale com.grafel.watcher.<group>.*
+// launchd jobs / plists from lingering and fighting a later recreate (#5338).
+func Cleanup(group, repoPath, binPath string) {
+	u := Unit{Group: group, Repo: repoPath, BinPath: binPath}
+	loader := NewLoader()
+	// Deregister from the OS scheduler before deleting the file so the OS does
+	// not try to relaunch a missing binary. Errors are tolerated: "not loaded"
+	// already satisfies the desired absent state.
+	_ = loader.Unload(u)
+	_ = Remove(u)
+}
+
 // Remove deletes the unit file if it exists.
 func Remove(u Unit) error {
 	path, err := UnitPath(u)

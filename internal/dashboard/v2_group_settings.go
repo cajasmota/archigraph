@@ -44,6 +44,7 @@ import (
 
 	"github.com/cajasmota/grafel/internal/daemon"
 	"github.com/cajasmota/grafel/internal/graph/fbreader"
+	"github.com/cajasmota/grafel/internal/install/watchers"
 	"github.com/cajasmota/grafel/internal/registry"
 )
 
@@ -385,6 +386,9 @@ func (s *Server) handleV2DeleteGroup(w http.ResponseWriter, r *http.Request) {
 			stateDir := daemon.StateDirForRepo(rep.Path)
 			// Best-effort: non-fatal per repo — do NOT touch source code.
 			_ = os.RemoveAll(stateDir)
+			// Tear down the OS-level watcher unit + plist so a later recreate
+			// of this group does not fight stale launchd state (#5338).
+			watchers.Cleanup(groupName, rep.Path, "")
 		}
 	}
 
