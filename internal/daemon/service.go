@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -674,7 +675,43 @@ func (s *Service) rebuildWithProgress(sess *rebuildSession, args proto.RebuildAr
 	}
 	sess.repos = newStates
 	sess.mu.Unlock()
+
+	// Populate the batch entity/relationship totals from the freshly written
+	// per-repo graph-stats.json sidecars (#5326). Without this the rebuild
+	// reply (and therefore the dashboard "rebuilt N repo(s)" toast) reported
+	// "0 entities, 0 relationships" for a fully populated graph because
+	// addEntities was never called on this path. We read the sidecar — the same
+	// cheap, mmap-free source the CLI rebuild summary uses — rather than the
+	// per-repo delta so the reply carries the graph's real TOTAL, which is what
+	// the toast wants.
+	for _, repoPath := range repos {
+		ents, rels := readGraphStatsSidecar(StateDirForRepo(repoPath))
+		if ents > 0 || rels > 0 {
+			sess.addEntities(ents, rels)
+		}
+	}
+
 	return repos, warning, nil
+}
+
+// readGraphStatsSidecar reads <stateDir>/graph-stats.json and returns the
+// entity/relationship totals the indexer wrote alongside graph.fb. It decodes
+// only the two fields it needs so the daemon does not have to import the graph
+// package (and mmap the full document). Returns (0, 0) on any read/parse error
+// so callers always get a safe value (#5326).
+func readGraphStatsSidecar(stateDir string) (entities, rels int64) {
+	data, err := os.ReadFile(filepath.Join(stateDir, "graph-stats.json"))
+	if err != nil {
+		return 0, 0
+	}
+	var st struct {
+		TotalEntities      int64 `json:"total_entities"`
+		TotalRelationships int64 `json:"total_relationships"`
+	}
+	if err := json.Unmarshal(data, &st); err != nil {
+		return 0, 0
+	}
+	return st.TotalEntities, st.TotalRelationships
 }
 
 // IndexProgress handles a CLI poll for in-flight rebuild progress.

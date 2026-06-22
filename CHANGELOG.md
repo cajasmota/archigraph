@@ -27,6 +27,17 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ### Fixed
 
+- **Graph-view rebuild toast now reports the graph's real entity/relationship
+  totals instead of "0 entities, 0 relationships" (#5326):** after a background
+  rebuild on the graph view, the completion toast read "rebuilt N repo(s): 0
+  entities, 0 relationships" even for a fully populated graph (e.g. 3,888
+  entities). `RebuildReply.TotalEntities`/`TotalRels` were left at 0 on the
+  progress path because the session totals were never accumulated. The daemon
+  now sums the per-repo `graph-stats.json` sidecars (the same cheap, mmap-free
+  source the CLI rebuild summary uses) into the reply on rebuild completion, so
+  the toast shows the real totals. When a rebuild legitimately has nothing to
+  report, the toast now reads "up to date" instead of "0 entities"
+  ([#5326](https://github.com/cajasmota/grafel/issues/5326)).
 - **Wizard indexing view now marks all per-repo rows Done on successful
   completion (#5340):** previously a repo could freeze on its last intermediate
   phase (e.g. "Building communities…") if its final SSE events (centrality →
