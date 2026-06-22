@@ -37,6 +37,21 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   fails for lack of `SeCreateSymbolicLinkPrivilege`, so cross-repo edges are no
   longer silently 0 without Developer Mode/admin (Refs [#856](https://github.com/cajasmota/grafel/issues/856)).
 
+### Added
+
+- **Windows CMD installer + manual install path.** A new `install.bat` provides
+  a non-PowerShell, non-admin one-line install for `cmd.exe`
+  (`curl -fL …/install.bat -o "%TEMP%\grafel-install.bat" && "%TEMP%\grafel-install.bat"`);
+  it mirrors `install.ps1` exactly (same `%USERPROFILE%\.grafel\bin` prefix,
+  release asset names, `checksums.txt` SHA256 verification, and user-PATH append)
+  using only Windows 10 1803+ built-ins. New `docs/install-windows-manual.md`
+  documents a step-by-step locked-down/air-gapped install, and the install docs
+  (README, `docs/install.md`, `docs/quickstart.md`) now present all three Windows
+  methods — PowerShell, CMD, and manual
+  (Fixes [#5319](https://github.com/cajasmota/grafel/issues/5319), Refs
+  [#5318](https://github.com/cajasmota/grafel/issues/5318),
+  [#856](https://github.com/cajasmota/grafel/issues/856)).
+
 ---
 
 ## [0.1.1] — 2026-06-20
