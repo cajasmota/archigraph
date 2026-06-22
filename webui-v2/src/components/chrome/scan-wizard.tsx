@@ -56,9 +56,17 @@ import { aggregateProgress, overallPhaseLabel } from "@/lib/index-progress-fold"
 import { IndexProgressFeed } from "@/components/chrome/index-progress-feed";
 import { ApiError } from "@/lib/api";
 import type { ScanInspectReply, WizardRepo } from "@/data/types";
+import {
+  WIZARD_ACTIONS,
+  defaultActionFor,
+  type WizardAction,
+} from "@/lib/wizard-action";
 import { cn } from "@/lib/utils";
 
-type WizardStep = "pick" | "detect" | "index";
+// Action-first flow (#5336): the wizard now opens on an action choice (single /
+// group / monorepo / add-to-group) — parity with the CLI wizard — before the
+// folder picker. The chosen action tunes the Detect step's labels and defaults.
+type WizardStep = "action" | "pick" | "detect" | "index";
 
 export interface ScanWizardProps {
   open: boolean;
@@ -82,7 +90,10 @@ function slugify(s: string): string {
 export function ScanWizard(props: ScanWizardProps) {
   const { open, onOpenChange, mode, groupId, groupName, takenNames = [], existingPaths = [], onIndexed } = props;
 
-  const [step, setStep] = useState<WizardStep>("pick");
+  // In "create" mode the wizard opens on the action choice; in "add-repo" mode
+  // the action is implicitly "add-group" so we skip straight to the picker.
+  const [step, setStep] = useState<WizardStep>(mode === "create" ? "action" : "pick");
+  const [action, setAction] = useState<WizardAction>(mode === "add-repo" ? "add-group" : "single");
   const [path, setPath] = useState("");
   const [scan, setScan] = useState<ScanInspectReply | null>(null);
   const [name, setName] = useState("");
@@ -135,7 +146,8 @@ export function ScanWizard(props: ScanWizardProps) {
 
   // Reset everything when the dialog closes.
   function reset() {
-    setStep("pick");
+    setStep(mode === "create" ? "action" : "pick");
+    setAction(mode === "add-repo" ? "add-group" : "single");
     setPath("");
     setScan(null);
     setName("");
@@ -180,6 +192,14 @@ export function ScanWizard(props: ScanWizardProps) {
       const result = await inspect.mutateAsync(p);
       setScan(result);
       if (result.valid) {
+        // Reconcile the chosen action with what the shared classifier detected
+        // (#5336). In add-repo mode the action is pinned to "add-group". In
+        // create mode, if the detected smart default disagrees with the picked
+        // action, prefer the detection so the Detect step shows the right
+        // selection list (e.g. a container folder → group/child repos).
+        if (mode === "create") {
+          setAction(defaultActionFor(result));
+        }
         setName((prev) => prev || result.suggestedGroup);
         // Default to ALL detected packages checked (#1531). Empty for a single
         // repo — then runIndex registers the whole folder as one repo.
@@ -303,32 +323,93 @@ export function ScanWizard(props: ScanWizardProps) {
           {mode === "create" ? "Index a new group" : <>Add a repo to <span className="font-mono">{groupName}</span></>}
         </DialogTitle>
         <DialogDescription>
+          {step === "action" && "What do you want to index?"}
           {step === "pick" && "Point Grafel at a repository folder on this machine."}
           {step === "detect" && "Review what we detected, then start indexing."}
           {step === "index" && "Indexing in progress — you can leave this open."}
         </DialogDescription>
 
-        {/* Stepper */}
-        <ol className="mt-3 flex items-center gap-2 text-xs text-text-3" data-testid="wizard-stepper">
-          {(["pick", "detect", "index"] as WizardStep[]).map((s, i) => (
-            <li key={s} className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "inline-flex size-5 items-center justify-center rounded-full border font-mono",
-                  step === s
-                    ? "border-accent bg-accent-soft text-accent-strong"
-                    : "border-border text-text-4",
-                )}
-              >
-                {i + 1}
-              </span>
-              <span className={cn(step === s ? "text-text-2" : "text-text-4")}>
-                {s === "pick" ? "Pick" : s === "detect" ? "Detect" : "Index"}
-              </span>
-              {i < 2 && <span className="text-border">/</span>}
-            </li>
-          ))}
-        </ol>
+        {/* Stepper — the "action" step is only present in create mode. */}
+        {(() => {
+          const steps: { id: WizardStep; label: string }[] = [
+            ...(mode === "create" ? [{ id: "action" as WizardStep, label: "Action" }] : []),
+            { id: "pick", label: "Pick" },
+            { id: "detect", label: "Detect" },
+            { id: "index", label: "Index" },
+          ];
+          return (
+            <ol className="mt-3 flex items-center gap-2 text-xs text-text-3" data-testid="wizard-stepper">
+              {steps.map((s, i) => (
+                <li key={s.id} className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "inline-flex size-5 items-center justify-center rounded-full border font-mono",
+                      step === s.id
+                        ? "border-accent bg-accent-soft text-accent-strong"
+                        : "border-border text-text-4",
+                    )}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className={cn(step === s.id ? "text-text-2" : "text-text-4")}>{s.label}</span>
+                  {i < steps.length - 1 && <span className="text-border">/</span>}
+                </li>
+              ))}
+            </ol>
+          );
+        })()}
+
+        {/* Step 0 — action select (create mode only): the four-action first step,
+            parity with the CLI wizard (#5336). The picked action tunes the
+            Detect step; the smart default is reconciled against detection once a
+            folder is scanned. */}
+        {step === "action" && (
+          <div className="mt-4 space-y-2" data-testid="wizard-action">
+            <ul className="space-y-2">
+              {WIZARD_ACTIONS.map((a) => {
+                const selected = action === a.value;
+                return (
+                  <li key={a.value}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm",
+                        selected
+                          ? "border-accent bg-accent-soft text-text-1"
+                          : "border-border bg-surface text-text-2 hover:bg-surface-2",
+                      )}
+                      onClick={() => setAction(a.value)}
+                      data-testid="wizard-action-option"
+                      data-action={a.value}
+                      data-selected={selected}
+                    >
+                      <span
+                        className={cn(
+                          "inline-flex size-4 shrink-0 items-center justify-center rounded-full border",
+                          selected ? "border-accent-strong" : "border-text-4",
+                        )}
+                      >
+                        {selected && <span className="size-2 rounded-full bg-accent-strong" />}
+                      </span>
+                      <span className="min-w-0 flex-1">{a.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="flex justify-between gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={() => setStep("pick")} data-testid="wizard-action-next">
+                Next
+                <ArrowRight size={13} />
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Step 1 — pick directory: a server-side folder browser (#1529). The
             daemon lists ITS OWN filesystem so navigating to a folder and
@@ -476,7 +557,14 @@ export function ScanWizard(props: ScanWizardProps) {
               </label>
             </form>
 
-            <div className="flex justify-end pt-1">
+            <div className="flex justify-between pt-1">
+              {mode === "create" ? (
+                <Button type="button" variant="ghost" onClick={() => setStep("action")}>
+                  Back
+                </Button>
+              ) : (
+                <span />
+              )}
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
