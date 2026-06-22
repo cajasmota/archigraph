@@ -519,7 +519,27 @@ func (w *Watcher) handleEvent(ev fsnotify.Event) {
 	if ev.Op == fsnotify.Chmod {
 		return
 	}
+	// Cheap static filter first (no I/O, no repo lookup): SkipDirs /
+	// SkipExts / generated-file globs.
 	if ShouldSkipPath(ev.Name) {
+		atomic.AddUint64(&w.droppedSkips, 1)
+		return
+	}
+
+	// Determine the owning repo. We need it both for the gitignore-aware
+	// filter and to arm the debounce timer.
+	repo := w.repoFor(ev.Name)
+	if repo == "" {
+		return
+	}
+
+	// Repo-aware filter (#5392): drop events under a gitignored path or a
+	// per-repo excluded dir BEFORE arming a reindex. Build artifacts that
+	// the repo gitignores (e.g. AAB/, app/build/, *.aab) churn heavily
+	// during an Android/gradle build; honouring .gitignore here prevents
+	// the reindex loop + heap thrash even when the artifact dir doesn't
+	// match a well-known static name.
+	if ShouldSkipPathForRepo(repo, ev.Name) {
 		atomic.AddUint64(&w.droppedSkips, 1)
 		return
 	}
@@ -534,10 +554,6 @@ func (w *Watcher) handleEvent(ev fsnotify.Event) {
 		}
 	}
 
-	repo := w.repoFor(ev.Name)
-	if repo == "" {
-		return
-	}
 	w.recordAndArm(repo)
 }
 
