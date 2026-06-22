@@ -177,9 +177,19 @@ func (m *schtasksManager) IsLoaded() (bool, error) {
 
 func (m *schtasksManager) Unload() error {
 	stopRunningDaemon(m.opts.SocketPath)
+	// If the task isn't registered there is nothing to delete — and on a clean
+	// install schtasks /delete returns a localized "cannot find the file"
+	// error. IsLoaded() is exit-code based (schtasks /query), so it is
+	// locale-independent, unlike the English-only string match below. The
+	// contract of Unload() is that "not loaded" counts as success.
+	if loaded, _ := m.IsLoaded(); !loaded {
+		return nil
+	}
 	// /end stops a running instance; /delete removes the registration. Both are
 	// idempotent against a missing task: "cannot find" / "does not exist" are
-	// success-to-proceed (the desired absent state is reached).
+	// success-to-proceed (the desired absent state is reached). The English
+	// string match below remains as a best-effort fallback for races where the
+	// task disappears between IsLoaded() and /delete.
 	_ = exec.Command("schtasks", "/end", "/tn", taskName).Run()
 	out, err := exec.Command("schtasks", "/delete", "/tn", taskName, "/f").CombinedOutput()
 	if err != nil {
