@@ -422,6 +422,88 @@ func finishRebuild(
 	return nil
 }
 
+// indexGroupWithProgress triggers a full index of a group via the daemon and
+// renders live phase progress to w (the same broker SSE / poll-fallback flow as
+// `grafel rebuild`), then prints a summary. It is the shared entry point used by
+// the wizard and `group add` so a freshly-registered group ends with the same
+// "Indexing… → Done" experience as the dashboard (#5338).
+//
+// It returns errDaemonNotRunning when the daemon is down so callers can degrade
+// gracefully (the group is still registered; the user can index later).
+func indexGroupWithProgress(w, errW io.Writer, group string) error {
+	c, err := client.Dial()
+	if err != nil {
+		if errors.Is(err, client.ErrDaemonNotRunning) {
+			return errDaemonNotRunning
+		}
+		return err
+	}
+	defer c.Close()
+
+	dashPort := 0
+	if st, stErr := c.Status(); stErr == nil && st.DashboardPort > 0 {
+		dashPort = st.DashboardPort
+	}
+
+	outcomeCh := make(chan rebuildOutcome, 1)
+	token := progressToken()
+	go func() {
+		reply, rpcErr := c.Rebuild(proto.RebuildArgs{
+			Group:         group,
+			ProgressToken: token,
+		})
+		outcomeCh <- rebuildOutcome{
+			repos:    reply.Repos,
+			warning:  reply.Warning,
+			elapsed:  reply.ElapsedSec,
+			entities: reply.TotalEntities,
+			rels:     reply.TotalRels,
+			err:      rpcErr,
+		}
+	}()
+
+	fmt.Fprintf(w, "Indexing group '%s'...\n", group)
+
+	// Path 1: live broker progress via SSE (matches the dashboard exactly).
+	if dashPort > 0 {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		if sseCh, sseErr := subscribeSSE(ctx, dashPort, group); sseErr == nil {
+			outcome := runBrokerProgress(ctx, w, group, sseCh, outcomeCh, false, false)
+			cancel()
+			if outcome.err != nil {
+				return outcome.err
+			}
+			return finishIndexSummary(w, errW, group, token, outcome)
+		}
+	}
+
+	// Path 2: no dashboard broker — wait for the RPC and print the summary.
+	outcome := <-outcomeCh
+	if outcome.err != nil {
+		return outcome.err
+	}
+	return finishIndexSummary(w, errW, group, token, outcome)
+}
+
+// finishIndexSummary renders the post-index summary for indexGroupWithProgress.
+// It mirrors finishRebuild's non-JSON branch but is writer-based (no cobra).
+func finishIndexSummary(w, errW io.Writer, group, token string, o rebuildOutcome) error {
+	elapsed := time.Duration(o.elapsed * float64(time.Second))
+	if len(o.repos) > 0 {
+		sum := ComputeRebuildSummary(group, o.repos, elapsed)
+		PrintRebuildSummary(w, sum)
+		recordHealthHistory(group, sum)
+	} else {
+		fmt.Fprintf(w, "Group '%s' indexed\n", group)
+	}
+	if o.warning != "" {
+		fmt.Fprintf(errW, "warning: %s\n", o.warning)
+	}
+	_ = token
+	return nil
+}
+
 // printProgressLine emits one human-readable progress line for a repo.
 //
 // Format follows the spec from issue #989:
