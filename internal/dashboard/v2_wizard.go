@@ -78,6 +78,16 @@ type v2ScanInspectReply struct {
 	// when Packages is non-empty, "" when neither. The frontend uses this to
 	// label the checkbox list appropriately.
 	ChildrenKind string `json:"childrenKind"`
+	// SiblingGitRepos are the ABSOLUTE paths of the OTHER git repos alongside
+	// AbsPath in its parent (populated only when AbsPath is itself a git repo).
+	// Used by the action-first "group" flow to offer "this repo + siblings".
+	SiblingGitRepos []string `json:"siblingGitRepos"`
+	// IsGitRepo reports whether AbsPath itself is a git repo.
+	IsGitRepo bool `json:"isGitRepo"`
+	// SuggestedAction is the recommended wizard action ("single","group",
+	// "monorepo","") derived from the shared detect.ClassifyPath classifier so
+	// the dashboard's action-first step matches the CLI (#5336).
+	SuggestedAction string `json:"suggestedAction"`
 	// HasAgentsMD is true when AGENTS.md / CLAUDE.md / GEMINI.md exists at the root.
 	HasAgentsMD bool `json:"hasAgentsMd"`
 	// AlreadyRegistered is the existing group name if .grafel/group.json exists.
@@ -107,28 +117,6 @@ type v2ScanReposReq struct {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/v2/scan/inspect — resolve + detect (no writes)
 // ─────────────────────────────────────────────────────────────────────────────
-
-// detectChildGitRepos returns the names of immediate subdirectories of dir
-// that contain a .git entry (file or directory), sorted alphabetically. It
-// does NOT recurse; only depth-1 children are checked. Returns nil (not an
-// empty slice) when no such children exist so callers can test with len().
-func detectChildGitRepos(dir string) []string {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil
-	}
-	var children []string
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		candidate := filepath.Join(dir, e.Name(), ".git")
-		if _, err := os.Stat(candidate); err == nil {
-			children = append(children, e.Name())
-		}
-	}
-	return children
-}
 
 // handleV2ScanInspect resolves a server-side path and returns a stack +
 // monorepo detection preview. It performs NO registry writes; it is the
@@ -169,45 +157,54 @@ func (s *Server) handleV2ScanInspect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := filepath.Base(abs)
-	mono, _ := detect.DetectMonorepo(abs)
-	pkgs := mono.Packages
-	if pkgs == nil {
-		pkgs = []string{}
-	}
 
-	// Detect child git repos (the multi-repo-parent pattern). A parent directory
-	// containing N sub-repos is NOT itself a monorepo (no workspace manifest), so
-	// DetectMonorepo returns KindNone. We detect it by checking which immediate
-	// subdirs contain a .git entry. If child git repos are found we prefer them
-	// over monorepo packages (a plain parent dir can't meaningfully be both).
-	childGitRepos := detectChildGitRepos(abs)
-	if childGitRepos == nil {
-		childGitRepos = []string{}
-	}
+	// Classify the path with the SHARED detect.ClassifyPath classifier — the
+	// SAME single source of truth the CLI wizard uses (#5336). This yields the
+	// child git repos (the ivivo/backend+frontend case), monorepo packages,
+	// sibling git repos, and a suggested action, so the dashboard's action-first
+	// step matches the CLI exactly.
+	class, _ := detect.ClassifyPath(abs)
 
-	// Determine childrenKind and resolve precedence: child git repos win over
-	// monorepo packages when both would be present (shouldn't happen in practice
-	// but be explicit and safe).
+	pkgs := class.Packages
+	childGitRepos := class.ChildGitRepos
+	siblings := class.SiblingGitRepos
+
+	// Resolve precedence for the checkbox list: child git repos win over monorepo
+	// packages when both would be present (a container of repos isn't a monorepo).
 	var childrenKind string
 	if len(childGitRepos) > 0 {
-		// Child git repos detected — clear packages to avoid confusion.
-		pkgs = []string{}
+		pkgs = nil // clear packages to avoid confusion in the UI
 		childrenKind = "git-repos"
 	} else if len(pkgs) > 0 {
 		childrenKind = "packages"
 	}
 
+	// Normalize nil slices to [] so the JSON carries empty arrays (the frontend
+	// expects arrays, not null).
+	if pkgs == nil {
+		pkgs = []string{}
+	}
+	if childGitRepos == nil {
+		childGitRepos = []string{}
+	}
+	if siblings == nil {
+		siblings = []string{}
+	}
+
 	reply := v2ScanInspectReply{
-		Valid:          true,
-		AbsPath:        abs,
-		SuggestedGroup: slugify(base),
-		SuggestedSlug:  slugify(base),
-		Stack:          detect.Stack(abs),
-		Monorepo:       string(mono.Kind),
-		Packages:       pkgs,
-		ChildGitRepos:  childGitRepos,
-		ChildrenKind:   childrenKind,
-		HasAgentsMD:    fileExists(abs, "AGENTS.md") || fileExists(abs, "CLAUDE.md") || fileExists(abs, "GEMINI.md"),
+		Valid:           true,
+		AbsPath:         abs,
+		SuggestedGroup:  slugify(base),
+		SuggestedSlug:   slugify(base),
+		Stack:           detect.Stack(abs),
+		Monorepo:        string(class.Monorepo),
+		Packages:        pkgs,
+		ChildGitRepos:   childGitRepos,
+		ChildrenKind:    childrenKind,
+		SiblingGitRepos: siblings,
+		IsGitRepo:       class.IsGitRepo,
+		SuggestedAction: string(class.Suggested),
+		HasAgentsMD:     fileExists(abs, "AGENTS.md") || fileExists(abs, "CLAUDE.md") || fileExists(abs, "GEMINI.md"),
 	}
 	if fileExists(abs, ".grafel/group.json") {
 		reply.AlreadyRegistered = readManifestGroup(filepath.Join(abs, ".grafel", "group.json"))

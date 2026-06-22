@@ -1356,6 +1356,20 @@ export interface ScanInspectReply {
    * non-empty, "" otherwise. The UI uses this to label the checkbox list.
    */
   childrenKind: "git-repos" | "packages" | "";
+  /**
+   * Absolute paths of the OTHER git repos alongside absPath in its parent —
+   * populated only when absPath is itself a git repo. Used by the action-first
+   * "group" flow to offer "this repo + its siblings" (#5336).
+   */
+  siblingGitRepos: string[];
+  /** Whether absPath itself is a git repo. */
+  isGitRepo: boolean;
+  /**
+   * Recommended wizard action derived from the shared detect.ClassifyPath
+   * classifier ("single" | "group" | "monorepo" | ""), so the dashboard's
+   * action-first step matches the CLI wizard (#5336).
+   */
+  suggestedAction: "single" | "group" | "monorepo" | "";
   hasAgentsMd: boolean;
   alreadyRegistered?: string;
   error?: string;
