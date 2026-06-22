@@ -167,8 +167,17 @@ func (s *Server) runRebuildJob(jobID string, args proto.RebuildArgs) {
 		j.Status = actionJobDone
 		j.Progress = 100
 		j.FinishedAt = &fin
-		j.Message = fmt.Sprintf("rebuilt %d repo(s): %d entities, %d relationships",
-			len(reply.Repos), reply.TotalEntities, reply.TotalRels)
+		// When the rebuild produced a graph, report its real totals. If the
+		// daemon legitimately has nothing to report (e.g. a no-op rebuild that
+		// touched no repos, or sidecars unavailable), prefer a clear "up to
+		// date" message over the misleading "0 entities, 0 relationships"
+		// (#5326).
+		if reply.TotalEntities == 0 && reply.TotalRels == 0 {
+			j.Message = fmt.Sprintf("rebuilt %d repo(s): up to date", len(reply.Repos))
+		} else {
+			j.Message = fmt.Sprintf("rebuilt %d repo(s): %d entities, %d relationships",
+				len(reply.Repos), reply.TotalEntities, reply.TotalRels)
+		}
 		if reply.Warning != "" {
 			j.Message += " (warning: " + reply.Warning + ")"
 		}

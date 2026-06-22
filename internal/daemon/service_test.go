@@ -3,7 +3,10 @@ package daemon
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -214,6 +217,76 @@ func TestStatusRSSReportsActualMemory(t *testing.T) {
 	if reply.RSSUsedMB != expectedUsedMB {
 		t.Errorf("RSSUsedMB: got %d, want %d (RSSBytes %d / 1MB)",
 			reply.RSSUsedMB, expectedUsedMB, reply.RSSBytes)
+	}
+}
+
+// TestReadGraphStatsSidecar verifies the #5326 sidecar reader returns the
+// entity/relationship totals the indexer wrote, and (0,0) on a missing file.
+func TestReadGraphStatsSidecar(t *testing.T) {
+	dir := t.TempDir()
+	if ents, rels := readGraphStatsSidecar(dir); ents != 0 || rels != 0 {
+		t.Fatalf("missing sidecar should yield (0,0), got (%d,%d)", ents, rels)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "graph-stats.json"),
+		[]byte(`{"total_entities":3888,"total_relationships":12042}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ents, rels := readGraphStatsSidecar(dir)
+	if ents != 3888 || rels != 12042 {
+		t.Fatalf("got (%d,%d), want (3888,12042)", ents, rels)
+	}
+}
+
+// TestRebuild_ReplyCarriesRealTotals verifies the #5326 fix: a full rebuild
+// that produced a populated graph must report the graph's real entity and
+// relationship totals in the RebuildReply (which drives the dashboard
+// "rebuilt N repo(s)" toast), not "0 entities, 0 relationships". The totals are
+// sourced from the per-repo graph-stats.json sidecars the indexer writes.
+func TestRebuild_ReplyCarriesRealTotals(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv(EnvRoot, root)
+
+	// Two repos whose sidecars sum to 3,888 entities / 12,042 relationships.
+	repoA := filepath.Join(t.TempDir(), "repo-a")
+	repoB := filepath.Join(t.TempDir(), "repo-b")
+	writeSidecar := func(repoPath string, ents, rels int) {
+		stateDir := StateDirForRepo(repoPath)
+		if err := os.MkdirAll(stateDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		body := fmt.Sprintf(`{"total_entities":%d,"total_relationships":%d}`, ents, rels)
+		if err := os.WriteFile(filepath.Join(stateDir, "graph-stats.json"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeSidecar(repoA, 2888, 9000)
+	writeSidecar(repoB, 1000, 3042)
+
+	svc := newService(
+		func(proto.IndexArgs) (string, string, error) { return "", "", nil },
+		func(proto.RebuildArgs) ([]string, string, error) {
+			return []string{repoA, repoB}, "", nil
+		},
+		func(proto.QualityAuditRequest) (proto.QualityAuditReply, error) {
+			return proto.QualityAuditReply{}, nil
+		},
+		"/tmp/test.sock",
+		make(chan struct{}),
+		nil,
+		1,
+	)
+
+	var reply proto.RebuildReply
+	// A ProgressToken forces the rebuildWithProgress path — the exact path the
+	// dashboard takes, and the one that previously left totals at 0.
+	if err := svc.Rebuild(&proto.RebuildArgs{Group: "g", ProgressToken: "tok"}, &reply); err != nil {
+		t.Fatalf("rebuild: %v", err)
+	}
+	if reply.TotalEntities != 3888 {
+		t.Errorf("TotalEntities = %d, want 3888 (must not be 0)", reply.TotalEntities)
+	}
+	if reply.TotalRels != 12042 {
+		t.Errorf("TotalRels = %d, want 12042 (must not be 0)", reply.TotalRels)
 	}
 }
 
