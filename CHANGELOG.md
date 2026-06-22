@@ -43,6 +43,19 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ### Fixed
 
+- **Dashboard wizard showed only ONE repo of a multi-repo group** (Refs
+  [#5326](https://github.com/cajasmota/grafel/issues/5326)). The feed-terminal
+  fallback added for the freeze fix treated the per-repo SSE feed as terminal as
+  soon as *every row seen so far* was `done`/`error`, without knowing how many
+  repos to expect. Under the broker's drop policy the first repo could reach
+  `done` before the second repo emitted a single event, so the feed looked
+  terminal and the wizard tore the SSE subscription down — only one repo row
+  ever rendered (which one was a race, hence inconsistent backend-vs-frontend),
+  even though the backend correctly indexed all repos. The wizard now threads the
+  EXPECTED repo count (the same repo list it registers to start indexing) into
+  the feed: feed-terminal fires only once **all** expected repos have reported a
+  terminal phase, and the job poller remains the primary terminal signal. The
+  EventSource stays subscribed for the whole index, so every repo's rows render.
 - **Dashboard wizard indexing froze mid-extraction and never showed completion;
   rebuild appeared to idle-wait ~5 min** ([#5326](https://github.com/cajasmota/grafel/issues/5326)).
   Three independent defects on the rebuild/progress path:

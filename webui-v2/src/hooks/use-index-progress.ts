@@ -33,9 +33,11 @@ export interface UseIndexProgress {
   /** True once at least one progress event has arrived. */
   hasData: boolean;
   /**
-   * True once every repo row has reached a terminal (done/error) phase. Used by
-   * the wizard as a FALLBACK terminal signal so the button reaches "Done" even
-   * if the job poller is slow to flip (#5326 bug 1).
+   * True once ALL expected repo rows have reached a terminal (done/error)
+   * phase. Used by the wizard as a FALLBACK terminal signal so the button
+   * reaches "Done" even if the job poller is slow to flip (#5326 bug 1). Gated
+   * on the expected repo count so it can't fire after only the first of several
+   * repos finishes (#5326 multi-repo regression).
    */
   terminal: boolean;
 }
@@ -44,8 +46,19 @@ export interface UseIndexProgress {
  * Subscribe to the per-repo progress stream for `group`. Pass a falsy group or
  * `enabled === false` to stay disconnected (e.g. before the job has a group, or
  * after the wizard closes).
+ *
+ * `expectedRepos` is how many repos this index registered (selected child git
+ * repos, or selected monorepo packages, or 1). It gates the `terminal` flag so
+ * feed-terminal cannot fire after the FIRST repo finishes while later repos are
+ * still streaming (#5326). The EventSource stays subscribed the whole time
+ * `enabled` is true (the wizard gates that on the JOB being active, not on
+ * `terminal`), so every repo's events are received even if one finishes early.
  */
-export function useIndexProgress(group: string | undefined, enabled = true): UseIndexProgress {
+export function useIndexProgress(
+  group: string | undefined,
+  enabled = true,
+  expectedRepos?: number,
+): UseIndexProgress {
   const [rows, setRows] = useState<Map<string, ProgressRow>>(new Map());
   const [connected, setConnected] = useState(false);
 
@@ -89,6 +102,6 @@ export function useIndexProgress(group: string | undefined, enabled = true): Use
     rows: sorted,
     connected,
     hasData: rows.size > 0,
-    terminal: rowsTerminal(sorted),
+    terminal: rowsTerminal(sorted, expectedRepos),
   };
 }

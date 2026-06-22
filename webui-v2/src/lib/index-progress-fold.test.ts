@@ -94,7 +94,7 @@ describe("rowsTerminal — wizard terminal fallback (#5326 bug 1)", () => {
       ev({ repo_slug: "backend", phase: "done", ts: 1 }),
       ev({ repo_slug: "frontend", phase: "running_algorithms", ts: 1 }),
     ]);
-    expect(rowsTerminal(rows)).toBe(false);
+    expect(rowsTerminal(rows, 2)).toBe(false);
   });
 
   it("is true once all repo rows reach done/error", () => {
@@ -102,10 +102,66 @@ describe("rowsTerminal — wizard terminal fallback (#5326 bug 1)", () => {
       ev({ repo_slug: "backend", phase: "done", ts: 1 }),
       ev({ repo_slug: "frontend", phase: "error", error: "boom", ts: 1 }),
     ]);
-    expect(rowsTerminal(rows)).toBe(true);
+    expect(rowsTerminal(rows, 2)).toBe(true);
   });
 
   it("is false for an empty feed (nothing to be terminal about)", () => {
-    expect(rowsTerminal([])).toBe(false);
+    expect(rowsTerminal([], 2)).toBe(false);
+  });
+});
+
+describe("rowsTerminal — expected-repo-count gate (#5326 multi-repo regression)", () => {
+  it("THE BUG: repo A done while repo B has not emitted yet → NOT terminal", () => {
+    // The exact race that broke multi-repo wizards: under the broker's drop
+    // policy the first repo finishes before the second emits a single event, so
+    // only one row exists. Without the expected count this looked terminal and
+    // the feed tore down before repo B ever appeared.
+    const rows = applyAll([
+      ev({ repo_slug: "backend", phase: "done", files_done: 173, files_total: 173, ts: 5 }),
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rowsTerminal(rows, 2)).toBe(false);
+  });
+
+  it("both expected repos done → terminal", () => {
+    const rows = applyAll([
+      ev({ repo_slug: "backend", phase: "done", ts: 5 }),
+      ev({ repo_slug: "frontend", phase: "done", ts: 5 }),
+    ]);
+    expect(rowsTerminal(rows, 2)).toBe(true);
+  });
+
+  it("all expected rows present but one still in-flight → not terminal", () => {
+    const rows = applyAll([
+      ev({ repo_slug: "backend", phase: "done", ts: 5 }),
+      ev({ repo_slug: "frontend", phase: "resolving_refs", ts: 5 }),
+    ]);
+    expect(rowsTerminal(rows, 2)).toBe(false);
+  });
+
+  it("unknown expectedRepos → never prematurely terminal on partial rows", () => {
+    const rows = applyAll([
+      ev({ repo_slug: "backend", phase: "done", ts: 5 }),
+    ]);
+    // Defer to the job poller rather than firing early.
+    expect(rowsTerminal(rows, undefined)).toBe(false);
+    expect(rowsTerminal(rows)).toBe(false);
+    expect(rowsTerminal(rows, 0)).toBe(false);
+  });
+
+  it("regression: single-repo group still reaches terminal (expectedRepos = 1)", () => {
+    const rows = applyAll([
+      ev({ repo_slug: "backend", phase: "done", files_done: 173, files_total: 173, ts: 5 }),
+    ]);
+    expect(rowsTerminal(rows, 1)).toBe(true);
+  });
+
+  it("more rows than expected (defensive) → still terminal when all done", () => {
+    const rows = applyAll([
+      ev({ repo_slug: "backend", phase: "done", ts: 5 }),
+      ev({ repo_slug: "frontend", phase: "done", ts: 5 }),
+      ev({ repo_slug: "shared", phase: "done", ts: 5 }),
+    ]);
+    expect(rowsTerminal(rows, 2)).toBe(true);
   });
 });

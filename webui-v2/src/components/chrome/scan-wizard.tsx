@@ -113,8 +113,24 @@ export function ScanWizard(props: ScanWizardProps) {
   // #1527 — subscribe to the per-repo / per-MODULE progress stream once we're
   // on the Index step and have a group. For a monorepo this yields one row per
   // package; for a single repo, one row per repo.
+  //
+  // progressActive gates the subscription on the JOB being active (Index step +
+  // a group) — NOT on `terminal`/`feedTerminal` — so a premature feed-terminal
+  // can't tear the stream down before every repo reports (#5326).
   const progressActive = step === "index" && !!targetGroup;
-  const indexProgress = useIndexProgress(targetGroup, progressActive);
+  // How many repos THIS index registered — the same selection the wizard uses
+  // to start indexing (see runIndex): one per selected child git repo, else one
+  // per selected monorepo package, else 1 for a single repo. Threading this into
+  // the feed lets feed-terminal wait for ALL repos instead of firing after the
+  // first one finishes while the rest are still streaming (#5326).
+  const expectedRepos = scan?.valid
+    ? (scan.childGitRepos?.length ?? 0) > 0
+      ? selectedChildren.size
+      : (scan.packages?.length ?? 0) > 0
+        ? selectedPkgs.size
+        : 1
+    : undefined;
+  const indexProgress = useIndexProgress(targetGroup, progressActive, expectedRepos);
 
   // Reset everything when the dialog closes.
   function reset() {

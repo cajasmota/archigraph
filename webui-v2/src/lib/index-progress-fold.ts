@@ -83,9 +83,31 @@ export function fold(
   return next;
 }
 
-/** True once the per-repo feed shows every repo in a terminal (done/error) phase. */
-export function rowsTerminal(rows: ProgressRow[]): boolean {
-  return rows.length > 0 && rows.every((r) => r.phase === "done" || r.phase === "error");
+/**
+ * True once the per-repo feed shows EVERY expected repo in a terminal
+ * (done/error) phase.
+ *
+ * `expectedRepos` is the number of repos the wizard registered for this index
+ * (one per selected child git repo, or one per selected monorepo package, or 1
+ * for a single repo). It is REQUIRED to safely fire feed-terminal: under the
+ * SSE broker's drop policy the first repo can reach `done` before the second
+ * repo emits a single event, so `rows = [first:done]` would look terminal even
+ * though more repos are still coming. Gating on `rows.length >= expectedRepos`
+ * prevents that early fire (#5326) — only when all expected rows exist AND each
+ * is terminal do we report terminal.
+ *
+ * When `expectedRepos` is unknown (undefined / 0), we DELIBERATELY do not fire
+ * feed-terminal on partial rows: we return false and let the job poller be the
+ * terminal source of truth, so a premature "all rows so far are done" can never
+ * tear the feed down before later repos report.
+ */
+export function rowsTerminal(rows: ProgressRow[], expectedRepos?: number): boolean {
+  if (rows.length === 0) return false;
+  // Without a known expected count we can't tell "all repos done" from "the
+  // only repos seen SO FAR are done" — defer to the job poller (return false).
+  if (!expectedRepos || expectedRepos <= 0) return false;
+  if (rows.length < expectedRepos) return false;
+  return rows.every((r) => r.phase === "done" || r.phase === "error");
 }
 
 /** Stable sort for rendering: by repo, then module label. */
