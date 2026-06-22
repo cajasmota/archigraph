@@ -10,11 +10,34 @@
 package watch
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/cajasmota/grafel/internal/daemon/walk"
 )
+
+// envExtraSkipDirs holds additional directory basenames parsed once from
+// the GRAFEL_WATCH_EXTRA_SKIP_DIRS environment variable (comma-separated).
+// This is the global, ops-tunable escape hatch for sites whose build
+// tooling writes to a dir not covered by the built-in SkipDirs set (#5392).
+var (
+	envExtraSkipOnce sync.Once
+	envExtraSkipDirs map[string]struct{}
+)
+
+func extraSkipDirsFromEnv() map[string]struct{} {
+	envExtraSkipOnce.Do(func() {
+		envExtraSkipDirs = make(map[string]struct{})
+		for _, d := range strings.Split(os.Getenv("GRAFEL_WATCH_EXTRA_SKIP_DIRS"), ",") {
+			if d = strings.TrimSpace(d); d != "" {
+				envExtraSkipDirs[d] = struct{}{}
+			}
+		}
+	})
+	return envExtraSkipDirs
+}
 
 // SkipDirs is the static list of directory basenames the watcher never
 // recurses into. Source trees pin most of their churn behind these
@@ -70,11 +93,17 @@ var SkipDirs = map[string]struct{}{
 	// Android / Gradle
 	".gradle":  {},
 	"captures": {},
-	// Mobile build outputs
+	// Mobile build outputs (#5392: an Android AAB/gradle build under
+	// core-mobile churned these dirs and tripped a continuous reindex
+	// loop → 20GB heap thrash. AAB/ in particular is the project's
+	// Android App Bundle output dir).
 	"APK":      {},
+	"AAB":      {},
 	"IPA":      {},
 	"Builds":   {},
 	"Releases": {},
+	// Flutter / Dart
+	".dart_tool": {},
 	// Prior-tool outputs
 	"graphify-out": {},
 	"gfleet-out":   {},
@@ -109,6 +138,26 @@ var SkipExts = map[string]struct{}{
 	".dylib": {},
 	".dll":   {},
 	".exe":   {},
+	// Mobile build artifacts (#5392). These are large binary outputs of
+	// an app build; writing them must never trip a reindex.
+	".aab": {},
+	".apk": {},
+	".ipa": {},
+	".aar": {},
+}
+
+// SkipBaseGlobs is the list of basename glob patterns whose matches we
+// never re-index for. Unlike SkipExts (which keys on the final
+// extension only), these match anywhere in the basename so multi-dot
+// generated files like `schema.generated.ts` or `api.g.dart` are
+// dropped at the watcher event boundary (#5392).
+var SkipBaseGlobs = []string{
+	"*.generated.*", // foo.generated.ts, foo.generated.go, ...
+	"*.gen.*",       // foo.gen.go
+	"*.g.dart",      // Flutter codegen
+	"*.freezed.dart",
+	"*.pb.go",   // protobuf
+	"*.pb.dart", // protobuf
 }
 
 // ShouldSkipDir reports whether a directory basename is on the skip
@@ -116,6 +165,10 @@ var SkipExts = map[string]struct{}{
 // watcher and the indexer use the identical extended set (issue #805).
 func ShouldSkipDir(base string) bool {
 	if _, ok := SkipDirs[base]; ok {
+		return true
+	}
+	// Ops-tunable global escape hatch (#5392).
+	if _, ok := extraSkipDirsFromEnv()[base]; ok {
 		return true
 	}
 	// TCC guard (#5296): never recurse into macOS media-library bundles
@@ -144,8 +197,64 @@ func ShouldSkipPath(p string) bool {
 	if _, ok := SkipExts[ext]; ok {
 		return true
 	}
+	// Multi-dot generated-file globs (e.g. *.generated.*, *.g.dart).
+	base := filepath.Base(filepath.ToSlash(p))
+	for _, g := range SkipBaseGlobs {
+		if ok, _ := filepath.Match(g, base); ok {
+			return true
+		}
+	}
 	// Vim creates `4913` test files and `.foo.swp` style swap files;
 	// the latter is caught by .swp above, the former is rare enough to
 	// ignore (it lives at most for a few ms).
+	return false
+}
+
+// ShouldSkipPathForRepo is the repo-aware event-boundary filter. It is a
+// superset of ShouldSkipPath: in addition to the static SkipDirs /
+// SkipExts / SkipBaseGlobs rules it consults the repo's .gitignore (and
+// per-repo .grafel/watch.json) so that a file event under a gitignored
+// path NEVER triggers a reindex (#5392).
+//
+// This matters because the static lists can only cover *well-known*
+// artifact names. A repo may gitignore arbitrary build/output dirs
+// (e.g. AAB/, app/build/, *.aab) that the watcher's directory-level
+// subscription already declines to watch — but events can still surface
+// for them via a watched parent directory (e.g. a Create event for a new
+// gitignored subdir, or a file written at the repo root). Honouring
+// .gitignore at the event boundary drops that churn cheaply.
+//
+// repoPath must be the absolute repo root; p must be inside it. When
+// repoPath is empty or p is not under it, this degrades to ShouldSkipPath.
+func ShouldSkipPathForRepo(repoPath, p string) bool {
+	if ShouldSkipPath(p) {
+		return true
+	}
+	if repoPath == "" {
+		return false
+	}
+	rel, err := filepath.Rel(repoPath, p)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return false
+	}
+	rel = filepath.ToSlash(rel)
+	if rel == "." || rel == "" {
+		return false
+	}
+	s := loadRepoIgnoreState(repoPath)
+	// Walk the path and each ancestor directory: a file is ignored if it
+	// OR any ancestor dir matches .gitignore (a `build/` rule ignores the
+	// dir, so everything beneath it is ignored too) or a per-repo
+	// exclude_dirs basename.
+	segs := strings.Split(rel, "/")
+	for i := 1; i <= len(segs); i++ {
+		sub := strings.Join(segs[:i], "/")
+		if _, ok := s.extraSkip[segs[i-1]]; ok {
+			return true
+		}
+		if skip, _ := s.gitignore.MatchDir(sub); skip {
+			return true
+		}
+	}
 	return false
 }

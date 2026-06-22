@@ -85,6 +85,17 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ### Fixed
 
+- **Daemon watcher re-index loop on build artifacts → memory thrash + MCP
+  socket loss (Refs #5392):** the file-watcher now ignores build/output
+  artifacts and gitignored paths and coalesces per-repo reindexes, so build
+  churn (e.g. an Android AAB/gradle build under a watched repo) no longer
+  triggers a continuous reindex loop / heap thrash. The static event-boundary
+  ignore set gained the mobile build dirs/outputs (`AAB/`, `.dart_tool/`,
+  `*.aab`/`*.apk`/`*.ipa`/`*.aar`) and generated-file globs
+  (`*.generated.*`, `*.g.dart`, `*.pb.go`, ...); the watcher now also honours
+  the repo's `.gitignore` at the event boundary (not just at directory
+  subscription time) so a write under any gitignored path is dropped before it
+  can arm a reindex, and exposes a `GRAFEL_WATCH_EXTRA_SKIP_DIRS` ops override.
 - **Windows installer latest-version auto-resolution produced garbage → 404
   (Refs #5318):** `install.bat` extracted the release tag from the
   `/releases/latest` redirect `location:` header with `%~nx`, which treats its
