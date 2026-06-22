@@ -25,6 +25,10 @@ jobs:
           fi
       - name: go vet
         run: go vet ./...
+      # Guard against the locale-bug class (#5317): control flow that matches a
+      # localized OS command output / error string breaks on non-English locales.
+      - name: lint-localematch (locale-invariant command checks)
+        run: go run ./cmd/lint-localematch
       - uses: actions/setup-node@v4
         with:
           node-version: '20'

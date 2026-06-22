@@ -52,8 +52,16 @@ build-go-only:
 test:
 	$(GO) test -race -count=1 ./...
 
-lint:
-	@echo "lint: (no linter configured yet — run 'go vet ./...' for now)"
+lint: lint-localematch
+	$(GO) vet ./...
+
+# lint-localematch guards against the locale-bug class (#5317): branching on a
+# localized OS command output / error string (e.g. strings.Contains(out,
+# "cannot find")) breaks on non-English locales. Use exit codes / typed errors /
+# structured output instead. Justified race fallbacks use // nolint:localematch.
+.PHONY: lint-localematch
+lint-localematch:
+	$(GO) run ./cmd/lint-localematch
 
 fmt:
 	$(GO) fmt ./...
