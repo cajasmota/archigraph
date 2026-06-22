@@ -286,3 +286,68 @@ func TestBroker_ConcurrentPublishSubscribe(t *testing.T) {
 	t.Logf("concurrent stress: received %d / %d events (buffer=%d)",
 		total, publishers*eventsPerPublisher, defaultBufferSize)
 }
+
+// TestBroker_RetainsTerminalEvent verifies that the broker retains the most
+// recent terminal (PhaseDone / PhaseError) event per group so the SSE handler
+// can guarantee delivery even when the live fan-out dropped it (#5326).
+func TestBroker_RetainsTerminalEvent(t *testing.T) {
+	b := NewBroker()
+
+	// No terminal event yet.
+	if _, ok := b.LastTerminal("g"); ok {
+		t.Fatal("expected no terminal event before any publish")
+	}
+
+	// A non-terminal event must NOT be retained as terminal.
+	b.Publish(makeEvent("g", "r", PhaseExtractAST))
+	if _, ok := b.LastTerminal("g"); ok {
+		t.Fatal("non-terminal event should not be retained as terminal")
+	}
+
+	// A PhaseDone event is retained even with zero subscribers (the drop-on-full
+	// / no-subscriber case that froze the wizard UI).
+	done := makeEvent("g", "r", PhaseDone)
+	done.EntitiesSoFar = 42
+	b.Publish(done)
+
+	got, ok := b.LastTerminal("g")
+	if !ok {
+		t.Fatal("expected retained terminal event after PhaseDone")
+	}
+	if got.Phase != PhaseDone || got.EntitiesSoFar != 42 {
+		t.Fatalf("retained terminal mismatch: got %+v", got)
+	}
+
+	// PhaseError replaces the retained terminal event.
+	b.Publish(makeEvent("g", "r", PhaseError))
+	got, _ = b.LastTerminal("g")
+	if got.Phase != PhaseError {
+		t.Fatalf("expected PhaseError retained, got %q", got.Phase)
+	}
+
+	// Other groups are isolated.
+	if _, ok := b.LastTerminal("other"); ok {
+		t.Fatal("terminal retention must be per-group")
+	}
+}
+
+// TestBroker_TerminalDeliveredDespiteFullBuffer reproduces the #5326 freeze:
+// a slow subscriber whose buffer is saturated drops the live PhaseDone event,
+// but the broker still retains it so a consumer can recover the terminal state.
+func TestBroker_TerminalDeliveredDespiteFullBuffer(t *testing.T) {
+	b := NewBroker()
+	_, cancel := b.Subscribe("g") // never drained → buffer fills
+	defer cancel()
+
+	// Saturate the subscriber buffer with non-terminal events.
+	for i := 0; i < defaultBufferSize*2; i++ {
+		b.Publish(makeEvent("g", "r", PhaseExtractAST))
+	}
+	// Now publish the terminal event — it is dropped for the full subscriber.
+	b.Publish(makeEvent("g", "r", PhaseDone))
+
+	// The terminal state is still recoverable via retention.
+	if got, ok := b.LastTerminal("g"); !ok || got.Phase != PhaseDone {
+		t.Fatalf("terminal event lost despite retention: ok=%v got=%+v", ok, got)
+	}
+}

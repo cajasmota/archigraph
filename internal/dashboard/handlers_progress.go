@@ -108,6 +108,39 @@ func (s *Server) serveSSE(w http.ResponseWriter, r *http.Request, group string) 
 	writeSSEEvent(w, "connected", connPayload)
 	flusher.Flush()
 
+	// #5326 — terminal-state guarantee. A rebuild emits its terminal event
+	// (PhaseDone / PhaseError) exactly once, and Publish is best-effort
+	// (drop-on-full): under load that single event can be dropped, leaving the
+	// wizard UI frozen on the last mid-extraction frame and never showing
+	// completion. We defend against that two ways for a concrete-group stream:
+	//   1. On connect, replay any already-recorded terminal event (covers a
+	//      client that connected/reconnected AFTER the rebuild finished).
+	//   2. On every heartbeat, re-check the retained terminal event and forward
+	//      it if we have not already (covers the in-flight drop-on-full case).
+	// In both cases we then emit `close`, so the UI always reaches a terminal
+	// render rather than silently freezing.
+	var terminalSent bool
+	emitTerminalIfReady := func() (done bool) {
+		if group == sseWildcardGroup || terminalSent {
+			return false
+		}
+		te, ok := s.progressBroker.LastTerminal(group)
+		if !ok {
+			return false
+		}
+		if data, err := json.Marshal(te); err == nil {
+			writeSSEEvent(w, "progress", string(data))
+			writeSSEEvent(w, "close", "{}")
+			flusher.Flush()
+			terminalSent = true
+			return true
+		}
+		return false
+	}
+	if emitTerminalIfReady() {
+		return
+	}
+
 	heartbeat := time.NewTicker(heartbeatInterval)
 	defer heartbeat.Stop()
 
@@ -134,12 +167,31 @@ func (s *Server) serveSSE(w http.ResponseWriter, r *http.Request, group string) 
 			}
 			writeSSEEvent(w, "progress", string(data))
 			flusher.Flush()
+			// If this was the terminal event itself, record that we delivered it
+			// and close — no need to wait for a heartbeat re-assert.
+			if isTerminalEventPhase(e.Phase) {
+				terminalSent = true
+				writeSSEEvent(w, "close", "{}")
+				flusher.Flush()
+				return
+			}
 
 		case <-heartbeat.C:
+			// Re-assert the terminal state if the live event was dropped.
+			if emitTerminalIfReady() {
+				return
+			}
 			writeSSEEvent(w, "heartbeat", "{}")
 			flusher.Flush()
 		}
 	}
+}
+
+// isTerminalEventPhase reports whether an SSE progress event represents a
+// terminal indexing state (done/error). Mirrors progress.isTerminalPhase, which
+// is unexported.
+func isTerminalEventPhase(phase string) bool {
+	return phase == progress.PhaseDone || phase == progress.PhaseError
 }
 
 // writeSSEEvent writes a single SSE event block to w.

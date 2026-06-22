@@ -39,13 +39,39 @@ type subscriber struct {
 type Broker struct {
 	mu   sync.RWMutex
 	subs map[string][]*subscriber
+	// terminal retains the most recent terminal event (PhaseDone / PhaseError)
+	// per group slug. A terminal event is emitted exactly once by the indexer
+	// (Tracker.Done / Tracker.Fail); because Publish is best-effort (drop-on-full),
+	// that single event can be lost if a slow SSE subscriber's buffer is full at
+	// the moment it fires — which leaves the wizard UI frozen on the last
+	// mid-extraction frame, never learning the rebuild finished (#5326). Retaining
+	// it lets the SSE handler (a) replay it to a late/reconnecting subscriber and
+	// (b) re-assert it on the heartbeat so the terminal state is ALWAYS rendered.
+	terminal map[string]Event
 }
 
 // NewBroker constructs an empty Broker ready for use.
 func NewBroker() *Broker {
 	return &Broker{
-		subs: make(map[string][]*subscriber),
+		subs:     make(map[string][]*subscriber),
+		terminal: make(map[string]Event),
 	}
+}
+
+// isTerminalPhase reports whether a phase label is a terminal indexing state.
+func isTerminalPhase(phase string) bool {
+	return phase == PhaseDone || phase == PhaseError
+}
+
+// LastTerminal returns the most recent terminal (done/error) event retained for
+// the given group, and whether one has been recorded. Used by the SSE handler to
+// guarantee the terminal state reaches the client even if the live event was
+// dropped on a full buffer (#5326).
+func (b *Broker) LastTerminal(group string) (Event, bool) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	e, ok := b.terminal[group]
+	return e, ok
 }
 
 // wildcardGroup is the internal key used to register subscribers that want
@@ -62,6 +88,14 @@ const wildcardGroup = "\x00wildcard"
 // Publish implements the Publisher interface so the indexer can use the broker
 // without importing a concrete type.
 func (b *Broker) Publish(e Event) {
+	if isTerminalPhase(e.Phase) {
+		// Retain terminal events so the SSE handler can guarantee delivery even
+		// if the live fan-out below drops this event on a full buffer (#5326).
+		b.mu.Lock()
+		b.terminal[e.GroupSlug] = e
+		b.mu.Unlock()
+	}
+
 	b.mu.RLock()
 	groupSubs := b.subs[e.GroupSlug]
 	wildcardSubs := b.subs[wildcardGroup]
