@@ -1005,7 +1005,17 @@ function DetailPane({ detail: rawDetail, initialVerb, groupId }: { detail: PathD
   // View toggle (#4819): Tree = the downstream call DAG (<FlowDag>), Flowchart =
   // the handler's control-flow graph (<Flowchart>). The Detail slider only
   // affects the Flowchart view (independent of the Tree's own depth control).
-  const [flowView, setFlowView] = useState<"tree" | "flowchart">("tree");
+  // #5324 — the Flowchart layout is currently unreliable (it renders
+  // disconnected EXIT/ENTRY/RETURN fragments). Gate it off via this flag until
+  // the layout is fixed; flip to `true` to re-enable the Flowchart toggle. The
+  // <Flowchart> renderer below is intentionally kept (just unreachable while
+  // this flag is false) so the change is fully reversible.
+  const SHOW_FLOWCHART = false;
+  // When the flag is off, force-coerce the view mode to "tree" so nothing can
+  // land on the (hidden) flowchart view.
+  const [flowView, setFlowViewRaw] = useState<"tree" | "flowchart">("tree");
+  const setFlowView = (v: "tree" | "flowchart") =>
+    setFlowViewRaw(SHOW_FLOWCHART ? v : "tree");
   const [cfgDetail, setCfgDetail] = useState<ControlFlowDetail>("decisions");
   // #4883 — interprocedural inline depth for the Flowchart view (1 = handler
   // CFG only; >=2 splices callee CFGs at in-repo call sites). Separate control
@@ -1438,47 +1448,54 @@ function DetailPane({ detail: rawDetail, initialVerb, groupId }: { detail: PathD
                 drives the Flowchart's CFG detail level (independent of the
                 Tree's own depth control, which lives in <FlowDag>). */}
             <div className="mt-2 flex flex-wrap items-center gap-3">
-              <div
-                className="inline-flex rounded-md border border-border overflow-hidden"
-                role="tablist"
-                aria-label="Flow view"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={flowView === "tree"}
-                  onClick={() => setFlowView("tree")}
-                  className={cn(
-                    "h-7 px-3 text-xs transition-colors",
-                    flowView === "tree"
-                      ? "bg-accent text-accent-text"
-                      : "bg-surface text-text-3 hover:bg-surface-2",
-                  )}
-                  title="Tree — the downstream call DAG"
+              {/* #5324 — the Tree | Flowchart segmented control is hidden while
+                  SHOW_FLOWCHART is false (the flowchart layout is unreliable).
+                  Tree is then the only view, so the toggle is dropped entirely.
+                  Re-enable by flipping SHOW_FLOWCHART above. */}
+              {SHOW_FLOWCHART && (
+                <div
+                  className="inline-flex rounded-md border border-border overflow-hidden"
+                  role="tablist"
+                  aria-label="Flow view"
                 >
-                  Tree
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={flowView === "flowchart"}
-                  onClick={() => setFlowView("flowchart")}
-                  className={cn(
-                    "h-7 px-3 text-xs transition-colors border-l border-border",
-                    flowView === "flowchart"
-                      ? "bg-accent text-accent-text"
-                      : "bg-surface text-text-3 hover:bg-surface-2",
-                  )}
-                  title="Flowchart — the handler's control flow (decisions, loops, effects)"
-                >
-                  Flowchart
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={flowView === "tree"}
+                    onClick={() => setFlowView("tree")}
+                    className={cn(
+                      "h-7 px-3 text-xs transition-colors",
+                      flowView === "tree"
+                        ? "bg-accent text-accent-text"
+                        : "bg-surface text-text-3 hover:bg-surface-2",
+                    )}
+                    title="Tree — the downstream call DAG"
+                  >
+                    Tree
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={flowView === "flowchart"}
+                    onClick={() => setFlowView("flowchart")}
+                    className={cn(
+                      "h-7 px-3 text-xs transition-colors border-l border-border",
+                      flowView === "flowchart"
+                        ? "bg-accent text-accent-text"
+                        : "bg-surface text-text-3 hover:bg-surface-2",
+                    )}
+                    title="Flowchart — the handler's control flow (decisions, loops, effects)"
+                  >
+                    Flowchart
+                  </button>
+                </div>
+              )}
 
               {/* Depth + Detail sliders — only meaningful for the Flowchart
                   view. Depth (#4883) inlines callee CFGs hop-by-hop; Detail
-                  (#4819) controls within-function granularity. */}
-              {flowView === "flowchart" && (
+                  (#4819) controls within-function granularity. Hidden with the
+                  flowchart view (#5324). */}
+              {SHOW_FLOWCHART && flowView === "flowchart" && (
                 <>
                   <DepthSlider value={cfgDepth} onChange={setCfgDepth} />
                   <DetailSlider value={cfgDetail} onChange={setCfgDetail} />

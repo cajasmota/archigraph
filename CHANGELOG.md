@@ -23,6 +23,11 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   a documented best-effort race fallback behind the exit-code `IsLoaded()` check
   (Refs [#5317](https://github.com/cajasmota/grafel/issues/5317),
   [#856](https://github.com/cajasmota/grafel/issues/856)).
+- Dashboard Paths → "Downstream flow" modal now defaults to and only shows the
+  **Tree** view; the **Flowchart** view is hidden behind a `SHOW_FLOWCHART` flag
+  pending a layout fix (it currently renders disconnected EXIT/ENTRY/RETURN
+  fragments). The flowchart renderer is retained, just gated
+  ([#5324](https://github.com/cajasmota/grafel/issues/5324)).
 
 ### Added
 
