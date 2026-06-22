@@ -32,7 +32,13 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/cajasmota/grafel/main/install.ps1 | iex
 ```
 
-The installer places `grafel` under `~/.grafel/bin`. Confirm with `grafel --version`.
+Windows without PowerShell (CMD):
+
+```bat
+curl -fL https://raw.githubusercontent.com/cajasmota/grafel/main/install.bat -o "%TEMP%\grafel-install.bat" && "%TEMP%\grafel-install.bat"
+```
+
+The installer places `grafel` under `~/.grafel/bin`. Confirm with `grafel --version`. All Windows paths are non-admin; for a manual/air-gapped install see [install-windows-manual.md](install-windows-manual.md).
 
 **Build from source** (alternative):
 

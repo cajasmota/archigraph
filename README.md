@@ -70,6 +70,14 @@ On Windows (PowerShell):
 irm https://raw.githubusercontent.com/cajasmota/grafel/main/install.ps1 | iex
 ```
 
+On Windows without PowerShell (CMD):
+
+```bat
+curl -fL https://raw.githubusercontent.com/cajasmota/grafel/main/install.bat -o "%TEMP%\grafel-install.bat" && "%TEMP%\grafel-install.bat"
+```
+
+All Windows paths are non-admin. For a locked-down/manual install see [docs/install-windows-manual.md](docs/install-windows-manual.md).
+
 Then point it at your code and wire it up:
 
 ```sh

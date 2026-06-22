@@ -27,15 +27,31 @@ The script respects `GRAFEL_VERSION` (pin a release tag), `GRAFEL_PREFIX` (insta
 
 ---
 
-## Windows — PowerShell installer
+## Windows — three ways to install
 
-The recommended install path on Windows. Downloads the latest release binary into `%USERPROFILE%\.grafel`.
+All three paths install the same release binary into `%USERPROFILE%\.grafel\bin`, add that folder to your **user** PATH, and run `grafel install`. **None require administrator rights** — everything lives under your user profile. There is no native `windows_arm64` build; on Windows on ARM the x86_64 binary runs under x64 emulation, and the installers select it automatically.
+
+### PowerShell (recommended)
 
 ```powershell
 irm https://raw.githubusercontent.com/cajasmota/grafel/main/install.ps1 | iex
 ```
 
-Windows builds require MSYS2/MinGW64. The installer handles this. Shipped binaries link statically against MinGW — users do not need MinGW installed at runtime.
+### CMD (no PowerShell)
+
+`cmd.exe` can't pipe-execute a remote script the way PowerShell's `iex` can, so download the `.bat` first, then run it:
+
+```bat
+curl -fL https://raw.githubusercontent.com/cajasmota/grafel/main/install.bat -o "%TEMP%\grafel-install.bat" && "%TEMP%\grafel-install.bat"
+```
+
+The `.bat` mirrors the PowerShell installer exactly (same prefix, asset names, SHA256 verification, user-PATH append) using only Windows 10 1803+ built-ins (`curl`, `certutil`, `tar`, `setx`).
+
+### Manual (locked-down / air-gapped)
+
+Download the `windows_x86_64` archive from the [releases page](https://github.com/cajasmota/grafel/releases/latest), extract it, add the folder to PATH, and run `grafel install`. Full step-by-step with copy-pasteable commands: **[install-windows-manual.md](install-windows-manual.md)**.
+
+Both the PowerShell and CMD installers, as well as `GRAFEL_VERSION` / `GRAFEL_PREFIX`, are documented inline at the top of each script. Windows release binaries link statically against MinGW — users do not need MinGW installed at runtime.
 
 ---
 
@@ -45,7 +61,7 @@ Release archives are published at https://github.com/cajasmota/grafel/releases f
 
 Archives per platform: `linux_x86_64`, `linux_arm64`, `macos_x86_64`, `macos_arm64`, `windows_x86_64`.
 
-Extract the archive and move the `grafel` binary to a directory on your `PATH`.
+Extract the archive and move the `grafel` binary to a directory on your `PATH`. On Windows, see [install-windows-manual.md](install-windows-manual.md) for the exact extract + PATH + `grafel install` steps.
 
 ---
 
