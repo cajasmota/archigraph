@@ -22,6 +22,12 @@ const PHASE_LABEL: Record<ProgressPhase, string> = {
   resolving_refs: "Resolving refs",
   running_algorithms: "Running algorithms",
   materializing: "Materializing",
+  // #5334 — granular graph-assembly phases.
+  building_communities: "Building communities",
+  computing_centrality: "Computing centrality",
+  detecting_links: "Detecting cross-repo links",
+  computing_flows: "Computing flows",
+  writing_graph: "Writing graph",
   done: "Indexed",
   error: "Failed",
 };
