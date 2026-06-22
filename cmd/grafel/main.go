@@ -27,6 +27,13 @@ func main() {
 	if len(os.Args) >= 2 && os.Args[1] == "index-internal" {
 		os.Exit(runIndexInternal(os.Args[2:]))
 	}
+	// Hidden group-level algorithm harness (#5349 A1 / epic #5350). Assembles
+	// the union of a group's per-repo graphs and runs the algorithm pass ONCE
+	// at group scope, printing stats. --dry-run writes no files. Not part of the
+	// public command surface; intercepted before cobra dispatch.
+	if len(os.Args) >= 2 && os.Args[1] == "group-algo" {
+		os.Exit(runGroupAlgo(os.Args[2:]))
+	}
 	// Release acceptance ladder (#5224). Intercepted before cobra dispatch
 	// because it owns its own argv, lifecycle, and exit code (it boots an
 	// isolated in-process daemon and asserts each layer). Lives in cmd/grafel
