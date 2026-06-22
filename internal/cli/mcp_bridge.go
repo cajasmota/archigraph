@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cajasmota/grafel/internal/daemon"
+	"github.com/cajasmota/grafel/internal/daemon/transport"
 )
 
 // bridgeCWD returns the best available working-directory hint for the bridge
@@ -193,7 +193,11 @@ func (b *bridge) getRPCClient() (*rpc.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := net.Dial("unix", socketPath)
+	// transport.Dial selects the OS-appropriate transport: AF_UNIX on
+	// Linux/mac (identical to the previous net.Dial("unix", ...)) and a named
+	// pipe on Windows, matching transport.Listen on the daemon side. Hardcoding
+	// "unix" here meant the bridge could never reach the daemon on Windows.
+	conn, err := transport.Dial(socketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -480,6 +484,12 @@ func (b *bridge) offlineToolList(id any) *rpc2Response {
 		{
 			Name:        "grafel_whoami",
 			Description: "Return grafel status. NOTE: daemon is currently offline — run 'grafel start'.",
+			// Always carry a valid JSON Schema, even in the degraded/offline
+			// path. Without this the field is omitted (omitempty) and Claude
+			// Code's Zod validation rejects the tool with a cryptic
+			// "expected object, received undefined" on inputSchema — masking
+			// the real cause (the daemon was unreachable).
+			InputSchema: json.RawMessage(`{"type":"object"}`),
 		},
 	}
 	result := map[string]any{"tools": stub}
