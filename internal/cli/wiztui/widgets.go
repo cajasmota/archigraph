@@ -146,6 +146,7 @@ func (m listModel) view(maxHeight int) string {
 
 type multiListModel struct {
 	title     string
+	context   string // optional context line(s) under the title
 	all       []Candidate
 	cursor    int
 	filter    string
@@ -258,6 +259,10 @@ func (m multiListModel) view(maxHeight int) string {
 	header := fmt.Sprintf("%s  (%d selected)", m.title, count)
 	b.WriteString(titleTxtStyle.Render(header))
 	b.WriteString("\n")
+	if m.context != "" {
+		b.WriteString(helpTextStyle.Render(m.context))
+		b.WriteString("\n")
+	}
 	if m.filtering || m.filter != "" {
 		b.WriteString(filterStyle.Render("filter: " + m.filter + "█"))
 		b.WriteString("\n")

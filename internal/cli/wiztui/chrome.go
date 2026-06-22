@@ -28,10 +28,17 @@ var stepRail = []struct {
 	{StepIndex, "Index"},
 }
 
-// Palette — derived from the charm theme so the TUI feels of-a-piece with huh.
+// Palette — a tasteful light-blue accent (replacing the former pink/magenta) so
+// every accented element — the header badge, step-rail pills, the cursor ›, and
+// selected/active highlights — reads as one cohesive blue on dark terminals,
+// with a light-mode-friendly variant via AdaptiveColor. Green stays reserved for
+// done/✓ and the phase colors are unchanged.
 var (
-	colAccent  = lipgloss.Color("212") // pink/magenta accent
-	colAccent2 = lipgloss.Color("99")  // purple
+	// colAccent is the single source of truth for the wizard accent. 256-color
+	// 117 (#87d7ff-ish) is a clean light blue on dark terminals; the adaptive
+	// Light variant (75 / #5fafff) stays legible on light backgrounds.
+	colAccent  = lipgloss.AdaptiveColor{Light: "75", Dark: "117"}
+	colAccent2 = lipgloss.AdaptiveColor{Light: "33", Dark: "75"} // deeper blue
 	colMuted   = lipgloss.Color("241")
 	colFaint   = lipgloss.Color("238")
 	colText    = lipgloss.Color("252")
@@ -41,8 +48,9 @@ var (
 )
 
 var (
+	// On a light-blue badge, dark ink reads crisper than white.
 	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("231")).
+			Foreground(lipgloss.Color("16")).
 			Background(colAccent).
 			Bold(true).
 			Padding(0, 1)
