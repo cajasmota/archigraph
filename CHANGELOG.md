@@ -10,6 +10,17 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ### Added
 
+- **Group-level graph algorithms — foundation (Refs #5353, #5349):** a hidden
+  `grafel group-algo <group> --dry-run` command assembles the union of a
+  group's per-repo graphs (entities + relationships, including the cross-repo
+  phantom CALLS edges already written into each `graph.fb` by the link pass)
+  and runs the Louvain communities + PageRank/Betweenness centrality pass
+  **once** at group scope, printing stats (union counts, communities and how
+  many span >1 repo, modularity, top-10 PageRank with source repo). This is the
+  foundation for group-level communities/centrality so cross-repo hubs rank by
+  their true cross-repo importance. No behavior change to the default path yet —
+  overlay storage (A2) and the debounced/capped/background scheduler (A3) land
+  in follow-ups. New package `internal/graph/groupalgo`.
 - **The wizard (CLI + web) now lets you choose which AI tools get the grafel
   MCP server (#5344):** instead of auto-registering the grafel MCP entry in
   every detected AI tool (Claude Code, Cursor, Windsurf, Codex, Kiro,
